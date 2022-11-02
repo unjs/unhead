@@ -10,7 +10,7 @@
 
 
 <p align="center">
-Universal document &lt;head&gt;' manager for everyone.  
+Universal document &lt;head&gt; manager for everyone.  
 </p>
 
 <p align="center">
@@ -29,12 +29,13 @@ Universal document &lt;head&gt;' manager for everyone.
 
 ## Highlights
 
-- 🤝 Built for everyone: Vue, React, Svelte, etc.
 - 💎 Fully typed
-- 📦 Optimised, tiny SSR and DOM bundles
-- 🍣 Intuitive tag deduping and sorting
-- 🪝 Extensible API using hooks and plugin
-- 🖥️ Optional Server-only tags for 0kb runtime
+- 🧑‍🤝‍🧑 New DOM patching algorithm, plays nicely with other libraries
+- 🤝 Built for everyone: Vue, React, Svelte, etc.
+- 🚀 Optimised, tiny SSR and DOM bundles
+- 🖥️ `useServerHead` for 0kb runtime head management
+- 🍣 Intuitive tag deduping, sorting and title templates
+- 🪝 Extensible hook / plugin based API
 
 ## Features
 
