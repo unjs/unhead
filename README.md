@@ -71,9 +71,24 @@ useHead({
 })
 ```
 
+## Composables
+
+### `useHead`
+
+```ts
+useHead(options: HeadOptions)
+```
+
+### `useServerHead`
+
+```ts
+useServerHead(options: HeadOptions)
+```
+
+
 ## Features
 
-## Duplicate Tag Removal
+### Duplicate Tag Removal
 
 When you register multiple tags which are duplicated, only the most recent one will be used. This is useful for tags like `title` and some `meta` which can only appear once on a page.
 
@@ -110,7 +125,7 @@ head.push({
 // <meta name="description" content="my page description" />
 ```
 
-### Meta content as an array
+#### Meta content as an array
 
 When you register multiple `meta` tags with the same `name` or `property` attributes, they will be deduped.
 
@@ -146,7 +161,7 @@ head.push({
 // <meta name=\"og:image\" content=\"https://example.com/image2.jpg\" >
 ```
 
-### Providing a `key` attribute
+#### Providing a `key` attribute
 
 If you want to avoid deduping occurring accross all tags, you can provide a `key` attribute.
 
@@ -154,14 +169,14 @@ If you want to avoid deduping occurring accross all tags, you can provide a `key
 
 ```
 
-## Sorting
+### Sorting
 
 By default, tags are rendered in the order they are added.
 
 However, this is not always useful, some tags need to be in certain positions to work. To resolve position issues
 this package uses implementing critical tags sorting and the user configured `tagPosition`.
 
-### Critical Tag Sorting
+#### Critical Tag Sorting
 
 A sorting algorithm is used to ensure that critical tags are always in the correct order.
 
@@ -173,7 +188,7 @@ The following tags have set priorities:
 
 All other tags have a default priority of 10: <meta>, <script>, <link>, <style>, etc
 
-### Tag Position
+#### Tag Position
 
 You can also set custom priorities for tags using the `tagPosition` attribute.
 
