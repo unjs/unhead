@@ -37,6 +37,40 @@ Universal document &lt;head&gt; manager for everyone.
 - 🍣 Intuitive tag deduping, sorting and title templates
 - 🪝 Extensible hook / plugin based API
 
+## Install
+
+```bash
+npm i unhead
+```
+
+## Usage
+
+For specific frameworks integrations, see the [docs](https://unhead.netlify.app/).
+
+### Basic
+
+Create the head client somewhere in your root application.
+
+```ts
+import { createHead } from 'unhead'
+
+createHead()
+```
+
+Then use the composables anywhere you want.
+
+```ts
+// pages/about.js
+import { useHead } from 'unhead'
+
+useHead({
+  title: 'About',
+  meta: [
+    { name: 'description', content: 'Learn more about us.' },
+  ],
+})
+```
+
 ## Features
 
 ## Duplicate Tag Removal
