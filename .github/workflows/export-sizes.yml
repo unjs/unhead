@@ -1,0 +1,48 @@
+name: Export Sizes
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/README.md'
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.2.1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
+          cache: "pnpm"
+
+      - run: pnpm i
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Run package sizes
+        run: pnpm run export:sizes
+
+      - name: Commit
+        uses: EndBug/add-and-commit@v4
+        with:
+          message: "chore: update export size report"
+          add: "packages/unhead/export-size-report.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -1,0 +1,24 @@
+name: Export Size Comment
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.2.1
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
+          cache: "pnpm"
+      - uses: antfu/export-size-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          paths: ./packages/unhead

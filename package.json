@@ -1,0 +1,69 @@
+{
+  "name": "unhead-monorepo",
+  "private": "true",
+  "version": "0.9.9",
+  "packageManager": "pnpm@7.8.0",
+  "description": "Typed utilities for defining, validating and building best-practice document &lt;head&gt;'s.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "keywords": [
+    "meta tags",
+    "node",
+    "seo",
+    "head"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm -r --filter=./packages/** run build",
+    "stub": "pnpm -r --parallel --filter=./packages/** run stub",
+    "test": "vitest",
+    "export:sizes": "cd packages/unhead && npx export-size . -r",
+    "release": "bumpp package.json packages/*/package.json --commit --push --tag",
+    "lint": "eslint \"{packages,test}/**/*.{ts,vue,json,yml}\" --fix"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.29.2",
+    "@types/fs-extra": "^9.0.13",
+    "@types/jsdom": "^20.0.0",
+    "@vitest/ui": "^0.24.5",
+    "@vue/server-renderer": "^3.2.41",
+    "bumpp": "^8.2.1",
+    "eslint": "^8.26.0",
+    "fs-extra": "^10.1.0",
+    "jsdom": "^20.0.2",
+    "typescript": "^4.8.4",
+    "unbuild": "^0.9.4",
+    "utility-types": "^3.10.0",
+    "vitest": "^0.24.5",
+    "vue": "^3.2.41"
+  },
+  "resolutions": {
+    "@zhead/schema": "link:../zhead/packages/schema"
+  },
+  "dependencies": {
+    "@zhead/schema": "link:../zhead/packages/schema",
+    "unplugin-auto-import": "^0.11.4"
+  }
+}

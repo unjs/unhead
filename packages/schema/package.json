@@ -1,0 +1,43 @@
+{
+  "name": "@unhead/schema",
+  "version": "0.0.0",
+  "packageManager": "pnpm@7.14.0",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "directory": "packages/schema"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "keywords": [
+    "head",
+    "meta tags",
+    "types"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub"
+  },
+  "dependencies": {
+    "@zhead/schema": "link:../../../zhead/packages/schema"
+  }
+}

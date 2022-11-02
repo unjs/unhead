@@ -1,0 +1,46 @@
+{
+  "name": "@unhead/vue",
+  "version": "0.0.0",
+  "packageManager": "pnpm@7.14.0",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "directory": "packages/vue"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub"
+  },
+  "peerDependencies": {
+    "vue": ">=2.7 || >=3"
+  },
+  "dependencies": {
+    "@unhead/schema": "workspace:*",
+    "@vueuse/shared": "latest",
+    "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "vue": "latest"
+  }
+}

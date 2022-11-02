@@ -1,0 +1,51 @@
+{
+  "name": "unhead",
+  "version": "0.0.0",
+  "packageManager": "pnpm@7.14.0",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "directory": "packages/unhead"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "require": "./dist/server.cjs",
+      "import": "./dist/server.mjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "require": "./dist/client.cjs",
+      "import": "./dist/client.mjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub"
+  },
+  "dependencies": {
+    "@unhead/schema": "workspace:*",
+    "hookable": "^5.4.1",
+    "unctx": "^2.0.2",
+    "zhead": "link:../../../zhead/packages/zhead"
+  }
+}
