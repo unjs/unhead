@@ -38,6 +38,6 @@
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@zhead/schema": "link:../../../zhead/packages/schema"
+    "@zhead/schema": "1.0.0-beta.4"
   }
 }

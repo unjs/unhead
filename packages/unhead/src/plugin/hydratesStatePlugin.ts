@@ -1,6 +1,6 @@
 import { HasElementTags } from 'zhead'
 import { hashCode } from '../util'
-import { defineHeadPlugin } from './defineHeadPlugin'
+import { defineHeadPlugin } from '.'
 
 export const hydratesStatePlugin = defineHeadPlugin({
   hooks: {

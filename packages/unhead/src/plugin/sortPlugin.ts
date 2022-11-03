@@ -1,5 +1,5 @@
 import { sortCriticalTags } from 'zhead'
-import { defineHeadPlugin } from './defineHeadPlugin'
+import { defineHeadPlugin } from '.'
 
 export const sortPlugin = defineHeadPlugin({
   hooks: {

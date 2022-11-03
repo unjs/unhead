@@ -1,5 +1,5 @@
 import { tagDedupeKey } from 'zhead'
-import type { HeadTag, HeadTagKeys } from '@unhead/schema/dist'
+import type { HeadTag, HeadTagKeys } from '@unhead/schema'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 export const dedupePlugin = defineHeadPlugin({

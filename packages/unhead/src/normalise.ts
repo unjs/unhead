@@ -1,41 +1,20 @@
-import type { Head, HeadTag, HeadTagKeys } from '@unhead/schema'
-import { ValidHeadTags, normaliseProps } from 'zhead'
+import type { Head, HeadTag } from '@unhead/schema'
+import { ValidHeadTags, normaliseTag as normaliseTagBase } from 'zhead'
 import type { HeadEntry } from './types'
 import { asArray } from './util'
 
 export function normaliseTag<T>(tagName: HeadTag['tag'], input: HeadTag['props'], entry: HeadEntry<T>): HeadTag | HeadTag[] {
-  const tag: HeadTag = { tag: tagName, _e: entry._i, props: {} }
-
-  let props: HeadTag['props']
-  if (tagName.startsWith('title')) {
-    // title is a special case, we need to normalise it
-    // to a string
-    props = { children: String(input) }
-  }
-  else {
-    // clone the input so we're not modifying source
-    props = { ...input }
-  }
-  // set children key
-  (<HeadTagKeys> ['children', 'innerHTML', 'textContent'])
-    .forEach((key) => {
-      if (typeof props[key] !== 'undefined') {
-        tag.children = props[key]
-        delete props[key]
-      }
-    })
+  const tag = normaliseTagBase(tagName, input, { childrenKeys: ['innerHTML', 'textContent'] }) as HeadTag
+  tag._e = entry._i
 
   // clear user tag options from the tag props (tagPosition, tagPriority, etc)
-  for (const k in props) {
-    if (k.startsWith('tag')) {
+  Object.keys(tag.props)
+    .filter(k => k.startsWith('tag'))
+    .forEach((k) => {
       // @ts-expect-error untyped
-      tag[k] = props[k]
-      delete props[k]
-    }
-  }
-
-  // handle boolean props
-  tag.props = normaliseProps(props)
+      tag[k] = tag.props[k]
+      delete tag.props[k]
+    })
 
   // allow meta to be resolved into multiple tags if an array is provided on content
   if (tag.props.content && Array.isArray(tag.props.content)) {
@@ -52,7 +31,7 @@ export function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>) {
   return Object.entries(e.input)
     .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
     .map(([k, value]) => asArray(value)
-      // @ts-expect-error untyped
+    // @ts-expect-error untyped
       .map(props => asArray(normaliseTag(k as HeadTag['tag'], props, e))),
     )
     .flat(3)

@@ -46,6 +46,6 @@
     "@unhead/schema": "workspace:*",
     "hookable": "^5.4.1",
     "unctx": "^2.0.2",
-    "zhead": "link:../../../zhead/packages/zhead"
+    "zhead": "1.0.0-beta.4"
   }
 }
