@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "name": "unhead",
+    "dependencies": [
+      "@unhead/schema",
+      "hookable",
+      "unctx",
+      "zhead"
+    ],
+    "versions": {
+      "export-size": "0.5.2",
+      "esbuild": "^0.13.8",
+      "brotli-size": "^4.0.0"
+    }
+  },
+  "exports": [
+    {
+      "name": "createHead",
+      "path": "dist/index.mjs",
+      "minified": 3072,
+      "minzipped": 1378,
+      "bundled": 6163
+    },
+    {
+      "name": "useBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 1722,
+      "minzipped": 833,
+      "bundled": 3624
+    },
+    {
+      "name": "useHtmlAttrs",
+      "path": "dist/index.mjs",
+      "minified": 1722,
+      "minzipped": 829,
+      "bundled": 3624
+    },
+    {
+      "name": "useStyle",
+      "path": "dist/index.mjs",
+      "minified": 1720,
+      "minzipped": 827,
+      "bundled": 3614
+    },
+    {
+      "name": "useMeta",
+      "path": "dist/index.mjs",
+      "minified": 1719,
+      "minzipped": 826,
+      "bundled": 3609
+    },
+    {
+      "name": "useTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 1726,
+      "minzipped": 826,
+      "bundled": 3637
+    },
+    {
+      "name": "useTitle",
+      "path": "dist/index.mjs",
+      "minified": 1718,
+      "minzipped": 825,
+      "bundled": 3605
+    },
+    {
+      "name": "useBase",
+      "path": "dist/index.mjs",
+      "minified": 1717,
+      "minzipped": 824,
+      "bundled": 3601
+    },
+    {
+      "name": "useLink",
+      "path": "dist/index.mjs",
+      "minified": 1719,
+      "minzipped": 824,
+      "bundled": 3609
+    },
+    {
+      "name": "useNoscript",
+      "path": "dist/index.mjs",
+      "minified": 1723,
+      "minzipped": 824,
+      "bundled": 3629
+    },
+    {
+      "name": "useScript",
+      "path": "dist/index.mjs",
+      "minified": 1721,
+      "minzipped": 824,
+      "bundled": 3619
+    },
+    {
+      "name": "asArray",
+      "path": "dist/index.mjs",
+      "minified": 1691,
+      "minzipped": 812,
+      "bundled": 3471
+    },
+    {
+      "name": "useHead",
+      "path": "dist/index.mjs",
+      "minified": 1689,
+      "minzipped": 806,
+      "bundled": 3551
+    },
+    {
+      "name": "getActiveHead",
+      "path": "dist/index.mjs",
+      "minified": 1661,
+      "minzipped": 801,
+      "bundled": 3454
+    },
+    {
+      "name": "setActiveHead",
+      "path": "dist/index.mjs",
+      "minified": 1662,
+      "minzipped": 801,
+      "bundled": 3465
+    },
+    {
+      "name": "activeHead",
+      "path": "dist/index.mjs",
+      "minified": 1653,
+      "minzipped": 798,
+      "bundled": 3413
+    },
+    {
+      "name": "dedupePlugin",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 795,
+      "bundled": 3399
+    },
+    {
+      "name": "defineHeadPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 795,
+      "bundled": 3403
+    },
+    {
+      "name": "hashCode",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 795,
+      "bundled": 3395
+    },
+    {
+      "name": "hydratesStatePlugin",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 794,
+      "bundled": 3406
+    },
+    {
+      "name": "sortPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 794,
+      "bundled": 3397
+    },
+    {
+      "name": "titleTemplatePlugin",
+      "path": "dist/index.mjs",
+      "minified": 1647,
+      "minzipped": 794,
+      "bundled": 3406
+    }
+  ]
+}
