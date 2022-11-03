@@ -18,21 +18,18 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
       "import": "./dist/index.mjs"
     },
     "./server": {
       "types": "./dist/server.d.ts",
-      "require": "./dist/server.cjs",
       "import": "./dist/server.mjs"
     },
     "./client": {
       "types": "./dist/client.d.ts",
-      "require": "./dist/client.cjs",
       "import": "./dist/client.mjs"
     }
   },
-  "main": "dist/index.cjs",
+  "type": "module",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
