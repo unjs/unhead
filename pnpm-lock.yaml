@@ -1,8 +1,5 @@
 lockfileVersion: 5.4
 
-overrides:
-  '@zhead/schema': link:../zhead/packages/schema
-
 importers:
 
   .:
@@ -12,7 +9,7 @@ importers:
       '@types/jsdom': ^20.0.0
       '@vitest/ui': ^0.24.5
       '@vue/server-renderer': ^3.2.41
-      '@zhead/schema': link:../zhead/packages/schema
+      '@zhead/schema': 1.0.0-beta.4
       bumpp: ^8.2.1
       eslint: ^8.26.0
       fs-extra: ^10.1.0
@@ -24,7 +21,7 @@ importers:
       vitest: ^0.24.5
       vue: ^3.2.41
     dependencies:
-      '@zhead/schema': link:../zhead/packages/schema
+      '@zhead/schema': 1.0.0-beta.4
       unplugin-auto-import: 0.11.4
     devDependencies:
       '@antfu/eslint-config': 0.29.2_wyqvi574yv7oiwfeinomdzmc3m
@@ -94,9 +91,9 @@ importers:
 
   packages/schema:
     specifiers:
-      '@zhead/schema': link:../../../zhead/packages/schema
+      '@zhead/schema': 1.0.0-beta.4
     dependencies:
-      '@zhead/schema': link:../../../zhead/packages/schema
+      '@zhead/schema': 1.0.0-beta.4
 
   packages/unhead:
     specifiers:
@@ -1147,6 +1144,10 @@ packages:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+    dev: false
+
+  /@zhead/schema/1.0.0-beta.4:
+    resolution: {integrity: sha512-Jel79PmqswpS0cikt8dBjMK6I1P7sYDsaTvXBLLvLwFYqdMYIw3xnIdzREPDFZonZF37tJV6fbgPpCmF4/c6mQ==}
     dev: false
 
   /abab/2.0.6:
@@ -4887,7 +4888,7 @@ packages:
   /zhead/1.0.0-beta.4:
     resolution: {integrity: sha512-cotzh8/naCnEAjPZc1CPQYQHEWRRZg5J4mXd/ed4qHNJvy2gRRKNmhJ3my7LL9CDBXcG222cJhx1jdoNNHphjQ==}
     dependencies:
-      '@zhead/schema': link:../zhead/packages/schema
+      '@zhead/schema': 1.0.0-beta.4
       packrup: 0.1.0
     dev: false
 

@@ -1,5 +1,6 @@
 {
   "name": "@unhead/vue",
+  "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@7.14.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -21,7 +22,6 @@
       "import": "./dist/index.mjs"
     }
   },
-  "type": "module",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
