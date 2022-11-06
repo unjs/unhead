@@ -1,6 +1,25 @@
 import type { MaybeComputedRef, MaybeRef } from '@vueuse/shared'
-import type { EntryAugmentation, MergeHead, Base as _Base, BodyAttributes as _BodyAttributes, HtmlAttributes as _HtmlAttributes, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
+import type { BaseBodyAttr, BaseHtmlAttr, EntryAugmentation, MaybeArray, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
+import type { DataKeys, DefinedValueOrEmptyObject } from '@zhead/schema'
 import type { MaybeComputedRefEntries } from './util'
+
+interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+}
+
+interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+}
 
 export type Title = MaybeComputedRef<_Title>
 export type TitleTemplate = MaybeRef<_TitleTemplate> | ((title?: string) => _TitleTemplate)
@@ -10,8 +29,8 @@ export type Meta<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Me
 export type Style<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Style<E>>
 export type Script<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Script<E>>
 export type Noscript<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Noscript<E>>
-export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<_HtmlAttributes<E>>>
-export type BodyAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<_BodyAttributes<E>>>
+export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>>>
+export type BodyAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>>>
 
 export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**

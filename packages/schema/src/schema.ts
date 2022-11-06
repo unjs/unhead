@@ -19,7 +19,28 @@ export interface SchemaAugmentations extends MergeHead {
   noscript: TagUserProperties
 }
 
-type MaybeArray<T> = T | T[]
+export type MaybeArray<T> = T | T[]
+
+export type BaseBodyAttr = _BodyAttributes
+export type BaseHtmlAttr = _HtmlAttributes
+
+interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  class?: MaybeArray<string> | Record<string, boolean>
+}
+
+interface HtmlAttr extends Omit<_HtmlAttributes, 'class'> {
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  class?: MaybeArray<string> | Record<string, boolean>
+}
 
 interface BaseMeta extends Omit<_Meta, 'content'> {
   /**
@@ -34,6 +55,8 @@ interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
+export { DataKeys, DefinedValueOrEmptyObject }
+
 export type Title = string
 export type TitleTemplate = string | null | ((title?: string) => string)
 export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E>
@@ -42,8 +65,8 @@ export type Meta<E extends EntryAugmentation = {}> = BaseMeta & DataKeys & Schem
 export type Style<E extends EntryAugmentation = {}> = _Style & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
 export type Script<E extends EntryAugmentation = {}> = _Script & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
 export type Noscript<E extends EntryAugmentation = {}> = _Noscript & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = {}> = _HtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = {}> = _BodyAttributes & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = {}> = HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = {}> = BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface Head<E extends MergeHead = SchemaAugmentations> {
   /**

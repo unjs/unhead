@@ -23,7 +23,11 @@ export const dedupePlugin = defineHeadPlugin({
         let dedupeKey = tag._d || tag._p || i
         const dupedTag = deduping[dedupeKey]
         if (dupedTag) {
-          if (tag?.tagDuplicateStrategy === 'merge') {
+          let strategy = tag?.tagDuplicateStrategy
+          if (!strategy && (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'))
+            strategy = 'merge'
+
+          if (strategy === 'merge') {
             const oldProps = dupedTag.props
             // apply oldProps to current props
             ;['class', 'style'].forEach((key) => {

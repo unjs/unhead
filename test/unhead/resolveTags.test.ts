@@ -210,4 +210,86 @@ describe('resolveTags', () => {
       ]
     `)
   })
+
+  it('class array merge support', async () => {
+    const head = createHead()
+
+    head.push({
+      htmlAttrs: {
+        class: ['foo', 'bar'],
+      },
+      bodyAttrs: {
+        class: ['foo2', 'bar2'],
+      },
+    })
+
+    head.push({
+      htmlAttrs: {
+        class: ['something-new'],
+      },
+      bodyAttrs: {
+        class: 'something-new2',
+      },
+    })
+
+    const tags = await head.resolveTags()
+    expect(tags).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "htmlAttrs",
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "class": "foo bar something-new",
+          },
+          "tag": "htmlAttrs",
+        },
+        {
+          "_d": "bodyAttrs",
+          "_e": 0,
+          "_p": 1,
+          "props": {
+            "class": "foo2 bar2 something-new2",
+          },
+          "tag": "bodyAttrs",
+        },
+      ]
+    `)
+  })
+
+  it('class object merge support', async () => {
+    const head = createHead()
+
+    head.push({
+      htmlAttrs: {
+        class: {
+          foo: true,
+          bar: false,
+        },
+      },
+    })
+
+    head.push({
+      htmlAttrs: {
+        class: {
+          bar: true,
+        },
+      },
+    })
+
+    const tags = await head.resolveTags()
+    expect(tags).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "htmlAttrs",
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "class": "foo bar",
+          },
+          "tag": "htmlAttrs",
+        },
+      ]
+    `)
+  })
 })
