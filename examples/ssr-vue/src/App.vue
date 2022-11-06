@@ -1,7 +1,8 @@
 <template>
   <div>
     <router-link to="/">Home</router-link>|
-    <router-link to="/about">About</router-link>
+    <router-link to="/about">About</router-link>|
+    <router-link to="/red">Red</router-link>
     <router-view v-slot="{ Component }">
       <Suspense>
         <div>
