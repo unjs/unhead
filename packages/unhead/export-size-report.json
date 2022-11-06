@@ -4,7 +4,6 @@
     "dependencies": [
       "@unhead/schema",
       "hookable",
-      "unctx",
       "zhead"
     ],
     "versions": {
