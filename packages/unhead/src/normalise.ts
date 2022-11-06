@@ -15,6 +15,14 @@ export function normaliseTag<T>(tagName: HeadTag['tag'], input: HeadTag['props']
       tag[k] = tag.props[k]
       delete tag.props[k]
     })
+  // class object boolean support
+  if (typeof tag.props.class === 'object' && !Array.isArray(tag.props.class)) {
+    tag.props.class = Object.keys(tag.props.class)
+      .filter(k => tag.props.class[k])
+  }
+  // class array support
+  if (Array.isArray(tag.props.class))
+    tag.props.class = tag.props.class.join(' ')
 
   // allow meta to be resolved into multiple tags if an array is provided on content
   if (tag.props.content && Array.isArray(tag.props.content)) {
