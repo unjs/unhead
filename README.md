@@ -30,8 +30,8 @@ Universal document &lt;head&gt; manager for everyone.
 ## Highlights
 
 - 💎 Fully typed augmentable Schema powered by [zhead](https://github.com/harlan-zw/zhead)
-- 🧑‍🤝‍🧑 Side-effect based DOM patching, plays nicely with other libraries
-- 🤝 Built for everyone: Vue, React, Svelte, etc.
+- 🧑‍🤝‍🧑 Side-effect based DOM patching, plays nicely your existing other tags and attributes
+- 🤝 Built for everyone: Vue, React (soon), Svelte (soon), etc.
 - 🚀 Optimised, tiny SSR and DOM bundles
 - 🖥️ `useServerHead` for 0kb runtime head management
 - 🍣 Intuitive tag deduping, sorting and title templates

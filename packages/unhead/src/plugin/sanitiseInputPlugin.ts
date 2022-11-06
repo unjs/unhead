@@ -1,7 +1,7 @@
 import type { NestedHooks } from 'hookable'
 import type { HeadEntryHooks } from './types'
 
-export const sanitiseEntryPlugin: NestedHooks<HeadEntryHooks> = {
+export const sanitiseInputPlugin: NestedHooks<HeadEntryHooks> = {
   'tag:resolved': function ({ tag }) {
     for (const p in tag.props) {
       const value = tag.props[p]
