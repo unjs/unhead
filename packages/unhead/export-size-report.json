@@ -16,163 +16,163 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 3438,
-      "minzipped": 1483,
-      "bundled": 6759
-    },
-    {
-      "name": "useBodyAttrs",
-      "path": "dist/index.mjs",
-      "minified": 1788,
-      "minzipped": 868,
-      "bundled": 3779
-    },
-    {
-      "name": "useTitleTemplate",
-      "path": "dist/index.mjs",
-      "minified": 1792,
-      "minzipped": 868,
-      "bundled": 3792
-    },
-    {
-      "name": "useBase",
-      "path": "dist/index.mjs",
-      "minified": 1783,
-      "minzipped": 867,
-      "bundled": 3756
-    },
-    {
-      "name": "useHtmlAttrs",
-      "path": "dist/index.mjs",
-      "minified": 1788,
-      "minzipped": 867,
-      "bundled": 3779
+      "minified": 3550,
+      "minzipped": 1519,
+      "bundled": 6972
     },
     {
       "name": "useMeta",
       "path": "dist/index.mjs",
-      "minified": 1785,
-      "minzipped": 867,
-      "bundled": 3764
+      "minified": 1847,
+      "minzipped": 887,
+      "bundled": 3862
     },
     {
       "name": "useNoscript",
       "path": "dist/index.mjs",
-      "minified": 1789,
-      "minzipped": 866,
-      "bundled": 3784
-    },
-    {
-      "name": "useTitle",
-      "path": "dist/index.mjs",
-      "minified": 1784,
-      "minzipped": 866,
-      "bundled": 3760
-    },
-    {
-      "name": "useLink",
-      "path": "dist/index.mjs",
-      "minified": 1785,
-      "minzipped": 864,
-      "bundled": 3764
+      "minified": 1851,
+      "minzipped": 887,
+      "bundled": 3882
     },
     {
       "name": "useScript",
       "path": "dist/index.mjs",
-      "minified": 1787,
-      "minzipped": 864,
-      "bundled": 3774
+      "minified": 1849,
+      "minzipped": 886,
+      "bundled": 3872
+    },
+    {
+      "name": "useBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 1850,
+      "minzipped": 885,
+      "bundled": 3877
+    },
+    {
+      "name": "useTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 1854,
+      "minzipped": 882,
+      "bundled": 3890
+    },
+    {
+      "name": "useBase",
+      "path": "dist/index.mjs",
+      "minified": 1845,
+      "minzipped": 881,
+      "bundled": 3854
+    },
+    {
+      "name": "useLink",
+      "path": "dist/index.mjs",
+      "minified": 1847,
+      "minzipped": 881,
+      "bundled": 3862
+    },
+    {
+      "name": "useTitle",
+      "path": "dist/index.mjs",
+      "minified": 1846,
+      "minzipped": 881,
+      "bundled": 3858
     },
     {
       "name": "useStyle",
       "path": "dist/index.mjs",
-      "minified": 1786,
-      "minzipped": 859,
-      "bundled": 3769
+      "minified": 1848,
+      "minzipped": 880,
+      "bundled": 3867
+    },
+    {
+      "name": "useHtmlAttrs",
+      "path": "dist/index.mjs",
+      "minified": 1850,
+      "minzipped": 878,
+      "bundled": 3877
     },
     {
       "name": "useHead",
       "path": "dist/index.mjs",
-      "minified": 1760,
-      "minzipped": 850,
-      "bundled": 3706
-    },
-    {
-      "name": "TagConfigKeys",
-      "path": "dist/index.mjs",
-      "minified": 1768,
-      "minzipped": 843,
-      "bundled": 3631
+      "minified": 1822,
+      "minzipped": 872,
+      "bundled": 3804
     },
     {
       "name": "asArray",
       "path": "dist/index.mjs",
-      "minified": 1757,
-      "minzipped": 840,
-      "bundled": 3626
+      "minified": 1819,
+      "minzipped": 867,
+      "bundled": 3724
+    },
+    {
+      "name": "TagConfigKeys",
+      "path": "dist/index.mjs",
+      "minified": 1830,
+      "minzipped": 863,
+      "bundled": 3729
     },
     {
       "name": "setActiveHead",
       "path": "dist/index.mjs",
-      "minified": 1723,
-      "minzipped": 830,
-      "bundled": 3620
-    },
-    {
-      "name": "activeHead",
-      "path": "dist/index.mjs",
-      "minified": 1719,
-      "minzipped": 829,
-      "bundled": 3568
+      "minified": 1790,
+      "minzipped": 859,
+      "bundled": 3718
     },
     {
       "name": "getActiveHead",
       "path": "dist/index.mjs",
-      "minified": 1722,
-      "minzipped": 826,
-      "bundled": 3609
-    },
-    {
-      "name": "hashCode",
-      "path": "dist/index.mjs",
-      "minified": 1713,
-      "minzipped": 825,
-      "bundled": 3550
-    },
-    {
-      "name": "defineHeadPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1713,
-      "minzipped": 824,
-      "bundled": 3558
-    },
-    {
-      "name": "HydratesStatePlugin",
-      "path": "dist/index.mjs",
-      "minified": 1708,
-      "minzipped": 820,
-      "bundled": 3561
+      "minified": 1789,
+      "minzipped": 858,
+      "bundled": 3707
     },
     {
       "name": "DedupesTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1713,
-      "minzipped": 817,
-      "bundled": 3559
+      "minified": 1775,
+      "minzipped": 848,
+      "bundled": 3657
+    },
+    {
+      "name": "activeHead",
+      "path": "dist/index.mjs",
+      "minified": 1781,
+      "minzipped": 848,
+      "bundled": 3666
+    },
+    {
+      "name": "defineHeadPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1775,
+      "minzipped": 848,
+      "bundled": 3656
+    },
+    {
+      "name": "hashCode",
+      "path": "dist/index.mjs",
+      "minified": 1775,
+      "minzipped": 848,
+      "bundled": 3648
+    },
+    {
+      "name": "HydratesStatePlugin",
+      "path": "dist/index.mjs",
+      "minified": 1775,
+      "minzipped": 847,
+      "bundled": 3659
     },
     {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1713,
-      "minzipped": 817,
-      "bundled": 3556
+      "minified": 1775,
+      "minzipped": 847,
+      "bundled": 3654
     },
     {
       "name": "TitleTemplatePlugin",
       "path": "dist/index.mjs",
-      "minified": 1713,
-      "minzipped": 817,
-      "bundled": 3561
+      "minified": 1775,
+      "minzipped": 847,
+      "bundled": 3659
     }
   ]
 }
