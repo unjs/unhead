@@ -1,5 +1,5 @@
 export * from './defineHeadPlugin'
-export * from './dedupePlugin'
-export * from './sortPlugin'
+export * from './dedupesTagsPlugin'
+export * from './sortTagsPlugin'
 export * from './titleTemplatePlugin'
 export * from './hydratesStatePlugin'

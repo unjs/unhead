@@ -4,6 +4,8 @@ export function asArray<T>(value: Arrayable<T>): T[] {
   return Array.isArray(value) ? value : [value]
 }
 
+export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy']
+
 export function hashCode(s: string) {
   let h = 9
   for (let i = 0; i < s.length;)

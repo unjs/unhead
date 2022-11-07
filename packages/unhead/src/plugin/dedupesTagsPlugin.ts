@@ -1,11 +1,11 @@
 import { tagDedupeKey } from 'zhead'
 import type { HeadTag, HeadTagKeys } from '@unhead/schema'
-import { defineHeadPlugin } from './defineHeadPlugin'
+import { defineHeadPlugin } from '.'
 
-export const dedupePlugin = defineHeadPlugin({
+export const DedupesTagsPlugin = defineHeadPlugin({
   hooks: {
     'tag:normalise': function ({ tag }) {
-      // dedupe keys
+      // support for third-party dedupe keys
       (<HeadTagKeys> ['hid', 'vmid', 'key']).forEach((key) => {
         if (tag.props[key]) {
           tag.key = tag.props[key]
@@ -22,7 +22,9 @@ export const dedupePlugin = defineHeadPlugin({
       ctx.tags.forEach((tag, i) => {
         let dedupeKey = tag._d || tag._p || i
         const dupedTag = deduping[dedupeKey]
+        // handling a duplicate tag
         if (dupedTag) {
+          // default strategy is replace, unless we're dealing with a html or body attrs
           let strategy = tag?.tagDuplicateStrategy
           if (!strategy && (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'))
             strategy = 'merge'

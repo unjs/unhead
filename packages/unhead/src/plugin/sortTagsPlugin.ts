@@ -1,7 +1,7 @@
 import { sortCriticalTags } from 'zhead'
 import { defineHeadPlugin } from '.'
 
-export const sortPlugin = defineHeadPlugin({
+export const SortTagsPlugin = defineHeadPlugin({
   hooks: {
     'tags:resolve': (ctx) => {
       const tagIndexForKey = (key: string) => ctx.tags.find(tag => tag._d === key)?._p

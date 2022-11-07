@@ -3,18 +3,44 @@ import type { Head, HeadTag } from '@unhead/schema'
 import type { HeadPlugin } from './plugin'
 import type { SSRHeadPayload } from './runtime/server'
 
+/**
+ * An active head entry provides an API to manipulate it.
+ */
 export interface ActiveHeadEntry<T> {
+  /**
+   * Updates the entry with new input.
+   *
+   * Will first clear any side effects for previous input.
+   */
   patch: (resolvedInput: T) => void
+  /**
+   * Dispose the entry, removing it from the active head.
+   *
+   * Will queue side effects for removal.
+   */
   dispose: () => void
 }
 
+/**
+ * Side effects are mapped with a key and their cleanup function.
+ *
+ * For example `meta:data-h-4h46h465`: () => { document.querySelector('meta[data-h-4h46h465]').remove() }
+ */
 export type SideEffectsRecord = Record<string, () => void>
 
 export type RuntimeMode = 'server' | 'client' | 'all'
 
 export interface HeadEntry<T> {
-  mode?: RuntimeMode
+  /**
+   * User provided input for the entry.
+   */
   input: T
+  /**
+   * The mode that the entry should be used in.
+   *
+   * @internal
+   */
+  _m?: RuntimeMode
   /**
    * Head entry index
    *
@@ -26,19 +52,18 @@ export interface HeadEntry<T> {
    *
    * @internal
    */
-  _sde?: SideEffectsRecord
+  _sde: SideEffectsRecord
 }
 
-type HookResult = Promise<void> | void
+export type HookResult = Promise<void> | void
 
-export interface DomRenderTagContext { head: HeadClient; tag: HeadTag; $el: Element | null; document: Document }
+export interface DomRenderTagContext { head: HeadClient; tag: HeadTag; document: Document }
+export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
 
 export interface HeadHooks<T> {
-  'entries:resolve': (head: HeadClient<T>) => HookResult
+  'entries:resolve': (ctx: EntryResolveCtx<T>) => HookResult
   'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<T> }) => HookResult
-  'tags:beforeResolve': (ctx: { tags: HeadTag[] }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
-  'render': (ctx: any) => HookResult
   // DOM render
   'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
   'dom:beforeRender': (ctx: { head: HeadClient; tags: HeadTag[]; document: Document }) => HookResult
@@ -57,14 +82,25 @@ export interface HeadEntryOptions {
 }
 
 export interface HeadClient<T = Head> {
-  entries: HeadEntry<T>[]
-  hooks: Hookable<HeadHooks<T>>
+  /**
+   * The active head entries.
+   */
   headEntries: () => HeadEntry<T>[]
+  /**
+   * Create a new head entry.
+   */
   push: (entry: T, options?: HeadEntryOptions) => ActiveHeadEntry<T>
+  /**
+   * Resolve tags from head entries.
+   */
   resolveTags: () => Promise<HeadTag[]>
+  /**
+   * Exposed hooks for easier extension.
+   */
+  hooks: Hookable<HeadHooks<T>>
   /**
    * @internal
    */
-  _flushDomSideEffects: () => void
+  _flushQueuedSideEffectFns: () => void
 }
 

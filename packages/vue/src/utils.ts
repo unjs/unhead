@@ -15,11 +15,7 @@ export function resolveUnrefHeadInput(ref: any): any {
         // title template must stay a function, we support a ref'd string though
         if (key === 'titleTemplate')
           return [key, unref(value)]
-
-        return [
-          key,
-          resolveUnrefHeadInput(value),
-        ]
+        return [key, resolveUnrefHeadInput(value)]
       }),
     )
   }

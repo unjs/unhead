@@ -1,15 +1,15 @@
 import type { Head, HeadTag } from '@unhead/schema'
 import { ValidHeadTags, normaliseTag as normaliseTagBase } from 'zhead'
 import type { HeadEntry } from './types'
-import { asArray } from './util'
+import { TagConfigKeys, asArray } from './util'
 
 export function normaliseTag<T>(tagName: HeadTag['tag'], input: HeadTag['props'], entry: HeadEntry<T>): HeadTag | HeadTag[] {
   const tag = normaliseTagBase(tagName, input, { childrenKeys: ['innerHTML', 'textContent'] }) as HeadTag
   tag._e = entry._i
 
-  // clear user tag options from the tag props (tagPosition, tagPriority, etc)
+  // keys with direct mapping
   Object.keys(tag.props)
-    .filter(k => k.startsWith('tag'))
+    .filter(k => TagConfigKeys.includes(k))
     .forEach((k) => {
       // @ts-expect-error untyped
       tag[k] = tag.props[k]
@@ -26,9 +26,10 @@ export function normaliseTag<T>(tagName: HeadTag['tag'], input: HeadTag['props']
 
   // allow meta to be resolved into multiple tags if an array is provided on content
   if (tag.props.content && Array.isArray(tag.props.content)) {
-    return tag.props.content.map((v) => {
+    return tag.props.content.map((v, i) => {
       const newTag = { ...tag, props: { ...tag.props } }
       newTag.props.content = v
+      newTag.key = `${tag.props.name || tag.props.property}:${i}`
       return newTag
     })
   }
@@ -44,10 +45,7 @@ export function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>) {
     )
     .flat(3)
     .map((t, i) => {
-      // used to restore the order after deduping
-      // a large number is needed otherwise the position will potentially duplicate (this support 10k tags)
-      // ideally we'd use the total tag count but this is too hard to calculate with the current reactivity
-      // << 8 is 256 tags per entry
+      // support 256 tags per entry
       t._p = (e._i << 8) + (i++)
       return t
     })

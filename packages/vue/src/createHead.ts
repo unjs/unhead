@@ -1,8 +1,8 @@
 import type { App, InjectionKey, Plugin } from 'vue'
 import { getCurrentInstance, inject, version } from 'vue'
-import { createHead as _createHead, getActiveHead, hydratesStatePlugin } from 'unhead'
+import { HydratesStatePlugin, createHead as _createHead, getActiveHead } from 'unhead'
 import type { HeadClient } from 'unhead'
-import { resolveVueInputPlugin } from './resolveVueInputPlugin'
+import { VueReactiveInputPlugin } from './vueReactiveInputPlugin'
 import type { ReactiveHead } from './types'
 
 export const Vue3 = version.startsWith('3')
@@ -18,8 +18,8 @@ export function injectHead() {
 export function createHead(): HeadClient<ReactiveHead> & Plugin {
   const head = _createHead<ReactiveHead>({
     plugins: [
-      hydratesStatePlugin,
-      resolveVueInputPlugin,
+      HydratesStatePlugin,
+      VueReactiveInputPlugin,
     ],
   })
 

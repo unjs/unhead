@@ -37,6 +37,7 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@vueuse/shared": "latest",
+    "@zhead/schema": "^1.0.0-beta.4",
     "unhead": "workspace:*"
   },
   "devDependencies": {

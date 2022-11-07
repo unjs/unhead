@@ -9,7 +9,7 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
-export const renderSSRHead = async<T extends HeadClient<any>>(ctx: T) => {
+export async function renderSSRHead<T extends HeadClient<any>>(ctx: T) {
   const tags = await ctx.resolveTags()
   const beforeRenderCtx = { tags }
   await ctx.hooks.callHook('ssr:beforeRender', beforeRenderCtx)

@@ -1,30 +1,36 @@
-import { createElement } from 'zhead'
-import type { DomRenderTagContext, HeadClient, SideEffectsRecord } from '../../types'
-import { setAttributes } from './setAttributes'
-
-let domUpdatePromise: Promise<void> | null = null
+import { TagsWithInnerContent, createElement } from 'zhead'
+import type { DomRenderTagContext, HeadClient } from '../../types'
+import { setAttributesWithSideEffects } from './setAttributesWithSideEffects'
 
 export interface RenderDomHeadOptions {
+  /**
+   * Document to use for rendering. Allows stubbing for testing.
+   */
   document?: Document
 }
 
-export const renderDOMHead = async<T extends HeadClient<any>>(head: T, options: RenderDomHeadOptions = {}) => {
+/**
+ * Render the head tags to the DOM.
+ */
+export async function renderDOMHead<T extends HeadClient<any>>(head: T, options: RenderDomHeadOptions = {}) {
   const dom: Document = options.document || window.document
 
   const tags = await head.resolveTags()
 
   await head.hooks.callHook('dom:beforeRender', { head, tags, document: dom })
 
-  // start with a clean slate
-  head._flushDomSideEffects()
+  // remove
+  head._flushQueuedSideEffectFns()
 
-  const sideEffectMap: Record<number, SideEffectsRecord> = {}
   // default is to only create tags, not to resolve state
   for (const tag of tags) {
-    sideEffectMap[tag._e!] = sideEffectMap[tag._e!] || {}
+    const entry = head.headEntries().find(e => e._i === Number(tag._e))!
+    const sdeKey = `${tag._s || tag._p}:el`
     // if we can hydrate an element via the selector id, do that instead of creating a new one
-    let $el = tag._s ? dom.querySelector(`[${tag._s}]`) : null
-    const renderCtx: DomRenderTagContext = { tag, document: dom, $el, head }
+    // creating element with side effects
+    const $newEl = createElement(tag, dom)
+    const $el = tag._s ? dom.querySelector(`[${tag._s}]`) : null
+    const renderCtx: DomRenderTagContext = { tag, document: dom, head }
     await head.hooks.callHook('dom:renderTag', renderCtx)
     // updating an existing tag
     if ($el) {
@@ -32,57 +38,52 @@ export const renderDOMHead = async<T extends HeadClient<any>>(head: T, options: 
         $el.remove()
         continue
       }
-      sideEffectMap[tag._e!] = {
-        ...sideEffectMap[tag._e!],
-        ...setAttributes($el, tag),
-      }
-      $el.innerHTML = tag.children || ''
-      sideEffectMap[tag._e!][`${tag._p}:el:remove`] = () => $el?.remove()
+      setAttributesWithSideEffects($el, entry, tag)
+      if (TagsWithInnerContent.includes(tag.tag))
+        $el.innerHTML = tag.children || ''
+
+      // may be a duplicate but it's okay
+      entry._sde[sdeKey] = () => $el?.remove()
       continue
     }
 
     if (tag.tag === 'title' && tag.children) {
+      // we don't handle title side effects
       dom.title = tag.children
       continue
     }
 
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      sideEffectMap[tag._e!] = {
-        ...sideEffectMap[tag._e!],
-        ...setAttributes(dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], tag),
-      }
+      setAttributesWithSideEffects(dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], entry, tag)
       continue
     }
 
-    $el = createElement(tag, dom)
-
     switch (tag.tagPosition) {
       case 'bodyClose':
-        dom.body.appendChild($el)
+        dom.body.appendChild($newEl)
         break
       case 'bodyOpen':
-        dom.body.insertBefore($el, dom.body.firstChild)
+        dom.body.insertBefore($newEl, dom.body.firstChild)
         break
       case 'head':
       default:
-        dom.head.appendChild($el)
+        dom.head.appendChild($newEl)
         break
     }
 
-    sideEffectMap[tag._e!][`${tag._p}:el:remove`] = () => $el?.remove()
-  }
-
-  // add side effects once we've rendered
-  for (const k in sideEffectMap) {
-    const entry = head.headEntries().find(e => e._i === Number(k))!
-    entry._sde = {
-      ...entry._sde,
-      ...sideEffectMap[k],
-    }
+    entry._sde[sdeKey] = () => $newEl?.remove()
   }
 }
 
-export const debouncedUpdateDom = async<T extends HeadClient<any>>(delayedFn: (fn: () => void) => void, head: T, options: RenderDomHeadOptions = {}) => {
+/**
+ * Global instance of the dom update promise. Used for debounding head updates.
+ */
+export let domUpdatePromise: Promise<void> | null = null
+
+/**
+ * Queue a debounced update of the DOM head.
+ */
+export async function debouncedRenderDOMHead<T extends HeadClient<any>>(delayedFn: (fn: () => void) => void, head: T, options: RenderDomHeadOptions = {}) {
   // within the debounced dom update we need to compute all the tags so that watchEffects still works
   function doDomUpdate() {
     domUpdatePromise = null

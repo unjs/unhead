@@ -74,12 +74,12 @@ describe('vue e2e', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\" data-h-889faf=\\"\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <script src=\\"https://my-app.com/home.js\\" data-h-0a90d3=\\"\\"></script>",
         "htmlAttrs": " lang=\\"en\\"",
       }
@@ -113,12 +113,12 @@ describe('vue e2e', () => {
       "<!DOCTYPE html><html lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\" data-h-889faf=\\"\\">
       <meta property=\\"og:title\\" content=\\"Home\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <script src=\\"https://my-app.com/home.js\\" data-h-0a90d3=\\"\\"></script>
       </head>
       <body>
@@ -193,8 +193,8 @@ describe('vue e2e', () => {
       <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">",
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">",
         "htmlAttrs": " class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"",
       }
     `)
@@ -220,8 +220,8 @@ describe('vue e2e', () => {
       <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       </head>
       <body class=\\"test\\">
 
@@ -261,15 +261,15 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-home\\" style=\\"background-color: red\\" lang=\\"en\\"><head>
+      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-home\\" style=\\"color: red background-color: red\\" lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>Home</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\" data-h-889faf=\\"\\">
       <meta property=\\"og:title\\" content=\\"Home\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <script src=\\"https://my-app.com/home.js\\" data-h-0a90d3=\\"\\"></script></head>
       <body class=\\"test\\">
 
@@ -294,8 +294,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\"></head>
       <body class=\\"test\\">
 
@@ -344,8 +344,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <meta name=\\"description\\" content=\\"This is the about page\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"About\\" data-h-e05a65=\\"\\"><script src=\\"https://my-app.com/about.js\\" data-h-3697bd=\\"\\"></script></head>
       <body class=\\"test overflow-hidden\\">
 
@@ -369,8 +369,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-12df9d=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\"></head>
       <body class=\\"test\\">
 

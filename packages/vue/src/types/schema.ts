@@ -98,5 +98,3 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    */
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
-
-// export type MetaFlatRef = MaybeComputedRefEntries<Partial<MetaFlat>>
