@@ -1,10 +1,8 @@
 import type { HeadEntryOptions } from 'unhead'
+import type { UseHeadInput } from '../..'
 import { injectHead } from '../..'
-import type {
-  ReactiveHead,
-} from '../../types'
 
-export function useHead(input: ReactiveHead, options: HeadEntryOptions = {}) {
+export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
   const head = injectHead()
   head.push(input, options)
 }

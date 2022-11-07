@@ -2,6 +2,7 @@ export * from './types'
 export * from './utils'
 export * from './vueReactiveInputPlugin'
 export * from './composables'
+export * from './components'
 export * from './createHead'
 
 export { renderDOMHead, debouncedRenderDOMHead } from 'unhead/client'

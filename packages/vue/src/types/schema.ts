@@ -98,3 +98,5 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    */
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
+
+export type UseHeadInput = MaybeComputedRef<ReactiveHead>

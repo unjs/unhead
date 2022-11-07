@@ -1,11 +1,11 @@
 import { asArray } from 'unhead'
 import type { Arrayable, HeadEntryOptions } from 'unhead'
-import type { Link, Meta, Noscript, ReactiveHead, Script, Style } from '../../types'
+import type { Link, Meta, Noscript, ReactiveHead, Script, Style, UseHeadInput } from '../../types'
 import { useHead as _useHead, useServerHead as _useServerHead } from '#head-runtime'
 
-export const useServerHead = (input: ReactiveHead, options: HeadEntryOptions = {}) => _useServerHead(input, options)
+export const useServerHead = (input: UseHeadInput, options: HeadEntryOptions = {}) => _useServerHead(input, options)
 
-export const useHead = (input: ReactiveHead, options: HeadEntryOptions = {}) => _useHead(input, options)
+export const useHead = (input: UseHeadInput, options: HeadEntryOptions = {}) => _useHead(input, options)
 
 export const useTitle = (title: ReactiveHead['title']) => useHead({ title })
 

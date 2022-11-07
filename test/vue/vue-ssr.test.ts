@@ -1,8 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createSSRApp, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { Head, createHead, useHead } from '../src'
-import { ssrRenderHeadToString } from './shared/utils'
+import { Head, createHead, renderSSRHead, useHead } from '../../packages/vue/src'
+import { ssrRenderHeadToString } from './util'
 
 describe('vue ssr', () => {
   test('server', async () => {
@@ -39,9 +38,16 @@ describe('vue ssr', () => {
     }))
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<title>hello</title><meta name=\\"description\\" content=\\"desc 2\\"><meta property=\\"og:locale:alternate\\" content=\\"fr\\"><meta property=\\"og:locale:alternate\\" content=\\"zh\\"><script src=\\"foo.js\\"></script><meta name=\\"head:count\\" content=\\"4\\">"',
+      `
+      "<title>hello</title>
+      <meta name=\\"description\\" content=\\"desc\\" data-h-889faf=\\"\\">
+      <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf=\\"\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-3f7248=\\"\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-321fb4=\\"\\">
+      <script src=\\"foo.js\\" data-h-33493a=\\"\\"></script>"
+    `,
     )
-    expect(headResult.htmlAttrs).toEqual(' lang="zh" data-head-attrs="lang"')
+    expect(headResult.htmlAttrs).toEqual(' lang="zh"')
   })
 
   test('useHead: server async setup', async () => {
@@ -54,14 +60,14 @@ describe('vue ssr', () => {
         })
         await new Promise(resolve => setTimeout(resolve, 200))
         title.value = 'new title'
-        return () => <div>hi</div>
+        return () => '<div>hi</div>'
       },
     })
     app.use(head)
     await renderToString(app)
 
-    const { headTags } = await renderHeadToString(head)
-    expect(headTags).match(/new title/)
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).eq('<title>new title</title>')
   })
 
   test('<Head>: link & meta with v-for', async () => {
@@ -83,27 +89,13 @@ describe('vue ssr', () => {
     app.use(head)
     await renderToString(app)
 
-    const { headTags } = await renderHeadToString(head)
+    const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<meta property=\\"test1\\" content=\\"test1\\"><meta property=\\"test2\\" content=\\"test2\\"><meta name=\\"head:count\\" content=\\"2\\">"',
+      `
+      "<meta property=\\"test1\\" content=\\"test1\\" data-h-051b9d=\\"\\">
+      <meta property=\\"test2\\" content=\\"test2\\" data-h-7449ef=\\"\\">"
+    `,
     )
-  })
-
-  test('<Head>: server async setup', async () => {
-    const head = createHead()
-    const app = createSSRApp({
-      async setup() {
-        const title = ref('initial title')
-        await new Promise(resolve => setTimeout(resolve, 200))
-        title.value = 'new title'
-        return () => <Head>{() => <title>{title.value}</title>}</Head>
-      },
-    })
-    app.use(head)
-    await renderToString(app)
-
-    const { headTags } = await renderHeadToString(head)
-    expect(headTags).match(/new title/)
   })
 
   test('children', async () => {
@@ -118,7 +110,7 @@ describe('vue ssr', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script>console.log(\'hi\')</script><meta name=\\"head:count\\" content=\\"1\\">"',
+      '"<script data-h-c9ee4d=\\"\\">console.log(\'hi\')</script>"',
     )
   })
 
@@ -140,7 +132,10 @@ describe('vue ssr', () => {
     )
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script>console.log(\'B\')</script><meta name=\\"head:count\\" content=\\"1\\">"',
+      `
+      "<script src=\\"test\\" data-h-229264=\\"\\">console.log('A')</script>
+      <script data-h-229264=\\"\\">console.log('B')</script>"
+    `,
     )
   })
 
@@ -161,7 +156,10 @@ describe('vue ssr', () => {
     )
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<link href=\\"/\\"><link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\"><meta name=\\"head:count\\" content=\\"2\\">"',
+      `
+      "<link href=\\"/\\" data-h-deed27=\\"\\">
+      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\" data-h-6f3633=\\"\\">"
+    `,
     )
   })
 
@@ -173,7 +171,7 @@ describe('vue ssr', () => {
     }))
 
     expect(headResult.htmlAttrs).toMatchInlineSnapshot(
-      '" data-something data-head-attrs=\\"data-something\\""',
+      '" data-something=\\"\\""',
     )
   })
 })

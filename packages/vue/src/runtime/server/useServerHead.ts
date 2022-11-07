@@ -1,10 +1,8 @@
 import type { HeadEntryOptions } from 'unhead'
-import type {
-  ReactiveHead,
-} from '../../types'
+import type { UseHeadInput } from '../../types'
 import { useHead } from './index'
 
-export function useServerHead(input: ReactiveHead, options: HeadEntryOptions = {}) {
+export function useServerHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
   // ensure server mode
   useHead(input, { ...options, mode: 'server' })
 }

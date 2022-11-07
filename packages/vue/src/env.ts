@@ -1,1 +1,6 @@
-export const IS_CLIENT = typeof window !== 'undefined'
+import { version } from 'vue'
+
+export const Vue3 = version.startsWith('3')
+export const Vue2 = version.startsWith('2.')
+
+export const IsClient = typeof window !== 'undefined'
