@@ -1,5 +1,3 @@
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   extends: ['@nuxt-themes/docus'],
 
@@ -41,42 +39,6 @@ export default defineNuxtConfig({
     },
   },
 
-  components: [
-    {
-      path: './node_modules/@nuxt-themes/docus/components/app',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './node_modules/@nuxt-themes/docus/components/content',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './node_modules/@nuxt-themes/docus/components/docs',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './node_modules/@nuxt-themes/docus/components/github',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './node_modules/@nuxt-themes/docus/components/icons',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './node_modules/@nuxt-themes/docus/components/prose',
-      global: true,
-      prefix: '',
-    },
-    {
-      path: './components',
-      prefix: '',
-    },
-  ],
   nitro: {
     prerender: {
       crawlLinks: true,

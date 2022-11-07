@@ -9,15 +9,14 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@netlify/functions": "^1.2.0",
     "@nuxt-themes/docus": "npm:@nuxt-themes/docus-edge@latest",
-    "nuxt": "3.0.0-rc.8"
+    "nuxt": "3.0.0-rc.13",
+    "@nuxtjs/tailwindcss": "latest"
   },
   "dependencies": {
     "@headlessui/vue": "^1.6.7",
     "@nuxtlabs/github-module": "^1.4.6",
     "postcss-custom-properties": "^12.1.8",
-    "typewriter-effect": "^2.19.0",
     "vue-github-button": "^3.0.3"
   }
 }

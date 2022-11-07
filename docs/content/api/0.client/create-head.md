@@ -1,0 +1,53 @@
+---
+title: createHead
+---
+
+- **Type:** `(options: CreateSchemaOrgInput) => SchemaOrgClient`
+
+  Create the Schema.org manager instance.
+
+## Types
+
+```ts
+export interface CreateSchemaOrgInput {
+  /**
+   * The meta data used to render the final schema.org graph.
+   */
+  meta: () => MetaInput
+  /**
+   * Client used to write schema to the document.
+   */
+  updateHead: (fn: ComputedRef) => void
+}
+```
+
+  **HeadClient**
+
+  ```ts
+  export interface HeadClient<T = Head> {
+    /**
+     * The active head entries.
+     */
+    headEntries: () => HeadEntry<T>[]
+    /**
+     * Create a new head entry.
+     */
+    push: (entry: T, options?: HeadEntryOptions) => ActiveHeadEntry<T>
+    /**
+     * Resolve tags from head entries.
+     */
+    resolveTags: () => Promise<HeadTag[]>
+    /**
+     * Exposed hooks for easier extension.
+     */
+    hooks: Hookable<HeadHooks<T>>
+    /**
+     * @internal
+     */
+    _removeQueuedSideEffect: (key: string) => void
+    /**
+     * @internal
+     */
+    _flushQueuedSideEffects: () => void
+  }
+  ```

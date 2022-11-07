@@ -1,5 +1,5 @@
 ---
-title: Breadcrumbs
+title: Infer SEO Meta tags
 ---
 
 # Setting up Schema.org for Breadcrumbs in Vue

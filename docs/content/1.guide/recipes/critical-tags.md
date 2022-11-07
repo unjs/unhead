@@ -1,5 +1,5 @@
 ---
-title: Blog
+title: Critical Tags
 ---
 
 # Setting up Schema.org for a Blog in Vue

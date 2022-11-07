@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <div class="flex w-full mx-auto my-20">
-    <div class="text-left flex-grow ml-10">
+    <div class="text-left flex-grow">
       <div class="text-xs opacity-75">
         Created by
       </div>

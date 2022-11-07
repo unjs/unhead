@@ -65,8 +65,8 @@ export interface HeadHooks<T> {
   'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<T> }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
   // DOM render
-  'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
   'dom:beforeRender': (ctx: { head: HeadClient; tags: HeadTag[]; document: Document }) => HookResult
+  'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
   // SSR render
   'ssr:beforeRender': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[]; html: SSRHeadPayload }) => HookResult
