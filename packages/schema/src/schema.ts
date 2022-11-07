@@ -55,7 +55,7 @@ interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
-export { DataKeys, DefinedValueOrEmptyObject }
+export type { DataKeys, DefinedValueOrEmptyObject }
 
 export type Title = string
 export type TitleTemplate = string | null | ((title?: string) => string)
@@ -137,4 +137,4 @@ export interface Head<E extends MergeHead = SchemaAugmentations> {
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
-export { MergeHead } from '@zhead/schema'
+export type { MergeHead } from '@zhead/schema'
