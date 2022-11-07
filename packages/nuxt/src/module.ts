@@ -1,6 +1,5 @@
 import { fileURLToPath } from 'url'
 import { addComponent, addImports, addPlugin, addTemplate, defineNuxtModule } from '@nuxt/kit'
-import { resolve } from 'pathe'
 
 export interface ModuleOptions {
   resolveAliases: boolean
@@ -31,7 +30,7 @@ export default defineNuxtModule<ModuleOptions>({
       filePath: `${runtimeDir}/components/DebugHead.client.vue`,
     })
 
-    addPlugin({ src: resolve(runtimeDir, 'plugin') })
+    addPlugin({ src: runtimeDir + '/plugin' })
 
     ;[
       'useHead',

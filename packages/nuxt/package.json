@@ -18,12 +18,14 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "types": "./dist/types.d.ts",
+      "require": "./dist/module.cjs",
+      "import": "./dist/module.mjs"
     }
   },
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "dist/module.cjs",
+  "module": "dist/module.mjs",
+  "types": "dist/types.d.ts",
   "files": [
     "dist"
   ],
@@ -41,7 +43,6 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "latest",
-    "@nuxt/schema": "npm:@nuxt/schema-edge@latest",
     "vue": "latest"
   }
 }

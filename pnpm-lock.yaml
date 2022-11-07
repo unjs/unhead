@@ -95,7 +95,6 @@ importers:
     specifiers:
       '@nuxt/kit': npm:@nuxt/kit-edge@latest
       '@nuxt/module-builder': latest
-      '@nuxt/schema': npm:@nuxt/schema-edge@latest
       '@unhead/schema': workspace:*
       '@unhead/vue': workspace:*
       '@vueuse/shared': latest
@@ -111,7 +110,6 @@ importers:
       unhead: link:../unhead
     devDependencies:
       '@nuxt/module-builder': 0.2.0
-      '@nuxt/schema': /@nuxt/schema-edge/3.0.0-rc.14-27793096.fe433a4
       vue: 3.2.41
 
   packages/schema:
@@ -1961,7 +1959,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001425
+      caniuse-lite: 1.0.30001430
       electron-to-chromium: 1.4.284
       node-releases: 2.0.6
       update-browserslist-db: 1.0.10_browserslist@4.21.4
@@ -2076,12 +2074,8 @@ packages:
       lodash.uniq: 4.5.0
     dev: true
 
-  /caniuse-lite/1.0.30001425:
-    resolution: {integrity: sha512-/pzFv0OmNG6W0ym80P3NtapU0QEiDS3VuYAZMGoLLqiC7f6FJFe1MjpQDREGApeenD9wloeytmVDj+JLXPC6qw==}
-
   /caniuse-lite/1.0.30001430:
     resolution: {integrity: sha512-IB1BXTZKPDVPM7cnV4iaKaHxckvdr/3xtctB3f7Hmenx3qYBhGtTZ//7EllK66aKXW98Lx0+7Yr0kxBtIt3tzg==}
-    dev: true
 
   /chai/4.3.6:
     resolution: {integrity: sha512-bbcp3YfHCUzMOvKqsztczerVgBKSsEijCySNlHHbX3VG1nskvqjz5Rfso1gGwD6w6oOV3eI60pKuMOV5MV7p3Q==}
