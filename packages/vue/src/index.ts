@@ -3,3 +3,8 @@ export * from './utils'
 export * from './vueReactiveInputPlugin'
 export * from './composables'
 export * from './createHead'
+
+export { renderDOMHead, debouncedRenderDOMHead } from 'unhead/client'
+export { renderSSRHead } from 'unhead/server'
+export { HeadTag, MergeHead } from '@unhead/schema'
+export * from './vue2Plugin'

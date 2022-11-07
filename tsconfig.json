@@ -18,6 +18,8 @@
     "noUnusedLocals": true,
     "paths": {
       "unhead": ["packages/unhead/src"],
+      "unhead/client": ["packages/unhead/src/runtime/client"],
+      "unhead/server": ["packages/unhead/src/runtime/server"],
       "unhead/*": ["packages/unhead/*"],
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
