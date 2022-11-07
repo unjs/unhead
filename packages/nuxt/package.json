@@ -30,7 +30,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "nuxt-module-build .",
+    "build": "nuxi prepare ../../examples/nuxt3 && nuxt-module-build .",
     "stub": "nuxt-module-build . --stub"
   },
   "dependencies": {
