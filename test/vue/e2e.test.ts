@@ -291,12 +291,12 @@ describe('vue e2e', () => {
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>My amazing site</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
-
-
+      <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\">
+      <meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
-      <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\"></head>
+      </head>
       <body class=\\"test\\">
 
       <div>
@@ -341,12 +341,12 @@ describe('vue e2e', () => {
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>About</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
-
-
+      <meta name=\\"description\\" content=\\"This is the about page\\" data-h-889faf=\\"\\">
+      <meta property=\\"og:title\\" content=\\"About\\" data-h-e05a65=\\"\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
-      <meta name=\\"description\\" content=\\"This is the about page\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"About\\" data-h-e05a65=\\"\\"><script src=\\"https://my-app.com/about.js\\" data-h-3697bd=\\"\\"></script></head>
+      <script src=\\"https://my-app.com/about.js\\" data-h-3697bd=\\"\\"></script></head>
       <body class=\\"test overflow-hidden\\">
 
       <div>
@@ -366,12 +366,12 @@ describe('vue e2e', () => {
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
       <title>My amazing site</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\" data-h-c289ee=\\"\\"></script>
-
-
+      <meta name=\\"description\\" data-h-889faf=\\"\\" content=\\"My amazing site\\">
+      <meta property=\\"og:title\\" data-h-e05a65=\\"\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\" data-h-2002f8=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
-      <meta name=\\"description\\" content=\\"My amazing site\\" data-h-889faf=\\"\\"><meta property=\\"og:title\\" content=\\"My amazing site\\" data-h-e05a65=\\"\\"></head>
+      </head>
       <body class=\\"test\\">
 
       <div>

@@ -19,26 +19,27 @@ export async function renderDOMHead<T extends HeadClient<any>>(head: T, options:
 
   await head.hooks.callHook('dom:beforeRender', { head, tags, document: dom })
 
-  // remove
-  head._flushQueuedSideEffectFns()
-
-  // default is to only create tags, not to resolve state
   for (const tag of tags) {
     const entry = head.headEntries().find(e => e._i === Number(tag._e))!
     const sdeKey = `${tag._s || tag._p}:el`
-    // if we can hydrate an element via the selector id, do that instead of creating a new one
-    // creating element with side effects
+
     const $newEl = createElement(tag, dom)
+    // try hydrate state
     const $el = tag._s ? dom.querySelector(`[${tag._s}]`) : null
     const renderCtx: DomRenderTagContext = { tag, document: dom, head }
     await head.hooks.callHook('dom:renderTag', renderCtx)
     // updating an existing tag
     if ($el) {
+      // safe to ignore removal
+      head._removeQueuedSideEffect(sdeKey)
+
+      if ($newEl.isEqualNode($el))
+        continue
       if (Object.keys(tag.props).length === 0) {
         $el.remove()
         continue
       }
-      setAttributesWithSideEffects($el, entry, tag)
+      setAttributesWithSideEffects(head, $el, entry, tag)
       if (TagsWithInnerContent.includes(tag.tag))
         $el.innerHTML = tag.children || ''
 
@@ -54,7 +55,7 @@ export async function renderDOMHead<T extends HeadClient<any>>(head: T, options:
     }
 
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      setAttributesWithSideEffects(dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], entry, tag)
+      setAttributesWithSideEffects(head, dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], entry, tag)
       continue
     }
 
@@ -70,9 +71,11 @@ export async function renderDOMHead<T extends HeadClient<any>>(head: T, options:
         dom.head.appendChild($newEl)
         break
     }
-
     entry._sde[sdeKey] = () => $newEl?.remove()
   }
+
+  // run side effect cleanup
+  head._flushQueuedSideEffects()
 }
 
 /**

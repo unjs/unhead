@@ -200,7 +200,7 @@ describe('vue dom', () => {
 
 
 
-      <script data-h-4d4fad=\\"\\">console.log('hello')</script></body></html>"
+      <script data-h-702290=\\"\\">console.log('hello')</script></body></html>"
     `)
 
     entry.dispose()
@@ -240,7 +240,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script data-h-4d4fad=\\"\\">console.log('hello')</script></head>
+      <script data-h-702290=\\"\\">console.log('hello')</script></head>
       <body>
 
       <div>
@@ -264,7 +264,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script data-h-4d4fad=\\"\\">console.log('hello world')</script></head>
+      <script data-h-47990b=\\"\\">console.log('hello world')</script></head>
       <body>
 
       <div>

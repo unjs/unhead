@@ -101,6 +101,10 @@ export interface HeadClient<T = Head> {
   /**
    * @internal
    */
-  _flushQueuedSideEffectFns: () => void
+  _removeQueuedSideEffect: (key: string) => void
+  /**
+   * @internal
+   */
+  _flushQueuedSideEffects: () => void
 }
 

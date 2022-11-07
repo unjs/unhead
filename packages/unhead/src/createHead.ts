@@ -26,7 +26,10 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions<T> = 
   plugins.forEach(plugin => hooks.addHooks(plugin.hooks || {}))
 
   const head: HeadClient<T> = {
-    _flushQueuedSideEffectFns() {
+    _removeQueuedSideEffect(key) {
+      delete _sde[key]
+    },
+    _flushQueuedSideEffects() {
       Object.values(_sde).forEach(fn => fn())
       _sde = {}
     },
@@ -57,9 +60,11 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions<T> = 
         },
         patch(input) {
           entries = entries.map((e) => {
-            _sde = { ..._sde, ...e._sde || {} }
-            e._sde = {}
-            e.input = e._i === _i ? input : e.input
+            if (e._i === _i) {
+              _sde = { ..._sde, ...e._sde || {} }
+              e._sde = {}
+              e.input = e._i === _i ? input : e.input
+            }
             return e
           })
         },

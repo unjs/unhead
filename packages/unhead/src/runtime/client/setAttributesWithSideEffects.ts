@@ -1,10 +1,10 @@
 import type { HeadTag } from '@unhead/schema'
-import type { HeadEntry } from '../../types'
+import type { HeadClient, HeadEntry } from '../../types'
 
 /**
  * Set attributes on a DOM element, while adding entry side effects.
  */
-export function setAttributesWithSideEffects($el: Element, entry: HeadEntry<any>, tag: HeadTag) {
+export function setAttributesWithSideEffects(head: HeadClient, $el: Element, entry: HeadEntry<any>, tag: HeadTag) {
   const attrs = tag.props || {}
   const sdeKey = `${tag._p}:attr`
 
@@ -13,17 +13,21 @@ export function setAttributesWithSideEffects($el: Element, entry: HeadEntry<any>
     // only attribute based side effects
     .filter(([key]) => key.startsWith(sdeKey))
     // remove then and run the cleanup
-    .forEach(([key, fn]) => delete entry._sde![key] && fn())
+    .forEach(([key, fn]) => {
+      delete entry._sde![key] && fn()
+    })
 
   // add new attributes
   Object.entries(attrs).forEach(([k, value]) => {
     value = String(value)
     const attrSdeKey = `${sdeKey}:${k}`
+    head._removeQueuedSideEffect(attrSdeKey)
     // try and keep existing class and style props by appending data
     if (k === 'class') {
       for (const c of value.split(' ')) {
         if (!$el.classList.contains(c)) {
           $el.classList.add(c)
+          head._removeQueuedSideEffect(`${attrSdeKey}:${c}`)
           entry._sde![`${attrSdeKey}:${c}`] = () => $el.classList.remove(c)
         }
       }

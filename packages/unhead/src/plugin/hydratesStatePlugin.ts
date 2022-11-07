@@ -15,7 +15,8 @@ export const HydratesStatePlugin = defineHeadPlugin({
         return
 
       // _s is the hydrate state key, it's a light-weight hash which may have conflicts
-      tag._s = `data-h-${hashCode(tag._d || (tag.tag + JSON.stringify(tag.props)))}`
+      const hasChildren = tag.children && tag.children.length > 0
+      tag._s = `data-h-${hashCode(tag._d || (tag.tag + (hasChildren ? tag.children : JSON.stringify(tag.props))))}`
       tag.props[tag._s] = ''
     },
   },

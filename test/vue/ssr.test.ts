@@ -89,7 +89,7 @@ describe('vue ssr', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script data-h-4d4fad=\\"\\">console.log(\'hi\')</script>"',
+      '"<script data-h-c9ee4d=\\"\\">console.log(\'hi\')</script>"',
     )
   })
 
