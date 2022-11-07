@@ -57,7 +57,8 @@
     "unbuild": "^0.9.4",
     "utility-types": "^3.10.0",
     "vitest": "^0.24.5",
-    "vue": "^3.2.41"
+    "vue": "^3.2.41",
+    "nuxt": "npm:nuxt3@latest"
   },
   "dependencies": {
     "@zhead/schema": "1.0.0-beta.4",

@@ -1,0 +1,47 @@
+{
+  "name": "nuxt-unhead",
+  "type": "module",
+  "version": "0.0.2",
+  "packageManager": "pnpm@7.14.0",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "directory": "packages/nuxt"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "nuxt-module-build .",
+    "stub": "nuxt-module-build . --stub"
+  },
+  "dependencies": {
+    "@nuxt/kit": "npm:@nuxt/kit-edge@latest",
+    "@unhead/schema": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "@vueuse/shared": "latest",
+    "@zhead/schema": "^1.0.0-beta.4",
+    "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "latest",
+    "@nuxt/schema": "npm:@nuxt/schema-edge@latest",
+    "vue": "latest"
+  }
+}
