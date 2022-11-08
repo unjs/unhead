@@ -7,7 +7,7 @@ import type {
   ReactiveHead,
 } from '../../types'
 
-export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}) {
+export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
   const head = injectHead()
 
   const vm = getCurrentInstance()
