@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "name": "@unhead/dom",
+    "dependencies": [
+      "@unhead/schema",
+      "zhead"
+    ],
+    "versions": {
+      "export-size": "0.5.2",
+      "esbuild": "^0.13.8",
+      "brotli-size": "^4.0.0"
+    }
+  },
+  "exports": [
+    {
+      "name": "debouncedRenderDOMHead",
+      "path": "dist/index.mjs",
+      "minified": 1933,
+      "minzipped": 828,
+      "bundled": 3523
+    },
+    {
+      "name": "renderDOMHead",
+      "path": "dist/index.mjs",
+      "minified": 1819,
+      "minzipped": 783,
+      "bundled": 3196
+    },
+    {
+      "name": "domUpdatePromise",
+      "path": "dist/index.mjs",
+      "minified": 27,
+      "minzipped": 31,
+      "bundled": 83
+    }
+  ]
+}

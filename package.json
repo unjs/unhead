@@ -39,7 +39,7 @@
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
-    "export:sizes": "cd packages/unhead && npx export-size . -r",
+    "export:sizes": "pnpm -r --parallel --filter=./packages/** run export:sizes",
     "release": "bumpp package.json packages/*/package.json --commit --push --tag",
     "lint": "eslint \"{packages,test}/**/*.{ts,vue,json,yml}\" --fix"
   },

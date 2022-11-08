@@ -29,7 +29,8 @@
   ],
   "scripts": {
     "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "stub": "unbuild . --stub",
+    "export:sizes": "npx export-size . -r"
   },
   "peerDependencies": {
     "vue": ">=2.7 || >=3"

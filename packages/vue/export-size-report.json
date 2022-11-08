@@ -1,0 +1,173 @@
+{
+  "meta": {
+    "name": "@unhead/vue",
+    "dependencies": [
+      "@unhead/dom",
+      "@unhead/schema",
+      "@vueuse/shared",
+      "unhead",
+      "vue"
+    ],
+    "versions": {
+      "export-size": "0.5.2",
+      "esbuild": "^0.13.8",
+      "brotli-size": "^4.0.0"
+    }
+  },
+  "exports": [
+    {
+      "name": "injectHead",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1230,
+      "bundled": 6216
+    },
+    {
+      "name": "resolveUnrefHeadInput",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1228,
+      "bundled": 6227
+    },
+    {
+      "name": "HeadVuePlugin",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1227,
+      "bundled": 6219
+    },
+    {
+      "name": "VueReactiveInputPlugin",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1227,
+      "bundled": 6228
+    },
+    {
+      "name": "asArray",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1227,
+      "bundled": 6213
+    },
+    {
+      "name": "headSymbol",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1227,
+      "bundled": 6216
+    },
+    {
+      "name": "useHead",
+      "path": "dist/index.mjs",
+      "minified": 2812,
+      "minzipped": 1227,
+      "bundled": 6213
+    },
+    {
+      "name": "createHead",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6216
+    },
+    {
+      "name": "useBase",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6213
+    },
+    {
+      "name": "useBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6218
+    },
+    {
+      "name": "useHtmlAttrs",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6218
+    },
+    {
+      "name": "useLink",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6213
+    },
+    {
+      "name": "useMeta",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6213
+    },
+    {
+      "name": "useNoscript",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6217
+    },
+    {
+      "name": "useScript",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6215
+    },
+    {
+      "name": "useServerHead",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6219
+    },
+    {
+      "name": "useStyle",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6214
+    },
+    {
+      "name": "useTitle",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6214
+    },
+    {
+      "name": "useTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 2807,
+      "minzipped": 1226,
+      "bundled": 6222
+    },
+    {
+      "name": "debouncedRenderDOMHead",
+      "path": "/dist/index.mjs",
+      "minified": 0,
+      "minzipped": 1,
+      "bundled": 0
+    },
+    {
+      "name": "domUpdatePromise",
+      "path": "/dist/index.mjs",
+      "minified": 0,
+      "minzipped": 1,
+      "bundled": 0
+    },
+    {
+      "name": "renderDOMHead",
+      "path": "/dist/index.mjs",
+      "minified": 0,
+      "minzipped": 1,
+      "bundled": 0
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "name": "@unhead/ssr",
+    "dependencies": [
+      "@unhead/schema",
+      "zhead"
+    ],
+    "versions": {
+      "export-size": "0.5.2",
+      "esbuild": "^0.13.8",
+      "brotli-size": "^4.0.0"
+    }
+  },
+  "exports": [
+    {
+      "name": "renderSSRHead",
+      "path": "dist/index.mjs",
+      "minified": 941,
+      "minzipped": 452,
+      "bundled": 1712
+    }
+  ]
+}
