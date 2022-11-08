@@ -16,9 +16,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 4596,
-      "minzipped": 1814,
-      "bundled": 9488
+      "minified": 4513,
+      "minzipped": 1785,
+      "bundled": 9236
     },
     {
       "name": "DedupesTagsPlugin",
@@ -30,23 +30,16 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 1337,
-      "minzipped": 559,
-      "bundled": 2217
-    },
-    {
-      "name": "normaliseTag",
-      "path": "dist/index.mjs",
-      "minified": 1007,
-      "minzipped": 413,
-      "bundled": 1680
+      "minified": 1242,
+      "minzipped": 518,
+      "bundled": 2031
     },
     {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 707,
-      "minzipped": 363,
-      "bundled": 1529
+      "minified": 715,
+      "minzipped": 362,
+      "bundled": 1463
     },
     {
       "name": "HydratesStatePlugin",
@@ -145,13 +138,6 @@
       "minified": 163,
       "minzipped": 122,
       "bundled": 387
-    },
-    {
-      "name": "TagConfigKeys",
-      "path": "dist/index.mjs",
-      "minified": 92,
-      "minzipped": 87,
-      "bundled": 167
     },
     {
       "name": "asArray",
