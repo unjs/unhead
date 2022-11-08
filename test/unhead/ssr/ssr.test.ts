@@ -5,7 +5,7 @@ import { basicSchema } from '../../fixtures'
 
 describe('ssr', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     head.push({
       ...basicSchema,
@@ -28,7 +28,7 @@ describe('ssr', () => {
     `)
   })
   it ('boolean props', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     head.push({
       script: [

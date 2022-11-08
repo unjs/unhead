@@ -4,7 +4,7 @@ import { setActiveHead } from './runtime/state'
 import { DedupesTagsPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
 import { normaliseEntryTags } from './normalise'
 
-export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+export async function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   let entries: HeadEntry<T>[] = []
   // queued side effects
   let _sde: SideEffectsRecord = {}
@@ -45,6 +45,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
         _sde: {},
         ...options,
       })
+      hooks.callHook('entries:updated', head)
       return {
         dispose() {
           entries = entries.filter((e) => {
@@ -55,6 +56,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
             e._sde = {}
             return false
           })
+          hooks.callHook('entries:updated', head)
         },
         patch(input) {
           entries = entries.map((e) => {
@@ -65,6 +67,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
             }
             return e
           })
+          hooks.callHook('entries:updated', head)
         },
       }
     },
@@ -83,6 +86,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     },
   }
 
+  await head.hooks.callHook('init', head)
   // @ts-expect-error broken type
   setActiveHead(head)
   return head

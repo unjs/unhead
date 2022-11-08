@@ -5,8 +5,7 @@ import { basicSchema } from '../../fixtures'
 
 describe('composables', () => {
   it('basic', async () => {
-    const head = createHead({
-    })
+    const head = await createHead()
 
     useHead(basicSchema)
 

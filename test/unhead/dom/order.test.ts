@@ -7,7 +7,7 @@ import { useDom } from '../../fixtures'
 describe('dom order', () => {
   it('renders in registered order', async () => {
     let firstTagRendered: HeadTag | null = null
-    createHead({
+    await createHead({
       hooks: {
         'dom:renderTag': (ctx) => {
           firstTagRendered = firstTagRendered || ctx.tag

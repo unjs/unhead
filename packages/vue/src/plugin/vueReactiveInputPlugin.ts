@@ -1,5 +1,5 @@
 import { defineHeadPlugin } from 'unhead'
-import { resolveUnrefHeadInput } from './utils'
+import { resolveUnrefHeadInput } from '../utils'
 
 export const VueReactiveInputPlugin = () => {
   return defineHeadPlugin({

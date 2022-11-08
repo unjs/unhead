@@ -1,16 +1,7 @@
 import type { Hookable, NestedHooks } from 'hookable'
+import type { HeadHooks } from '@unhead/schema/src/hooks'
 import type { HeadTag } from './tags'
 import type { Head } from './schema'
-
-export type HookResult = Promise<void> | void
-
-export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
-
-export interface HeadHooks {
-  'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any> }) => HookResult
-  'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
-}
 
 /**
  * Side effects are mapped with a key and their cleanup function.

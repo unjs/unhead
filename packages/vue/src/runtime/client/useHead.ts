@@ -1,6 +1,5 @@
 import type { Ref } from 'vue'
-import { getCurrentInstance, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
-import { debouncedRenderDOMHead } from '@unhead/dom'
+import { getCurrentInstance, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
 import type { ActiveHeadEntry, HeadEntryOptions } from '@unhead/schema'
 import type { UseHeadInput } from '../../index'
 import { injectHead, resolveUnrefHeadInput } from '../../index'
@@ -8,7 +7,7 @@ import type {
   ReactiveHead,
 } from '../../types'
 
-export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
+export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}) {
   const head = injectHead()
 
   const vm = getCurrentInstance()
@@ -29,12 +28,9 @@ export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
 
     else
       entry.patch(e)
-
-    debouncedRenderDOMHead(nextTick, head)
   }, { immediate: true })
 
   onBeforeUnmount(() => {
     entry?.dispose()
-    debouncedRenderDOMHead(nextTick, head)
   })
 }

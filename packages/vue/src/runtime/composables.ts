@@ -14,7 +14,7 @@ export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
   if ((options.mode === 'server' && IsClient) || (options.mode === 'client' && !IsClient))
     return
 
-  return IsClient ? _clientUseHead(input, options) : _serverUseHead(input, options)
+  IsClient ? _clientUseHead(input, options) : _serverUseHead(input, options)
 }
 
 export const useTitle = (title: ReactiveHead['title']) => useHead({ title })

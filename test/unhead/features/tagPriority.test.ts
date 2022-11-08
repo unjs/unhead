@@ -3,7 +3,7 @@ import { renderSSRHead } from '@unhead/ssr'
 
 describe('tag priority', () => {
   test('charset first', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -33,7 +33,7 @@ describe('tag priority', () => {
   })
 
   test('base early', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -68,7 +68,7 @@ describe('tag priority', () => {
   })
 
   test('CSP early', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -103,7 +103,7 @@ describe('tag priority', () => {
   })
 
   test('manual priority', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -132,7 +132,7 @@ describe('tag priority', () => {
   })
 
   test('before priority', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -159,7 +159,7 @@ describe('tag priority', () => {
   })
 
   test('before and after priority', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {

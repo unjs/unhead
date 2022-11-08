@@ -1,10 +1,10 @@
 import type { App, InjectionKey, Plugin } from 'vue'
 import { getCurrentInstance, inject } from 'vue'
 import { HydratesStatePlugin, createHead as _createHead, getActiveHead } from 'unhead'
-import type { CreateHeadOptions, HeadClient } from '@unhead/schema'
-import { VueReactiveInputPlugin } from './vueReactiveInputPlugin'
+import type { CreateHeadOptions, HeadClient, HeadPlugin } from '@unhead/schema'
+import { VueReactiveInputPlugin } from './plugin/vueReactiveInputPlugin'
 import type { UseHeadInput } from './types'
-import { Vue3 } from './env'
+import { IsClient, Vue3 } from './env'
 
 export type VueHeadClient = HeadClient<UseHeadInput> & Plugin
 
@@ -14,14 +14,21 @@ export function injectHead() {
   return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient
 }
 
-export function createHead(options: CreateHeadOptions = {}): VueHeadClient {
-  const head = _createHead<UseHeadInput>({
+export async function createHead(options: CreateHeadOptions = {}): Promise<VueHeadClient> {
+  const plugins: HeadPlugin[] = [
+    HydratesStatePlugin(),
+    VueReactiveInputPlugin(),
+    ...(options?.plugins || []),
+  ]
+
+  if (IsClient) {
+    const { VueTriggerDomPatchingOnUpdatesPlugin } = await import('./plugin/vueTriggerDomPatchingOnUpdatesPlugin')
+    plugins.push(VueTriggerDomPatchingOnUpdatesPlugin())
+  }
+
+  const head = await _createHead<UseHeadInput>({
     ...options,
-    plugins: [
-      HydratesStatePlugin(),
-      VueReactiveInputPlugin(),
-      ...(options?.plugins || []),
-    ],
+    plugins,
   })
 
   const vuePlugin: Plugin = {

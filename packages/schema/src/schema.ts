@@ -55,8 +55,6 @@ interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
-export type { DataKeys, DefinedValueOrEmptyObject }
-
 export type Title = string
 export type TitleTemplate = string | null | ((title?: string) => string)
 export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E>
@@ -137,4 +135,3 @@ export interface Head<E extends MergeHead = SchemaAugmentations> {
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
-export type { MergeHead } from '@zhead/schema'

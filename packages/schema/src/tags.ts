@@ -1,4 +1,4 @@
-import type { HeadTag as BaseHeadTag, TagKey } from '@zhead/schema'
+import type { HeadTag as BaseHeadTag } from '@zhead/schema'
 
 export interface ResolvesDuplicates {
   /**
@@ -81,5 +81,3 @@ export interface TagInternalProperties {
 export type HeadTag = BaseHeadTag & TagUserProperties & TagInternalProperties
 
 export type HeadTagKeys = (keyof HeadTag)[]
-
-export type { TagKey }

@@ -5,7 +5,7 @@ import { useDom } from '../../fixtures'
 
 describe('dom meta-deduped', () => {
   it('renders both', async () => {
-    createHead({
+    await createHead({
       plugins: [HydratesStatePlugin()],
     })
 
@@ -44,7 +44,7 @@ describe('dom meta-deduped', () => {
   })
 
   it('can update', async () => {
-    const head = createHead({
+    const head = await createHead({
       plugins: [HydratesStatePlugin()],
     })
 

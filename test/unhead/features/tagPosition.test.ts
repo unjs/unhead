@@ -3,7 +3,7 @@ import { renderSSRHead } from '@unhead/ssr'
 
 describe('tagPosition', () => {
   test('head', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -24,7 +24,7 @@ describe('tagPosition', () => {
     `)
   })
   test('head', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {
@@ -45,7 +45,7 @@ describe('tagPosition', () => {
     `)
   })
   test('head', async () => {
-    const head = createHead()
+    const head = await createHead()
     head.push({
       script: [
         {

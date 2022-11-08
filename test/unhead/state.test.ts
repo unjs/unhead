@@ -3,7 +3,7 @@ import { createHead, getActiveHead, useHead } from 'unhead'
 
 describe('state', () => {
   it('exists', async () => {
-    createHead()
+    await createHead()
 
     useHead({
       title: 'hello',

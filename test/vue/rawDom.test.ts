@@ -6,7 +6,7 @@ import { basicSchema, useDom } from '../fixtures'
 
 describe('vue dom', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const lang = ref('de')
 
@@ -39,7 +39,7 @@ describe('vue dom', () => {
   })
 
   it('update', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const lang = ref('de')
 
@@ -102,7 +102,7 @@ describe('vue dom', () => {
   })
 
   it('dispose', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const entry = head.push(basicSchema)
 
@@ -147,7 +147,7 @@ describe('vue dom', () => {
   })
 
   it('update + dispose', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const entry = head.push(basicSchema)
 
@@ -222,7 +222,7 @@ describe('vue dom', () => {
   })
 
   it('update innerHtml', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const entry = head.push({
       script: [

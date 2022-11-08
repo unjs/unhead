@@ -5,7 +5,7 @@ import { createHead, useHead } from '@unhead/vue'
 
 describe('resolveTags', () => {
   it('basic resolve tags', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     useHead({
       htmlAttrs: { class: 'first-class' },
@@ -32,7 +32,7 @@ describe('resolveTags', () => {
   })
 
   it('conditional classes', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     const theme: Ref<'dark' | 'light'> = ref('dark')
 
@@ -80,7 +80,7 @@ describe('resolveTags', () => {
     `)
   })
   it('basic resolve tags', async () => {
-    const head = createHead()
+    const head = await createHead()
 
     useHead({
       htmlAttrs: { class: 'first-class' },

@@ -13,11 +13,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'unhead': resolve(__dirname, 'packages/unhead/src/index.ts'),
-      '@unhead/schema': resolve(__dirname, 'packages/schema/src/index.ts'),
-      '@unhead/ssr': resolve(__dirname, 'packages/ssr/src/index.ts'),
-      '@unhead/dom': resolve(__dirname, 'packages/dom/src/index.ts'),
-      '@unhead/vue': resolve(__dirname, 'packages/vue/src/index.ts'),
+      'unhead': resolve(__dirname, 'packages/unhead/src'),
+      '@unhead/schema': resolve(__dirname, 'packages/schema/src'),
+      '@unhead/ssr': resolve(__dirname, 'packages/ssr/src'),
+      '@unhead/dom': resolve(__dirname, 'packages/dom/src'),
+      '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
     }
   },
   test: {

@@ -1,6 +1,5 @@
 import { ssrRenderTags } from 'zhead'
-import type { HeadClient } from '@unhead/schema'
-import type { SSRHeadPayload } from './types'
+import type { HeadClient, SSRHeadPayload } from '@unhead/schema'
 
 export async function renderSSRHead<T extends HeadClient>(ctx: T) {
   const tags = await ctx.resolveTags()

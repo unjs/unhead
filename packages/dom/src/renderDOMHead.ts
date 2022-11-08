@@ -1,7 +1,6 @@
 import { TagsWithInnerContent, createElement } from 'zhead'
-import type { HeadClient } from '@unhead/schema'
+import type { DomRenderTagContext, HeadClient } from '@unhead/schema'
 import { setAttributesWithSideEffects } from './setAttributesWithSideEffects'
-import type { DomRenderTagContext } from './types'
 
 export interface RenderDomHeadOptions {
   /**
