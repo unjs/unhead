@@ -32,7 +32,9 @@
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
+    "@unhead/schema": "workspace:*"
+  },
+  "devDependencies": {
     "zhead": "1.0.0-beta.4"
   }
 }
