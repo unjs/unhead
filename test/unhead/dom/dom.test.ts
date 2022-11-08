@@ -5,7 +5,7 @@ import { basicSchema, useDom } from '../../fixtures'
 
 describe('dom', () => {
   it('basic', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     head.push(basicSchema)
 
@@ -30,7 +30,7 @@ describe('dom', () => {
   })
 
   it('boolean attributes respected', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     head.push({
       script: [

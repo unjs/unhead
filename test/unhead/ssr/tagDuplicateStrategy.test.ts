@@ -4,7 +4,7 @@ import { renderSSRHead } from '@unhead/ssr'
 
 describe('tagDuplicateStrategy', () => {
   test('basic', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       htmlAttrs: {
         'data-layout': 'base',
@@ -25,7 +25,7 @@ describe('tagDuplicateStrategy', () => {
   })
 
   test('class / style merge', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       htmlAttrs: {
         class: 'html-doc',

@@ -7,7 +7,7 @@ import { ssrRenderHeadToString } from './util'
 
 describe('vue ssr', () => {
   it('basic', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const lang = ref('de')
 

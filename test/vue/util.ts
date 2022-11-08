@@ -4,7 +4,7 @@ import { createHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 
 export async function ssrRenderHeadToString(fn: () => void) {
-  const head = await createHead()
+  const head = createHead()
   const app = createSSRApp({
     setup() {
       fn()
@@ -18,7 +18,7 @@ export async function ssrRenderHeadToString(fn: () => void) {
 }
 
 export async function ssrRenderOptionsHead(input: any) {
-  const head = await createHead()
+  const head = createHead()
   const app = createSSRApp({
     head() {
       return input

@@ -21,6 +21,12 @@ export interface TagPosition {
    * @default 'head'
    */
   tagPosition?: 'head' | 'bodyClose' | 'bodyOpen'
+  /**
+   * Render the tag before the body close.
+   *
+   * @deprecated Use `tagPosition: 'bodyClose'` instead.
+   */
+  body?: true
 }
 
 export interface InnerContent {

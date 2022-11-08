@@ -5,7 +5,7 @@ import { createHead, useHead, useHtmlAttrs, useMeta, useScript } from '@unhead/v
 
 describe('vue composables', () => {
   it('basic', async () => {
-    const head = await createHead()
+    const head = createHead()
     const lang = ref('en')
 
     useHead({
@@ -34,7 +34,7 @@ describe('vue composables', () => {
   })
 
   it('shortcuts', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     useScript({
       src: 'https://cdn.example.com/script.js',

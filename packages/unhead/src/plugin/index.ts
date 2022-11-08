@@ -1,4 +1,5 @@
 export * from './dedupesTagsPlugin'
 export * from './sortTagsPlugin'
 export * from './titleTemplatePlugin'
+export * from './deprecatedTagAttrPlugin'
 export * from './hydratesStatePlugin/hydratesStatePlugin'

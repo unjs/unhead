@@ -52,7 +52,7 @@ describe('vue ssr', () => {
   })
 
   test('useHead: server async setup', async () => {
-    const head = await createHead()
+    const head = createHead()
     const app = createSSRApp({
       async setup() {
         const title = ref('initial title')

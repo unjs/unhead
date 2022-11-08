@@ -44,7 +44,7 @@ describe('dom meta-deduped', () => {
   })
 
   it('can update', async () => {
-    const head = await createHead({
+    const head = createHead({
       plugins: [HydratesStatePlugin()],
     })
 

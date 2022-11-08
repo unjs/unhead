@@ -9,7 +9,7 @@ describe('vue e2e', () => {
   it('hydration', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = await createHead()
+    const ssrHead = createHead()
     // i.e App.vue
     useServerHead({
       title: 'My amazing site',
@@ -87,7 +87,7 @@ describe('vue e2e', () => {
 
     const dom = useDom(data)
 
-    const csrHead = await createHead()
+    const csrHead = createHead()
     csrHead.push({
       title: 'Home',
       script: [
@@ -136,7 +136,7 @@ describe('vue e2e', () => {
   it('hydration breaking', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = await createHead()
+    const ssrHead = createHead()
 
     const schema = <ReactiveHead> {
       title: 'My amazing site',
@@ -207,7 +207,7 @@ describe('vue e2e', () => {
       bodyTagsOpen: '',
     })
 
-    const csrHead = await createHead()
+    const csrHead = createHead()
     useHead(schema)
 
     await renderDOMHead(csrHead, { document: dom.window.document })

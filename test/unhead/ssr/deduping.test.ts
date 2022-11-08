@@ -4,7 +4,7 @@ import { renderSSRHead } from '@unhead/ssr'
 
 describe('dedupe', () => {
   it('arrays', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     // same entry duplicates should not be de-duped
     useHead({
@@ -30,7 +30,7 @@ describe('dedupe', () => {
   })
 
   it('desc', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -57,7 +57,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes key', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -80,7 +80,7 @@ describe('dedupe', () => {
   })
 
   test('dedupes canonical', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       link: [
         {
@@ -107,7 +107,7 @@ describe('dedupe', () => {
   })
 
   test('dedupes charset', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push(
       {
         meta: [
@@ -137,7 +137,7 @@ describe('dedupe', () => {
   })
 
   test('dedupes base', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       base: {
         href: '/old',
@@ -155,7 +155,7 @@ describe('dedupe', () => {
   })
 
   test('dedupes http-equiv', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -178,7 +178,7 @@ describe('dedupe', () => {
   })
 
   test('issue #104', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       link: [
         { rel: 'icon', href: '/favicon.ico' },
@@ -195,7 +195,7 @@ describe('dedupe', () => {
   })
 
   test('doesn\'t dedupe over tag types', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -216,7 +216,7 @@ describe('dedupe', () => {
   })
 
   test('dedupes legacy', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -245,7 +245,7 @@ describe('dedupe', () => {
   })
 
   test('no deduping for entry and content', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -278,7 +278,7 @@ describe('dedupe', () => {
   })
 
   test('key example readme', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {
@@ -309,7 +309,7 @@ describe('dedupe', () => {
   })
 
   test('removing tag with null props', async () => {
-    const head = await createHead()
+    const head = createHead()
     head.push({
       meta: [
         {

@@ -1,13 +1,13 @@
 import type { Ref } from 'vue'
 import { getCurrentInstance, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
-import type { ActiveHeadEntry, HeadEntryOptions } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { UseHeadInput } from '../../index'
 import { injectHead, resolveUnrefHeadInput } from '../../index'
 import type {
   ReactiveHead,
 } from '../../types'
 
-export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
   const head = injectHead()
 
   const vm = getCurrentInstance()

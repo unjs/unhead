@@ -1,10 +1,10 @@
 import { createHooks } from 'hookable'
 import type { CreateHeadOptions, Head, HeadClient, HeadEntry, HeadHooks, HeadPlugin, HeadTag, SideEffectsRecord } from '@unhead/schema'
 import { setActiveHead } from './runtime/state'
-import { DedupesTagsPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
+import { DedupesTagsPlugin, DeprecatedTagAttrPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
 import { normaliseEntryTags } from './normalise'
 
-export async function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   let entries: HeadEntry<T>[] = []
   // queued side effects
   let _sde: SideEffectsRecord = {}
@@ -16,12 +16,15 @@ export async function createHead<T extends {} = Head>(options: CreateHeadOptions
 
   const plugins: HeadPlugin[] = [
     // order is important
+    DeprecatedTagAttrPlugin(),
     DedupesTagsPlugin(),
     SortTagsPlugin(),
     TitleTemplatePlugin(),
   ]
   plugins.push(...(options.plugins || []))
   plugins.forEach(plugin => hooks.addHooks(plugin.hooks || {}))
+
+  const triggerUpdate = () => hooks.callHook('entries:updated', head)
 
   const head: HeadClient<T> = {
     _removeQueuedSideEffect(key) {
@@ -45,29 +48,30 @@ export async function createHead<T extends {} = Head>(options: CreateHeadOptions
         _sde: {},
         ...options,
       })
-      hooks.callHook('entries:updated', head)
+      triggerUpdate()
+      const queueSideEffects = (e: HeadEntry<T>) => {
+        // queue side effects
+        _sde = { ..._sde, ...e._sde || {} }
+        e._sde = {}
+        triggerUpdate()
+      }
       return {
         dispose() {
           entries = entries.filter((e) => {
             if (e._i !== _i)
               return true
-            // queue side effects
-            _sde = { ..._sde, ...e._sde || {} }
-            e._sde = {}
+            queueSideEffects(e)
             return false
           })
-          hooks.callHook('entries:updated', head)
         },
         patch(input) {
           entries = entries.map((e) => {
             if (e._i === _i) {
-              _sde = { ..._sde, ...e._sde || {} }
-              e._sde = {}
+              queueSideEffects(e)
               e.input = e._i === _i ? input : e.input
             }
             return e
           })
-          hooks.callHook('entries:updated', head)
         },
       }
     },
@@ -86,7 +90,7 @@ export async function createHead<T extends {} = Head>(options: CreateHeadOptions
     },
   }
 
-  await head.hooks.callHook('init', head)
+  head.hooks.callHook('init', head)
   // @ts-expect-error broken type
   setActiveHead(head)
   return head

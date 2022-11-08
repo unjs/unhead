@@ -55,8 +55,8 @@ interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
-export type Title = string
-export type TitleTemplate = string | null | ((title?: string) => string)
+export type Title = string | null
+export type TitleTemplate = string | null | ((title?: string) => string | null)
 export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E>
 export type Link<E extends EntryAugmentation = {}> = _Link & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
 export type Meta<E extends EntryAugmentation = {}> = BaseMeta & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>

@@ -4,7 +4,7 @@ import { basicSchema } from '../fixtures'
 
 describe('resolveTags', () => {
   it('basic resolve tags', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     head.push(basicSchema)
 
@@ -113,7 +113,7 @@ describe('resolveTags', () => {
   })
 
   it('basic /w removal', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const firstEntry = head.push(basicSchema)
 
@@ -144,7 +144,7 @@ describe('resolveTags', () => {
   })
 
   it('basic /w update', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const firstEntry = head.push(basicSchema)
 
@@ -212,7 +212,7 @@ describe('resolveTags', () => {
   })
 
   it('class array merge support', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     head.push({
       htmlAttrs: {
@@ -258,7 +258,7 @@ describe('resolveTags', () => {
   })
 
   it('class object merge support', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     head.push({
       htmlAttrs: {

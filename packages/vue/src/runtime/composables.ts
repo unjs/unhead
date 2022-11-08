@@ -1,16 +1,16 @@
-import type { HeadEntryOptions } from '@unhead/schema'
+import type { HeadEntryOptions, MergeHead } from '@unhead/schema'
 import { asArray } from '../utils'
 import type { Arrayable, Link, Meta, Noscript, ReactiveHead, Script, Style, UseHeadInput } from '../types'
 import { IsBrowser } from '../env'
 import { useHead as _serverUseHead, useServerHead as _serverUseServerHead } from './server'
 import { useHead as _clientUseHead } from './client'
 
-export function useServerHead(input: ReactiveHead, options: HeadEntryOptions = {}) {
+export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
   if (!IsBrowser)
     _serverUseServerHead(input, options)
 }
 
-export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
   if ((options.mode === 'server' && IsBrowser) || (options.mode === 'client' && !IsBrowser))
     return
 

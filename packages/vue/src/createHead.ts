@@ -1,11 +1,11 @@
 import type { App, Plugin } from 'vue'
 import { getCurrentInstance, inject } from 'vue'
-import { HydratesStatePlugin, createHead as _createHead, getActiveHead } from 'unhead'
+import { HydratesStatePlugin, createHead as createUnhead, getActiveHead } from 'unhead'
 import type { CreateHeadOptions, HeadClient, HeadPlugin, MergeHead } from '@unhead/schema'
 import type { MaybeComputedRef } from '@vueuse/shared'
 import { VueReactiveInputPlugin } from './plugin'
-import type { ReactiveHead, UseHeadInput } from './types'
-import { IsBrowser, Vue3 } from './env'
+import type { ReactiveHead } from './types'
+import { Vue3 } from './env'
 import { useHead } from './runtime'
 
 export type VueHeadClient<T extends MergeHead> = HeadClient<MaybeComputedRef<ReactiveHead<T>>> & Plugin
@@ -16,19 +16,14 @@ export function injectHead<T extends MergeHead>() {
   return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient<T>
 }
 
-export async function createHead<T extends MergeHead>(options: CreateHeadOptions = {}): Promise<VueHeadClient<T>> {
+export function createHead<T extends MergeHead>(options: CreateHeadOptions = {}): VueHeadClient<T> {
   const plugins: HeadPlugin[] = [
     HydratesStatePlugin(),
     VueReactiveInputPlugin(),
     ...(options?.plugins || []),
   ]
 
-  if (IsBrowser) {
-    const { VueTriggerDomPatchingOnUpdatesPlugin } = await import('./plugin/vueTriggerDomPatchingOnUpdatesPlugin')
-    plugins.push(VueTriggerDomPatchingOnUpdatesPlugin())
-  }
-
-  const head = await _createHead<UseHeadInput>({
+  const head = createUnhead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
     plugins,
   })

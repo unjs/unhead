@@ -5,8 +5,35 @@ import { renderDOMHead } from '@unhead/dom'
 import { basicSchema, useDom } from '../fixtures'
 
 describe('vue dom', () => {
+  test('titleTemplate', async () => {
+    const dom = useDom()
+
+    const head = createHead({ document: dom.window.document })
+
+    useHead({
+      title: 'test',
+      titleTemplate: '%s | template',
+    })
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      <title>test | template</title></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
   it('basic', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const lang = ref('de')
 
@@ -39,7 +66,7 @@ describe('vue dom', () => {
   })
 
   it('update', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const lang = ref('de')
 
@@ -102,7 +129,7 @@ describe('vue dom', () => {
   })
 
   it('dispose', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const entry = head.push(basicSchema)
 
@@ -147,7 +174,7 @@ describe('vue dom', () => {
   })
 
   it('update + dispose', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const entry = head.push(basicSchema)
 
@@ -222,7 +249,7 @@ describe('vue dom', () => {
   })
 
   it('update innerHtml', async () => {
-    const head = await createHead()
+    const head = createHead()
 
     const entry = head.push({
       script: [
