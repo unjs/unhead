@@ -2,6 +2,46 @@ import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('tag priority', () => {
+  test('basic int', async () => {
+    const head = await createHead()
+    head.push({
+      script: [
+        {
+          src: '/not-important-script.js',
+        },
+      ],
+    })
+    head.push({
+      script: [
+        {
+          src: '/very-important-script.js',
+          tagPriority: 1,
+        },
+      ],
+    })
+
+    expect(await head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_e": 1,
+          "_p": 256,
+          "props": {
+            "src": "/very-important-script.js",
+          },
+          "tag": "script",
+          "tagPriority": 1,
+        },
+        {
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "src": "/not-important-script.js",
+          },
+          "tag": "script",
+        },
+      ]
+    `)
+  })
   test('charset first', async () => {
     const head = await createHead()
     head.push({

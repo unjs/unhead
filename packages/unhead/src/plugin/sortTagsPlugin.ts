@@ -1,4 +1,4 @@
-import { sortCriticalTags } from 'zhead'
+import { sortTags } from 'zhead'
 import { defineHeadPlugin } from '..'
 
 export const SortTagsPlugin = () => {
@@ -6,19 +6,14 @@ export const SortTagsPlugin = () => {
     hooks: {
       'tags:resolve': (ctx) => {
         const tagIndexForKey = (key: string) => ctx.tags.find(tag => tag._d === key)?._p
+
         // 2a. Sort based on priority
         // now we need to check render priority for each before: rule and use the dedupe key index
         for (const tag of ctx.tags) {
-          if (!tag?.tagPriority)
+          if (!tag.tagPriority || typeof tag.tagPriority === 'number')
             continue
-
-          if (typeof tag.tagPriority === 'number') {
-            tag._p = tag.tagPriority
-            continue
-          }
-
-          const modifiers = [{ prefix: 'before:', offset: -1 }, { prefix: 'after:', offset: 1 }]
-          for (const { prefix, offset } of modifiers) {
+          const modifiers = [{prefix: 'before:', offset: -1}, {prefix: 'after:', offset: 1}]
+          for (const {prefix, offset} of modifiers) {
             if (tag.tagPriority.startsWith(prefix)) {
               const key = tag.tagPriority.replace(prefix, '')
               const index = tagIndexForKey(key)
@@ -32,7 +27,7 @@ export const SortTagsPlugin = () => {
           // 2b. sort tags in their natural order
           .sort((a, b) => a._p! - b._p!)
           // 2c. sort based on critical tags
-          .sort(sortCriticalTags)
+          .sort(sortTags)
       },
     },
   })
