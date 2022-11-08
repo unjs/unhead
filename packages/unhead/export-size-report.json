@@ -16,9 +16,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 4513,
-      "minzipped": 1785,
-      "bundled": 9236
+      "minified": 4571,
+      "minzipped": 1816,
+      "bundled": 9527
     },
     {
       "name": "DedupesTagsPlugin",
@@ -30,9 +30,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 1242,
-      "minzipped": 518,
-      "bundled": 2031
+      "minified": 1261,
+      "minzipped": 524,
+      "bundled": 2067
     },
     {
       "name": "SortTagsPlugin",
@@ -45,15 +45,15 @@
       "name": "HydratesStatePlugin",
       "path": "dist/index.mjs",
       "minified": 530,
-      "minzipped": 328,
+      "minzipped": 325,
       "bundled": 980
     },
     {
       "name": "TitleTemplatePlugin",
       "path": "dist/index.mjs",
-      "minified": 542,
-      "minzipped": 269,
-      "bundled": 1415
+      "minified": 530,
+      "minzipped": 261,
+      "bundled": 1391
     },
     {
       "name": "useBodyAttrs",
@@ -131,6 +131,13 @@
       "minified": 187,
       "minzipped": 134,
       "bundled": 441
+    },
+    {
+      "name": "DeprecatedTagAttrPlugin",
+      "path": "dist/index.mjs",
+      "minified": 176,
+      "minzipped": 126,
+      "bundled": 415
     },
     {
       "name": "useHead",
