@@ -1,5 +1,5 @@
 import { resolveTitleTemplateFromTags } from 'zhead'
-import { defineHeadPlugin } from '.'
+import { defineHeadPlugin } from '..'
 
 export const TitleTemplatePlugin = () => {
   return defineHeadPlugin({

@@ -1,6 +1,6 @@
 import { tagDedupeKey } from 'zhead'
 import type { HeadTag, HeadTagKeys } from '@unhead/schema'
-import { defineHeadPlugin } from '.'
+import { defineHeadPlugin } from '..'
 
 export interface DedupesTagsPluginOptions {
   dedupeKeys?: string[]
