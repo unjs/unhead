@@ -1,4 +1,4 @@
-import type { HeadEntryOptions } from 'unhead'
+import type { HeadEntryOptions } from '@unhead/schema'
 import type { UseHeadInput } from '../../types'
 
 // eslint-ignore-next-line @typescript-eslint/no-unused-vars

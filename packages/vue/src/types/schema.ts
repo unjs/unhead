@@ -1,6 +1,5 @@
 import type { MaybeComputedRef, MaybeRef } from '@vueuse/shared'
-import type { BaseBodyAttr, BaseHtmlAttr, EntryAugmentation, MaybeArray, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
-import type { DataKeys, DefinedValueOrEmptyObject } from '@zhead/schema'
+import type { BaseBodyAttr, BaseHtmlAttr, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, MaybeArray, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
 import type { MaybeComputedRefEntries } from './util'
 
 interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {

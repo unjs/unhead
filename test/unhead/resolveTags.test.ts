@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead } from '../../packages/unhead/src'
+import { createHead } from 'unhead'
 import { basicSchema } from '../fixtures'
 
 describe('resolveTags', () => {

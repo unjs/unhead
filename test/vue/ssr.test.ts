@@ -1,8 +1,8 @@
 import { it } from 'vitest'
 import { ref } from 'vue'
-import { createHead, useHead } from '../../packages/vue/src'
+import { createHead, useHead } from '@unhead/vue'
+import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../fixtures'
-import { renderSSRHead } from '../../packages/unhead/src/runtime/server'
 import { ssrRenderHeadToString } from './util'
 
 describe('vue ssr', () => {

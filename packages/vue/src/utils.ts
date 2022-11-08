@@ -1,5 +1,6 @@
 import { resolveUnref } from '@vueuse/shared'
 import { unref } from 'vue'
+import type { Arrayable } from './types'
 
 export function resolveUnrefHeadInput(ref: any): any {
   const root = resolveUnref(ref)
@@ -20,4 +21,8 @@ export function resolveUnrefHeadInput(ref: any): any {
     )
   }
   return root
+}
+
+export function asArray<T>(value: Arrayable<T>): T[] {
+  return Array.isArray(value) ? value : [value]
 }

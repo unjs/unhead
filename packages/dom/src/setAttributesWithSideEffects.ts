@@ -1,5 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
-import type { HeadClient, HeadEntry } from '../../types'
+import type { HeadClient, HeadEntry, HeadTag } from '@unhead/schema'
 
 /**
  * Set attributes on a DOM element, while adding entry side effects.

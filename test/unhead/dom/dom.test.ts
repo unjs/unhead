@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
-import { createHead } from '../../../packages/unhead/src'
-import { renderDOMHead } from '../../../packages/unhead/src/runtime/client'
+import { createHead } from 'unhead'
+import { renderDOMHead } from '@unhead/dom'
 import { basicSchema, useDom } from '../../fixtures'
 
 describe('dom', () => {

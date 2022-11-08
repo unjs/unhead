@@ -1,6 +1,7 @@
 import { createSSRApp, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { Head, createHead, renderSSRHead, useHead } from '../../packages/vue/src'
+import { createHead, useHead } from '@unhead/vue'
+import { renderSSRHead } from '@unhead/ssr'
 import { ssrRenderHeadToString } from './util'
 
 describe('vue ssr', () => {
@@ -68,34 +69,6 @@ describe('vue ssr', () => {
 
     const { headTags } = await renderSSRHead(head)
     expect(headTags).eq('<title>new title</title>')
-  })
-
-  test('<Head>: link & meta with v-for', async () => {
-    const head = createHead()
-    const app = createSSRApp({
-      template: `<Head>
-      <meta v-for="meta in metaList" :key="meta.property" :property="meta.property" :content="meta.content" />
-      </Head>`,
-      components: { Head },
-      data() {
-        return {
-          metaList: [
-            { property: 'test1', content: 'test1' },
-            { property: 'test2', content: 'test2' },
-          ],
-        }
-      },
-    })
-    app.use(head)
-    await renderToString(app)
-
-    const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(
-      `
-      "<meta property=\\"test1\\" content=\\"test1\\" data-h-051b9d=\\"\\">
-      <meta property=\\"test2\\" content=\\"test2\\" data-h-7449ef=\\"\\">"
-    `,
-    )
   })
 
   test('children', async () => {

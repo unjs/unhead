@@ -1,8 +1,8 @@
 import { describe, it } from 'vitest'
-import type { ReactiveHead } from '../../packages/vue'
-import { createHead, useHead, useServerHead } from '../../packages/vue'
-import { renderSSRHead } from '../../packages/unhead/src/runtime/server'
-import { renderDOMHead } from '../../packages/unhead/src/runtime/client'
+import type { ReactiveHead } from '@unhead/vue'
+import { createHead, useHead, useServerHead } from '@unhead/vue'
+import { renderSSRHead } from '@unhead/ssr'
+import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'
 
 describe('vue e2e', () => {

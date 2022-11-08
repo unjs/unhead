@@ -1,7 +1,7 @@
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { createHead } from '../../packages/vue/src'
-import { renderSSRHead } from '../../packages/unhead/src/runtime/server'
+import { createHead } from '@unhead/vue'
+import { renderSSRHead } from '@unhead/ssr'
 
 export async function ssrRenderHeadToString(fn: () => void) {
   const head = createHead()

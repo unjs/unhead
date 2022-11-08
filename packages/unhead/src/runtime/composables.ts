@@ -1,10 +1,27 @@
-import type { Base, BodyAttributes, HtmlAttributes, Link, Meta, Noscript, Script, Style } from '@unhead/schema'
-import type { HeadEntryOptions } from './types'
+import type {
+  Base,
+  BodyAttributes,
+  Head,
+  HeadEntryOptions,
+  HtmlAttributes,
+  Link,
+  Meta,
+  Noscript,
+  Script,
+  Style,
+} from '@unhead/schema'
+import { IsClient } from '../env'
 import { getActiveHead } from './state'
 
-export function useHead<T>(input: T, options: HeadEntryOptions = {}) {
-  const head = getActiveHead<T>()
+export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}) {
+  if ((options.mode === 'server' && IsClient) || (options.mode === 'client' && !IsClient))
+    return
+  const head = getActiveHead()
   head.push(input, options)
+}
+
+export function useServerHead<T extends Head>(input: T, options: HeadEntryOptions = {}) {
+  useHead(input, { ...options, mode: 'server' })
 }
 
 export const useTitle = (title: string) => {

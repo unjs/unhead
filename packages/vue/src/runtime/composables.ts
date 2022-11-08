@@ -1,11 +1,21 @@
-import { asArray } from 'unhead'
-import type { Arrayable, HeadEntryOptions } from 'unhead'
-import type { Link, Meta, Noscript, ReactiveHead, Script, Style, UseHeadInput } from '../../types'
-import { useHead as _useHead, useServerHead as _useServerHead } from '#head-runtime'
+import type { HeadEntryOptions } from '@unhead/schema'
+import { asArray } from '../utils'
+import type { Arrayable, Link, Meta, Noscript, ReactiveHead, Script, Style, UseHeadInput } from '../types'
+import { IsClient } from '../env'
+import { useHead as _serverUseHead, useServerHead as _serverUseServerHead } from './server'
+import { useHead as _clientUseHead } from './client'
 
-export const useServerHead = (input: UseHeadInput, options: HeadEntryOptions = {}) => _useServerHead(input, options)
+export function useServerHead(input: ReactiveHead, options: HeadEntryOptions = {}) {
+  if (!IsClient)
+    _serverUseServerHead(input, options)
+}
 
-export const useHead = (input: UseHeadInput, options: HeadEntryOptions = {}) => _useHead(input, options)
+export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
+  if ((options.mode === 'server' && IsClient) || (options.mode === 'client' && !IsClient))
+    return
+
+  return IsClient ? _clientUseHead(input, options) : _serverUseHead(input, options)
+}
 
 export const useTitle = (title: ReactiveHead['title']) => useHead({ title })
 

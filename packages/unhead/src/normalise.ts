@@ -1,6 +1,5 @@
-import type { Head, HeadTag } from '@unhead/schema'
+import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import { ValidHeadTags, normaliseTag as normaliseTagBase } from 'zhead'
-import type { HeadEntry } from './types'
 import { TagConfigKeys, asArray } from './util'
 
 export function normaliseTag<T>(tagName: HeadTag['tag'], input: HeadTag['props'], entry: HeadEntry<T>): HeadTag | HeadTag[] {

@@ -1,5 +1,5 @@
-import { createHead } from '../../../packages/unhead/src'
-import { renderSSRHead } from '../../../packages/unhead/src/runtime/server'
+import { createHead } from 'unhead'
+import { renderSSRHead } from '@unhead/ssr'
 
 describe('tagPosition', () => {
   test('head', async () => {

@@ -1,6 +1,7 @@
 import { TagsWithInnerContent, createElement } from 'zhead'
-import type { DomRenderTagContext, HeadClient } from '../../types'
+import type { HeadClient } from '@unhead/schema'
 import { setAttributesWithSideEffects } from './setAttributesWithSideEffects'
+import type { DomRenderTagContext } from './types'
 
 export interface RenderDomHeadOptions {
   /**
@@ -20,33 +21,10 @@ export async function renderDOMHead<T extends HeadClient<any>>(head: T, options:
   await head.hooks.callHook('dom:beforeRender', { head, tags, document: dom })
 
   for (const tag of tags) {
-    const entry = head.headEntries().find(e => e._i === Number(tag._e))!
-    const sdeKey = `${tag._s || tag._p}:el`
-
-    const $newEl = createElement(tag, dom)
-    // try hydrate state
-    const $el = tag._s ? dom.querySelector(`[${tag._s}]`) : null
     const renderCtx: DomRenderTagContext = { tag, document: dom, head }
     await head.hooks.callHook('dom:renderTag', renderCtx)
-    // updating an existing tag
-    if ($el) {
-      // safe to ignore removal
-      head._removeQueuedSideEffect(sdeKey)
 
-      if ($newEl.isEqualNode($el))
-        continue
-      if (Object.keys(tag.props).length === 0) {
-        $el.remove()
-        continue
-      }
-      setAttributesWithSideEffects(head, $el, entry, tag)
-      if (TagsWithInnerContent.includes(tag.tag))
-        $el.innerHTML = tag.children || ''
-
-      // may be a duplicate but it's okay
-      entry._sde[sdeKey] = () => $el?.remove()
-      continue
-    }
+    const entry = head.headEntries().find(e => e._i === Number(tag._e))!
 
     if (tag.tag === 'title' && tag.children) {
       // we don't handle title side effects
@@ -56,6 +34,37 @@ export async function renderDOMHead<T extends HeadClient<any>>(head: T, options:
 
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
       setAttributesWithSideEffects(head, dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], entry, tag)
+      continue
+    }
+
+    const sdeKey = `${tag._s || tag._p}:el`
+    const $newEl = createElement(tag, dom)
+    let $previousEl: Element | null = null
+    // optimised scan of children
+    for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
+      if ($el.hasAttribute(`${tag._s}`)) {
+        $previousEl = $el
+        break
+      }
+    }
+
+    // updating an existing tag
+    if ($previousEl) {
+      // safe to ignore removal
+      head._removeQueuedSideEffect(sdeKey)
+
+      if ($newEl.isEqualNode($previousEl))
+        continue
+      if (Object.keys(tag.props).length === 0) {
+        $previousEl.remove()
+        continue
+      }
+      setAttributesWithSideEffects(head, $previousEl, entry, tag)
+      if (TagsWithInnerContent.includes(tag.tag))
+        $previousEl.innerHTML = tag.children || ''
+
+      // may be a duplicate but it's okay
+      entry._sde[sdeKey] = () => $previousEl?.remove()
       continue
     }
 

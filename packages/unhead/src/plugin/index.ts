@@ -1,5 +1,4 @@
-export * from './defineHeadPlugin'
 export * from './dedupesTagsPlugin'
 export * from './sortTagsPlugin'
 export * from './titleTemplatePlugin'
-export * from './hydratesStatePlugin'
+export * from './hydratesStatePlugin/hydratesStatePlugin'

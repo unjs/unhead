@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import type { Ref } from 'vue'
 import { ref } from 'vue'
-import { createHead, useHead } from '../../packages/vue/src'
+import { createHead, useHead } from '@unhead/vue'
 
 describe('resolveTags', () => {
   it('basic resolve tags', async () => {

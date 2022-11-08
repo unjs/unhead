@@ -1,8 +1,7 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { createHead } from '../../packages/vue/src'
-import { useHead } from '../../packages/vue/src/runtime/client'
-import { renderDOMHead } from '../../packages/unhead/src/runtime/client'
+import { createHead, useHead } from '@unhead/vue'
+import { renderDOMHead } from '@unhead/dom'
 import { basicSchema, useDom } from '../fixtures'
 
 describe('vue dom', () => {

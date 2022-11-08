@@ -1,8 +1,7 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { createHead } from '../../packages/vue/src'
-import { renderSSRHead } from '../../packages/unhead/src/runtime/server'
-import { useHead, useHtmlAttrs, useMeta, useScript } from '../../packages/vue/src/runtime/alias'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead, useHtmlAttrs, useMeta, useScript } from '@unhead/vue'
 
 describe('vue composables', () => {
   it('basic', async () => {

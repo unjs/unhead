@@ -1,7 +1,6 @@
 import { describe, it } from 'vitest'
-import { createHead } from '../../../packages/unhead/src/createHead'
-import { renderSSRHead } from '../../../packages/unhead/src/runtime/server'
-import { useHead, useHtmlAttrs } from '../../../packages/unhead/src/composables'
+import { createHead, useHead, useHtmlAttrs } from 'unhead'
+import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../../fixtures'
 
 describe('composables', () => {

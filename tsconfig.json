@@ -18,8 +18,9 @@
     "noUnusedLocals": true,
     "paths": {
       "unhead": ["packages/unhead/src"],
-      "unhead/client": ["packages/unhead/src/runtime/client"],
-      "unhead/server": ["packages/unhead/src/runtime/server"],
+      "@unhead/dom": ["packages/dom/src"],
+      "@unhead/ssr": ["packages/ssr/src"],
+      "@unhead/vue": ["packages/vue/src"],
       "unhead/*": ["packages/unhead/*"],
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],

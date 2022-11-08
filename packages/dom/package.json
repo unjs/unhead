@@ -1,5 +1,5 @@
 {
-  "name": "unhead",
+  "name": "@unhead/dom",
   "type": "module",
   "version": "0.0.7",
   "packageManager": "pnpm@7.14.0",
@@ -10,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/harlan-zw/unhead.git",
-    "directory": "packages/unhead"
+    "directory": "packages/dom"
   },
   "bugs": {
     "url": "https://github.com/harlan-zw/unhead/issues"
@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@unhead/schema": "workspace:*",
-    "hookable": "^5.4.1",
     "zhead": "1.0.0-beta.4"
   }
 }

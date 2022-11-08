@@ -30,7 +30,7 @@ export default defineNuxtModule<ModuleOptions>({
       filePath: `${runtimeDir}/components/DebugHead.client.vue`,
     })
 
-    addPlugin({ src: runtimeDir + '/plugin' })
+    addPlugin({ src: `${runtimeDir}/plugin` })
 
     ;[
       'useHead',

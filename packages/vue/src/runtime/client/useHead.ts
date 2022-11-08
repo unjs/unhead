@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 import { getCurrentInstance, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
-import { debouncedRenderDOMHead } from 'unhead/client'
-import type { ActiveHeadEntry, HeadEntryOptions } from 'unhead'
+import { debouncedRenderDOMHead } from '@unhead/dom'
+import type { ActiveHeadEntry, HeadEntryOptions } from '@unhead/schema'
 import type { UseHeadInput } from '../../index'
 import { injectHead, resolveUnrefHeadInput } from '../../index'
 import type {

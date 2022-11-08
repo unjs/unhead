@@ -1,26 +1,24 @@
 import { createHooks } from 'hookable'
-import type { Head, HeadTag } from '@unhead/schema'
-import { setActiveHead } from './state'
-import type { CreateHeadOptions, HeadClient, HeadEntry, HeadHooks, SideEffectsRecord } from './types'
-import type { HeadPlugin } from './plugin'
+import type { CreateHeadOptions, Head, HeadClient, HeadEntry, HeadHooks, HeadPlugin, HeadTag, SideEffectsRecord } from '@unhead/schema'
+import { setActiveHead } from './runtime/state'
 import { DedupesTagsPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
 import { normaliseEntryTags } from './normalise'
 
-export function createHead<T extends {} = Head>(options: CreateHeadOptions<T> = {}) {
+export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   let entries: HeadEntry<T>[] = []
   // queued side effects
   let _sde: SideEffectsRecord = {}
   // counter for keeping unique ids of head object entries
   let entryId = 0
-  const hooks = createHooks<HeadHooks<T>>()
+  const hooks = createHooks<HeadHooks>()
   if (options.hooks)
     hooks.addHooks(options.hooks)
 
-  const plugins: HeadPlugin<any>[] = [
+  const plugins: HeadPlugin[] = [
     // order is important
-    DedupesTagsPlugin,
-    SortTagsPlugin,
-    TitleTemplatePlugin,
+    DedupesTagsPlugin(),
+    SortTagsPlugin(),
+    TitleTemplatePlugin(),
   ]
   plugins.push(...(options.plugins || []))
   plugins.forEach(plugin => hooks.addHooks(plugin.hooks || {}))
@@ -85,6 +83,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions<T> = 
     },
   }
 
+  // @ts-expect-error broken type
   setActiveHead(head)
   return head
 }

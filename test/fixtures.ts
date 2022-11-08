@@ -1,6 +1,6 @@
 import type { Head } from '@unhead/schema'
 import { JSDOM } from 'jsdom'
-import type { SSRHeadPayload } from '../packages/unhead/src/runtime/server'
+import type { SSRHeadPayload } from '@unhead/ssr'
 
 export function useDom(payload?: SSRHeadPayload, extra?: SSRHeadPayload) {
   return new JSDOM(

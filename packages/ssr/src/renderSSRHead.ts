@@ -1,15 +1,8 @@
 import { ssrRenderTags } from 'zhead'
-import type { HeadClient } from '../../types'
+import type { HeadClient } from '@unhead/schema'
+import type { SSRHeadPayload } from './types'
 
-export interface SSRHeadPayload {
-  headTags: string
-  bodyTags: string
-  bodyTagsOpen: string
-  htmlAttrs: string
-  bodyAttrs: string
-}
-
-export async function renderSSRHead<T extends HeadClient<any>>(ctx: T) {
+export async function renderSSRHead<T extends HeadClient>(ctx: T) {
   const tags = await ctx.resolveTags()
   const beforeRenderCtx = { tags }
   await ctx.hooks.callHook('ssr:beforeRender', beforeRenderCtx)

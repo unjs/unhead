@@ -1,12 +1,12 @@
 import { describe, it } from 'vitest'
-import { HydratesStatePlugin, createHead, getActiveHead, useHead } from '../../../packages/unhead/src'
+import { HydratesStatePlugin, createHead, getActiveHead, useHead } from 'unhead'
+import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
-import { renderDOMHead } from '../../../packages/unhead/src/runtime/client'
 
 describe('dom meta-deduped', () => {
   it('renders both', async () => {
     createHead({
-      plugins: [HydratesStatePlugin],
+      plugins: [HydratesStatePlugin()],
     })
 
     useHead({
@@ -45,7 +45,7 @@ describe('dom meta-deduped', () => {
 
   it('can update', async () => {
     const head = createHead({
-      plugins: [HydratesStatePlugin],
+      plugins: [HydratesStatePlugin()],
     })
 
     const entry = head.push({

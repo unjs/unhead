@@ -1,4 +1,4 @@
-import type { HeadEntryOptions } from 'unhead'
+import type { HeadEntryOptions } from '@unhead/schema'
 import type { UseHeadInput } from '../..'
 import { injectHead } from '../..'
 
