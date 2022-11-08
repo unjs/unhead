@@ -1,20 +1,20 @@
 import type { HeadEntryOptions } from '@unhead/schema'
 import { asArray } from '../utils'
 import type { Arrayable, Link, Meta, Noscript, ReactiveHead, Script, Style, UseHeadInput } from '../types'
-import { IsClient } from '../env'
+import { IsBrowser } from '../env'
 import { useHead as _serverUseHead, useServerHead as _serverUseServerHead } from './server'
 import { useHead as _clientUseHead } from './client'
 
 export function useServerHead(input: ReactiveHead, options: HeadEntryOptions = {}) {
-  if (!IsClient)
+  if (!IsBrowser)
     _serverUseServerHead(input, options)
 }
 
 export function useHead(input: UseHeadInput, options: HeadEntryOptions = {}) {
-  if ((options.mode === 'server' && IsClient) || (options.mode === 'client' && !IsClient))
+  if ((options.mode === 'server' && IsBrowser) || (options.mode === 'client' && !IsBrowser))
     return
 
-  IsClient ? _clientUseHead(input, options) : _serverUseHead(input, options)
+  IsBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)
 }
 
 export const useTitle = (title: ReactiveHead['title']) => useHead({ title })

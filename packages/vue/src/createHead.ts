@@ -1,27 +1,29 @@
-import type { App, InjectionKey, Plugin } from 'vue'
+import type { App, Plugin } from 'vue'
 import { getCurrentInstance, inject } from 'vue'
 import { HydratesStatePlugin, createHead as _createHead, getActiveHead } from 'unhead'
-import type { CreateHeadOptions, HeadClient, HeadPlugin } from '@unhead/schema'
-import { VueReactiveInputPlugin } from './plugin/vueReactiveInputPlugin'
-import type { UseHeadInput } from './types'
-import { IsClient, Vue3 } from './env'
+import type { CreateHeadOptions, HeadClient, HeadPlugin, MergeHead } from '@unhead/schema'
+import type { MaybeComputedRef } from '@vueuse/shared'
+import { VueReactiveInputPlugin } from './plugin'
+import type { ReactiveHead, UseHeadInput } from './types'
+import { IsBrowser, Vue3 } from './env'
+import { useHead } from './runtime'
 
-export type VueHeadClient = HeadClient<UseHeadInput> & Plugin
+export type VueHeadClient<T extends MergeHead> = HeadClient<MaybeComputedRef<ReactiveHead<T>>> & Plugin
 
-export const headSymbol = Symbol('head') as InjectionKey<VueHeadClient>
+export const headSymbol = Symbol('unhead')
 
-export function injectHead() {
-  return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient
+export function injectHead<T extends MergeHead>() {
+  return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient<T>
 }
 
-export async function createHead(options: CreateHeadOptions = {}): Promise<VueHeadClient> {
+export async function createHead<T extends MergeHead>(options: CreateHeadOptions = {}): Promise<VueHeadClient<T>> {
   const plugins: HeadPlugin[] = [
     HydratesStatePlugin(),
     VueReactiveInputPlugin(),
     ...(options?.plugins || []),
   ]
 
-  if (IsClient) {
+  if (IsBrowser) {
     const { VueTriggerDomPatchingOnUpdatesPlugin } = await import('./plugin/vueTriggerDomPatchingOnUpdatesPlugin')
     plugins.push(VueTriggerDomPatchingOnUpdatesPlugin())
   }
@@ -55,7 +57,7 @@ export async function createHead(options: CreateHeadOptions = {}): Promise<VueHe
             ? () => options.head()
             : options.head
 
-          head.push(source)
+          useHead(source)
         },
       })
     },
