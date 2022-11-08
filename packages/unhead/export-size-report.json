@@ -16,9 +16,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 4461,
-      "minzipped": 1786,
-      "bundled": 9290
+      "minified": 4596,
+      "minzipped": 1814,
+      "bundled": 9488
     },
     {
       "name": "DedupesTagsPlugin",
