@@ -35,7 +35,6 @@ export function setAttributesWithSideEffects(head: HeadClient, $el: Element, ent
     }
   })
 
-
   // less aggressive clean up of entry side effect attributes
   Object.entries(sdeToRun)
     // only attribute based side effects
