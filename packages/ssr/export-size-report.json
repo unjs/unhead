@@ -16,7 +16,7 @@
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
       "minified": 941,
-      "minzipped": 452,
+      "minzipped": 449,
       "bundled": 1712
     }
   ]
