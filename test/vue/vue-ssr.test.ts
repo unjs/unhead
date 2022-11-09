@@ -42,7 +42,7 @@ describe('vue ssr', () => {
       `
       "<title>hello</title>
       <meta name=\\"description\\" content=\\"desc\\" data-h-889faf=\\"\\">
-      <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf=\\"\\">
+      <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf3=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-3f7248=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-321fb4=\\"\\">
       <script src=\\"foo.js\\" data-h-33493a=\\"\\"></script>"
@@ -107,7 +107,7 @@ describe('vue ssr', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<script src=\\"test\\" data-h-229264=\\"\\">console.log('A')</script>
-      <script data-h-229264=\\"\\">console.log('B')</script>"
+      <script data-h-2292641=\\"\\">console.log('B')</script>"
     `,
     )
   })

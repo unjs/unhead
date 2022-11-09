@@ -52,6 +52,12 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
             else if (tag._e === dupedTag._e) {
               // allow entries to have duplicate tags
               dedupeKey = `${dedupeKey}:entry(${tag._e}:${tag._p})`
+              // need to copy over the unique _s key and change it
+              if (dupedTag._s) {
+                delete tag.props[dupedTag._s]
+                tag._s = dupedTag._s + tag._p
+                tag.props[tag._s] = ''
+              }
               tag._d = dedupeKey
             }
             else {

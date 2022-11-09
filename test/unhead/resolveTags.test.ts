@@ -292,4 +292,48 @@ describe('resolveTags', () => {
       ]
     `)
   })
+
+  it('duplicate tags', async () => {
+    const head = createHead()
+
+    head.push({
+      meta: [
+        {
+          name: 'description',
+          content: 'desc',
+        },
+        {
+          name: 'description',
+          content: 'desc 2',
+        },
+      ],
+    })
+
+    const tags = await head.resolveTags()
+
+    expect(tags).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "meta:name:description",
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "content": "desc",
+            "name": "description",
+          },
+          "tag": "meta",
+        },
+        {
+          "_d": "meta:name:description:entry(0:1)",
+          "_e": 0,
+          "_p": 1,
+          "props": {
+            "content": "desc 2",
+            "name": "description",
+          },
+          "tag": "meta",
+        },
+      ]
+    `)
+  })
 })
