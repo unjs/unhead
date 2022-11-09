@@ -27,7 +27,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const renderCtx: DomRenderTagContext = { shouldRender: true, tag }
     await head.hooks.callHook('dom:renderTag', renderCtx)
     if (!renderCtx.shouldRender)
-      return
+      continue
 
     const entry = head.headEntries().find(e => e._i === Number(tag._e))!
 
