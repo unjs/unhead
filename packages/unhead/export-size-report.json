@@ -16,9 +16,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7374,
-      "minzipped": 2797,
-      "bundled": 15019
+      "minified": 7394,
+      "minzipped": 2793,
+      "bundled": 15042
     },
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
@@ -66,7 +66,7 @@
       "name": "HydratesStatePlugin",
       "path": "dist/index.mjs",
       "minified": 530,
-      "minzipped": 325,
+      "minzipped": 328,
       "bundled": 980
     },
     {
@@ -210,6 +210,13 @@
       "bundled": 473
     },
     {
+      "name": "DeprecatedTagAttrPlugin",
+      "path": "dist/index.mjs",
+      "minified": 196,
+      "minzipped": 135,
+      "bundled": 438
+    },
+    {
       "name": "useTagBase",
       "path": "dist/index.mjs",
       "minified": 186,
@@ -222,13 +229,6 @@
       "minified": 187,
       "minzipped": 134,
       "bundled": 447
-    },
-    {
-      "name": "DeprecatedTagAttrPlugin",
-      "path": "dist/index.mjs",
-      "minified": 176,
-      "minzipped": 126,
-      "bundled": 415
     },
     {
       "name": "useHead",
