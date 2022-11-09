@@ -1,7 +1,7 @@
 import { createHooks } from 'hookable'
-import type { CreateHeadOptions, Head, HeadClient, HeadEntry, HeadHooks, HeadPlugin, HeadTag, SideEffectsRecord } from '@unhead/schema'
+import type { CreateHeadOptions, Head, HeadEntry, HeadHooks, HeadPlugin, HeadTag, SideEffectsRecord, Unhead } from '@unhead/schema'
 import { setActiveHead } from './runtime/state'
-import { DedupesTagsPlugin, DeprecatedTagAttrPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
+import { DedupesTagsPlugin, DeprecatedTagAttrPlugin, PatchDomOnEntryUpdatesPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
 import { normaliseEntryTags } from './normalise'
 
 export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
@@ -11,7 +11,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   // counter for keeping unique ids of head object entries
   let entryId = 0
   const hooks = createHooks<HeadHooks>()
-  if (options.hooks)
+  if (options?.hooks)
     hooks.addHooks(options.hooks)
 
   const plugins: HeadPlugin[] = [
@@ -20,13 +20,14 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     DedupesTagsPlugin(),
     SortTagsPlugin(),
     TitleTemplatePlugin(),
+    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
   ]
   plugins.push(...(options.plugins || []))
   plugins.forEach(plugin => hooks.addHooks(plugin.hooks || {}))
 
   const triggerUpdate = () => hooks.callHook('entries:updated', head)
 
-  const head: HeadClient<T> = {
+  const head: Unhead<T> = {
     _removeQueuedSideEffect(key) {
       delete _sde[key]
     },

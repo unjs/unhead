@@ -1,5 +1,5 @@
 import { TagsWithInnerContent, createElement } from 'zhead'
-import type { DomRenderTagContext, HeadClient } from '@unhead/schema'
+import type { BeforeRenderContext, DomRenderTagContext, Unhead } from '@unhead/schema'
 import { setAttributesWithSideEffects } from './setAttributesWithSideEffects'
 
 export interface RenderDomHeadOptions {
@@ -12,16 +12,22 @@ export interface RenderDomHeadOptions {
 /**
  * Render the head tags to the DOM.
  */
-export async function renderDOMHead<T extends HeadClient<any>>(head: T, options: RenderDomHeadOptions = {}) {
+export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
   const dom: Document = options.document || window.document
 
   const tags = await head.resolveTags()
 
-  await head.hooks.callHook('dom:beforeRender', { head, tags, document: dom })
+  const context: BeforeRenderContext = { shouldRender: true, tags }
+  await head.hooks.callHook('dom:beforeRender', context)
+  // allow integrations to block to the render
+  if (!context.shouldRender)
+    return
 
-  for (const tag of tags) {
-    const renderCtx: DomRenderTagContext = { tag, document: dom, head }
+  for (const tag of context.tags) {
+    const renderCtx: DomRenderTagContext = { shouldRender: true, tag }
     await head.hooks.callHook('dom:renderTag', renderCtx)
+    if (!renderCtx.shouldRender)
+      return
 
     const entry = head.headEntries().find(e => e._i === Number(tag._e))!
 
@@ -94,12 +100,13 @@ export let domUpdatePromise: Promise<void> | null = null
 /**
  * Queue a debounced update of the DOM head.
  */
-export async function debouncedRenderDOMHead<T extends HeadClient<any>>(delayedFn: (fn: () => void) => void, head: T, options: RenderDomHeadOptions = {}) {
+export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions & { delayFn?: (fn: () => void) => void } = {}) {
   // within the debounced dom update we need to compute all the tags so that watchEffects still works
   function doDomUpdate() {
     domUpdatePromise = null
     return renderDOMHead(head, options)
   }
-
-  return domUpdatePromise = domUpdatePromise || new Promise(resolve => delayedFn(() => resolve(doDomUpdate())))
+  // we want to delay for the hydration chunking
+  const delayFn = options.delayFn || (fn => setTimeout(fn, 25))
+  return domUpdatePromise = domUpdatePromise || new Promise(resolve => delayFn(() => resolve(doDomUpdate())))
 }

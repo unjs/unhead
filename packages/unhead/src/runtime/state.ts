@@ -1,7 +1,7 @@
-import type { HeadClient } from '@unhead/schema'
+import type { Unhead } from '@unhead/schema'
 
-export let activeHead: HeadClient<any> | undefined
+export let activeHead: Unhead<any> | undefined
 
-export const setActiveHead = <T extends HeadClient> (head: T | undefined) => (activeHead = head)
+export const setActiveHead = <T extends Unhead> (head: T | undefined) => (activeHead = head)
 
-export const getActiveHead = <T extends HeadClient> () => activeHead as T
+export const getActiveHead = <T extends Unhead> () => activeHead as T

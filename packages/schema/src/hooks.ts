@@ -1,4 +1,4 @@
-import type { HeadClient, HeadEntry } from './head'
+import type { HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -12,20 +12,22 @@ export interface SSRHeadPayload {
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
-export interface DomRenderTagContext { head: HeadClient; tag: HeadTag; document: Document }
+export interface DomRenderTagContext { shouldRender: boolean; tag: HeadTag }
+export interface BeforeRenderContext { shouldRender: boolean; tags: HeadTag[] }
+export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
 
 export interface HeadHooks {
-  'init': (ctx: HeadClient<any>) => HookResult
-  'entries:updated': (ctx: HeadClient<any>) => HookResult
+  'init': (ctx: Unhead<any>) => HookResult
+  'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
   'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any> }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
-  'dom:beforeRender': (ctx: { head: HeadClient; tags: HeadTag[]; document: Document }) => HookResult
+  'dom:beforeRender': (ctx: BeforeRenderContext) => HookResult
   'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
 
   // @unhead/ssr
-  'ssr:beforeRender': (ctx: { tags: HeadTag[] }) => HookResult
-  'ssr:render': (ctx: { tags: HeadTag[]; html: SSRHeadPayload }) => HookResult
+  'ssr:beforeRender': (ctx: BeforeRenderContext) => HookResult
+  'ssr:render': (ctx: SSRRenderContext) => HookResult
 }

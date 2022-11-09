@@ -1,12 +1,21 @@
 import { ssrRenderTags } from 'zhead'
-import type { HeadClient, SSRHeadPayload } from '@unhead/schema'
+import type { BeforeRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
 
-export async function renderSSRHead<T extends {}>(ctx: HeadClient<T>) {
-  const tags = await ctx.resolveTags()
-  const beforeRenderCtx = { tags }
-  await ctx.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
+export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
+  const tags = await head.resolveTags()
+  const beforeRenderCtx: BeforeRenderContext = { shouldRender: true, tags }
+  if (!beforeRenderCtx.shouldRender) {
+    return {
+      headTags: '',
+      bodyTags: '',
+      bodyTagsOpen: '',
+      htmlAttrs: '',
+      bodyAttrs: '',
+    }
+  }
+  await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
   const html: SSRHeadPayload = ssrRenderTags(beforeRenderCtx.tags)
-  const renderCXx = { tags, html }
-  await ctx.hooks.callHook('ssr:render', renderCXx)
-  return renderCXx.html
+  const renderCtx: SSRRenderContext = { tags, html }
+  await head.hooks.callHook('ssr:render', renderCtx)
+  return renderCtx.html
 }

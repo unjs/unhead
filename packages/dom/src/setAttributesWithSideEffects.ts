@@ -1,9 +1,9 @@
-import type { HeadClient, HeadEntry, HeadTag } from '@unhead/schema'
+import type { HeadEntry, HeadTag, Unhead } from '@unhead/schema'
 
 /**
  * Set attributes on a DOM element, while adding entry side effects.
  */
-export function setAttributesWithSideEffects(head: HeadClient, $el: Element, entry: HeadEntry<any>, tag: HeadTag) {
+export function setAttributesWithSideEffects(head: Unhead, $el: Element, entry: HeadEntry<any>, tag: HeadTag) {
   const attrs = tag.props || {}
   const sdeKey = `${tag._p}:attr`
 

@@ -1,14 +1,14 @@
 import type { App, Plugin } from 'vue'
-import { getCurrentInstance, inject } from 'vue'
+import { getCurrentInstance, inject, nextTick } from 'vue'
 import { HydratesStatePlugin, createHead as createUnhead, getActiveHead } from 'unhead'
-import type { CreateHeadOptions, HeadClient, HeadPlugin, MergeHead } from '@unhead/schema'
+import type { CreateHeadOptions, HeadPlugin, MergeHead, Unhead } from '@unhead/schema'
 import type { MaybeComputedRef } from '@vueuse/shared'
 import { VueReactiveInputPlugin } from './plugin'
 import type { ReactiveHead } from './types'
 import { Vue3 } from './env'
 import { useHead } from './runtime/composables'
 
-export type VueHeadClient<T extends MergeHead> = HeadClient<MaybeComputedRef<ReactiveHead<T>>> & Plugin
+export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
 
 export const headSymbol = 'usehead'
 
@@ -16,7 +16,7 @@ export function injectHead<T extends MergeHead>() {
   return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient<T>
 }
 
-export function createHead<T extends MergeHead>(options: CreateHeadOptions = {}): VueHeadClient<T> {
+export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions, 'domDelayFn'> = {}): VueHeadClient<T> {
   const plugins: HeadPlugin[] = [
     HydratesStatePlugin(),
     VueReactiveInputPlugin(),
@@ -25,6 +25,7 @@ export function createHead<T extends MergeHead>(options: CreateHeadOptions = {})
 
   const head = createUnhead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
+    domDelayFn: nextTick,
     plugins,
   })
 

@@ -1,20 +1,16 @@
 import { describe, it } from 'vitest'
-import { createHead } from 'unhead'
-import { renderDOMHead } from '@unhead/dom'
-import { basicSchema, useDom } from '../../fixtures'
+import { useHead } from 'unhead'
+import { basicSchema } from '../../fixtures'
+import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('dom', () => {
   it('basic', async () => {
-    const head = createHead()
+    useDOMHead()
 
-    head.push(basicSchema)
+    useHead(basicSchema)
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.window.document.documentElement.outerHTML).toMatchInlineSnapshot(`
-      "<html lang=\\"en\\" dir=\\"ltr\\"><head>
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
       <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark\\">
@@ -30,7 +26,7 @@ describe('dom', () => {
   })
 
   it('boolean attributes respected', async () => {
-    const head = createHead()
+    const head = useDOMHead()
 
     head.push({
       script: [
@@ -42,12 +38,8 @@ describe('dom', () => {
       ],
     })
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.window.document.documentElement.outerHTML).toMatchInlineSnapshot(`
-      "<html><head>
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
 
       <script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script></head>
       <body>
