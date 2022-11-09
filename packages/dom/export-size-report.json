@@ -15,16 +15,16 @@
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 1968,
-      "minzipped": 840,
-      "bundled": 3662
+      "minified": 2065,
+      "minzipped": 879,
+      "bundled": 3837
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 1859,
-      "minzipped": 795,
-      "bundled": 3335
+      "minified": 1912,
+      "minzipped": 819,
+      "bundled": 3456
     },
     {
       "name": "domUpdatePromise",
