@@ -16,11 +16,11 @@ export default defineNuxtConfig({
       meta: [
         { property: 'og:title', content: 'unhead' },
         { property: 'og:description', content: 'Tiny, full-featured universal document <head> manager, for everyone.' },
-        { property: 'og:url', content: 'https://vue-schema-org.netlify.app/' },
-        { property: 'og:image', content: 'https://vue-schema-org.netlify.app/og.png' },
+        { property: 'og:url', content: 'https://unhead.harlanzw.com/' },
+        { property: 'og:image', content: 'https://unhead.harlanzw.com/og.png' },
         { name: 'twitter:title', content: 'unhead' },
         { name: 'twitter:description', content: 'Tiny, full-featured universal document <head> manager, for everyone.' },
-        { name: 'twitter:image', content: 'https://vue-schema-org.netlify.app/og.png' },
+        { name: 'twitter:image', content: 'https://unhead.harlanzw.com/og.png' },
         { name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
@@ -29,12 +29,12 @@ export default defineNuxtConfig({
         { rel: 'icon', href: '/logo-light.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:light)' },
       ],
       script: [
-        // {
-        //   'src': 'https://cdn.usefathom.com/script.js',
-        //   'data-spa': 'auto',
-        //   'data-site': 'UQADBWCI',
-        //   'defer': true,
-        // },
+        {
+          'src': 'https://cdn.usefathom.com/script.js',
+          'data-spa': 'auto',
+          'data-site': 'BRDEJWKJ',
+          'defer': true,
+        },
       ],
     },
   },

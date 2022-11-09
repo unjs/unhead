@@ -23,7 +23,7 @@ export default defineTheme({
     logo: true,
   },
   cover: {
-    src: 'https://vue-schema-org.netlify.app/og.png',
+    src: 'https://unhead.harlanzw.com/og.png',
   },
   footer: {
     credits: {
