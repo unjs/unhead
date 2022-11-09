@@ -45,7 +45,7 @@ jobs:
         uses: EndBug/add-and-commit@v4
         with:
           message: "chore: update export size report"
-          add: "packages/unhead/export-size-report.json"
+          add: "**/export-size-report.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

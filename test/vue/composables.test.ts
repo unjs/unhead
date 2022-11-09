@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead, useHtmlAttrs, useMeta, useScript } from '@unhead/vue'
+import { createHead, useHead, useHtmlAttrs, useTagMeta, useTagMetaFlat, useTagScript } from '@unhead/vue'
 
 describe('vue composables', () => {
   it('basic', async () => {
@@ -36,13 +36,18 @@ describe('vue composables', () => {
   it('shortcuts', async () => {
     const head = createHead()
 
-    useScript({
+    useTagScript({
       src: 'https://cdn.example.com/script.js',
       defer: true,
     })
 
-    useMeta({
+    useTagMeta({
       charset: 'utf-8',
+    })
+
+    const desc = ref('my description')
+    useTagMetaFlat({
+      description: desc,
     })
 
     const ctx = await renderSSRHead(head)
@@ -52,7 +57,8 @@ describe('vue composables', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
-      <script src=\\"https://cdn.example.com/script.js\\" defer=\\"\\" data-h-46d5e8=\\"\\"></script>",
+      <script src=\\"https://cdn.example.com/script.js\\" defer=\\"\\" data-h-46d5e8=\\"\\"></script>
+      <meta name=\\"description\\" content=\\"my description\\" data-h-889faf=\\"\\">",
         "htmlAttrs": "",
       }
     `)

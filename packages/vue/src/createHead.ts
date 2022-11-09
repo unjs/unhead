@@ -6,11 +6,11 @@ import type { MaybeComputedRef } from '@vueuse/shared'
 import { VueReactiveInputPlugin } from './plugin'
 import type { ReactiveHead } from './types'
 import { Vue3 } from './env'
-import { useHead } from './runtime'
+import { useHead } from './runtime/composables'
 
 export type VueHeadClient<T extends MergeHead> = HeadClient<MaybeComputedRef<ReactiveHead<T>>> & Plugin
 
-export const headSymbol = Symbol('unhead')
+export const headSymbol = 'usehead'
 
 export function injectHead<T extends MergeHead>() {
   return ((getCurrentInstance() && inject(headSymbol)) || getActiveHead()) as VueHeadClient<T>
@@ -38,7 +38,6 @@ export function createHead<T extends MergeHead>(options: CreateHeadOptions = {})
 
       // mixin support
       app.mixin({
-        // @todo load this in dynamically as useHead can be a runtime function
         created() {
           const instance = getCurrentInstance()
           if (!instance)

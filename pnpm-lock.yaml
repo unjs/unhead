@@ -92,11 +92,11 @@ importers:
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
 
   packages/schema:
     specifiers:
@@ -109,22 +109,22 @@ importers:
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
 
   packages/unhead:
     specifiers:
       '@unhead/schema': workspace:*
       hookable: ^5.4.1
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
     dependencies:
       '@unhead/schema': link:../schema
       hookable: 5.4.1
     devDependencies:
-      zhead: 1.0.0-beta.8
+      zhead: 1.0.0-beta.10
 
   packages/vue:
     specifiers:
@@ -136,7 +136,7 @@ importers:
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
-      '@vueuse/shared': 9.4.0_vue@3.2.41
+      '@vueuse/shared': 9.5.0_vue@3.2.41
       unhead: link:../unhead
     devDependencies:
       vue: 3.2.41
@@ -1181,8 +1181,8 @@ packages:
   /@vue/shared/3.2.41:
     resolution: {integrity: sha512-W9mfWLHmJhkfAmV+7gDjcHeAWALQtgGT3JErxULl0oz6R6+3ug91I7IErs93eCFhPCZPHBs4QJS7YWEV7A3sxw==}
 
-  /@vueuse/shared/9.4.0_vue@3.2.41:
-    resolution: {integrity: sha512-fTuem51KwMCnqUKkI8B57qAIMcFovtGgsCtAeqxIzH3i6nE9VYge+gVfneNHAAy7lj8twbkNfqQSygOPJTm4tQ==}
+  /@vueuse/shared/9.5.0_vue@3.2.41:
+    resolution: {integrity: sha512-HnnCWU1Vg9CVWRCcI8ohDKDRB2Sc4bTgT1XAIaoLSfVHHn+TKbrox6pd3klCSw4UDxkhDfOk8cAdcK+Z5KleCA==}
     dependencies:
       vue-demi: 0.13.11_vue@3.2.41
     transitivePeerDependencies:
@@ -1190,13 +1190,13 @@ packages:
       - vue
     dev: false
 
+  /@zhead/schema/1.0.0-beta.10:
+    resolution: {integrity: sha512-6+NFOQ8WPKZvhII8b5FZ4ik1YsF7HDFlYIcwttmjf7+fzJsb72dcA7MFx/9JPF5pQ8ovmIctqHbLHZZ0DcjQvA==}
+    dev: true
+
   /@zhead/schema/1.0.0-beta.4:
     resolution: {integrity: sha512-Jel79PmqswpS0cikt8dBjMK6I1P7sYDsaTvXBLLvLwFYqdMYIw3xnIdzREPDFZonZF37tJV6fbgPpCmF4/c6mQ==}
     dev: false
-
-  /@zhead/schema/1.0.0-beta.8:
-    resolution: {integrity: sha512-0KaQobgiQOVbz6A/DBCSOSE9X7ZVoGTPrlfPvrmZ73gw6aisFNhSbrjlQwfQQDSAHNNHfe9xmv7UGEo5CbKjSA==}
-    dev: true
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -3997,10 +3997,6 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /packrup/0.1.0:
-    resolution: {integrity: sha512-HnUl9ztHGty5ZK13WM8Q7854SWPKH/eCT+MiTO0P1qCu1Y4S5PPJ8E9MwD3cnjSr7PUPzXDnmOVJIKM043OfJQ==}
-    dev: true
-
   /parent-module/1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -5164,9 +5160,8 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zhead/1.0.0-beta.8:
-    resolution: {integrity: sha512-1nwqfZrJt/Jy8aeCZ42truCgaaKFPAHcBTLrOsz814x/7Gjj9MDjshjcgZB8+ad9RowG6qi0w7+/ImyJl+Y7Bw==}
+  /zhead/1.0.0-beta.10:
+    resolution: {integrity: sha512-s/P8qDl3afchhpICPEKptGnN5+Htvg8bnG5WNJnxDUYsGZj4fewsKTzfm7wNqlhaIZoBOwWgaVNjbHgGsnzu3A==}
     dependencies:
-      '@zhead/schema': 1.0.0-beta.8
-      packrup: 0.1.0
+      '@zhead/schema': 1.0.0-beta.10
     dev: true
