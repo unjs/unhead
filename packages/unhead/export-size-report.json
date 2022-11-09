@@ -16,16 +16,16 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7394,
-      "minzipped": 2793,
-      "bundled": 15042
+      "minified": 7396,
+      "minzipped": 2799,
+      "bundled": 15044
     },
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
       "path": "dist/index.mjs",
-      "minified": 2749,
-      "minzipped": 1163,
-      "bundled": 5372
+      "minified": 2751,
+      "minzipped": 1165,
+      "bundled": 5374
     },
     {
       "name": "useServerTagMetaFlat",
