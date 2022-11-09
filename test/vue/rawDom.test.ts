@@ -8,7 +8,7 @@ describe('vue dom', () => {
   test('titleTemplate', async () => {
     const dom = useDom()
 
-    const head = createHead({ document: dom.window.document })
+    const head = createHead()
 
     useHead({
       title: 'test',
@@ -113,7 +113,7 @@ describe('vue dom', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html class=\\"post-update\\" lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\" class=\\"post-update\\"><head>
 
       <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
       <body class=\\"dark test\\">
