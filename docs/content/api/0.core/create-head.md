@@ -1,10 +1,25 @@
 ---
 title: createHead
+description: How to create your unhead instance.
+icon: noto:hammer
 ---
 
-- **Type:** `(options: CreateSchemaOrgInput) => SchemaOrgClient`
+**Type:**
 
-  Create the Schema.org manager instance.
+```ts
+export function createHead<T extends {} = Head>
+    (options: CreateHeadOptions = {}) : Unhead
+```
+
+The `createHead` function is used to create an instance of unhead.
+
+## Example
+
+```ts
+import { createHead } from '@unhead/vue'
+
+createHead()
+```
 
 ## Types
 
