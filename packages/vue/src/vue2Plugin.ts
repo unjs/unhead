@@ -17,7 +17,7 @@ export const HeadVuePlugin: Plugin = function (_Vue) {
 
           return {
             ...origProvideResult,
-            [headSymbol as symbol]: options.head,
+            [headSymbol]: options.head,
           }
         }
 
