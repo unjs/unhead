@@ -1,12 +1,12 @@
 import Vue from 'vue'
 import App from './App.vue'
-import { createHead, UnheadVue2Plugin } from "@unhead/vue"
+import { createHead, Vue2ProvideUnheadPlugin } from "@unhead/vue"
 
 
 Vue.config.productionTip = false
 
 const head = createHead()
-Vue.use(UnheadVue2Plugin, head)
+Vue.use(Vue2ProvideUnheadPlugin, head)
 Vue.use(head)
 
 new Vue({
