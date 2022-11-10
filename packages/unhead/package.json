@@ -35,6 +35,7 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
+    "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "hookable": "^5.4.1"
   },
