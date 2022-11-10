@@ -52,7 +52,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
+      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -87,7 +87,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\" class=\\"pre-update\\" data-something-to-remove=\\"test\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
+      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -115,7 +115,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\" class=\\"post-update\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
+      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
       <body class=\\"dark test\\">
 
       <div>
@@ -140,7 +140,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
+      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -185,7 +185,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\"></head>
+      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -226,7 +226,7 @@ describe('vue dom', () => {
 
 
 
-      <script data-h-702290=\\"\\">console.log('hello')</script></body></html>"
+      <script data-h-d36dac=\\"\\">console.log('hello')</script></body></html>"
     `)
 
     entry.dispose()
@@ -266,7 +266,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script data-h-702290=\\"\\">console.log('hello')</script></head>
+      <script data-h-d36dac=\\"\\">console.log('hello')</script></head>
       <body>
 
       <div>
@@ -290,7 +290,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script data-h-47990b=\\"\\">console.log('hello world')</script></head>
+      <script data-h-2e1bca=\\"\\">console.log('hello world')</script></head>
       <body>
 
       <div>

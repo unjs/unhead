@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useHead } from 'unhead'
-import {useDelayedSerializedDom, useDOMHead} from "./util";
+import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('dom position', () => {
   it('body', async () => {
@@ -11,8 +11,8 @@ describe('dom position', () => {
         {
           innerHTML: 'Hello World',
           body: true,
-        }
-      ]
+        },
+      ],
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`

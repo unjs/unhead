@@ -45,7 +45,7 @@ describe('vue ssr', () => {
       <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf3=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-3f7248=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-321fb4=\\"\\">
-      <script src=\\"foo.js\\" data-h-33493a=\\"\\"></script>"
+      <script src=\\"foo.js\\" data-h-ed7ece=\\"\\"></script>"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')
@@ -83,7 +83,7 @@ describe('vue ssr', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script data-h-c9ee4d=\\"\\">console.log(\'hi\')</script>"',
+      '"<script data-h-2abb7d=\\"\\">console.log(\'hi\')</script>"',
     )
   })
 
@@ -130,8 +130,8 @@ describe('vue ssr', () => {
 
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
-      "<link href=\\"/\\" data-h-deed27=\\"\\">
-      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\" data-h-6f3633=\\"\\">"
+      "<link href=\\"/\\" data-h-877ffb=\\"\\">
+      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\" data-h-ce747c=\\"\\">"
     `,
     )
   })

@@ -57,7 +57,7 @@ describe('vue composables', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
-      <script src=\\"https://cdn.example.com/script.js\\" defer=\\"\\" data-h-46d5e8=\\"\\"></script>
+      <script src=\\"https://cdn.example.com/script.js\\" defer=\\"\\" data-h-71dd33=\\"\\"></script>
       <meta name=\\"description\\" content=\\"my description\\" data-h-889faf=\\"\\">",
         "htmlAttrs": "",
       }

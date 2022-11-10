@@ -25,8 +25,8 @@ describe('vue ssr', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\" data-h-207e30=\\"\\">
-      <script src=\\"https://cdn.example.com/script.js\\" data-h-4bccad=\\"\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-533738=\\"\\">",
+      <script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script>
+      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\">",
         "htmlAttrs": " lang=\\"de\\"",
       }
     `)
@@ -68,10 +68,10 @@ describe('vue ssr', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>hello</title>
-      <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-19f4e5=\\"\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-21080c=\\"\\">
-      <script src=\\"foo.js\\" data-h-33493a=\\"\\"></script>"
+      <script src=\\"foo.js\\" data-h-ed7ece=\\"\\"></script>
+      <meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf=\\"\\">"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')
@@ -89,7 +89,7 @@ describe('vue ssr', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script data-h-c9ee4d=\\"\\">console.log(\'hi\')</script>"',
+      '"<script data-h-2abb7d=\\"\\">console.log(\'hi\')</script>"',
     )
   })
 
@@ -138,8 +138,8 @@ describe('vue ssr', () => {
 
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
-      "<link href=\\"/\\" data-h-deed27=\\"\\">
-      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\" data-h-6f3633=\\"\\">"
+      "<link href=\\"/\\" data-h-877ffb=\\"\\">
+      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\" data-h-ce747c=\\"\\">"
     `,
     )
   })
