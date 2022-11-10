@@ -52,6 +52,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       Object.entries(tag.props).forEach(([k, value]) => {
         value = String(value)
         const attrSdeKey = `attr:${k}`
+
         // class attributes have their own side effects to allow for merging
         if (k === 'class') {
           for (const c of value.split(' ')) {

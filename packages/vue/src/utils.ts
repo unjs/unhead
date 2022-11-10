@@ -13,8 +13,8 @@ export function resolveUnrefHeadInput(ref: any): any {
   if (typeof root === 'object') {
     return Object.fromEntries(
       Object.entries(root).map(([key, value]) => {
-        // title template must stay a function, we support a ref'd string though
-        if (key === 'titleTemplate')
+        // title template and raw dom events should stay function, we support a ref'd string though
+        if (key === 'titleTemplate' || key.startsWith('on'))
           return [key, unref(value)]
         return [key, resolveUnrefHeadInput(value)]
       }),

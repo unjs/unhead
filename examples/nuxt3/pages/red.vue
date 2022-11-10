@@ -10,6 +10,15 @@ useHead({
   },
   title: 'red',
 })
+
+useHead({
+  script: [
+    {
+      src: 'https://example.com/script.js',
+      onload: (e) => console.log('script loaded', e),
+    }
+  ],
+}, { mode: 'client' })
 </script>
 
 <template>

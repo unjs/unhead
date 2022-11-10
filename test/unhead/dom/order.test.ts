@@ -9,7 +9,7 @@ describe('dom order', () => {
     let firstTagRendered: HeadTag | null = null
     await createHead({
       hooks: {
-        'dom:renderTag': (ctx) => {
+        'dom:beforeRenderTag': (ctx) => {
           firstTagRendered = firstTagRendered || ctx.tag
         },
       },

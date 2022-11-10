@@ -1,4 +1,4 @@
-import type { DataKeys, DefinedValueOrEmptyObject, Merge, MergeHead, Stringable, Base as _Base, BodyAttributes as _BodyAttributes, HtmlAttributes as _HtmlAttributes, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style } from '@zhead/schema'
+import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from '@zhead/schema'
 import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties } from './tags'
 
 export type Never<T> = {
@@ -21,7 +21,7 @@ export interface SchemaAugmentations extends MergeHead {
 
 export type MaybeArray<T> = T | T[]
 
-export type BaseBodyAttr = _BodyAttributes
+export type BaseBodyAttr = BaseBodyAttributes
 export type BaseHtmlAttr = _HtmlAttributes
 
 interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
@@ -55,16 +55,20 @@ interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
+export type MaybeFunctionEntries<T> = {
+  [key in keyof T]?: T[key] | ((e: Event) => void)
+}
+
 export type Title = string | null
 export type TitleTemplate = string | null | ((title?: string) => string | null)
 export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = {}> = _Link & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = {}> = LinkBase & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
 export type Meta<E extends EntryAugmentation = {}> = BaseMeta & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
 export type Style<E extends EntryAugmentation = {}> = _Style & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = {}> = _Script & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = {}> = ScriptBase & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
 export type Noscript<E extends EntryAugmentation = {}> = _Noscript & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
 export type HtmlAttributes<E extends EntryAugmentation = {}> = HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = {}> = BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = {}> = BodyAttr & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface Head<E extends MergeHead = SchemaAugmentations> {
   /**

@@ -48,7 +48,7 @@
     "@types/fs-extra": "^9.0.13",
     "@types/jsdom": "^20.0.1",
     "@vitest/ui": "^0.25.1",
-    "@vue/server-renderer": "^3.2.42",
+    "@vue/server-renderer": "^3.2.44",
     "bumpp": "^8.2.1",
     "eslint": "^8.27.0",
     "fs-extra": "^10.1.0",
@@ -57,10 +57,13 @@
     "unbuild": "^0.9.4",
     "utility-types": "^3.10.0",
     "vitest": "^0.25.1",
-    "vue": "^3.2.42"
+    "vue": "^3.2.44"
+  },
+  "resolutions": {
+    "vue": "^3.2.44"
   },
   "dependencies": {
-    "@zhead/schema": "1.0.0-beta.4",
+    "@zhead/schema": "1.0.0-beta.11",
     "unplugin-auto-import": "^0.11.4"
   }
 }
