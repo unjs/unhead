@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5009,
-      "minzipped": 1971,
-      "bundled": 10433
+      "minified": 5716,
+      "minzipped": 2221,
+      "bundled": 11924
     },
     {
       "name": "useServerTagMetaFlat",
@@ -48,6 +48,13 @@
       "minified": 1261,
       "minzipped": 524,
       "bundled": 2067
+    },
+    {
+      "name": "EventHandlersPlugin",
+      "path": "dist/index.mjs",
+      "minified": 763,
+      "minzipped": 365,
+      "bundled": 1616
     },
     {
       "name": "SortTagsPlugin",
