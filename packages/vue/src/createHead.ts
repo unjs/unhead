@@ -25,7 +25,8 @@ export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions,
 
   const head = createUnhead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
-    domDelayFn: nextTick,
+    // arbitrary delay the dom update for batch updates
+    domDelayFn: fn => setTimeout(() => nextTick(() => fn()), 25),
     plugins,
   })
 
