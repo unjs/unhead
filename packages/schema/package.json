@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema",
   "type": "module",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "packageManager": "pnpm@7.14.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
