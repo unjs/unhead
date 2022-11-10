@@ -16,6 +16,11 @@ describe('vue ssr', () => {
       htmlAttrs: {
         lang,
       },
+      link: [
+        {
+          key: 'test'
+        }
+      ]
     })
 
     const ctx = await renderSSRHead(head)

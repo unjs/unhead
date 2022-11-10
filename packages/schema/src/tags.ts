@@ -2,7 +2,7 @@ import type { HeadTag as BaseHeadTag } from '@zhead/schema'
 
 export interface ResolvesDuplicates {
   /**
-   * By default, tags which share the same unique key `name, `property` are de-duped. To allow duplicates
+   * By default, tags which share the same unique key `name`, `property` are de-duped. To allow duplicates
    * to be made you can provide a unique key for each entry.
    */
   key?: string
