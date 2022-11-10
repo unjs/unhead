@@ -150,6 +150,6 @@ export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, opt
     return renderDOMHead(head, options)
   }
   // we want to delay for the hydration chunking
-  const delayFn = options.delayFn || (fn => setTimeout(fn, 25))
+  const delayFn = options.delayFn || (fn => setTimeout(fn, 10))
   return domUpdatePromise = domUpdatePromise || new Promise(resolve => delayFn(() => resolve(doDomUpdate())))
 }
