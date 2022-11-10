@@ -3,10 +3,10 @@ import { getCurrentInstance, inject, nextTick } from 'vue'
 import { HydratesStatePlugin, createHead as createUnhead, getActiveHead } from 'unhead'
 import type { CreateHeadOptions, HeadPlugin, MergeHead, Unhead } from '@unhead/schema'
 import type { MaybeComputedRef } from '@vueuse/shared'
-import { VueReactiveInputPlugin } from './plugin'
 import type { ReactiveHead } from './types'
 import { Vue3 } from './env'
 import { useHead } from './runtime/composables'
+import { VueReactiveUseHeadPlugin } from '.'
 
 export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
 
@@ -19,45 +19,48 @@ export function injectHead<T extends MergeHead>() {
 export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions, 'domDelayFn'> = {}): VueHeadClient<T> {
   const plugins: HeadPlugin[] = [
     HydratesStatePlugin(),
-    VueReactiveInputPlugin(),
+    VueReactiveUseHeadPlugin(),
     ...(options?.plugins || []),
   ]
 
   const head = createUnhead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
     // arbitrary delay the dom update for batch updates
-    domDelayFn: fn => setTimeout(() => nextTick(() => fn()), 25),
+    domDelayFn: fn => setTimeout(() => nextTick(() => fn()), 10),
     plugins,
-  })
+  }) as VueHeadClient<T>
 
-  const vuePlugin: Plugin = {
-    install(app: App) {
-      // vue 3 only
-      if (Vue3)
-        app.config.globalProperties.$head = head
-
+  head.install = (app: App) => {
+    // vue 3 only
+    if (Vue3) {
+      app.config.globalProperties.$unhead = head
       app.provide(headSymbol, head)
+    }
+    else {
+      // @ts-expect-error vue2
+      app.options.$unhead = head
+    }
 
-      // mixin support
-      app.mixin({
-        created() {
-          const instance = getCurrentInstance()
-          if (!instance)
-            return
+    // options API support
+    app.mixin({
+      created() {
+        const instance = getCurrentInstance()
+        if (!instance)
+          return
 
-          const options = instance.type
-          if (!options || !('head' in options))
-            return
+        // @ts-expect-error vue mismatch
+        const options = Vue3 ? instance.type : instance.proxy.$options
+        if (!options || !('head' in options))
+          return
 
-          const source = typeof options.head === 'function'
-            ? () => options.head()
-            : options.head
+        const source = typeof options.head === 'function'
+          ? () => options.head()
+          : options.head
 
-          useHead(source)
-        },
-      })
-    },
+        useHead(source)
+      },
+    })
   }
 
-  return { ...vuePlugin, ...head }
+  return head
 }

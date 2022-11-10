@@ -1,7 +1,7 @@
 import { defineHeadPlugin } from 'unhead'
-import { resolveUnrefHeadInput } from '../utils'
+import { resolveUnrefHeadInput } from './utils'
 
-export const VueReactiveInputPlugin = () => {
+export const VueReactiveUseHeadPlugin = () => {
   return defineHeadPlugin({
     hooks: {
       'entries:resolve': function (ctx) {
