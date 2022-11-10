@@ -1,4 +1,4 @@
-import { TagsWithInnerContent, createElement } from 'zhead'
+import { TagsWithInnerContent } from 'zhead'
 import type { BeforeRenderContext, DomRenderTagContext, HeadEntry, HeadTag, Unhead } from '@unhead/schema'
 
 export interface RenderDomHeadOptions {
@@ -35,7 +35,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     if (tag.tag === 'title' && tag.children) {
       // we don't handle title side effects
       dom.title = tag.children
-      return
+      return dom.head.querySelector('title')
     }
 
     const markSideEffect = (key: string, fn: () => void) => {
@@ -71,14 +71,20 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         if ($el.getAttribute(k) !== value)
           $el.setAttribute(k, value)
       })
+      // @todo test side effects?
+      if (TagsWithInnerContent.includes(tag.tag))
+        $el.innerHTML = tag.children || ''
     }
 
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      setAttrs(dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'])
-      return
+      const $el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
+      setAttrs($el)
+      return $el
     }
 
-    let $newEl = createElement(tag, dom)
+    let $newEl: Element = dom.createElement(tag.tag)
+    setAttrs($newEl)
+
     let $previousEl: Element | undefined
     // optimised scan of children
     for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
@@ -88,22 +94,18 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       }
     }
 
+    // don't render empty tags
+    // @todo do some more testing around this
+    if ($newEl.attributes.length === 0 && !$newEl.innerHTML) {
+      $previousEl?.remove()
+      return
+    }
+
     // updating an existing tag
     if ($previousEl) {
       markSideEffect('el', () => $previousEl?.remove())
-
-      // @todo test around empty tags
-      if (Object.keys(tag.props).length === 0) {
-        $previousEl.remove()
-        return
-      }
-      if ($newEl.isEqualNode($previousEl))
-        return
-
       setAttrs($previousEl)
-      if (TagsWithInnerContent.includes(tag.tag))
-        $previousEl.innerHTML = tag.children || ''
-      return
+      return $previousEl
     }
 
     switch (tag.tagPosition) {
@@ -120,15 +122,17 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     markSideEffect('el', () => $newEl?.remove())
+    return $newEl
   }
 
   for (const tag of ctx.tags) {
-    const renderCtx: DomRenderTagContext = { shouldRender: true, tag }
-    await head.hooks.callHook('dom:renderTag', renderCtx)
+    const entry = head.headEntries().find(e => e._i === Number(tag._e))!
+    const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects }
+    await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
     if (!renderCtx.shouldRender)
       continue
-
-    renderTag(tag, head.headEntries().find(e => e._i === Number(tag._e))!)
+    renderCtx.$el = renderTag(renderCtx.tag, renderCtx.entry)
+    await head.hooks.callHook('dom:renderTag', renderCtx)
   }
 
   // clear all side effects still pending
