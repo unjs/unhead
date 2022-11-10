@@ -16,8 +16,7 @@ export const HydratesStatePlugin = () => {
           return
 
         // _s is the hydrate state key, it's a light-weight hash which may have conflicts
-        const hasChildren = tag.children && tag.children.length > 0
-        tag._s = `data-h-${hashCode(tag._d || (tag.tag + (hasChildren ? tag.children : JSON.stringify(tag.props))))}`
+        tag._s = `data-h-${hashCode(tag._d || (JSON.stringify({ tag: tag.tag, props: tag.props, children: tag.children })))}`
         tag.props[tag._s] = ''
       },
     },
