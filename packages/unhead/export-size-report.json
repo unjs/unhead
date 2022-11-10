@@ -2,6 +2,7 @@
   "meta": {
     "name": "unhead",
     "dependencies": [
+      "@unhead/dom",
       "@unhead/schema",
       "hookable",
       "zhead"
@@ -16,16 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7396,
-      "minzipped": 2799,
-      "bundled": 15044
-    },
-    {
-      "name": "PatchDomOnEntryUpdatesPlugin",
-      "path": "dist/index.mjs",
-      "minified": 2751,
-      "minzipped": 1165,
-      "bundled": 5374
+      "minified": 5009,
+      "minzipped": 1971,
+      "bundled": 10433
     },
     {
       "name": "useServerTagMetaFlat",
@@ -44,9 +38,9 @@
     {
       "name": "DedupesTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1212,
-      "minzipped": 615,
-      "bundled": 2716
+      "minified": 1249,
+      "minzipped": 636,
+      "bundled": 2792
     },
     {
       "name": "normaliseEntryTags",
@@ -65,9 +59,9 @@
     {
       "name": "HydratesStatePlugin",
       "path": "dist/index.mjs",
-      "minified": 530,
-      "minzipped": 328,
-      "bundled": 980
+      "minified": 500,
+      "minzipped": 309,
+      "bundled": 919
     },
     {
       "name": "TitleTemplatePlugin",
@@ -75,6 +69,13 @@
       "minified": 530,
       "minzipped": 261,
       "bundled": 1391
+    },
+    {
+      "name": "PatchDomOnEntryUpdatesPlugin",
+      "path": "dist/index.mjs",
+      "minified": 384,
+      "minzipped": 216,
+      "bundled": 757
     },
     {
       "name": "useServerTagScript",
