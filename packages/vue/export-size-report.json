@@ -18,219 +18,219 @@
     {
       "name": "useServerTagMeta",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2104,
-      "bundled": 11500
-    },
-    {
-      "name": "useHead",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2102,
-      "bundled": 11491
-    },
-    {
-      "name": "asArray",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2101,
-      "bundled": 11491
-    },
-    {
-      "name": "resolveUnrefHeadInput",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2101,
-      "bundled": 11505
-    },
-    {
-      "name": "useHtmlAttrs",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2101,
-      "bundled": 11496
-    },
-    {
-      "name": "useServerTagBase",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2101,
-      "bundled": 11500
-    },
-    {
-      "name": "headSymbol",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2100,
-      "bundled": 11494
-    },
-    {
-      "name": "useServerTagLink",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2100,
-      "bundled": 11500
-    },
-    {
-      "name": "createHead",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11494
-    },
-    {
-      "name": "useServerBodyAttrs",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11502
-    },
-    {
-      "name": "useServerHead",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11497
-    },
-    {
-      "name": "useServerHtmlAttrs",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11502
-    },
-    {
-      "name": "useTagBase",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11494
-    },
-    {
-      "name": "useTagLink",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11494
-    },
-    {
-      "name": "useTagScript",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11496
-    },
-    {
-      "name": "useTagStyle",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2098,
-      "bundled": 11495
-    },
-    {
-      "name": "VueReactiveUseHeadPlugin",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2097,
-      "bundled": 11508
-    },
-    {
-      "name": "useBodyAttrs",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2097,
-      "bundled": 11496
-    },
-    {
-      "name": "useServerTagMetaFlat",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2097,
-      "bundled": 11504
-    },
-    {
-      "name": "useServerTagNoscript",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2097,
-      "bundled": 11504
+      "minified": 5541,
+      "minzipped": 2119,
+      "bundled": 11524
     },
     {
       "name": "useServerTagScript",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2096,
-      "bundled": 11502
-    },
-    {
-      "name": "useTagMeta",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2096,
-      "bundled": 11494
-    },
-    {
-      "name": "useTagNoscript",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2096,
-      "bundled": 11498
-    },
-    {
-      "name": "injectHead",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2095,
-      "bundled": 11494
+      "minified": 5541,
+      "minzipped": 2118,
+      "bundled": 11526
     },
     {
       "name": "useServerTagStyle",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2095,
-      "bundled": 11501
+      "minified": 5541,
+      "minzipped": 2117,
+      "bundled": 11525
     },
     {
-      "name": "useServerTagTitle",
+      "name": "useServerHtmlAttrs",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2095,
-      "bundled": 11501
+      "minified": 5541,
+      "minzipped": 2115,
+      "bundled": 11526
+    },
+    {
+      "name": "useServerTagNoscript",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2115,
+      "bundled": 11528
+    },
+    {
+      "name": "useServerTagBase",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2114,
+      "bundled": 11524
+    },
+    {
+      "name": "useServerTagMetaFlat",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2114,
+      "bundled": 11528
+    },
+    {
+      "name": "useBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2113,
+      "bundled": 11520
+    },
+    {
+      "name": "useHtmlAttrs",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11520
+    },
+    {
+      "name": "useTagBase",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11518
+    },
+    {
+      "name": "useTagLink",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11518
+    },
+    {
+      "name": "useTagMeta",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11518
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2095,
-      "bundled": 11498
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11522
+    },
+    {
+      "name": "useTagScript",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11520
+    },
+    {
+      "name": "useTagStyle",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2112,
+      "bundled": 11519
+    },
+    {
+      "name": "injectHead",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2111,
+      "bundled": 11518
+    },
+    {
+      "name": "useTagNoscript",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2111,
+      "bundled": 11522
     },
     {
       "name": "useTitleTemplate",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2095,
-      "bundled": 11500
-    },
-    {
-      "name": "useServerTitleTemplate",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2094,
-      "bundled": 11506
-    },
-    {
-      "name": "useTagTitle",
-      "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2092,
-      "bundled": 11495
+      "minified": 5541,
+      "minzipped": 2111,
+      "bundled": 11524
     },
     {
       "name": "Vue2ProvideUnheadPlugin",
       "path": "dist/index.mjs",
-      "minified": 5521,
-      "minzipped": 2091,
-      "bundled": 11507
+      "minified": 5541,
+      "minzipped": 2110,
+      "bundled": 11531
+    },
+    {
+      "name": "useTagTitle",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2110,
+      "bundled": 11519
+    },
+    {
+      "name": "useServerTagTitle",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2109,
+      "bundled": 11525
+    },
+    {
+      "name": "useServerTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2109,
+      "bundled": 11530
+    },
+    {
+      "name": "headSymbol",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2108,
+      "bundled": 11518
+    },
+    {
+      "name": "asArray",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2107,
+      "bundled": 11515
+    },
+    {
+      "name": "resolveUnrefHeadInput",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2107,
+      "bundled": 11529
+    },
+    {
+      "name": "useHead",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2107,
+      "bundled": 11515
+    },
+    {
+      "name": "useServerHead",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2107,
+      "bundled": 11521
+    },
+    {
+      "name": "VueReactiveUseHeadPlugin",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2105,
+      "bundled": 11532
+    },
+    {
+      "name": "useServerBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2105,
+      "bundled": 11526
+    },
+    {
+      "name": "useServerTagLink",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2103,
+      "bundled": 11524
+    },
+    {
+      "name": "createHead",
+      "path": "dist/index.mjs",
+      "minified": 5541,
+      "minzipped": 2100,
+      "bundled": 11518
     }
   ]
 }
