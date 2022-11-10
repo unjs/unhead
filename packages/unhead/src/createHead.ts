@@ -28,12 +28,10 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   const triggerUpdate = () => hooks.callHook('entries:updated', head)
 
   const head: Unhead<T> = {
-    _removeQueuedSideEffect(key) {
-      delete _sde[key]
-    },
-    _flushQueuedSideEffects() {
-      Object.values(_sde).forEach(fn => fn())
+    _popSideEffectQueue() {
+      const sde = { ..._sde }
       _sde = {}
+      return sde
     },
     headEntries() {
       return entries

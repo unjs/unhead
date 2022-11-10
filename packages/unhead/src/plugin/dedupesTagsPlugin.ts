@@ -60,10 +60,6 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
               }
               tag._d = dedupeKey
             }
-            else {
-              // insert the tag change in the original spot
-              tag._p = dupedTag._p
-            }
             // if the new tag does not have any props we're trying to remove the dupedTag
             if (Object.keys(tag.props).length === 0 && !tag.children) {
               delete deduping[dedupeKey]

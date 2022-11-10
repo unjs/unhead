@@ -1,5 +1,5 @@
 import type { RenderDomHeadOptions } from '@unhead/dom'
-import { defineHeadPlugin } from '../defineHeadPlugin'
+import { defineHeadPlugin } from '..'
 
 interface TriggerDomPatchingOnUpdatesPluginOptions extends RenderDomHeadOptions {
   delayFn?: (fn: () => void) => void

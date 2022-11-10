@@ -88,10 +88,6 @@ export interface Unhead<Input extends {} = Head> {
   /**
    * @internal
    */
-  _removeQueuedSideEffect: (key: string) => void
-  /**
-   * @internal
-   */
-  _flushQueuedSideEffects: () => void
+  _popSideEffectQueue: () => SideEffectsRecord
 }
 
