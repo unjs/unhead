@@ -100,7 +100,7 @@ importers:
 
   examples/vue-2:
     specifiers:
-      '@unhead/vue': workspace:*
+      '@unhead/vue': link:../../packages/vue
       '@vue/cli-plugin-babel': ~5.0.0
       '@vue/cli-service': ~5.0.0
       core-js: ^3.8.3
