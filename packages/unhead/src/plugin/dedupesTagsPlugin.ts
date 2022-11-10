@@ -40,8 +40,13 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
               const oldProps = dupedTag.props
               // apply oldProps to current props
               ;['class', 'style'].forEach((key) => {
-                if (tag.props[key] && oldProps[key])
+                if (tag.props[key] && oldProps[key]) {
+                  // ensure style merge doesn't result in invalid css
+                  if (key === 'style' && !oldProps[key].endsWith(';'))
+                    oldProps[key] += ';'
+
                   tag.props[key] = `${oldProps[key]} ${tag.props[key]}`
+                }
               })
               deduping[dedupeKey].props = {
                 ...oldProps,
