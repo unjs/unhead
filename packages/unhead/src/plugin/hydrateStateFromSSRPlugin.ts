@@ -1,5 +1,6 @@
 import { HasElementTags } from 'zhead'
-import { defineHeadPlugin } from '..'
+import { defineHeadPlugin, getActiveHead } from '..'
+import { IsBrowser } from '../env'
 
 export function hashCode(s: string) {
   let h = 9
@@ -24,7 +25,8 @@ export const HydrateStateFromSSRPlugin = () => {
         // client side should not be here if the entry is server mode (entry should be ignored)
         // if a user provides a key we will also add the hash as a way to ensure hydration works, good for
         // when SSR / CSR does not match
-        if (entry._m === 'server' || tag.key)
+        const isBrowser = IsBrowser || getActiveHead()?.resolvedOptions?.document
+        if (!isBrowser && (entry._m === 'server' || tag.key))
           tag.props[tag._s] = ''
       },
     },

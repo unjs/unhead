@@ -88,7 +88,7 @@ describe('dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta name=\\"description\\" content=\\"desc\\" data-h-470da9=\\"\\"></head>
+      <meta name=\\"description\\" content=\\"desc\\"></head>
       <body>
 
       <div>
