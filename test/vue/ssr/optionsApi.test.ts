@@ -28,8 +28,8 @@ describe('vue ssr options api', () => {
       `
       "<title>hello</title>
       <meta name=\\"description\\" content=\\"desc\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-19f4e5=\\"\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-21080c=\\"\\">
       <script src=\\"foo.js\\"></script>"
     `,
     )

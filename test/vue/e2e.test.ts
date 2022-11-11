@@ -207,8 +207,8 @@ describe('vue e2e', () => {
       <meta name=\\"description\\" content=\\"My amazing site\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">",
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">",
         "htmlAttrs": " class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"",
       }
     `)
@@ -234,8 +234,8 @@ describe('vue e2e', () => {
       <meta name=\\"description\\" content=\\"My amazing site\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       </head>
       <body class=\\"test\\">
 
@@ -282,8 +282,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <script src=\\"https://my-app.com/home.js\\"></script><meta property=\\"og:title\\" content=\\"Home\\"><meta name=\\"description\\" content=\\"This is the home page\\"></head>
       <body class=\\"test\\">
 
@@ -308,8 +308,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <meta name=\\"description\\" content=\\"My amazing site\\"><meta property=\\"og:title\\" content=\\"My amazing site\\"></head>
       <body class=\\"test\\">
 
@@ -358,8 +358,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <script src=\\"https://my-app.com/about.js\\"></script><meta property=\\"og:title\\" content=\\"About\\"><meta name=\\"description\\" content=\\"This is the about page\\"></head>
       <body class=\\"test overflow-hidden\\">
 
@@ -383,8 +383,8 @@ describe('vue e2e', () => {
 
 
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-3f17e7=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-56c382=\\"\\">
       <meta name=\\"description\\" content=\\"My amazing site\\"><meta property=\\"og:title\\" content=\\"My amazing site\\"></head>
       <body class=\\"test\\">
 

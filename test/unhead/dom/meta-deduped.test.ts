@@ -30,7 +30,7 @@ describe('dom meta-deduped', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\" data-h-3f17e7=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\" data-h-56c382=\\"\\"></head>
       <body>
 
       <div>
@@ -79,7 +79,7 @@ describe('dom meta-deduped', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/3.jpg\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\" data-h-3f17e7=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\" data-h-56c382=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/3.jpg\\" data-h-113dda=\\"\\"></head>
       <body>
 
       <div>
