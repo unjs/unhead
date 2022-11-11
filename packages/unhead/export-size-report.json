@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5793,
-      "minzipped": 2215,
-      "bundled": 12131
+      "minified": 6269,
+      "minzipped": 2372,
+      "bundled": 12988
     },
     {
       "name": "useServerTagMetaFlat",
@@ -38,9 +38,9 @@
     {
       "name": "DedupesTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1267,
-      "minzipped": 622,
-      "bundled": 2801
+      "minified": 1476,
+      "minzipped": 706,
+      "bundled": 3038
     },
     {
       "name": "normaliseEntryTags",
@@ -52,9 +52,9 @@
     {
       "name": "EventHandlersPlugin",
       "path": "dist/index.mjs",
-      "minified": 763,
-      "minzipped": 365,
-      "bundled": 1616
+      "minified": 757,
+      "minzipped": 364,
+      "bundled": 1610
     },
     {
       "name": "SortTagsPlugin",
@@ -64,18 +64,18 @@
       "bundled": 1463
     },
     {
-      "name": "HydrateStateFromSSRPlugin",
-      "path": "dist/index.mjs",
-      "minified": 532,
-      "minzipped": 330,
-      "bundled": 1048
-    },
-    {
       "name": "TitleTemplatePlugin",
       "path": "dist/index.mjs",
       "minified": 530,
       "minzipped": 261,
       "bundled": 1391
+    },
+    {
+      "name": "ProvideTagHashPlugin",
+      "path": "dist/index.mjs",
+      "minified": 335,
+      "minzipped": 217,
+      "bundled": 767
     },
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
@@ -230,13 +230,6 @@
       "minified": 229,
       "minzipped": 154,
       "bundled": 541
-    },
-    {
-      "name": "hashCode",
-      "path": "dist/index.mjs",
-      "minified": 183,
-      "minzipped": 139,
-      "bundled": 285
     },
     {
       "name": "DeprecatedTagAttrPlugin",
