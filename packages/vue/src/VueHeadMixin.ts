@@ -1,5 +1,5 @@
-import { useHead } from '@unhead/vue'
 import { getCurrentInstance } from 'vue'
+import { useHead } from '.'
 
 export const VueHeadMixin = {
   created() {
