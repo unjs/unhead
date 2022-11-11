@@ -24,7 +24,7 @@ describe('tag priority', () => {
       [
         {
           "_e": 1,
-          "_p": 256,
+          "_p": 1024,
           "props": {
             "src": "/very-important-script.js",
           },

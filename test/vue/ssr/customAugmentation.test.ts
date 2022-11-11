@@ -4,7 +4,7 @@ import type { MergeHead } from '@unhead/schema'
 import { createHead, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 
-describe('custom augmentation', () => {
+describe('vue ssr custom augmentation', () => {
   test('link auto-completion', async () => {
     interface CustomHead extends MergeHead {
       link: {
@@ -38,7 +38,7 @@ describe('custom augmentation', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title></title>
-      <link data-test=\\"test\\" href=\\"link-one\\" CUSTOM_FIELD=\\"10\\" data-h-5ce464=\\"\\">"
+      <link data-test=\\"test\\" href=\\"link-one\\" CUSTOM_FIELD=\\"10\\">"
     `,
     )
   })

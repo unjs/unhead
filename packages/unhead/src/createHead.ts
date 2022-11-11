@@ -1,5 +1,5 @@
 import { createHooks } from 'hookable'
-import type { CreateHeadOptions, Head, HeadEntry, HeadHooks, HeadPlugin, HeadTag, SideEffectsRecord, Unhead } from '@unhead/schema'
+import type { CreateHeadOptions, Head, HeadEntry, HeadHooks, HeadTag, SideEffectsRecord, Unhead } from '@unhead/schema'
 import { setActiveHead } from './runtime/state'
 import { DedupesTagsPlugin, DeprecatedTagAttrPlugin, EventHandlersPlugin, PatchDomOnEntryUpdatesPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
 import { normaliseEntryTags } from './normalise'
@@ -9,12 +9,12 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   // queued side effects
   let _sde: SideEffectsRecord = {}
   // counter for keeping unique ids of head object entries
-  let entryId = 0
+  let _eid = 0
   const hooks = createHooks<HeadHooks>()
   if (options?.hooks)
     hooks.addHooks(options.hooks)
 
-  const plugins: HeadPlugin[] = [
+  options.plugins = [
     // order is important
     DeprecatedTagAttrPlugin(),
     DedupesTagsPlugin(),
@@ -22,13 +22,15 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     TitleTemplatePlugin(),
     PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
     EventHandlersPlugin(),
+    ...(options?.plugins || []),
   ]
-  plugins.push(...(options.plugins || []))
-  plugins.forEach(plugin => hooks.addHooks(plugin.hooks || {}))
+  options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
 
-  const triggerUpdate = () => hooks.callHook('entries:updated', head)
+  // does the dom rendering by default
+  const triggerUpdateHook = () => hooks.callHook('entries:updated', head)
 
   const head: Unhead<T> = {
+    resolvedOptions: options,
     _popSideEffectQueue() {
       const sde = { ..._sde }
       _sde = {}
@@ -41,34 +43,40 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
       return hooks
     },
     push(input, options) {
-      const _i = entryId++
-      entries.push({
-        _i,
+      const activeEntry: HeadEntry<T> = {
+        _i: _eid++,
         input,
         _sde: {},
-        ...options,
-      })
-      triggerUpdate()
+      }
+      // if a mode is provided via options, set it
+      if (options?.mode)
+        activeEntry._m = options?.mode
+      entries.push(activeEntry)
+      triggerUpdateHook()
       const queueSideEffects = (e: HeadEntry<T>) => {
         // queue side effects
         _sde = { ..._sde, ...e._sde || {} }
         e._sde = {}
-        triggerUpdate()
+        triggerUpdateHook()
       }
       return {
         dispose() {
           entries = entries.filter((e) => {
-            if (e._i !== _i)
+            if (e._i !== activeEntry._i)
               return true
             queueSideEffects(e)
             return false
           })
         },
+        // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
           entries = entries.map((e) => {
-            if (e._i === _i) {
+            if (e._i === activeEntry._i) {
               queueSideEffects(e)
-              e.input = e._i === _i ? input : e.input
+              // bit hacky syncing
+              activeEntry.input = e.input = input
+              // assign a new entry id so we can clean up the old data
+              activeEntry._i = e._i = _eid++
             }
             return e
           })

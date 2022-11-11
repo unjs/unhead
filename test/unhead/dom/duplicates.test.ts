@@ -1,13 +1,14 @@
-import { HydratesStatePlugin, createHead } from 'unhead'
+import { HydrateStateFromSSRPlugin } from 'unhead'
 import { describe, it } from 'vitest'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
+import { useDOMHead } from './util'
 
 describe('dom', () => {
   it('basic', async () => {
-    const head = createHead({
+    const head = useDOMHead({
       plugins: [
-        HydratesStatePlugin(),
+        HydrateStateFromSSRPlugin(),
       ],
     })
 
@@ -31,7 +32,7 @@ describe('dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta name=\\"description\\" content=\\"desc\\" data-h-889faf=\\"\\"><meta name=\\"description\\" content=\\"desc 2\\" data-h-889faf1=\\"\\"></head>
+      <meta name=\\"description\\" content=\\"desc\\"><meta name=\\"description\\" content=\\"desc 2\\"></head>
       <body>
 
       <div>
@@ -44,6 +45,68 @@ describe('dom', () => {
     `)
 
     entry.dispose()
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+  it('empty dedupe', async () => {
+    const head = useDOMHead({
+      plugins: [
+        HydrateStateFromSSRPlugin(),
+      ],
+    })
+
+    head.push({
+      meta: [
+        {
+          key: 'description',
+          name: 'description',
+          content: 'desc',
+        },
+      ],
+    })
+
+    const dom = useDom()
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      <meta name=\\"description\\" content=\\"desc\\"></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+
+    head.push({
+      meta: [
+        {
+          key: 'description',
+        },
+      ],
+    })
 
     await renderDOMHead(head, { document: dom.window.document })
 

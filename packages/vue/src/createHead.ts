@@ -1,6 +1,6 @@
 import type { App, Plugin } from 'vue'
 import { getCurrentInstance, inject, nextTick } from 'vue'
-import { HydratesStatePlugin, createHead as createUnhead, getActiveHead } from 'unhead'
+import { HydrateStateFromSSRPlugin, createHead as createUnhead, getActiveHead } from 'unhead'
 import type { CreateHeadOptions, HeadPlugin, MergeHead, Unhead } from '@unhead/schema'
 import type { MaybeComputedRef } from '@vueuse/shared'
 import type { ReactiveHead } from './types'
@@ -18,7 +18,7 @@ export function injectHead<T extends MergeHead>() {
 
 export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions, 'domDelayFn'> = {}): VueHeadClient<T> {
   const plugins: HeadPlugin[] = [
-    HydratesStatePlugin(),
+    HydrateStateFromSSRPlugin(),
     VueReactiveUseHeadPlugin(),
     ...(options?.plugins || []),
   ]
