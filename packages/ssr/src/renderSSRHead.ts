@@ -2,8 +2,8 @@ import { ssrRenderTags } from 'zhead'
 import type { BeforeRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
 
 export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
-  const tags = await head.resolveTags()
-  const beforeRenderCtx: BeforeRenderContext = { shouldRender: true, tags }
+  const beforeRenderCtx: BeforeRenderContext = { shouldRender: true }
+  await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
   if (!beforeRenderCtx.shouldRender) {
     return {
       headTags: '',
@@ -13,9 +13,10 @@ export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
       bodyAttrs: '',
     }
   }
-  await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
-  const html: SSRHeadPayload = ssrRenderTags(beforeRenderCtx.tags)
-  const renderCtx: SSRRenderContext = { tags, html }
-  await head.hooks.callHook('ssr:render', renderCtx)
+  const ctx = { tags: await head.resolveTags() }
+  await head.hooks.callHook('ssr:render', ctx)
+  const html: SSRHeadPayload = ssrRenderTags(ctx.tags)
+  const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
+  await head.hooks.callHook('ssr:rendered', renderCtx)
   return renderCtx.html
 }

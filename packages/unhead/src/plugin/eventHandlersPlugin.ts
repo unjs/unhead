@@ -22,7 +22,7 @@ export const EventHandlersPlugin = () => {
 
   return defineHeadPlugin({
     hooks: {
-      'ssr:beforeRender': function (ctx) {
+      'ssr:render': function (ctx) {
         // when server-side rendering we need to strip out all event handlers that are functions
         ctx.tags = ctx.tags.map((tag) => {
           tag.props = stripEventHandlers(tag).props

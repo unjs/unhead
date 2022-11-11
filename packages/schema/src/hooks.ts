@@ -13,7 +13,7 @@ export interface SSRHeadPayload {
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
 export interface DomRenderTagContext { $el?: Element | null; shouldRender: boolean; tag: HeadTag; entry: HeadEntry<any>; queuedSideEffects: SideEffectsRecord }
-export interface BeforeRenderContext { shouldRender: boolean; tags: HeadTag[] }
+export interface BeforeRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
 
 export interface HeadHooks {
@@ -30,5 +30,6 @@ export interface HeadHooks {
 
   // @unhead/ssr
   'ssr:beforeRender': (ctx: BeforeRenderContext) => HookResult
-  'ssr:render': (ctx: SSRRenderContext) => HookResult
+  'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
+  'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }

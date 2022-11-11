@@ -1,4 +1,4 @@
-import { TagsWithInnerContent } from 'zhead'
+import { TagsWithInnerContent, tagDedupeKey } from 'zhead'
 import type {
   BeforeRenderContext,
   DomRenderTagContext,
@@ -19,14 +19,13 @@ export interface RenderDomHeadOptions {
  * Render the head tags to the DOM.
  */
 export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
-  const dom: Document = options.document || window.document
-  const tags = await head.resolveTags()
-
-  const ctx: BeforeRenderContext = { shouldRender: true, tags }
+  const ctx: BeforeRenderContext = { shouldRender: true }
   await head.hooks.callHook('dom:beforeRender', ctx)
   // allow integrations to block to the render
   if (!ctx.shouldRender)
     return
+
+  const dom: Document = options.document || window.document
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
   // run queued side effects immediately
@@ -140,7 +139,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     return $newEl
   }
 
-  for (const tag of ctx.tags) {
+  for (const tag of await head.resolveTags()) {
     const entry = head.headEntries().find(e => e._i === Number(tag._e))!
     const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects: staleSideEffects }
     await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
