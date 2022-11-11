@@ -1,7 +1,7 @@
 import { basename } from 'node:path'
 import { renderToString } from 'vue/server-renderer'
 import { createApp } from './main'
-import { renderSSRHead } from '../../../packages/unhead/src/runtime/server'
+import { renderSSRHead } from '@unhead/ssr'
 
 export async function render(url, manifest) {
   const { app, router, head } = createApp()

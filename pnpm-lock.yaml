@@ -75,6 +75,7 @@ importers:
 
   examples/vite-ssr-vue:
     specifiers:
+      '@unhead/ssr': link:../../packages/ssr
       '@unhead/vue': latest
       '@vitejs/plugin-vue': latest
       '@vitejs/plugin-vue-jsx': latest
@@ -90,6 +91,7 @@ importers:
       vue: 3.2.44
       vue-router: 4.1.6_vue@3.2.44
     devDependencies:
+      '@unhead/ssr': link:../../packages/ssr
       '@unhead/vue': link:../../packages/vue
       '@vitejs/plugin-vue': 3.2.0_vue@3.2.44
       '@vitejs/plugin-vue-jsx': 2.1.1_vue@3.2.44

@@ -9,10 +9,21 @@ export default {
   async setup() {
     useHead({
       title: 'About',
+      htmlAttrs: {
+        class: 'about-page'
+      },
+      bodyAttrs: {
+        style: 'background-color: aquamarine'
+      },
       meta: [
         {
           name: 'description',
           content: 'This is an about page',
+        }
+      ],
+      style: [
+        {
+          children: '#app { background: aqua; color: white; }',
         }
       ]
     })

@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { defineConfig } from 'vite'
 import vuePlugin from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
@@ -114,13 +113,4 @@ export default defineConfig(({ command, ssrBuild }) => ({
   build: {
     minify: false
   },
-  ssr: {
-    noExternal: [
-      // this package has uncompiled .vue files
-      'example-external-component'
-    ]
-  },
-  optimizeDeps: {
-    exclude: ['example-external-component']
-  }
 }))

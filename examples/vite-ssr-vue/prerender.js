@@ -3,10 +3,16 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
+import * as url from 'url';
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const toAbsolute = (p) => path.resolve(__dirname, p)
 
-const manifest = (await import('./dist/static/ssr-manifest.json')).default
+console.log('preload import')
+const manifest = (await import('./dist/static/ssr-manifest.json', {
+  assert: { type: 'json' }
+}) ).default
 const template = fs.readFileSync(toAbsolute('dist/static/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
@@ -23,11 +29,13 @@ const routesToPrerender = fs
   for (const url of routesToPrerender) {
     const [appHtml, preloadLinks, headHtml] = await render(url, manifest)
 
-    const html = template
+    let html = template
       .replace(`<!--preload-links-->`, preloadLinks)
       .replace(`<!--app-html-->`, appHtml)
-      .replace(`<!--head-html-->`, headHtml)
 
+    Object.entries(headHtml).forEach(([key, value]) => {
+      html = html.replace(`<!--${key}-->`, value)
+    })
     const filePath = `dist/static${url === '/' ? '/index' : url}.html`
     fs.writeFileSync(toAbsolute(filePath), html)
     console.log('pre-rendered:', filePath)

@@ -20,7 +20,7 @@ export async function createServer(
 
   const manifest = isProd
     ? // @ts-ignore
-      (await import('./dist/client/ssr-manifest.json')).default
+      (await import('./dist/client/ssr-manifest.json') ).default
     : {}
 
   const app = express()
@@ -80,12 +80,13 @@ export async function createServer(
 
       const [appHtml, preloadLinks, headHtml] = await render(url, manifest)
 
-      const html = template
+      let html = template
         .replace(`<!--preload-links-->`, preloadLinks)
         .replace(`<!--app-html-->`, appHtml)
-        .replace(`<!--head-html-->`, headHtml)
 
-      console.log(appHtml, headHtml)
+      Object.entries(headHtml).forEach(([key, value]) => {
+        html = html.replace(`<!--${key}-->`, value)
+      })
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html)
     } catch (e) {

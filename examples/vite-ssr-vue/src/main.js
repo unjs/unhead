@@ -15,5 +15,14 @@ export function createApp() {
   app.use(router)
   const head = createHead()
   app.use(head)
+
+  head.push({
+    htmlAttrs: {
+      class: 'layout-default'
+    },
+    bodyAttrs: {
+      style: 'overflow: hidden;'
+    }
+  })
   return { app, router, head }
 }
