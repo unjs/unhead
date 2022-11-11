@@ -1,6 +1,7 @@
 export * from './types'
 export * from './utils'
 export * from './createHead'
+export * from './VueHeadMixin'
 export * from './VueReactiveUseHeadPlugin'
 export * from './Vue2ProvideUnheadPlugin'
 export * from './runtime/composables'

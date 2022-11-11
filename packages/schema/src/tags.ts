@@ -9,11 +9,11 @@ export interface ResolvesDuplicates {
   /**
    * @deprecated Use `key` instead
    */
-  hid?: string;
+  hid?: string
   /**
    * @deprecated Use `key` instead
    */
-  vmid?: string;
+  vmid?: string
   /**
    * Specify where to render the tag.
    *

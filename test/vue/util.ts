@@ -1,6 +1,6 @@
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { createHead } from '@unhead/vue'
+import { VueHeadMixin, createHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 
 export async function ssrRenderHeadToString(fn: () => void) {
@@ -27,6 +27,7 @@ export async function ssrRenderOptionsHead(input: any) {
       return () => '<div>hi</div>'
     },
   })
+  app.mixin(VueHeadMixin)
   app.use(head)
   await renderToString(app)
 
