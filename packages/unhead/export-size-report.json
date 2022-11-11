@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 6269,
-      "minzipped": 2372,
-      "bundled": 12988
+      "minified": 6291,
+      "minzipped": 2388,
+      "bundled": 13049
     },
     {
       "name": "useServerTagMetaFlat",
@@ -38,9 +38,9 @@
     {
       "name": "DedupesTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1476,
-      "minzipped": 706,
-      "bundled": 3038
+      "minified": 1498,
+      "minzipped": 718,
+      "bundled": 3099
     },
     {
       "name": "normaliseEntryTags",
