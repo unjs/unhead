@@ -66,9 +66,9 @@
     {
       "name": "HydrateStateFromSSRPlugin",
       "path": "dist/index.mjs",
-      "minified": 439,
-      "minzipped": 288,
-      "bundled": 837
+      "minified": 448,
+      "minzipped": 293,
+      "bundled": 848
     },
     {
       "name": "TitleTemplatePlugin",
