@@ -22,7 +22,9 @@ export const HydrateStateFromSSRPlugin = () => {
         tag._s = `data-h-${hashCode(tag._d)}`
         // when we are SSR rendering tags which are server only and have a dedupe key, we need to provide a hash
         // client side should not be here if the entry is server mode (entry should be ignored)
-        if (entry._m === 'server')
+        // if a user provides a key we will also add the hash as a way to ensure hydration works, good for
+        // when SSR / CSR does not match
+        if (entry._m === 'server' || tag.key)
           tag.props[tag._s] = ''
       },
     },
