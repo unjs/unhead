@@ -14,11 +14,14 @@ import type {
   UseHeadInput,
 } from '../../types'
 import { IsBrowser } from '../../env'
+import { injectHead } from '../../createHead'
 import { clientUseHead as _clientUseHead } from './useHead/clientUseHead'
 import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
-  if ((options.mode === 'server' && IsBrowser) || (options.mode === 'client' && !IsBrowser))
+  const head = injectHead()
+  const isBrowser = IsBrowser || head.resolvedOptions?.document
+  if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
     return
 
   IsBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)

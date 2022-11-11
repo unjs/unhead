@@ -15,13 +15,14 @@ import type {
 import { unpackMeta } from 'zhead'
 import type { Arrayable } from '../../util'
 import { asArray } from '../../util'
-import { IsClient } from '../../env'
+import { IsBrowser } from '../../env'
 import { getActiveHead } from '../state'
 
 export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
-  if ((options.mode === 'server' && IsClient) || (options.mode === 'client' && !IsClient))
-    return
   const head = getActiveHead()
+  const isBrowser = IsBrowser || head.resolvedOptions?.document
+  if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
+    return
   head.push(input, options)
 }
 
