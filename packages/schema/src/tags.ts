@@ -7,6 +7,14 @@ export interface ResolvesDuplicates {
    */
   key?: string
   /**
+   * @deprecated Use `key` instead
+   */
+  hid?: string;
+  /**
+   * @deprecated Use `key` instead
+   */
+  vmid?: string;
+  /**
    * Specify where to render the tag.
    *
    * @default 'head'
