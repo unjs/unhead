@@ -5,7 +5,6 @@ import type { CreateHeadOptions, HeadPlugin, MergeHead, Unhead } from '@unhead/s
 import type { MaybeComputedRef } from '@vueuse/shared'
 import type { ReactiveHead } from './types'
 import { Vue3 } from './env'
-import { useHead } from './runtime/composables'
 import { VueReactiveUseHeadPlugin } from '.'
 
 export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
@@ -35,30 +34,6 @@ export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions,
       app.config.globalProperties.$unhead = head
       app.provide(headSymbol, head)
     }
-    else {
-      // @ts-expect-error vue2
-      app.options.$unhead = head
-    }
-
-    // options API support
-    app.mixin({
-      created() {
-        const instance = getCurrentInstance()
-        if (!instance)
-          return
-
-        // @ts-expect-error vue mismatch
-        const options = Vue3 ? instance.type : instance.proxy.$options
-        if (!options || !('head' in options))
-          return
-
-        const source = typeof options.head === 'function'
-          ? () => options.head()
-          : options.head
-
-        useHead(source)
-      },
-    })
   }
 
   return head
