@@ -12,7 +12,7 @@ importers:
       '@types/jsdom': ^20.0.1
       '@vitest/ui': ^0.25.1
       '@vue/server-renderer': ^3.2.44
-      '@zhead/schema': 1.0.0-beta.12
+      '@zhead/schema': 1.0.0-beta.13
       bumpp: ^8.2.1
       eslint: ^8.27.0
       fs-extra: ^10.1.0
@@ -24,7 +24,7 @@ importers:
       vitest: ^0.25.1
       vue: ^3.2.44
     dependencies:
-      '@zhead/schema': 1.0.0-beta.12
+      '@zhead/schema': 1.0.0-beta.13
       unplugin-auto-import: 0.11.4
     devDependencies:
       '@antfu/eslint-config': 0.29.4_rmayb2veg2btbq6mbmnyivgasy
@@ -118,41 +118,41 @@ importers:
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
 
   packages/schema:
     specifiers:
-      '@zhead/schema': 1.0.0-beta.12
+      '@zhead/schema': 1.0.0-beta.13
       hookable: ^5.4.1
     dependencies:
-      '@zhead/schema': 1.0.0-beta.12
+      '@zhead/schema': 1.0.0-beta.13
       hookable: 5.4.1
 
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
 
   packages/unhead:
     specifiers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
       hookable: ^5.4.1
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
       hookable: 5.4.1
     devDependencies:
-      zhead: 1.0.0-beta.12
+      zhead: 1.0.0-beta.13
 
   packages/vue:
     specifiers:
@@ -3350,8 +3350,8 @@ packages:
     resolution: {integrity: sha512-B/No5zsZB1gz6BT7OKcD0rbyZCGoF6ImeQm2ffupQrgUpYAIv/LGtn3RVNSOcX2R2DB4g79UtuIwK0OxugFjJQ==}
     dev: true
 
-  /@zhead/schema/1.0.0-beta.12:
-    resolution: {integrity: sha512-4TQ++YHY7G9qPzda/qIzIf8JxQvzhAz+s21oPbVtMTpJrbd4dHAKC+SDBXfKsCCb+M1cOFo3o9r9Vc/4+XOeyw==}
+  /@zhead/schema/1.0.0-beta.13:
+    resolution: {integrity: sha512-P1A1vRGFBhITco8Iw4/hvnDYoE/SoVrd71dW1pBFdXJb3vP+pBtoOuhbEKy0ROJGOyzQuqvFibcwzyLlWMqNiQ==}
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -11624,10 +11624,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zhead/1.0.0-beta.12:
-    resolution: {integrity: sha512-3FJhTdKB0wcPL+wrtJIHOhTLg15v7lFeY5CPvbIkSORTjfOfcBQJtMLKkzoXnGDIcpyT1Um1T8wlhIGgZSMANw==}
+  /zhead/1.0.0-beta.13:
+    resolution: {integrity: sha512-dEBSwj0IqpswABFsbZ0sLk55N4/CuyxpNBSq0s4ZyAb6C6gB551lklUl5oltK/XE3VMx/lx8pARV78WouoviBg==}
     dependencies:
-      '@zhead/schema': 1.0.0-beta.12
+      '@zhead/schema': 1.0.0-beta.13
     dev: true
 
   /zip-stream/4.1.0:

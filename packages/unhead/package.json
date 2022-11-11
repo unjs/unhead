@@ -40,6 +40,6 @@
     "hookable": "^5.4.1"
   },
   "devDependencies": {
-    "zhead": "1.0.0-beta.12"
+    "zhead": "1.0.0-beta.13"
   }
 }
