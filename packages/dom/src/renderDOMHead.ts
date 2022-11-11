@@ -1,5 +1,12 @@
 import { TagsWithInnerContent } from 'zhead'
-import type { BeforeRenderContext, DomRenderTagContext, HeadEntry, HeadTag, Unhead } from '@unhead/schema'
+import type {
+  BeforeRenderContext,
+  DomRenderTagContext,
+  HeadEntry,
+  HeadTag,
+  SideEffectsRecord,
+  Unhead,
+} from '@unhead/schema'
 
 export interface RenderDomHeadOptions {
   /**
@@ -22,12 +29,16 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     return
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
-  const queuedSideEffects = head._popSideEffectQueue()
+  // run queued side effects immediately
+  Object.values(head._popSideEffectQueue()).forEach(fn => fn())
+
+  // presume all side effects are stale, we mark them as not stale if they're re-introduced
+  const staleSideEffects: SideEffectsRecord = {}
   head.headEntries()
     .map(entry => entry._sde)
     .forEach((sde) => {
       Object.entries(sde).forEach(([key, fn]) => {
-        queuedSideEffects[key] = fn
+        staleSideEffects[key] = fn
       })
     })
 
@@ -39,15 +50,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     const markSideEffect = (key: string, fn: () => void) => {
-      key = `${tag._s || tag._p}:${key}`
+      key = `${tag._p}:${key}`
       entry._sde[key] = fn
-      delete queuedSideEffects[key]
+      delete staleSideEffects[key]
     }
 
     /**
      * Set attributes on a DOM element, while adding entry side effects.
      */
-    const setAttrs = ($el: Element) => {
+    const setAttrs = ($el: Element, sideEffects = true) => {
       // add new attributes
       Object.entries(tag.props).forEach(([k, value]) => {
         value = String(value)
@@ -58,7 +69,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           for (const c of value.split(' ')) {
             const classSdeKey = `${attrSdeKey}:${c}`
             // always clear side effects
-            markSideEffect(classSdeKey, () => $el.classList.remove(c))
+            sideEffects && markSideEffect(classSdeKey, () => $el.classList.remove(c))
 
             if (!$el.classList.contains(c))
               $el.classList.add(c)
@@ -66,7 +77,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           return
         }
         // always clear side effects
-        if (!k.startsWith('data-h-'))
+        if (sideEffects && !k.startsWith('data-h-'))
           markSideEffect(attrSdeKey, () => $el.removeAttribute(k))
 
         if ($el.getAttribute(k) !== value)
@@ -84,28 +95,24 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     let $newEl: Element = dom.createElement(tag.tag)
-    setAttrs($newEl)
+    // don't track side effects for new elements as the element itself should be deleted
+    setAttrs($newEl, false)
 
     let $previousEl: Element | undefined
     // optimised scan of children
     for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
-      if ($el.hasAttribute(`${tag._s}`) || $el.isEqualNode($newEl)) {
+      if ((tag._s && $el.hasAttribute(`${tag._s}`)) || $el.isEqualNode($newEl)) {
         $previousEl = $el
         break
       }
     }
 
-    // don't render empty tags
-    // @todo do some more testing around this
-    if ($newEl.attributes.length === 0 && !$newEl.innerHTML) {
-      $previousEl?.remove()
-      return
-    }
-
     // updating an existing tag
     if ($previousEl) {
-      markSideEffect('el', () => $previousEl?.remove())
-      setAttrs($previousEl)
+      markSideEffect('el', () => {
+        $previousEl?.remove()
+      })
+      setAttrs($previousEl, false)
       return $previousEl
     }
 
@@ -128,7 +135,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   for (const tag of ctx.tags) {
     const entry = head.headEntries().find(e => e._i === Number(tag._e))!
-    const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects }
+    const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects: staleSideEffects }
     await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
     if (!renderCtx.shouldRender)
       continue
@@ -137,7 +144,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
 
   // clear all side effects still pending
-  Object.values(queuedSideEffects).forEach(fn => fn())
+  Object.values(staleSideEffects).forEach(fn => fn())
 }
 
 /**

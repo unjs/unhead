@@ -1,4 +1,4 @@
-import { ssrRenderOptionsHead } from './util'
+import { ssrRenderOptionsHead } from '../util'
 
 describe('vue ssr options api', () => {
   test('server', async () => {
@@ -27,10 +27,10 @@ describe('vue ssr options api', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>hello</title>
-      <meta name=\\"description\\" content=\\"desc\\" data-h-889faf=\\"\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"fr\\" data-h-19f4e5=\\"\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\" data-h-21080c=\\"\\">
-      <script src=\\"foo.js\\" data-h-ed7ece=\\"\\"></script>"
+      <meta name=\\"description\\" content=\\"desc\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <script src=\\"foo.js\\"></script>"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')

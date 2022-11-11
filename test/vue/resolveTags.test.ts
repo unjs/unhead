@@ -96,7 +96,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 1,
-          "_p": 256,
+          "_p": 1024,
           "props": {
             "class": "second-class",
           },

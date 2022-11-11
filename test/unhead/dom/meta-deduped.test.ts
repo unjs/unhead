@@ -1,12 +1,12 @@
 import { describe, it } from 'vitest'
-import { HydratesStatePlugin, createHead, getActiveHead, useHead } from 'unhead'
+import { HydrateStateFromSSRPlugin, createHead, getActiveHead, useHead } from 'unhead'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('dom meta-deduped', () => {
   it('renders both', async () => {
     await createHead({
-      plugins: [HydratesStatePlugin()],
+      plugins: [HydrateStateFromSSRPlugin()],
     })
 
     useHead({
@@ -30,7 +30,7 @@ describe('dom meta-deduped', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\" data-h-3f17e7=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\" data-h-56c382=\\"\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\"></head>
       <body>
 
       <div>
@@ -45,7 +45,7 @@ describe('dom meta-deduped', () => {
 
   it('can update', async () => {
     const head = createHead({
-      plugins: [HydratesStatePlugin()],
+      plugins: [HydrateStateFromSSRPlugin()],
     })
 
     const entry = head.push({
@@ -79,7 +79,7 @@ describe('dom meta-deduped', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\" data-h-3f17e7=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\" data-h-56c382=\\"\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/3.jpg\\" data-h-113dda=\\"\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/1.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/2.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/3.jpg\\"></head>
       <body>
 
       <div>

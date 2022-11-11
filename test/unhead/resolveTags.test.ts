@@ -133,7 +133,7 @@ describe('resolveTags', () => {
       [
         {
           "_e": 1,
-          "_p": 256,
+          "_p": 1024,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -163,8 +163,8 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 0,
-          "_p": 3,
+          "_e": 1,
+          "_p": 1027,
           "props": {
             "charset": "utf-8",
           },
@@ -172,8 +172,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -182,24 +182,24 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "class": "dark",
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_e": 1,
+          "_p": 1026,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
           "tag": "script",
         },
         {
-          "_e": 0,
-          "_p": 4,
+          "_e": 1,
+          "_p": 1028,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",
@@ -324,7 +324,7 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
-          "_d": "meta:name:description:entry(0:1)",
+          "_d": "meta:name:description:1",
           "_e": 0,
           "_p": 1,
           "props": {

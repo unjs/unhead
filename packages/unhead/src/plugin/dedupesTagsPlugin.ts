@@ -26,8 +26,8 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
       'tags:resolve': function (ctx) {
         // 1. Dedupe tags
         const deduping: Record<string, HeadTag> = {}
-        ctx.tags.forEach((tag, i) => {
-          let dedupeKey = tag._d || tag._p || i
+        ctx.tags.forEach((tag) => {
+          let dedupeKey = tag._d || tag._p!
           const dupedTag = deduping[dedupeKey]
           // handling a duplicate tag
           if (dupedTag) {
@@ -56,14 +56,12 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
             }
             else if (tag._e === dupedTag._e) {
               // allow entries to have duplicate tags
-              dedupeKey = `${dedupeKey}:entry(${tag._e}:${tag._p})`
-              // need to copy over the unique _s key and change it
-              if (dupedTag._s) {
+              dedupeKey = tag._d = `${dedupeKey}:${tag._p}`
+              if (dupedTag._s && typeof dupedTag.props[dupedTag._s] !== 'undefined') {
                 delete tag.props[dupedTag._s]
-                tag._s = dupedTag._s + tag._p
+                tag._s = `${dupedTag._s}${tag._p}`
                 tag.props[tag._s] = ''
               }
-              tag._d = dedupeKey
             }
             // if the new tag does not have any props we're trying to remove the dupedTag
             if (Object.keys(tag.props).length === 0 && !tag.children) {

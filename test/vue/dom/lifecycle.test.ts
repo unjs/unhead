@@ -2,37 +2,10 @@ import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { createHead, useHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
-import { basicSchema, useDom } from '../fixtures'
+import { basicSchema, useDom } from '../../fixtures'
 
 describe('vue dom', () => {
-  test('titleTemplate', async () => {
-    const dom = useDom()
-
-    const head = createHead()
-
-    useHead({
-      title: 'test',
-      titleTemplate: '%s | template',
-    })
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      <title>test | template</title></head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-  })
-  it('basic', async () => {
+  it('basic ref', async () => {
     const head = createHead()
 
     const lang = ref('de')
@@ -52,7 +25,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
+      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -87,7 +60,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\" class=\\"pre-update\\" data-something-to-remove=\\"test\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
+      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -115,7 +88,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\" class=\\"post-update\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
+      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark test\\">
 
       <div>
@@ -140,7 +113,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
+      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -185,7 +158,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\" data-h-207e30=\\"\\"><script src=\\"https://cdn.example.com/script.js\\" data-h-513614=\\"\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\" data-h-4a272f=\\"\\"></head>
+      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
       <body class=\\"dark\\">
 
       <div>
@@ -226,7 +199,7 @@ describe('vue dom', () => {
 
 
 
-      <script data-h-d36dac=\\"\\">console.log('hello')</script></body></html>"
+      <script>console.log('hello')</script></body></html>"
     `)
 
     entry.dispose()
@@ -237,79 +210,6 @@ describe('vue dom', () => {
 
       </head>
       <body class=\\"\\">
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-  })
-
-  it('update innerHtml', async () => {
-    const head = createHead()
-
-    const entry = head.push({
-      script: [
-        {
-          children: 'console.log(\'hello\')',
-        },
-      ],
-    })
-
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      <script data-h-d36dac=\\"\\">console.log('hello')</script></head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-
-    entry.patch({
-      script: [
-        {
-          children: 'console.log(\'hello world\')',
-        },
-      ],
-    })
-
-    await renderDOMHead(head, { document: dom.window.document })
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      <script data-h-2e1bca=\\"\\">console.log('hello world')</script></head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-
-    entry.dispose()
-
-    await renderDOMHead(head, { document: dom.window.document })
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      </head>
-      <body>
 
       <div>
       <h1>hello world</h1>

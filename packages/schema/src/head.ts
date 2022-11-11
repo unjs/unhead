@@ -86,6 +86,10 @@ export interface Unhead<Input extends {} = Head> {
    */
   hooks: Hookable<HeadHooks>
   /**
+   * Resolved options
+   */
+  resolvedOptions: CreateHeadOptions
+  /**
    * @internal
    */
   _popSideEffectQueue: () => SideEffectsRecord

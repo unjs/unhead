@@ -262,16 +262,6 @@ describe('unhead e2e', () => {
 
     html = dom.serialize().replaceAll('\n\n', '')
 
-    // updates title
-    expect(html).toContain('<title>Home</title>')
-    // creates new entry
-    expect(html).toContain('<meta name="description" content="This is the home page"')
-    // deletes old entry
-    expect(html).not.toContain('<meta name="description" content="My amazing site"')
-    // merging class / style to work
-    expect(html).toContain('class="layout-default page-home"')
-    expect(html).toContain('style="color: red; background-color: red"')
-
     expect(html).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-home\\" style=\\"color: red; background-color: red\\" lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\">
@@ -285,6 +275,18 @@ describe('unhead e2e', () => {
       <h1>hello world</h1>
       </div></body></html>"
     `)
+
+    // updates title
+    expect(html).toContain('<title>Home</title>')
+    // creates new entry
+    expect(html).toContain('<meta name="description" content="This is the home page"')
+    // deletes old entry
+    expect(html).not.toContain('<meta name="description" content="My amazing site"')
+    // merging class / style to work
+    expect(html).toContain('class="layout-default page-home"')
+    expect(html).toContain('style="color: red; background-color: red"')
+
+    return
 
     homePageEntry.dispose()
 
