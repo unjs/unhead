@@ -1,7 +1,6 @@
-import { ref } from 'vue'
-
 export function useChangeColour() {
-  const counter = ref(0)
+  const counter = ref(2)
+  const nextColour = ref('lightskyblue')
   const colour = ref('limegreen')
 
   const changeColour = () => {
@@ -9,23 +8,29 @@ export function useChangeColour() {
     switch (counter.value) {
       case 1:
         colour.value = 'red'
-        break
+        nextColour.value = 'limegreen'
+        return
       case 2:
         colour.value = 'limegreen'
-        break
+        nextColour.value = 'lightskyblue'
+        return
       case 3:
         colour.value = 'lightskyblue'
-        break
+        nextColour.value = 'yellow'
+        return
       case 4:
         colour.value = 'yellow'
-        break
+        nextColour.value = 'aquamarine'
+        return
       default:
         colour.value = 'aquamarine'
+        nextColour.value = 'red'
         counter.value = 0
     }
   }
 
   return {
+    nextColour,
     changeColour,
     colour,
   }

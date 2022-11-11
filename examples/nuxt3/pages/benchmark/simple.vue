@@ -41,7 +41,6 @@ const react = () => {
   console.time('patch')
   count.value += 1
   page.value.title = `Updated title: ${count.value}`
-  console.log(page.value.title)
   nextTick(() => {
     console.timeEnd('patch')
   })

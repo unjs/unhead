@@ -1,29 +1,35 @@
-<script setup lang="ts">
-import { useHead } from '#head'
-
+<script lang="ts" setup>
 useHead({
-  htmlAttrs: {
-    class: {
-      'dark-mode': true,
-    }
-  },
-  bodyAttrs: {
-    class: ['my-body-class'],
-  },
-  title: 'Title',
-  style: [
+  title: 'test',
+  titleTemplate: '%s - Nuxt module playground',
+  link: [
     {
-      key: 'bg-colour',
-      children: '.new-bg { background-color: yellow; }',
-    }
+      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+      rel: 'stylesheet',
+    },
   ],
-  titleTemplate: title => `${title} | Title Site`,
+  meta: [
+    {
+      charset: 'utf-8',
+    },
+    {
+      name: 'description',
+      content: 'description',
+      hid: 'test',
+      vmid: 'test',
+    },
+  ],
 })
-
 </script>
 
 <template>
+<div>
   <div>
     <NuxtPage />
   </div>
+  <nuxt-link to="/" style="margin-top: 10px;" as="div">Home</nuxt-link>
+  <div style="margin-top: 30px;">
+    <DebugHead />
+  </div>
+</div>
 </template>

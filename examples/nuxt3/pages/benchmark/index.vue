@@ -5,12 +5,12 @@ const page = ref({
   description: 'Home page description',
   image: 'https://nuxtjs.org/meta_400.png',
 })
-console.time('useHead x1000')
+console.time('useHead x100')
 useHead({
   // de-dupe keys
   title: 'bench test',
 })
-for (const i in Array.from({ length: 1000 })) {
+for (const i in Array.from({ length: 100 })) {
   useHead({
     // de-dupe keys
     title: () => `${page.value.title}-${i} | Nuxt`,
@@ -38,12 +38,10 @@ for (const i in Array.from({ length: 1000 })) {
   })
 }
 const count = ref(0)
-console.timeEnd('useHead x1000')
+console.timeEnd('useHead x100')
 const react = () => {
   console.time('patch')
-  count.value += 1
-  page.value.title = `Updated title: ${count.value}`
-  console.log(page.value.title)
+  page.value.title = `Updated ${count.value++}`
   nextTick(() => {
     console.timeEnd('patch')
   })
