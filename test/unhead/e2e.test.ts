@@ -77,8 +77,8 @@ describe('unhead e2e', () => {
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-key=\\"meta:og:image:0\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-key=\\"meta:og:image:1\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">",
         "htmlAttrs": " lang=\\"en\\"",
@@ -114,13 +114,13 @@ describe('unhead e2e', () => {
       <meta charset=\\"utf-8\\">
       <title>Home</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
+      <meta property=\\"og:title\\" content=\\"Home\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-key=\\"meta:og:image:0\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-key=\\"meta:og:image:1\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
-      <meta property=\\"og:title\\" content=\\"Home\\"></head>
+      </head>
       <body>
 
       <div>
@@ -267,10 +267,12 @@ describe('unhead e2e', () => {
       <meta charset=\\"utf-8\\">
       <title>Home</title>
       <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta property=\\"og:title\\" content=\\"Home\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <script src=\\"https://my-app.com/home.js\\"></script><meta property=\\"og:title\\" content=\\"Home\\"><meta name=\\"description\\" content=\\"This is the home page\\"></head>
+      <script src=\\"https://my-app.com/home.js\\"></script></head>
       <body class=\\"test\\"><div>
       <h1>hello world</h1>
       </div></body></html>"

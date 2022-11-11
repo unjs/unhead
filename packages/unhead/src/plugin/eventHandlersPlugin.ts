@@ -49,7 +49,7 @@ export const EventHandlersPlugin = () => {
 
         // @ts-expect-error runtime hack
         Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {
-          const sdeKey = `${ctx.tag._s || ctx.tag._p}:${k}`
+          const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
 
           const eventName = k.slice(2).toLowerCase()
           const handler = value as EventListener

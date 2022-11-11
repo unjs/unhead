@@ -26,7 +26,7 @@ describe('vue ssr deduping', () => {
     )
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script data-h-229264=\\"\\">console.log(\'B\')</script>"',
+      '"<script>console.log(\'B\')</script>"',
     )
   })
 })

@@ -75,10 +75,6 @@ export interface TagInternalProperties {
    */
   _p?: number
   /**
-   * Hash id used as a selector
-   */
-  _s?: string
-  /**
    * Dedupe key
    */
   _d?: string

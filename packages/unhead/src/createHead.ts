@@ -1,7 +1,14 @@
 import { createHooks } from 'hookable'
 import type { CreateHeadOptions, Head, HeadEntry, HeadHooks, HeadTag, SideEffectsRecord, Unhead } from '@unhead/schema'
 import { setActiveHead } from './runtime/state'
-import { DedupesTagsPlugin, DeprecatedTagAttrPlugin, EventHandlersPlugin, PatchDomOnEntryUpdatesPlugin, SortTagsPlugin, TitleTemplatePlugin } from './plugin'
+import {
+  DedupesTagsPlugin,
+  DeprecatedTagAttrPlugin,
+  EventHandlersPlugin,
+  PatchDomOnEntryUpdatesPlugin, ProvideTagHashPlugin,
+  SortTagsPlugin,
+  TitleTemplatePlugin,
+} from './plugin'
 import { normaliseEntryTags } from './normalise'
 
 export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
@@ -20,8 +27,9 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     DedupesTagsPlugin(),
     SortTagsPlugin(),
     TitleTemplatePlugin(),
-    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
     EventHandlersPlugin(),
+    ProvideTagHashPlugin(),
+    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
     ...(options?.plugins || []),
   ]
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))

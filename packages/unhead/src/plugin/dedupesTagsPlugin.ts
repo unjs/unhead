@@ -57,14 +57,10 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
             else if (tag._e === dupedTag._e) {
               // allow entries to have duplicate tags
               dedupeKey = tag._d = `${dedupeKey}:${tag._p}`
-              if (dupedTag._s && typeof dupedTag.props[dupedTag._s] !== 'undefined') {
-                delete tag.props[dupedTag._s]
-                tag._s = `${dupedTag._s}${tag._p}`
-                tag.props[tag._s] = ''
-              }
             }
+            const propCount = Object.keys(tag.props).length
             // if the new tag does not have any props we're trying to remove the dupedTag
-            if (Object.keys(tag.props).length === 0 && !tag.children) {
+            if (((propCount === 0) || (propCount === 1 && typeof tag.props['data-h-key'] !== 'undefined')) && !tag.children) {
               delete deduping[dedupeKey]
               return
             }

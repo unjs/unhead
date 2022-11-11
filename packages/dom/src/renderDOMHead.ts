@@ -30,10 +30,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
   // run queued side effects immediately
-  Object.values(head._popSideEffectQueue()).forEach(fn => fn())
 
   // presume all side effects are stale, we mark them as not stale if they're re-introduced
-  const staleSideEffects: SideEffectsRecord = {}
+  const staleSideEffects: SideEffectsRecord = head._popSideEffectQueue()
   head.headEntries()
     .map(entry => entry._sde)
     .forEach((sde) => {
@@ -50,7 +49,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     const markSideEffect = (key: string, fn: () => void) => {
-      key = `${tag._p}:${key}`
+      key = `${tag._d || tag._p}:${key}`
       entry._sde[key] = fn
       delete staleSideEffects[key]
     }
@@ -101,7 +100,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     let $previousEl: Element | undefined
     // optimised scan of children
     for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
-      if ((tag._s && $el.hasAttribute(`${tag._s}`)) || $el.isEqualNode($newEl)) {
+      const key = $el.getAttribute('data-h-key') || tagDedupeKey({
+        // @ts-expect-error untyped
+        tag: $el.tagName.toLowerCase(),
+        // convert attributes to object
+        props: Array.from($el.attributes)
+          .map(attr => [attr.name, attr.value])
+          .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {}),
+      })
+      if ((key === tag._d || $el.isEqualNode($newEl))) {
         $previousEl = $el
         break
       }

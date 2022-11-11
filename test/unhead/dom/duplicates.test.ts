@@ -1,4 +1,3 @@
-import { HydrateStateFromSSRPlugin } from 'unhead'
 import { describe, it } from 'vitest'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -6,11 +5,7 @@ import { useDOMHead } from './util'
 
 describe('dom', () => {
   it('basic', async () => {
-    const head = useDOMHead({
-      plugins: [
-        HydrateStateFromSSRPlugin(),
-      ],
-    })
+    const head = useDOMHead()
 
     const entry = head.push({
       meta: [
@@ -65,11 +60,7 @@ describe('dom', () => {
   })
 
   it('empty dedupe', async () => {
-    const head = useDOMHead({
-      plugins: [
-        HydrateStateFromSSRPlugin(),
-      ],
-    })
+    const head = useDOMHead()
 
     head.push({
       meta: [
