@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 6781,
-      "minzipped": 2531,
-      "bundled": 13740
+      "minified": 7089,
+      "minzipped": 2635,
+      "bundled": 14359
     },
     {
       "name": "useServerTagMetaFlat",
@@ -50,18 +50,18 @@
       "bundled": 2792
     },
     {
+      "name": "EventHandlersPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1555,
+      "minzipped": 638,
+      "bundled": 2920
+    },
+    {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
       "minified": 1205,
       "minzipped": 514,
       "bundled": 2154
-    },
-    {
-      "name": "EventHandlersPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1247,
-      "minzipped": 509,
-      "bundled": 2301
     },
     {
       "name": "TitleTemplatePlugin",
