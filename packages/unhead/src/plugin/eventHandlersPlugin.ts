@@ -7,7 +7,7 @@ import { defineHeadPlugin } from '..'
  * When SSR we need to strip out these values. On CSR we
  */
 export const EventHandlersPlugin = () => {
-  const stripEventHandlers = (tag: HeadTag) => {
+  const stripEventHandlers = (mode: 'ssr' | 'dom', tag: HeadTag) => {
     const props: HeadTag['props'] = {}
     const eventHandlers: HeadTag['props'] = {}
     Object.entries(tag.props)
@@ -17,7 +17,12 @@ export const EventHandlersPlugin = () => {
         else
           props[key] = value
       })
-    return { props, eventHandlers }
+    let delayedSrc : string | undefined
+    if (mode === 'dom' && typeof props['src'] === 'string' && typeof eventHandlers['onload'] !== 'undefined') {
+      delayedSrc = props['src']
+      delete props['src']
+    }
+    return { props, eventHandlers, delayedSrc }
   }
 
   return defineHeadPlugin({
@@ -25,13 +30,13 @@ export const EventHandlersPlugin = () => {
       'ssr:render': function (ctx) {
         // when server-side rendering we need to strip out all event handlers that are functions
         ctx.tags = ctx.tags.map((tag) => {
-          tag.props = stripEventHandlers(tag).props
+          tag.props = stripEventHandlers('ssr', tag).props
           return tag
         })
       },
       'dom:beforeRenderTag': function (ctx) {
         // we need to strip out all event handlers that are functions and add them on to the tag
-        const { props, eventHandlers } = stripEventHandlers(ctx.tag)
+        const { props, eventHandlers, delayedSrc } = stripEventHandlers('dom', ctx.tag)
         if (!Object.keys(eventHandlers).length)
           return
 
@@ -40,6 +45,8 @@ export const EventHandlersPlugin = () => {
         // add the event handlers so we can reference once the element is rendered
         // @ts-expect-error runtime hack
         ctx.tag._eventHandlers = eventHandlers
+        // @ts-expect-error runtime hack
+        ctx.tag._delayedSrc = delayedSrc
       },
       'dom:renderTag': function (ctx) {
         const $el = ctx.$el
@@ -50,15 +57,27 @@ export const EventHandlersPlugin = () => {
         // @ts-expect-error runtime hack
         Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {
           const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
-
           const eventName = k.slice(2).toLowerCase()
+          const eventDedupeKey = `data-h-${eventName}`
+          delete ctx.queuedSideEffects[sdeKey]
+          if ($el.hasAttribute(eventDedupeKey)) {
+            return
+          }
           const handler = value as EventListener
-          $el?.addEventListener(eventName, handler)
+          // check if $el has the event listener
+          $el.setAttribute(eventDedupeKey, '')
+          $el.addEventListener(eventName, handler)
           ctx.entry._sde[sdeKey] = () => {
             $el.removeEventListener(eventName, handler)
+            $el.removeAttribute(eventDedupeKey)
           }
-          delete ctx.queuedSideEffects[sdeKey]
         })
+        // only after the event listeners are added do we set the src
+        // @ts-expect-error runtime hack
+        if (ctx.tag._delayedSrc) {
+          // @ts-expect-error runtime hack
+          $el.setAttribute('src', ctx.tag._delayedSrc)
+        }
       },
     },
   })

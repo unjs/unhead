@@ -86,6 +86,11 @@ useHead({
       red bg
     </NuxtLink>
   </div>
+  <div>
+    <NuxtLink to="/examples/script-load">
+      script onload event
+    </NuxtLink>
+  </div>
   <h2>Benchmarks</h2>
   <div>
     <NuxtLink to="/benchmark">
