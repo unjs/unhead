@@ -9,7 +9,7 @@ Using a useHead like this at a root level will ensure your site works as expecte
 
 ```ts
 useHead({
-  htmlAttr: {
+  htmlAttrs: {
     lang: 'en' // Change to your language  
   },
   meta: [
