@@ -17,10 +17,10 @@ export const EventHandlersPlugin = () => {
         else
           props[key] = value
       })
-    let delayedSrc : string | undefined
-    if (mode === 'dom' && typeof props['src'] === 'string' && typeof eventHandlers['onload'] !== 'undefined') {
-      delayedSrc = props['src']
-      delete props['src']
+    let delayedSrc: string | undefined
+    if (mode === 'dom' && tag.tag === 'script' && typeof props.src === 'string' && typeof eventHandlers.onload !== 'undefined') {
+      delayedSrc = props.src
+      delete props.src
     }
     return { props, eventHandlers, delayedSrc }
   }
@@ -54,22 +54,25 @@ export const EventHandlersPlugin = () => {
         if (!ctx.tag._eventHandlers || !$el)
           return
 
+        // while body does expose these events, they should be added to the window instead
+        const $eventListenerTarget: Element | Window | null | undefined = ctx.tag.tag === 'bodyAttrs' && typeof window !== 'undefined' ? window : $el
+
         // @ts-expect-error runtime hack
         Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {
           const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
           const eventName = k.slice(2).toLowerCase()
           const eventDedupeKey = `data-h-${eventName}`
           delete ctx.queuedSideEffects[sdeKey]
-          if ($el.hasAttribute(eventDedupeKey)) {
+          if ($el!.hasAttribute(eventDedupeKey))
             return
-          }
+
           const handler = value as EventListener
           // check if $el has the event listener
-          $el.setAttribute(eventDedupeKey, '')
-          $el.addEventListener(eventName, handler)
+          $el!.setAttribute(eventDedupeKey, '')
+          $eventListenerTarget!.addEventListener(eventName, handler)
           ctx.entry._sde[sdeKey] = () => {
-            $el.removeEventListener(eventName, handler)
-            $el.removeAttribute(eventDedupeKey)
+            $eventListenerTarget!.removeEventListener(eventName, handler)
+            $el!.removeAttribute(eventDedupeKey)
           }
         })
         // only after the event listeners are added do we set the src
