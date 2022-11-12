@@ -1,7 +1,22 @@
 ---
 title: getActiveHead
-description: Access your unhead instance where you are.
-icon: noto:hammer
+description: Access your unhead instance wherever you are.
 ---
 
-// todo
+**Type:**
+
+```ts
+export const getActiveHead = <T extends Unhead> () => activeHead as T
+```
+
+Get access to your head instance.
+
+This is used internally with the composable functions like `useHead`.
+
+## Example
+
+```ts
+import { getActiveHead } from 'unhead'
+
+getActiveHead().push({ title: 'Hello World' })
+```

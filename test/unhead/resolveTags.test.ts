@@ -3,6 +3,42 @@ import { createHead } from 'unhead'
 import { basicSchema } from '../fixtures'
 
 describe('resolveTags', () => {
+  it('docs example', async () => {
+    const head = createHead()
+
+    head.push({
+      title: 'My title',
+      meta: [
+        {
+          name: 'description',
+          content: 'My description',
+        },
+      ],
+    })
+
+    expect(await head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 0,
+          "_p": 0,
+          "children": "My title",
+          "props": {},
+          "tag": "title",
+        },
+        {
+          "_d": "meta:name:description",
+          "_e": 0,
+          "_p": 1,
+          "props": {
+            "content": "My description",
+            "name": "description",
+          },
+          "tag": "meta",
+        },
+      ]
+    `)
+  })
   it('basic resolve tags', async () => {
     const head = createHead()
 

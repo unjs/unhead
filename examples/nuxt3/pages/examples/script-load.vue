@@ -7,9 +7,20 @@ useHead({
     }
   ]
 })
+
+useHead({
+  bodyAttrs: {
+    onresize: (e) => {
+      console.log('resized', e)
+    },
+  }
+})
 </script>
 <template>
 <div>
   script load test
+
+  <a href="#hash">change hash</a>
+  <a href="#">clear hash</a>
 </div>
 </template>

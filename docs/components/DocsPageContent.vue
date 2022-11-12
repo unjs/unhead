@@ -73,6 +73,11 @@ const isOpen = ref(false)
 </div>
 </template>
 
+<style>
+.line.highlight {
+  background-color: #3f3f4640 !important;
+}
+</style>
 <style lang="postcss" scoped>
 .toc {
 &:before {

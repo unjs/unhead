@@ -1,6 +1,22 @@
 ---
 title: Pause DOM Rendering
-icon: noto:hammer
+description: Learn how to pause DOM rendering with unhead.
 ---
 
-// todo
+Pausing the DOM rendering is useful for when you want to ensure your page is fully loaded before updating tags.
+
+```ts
+const head = createHead()
+
+let pauseDOMUpdates = true
+head.hooks.hook('dom:beforeRender', (context) => {
+  context.shouldRender = !pauseDOMUpdates
+})
+
+// When your app is ready
+loadPage().then(() => {
+  pauseDOMUpdates = false
+  // triggers the dom update
+  head.hooks.callHook('entries:updated', head)
+})
+```
