@@ -4,30 +4,22 @@ import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schem
 import type { ReactiveHead, UseHeadInput } from '../../..'
 import { injectHead, resolveUnrefHeadInput } from '../../..'
 
-export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
+export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const head = injectHead()
 
   const vm = getCurrentInstance()
 
-  if (!vm) {
-    head.push(input, options)
-    return
-  }
+  if (!vm)
+    return head.push(input, options)
 
   const resolvedInput: Ref<ReactiveHead> = ref({})
   watchEffect(() => {
     resolvedInput.value = resolveUnrefHeadInput(input)
   })
-  let entry: ActiveHeadEntry<ReactiveHead>
-  watch(resolvedInput, (e) => {
-    if (!entry)
-      entry = head.push(e, options)
-
-    else
-      entry.patch(e)
-  }, { immediate: true })
-
+  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
+  watch(resolvedInput, e => entry.patch(e))
   onBeforeUnmount(() => {
-    entry?.dispose()
+    entry.dispose()
   })
+  return entry
 }

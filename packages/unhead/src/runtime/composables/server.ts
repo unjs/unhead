@@ -18,49 +18,27 @@ import { asArray } from '../../util'
 import { useHead } from './client'
 
 export function useServerHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
-  useHead(input, { ...options, mode: 'server' })
+  return useHead(input, { ...options, mode: 'server' })
 }
 
-export const useServerTagTitle = (title: Title) => {
-  useServerHead({ title })
-}
+export const useServerTagTitle = (title: Title): ActiveHeadEntry<any> | void => useServerHead({ title })
 
-export const useServerTagBase = (base: Base) => {
-  useServerHead({ base })
-}
+export const useServerTagBase = (base: Base): ActiveHeadEntry<any> | void => useServerHead({ base })
 
-export const useServerTagMeta = (meta: Arrayable<Meta>) => {
-  useServerHead({ meta: asArray(meta) })
-}
+export const useServerTagMeta = (meta: Arrayable<Meta>): ActiveHeadEntry<any> | void => useServerHead({ meta: asArray(meta) })
 
-export const useServerTagMetaFlat = (meta: MetaFlatInput) => {
-  useServerTagMeta(unpackMeta(meta))
-}
+export const useServerTagMetaFlat = (meta: MetaFlatInput): ActiveHeadEntry<any> | void => useServerTagMeta(unpackMeta(meta))
 
-export const useServerTagLink = (link: Arrayable<Link>) => {
-  useServerHead({ link: asArray(link) })
-}
+export const useServerTagLink = (link: Arrayable<Link>): ActiveHeadEntry<any> | void => useServerHead({ link: asArray(link) })
 
-export const useServerTagScript = (script: Arrayable<Script>) => {
-  useServerHead({ script: asArray(script) })
-}
+export const useServerTagScript = (script: Arrayable<Script>): ActiveHeadEntry<any> | void => useServerHead({ script: asArray(script) })
 
-export const useServerTagStyle = (style: Arrayable<Style>) => {
-  useServerHead({ style: asArray(style) })
-}
+export const useServerTagStyle = (style: Arrayable<Style>): ActiveHeadEntry<any> | void => useServerHead({ style: asArray(style) })
 
-export const useServerTagNoscript = (noscript: Arrayable<Noscript>) => {
-  useServerHead({ noscript: asArray(noscript) })
-}
+export const useServerTagNoscript = (noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void => useServerHead({ noscript: asArray(noscript) })
 
-export const useServerHtmlAttrs = (attrs: HtmlAttributes) => {
-  useServerHead({ htmlAttrs: attrs })
-}
+export const useServerHtmlAttrs = (attrs: HtmlAttributes): ActiveHeadEntry<any> | void => useServerHead({ htmlAttrs: attrs })
 
-export const useServerBodyAttrs = (attrs: BodyAttributes) => {
-  useServerHead({ bodyAttrs: attrs })
-}
+export const useServerBodyAttrs = (attrs: BodyAttributes): ActiveHeadEntry<any> | void => useServerHead({ bodyAttrs: attrs })
 
-export const useServerTitleTemplate = (titleTemplate: TitleTemplate) => {
-  useServerHead({ titleTemplate })
-}
+export const useServerTitleTemplate = (titleTemplate: TitleTemplate): ActiveHeadEntry<any> | void => useServerHead({ titleTemplate })

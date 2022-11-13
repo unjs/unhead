@@ -13,7 +13,7 @@ import { useHead } from '.'
 
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
   // ensure server mode
-  useHead(input, { ...options, mode: 'server' })
+  return useHead(input, { ...options, mode: 'server' })
 }
 export const useServerTagTitle = (title: ReactiveHead['title']) => useServerHead({ title })
 

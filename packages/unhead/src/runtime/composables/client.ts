@@ -23,49 +23,27 @@ export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}
   const isBrowser = IsBrowser || head.resolvedOptions?.document
   if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
     return
-  head.push(input, options)
+  return head.push(input, options)
 }
 
-export const useTagTitle = (title: Title) => {
-  useHead({ title })
-}
+export const useTagTitle = (title: Title): ActiveHeadEntry<any> | void => useHead({ title })
 
-export const useTagBase = (base: Base) => {
-  useHead({ base })
-}
+export const useTagBase = (base: Base): ActiveHeadEntry<any> | void => useHead({ base })
 
-export const useTagMeta = (meta: Arrayable<Meta>) => {
-  useHead({ meta: asArray(meta) })
-}
+export const useTagMeta = (meta: Arrayable<Meta>): ActiveHeadEntry<any> | void => useHead({ meta: asArray(meta) })
 
-export const useTagMetaFlat = (meta: MetaFlatInput) => {
-  useTagMeta(unpackMeta(meta))
-}
+export const useTagMetaFlat = (meta: MetaFlatInput): ActiveHeadEntry<any> | void => useTagMeta(unpackMeta(meta))
 
-export const useTagLink = (link: Arrayable<Link>) => {
-  useHead({ link: asArray(link) })
-}
+export const useTagLink = (link: Arrayable<Link>): ActiveHeadEntry<any> | void => useHead({ link: asArray(link) })
 
-export const useTagScript = (script: Arrayable<Script>) => {
-  useHead({ script: asArray(script) })
-}
+export const useTagScript = (script: Arrayable<Script>): ActiveHeadEntry<any> | void => useHead({ script: asArray(script) })
 
-export const useTagStyle = (style: Arrayable<Style>) => {
-  useHead({ style: asArray(style) })
-}
+export const useTagStyle = (style: Arrayable<Style>): ActiveHeadEntry<any> | void => useHead({ style: asArray(style) })
 
-export const useTagNoscript = (noscript: Arrayable<Noscript>) => {
-  useHead({ noscript: asArray(noscript) })
-}
+export const useTagNoscript = (noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void => useHead({ noscript: asArray(noscript) })
 
-export const useHtmlAttrs = (attrs: HtmlAttributes) => {
-  useHead({ htmlAttrs: attrs })
-}
+export const useHtmlAttrs = (attrs: HtmlAttributes): ActiveHeadEntry<any> | void => useHead({ htmlAttrs: attrs })
 
-export const useBodyAttrs = (attrs: BodyAttributes) => {
-  useHead({ bodyAttrs: attrs })
-}
+export const useBodyAttrs = (attrs: BodyAttributes): ActiveHeadEntry<any> | void => useHead({ bodyAttrs: attrs })
 
-export const useTitleTemplate = (titleTemplate: TitleTemplate) => {
-  useHead({ titleTemplate })
-}
+export const useTitleTemplate = (titleTemplate: TitleTemplate): ActiveHeadEntry<any> | void => useHead({ titleTemplate })

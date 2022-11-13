@@ -1,6 +1,6 @@
 import { unpackMeta } from 'zhead'
 import { ref, watchEffect } from 'vue'
-import type { HeadEntryOptions, MergeHead, MetaFlatInput } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead, MetaFlatInput } from '@unhead/schema'
 import { asArray, resolveUnrefHeadInput } from '../../utils'
 import type {
   Arrayable,
@@ -18,13 +18,13 @@ import { injectHead } from '../../createHead'
 import { clientUseHead as _clientUseHead } from './useHead/clientUseHead'
 import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()
   const isBrowser = IsBrowser || head.resolvedOptions?.document
   if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
     return
 
-  IsBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)
+  return IsBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)
 }
 
 export const useTagTitle = (title: ReactiveHead['title']) => useHead({ title })
