@@ -103,12 +103,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       if (elTag !== tag.tag)
         continue
       const key = $el.getAttribute('data-h-key') || tagDedupeKey({
-        // @ts-expect-error untyped
-        tag: $el.tagName.toLowerCase(),
+        tag: elTag,
         // convert attributes to object
-        props: Array.from($el.attributes)
-          .map(attr => [attr.name, attr.value])
-          .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {}),
+        props: $el.getAttributeNames()
+          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name)} ), {}),
       })
       if ((key === tag._d || $el.isEqualNode($newEl))) {
         $previousEl = $el
