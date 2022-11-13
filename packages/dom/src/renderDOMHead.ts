@@ -99,6 +99,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     let $previousEl: Element | undefined
     // optimised scan of children
     for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
+      const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
+      if (elTag !== tag.tag)
+        continue
       const key = $el.getAttribute('data-h-key') || tagDedupeKey({
         // @ts-expect-error untyped
         tag: $el.tagName.toLowerCase(),
@@ -112,7 +115,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         break
       }
     }
-
     // updating an existing tag
     if ($previousEl) {
       markSideEffect('el', () => {
