@@ -35,7 +35,7 @@ export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions,
         app.config.globalProperties.$unhead = head
         app.provide(headSymbol, head)
       }
-    }
+    },
   }
 
   head.install = vuePlugin.install

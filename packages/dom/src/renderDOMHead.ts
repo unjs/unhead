@@ -106,7 +106,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         tag: elTag,
         // convert attributes to object
         props: $el.getAttributeNames()
-          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name)} ), {}),
+          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
       })
       if ((key === tag._d || $el.isEqualNode($newEl))) {
         $previousEl = $el
