@@ -1,4 +1,4 @@
-import type { App, Plugin } from 'vue'
+import type { Plugin } from 'vue'
 import { getCurrentInstance, inject, nextTick } from 'vue'
 import { createHead as createUnhead, getActiveHead } from 'unhead'
 import type { CreateHeadOptions, HeadPlugin, MergeHead, Unhead } from '@unhead/schema'
@@ -28,13 +28,16 @@ export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions,
     plugins,
   }) as VueHeadClient<T>
 
-  head.install = (app: App) => {
-    // vue 3 only
-    if (Vue3) {
-      app.config.globalProperties.$unhead = head
-      app.provide(headSymbol, head)
+  const vuePlugin: Plugin = {
+    install(app) {
+      // vue 3 only
+      if (Vue3) {
+        app.config.globalProperties.$unhead = head
+        app.provide(headSymbol, head)
+      }
     }
   }
 
+  head.install = vuePlugin.install
   return head
 }
