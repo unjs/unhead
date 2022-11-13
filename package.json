@@ -60,7 +60,7 @@
     "vue": "^3.2.45"
   },
   "resolutions": {
-    "vue": "^3.2.44"
+    "vue": "^3.2.45"
   },
   "dependencies": {
     "@zhead/schema": "1.0.0-beta.13",
