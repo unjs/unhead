@@ -18,6 +18,7 @@ export default defineNuxtConfig({
       title: 'default title',
     },
   },
+
   hooks: {
     'modules:before': async ({ nuxt }) => {
       const newModules = nuxt.options._modules
@@ -41,4 +42,8 @@ export default defineNuxtConfig({
       nuxt.options.build.transpile.push(runtimeDir)
     },
   },
+
+  // schemaOrg: {
+  //   canonicalHost: 'https://nuxt-schema-org-demo.com',
+  // },
 })

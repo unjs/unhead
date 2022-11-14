@@ -1,6 +1,7 @@
 import { createHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { defineNuxtPlugin } from '#app'
+import { useHead } from '@unhead/vue'
 
 // Note: This is just a copy of Nuxt's internal head plugin with modifications made for this issue
 
@@ -8,6 +9,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   const head = createHead()
 
   nuxtApp.vueApp.use(head)
+
+  nuxtApp._useHead = useHead
 
   console.log('created head instance')
 
