@@ -101,17 +101,24 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // try and hydrate based on runtime mapping of created el elements
     let $previousEl: Element | undefined = head._elMap[tagRenderId]
     // otherwise we need to try and hydrate based on DOM state
+    const $target = dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head']
+    // @ts-expect-error runtime _hash untyped
+    if (!$previousEl && tag._hash) {
+      // @ts-expect-error runtime _hash untyped
+      $previousEl = $target.querySelector(`${tag.tag}[data-h-${tag._hash}]`)
+    }
+
     if (!$previousEl) {
-      // optimised scan of children
-      for (const $el of [...dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children].reverse()) {
+      for (const $el of tag.tagPosition === 'bodyClose' ? [...$target.children].reverse() : $target.children) {
         const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
         if (elTag !== tag.tag)
           continue
-        const key = $el.getAttribute('data-h-key') || tagDedupeKey({
+
+        const key = tagDedupeKey({
           tag: elTag,
           // convert attributes to object
           props: $el.getAttributeNames()
-            .reduce((props, name) => ({...props, [name]: $el.getAttribute(name)}), {}),
+            .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
         })
         if ((key === tag._d || $el.isEqualNode($newEl))) {
           $previousEl = $el
@@ -119,12 +126,18 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
       }
     }
-    // updating an existing tag
-    if ($previousEl) {
+
+    const markEl = ($el: Element) => {
+      head._elMap[tagRenderId] = $el
       markSideEffect('el', () => {
-        $previousEl?.remove()
+        $el?.remove()
         delete head._elMap[tagRenderId]
       })
+    }
+
+    // updating an existing tag
+    if ($previousEl) {
+      markEl($previousEl)
       setAttrs($previousEl, false)
       return $previousEl
     }
@@ -142,11 +155,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         break
     }
 
-    head._elMap[tagRenderId] = $newEl
-    markSideEffect('el', () => {
-      $newEl?.remove()
-      delete head._elMap[tagRenderId]
-    })
+    markEl($newEl)
     return $newEl
   }
 

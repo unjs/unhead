@@ -88,8 +88,8 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:locale\\" content=\\"en_US\\">
       <meta property=\\"og:locale\\" content=\\"en_AU\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-key=\\"meta:og:image:0\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-key=\\"meta:og:image:1\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-2983b49=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-13ea24d=\\"\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">",
         "htmlAttrs": " lang=\\"en\\"",
@@ -130,8 +130,8 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:locale\\" content=\\"en_US\\">
       <meta property=\\"og:locale\\" content=\\"en_AU\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-key=\\"meta:og:image:0\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-key=\\"meta:og:image:1\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\" data-h-2983b49=\\"\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\" data-h-13ea24d=\\"\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
       </head>
