@@ -1,6 +1,7 @@
 import { describe, it } from 'vitest'
-import { createHead, renderDOMHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue'
 import { useDom } from '../../fixtures'
+import { renderDOMHead } from '@unhead/dom'
 
 describe('vue dom innerContent', () => {
   it('update innerHtml', async () => {

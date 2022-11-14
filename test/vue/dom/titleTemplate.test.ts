@@ -1,6 +1,7 @@
 import { describe } from 'vitest'
-import { createHead, renderDOMHead, useHead } from '@unhead/vue'
+import { createHead, useHead } from '@unhead/vue'
 import { useDom } from '../../fixtures'
+import { renderDOMHead } from '@unhead/dom'
 
 describe('vue dom titleTemplate', () => {
   test('basic', async () => {
