@@ -11,7 +11,36 @@ import {
 } from './plugin'
 import { normaliseEntryTags } from './normalise'
 
+export const CorePlugins = () => [
+  // dedupe needs to come first
+  DedupesTagsPlugin(),
+  SortTagsPlugin(),
+  TitleTemplatePlugin(),
+  ProvideTagHashPlugin(),
+  EventHandlersPlugin(),
+  DeprecatedTagAttrPlugin(),
+]
+
+export const DOMPlugins = (options: CreateHeadOptions = {}) => [
+  PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
+]
+
 export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+  const head = createHeadCore<T>({
+    ...options,
+    plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
+  })
+  setActiveHead(head)
+  return head
+}
+
+/**
+ * Creates a core instance of unhead. Does not provide a global ctx for composables to work
+ * and does not register DOM plugins.
+ *
+ * @param options
+ */
+export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
   let entries: HeadEntry<T>[] = []
   // queued side effects
   let _sde: SideEffectsRecord = {}
@@ -22,14 +51,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     hooks.addHooks(options.hooks)
 
   options.plugins = [
-    // order is important
-    DeprecatedTagAttrPlugin(),
-    DedupesTagsPlugin(),
-    SortTagsPlugin(),
-    TitleTemplatePlugin(),
-    EventHandlersPlugin(),
-    ProvideTagHashPlugin(),
-    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
+    ...CorePlugins(),
     ...(options?.plugins || []),
   ]
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
@@ -108,8 +130,6 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   }
 
   head.hooks.callHook('init', head)
-  // @ts-expect-error broken type
-  setActiveHead(head)
   return head
 }
 

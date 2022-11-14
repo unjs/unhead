@@ -70,11 +70,12 @@ export const EventHandlersPlugin = () => {
           // check if $el has the event listener
           $el!.setAttribute(eventDedupeKey, '')
           $eventListenerTarget!.addEventListener(eventName, handler)
-          if (ctx.entry)
+          if (ctx.entry) {
             ctx.entry._sde[sdeKey] = () => {
               $eventListenerTarget!.removeEventListener(eventName, handler)
               $el!.removeAttribute(eventDedupeKey)
             }
+          }
         })
         // only after the event listeners are added do we set the src
         // @ts-expect-error runtime hack
