@@ -93,5 +93,9 @@ export interface Unhead<Input extends {} = Head> {
    * @internal
    */
   _popSideEffectQueue: () => SideEffectsRecord
+  /**
+   * @internal
+   */
+  _elMap: Record<string, Element>
 }
 

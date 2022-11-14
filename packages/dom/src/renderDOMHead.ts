@@ -47,8 +47,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       return dom.head.querySelector('title')
     }
 
+    const tagRenderId = tag._d || tag._p!
+
     const markSideEffect = (key: string, fn: () => void) => {
-      key = `${tag._d || tag._p}:${key}`
+      key = `${tagRenderId}:${key}`
       entry._sde[key] = fn
       delete staleSideEffects[key]
     }
@@ -96,27 +98,32 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // don't track side effects for new elements as the element itself should be deleted
     setAttrs($newEl, false)
 
-    let $previousEl: Element | undefined
-    // optimised scan of children
-    for (const $el of dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children) {
-      const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
-      if (elTag !== tag.tag)
-        continue
-      const key = $el.getAttribute('data-h-key') || tagDedupeKey({
-        tag: elTag,
-        // convert attributes to object
-        props: $el.getAttributeNames()
-          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
-      })
-      if ((key === tag._d || $el.isEqualNode($newEl))) {
-        $previousEl = $el
-        break
+    // try and hydrate based on runtime mapping of created el elements
+    let $previousEl: Element | undefined = head._elMap[tagRenderId]
+    // otherwise we need to try and hydrate based on DOM state
+    if (!$previousEl) {
+      // optimised scan of children
+      for (const $el of [...dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].children].reverse()) {
+        const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
+        if (elTag !== tag.tag)
+          continue
+        const key = $el.getAttribute('data-h-key') || tagDedupeKey({
+          tag: elTag,
+          // convert attributes to object
+          props: $el.getAttributeNames()
+            .reduce((props, name) => ({...props, [name]: $el.getAttribute(name)}), {}),
+        })
+        if ((key === tag._d || $el.isEqualNode($newEl))) {
+          $previousEl = $el
+          break
+        }
       }
     }
     // updating an existing tag
     if ($previousEl) {
       markSideEffect('el', () => {
         $previousEl?.remove()
+        delete head._elMap[tagRenderId]
       })
       setAttrs($previousEl, false)
       return $previousEl
@@ -135,7 +142,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         break
     }
 
-    markSideEffect('el', () => $newEl?.remove())
+    head._elMap[tagRenderId] = $newEl
+    markSideEffect('el', () => {
+      $newEl?.remove()
+      delete head._elMap[tagRenderId]
+    })
     return $newEl
   }
 
