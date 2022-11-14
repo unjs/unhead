@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7193,
-      "minzipped": 2664,
-      "bundled": 14521
+      "minified": 7505,
+      "minzipped": 2798,
+      "bundled": 15038
     },
     {
       "name": "useServerTagMetaFlat",
@@ -57,6 +57,13 @@
       "bundled": 2792
     },
     {
+      "name": "ProvideTagHashPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1141,
+      "minzipped": 532,
+      "bundled": 1975
+    },
+    {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
       "minified": 1205,
@@ -69,13 +76,6 @@
       "minified": 1020,
       "minzipped": 413,
       "bundled": 2082
-    },
-    {
-      "name": "ProvideTagHashPlugin",
-      "path": "dist/index.mjs",
-      "minified": 825,
-      "minzipped": 366,
-      "bundled": 1458
     },
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
@@ -232,6 +232,13 @@
       "bundled": 1206
     },
     {
+      "name": "hashCode",
+      "path": "dist/index.mjs",
+      "minified": 673,
+      "minzipped": 296,
+      "bundled": 976
+    },
+    {
       "name": "useHead",
       "path": "dist/index.mjs",
       "minified": 699,
@@ -244,6 +251,13 @@
       "minified": 686,
       "minzipped": 278,
       "bundled": 1129
+    },
+    {
+      "name": "HasElementTags",
+      "path": "dist/index.mjs",
+      "minified": 576,
+      "minzipped": 234,
+      "bundled": 875
     },
     {
       "name": "asArray",
