@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7183,
-      "minzipped": 2659,
-      "bundled": 14505
+      "minified": 7193,
+      "minzipped": 2664,
+      "bundled": 14521
     },
     {
       "name": "useServerTagMetaFlat",
