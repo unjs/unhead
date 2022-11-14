@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead } from 'unhead'
+import { createHead, useSeoMeta } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../../fixtures'
 
@@ -48,6 +48,30 @@ describe('ssr', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('useSeoMeta', async () => {
+    const head = createHead()
+
+    useSeoMeta({
+      charset: 'utf-8',
+      description: 'test',
+      ogLocaleAlternate: ['fr', 'zh'],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta charset=\\"utf-8\\">
+      <meta name=\\"description\\" content=\\"test\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
         "htmlAttrs": "",
       }
     `)

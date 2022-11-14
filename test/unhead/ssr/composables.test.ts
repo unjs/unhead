@@ -3,9 +3,9 @@ import {
   createHead,
   useBodyAttrs, useHead,
   useHtmlAttrs,
+  useSeoMeta,
   useTagLink,
   useTagMeta,
-  useTagMetaFlat,
   useTagScript,
 } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
@@ -55,7 +55,7 @@ describe('composables', () => {
   it('meta flat', async () => {
     const head = createHead()
 
-    useTagMetaFlat({
+    useSeoMeta({
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],

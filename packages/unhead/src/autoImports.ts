@@ -8,6 +8,8 @@ export const composableNames = [
   'useTagBase',
   'useTagMeta',
   'useTagMetaFlat',
+  // alias
+  'useSeoMeta',
   'useTagLink',
   'useTagScript',
   'useTagStyle',
