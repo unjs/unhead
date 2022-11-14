@@ -1,4 +1,4 @@
-import { unref } from 'vue'
+import { isRef, unref } from 'vue'
 import { HasElementTags } from 'unhead'
 import type { Arrayable } from './types'
 
@@ -16,16 +16,20 @@ export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): 
     return root.map(r => resolveUnrefHeadInput(r, lastKey))
 
   if (typeof root === 'object') {
+    let dynamic = false
     const unrefdObj = Object.fromEntries(
-      Object.entries(root).map(([key, value]) => {
+      Object.entries(root).map(([k, v]) => {
         // title template and raw dom events should stay function, we support a ref'd string though
-        if (key === 'titleTemplate' || key.startsWith('on'))
-          return [key, unref(value)]
-        return [key, resolveUnrefHeadInput(value, key)]
+        if (k === 'titleTemplate' || k.startsWith('on'))
+          return [k, unref(v)]
+        if (typeof v === 'function' || isRef(v))
+          dynamic = true
+
+        return [k, resolveUnrefHeadInput(v, k)]
       }),
     )
     // flag any tags which are dynamic
-    if (HasElementTags.includes(String(lastKey)) && JSON.stringify(unrefdObj) !== JSON.stringify(root))
+    if (dynamic && HasElementTags.includes(String(lastKey)))
       unrefdObj._dynamic = true
 
     return unrefdObj

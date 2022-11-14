@@ -2,8 +2,8 @@ import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
 import { createHead, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
-import { useDom } from '../../fixtures'
 import { renderDOMHead } from '@unhead/dom'
+import { useDom } from '../../fixtures'
 
 describe('vue e2e charset', () => {
   it('ssr / csr hydration', async () => {
