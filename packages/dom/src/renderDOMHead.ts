@@ -84,7 +84,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           $el.setAttribute(k, value)
       })
       // @todo test side effects?
-      if (TagsWithInnerContent.includes(tag.tag))
+      if (TagsWithInnerContent.includes(tag.tag) && $el.innerHTML !== (tag.children || ''))
         $el.innerHTML = tag.children || ''
     }
 
