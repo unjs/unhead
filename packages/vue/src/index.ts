@@ -1,3 +1,5 @@
+import { createHeadCore } from 'unhead'
+
 export * from './types'
 export * from './utils'
 export * from './createHead'
@@ -8,3 +10,4 @@ export * from './runtime/composables'
 export * from './autoImports'
 export type { HeadTag, MergeHead, ActiveHeadEntry, Head, Unhead, HeadEntryOptions } from '@unhead/schema'
 
+export { createHeadCore }

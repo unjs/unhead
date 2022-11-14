@@ -20,10 +20,12 @@ import { getActiveHead } from '../state'
 
 export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
   const head = getActiveHead()
-  const isBrowser = IsBrowser || head.resolvedOptions?.document
-  if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
-    return
-  return head.push(input, options)
+  if (head) {
+    const isBrowser = IsBrowser || head.resolvedOptions?.document
+    if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
+      return
+    return head.push(input, options)
+  }
 }
 
 export const useTagTitle = (title: Title): ActiveHeadEntry<any> | void => useHead({ title })
