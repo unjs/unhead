@@ -91,6 +91,16 @@ useHead({
       script onload event
     </NuxtLink>
   </div>
+  <div>
+    <NuxtLink to="/meta">
+      meta
+    </NuxtLink>
+  </div>
+  <div>
+    <NuxtLink to="/mount">
+      mount
+    </NuxtLink>
+  </div>
   <h2>Benchmarks</h2>
   <div>
     <NuxtLink to="/benchmark">

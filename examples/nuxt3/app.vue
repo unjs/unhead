@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 useHead({
-  title: 'test',
   titleTemplate: '%s - Nuxt module playground',
   link: [
     {
