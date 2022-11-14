@@ -40,7 +40,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       })
     })
 
-  const renderTag = (tag: HeadTag, entry: HeadEntry<any>) => {
+  const renderTag = (tag: HeadTag, entry?: HeadEntry<any>) => {
     if (tag.tag === 'title' && tag.children) {
       // we don't handle title side effects
       dom.title = tag.children
@@ -51,7 +51,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
     const markSideEffect = (key: string, fn: () => void) => {
       key = `${tagRenderId}:${key}`
-      entry._sde[key] = fn
+      // may not have an entry for some reason
+      if (entry)
+        entry._sde[key] = fn
       delete staleSideEffects[key]
     }
 
@@ -160,7 +162,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
 
   for (const tag of await head.resolveTags()) {
-    const entry = head.headEntries().find(e => e._i === Number(tag._e))!
+    const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects: staleSideEffects }
     await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
     if (!renderCtx.shouldRender)

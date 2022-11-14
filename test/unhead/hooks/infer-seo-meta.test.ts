@@ -13,7 +13,6 @@ describe('hooks', () => {
               ctx.tags.push({
                 // note: we need to add this new tag to the useHead entry of title
                 // (if title is removed, we remove this tag too)
-                _e: title._e,
                 tag: 'meta',
                 props: {
                   property: 'og:title',
@@ -24,7 +23,6 @@ describe('hooks', () => {
             const description = ctx.tags.find(t => t.tag === 'meta' && t.props.name === 'description' && !!t.props.content)
             if (description) {
               ctx.tags.push({
-                _e: description._e,
                 tag: 'meta',
                 props: {
                   name: 'og:description',
@@ -36,7 +34,6 @@ describe('hooks', () => {
             const ogImage = ctx.tags.find(t => t.tag === 'meta' && t.props.property === 'og:image')
             if (ogImage && !ctx.tags.find(t => t.tag === 'meta' && t.props.property === 'twitter:card')) {
               ctx.tags.push({
-                _e: ogImage._e,
                 tag: 'meta',
                 props: {
                   property: 'twitter:card',
@@ -46,7 +43,6 @@ describe('hooks', () => {
             }
             if (!ctx.tags.find(t => t.tag === 'meta' && t.props.name === 'robots')) {
               ctx.tags.push({
-                _e: ctx.tags[0]._e,
                 tag: 'meta',
                 props: {
                   name: 'robots',
