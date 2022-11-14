@@ -39,11 +39,6 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
 
   const head: Unhead<T> = {
     resolvedOptions: options,
-    _popSideEffectQueue() {
-      const sde = { ..._sde }
-      _sde = {}
-      return sde
-    },
     headEntries() {
       return entries
     },
@@ -103,6 +98,12 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
       }
       await hooks.callHook('tags:resolve', resolveCtx)
       return resolveCtx.tags
+    },
+    _elMap: {},
+    _popSideEffectQueue() {
+      const sde = { ..._sde }
+      _sde = {}
+      return sde
     },
   }
 
