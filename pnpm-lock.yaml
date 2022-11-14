@@ -158,17 +158,15 @@ importers:
 
   packages/vue:
     specifiers:
-      '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
-      '@vueuse/shared': latest
+      hookable: ^5.4.1
       unhead: workspace:*
       vue: ^3.2.45
     dependencies:
-      '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
-      '@vueuse/shared': 9.5.0_vue@3.2.45
-      unhead: link:../unhead
+      hookable: 5.4.1
     devDependencies:
+      unhead: link:../unhead
       vue: 3.2.45
 
 packages:
@@ -3224,6 +3222,7 @@ packages:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+    dev: true
 
   /@webassemblyjs/ast/1.11.1:
     resolution: {integrity: sha512-ukBh14qFLjxTQNTXocdyksN5QdM28S1CxHt2rdskFyL+xFV7VremuBLVbmCePj+URalXBENx/9Lm7lnhihtCSw==}

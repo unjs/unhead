@@ -7,6 +7,4 @@ export * from './Vue2ProvideUnheadPlugin'
 export * from './runtime/composables'
 export * from './autoImports'
 export type { HeadTag, MergeHead, ActiveHeadEntry, Head, Unhead, HeadEntryOptions } from '@unhead/schema'
-export * from '@unhead/dom'
-export type { MaybeComputedRef } from '@vueuse/shared'
 

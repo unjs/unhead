@@ -38,12 +38,11 @@
     "vue": ">=2.7 || >=3"
   },
   "dependencies": {
-    "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
-    "@vueuse/shared": "latest",
-    "unhead": "workspace:*"
+    "hookable": "^5.4.1"
   },
   "devDependencies": {
+    "unhead": "workspace:*",
     "vue": "^3.2.45"
   }
 }

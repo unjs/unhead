@@ -1,7 +1,11 @@
-import { resolveUnref } from '@vueuse/shared'
 import { unref } from 'vue'
 import { HasElementTags } from 'unhead'
 import type { Arrayable } from './types'
+
+// copied from @vueuse/shared
+function resolveUnref(r: any) {
+  return typeof r === 'function' ? r() : unref(r)
+}
 
 export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): any {
   const root = resolveUnref(ref)

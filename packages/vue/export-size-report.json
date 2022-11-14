@@ -4,7 +4,6 @@
     "dependencies": [
       "@unhead/dom",
       "@unhead/schema",
-      "@vueuse/shared",
       "unhead",
       "vue"
     ],
