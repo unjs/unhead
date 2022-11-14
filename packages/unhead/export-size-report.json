@@ -17,23 +17,37 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7505,
-      "minzipped": 2798,
-      "bundled": 15038
+      "minified": 7627,
+      "minzipped": 2842,
+      "bundled": 15336
+    },
+    {
+      "name": "createHeadCore",
+      "path": "dist/index.mjs",
+      "minified": 7149,
+      "minzipped": 2677,
+      "bundled": 14366
+    },
+    {
+      "name": "CorePlugins",
+      "path": "dist/index.mjs",
+      "minified": 4982,
+      "minzipped": 1934,
+      "bundled": 10198
     },
     {
       "name": "useServerTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 2981,
-      "minzipped": 1128,
-      "bundled": 5372
+      "minified": 2995,
+      "minzipped": 1133,
+      "bundled": 5398
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 2929,
-      "minzipped": 1107,
-      "bundled": 5237
+      "minified": 2943,
+      "minzipped": 1116,
+      "bundled": 5263
     },
     {
       "name": "DedupesTagsPlugin",
@@ -43,18 +57,18 @@
       "bundled": 3790
     },
     {
-      "name": "EventHandlersPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1649,
-      "minzipped": 676,
-      "bundled": 3066
-    },
-    {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
       "minified": 1758,
       "minzipped": 671,
       "bundled": 2792
+    },
+    {
+      "name": "EventHandlersPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1660,
+      "minzipped": 665,
+      "bundled": 3113
     },
     {
       "name": "ProvideTagHashPlugin",
@@ -78,6 +92,13 @@
       "bundled": 2082
     },
     {
+      "name": "DOMPlugins",
+      "path": "dist/index.mjs",
+      "minified": 934,
+      "minzipped": 378,
+      "bundled": 1564
+    },
+    {
       "name": "PatchDomOnEntryUpdatesPlugin",
       "path": "dist/index.mjs",
       "minified": 874,
@@ -85,151 +106,158 @@
       "bundled": 1448
     },
     {
+      "name": "useServerTagMeta",
+      "path": "dist/index.mjs",
+      "minified": 833,
+      "minzipped": 355,
+      "bundled": 1443
+    },
+    {
       "name": "useServerTagScript",
       "path": "dist/index.mjs",
-      "minified": 821,
-      "minzipped": 350,
-      "bundled": 1427
+      "minified": 835,
+      "minzipped": 355,
+      "bundled": 1453
     },
     {
       "name": "useServerTagLink",
       "path": "dist/index.mjs",
-      "minified": 819,
-      "minzipped": 348,
-      "bundled": 1417
-    },
-    {
-      "name": "useServerTagMeta",
-      "path": "dist/index.mjs",
-      "minified": 819,
-      "minzipped": 348,
-      "bundled": 1417
+      "minified": 833,
+      "minzipped": 354,
+      "bundled": 1443
     },
     {
       "name": "useServerTagNoscript",
       "path": "dist/index.mjs",
-      "minified": 823,
-      "minzipped": 347,
-      "bundled": 1437
+      "minified": 837,
+      "minzipped": 354,
+      "bundled": 1463
     },
     {
       "name": "useServerTagStyle",
       "path": "dist/index.mjs",
-      "minified": 820,
-      "minzipped": 347,
-      "bundled": 1422
-    },
-    {
-      "name": "useTagMeta",
-      "path": "dist/index.mjs",
-      "minified": 767,
-      "minzipped": 330,
-      "bundled": 1294
-    },
-    {
-      "name": "useServerBodyAttrs",
-      "path": "dist/index.mjs",
-      "minified": 773,
-      "minzipped": 329,
-      "bundled": 1342
-    },
-    {
-      "name": "useServerHtmlAttrs",
-      "path": "dist/index.mjs",
-      "minified": 773,
-      "minzipped": 329,
-      "bundled": 1342
-    },
-    {
-      "name": "useServerTagBase",
-      "path": "dist/index.mjs",
-      "minified": 768,
-      "minzipped": 329,
-      "bundled": 1325
-    },
-    {
-      "name": "useServerTitleTemplate",
-      "path": "dist/index.mjs",
-      "minified": 777,
-      "minzipped": 329,
-      "bundled": 1355
-    },
-    {
-      "name": "useTagNoscript",
-      "path": "dist/index.mjs",
-      "minified": 771,
-      "minzipped": 329,
-      "bundled": 1314
-    },
-    {
-      "name": "useTagStyle",
-      "path": "dist/index.mjs",
-      "minified": 768,
-      "minzipped": 329,
-      "bundled": 1299
-    },
-    {
-      "name": "useServerTagTitle",
-      "path": "dist/index.mjs",
-      "minified": 769,
-      "minzipped": 328,
-      "bundled": 1329
-    },
-    {
-      "name": "useTagScript",
-      "path": "dist/index.mjs",
-      "minified": 769,
-      "minzipped": 328,
-      "bundled": 1304
+      "minified": 834,
+      "minzipped": 353,
+      "bundled": 1448
     },
     {
       "name": "useTagLink",
       "path": "dist/index.mjs",
-      "minified": 767,
-      "minzipped": 327,
-      "bundled": 1294
+      "minified": 781,
+      "minzipped": 343,
+      "bundled": 1320
+    },
+    {
+      "name": "useTagScript",
+      "path": "dist/index.mjs",
+      "minified": 783,
+      "minzipped": 343,
+      "bundled": 1330
+    },
+    {
+      "name": "useTagNoscript",
+      "path": "dist/index.mjs",
+      "minified": 785,
+      "minzipped": 340,
+      "bundled": 1340
+    },
+    {
+      "name": "useTagStyle",
+      "path": "dist/index.mjs",
+      "minified": 782,
+      "minzipped": 340,
+      "bundled": 1325
+    },
+    {
+      "name": "useTagMeta",
+      "path": "dist/index.mjs",
+      "minified": 781,
+      "minzipped": 336,
+      "bundled": 1320
+    },
+    {
+      "name": "useServerTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 791,
+      "minzipped": 335,
+      "bundled": 1381
+    },
+    {
+      "name": "useServerTagTitle",
+      "path": "dist/index.mjs",
+      "minified": 783,
+      "minzipped": 333,
+      "bundled": 1355
+    },
+    {
+      "name": "useServerBodyAttrs",
+      "path": "dist/index.mjs",
+      "minified": 787,
+      "minzipped": 332,
+      "bundled": 1368
+    },
+    {
+      "name": "useServerHtmlAttrs",
+      "path": "dist/index.mjs",
+      "minified": 787,
+      "minzipped": 331,
+      "bundled": 1368
+    },
+    {
+      "name": "useServerTagBase",
+      "path": "dist/index.mjs",
+      "minified": 782,
+      "minzipped": 331,
+      "bundled": 1351
     },
     {
       "name": "useServerHead",
       "path": "dist/index.mjs",
-      "minified": 751,
-      "minzipped": 314,
-      "bundled": 1264
+      "minified": 765,
+      "minzipped": 316,
+      "bundled": 1290
     },
     {
       "name": "useBodyAttrs",
       "path": "dist/index.mjs",
-      "minified": 721,
-      "minzipped": 310,
-      "bundled": 1219
-    },
-    {
-      "name": "useTitleTemplate",
-      "path": "dist/index.mjs",
-      "minified": 725,
-      "minzipped": 310,
-      "bundled": 1232
+      "minified": 735,
+      "minzipped": 312,
+      "bundled": 1245
     },
     {
       "name": "useHtmlAttrs",
       "path": "dist/index.mjs",
-      "minified": 721,
-      "minzipped": 309,
-      "bundled": 1219
+      "minified": 735,
+      "minzipped": 312,
+      "bundled": 1245
+    },
+    {
+      "name": "useTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 739,
+      "minzipped": 312,
+      "bundled": 1258
     },
     {
       "name": "useTagBase",
       "path": "dist/index.mjs",
-      "minified": 716,
-      "minzipped": 309,
-      "bundled": 1202
+      "minified": 730,
+      "minzipped": 310,
+      "bundled": 1228
     },
     {
       "name": "useTagTitle",
       "path": "dist/index.mjs",
-      "minified": 717,
-      "minzipped": 307,
-      "bundled": 1206
+      "minified": 731,
+      "minzipped": 310,
+      "bundled": 1232
+    },
+    {
+      "name": "useHead",
+      "path": "dist/index.mjs",
+      "minified": 713,
+      "minzipped": 298,
+      "bundled": 1179
     },
     {
       "name": "hashCode",
@@ -237,13 +265,6 @@
       "minified": 673,
       "minzipped": 296,
       "bundled": 976
-    },
-    {
-      "name": "useHead",
-      "path": "dist/index.mjs",
-      "minified": 699,
-      "minzipped": 295,
-      "bundled": 1153
     },
     {
       "name": "DeprecatedTagAttrPlugin",
