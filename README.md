@@ -33,7 +33,7 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 - 🧑‍🤝‍🧑 Side-effect based DOM patching, plays nicely your existing other tags and attributes
 - 🤝 Built for everyone: Vue, React (soon), Svelte (soon), (more soon).
 - 🚀 Optimised, tiny SSR and DOM bundles
-- 🖥️ `useServerHead` (supporting 0kb runtime soon) 
+- 🖥️ `useServerHead` (supporting 0kb runtime) 
 - 🍣 Intuitive deduping, sorting, title templates, class merging and more
 - 🪝 Extensible hook / plugin based API
 
