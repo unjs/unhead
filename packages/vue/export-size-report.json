@@ -17,16 +17,16 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 11676,
-      "minzipped": 4099,
-      "bundled": 23285
+      "minified": 11872,
+      "minzipped": 4067,
+      "bundled": 23121
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 7216,
-      "minzipped": 2708,
-      "bundled": 14558
+      "minified": 7183,
+      "minzipped": 2692,
+      "bundled": 14401
     },
     {
       "name": "useServerTagMetaFlat",
