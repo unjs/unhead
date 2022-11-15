@@ -1,8 +1,8 @@
-import {describe, bench} from "vitest";
-import {createHead, useHead} from "@unhead/vue";
-import {ref} from "vue";
-import {useDom} from "../fixtures";
-import {renderDOMHead} from "@unhead/dom";
+import { bench, describe } from 'vitest'
+import { createHead, useHead } from '@unhead/vue'
+import { ref } from 'vue'
+import { renderDOMHead } from '@unhead/dom'
+import { useDom } from '../fixtures'
 
 describe('dom-useHead', () => {
   bench('x1000', async () => {
@@ -47,7 +47,7 @@ describe('dom-useHead', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     page.value.image = page.value.image.replace('_0', '_1')
-    page.value.title = `Updated`
+    page.value.title = 'Updated'
 
     await renderDOMHead(head, { document: dom.window.document })
   })

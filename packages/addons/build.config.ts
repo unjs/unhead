@@ -16,6 +16,6 @@ export default defineBuildConfig({
     'vite',
     'webpack',
     'rollup',
-    'unplugin'
-  ]
+    'unplugin',
+  ],
 })

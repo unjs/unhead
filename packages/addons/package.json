@@ -33,6 +33,9 @@
       "import": "./dist/webpack.mjs"
     }
   },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "vite": [
@@ -43,9 +46,6 @@
       ]
     }
   },
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -55,9 +55,9 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "unhead": "workspace:*",
     "@rollup/pluginutils": "^5.0.2",
     "@unhead/schema": "workspace:*",
+    "unhead": "workspace:*",
     "unplugin": "^1.0.0",
     "unplugin-ast": "^0.5.5"
   },

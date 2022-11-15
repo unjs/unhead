@@ -1,4 +1,4 @@
-import {defineHeadPlugin} from "unhead";
+import { defineHeadPlugin } from 'unhead'
 
 export interface InferSeoMetaPluginOptions {
   /**
@@ -77,7 +77,7 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => defin
             },
           })
         }
-      }
-    }
-  }
+      },
+    },
+  },
 })
