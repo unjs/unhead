@@ -57,7 +57,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
 
   // does the dom rendering by default
-  const triggerUpdateHook = () => hooks.callHook('entries:updated', head)
+  const updated = () => hooks.callHook('entries:updated', head)
 
   const head: Unhead<T> = {
     resolvedOptions: options,
@@ -77,19 +77,16 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       if (options?.mode)
         activeEntry._m = options?.mode
       entries.push(activeEntry)
-      triggerUpdateHook()
-      const queueSideEffects = (e: HeadEntry<T>) => {
-        // queue side effects
-        _sde = { ..._sde, ...e._sde || {} }
-        e._sde = {}
-        triggerUpdateHook()
-      }
+      updated()
       return {
         dispose() {
           entries = entries.filter((e) => {
             if (e._i !== activeEntry._i)
               return true
-            queueSideEffects(e)
+            // queue side effects
+            _sde = { ..._sde, ...e._sde || {} }
+            e._sde = {}
+            updated()
             return false
           })
         },
@@ -97,11 +94,9 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         patch(input) {
           entries = entries.map((e) => {
             if (e._i === activeEntry._i) {
-              queueSideEffects(e)
               // bit hacky syncing
               activeEntry.input = e.input = input
-              // assign a new entry id so we can clean up the old data
-              activeEntry._i = e._i = _eid++
+              updated()
             }
             return e
           })

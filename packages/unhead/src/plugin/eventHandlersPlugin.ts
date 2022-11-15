@@ -62,7 +62,7 @@ export const EventHandlersPlugin = () => {
           const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
           const eventName = k.slice(2).toLowerCase()
           const eventDedupeKey = `data-h-${eventName}`
-          delete ctx.queuedSideEffects[sdeKey]
+          delete ctx.staleSideEffects[sdeKey]
           if ($el!.hasAttribute(eventDedupeKey))
             return
 

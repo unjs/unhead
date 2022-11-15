@@ -22,13 +22,15 @@ export interface ResolvesDuplicates {
   tagDuplicateStrategy?: 'replace' | 'merge'
 }
 
+export type ValidTagPositions = 'head' | 'bodyClose' | 'bodyOpen'
+
 export interface TagPosition {
   /**
    * Specify where to render the tag.
    *
    * @default 'head'
    */
-  tagPosition?: 'head' | 'bodyClose' | 'bodyOpen'
+  tagPosition?: ValidTagPositions
   /**
    * Render the tag before the body close.
    *
