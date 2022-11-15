@@ -1,4 +1,5 @@
-import { HasElementTags, defineHeadPlugin, getActiveHead, hashCode } from '..'
+import { hashCode } from '@unhead/dom'
+import { HasElementTags, defineHeadPlugin, getActiveHead } from '..'
 import { IsBrowser } from '../env'
 
 export const ProvideTagHashPlugin = () => {

@@ -199,8 +199,8 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 1,
-          "_p": 1027,
+          "_e": 0,
+          "_p": 3,
           "props": {
             "charset": "utf-8",
           },
@@ -208,8 +208,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 1,
-          "_p": 1024,
+          "_e": 0,
+          "_p": 0,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -218,24 +218,24 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 1,
-          "_p": 1025,
+          "_e": 0,
+          "_p": 1,
           "props": {
             "class": "dark",
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 1,
-          "_p": 1026,
+          "_e": 0,
+          "_p": 2,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
           "tag": "script",
         },
         {
-          "_e": 1,
-          "_p": 1028,
+          "_e": 0,
+          "_p": 4,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",

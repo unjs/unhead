@@ -1,12 +1,13 @@
-import { TagsWithInnerContent, tagDedupeKey } from 'zhead'
+import { HasElementTags, tagDedupeKey } from 'zhead'
 import type {
   BeforeRenderContext,
   DomRenderTagContext,
-  HeadEntry,
   HeadTag,
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
+import { setAttrs } from './setAttrs'
+import { hashCode } from './util'
 
 export interface RenderDomHeadOptions {
   /**
@@ -40,136 +41,135 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       })
     })
 
-  const renderTag = (tag: HeadTag, entry?: HeadEntry<any>) => {
-    if (tag.tag === 'title' && tag.children) {
+  const preRenderTag = async (tag: HeadTag) => {
+    const entry = head.headEntries().find(e => e._i === tag._e)
+    const renderCtx: DomRenderTagContext = {
+      renderId: tag._d || hashCode(JSON.stringify({ ...tag, _e: undefined, _p: undefined })),
+      $el: null,
+      shouldRender: true,
+      tag,
+      entry,
+      staleSideEffects,
+    }
+    await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
+    return renderCtx
+  }
+
+  const renders: DomRenderTagContext[] = []
+  const pendingRenders: Record<'body' | 'head', DomRenderTagContext[]> = {
+    body: [],
+    head: [],
+  }
+
+  const markSideEffect = (ctx: DomRenderTagContext, key: string, fn: () => void) => {
+    key = `${ctx.renderId}:${key}`
+    // may not have an entry for some reason
+    if (ctx.entry)
+      ctx.entry._sde[key] = fn
+    delete staleSideEffects[key]
+  }
+  const markEl = (ctx: DomRenderTagContext) => {
+    head._elMap[ctx.renderId] = ctx.$el!
+    renders.push(ctx)
+    markSideEffect(ctx, 'el', () => {
+      ctx.$el?.remove()
+      delete head._elMap[ctx.renderId]
+    })
+  }
+
+  // first render all tags which we can match quickly
+  for (const t of await head.resolveTags()) {
+    const ctx = await preRenderTag(t)
+    if (!ctx.shouldRender)
+      continue
+    const { tag } = ctx
+    // 1. render tags which don't create a new element
+    if (tag.tag === 'title') {
       // we don't handle title side effects
-      dom.title = tag.children
-      return dom.head.querySelector('title')
+      dom.title = tag.children || ''
+      renders.push(ctx)
+      continue
     }
-
-    const tagRenderId = tag._d || tag._p!
-
-    const markSideEffect = (key: string, fn: () => void) => {
-      key = `${tagRenderId}:${key}`
-      // may not have an entry for some reason
-      if (entry)
-        entry._sde[key] = fn
-      delete staleSideEffects[key]
-    }
-
-    /**
-     * Set attributes on a DOM element, while adding entry side effects.
-     */
-    const setAttrs = ($el: Element, sideEffects = true) => {
-      // add new attributes
-      Object.entries(tag.props).forEach(([k, value]) => {
-        value = String(value)
-        const attrSdeKey = `attr:${k}`
-
-        // class attributes have their own side effects to allow for merging
-        if (k === 'class') {
-          for (const c of value.split(' ')) {
-            const classSdeKey = `${attrSdeKey}:${c}`
-            // always clear side effects
-            sideEffects && markSideEffect(classSdeKey, () => $el.classList.remove(c))
-
-            if (!$el.classList.contains(c))
-              $el.classList.add(c)
-          }
-          return
-        }
-        // always clear side effects
-        if (sideEffects && !k.startsWith('data-h-'))
-          markSideEffect(attrSdeKey, () => $el.removeAttribute(k))
-
-        if ($el.getAttribute(k) !== value)
-          $el.setAttribute(k, value)
-      })
-      // @todo test side effects?
-      if (TagsWithInnerContent.includes(tag.tag) && $el.innerHTML !== (tag.children || ''))
-        $el.innerHTML = tag.children || ''
-    }
-
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      const $el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
-      setAttrs($el)
-      return $el
+      ctx.$el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
+      setAttrs(ctx, markSideEffect)
+      renders.push(ctx)
+      continue
     }
-
-    let $newEl: Element = dom.createElement(tag.tag)
-    // don't track side effects for new elements as the element itself should be deleted
-    setAttrs($newEl, false)
-
-    // try and hydrate based on runtime mapping of created el elements
-    let $previousEl: Element | undefined = head._elMap[tagRenderId]
-    // otherwise we need to try and hydrate based on DOM state
-    const $target = dom[tag.tagPosition?.startsWith('body') ? 'body' : 'head']
+    // 2. Hydrate based on either SSR or CSR mapping
+    ctx.$el = head._elMap[ctx.renderId]
     // @ts-expect-error runtime _hash untyped
-    if (!$previousEl && tag._hash) {
+    if (!ctx.$el && tag._hash) {
       // @ts-expect-error runtime _hash untyped
-      $previousEl = $target.querySelector(`${tag.tag}[data-h-${tag._hash}]`)
+      ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._hash}]`)
+    }
+    if (ctx.$el) {
+      // if we don't have a dedupe keys then the attrs will be the same
+      if (ctx.tag._d)
+        setAttrs(ctx)
+      markEl(ctx)
+      continue
     }
 
-    if (!$previousEl) {
-      for (const $el of tag.tagPosition === 'bodyClose' ? [...$target.children].reverse() : $target.children) {
-        const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
-        if (elTag !== tag.tag)
+    // 3. create the new dom element, we may or may not need it
+    ctx.$el = dom.createElement(tag.tag)
+    setAttrs(ctx)
+
+    pendingRenders[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].push(ctx)
+  }
+
+  // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
+  Object.entries(pendingRenders)
+    .forEach(([pos, queue]) => {
+      if (!queue.length)
+        return
+
+      // 3a. try and find a matching existing element (we only scan the DOM once per render tree)
+      for (const $el of [...dom[pos as 'head' | 'body'].children].reverse()) {
+        const elTag = $el.tagName.toLowerCase()
+        // only valid element tags
+        if (!HasElementTags.includes(elTag))
           continue
 
-        const key = tagDedupeKey({
-          tag: elTag,
+        const dedupeKey = tagDedupeKey({
+          tag: elTag as HeadTag['tag'],
           // convert attributes to object
           props: $el.getAttributeNames()
             .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
         })
-        if ((key === tag._d || $el.isEqualNode($newEl))) {
-          $previousEl = $el
-          break
+
+        const matchIdx = queue.findIndex(ctx => ctx && (ctx.tag._d === dedupeKey || $el.isEqualNode(ctx.$el!)))
+        if (matchIdx !== -1) {
+          const ctx = queue[matchIdx]
+          ctx.$el = $el
+          setAttrs(ctx)
+          markEl(ctx)
+          delete queue[matchIdx]
         }
       }
-    }
 
-    const markEl = ($el: Element) => {
-      head._elMap[tagRenderId] = $el
-      markSideEffect('el', () => {
-        $el?.remove()
-        delete head._elMap[tagRenderId]
+      // 3b. if not, create the new element
+      queue.forEach((ctx) => {
+        if (!ctx.$el)
+          return
+        switch (ctx.tag.tagPosition) {
+          case 'bodyClose':
+            dom.body.appendChild(ctx.$el)
+            break
+          case 'bodyOpen':
+            dom.body.insertBefore(ctx.$el, dom.body.firstChild)
+            break
+          case 'head':
+          default:
+            dom.head.appendChild(ctx.$el)
+            break
+        }
+        markEl(ctx)
       })
-    }
+    })
 
-    // updating an existing tag
-    if ($previousEl) {
-      markEl($previousEl)
-      setAttrs($previousEl, false)
-      return $previousEl
-    }
-
-    switch (tag.tagPosition) {
-      case 'bodyClose':
-        $newEl = dom.body.appendChild($newEl)
-        break
-      case 'bodyOpen':
-        $newEl = dom.body.insertBefore($newEl, dom.body.firstChild)
-        break
-      case 'head':
-      default:
-        $newEl = dom.head.appendChild($newEl)
-        break
-    }
-
-    markEl($newEl)
-    return $newEl
-  }
-
-  for (const tag of await head.resolveTags()) {
-    const entry = head.headEntries().find(e => e._i === tag._e)
-    const renderCtx: DomRenderTagContext = { $el: null, shouldRender: true, tag, entry, queuedSideEffects: staleSideEffects }
-    await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
-    if (!renderCtx.shouldRender)
-      continue
-    renderCtx.$el = renderTag(renderCtx.tag, renderCtx.entry)
-    await head.hooks.callHook('dom:renderTag', renderCtx)
-  }
+  for (const ctx of renders)
+    await head.hooks.callHook('dom:renderTag', ctx)
 
   // clear all side effects still pending
   Object.values(staleSideEffects).forEach(fn => fn())

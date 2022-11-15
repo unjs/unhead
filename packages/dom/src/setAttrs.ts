@@ -1,0 +1,39 @@
+import { TagsWithInnerContent } from 'zhead'
+import type { DomRenderTagContext } from '@unhead/schema'
+
+/**
+ * Set attributes on a DOM element, while adding entry side effects.
+ */
+export const setAttrs = (ctx: DomRenderTagContext, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
+  const { tag, $el } = ctx
+  if (!$el)
+    return
+  // add new attributes
+  Object.entries(tag.props).forEach(([k, value]) => {
+    value = String(value)
+    const attrSdeKey = `attr:${k}`
+
+    // class attributes have their own side effects to allow for merging
+    if (k === 'class') {
+      for (const c of value.split(' ')) {
+        const classSdeKey = `${attrSdeKey}:${c}`
+        // always clear side effects
+        if (markSideEffect)
+          markSideEffect(ctx, classSdeKey, () => $el.classList.remove(c))
+
+        if (!$el.classList.contains(c))
+          $el.classList.add(c)
+      }
+      return
+    }
+    // always clear side effects
+    if (markSideEffect && !k.startsWith('data-h-'))
+      markSideEffect(ctx, attrSdeKey, () => $el.removeAttribute(k))
+
+    if ($el.getAttribute(k) !== value)
+      $el.setAttribute(k, value)
+  })
+  // @todo test side effects?
+  if (TagsWithInnerContent.includes(tag.tag) && $el.innerHTML !== (tag.children || ''))
+    $el.innerHTML = tag.children || ''
+}
