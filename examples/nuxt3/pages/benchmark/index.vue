@@ -25,17 +25,17 @@ for (const i in Array.from({ length: 1000 })) {
         content: () => `${page.value.image}?${i}`,
       },
     ],
-    // script: [
-    //   {
-    //     src: () => `https://example.com/script.js?${i}`,
-    //   },
-    // ],
-    // link: [
-    //   {
-    //     as: 'style',
-    //     href: () => `https://example.com/style.js?${i}`,
-    //   },
-    // ],
+    script: [
+      {
+        src: () => `https://example.com/script.js?${i}`,
+      },
+    ],
+    link: [
+      {
+        as: 'style',
+        href: () => `https://example.com/style.js?${i}`,
+      },
+    ],
   })
 }
 const count = ref(0)
