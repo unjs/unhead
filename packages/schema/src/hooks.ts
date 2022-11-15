@@ -12,7 +12,7 @@ export interface SSRHeadPayload {
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
-export interface DomRenderTagContext { $el?: Element | null; shouldRender: boolean; renderId: string, tag: HeadTag; entry?: HeadEntry<any>; staleSideEffects: SideEffectsRecord }
+export interface DomRenderTagContext { $el?: Element | null; shouldRender: boolean; renderId: string; tag: HeadTag; entry?: HeadEntry<any>; staleSideEffects: SideEffectsRecord }
 export interface BeforeRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
 

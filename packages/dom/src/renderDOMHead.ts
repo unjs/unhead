@@ -7,16 +7,7 @@ import type {
   Unhead,
 } from '@unhead/schema'
 import { setAttrs } from './setAttrs'
-
-export function hashCode(s: string) {
-  let h = 9
-  for (let i = 0; i < s.length;)
-    h = Math.imul(h ^ s.charCodeAt(i++), 9 ** 9)
-  return ((h ^ h >>> 9) + 0x10000)
-    .toString(16)
-    .substring(1, 8)
-    .toLowerCase()
-}
+import { hashCode } from './util'
 
 export interface RenderDomHeadOptions {
   /**
@@ -54,7 +45,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
       renderId: tag._d || hashCode(JSON.stringify({ ...tag, _e: undefined, _p: undefined })),
-      $el: null, shouldRender: true, tag, entry, staleSideEffects
+      $el: null,
+      shouldRender: true,
+      tag,
+      entry,
+      staleSideEffects,
     }
     await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
     return renderCtx
@@ -75,6 +70,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
   const markEl = (ctx: DomRenderTagContext) => {
     head._elMap[ctx.renderId] = ctx.$el!
+    renders.push(ctx)
     markSideEffect(ctx, 'el', () => {
       ctx.$el?.remove()
       delete head._elMap[ctx.renderId]
@@ -108,9 +104,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._hash}]`)
     }
     if (ctx.$el) {
+      // if we don't have a dedupe keys then the attrs will be the same
+      if (ctx.tag._d)
+        setAttrs(ctx)
       markEl(ctx)
-      setAttrs(ctx)
-      renders.push(ctx)
       continue
     }
 
@@ -145,9 +142,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         if (matchIdx !== -1) {
           const ctx = queue[matchIdx]
           ctx.$el = $el
-          markEl(ctx)
           setAttrs(ctx)
-          renders.push(ctx)
+          markEl(ctx)
           delete queue[matchIdx]
         }
       }
@@ -169,7 +165,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             break
         }
         markEl(ctx)
-        renders.push(ctx)
       })
     })
 
