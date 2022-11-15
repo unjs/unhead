@@ -2,9 +2,9 @@
   "meta": {
     "name": "@unhead/addons",
     "dependencies": [
-      "unhead",
       "@rollup/pluginutils",
       "@unhead/schema",
+      "unhead",
       "unplugin",
       "unplugin-ast",
       "@babel/types",
