@@ -1,0 +1,68 @@
+{
+  "name": "@unhead/addons",
+  "type": "module",
+  "version": "0.6.7",
+  "packageManager": "pnpm@7.14.0",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "directory": "packages/ssr"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "require": "./dist/vite.cjs",
+      "import": "./dist/vite.mjs"
+    },
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "require": "./dist/webpack.cjs",
+      "import": "./dist/webpack.mjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "vite": [
+        "dist/vite.d.ts"
+      ],
+      "webpack": [
+        "dist/webpack.d.ts"
+      ]
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub",
+    "export:sizes": "npx export-size . -r"
+  },
+  "dependencies": {
+    "unhead": "workspace:*",
+    "@rollup/pluginutils": "^5.0.2",
+    "@unhead/schema": "workspace:*",
+    "unplugin": "^1.0.0",
+    "unplugin-ast": "^0.5.5"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.20.2",
+    "zhead": "1.0.0-beta.13"
+  }
+}

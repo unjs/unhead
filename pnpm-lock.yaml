@@ -117,6 +117,25 @@ importers:
       '@vue/cli-service': 5.0.8_plw62lyq7rnwccpcmeldauxtn4
       vue-template-compiler: 2.7.14
 
+  packages/addons:
+    specifiers:
+      '@babel/types': ^7.20.2
+      '@rollup/pluginutils': ^5.0.2
+      '@unhead/schema': workspace:*
+      unhead: workspace:*
+      unplugin: ^1.0.0
+      unplugin-ast: ^0.5.5
+      zhead: 1.0.0-beta.13
+    dependencies:
+      '@rollup/pluginutils': 5.0.2
+      '@unhead/schema': link:../schema
+      unhead: link:../unhead
+      unplugin: 1.0.0
+      unplugin-ast: 0.5.5
+    devDependencies:
+      '@babel/types': 7.20.2
+      zhead: 1.0.0-beta.13
+
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
@@ -276,6 +295,10 @@ packages:
       - supports-color
       - typescript
     dev: true
+
+  /@antfu/utils/0.5.2:
+    resolution: {integrity: sha512-CQkeV+oJxUazwjlHD0/3ZD08QWKuGQkhnrKo3e6ly5pd48VUpXbb77q0xMU4+vc2CkJnDS02Eq/M9ugyX20XZA==}
+    dev: false
 
   /@antfu/utils/0.6.0:
     resolution: {integrity: sha512-VauUKmo22NYo3y6fIjGjVU7LJyhaedYL9kyabdvIIIl7P+qbNPbQiaLwwk4UOU4McFfA2eg+aIWpEYhkHzsE9Q==}
@@ -1562,15 +1585,6 @@ packages:
       - supports-color
     dev: true
 
-  /@babel/types/7.19.4:
-    resolution: {integrity: sha512-M5LK7nAeS6+9j7hAq+b3fQs+pNfUtTGq+yFFfHnauFA8zQtLRfmuipmsKDKKLuyG+wC8ABW43A153YNawNTEtw==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      '@babel/helper-string-parser': 7.19.4
-      '@babel/helper-validator-identifier': 7.19.1
-      to-fast-properties: 2.0.0
-    dev: true
-
   /@babel/types/7.20.2:
     resolution: {integrity: sha512-FnnvsNWgZCr232sqtXggapvlkk/tuwR/qhGzcmxI0GXLCjmPYQPzio2FbdlWuY6y1sHFfQKk+rRbUZ9VStQMog==}
     engines: {node: '>=6.9.0'}
@@ -2169,7 +2183,6 @@ packages:
     dependencies:
       estree-walker: 2.0.2
       picomatch: 2.3.1
-    dev: true
 
   /@rollup/pluginutils/5.0.2:
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
@@ -11037,6 +11050,17 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
+  /unplugin-ast/0.5.5:
+    resolution: {integrity: sha512-L2HnV2xNWjnkOm8bAja2yLIQPZCla3PVN0mTGdYdSTj4sl9KwAVaRheYbCZpHuBNqvpHJPhxw7KR0/y6hs2YVQ==}
+    engines: {node: '>=14.19.0'}
+    dependencies:
+      '@antfu/utils': 0.5.2
+      '@babel/parser': 7.20.3
+      '@rollup/pluginutils': 4.2.1
+      magic-string: 0.26.7
+      unplugin: 0.9.6
+    dev: false
+
   /unplugin-auto-import/0.11.4:
     resolution: {integrity: sha512-lh/bRDRYwgnb9Cm5ur8TlTMGxA1GRZvgzCvBIf0vyuVRy7ebWcWefFElpUDpr8vLl+ZRGsPVCOGiYJ8TCR625Q==}
     engines: {node: '>=14'}
@@ -11070,8 +11094,16 @@ packages:
       acorn: 8.8.1
       chokidar: 3.5.3
       webpack-sources: 3.2.3
-      webpack-virtual-modules: 0.4.5
-    dev: true
+      webpack-virtual-modules: 0.4.6
+
+  /unplugin/1.0.0:
+    resolution: {integrity: sha512-H5UnBUxfhTXBXGo2AwKsl0UaLSHzSNDZNehPQSgdhVfO/t+XAS1Yoj3vmLrrlBrS9ZwtH5tejbX/TCp5DcyCKg==}
+    dependencies:
+      acorn: 8.8.1
+      chokidar: 3.5.3
+      webpack-sources: 3.2.3
+      webpack-virtual-modules: 0.4.6
+    dev: false
 
   /unstorage/0.6.0:
     resolution: {integrity: sha512-X05PIq28pVNA1BypX6Y00YNqAsHM25MGemvpjHeYvwJ8/wg936GoO1YD+VdWlqm3LmVX4fNJ5tlC7uhXsMPgeg==}
@@ -11098,7 +11130,7 @@ packages:
     dependencies:
       '@babel/core': 7.19.6
       '@babel/standalone': 7.19.6
-      '@babel/types': 7.19.4
+      '@babel/types': 7.20.2
       scule: 0.3.2
     transitivePeerDependencies:
       - supports-color
@@ -11272,7 +11304,7 @@ packages:
         optional: true
     dependencies:
       esbuild: 0.15.13
-      postcss: 8.4.18
+      postcss: 8.4.19
       resolve: 1.22.1
       rollup: 2.79.1
     optionalDependencies:
@@ -11724,6 +11756,9 @@ packages:
 
   /webpack-virtual-modules/0.4.5:
     resolution: {integrity: sha512-8bWq0Iluiv9lVf9YaqWQ9+liNgXSHICm+rg544yRgGYaR8yXZTVBaHZkINZSB2yZSWo4b0F6MIxqJezVfOEAlg==}
+
+  /webpack-virtual-modules/0.4.6:
+    resolution: {integrity: sha512-5tyDlKLqPfMqjT3Q9TAqf2YqjwmnUleZwzJi1A5qXnlBCdj2AtOJ6wAWdglTIDOPgOiOrXeBeFcsQ8+aGQ6QbA==}
 
   /webpack/5.75.0:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
