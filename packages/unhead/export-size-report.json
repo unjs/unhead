@@ -17,23 +17,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7674,
-      "minzipped": 2816,
-      "bundled": 15310
+      "minified": 7444,
+      "minzipped": 2742,
+      "bundled": 14994
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 7196,
-      "minzipped": 2658,
-      "bundled": 14340
+      "minified": 6966,
+      "minzipped": 2577,
+      "bundled": 14024
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 4879,
-      "minzipped": 1878,
-      "bundled": 10054
+      "minified": 4649,
+      "minzipped": 1805,
+      "bundled": 9738
     },
     {
       "name": "useServerTagMetaFlat",
@@ -59,9 +59,9 @@
     {
       "name": "DedupesTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 2021,
-      "minzipped": 886,
-      "bundled": 3846
+      "minified": 1791,
+      "minzipped": 809,
+      "bundled": 3530
     },
     {
       "name": "normaliseEntryTags",
