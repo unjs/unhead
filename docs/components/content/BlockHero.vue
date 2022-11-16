@@ -43,7 +43,7 @@ defineProps({
 
       <div class="mt-6 flex flex-col items-center justify-center gap-4 sm:mt-10 sm:flex-row sm:gap-6 lg:justify-start">
         <template v-if="!$slots.actions">
-        <ButtonLink v-if="cta" class="!mb-0" bold size="large" :href="cta[1] as any">
+        <ButtonLink v-if="cta" class="!mb-0 dark:bg-green-800!" bold size="large" :href="cta[1] as any">
           {{ cta[0] }}
         </ButtonLink>
 
@@ -56,7 +56,7 @@ defineProps({
     </div>
 
     <div class="block-hero__right lg:col-span-6">
-      <div class="flex relative items-center block-hero__inner ht p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-700 dark:to-blue-900 rounded">
+      <div class="flex relative items-center block-hero__inner ht p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-500/10 dark:to-blue-500/20 rounded">
         <slot name="right">
           <Markdown :use="$slots.right" unwrap="p" />
         </slot>
