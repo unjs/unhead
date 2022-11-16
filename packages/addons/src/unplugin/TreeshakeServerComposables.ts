@@ -25,15 +25,17 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
   ])
   let root = userConfig.root
 
-  let enabled = true
+  let enabled = false
 
   return {
     name: 'unhead:remove-server-composables',
     enforce: 'post',
 
     transformInclude(id) {
+      if (!enabled)
+        return false
       // make sure we run on files from root
-      if (enabled && root && !id.startsWith(root))
+      if (root && !id.startsWith(root))
         return false
       if (!filter(id))
         return false
@@ -61,7 +63,7 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
     },
     webpack(ctx) {
       if (ctx.name !== 'server')
-        enabled = false
+        enabled = true
     },
     vite: {
       async config(config) {
@@ -69,10 +71,10 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
       },
       apply(config: UserConfig, env: ConfigEnv) {
         if (!env.ssrBuild) {
-          enabled = false
-          return false
+          enabled = true
+          return true
         }
-        return true
+        return false
       },
     },
   }
