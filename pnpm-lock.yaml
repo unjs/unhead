@@ -125,7 +125,7 @@ importers:
       unhead: workspace:*
       unplugin: ^1.0.0
       unplugin-ast: ^0.5.5
-      zhead: ^1.0.1
+      zhead: ^1.0.2
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
@@ -134,16 +134,16 @@ importers:
       unplugin-ast: 0.5.5
     devDependencies:
       '@babel/types': 7.20.2
-      zhead: 1.0.1
+      zhead: 1.0.2
 
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.1
+      zhead: ^1.0.2
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.1
+      zhead: 1.0.2
 
   packages/schema:
     specifiers:
@@ -156,24 +156,24 @@ importers:
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.1
+      zhead: ^1.0.2
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.1
+      zhead: 1.0.2
 
   packages/unhead:
     specifiers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
       hookable: ^5.4.1
-      zhead: ^1.0.1
+      zhead: ^1.0.2
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
       hookable: 5.4.2
     devDependencies:
-      zhead: 1.0.1
+      zhead: 1.0.2
 
   packages/vue:
     specifiers:
@@ -3315,6 +3315,11 @@ packages:
 
   /@zhead/schema/1.0.1:
     resolution: {integrity: sha512-n6BDs+MjSOesuv6krG2QGyCPfdndxWX0M/G2wEGu1SPHc5jLHHi3EY1+vQvudFVXRVXquZHKsDPE7pSyeyGgHg==}
+    dev: false
+
+  /@zhead/schema/1.0.2:
+    resolution: {integrity: sha512-QLwVY7pyZ7LLTihigjNsrFHzpzNtnOdTjbt7OEIergnG5IRoqiSrHuxHkjgHSUdIOOlnrno0VEYk/PcvSGJAJA==}
+    dev: true
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -11182,10 +11187,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zhead/1.0.1:
-    resolution: {integrity: sha512-xlB+oe2vfgLBTg2RgE/GmEHmQij6eVO6BKAc5Kj3lWI80SaThq0xNNLdJgH55QT+VGY3p1vLx4OZ1phPfAroHA==}
+  /zhead/1.0.2:
+    resolution: {integrity: sha512-uuZuoheD5NgVfa62ZzbyQpAbTCsEbJZWh0iWV0C1TZBiiSzkNhW3v2kFBjv4Rx/PqVv8IxvLDlaDjyJPEup2Zw==}
     dependencies:
-      '@zhead/schema': 1.0.1
+      '@zhead/schema': 1.0.2
     dev: true
 
   /zip-stream/4.1.0:
