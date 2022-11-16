@@ -1,4 +1,4 @@
-import type { HeadTag as BaseHeadTag } from '@zhead/schema'
+import type { HeadTag as BaseHeadTag, MaybePromiseProps } from '@zhead/schema'
 
 export interface ResolvesDuplicates {
   /**
@@ -73,7 +73,7 @@ export interface TagPriority {
   tagPriority?: number | `before:${string}` | `after:${string}`
 }
 
-export type TagUserProperties = TagPriority & TagPosition & InnerContent & ResolvesDuplicates
+export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates
 
 export interface TagInternalProperties {
   /**

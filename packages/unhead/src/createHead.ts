@@ -107,7 +107,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       const resolveCtx: { tags: HeadTag[]; entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
-        for (const tag of normaliseEntryTags<T>(entry)) {
+        for (const tag of await normaliseEntryTags<T>(entry)) {
           const tagCtx = { tag, entry }
           await hooks.callHook('tag:normalise', tagCtx)
           resolveCtx.tags.push(tagCtx.tag)
