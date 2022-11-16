@@ -13,9 +13,9 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     })
   return (await Promise.all(tagPromises))
     .flat()
-    .map((t, i) => {
+    .map((t: HeadTag, i) => {
       t._e = e._i
       t._p = (e._i << TagEntityBits) + i
       return t
-    })
+    }) as unknown as HeadTag[]
 }
