@@ -8,6 +8,9 @@ function resolveUnref(r: any) {
 }
 
 export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): any {
+  // allow promises to bubble through
+  if (ref instanceof Promise)
+    return ref
   const root = resolveUnref(ref)
   if (!ref || !root)
     return root

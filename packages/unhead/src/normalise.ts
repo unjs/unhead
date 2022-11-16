@@ -3,14 +3,16 @@ import { ValidHeadTags, normaliseTag } from 'zhead'
 import { asArray } from './util'
 import { TagEntityBits } from './constants'
 
-export function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>) {
-  return Object.entries(e.input)
+export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>) {
+  return (await Promise.all(Object.entries(e.input)
     .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
     .map(([k, value]) => asArray(value)
     // @ts-expect-error untyped
-      .map(props => asArray(normaliseTag<HeadTag>(k as HeadTag['tag'], props, e))),
+      .map(props => asArray(normaliseTag<HeadTag>(k, props, e))),
     )
-    .flat(3)
+    .flat(3),
+  ))
+    .flat()
     .map((t, i) => {
       t._e = e._i
       t._p = (e._i << TagEntityBits) + i
