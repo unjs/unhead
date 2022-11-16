@@ -1,15 +1,6 @@
 export default defineNuxtConfig({
   extends: ['@nuxt-themes/docus'],
 
-  // github: {
-  //   owner: 'vueuse',
-  //   repo: 'schema-org',
-  //   branch: 'main',
-  //   token: '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',
-  // },
-  //
-  // modules: ['@nuxtlabs/github-module'],
-
   app: {
     head: {
       title: 'unhead',

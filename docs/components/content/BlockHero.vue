@@ -22,9 +22,9 @@ defineProps({
 </script>
 
 <template>
-<section class="py-20 sm:py-24 lg:py-32">
-  <div class="md:grid gap-8 lg:grid-cols-5 mx-auto w-full sm:px-6 lg:px-0 px-0 max-w-7xl">
-    <div class="lg:col-span-3 mb-10 lg:mb-0">
+<section class="py-5 sm:py-24 lg:py-32">
+  <div class="md:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0 max-w-8xl">
+    <div class="lg:col-span-6 mb-10 lg:mb-0 flex flex-col justify-center">
       <p v-if="$slots.top" class="mb-2 text-center lg:text-left">
         <Markdown :use="$slots.top" unwrap="p" />
       </p>
@@ -55,18 +55,25 @@ defineProps({
       </div>
     </div>
 
-    <div class="block-hero__right lg:col-span-2">
-      <slot name="right">
-        <Markdown :use="$slots.right" unwrap="p" />
-      </slot>
+    <div class="block-hero__right lg:col-span-6">
+      <div class="flex relative items-center block-hero__inner ht p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-700 dark:to-blue-900 rounded">
+        <slot name="right">
+          <Markdown :use="$slots.right" unwrap="p" />
+        </slot>
+      </div>
     </div>
   </div>
 </section>
 </template>
 
 <style scoped>
-.block-hero__right :deep(.prose-code) {
-  max-height: 350px;
-  overflow: auto;
+@media(min-width: 1024px) {
+  .block-hero__inner {
+    height: 500px;
+    overflow: auto;
+  }
+}
+:deep(.code-group) {
+  width: 100%;
 }
 </style>

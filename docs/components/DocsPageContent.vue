@@ -95,4 +95,10 @@ const isOpen = ref(false)
  }
 }
 }
+
+</style>
+<style>
+.max-w-7xl {
+  max-width: var(--page-max-width) !important;
+}
 </style>
