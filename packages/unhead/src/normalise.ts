@@ -12,7 +12,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
         .map(props => asArray(normaliseTag<HeadTag>(k, props, e))),
       )
       .flat(3)
-  ) as HeadTag[])
+  ))
     .flat()
     .map((t, i) => {
       t._e = e._i
