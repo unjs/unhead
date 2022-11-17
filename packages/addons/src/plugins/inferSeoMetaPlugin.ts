@@ -31,8 +31,10 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => defin
   hooks: {
     tags: {
       resolve(ctx) {
-        const title = ctx.tags.find(t => t.tag === 'title' && !!t.children)
-        if (title) {
+        const tags = ctx.tags.reverse()
+        const title = tags.find(t => t.tag === 'title' && !!t.children)
+        const ogTitle = tags.find(t => t.tag === 'meta' && t.props.property === 'og:title' && t._e === title?._e)
+        if (title && !ogTitle) {
           ctx.tags.push({
             // note: we need to add this new tag to the useHead entry of title
             // (if title is removed, we remove this tag too)
@@ -45,7 +47,8 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => defin
           })
         }
         const description = ctx.tags.find(t => t.tag === 'meta' && t.props.name === 'description' && !!t.props.content)
-        if (description) {
+        const ogDescription = tags.find(t => t.tag === 'meta' && t.props.property === 'og:description' && t._e === description?._e)
+        if (description && !ogDescription) {
           ctx.tags.push({
             _e: description._e,
             tag: 'meta',
@@ -67,7 +70,7 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => defin
             },
           })
         }
-        if (options?.robots && !ctx.tags.find(t => t.tag === 'meta' && t.props.name === 'robots')) {
+        if (options?.robots !== false && !ctx.tags.find(t => t.tag === 'meta' && t.props.name === 'robots')) {
           ctx.tags.push({
             _e: ctx.tags[0]._e,
             tag: 'meta',
