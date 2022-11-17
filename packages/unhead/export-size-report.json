@@ -17,23 +17,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7444,
-      "minzipped": 2742,
-      "bundled": 14994
+      "minified": 7530,
+      "minzipped": 2768,
+      "bundled": 15130
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 6966,
-      "minzipped": 2577,
-      "bundled": 14024
+      "minified": 7052,
+      "minzipped": 2610,
+      "bundled": 14160
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 4649,
-      "minzipped": 1805,
-      "bundled": 9738
+      "minified": 4735,
+      "minzipped": 1829,
+      "bundled": 9874
     },
     {
       "name": "useServerTagMetaFlat",
@@ -80,9 +80,9 @@
     {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1238,
-      "minzipped": 532,
-      "bundled": 2210
+      "minified": 1324,
+      "minzipped": 557,
+      "bundled": 2346
     },
     {
       "name": "ProvideTagHashPlugin",
