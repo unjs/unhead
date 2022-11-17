@@ -12,6 +12,7 @@ export const SortTagsPlugin = () => {
         for (const tag of ctx.tags) {
           if (!tag.tagPriority || typeof tag.tagPriority === 'number')
             continue
+
           const modifiers = [{ prefix: 'before:', offset: -1 }, { prefix: 'after:', offset: 1 }]
           for (const { prefix, offset } of modifiers) {
             if (tag.tagPriority.startsWith(prefix)) {

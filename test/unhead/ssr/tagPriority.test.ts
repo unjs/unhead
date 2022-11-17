@@ -15,7 +15,7 @@ describe('tag priority', () => {
       script: [
         {
           src: '/very-important-script.js',
-          tagPriority: 1,
+          tagPriority: 'critical',
         },
       ],
     })
@@ -29,7 +29,7 @@ describe('tag priority', () => {
             "src": "/very-important-script.js",
           },
           "tag": "script",
-          "tagPriority": 1,
+          "tagPriority": "critical",
         },
         {
           "_e": 0,
