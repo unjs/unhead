@@ -12,7 +12,7 @@ importers:
       '@types/jsdom': ^20.0.1
       '@vitest/ui': ^0.25.2
       '@vue/server-renderer': ^3.2.45
-      '@zhead/schema': 1.0.3
+      '@zhead/schema': ^1.0.3
       bumpp: ^8.2.1
       eslint: ^8.27.0
       fs-extra: ^10.1.0
@@ -147,10 +147,10 @@ importers:
 
   packages/schema:
     specifiers:
-      '@zhead/schema': 1.0.1
+      '@zhead/schema': ^1.0.3
       hookable: ^5.4.1
     dependencies:
-      '@zhead/schema': 1.0.1
+      '@zhead/schema': 1.0.3
       hookable: 5.4.2
 
   packages/ssr:
@@ -3312,10 +3312,6 @@ packages:
   /@zhead/schema/1.0.0-beta.13:
     resolution: {integrity: sha512-P1A1vRGFBhITco8Iw4/hvnDYoE/SoVrd71dW1pBFdXJb3vP+pBtoOuhbEKy0ROJGOyzQuqvFibcwzyLlWMqNiQ==}
     dev: true
-
-  /@zhead/schema/1.0.1:
-    resolution: {integrity: sha512-n6BDs+MjSOesuv6krG2QGyCPfdndxWX0M/G2wEGu1SPHc5jLHHi3EY1+vQvudFVXRVXquZHKsDPE7pSyeyGgHg==}
-    dev: false
 
   /@zhead/schema/1.0.3:
     resolution: {integrity: sha512-hpG+fENrSV82trtmtO7sAdPTQLnfhZIGtqvgN4fIUfEuyILF1GwAYjgFT/FdUaZ8yBSsYt5U47O35tOE2Ts1HA==}

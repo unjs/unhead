@@ -1,5 +1,5 @@
-import {InferSeoMetaPlugin} from "../../packages/addons/src";
-import {describe, it} from "vitest";
+import { describe, it } from 'vitest'
+import { InferSeoMetaPlugin } from '../../packages/addons/src'
 
 describe('state', () => {
   it('exists', async () => {
@@ -7,27 +7,27 @@ describe('state', () => {
       tags: [
         {
           _e: 1,
-          "children": "test",
-          "props": {},
-          "tag": "title",
+          children: 'test',
+          props: {},
+          tag: 'title',
         },
         {
           _e: 1,
-          "props": {
-            "content": "test",
-            "name": "description",
+          props: {
+            content: 'test',
+            name: 'description',
           },
-          "tag": "meta",
+          tag: 'meta',
         },
         {
           _e: 1,
-          "props": {
-            "property": "og:image",
-            "name": "https://example.com/image.jpg",
+          props: {
+            property: 'og:image',
+            name: 'https://example.com/image.jpg',
           },
-          "tag": "meta",
+          tag: 'meta',
         },
-      ]
+      ],
     }
     // @ts-expect-error hacky run of hook
     InferSeoMetaPlugin().hooks.tags.resolve(ctx)

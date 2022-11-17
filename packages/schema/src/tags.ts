@@ -70,7 +70,7 @@ export interface TagPriority {
    *
    * All other tags have a default priority of 10: <meta>, <script>, <link>, <style>, etc
    */
-  tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`;
+  tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
 export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates
