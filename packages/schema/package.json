@@ -2,7 +2,7 @@
   "name": "@unhead/schema",
   "type": "module",
   "version": "1.0.2",
-  "packageManager": "pnpm@7.14.0",
+  "packageManager": "pnpm@7.17.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -40,6 +40,6 @@
   },
   "dependencies": {
     "@zhead/schema": "^1.0.3",
-    "hookable": "^5.4.1"
+    "hookable": "^5.4.2"
   }
 }
