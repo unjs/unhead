@@ -17,23 +17,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7530,
-      "minzipped": 2768,
-      "bundled": 15130
+      "minified": 7539,
+      "minzipped": 2780,
+      "bundled": 15157
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 7052,
-      "minzipped": 2610,
-      "bundled": 14160
+      "minified": 7061,
+      "minzipped": 2616,
+      "bundled": 14187
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 4735,
-      "minzipped": 1829,
-      "bundled": 9874
+      "minified": 4744,
+      "minzipped": 1844,
+      "bundled": 9901
     },
     {
       "name": "useServerTagMetaFlat",
@@ -94,9 +94,9 @@
     {
       "name": "TitleTemplatePlugin",
       "path": "dist/index.mjs",
-      "minified": 1053,
-      "minzipped": 430,
-      "bundled": 2138
+      "minified": 1062,
+      "minzipped": 436,
+      "bundled": 2165
     },
     {
       "name": "DOMPlugins",
