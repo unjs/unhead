@@ -125,7 +125,7 @@ importers:
       unhead: workspace:*
       unplugin: ^1.0.0
       unplugin-ast: ^0.5.5
-      zhead: ^1.0.4
+      zhead: ^1.0.3
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
@@ -139,7 +139,7 @@ importers:
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.4
+      zhead: ^1.0.3
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
@@ -156,7 +156,7 @@ importers:
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.4
+      zhead: ^1.0.3
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
@@ -167,7 +167,7 @@ importers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
       hookable: ^5.4.2
-      zhead: ^1.0.4
+      zhead: ^1.0.3
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
