@@ -16,7 +16,7 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.4",
     "@nuxtlabs/github-module": "^1.5.3",
-    "postcss-custom-properties": "^12.1.10",
+    "postcss-custom-properties": "^13.0.0",
     "vue-github-button": "^3.1.0"
   }
 }
