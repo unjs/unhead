@@ -39,7 +39,7 @@
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@zhead/schema": "^1.0.3",
+    "@zhead/schema": "^1.0.4",
     "hookable": "^5.4.2"
   }
 }

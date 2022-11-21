@@ -38,6 +38,6 @@
     "@unhead/schema": "workspace:*"
   },
   "devDependencies": {
-    "zhead": "^1.0.3"
+    "zhead": "^1.0.4"
   }
 }

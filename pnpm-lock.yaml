@@ -12,7 +12,7 @@ importers:
       '@types/jsdom': ^20.0.1
       '@vitest/ui': ^0.25.2
       '@vue/server-renderer': ^3.2.45
-      '@zhead/schema': ^1.0.3
+      '@zhead/schema': ^1.0.4
       bumpp: ^8.2.1
       eslint: ^8.28.0
       fs-extra: ^10.1.0
@@ -24,7 +24,7 @@ importers:
       vitest: ^0.25.2
       vue: ^3.2.45
     dependencies:
-      '@zhead/schema': 1.0.3
+      '@zhead/schema': 1.0.4
       unplugin-auto-import: 0.11.4
     devDependencies:
       '@antfu/eslint-config': 0.31.0_hsf322ms6xhhd4b5ne6lb74y4a
@@ -125,7 +125,7 @@ importers:
       unhead: workspace:*
       unplugin: ^1.0.0
       unplugin-ast: ^0.5.5
-      zhead: ^1.0.3
+      zhead: ^1.0.4
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
@@ -134,46 +134,46 @@ importers:
       unplugin-ast: 0.5.5
     devDependencies:
       '@babel/types': 7.20.2
-      zhead: 1.0.3
+      zhead: 1.0.4
 
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.3
+      zhead: ^1.0.4
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.3
+      zhead: 1.0.4
 
   packages/schema:
     specifiers:
-      '@zhead/schema': ^1.0.3
+      '@zhead/schema': ^1.0.4
       hookable: ^5.4.2
     dependencies:
-      '@zhead/schema': 1.0.3
+      '@zhead/schema': 1.0.4
       hookable: 5.4.2
 
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.3
+      zhead: ^1.0.4
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.3
+      zhead: 1.0.4
 
   packages/unhead:
     specifiers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
       hookable: ^5.4.2
-      zhead: ^1.0.3
+      zhead: ^1.0.4
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
       hookable: 5.4.2
     devDependencies:
-      zhead: 1.0.3
+      zhead: 1.0.4
 
   packages/vue:
     specifiers:
@@ -3313,8 +3313,8 @@ packages:
     resolution: {integrity: sha512-P1A1vRGFBhITco8Iw4/hvnDYoE/SoVrd71dW1pBFdXJb3vP+pBtoOuhbEKy0ROJGOyzQuqvFibcwzyLlWMqNiQ==}
     dev: true
 
-  /@zhead/schema/1.0.3:
-    resolution: {integrity: sha512-hpG+fENrSV82trtmtO7sAdPTQLnfhZIGtqvgN4fIUfEuyILF1GwAYjgFT/FdUaZ8yBSsYt5U47O35tOE2Ts1HA==}
+  /@zhead/schema/1.0.4:
+    resolution: {integrity: sha512-v/CM22nH0TW9VU5IcRXlshwrMtsZPnFQWhcLBvpZjOJvfEmjl8cUb6OIJQJRR2WESNjjPW2Cji8mgL9XSVLjxA==}
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -11182,10 +11182,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zhead/1.0.3:
-    resolution: {integrity: sha512-cgOk347gp+FJMXJOnIJrXLYHDZIW1V8cKSp4HmmdF5RvN4KSqPoJaHlDf5ji0rfx98iHc6lfaBwFVXmdbUSF3w==}
+  /zhead/1.0.4:
+    resolution: {integrity: sha512-E0vbe9nW70f57fdfUdFt9odmDEubySleEbd+hyCjkCHxev419HsxQ1mEaQEEmGdaxxslZFrekjGMLeioiJKodQ==}
     dependencies:
-      '@zhead/schema': 1.0.3
+      '@zhead/schema': 1.0.4
     dev: true
 
   /zip-stream/4.1.0:
