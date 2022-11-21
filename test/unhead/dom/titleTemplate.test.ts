@@ -40,6 +40,25 @@ describe('titleTemplate', () => {
       '"<title>Default Title</title>"',
     )
   })
+  test('titleTemplate as title', async () => {
+    const head = createHead()
+    head.push({
+      titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
+    })
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
+      '"<title>Default Title</title>"',
+    )
+    const entry = head.push({
+      title: 'Hello world'
+    })
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
+      '"<title>Hello world - Template</title>"',
+    )
+    entry.dispose()
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
+      '"<title>Default Title</title>"',
+    )
+  })
   test('reset title template', async () => {
     const head = createHead()
     head.push({
