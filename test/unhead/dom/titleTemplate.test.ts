@@ -49,7 +49,7 @@ describe('titleTemplate', () => {
       '"<title>Default Title</title>"',
     )
     const entry = head.push({
-      title: 'Hello world'
+      title: 'Hello world',
     })
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
       '"<title>Hello world - Template</title>"',

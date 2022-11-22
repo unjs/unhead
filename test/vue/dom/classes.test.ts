@@ -1,8 +1,8 @@
-import {describe, it} from "vitest";
-import {createHead, useHead} from "@unhead/vue";
-import {computed, ref} from "vue";
-import {useDom} from "../../fixtures";
-import {renderDOMHead} from "@unhead/dom";
+import { describe, it } from 'vitest'
+import { createHead, useHead } from '@unhead/vue'
+import { computed, ref } from 'vue'
+import { renderDOMHead } from '@unhead/dom'
+import { useDom } from '../../fixtures'
 
 describe('vue dom classes', () => {
   it('empty class', async () => {
@@ -16,7 +16,7 @@ describe('vue dom classes', () => {
       bodyAttrs: {
         class: computed(() => {
           return isNavActive.value ? 'active-navbar-body' : ''
-        })
+        }),
       },
     })
 
@@ -38,7 +38,6 @@ describe('vue dom classes', () => {
     `)
 
     isNavActive.value = true
-    console.log('ref updated', isNavActive.value)
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
