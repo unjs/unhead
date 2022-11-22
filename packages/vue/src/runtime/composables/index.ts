@@ -20,11 +20,10 @@ import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()
-  const isBrowser = IsBrowser || head.resolvedOptions?.document
+  const isBrowser = IsBrowser || !!head.resolvedOptions?.document
   if ((options.mode === 'server' && isBrowser) || (options.mode === 'client' && !isBrowser))
     return
-
-  return IsBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)
+  return isBrowser ? _clientUseHead(input, options) : _serverUseHead(input, options)
 }
 
 export const useTagTitle = (title: ReactiveHead['title']) => useHead({ title })
