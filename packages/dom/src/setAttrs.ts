@@ -15,6 +15,10 @@ export const setAttrs = (ctx: DomRenderTagContext, markSideEffect?: (ctx: DomRen
 
     // class attributes have their own side effects to allow for merging
     if (k === 'class') {
+      // if the user is providing an empty string then it's removing the class
+      // the side effect clean up should remove it
+      if (!value)
+        return
       for (const c of value.split(' ')) {
         const classSdeKey = `${attrSdeKey}:${c}`
         // always clear side effects
