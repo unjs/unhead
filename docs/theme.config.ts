@@ -8,7 +8,7 @@ export default defineTheme({
   layout: 'default',
   socials: {
     twitter: '@harlan_zw',
-    github: 'harlan-zw/unhead',
+    github: 'unjs/unhead',
   },
   github: {
     root: 'content',
