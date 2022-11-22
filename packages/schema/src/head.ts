@@ -18,6 +18,10 @@ export interface HeadEntry<Input> {
    */
   input: Input
   /**
+   * Optional resolved input which will be used if set.
+   */
+  resolvedInput?: Input
+  /**
    * The mode that the entry should be used in.
    *
    * @internal

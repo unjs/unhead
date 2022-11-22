@@ -5,7 +5,7 @@ import { TagEntityBits } from './constants'
 
 export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
   const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
-  Object.entries(e.input)
+  Object.entries(e.resolvedInput || e.input)
     .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
     .forEach(([k, value]) => {
       const v = asArray(value)
