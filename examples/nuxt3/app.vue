@@ -20,6 +20,16 @@ useHead({
   ],
 })
 
+const isFixedHeader = ref(false)
+useHead({
+  bodyAttrs: {
+    onscroll: (e) => { isFixedHeader.value = window.top.scrollY > 100 },
+    class: {
+      ['fixed-header']: isFixedHeader
+    }
+  },
+})
+
 // example of dynamic inner content that isn't key'd, we want to make sure this isn't duplicated in a SPA mode
 // for it not to duplicate in a SSR mode, they must key it
 // it's possible to automatically key it based on comparing the unref'd value with the input
@@ -43,6 +53,7 @@ useHead({
     <NuxtPage />
   </div>
   <nuxt-link to="/" style="margin-top: 10px;" as="div">Home</nuxt-link>
+  <button @click="isNavActive = !isNavActive">Nav open</button>
   <div style="margin-top: 30px;">
     <DebugHead />
   </div>

@@ -19,30 +19,6 @@ export default defineNuxtConfig({
     },
   },
 
-  hooks: {
-    'modules:before': async ({ nuxt }) => {
-      const newModules = nuxt.options._modules
-      // remove the nuxt meta (head) module
-      for (const k in newModules) {
-        if (typeof newModules[k] === 'function') {
-          if ((await newModules[k].getMeta()).name === 'meta') {
-            // we can't use an undefined key so use a duplicate
-            newModules[k] = '@nuxt/telemetry'
-          }
-        }
-      }
-      nuxt.options._modules = newModules
-    },
-    'modules:done': function ({ nuxt }) {
-      // Replace #head alias
-      nuxt.options.alias['#head'] = runtimeDir
-
-      addPlugin({ src: resolve(runtimeDir, 'plugin') }, { append: true })
-
-      nuxt.options.build.transpile.push(runtimeDir)
-    },
-  },
-
   // schemaOrg: {
   //   canonicalHost: 'https://nuxt-schema-org-demo.com',
   // },
