@@ -59,7 +59,7 @@
     "@unhead/schema": "workspace:*",
     "unhead": "workspace:*",
     "unplugin": "^1.0.0",
-    "unplugin-ast": "^0.5.5"
+    "unplugin-ast": "^0.5.8"
   },
   "devDependencies": {
     "@babel/types": "^7.20.2",
