@@ -9,8 +9,9 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "npm:@nuxt-themes/docus-edge@latest",
-    "nuxt": "3.0.0",
+    "@nuxt-themes/docus": "npm:@nuxt-themes/docus-edge@3.0.0-e37d6b1",
+    "nuxt": "3.0.0-rc.13",
+    "@nuxt/kit": "3.0.0-rc.13",
     "@nuxtjs/tailwindcss": "latest"
   },
   "dependencies": {
