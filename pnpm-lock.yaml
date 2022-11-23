@@ -10,7 +10,7 @@ importers:
       '@antfu/eslint-config': ^0.31.0
       '@types/fs-extra': ^9.0.13
       '@types/jsdom': ^20.0.1
-      '@vitest/ui': ^0.25.2
+      '@vitest/ui': ^0.25.3
       '@vue/server-renderer': ^3.2.45
       '@zhead/schema': ^1.0.4
       bumpp: ^8.2.1
@@ -19,18 +19,18 @@ importers:
       jsdom: ^20.0.3
       typescript: ^4.9.3
       unbuild: ^1.0.1
-      unplugin-auto-import: ^0.11.4
+      unplugin-auto-import: ^0.11.5
       utility-types: ^3.10.0
-      vitest: ^0.25.2
+      vitest: ^0.25.3
       vue: ^3.2.45
     dependencies:
       '@zhead/schema': 1.0.4
-      unplugin-auto-import: 0.11.4
+      unplugin-auto-import: 0.11.5
     devDependencies:
       '@antfu/eslint-config': 0.31.0_hsf322ms6xhhd4b5ne6lb74y4a
       '@types/fs-extra': 9.0.13
       '@types/jsdom': 20.0.1
-      '@vitest/ui': 0.25.2
+      '@vitest/ui': 0.25.3
       '@vue/server-renderer': 3.2.45_vue@3.2.45
       bumpp: 8.2.1
       eslint: 8.28.0
@@ -39,7 +39,7 @@ importers:
       typescript: 4.9.3
       unbuild: 1.0.1
       utility-types: 3.10.0
-      vitest: 0.25.2_egm2pqfjqjfd5w57ye4cyofdka
+      vitest: 0.25.3_vateklu3eoqp3m23r6t6ghnz24
       vue: 3.2.45
 
   examples/nuxt3:
@@ -124,14 +124,14 @@ importers:
       '@unhead/schema': workspace:*
       unhead: workspace:*
       unplugin: ^1.0.0
-      unplugin-ast: ^0.5.5
+      unplugin-ast: ^0.5.8
       zhead: ^1.0.4
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
       unhead: link:../unhead
       unplugin: 1.0.0
-      unplugin-ast: 0.5.5
+      unplugin-ast: 0.5.8
     devDependencies:
       '@babel/types': 7.20.2
       zhead: 1.0.4
@@ -296,12 +296,12 @@ packages:
       - typescript
     dev: true
 
-  /@antfu/utils/0.5.2:
-    resolution: {integrity: sha512-CQkeV+oJxUazwjlHD0/3ZD08QWKuGQkhnrKo3e6ly5pd48VUpXbb77q0xMU4+vc2CkJnDS02Eq/M9ugyX20XZA==}
-    dev: false
-
   /@antfu/utils/0.6.3:
     resolution: {integrity: sha512-sEYpyyKUPOew9QsXZ8feRVMzW6DWLviwOl+/ap06UQW02A8Srbc95CPHVm4eUbiBzBgD46eyIT+przv//KSSlQ==}
+    dev: false
+
+  /@antfu/utils/0.7.0:
+    resolution: {integrity: sha512-tH38JQEFLOdvZJC32ZbPTvWOQzxEtOQh5jOqBPDLw8sxBr0PFF+f2Csgwb7mRpD0QB1xu+PDoAifIPiCNneeNA==}
     dev: false
 
   /@babel/code-frame/7.18.6:
@@ -2658,8 +2658,8 @@ packages:
       vue: 3.2.45
     dev: true
 
-  /@vitest/ui/0.25.2:
-    resolution: {integrity: sha512-/pUR88zjiF/5qnzb8Ou9i3+NDgteMcqk7G8VZox/qzcs7Z06dLpNzAxANOANP9m8U/yrJtPNjQqeuMI26HbWwA==}
+  /@vitest/ui/0.25.3:
+    resolution: {integrity: sha512-o0Bo/SPlcqopsuGaPUwIPhb0Jr3VSMO4hOOWBBNDtz2/a89HO2GHPP/tx8waWxF0bBc6Cjpcj/CRQAYy3KbLgg==}
     dependencies:
       sirv: 2.0.2
     dev: true
@@ -10149,24 +10149,6 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /unimport/0.7.1:
-    resolution: {integrity: sha512-rn/hRpCtFxVVT3T8a6sG738xiA6yp8eFzzMLVr+ebp2FBU1gF0Qo6SfOGrrXATDmKruskhYAvPN7djhydgHU8A==}
-    dependencies:
-      '@rollup/pluginutils': 5.0.2
-      escape-string-regexp: 5.0.0
-      fast-glob: 3.2.12
-      local-pkg: 0.4.2
-      magic-string: 0.26.7
-      mlly: 1.0.0
-      pathe: 1.0.0
-      pkg-types: 1.0.1
-      scule: 1.0.0
-      strip-literal: 1.0.0
-      unplugin: 1.0.0
-    transitivePeerDependencies:
-      - rollup
-    dev: false
-
   /unimport/1.0.1:
     resolution: {integrity: sha512-SEPKl3uyqUvi6c0MnyCmUF9H07CuC9j9p2p33F03LmegU0sxjpnjL0fLKAhh7BTfcKaJKj+1iOiAFtg7P3m5mQ==}
     dependencies:
@@ -10183,7 +10165,6 @@ packages:
       unplugin: 1.0.0
     transitivePeerDependencies:
       - rollup
-    dev: true
 
   /unimport/1.0.1_rollup@2.79.1:
     resolution: {integrity: sha512-SEPKl3uyqUvi6c0MnyCmUF9H07CuC9j9p2p33F03LmegU0sxjpnjL0fLKAhh7BTfcKaJKj+1iOiAFtg7P3m5mQ==}
@@ -10224,19 +10205,19 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-  /unplugin-ast/0.5.5:
-    resolution: {integrity: sha512-L2HnV2xNWjnkOm8bAja2yLIQPZCla3PVN0mTGdYdSTj4sl9KwAVaRheYbCZpHuBNqvpHJPhxw7KR0/y6hs2YVQ==}
+  /unplugin-ast/0.5.8:
+    resolution: {integrity: sha512-e3uqBdFBWfgvigsCkav6MM11WEgjMt9k16/EpnqfDp8d8YQAjK92FYFyyOm1HRd4rOKC0XYIZtkwVsuFkTeUvw==}
     engines: {node: '>=14.19.0'}
     dependencies:
-      '@antfu/utils': 0.5.2
+      '@antfu/utils': 0.6.3
       '@babel/parser': 7.20.3
       '@rollup/pluginutils': 4.2.1
       magic-string: 0.26.7
-      unplugin: 0.9.6
+      unplugin: 1.0.0
     dev: false
 
-  /unplugin-auto-import/0.11.4:
-    resolution: {integrity: sha512-lh/bRDRYwgnb9Cm5ur8TlTMGxA1GRZvgzCvBIf0vyuVRy7ebWcWefFElpUDpr8vLl+ZRGsPVCOGiYJ8TCR625Q==}
+  /unplugin-auto-import/0.11.5:
+    resolution: {integrity: sha512-nvbL2AQwLRR8wbHpJ6L1EBVNmjN045RSedTa4NtsGRkSQFXkI1iKHs4dTqJwcKZsnFrZOAKtLPiN1/oQTObLZw==}
     engines: {node: '>=14'}
     peerDependencies:
       '@vueuse/core': '*'
@@ -10244,32 +10225,14 @@ packages:
       '@vueuse/core':
         optional: true
     dependencies:
-      '@antfu/utils': 0.6.3
+      '@antfu/utils': 0.7.0
       '@rollup/pluginutils': 5.0.2
       local-pkg: 0.4.2
       magic-string: 0.26.7
-      unimport: 0.7.1
-      unplugin: 0.10.2
+      unimport: 1.0.1
+      unplugin: 1.0.0
     transitivePeerDependencies:
       - rollup
-    dev: false
-
-  /unplugin/0.10.2:
-    resolution: {integrity: sha512-6rk7GUa4ICYjae5PrAllvcDeuT8pA9+j5J5EkxbMFaV+SalHhxZ7X2dohMzu6C3XzsMT+6jwR/+pwPNR3uK9MA==}
-    dependencies:
-      acorn: 8.8.1
-      chokidar: 3.5.3
-      webpack-sources: 3.2.3
-      webpack-virtual-modules: 0.4.6
-    dev: false
-
-  /unplugin/0.9.6:
-    resolution: {integrity: sha512-YYLtfoNiie/lxswy1GOsKXgnLJTE27la/PeCGznSItk+8METYZErO+zzV9KQ/hXhPwzIJsfJ4s0m1Rl7ZCWZ4Q==}
-    dependencies:
-      acorn: 8.8.1
-      chokidar: 3.5.3
-      webpack-sources: 3.2.3
-      webpack-virtual-modules: 0.4.6
     dev: false
 
   /unplugin/1.0.0:
@@ -10495,8 +10458,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /vitest/0.25.2_egm2pqfjqjfd5w57ye4cyofdka:
-    resolution: {integrity: sha512-qqkzfzglEFbQY7IGkgSJkdOhoqHjwAao/OrphnHboeYHC5JzsVFoLCaB2lnAy8krhj7sbrFTVRApzpkTOeuDWQ==}
+  /vitest/0.25.3_vateklu3eoqp3m23r6t6ghnz24:
+    resolution: {integrity: sha512-/UzHfXIKsELZhL7OaM2xFlRF8HRZgAHtPctacvNK8H4vOcbJJAMEgbWNGSAK7Y9b1NBe5SeM7VTuz2RsTHFJJA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -10520,7 +10483,7 @@ packages:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.9
-      '@vitest/ui': 0.25.2
+      '@vitest/ui': 0.25.3
       acorn: 8.8.1
       acorn-walk: 8.2.0
       chai: 4.3.7
