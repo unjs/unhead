@@ -64,6 +64,6 @@
   },
   "dependencies": {
     "@zhead/schema": "^1.0.4",
-    "unplugin-auto-import": "^0.11.5"
+    "unplugin-auto-import": "^0.12.0"
   }
 }
