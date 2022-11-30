@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import { getCurrentInstance, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
+import { getCurrentScope, onScopeDispose, ref, watch, watchEffect, effectScope} from 'vue'
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { ReactiveHead, UseHeadInput } from '../../..'
 import { injectHead, resolveUnrefHeadInput } from '../../..'
@@ -8,18 +8,24 @@ export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, optio
   const head = injectHead()
 
   const resolvedInput: Ref<ReactiveHead> = ref({})
-  watchEffect(() => {
-    resolvedInput.value = resolveUnrefHeadInput(input)
+
+  const scope = effectScope()
+
+  let entry: ActiveHeadEntry<UseHeadInput<T>>
+
+  scope.run(() => {
+    watchEffect(() => {
+      resolvedInput.value = resolveUnrefHeadInput(input)
+    })
+    entry = head.push(resolvedInput.value, options)
+    watch(resolvedInput, e => entry.patch(e))
   })
-  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
-  watch(resolvedInput, e => entry.patch(e))
 
-  const vm = getCurrentInstance()
-
-  if (vm) {
-    onBeforeUnmount(() => {
-      entry.dispose()
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      entry?.dispose()
+      scope.stop(true)
     })
   }
-  return entry
+  return entry!
 }

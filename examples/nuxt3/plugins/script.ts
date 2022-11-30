@@ -1,4 +1,5 @@
 import { defineNuxtPlugin, useHead, ref } from '#imports'
+import {EffectScope} from "vue";
 
 const configure = [
   'window.loadTurnstile = new Promise(resolve => {',
@@ -21,14 +22,24 @@ const script = {
 export default defineNuxtPlugin(() => {
   const addScript = ref(false)
 
-  useHead({
-    script: () => [
-      { children: configure },
-      addScript.value && script,
-    ].filter((s): s is typeof script => !!s),
+  let scope : EffectScope | null = effectScope()
+
+  scope.run(() => {
+    useHead({
+      script: () => {
+        return [
+          {children: configure},
+          addScript.value && script,
+        ].filter((s): s is typeof script => !!s)
+      },
+    })
   })
 
-  setTimeout(() => {
-    addScript.value = true
+  setInterval(() => {
+    addScript.value = !addScript.value
+    if (scope) {
+      scope.stop()
+      scope = null
+    }
   }, 1000)
 })
