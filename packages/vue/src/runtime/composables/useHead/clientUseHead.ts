@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import { getCurrentScope, onScopeDispose, ref, watch, watchEffect, effectScope} from 'vue'
+import { effectScope, getCurrentScope, onScopeDispose, ref, watch, watchEffect } from 'vue'
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { ReactiveHead, UseHeadInput } from '../../..'
 import { injectHead, resolveUnrefHeadInput } from '../../..'
