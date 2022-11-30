@@ -7,19 +7,19 @@ import { injectHead, resolveUnrefHeadInput } from '../../..'
 export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const head = injectHead()
 
-  const vm = getCurrentInstance()
-
-  if (!vm)
-    return head.push(input, options)
-
   const resolvedInput: Ref<ReactiveHead> = ref({})
   watchEffect(() => {
     resolvedInput.value = resolveUnrefHeadInput(input)
   })
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
   watch(resolvedInput, e => entry.patch(e))
-  onBeforeUnmount(() => {
-    entry.dispose()
-  })
+
+  const vm = getCurrentInstance()
+
+  if (vm) {
+    onBeforeUnmount(() => {
+      entry.dispose()
+    })
+  }
   return entry
 }

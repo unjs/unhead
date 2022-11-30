@@ -19,6 +19,10 @@ export default defineNuxtConfig({
     },
   },
 
+  plugins: [
+    '~/plugins/script',
+  ],
+
   // schemaOrg: {
   //   canonicalHost: 'https://nuxt-schema-org-demo.com',
   // },
