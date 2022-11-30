@@ -44,7 +44,7 @@
     "lint": "eslint \"{packages,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^0.32.0",
+    "@antfu/eslint-config": "^0.33.0",
     "@types/fs-extra": "^9.0.13",
     "@types/jsdom": "^20.0.1",
     "@vitest/ui": "^0.25.3",
