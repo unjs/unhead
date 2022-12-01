@@ -635,7 +635,7 @@
   resolved "https://registry.yarnpkg.com/@nuxt/devalue/-/devalue-2.0.0.tgz#c7bd7e9a516514e612d5d2e511ffc399e0eac322"
   integrity sha512-YBI/6o2EBz02tdEJRBK8xkt3zvOFOWlLBf7WKYGBsSYSRtjjgrqPe2skp6VLLmKx5WbHHDNcW+6oACaurxGzeA==
 
-"@nuxt/kit@3.0.0", "@nuxt/kit@^3.0.0-rc.13", "@nuxt/kit@^3.0.0-rc.14":
+"@nuxt/kit@3.0.0", "@nuxt/kit@^3.0.0", "@nuxt/kit@^3.0.0-rc.14":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-3.0.0.tgz#ae49b4e27b15285556cb88f35a56309c5ca0dd79"
   integrity sha512-7ZsOLt5s9a0ZleAIzmoD70JwkZf5ti6bDdxl6f8ew7Huxz+ni/oRfTPTX9TrORXsgW5CvDt6Q9M7IJNPkAN/Iw==
@@ -912,12 +912,12 @@
     tailwindcss "^3.1.6"
     ufo "^0.8.5"
 
-"@nuxtlabs/github-module@^1.5.3":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@nuxtlabs/github-module/-/github-module-1.5.3.tgz#9aa50c96b88f023dc73f2c3c5461abcdc8d13c71"
-  integrity sha512-dxjhyCRkcCHw73lQriIdertjIk6VAt6VTtdh25pBtFtEW9yGNiG20QrF7CT5Rl20PiKLHNa4jrQfnPNkJPRvHQ==
+"@nuxtlabs/github-module@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@nuxtlabs/github-module/-/github-module-1.5.4.tgz#4ca66b69facaec00305ad2d97431fd59274b3a0d"
+  integrity sha512-hjseUtQQ2wwloqHPopAIz0C3QxjE/+H+xyCNB7cY3mXt9jqFvIq1fn+hGOMCCGGdB5qKXoul2OnqosKqyvcMXA==
   dependencies:
-    "@nuxt/kit" "^3.0.0-rc.13"
+    "@nuxt/kit" "^3.0.0"
     "@octokit/graphql" "^5.0.1"
     "@octokit/rest" "^19.0.4"
     remark-gfm "^3.0.1"
