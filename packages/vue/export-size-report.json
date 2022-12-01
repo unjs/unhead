@@ -52,9 +52,9 @@
     {
       "name": "VueHeadMixin",
       "path": "dist/index.mjs",
-      "minified": 1747,
-      "minzipped": 777,
-      "bundled": 3298
+      "minified": 1759,
+      "minzipped": 785,
+      "bundled": 3317
     },
     {
       "name": "useServerTagNoscript",
