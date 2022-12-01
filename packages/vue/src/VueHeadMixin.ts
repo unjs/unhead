@@ -12,7 +12,7 @@ export const VueHeadMixin = {
       return
 
     const source = typeof options.head === 'function'
-      ? () => options.head()
+      ? () => options.head.call(instance.proxy)
       : options.head
 
     useHead(source)
