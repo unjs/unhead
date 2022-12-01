@@ -9,22 +9,15 @@ export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, optio
 
   const resolvedInput: Ref<ReactiveHead> = ref({})
 
-  const scope = effectScope()
-
-  let entry: ActiveHeadEntry<UseHeadInput<T>>
-
-  scope.run(() => {
-    watchEffect(() => {
-      resolvedInput.value = resolveUnrefHeadInput(input)
-    })
-    entry = head.push(resolvedInput.value, options)
-    watch(resolvedInput, e => entry.patch(e))
+  watchEffect(() => {
+    resolvedInput.value = resolveUnrefHeadInput(input)
   })
+  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
+  watch(resolvedInput, e => entry.patch(e))
 
   if (getCurrentScope()) {
     onScopeDispose(() => {
-      entry?.dispose()
-      scope.stop(true)
+      entry.dispose()
     })
   }
   return entry!
