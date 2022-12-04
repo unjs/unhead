@@ -57,6 +57,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
 
   // does the dom rendering by default
+  // es-lint-disable-next-line @typescript-eslint/no-use-before-define
   const updated = () => hooks.callHook('entries:updated', head)
 
   const head: Unhead<T> = {

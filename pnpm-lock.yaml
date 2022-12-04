@@ -12,10 +12,10 @@ importers:
       '@types/jsdom': ^20.0.1
       '@vitest/ui': ^0.25.3
       '@vue/server-renderer': ^3.2.45
-      '@zhead/schema': ^1.0.4
+      '@zhead/schema': ^1.0.7
       bumpp: ^8.2.1
       eslint: ^8.29.0
-      fs-extra: ^10.1.0
+      fs-extra: ^11.1.0
       jsdom: ^20.0.3
       typescript: ^4.9.3
       unbuild: ^1.0.1
@@ -24,7 +24,7 @@ importers:
       vitest: ^0.25.3
       vue: ^3.2.45
     dependencies:
-      '@zhead/schema': 1.0.4
+      '@zhead/schema': 1.0.7
       unplugin-auto-import: 0.12.0
     devDependencies:
       '@antfu/eslint-config': 0.33.1_s5ps7njkmjlaqajutnox5ntcla
@@ -34,7 +34,7 @@ importers:
       '@vue/server-renderer': 3.2.45_vue@3.2.45
       bumpp: 8.2.1
       eslint: 8.29.0
-      fs-extra: 10.1.0
+      fs-extra: 11.1.0
       jsdom: 20.0.3
       typescript: 4.9.3
       unbuild: 1.0.1
@@ -125,7 +125,7 @@ importers:
       unhead: workspace:*
       unplugin: ^1.0.0
       unplugin-ast: ^0.5.8
-      zhead: ^1.0.4
+      zhead: ^1.0.7
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
@@ -134,46 +134,46 @@ importers:
       unplugin-ast: 0.5.8
     devDependencies:
       '@babel/types': 7.20.5
-      zhead: 1.0.4
+      zhead: 1.0.7
 
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.4
+      zhead: ^1.0.7
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.4
+      zhead: 1.0.7
 
   packages/schema:
     specifiers:
-      '@zhead/schema': ^1.0.4
+      '@zhead/schema': ^1.0.7
       hookable: ^5.4.2
     dependencies:
-      '@zhead/schema': 1.0.4
+      '@zhead/schema': 1.0.7
       hookable: 5.4.2
 
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.0.4
+      zhead: ^1.0.7
     dependencies:
       '@unhead/schema': link:../schema
     devDependencies:
-      zhead: 1.0.4
+      zhead: 1.0.7
 
   packages/unhead:
     specifiers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
       hookable: ^5.4.2
-      zhead: ^1.0.4
+      zhead: ^1.0.7
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
       hookable: 5.4.2
     devDependencies:
-      zhead: 1.0.4
+      zhead: 1.0.7
 
   packages/vue:
     specifiers:
@@ -1616,8 +1616,8 @@ packages:
       ajv: 6.12.6
       debug: 4.3.4
       espree: 9.4.1
-      globals: 13.17.0
-      ignore: 5.2.0
+      globals: 13.18.0
+      ignore: 5.2.1
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -1767,7 +1767,7 @@ packages:
     engines: {node: '>= 8'}
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
-      fastq: 1.13.0
+      fastq: 1.14.0
 
   /@nuxt/devalue/2.0.0:
     resolution: {integrity: sha512-YBI/6o2EBz02tdEJRBK8xkt3zvOFOWlLBf7WKYGBsSYSRtjjgrqPe2skp6VLLmKx5WbHHDNcW+6oACaurxGzeA==}
@@ -2559,7 +2559,7 @@ packages:
   /@unhead/schema/1.0.3:
     resolution: {integrity: sha512-Alt7YdY4ksM1dty/hQpRFaCmnDv11h79gvi3RgALYe8J16uvR+55WChwtjFMUDUDUx4nLNmsxohfj22IYaqfwg==}
     dependencies:
-      '@zhead/schema': 1.0.4
+      '@zhead/schema': 1.0.7
       hookable: 5.4.2
     dev: true
 
@@ -3324,8 +3324,8 @@ packages:
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
     dev: true
 
-  /@zhead/schema/1.0.4:
-    resolution: {integrity: sha512-v/CM22nH0TW9VU5IcRXlshwrMtsZPnFQWhcLBvpZjOJvfEmjl8cUb6OIJQJRR2WESNjjPW2Cji8mgL9XSVLjxA==}
+  /@zhead/schema/1.0.7:
+    resolution: {integrity: sha512-jN2ipkz39YrHd8uulgw/Y7x8iOxvR/cTkin/E9zRQVP5JBIrrJMiGyFFj6JBW4Q029xJ5dKtpwy/3RZWpz+dkQ==}
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -5640,14 +5640,14 @@ packages:
       file-entry-cache: 6.0.1
       find-up: 5.0.0
       glob-parent: 6.0.2
-      globals: 13.17.0
+      globals: 13.18.0
       grapheme-splitter: 1.0.4
-      ignore: 5.2.0
+      ignore: 5.2.1
       import-fresh: 3.3.0
       imurmurhash: 0.1.4
       is-glob: 4.0.3
       is-path-inside: 3.0.3
-      js-sdsl: 4.1.5
+      js-sdsl: 4.2.0
       js-yaml: 4.1.0
       json-stable-stringify-without-jsonify: 1.0.1
       levn: 0.4.1
@@ -5844,8 +5844,8 @@ packages:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
     dev: true
 
-  /fastq/1.13.0:
-    resolution: {integrity: sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw==}
+  /fastq/1.14.0:
+    resolution: {integrity: sha512-eR2D+V9/ExcbF9ls441yIuN6TI2ED1Y2ZcA5BmMtJsOkWOFRJQ0Jt0g1UwqXJJVAb+V+umH5Dfr8oh4EVP7VVg==}
     dependencies:
       reusify: 1.0.4
 
@@ -6012,6 +6012,15 @@ packages:
   /fs-extra/10.1.0:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
+    dependencies:
+      graceful-fs: 4.2.10
+      jsonfile: 6.1.0
+      universalify: 2.0.0
+    dev: true
+
+  /fs-extra/11.1.0:
+    resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
@@ -6211,8 +6220,8 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /globals/13.17.0:
-    resolution: {integrity: sha512-1C+6nQRb1GwGMKm2dH/E7enFAMxGTmGI7/dEdhy/DNelv85w9B72t3uc5frtMNXIbzrarJJ/lTCjcaZwbLJmyw==}
+  /globals/13.18.0:
+    resolution: {integrity: sha512-/mR4KI8Ps2spmoc0Ulu9L7agOF0du1CZNQ3dke8yItYlyKNmGrkONemBbd6V8UTc1Wgcqn21t3WYB7dbRmh6/A==}
     engines: {node: '>=8'}
     dependencies:
       type-fest: 0.20.2
@@ -6549,6 +6558,11 @@ packages:
 
   /ignore/5.2.0:
     resolution: {integrity: sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==}
+    engines: {node: '>= 4'}
+    dev: true
+
+  /ignore/5.2.1:
+    resolution: {integrity: sha512-d2qQLzTJ9WxQftPAuEQpSPmKqzxePjzVbpAVv62AQ64NTL+wR4JkrVqR/LqFsFEUsHDAiId52mJteHDFuDkElA==}
     engines: {node: '>= 4'}
     dev: true
 
@@ -6945,8 +6959,8 @@ packages:
     engines: {node: '>=0.6.0'}
     dev: true
 
-  /js-sdsl/4.1.5:
-    resolution: {integrity: sha512-08bOAKweV2NUC1wqTtf3qZlnpOX/R2DU9ikpjOHs0H+ibQv3zpncVQg6um4uYtRtrwIX8M4Nh3ytK4HGlYAq7Q==}
+  /js-sdsl/4.2.0:
+    resolution: {integrity: sha512-dyBIzQBDkCqCu+0upx25Y2jGdbTGxE9fshMsCdK0ViOongpV+n5tXRcZY9v7CaVQ79AGS9KA1KHtojxiM7aXSQ==}
     dev: true
 
   /js-tokens/4.0.0:
@@ -9509,7 +9523,6 @@ packages:
 
   /sourcemap-codec/1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
-    deprecated: Please use @jridgewell/sourcemap-codec instead
 
   /spdx-correct/3.1.1:
     resolution: {integrity: sha512-cOYcUWwhCuHCXi49RhFRCyJEK3iPj1Ziz9DpViV3tbZOwXD49QzIN3MpOLJNxh2qwq2lJJZaKMVw9qNi4jTC0w==}
@@ -11163,10 +11176,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zhead/1.0.4:
-    resolution: {integrity: sha512-E0vbe9nW70f57fdfUdFt9odmDEubySleEbd+hyCjkCHxev419HsxQ1mEaQEEmGdaxxslZFrekjGMLeioiJKodQ==}
+  /zhead/1.0.7:
+    resolution: {integrity: sha512-p/PBV+KtdsyIPr+tPHVXIGe028EmBFtsbSYKURS2foTDKr6d33zaRrC3GzmGeQSc0vZezmD5C3Okh1P26Nb1Qg==}
     dependencies:
-      '@zhead/schema': 1.0.4
+      '@zhead/schema': 1.0.7
     dev: true
 
   /zip-stream/4.1.0:
