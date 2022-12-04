@@ -42,7 +42,7 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
     },
 
     async transform(code, id) {
-      if (!code.includes('useServerHead') && !code.includes('useSeoMeta'))
+      if (!code.includes('useServerHead') && !code.includes('useSeoMeta') && !code.includes('useSchemaOrg'))
         return null
 
       let transformed
@@ -53,6 +53,8 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
             RemoveFunctions([
               'useServerHead',
               'useSeoMeta',
+              // schema.org support
+              'useSchemaOrg',
             ]),
           ],
         })

@@ -178,6 +178,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 /**
  * Global instance of the dom update promise. Used for debounding head updates.
  */
+// eslint-disable-next-line import/no-mutable-exports
 export let domUpdatePromise: Promise<void> | null = null
 
 /**

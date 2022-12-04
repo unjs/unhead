@@ -39,23 +39,25 @@ export interface TagPosition {
   body?: true
 }
 
+export type InnerContentVal = string | Record<string, any>
+
 export interface InnerContent {
   /**
    * Text content of the tag.
    *
    * Alias for children
    */
-  innerHTML?: string
+  innerHTML?: InnerContentVal
   /**
    * Sets the textContent of an element.
    */
-  children?: string
+  children?: InnerContentVal
   /**
    * Sets the textContent of an element. This will be HTML encoded.
    *
    * Alias for children
    */
-  textContent?: string
+  textContent?: InnerContentVal
 }
 
 export interface TagPriority {
