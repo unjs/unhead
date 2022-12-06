@@ -12,7 +12,7 @@ function useHead<T extends MergeHead>
 
 The `useHead` composable is the primary way to manage the head of the document at runtime.
 
-Internally this uses the [getActiveHead](/api/core/get-active-head) to access the unhead instance, allowing you
+Internally this uses the [getActiveHead](/api/core/get-active-head) to access the Unhead instance, allowing you
 to use this function without referencing your head explicitly.
 
 ## Example

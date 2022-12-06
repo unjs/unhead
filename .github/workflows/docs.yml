@@ -11,11 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.2.4
+
+      - name: Use Node.js v16
+        uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: v16
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
       - name: Install Vercel CLI
-        run: yarn global add vercel@latest
+        run: pnpm add -g vercel@latest
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - name: Build Project Artifacts

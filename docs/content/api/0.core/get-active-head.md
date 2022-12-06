@@ -1,6 +1,6 @@
 ---
 title: getActiveHead
-description: Access your unhead instance wherever you are.
+description: Access your Unhead instance wherever you are.
 ---
 
 **Type:**

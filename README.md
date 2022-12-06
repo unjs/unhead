@@ -1,4 +1,4 @@
-<h1 align='center'>unhead</h1>
+<h1 align='center'>Unhead</h1>
 
 <p align="center">
 <a href='https://github.com/harlan-zw/unhead/actions/workflows/test.yml'>
@@ -45,7 +45,7 @@ npm i unhead
 
 ## Usage
 
-For specific frameworks integrations, see the [docs](https://unhead.netlify.app/).
+For specific frameworks integrations, see the [docs](https://unhead.harlanzw.com/).
 
 ### Basic
 
