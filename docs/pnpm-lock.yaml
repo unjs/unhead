@@ -4,13 +4,13 @@ importers:
 
   .:
     specifiers:
-      '@headlessui/vue': ^1.6.7
+      '@headlessui/vue': ^1.7.4
       '@nuxt-themes/docus': 1.1.1
-      '@nuxtlabs/github-module': ^1.4.6
+      '@nuxtlabs/github-module': ^1.5.4
       nuxt: 3.0.0
       nuxt-windicss: latest
-      postcss-custom-properties: ^12.1.8
-      vue-github-button: ^3.0.3
+      postcss-custom-properties: ^12.1.11
+      vue-github-button: ^3.1.0
     dependencies:
       '@headlessui/vue': 1.7.4
       '@nuxtlabs/github-module': 1.5.4
@@ -2342,7 +2342,7 @@ packages:
     dev: true
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
     dev: true
 
   /connect/3.7.0:
@@ -2737,7 +2737,7 @@ packages:
     dev: true
 
   /ee-first/1.1.1:
-    resolution: {integrity: sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=}
+    resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
     dev: true
 
   /electron-to-chromium/1.4.284:
@@ -6692,7 +6692,7 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
   /utils-merge/1.0.1:
-    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
+    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
     dev: true
 
