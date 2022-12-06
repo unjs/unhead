@@ -13,7 +13,7 @@ const title = computed(() => docus.value.header?.title || docus.value.title)
         </div>
         <div class="flex flex-col">
           <span class="opacity-60 text-xs">@unjs/</span>
-          <h1 class="font-bold text-xl">unhead</h1>
+          <h1 class="font-bold text-xl">Unhead</h1>
         </div>
       </div>
     </div>

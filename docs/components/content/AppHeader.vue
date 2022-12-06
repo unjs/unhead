@@ -23,7 +23,7 @@ const githubColorScheme = computed(() => color.value === 'dark' ? 'no-preference
 
       <section class="right">
         <AppSearch v-if="hasDocSearch" />
-        <GithubButton class="hidden xl:inline h-[20px]" href="https://github.com/harlan-zw/unhead-schema-org" :data-color-scheme="githubColorScheme" data-icon="octicon-star" data-show-count="true" aria-label="Star on GitHub">
+        <GithubButton class="hidden xl:inline h-[20px]" href="https://github.com/unjs/unhead" :data-color-scheme="githubColorScheme" data-icon="octicon-star" data-show-count="true" aria-label="Star on GitHub">
           Star
         </GithubButton>
         <GithubButton class="hidden xl:inline h-[20px]" href="https://github.com/sponsors/harlan-zw" :data-color-scheme="githubColorScheme" data-icon="octicon-heart" aria-label="Sponsor @harlan-zw on GitHub">
