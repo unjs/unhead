@@ -24,16 +24,16 @@ defineProps({
 <template>
 <section class="py-5 sm:py-24 lg:py-32">
   <div class="md:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0 max-w-8xl">
-    <div class="lg:col-span-6 mb-10 lg:mb-0 flex flex-col justify-center">
+    <div class="col-span-6 mb-10 lg:mb-0 flex flex-col justify-center">
       <p v-if="$slots.top" class="mb-2 text-center lg:text-left">
         <Markdown :use="$slots.top" unwrap="p" />
       </p>
 
-      <h1 class="u-text-gray-900 text-center text-4xl leading-25 font-extrabold tracking-tight sm:text-5xl lg:text-left lg:text-6xl" style="line-height: 1.3;">
+      <h1 class="text-gray-900 dark:text-gray-100 text-center text-4xl leading-25 font-extrabold tracking-tight sm:text-5xl lg:text-left lg:text-6xl" style="line-height: 1.3;">
         <Markdown :use="$slots.title" unwrap="p" />
       </h1>
 
-      <p class="u-text-gray-500 mt-4 max-w-3xl text-center text-lg lg:text-left">
+      <p class="text-gray-700 dark:text-gray-300 mt-4 max-w-3xl text-center text-lg lg:text-left">
         <Markdown :use="$slots.description" unwrap="p" />
       </p>
 
@@ -55,8 +55,8 @@ defineProps({
       </div>
     </div>
 
-    <div class="block-hero__right lg:col-span-6">
-      <div class="flex relative items-center block-hero__inner ht p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-500/10 dark:to-blue-500/20 rounded">
+    <div class="block-hero__right md:col-span-6 max-w-full">
+      <div class="flex relative items-center block-hero__inner md:p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-500/10 dark:to-blue-500/20 rounded">
         <slot name="right">
           <Markdown :use="$slots.right" unwrap="p" />
         </slot>
@@ -68,9 +68,9 @@ defineProps({
 
 <style scoped>
 @media(min-width: 1024px) {
-  .block-hero__inner {
-    height: 500px;
-    overflow: auto;
+  :deep(.prose-code) {
+    max-height: 350px;
+    overflow-y: auto !important;
   }
 }
 :deep(.code-group) {

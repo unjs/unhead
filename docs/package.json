@@ -9,15 +9,14 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "npm:@nuxt-themes/docus-edge@3.0.0-fa5b4af",
+    "@nuxt-themes/docus": "1.1.1",
     "nuxt": "3.0.0",
-    "@nuxt/kit": "3.0.0",
-    "@nuxtjs/tailwindcss": "latest"
+    "nuxt-windicss": "latest"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.4",
-    "@nuxtlabs/github-module": "^1.5.4",
-    "postcss-custom-properties": "^13.0.0",
-    "vue-github-button": "^3.1.0"
+    "@headlessui/vue": "^1.6.7",
+    "@nuxtlabs/github-module": "^1.4.6",
+    "postcss-custom-properties": "^12.1.8",
+    "vue-github-button": "^3.0.3"
   }
 }
