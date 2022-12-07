@@ -17,16 +17,16 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 7625,
-      "minzipped": 2798,
-      "bundled": 15273
+      "minified": 7662,
+      "minzipped": 2807,
+      "bundled": 15360
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 7147,
-      "minzipped": 2638,
-      "bundled": 14303
+      "minified": 7184,
+      "minzipped": 2643,
+      "bundled": 14390
     },
     {
       "name": "CorePlugins",
