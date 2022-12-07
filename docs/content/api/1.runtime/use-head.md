@@ -3,6 +3,8 @@ title: useHead
 description: How to use the useHead composable.
 ---
 
+# useHead
+
 **Type:** 
 
 ```ts

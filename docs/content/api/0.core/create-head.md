@@ -3,6 +3,8 @@ title: createHead
 description: How to create your Unhead instance.
 ---
 
+# creareHead
+
 **Type:**
 
 ```ts

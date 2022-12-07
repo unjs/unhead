@@ -3,6 +3,8 @@ title: useServerHead
 description: Using the useServerHead for minimal client-side bundles.
 ---
 
+# useServerHead
+
 **Type:**
 
 ```ts

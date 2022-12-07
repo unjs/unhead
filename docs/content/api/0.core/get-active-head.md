@@ -3,6 +3,8 @@ title: getActiveHead
 description: Access your Unhead instance wherever you are.
 ---
 
+# getActiveHead
+
 **Type:**
 
 ```ts

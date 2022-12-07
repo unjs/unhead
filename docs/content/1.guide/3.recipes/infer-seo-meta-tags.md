@@ -3,6 +3,8 @@ title: "Plugin: Infer SEO Meta"
 description: Automatically infer SEO meta tags from your page.
 ---
 
+# Plugin: Infer SEO Meta
+
 Unhead is internally powered by a hook system which you can plug into to add your own logic.
 
 One example of this is the inferring the SEO meta tags to display on your page before a render.
