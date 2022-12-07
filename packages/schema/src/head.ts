@@ -94,6 +94,10 @@ export interface Unhead<Input extends {} = Head> {
    */
   resolvedOptions: CreateHeadOptions
   /**
+   * Use a head plugin, loads the plugins hooks.
+   */
+  use: (plugin: HeadPlugin) => void
+  /**
    * @internal
    */
   _popSideEffectQueue: () => SideEffectsRecord

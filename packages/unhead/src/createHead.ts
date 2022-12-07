@@ -1,5 +1,14 @@
 import { createHooks } from 'hookable'
-import type { CreateHeadOptions, Head, HeadEntry, HeadHooks, HeadTag, SideEffectsRecord, Unhead } from '@unhead/schema'
+import type {
+  CreateHeadOptions,
+  Head,
+  HeadEntry,
+  HeadHooks,
+  HeadPlugin,
+  HeadTag,
+  SideEffectsRecord,
+  Unhead,
+} from '@unhead/schema'
 import { setActiveHead } from './runtime/state'
 import {
   DedupesTagsPlugin,
@@ -67,6 +76,10 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     },
     get hooks() {
       return hooks
+    },
+    use(plugin: HeadPlugin) {
+      if (plugin.hooks)
+        hooks.addHooks(plugin.hooks)
     },
     push(input, options) {
       const activeEntry: HeadEntry<T> = {
