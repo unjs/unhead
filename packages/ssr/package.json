@@ -1,7 +1,7 @@
 {
   "name": "@unhead/ssr",
   "type": "module",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "packageManager": "pnpm@7.18.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
