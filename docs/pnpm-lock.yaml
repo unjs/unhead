@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@headlessui/vue': ^1.7.4
+      '@headlessui/vue': ^1.7.5
       '@nuxt-themes/docus': 1.1.3
       '@nuxtlabs/github-module': ^1.5.4
       nuxt: 3.0.0
@@ -12,7 +12,7 @@ importers:
       postcss-custom-properties: ^12.1.11
       vue-github-button: ^3.1.0
     dependencies:
-      '@headlessui/vue': 1.7.4
+      '@headlessui/vue': 1.7.5
       '@nuxtlabs/github-module': 1.5.4
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
@@ -515,8 +515,8 @@ packages:
     resolution: {integrity: sha512-JDC9AocdPLuGsASkvWw9hS5gtHE7K9dOwL98XLrk5yjYqxy4uVnScG58NUvFMJDVJRl/7c8Wnap6PEs+7Zvj1Q==}
     dev: true
 
-  /@headlessui/vue/1.7.4:
-    resolution: {integrity: sha512-QHRlKCK/zRpjSjhth7c2CZvx5eMDFflXauqRdRJgp1CwScx6PwCpWiwDsjQcYM4z8Yik2ZvyX8W4PFT2Wsqqyw==}
+  /@headlessui/vue/1.7.5:
+    resolution: {integrity: sha512-WjMvaOoxNUqbJO9UxdDJQmCtZZTsTUh4VbAekfhnbFsLqLrbvct27g1Q8gjEJjI4EWHiofIPCUs7mDsuKvwlHw==}
     engines: {node: '>=10'}
     peerDependencies:
       vue: ^3.2.0
@@ -636,7 +636,7 @@ packages:
       '@nuxtjs/color-mode': 3.2.0
       '@vueuse/core': 9.6.0
       '@vueuse/nuxt': 9.6.0_nuxt@3.0.0
-      pinceau: 0.8.4
+      pinceau: 0.8.5
     transitivePeerDependencies:
       - '@algolia/client-search'
       - '@types/react'
@@ -675,7 +675,7 @@ packages:
     dependencies:
       '@nuxtjs/color-mode': 3.2.0
       '@vueuse/core': 9.6.0
-      pinceau: 0.8.4
+      pinceau: 0.8.5
       style-value-types: 5.1.2
     transitivePeerDependencies:
       - '@vue/composition-api'
@@ -693,7 +693,7 @@ packages:
       '@nuxtjs/color-mode': 3.2.0
       nuxt-config-schema: 0.3.4
       nuxt-icon: 0.1.8
-      pinceau: 0.8.4
+      pinceau: 0.8.5
     transitivePeerDependencies:
       - '@vue/composition-api'
       - postcss
@@ -4057,6 +4057,13 @@ packages:
     dependencies:
       sourcemap-codec: 1.4.8
 
+  /magic-string/0.27.0:
+    resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
+    engines: {node: '>=12'}
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.4.14
+    dev: true
+
   /make-dir/3.1.0:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
     engines: {node: '>=8'}
@@ -5144,8 +5151,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /pinceau/0.8.4:
-    resolution: {integrity: sha512-S5M3Rvee529rTfjCTgTPvSCuytCYHftoQB0qxr6BrKIyVrTINf7agZsx+QM3OFfbyLBPgGUv6HDDnlK7TyR2pw==}
+  /pinceau/0.8.5:
+    resolution: {integrity: sha512-6UFG/uz248hHI6lLcxbBqWkGa2DYJGUzDN7oTlNlr2zEcDouJQMczoR1+iAvn5w+JSQVAfIpiBimtdqE7oPumw==}
     dependencies:
       '@unocss/reset': 0.47.5
       '@volar/vue-language-core': 1.0.11
@@ -5154,7 +5161,7 @@ packages:
       consola: 2.15.3
       csstype: 3.1.1
       defu: 6.1.1
-      magic-string: 0.26.7
+      magic-string: 0.27.0
       nanoid: 4.0.0
       ohash: 1.0.0
       postcss-custom-properties: 12.1.11
@@ -5163,7 +5170,7 @@ packages:
       recast: 0.21.5
       scule: 1.0.0
       style-dictionary-esm: 1.0.15
-      unbuild: 1.0.1
+      unbuild: 1.0.2
       unplugin: 1.0.0
     transitivePeerDependencies:
       - postcss
@@ -6455,8 +6462,8 @@ packages:
     resolution: {integrity: sha512-sso5lk1F1/Q1crKx0+9/9/rHCykRJFSifYLaShnhgzfJhbEDZdpntClBs7ojhx0lRmQlUtDIxrC/8hBJj5bVPw==}
     dev: true
 
-  /unbuild/1.0.1:
-    resolution: {integrity: sha512-i2mkbLNFZDJJdpsbg4JflHldKeF3J0K+mLGUdh8jrHBSTHZBw8qFWI7t/AUrGjHxa/O/vkIod65LXu9ktPiUHw==}
+  /unbuild/1.0.2:
+    resolution: {integrity: sha512-nQ2rxQ9aqIPzVhOEs6T/YcDGb6PWf6BAtQ0as+YWoaWCfezAdeL3KlNWSh279D6euOeCt94t0b/vAGr3GKu9Gw==}
     hasBin: true
     dependencies:
       '@rollup/plugin-alias': 4.0.2_rollup@3.6.0
@@ -6472,7 +6479,7 @@ packages:
       globby: 13.1.2
       hookable: 5.4.2
       jiti: 1.16.0
-      magic-string: 0.26.7
+      magic-string: 0.27.0
       mkdirp: 1.0.4
       mkdist: 1.0.0_typescript@4.9.3
       mlly: 1.0.0
