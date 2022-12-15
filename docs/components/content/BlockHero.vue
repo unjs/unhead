@@ -22,7 +22,7 @@ defineProps({
 </script>
 
 <template>
-<section class="py-5 sm:py-24 lg:py-32">
+<section class="py-5 sm:py-15 xl:py-32">
   <div class="md:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0 max-w-8xl">
     <div class="col-span-6 mb-10 lg:mb-0 flex flex-col justify-center">
       <p v-if="$slots.top" class="mb-2 text-center lg:text-left">

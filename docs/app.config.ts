@@ -1,8 +1,13 @@
 export default defineAppConfig({
+  site: {
+    title: 'Unhead',
+    description: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
+    locale: 'en',
+  },
   docus: {
-    title: 'unhead',
-    name: 'unhead',
-    description: 'Tiny, full-featured universal document <head> manager, for everyone.',
+    title: 'Unhead',
+    name: 'Unhead',
+    description: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
     url: 'https://unhead.harlanzw.com/',
     layout: 'default',
     socials: {

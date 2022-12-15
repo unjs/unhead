@@ -9,13 +9,15 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "1.1.3",
+    "@nuxt-themes/docus": "1.1.5",
     "nuxt": "3.0.0",
+    "nuxt-og-image": "^0.1.0",
     "nuxt-windicss": "latest"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.4",
+    "@headlessui/vue": "^1.7.5",
     "@nuxtlabs/github-module": "^1.5.4",
+    "nuxt-seo-kit": "^0.1.4",
     "postcss-custom-properties": "^12.1.11",
     "vue-github-button": "^3.1.0"
   }

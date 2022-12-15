@@ -15,7 +15,10 @@ export default defineTheme({
       900: { value: '#064e3b' },
     },
   },
-  fonts: {
+  font: {
+    sans: {
+      value: 'Inter, sans-serif',
+    },
     primary: {
       value: 'Inter, sans-serif',
     },
