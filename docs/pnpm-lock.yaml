@@ -8,7 +8,7 @@ importers:
       '@nuxt-themes/docus': 1.1.5
       '@nuxtlabs/github-module': ^1.5.4
       nuxt: 3.0.0
-      nuxt-og-image: ^0.1.0
+      nuxt-og-image: ^0.3.4
       nuxt-seo-kit: ^0.1.4
       nuxt-windicss: latest
       postcss-custom-properties: ^12.1.11
@@ -22,7 +22,7 @@ importers:
     devDependencies:
       '@nuxt-themes/docus': 1.1.5_nuxt@3.0.0
       nuxt: 3.0.0
-      nuxt-og-image: 0.1.0
+      nuxt-og-image: 0.3.4
       nuxt-windicss: 2.6.0
 
 packages:
@@ -2274,6 +2274,15 @@ packages:
     resolution: {integrity: sha512-U9eDw6+wt7V8z5NncY2jJfZa+hUH8XEj8FQHgFJTrUFnJfXYf4Ml4adI2vXZOjqRDpFWtYVWypDfZwnJ+HIR4A==}
     dev: true
 
+  /chrome-aws-lambda/10.1.0:
+    resolution: {integrity: sha512-NZQVf+J4kqG4sVhRm3WNmOfzY0OtTSm+S8rg77pwePa9RCYHzhnzRs8YvNI6L9tALIW6RpmefWiPURt3vURXcw==}
+    engines: {node: '>= 10.16'}
+    peerDependencies:
+      puppeteer-core: ^10.1.0
+    dependencies:
+      lambdafs: 2.1.1
+    dev: true
+
   /ci-info/3.7.0:
     resolution: {integrity: sha512-2CpRNYmImPx+RXKLq6jko/L07phmS9I02TyqkcNU20GCF/GgaWvc58hPtjxDX8lPpkdwc9sNh72V9k00S7ezog==}
     engines: {node: '>=8'}
@@ -4091,6 +4100,14 @@ packages:
     resolution: {integrity: sha512-dLkz37Ab97HWMx9KTes3Tbi3D1ln9fCAy2zr2YVExJasDRPGRaKcoE4fycWNtnCAJfjFqe0cnY+f8KT2JePEXQ==}
     dev: true
 
+  /lambdafs/2.1.1:
+    resolution: {integrity: sha512-x5k8JcoJWkWLvCVBzrl4pzvkEHSgSBqFjg3Dpsc4AcTMq7oUMym4cL/gRTZ6VM4mUMY+M0dIbQ+V1c1tsqqanQ==}
+    engines: {node: '>= 10.16'}
+    hasBin: true
+    dev: true
+    bundledDependencies:
+      - tar-fs
+
   /lazystream/1.0.1:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
     engines: {node: '>= 0.6.3'}
@@ -5015,19 +5032,21 @@ packages:
       - vue
     dev: true
 
-  /nuxt-og-image/0.1.0:
-    resolution: {integrity: sha512-q9nvIPqs3uw0jMA4EM2u1jToedqQL2lpVuhUDgCEEokTRbczFbFX1pEO8DNtDC0OgMq+xz/uDPNMUohNfNuk0w==}
+  /nuxt-og-image/0.3.4:
+    resolution: {integrity: sha512-avstdERLlxacW6+t+x2D07gxZAB0BP6AJPA0LZpZwTBS3Cv4O50ojxoOdQ7wM056Yg4x6i3rI+/Tedg4RmAPaA==}
     dependencies:
       '@nuxt/kit': 3.0.0
       chalk: 5.2.0
+      chrome-aws-lambda: 10.1.0
       defu: 6.1.1
       execa: 6.1.0
       fast-glob: 3.2.12
       ohash: 1.0.0
-      playwright: 1.28.1
+      playwright-core: 1.28.1
       radix3: 1.0.0
       ufo: 1.0.1
     transitivePeerDependencies:
+      - puppeteer-core
       - rollup
       - supports-color
     dev: true
@@ -5450,15 +5469,6 @@ packages:
     resolution: {integrity: sha512-3PixLnGPno0E8rSBJjtwqTwJe3Yw72QwBBBxNoukIj3lEeBNXwbNiKrNuB1oyQgTBw5QHUhNO3SteEtHaMK6ag==}
     engines: {node: '>=14'}
     hasBin: true
-    dev: true
-
-  /playwright/1.28.1:
-    resolution: {integrity: sha512-92Sz6XBlfHlb9tK5UCDzIFAuIkHHpemA9zwUaqvo+w7sFMSmVMGmvKcbptof/eJObq63PGnMhM75x7qxhTR78Q==}
-    engines: {node: '>=14'}
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      playwright-core: 1.28.1
     dev: true
 
   /postcss-calc/8.2.4_postcss@8.4.20:

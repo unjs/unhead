@@ -11,7 +11,7 @@
   "devDependencies": {
     "@nuxt-themes/docus": "1.1.5",
     "nuxt": "3.0.0",
-    "nuxt-og-image": "^0.1.0",
+    "nuxt-og-image": "^0.3.4",
     "nuxt-windicss": "latest"
   },
   "dependencies": {

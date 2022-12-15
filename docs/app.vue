@@ -1,3 +1,6 @@
+<script lang="ts" setup>
+defineOgImageScreenshot()
+</script>
 <template>
   <AppLayout>
     <SeoKit />
