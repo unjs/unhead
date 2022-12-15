@@ -1,8 +1,8 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.0.13",
-  "packageManager": "pnpm@7.18.1",
+  "version": "1.0.12",
+  "packageManager": "pnpm@7.18.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -58,8 +58,8 @@
     "@rollup/pluginutils": "^5.0.2",
     "@unhead/schema": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin": "^1.0.0",
-    "unplugin-ast": "^0.5.8"
+    "unplugin": "^1.0.1",
+    "unplugin-ast": "^0.6.0"
   },
   "devDependencies": {
     "@babel/types": "^7.20.5",
