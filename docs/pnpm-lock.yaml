@@ -4,17 +4,17 @@ importers:
 
   .:
     specifiers:
-      '@headlessui/vue': ^1.7.5
+      '@headlessui/vue': ^1.7.6
       '@nuxt-themes/docus': 1.1.5
       '@nuxtlabs/github-module': ^1.5.4
       nuxt: 3.0.0
-      nuxt-og-image: ^0.3.4
+      nuxt-og-image: ^0.4.0
       nuxt-seo-kit: ^0.1.4
       nuxt-windicss: latest
       postcss-custom-properties: ^12.1.11
       vue-github-button: ^3.1.0
     dependencies:
-      '@headlessui/vue': 1.7.5
+      '@headlessui/vue': 1.7.6
       '@nuxtlabs/github-module': 1.5.4
       nuxt-seo-kit: 0.1.4
       postcss-custom-properties: 12.1.11
@@ -22,7 +22,7 @@ importers:
     devDependencies:
       '@nuxt-themes/docus': 1.1.5_nuxt@3.0.0
       nuxt: 3.0.0
-      nuxt-og-image: 0.3.4
+      nuxt-og-image: 0.4.0
       nuxt-windicss: 2.6.0
 
 packages:
@@ -523,8 +523,8 @@ packages:
     resolution: {integrity: sha512-JDC9AocdPLuGsASkvWw9hS5gtHE7K9dOwL98XLrk5yjYqxy4uVnScG58NUvFMJDVJRl/7c8Wnap6PEs+7Zvj1Q==}
     dev: true
 
-  /@headlessui/vue/1.7.5:
-    resolution: {integrity: sha512-WjMvaOoxNUqbJO9UxdDJQmCtZZTsTUh4VbAekfhnbFsLqLrbvct27g1Q8gjEJjI4EWHiofIPCUs7mDsuKvwlHw==}
+  /@headlessui/vue/1.7.6:
+    resolution: {integrity: sha512-G5Y23FLCk8/pkv/m/UMEMhISFn6mn2mDpmFuVIT7kT8536SSmxuXT6aJh3FSpztYIXjjE0hbD2qezmJ2OHtMjg==}
     engines: {node: '>=10'}
     peerDependencies:
       vue: ^3.2.0
@@ -5032,8 +5032,8 @@ packages:
       - vue
     dev: true
 
-  /nuxt-og-image/0.3.4:
-    resolution: {integrity: sha512-avstdERLlxacW6+t+x2D07gxZAB0BP6AJPA0LZpZwTBS3Cv4O50ojxoOdQ7wM056Yg4x6i3rI+/Tedg4RmAPaA==}
+  /nuxt-og-image/0.4.0:
+    resolution: {integrity: sha512-ZzWkVEsv+pZ+16WhP90HsNxYwwYV+ufLHq5NBAydEh4VBsyvIDxFcxziJw1S941QpWnDJKFUUCXOyW95T4uU7A==}
     dependencies:
       '@nuxt/kit': 3.0.0
       chalk: 5.2.0
@@ -5042,6 +5042,7 @@ packages:
       execa: 6.1.0
       fast-glob: 3.2.12
       ohash: 1.0.0
+      pathe: 1.0.0
       playwright-core: 1.28.1
       radix3: 1.0.0
       ufo: 1.0.1

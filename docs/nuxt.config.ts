@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     public: {
       indexable: true,
       siteUrl: 'https://unhead.harlanzw.com/',
-      trailingSlash: true,
+      trailingSlash: false,
       locale: 'en',
     }
   },

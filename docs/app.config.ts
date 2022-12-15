@@ -4,6 +4,8 @@ export default defineAppConfig({
     description: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
     locale: 'en',
   },
+  siteTitle: 'Unhead',
+  locale: 'en',
   docus: {
     title: 'Unhead',
     name: 'Unhead',
