@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   extends: [
     '@nuxt-themes/docus',
-    'nuxt-seo-kit'
+    'nuxt-seo-kit',
   ],
 
   workspaceDir: './',
@@ -19,6 +19,7 @@ export default defineNuxtConfig({
 
   modules: [
     'nuxt-windicss',
+    '@nuxtjs/fontaine'
   ],
 
   hooks: {

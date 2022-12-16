@@ -10,6 +10,8 @@
   },
   "devDependencies": {
     "@nuxt-themes/docus": "1.1.8",
+    "@nuxtjs/fontaine": "^0.2.3",
+    "chrome-aws-lambda": "^10.1.0",
     "nuxt": "3.0.0",
     "nuxt-windicss": "latest"
   },
