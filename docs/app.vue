@@ -1,8 +1,6 @@
-<script lang="ts" setup>
-defineOgImageScreenshot()
-</script>
 <template>
   <AppLayout>
+    <OgImageScreenshot />
     <SeoKit />
     <NuxtPage />
   </AppLayout>
