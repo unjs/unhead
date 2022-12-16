@@ -10,14 +10,15 @@ export default defineNuxtConfig({
     public: {
       indexable: true,
       siteUrl: 'https://unhead.harlanzw.com/',
+      siteTitle: 'Unhead',
+      siteDescription: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
       trailingSlash: false,
-      locale: 'en',
+      language: 'en',
     }
   },
 
   modules: [
     'nuxt-windicss',
-    'nuxt-og-image',
   ],
 
   ogImage: {
