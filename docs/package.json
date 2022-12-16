@@ -11,13 +11,12 @@
   "devDependencies": {
     "@nuxt-themes/docus": "1.1.8",
     "nuxt": "3.0.0",
-    "nuxt-og-image": "^0.4.5",
     "nuxt-windicss": "latest"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.6",
     "@nuxtlabs/github-module": "^1.5.4",
-    "nuxt-seo-kit": "^0.2.0",
+    "nuxt-seo-kit": "^0.2.1",
     "postcss-custom-properties": "^12.1.11",
     "vue-github-button": "^3.1.0"
   }

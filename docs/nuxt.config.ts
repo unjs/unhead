@@ -21,10 +21,6 @@ export default defineNuxtConfig({
     'nuxt-windicss',
   ],
 
-  ogImage: {
-    host: 'https://unhead.harlanzw.com',
-  },
-
   hooks: {
     'nitro:init'(nitro) {
       // prev [/[/\\]node_modules[/\\]/, /[/\\]\.git[/\\]/],
