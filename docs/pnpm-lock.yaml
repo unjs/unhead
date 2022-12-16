@@ -8,7 +8,7 @@ importers:
       '@nuxt-themes/docus': 1.1.7
       '@nuxtlabs/github-module': ^1.5.4
       nuxt: 3.0.0
-      nuxt-og-image: ^0.4.2
+      nuxt-og-image: ^0.4.3
       nuxt-seo-kit: ^0.1.4
       nuxt-windicss: latest
       postcss-custom-properties: ^12.1.11
@@ -22,7 +22,7 @@ importers:
     devDependencies:
       '@nuxt-themes/docus': 1.1.7_nuxt@3.0.0
       nuxt: 3.0.0
-      nuxt-og-image: 0.4.2
+      nuxt-og-image: 0.4.3
       nuxt-windicss: 2.6.0
 
 packages:
@@ -4569,8 +4569,8 @@ packages:
       - vue
     dev: true
 
-  /nuxt-og-image/0.4.2:
-    resolution: {integrity: sha512-g2MxWPRay77daE+Y9ipNgXpS9SAgEQzNy8sQF4y6+UIRq7hSifLQ50WXyxOAmBo6UBkNq45FWBv91VXRXMku+w==}
+  /nuxt-og-image/0.4.3:
+    resolution: {integrity: sha512-0ke6zqoVOwour4l5TVKfBLl0D8sFgg/9UQJivBqPBPCg/Dr8akoXbLuZ27bJsY7yl1RsvP/dtqSqGSpTfw8wFQ==}
     dependencies:
       '@nuxt/kit': 3.0.0
       chalk: 5.2.0
