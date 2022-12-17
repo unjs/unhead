@@ -10,14 +10,14 @@ importers:
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
       nuxt: 3.0.0
-      nuxt-seo-kit: ^0.2.2
+      nuxt-seo-kit: ^0.2.4
       nuxt-windicss: latest
       postcss-custom-properties: ^12.1.11
       vue-github-button: ^3.1.0
     dependencies:
       '@headlessui/vue': 1.7.7
       '@nuxtlabs/github-module': 1.5.4
-      nuxt-seo-kit: 0.2.2
+      nuxt-seo-kit: 0.2.4
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
@@ -4843,8 +4843,8 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-seo-kit/0.2.2:
-    resolution: {integrity: sha512-DspAatezsXNwuY8rmCzHblMqCPB9ZE3WmP1bMfGKu1On+4ZEXVi8PxdnDhf+LHdgG4vHZhmxspiYjr/lX//lwA==}
+  /nuxt-seo-kit/0.2.4:
+    resolution: {integrity: sha512-DnBRtn10umD2y7naoiGlQhQ3n1ClIATdUg6ITA8gFJO/7xwSaa/0LAUY8KCn9T8i6cP0yuv9He9mBm28deE2sw==}
     dependencies:
       '@nuxt/kit': 3.0.0
       defu: 6.1.1
@@ -6779,7 +6779,7 @@ packages:
     dev: true
 
   /utils-merge/1.0.1:
-    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
+    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
     engines: {node: '>= 0.4.0'}
     dev: true
 
