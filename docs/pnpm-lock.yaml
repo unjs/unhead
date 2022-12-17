@@ -4,8 +4,8 @@ importers:
 
   .:
     specifiers:
-      '@headlessui/vue': ^1.7.6
-      '@nuxt-themes/docus': 1.1.8
+      '@headlessui/vue': ^1.7.7
+      '@nuxt-themes/docus': 1.1.10
       '@nuxtjs/fontaine': ^0.2.3
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
@@ -15,13 +15,13 @@ importers:
       postcss-custom-properties: ^12.1.11
       vue-github-button: ^3.1.0
     dependencies:
-      '@headlessui/vue': 1.7.6
+      '@headlessui/vue': 1.7.7
       '@nuxtlabs/github-module': 1.5.4
       nuxt-seo-kit: 0.2.1
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
-      '@nuxt-themes/docus': 1.1.8_nuxt@3.0.0
+      '@nuxt-themes/docus': 1.1.10_nuxt@3.0.0
       '@nuxtjs/fontaine': 0.2.3
       chrome-aws-lambda: 10.1.0
       nuxt: 3.0.0
@@ -349,8 +349,8 @@ packages:
     dev: true
     optional: true
 
-  /@headlessui/vue/1.7.6:
-    resolution: {integrity: sha512-G5Y23FLCk8/pkv/m/UMEMhISFn6mn2mDpmFuVIT7kT8536SSmxuXT6aJh3FSpztYIXjjE0hbD2qezmJ2OHtMjg==}
+  /@headlessui/vue/1.7.7:
+    resolution: {integrity: sha512-dkdNhJkxyT9rXW5fHx/MkKaM3U13P3duYuwoGTRmDGjE7xAsvcWOSJRJpw1AmCQTvjZF44bh2wSlySLaHW+WuQ==}
     engines: {node: '>=10'}
     peerDependencies:
       vue: ^3.2.0
@@ -454,8 +454,8 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.14.0
 
-  /@nuxt-themes/docus/1.1.8_nuxt@3.0.0:
-    resolution: {integrity: sha512-V+j28vfKbBZbSg5RIFwJE/Td+ZWgaU9RhNBgjaEXFFZpMHSYYAIFLRrL8zFSpi0aeXAipJyo6WkWuyQ9bORN+g==}
+  /@nuxt-themes/docus/1.1.10_nuxt@3.0.0:
+    resolution: {integrity: sha512-NGFJFMYCslDGGwKfcNj8lIrdGuM9NiIqhDHcQBQ2HFi6YaPMeBibLkbFZZBi/rnrNAbPGD+QDhRm8QdwI6Z9Fg==}
     dependencies:
       '@nuxt-themes/elements': 0.2.3
       '@nuxt-themes/tokens': 1.2.2
@@ -2134,7 +2134,7 @@ packages:
     dev: true
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
     dev: true
 
   /connect/3.7.0:
@@ -2551,7 +2551,7 @@ packages:
     dev: true
 
   /ee-first/1.1.1:
-    resolution: {integrity: sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=}
+    resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
     dev: true
 
   /electron-to-chromium/1.4.284:
@@ -6775,7 +6775,7 @@ packages:
     dev: true
 
   /utils-merge/1.0.1:
-    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
+    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
     dev: true
 
