@@ -7,12 +7,13 @@ export default defineNuxtConfig({
   workspaceDir: './',
 
   runtimeConfig: {
+    indexable: true,
     public: {
-      indexable: true,
+      titleSeparator: '·',
       siteUrl: 'https://unhead.harlanzw.com/',
-      siteTitle: 'Unhead',
-      siteDescription: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
+      siteName: 'Unhead',
       trailingSlash: false,
+      siteDescription: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
       language: 'en',
     }
   },
