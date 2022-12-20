@@ -10,7 +10,7 @@ importers:
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
       nuxt: 3.0.0
-      nuxt-seo-kit: ^0.4.0
+      nuxt-seo-kit: ^0.4.1
       nuxt-windicss: latest
       playwright: ^1.29.0
       postcss-custom-properties: ^12.1.11
@@ -18,7 +18,7 @@ importers:
     dependencies:
       '@headlessui/vue': 1.7.7
       '@nuxtlabs/github-module': 1.5.4
-      nuxt-seo-kit: 0.4.0
+      nuxt-seo-kit: 0.4.1
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
@@ -73,7 +73,7 @@ packages:
       convert-source-map: 1.9.0
       debug: 4.3.4
       gensync: 1.0.0-beta.2
-      json5: 2.2.1
+      json5: 2.2.2
       semver: 6.3.0
     transitivePeerDependencies:
       - supports-color
@@ -1202,13 +1202,8 @@ packages:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
     dev: false
 
-  /@types/node/18.11.15:
-    resolution: {integrity: sha512-VkhBbVo2+2oozlkdHXLrb3zjsRkpdnaU2bXmX8Wgle3PUi569eLRaHGlgETQHR7lLL1w7GiG3h9SnePhxNDecw==}
-    dev: true
-
   /@types/node/18.11.17:
     resolution: {integrity: sha512-HJSUJmni4BeDHhfzn6nF0sVmd1SMezP7/4F0Lq+aXzmp2xm9O7WXrUtHW/CHlYVtZUbByEvWidHqRtcJXGF2Ng==}
-    dev: false
 
   /@types/parse5/6.0.3:
     resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}
@@ -1221,7 +1216,7 @@ packages:
   /@types/sax/1.2.4:
     resolution: {integrity: sha512-pSAff4IAxJjfAXUG6tFkO7dsSbTmf8CtUpfhhZ5VhkRpC4628tJhh3+V6H1E+/Gs9piSzYKT5yzHO5M4GG9jkw==}
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 18.11.17
     dev: false
 
   /@types/unist/2.0.6:
@@ -3822,7 +3817,7 @@ packages:
     resolution: {integrity: sha512-KWYVV1c4i+jbMpaBC+U++4Va0cp8OisU185o73T1vo99hqi7w8tSJfUXYswwqqrjzwxa6KpRK54WhPvwf5w6PQ==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.11.15
+      '@types/node': 18.11.17
       merge-stream: 2.0.0
       supports-color: 7.2.0
     dev: true
@@ -3846,16 +3841,10 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  /json5/2.2.1:
-    resolution: {integrity: sha512-1hqLFMSrGHRHxav9q9gNjJ5EXznIxGVO09xQRrwplcS8qs28pZ8s8hupZAmqDwZUmVZ2Qb2jnyPOWcDH8m8dlA==}
-    engines: {node: '>=6'}
-    hasBin: true
-
   /json5/2.2.2:
     resolution: {integrity: sha512-46Tk9JiOL2z7ytNQWFLpj99RZkVgeHf87yGQKsIkaPz1qSH9UczKH1rO7K3wgRselo0tYMUNfecYpm/p1vC7tQ==}
     engines: {node: '>=6'}
     hasBin: true
-    dev: true
 
   /jsonc-parser/3.2.0:
     resolution: {integrity: sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==}
@@ -4850,8 +4839,8 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-seo-kit/0.4.0:
-    resolution: {integrity: sha512-R9UOJMNq0tjtkWzYzyxEw/3LpQ2QOD4KB+24KUubCL7cFFUToFUEq7jAv9tBhtZAdHfdaBE2yc6Gz5V0VvlojQ==}
+  /nuxt-seo-kit/0.4.1:
+    resolution: {integrity: sha512-Wj1NMav7w/7sxzcFVn/W4z/SUnTWHakyLzWzvKiSnFzMGf2LwjZx6h35JVDsFciQVVYKq5C7oYH2pQxij7piLA==}
     dependencies:
       '@nuxt/kit': 3.0.0
       defu: 6.1.1
@@ -6809,7 +6798,7 @@ packages:
     dev: true
 
   /utils-merge/1.0.1:
-    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
+    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
     dev: true
 
