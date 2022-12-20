@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
-    <OgImageScreenshot />
     <SeoKit />
+    <OgImageScreenshot />
     <NuxtPage />
   </AppLayout>
 </template>
