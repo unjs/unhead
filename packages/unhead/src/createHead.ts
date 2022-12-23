@@ -141,4 +141,3 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   head.hooks.callHook('init', head)
   return head
 }
-

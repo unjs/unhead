@@ -63,7 +63,7 @@
     "vue": "^3.2.45"
   },
   "dependencies": {
-    "@zhead/schema": "^1.0.7",
+    "@zhead/schema": "^1.0.9",
     "unplugin-auto-import": "^0.12.1"
   }
 }
