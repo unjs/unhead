@@ -38,23 +38,23 @@
     {
       "name": "useServerTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3028,
-      "minzipped": 1156,
-      "bundled": 5454
+      "minified": 3137,
+      "minzipped": 1186,
+      "bundled": 5656
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 2980,
-      "minzipped": 1133,
-      "bundled": 5348
+      "minified": 3089,
+      "minzipped": 1169,
+      "bundled": 5550
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 2976,
-      "minzipped": 1130,
-      "bundled": 5319
+      "minified": 3085,
+      "minzipped": 1164,
+      "bundled": 5521
     },
     {
       "name": "DedupesTagsPlugin",
