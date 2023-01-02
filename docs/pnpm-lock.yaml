@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@headlessui/vue': ^1.7.7
-      '@nuxt-themes/docus': 1.2.5
+      '@nuxt-themes/docus': 1.3.1
       '@nuxtjs/fontaine': ^0.2.4
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
@@ -22,7 +22,7 @@ importers:
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
-      '@nuxt-themes/docus': 1.2.5_nuxt@3.0.0
+      '@nuxt-themes/docus': 1.3.1_nuxt@3.0.0
       '@nuxtjs/fontaine': 0.2.4
       chrome-aws-lambda: 10.1.0
       nuxt: 3.0.0
@@ -451,14 +451,14 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.14.0
 
-  /@nuxt-themes/docus/1.2.5_nuxt@3.0.0:
-    resolution: {integrity: sha512-nuwGQqVG33bU+lRMnnnB0pRcCbLaPiHnohY6iulh+6wbH2H6ThDjciXEdOhE8+EY4LW9S2RGT4w9lVwsRAlyww==}
+  /@nuxt-themes/docus/1.3.1_nuxt@3.0.0:
+    resolution: {integrity: sha512-GklNBr1pXNIE3ZgO7IO2dZoWL3pK5tlMqcP9RhO+XoH5cv+Rer0ZI6JVIq4ceRtlra+XKRvk9OUh/P32MyNSog==}
     dependencies:
-      '@nuxt-themes/elements': 0.3.3
-      '@nuxt-themes/tokens': 1.4.4
-      '@nuxt-themes/typography': 0.2.2
+      '@nuxt-themes/elements': 0.4.1
+      '@nuxt-themes/tokens': 1.5.1
+      '@nuxt-themes/typography': 0.3.1
       '@nuxt/content': 2.3.0
-      '@nuxthq/studio': 0.4.2
+      '@nuxthq/studio': 0.4.3
       '@vueuse/nuxt': 9.9.0_nuxt@3.0.0
     transitivePeerDependencies:
       - '@vue/composition-api'
@@ -472,10 +472,10 @@ packages:
       - vue
     dev: true
 
-  /@nuxt-themes/elements/0.3.3:
-    resolution: {integrity: sha512-6S3z+GY2H78Ff36BJNzvWAP4NKhmzju4NGhST6oIJnw07UYKsgkO1ttz867QX1kNhOwFFsCTpcxVCrj0FFxpSw==}
+  /@nuxt-themes/elements/0.4.1:
+    resolution: {integrity: sha512-/GiaSZIy0VTf18r/DeFhq2bk+aJ9vQT5dqs/YMggCCFes9VmIcMZEsFgZJWffM6B4kledqord/M1VpEQ3QnLBg==}
     dependencies:
-      '@nuxt-themes/tokens': 1.4.4
+      '@nuxt-themes/tokens': 1.5.1
       '@vueuse/core': 9.9.0
     transitivePeerDependencies:
       - '@vue/composition-api'
@@ -486,12 +486,12 @@ packages:
       - vue
     dev: true
 
-  /@nuxt-themes/tokens/1.4.4:
-    resolution: {integrity: sha512-rbmfwPAbmmiLcOcMEdyqEluHx4//FBJDxim5/yAcpl2EZKnA9LtWV0LYLyZ5BwQmQn5L9pqchFwo5lnIyzrn7Q==}
+  /@nuxt-themes/tokens/1.5.1:
+    resolution: {integrity: sha512-oK5mwhZbnIeyzGm7wb80ea6nUXcir9c64g1HrCQKxAJem2w2hwtqtAQAyujN9NSwTm1EZbO67+58i8T7BKZ4Zw==}
     dependencies:
       '@nuxtjs/color-mode': 3.2.0
       '@vueuse/core': 9.9.0
-      pinceau: 0.9.17
+      pinceau: 0.10.3
     transitivePeerDependencies:
       - '@vue/composition-api'
       - postcss
@@ -501,10 +501,10 @@ packages:
       - vue
     dev: true
 
-  /@nuxt-themes/typography/0.2.2:
-    resolution: {integrity: sha512-yynYFbnxDqlBvBDttmMW05YSKwzPigNctbE/8k5KepNgHexFvuTDim1asWW9/NsUFkECMsl9yVOW97hXq0UiWQ==}
+  /@nuxt-themes/typography/0.3.1:
+    resolution: {integrity: sha512-4Yo0VhlwD49kjokLTIVuKI27XqvjgGXzXY7amilxyfHFcsS1E7Pv3UrN1HJoRh0k4Pe0TkM7Q2IyTKsskxv1Pg==}
     dependencies:
-      '@nuxt-themes/tokens': 1.4.4
+      '@nuxt-themes/tokens': 1.5.1
       '@nuxtjs/color-mode': 3.2.0
       nuxt-config-schema: 0.3.7
       nuxt-icon: 0.1.8
@@ -751,13 +751,13 @@ packages:
       - vti
     dev: true
 
-  /@nuxthq/studio/0.4.2:
-    resolution: {integrity: sha512-IkDuRn9i7mEbb4+SU+wC0pYEWyxjmnvT1wOursIP6wVkdNa7oM2qdiueAZQ7KTAGAEtn2R6gtAD8h6ukEWE5gA==}
+  /@nuxthq/studio/0.4.3:
+    resolution: {integrity: sha512-++1URnpl+AH2CIWUm39QxT6jevSH4pR631JQ6wQxpZHZTfksCu3f/l2yEaPeDAeJ9V+9aS2cdQwT6zUmkEkXng==}
     dependencies:
       '@nuxt/kit': 3.0.0
       '@nuxt/schema': 3.0.0
       defu: 6.1.1
-      nuxt-component-meta: 0.4.1
+      nuxt-component-meta: 0.4.2
       nuxt-config-schema: 0.3.7
       socket.io-client: 4.5.4
       ufo: 1.0.1
@@ -1333,14 +1333,6 @@ packages:
       vue: 3.2.45
     dev: true
 
-  /@volar/language-core/1.0.16:
-    resolution: {integrity: sha512-IGnOxWTs4DZ81TDcmxBAkCBxs97hUblwcjpBsTx/pOGGaSSDQRJPn0wL8NYTybEObU0i7lhEpKZ+0vJfdIy1Kg==}
-    dependencies:
-      '@volar/source-map': 1.0.16
-      '@vue/reactivity': 3.2.45
-      muggle-string: 0.1.0
-    dev: true
-
   /@volar/language-core/1.0.18:
     resolution: {integrity: sha512-PFrqAksKhiuAqNV4fefoMilX+JutVq0Z3iM14xjLvWPv68fs2dLedwU84GiHfSPTMmRiPCJ2HhH2rz4qNY42lA==}
     dependencies:
@@ -1349,9 +1341,10 @@ packages:
       muggle-string: 0.1.0
     dev: true
 
-  /@volar/source-map/1.0.16:
-    resolution: {integrity: sha512-PKjzmQcg8QOGC/1V9tmGh2jcy6bKLhkW5bGidElSr83iDbCzLvldt2/La/QlDxaRCHYLT0MeyuGJBZIChB1dYQ==}
+  /@volar/language-core/1.0.19:
+    resolution: {integrity: sha512-BRxhwqn66VHeLIxxgV4ybY9NDtwMp2bl1w7085qlK7i1pa4jeFR5lJG2U5qd0oI3e0PIWML+PryxSrKNd3+SZw==}
     dependencies:
+      '@volar/source-map': 1.0.19
       muggle-string: 0.1.0
     dev: true
 
@@ -1361,11 +1354,17 @@ packages:
       muggle-string: 0.1.0
     dev: true
 
-  /@volar/vue-language-core/1.0.16:
-    resolution: {integrity: sha512-sQ/aW1Vuiyy4OQuh2lthyYicruM3qh9VSk/aDh8/bFvM8GoohHZqVpMN3LYldEJ9eT/rN6u4xmYP54vc/EjX4Q==}
+  /@volar/source-map/1.0.19:
+    resolution: {integrity: sha512-5fYKsl1evR/QAZ9LADto3kzbYKfpjZLWS9reNpxGR3ODPFTpaJgYk4lqghFyq4yU7/e/ZPZ1zLXjEsnL526URw==}
     dependencies:
-      '@volar/language-core': 1.0.16
-      '@volar/source-map': 1.0.16
+      muggle-string: 0.1.0
+    dev: true
+
+  /@volar/vue-language-core/1.0.18:
+    resolution: {integrity: sha512-1yJcXYz9SdQUYoKWPbnr1SgMsBGXH29hS8W47p46P8Mm+5mmDdR/GFQw2+Zo5kAIS8vtLstlowI1Okoy7HFzIQ==}
+    dependencies:
+      '@volar/language-core': 1.0.18
+      '@volar/source-map': 1.0.18
       '@vue/compiler-dom': 3.2.45
       '@vue/compiler-sfc': 3.2.45
       '@vue/reactivity': 3.2.45
@@ -1374,11 +1373,11 @@ packages:
       vue-template-compiler: 2.7.14
     dev: true
 
-  /@volar/vue-language-core/1.0.18:
-    resolution: {integrity: sha512-1yJcXYz9SdQUYoKWPbnr1SgMsBGXH29hS8W47p46P8Mm+5mmDdR/GFQw2+Zo5kAIS8vtLstlowI1Okoy7HFzIQ==}
+  /@volar/vue-language-core/1.0.19:
+    resolution: {integrity: sha512-3mIjJvQ+0tNOp+U9+Nggy92HYIqnltf882UMG9RuNHrd0Jn/rdvjRBs0jNTzwYDV9tn3tjDHGIfQak9XrUCaRg==}
     dependencies:
-      '@volar/language-core': 1.0.18
-      '@volar/source-map': 1.0.18
+      '@volar/language-core': 1.0.19
+      '@volar/source-map': 1.0.19
       '@vue/compiler-dom': 3.2.45
       '@vue/compiler-sfc': 3.2.45
       '@vue/reactivity': 3.2.45
@@ -4792,13 +4791,13 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /nuxt-component-meta/0.4.1:
-    resolution: {integrity: sha512-vbbElbYI/Y/dYvshsSXycew+CTe4Z9M1/khMF2+8uT+64mcgVyuOgiRzq7AQmYXk14PvRSqLzv0pO3fGd7pF+Q==}
+  /nuxt-component-meta/0.4.2:
+    resolution: {integrity: sha512-X+KyiIAUd5UwExflu+Swch++bSPTm4+Ixa3JHyM4gPHu1IQ+HwRJp6VPskyLzqQnfULh5xuU35kDa018ghjX2w==}
     dependencies:
       '@nuxt/kit': 3.0.0
       scule: 1.0.0
       typescript: 4.9.4
-      vue-component-meta: 1.0.16_typescript@4.9.4
+      vue-component-meta: 1.0.19_typescript@4.9.4
     transitivePeerDependencies:
       - rollup
       - supports-color
@@ -5260,8 +5259,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /pinceau/0.9.17:
-    resolution: {integrity: sha512-k3K3MjF1HHdVo/4nEjelKWWOKlS6ZvHjWZvtoQHgst4v9XHVlGtFenMU5A3Hi+kChSCUMPJg4Ijcjt8N6m2bug==}
+  /pinceau/0.10.3:
+    resolution: {integrity: sha512-hyTrH0Fw73VPLdsU8Ky/yNsv9x6sJQyBvlaVULrzb/aIievbnTpG9jAOvNfy+I3FaIpCb/SH0e/t5Cwc9l9rlw==}
     dependencies:
       '@unocss/reset': 0.48.0
       '@volar/vue-language-core': 1.0.18
@@ -7053,13 +7052,13 @@ packages:
       ufo: 1.0.1
     dev: true
 
-  /vue-component-meta/1.0.16_typescript@4.9.4:
-    resolution: {integrity: sha512-MQElonN8HoJ4AwAFpKNu4FRDOjO/VqNSPz8wquAZoyE3CbUtVIWSc1z5FShwDA4x8VEp4CbUkf6A7KU6b65kUQ==}
+  /vue-component-meta/1.0.19_typescript@4.9.4:
+    resolution: {integrity: sha512-cfUzk90j12psrbe7DMG9HNG/+nwvjVfSbBwC6Pg9cVZmczfq2KiT3IKYqgzFiVjhslawoRWUWe07J6mVXYgBng==}
     peerDependencies:
       typescript: '*'
     dependencies:
-      '@volar/language-core': 1.0.16
-      '@volar/vue-language-core': 1.0.16
+      '@volar/language-core': 1.0.19
+      '@volar/vue-language-core': 1.0.19
       typesafe-path: 0.2.2
       typescript: 4.9.4
     dev: true
