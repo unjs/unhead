@@ -10,7 +10,7 @@ importers:
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
       nuxt: 3.0.0
-      nuxt-seo-kit: ^0.4.5
+      nuxt-seo-kit: ^0.4.6
       nuxt-windicss: latest
       playwright: ^1.29.1
       postcss-custom-properties: ^12.1.11
@@ -18,7 +18,7 @@ importers:
     dependencies:
       '@headlessui/vue': 1.7.7
       '@nuxtlabs/github-module': 1.5.4
-      nuxt-seo-kit: 0.4.5
+      nuxt-seo-kit: 0.4.6
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
@@ -1245,8 +1245,8 @@ packages:
     dependencies:
       '@unhead/schema': 1.0.14
 
-  /@unhead/schema-org-vue/0.2.2:
-    resolution: {integrity: sha512-Y0S2jKenHLWeK7zyjfcDkIU5XkACAmh59goWU0nxK/jxmLJqoeth7RHnbG1ZVDQYnI9avocAzUkfTeO0qWadLg==}
+  /@unhead/schema-org-vue/0.4.0:
+    resolution: {integrity: sha512-GEO7fYz0gVv72eD1Z8UbY4i2Dh6ymbdKWKekDd4vH5tNamWipq7hfBglYqLRZAjjSEzYr/bHIw+Y3nNvEcQZiw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@unhead/vue': '>=1.0.10'
@@ -4858,11 +4858,11 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-schema-org/2.0.7:
-    resolution: {integrity: sha512-l7VnZ4rpXOPEBXDT/tBbhwwqJNFMf+ssRp26JM1U/sEosvqozpvsWtDLtDDb/lsaaPG7eZq97P5Ir3kBYMhZrg==}
+  /nuxt-schema-org/2.1.0:
+    resolution: {integrity: sha512-6nKcwQYkt26vm3rXKy3c6nvokCdFYwwuprSA8AkBWRG8S03zhv6THJ8HIIHmmyKV6K3wuImlVuiIPH2O/FUPHg==}
     dependencies:
       '@nuxt/kit': 3.0.0
-      '@unhead/schema-org-vue': 0.2.2
+      '@unhead/schema-org-vue': 0.4.0
       pathe: 1.0.0
     transitivePeerDependencies:
       - '@unhead/vue'
@@ -4870,17 +4870,17 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-seo-kit/0.4.5:
-    resolution: {integrity: sha512-S14gp8VQLi7L5F9TW/3o0m1lSOtvcx09XrMKTi/FI13ySc/r6KQdYBlM7dC7AUG+/iPYyhmtOBSOnBk+ypGc5Q==}
+  /nuxt-seo-kit/0.4.6:
+    resolution: {integrity: sha512-iym74B3kURIobe380YF5o39+YK9/AZAKsloNRl6ADJMnb7erCDJ+gnYA2YDlYVyH+/+zqNKr0ofh5C+uH/OWdg==}
     dependencies:
       '@nuxt/kit': 3.0.0
       defu: 6.1.1
       nuxt-link-checker: 0.1.6
       nuxt-og-image: 0.5.5
-      nuxt-schema-org: 2.0.7
+      nuxt-schema-org: 2.1.0
       nuxt-simple-robots: 0.1.6
       nuxt-simple-sitemap: 0.5.7
-      nuxt-unhead: 1.0.11
+      nuxt-unhead: 1.0.12
       ufo: 1.0.1
     transitivePeerDependencies:
       - '@unhead/vue'
@@ -4911,8 +4911,8 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-unhead/1.0.11:
-    resolution: {integrity: sha512-5HM8518c2hZfHxL874AF1U+w8qoEIhLKgm0UQ2J6gBEaq5SH6rguCqikfInTKUQhTYHVamiFeKMgyK8m+StJRg==}
+  /nuxt-unhead/1.0.12:
+    resolution: {integrity: sha512-MtWl3sukCLnkdAJpBE4wN1Q5iWV3/Tk1ITAExbHdTXudrxm2/uIa/rP2IBrWz1VLJcFbchqc1aJ7wMbc4vMMwg==}
     dependencies:
       '@nuxt/kit': 3.0.0
       '@unhead/addons': 1.0.14
