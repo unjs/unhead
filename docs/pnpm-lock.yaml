@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@headlessui/vue': ^1.7.7
-      '@nuxt-themes/docus': 1.4.3
+      '@nuxt-themes/docus': 1.4.4
       '@nuxtjs/fontaine': ^0.2.4
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
@@ -22,7 +22,7 @@ importers:
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
-      '@nuxt-themes/docus': 1.4.3_nuxt@3.0.0
+      '@nuxt-themes/docus': 1.4.4_nuxt@3.0.0
       '@nuxtjs/fontaine': 0.2.4
       chrome-aws-lambda: 10.1.0
       nuxt: 3.0.0
@@ -452,8 +452,8 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.14.0
 
-  /@nuxt-themes/docus/1.4.3_nuxt@3.0.0:
-    resolution: {integrity: sha512-B/krN08EDTQcWNm1SNAs/lRxYfZLG3EVLkRyhW5mVHY0gzC/C/XDp/AiuJL3drPfhYmoAGyF+9Wvb5GfLFWaiQ==}
+  /@nuxt-themes/docus/1.4.4_nuxt@3.0.0:
+    resolution: {integrity: sha512-hVbFWD/2qotFVBQtau2eeR2g74k9lLdKZBU+voB2GTo6TbtC1SfVEUlh/KeSbR3DqvfIO1pNQnSTJFGvc4vMdg==}
     dependencies:
       '@nuxt-themes/elements': 0.4.4
       '@nuxt-themes/tokens': 1.5.3
