@@ -14,12 +14,12 @@
     "chrome-aws-lambda": "^10.1.0",
     "nuxt": "3.0.0",
     "nuxt-windicss": "latest",
-    "playwright": "^1.29.1"
+    "playwright": "^1.29.2"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.7",
     "@nuxtlabs/github-module": "^1.5.4",
-    "nuxt-seo-kit": "^0.4.8",
+    "nuxt-seo-kit": "^0.4.9",
     "postcss-custom-properties": "^12.1.11",
     "vue-github-button": "^3.1.0"
   }
