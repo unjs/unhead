@@ -10,15 +10,15 @@ importers:
       '@nuxtlabs/github-module': ^1.5.4
       chrome-aws-lambda: ^10.1.0
       nuxt: 3.0.0
-      nuxt-seo-kit: ^0.4.8
+      nuxt-seo-kit: ^0.4.9
       nuxt-windicss: latest
-      playwright: ^1.29.1
+      playwright: ^1.29.2
       postcss-custom-properties: ^12.1.11
       vue-github-button: ^3.1.0
     dependencies:
       '@headlessui/vue': 1.7.7
       '@nuxtlabs/github-module': 1.5.4
-      nuxt-seo-kit: 0.4.8
+      nuxt-seo-kit: 0.4.9
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
     devDependencies:
@@ -27,7 +27,7 @@ importers:
       chrome-aws-lambda: 10.1.0
       nuxt: 3.0.0
       nuxt-windicss: 2.6.0
-      playwright: 1.29.1
+      playwright: 1.29.2
 
 packages:
 
@@ -4832,8 +4832,8 @@ packages:
       - vue
     dev: true
 
-  /nuxt-link-checker/0.1.6:
-    resolution: {integrity: sha512-b1Rdmk11cHEXMyQevUuoH2X9Jq2pCpselieCYyCm2ww/J1Y+2O5j5+JL2QrYzouDGe2RY2vuarXsAiz8dgMrww==}
+  /nuxt-link-checker/0.2.0:
+    resolution: {integrity: sha512-Ihn3zRB5FTejOALR+MNIfZFA9aTwV6LrcA6vNLC9WZDGDKNCiyQIK3HcVIBNuP1+0XKgPVUS7CjrwHStBNTB9w==}
     dependencies:
       '@nuxt/kit': 3.0.0
       chalk: 5.2.0
@@ -4855,7 +4855,7 @@ packages:
       fast-glob: 3.2.12
       ohash: 1.0.0
       pathe: 1.0.0
-      playwright-core: 1.29.1
+      playwright-core: 1.29.2
       radix3: 1.0.0
       ufo: 1.0.1
     transitivePeerDependencies:
@@ -4875,12 +4875,12 @@ packages:
       - supports-color
     dev: false
 
-  /nuxt-seo-kit/0.4.8:
-    resolution: {integrity: sha512-UBKenD85sIEcyFjUdY4QeLJn7asX/BGkbT2kOurBCWb96NgMfxymJUtB0/2+k2RQeLNFzDsRgzMI3mX73txa7w==}
+  /nuxt-seo-kit/0.4.9:
+    resolution: {integrity: sha512-XZYVnGapPYdd6PLCMtFPwEu90p+vny09UMpVLQMECYoMH8RiFzAwezf6ucyDBSavkHCFTnmL52KUEACQCerbnw==}
     dependencies:
       '@nuxt/kit': 3.0.0
       defu: 6.1.1
-      nuxt-link-checker: 0.1.6
+      nuxt-link-checker: 0.2.0
       nuxt-og-image: 0.6.0
       nuxt-schema-org: 2.1.0
       nuxt-simple-robots: 0.1.6
@@ -5298,18 +5298,18 @@ packages:
       mlly: 1.0.0
       pathe: 1.0.0
 
-  /playwright-core/1.29.1:
-    resolution: {integrity: sha512-20Ai3d+lMkWpI9YZYlxk8gxatfgax5STW8GaMozAHwigLiyiKQrdkt7gaoT9UQR8FIVDg6qVXs9IoZUQrDjIIg==}
+  /playwright-core/1.29.2:
+    resolution: {integrity: sha512-94QXm4PMgFoHAhlCuoWyaBYKb92yOcGVHdQLoxQ7Wjlc7Flg4aC/jbFW7xMR52OfXMVkWicue4WXE7QEegbIRA==}
     engines: {node: '>=14'}
     hasBin: true
 
-  /playwright/1.29.1:
-    resolution: {integrity: sha512-lasC+pMqsQ2uWhNurt3YK3xo0gWlMjslYUylKbHcqF/NTjwp9KStRGO7S6wwz2f52GcSnop8XUK/GymJjdzrxw==}
+  /playwright/1.29.2:
+    resolution: {integrity: sha512-hKBYJUtdmYzcjdhYDkP9WGtORwwZBBKAW8+Lz7sr0ZMxtJr04ASXVzH5eBWtDkdb0c3LLFsehfPBTRfvlfKJOA==}
     engines: {node: '>=14'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      playwright-core: 1.29.1
+      playwright-core: 1.29.2
     dev: true
 
   /postcss-calc/8.2.4_postcss@8.4.20:
