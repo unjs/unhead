@@ -1,8 +1,8 @@
 {
   "name": "@unhead/schema",
   "type": "module",
-  "version": "1.0.12",
-  "packageManager": "pnpm@7.18.2",
+  "version": "1.0.14",
+  "packageManager": "pnpm@7.23.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -39,7 +39,7 @@
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@zhead/schema": "^1.0.7",
+    "@zhead/schema": "^1.0.9",
     "hookable": "^5.4.2"
   }
 }

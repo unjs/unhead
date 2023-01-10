@@ -1,8 +1,8 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.0.12",
-  "packageManager": "pnpm@7.18.2",
+  "version": "1.0.14",
+  "packageManager": "pnpm@7.23.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -62,7 +62,7 @@
     "unplugin-ast": "^0.6.0"
   },
   "devDependencies": {
-    "@babel/types": "^7.20.5",
-    "zhead": "^1.0.7"
+    "@babel/types": "^7.20.7",
+    "zhead": "^1.0.9"
   }
 }

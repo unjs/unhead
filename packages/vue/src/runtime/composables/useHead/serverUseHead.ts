@@ -6,4 +6,3 @@ export function serverUseHead<T extends MergeHead>(input: UseHeadInput<T>, optio
   const head = injectHead()
   return head.push(input, options)
 }
-

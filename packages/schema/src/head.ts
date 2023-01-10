@@ -106,4 +106,3 @@ export interface Unhead<Input extends {} = Head> {
    */
   _elMap: Record<string, Element>
 }
-
