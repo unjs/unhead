@@ -1,5 +1,4 @@
 <script setup>
-import { useHead } from '@unhead/vue'
 import { reactive } from 'vue'
 
 const state = reactive({

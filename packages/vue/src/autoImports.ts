@@ -4,9 +4,6 @@ const coreComposableNames = [
   'injectHead',
 ]
 
-export const unheadVueComposablesImports = [
-  {
-    from: '@unhead/vue',
-    imports: [...coreComposableNames, ...composableNames],
-  },
-]
+export const unheadVueComposablesImports = {
+  '@unhead/vue': [...coreComposableNames, ...composableNames],
+}

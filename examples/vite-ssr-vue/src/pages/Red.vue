@@ -3,7 +3,6 @@
 </template>
 
 <script>
-import { useHead } from '@unhead/vue'
 
 export default {
   async setup() {

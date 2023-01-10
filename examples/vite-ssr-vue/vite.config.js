@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import vuePlugin from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import AutoImport from 'unplugin-auto-import/vite'
+import { unheadVueComposablesImports } from '@unhead/vue'
 
 const virtualFile = '@virtual-file'
 const virtualId = '\0' + virtualFile
@@ -17,6 +19,11 @@ globalThis.__vite_test_dirname = __dirname
 export default defineConfig(({ command, ssrBuild }) => ({
   base,
   plugins: [
+    AutoImport({
+      imports: [
+        unheadVueComposablesImports
+      ],
+    }),
     vuePlugin(),
     vueJsx(),
     {

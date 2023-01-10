@@ -16,18 +16,20 @@
   },
   "dependencies": {
     "pinia": "^2.0.23",
+    "unplugin-auto-import": "^0.12.1",
+    "vite": "^4.0.4",
     "vue": "^3.2.41",
     "vue-router": "^4.1.6"
   },
   "devDependencies": {
+    "@unhead/ssr": "link:../../packages/ssr",
+    "@unhead/vue": "link:../../packages/vue",
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.7.4",
     "express": "^4.18.2",
     "serve-static": "^1.15.0",
-    "unhead": "latest",
-    "@unhead/vue": "latest",
-    "@unhead/ssr": "link:../../packages/ssr"
+    "unhead": "latest"
   },
   "resolutions": {
     "unhead": "link:../../packages/unhead",
