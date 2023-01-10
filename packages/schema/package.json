@@ -2,7 +2,7 @@
   "name": "@unhead/schema",
   "type": "module",
   "version": "1.0.15",
-  "packageManager": "pnpm@7.23.0",
+  "packageManager": "pnpm@7.24.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
