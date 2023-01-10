@@ -7,7 +7,7 @@ importers:
       '@headlessui/vue': ^1.7.7
       '@nuxt-themes/docus': 1.4.4
       '@nuxtjs/fontaine': ^0.2.4
-      '@nuxtlabs/github-module': ^1.5.4
+      '@nuxtlabs/github-module': ^1.6.0
       chrome-aws-lambda: ^10.1.0
       nuxt: 3.0.0
       nuxt-seo-kit: ^0.4.10
@@ -17,7 +17,7 @@ importers:
       vue-github-button: ^3.1.0
     dependencies:
       '@headlessui/vue': 1.7.7
-      '@nuxtlabs/github-module': 1.5.4
+      '@nuxtlabs/github-module': 1.6.0
       nuxt-seo-kit: 0.4.10
       postcss-custom-properties: 12.1.11
       vue-github-button: 3.1.0
@@ -94,7 +94,7 @@ packages:
       convert-source-map: 1.9.0
       debug: 4.3.4
       gensync: 1.0.0-beta.2
-      json5: 2.2.1
+      json5: 2.2.3
       semver: 6.3.0
     transitivePeerDependencies:
       - supports-color
@@ -743,7 +743,7 @@ packages:
       c12: 1.1.0
       create-require: 1.1.1
       defu: 6.1.1
-      jiti: 1.16.0
+      jiti: 1.16.1
       pathe: 1.0.0
       pkg-types: 1.0.1
       postcss-import-resolver: 2.0.0
@@ -763,7 +763,7 @@ packages:
       c12: 1.1.0
       create-require: 1.1.1
       defu: 6.1.1
-      jiti: 1.16.0
+      jiti: 1.16.1
       pathe: 1.0.0
       pkg-types: 1.0.1
       postcss-import-resolver: 2.0.0
@@ -793,7 +793,7 @@ packages:
       git-url-parse: 13.1.0
       inquirer: 9.1.4
       is-docker: 3.0.0
-      jiti: 1.16.0
+      jiti: 1.16.1
       mri: 1.2.0
       nanoid: 4.0.0
       node-fetch: 3.3.0
@@ -909,8 +909,8 @@ packages:
       - supports-color
     dev: true
 
-  /@nuxtlabs/github-module/1.5.4:
-    resolution: {integrity: sha512-hjseUtQQ2wwloqHPopAIz0C3QxjE/+H+xyCNB7cY3mXt9jqFvIq1fn+hGOMCCGGdB5qKXoul2OnqosKqyvcMXA==}
+  /@nuxtlabs/github-module/1.6.0:
+    resolution: {integrity: sha512-6GFpmnWH8xD3du31+PfLoTdKEtBpGaaVKcIBvZerWWPif1bA6RbKQlJ5/HCQ0DpgAMQxbbjGNeu5bZrF5qNSrA==}
     dependencies:
       '@nuxt/kit': 3.0.0
       '@octokit/graphql': 5.0.4
@@ -1968,7 +1968,7 @@ packages:
       defu: 6.1.1
       dotenv: 16.0.3
       giget: 1.0.0
-      jiti: 1.16.0
+      jiti: 1.16.1
       mlly: 1.0.0
       pathe: 1.0.0
       pkg-types: 1.0.1
@@ -2682,7 +2682,7 @@ packages:
     dev: true
 
   /ee-first/1.1.1:
-    resolution: {integrity: sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=}
+    resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
     dev: true
 
   /electron-to-chromium/1.4.284:
@@ -3978,10 +3978,6 @@ packages:
       supports-color: 7.2.0
     dev: true
 
-  /jiti/1.16.0:
-    resolution: {integrity: sha512-L3BJStEf5NAqNuzrpfbN71dp43mYIcBUlCRea/vdyv5dW/AYa1d4bpelko4SHdY3I6eN9Wzyasxirj1/vv5kmg==}
-    hasBin: true
-
   /jiti/1.16.1:
     resolution: {integrity: sha512-kJUp4Bj44uTaZAwG6R2/GjbodOWHULn8Swue0B7tY8v5BpTkUvDR+zBM5tsbC4x/jCeYDZ+mAdrUIScwIo4oPw==}
     hasBin: true
@@ -3999,11 +3995,6 @@ packages:
   /jsesc/2.5.2:
     resolution: {integrity: sha512-OYu7XEzjkCQ3C5Ps3QIZsQfNpqoJyZZA99wd9aWd05NCtC5pWOkShK2mkL6HXQR6/Cy2lbNdPlZBpuQHXE63gA==}
     engines: {node: '>=4'}
-    hasBin: true
-
-  /json5/2.2.1:
-    resolution: {integrity: sha512-1hqLFMSrGHRHxav9q9gNjJ5EXznIxGVO09xQRrwplcS8qs28pZ8s8hupZAmqDwZUmVZ2Qb2jnyPOWcDH8m8dlA==}
-    engines: {node: '>=6'}
     hasBin: true
 
   /json5/2.2.3:
@@ -4273,14 +4264,14 @@ packages:
     resolution: {integrity: sha512-p+PrYlkw9DeCRkTVw1duWqPRHX6Ywh2BNKJQcZbCwAuP/59B0Lk9kakuAd7KbQprVO4GzdW8eS5++A9PUSqIyw==}
     dependencies:
       '@types/mdast': 3.0.10
-      mdast-util-to-markdown: 1.4.0
+      mdast-util-to-markdown: 1.5.0
       micromark-util-normalize-identifier: 1.0.0
 
   /mdast-util-gfm-strikethrough/1.0.2:
     resolution: {integrity: sha512-T/4DVHXcujH6jx1yqpcAYYwd+z5lAYMw4Ls6yhTfbMMtCt0PHY4gEfhW9+lKsLBtyhUGKRIzcUA2FATVqnvPDA==}
     dependencies:
       '@types/mdast': 3.0.10
-      mdast-util-to-markdown: 1.4.0
+      mdast-util-to-markdown: 1.5.0
 
   /mdast-util-gfm-table/1.0.6:
     resolution: {integrity: sha512-uHR+fqFq3IvB3Rd4+kzXW8dmpxUhvgCQZep6KdjsLK4O6meK5dYZEayLtIxNus1XO3gfjfcIFe8a7L0HZRGgag==}
@@ -4288,7 +4279,7 @@ packages:
       '@types/mdast': 3.0.10
       markdown-table: 3.0.3
       mdast-util-from-markdown: 1.2.0
-      mdast-util-to-markdown: 1.4.0
+      mdast-util-to-markdown: 1.5.0
     transitivePeerDependencies:
       - supports-color
 
@@ -4296,7 +4287,7 @@ packages:
     resolution: {integrity: sha512-KZ4KLmPdABXOsfnM6JHUIjxEvcx2ulk656Z/4Balw071/5qgnhz+H1uGtf2zIGnrnvDC8xR4Fj9uKbjAFGNIeA==}
     dependencies:
       '@types/mdast': 3.0.10
-      mdast-util-to-markdown: 1.4.0
+      mdast-util-to-markdown: 1.5.0
 
   /mdast-util-gfm/2.0.1:
     resolution: {integrity: sha512-42yHBbfWIFisaAfV1eixlabbsa6q7vHeSPY+cg+BBjX51M8xhgMacqH9g6TftB/9+YkcI0ooV4ncfrJslzm/RQ==}
@@ -4307,7 +4298,7 @@ packages:
       mdast-util-gfm-strikethrough: 1.0.2
       mdast-util-gfm-table: 1.0.6
       mdast-util-gfm-task-list-item: 1.0.1
-      mdast-util-to-markdown: 1.4.0
+      mdast-util-to-markdown: 1.5.0
     transitivePeerDependencies:
       - supports-color
 
@@ -4316,7 +4307,6 @@ packages:
     dependencies:
       '@types/mdast': 3.0.10
       unist-util-is: 5.1.1
-    dev: true
 
   /mdast-util-to-hast/12.2.5:
     resolution: {integrity: sha512-EFNhT35ZR/VZ85/EedDdCNTq0oFM+NM/+qBomVGQ0+Lcg0nhI8xIwmdCzNMlVlCJNXRprpobtKP/IUh8cfz6zQ==}
@@ -4332,17 +4322,6 @@ packages:
       unist-util-visit: 4.1.1
     dev: true
 
-  /mdast-util-to-markdown/1.4.0:
-    resolution: {integrity: sha512-IjXARf/O8VGx/pc5SZ7syfydq1DYL9vd92orsG5U0b4GNCmAvXzu+n7sbzfIKrXwB0AVrYk3NV2kXl0AIi9LCA==}
-    dependencies:
-      '@types/mdast': 3.0.10
-      '@types/unist': 2.0.6
-      longest-streak: 3.1.0
-      mdast-util-to-string: 3.1.0
-      micromark-util-decode-string: 1.0.2
-      unist-util-visit: 4.1.1
-      zwitch: 2.0.4
-
   /mdast-util-to-markdown/1.5.0:
     resolution: {integrity: sha512-bbv7TPv/WC49thZPg3jXuqzuvI45IL2EVAr/KxF0BSdHsU0ceFHOmwQn6evxAh1GaoK/6GQ1wp4R4oW2+LFL/A==}
     dependencies:
@@ -4354,7 +4333,6 @@ packages:
       micromark-util-decode-string: 1.0.2
       unist-util-visit: 4.1.1
       zwitch: 2.0.4
-    dev: true
 
   /mdast-util-to-string/3.1.0:
     resolution: {integrity: sha512-n4Vypz/DZgwo0iMHLQL49dJzlp7YtAJP+N07MZHpjPf/5XJuHUWstviF4Mn2jEiR/GNmtnRRqnwsXExk3igfFA==}
@@ -4813,7 +4791,7 @@ packages:
       hookable: 5.4.2
       http-proxy: 1.18.1
       is-primitive: 3.0.1
-      jiti: 1.16.0
+      jiti: 1.16.1
       klona: 2.0.5
       knitwork: 1.0.0
       listhen: 1.0.1
@@ -7059,7 +7037,7 @@ packages:
     dev: true
 
   /utils-merge/1.0.1:
-    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
+    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
     dev: true
 
