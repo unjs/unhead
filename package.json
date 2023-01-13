@@ -2,7 +2,7 @@
   "name": "unhead-monorepo",
   "private": "true",
   "version": "1.0.15",
-  "packageManager": "pnpm@7.24.3",
+  "packageManager": "pnpm@7.25.0",
   "description": "Typed utilities for defining, validating and building best-practice document &lt;head&gt;'s.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -54,7 +54,7 @@
     "fs-extra": "^11.1.0",
     "jsdom": "^20.0.3",
     "typescript": "^4.9.4",
-    "unbuild": "^1.0.2",
+    "unbuild": "^1.1.1",
     "utility-types": "^3.10.0",
     "vitest": "^0.27.1",
     "vue": "^3.2.45"
