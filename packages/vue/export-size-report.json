@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 11843,
-      "minzipped": 4103,
-      "bundled": 23184
+      "minified": 11871,
+      "minzipped": 4119,
+      "bundled": 23251
     },
     {
       "name": "createHeadCore",
