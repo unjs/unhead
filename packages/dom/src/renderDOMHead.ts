@@ -123,9 +123,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     .forEach(([pos, queue]) => {
       if (!queue.length)
         return
+      const children = dom?.[pos as 'head' | 'body']?.children
+      if (!children)
+        return
 
       // 3a. try and find a matching existing element (we only scan the DOM once per render tree)
-      for (const $el of [...dom[pos as 'head' | 'body'].children].reverse()) {
+      for (const $el of [...children].reverse()) {
         const elTag = $el.tagName.toLowerCase()
         // only valid element tags
         if (!HasElementTags.includes(elTag))
