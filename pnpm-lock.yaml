@@ -11147,10 +11147,10 @@ packages:
         optional: true
     dependencies:
       '@types/node': 18.11.18
-      esbuild: 0.16.17
+      esbuild: 0.16.16
       postcss: 8.4.21
       resolve: 1.22.1
-      rollup: 3.10.0
+      rollup: 3.9.1
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
