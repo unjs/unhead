@@ -65,7 +65,6 @@ describe('InferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
-      <meta property=\\"twitter:card\\" content=\\"summary_large_image\\">
       <meta name=\\"og:description\\" content=\\"My OG description\\">
       <meta property=\\"og:title\\" content=\\"My OG title\\">",
         "htmlAttrs": "",
@@ -87,7 +86,6 @@ describe('InferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
-      <meta property=\\"twitter:card\\" content=\\"summary_large_image\\">
       <meta property=\\"og:title\\" content=\\"Title\\">",
         "htmlAttrs": "",
       }
@@ -110,7 +108,6 @@ describe('InferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
-      <meta property=\\"twitter:card\\" content=\\"summary_large_image\\">
       <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
         "htmlAttrs": "",
       }

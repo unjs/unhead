@@ -36,12 +36,14 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => {
     hooks: {
       entries: {
         resolve({ entries }) {
+          let hasOgImage = false
           for (const entry of entries) {
             const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
             const input = entry[inputKey]
             const resolvedMeta: Required<Head>['meta'] = input.meta || []
             const title = input.title
             const ogTitle = resolvedMeta.find(meta => meta.property === 'og:title')
+            hasOgImage = hasOgImage || !!resolvedMeta.find(meta => meta.property === 'og:image')
             const description = resolvedMeta.find(meta => meta.name === 'description')?.content
             const ogDescription = resolvedMeta.find(meta => meta.property === 'og:description')
             // ensure meta exists
@@ -68,7 +70,7 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => {
               content: options?.robots || 'max-snippet: -1; max-image-preview: large; max-video-preview: -1',
             })
           }
-          if (options?.twitterCard !== false) {
+          if (hasOgImage && options?.twitterCard !== false) {
             metas.push({
               property: 'twitter:card',
               content: options?.twitterCard || 'summary_large_image',
