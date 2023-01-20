@@ -102,7 +102,7 @@ importers:
       compression: 1.7.4
       express: 4.18.2
       serve-static: 1.15.0
-      unhead: link:../../packages/unhead
+      unhead: 1.0.17
 
   examples/vue-2:
     specifiers:
@@ -2955,14 +2955,21 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
-  /@unhead/dom/1.0.14:
-    resolution: {integrity: sha512-AMOOMUNbybHrvtuddy5aEkDibL3grwUCoUT1aHHqfvtEy86t/ftRGKT4T9znx54IxlXN9FnoNpeSOg4D8OP/5w==}
+  /@unhead/dom/1.0.17:
+    resolution: {integrity: sha512-iLVBQ1ck8r8U+n1Rdk93ry6NP0jgRXuJwrujXlYUFkrvbkXl08rTfyyXHT+AkA1aZgFLS9KtYtbEhwzNeWfZtg==}
     dependencies:
-      '@unhead/schema': 1.0.14
+      '@unhead/schema': 1.0.17
     dev: true
 
   /@unhead/schema/1.0.14:
     resolution: {integrity: sha512-eL03X15KvI10igudFkvV1sWUIMcMGQed0qOk+V5fyp036NZLQ5MF9ygyZOKkZ71jbdL8/1Afe8+f2tklc4v8zQ==}
+    dependencies:
+      '@zhead/schema': 1.0.9
+      hookable: 5.4.2
+    dev: true
+
+  /@unhead/schema/1.0.17:
+    resolution: {integrity: sha512-Vfc6HWcZAzibzlzBMNhVTOC7AYqvq3QMIY6VF7myowl4xbSiPLOmp63ZWAXKavYjHDchAJXvL/PF+6sDaIeCLQ==}
     dependencies:
       '@zhead/schema': 1.0.9
       hookable: 5.4.2
@@ -3617,8 +3624,8 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
     dependencies:
-      '@unhead/dom': 1.0.14
-      '@unhead/schema': 1.0.14
+      '@unhead/dom': 1.0.17
+      '@unhead/schema': 1.0.17
       '@unhead/ssr': 1.0.3
       '@unhead/vue': 1.0.14_vue@3.2.45
       vue: 3.2.45
@@ -8466,7 +8473,7 @@ packages:
       ultrahtml: 1.0.1
       unctx: 2.1.0
       unenv: 1.0.0
-      unhead: 1.0.14
+      unhead: 1.0.17
       unimport: 1.0.1
       unplugin: 1.0.0
       untyped: 1.0.0
@@ -10720,11 +10727,11 @@ packages:
       pathe: 1.0.0
     dev: true
 
-  /unhead/1.0.14:
-    resolution: {integrity: sha512-0i0UA6DS44ul0QN4ibP389EiykjHCe3B9gM5eg40O4O8KfDyXgFJ5osdGdfwkmzWR8uWUMLwauNE4FIEFk5NGg==}
+  /unhead/1.0.17:
+    resolution: {integrity: sha512-JjKjFxKwsmsAl/nLu3uTqd7bSTGOu4bhDj2KSYGBBfTVBmzJVK8lC/Aj0q/1au5g4NH4la+ulbmo3oWU4BqICw==}
     dependencies:
-      '@unhead/dom': 1.0.14
-      '@unhead/schema': 1.0.14
+      '@unhead/dom': 1.0.17
+      '@unhead/schema': 1.0.17
       hookable: 5.4.2
     dev: true
 
