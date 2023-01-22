@@ -1,6 +1,7 @@
 import { it } from 'vitest'
 import { ref } from 'vue'
-import { useHead } from '@unhead/vue'
+import { createHead, useHead, useSeoMeta } from '@unhead/vue'
+import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../../fixtures'
 import { ssrRenderHeadToString } from '../util'
 
@@ -109,5 +110,38 @@ describe('vue ssr examples', () => {
     expect(headResult.htmlAttrs).toMatchInlineSnapshot(
       '" data-something=\\"\\""',
     )
+  })
+
+  it('useSeoMeta', async () => {
+    const head = createHead()
+
+    const data = ref<null | { title: string; description: string }>(null)
+
+    useSeoMeta({
+      title: () => data.value?.title || 'Page',
+      titleTemplate: title => `${title} - My Site`,
+      ogTitle: () => `${data.value?.title} - My Site`,
+      description: () => data.value?.description,
+      ogDescription: () => data.value?.description,
+    })
+
+    data.value = {
+      title: 'page name',
+      description: 'my page description',
+    }
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>page name - My Site</title>
+      <meta property=\\"og:title\\" content=\\"page name - My Site\\">
+      <meta name=\\"description\\" content=\\"my page description\\">
+      <meta property=\\"og:description\\" content=\\"my page description\\">",
+        "htmlAttrs": "",
+      }
+    `)
   })
 })

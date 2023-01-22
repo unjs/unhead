@@ -57,6 +57,8 @@ describe('ssr', () => {
     const head = createHead()
 
     useSeoMeta({
+      title: 'page name',
+      titleTemplate: '%s - site',
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],
@@ -69,9 +71,37 @@ describe('ssr', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
+      <title>page name - site</title>
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('useSeoMeta alt', async () => {
+    const head = createHead()
+
+    useSeoMeta({
+      description: 'This is my amazing site, let me tell you all about it.',
+      ogDescription: 'This is my amazing site, let me tell you all about it.',
+      ogTitle: 'My Amazing Site',
+      ogImage: 'https://example.com/image.png',
+      twitterCard: 'summary_large_image',
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name=\\"description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
+      <meta property=\\"og:description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
+      <meta property=\\"og:title\\" content=\\"My Amazing Site\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
+      <meta property=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }
     `)

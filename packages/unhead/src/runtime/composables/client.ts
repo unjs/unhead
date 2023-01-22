@@ -36,8 +36,6 @@ export const useTagMeta = (meta: Arrayable<Meta>): ActiveHeadEntry<any> | void =
 
 export const useTagMetaFlat = (meta: MetaFlatInput): ActiveHeadEntry<any> | void => useTagMeta(unpackMeta(meta))
 
-export const useSeoMeta = useTagMetaFlat
-
 export const useTagLink = (link: Arrayable<Link>): ActiveHeadEntry<any> | void => useHead({ link: asArray(link) })
 
 export const useTagScript = (script: Arrayable<Script>): ActiveHeadEntry<any> | void => useHead({ script: asArray(script) })

@@ -43,9 +43,6 @@ export const useTagMetaFlat = (meta: MaybeComputedRefEntries<MetaFlatInput>) => 
   return useHead({ meta: input })
 }
 
-// alias
-export const useSeoMeta = useTagMetaFlat
-
 export const useTagLink = (link: Arrayable<Link>) => useHead({ link: asArray(link) })
 
 export const useTagScript = (script: Arrayable<Script>) => useHead({ script: asArray(script) })
@@ -61,3 +58,4 @@ export const useHtmlAttrs = (attrs: ReactiveHead['htmlAttrs']) => useHead({ html
 export const useBodyAttrs = (attrs: ReactiveHead['bodyAttrs']) => useHead({ bodyAttrs: attrs })
 
 export * from './server'
+export * from './useSeoMeta'
