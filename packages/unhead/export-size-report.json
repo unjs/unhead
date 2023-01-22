@@ -45,9 +45,9 @@
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3089,
-      "minzipped": 1169,
-      "bundled": 5550
+      "minified": 3095,
+      "minzipped": 1170,
+      "bundled": 5484
     },
     {
       "name": "useTagMetaFlat",

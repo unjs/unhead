@@ -17,9 +17,9 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 11871,
-      "minzipped": 4119,
-      "bundled": 23251
+      "minified": 11873,
+      "minzipped": 4120,
+      "bundled": 23253
     },
     {
       "name": "createHeadCore",
@@ -27,6 +27,13 @@
       "minified": 7334,
       "minzipped": 2731,
       "bundled": 14694
+    },
+    {
+      "name": "useSeoMeta",
+      "path": "dist/index.mjs",
+      "minified": 3994,
+      "minzipped": 1548,
+      "bundled": 7378
     },
     {
       "name": "useServerTagMetaFlat",
@@ -41,13 +48,6 @@
       "minified": 3923,
       "minzipped": 1524,
       "bundled": 7237
-    },
-    {
-      "name": "useSeoMeta",
-      "path": "dist/index.mjs",
-      "minified": 3927,
-      "minzipped": 1523,
-      "bundled": 7266
     },
     {
       "name": "VueHeadMixin",
