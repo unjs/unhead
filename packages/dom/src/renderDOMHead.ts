@@ -141,7 +141,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
         })
 
-        const matchIdx = queue.findIndex(ctx => ctx && (ctx.tag._d === dedupeKey || $el.isEqualNode(ctx.$el!)))
+        const matchIdx = queue.findIndex(ctx => ctx && (ctx.tag._d === dedupeKey || $el.isEqualNode?.(ctx.$el!)))
         if (matchIdx !== -1) {
           const ctx = queue[matchIdx]
           ctx.$el = $el
