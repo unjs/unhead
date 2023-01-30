@@ -31,23 +31,23 @@
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3994,
-      "minzipped": 1548,
-      "bundled": 7378
+      "minified": 4465,
+      "minzipped": 1715,
+      "bundled": 8322
     },
     {
       "name": "useServerTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3979,
-      "minzipped": 1538,
-      "bundled": 7360
+      "minified": 4450,
+      "minzipped": 1712,
+      "bundled": 8304
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3923,
-      "minzipped": 1524,
-      "bundled": 7237
+      "minified": 4394,
+      "minzipped": 1696,
+      "bundled": 8181
     },
     {
       "name": "VueHeadMixin",
