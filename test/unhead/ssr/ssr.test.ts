@@ -68,8 +68,8 @@ describe('ssr', () => {
           width: 800,
           height: 600,
           alt: 'My amazing image',
-        }
-      ]
+        },
+      ],
     })
 
     const ctx = await renderSSRHead(head)

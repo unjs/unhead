@@ -1,5 +1,6 @@
-import type { BaseBodyAttr, BaseHtmlAttr, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, MaybeArray, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
+import type { BaseBodyAttr, BaseHtmlAttr, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, MaybeArray, MaybeFunctionEntries, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
 import type { Ref } from 'vue'
+import type { BodyEvents } from '@zhead/schema'
 import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
 
 interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
@@ -29,7 +30,7 @@ export type Style<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_S
 export type Script<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Script<E>>
 export type Noscript<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Noscript<E>>
 export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>>>
-export type BodyAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>>>
+export type BodyAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>> & MaybeFunctionEntries<BodyEvents>>
 
 export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**
