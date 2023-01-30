@@ -1,5 +1,5 @@
 import type { Hookable, NestedHooks } from 'hookable'
-import type { HeadHooks } from '@unhead/schema/src/hooks'
+import type { HeadHooks } from './hooks'
 import type { HeadTag } from './tags'
 import type { Head } from './schema'
 

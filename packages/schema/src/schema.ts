@@ -139,4 +139,4 @@ export interface Head<E extends MergeHead = SchemaAugmentations> {
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
-export type { MetaFlatInput } from '@zhead/schema'
+export type { MetaFlatInput, BodyEvents } from '@zhead/schema'
