@@ -101,7 +101,7 @@ describe('ssr', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
       <meta property=\\"og:title\\" content=\\"My Amazing Site\\">
       <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta property=\\"twitter:card\\" content=\\"summary_large_image\\">",
+      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }
     `)

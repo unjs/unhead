@@ -123,6 +123,10 @@ describe('vue ssr examples', () => {
       ogTitle: () => `${data.value?.title} - My Site`,
       description: () => data.value?.description,
       ogDescription: () => data.value?.description,
+      ogImage: () => [
+        { url: 'https://example.com/image.jpg' },
+        { url: 'https://example.com/image2.jpg' },
+      ],
     })
 
     data.value = {
@@ -137,6 +141,8 @@ describe('vue ssr examples', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>page name - My Site</title>
+      <meta property=\\"og:image\\" content=\\"https://example.com/image.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com/image2.jpg\\">
       <meta property=\\"og:title\\" content=\\"page name - My Site\\">
       <meta name=\\"description\\" content=\\"my page description\\">
       <meta property=\\"og:description\\" content=\\"my page description\\">",
