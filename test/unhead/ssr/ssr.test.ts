@@ -62,6 +62,14 @@ describe('ssr', () => {
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],
+      ogImage: [
+        {
+          url: 'https://example.com/image.png',
+          width: 800,
+          height: 600,
+          alt: 'My amazing image',
+        }
+      ]
     })
 
     const ctx = await renderSSRHead(head)
@@ -72,6 +80,10 @@ describe('ssr', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>page name - site</title>
+      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
+      <meta property=\\"og:image:width\\" content=\\"800\\">
+      <meta property=\\"og:image:height\\" content=\\"600\\">
+      <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
