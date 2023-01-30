@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "private": "true",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "packageManager": "pnpm@7.25.1",
   "description": "Typed utilities for defining, validating and building best-practice document &lt;head&gt;'s.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
