@@ -34,7 +34,6 @@ describe('keepalive', () => {
     `)
 
     comp.title = 'world'
-    await nextTick()
     expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
       [
         {
@@ -51,7 +50,6 @@ describe('keepalive', () => {
     wrapper.visible = false
     await nextTick()
     comp.title = 'hello'
-    await nextTick()
     expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
       [
         {
@@ -59,6 +57,20 @@ describe('keepalive', () => {
           "_e": 0,
           "_p": 0,
           "children": "world",
+          "props": {},
+          "tag": "title",
+        },
+      ]
+    `)
+
+    wrapper.visible = true
+    expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 0,
+          "_p": 0,
+          "children": "hello",
           "props": {},
           "tag": "title",
         },
