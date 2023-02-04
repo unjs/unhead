@@ -1,9 +1,8 @@
-/* eslint-disable spaced-comment */
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
 
-import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   define: {
@@ -18,7 +17,7 @@ export default defineConfig({
       '@unhead/ssr': resolve(__dirname, 'packages/ssr/src'),
       '@unhead/dom': resolve(__dirname, 'packages/dom/src'),
       '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
-    }
+    },
   },
   test: {
     include: ['test/**/*.test.ts'],
