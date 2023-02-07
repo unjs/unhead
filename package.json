@@ -2,7 +2,7 @@
   "name": "unhead-monorepo",
   "private": "true",
   "version": "1.0.21",
-  "packageManager": "pnpm@7.25.1",
+  "packageManager": "pnpm@7.26.3",
   "description": "Typed utilities for defining, validating and building best-practice document &lt;head&gt;'s.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -44,23 +44,23 @@
     "lint": "eslint \"{packages,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^0.35.1",
+    "@antfu/eslint-config": "^0.35.2",
     "@types/fs-extra": "^11.0.1",
     "@types/jsdom": "^20.0.1",
-    "@vitest/ui": "^0.28.3",
-    "@vue/server-renderer": "^3.2.45",
+    "@vitest/ui": "^0.28.4",
+    "@vue/server-renderer": "^3.2.47",
     "bumpp": "^8.2.1",
     "eslint": "^8.33.0",
     "fs-extra": "^11.1.0",
     "jsdom": "^21.1.0",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "unbuild": "^1.1.1",
     "utility-types": "^3.10.0",
-    "vitest": "^0.28.3",
-    "vue": "^3.2.45"
+    "vitest": "^0.28.4",
+    "vue": "^3.2.47"
   },
   "resolutions": {
-    "vue": "^3.2.45"
+    "vue": "^3.2.47"
   },
   "dependencies": {
     "@zhead/schema": "^1.1.0",
