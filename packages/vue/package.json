@@ -2,7 +2,7 @@
   "name": "@unhead/vue",
   "type": "module",
   "version": "1.0.21",
-  "packageManager": "pnpm@7.25.1",
+  "packageManager": "pnpm@7.26.3",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -43,6 +43,6 @@
   },
   "devDependencies": {
     "unhead": "workspace:*",
-    "vue": "^3.2.45"
+    "vue": "^3.2.47"
   }
 }
