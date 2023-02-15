@@ -59,7 +59,7 @@
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin": "^1.0.1",
+    "unplugin": "^1.1.0",
     "unplugin-ast": "^0.7.0"
   },
   "devDependencies": {
