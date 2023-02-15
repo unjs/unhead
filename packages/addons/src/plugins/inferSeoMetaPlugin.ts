@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from 'unhead'
+import { defineHeadPlugin } from '@unhead/shared'
 import type { Head, HeadEntry } from '@unhead/schema'
 
 export interface InferSeoMetaPluginOptions {

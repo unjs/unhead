@@ -1,7 +1,7 @@
-import { unpackMeta } from 'zhead'
+import { unpackMeta } from 'unhead'
 import { ref, watchEffect } from 'vue'
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead, MetaFlatInput } from '@unhead/schema'
-import { asArray, resolveUnrefHeadInput } from '../../utils'
+import { resolveUnrefHeadInput } from '../../utils'
 import type {
   Arrayable,
   Link,
@@ -17,6 +17,7 @@ import { IsBrowser } from '../../env'
 import { injectHead } from '../../createHead'
 import { clientUseHead as _clientUseHead } from './useHead/clientUseHead'
 import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
+import { asArray } from '@unhead/shared'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()

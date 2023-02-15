@@ -1,4 +1,4 @@
-import type { BodyEvents, BaseBodyAttr, BaseHtmlAttr, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, MaybeArray, MaybeFunctionEntries, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
+import type { BaseBodyAttr, BaseHtmlAttr, BodyEvents, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, MaybeArray, MaybeFunctionEntries, MergeHead, SchemaAugmentations, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
 import type { Ref } from 'vue'
 import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
 

@@ -1,6 +1,5 @@
 import { isRef, unref } from 'vue'
-import { HasElementTags } from 'unhead'
-import type { Arrayable } from './types'
+import { HasElementTags } from '@unhead/shared'
 
 // copied from @vueuse/shared
 function resolveUnref(r: any) {
@@ -38,8 +37,4 @@ export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): 
     return unrefdObj
   }
   return root
-}
-
-export function asArray<T>(value: Arrayable<T>): T[] {
-  return Array.isArray(value) ? value : [value]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@unhead/ssr",
+  "name": "@unhead/shared",
   "type": "module",
   "version": "1.0.21",
   "packageManager": "pnpm@7.26.3",
@@ -10,11 +10,16 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/ssr"
+    "directory": "packages/schema"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
   },
+  "keywords": [
+    "head",
+    "meta tags",
+    "types"
+  ],
   "sideEffects": false,
   "exports": {
     ".": {
@@ -31,11 +36,9 @@
   ],
   "scripts": {
     "build": "unbuild .",
-    "stub": "unbuild . --stub",
-    "export:sizes": "npx export-size . -r"
+    "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*"
+    "@unhead/schema": "workspace:*"
   }
 }

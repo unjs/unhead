@@ -1,6 +1,6 @@
 import type { HeadEntryOptions, MergeHead, MetaFlatInput } from '@unhead/schema'
 import { ref, watchEffect } from 'vue'
-import { unpackMeta } from 'zhead'
+import { unpackMeta } from 'unhead'
 import type {
   Arrayable, Link, MaybeComputedRefEntries, Meta,
   Noscript,
@@ -8,8 +8,9 @@ import type {
   Script,
   Style, UseHeadInput,
 } from '../../types'
-import { asArray, resolveUnrefHeadInput } from '../../'
+import { resolveUnrefHeadInput } from '../../'
 import { useHead } from '.'
+import { asArray } from '@unhead/shared'
 
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
   // ensure server mode

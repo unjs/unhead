@@ -9,16 +9,17 @@ import type {
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
+import { DedupesTagsPlugin } from '@unhead/shared'
+import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
-  DedupesTagsPlugin,
   DeprecatedTagAttrPlugin,
   EventHandlersPlugin,
-  PatchDomOnEntryUpdatesPlugin, ProvideTagHashPlugin,
+  ProvideTagHashPlugin,
   SortTagsPlugin,
   TitleTemplatePlugin,
 } from './plugin'
-import { normaliseEntryTags } from './normalise'
+import { normaliseEntryTags } from './utils'
 
 export const CorePlugins = () => [
   // dedupe needs to come first

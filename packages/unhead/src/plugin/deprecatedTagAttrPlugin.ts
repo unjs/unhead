@@ -1,5 +1,5 @@
 // legacy tag support
-import { defineHeadPlugin } from '..'
+import { defineHeadPlugin } from '@unhead/shared'
 
 export const DeprecatedTagAttrPlugin = () => {
   return defineHeadPlugin({

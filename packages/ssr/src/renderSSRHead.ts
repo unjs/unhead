@@ -1,5 +1,5 @@
-import { ssrRenderTags } from 'zhead'
 import type { BeforeRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
+import { ssrRenderTags } from './util'
 
 export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
   const beforeRenderCtx: BeforeRenderContext = { shouldRender: true }

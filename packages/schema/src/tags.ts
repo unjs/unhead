@@ -1,4 +1,4 @@
-import type { HeadTag as BaseHeadTag, MaybePromiseProps } from '@zhead/schema'
+import type { HeadTag as BaseHeadTag, MaybePromiseProps } from 'zhead'
 
 export interface ResolvesDuplicates {
   /**

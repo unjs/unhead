@@ -1,4 +1,4 @@
-import { HasElementTags, tagDedupeKey } from 'zhead'
+import { HasElementTags, hashCode, tagDedupeKey } from '@unhead/shared'
 import type {
   BeforeRenderContext,
   DomRenderTagContext,
@@ -7,7 +7,6 @@ import type {
   Unhead,
 } from '@unhead/schema'
 import { setAttrs } from './setAttrs'
-import { hashCode } from './util'
 
 export interface RenderDomHeadOptions {
   /**
@@ -165,15 +164,14 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       })
     })
   // finally, write the tags
-  if (fragments.head) {
+  if (fragments.head)
     dom.head.appendChild(fragments.head)
-  }
-  if (fragments.bodyOpen) {
+
+  if (fragments.bodyOpen)
     dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
-  }
-  if (fragments.bodyClose) {
+
+  if (fragments.bodyClose)
     dom.body.appendChild(fragments.bodyClose)
-  }
 
   for (const ctx of renders)
     await head.hooks.callHook('dom:renderTag', ctx)
