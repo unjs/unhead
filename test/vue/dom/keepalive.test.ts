@@ -1,80 +1,99 @@
 // @vitest-environment jsdom
+/* eslint-disable vue/one-component-per-file */
 
 import { describe, it } from 'vitest'
 import { createHead, injectHead, useHead } from '@unhead/vue'
-import { nextTick, ref } from 'vue'
-import { useKeepAliveSetup } from '../util'
+import { KeepAlive, defineComponent, h, nextTick, ref } from 'vue'
+import { mount } from '../util'
 
 describe('keepalive', () => {
-  it('basic', async () => {
-    const wrapper = useKeepAliveSetup(
-      () => {
-        const title = ref('hello')
-        useHead({ title })
-        const head = ref(injectHead())
-
-        return { title, head }
+  it('keepalive component change', async () => {
+    const Comp1 = defineComponent({
+      setup() {
+        useHead({ title: 'home' })
       },
-      () => ({ head: createHead() }),
-    )
+      render() {
+        return '<h1>home</h1>'
+      },
+    })
 
-    const comp = wrapper.$refs.comp as any
+    const Comp2 = defineComponent({
+      setup() {
+        useHead({ title: 'about' })
+      },
+      render() {
+        return '<h1>about</h1>'
+      },
+    })
 
-    expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
+    const Provider = defineComponent({
+      components: { Comp1, Comp2 },
+      setup() {
+        const head = ref(injectHead())
+        const name = ref('home')
+        return { name, head }
+      },
+      render() {
+        const compMap = {
+          home: h(Comp1, { ref: 'comp1' }),
+          about: h(Comp2, { ref: 'comp2' }),
+        }
+        return h('div', [
+          h(KeepAlive, [
+            compMap[this.name as keyof typeof compMap],
+          ]),
+        ])
+      },
+    })
+
+    const homeHeadSnapshot = `
       [
         {
           "_d": "title",
           "_e": 0,
           "_p": 0,
-          "children": "hello",
+          "children": "home",
           "props": {},
           "tag": "title",
         },
       ]
-    `)
-
-    comp.title = 'world'
-    expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
+    `
+    const aboutHeadSnapshot = `
       [
         {
           "_d": "title",
-          "_e": 0,
-          "_p": 0,
-          "children": "world",
+          "_e": 1,
+          "_p": 1024,
+          "children": "about",
           "props": {},
           "tag": "title",
         },
       ]
-    `)
+    `
 
-    wrapper.visible = false
+    /*
+      Steps 1 and 2 are used to enable instances of each component,
+      and steps 3 and 4 are used to check that the deactivated hooks in `useHead` are working properly.
+     */
+
+    // Step 1
+    const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    comp.title = 'hello'
-    expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "title",
-          "_e": 0,
-          "_p": 0,
-          "children": "world",
-          "props": {},
-          "tag": "title",
-        },
-      ]
-    `)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
 
-    wrapper.visible = true
-    expect(await comp.head!.resolveTags()).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "title",
-          "_e": 0,
-          "_p": 0,
-          "children": "hello",
-          "props": {},
-          "tag": "title",
-        },
-      ]
-    `)
+    // Step 2
+    app.name = 'about'
+    await nextTick()
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
+
+    // Step 3
+    app.name = 'home'
+    await nextTick()
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+
+    // Step 4
+    app.name = 'about'
+    await nextTick()
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
   })
 })

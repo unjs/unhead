@@ -10,12 +10,13 @@ export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, optio
 
   const resolvedInput: Ref<ReactiveHead> = ref({})
   watchEffect(() => {
-    resolvedInput.value = resolveUnrefHeadInput(input)
+    resolvedInput.value = deactivated.value
+      ? {}
+      : resolveUnrefHeadInput(input)
   })
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
-  watch([resolvedInput, deactivated], ([e, disable]) => {
-    if (!disable)
-      entry.patch(e)
+  watch(resolvedInput, (e) => {
+    entry.patch(e)
   })
 
   const vm = getCurrentInstance()
