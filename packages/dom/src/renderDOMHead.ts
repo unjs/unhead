@@ -118,6 +118,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     pendingRenders[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].push(ctx)
   }
 
+  const fragments: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
+    bodyClose: undefined,
+    bodyOpen: undefined,
+    head: undefined,
+  } as const
+
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
   Object.entries(pendingRenders)
     .forEach(([pos, queue]) => {
@@ -151,25 +157,23 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
       }
 
-      // 3b. if not, create the new element
       queue.forEach((ctx) => {
-        if (!ctx.$el)
-          return
-        switch (ctx.tag.tagPosition) {
-          case 'bodyClose':
-            dom.body.appendChild(ctx.$el)
-            break
-          case 'bodyOpen':
-            dom.body.insertBefore(ctx.$el, dom.body.firstChild)
-            break
-          case 'head':
-          default:
-            dom.head.appendChild(ctx.$el)
-            break
-        }
+        const pos = ctx.tag.tagPosition || 'head'
+        fragments[pos] = fragments[pos] || dom.createDocumentFragment()
+        fragments[pos]!.appendChild(ctx.$el!)
         markEl(ctx)
       })
     })
+  // finally, write the tags
+  if (fragments.head) {
+    dom.head.appendChild(fragments.head)
+  }
+  if (fragments.bodyOpen) {
+    dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
+  }
+  if (fragments.bodyClose) {
+    dom.body.appendChild(fragments.bodyClose)
+  }
 
   for (const ctx of renders)
     await head.hooks.callHook('dom:renderTag', ctx)
