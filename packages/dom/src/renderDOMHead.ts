@@ -41,7 +41,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       })
     })
 
-  const preRenderTag = async (tag: HeadTag) => {
+  const setupTagRenderCtx = async (tag: HeadTag) => {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
       renderId: tag._d || hashCode(JSON.stringify({ ...tag, _e: undefined, _p: undefined })),
@@ -79,7 +79,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   // first render all tags which we can match quickly
   for (const t of await head.resolveTags()) {
-    const ctx = await preRenderTag(t)
+    const ctx = await setupTagRenderCtx(t)
     if (!ctx.shouldRender)
       continue
     const { tag } = ctx
