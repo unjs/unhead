@@ -4,11 +4,11 @@
     "dependencies": [
       "@rollup/pluginutils",
       "@unhead/schema",
+      "@unhead/shared",
       "unhead",
       "unplugin",
       "unplugin-ast",
-      "@babel/types",
-      "zhead"
+      "@babel/types"
     ],
     "versions": {
       "export-size": "0.5.2",
@@ -20,16 +20,16 @@
     {
       "name": "InferSeoMetaPlugin",
       "path": "dist/index.mjs",
-      "minified": 995,
-      "minzipped": 453,
-      "bundled": 2447
+      "minified": 1003,
+      "minzipped": 458,
+      "bundled": 2455
     },
     {
       "name": "DefaultCriticalTags",
       "path": "dist/index.mjs",
-      "minified": 150,
-      "minzipped": 106,
-      "bundled": 279
+      "minified": 158,
+      "minzipped": 112,
+      "bundled": 287
     }
   ]
 }

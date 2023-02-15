@@ -3,7 +3,7 @@
     "name": "@unhead/ssr",
     "dependencies": [
       "@unhead/schema",
-      "zhead"
+      "@unhead/shared"
     ],
     "versions": {
       "export-size": "0.5.2",
@@ -15,9 +15,30 @@
     {
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
-      "minified": 1102,
-      "minzipped": 493,
-      "bundled": 1955
+      "minified": 1126,
+      "minzipped": 509,
+      "bundled": 1957
+    },
+    {
+      "name": "ssrRenderTags",
+      "path": "dist/index.mjs",
+      "minified": 770,
+      "minzipped": 388,
+      "bundled": 1369
+    },
+    {
+      "name": "tagToString",
+      "path": "dist/index.mjs",
+      "minified": 369,
+      "minzipped": 242,
+      "bundled": 736
+    },
+    {
+      "name": "propsToString",
+      "path": "dist/index.mjs",
+      "minified": 236,
+      "minzipped": 172,
+      "bundled": 519
     }
   ]
 }
