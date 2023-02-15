@@ -61,9 +61,5 @@
   },
   "resolutions": {
     "vue": "^3.2.47"
-  },
-  "dependencies": {
-    "@zhead/schema": "^1.1.0",
-    "unplugin-auto-import": "^0.13.0"
   }
 }

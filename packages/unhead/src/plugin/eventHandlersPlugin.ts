@@ -1,5 +1,5 @@
 import type { HeadTag } from '@unhead/schema'
-import { defineHeadPlugin } from '..'
+import { defineHeadPlugin } from '@unhead/shared'
 
 /**
  * Supports DOM event handlers (i.e `onload`) as functions.

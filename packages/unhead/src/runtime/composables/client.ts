@@ -12,9 +12,8 @@ import type {
   Script, Style, Title,
   TitleTemplate,
 } from '@unhead/schema'
-import { unpackMeta } from 'zhead'
-import type { Arrayable } from '../../util'
-import { asArray } from '../../util'
+import type { Arrayable } from '../..'
+import { asArray, unpackMeta } from '../..'
 import { IsBrowser } from '../../env'
 import { getActiveHead } from '../state'
 

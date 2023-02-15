@@ -1,4 +1,4 @@
-import { TagsWithInnerContent } from 'zhead'
+import { TagsWithInnerContent } from '@unhead/shared'
 import type { DomRenderTagContext } from '@unhead/schema'
 
 /**

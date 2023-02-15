@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from 'unhead'
+import { defineHeadPlugin } from '@unhead/shared'
 import { resolveUnrefHeadInput } from './utils'
 
 export const VueReactiveUseHeadPlugin = () => {

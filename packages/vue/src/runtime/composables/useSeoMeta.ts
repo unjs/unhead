@@ -1,6 +1,6 @@
 import type { ActiveHeadEntry, MetaFlatInput } from '@unhead/schema'
 import { ref, watchEffect } from 'vue'
-import { unpackMeta } from 'zhead'
+import { unpackMeta } from 'unhead'
 import type { MaybeComputedRefEntries, ReactiveHead } from '../../types'
 import { resolveUnrefHeadInput } from '../../utils'
 import { useHead } from './index'

@@ -1,7 +1,8 @@
-import type { RenderDomHeadOptions } from '@unhead/dom'
-import { defineHeadPlugin } from '..'
+import { defineHeadPlugin } from '@unhead/shared'
+import type { RenderDomHeadOptions } from './renderDOMHead'
+import { debouncedRenderDOMHead } from './renderDOMHead'
 
-interface TriggerDomPatchingOnUpdatesPluginOptions extends RenderDomHeadOptions {
+export interface TriggerDomPatchingOnUpdatesPluginOptions extends RenderDomHeadOptions {
   delayFn?: (fn: () => void) => void
 }
 
@@ -17,9 +18,7 @@ export const PatchDomOnEntryUpdatesPlugin = (options?: TriggerDomPatchingOnUpdat
           delayFn = requestAnimationFrame
 
         // async load the renderDOMHead function
-        import('@unhead/dom').then(({ debouncedRenderDOMHead }) => {
-          debouncedRenderDOMHead(head, { document: options?.document || window.document, delayFn })
-        })
+        debouncedRenderDOMHead(head, { document: options?.document || window.document, delayFn })
       },
     },
   })

@@ -12,20 +12,15 @@ importers:
       '@types/jsdom': ^20.0.1
       '@vitest/ui': ^0.28.4
       '@vue/server-renderer': ^3.2.47
-      '@zhead/schema': ^1.1.0
       bumpp: ^8.2.1
       eslint: ^8.33.0
       fs-extra: ^11.1.0
       jsdom: ^21.1.0
       typescript: ^4.9.5
       unbuild: ^1.1.1
-      unplugin-auto-import: ^0.13.0
       utility-types: ^3.10.0
       vitest: ^0.28.4
       vue: ^3.2.47
-    dependencies:
-      '@zhead/schema': 1.1.0
-      unplugin-auto-import: 0.13.0
     devDependencies:
       '@antfu/eslint-config': 0.35.2_4vsywjlpuriuw3tl5oq6zy5a64
       '@types/fs-extra': 11.0.1
@@ -126,67 +121,75 @@ importers:
       '@babel/types': ^7.20.7
       '@rollup/pluginutils': ^5.0.2
       '@unhead/schema': workspace:*
+      '@unhead/shared': workspace:*
       unhead: workspace:*
       unplugin: ^1.0.1
       unplugin-ast: ^0.7.0
-      zhead: ^1.1.0
     dependencies:
       '@rollup/pluginutils': 5.0.2
       '@unhead/schema': link:../schema
+      '@unhead/shared': link:../shared
       unhead: link:../unhead
       unplugin: 1.0.1
       unplugin-ast: 0.7.0
     devDependencies:
       '@babel/types': 7.20.7
-      zhead: 1.1.0
 
   packages/dom:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.1.0
+      '@unhead/shared': workspace:*
     dependencies:
       '@unhead/schema': link:../schema
-    devDependencies:
-      zhead: 1.1.0
+      '@unhead/shared': link:../shared
 
   packages/schema:
     specifiers:
-      '@zhead/schema': ^1.1.0
       hookable: ^5.4.2
+      zhead: ^2.0.0
     dependencies:
-      '@zhead/schema': 1.1.0
       hookable: 5.4.2
+      zhead: 2.0.0
+
+  packages/shared:
+    specifiers:
+      '@unhead/schema': workspace:*
+    dependencies:
+      '@unhead/schema': link:../schema
 
   packages/ssr:
     specifiers:
       '@unhead/schema': workspace:*
-      zhead: ^1.1.0
+      '@unhead/shared': workspace:*
     dependencies:
       '@unhead/schema': link:../schema
-    devDependencies:
-      zhead: 1.1.0
+      '@unhead/shared': link:../shared
 
   packages/unhead:
     specifiers:
       '@unhead/dom': workspace:*
       '@unhead/schema': workspace:*
+      '@unhead/shared': workspace:*
       hookable: ^5.4.2
-      zhead: ^1.1.0
+      packrup: ^0.1.0
     dependencies:
       '@unhead/dom': link:../dom
       '@unhead/schema': link:../schema
+      '@unhead/shared': link:../shared
       hookable: 5.4.2
     devDependencies:
-      zhead: 1.1.0
+      packrup: 0.1.0
 
   packages/vue:
     specifiers:
       '@unhead/schema': workspace:*
+      '@unhead/shared': workspace:*
       hookable: ^5.4.2
       unhead: workspace:*
       vue: ^3.2.47
     dependencies:
       '@unhead/schema': link:../schema
+      '@unhead/shared': link:../shared
       hookable: 5.4.2
     devDependencies:
       unhead: link:../unhead
@@ -3784,6 +3787,7 @@ packages:
 
   /@zhead/schema/1.1.0:
     resolution: {integrity: sha512-hEtK+hUAKS3w1+F++m6EeZ6bWeLDXraqN2nCyRVIP5vvR3bWjXVP9OM9x7Pmn7Hp6T7FKmsG2C8rvouQU2806w==}
+    dev: true
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
@@ -7983,6 +7987,7 @@ packages:
   /local-pkg/0.4.3:
     resolution: {integrity: sha512-SFppqq5p42fe2qcZQqqEOiVRXl+WCP1MdT6k7BDEW1j++sp5fIY+/fdRQitvKgB5BrBcmrs5m/L0v2FrU5MY1g==}
     engines: {node: '>=14'}
+    dev: true
 
   /locate-path/5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
@@ -8977,6 +8982,10 @@ packages:
   /p-try/2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
+    dev: true
+
+  /packrup/0.1.0:
+    resolution: {integrity: sha512-HnUl9ztHGty5ZK13WM8Q7854SWPKH/eCT+MiTO0P1qCu1Y4S5PPJ8E9MwD3cnjSr7PUPzXDnmOVJIKM043OfJQ==}
     dev: true
 
   /param-case/3.0.4:
@@ -11397,24 +11406,6 @@ packages:
       - rollup
     dev: true
 
-  /unimport/2.1.0:
-    resolution: {integrity: sha512-GDVIxATluUquX8EqelT6DtnmnZaXGID1jsO9IXwlnxb0OIEqKAxTOnTlnGmHbseoGTh+ZC9kcNDaO18HYQj9KA==}
-    dependencies:
-      '@rollup/pluginutils': 5.0.2
-      escape-string-regexp: 5.0.0
-      fast-glob: 3.2.12
-      local-pkg: 0.4.3
-      magic-string: 0.27.0
-      mlly: 1.1.0
-      pathe: 1.1.0
-      pkg-types: 1.0.1
-      scule: 1.0.0
-      strip-literal: 1.0.0
-      unplugin: 1.0.1
-    transitivePeerDependencies:
-      - rollup
-    dev: false
-
   /unist-util-stringify-position/2.0.3:
     resolution: {integrity: sha512-3faScn5I+hy9VleOq/qNbAd6pAx7iH5jYBMS9I1HgQVijz/4mv5Bvw5iw1sC/90CODiKo81G/ps8AJrISn687g==}
     dependencies:
@@ -11464,25 +11455,6 @@ packages:
       local-pkg: 0.4.2
       magic-string: 0.27.0
       unimport: 1.0.2
-      unplugin: 1.0.1
-    transitivePeerDependencies:
-      - rollup
-    dev: false
-
-  /unplugin-auto-import/0.13.0:
-    resolution: {integrity: sha512-nKMxDbkjM4FRPInFfm7sWrJOKgxfKKwb5yLPP+DEGl/SG0/FtBoW1LnZL4PQfx0FXjertoHO1P/5nDf+RSip2Q==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@vueuse/core': '*'
-    peerDependenciesMeta:
-      '@vueuse/core':
-        optional: true
-    dependencies:
-      '@antfu/utils': 0.7.2
-      '@rollup/pluginutils': 5.0.2
-      local-pkg: 0.4.3
-      magic-string: 0.27.0
-      unimport: 2.1.0
       unplugin: 1.0.1
     transitivePeerDependencies:
       - rollup
@@ -12536,11 +12508,9 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zhead/1.1.0:
-    resolution: {integrity: sha512-sB3F/B8Uyfwcx1F9vBsSdqx2mZK7QkcCxyM6MNrqkk1U2FzZIW+HP9OG0oocEvZrBUjZfiypuRSM8CYqzCBuDQ==}
-    dependencies:
-      '@zhead/schema': 1.1.0
-    dev: true
+  /zhead/2.0.0:
+    resolution: {integrity: sha512-d7URVnQ0i2llNAewFknJ8L87R23/1XByNWmFJonY2Pwr7SP/HtZ3h8LW6N014lu1uTc5s+b/cDc8sZ3ICMIOPA==}
+    dev: false
 
   /zip-stream/4.1.0:
     resolution: {integrity: sha512-zshzwQW7gG7hjpBlgeQP9RuyPGNxvJdzR8SUM3QhxCnLjWN2E7j3dOvpeDcQoETfHx0urRS7EtmVToql7YpU4A==}

@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useHead } from 'unhead'
-import type { SpeculationRules } from '@zhead/schema'
+import type { SpeculationRules } from '@unhead/schema'
 import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('dom innerHTML', () => {

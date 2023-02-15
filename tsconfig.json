@@ -24,6 +24,8 @@
       "unhead/*": ["packages/unhead/*"],
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
+      "@unhead/shared": ["packages/shared/src"],
+      "@unhead/shared/*": ["packages/shared/*"],
       "#head-runtime": ["packages/vue/src/runtime/client"],
     }
   },

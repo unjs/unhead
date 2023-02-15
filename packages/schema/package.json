@@ -6,14 +6,14 @@
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
-  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "homepage": "https://unhead.harlanzw.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harlan-zw/unhead.git",
+    "url": "git+https://github.com/unjs/unhead.git",
     "directory": "packages/schema"
   },
   "bugs": {
-    "url": "https://github.com/harlan-zw/unhead/issues"
+    "url": "https://github.com/unjs/unhead/issues"
   },
   "keywords": [
     "head",
@@ -39,7 +39,7 @@
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@zhead/schema": "^1.1.0",
-    "hookable": "^5.4.2"
+    "hookable": "^5.4.2",
+    "zhead": "^2.0.0"
   }
 }

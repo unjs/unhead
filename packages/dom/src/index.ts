@@ -1,2 +1,3 @@
 export * from './renderDOMHead'
-export * from './util'
+export * from './patchDomOnEntryUpdatesPlugin'
+export * from './setAttrs'
