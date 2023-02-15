@@ -16,7 +16,7 @@ export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, optio
   })
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
   watch(resolvedInput, (e) => {
-      entry.patch(e)
+    entry.patch(e)
   })
 
   const vm = getCurrentInstance()
