@@ -11,8 +11,8 @@ export const ProvideTagHashPlugin = () => {
         // only valid tags with a key
         if (!HasElementTags.includes(tag.tag) || !tag.key)
           return
-        // @ts-expect-error untyped
-        tag._hash = hashCode(JSON.stringify({ tag: tag.tag, key: tag.key }))
+        // @ts-expect-error runtime prop
+        tag._hash = hashCode(`${tag.tag}:${tag.key}`)
 
         // ssr only from here
         if (IsBrowser || getActiveHead()?.resolvedOptions?.document)

@@ -15,6 +15,11 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
+export function hashTag(tag: HeadTag) {
+  const str = `${tag.children || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`
+  return `${tag.tag}:${hashCode(str)}`
+}
+
 /**
  * Render the head tags to the DOM.
  */
@@ -43,7 +48,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const setupTagRenderCtx = async (tag: HeadTag) => {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
-      renderId: tag._d || hashCode(JSON.stringify({ ...tag, _e: undefined, _p: undefined })),
+      renderId: tag._d || hashTag(tag),
       $el: null,
       shouldRender: true,
       tag,
