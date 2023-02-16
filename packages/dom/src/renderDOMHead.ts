@@ -110,10 +110,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       continue
     }
 
-    // 3. create the new dom element, we may or may not need it
-    ctx.$el = dom.createElement(tag.tag)
-    setAttrs(ctx)
-
     pendingRenders[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].push(ctx)
   }
 
@@ -134,19 +130,27 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
       // 3a. try and find a matching existing element (we only scan the DOM once per render tree)
       for (const $el of [...children].reverse()) {
-        const elTag = $el.tagName.toLowerCase()
+        const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
         // only valid element tags
         if (!HasElementTags.includes(elTag))
           continue
 
-        const dedupeKey = tagDedupeKey({
-          tag: elTag as HeadTag['tag'],
-          // convert attributes to object
-          props: $el.getAttributeNames()
-            .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
-        })
+        // convert attributes to object
+        const props = $el.getAttributeNames()
+          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
 
-        const matchIdx = queue.findIndex(ctx => ctx && (ctx.tag._d === dedupeKey || $el.isEqualNode?.(ctx.$el!)))
+        const tmpTag: HeadTag = { tag: elTag, props }
+
+        const tmpRenderId = hashTag(tmpTag)
+        // avoid using DOM API, let's use our own hash verification
+        let matchIdx = queue.findIndex(ctx => ctx?.renderId === tmpRenderId)
+        // there was no match for the index, we need to do a more expensive lookup
+        if (matchIdx === -1) {
+          const tmpDedupeKey = tagDedupeKey(tmpTag)
+          // avoid using DOM API, let's use our own hash verification
+          matchIdx = queue.findIndex(ctx => ctx?.tag._d && ctx.tag._d === tmpDedupeKey)
+        }
+
         if (matchIdx !== -1) {
           const ctx = queue[matchIdx]
           ctx.$el = $el
@@ -159,6 +163,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       queue.forEach((ctx) => {
         const pos = ctx.tag.tagPosition || 'head'
         fragments[pos] = fragments[pos] || dom.createDocumentFragment()
+        if (!ctx.$el) {
+          //  create the new dom element
+          ctx.$el = dom.createElement(ctx.tag.tag)
+          setAttrs(ctx)
+        }
         fragments[pos]!.appendChild(ctx.$el!)
         markEl(ctx)
       })
