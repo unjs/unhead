@@ -4,8 +4,8 @@
     "dependencies": [
       "@unhead/schema",
       "@unhead/shared",
-      "unhead",
       "hookable",
+      "unhead",
       "vue"
     ],
     "versions": {
