@@ -17,28 +17,28 @@
       "path": "dist/index.mjs",
       "minified": 3310,
       "minzipped": 1408,
-      "bundled": 6225
+      "bundled": 6217
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
       "minified": 3020,
       "minzipped": 1306,
-      "bundled": 5706
+      "bundled": 5698
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
       "minified": 2867,
       "minzipped": 1237,
-      "bundled": 5325
+      "bundled": 5317
     },
     {
       "name": "setAttrs",
       "path": "dist/index.mjs",
       "minified": 552,
       "minzipped": 319,
-      "bundled": 1126
+      "bundled": 1118
     },
     {
       "name": "hashTag",
