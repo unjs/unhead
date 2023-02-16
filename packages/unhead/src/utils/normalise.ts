@@ -40,14 +40,8 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     tag.props.class = tag.props.class.join(' ')
 
   // allow meta to be resolved into multiple tags if an array is provided on content
-  if (tag.props.content && Array.isArray(tag.props.content)) {
-    return tag.props.content.map((v, i) => {
-      const newTag = { ...tag, props: { ...tag.props } } as T
-      newTag.props.content = v
-      newTag.key = `${tag.props.name || tag.props.property}:${i}`
-      return newTag
-    })
-  }
+  if (tag.props.content && Array.isArray(tag.props.content))
+    return tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
 
   return tag
 }
