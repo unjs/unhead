@@ -40,8 +40,8 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "unhead": "workspace:*",
-    "hookable": "^5.4.2"
+    "hookable": "^5.4.2",
+    "unhead": "workspace:*"
   },
   "devDependencies": {
     "vue": "^3.2.47"
