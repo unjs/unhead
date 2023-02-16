@@ -13,6 +13,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'unhead': resolve(__dirname, 'packages/unhead/src'),
+      '@unhead/shared': resolve(__dirname, 'packages/shared/src'),
       '@unhead/schema': resolve(__dirname, 'packages/schema/src'),
       '@unhead/ssr': resolve(__dirname, 'packages/ssr/src'),
       '@unhead/dom': resolve(__dirname, 'packages/dom/src'),

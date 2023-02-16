@@ -15,6 +15,11 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
+export function hashTag(tag: HeadTag) {
+  const str = `${tag.children || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`
+  return `${tag.tag}:${hashCode(str)}`
+}
+
 /**
  * Render the head tags to the DOM.
  */
@@ -43,7 +48,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const setupTagRenderCtx = async (tag: HeadTag) => {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
-      renderId: tag._d || hashCode(JSON.stringify({ ...tag, _e: undefined, _p: undefined })),
+      renderId: tag._d || hashTag(tag),
       $el: null,
       shouldRender: true,
       tag,
@@ -91,7 +96,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
       ctx.$el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
-      setAttrs(ctx, markSideEffect)
+      setAttrs(ctx, false, markSideEffect)
       renders.push(ctx)
       continue
     }
@@ -103,16 +108,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._hash}]`)
     }
     if (ctx.$el) {
-      // if we don't have a dedupe keys then the attrs will be the same
+      // if we don't have a dedupe keys, then the attrs will be the same
       if (ctx.tag._d)
         setAttrs(ctx)
       markEl(ctx)
       continue
     }
-
-    // 3. create the new dom element, we may or may not need it
-    ctx.$el = dom.createElement(tag.tag)
-    setAttrs(ctx)
 
     pendingRenders[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].push(ctx)
   }
@@ -134,22 +135,31 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
       // 3a. try and find a matching existing element (we only scan the DOM once per render tree)
       for (const $el of [...children].reverse()) {
-        const elTag = $el.tagName.toLowerCase()
+        const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
         // only valid element tags
         if (!HasElementTags.includes(elTag))
           continue
 
-        const dedupeKey = tagDedupeKey({
-          tag: elTag as HeadTag['tag'],
-          // convert attributes to object
-          props: $el.getAttributeNames()
-            .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
-        })
+        // convert attributes to object
+        const props = $el.getAttributeNames()
+          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
 
-        const matchIdx = queue.findIndex(ctx => ctx && (ctx.tag._d === dedupeKey || $el.isEqualNode?.(ctx.$el!)))
+        const tmpTag: HeadTag = { tag: elTag, props }
+
+        const tmpRenderId = hashTag(tmpTag)
+        // avoid using DOM API, let's use our own hash verification
+        let matchIdx = queue.findIndex(ctx => ctx?.renderId === tmpRenderId)
+        // there was no match for the index, we need to do a more expensive lookup
+        if (matchIdx === -1) {
+          const tmpDedupeKey = tagDedupeKey(tmpTag)
+          // avoid using DOM API, let's use our own hash verification
+          matchIdx = queue.findIndex(ctx => ctx?.tag._d && ctx.tag._d === tmpDedupeKey)
+        }
+
         if (matchIdx !== -1) {
           const ctx = queue[matchIdx]
           ctx.$el = $el
+          // if all the props are the same, we can ignore
           setAttrs(ctx)
           markEl(ctx)
           delete queue[matchIdx]
@@ -159,6 +169,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       queue.forEach((ctx) => {
         const pos = ctx.tag.tagPosition || 'head'
         fragments[pos] = fragments[pos] || dom.createDocumentFragment()
+        if (!ctx.$el) {
+          //  create the new dom element
+          ctx.$el = dom.createElement(ctx.tag.tag)
+          setAttrs(ctx, true)
+        }
         fragments[pos]!.appendChild(ctx.$el!)
         markEl(ctx)
       })

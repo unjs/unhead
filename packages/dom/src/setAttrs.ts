@@ -4,7 +4,7 @@ import type { DomRenderTagContext } from '@unhead/schema'
 /**
  * Set attributes on a DOM element, while adding entry side effects.
  */
-export const setAttrs = (ctx: DomRenderTagContext, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
+export const setAttrs = (ctx: DomRenderTagContext, newEntry: boolean = false, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
   const { tag, $el } = ctx
   if (!$el)
     return
@@ -12,7 +12,6 @@ export const setAttrs = (ctx: DomRenderTagContext, markSideEffect?: (ctx: DomRen
   Object.entries(tag.props).forEach(([k, value]) => {
     value = String(value)
     const attrSdeKey = `attr:${k}`
-
     // class attributes have their own side effects to allow for merging
     if (k === 'class') {
       // if the user is providing an empty string then it's removing the class
@@ -34,10 +33,14 @@ export const setAttrs = (ctx: DomRenderTagContext, markSideEffect?: (ctx: DomRen
     if (markSideEffect && !k.startsWith('data-h-'))
       markSideEffect(ctx, attrSdeKey, () => $el.removeAttribute(k))
 
-    if ($el.getAttribute(k) !== value)
+    if (newEntry || $el.getAttribute(k) !== value)
       $el.setAttribute(k, value)
   })
   // @todo test side effects?
-  if (TagsWithInnerContent.includes(tag.tag) && $el.innerHTML !== (tag.children || ''))
-    $el.innerHTML = tag.children || ''
+  if (TagsWithInnerContent.includes(tag.tag)) {
+    const html = tag.children || ''
+      if (newEntry || $el.innerHTML !== html) {
+        $el.innerHTML = html
+      }
+  }
 }
