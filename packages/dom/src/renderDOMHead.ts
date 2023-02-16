@@ -91,7 +91,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
       ctx.$el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
-      setAttrs(ctx, markSideEffect)
+      setAttrs(ctx, false, markSideEffect)
       renders.push(ctx)
       continue
     }
@@ -103,7 +103,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._hash}]`)
     }
     if (ctx.$el) {
-      // if we don't have a dedupe keys then the attrs will be the same
+      // if we don't have a dedupe keys, then the attrs will be the same
       if (ctx.tag._d)
         setAttrs(ctx)
       markEl(ctx)
@@ -154,6 +154,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         if (matchIdx !== -1) {
           const ctx = queue[matchIdx]
           ctx.$el = $el
+          // if all the props are the same, we can ignore
           setAttrs(ctx)
           markEl(ctx)
           delete queue[matchIdx]
@@ -166,7 +167,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         if (!ctx.$el) {
           //  create the new dom element
           ctx.$el = dom.createElement(ctx.tag.tag)
-          setAttrs(ctx)
+          setAttrs(ctx, true)
         }
         fragments[pos]!.appendChild(ctx.$el!)
         markEl(ctx)
