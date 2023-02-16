@@ -1,4 +1,4 @@
-import type { HeadTag, HeadTagKeys } from '@unhead/schema/dist'
+import type { HeadTag, HeadTagKeys } from '@unhead/schema'
 import { UniqueTags, defineHeadPlugin } from '.'
 
 export interface DedupesTagsPluginOptions {
@@ -56,8 +56,8 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
         // 1. Dedupe tags
         const deduping: Record<string, HeadTag> = {}
         ctx.tags.forEach((tag) => {
-          let dedupeKey = tag._d || tag._p!
-          const dupedTag = deduping[dedupeKey]
+          const dedupeKey = tag._d || tag._p!
+          const dupedTag: HeadTag = deduping[dedupeKey]
           // handling a duplicate tag
           if (dupedTag) {
             // default strategy is replace, unless we're dealing with a html or body attrs
@@ -84,8 +84,13 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
               return
             }
             else if (tag._e === dupedTag._e) {
-              // allow entries to have duplicate tags
-              dedupeKey = tag._d = `${dedupeKey}:${tag._p}`
+              // add the duped tag to the current tag
+              // @ts-expect-error runtime type
+              dupedTag._duped = dupedTag._duped || []
+              tag._d = `${dupedTag._d}:${dupedTag._duped.length + 1}`
+              // @ts-expect-error runtime type
+              dupedTag._duped.push(tag)
+              return
             }
             const propCount = Object.keys(tag.props).length
             // if the new tag does not have any props we're trying to remove the dupedTag
@@ -96,7 +101,18 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
           }
           deduping[dedupeKey] = tag
         })
-        ctx.tags = Object.values(deduping)
+        const newTags: HeadTag[] = []
+        Object.values(deduping).forEach((tag) => {
+          // @ts-expect-error runtime type
+          const dupes = tag._duped
+          // @ts-expect-error runtime type
+          delete tag._duped
+          newTags.push(tag)
+          // add the duped tags to the new tags
+          if (dupes)
+            newTags.push(...dupes)
+        })
+        ctx.tags = newTags
       },
     },
   })
