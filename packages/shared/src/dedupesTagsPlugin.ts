@@ -87,13 +87,14 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
               // add the duped tag to the current tag
               // @ts-expect-error runtime type
               dupedTag._duped = dupedTag._duped || []
+              // @ts-expect-error runtime type
               tag._d = `${dupedTag._d}:${dupedTag._duped.length + 1}`
               // @ts-expect-error runtime type
               dupedTag._duped.push(tag)
               return
             }
             const propCount = Object.keys(tag.props).length
-            // if the new tag does not have any props we're trying to remove the dupedTag
+            // if the new tag does not have any props, we're trying to remove the dupedTag
             if (((propCount === 0) || (propCount === 1 && typeof tag.props['data-h-key'] !== 'undefined')) && !tag.children) {
               delete deduping[dedupeKey]
               return
