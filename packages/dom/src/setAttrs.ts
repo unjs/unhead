@@ -4,7 +4,7 @@ import type { DomRenderTagContext } from '@unhead/schema'
 /**
  * Set attributes on a DOM element, while adding entry side effects.
  */
-export const setAttrs = (ctx: DomRenderTagContext, newEntry: boolean = false, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
+export const setAttrs = (ctx: DomRenderTagContext, newEntry = false, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
   const { tag, $el } = ctx
   if (!$el)
     return
@@ -39,8 +39,7 @@ export const setAttrs = (ctx: DomRenderTagContext, newEntry: boolean = false, ma
   // @todo test side effects?
   if (TagsWithInnerContent.includes(tag.tag)) {
     const html = tag.children || ''
-      if (newEntry || $el.innerHTML !== html) {
-        $el.innerHTML = html
-      }
+    if (newEntry || $el.innerHTML !== html)
+      $el.innerHTML = html
   }
 }
