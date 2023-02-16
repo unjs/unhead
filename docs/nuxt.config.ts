@@ -18,6 +18,14 @@ export default defineNuxtConfig({
     }
   },
 
+  vite: {
+    server: {
+      fs: {
+        allow: ['..'],
+      }
+    }
+  },
+
   modules: [
     'nuxt-windicss',
     '@nuxtjs/fontaine'
