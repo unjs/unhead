@@ -1,6 +1,8 @@
 import type { HeadTag } from '@unhead/schema'
 import { defineHeadPlugin } from '@unhead/shared'
 
+const ValidEventTags = ['script', 'link', 'bodyAttrs']
+
 /**
  * Supports DOM event handlers (i.e `onload`) as functions.
  *
@@ -30,12 +32,23 @@ export const EventHandlersPlugin = () => {
       'ssr:render': function (ctx) {
         // when server-side rendering we need to strip out all event handlers that are functions
         ctx.tags = ctx.tags.map((tag) => {
+          // must be a valid tag
+          if (!ValidEventTags.includes(tag.tag))
+            return tag
+          // must have events
+          if (!Object.entries(tag.props).find(([key, value]) => key.startsWith('on') && typeof value === 'function'))
+            return tag
           tag.props = stripEventHandlers('ssr', tag).props
           return tag
         })
       },
       'dom:beforeRenderTag': function (ctx) {
-        // we need to strip out all event handlers that are functions and add them on to the tag
+        if (!ValidEventTags.includes(ctx.tag.tag))
+          return
+        // must have events
+        if (!Object.entries(ctx.tag.props).find(([key, value]) => key.startsWith('on') && typeof value === 'function'))
+          return
+          // we need to strip out all event handlers that are functions and add them on to the tag
         const { props, eventHandlers, delayedSrc } = stripEventHandlers('dom', ctx.tag)
         if (!Object.keys(eventHandlers).length)
           return
