@@ -19,12 +19,14 @@ export const setAttrs = (ctx: DomRenderTagContext, newEntry = false, markSideEff
       if (!value)
         return
       for (const c of value.split(' ')) {
+        if (!c)
+          return
         const classSdeKey = `${attrSdeKey}:${c}`
         // always clear side effects
         if (markSideEffect)
           markSideEffect(ctx, classSdeKey, () => $el.classList.remove(c))
 
-        if (!$el.classList.contains(c) && c)
+        if (!$el.classList.contains(c))
           $el.classList.add(c)
       }
       return
