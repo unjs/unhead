@@ -24,7 +24,7 @@ export const setAttrs = (ctx: DomRenderTagContext, newEntry = false, markSideEff
         if (markSideEffect)
           markSideEffect(ctx, classSdeKey, () => $el.classList.remove(c))
 
-        if (!$el.classList.contains(c))
+        if (!$el.classList.contains(c) && c !== '')
           $el.classList.add(c)
       }
       return
