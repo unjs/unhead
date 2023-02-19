@@ -49,6 +49,8 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
 export async function normaliseProps<T extends HeadTag['props']>(props: T): Promise<T> {
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
+    // data keys get special treatment, we opt for more verbose syntax
+    const isDataKey = k.startsWith('data-')
     // first resolve any promises
     if (props[k] instanceof Promise) {
       // @ts-expect-error untyped
@@ -56,10 +58,15 @@ export async function normaliseProps<T extends HeadTag['props']>(props: T): Prom
     }
     if (String(props[k]) === 'true') {
       // @ts-expect-error untyped
-      props[k] = ''
+      props[k] = isDataKey? 'true' : ''
     }
     else if (String(props[k]) === 'false') {
-      delete props[k]
+      if (isDataKey) {
+        // @ts-expect-error untyped
+        props[k] = 'false'
+      } else {
+        delete props[k]
+      }
     }
   }
   return props
