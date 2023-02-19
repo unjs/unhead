@@ -41,13 +41,13 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
   return tag
 }
 
-export function normaliseClassProp(v: Record<string, string | Array<string>> | Array<string> | string) {
+export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['class']>) {
   if (typeof v === 'object' && !Array.isArray(v)) {
-    v = Object.keys(v)
-      .filter(k => v[k])
+    // @ts-expect-error untyped
+    v = Object.keys(v).filter(k => v[k])
   }
   // finally, check we don't have spaces, we may need to split again
-  return (Array.isArray(v) ? v.join(' ') : v)
+  return (Array.isArray(v) ? v.join(' ') : v as string)
     .split(' ')
     .filter(c => c.trim())
     .filter(Boolean)
