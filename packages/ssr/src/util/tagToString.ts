@@ -2,8 +2,34 @@ import type { HeadTag } from '@unhead/schema'
 import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import { propsToString } from './propsToString'
 
-export function encodeHtmlEntities(str: string) {
-  return str.replace(/[\u00A0-\u9999<>\&]/gim, i => `&#${i.charCodeAt(0)};`)
+export function encodeInnerHtml(str: string) {
+  /**
+   * Encode the following characters:
+   * & --> &amp;
+   * < --> &lt;
+   * > --> &gt;
+   * " --> &quot;
+   * ' --> &#x27;
+   * / --> &#x2F;
+   */
+  return str.replace(/[&<>"'/]/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;'
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '"':
+        return '&quot;'
+      case "'":
+        return '&#x27;'
+      case '/':
+        return '&#x2F;'
+      default:
+        return char
+    }
+  })
 }
 
 export const tagToString = <T extends HeadTag>(tag: T) => {
@@ -16,6 +42,6 @@ export const tagToString = <T extends HeadTag>(tag: T) => {
   let content = tag.children || ''
   if (content && tag.tag === 'title')
     // content needs to be encoded to avoid XSS, only for title
-    content = encodeHtmlEntities(content)
+    content = encodeInnerHtml(content)
   return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }
