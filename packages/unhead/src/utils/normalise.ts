@@ -30,20 +30,28 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       delete tag.props[k]
     })
 
-  // class object boolean support
-  if (typeof tag.props.class === 'object' && !Array.isArray(tag.props.class)) {
-    tag.props.class = Object.keys(tag.props.class)
-      .filter(k => tag.props.class[k])
+  if (tag.props.class) {
+    tag.props.class = normaliseClassProp(tag.props.class)
   }
-  // class array support
-  if (Array.isArray(tag.props.class))
-    tag.props.class = tag.props.class.join(' ')
 
   // allow meta to be resolved into multiple tags if an array is provided on content
   if (tag.props.content && Array.isArray(tag.props.content))
     return tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
 
   return tag
+}
+
+export function normaliseClassProp(v: Record<string, string | Array<string>> | Array<string> | string) {
+  if (typeof v === 'object' && !Array.isArray(v)) {
+    v = Object.keys(v)
+      .filter(k => v[k])
+  }
+  // finally, check we don't have spaces, we may need to split again
+  return (Array.isArray(v) ? v.join(' ') : v)
+    .split(' ')
+    .filter(c => c.trim())
+    .filter(Boolean)
+    .join(' ')
 }
 
 export async function normaliseProps<T extends HeadTag['props']>(props: T): Promise<T> {
