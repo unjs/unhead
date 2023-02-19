@@ -146,10 +146,10 @@ importers:
   packages/schema:
     specifiers:
       hookable: ^5.4.2
-      zhead: ^2.0.0
+      zhead: ^2.0.1
     dependencies:
       hookable: 5.4.2
-      zhead: 2.0.0
+      zhead: 2.0.1
 
   packages/shared:
     specifiers:
@@ -3079,12 +3079,6 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
-  /@unhead/dom/1.0.21:
-    resolution: {integrity: sha512-rwVz7NWMdQ8kSTXv/WOhB0eTWYFD2SQwQ/J109IEqNUN9X3pIwcvdvlXMCG+qhJGFyiIgOl2X+W0cE+u/IiLVA==}
-    dependencies:
-      '@unhead/schema': 1.0.21
-    dev: true
-
   /@unhead/dom/1.0.22:
     resolution: {integrity: sha512-oqTHB6OgiH91grELZLQxxw17la86dUBiGz40fItaiE6ywIImCSGjid10IjH5VVifHSmLaQ08qq+s5HH0s/hZ4w==}
     dependencies:
@@ -3103,7 +3097,7 @@ packages:
     resolution: {integrity: sha512-Pg+F4UmYhI3Vz1Jio3bjCxEjuhvqlYrybwphsK2XacIDHYGQmcvBtMiB/5Y8Diuy1lGfHFloWaNjMuvAdh5gNA==}
     dependencies:
       hookable: 5.4.2
-      zhead: 2.0.0
+      zhead: 2.0.1
     dev: true
 
   /@unhead/shared/1.0.22:
@@ -3789,8 +3783,8 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
     dependencies:
-      '@unhead/dom': 1.0.21
-      '@unhead/schema': 1.0.21
+      '@unhead/dom': 1.0.22
+      '@unhead/schema': 1.0.22
       '@unhead/ssr': 1.0.21
       '@unhead/vue': 1.0.21_vue@3.2.47
       vue: 3.2.47
@@ -12353,8 +12347,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zhead/2.0.0:
-    resolution: {integrity: sha512-d7URVnQ0i2llNAewFknJ8L87R23/1XByNWmFJonY2Pwr7SP/HtZ3h8LW6N014lu1uTc5s+b/cDc8sZ3ICMIOPA==}
+  /zhead/2.0.1:
+    resolution: {integrity: sha512-hSs43ihATxmm+AMWkLAvQvSHdayA2uwuneD4PRaQdV7baubLlaFufHMyVmt6VSeoFCOMhknDPnZ2HHFLEyseXQ==}
 
   /zip-stream/4.1.0:
     resolution: {integrity: sha512-zshzwQW7gG7hjpBlgeQP9RuyPGNxvJdzR8SUM3QhxCnLjWN2E7j3dOvpeDcQoETfHx0urRS7EtmVToql7YpU4A==}
