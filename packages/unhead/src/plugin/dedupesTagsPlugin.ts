@@ -1,39 +1,11 @@
 import type { HeadTag, HeadTagKeys } from '@unhead/schema'
-import { UniqueTags, defineHeadPlugin } from '.'
+import { tagDedupeKey, defineHeadPlugin } from '@unhead/shared'
 
 export interface DedupesTagsPluginOptions {
   dedupeKeys?: string[]
 }
 
-export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => boolean): string | false {
-  const { props, tag: tagName } = tag
-  // must only be a single base so we always dedupe
-  if (UniqueTags.includes(tagName))
-    return tagName
-
-  // support only a single canonical
-  if (tagName === 'link' && props.rel === 'canonical')
-    return 'canonical'
-
-  // must only be a single charset
-  if (props.charset)
-    return 'charset'
-
-  const name = ['id']
-  if (tagName === 'meta')
-    name.push(...['name', 'property', 'http-equiv'])
-  for (const n of name) {
-    // open graph props can have multiple tags with the same property
-    if (typeof props[n] !== 'undefined') {
-      const val = String(props[n])
-      if (fn && !fn(val))
-        return false
-      // for example: meta-name-description
-      return `${tagName}:${n}:${val}`
-    }
-  }
-  return false
-}
+const UsesMergeStrategy = ['templateVars', 'htmlAttrs', 'bodyAttrs']
 
 export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
   options = options || {}
@@ -62,7 +34,7 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
           if (dupedTag) {
             // default strategy is replace, unless we're dealing with a html or body attrs
             let strategy = tag?.tagDuplicateStrategy
-            if (!strategy && (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'))
+            if (!strategy && UsesMergeStrategy.includes(tag.tag))
               strategy = 'merge'
 
             if (strategy === 'merge') {

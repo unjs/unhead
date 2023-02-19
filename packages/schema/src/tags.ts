@@ -92,6 +92,12 @@ export interface TagInternalProperties {
   _d?: string
 }
 
-export type HeadTag = BaseHeadTag & TagUserProperties & TagInternalProperties
+export type TemplateVars = { titleSeparator: string } & Record<string, string>
+
+export interface HasTemplateVars {
+  templateVars?: TemplateVars
+}
+
+export type HeadTag = BaseHeadTag & TagUserProperties & TagInternalProperties & HasTemplateVars
 
 export type HeadTagKeys = (keyof HeadTag)[]

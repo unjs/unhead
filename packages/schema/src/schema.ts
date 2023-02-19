@@ -70,7 +70,20 @@ export type Noscript<E extends EntryAugmentation = {}> = MaybePromiseProps<_Nosc
 export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
 export type BodyAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
-export interface Head<E extends MergeHead = SchemaAugmentations> {
+export interface HeadUtils {
+  /**
+   * Generate the title from a template.
+   *
+   * Should include a `%s` placeholder for the title, for example `%s - My Site`.
+   */
+  titleTemplate?: TitleTemplate
+  /**
+   * Variables used to substitute in the title and meta content.
+   */
+  templateVars?: Record<string, null | undefined | string>
+}
+
+export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUtils {
   /**
    * The <title> HTML element defines the document's title that is shown in a browser's title bar or a page's tab.
    * It only contains text; tags within the element are ignored.
@@ -78,12 +91,6 @@ export interface Head<E extends MergeHead = SchemaAugmentations> {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title
    */
   title?: Title | Promise<Title>
-  /**
-   * Generate the title from a template.
-   *
-   * Should include a `%s` placeholder for the title, for example `%s - My Site`.
-   */
-  titleTemplate?: TitleTemplate
   /**
    * The <base> HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.

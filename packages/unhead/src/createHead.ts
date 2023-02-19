@@ -9,7 +9,6 @@ import type {
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
-import { DedupesTagsPlugin } from '@unhead/shared'
 import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
@@ -18,6 +17,7 @@ import {
   ProvideTagHashPlugin,
   SortTagsPlugin,
   TitleTemplatePlugin,
+  DedupesTagsPlugin,
 } from './plugin'
 import { normaliseEntryTags } from './utils'
 
