@@ -26,7 +26,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `
+      "<title>test - my template</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
   test('titleTemplate as title', async () => {
@@ -37,7 +40,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `
+      "<title>Default Title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
   test('titleTemplate as title', async () => {
@@ -46,17 +52,26 @@ describe('titleTemplate', () => {
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `
+      "<title>Default Title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"1c1bc8c\\">"
+    `,
     )
     const entry = head.push({
       title: 'Hello world',
     })
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Hello world - Template</title>"',
+      `
+      "<title>Hello world - Template</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
     entry.dispose()
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `
+      "<title>Default Title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"1c1bc8c\\">"
+    `,
     )
   })
   test('reset title template', async () => {
@@ -70,7 +85,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>page title</title>"',
+      `
+      "<title>page title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
 
@@ -84,7 +102,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '""',
+      '"<meta property=\\"unhead:ssr\\" content=\\"\\">"',
     )
   })
 
@@ -96,7 +114,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '""',
+      '"<meta property=\\"unhead:ssr\\" content=\\"\\">"',
     )
   })
 
@@ -107,7 +125,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title></title>"',
+      `
+      "<title></title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
 })

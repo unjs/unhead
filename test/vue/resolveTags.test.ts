@@ -21,6 +21,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "class": "first-class second-class",
@@ -61,6 +62,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "class": "layout-theme-dark home",
@@ -70,6 +72,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
+          "_h": "d9ef6cc",
           "_p": 1,
           "props": {
             "class": "test theme-dark",
@@ -96,6 +99,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 1,
+          "_h": "c3b99ea",
           "_p": 1024,
           "props": {
             "class": "second-class",

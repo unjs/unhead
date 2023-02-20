@@ -2,6 +2,11 @@ lockfileVersion: 5.4
 
 overrides:
   unhead: link:../../packages/unhead
+  '@unhead/addons': link:../../packages/addons
+  '@unhead/shared': link:../../packages/shared
+  '@unhead/ssr': link:../../packages/ssr
+  '@unhead/schema': link:../../packages/schema
+  '@unhead/dom': link:../../packages/dom
   '@unhead/vue': link:../../packages/vue
 
 importers:
@@ -1186,25 +1191,6 @@ packages:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
     dev: true
 
-  /@unhead/dom/1.0.21:
-    resolution: {integrity: sha512-rwVz7NWMdQ8kSTXv/WOhB0eTWYFD2SQwQ/J109IEqNUN9X3pIwcvdvlXMCG+qhJGFyiIgOl2X+W0cE+u/IiLVA==}
-    dependencies:
-      '@unhead/schema': 1.0.21
-    dev: true
-
-  /@unhead/schema/1.0.21:
-    resolution: {integrity: sha512-amYg6vJ37xUhnL6bvL4S3lz6yDs5lWeqJu63/3a5bxH3Dq0WPJ+kdhpUXI+4enoNaWvLvm860WXUOtKr5D+DMg==}
-    dependencies:
-      '@zhead/schema': 1.1.0
-      hookable: 5.4.2
-    dev: true
-
-  /@unhead/ssr/1.0.21:
-    resolution: {integrity: sha512-QWy+vKZWVb+XfHl/B/rEoniMGFpDjXiYBkjJZyuf+9By8DzQUscMaTv14neW1ZR6pq56c4B7Tp1N3Lve8SW+rA==}
-    dependencies:
-      '@unhead/schema': 1.0.21
-    dev: true
-
   /@vercel/nft/0.22.6:
     resolution: {integrity: sha512-gTsFnnT4mGxodr4AUlW3/urY+8JKKB452LwF3m477RFUJTAaDmcz2JqFuInzvdybYIeyIv1sSONEJxsxnbQ5JQ==}
     engines: {node: '>=14'}
@@ -1366,15 +1352,11 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
     dependencies:
-      '@unhead/dom': 1.0.21
-      '@unhead/schema': 1.0.21
-      '@unhead/ssr': 1.0.21
+      '@unhead/dom': link:../../packages/dom
+      '@unhead/schema': link:../../packages/schema
+      '@unhead/ssr': link:../../packages/ssr
       '@unhead/vue': link:../../packages/vue
       vue: 3.2.47
-    dev: true
-
-  /@zhead/schema/1.1.0:
-    resolution: {integrity: sha512-hEtK+hUAKS3w1+F++m6EeZ6bWeLDXraqN2nCyRVIP5vvR3bWjXVP9OM9x7Pmn7Hp6T7FKmsG2C8rvouQU2806w==}
     dev: true
 
   /abbrev/1.1.1:
@@ -3307,7 +3289,7 @@ packages:
       '@nuxt/telemetry': 2.1.9
       '@nuxt/ui-templates': 1.1.1
       '@nuxt/vite-builder': 3.2.0_vue@3.2.47
-      '@unhead/ssr': 1.0.21
+      '@unhead/ssr': link:../../packages/ssr
       '@vue/reactivity': 3.2.47
       '@vue/shared': 3.2.47
       '@vueuse/head': 1.0.25_vue@3.2.47

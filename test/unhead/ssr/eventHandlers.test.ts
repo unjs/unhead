@@ -23,7 +23,8 @@ describe('ssr event handlers', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script src=\\"https://js.stripe.com/v3/\\" defer=\\"\\"></script>",
+        "headTags": "<script src=\\"https://js.stripe.com/v3/\\" defer=\\"\\"></script>
+      <meta property=\\"unhead:ssr\\" content=\\"64ce70\\">",
         "htmlAttrs": "",
       }
     `)

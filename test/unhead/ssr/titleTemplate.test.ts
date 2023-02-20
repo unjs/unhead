@@ -10,7 +10,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `
+      "<title>test - my template</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
   test('fn replace', async () => {
@@ -21,7 +24,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `
+      "<title>test - my template</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
   test('titleTemplate as title', async () => {
@@ -32,7 +38,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `
+      "<title>Default Title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
   test('reset title template', async () => {
@@ -46,7 +55,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>page title</title>"',
+      `
+      "<title>page title</title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
 
@@ -60,7 +72,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '""',
+      '"<meta property=\\"unhead:ssr\\" content=\\"\\">"',
     )
   })
 
@@ -71,7 +83,7 @@ describe('titleTemplate', () => {
       title: 'test',
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('""')
+    expect(headTags).toMatchInlineSnapshot('"<meta property=\\"unhead:ssr\\" content=\\"\\">"')
   })
 
   test('empty title', async () => {
@@ -81,7 +93,10 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title></title>"',
+      `
+      "<title></title>
+      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">"
+    `,
     )
   })
 })

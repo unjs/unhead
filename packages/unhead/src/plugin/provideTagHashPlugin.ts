@@ -1,4 +1,4 @@
-import { HasElementTags, defineHeadPlugin, hashCode } from '@unhead/shared'
+import {HasElementTags, defineHeadPlugin, hashTag} from '@unhead/shared'
 import { getActiveHead } from '..'
 import { IsBrowser } from '../env'
 
@@ -7,12 +7,15 @@ export const ProvideTagHashPlugin = () => {
     hooks: {
       'tag:normalise': (ctx) => {
         const { tag, entry } = ctx
+
+        // always generate a hash
+        console.log('hashing', tag)
+        tag._h = hashTag(tag)
+
         const isDynamic = typeof tag.props._dynamic !== 'undefined'
         // only valid tags with a key
         if (!HasElementTags.includes(tag.tag) || !tag.key)
           return
-        // @ts-expect-error runtime prop
-        tag._hash = hashCode(`${tag.tag}:${tag.key}`)
 
         // ssr only from here
         if (IsBrowser || getActiveHead()?.resolvedOptions?.document)
@@ -23,8 +26,7 @@ export const ProvideTagHashPlugin = () => {
         // if a user provides a key we will also add the hash as a way to ensure hydration works, good for
         // when SSR / CSR does not match
         if (entry._m === 'server' || isDynamic) {
-          // @ts-expect-error untyped
-          tag.props[`data-h-${tag._hash}`] = ''
+          tag.props[`data-h-${tag._h}`] = ''
         }
       },
       'tags:resolve': (ctx) => {

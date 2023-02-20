@@ -26,7 +26,10 @@ describe('vue ssr deduping', () => {
     )
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script>console.log(\'B\')</script>"',
+      `
+      "<script>console.log('B')</script>
+      <meta property=\\"unhead:ssr\\" content=\\"36688bf\\">"
+    `,
     )
   })
 })

@@ -24,6 +24,7 @@ describe('tag priority', () => {
       [
         {
           "_e": 1,
+          "_h": "4d3ad5d",
           "_p": 1024,
           "props": {
             "src": "/very-important-script.js",
@@ -33,6 +34,7 @@ describe('tag priority', () => {
         },
         {
           "_e": 0,
+          "_h": "a24420",
           "_p": 0,
           "props": {
             "src": "/not-important-script.js",
@@ -163,7 +165,8 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src=\\"/very-important-script.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>"
+      <script src=\\"/not-important-script.js\\"></script>
+      <meta property=\\"unhead:ssr\\" content=\\"7a2ba30\\">"
     `,
     )
     expect(
@@ -193,7 +196,8 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src=\\"/must-be-first-script.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>"
+      <script src=\\"/not-important-script.js\\"></script>
+      <meta property=\\"unhead:ssr\\" content=\\"528ce3\\">"
     `,
     )
   })
@@ -238,7 +242,8 @@ describe('tag priority', () => {
       "<script src=\\"/must-be-first-script.js\\"></script>
       <script src=\\"/after-first-script.js\\"></script>
       <script src=\\"/before-not-important.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>"
+      <script src=\\"/not-important-script.js\\"></script>
+      <meta property=\\"unhead:ssr\\" content=\\"1f0bc13\\">"
     `,
     )
   })

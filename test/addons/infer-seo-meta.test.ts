@@ -34,7 +34,8 @@ describe('InferSeoMetaPlugin', () => {
       <meta name=\\"description\\" content=\\"My Description\\">
       <meta property=\\"og:image\\" content=\\"https://example.com/image.jpg\\">
       <meta property=\\"og:title\\" content=\\"My Title\\">
-      <meta property=\\"og:description\\" content=\\"My Description\\">",
+      <meta property=\\"og:description\\" content=\\"My Description\\">
+      <meta property=\\"unhead:ssr\\" content=\\"297046b\\">",
         "htmlAttrs": "",
       }
     `)
@@ -66,7 +67,8 @@ describe('InferSeoMetaPlugin', () => {
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
       <meta name=\\"og:description\\" content=\\"My OG description\\">
-      <meta property=\\"og:title\\" content=\\"My OG title\\">",
+      <meta property=\\"og:title\\" content=\\"My OG title\\">
+      <meta property=\\"unhead:ssr\\" content=\\"e938249\\">",
         "htmlAttrs": "",
       }
     `)
@@ -86,7 +88,8 @@ describe('InferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
-      <meta property=\\"og:title\\" content=\\"Title\\">",
+      <meta property=\\"og:title\\" content=\\"Title\\">
+      <meta property=\\"unhead:ssr\\" content=\\"5315441\\">",
         "htmlAttrs": "",
       }
     `)
@@ -108,7 +111,8 @@ describe('InferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\">
-      <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
+      <meta property=\\"og:title\\" content=\\"Title - My Site\\">
+      <meta property=\\"unhead:ssr\\" content=\\"5315441\\">",
         "htmlAttrs": "",
       }
     `)

@@ -91,7 +91,8 @@ describe('vue e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
-      <meta name=\\"description\\" content=\\"This is the home page\\">",
+      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta property=\\"unhead:ssr\\" content=\\"54f1d37\\">",
         "htmlAttrs": " lang=\\"en\\"",
       }
     `)
@@ -134,6 +135,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta property=\\"unhead:ssr\\" content=\\"54f1d37\\">
       </head>
       <body>
 
@@ -208,7 +210,8 @@ describe('vue e2e', () => {
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">",
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">",
         "htmlAttrs": " class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"",
       }
     `)
@@ -236,6 +239,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 
@@ -284,6 +288,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/home.js\\"></script></head>
       <body class=\\"test\\">
 
@@ -310,6 +315,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 
@@ -360,6 +366,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/about.js\\"></script></head>
       <body class=\\"test overflow-hidden\\">
 
@@ -385,6 +392,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 

@@ -30,7 +30,7 @@ describe('e2e double-space-class-list', () => {
         "bodyAttrs": " class=\\"foo bar baz relative min-h-screen\\"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<meta property=\\"unhead:ssr\\" content=\\"0136379\\">",
         "htmlAttrs": " class=\\"a bunch of different classes\\"",
       }
     `)
@@ -52,7 +52,7 @@ describe('e2e double-space-class-list', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html class=\\"a bunch of different classes\\"><head>
-
+      <meta property=\\"unhead:ssr\\" content=\\"0136379\\">
       </head>
       <body class=\\"foo bar baz relative min-h-screen\\">
 
@@ -92,7 +92,7 @@ describe('e2e double-space-class-list', () => {
         "bodyAttrs": " class=\\"foo bar\\"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<meta property=\\"unhead:ssr\\" content=\\"0136379\\">",
         "htmlAttrs": " class=\\"a bunch of different classes\\"",
       }
     `)
@@ -118,7 +118,7 @@ describe('e2e double-space-class-list', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html class=\\"a bunch of different classes\\"><head>
-
+      <meta property=\\"unhead:ssr\\" content=\\"0136379\\">
       </head>
       <body class=\\"foo bar\\">
 

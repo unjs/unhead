@@ -19,6 +19,7 @@ describe('vue promises', () => {
         {
           "_d": "title",
           "_e": 0,
+          "_h": "5da371e",
           "_p": 0,
           "children": "hello",
           "props": {},
@@ -26,6 +27,7 @@ describe('vue promises', () => {
         },
         {
           "_e": 0,
+          "_h": "9833eb3",
           "_p": 1,
           "props": {
             "src": "https://example.com/script.js",
@@ -34,6 +36,7 @@ describe('vue promises', () => {
         },
         {
           "_e": 0,
+          "_h": "2974e38",
           "_p": 2,
           "children": "test",
           "props": {},

@@ -21,6 +21,7 @@ describe('resolveTags', () => {
         {
           "_d": "title",
           "_e": 0,
+          "_h": "5da371e",
           "_p": 0,
           "children": "My title",
           "props": {},
@@ -29,6 +30,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description",
           "_e": 0,
+          "_h": "725a600",
           "_p": 1,
           "props": {
             "content": "My description",
@@ -51,6 +53,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
+          "_h": "1073e90",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -60,6 +63,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -70,6 +74,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
+          "_h": "d9ef6cc",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -78,6 +83,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "da01b8d",
           "_p": 2,
           "props": {
             "src": "https://cdn.example.com/script.js",
@@ -86,6 +92,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "5a74aca",
           "_p": 4,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
@@ -101,6 +108,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
+          "_h": "1073e90",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -110,6 +118,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -120,6 +129,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
+          "_h": "d9ef6cc",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -128,6 +138,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "da01b8d",
           "_p": 2,
           "props": {
             "src": "https://cdn.example.com/script.js",
@@ -136,6 +147,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "5a74aca",
           "_p": 4,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
@@ -169,6 +181,7 @@ describe('resolveTags', () => {
       [
         {
           "_e": 1,
+          "_h": "ffd244",
           "_p": 1024,
           "props": {
             "src": "https://cdn.example.com/script2.js",
@@ -200,6 +213,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
+          "_h": "1073e90",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -209,6 +223,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -219,6 +234,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
+          "_h": "d9ef6cc",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -227,6 +243,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "ffd244",
           "_p": 2,
           "props": {
             "src": "https://cdn.example.com/script2.js",
@@ -235,6 +252,7 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
+          "_h": "5a74aca",
           "_p": 4,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
@@ -274,6 +292,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "class": "foo bar something-new",
@@ -283,6 +302,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
+          "_h": "d9ef6cc",
           "_p": 1,
           "props": {
             "class": "foo2 bar2 something-new2",
@@ -319,6 +339,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
+          "_h": "c3b99ea",
           "_p": 0,
           "props": {
             "class": "foo bar",
@@ -352,6 +373,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description",
           "_e": 0,
+          "_h": "725a600",
           "_p": 0,
           "props": {
             "content": "desc",
@@ -362,6 +384,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description:1",
           "_e": 0,
+          "_h": "725a600",
           "_p": 1,
           "props": {
             "content": "desc 2",

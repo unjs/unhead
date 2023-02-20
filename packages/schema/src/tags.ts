@@ -90,6 +90,10 @@ export interface TagInternalProperties {
    * Dedupe key
    */
   _d?: string
+  /**
+   * Hash code used to represent the tag.
+   */
+  _h?: string
 }
 
 export type HeadTag = BaseHeadTag & TagUserProperties & TagInternalProperties

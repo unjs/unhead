@@ -80,7 +80,8 @@ describe('unhead e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
-      <meta name=\\"description\\" content=\\"This is the home page\\">",
+      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta property=\\"unhead:ssr\\" content=\\"742de8e\\">",
         "htmlAttrs": " lang=\\"en\\"",
       }
     `)
@@ -120,6 +121,7 @@ describe('unhead e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta property=\\"unhead:ssr\\" content=\\"742de8e\\">
       </head>
       <body>
 
@@ -194,7 +196,8 @@ describe('unhead e2e', () => {
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">",
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">",
         "htmlAttrs": " class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"",
       }
     `)
@@ -228,6 +231,7 @@ describe('unhead e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\"><div>
       <h1>hello world</h1>
@@ -272,6 +276,7 @@ describe('unhead e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"unhead:ssr\\" content=\\"7401cc0\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/home.js\\"></script></head>
       <body class=\\"test\\"><div>
       <h1>hello world</h1>

@@ -47,7 +47,8 @@ describe('composables', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <script src=\\"https://cdn.example.com/script.js\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">",
+      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">
+      <meta property=\\"unhead:ssr\\" content=\\"21c8899\\">",
         "htmlAttrs": " lang=\\"en\\" dir=\\"ltr\\"",
       }
     `)
@@ -70,7 +71,8 @@ describe('composables', () => {
         "headTags": "<meta charset=\\"utf-8\\">
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <meta property=\\"unhead:ssr\\" content=\\"1901e46\\">",
         "htmlAttrs": "",
       }
     `)
