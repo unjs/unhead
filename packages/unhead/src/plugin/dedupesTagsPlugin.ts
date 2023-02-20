@@ -1,11 +1,11 @@
 import type { HeadTag, HeadTagKeys } from '@unhead/schema'
-import { tagDedupeKey, defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
 
 export interface DedupesTagsPluginOptions {
   dedupeKeys?: string[]
 }
 
-const UsesMergeStrategy = ['templateVars', 'htmlAttrs', 'bodyAttrs']
+const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
 export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
   options = options || {}

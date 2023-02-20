@@ -80,7 +80,7 @@ export interface HeadUtils {
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateVars?: Record<string, null | undefined | string>
+  templateParams?: Record<string, string>
 }
 
 export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUtils {

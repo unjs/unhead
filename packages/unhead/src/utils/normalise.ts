@@ -1,9 +1,9 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
-import {TagConfigKeys, ValidHeadTags, asArray, TagsWithInnerContent} from '..'
+import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '..'
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props']): Promise<T | T[]> {
   const tag = { tag: tagName, props: {} } as T
-  if (['title', 'titleTemplate'].includes(tagName)) {
+  if (['title', 'titleTemplate', 'templateParams'].includes(tagName)) {
     tag.textContent = (input instanceof Promise ? await input : input) as string
     return tag
   }
@@ -13,7 +13,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     return tag
   }
 
-    tag.props = await normaliseProps<T>(tagName, { ...input })
+  tag.props = await normaliseProps<T>(tagName, { ...input })
 
   // `children` is deprecated but still supported
   if (tag.props.children) {

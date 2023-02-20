@@ -6,7 +6,6 @@ import { useDom } from '../../fixtures'
 describe('vue dom titleTemplate', () => {
   test('basic', async () => {
     const dom = useDom()
-
     const head = createHead()
 
     useHead({

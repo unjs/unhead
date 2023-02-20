@@ -12,12 +12,13 @@ import type {
 import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
+  DedupesTagsPlugin,
   DeprecatedTagAttrPlugin,
   EventHandlersPlugin,
   ProvideTagHashPlugin,
   SortTagsPlugin,
+  TemplateParamsPlugin,
   TitleTemplatePlugin,
-  DedupesTagsPlugin,
 } from './plugin'
 import { normaliseEntryTags } from './utils'
 
@@ -29,6 +30,7 @@ export const CorePlugins = () => [
   ProvideTagHashPlugin(),
   EventHandlersPlugin(),
   DeprecatedTagAttrPlugin(),
+  TemplateParamsPlugin(),
 ]
 
 export const DOMPlugins = (options: CreateHeadOptions = {}) => [
