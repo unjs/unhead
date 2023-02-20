@@ -1,7 +1,7 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import {TagConfigKeys, ValidHeadTags, asArray, TagsWithInnerContent} from '..'
 
-export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: any): Promise<T | T[]> {
+export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props']): Promise<T | T[]> {
   const tag = { tag: tagName, props: {} } as T
   if (['title', 'titleTemplate'].includes(tagName)) {
     tag.textContent = (input instanceof Promise ? await input : input) as string
@@ -27,19 +27,20 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     .filter(k => TagConfigKeys.includes(k))
     .forEach((k) => {
       // strip innerHTML and textContent for tags which don't support it
-      // @ts-expect-error untyped
       if (!['innerHTML', 'textContent'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
+        // @ts-expect-error untyped
         tag[k] = tag.props[k]
       }
       delete tag.props[k]
     })
 
   // normalise tag content
-  ;['innerHTML', 'textContent'].forEach((k) => {
+  ;(['innerHTML', 'textContent'] as const).forEach((k) => {
     // avoid accidental XSS in json blobs
     if (tag.tag === 'script' && tag[k] && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
       // recreate the json blob, ensure it's JSON
       try {
+        // @ts-expect-error untyped
         tag[k] = JSON.parse(tag[k])
       }
       catch (e) {
@@ -81,6 +82,7 @@ export async function normaliseProps<T extends HeadTag>(tagName: T['tag'], props
     // data keys get special treatment, we opt for more verbose syntax
     const isDataKey = k.startsWith('data-')
     // first resolve any promises
+    // @ts-expect-error untyped
     if (props[k] instanceof Promise) {
       // @ts-expect-error untyped
       props[k] = await props[k]
@@ -111,6 +113,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
     .forEach(([k, value]) => {
       const v = asArray(value)
+      // @ts-expect-error untyped
       tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).flat())
     })
   return (await Promise.all(tagPromises))
