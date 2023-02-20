@@ -23,4 +23,4 @@ export const ValidHeadTags = [
 
 export const UniqueTags = ['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs']
 
-export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy']
+export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent']

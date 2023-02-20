@@ -38,8 +38,9 @@ export const setAttrs = (ctx: DomRenderTagContext, newEntry = false, markSideEff
   })
   // @todo test side effects?
   if (TagsWithInnerContent.includes(tag.tag)) {
-    const html = tag.children || ''
-    if (newEntry || $el.innerHTML !== html)
-      $el.innerHTML = html
+    if (tag.textContent && tag.textContent !== $el.textContent)
+      $el.textContent = tag.textContent
+    else if (tag.innerHTML && (tag.innerHTML !== $el.innerHTML))
+      $el.innerHTML = tag.innerHTML
   }
 }

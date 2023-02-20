@@ -20,9 +20,9 @@ describe('promises', () => {
           "_d": "title",
           "_e": 0,
           "_p": 0,
-          "children": "hello",
           "props": {},
           "tag": "title",
+          "textContent": "hello",
         },
         {
           "_e": 0,
@@ -35,7 +35,7 @@ describe('promises', () => {
         {
           "_e": 0,
           "_p": 2,
-          "children": "test",
+          "innerHTML": "test",
           "props": {},
           "tag": "script",
         },

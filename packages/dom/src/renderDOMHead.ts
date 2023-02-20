@@ -16,7 +16,7 @@ export interface RenderDomHeadOptions {
 }
 
 export function hashTag(tag: HeadTag) {
-  const str = `${tag.children || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`
+  const str = `${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`
   return `${tag.tag}:${hashCode(str)}`
 }
 
@@ -90,7 +90,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // 1. render tags which don't create a new element
     if (tag.tag === 'title') {
       // we don't handle title side effects
-      dom.title = tag.children || ''
+      dom.title = tag.textContent || ''
       renders.push(ctx)
       continue
     }
