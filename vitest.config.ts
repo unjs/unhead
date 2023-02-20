@@ -16,6 +16,7 @@ export default defineConfig({
       '@unhead/shared': resolve(__dirname, 'packages/shared/src'),
       '@unhead/schema': resolve(__dirname, 'packages/schema/src'),
       '@unhead/ssr': resolve(__dirname, 'packages/ssr/src'),
+      '@unhead/addons': resolve(__dirname, 'packages/addons/src'),
       '@unhead/dom': resolve(__dirname, 'packages/dom/src'),
       '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
     },

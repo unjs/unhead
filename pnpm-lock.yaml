@@ -146,10 +146,10 @@ importers:
   packages/schema:
     specifiers:
       hookable: ^5.4.2
-      zhead: ^2.0.1
+      zhead: ^2.0.2
     dependencies:
       hookable: 5.4.2
-      zhead: 2.0.1
+      zhead: 2.0.2
 
   packages/shared:
     specifiers:
@@ -3097,7 +3097,7 @@ packages:
     resolution: {integrity: sha512-Pg+F4UmYhI3Vz1Jio3bjCxEjuhvqlYrybwphsK2XacIDHYGQmcvBtMiB/5Y8Diuy1lGfHFloWaNjMuvAdh5gNA==}
     dependencies:
       hookable: 5.4.2
-      zhead: 2.0.1
+      zhead: 2.0.2
     dev: true
 
   /@unhead/shared/1.0.22:
@@ -12347,8 +12347,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zhead/2.0.1:
-    resolution: {integrity: sha512-hSs43ihATxmm+AMWkLAvQvSHdayA2uwuneD4PRaQdV7baubLlaFufHMyVmt6VSeoFCOMhknDPnZ2HHFLEyseXQ==}
+  /zhead/2.0.2:
+    resolution: {integrity: sha512-a+Ye1MpwTpTSfJQnE6Rbc0P96fLLROpDHXowZwh8xwKyj+V3QFXkT1HKegLf1gBls9Eqj2IfyJvWwn7C9FuObQ==}
 
   /zip-stream/4.1.0:
     resolution: {integrity: sha512-zshzwQW7gG7hjpBlgeQP9RuyPGNxvJdzR8SUM3QhxCnLjWN2E7j3dOvpeDcQoETfHx0urRS7EtmVToql7YpU4A==}

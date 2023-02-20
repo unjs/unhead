@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { createHead } from 'unhead'
-import { InferSeoMetaPlugin } from '../../packages/addons/src'
-import { renderSSRHead } from '../../packages/ssr'
+import { InferSeoMetaPlugin } from '@unhead/addons'
+import { renderSSRHead } from '@unhead/ssr'
 
 describe('InferSeoMetaPlugin', () => {
   it('simple', async () => {

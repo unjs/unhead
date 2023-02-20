@@ -12,15 +12,15 @@ describe('e2e double-space-class-list', () => {
     // i.e App.vue
     useServerHead({
       htmlAttrs: {
-        class: 'a bunch of  different classes'
+        class: 'a bunch of  different classes',
       },
       bodyAttrs: {
         class: [
           // make sure we support this, just in case
           'foo   bar  baz',
-          'relative   min-h-screen'
-        ]
-      }
+          'relative   min-h-screen',
+        ],
+      },
     })
 
     const data = await renderSSRHead(ssrHead)
@@ -43,9 +43,9 @@ describe('e2e double-space-class-list', () => {
         class: [
           // make sure we support this, just in case
           'foo   bar  baz',
-          'relative   min-h-screen'
-        ]
-      }
+          'relative   min-h-screen',
+        ],
+      },
     })
 
     await renderDOMHead(csrHead, { document: dom.window.document })
@@ -75,14 +75,14 @@ describe('e2e double-space-class-list', () => {
       htmlAttrs: {
         class: {
           'a bunch of  different classes': true,
-        }
+        },
       },
       bodyAttrs: {
         class: {
           'foo          bar': true,
           ' baz ': false,
-        }
-      }
+        },
+      },
     })
 
     const data = await renderSSRHead(ssrHead)
@@ -104,14 +104,14 @@ describe('e2e double-space-class-list', () => {
       htmlAttrs: {
         class: {
           'a bunch of  different classes': true,
-        }
+        },
       },
       bodyAttrs: {
         class: {
           'foo          bar': true,
           ' baz ': false,
-        }
-      }
+        },
+      },
     })
 
     await renderDOMHead(csrHead, { document: dom.window.document })
@@ -131,5 +131,4 @@ describe('e2e double-space-class-list', () => {
       </body></html>"
     `)
   })
-
 })

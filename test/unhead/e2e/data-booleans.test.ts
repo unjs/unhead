@@ -13,12 +13,12 @@ describe('unhead e2e data true', () => {
     useServerHead({
       meta: [
         {
-          name: 'foo',
-          ['data-foo']: 'true',
-          ['data-bar']: 'false',
-          ['data-bar-false']: false,
-          ['data-foo-true']: true,
-          content: 'true',
+          'name': 'foo',
+          'data-foo': 'true',
+          'data-bar': 'false',
+          'data-bar-false': false,
+          'data-foo-true': true,
+          'content': 'true',
         },
       ],
     })
@@ -41,9 +41,9 @@ describe('unhead e2e data true', () => {
     csrHead.push({
       meta: [
         {
-          name: 'foo',
-          ['data-foo']: 'true',
-          content: 'true',
+          'name': 'foo',
+          'data-foo': 'true',
+          'content': 'true',
         },
       ],
     })
