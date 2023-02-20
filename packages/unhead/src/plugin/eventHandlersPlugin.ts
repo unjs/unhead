@@ -68,7 +68,7 @@ export const EventHandlersPlugin = () => {
           return
 
         // while body does expose these events, they should be added to the window instead
-        const $eventListenerTarget: Element | Window | null | undefined = ctx.tag.tag === 'bodyAttrs' && typeof window !== 'undefined' ? window : $el
+        const $eventListenerTarget: Element | Window | null | undefined = (ctx.tag.tag === 'bodyAttrs' && typeof window !== 'undefined') ? window : $el
 
         // @ts-expect-error runtime hack
         Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {

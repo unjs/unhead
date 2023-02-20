@@ -12,7 +12,7 @@ describe('unhead e2e shorthands', () => {
     // i.e App.vue
     useHead({
       style: [
-        '.test { color: red; }'
+        '.test { color: red; }',
       ],
     })
 
@@ -33,7 +33,7 @@ describe('unhead e2e shorthands', () => {
     const csrHead = createHead()
     csrHead.push({
       style: [
-        '.test { color: red; }'
+        '.test { color: red; }',
       ],
     })
 
@@ -61,7 +61,7 @@ describe('unhead e2e shorthands', () => {
     // i.e App.vue
     useHead({
       script: [
-        'console.log(\'Hello World\')'
+        'console.log(\'Hello World\')',
       ],
     })
 
@@ -82,7 +82,7 @@ describe('unhead e2e shorthands', () => {
     const csrHead = createHead()
     csrHead.push({
       script: [
-        'console.log(\'Hello World\')'
+        'console.log(\'Hello World\')',
       ],
     })
 
@@ -110,7 +110,7 @@ describe('unhead e2e shorthands', () => {
     // i.e App.vue
     useHead({
       noscript: [
-        '<iframe src="https://www.googletagmanager.com/ns.html?${serialize(params)}" height="0" width="0" style="display:none;visibility:hidden"></iframe>'
+        '<iframe src="https://www.googletagmanager.com/ns.html" height="0" width="0" style="display:none;visibility:hidden"></iframe>',
       ],
     })
 
@@ -121,7 +121,7 @@ describe('unhead e2e shorthands', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
+        "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
         "htmlAttrs": "",
       }
     `)
@@ -131,7 +131,7 @@ describe('unhead e2e shorthands', () => {
     const csrHead = createHead()
     csrHead.push({
       noscript: [
-        '<iframe src="https://www.googletagmanager.com/ns.html?${serialize(params)}" height="0" width="0" style="display:none;visibility:hidden"></iframe>'
+        '<iframe src="https://www.googletagmanager.com/ns.html" height="0" width="0" style="display:none;visibility:hidden"></iframe>',
       ],
     })
 
@@ -139,7 +139,7 @@ describe('unhead e2e shorthands', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <noscript></noscript><noscript>&lt;iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"&gt;&lt;/iframe&gt;</noscript></head><body><iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe>
+      <noscript></noscript><noscript>&lt;iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"&gt;&lt;/iframe&gt;</noscript></head><body><iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe>
 
 
 
