@@ -121,7 +121,7 @@ describe('unhead e2e shorthands', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
+        "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
         "htmlAttrs": "",
       }
     `)
@@ -139,7 +139,7 @@ describe('unhead e2e shorthands', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <noscript></noscript><noscript>&lt;iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"&gt;&lt;/iframe&gt;</noscript></head><body><iframe src=\\"https://www.googletagmanager.com/ns.html?\${serialize(params)}\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe>
+      <noscript></noscript><noscript>&lt;iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"&gt;&lt;/iframe&gt;</noscript></head><body><iframe src=\\"https://www.googletagmanager.com/ns.html\\" height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe>
 
 
 
