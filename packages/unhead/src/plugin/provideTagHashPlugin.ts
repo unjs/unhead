@@ -9,7 +9,6 @@ export const ProvideTagHashPlugin = () => {
         const { tag, entry } = ctx
 
         // always generate a hash
-        console.log('hashing', tag)
         tag._h = hashTag(tag)
 
         const isDynamic = typeof tag.props._dynamic !== 'undefined'
