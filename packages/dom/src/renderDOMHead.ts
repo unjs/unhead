@@ -102,7 +102,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // 1. render tags which don't create a new element
     if (tag.tag === 'title') {
       // we don't handle title side effects
-      dom.title = tag.children || ''
+      dom.title = tag.textContent || ''
       renders.push(ctx)
       continue
     }

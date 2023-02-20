@@ -22,7 +22,7 @@ export function encodeInnerHtml(str: string) {
         return '&gt;'
       case '"':
         return '&quot;'
-      case "'":
+      case '\'':
         return '&#x27;'
       case '/':
         return '&#x2F;'
@@ -39,9 +39,10 @@ export const tagToString = <T extends HeadTag>(tag: T) => {
   if (!TagsWithInnerContent.includes(tag.tag))
     return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
 
-  let content = tag.children || ''
-  if (content && tag.tag === 'title')
+  // dangerously using innerHTML, we don't encode this
+  let content = tag.innerHTML || ''
+  if (tag.textContent)
     // content needs to be encoded to avoid XSS, only for title
-    content = encodeInnerHtml(content)
+    content = encodeInnerHtml(tag.textContent)
   return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

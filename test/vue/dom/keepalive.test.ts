@@ -53,9 +53,9 @@ describe('keepalive', () => {
           "_e": 0,
           "_h": "5da371e",
           "_p": 0,
-          "children": "home",
           "props": {},
           "tag": "title",
+          "textContent": "home",
         },
       ]
     `
@@ -66,9 +66,9 @@ describe('keepalive', () => {
           "_e": 1,
           "_h": "5da371e",
           "_p": 1024,
-          "children": "about",
           "props": {},
           "tag": "title",
+          "textContent": "about",
         },
       ]
     `

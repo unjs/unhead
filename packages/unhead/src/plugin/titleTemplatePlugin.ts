@@ -21,11 +21,11 @@ export const TitleTemplatePlugin = () => {
         const titleIdx = tags.findIndex(i => i.tag === 'title')
         if (titleIdx !== -1 && titleTemplateIdx !== -1) {
           const newTitle = renderTitleTemplate(
-            tags[titleTemplateIdx].children!,
-            tags[titleIdx].children,
+            tags[titleTemplateIdx].textContent!,
+            tags[titleIdx].textContent,
           )
           if (newTitle !== null) {
-            tags[titleIdx].children = newTitle || tags[titleIdx].children
+            tags[titleIdx].textContent = newTitle || tags[titleIdx].textContent
           }
           else {
             // remove the title tag
@@ -35,10 +35,10 @@ export const TitleTemplatePlugin = () => {
         // titleTemplate is set but title is not set, convert to a title
         else if (titleTemplateIdx !== -1) {
           const newTitle = renderTitleTemplate(
-            tags[titleTemplateIdx].children!,
+            tags[titleTemplateIdx].textContent!,
           )
           if (newTitle !== null) {
-            tags[titleTemplateIdx].children = newTitle
+            tags[titleTemplateIdx].textContent = newTitle
             tags[titleTemplateIdx].tag = 'title'
             titleTemplateIdx = -1
           }
