@@ -70,20 +70,20 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: MaybeComputedRef<Style<E['style']>[]>
+  style?: MaybeComputedRef<(Style<E['style']> | string)[]>
   /**
    * The <script> HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: MaybeComputedRef<Script<E['script']>[]>
+  script?: MaybeComputedRef<(Script<E['script']> | string)[]>
   /**
    * The <noscript> HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: MaybeComputedRef<Noscript<E['noscript']>[]>
+  noscript?: MaybeComputedRef<(Noscript<E['noscript']> | string)[]>
   /**
    * Attributes for the <html> HTML element.
    *

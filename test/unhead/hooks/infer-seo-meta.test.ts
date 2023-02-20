@@ -21,7 +21,7 @@ describe('hooks', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>Hello World</title><meta name=\\"description\\" content=\\"description\\"><meta property=\\"og:title\\" content=\\"Hello World\\"><meta name=\\"og:description\\" content=\\"description\\"><meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\"></head>
+      <title>Hello World</title><meta name=\\"robots\\" content=\\"max-snippet: -1; max-image-preview: large; max-video-preview: -1\\"><meta name=\\"description\\" content=\\"description\\"><meta property=\\"og:title\\" content=\\"Hello World\\"><meta property=\\"og:description\\" content=\\"description\\"></head>
       <body>
 
       <div>

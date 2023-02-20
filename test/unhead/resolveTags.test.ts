@@ -22,9 +22,9 @@ describe('resolveTags', () => {
           "_d": "title",
           "_e": 0,
           "_p": 0,
-          "children": "My title",
           "props": {},
           "tag": "title",
+          "textContent": "My title",
         },
         {
           "_d": "meta:name:description",
