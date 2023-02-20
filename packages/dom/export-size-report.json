@@ -15,37 +15,37 @@
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
       "path": "dist/index.mjs",
-      "minified": 3310,
-      "minzipped": 1408,
-      "bundled": 6217
+      "minified": 3404,
+      "minzipped": 1431,
+      "bundled": 6336
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 3020,
-      "minzipped": 1306,
-      "bundled": 5698
+      "minified": 3114,
+      "minzipped": 1327,
+      "bundled": 5817
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 2867,
-      "minzipped": 1237,
-      "bundled": 5317
+      "minified": 2961,
+      "minzipped": 1261,
+      "bundled": 5436
     },
     {
       "name": "setAttrs",
       "path": "dist/index.mjs",
-      "minified": 552,
-      "minzipped": 319,
-      "bundled": 1118
+      "minified": 627,
+      "minzipped": 331,
+      "bundled": 1214
     },
     {
       "name": "hashTag",
       "path": "dist/index.mjs",
-      "minified": 196,
-      "minzipped": 142,
-      "bundled": 351
+      "minified": 212,
+      "minzipped": 150,
+      "bundled": 371
     },
     {
       "name": "domUpdatePromise",

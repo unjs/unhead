@@ -21,6 +21,8 @@
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
       "@unhead/vue": ["packages/vue/src"],
+      "@unhead/addons": ["packages/addons/src"],
+      "@unhead/addons/*": ["packages/addons/*"],
       "unhead/*": ["packages/unhead/*"],
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],

@@ -1,4 +1,4 @@
-import type { HeadTag as BaseHeadTag, MaybePromiseProps } from 'zhead'
+import type { Head, MaybePromiseProps } from 'zhead'
 
 export interface ResolvesDuplicates {
   /**
@@ -45,19 +45,19 @@ export interface InnerContent {
   /**
    * Text content of the tag.
    *
-   * Alias for children
+   * Warning: This is not safe for XSS. Do not use this with user input, use `textContent` instead.
    */
   innerHTML?: InnerContentVal
   /**
-   * Sets the textContent of an element.
-   */
-  children?: InnerContentVal
-  /**
-   * Sets the textContent of an element. This will be HTML encoded.
-   *
-   * Alias for children
+   * Sets the textContent of an element. Safer for XSS.
    */
   textContent?: InnerContentVal
+  /**
+   * Sets the textContent of an element.
+   *
+   * @deprecated Use `textContent` or `innerHTML`.
+   */
+  children?: InnerContentVal
 }
 
 export interface TagPriority {
@@ -77,7 +77,15 @@ export interface TagPriority {
 
 export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates
 
-export interface TagInternalProperties {
+export type TagKey = keyof Head
+
+export type TemplateVars = { titleSeparator: string } & Record<string, string>
+
+export interface HasTemplateVars {
+  templateVars?: TemplateVars
+}
+
+export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateVars {
   /**
    * Entry ID
    */
@@ -90,14 +98,10 @@ export interface TagInternalProperties {
    * Dedupe key
    */
   _d?: string
+  tag: TagKey
+  props: Record<string, string>
+  innerHTML?: string
+  textContent?: string
 }
-
-export type TemplateVars = { titleSeparator: string } & Record<string, string>
-
-export interface HasTemplateVars {
-  templateVars?: TemplateVars
-}
-
-export type HeadTag = BaseHeadTag & TagUserProperties & TagInternalProperties & HasTemplateVars
 
 export type HeadTagKeys = (keyof HeadTag)[]

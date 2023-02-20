@@ -67,7 +67,7 @@ export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
             }
             const propCount = Object.keys(tag.props).length
             // if the new tag does not have any props, we're trying to remove the dupedTag
-            if (((propCount === 0) || (propCount === 1 && typeof tag.props['data-h-key'] !== 'undefined')) && !tag.children) {
+            if (((propCount === 0) || (propCount === 1 && typeof tag.props['data-h-key'] !== 'undefined')) && !tag.innerHTML && !tag.textContent) {
               delete deduping[dedupeKey]
               return
             }

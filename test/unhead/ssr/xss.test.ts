@@ -16,7 +16,7 @@ describe('xss', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>&#60;/title&#62;&#60;script&#62;alert(1)&#60;/script&#62;</title>",
+        "headTags": "<title>&lt;&#x2F;title&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;</title>",
         "htmlAttrs": "",
       }
     `)
