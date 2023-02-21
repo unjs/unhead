@@ -81,21 +81,69 @@ describe('keepalive', () => {
     // Step 1
     const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot`
+      [
+        {
+          "_d": "title",
+          "_e": 0,
+          "_h": "64280a1",
+          "_p": 0,
+          "props": {},
+          "tag": "title",
+          "textContent": "home",
+        },
+      ]
+    `)
 
     // Step 2
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot`
+      [
+        {
+          "_d": "title",
+          "_e": 1,
+          "_h": "1d36d74",
+          "_p": 1024,
+          "props": {},
+          "tag": "title",
+          "textContent": "about",
+        },
+      ]
+    `)
 
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot`
+      [
+        {
+          "_d": "title",
+          "_e": 0,
+          "_h": "64280a1",
+          "_p": 0,
+          "props": {},
+          "tag": "title",
+          "textContent": "home",
+        },
+      ]
+    `)
 
     // Step 4
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot`
+      [
+        {
+          "_d": "title",
+          "_e": 1,
+          "_h": "1d36d74",
+          "_p": 1024,
+          "props": {},
+          "tag": "title",
+          "textContent": "about",
+        },
+      ]
+    `)
   })
 })

@@ -16,8 +16,7 @@ describe('xss', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>&lt;&#x2F;title&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;</title>
-      <meta property=\\"unhead:ssr\\" content=\\"f2006d\\">",
+        "headTags": "<title>&lt;&#x2F;title&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;</title>",
         "htmlAttrs": "",
       }
     `)

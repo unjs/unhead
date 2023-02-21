@@ -1,4 +1,4 @@
-import {HeadTag} from "@unhead/schema";
+import type { HeadTag } from '@unhead/schema'
 
 export function hashCode(s: string) {
   let h = 9

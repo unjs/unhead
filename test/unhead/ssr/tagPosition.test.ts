@@ -18,8 +18,7 @@ describe('tagPosition', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script src=\\"/my-important-script.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"4ce05e0\\">",
+        "headTags": "<script src=\\"/my-important-script.js\\"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -40,7 +39,7 @@ describe('tagPosition', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "<script src=\\"/my-important-script.js\\"></script>",
-        "headTags": "<meta property=\\"unhead:ssr\\" content=\\"4ce05e0\\">",
+        "headTags": "",
         "htmlAttrs": "",
       }
     `)
@@ -61,7 +60,7 @@ describe('tagPosition', () => {
         "bodyAttrs": "",
         "bodyTags": "<script src=\\"/my-important-script.js\\"></script>",
         "bodyTagsOpen": "",
-        "headTags": "<meta property=\\"unhead:ssr\\" content=\\"4ce05e0\\">",
+        "headTags": "",
         "htmlAttrs": "",
       }
     `)

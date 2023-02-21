@@ -50,7 +50,7 @@ describe('unhead e2e json', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <script type=\\"application/ld+json\\"></script>
-      <script type=\\"application/ld+json\\"></script></head>
+      </head>
       <body>
 
       <div>

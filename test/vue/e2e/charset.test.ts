@@ -43,8 +43,7 @@ describe('vue e2e charset', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
-      <title>Home page</title>
-      <meta property=\\"unhead:ssr\\" content=\\"6cbfca7\\">",
+      <title>Home page</title>",
         "htmlAttrs": "",
       }
     `)
@@ -64,7 +63,6 @@ describe('vue e2e charset', () => {
       "<!DOCTYPE html><html><head>
       <meta charset=\\"utf-8\\">
       <title>Home page</title>
-      <meta property=\\"unhead:ssr\\" content=\\"6cbfca7\\">
       </head>
       <body>
 
@@ -87,7 +85,6 @@ describe('vue e2e charset', () => {
       "<!DOCTYPE html><html><head>
       <meta charset=\\"utf-8\\">
       <title>About page</title>
-      <meta property=\\"unhead:ssr\\" content=\\"6cbfca7\\">
       </head>
       <body>
 
@@ -110,7 +107,6 @@ describe('vue e2e charset', () => {
       "<!DOCTYPE html><html><head>
       <meta charset=\\"utf-8\\">
       <title>Home page</title>
-      <meta property=\\"unhead:ssr\\" content=\\"6cbfca7\\">
       </head>
       <body>
 

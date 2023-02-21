@@ -1,4 +1,4 @@
-import {computeHashes, HasElementTags, hashTag, tagDedupeKey} from '@unhead/shared'
+import { HasElementTags, computeHashes, hashTag, tagDedupeKey } from '@unhead/shared'
 import type {
   BeforeRenderContext,
   DomRenderTagContext,
@@ -15,7 +15,7 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-let prevHash = ''
+let prevHash: string | false = false
 
 /**
  * Render the head tags to the DOM.
@@ -27,20 +27,18 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   if (!beforeRenderCtx.shouldRender)
     return
 
-  const dom: Document = options.document || window.document
+  const dom: Document = options.document || head.resolvedOptions.document || window.document
 
   const tagContexts: DomRenderTagContext[] = (await head.resolveTags())
     .map(setupTagRenderCtx)
 
-  prevHash = prevHash || dom.head.querySelector('meta[property="unhead:ssr"]')?.getAttribute('content') || ''
-  console.log('prev hash', prevHash)
+  prevHash = prevHash || head._hash || false
   if (prevHash) {
     const hash = computeHashes(tagContexts.map(ctx => ctx.tag._h!))
-    console.log('Comparing prev hash', prevHash, hash)
     // the SSR hash matches the CSR hash, we can skip the render
-    if (prevHash === hash) {
+    if (prevHash === hash)
       return
-    }
+
     prevHash = hash
   }
 
@@ -65,7 +63,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     delete staleSideEffects[key]
   }
 
-  function setupTagRenderCtx (tag: HeadTag) {
+  function setupTagRenderCtx(tag: HeadTag) {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
       renderId: (tag.key || tag._d) ? `${tag.tag}:${tag.key || tag._d}` : tag._h!,
@@ -73,7 +71,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       shouldRender: true,
       tag,
       entry,
-      markSideEffect: (key, fn) => markSideEffect(renderCtx, key, fn)
+      markSideEffect: (key, fn) => markSideEffect(renderCtx, key, fn),
     }
     return renderCtx
   }
@@ -114,9 +112,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     // 2. Hydrate based on either SSR or CSR mapping
     ctx.$el = head._elMap[ctx.renderId]
-    if (!ctx.$el && tag.key) {
+    if (!ctx.$el && tag.key)
       ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._h}]`)
-    }
+
     if (ctx.$el) {
       // if we don't have a dedupe keys, then the attrs will be the same
       if (ctx.tag._d)

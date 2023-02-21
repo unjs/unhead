@@ -165,8 +165,7 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src=\\"/very-important-script.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"7a2ba30\\">"
+      <script src=\\"/not-important-script.js\\"></script>"
     `,
     )
     expect(
@@ -196,8 +195,7 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src=\\"/must-be-first-script.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"528ce3\\">"
+      <script src=\\"/not-important-script.js\\"></script>"
     `,
     )
   })
@@ -242,8 +240,7 @@ describe('tag priority', () => {
       "<script src=\\"/must-be-first-script.js\\"></script>
       <script src=\\"/after-first-script.js\\"></script>
       <script src=\\"/before-not-important.js\\"></script>
-      <script src=\\"/not-important-script.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"1f0bc13\\">"
+      <script src=\\"/not-important-script.js\\"></script>"
     `,
     )
   })

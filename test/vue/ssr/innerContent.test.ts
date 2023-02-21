@@ -15,10 +15,7 @@ describe('vue ssr innerContent', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      `
-      "<script>console.log('hi')</script>
-      <meta property=\\"unhead:ssr\\" content=\\"dca45aa\\">"
-    `,
+      '"<script>console.log(\'hi\')</script>"',
     )
   })
 })

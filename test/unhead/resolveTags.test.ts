@@ -21,7 +21,7 @@ describe('resolveTags', () => {
         {
           "_d": "title",
           "_e": 0,
-          "_h": "5da371e",
+          "_h": "3d92997",
           "_p": 0,
           "props": {},
           "tag": "title",
@@ -30,7 +30,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description",
           "_e": 0,
-          "_h": "725a600",
+          "_h": "cf62ca1",
           "_p": 1,
           "props": {
             "content": "My description",
@@ -53,7 +53,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
-          "_h": "1073e90",
+          "_h": "cb8f03a",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -63,7 +63,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
-          "_h": "c3b99ea",
+          "_h": "a8a3a48",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -74,7 +74,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
-          "_h": "d9ef6cc",
+          "_h": "55edb56",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -108,7 +108,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
-          "_h": "1073e90",
+          "_h": "cb8f03a",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -118,7 +118,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
-          "_h": "c3b99ea",
+          "_h": "a8a3a48",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -129,7 +129,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
-          "_h": "d9ef6cc",
+          "_h": "55edb56",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -213,7 +213,7 @@ describe('resolveTags', () => {
         {
           "_d": "charset",
           "_e": 0,
-          "_h": "1073e90",
+          "_h": "cb8f03a",
           "_p": 3,
           "props": {
             "charset": "utf-8",
@@ -223,7 +223,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
-          "_h": "c3b99ea",
+          "_h": "a8a3a48",
           "_p": 0,
           "props": {
             "dir": "ltr",
@@ -234,7 +234,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
-          "_h": "d9ef6cc",
+          "_h": "55edb56",
           "_p": 1,
           "props": {
             "class": "dark",
@@ -292,7 +292,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
-          "_h": "c3b99ea",
+          "_h": "1abf260",
           "_p": 0,
           "props": {
             "class": "foo bar something-new",
@@ -302,7 +302,7 @@ describe('resolveTags', () => {
         {
           "_d": "bodyAttrs",
           "_e": 0,
-          "_h": "d9ef6cc",
+          "_h": "d08a683",
           "_p": 1,
           "props": {
             "class": "foo2 bar2 something-new2",
@@ -339,7 +339,7 @@ describe('resolveTags', () => {
         {
           "_d": "htmlAttrs",
           "_e": 0,
-          "_h": "c3b99ea",
+          "_h": "5dd76a0",
           "_p": 0,
           "props": {
             "class": "foo bar",
@@ -373,7 +373,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description",
           "_e": 0,
-          "_h": "725a600",
+          "_h": "a410f15",
           "_p": 0,
           "props": {
             "content": "desc",
@@ -384,7 +384,7 @@ describe('resolveTags', () => {
         {
           "_d": "meta:name:description:1",
           "_e": 0,
-          "_h": "725a600",
+          "_h": "1c95e3c",
           "_p": 1,
           "props": {
             "content": "desc 2",

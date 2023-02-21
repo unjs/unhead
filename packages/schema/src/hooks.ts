@@ -11,11 +11,20 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
+export interface RenderSSROptions {
+  /**
+   * Append a hash meta to the end of the head tags to allow quicker DOM hydration.
+   *
+   * @default true
+   */
+  appendHash?: boolean
+}
+
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
   renderId: string
   $el?: Element | null
-  shouldRender: boolean;
+  shouldRender: boolean
   tag: HeadTag
   entry?: HeadEntry<any>
   markSideEffect: (key: string, fn: () => void) => void

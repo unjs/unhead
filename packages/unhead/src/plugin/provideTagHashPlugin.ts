@@ -1,4 +1,4 @@
-import {HasElementTags, defineHeadPlugin, hashTag} from '@unhead/shared'
+import { HasElementTags, defineHeadPlugin, hashTag } from '@unhead/shared'
 import { getActiveHead } from '..'
 import { IsBrowser } from '../env'
 
@@ -24,9 +24,8 @@ export const ProvideTagHashPlugin = () => {
         // client side should not be here if the entry is server mode (entry should be ignored)
         // if a user provides a key we will also add the hash as a way to ensure hydration works, good for
         // when SSR / CSR does not match
-        if (entry._m === 'server' || isDynamic) {
+        if (entry._m === 'server' || isDynamic)
           tag.props[`data-h-${tag._h}`] = ''
-        }
       },
       'tags:resolve': (ctx) => {
         // remove dynamic prop

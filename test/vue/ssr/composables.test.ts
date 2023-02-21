@@ -27,7 +27,7 @@ describe('vue ssr composables', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta property=\\"unhead:ssr\\" content=\\"d0d3baa\\">",
+        "headTags": "",
         "htmlAttrs": " lang=\\"de\\" dir=\\"ltr\\"",
       }
     `)
@@ -57,8 +57,7 @@ describe('vue ssr composables', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <script src=\\"https://cdn.example.com/script.js\\" defer=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"my description\\">
-      <meta property=\\"unhead:ssr\\" content=\\"94d500b\\">",
+      <meta name=\\"description\\" content=\\"my description\\">",
         "htmlAttrs": "",
       }
     `)

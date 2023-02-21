@@ -23,8 +23,7 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script>{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script>
-      <meta property=\\"unhead:ssr\\" content=\\"6282324\\">",
+        "headTags": "<script>{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -47,8 +46,7 @@ describe('ssr innerHTML', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX\\"
-          height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>
-      <meta property=\\"unhead:ssr\\" content=\\"b97d7c6\\">",
+          height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
         "htmlAttrs": "",
       }
     `)

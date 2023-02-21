@@ -1,0 +1,147 @@
+import { describe, it } from 'vitest'
+import { createHead, useHead, useServerHead } from 'unhead'
+import { renderSSRHead } from '@unhead/ssr'
+import { renderDOMHead } from '@unhead/dom'
+import { useDom } from '../../fixtures'
+
+describe('unhead e2e', () => {
+  it('basic hydration', async () => {
+    // scenario: we are injecting root head schema which will not have a hydration step,
+    // but we are also injecting a child head schema which will have a hydration step
+    const ssrHead = createHead({
+      provideSSRHash: true,
+    })
+    // i.e App.vue
+    useServerHead({
+      title: 'My amazing site',
+      htmlAttrs: {
+        lang: 'en',
+      },
+      script: [
+        {
+          src: 'https://analytics.example.com/script.js',
+          defer: true,
+          async: true,
+        },
+      ],
+      meta: [
+        {
+          name: 'description',
+          content: 'My amazing site',
+        },
+        {
+          property: 'og:title',
+          content: 'My amazing site',
+        },
+        {
+          property: 'og:description',
+          content: 'This is my amazing site',
+        },
+        {
+          property: 'og:image',
+          content: [
+            'https://cdn.example.com/image.jpg',
+            'https://cdn.example.com/image2.jpg',
+          ],
+        },
+        {
+          charset: 'utf-8',
+        },
+      ],
+    })
+
+    // i.e pages/index.vue
+    useHead({
+      title: 'Home',
+      script: [
+        {
+          src: 'https://my-app.com/home.js',
+        },
+      ],
+      meta: [
+        {
+          property: 'og:title',
+          content: 'Home',
+        },
+        {
+          name: 'description',
+          content: 'This is the home page',
+        },
+      ],
+    })
+
+    const data = await renderSSRHead(ssrHead)
+
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta charset=\\"utf-8\\">
+      <title>Home</title>
+      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <script src=\\"https://my-app.com/home.js\\"></script>
+      <meta property=\\"og:title\\" content=\\"Home\\">
+      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta name=\\"unhead:ssr\\" content=\\"49ff87f\\">",
+        "htmlAttrs": " lang=\\"en\\"",
+      }
+    `)
+
+    const dom = useDom(data)
+
+    const csrHead = createHead({
+      document: dom.window.document,
+      provideSSRHash: true,
+    })
+    csrHead.push({
+      title: 'Home',
+      script: [
+        {
+          src: 'https://my-app.com/home.js',
+        },
+      ],
+      meta: [
+        {
+          property: 'og:title',
+          content: 'Home',
+        },
+        {
+          name: 'description',
+          content: 'This is the home page',
+        },
+      ],
+    })
+
+    csrHead.hooks.hook('dom')
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html lang=\\"en\\"><head>
+      <meta charset=\\"utf-8\\">
+      <title>Home</title>
+      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
+      <script src=\\"https://my-app.com/home.js\\"></script>
+      <meta property=\\"og:title\\" content=\\"Home\\">
+      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <meta name=\\"unhead:ssr\\" content=\\"49ff87f\\">
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+})

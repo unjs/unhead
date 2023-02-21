@@ -30,8 +30,7 @@ describe('vue ssr options api', () => {
       <meta name=\\"description\\" content=\\"desc\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
-      <script src=\\"foo.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"e713268\\">"
+      <script src=\\"foo.js\\"></script>"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')

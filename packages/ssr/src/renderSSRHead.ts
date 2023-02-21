@@ -1,18 +1,8 @@
-import type { BeforeRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
+import type { BeforeRenderContext, HeadTag, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
+import { computeHashes } from '@unhead/shared'
 import { ssrRenderTags } from './util'
-import {HeadTag} from "@unhead/schema";
-import {computeHashes} from "@unhead/shared";
 
-export interface RenderSSROptions {
-  /**
-   * Append a hash meta to the end of the head tags to allow quicker DOM hydration.
-   *
-   * @default true
-   */
-  appendHash?: boolean
-}
-export async function renderSSRHead<T extends {}>(head: Unhead<T>, options: RenderSSROptions = {}) {
-  options.appendHash = options.appendHash ?? true
+export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
   const beforeRenderCtx: BeforeRenderContext = { shouldRender: true }
   await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
   if (!beforeRenderCtx.shouldRender) {
@@ -25,17 +15,21 @@ export async function renderSSRHead<T extends {}>(head: Unhead<T>, options: Rend
     }
   }
   const ctx = { tags: await head.resolveTags() }
-  const hashTag = <HeadTag> {
-    tag: 'meta',
-    props: {
-      property: 'unhead:ssr',
-      content: computeHashes(ctx.tags.map((tag) => tag._h!))
-    },
-    _e: -2,
-    _p: -2,
+  if (head.resolvedOptions.provideSSRHash) {
+    const hashTag = <HeadTag>{
+      tag: 'meta',
+      props: {
+        name: 'unhead:ssr',
+        content: computeHashes(ctx.tags.filter((t) => {
+          // find entry
+          const entry = head.headEntries().find(entry => entry._i === t._e)
+          // we don't care about server entries
+          return entry?._m !== 'server'
+        }).map(tag => tag._h!)),
+      },
+    }
+    ctx.tags.push(hashTag)
   }
-  ctx.tags.unshift(hashTag)
-  console.log(ctx.tags)
   await head.hooks.callHook('ssr:render', ctx)
   const html: SSRHeadPayload = ssrRenderTags(ctx.tags)
   const renderCtx: SSRRenderContext = { tags: ctx.tags, html }

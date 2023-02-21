@@ -22,8 +22,7 @@ describe('ssr', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <script src=\\"https://cdn.example.com/script.js\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">
-      <meta property=\\"unhead:ssr\\" content=\\"21c8899\\">",
+      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">",
         "htmlAttrs": " lang=\\"de\\"",
       }
     `)
@@ -48,8 +47,7 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script>
-      <meta property=\\"unhead:ssr\\" content=\\"221f1d1\\">",
+        "headTags": "<script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -88,8 +86,7 @@ describe('ssr', () => {
       <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
-      <meta property=\\"unhead:ssr\\" content=\\"2f8ea6f\\">",
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
         "htmlAttrs": "",
       }
     `)
@@ -116,8 +113,7 @@ describe('ssr', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
       <meta property=\\"og:title\\" content=\\"My Amazing Site\\">
       <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">
-      <meta property=\\"unhead:ssr\\" content=\\"f2174a5\\">",
+      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }
     `)

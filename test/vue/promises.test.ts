@@ -19,7 +19,7 @@ describe('vue promises', () => {
         {
           "_d": "title",
           "_e": 0,
-          "_h": "5da371e",
+          "_h": "e5b88ea",
           "_p": 0,
           "props": {},
           "tag": "title",

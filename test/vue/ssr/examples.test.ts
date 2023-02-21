@@ -25,8 +25,7 @@ describe('vue ssr examples', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <script src=\\"https://cdn.example.com/script.js\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">
-      <meta property=\\"unhead:ssr\\" content=\\"21c8899\\">",
+      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">",
         "htmlAttrs": " lang=\\"de\\"",
       }
     `)
@@ -71,8 +70,7 @@ describe('vue ssr examples', () => {
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
       <script src=\\"foo.js\\"></script>
-      <meta name=\\"description\\" content=\\"desc 2\\">
-      <meta property=\\"unhead:ssr\\" content=\\"47c4eaa\\">"
+      <meta name=\\"description\\" content=\\"desc 2\\">"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')
@@ -97,8 +95,7 @@ describe('vue ssr examples', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<link href=\\"/\\">
-      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\">
-      <meta property=\\"unhead:ssr\\" content=\\"4692966\\">"
+      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\">"
     `,
     )
   })
@@ -148,8 +145,7 @@ describe('vue ssr examples', () => {
       <meta property=\\"og:image\\" content=\\"https://example.com/image2.jpg\\">
       <meta property=\\"og:title\\" content=\\"page name - My Site\\">
       <meta name=\\"description\\" content=\\"my page description\\">
-      <meta property=\\"og:description\\" content=\\"my page description\\">
-      <meta property=\\"unhead:ssr\\" content=\\"71a13b2\\">",
+      <meta property=\\"og:description\\" content=\\"my page description\\">",
         "htmlAttrs": "",
       }
     `)
