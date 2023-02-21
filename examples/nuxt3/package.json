@@ -11,12 +11,12 @@
     "nuxt": "3.2.2"
   },
   "resolutions": {
-    "unhead": "link:../packages/unhead",
-    "@unhead/addons": "link:../packages/addons",
-    "@unhead/shared": "link:../packages/shared",
-    "@unhead/ssr": "link:../packages/ssr",
-    "@unhead/schema": "link:../packages/schema",
-    "@unhead/dom": "link:../packages/dom",
-    "@unhead/vue": "link:../packages/vue"
+    "unhead": "link:../../packages/unhead",
+    "@unhead/addons": "link:../../packages/addons",
+    "@unhead/shared": "link:../../packages/shared",
+    "@unhead/ssr": "link:../../packages/ssr",
+    "@unhead/schema": "link:../../packages/schema",
+    "@unhead/dom": "link:../../packages/dom",
+    "@unhead/vue": "link:../../packages/vue"
   }
 }
