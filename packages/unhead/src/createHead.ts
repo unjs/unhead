@@ -41,7 +41,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     ...options,
     plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
   })
-  if (options.provideSSRHash && head.resolvedOptions.document)
+  if (options.experimentalHashHydration && head.resolvedOptions.document)
     head._hash = maybeGetSSRHash(head.resolvedOptions.document)
   setActiveHead(head)
   return head

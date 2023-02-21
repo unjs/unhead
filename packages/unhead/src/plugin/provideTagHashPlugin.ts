@@ -6,9 +6,9 @@ export const ProvideTagHashPlugin = () => {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': (ctx) => {
-        const { tag, entry, resolvedOptions  } = ctx
+        const { tag, entry, resolvedOptions } = ctx
 
-        if (resolvedOptions.provideSSRHash === true) {
+        if (resolvedOptions.experimentalHashHydration === true) {
           // always generate a hash
           tag._h = hashTag(tag)
         }

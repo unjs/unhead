@@ -32,14 +32,17 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const tagContexts: DomRenderTagContext[] = (await head.resolveTags())
     .map(setupTagRenderCtx)
 
-  prevHash = prevHash || head._hash || false
-  if (prevHash) {
-    const hash = computeHashes(tagContexts.map(ctx => ctx.tag._h!))
-    // the SSR hash matches the CSR hash, we can skip the render
-    if (prevHash === hash)
-      return
+  // if enabled, we may be able to skip the entire dom render
+  if (head.resolvedOptions.experimentalHashHydration) {
+    prevHash = prevHash || head._hash || false
+    if (prevHash) {
+      const hash = computeHashes(tagContexts.map(ctx => ctx.tag._h!))
+      // the SSR hash matches the CSR hash, we can skip the render
+      if (prevHash === hash)
+        return
 
-    prevHash = hash
+      prevHash = hash
+    }
   }
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
@@ -66,7 +69,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   function setupTagRenderCtx(tag: HeadTag) {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
-      renderId:  tag._d || hashTag(tag),
+      renderId: tag._d || hashTag(tag),
       $el: null,
       shouldRender: true,
       tag,
@@ -156,7 +159,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
         const tmpRenderId = hashTag(tmpTag)
         // avoid using DOM API, let's use our own hash verification
-        let matchIdx = queue.findIndex(ctx => ctx?.tag.renderId === tmpRenderId)
+        let matchIdx = queue.findIndex(ctx => ctx?.renderId === tmpRenderId)
         // there was no match for the index, we need to do a more expensive lookup
         if (matchIdx === -1) {
           const tmpDedupeKey = tagDedupeKey(tmpTag)

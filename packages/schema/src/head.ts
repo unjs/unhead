@@ -66,7 +66,7 @@ export interface CreateHeadOptions {
   document?: Document
   plugins?: HeadPlugin[]
   hooks?: NestedHooks<HeadHooks>
-  provideSSRHash?: boolean
+  experimentalHashHydration?: boolean
 }
 
 export interface HeadEntryOptions {

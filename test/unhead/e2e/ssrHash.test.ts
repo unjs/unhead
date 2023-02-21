@@ -9,7 +9,7 @@ describe('unhead e2e', () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead({
-      provideSSRHash: true,
+      experimentalHashHydration: true,
     })
     // i.e App.vue
     useServerHead({
@@ -95,7 +95,7 @@ describe('unhead e2e', () => {
 
     const csrHead = createHead({
       document: dom.window.document,
-      provideSSRHash: true,
+      experimentalHashHydration: true,
     })
     csrHead.push({
       title: 'Home',

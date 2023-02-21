@@ -1,6 +1,5 @@
-import type { HeadEntry, Unhead } from './head'
+import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
-import {CreateHeadOptions} from "./head";
 
 export type HookResult = Promise<void> | void
 
@@ -28,7 +27,7 @@ export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>, resolvedOptions: CreateHeadOptions }) => HookResult
+  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom

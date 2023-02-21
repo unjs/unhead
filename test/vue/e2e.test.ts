@@ -134,7 +134,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
-      <script src=\\"https://my-app.com/home.js\\"></script></head>
+      </head>
       <body>
 
       <div>
@@ -236,7 +236,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 
       <div>
@@ -284,7 +284,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/home.js\\"></script></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/home.js\\"></script></head>
       <body class=\\"test\\">
 
       <div>
@@ -310,7 +310,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 
       <div>
@@ -360,7 +360,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/about.js\\"></script></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/about.js\\"></script></head>
       <body class=\\"test overflow-hidden\\">
 
       <div>
@@ -385,7 +385,7 @@ describe('vue e2e', () => {
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
+      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
       <body class=\\"test\\">
 
       <div>
