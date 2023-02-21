@@ -6,10 +6,12 @@ export const ProvideTagHashPlugin = () => {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': (ctx) => {
-        const { tag, entry } = ctx
+        const { tag, entry, resolvedOptions  } = ctx
 
-        // always generate a hash
-        tag._h = hashTag(tag)
+        if (resolvedOptions.provideSSRHash === true) {
+          // always generate a hash
+          tag._h = hashTag(tag)
+        }
 
         const isDynamic = typeof tag.props._dynamic !== 'undefined'
         // only valid tags with a key
@@ -24,8 +26,10 @@ export const ProvideTagHashPlugin = () => {
         // client side should not be here if the entry is server mode (entry should be ignored)
         // if a user provides a key we will also add the hash as a way to ensure hydration works, good for
         // when SSR / CSR does not match
-        if (entry._m === 'server' || isDynamic)
+        if (entry._m === 'server' || isDynamic) {
+          tag._h = tag._h || hashTag(tag)
           tag.props[`data-h-${tag._h}`] = ''
+        }
       },
       'tags:resolve': (ctx) => {
         // remove dynamic prop

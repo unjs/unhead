@@ -66,7 +66,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   function setupTagRenderCtx(tag: HeadTag) {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
-      renderId: (tag.key || tag._d) ? `${tag.tag}:${tag.key || tag._d}` : tag._h!,
+      renderId:  tag._d || hashTag(tag),
       $el: null,
       shouldRender: true,
       tag,
@@ -156,7 +156,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
         const tmpRenderId = hashTag(tmpTag)
         // avoid using DOM API, let's use our own hash verification
-        let matchIdx = queue.findIndex(ctx => ctx?.tag._h === tmpRenderId)
+        let matchIdx = queue.findIndex(ctx => ctx?.tag.renderId === tmpRenderId)
         // there was no match for the index, we need to do a more expensive lookup
         if (matchIdx === -1) {
           const tmpDedupeKey = tagDedupeKey(tmpTag)

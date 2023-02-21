@@ -32,7 +32,6 @@ describe('dom order', () => {
       {
         "_d": "htmlAttrs",
         "_e": 0,
-        "_h": "ff807da",
         "_p": 0,
         "props": {
           "class": "no-js",

@@ -19,7 +19,6 @@ describe('promises', () => {
         {
           "_d": "title",
           "_e": 0,
-          "_h": "e5b88ea",
           "_p": 0,
           "props": {},
           "tag": "title",
@@ -27,7 +26,6 @@ describe('promises', () => {
         },
         {
           "_e": 0,
-          "_h": "9833eb3",
           "_p": 1,
           "props": {
             "src": "https://example.com/script.js",
@@ -36,7 +34,6 @@ describe('promises', () => {
         },
         {
           "_e": 0,
-          "_h": "2974e38",
           "_p": 2,
           "innerHTML": "test",
           "props": {},

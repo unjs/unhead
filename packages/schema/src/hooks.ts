@@ -1,5 +1,6 @@
 import type { HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
+import {CreateHeadOptions} from "./head";
 
 export type HookResult = Promise<void> | void
 
@@ -9,15 +10,6 @@ export interface SSRHeadPayload {
   bodyTagsOpen: string
   htmlAttrs: string
   bodyAttrs: string
-}
-
-export interface RenderSSROptions {
-  /**
-   * Append a hash meta to the end of the head tags to allow quicker DOM hydration.
-   *
-   * @default true
-   */
-  appendHash?: boolean
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
@@ -36,7 +28,7 @@ export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any> }) => HookResult
+  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>, resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
