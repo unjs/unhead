@@ -10,7 +10,7 @@ import type {
   Unhead,
 } from '@unhead/schema'
 import { DedupesTagsPlugin } from '@unhead/shared'
-import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
+import { PatchDomOnEntryUpdatesPlugin, maybeGetSSRHash } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
   DeprecatedTagAttrPlugin,
@@ -20,6 +20,7 @@ import {
   TitleTemplatePlugin,
 } from './plugin'
 import { normaliseEntryTags } from './utils'
+import { IsBrowser } from './env'
 
 export const CorePlugins = () => [
   // dedupe needs to come first
@@ -40,6 +41,8 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
     ...options,
     plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
   })
+  if (options.experimentalHashHydration && head.resolvedOptions.document)
+    head._hash = maybeGetSSRHash(head.resolvedOptions.document)
   setActiveHead(head)
   return head
 }
@@ -65,6 +68,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     ...(options?.plugins || []),
   ]
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
+  options.document = options.document || (IsBrowser ? document : undefined)
 
   // does the dom rendering by default
   // es-lint-disable-next-line @typescript-eslint/no-use-before-define
@@ -123,7 +127,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
         for (const tag of await normaliseEntryTags<T>(entry)) {
-          const tagCtx = { tag, entry }
+          const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
           await hooks.callHook('tag:normalise', tagCtx)
           resolveCtx.tags.push(tagCtx.tag)
         }
@@ -131,12 +135,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       await hooks.callHook('tags:resolve', resolveCtx)
       return resolveCtx.tags
     },
-    _elMap: {},
     _popSideEffectQueue() {
       const sde = { ..._sde }
       _sde = {}
       return sde
     },
+    _elMap: {},
   }
 
   head.hooks.callHook('init', head)

@@ -1,4 +1,4 @@
-import type { HeadEntry, SideEffectsRecord, Unhead } from './head'
+import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -12,7 +12,14 @@ export interface SSRHeadPayload {
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
-export interface DomRenderTagContext { $el?: Element | null; shouldRender: boolean; renderId: string; tag: HeadTag; entry?: HeadEntry<any>; staleSideEffects: SideEffectsRecord }
+export interface DomRenderTagContext {
+  renderId: string
+  $el?: Element | null
+  shouldRender: boolean
+  tag: HeadTag
+  entry?: HeadEntry<any>
+  markSideEffect: (key: string, fn: () => void) => void
+}
 export interface BeforeRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
 
@@ -20,7 +27,7 @@ export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any> }) => HookResult
+  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom

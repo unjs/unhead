@@ -92,6 +92,10 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates {
    * Dedupe key
    */
   _d?: string
+  /**
+   * Hash code used to represent the tag.
+   */
+  _h?: string
   tag: TagKey
   props: Record<string, string>
   innerHTML?: string
