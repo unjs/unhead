@@ -66,6 +66,7 @@ export interface CreateHeadOptions {
   document?: Document
   plugins?: HeadPlugin[]
   hooks?: NestedHooks<HeadHooks>
+  experimentalHashHydration?: boolean
 }
 
 export interface HeadEntryOptions {
@@ -105,4 +106,5 @@ export interface Unhead<Input extends {} = Head> {
    * @internal
    */
   _elMap: Record<string, Element>
+  _hash?: string | false
 }

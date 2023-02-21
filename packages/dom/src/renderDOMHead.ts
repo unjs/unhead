@@ -1,4 +1,4 @@
-import { HasElementTags, hashCode, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, computeHashes, hashTag, tagDedupeKey } from '@unhead/shared'
 import type {
   BeforeRenderContext,
   DomRenderTagContext,
@@ -15,22 +15,35 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-export function hashTag(tag: HeadTag) {
-  const str = `${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`
-  return `${tag.tag}:${hashCode(str)}`
-}
+let prevHash: string | false = false
 
 /**
  * Render the head tags to the DOM.
  */
 export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
-  const ctx: BeforeRenderContext = { shouldRender: true }
-  await head.hooks.callHook('dom:beforeRender', ctx)
+  const beforeRenderCtx: BeforeRenderContext = { shouldRender: true }
+  await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
-  if (!ctx.shouldRender)
+  if (!beforeRenderCtx.shouldRender)
     return
 
-  const dom: Document = options.document || window.document
+  const dom: Document = options.document || head.resolvedOptions.document || window.document
+
+  const tagContexts: DomRenderTagContext[] = (await head.resolveTags())
+    .map(setupTagRenderCtx)
+
+  // if enabled, we may be able to skip the entire dom render
+  if (head.resolvedOptions.experimentalHashHydration) {
+    prevHash = prevHash || head._hash || false
+    if (prevHash) {
+      const hash = computeHashes(tagContexts.map(ctx => ctx.tag._h!))
+      // the SSR hash matches the CSR hash, we can skip the render
+      if (prevHash === hash)
+        return
+
+      prevHash = hash
+    }
+  }
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
   // run queued side effects immediately
@@ -45,7 +58,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       })
     })
 
-  const setupTagRenderCtx = async (tag: HeadTag) => {
+  const markSideEffect = (ctx: DomRenderTagContext, key: string, fn: () => void) => {
+    key = `${ctx.renderId}:${key}`
+    // may not have an entry for some reason
+    if (ctx.entry)
+      ctx.entry._sde[key] = fn
+    delete staleSideEffects[key]
+  }
+
+  function setupTagRenderCtx(tag: HeadTag) {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
       renderId: tag._d || hashTag(tag),
@@ -53,9 +74,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       shouldRender: true,
       tag,
       entry,
-      staleSideEffects,
+      markSideEffect: (key, fn) => markSideEffect(renderCtx, key, fn),
     }
-    await head.hooks.callHook('dom:beforeRenderTag', renderCtx)
     return renderCtx
   }
 
@@ -65,13 +85,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     head: [],
   }
 
-  const markSideEffect = (ctx: DomRenderTagContext, key: string, fn: () => void) => {
-    key = `${ctx.renderId}:${key}`
-    // may not have an entry for some reason
-    if (ctx.entry)
-      ctx.entry._sde[key] = fn
-    delete staleSideEffects[key]
-  }
   const markEl = (ctx: DomRenderTagContext) => {
     head._elMap[ctx.renderId] = ctx.$el!
     renders.push(ctx)
@@ -82,8 +95,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
 
   // first render all tags which we can match quickly
-  for (const t of await head.resolveTags()) {
-    const ctx = await setupTagRenderCtx(t)
+  for (const ctx of tagContexts) {
+    await head.hooks.callHook('dom:beforeRenderTag', ctx)
     if (!ctx.shouldRender)
       continue
     const { tag } = ctx
@@ -102,11 +115,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     // 2. Hydrate based on either SSR or CSR mapping
     ctx.$el = head._elMap[ctx.renderId]
-    // @ts-expect-error runtime _hash untyped
-    if (!ctx.$el && tag._hash) {
-      // @ts-expect-error runtime _hash untyped
-      ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._hash}]`)
-    }
+    if (!ctx.$el && tag.key)
+      ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._h}]`)
+
     if (ctx.$el) {
       // if we don't have a dedupe keys, then the attrs will be the same
       if (ctx.tag._d)
