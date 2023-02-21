@@ -116,9 +116,15 @@ describe('unhead e2e', () => {
       ],
     })
 
-    csrHead.hooks.hook('dom')
+    let renderingTags = false
+    csrHead.hooks.hook('dom:beforeRenderTag', () => {
+      renderingTags = true
+    })
 
     await renderDOMHead(csrHead, { document: dom.window.document })
+
+    // didn't render any tags, we hydrated
+    expect(renderingTags).toBe(false)
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\"><head>
