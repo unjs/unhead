@@ -9,10 +9,10 @@ import type {
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
-import { DedupesTagsPlugin } from '@unhead/shared'
 import { PatchDomOnEntryUpdatesPlugin, maybeGetSSRHash } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
+  DedupesTagsPlugin,
   DeprecatedTagAttrPlugin,
   EventHandlersPlugin,
   ProvideTagHashPlugin,

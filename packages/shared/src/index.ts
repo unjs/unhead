@@ -1,5 +1,5 @@
 export * from './array'
 export * from './constants'
-export * from './dedupesTagsPlugin'
 export * from './defineHeadPlugin'
 export * from './hashCode'
+export * from './tagDedupeKey'
