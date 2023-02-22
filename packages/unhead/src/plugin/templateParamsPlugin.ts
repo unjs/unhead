@@ -10,8 +10,8 @@ function processTemplateParams(s: string, config: TemplateParams) {
     let val
     // support . notation
     if (token.includes('.'))
+      // @ts-expect-error untyped
       val = token.split('.').reduce((acc, key) => acc[key] || {}, config)
-
     else
       val = config[token]
 
