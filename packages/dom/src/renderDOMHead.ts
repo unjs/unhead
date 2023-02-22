@@ -15,6 +15,13 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
+export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
+  /**
+   * Specify a custom delay function for delaying the render.
+   */
+  delayFn?: (fn: () => void) => void
+}
+
 let prevHash: string | false = false
 
 /**
@@ -215,7 +222,7 @@ export let domUpdatePromise: Promise<void> | null = null
 /**
  * Queue a debounced update of the DOM head.
  */
-export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions & { delayFn?: (fn: () => void) => void } = {}) {
+export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: DebouncedRenderDomHeadOptions = {}) {
   // within the debounced dom update we need to compute all the tags so that watchEffects still works
   function doDomUpdate() {
     domUpdatePromise = null
