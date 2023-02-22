@@ -1,8 +1,8 @@
 import { describe, it } from 'vitest'
-import {createHead, useHead} from '@unhead/vue'
-import {useDom} from "../../fixtures";
-import {renderDOMHead} from "@unhead/dom";
+import { createHead, useHead } from '@unhead/vue'
+import { renderDOMHead } from '@unhead/dom'
 import { ref } from 'vue'
+import { useDom } from '../../fixtures'
 
 describe('vue templateParams', () => {
   it('basic', async () => {

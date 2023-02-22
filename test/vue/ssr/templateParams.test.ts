@@ -1,13 +1,9 @@
 import { describe, it } from 'vitest'
-import {createHead, useHead} from '@unhead/vue'
-import {useDom} from "../../fixtures";
-import {renderDOMHead} from "@unhead/dom";
 import { ref } from 'vue'
-import {ssrRenderOptionsHead} from "../util";
+import { ssrRenderOptionsHead } from '../util'
 
 describe('ssr vue templateParams', () => {
   it('basic', async () => {
-
     const separator = ref('/')
 
     const headResult = await ssrRenderOptionsHead({

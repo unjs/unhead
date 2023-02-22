@@ -1,5 +1,5 @@
 import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MaybePromiseProps, Merge, MergeHead, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from 'zhead'
-import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties } from './tags'
+import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
 
 export type Never<T> = {
   [P in keyof T]?: never
@@ -80,7 +80,7 @@ export interface HeadUtils {
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateParams?: Record<string, string>
+  templateParams?: TemplateParams
 }
 
 export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUtils {

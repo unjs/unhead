@@ -9,12 +9,12 @@ function processTemplateParams(s: string, config: TemplateParams) {
 
     let val
     // support . notation
-    if (token.includes('.')) {
+    if (token.includes('.'))
       val = token.split('.').reduce((acc, key) => acc[key] || {}, config)
-    }
-    else {
+
+    else
       val = config[token]
-    }
+
     return val || (preserveToken ? token : '')
   }
   let template = s
@@ -30,6 +30,8 @@ function processTemplateParams(s: string, config: TemplateParams) {
       template = template.slice(0, -config.separator.length).trim()
     if (template.startsWith(config.separator))
       template = template.slice(config.separator.length).trim()
+    // make sure we don't have two separators next to each other
+    template = template.replace(new RegExp(`\\${config.separator}\\s*\\${config.separator}`, 'g'), config.separator)
   }
   return template
 }
