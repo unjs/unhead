@@ -17,6 +17,7 @@ import {
   EventHandlersPlugin,
   ProvideTagHashPlugin,
   SortTagsPlugin,
+  TemplateParamsPlugin,
   TitleTemplatePlugin,
 } from './plugin'
 import { normaliseEntryTags } from './utils'
@@ -30,6 +31,7 @@ export const CorePlugins = () => [
   ProvideTagHashPlugin(),
   EventHandlersPlugin(),
   DeprecatedTagAttrPlugin(),
+  TemplateParamsPlugin(),
 ]
 
 export const DOMPlugins = (options: CreateHeadOptions = {}) => [

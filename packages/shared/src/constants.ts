@@ -11,6 +11,7 @@ export const HasElementTags = [
 export const ValidHeadTags = [
   'title',
   'titleTemplate',
+  'templateParams',
   'base',
   'htmlAttrs',
   'bodyAttrs',
