@@ -1,4 +1,5 @@
-import type { Head, MaybePromiseProps } from 'zhead'
+import type { MaybePromiseProps } from 'zhead'
+import type { Head } from './schema'
 
 export interface ResolvesDuplicates {
   /**
@@ -79,7 +80,13 @@ export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<In
 
 export type TagKey = keyof Head
 
-export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates {
+export type TemplateParams = { separator?: string } & Record<string, string | Record<string, string>>
+
+export interface HasTemplateParams {
+  templateParams?: TemplateParams
+}
+
+export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateParams {
   /**
    * Entry ID
    */

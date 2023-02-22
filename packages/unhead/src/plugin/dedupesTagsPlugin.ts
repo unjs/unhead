@@ -5,7 +5,7 @@ export interface DedupesTagsPluginOptions {
   dedupeKeys?: string[]
 }
 
-const UsesMergeStrategy = ['htmlAttrs', 'bodyAttrs']
+const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
 export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
   options = options || {}
