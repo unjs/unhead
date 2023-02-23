@@ -6,7 +6,7 @@ import type { Head } from './schema'
 /**
  * Side effects are mapped with a key and their cleanup function.
  *
- * For example `meta:data-h-4h46h465`: () => { document.querySelector('meta[data-h-4h46h465]').remove() }
+ * For example, `meta:data-h-4h46h465`: () => { document.querySelector('meta[data-h-4h46h465]').remove() }
  */
 export type SideEffectsRecord = Record<string, () => void>
 
@@ -27,6 +27,12 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _m?: RuntimeMode
+  /**
+   * Transformer function for the entry.
+   *
+   * @internal
+   */
+  _t?: (input: Input) => Input
   /**
    * Head entry index
    *
@@ -71,6 +77,7 @@ export interface CreateHeadOptions {
 
 export interface HeadEntryOptions {
   mode?: RuntimeMode
+  transform?: (input: unknown) => unknown
 }
 
 export interface Unhead<Input extends {} = Head> {

@@ -4,7 +4,7 @@ import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schem
 import type { ReactiveHead, UseHeadInput } from '../../..'
 import { injectHead, resolveUnrefHeadInput } from '../../..'
 
-export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
+export function clientUseHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions<UseHeadInput<T>> = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const head = injectHead()
   const deactivated = ref(false)
 

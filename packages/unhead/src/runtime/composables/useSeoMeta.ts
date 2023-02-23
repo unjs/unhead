@@ -1,6 +1,6 @@
 import type { ActiveHeadEntry, MetaFlatInput, Title, TitleTemplate } from '@unhead/schema'
 import { unpackMeta } from '../..'
-import { useHead } from './index'
+import { useHead } from './useHead'
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title; titleTemplate?: TitleTemplate }
 
