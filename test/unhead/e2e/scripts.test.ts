@@ -1,22 +1,23 @@
-import { describe, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
-import { renderDOMHead } from '@unhead/dom'
-import { useDom } from '../../fixtures'
+import {describe, it} from "vitest";
+import {createHead, useHead} from "unhead";
+import {renderSSRHead} from "@unhead/ssr";
+import {useDom} from "../../fixtures";
+import {renderDOMHead} from "@unhead/dom";
 
-describe('unhead e2e textContent', () => {
-  it('pretend json', async () => {
+describe('unhead e2e scripts', () => {
+  it('does not duplicate innerHTML', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead()
-    // i.e App.vue
-    useHead({
-      style: [
+    const input = {
+      script: [
         {
-          textContent: '.test { color: red; }',
-        },
+          innerHTML: 'console.log(\'Hello World\')',
+        }
       ],
-    })
+    }
+    // i.e App.vue
+    useHead(input)
 
     const data = await renderSSRHead(ssrHead)
 
@@ -25,7 +26,7 @@ describe('unhead e2e textContent', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<style>.test { color: red; }</style>",
+        "headTags": "<script>console.log('Hello World')</script>",
         "htmlAttrs": "",
       }
     `)
@@ -33,19 +34,13 @@ describe('unhead e2e textContent', () => {
     const dom = useDom(data)
 
     const csrHead = createHead()
-    csrHead.push({
-      style: [
-        {
-          textContent: '.test { color: red; }',
-        },
-      ],
-    })
+    csrHead.push(input)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, {document: dom.window.document})
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <style>.test { color: red; }</style>
+      <script>console.log('Hello World')</script>
       </head>
       <body>
 
