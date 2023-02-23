@@ -1,14 +1,18 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import {TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray, hashCode} from '..'
 
-export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props']): Promise<T | T[]> {
+export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
   if (['title', 'titleTemplate', 'templateParams'].includes(tagName)) {
     tag.textContent = (input instanceof Promise ? await input : input) as string
     return tag
   }
   // allow shorthands
-  if (['script', 'noscript', 'style'].includes(tagName) && typeof input === 'string') {
+  if (typeof input === 'string') {
+    // unsupported shorthand
+    if (['script', 'noscript', 'style'].includes(tagName)) {
+      return false
+    }
     // if string starts with "/", "http://" or "https://" then assume it's a src
     if (tagName === 'script' && /^(https?:)?\/\//.test(input) || input.startsWith('/')) {
       tag.props.src = input
@@ -120,7 +124,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .forEach(([k, value]) => {
       const v = asArray(value)
       // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).flat())
+      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).filter(Boolean).flat())
     })
   return (await Promise.all(tagPromises))
     .flat()
