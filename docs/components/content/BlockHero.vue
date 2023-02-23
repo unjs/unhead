@@ -22,8 +22,8 @@ defineProps({
 </script>
 
 <template>
-<section class="py-5 sm:py-15 xl:py-32">
-  <div class="md:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0 max-w-8xl">
+<section class="py-5 sm:py-10 xl:py-20">
+  <div class="xl:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0">
     <div class="col-span-6 mb-10 lg:mb-0 flex flex-col justify-center">
       <p v-if="$slots.top" class="mb-2 text-center lg:text-left">
         <Markdown :use="$slots.top" unwrap="p" />
@@ -55,8 +55,8 @@ defineProps({
       </div>
     </div>
 
-    <div class="block-hero__right md:col-span-6 max-w-full">
-      <div class="flex relative items-center block-hero__inner md:p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-500/10 dark:to-blue-500/20 rounded">
+    <div class="block-hero__right xl:col-span-6 max-w-full">
+      <div class="flex relative items-center block-hero__inner xl:p-10 bg-gradient-to-br to-green-200 from-blue-100 dark:from-green-500/10 dark:to-blue-500/20 rounded">
         <slot name="right">
           <Markdown :use="$slots.right" unwrap="p" />
         </slot>

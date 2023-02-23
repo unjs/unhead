@@ -15,11 +15,18 @@ export default defineAppConfig({
       branch: 'main',
       edit: true,
     },
+    main: {
+      fluid: true,
+    },
+    footer: {
+      fluid: true,
+    },
     aside: {
       level: 1,
       filter: [],
     },
     header: {
+      fluid: true,
       title: false,
       logo: true,
     },

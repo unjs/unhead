@@ -10,7 +10,7 @@ const githubColorScheme = computed(() => color.value === 'dark' ? 'no-preference
 
 <template>
   <header :class="{ 'has-dialog': hasDialog, 'has-doc-search': hasDocSearch }">
-    <Container>
+    <Container fluid>
       <section class="left">
         <AppHeaderDialog v-if="hasDialog" />
         <AppHeaderLogo />

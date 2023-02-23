@@ -1,9 +1,9 @@
 ---
-title: "Plugin: Infer SEO Meta"
+title: "Infer SEO Meta"
 description: Automatically infer SEO meta tags from your page.
 ---
 
-# Plugin: Infer SEO Meta
+# Infer SEO Meta
 
 Unhead is internally powered by a hook system which you can plug into to add your own logic.
 
@@ -19,6 +19,10 @@ const head = createHead({
     InferSeoMetaPlugin()
   ]
 })
+
+// or 
+
+head.use(InferSeoMetaPlugin())
 ```
 
 If you'd like to configure the behavior of the plugin, you can pass in an options object.
@@ -27,28 +31,28 @@ If you'd like to configure the behavior of the plugin, you can pass in an option
 export interface InferSeoMetaPluginOptions {
   /**
    * Transform the og title.
-   * 
+   *
    * @param title
    */
-  ogTitle?: (title: string) => string
+  ogTitle?: string | ((title: string) => string)
   /**
    * Transform the og description.
    *
    * @param title
    */
-  ogDescription?: (description: string) => string
+  ogDescription?: string | ((description: string) => string)
   /**
    * Whether robot meta should be infered.
-   * 
+   *
    * @default true
    */
-  robots?: boolean
+  robots?: false | string
   /**
    * The twitter card to use.
-   * 
+   *
    * @default 'summary_large_image'
    */
-  twitterCard?: string
+  twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 ```
 
