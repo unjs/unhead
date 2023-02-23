@@ -1,6 +1,6 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { UseHeadInput } from '@unhead/vue'
-import { injectHead } from '@unhead/vue'
+import type { UseHeadInput } from '../../'
+import { injectHead } from '../../'
 import { IsBrowser } from '../../env'
 import { clientUseHead as _clientUseHead } from './useHead/clientUseHead'
 import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
