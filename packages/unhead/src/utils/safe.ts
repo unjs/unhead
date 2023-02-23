@@ -25,6 +25,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
       case 'htmlAttrs':
       case 'bodyAttrs':
         filtered[key] = {}
+        // @ts-expect-error untyped
         WhitelistAttributes[key].forEach((a) => {
           // @ts-expect-error untyped
           if (tagValue[a])
