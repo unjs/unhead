@@ -10,7 +10,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
   // allow shorthands
   if (typeof input === 'string') {
     // unsupported shorthand
-    if (['script', 'noscript', 'style'].includes(tagName)) {
+    if (!['script', 'noscript', 'style'].includes(tagName)) {
       return false
     }
     // if string starts with "/", "http://" or "https://" then assume it's a src
@@ -124,10 +124,11 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .forEach(([k, value]) => {
       const v = asArray(value)
       // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).filter(Boolean).flat())
+      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).flat())
     })
   return (await Promise.all(tagPromises))
     .flat()
+    .filter(Boolean)
     .map((t: HeadTag, i) => {
       t._e = e._i
       t._p = (e._i << TagEntityBits) + i

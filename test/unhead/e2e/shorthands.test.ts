@@ -11,6 +11,9 @@ describe('unhead e2e shorthands', () => {
     const ssrHead = createHead()
     // i.e App.vue
     useHead({
+      meta: [
+        'shorthand test',
+      ],
       style: [
         '.test { color: red; }',
       ],
