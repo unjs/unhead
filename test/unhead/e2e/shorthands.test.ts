@@ -62,8 +62,69 @@ describe('unhead e2e shorthands', () => {
     useHead({
       script: [
         'console.log(\'Hello World\')',
+        '/my-script.js',
+        'https://example.com/script.js'
       ],
     })
+
+    const data = await renderSSRHead(ssrHead)
+
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<script>console.log('Hello World')</script>
+      <script src=\\"/my-script.js\\"></script>
+      <script src=\\"https://example.com/script.js\\"></script>",
+        "htmlAttrs": "",
+      }
+    `)
+
+    const dom = useDom(data)
+
+    const csrHead = createHead()
+    csrHead.push({
+      script: [
+        'console.log(\'Hello World\')',
+        '/my-script.js',
+        'https://example.com/script.js'
+      ],
+    })
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <script>console.log('Hello World')</script>
+      <script src=\\"/my-script.js\\"></script>
+      <script src=\\"https://example.com/script.js\\"></script>
+      <script>console.log('Hello World')</script></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+  it('script 2', async () => {
+    // scenario: we are injecting root head schema which will not have a hydration step,
+    // but we are also injecting a child head schema which will have a hydration step
+    const ssrHead = createHead()
+    const input = {
+      script: [
+        {
+          innerHTML: 'console.log(\'Hello World\')',
+        }
+      ],
+    }
+    // i.e App.vue
+    useHead(input)
 
     const data = await renderSSRHead(ssrHead)
 
@@ -80,18 +141,14 @@ describe('unhead e2e shorthands', () => {
     const dom = useDom(data)
 
     const csrHead = createHead()
-    csrHead.push({
-      script: [
-        'console.log(\'Hello World\')',
-      ],
-    })
+    csrHead.push(input)
 
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <script>console.log('Hello World')</script>
-      <script>console.log('Hello World')</script></head>
+      </head>
       <body>
 
       <div>
@@ -103,6 +160,7 @@ describe('unhead e2e shorthands', () => {
       </body></html>"
     `)
   })
+
   it('noscript', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
