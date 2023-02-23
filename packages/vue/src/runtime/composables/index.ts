@@ -1,4 +1,6 @@
 export * from './useHead'
-export * from './useServerHead'
+export * from './useHeadSafe'
 export * from './useSeoMeta'
+export * from './useServerHead'
+export * from './useServerHeadSafe'
 export * from './deprecations'

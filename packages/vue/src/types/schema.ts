@@ -2,7 +2,7 @@ import type { BaseBodyAttr, BaseHtmlAttr, BodyEvents, DataKeys, DefinedValueOrEm
 import type { Ref } from 'vue'
 import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
 
-interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
+export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -11,7 +11,7 @@ interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
 }
 
-interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+export interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *

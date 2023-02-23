@@ -97,6 +97,11 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       // if a mode is provided via options, set it
       if (options?.mode)
         activeEntry._m = options?.mode
+      if (options?.transform) {
+        // @ts-expect-error untyped
+        activeEntry._t = options?.transform
+      }
+
       entries.push(activeEntry)
       updated()
       return {
@@ -128,6 +133,9 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       const resolveCtx: { tags: HeadTag[]; entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
+        // apply any custom transformers applied to the entry
+        const transformer = entry._t || (i => i)
+        entry.resolvedInput = transformer(entry.resolvedInput || entry.input)
         for (const tag of await normaliseEntryTags<T>(entry)) {
           const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
           await hooks.callHook('tag:normalise', tagCtx)

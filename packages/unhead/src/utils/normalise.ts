@@ -109,7 +109,7 @@ export const TagEntityBits = 10
 
 export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
   const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
-  Object.entries(e.resolvedInput || e.input)
+  Object.entries(e.resolvedInput as {})
     .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
     .forEach(([k, value]) => {
       const v = asArray(value)

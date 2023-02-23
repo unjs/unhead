@@ -2,8 +2,8 @@ import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schem
 import type { UseHeadInput } from '../../'
 import { injectHead } from '../../'
 import { IsBrowser } from '../../env'
-import { clientUseHead as _clientUseHead } from './useHead/clientUseHead'
-import { serverUseHead as _serverUseHead } from './useHead/serverUseHead'
+import { clientUseHead as _clientUseHead } from './util/clientUseHead'
+import { serverUseHead as _serverUseHead } from './util/serverUseHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()

@@ -24,7 +24,7 @@ export type MaybeArray<T> = T | T[]
 export type BaseBodyAttr = BaseBodyAttributes
 export type BaseHtmlAttr = _HtmlAttributes
 
-interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+export interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -33,7 +33,7 @@ interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
   class?: MaybeArray<string> | Record<string, boolean>
 }
 
-interface HtmlAttr extends Omit<_HtmlAttributes, 'class'> {
+export interface HtmlAttr extends Omit<_HtmlAttributes, 'class'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -42,7 +42,7 @@ interface HtmlAttr extends Omit<_HtmlAttributes, 'class'> {
   class?: MaybeArray<string> | Record<string, boolean>
 }
 
-interface BaseMeta extends Omit<_Meta, 'content'> {
+export interface BaseMeta extends Omit<_Meta, 'content'> {
   /**
    * This attribute contains the value for the http-equiv, name or property attribute, depending on which is used.
    *
@@ -146,4 +146,4 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
-export type { MetaFlatInput, BodyEvents } from 'zhead'
+export type { MetaFlatInput, BodyEvents, MergeHead, DataKeys, DefinedValueOrEmptyObject, SpeculationRules } from 'zhead'
