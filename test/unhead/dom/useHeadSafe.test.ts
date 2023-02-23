@@ -26,7 +26,7 @@ describe('dom useHeadSafe', () => {
       style: [
         {
           innerHTML: 'body { background: url("javascript:alert(1)") }',
-        }
+        },
       ],
       script: [
         {
@@ -36,8 +36,8 @@ describe('dom useHeadSafe', () => {
         {
           innerHTML: 'alert(1)',
           textContent: { value: 'alert(1)' },
-        }
-      ]
+        },
+      ],
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`

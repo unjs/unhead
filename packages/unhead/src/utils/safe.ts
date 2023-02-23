@@ -1,5 +1,13 @@
-import {HeadSafe, MaybeArray} from "@unhead/schema";
+import type { HeadSafe, MaybeArray } from '@unhead/schema'
 
+const WhitelistAttributes = {
+  htmlAttrs: ['id', 'class', 'lang', 'dir'],
+  bodyAttrs: ['id', 'class'],
+  meta: ['id', 'name', 'property', 'charset', 'content'],
+  noscript: ['id', 'textContent'],
+  script: ['id', 'type', 'textContent'],
+  link: ['id', 'color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'],
+}
 export function whitelistSafeInput(input: Record<string, MaybeArray<Record<string, string>>>): HeadSafe {
   const filtered: Record<string, MaybeArray<Record<string, string>>> = {}
   // remove any keys that can be used for XSS
@@ -17,8 +25,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
       case 'htmlAttrs':
       case 'bodyAttrs':
         filtered[key] = {}
-        const safeKeys = key === 'bodyAttrs' ? ['id', 'class'] : ['id', 'class', 'lang', 'dir']
-        safeKeys.forEach((a) => {
+        WhitelistAttributes[key].forEach((a) => {
           // @ts-expect-error untyped
           if (tagValue[a])
             // @ts-expect-error untyped
@@ -26,7 +33,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         })
         // add any data attributes
         Object.keys(tagValue || {})
-          .filter((a) => a.startsWith('data-'))
+          .filter(a => a.startsWith('data-'))
           .forEach((a) => {
             // @ts-expect-error untyped
             filtered[key][a] = tagValue[a]
@@ -37,9 +44,8 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         if (Array.isArray(tagValue)) {
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
-              const safeKeys = ['name', 'property', 'charset', 'content']
               const safeMeta: Record<string, string> = {}
-              safeKeys.forEach((key) => {
+              WhitelistAttributes.meta.forEach((key) => {
                 if (meta[key] || key.startsWith('data-'))
                   safeMeta[key] = meta[key]
               })
@@ -54,8 +60,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
               const link: Record<string, string> = {}
-              const safeKeys = ['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type', 'id']
-              safeKeys.forEach((key) => {
+              WhitelistAttributes.link.forEach((key) => {
                 // block bad rel types
                 if (key === 'rel' && ['stylesheet', 'canonical', 'modulepreload', 'prerender', 'preload', 'prefetch'].includes(meta[key]))
                   return
@@ -84,8 +89,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
               const noscript: Record<string, string> = {}
-              const safeKeys = ['textContent', 'id']
-              safeKeys.forEach((key) => {
+              WhitelistAttributes.noscript.forEach((key) => {
                 if (meta[key] || key.startsWith('data-'))
                   noscript[key] = meta[key]
               })
@@ -100,8 +104,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
           filtered[key] = (tagValue as Record<string, string>[])
             .map((script) => {
               const safeScript: Record<string, string> = {}
-              const safeKeys = ['type', 'textContent', 'id']
-              safeKeys.forEach((s) => {
+              WhitelistAttributes.script.forEach((s) => {
                 if (script[s] || s.startsWith('data-')) {
                   if (s === 'textContent') {
                     try {

@@ -1,10 +1,9 @@
-import type { ActiveHeadEntry, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { UseHeadInput } from '../../'
 import { injectHead } from '../../'
 import { IsBrowser } from '../../env'
 import { clientUseHead as _clientUseHead } from './util/clientUseHead'
 import { serverUseHead as _serverUseHead } from './util/serverUseHead'
-import {HeadEntryOptions} from "@unhead/schema";
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()

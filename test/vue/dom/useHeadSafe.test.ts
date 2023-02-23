@@ -1,10 +1,9 @@
 import { describe, it } from 'vitest'
 import { useHeadSafe } from 'unhead'
-import { basicSchema } from '../../fixtures'
-import { useDom } from '../../fixtures'
-import {createHead} from "@unhead/vue";
-import {renderDOMHead} from "@unhead/dom";
+import { createHead } from '@unhead/vue'
+import { renderDOMHead } from '@unhead/dom'
 import { ref } from 'vue'
+import { basicSchema, useDom } from '../../fixtures'
 
 describe('vue dom useHeadSafe', () => {
   it('basic', async () => {
@@ -30,7 +29,7 @@ describe('vue dom useHeadSafe', () => {
       style: [
         {
           innerHTML: 'body { background: url("javascript:alert(1)") }',
-        }
+        },
       ],
       script: () => [
         {
@@ -40,8 +39,8 @@ describe('vue dom useHeadSafe', () => {
         {
           innerHTML: 'alert(1)',
           textContent: { value: 'alert(1)' },
-        }
-      ]
+        },
+      ],
     })
 
     await renderDOMHead(head, { document: dom.window.document })
