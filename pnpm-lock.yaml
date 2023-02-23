@@ -187,13 +187,11 @@ importers:
       hookable: ^5.4.2
       unhead: workspace:*
       vue: ^3.2.47
-      zhead: ^2.0.2
     dependencies:
       '@unhead/schema': link:../schema
       '@unhead/shared': link:../shared
       hookable: 5.4.2
       unhead: link:../unhead
-      zhead: 2.0.2
     devDependencies:
       vue: 3.2.47
 
