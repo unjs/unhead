@@ -9,10 +9,11 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "1.8.2",
+    "@nuxt-themes/docus": "1.8.3",
     "@nuxtjs/fontaine": "^0.2.4",
     "nuxt": "3.2.2",
-    "nuxt-windicss": "latest"
+    "nuxt-windicss": "latest",
+    "playwright": "^1.30.0"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.10",
