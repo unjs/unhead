@@ -1,7 +1,7 @@
-import type { HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { UseHeadInput } from '../../types'
+import type { HeadEntryOptions } from '@unhead/schema'
+import type { UseHeadSafeInput } from '../../types'
 import { useHeadSafe } from '.'
 
-export function useServerHeadSafe<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}) {
+export function useServerHeadSafe(input: UseHeadSafeInput, options: HeadEntryOptions = {}) {
   return useHeadSafe(input, { ...options, mode: 'server' })
 }
