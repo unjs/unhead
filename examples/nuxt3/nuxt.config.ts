@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     '@unhead/vue': `${rootDir}/packages/vue/src`,
     '@unhead/ssr': `${rootDir}/packages/ssr/src`,
     '@unhead/dom': `${rootDir}/packages/dom/src`,
+    'unhead': `${rootDir}/packages/unhead/src`,
   },
   app: {
     head: {
@@ -22,8 +23,4 @@ export default defineNuxtConfig({
   plugins: [
     '~/plugins/script',
   ],
-
-  // schemaOrg: {
-  //   canonicalHost: 'https://nuxt-schema-org-demo.com',
-  // },
 })

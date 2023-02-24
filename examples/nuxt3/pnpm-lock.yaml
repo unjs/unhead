@@ -1,14 +1,5 @@
 lockfileVersion: 5.4
 
-overrides:
-  unhead: link:../../packages/unhead
-  '@unhead/addons': link:../../packages/addons
-  '@unhead/shared': link:../../packages/shared
-  '@unhead/ssr': link:../../packages/ssr
-  '@unhead/schema': link:../../packages/schema
-  '@unhead/dom': link:../../packages/dom
-  '@unhead/vue': link:../../packages/vue
-
 importers:
 
   .:
@@ -1192,6 +1183,45 @@ packages:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
     dev: true
 
+  /@unhead/dom/1.0.22:
+    resolution: {integrity: sha512-oqTHB6OgiH91grELZLQxxw17la86dUBiGz40fItaiE6ywIImCSGjid10IjH5VVifHSmLaQ08qq+s5HH0s/hZ4w==}
+    dependencies:
+      '@unhead/schema': 1.0.22
+      '@unhead/shared': 1.0.22
+    dev: true
+
+  /@unhead/schema/1.0.22:
+    resolution: {integrity: sha512-Pg+F4UmYhI3Vz1Jio3bjCxEjuhvqlYrybwphsK2XacIDHYGQmcvBtMiB/5Y8Diuy1lGfHFloWaNjMuvAdh5gNA==}
+    dependencies:
+      hookable: 5.4.2
+      zhead: 2.0.4
+    dev: true
+
+  /@unhead/shared/1.0.22:
+    resolution: {integrity: sha512-0PsmYRoATAdCsJ7edBxKXgUq2vP9gznFOLux+OelF5axGTo3WpxeK7BczaPmyz3fVHg6mJWhWOaHIeOktOcTiQ==}
+    dependencies:
+      '@unhead/schema': 1.0.22
+    dev: true
+
+  /@unhead/ssr/1.0.22:
+    resolution: {integrity: sha512-0r9b+QFUAABHqewlqwW+mfNTR4qtWsBe3KCCzhqrNEXFxMBAXqqAtnKRiDJ3YwVZZHJ3YULLu7GlmfivIBM5zA==}
+    dependencies:
+      '@unhead/schema': 1.0.22
+      '@unhead/shared': 1.0.22
+    dev: true
+
+  /@unhead/vue/1.0.22_vue@3.2.47:
+    resolution: {integrity: sha512-v6PdiDYKuRXZYFPB11QvoiFjP7Pw+U59MmA0V4yvRZQSz9KAx4KUefgxi3f6JnLeyyUX1xPEZ1Zv6z6Pm8nyOg==}
+    peerDependencies:
+      vue: '>=2.7 || >=3'
+    dependencies:
+      '@unhead/schema': 1.0.22
+      '@unhead/shared': 1.0.22
+      hookable: 5.4.2
+      unhead: 1.0.22
+      vue: 3.2.47
+    dev: true
+
   /@vercel/nft/0.22.6:
     resolution: {integrity: sha512-gTsFnnT4mGxodr4AUlW3/urY+8JKKB452LwF3m477RFUJTAaDmcz2JqFuInzvdybYIeyIv1sSONEJxsxnbQ5JQ==}
     engines: {node: '>=14'}
@@ -1353,10 +1383,10 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
     dependencies:
-      '@unhead/dom': link:../../packages/dom
-      '@unhead/schema': link:../../packages/schema
-      '@unhead/ssr': link:../../packages/ssr
-      '@unhead/vue': link:../../packages/vue
+      '@unhead/dom': 1.0.22
+      '@unhead/schema': 1.0.22
+      '@unhead/ssr': 1.0.22
+      '@unhead/vue': 1.0.22_vue@3.2.47
       vue: 3.2.47
     dev: true
 
@@ -3298,7 +3328,7 @@ packages:
       '@nuxt/telemetry': 2.1.10
       '@nuxt/ui-templates': 1.1.1
       '@nuxt/vite-builder': 3.2.2_vue@3.2.47
-      '@unhead/ssr': link:../../packages/ssr
+      '@unhead/ssr': 1.0.22
       '@vue/reactivity': 3.2.47
       '@vue/shared': 3.2.47
       '@vueuse/head': 1.0.26_vue@3.2.47
@@ -3328,7 +3358,7 @@ packages:
       ufo: 1.1.0
       unctx: 2.1.2
       unenv: 1.2.0
-      unhead: link:../../packages/unhead
+      unhead: 1.0.22
       unimport: 2.2.4
       unplugin: 1.1.0
       untyped: 1.2.2
@@ -4394,6 +4424,15 @@ packages:
       pathe: 1.1.0
     dev: true
 
+  /unhead/1.0.22:
+    resolution: {integrity: sha512-CIA8aEFHfoW3uABL+inYqDz5h50xgK3mwQQzPL4WtJRG9fEFciM2mjLtW7djvrnUlcGyf/tgVTOcAkhHb+320Q==}
+    dependencies:
+      '@unhead/dom': 1.0.22
+      '@unhead/schema': 1.0.22
+      '@unhead/shared': 1.0.22
+      hookable: 5.4.2
+    dev: true
+
   /unimport/2.2.4:
     resolution: {integrity: sha512-qMgmeEGqqrrmEtm0dqxMG37J6xBtrriqxq9hILvDb+e6l2F0yTnJomLoCCp0eghLR7bYGeBsUU5Y0oyiUYhViw==}
     dependencies:
@@ -4789,6 +4828,10 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
+
+  /zhead/2.0.4:
+    resolution: {integrity: sha512-V4R94t3ifk9AURym6OskbKcnowzgp5Z88tkoL/NF67vyryNxC62u6mx5F1Ux4oh4+YN7FFmKYEyWy6m5kfPH6g==}
     dev: true
 
   /zip-stream/4.1.0:

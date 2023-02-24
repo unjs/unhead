@@ -30,6 +30,9 @@ useHead({
 <template>
 <div>
   Nuxt module playground!
+  <NuxtLink to="/delayed">
+    delayed
+  </NuxtLink>
   <button @click="count++">
     Click me
   </button>
