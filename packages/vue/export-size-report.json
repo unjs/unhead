@@ -16,6 +16,13 @@
   },
   "exports": [
     {
+      "name": "useServerSeoMeta",
+      "path": "dist/index.mjs",
+      "minified": 1510,
+      "minzipped": 729,
+      "bundled": 3175
+    },
+    {
       "name": "useServerHeadSafe",
       "path": "dist/index.mjs",
       "minified": 1425,
@@ -39,9 +46,9 @@
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1447,
+      "minified": 1453,
       "minzipped": 704,
-      "bundled": 3039
+      "bundled": 3057
     },
     {
       "name": "useTagMetaFlat",
