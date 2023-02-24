@@ -1,8 +1,9 @@
-import type { PluginOptions } from './types'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
+import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
-export default (args: PluginOptions = {}) => {
+export default () => {
   return [
-    TreeshakeServerComposables.vite(args),
+    TreeshakeServerComposables.vite(),
+    UseSeoMetaTransform.vite(),
   ]
 }

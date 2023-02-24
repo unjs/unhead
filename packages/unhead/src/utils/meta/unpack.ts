@@ -52,30 +52,34 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
       if (value === null)
         return '_null'
 
-      if (typeof value === 'object') {
-        const definition = MetaPackingSchema[key]
+      if (typeof value === 'object')
+        return resolvePackedMetaObjectValue(value, key)
 
-        // refresh is weird...
-        if (key === 'refresh')
-          return `${value.seconds};url=${value.url}`
-
-        return unpackToString(
-          changeKeyCasingDeep(value), {
-            entrySeparator: ', ',
-            keyValueSeparator: '=',
-            resolve({ value, key }) {
-              if (value === null)
-                return ''
-              if (typeof value === 'boolean')
-                return `${key}`
-            },
-            ...definition?.unpack,
-          },
-        )
-      }
       return typeof value === 'number' ? value.toString() : value
     },
   })
   // remove keys with defined but empty content
   return [...extras, ...meta].filter(v => typeof v.content === 'undefined' || v.content !== '_null')
+}
+
+export function resolvePackedMetaObjectValue(value: string, key: string) {
+  const definition = MetaPackingSchema[key]
+
+  // refresh is weird...
+  if (key === 'refresh')
+    return `${value.seconds};url=${value.url}`
+
+  return unpackToString(
+    changeKeyCasingDeep(value), {
+      entrySeparator: ', ',
+      keyValueSeparator: '=',
+      resolve({ value, key }) {
+        if (value === null)
+          return ''
+        if (typeof value === 'boolean')
+          return `${key}`
+      },
+      ...definition?.unpack,
+    },
+  )
 }
