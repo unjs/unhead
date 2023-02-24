@@ -66,7 +66,7 @@ describe('unhead e2e shorthands', () => {
       script: [
         'console.log(\'Hello World\')',
         '/my-script.js',
-        'https://example.com/script.js'
+        'https://example.com/script.js',
       ],
     })
 
@@ -91,7 +91,7 @@ describe('unhead e2e shorthands', () => {
       script: [
         'console.log(\'Hello World\')',
         '/my-script.js',
-        'https://example.com/script.js'
+        'https://example.com/script.js',
       ],
     })
 
@@ -123,7 +123,7 @@ describe('unhead e2e shorthands', () => {
       script: [
         {
           innerHTML: 'console.log(\'Hello World\')',
-        }
+        },
       ],
     }
     // i.e App.vue

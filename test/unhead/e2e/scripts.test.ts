@@ -1,8 +1,8 @@
-import {describe, it} from "vitest";
-import {createHead, useHead} from "unhead";
-import {renderSSRHead} from "@unhead/ssr";
-import {useDom} from "../../fixtures";
-import {renderDOMHead} from "@unhead/dom";
+import { describe, it } from 'vitest'
+import { createHead, useHead } from 'unhead'
+import { renderSSRHead } from '@unhead/ssr'
+import { renderDOMHead } from '@unhead/dom'
+import { useDom } from '../../fixtures'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {
@@ -13,7 +13,7 @@ describe('unhead e2e scripts', () => {
       script: [
         {
           innerHTML: 'console.log(\'Hello World\')',
-        }
+        },
       ],
     }
     // i.e App.vue
@@ -36,7 +36,7 @@ describe('unhead e2e scripts', () => {
     const csrHead = createHead()
     csrHead.push(input)
 
-    await renderDOMHead(csrHead, {document: dom.window.document})
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
