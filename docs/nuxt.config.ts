@@ -1,10 +1,12 @@
+
+// disable studio
+process.env.THEME_DEV_STUDIO_PATH='@nuxt-themes/tokens'
+
 export default defineNuxtConfig({
   extends: [
     '@nuxt-themes/docus',
     'nuxt-seo-kit',
   ],
-
-  workspaceDir: './',
 
   runtimeConfig: {
     indexable: true,
@@ -18,13 +20,13 @@ export default defineNuxtConfig({
     }
   },
 
-  vite: {
-    server: {
-      fs: {
-        allow: ['..'],
-      }
-    }
-  },
+  // vite: {
+  //   server: {
+  //     fs: {
+  //       allow: ['..'],
+  //     }
+  //   }
+  // },
 
   modules: [
     'nuxt-windicss',
@@ -34,8 +36,18 @@ export default defineNuxtConfig({
   hooks: {
     'nitro:init'(nitro) {
       // prev [/[/\\]node_modules[/\\]/, /[/\\]\.git[/\\]/],
-      nitro.options.imports.exclude = [/[/\\]\.git[/\\]/]
+      // nitro.options.imports.exclude = [/[/\\]\.git[/\\]/]
     }
+  },
+
+  studio: {
+    enabled: false,
+  },
+
+  pinceau: {
+    studio: false,
+    debug: true,
+    followSymbolicLinks: false,
   },
 
   app: {
@@ -58,17 +70,8 @@ export default defineNuxtConfig({
       ],
     },
   },
-
+  //
   fontMetrics: {
     fonts: ['Inter'],
-  },
-
-  nitro: {
-    prerender: {
-      crawlLinks: true,
-      routes: [
-        '/',
-      ],
-    },
   },
 })
