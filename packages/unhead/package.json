@@ -38,9 +38,7 @@
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "hookable": "^5.4.2"
-  },
-  "devDependencies": {
+    "hookable": "^5.4.2",
     "packrup": "^0.1.0"
   }
 }

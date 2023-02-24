@@ -1,10 +1,10 @@
+import { pathToFileURL } from 'node:url'
 import { createUnplugin } from 'unplugin'
-import { createFilter } from '@rollup/pluginutils'
 import type { Transformer } from 'unplugin-ast'
 import { transform } from 'unplugin-ast'
 import type { CallExpression } from '@babel/types'
 import type { ConfigEnv, UserConfig } from 'vite'
-import type { PluginOptions } from './types'
+import { parseQuery, parseURL } from 'ufo'
 
 const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> => ({
   onNode: node =>
@@ -16,15 +16,7 @@ const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> =
   },
 })
 
-export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userConfig = {}) => {
-  const filter = createFilter([
-    /\.[jt]sx?$/,
-    /\.vue$/,
-  ], [
-    'node_modules',
-  ])
-  let root = userConfig.root
-
+export const TreeshakeServerComposables = createUnplugin(() => {
   let enabled = false
 
   return {
@@ -32,17 +24,27 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
     enforce: 'post',
 
     transformInclude(id) {
-      if (!enabled)
-        return false
-      // make sure we run on files from root
-      if (root && !id.startsWith(root))
-        return false
-      if (!filter(id))
-        return false
+      const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
+      const { type } = parseQuery(search)
+
+      // vue files
+      if (pathname.endsWith('.vue') && (type === 'script' || !search))
+        return true
+
+      // js files
+      if (pathname.match(/\.((c|m)?j|t)sx?$/g))
+        return true
+
+      return false
     },
 
     async transform(code, id) {
-      if (!code.includes('useServerHead') && !code.includes('useSeoMeta') && !code.includes('useSchemaOrg'))
+      if (
+        !code.includes('useServerHead')
+        && !code.includes('useServerHeadSafe')
+        && !code.includes('useServerSeoMeta')
+        && !code.includes('useSchemaOrg')
+      )
         return null
 
       let transformed
@@ -52,7 +54,8 @@ export const TreeshakeServerComposables = createUnplugin<PluginOptions>((userCon
           transformer: [
             RemoveFunctions([
               'useServerHead',
-              'useSeoMeta',
+              'useServerHeadSafe',
+              'useServerSeoMeta',
               // plugins
               'useSchemaOrg',
             ]),
