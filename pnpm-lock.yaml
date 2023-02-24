@@ -185,7 +185,6 @@ importers:
       '@unhead/schema': link:../schema
       '@unhead/shared': link:../shared
       hookable: 5.4.2
-    devDependencies:
       packrup: 0.1.0
 
   packages/vue:
@@ -9408,7 +9407,7 @@ packages:
 
   /packrup/0.1.0:
     resolution: {integrity: sha512-HnUl9ztHGty5ZK13WM8Q7854SWPKH/eCT+MiTO0P1qCu1Y4S5PPJ8E9MwD3cnjSr7PUPzXDnmOVJIKM043OfJQ==}
-    dev: true
+    dev: false
 
   /param-case/3.0.4:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
