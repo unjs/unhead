@@ -4,12 +4,16 @@ const coreComposableNames = [
 
 export const composableNames = [
   'useHead',
+  'useSeoMeta',
+  'useHeadSafe',
+  'useServerHead',
+  'useServerSeoMeta',
+  'useServerHeadSafe',
+  // deprecated
   'useTagTitle',
   'useTagBase',
   'useTagMeta',
   'useTagMetaFlat',
-  // alias
-  'useSeoMeta',
   'useTagLink',
   'useTagScript',
   'useTagStyle',
@@ -17,8 +21,6 @@ export const composableNames = [
   'useHtmlAttrs',
   'useBodyAttrs',
   'useTitleTemplate',
-  // server only composables
-  'useServerHead',
   'useServerTagTitle',
   'useServerTagBase',
   'useServerTagMeta',
