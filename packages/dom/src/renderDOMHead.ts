@@ -162,10 +162,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         const props = $el.getAttributeNames()
           .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
 
-        const tmpTag: HeadTag = { tag: elTag, props,  }
-        if ($el.innerHTML) {
+        const tmpTag: HeadTag = { tag: elTag, props }
+        if ($el.innerHTML)
           tmpTag.innerHTML = $el.innerHTML
-        }
+
         const tmpRenderId = hashTag(tmpTag)
         // avoid using DOM API, let's use our own hash verification
         let matchIdx = queue.findIndex(ctx => ctx?.renderId === tmpRenderId)
