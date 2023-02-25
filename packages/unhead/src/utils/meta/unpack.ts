@@ -62,7 +62,7 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   return [...extras, ...meta].filter(v => typeof v.content === 'undefined' || v.content !== '_null')
 }
 
-export function resolvePackedMetaObjectValue(value: string, key: string) : string {
+export function resolvePackedMetaObjectValue(value: string, key: string): string {
   const definition = MetaPackingSchema[key]
 
   // refresh is weird...

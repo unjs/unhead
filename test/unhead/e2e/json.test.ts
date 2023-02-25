@@ -74,7 +74,7 @@ describe('unhead e2e json', () => {
           type: 'application/json',
           children: {
             foo: 'bar',
-          }
+          },
         },
       ],
     })
@@ -100,7 +100,7 @@ describe('unhead e2e json', () => {
           type: 'application/json',
           children: {
             foo: 'bar',
-          }
+          },
         },
       ],
     })
@@ -122,5 +122,4 @@ describe('unhead e2e json', () => {
       </body></html>"
     `)
   })
-
 })

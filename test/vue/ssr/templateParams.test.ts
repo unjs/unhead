@@ -63,5 +63,4 @@ describe('ssr vue templateParams', () => {
       }
     `)
   })
-
 })

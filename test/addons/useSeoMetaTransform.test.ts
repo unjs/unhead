@@ -292,7 +292,7 @@ import.meta.hot.accept((mod) => {
 });
 import _export_sfc from "plugin-vue:export-helper";
 export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/home/harlan/packages/nuxt-head/playground/app.vue"]]);`,
-      'app.js'
+    'app.js',
     )
 
     expect(code).toBeDefined()
@@ -416,7 +416,7 @@ import.meta.hot.accept((mod) => {
 });
 import _export_sfc from "plugin-vue:export-helper";
 export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/home/harlan/packages/nuxt-head/playground/app.vue"]]);`,
-      'app.js'
+    'app.js',
     )
 
     expect(code).toBeDefined()
@@ -487,5 +487,4 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
     expect(code).match(/useServerHead/)
     expect(code).match(/title:/)
   })
-
 })
