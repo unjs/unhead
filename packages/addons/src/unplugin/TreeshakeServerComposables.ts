@@ -71,9 +71,6 @@ export const TreeshakeServerComposables = createUnplugin(() => {
         enabled = true
     },
     vite: {
-      async config(config) {
-        root = root || config.root || process.cwd()
-      },
       apply(config: UserConfig, env: ConfigEnv) {
         if (!env.ssrBuild) {
           enabled = true
