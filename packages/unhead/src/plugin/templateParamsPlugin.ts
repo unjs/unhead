@@ -5,7 +5,7 @@ function processTemplateParams(s: string, config: TemplateParams) {
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   const replacer = (preserveToken?: boolean) => (_: unknown, token: string) => {
     if (token === 'pageTitle' || token === 's')
-      return '%s'
+      return config.pageTitle
 
     let val
     // support . notation
@@ -41,9 +41,11 @@ export function TemplateParamsPlugin() {
       'tags:resolve': (ctx) => {
         const { tags } = ctx
         // find templateParams
+        const title = tags.find(tag => tag.tag === 'title')?.textContent
         const templateParamsIdx = tags.findIndex(tag => tag.tag === 'templateParams')
         if (templateParamsIdx !== -1) {
           const templateParams = tags[templateParamsIdx].textContent as unknown as TemplateParams
+          templateParams.pageTitle = templateParams.pageTitle || title || ''
           delete tags[templateParamsIdx]
           for (const tag of tags) {
             if (tag) {

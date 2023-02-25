@@ -27,11 +27,11 @@ export const CorePlugins = () => [
   // dedupe needs to come first
   DedupesTagsPlugin(),
   SortTagsPlugin(),
+  TemplateParamsPlugin(),
   TitleTemplatePlugin(),
   ProvideTagHashPlugin(),
   EventHandlersPlugin(),
   DeprecatedTagAttrPlugin(),
-  TemplateParamsPlugin(),
 ]
 
 export const DOMPlugins = (options: CreateHeadOptions = {}) => [
