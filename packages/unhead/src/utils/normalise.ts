@@ -48,7 +48,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
   // normalise tag content
   ;(['innerHTML', 'textContent'] as const).forEach((k) => {
     // avoid accidental XSS in json blobs
-    if (tag.tag === 'script' && tag[k] && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
+    if (tag.tag === 'script' && typeof tag[k] === 'string' && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
       // recreate the json blob, ensure it's JSON
       try {
         // @ts-expect-error untyped
