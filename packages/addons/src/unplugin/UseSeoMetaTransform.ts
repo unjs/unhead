@@ -35,6 +35,9 @@ export const UseSeoMetaTransform = createUnplugin(() => {
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
+      if (pathname.includes('node_modules'))
+        return false
+
       // vue files
       if (pathname.endsWith('.vue') && (type === 'script' || !search))
         return true
@@ -112,7 +115,7 @@ export const UseSeoMetaTransform = createUnplugin(() => {
             }
             if (calleeName === 'useServerSeoMeta') {
               if (output.length)
-                output.push('})')
+                output.push('});')
               output.push('useServerHead({', '  meta: [')
             }
             else if (calleeName === 'useSeoMeta') {
@@ -162,7 +165,7 @@ export const UseSeoMetaTransform = createUnplugin(() => {
             if (output) {
               if (meta.length)
                 output.push('  ]')
-              output.push('})')
+              output.push('});')
               s.overwrite(node.start, node.end, output.join('\n'))
             }
           }

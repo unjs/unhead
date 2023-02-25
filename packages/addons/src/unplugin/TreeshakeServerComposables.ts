@@ -27,6 +27,9 @@ export const TreeshakeServerComposables = createUnplugin(() => {
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
+      if (pathname.includes('node_modules'))
+        return false
+
       // vue files
       if (pathname.endsWith('.vue') && (type === 'script' || !search))
         return true
