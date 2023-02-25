@@ -211,7 +211,7 @@ describe('UseSeoMetaTransform', () => {
       "import { useServerSeoMeta, useServerHead, useHead, SomethingRandom } from 'unhead'
       useHead({
         title: 'Hello',
-      })
+      });
       useServerHead({
         meta: [
           { name: 'description', content: 'World' },
@@ -228,6 +228,7 @@ describe('UseSeoMetaTransform', () => {
     expect(code).toMatchInlineSnapshot(`
       "useHead({
         title: 'Hello',
+        meta: [
           { name: 'description', content: 'World' },
         ]
       })"
