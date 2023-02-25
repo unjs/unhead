@@ -24,6 +24,10 @@ export const TreeshakeServerComposables = createUnplugin(() => {
     enforce: 'post',
 
     transformInclude(id) {
+      // should only run on client builds
+      if (!enabled)
+        return false
+
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
@@ -47,9 +51,8 @@ export const TreeshakeServerComposables = createUnplugin(() => {
         && !code.includes('useServerHeadSafe')
         && !code.includes('useServerSeoMeta')
         && !code.includes('useSchemaOrg')
-      ) {
+      )
         return
-      }
 
       let transformed
       try {
