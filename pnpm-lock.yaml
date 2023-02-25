@@ -12,6 +12,7 @@ importers:
       '@types/jsdom': ^21.1.0
       '@vitest/ui': ^0.28.5
       '@vue/server-renderer': ^3.2.47
+      acorn-loose: ^8.3.0
       bumpp: ^9.0.0
       eslint: ^8.34.0
       fs-extra: ^11.1.0
@@ -27,6 +28,7 @@ importers:
       '@types/jsdom': 21.1.0
       '@vitest/ui': 0.28.5
       '@vue/server-renderer': 3.2.47_vue@3.2.47
+      acorn-loose: 8.3.0
       bumpp: 9.0.0
       eslint: 8.34.0
       fs-extra: 11.1.0
@@ -3462,6 +3464,13 @@ packages:
       '@unhead/shared': 1.1.0
     dev: true
 
+  /@unhead/dom/1.1.2:
+    resolution: {integrity: sha512-lqouW+sm1BPAT7Asykz6y/+qfW+kTQB0hPRArtLYwpggkJxDtjBr5ZtHMIeTi3TWSMkrn+xb1Ggs02yasWRDgA==}
+    dependencies:
+      '@unhead/schema': 1.1.2
+      '@unhead/shared': 1.1.2
+    dev: true
+
   /@unhead/schema/1.0.22:
     resolution: {integrity: sha512-Pg+F4UmYhI3Vz1Jio3bjCxEjuhvqlYrybwphsK2XacIDHYGQmcvBtMiB/5Y8Diuy1lGfHFloWaNjMuvAdh5gNA==}
     dependencies:
@@ -3471,6 +3480,13 @@ packages:
 
   /@unhead/schema/1.1.0:
     resolution: {integrity: sha512-y2CnibHH9HTHTm0ajXABxs3frU5cgMc7KTdWrzi+Rdtp+bEIRR2zmJM/f+s4USOxT4I55FLYcl2UxULjh/2BCQ==}
+    dependencies:
+      hookable: 5.4.2
+      zhead: 2.0.4
+    dev: true
+
+  /@unhead/schema/1.1.2:
+    resolution: {integrity: sha512-GMeVv3PjOwqBF3tDcFYU1VCF1lhojhyS/zLb0XrODKUTncIeM2LCTr2+UuuNEYyI5bPWDOpou6Tk3Sm4QG3rVA==}
     dependencies:
       hookable: 5.4.2
       zhead: 2.0.4
@@ -3486,6 +3502,12 @@ packages:
     resolution: {integrity: sha512-gpan1CFQFoCsa4t28WAz+kxhvShomGvvnLGPZAc9LFglWkWa0+/9xKuZTz7j08KdQvbHfWvgGI2ptvL4PX5OtA==}
     dependencies:
       '@unhead/schema': 1.1.0
+    dev: true
+
+  /@unhead/shared/1.1.2:
+    resolution: {integrity: sha512-SofQ9+juxD4L6Mrmgyr1FJBwtxSz5aRRu0vxSCNwhhfMFFpT9YTMjTJ4w1KTZbFBWH62VyVFgB8cYIOmtw9vHQ==}
+    dependencies:
+      '@unhead/schema': 1.1.2
     dev: true
 
   /@unhead/ssr/1.0.22:
@@ -4324,6 +4346,13 @@ packages:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
+    dependencies:
+      acorn: 8.8.2
+    dev: true
+
+  /acorn-loose/8.3.0:
+    resolution: {integrity: sha512-75lAs9H19ldmW+fAbyqHdjgdCrz0pWGXKmnqFoh8PyVd1L2RIb4RzYrSjmopeqv3E1G3/Pimu6GgLlrGbrkF7w==}
+    engines: {node: '>=0.4.0'}
     dependencies:
       acorn: 8.8.2
     dev: true
@@ -9087,7 +9116,7 @@ packages:
       ufo: 1.1.0
       unctx: 2.1.2
       unenv: 1.2.0
-      unhead: 1.1.0
+      unhead: 1.1.2
       unimport: 2.2.4
       unplugin: 1.1.0
       untyped: 1.2.2
@@ -11688,12 +11717,12 @@ packages:
       hookable: 5.4.2
     dev: true
 
-  /unhead/1.1.0:
-    resolution: {integrity: sha512-WL4GDvXtVLD5y7+o4oRPHmEg2W/kJNgtpmGX/2KL79uvx2RgGJvxh08pcGKbj1os0fkkxUijIc2eNYhANWGLRA==}
+  /unhead/1.1.2:
+    resolution: {integrity: sha512-dajTNJZafU3W+Gsn55XGWeQ7DjYd9NAtOD0UkXVbQDOvU1FfUEfzcVZhGoS+lh9fnT9TFJWzFTc1TJJwelunPQ==}
     dependencies:
-      '@unhead/dom': 1.1.0
-      '@unhead/schema': 1.1.0
-      '@unhead/shared': 1.1.0
+      '@unhead/dom': 1.1.2
+      '@unhead/schema': 1.1.2
+      '@unhead/shared': 1.1.2
       hookable: 5.4.2
       packrup: 0.1.0
     dev: true

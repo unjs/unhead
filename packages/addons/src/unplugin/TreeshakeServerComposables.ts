@@ -17,7 +17,7 @@ const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> =
 })
 
 export const TreeshakeServerComposables = createUnplugin(() => {
-  let enabled = false
+  let enabled = true
 
   return {
     name: 'unhead:remove-server-composables',
@@ -47,8 +47,9 @@ export const TreeshakeServerComposables = createUnplugin(() => {
         && !code.includes('useServerHeadSafe')
         && !code.includes('useServerSeoMeta')
         && !code.includes('useSchemaOrg')
-      )
-        return null
+      ) {
+        return
+      }
 
       let transformed
       try {
@@ -70,13 +71,13 @@ export const TreeshakeServerComposables = createUnplugin(() => {
       return transformed
     },
     webpack(ctx) {
-      if (ctx.name !== 'server')
-        enabled = true
+      if (ctx.name === 'server')
+        enabled = false
     },
     vite: {
       apply(config: UserConfig, env: ConfigEnv) {
-        if (!env.ssrBuild) {
-          enabled = true
+        if (env.ssrBuild) {
+          enabled = false
           return true
         }
         return false

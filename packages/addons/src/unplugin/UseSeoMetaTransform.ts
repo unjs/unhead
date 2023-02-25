@@ -93,7 +93,7 @@ export const UseSeoMetaTransform = createUnplugin(() => {
             }).includes(_node.callee.name)) {
             const node = _node as SimpleCallExpression
 
-            const calleeName = importNames[(node.callee as any).name]
+            const calleeName = importNames[(node.callee as any).name] || (node.callee as any).name
 
             const properties = node.arguments[0].properties as ObjectProperty[]
             if (!properties)
@@ -165,7 +165,7 @@ export const UseSeoMetaTransform = createUnplugin(() => {
             if (output) {
               if (meta.length)
                 output.push('  ]')
-              output.push('});')
+              output.push('})')
               s.overwrite(node.start, node.end, output.join('\n'))
             }
           }
