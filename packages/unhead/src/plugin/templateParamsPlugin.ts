@@ -19,9 +19,9 @@ function processTemplateParams(s: string, config: TemplateParams) {
   }
   let template = s
     // @ts-expect-error untyped
-    .replace(/%(\w+\.?\w+)%/g, replacer())
+    .replace(/%(\w+\.?\w*)%/g, replacer())
     // @ts-expect-error untyped
-    .replace(/%(\w+\.?\w+)/g, replacer(true))
+    .replace(/%(\w+\.?\w*)/g, replacer(true))
     .trim()
 
   if (config.separator) {
@@ -47,13 +47,13 @@ export function TemplateParamsPlugin() {
           const templateParams = tags[templateParamsIdx].textContent as unknown as TemplateParams
           templateParams.pageTitle = templateParams.pageTitle || title || ''
           delete tags[templateParamsIdx]
-          for (const tag of tags) {
-            if (tag) {
-              if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string')
-                tag.textContent = processTemplateParams(tag.textContent, templateParams)
-              if (tag.tag === 'meta' && typeof tag.props.content === 'string')
-                tag.props.content = processTemplateParams(tag.props.content, templateParams)
-            }
+          for (const tag of tags.filter(Boolean)) {
+            if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string')
+              tag.textContent = processTemplateParams(tag.textContent, templateParams)
+            else if (tag.tag === 'meta' && typeof tag.props.content === 'string')
+              tag.props.content = processTemplateParams(tag.props.content, templateParams)
+            else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && typeof tag.innerHTML === 'string')
+              tag.innerHTML = processTemplateParams(tag.innerHTML, templateParams)
           }
         }
         ctx.tags = tags.filter(Boolean)

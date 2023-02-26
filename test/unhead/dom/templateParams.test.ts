@@ -16,6 +16,17 @@ describe('templateParams', () => {
       },
       title: 'My Page',
       titleTemplate: '%s %separator %site.name',
+      script: [
+        {
+          id: 'site-data',
+          type: 'application/json',
+          innerHTML: {
+            pageTitle: '%s',
+            siteName: '%site.name',
+            siteUrl: '%site.url',
+          },
+        },
+      ],
       meta: [
         {
           name: 'description',
@@ -35,7 +46,7 @@ describe('templateParams', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>My Page - My Site</title><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"></head>
+      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"></head>
       <body>
 
       <div>
