@@ -259,6 +259,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     useSeoMeta({
       description: "Hi, welcome to the %envName v%app.version of %siteName."
     });
+    useSeoMeta({
+      title: data.value.page?.title,
+    })
     const __returned__ = { route };
     Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
     return __returned__;
@@ -322,6 +325,9 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
           { name: 'description', content: \\"Hi, welcome to the %envName v%app.version of %siteName.\\" },
         ]
       });
+          useHead({
+        title: data.value.page?.title,
+      })
           const __returned__ = { route };
           Object.defineProperty(__returned__, \\"__isScriptSetup\\", { enumerable: false, value: true });
           return __returned__;

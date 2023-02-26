@@ -116,9 +116,9 @@ export const UseSeoMetaTransform = createUnplugin(() => {
             if (calleeName === 'useServerSeoMeta') {
               if (output.length)
                 output.push('});')
-              output.push('useServerHead({', '  meta: [')
+              output.push('useServerHead({')
             }
-            else if (calleeName === 'useSeoMeta') {
+            if (meta.length) {
               output.push('  meta: [')
             }
             meta.forEach((property) => {
