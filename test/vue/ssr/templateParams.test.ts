@@ -49,8 +49,8 @@ describe('ssr vue templateParams', () => {
           innerHTML: {
             title: '%s',
             description: '%site.description',
-          }
-        }
+          },
+        },
       ],
       templateParams: {
         titleSeparator: '·',
@@ -59,8 +59,8 @@ describe('ssr vue templateParams', () => {
         siteDescription: 'A Nuxt 3 playground',
         language: 'en',
         site: {
-          description: 'A Nuxt 3 playground'
-        }
+          description: 'A Nuxt 3 playground',
+        },
       },
     })
 
