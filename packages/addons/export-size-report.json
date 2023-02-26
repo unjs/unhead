@@ -11,8 +11,8 @@
       "unhead",
       "unplugin",
       "unplugin-ast",
-      "estree-walker",
-      "@babel/types"
+      "@babel/types",
+      "estree-walker"
     ],
     "versions": {
       "export-size": "0.5.2",
