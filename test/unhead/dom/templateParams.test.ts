@@ -71,7 +71,7 @@ describe('templateParams', () => {
         subPage: null, // empty
       },
       title: 'My Page',
-      titleTemplate: '%s %separator %subPage% %separator %site.name',
+      titleTemplate: '%s %separator %subPage %separator %site.name',
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`

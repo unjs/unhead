@@ -43,12 +43,24 @@ describe('ssr vue templateParams', () => {
           content: 'Welcome to %siteName!',
         },
       ],
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: {
+            title: '%s',
+            description: '%site.description',
+          }
+        }
+      ],
       templateParams: {
         titleSeparator: '·',
         siteUrl: 'https://harlanzw.com',
         siteName: 'Nuxt Playground',
         siteDescription: 'A Nuxt 3 playground',
         language: 'en',
+        site: {
+          description: 'A Nuxt 3 playground'
+        }
       },
     })
 
@@ -58,7 +70,8 @@ describe('ssr vue templateParams', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>hello world · Nuxt Playground</title>
-      <meta name=\\"description\\" content=\\"Welcome to Nuxt Playground!\\">",
+      <meta name=\\"description\\" content=\\"Welcome to Nuxt Playground!\\">
+      <script type=\\"application/json\\">{\\"title\\":\\"hello world\\",\\"description\\":\\"A Nuxt 3 playground\\"}</script>",
         "htmlAttrs": "",
       }
     `)

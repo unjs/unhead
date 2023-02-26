@@ -3,25 +3,23 @@ import type { TemplateParams } from '@unhead/schema'
 
 function processTemplateParams(s: string, config: TemplateParams) {
   // for each %<word> token replace it with the corresponding runtime config or an empty value
-  const replacer = (preserveToken?: boolean) => (_: unknown, token: string) => {
+  const sub = (_: unknown, token: string) => {
+    let val: string
     if (token === 'pageTitle' || token === 's')
-      return config.pageTitle
-
-    let val
+      val = config.pageTitle as string
     // support . notation
-    if (token.includes('.'))
+    else if (token.includes('.'))
       // @ts-expect-error untyped
-      val = token.split('.').reduce((acc, key) => acc[key] || {}, config)
+      val = token.split('.').reduce((acc, key) => acc[key] || '', config) as string
     else
-      val = config[token]
-
-    return val || (preserveToken ? token : '')
+      val = config[token] as string
+    return val || ''
   }
   let template = s
-    // @ts-expect-error untyped
-    .replace(/%(\w+\.?\w*)%/g, replacer())
-    // @ts-expect-error untyped
-    .replace(/%(\w+\.?\w*)/g, replacer(true))
+    // replace words which are using dot notation
+    .replace(/%(\w+\.+\w+)/g, sub)
+    // replace non dot notation
+    .replace(/%(\w+)/g, sub)
     .trim()
 
   if (config.separator) {
