@@ -20,6 +20,7 @@
       "unhead": ["packages/unhead/src"],
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
+      "@unhead/vue/polyfill": ["packages/vue/src/VueUseHeadPolyfill.ts"],
       "@unhead/vue": ["packages/vue/src"],
       "@unhead/addons": ["packages/addons/src"],
       "@unhead/addons/*": ["packages/addons/*"],
@@ -27,8 +28,7 @@
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
-      "@unhead/shared/*": ["packages/shared/*"],
-      "#head-runtime": ["packages/vue/src/runtime/client"],
+      "@unhead/shared/*": ["packages/shared/*"]
     }
   },
 }

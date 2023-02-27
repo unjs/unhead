@@ -18,6 +18,7 @@ export default defineConfig({
       '@unhead/ssr': resolve(__dirname, 'packages/ssr/src'),
       '@unhead/addons': resolve(__dirname, 'packages/addons/src'),
       '@unhead/dom': resolve(__dirname, 'packages/dom/src'),
+      '@unhead/vue/polyfill': resolve(__dirname, 'packages/vue/src/VueUseHeadPolyfill.ts'),
       '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
     },
   },

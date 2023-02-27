@@ -21,6 +21,11 @@
       "types": "./dist/index.d.ts",
       "require": "./dist/index.cjs",
       "import": "./dist/index.mjs"
+    },
+    "./polyfill": {
+      "types": "./dist/polyfill.d.ts",
+      "require": "./dist/polyfill.cjs",
+      "import": "./dist/polyfill.mjs"
     }
   },
   "main": "dist/index.cjs",

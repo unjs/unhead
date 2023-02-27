@@ -30,6 +30,8 @@ export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions,
       // vue 3 only
       if (Vue3) {
         app.config.globalProperties.$unhead = head
+        // for @vueuse/head polyfill
+        app.config.globalProperties.$head = head
         app.provide(headSymbol, head)
       }
     },

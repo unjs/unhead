@@ -10,5 +10,6 @@ export default defineBuildConfig({
   externals: ['vue'],
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/VueUseHeadPolyfill', name: 'polyfill' },
   ],
 })
