@@ -13,7 +13,7 @@
     "@nuxtjs/fontaine": "^0.2.4",
     "nuxt": "3.2.2",
     "nuxt-windicss": "latest",
-    "playwright": "^1.30.0"
+    "playwright": "^1.31.1"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.11",
