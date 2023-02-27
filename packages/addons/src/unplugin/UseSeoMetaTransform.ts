@@ -118,9 +118,9 @@ export const UseSeoMetaTransform = createUnplugin(() => {
                 output.push('});')
               output.push('useServerHead({')
             }
-            if (meta.length) {
+            if (meta.length)
               output.push('  meta: [')
-            }
+
             meta.forEach((property) => {
               if (output === false)
                 return
