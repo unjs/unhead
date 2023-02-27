@@ -49,6 +49,12 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   return head
 }
 
+export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+  const head = createHeadCore<T>(options)
+  setActiveHead(head)
+  return head
+}
+
 /**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.

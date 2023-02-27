@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { useHead } from '@unhead/vue'
-import { createHead } from '@unhead/vue/polyfill'
+import { createHead, useHead } from '@unhead/vue'
+import { polyfillAsVueUseHead } from '@unhead/vue/polyfill'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -31,7 +31,7 @@ describe('vue e2e vueuse/head', () => {
     }
 
     // ssr render on the index page
-    const ssrHead = createHead()
+    const ssrHead = polyfillAsVueUseHead(createHead())
 
     ssrHead.push(AppSchema)
     ssrHead.addReactiveEntry(IndexSchema)
@@ -51,9 +51,9 @@ describe('vue e2e vueuse/head', () => {
 
     // mount client side with same data
     const dom = useDom(data)
-    const csrHead = createHead({
+    const csrHead = polyfillAsVueUseHead(createHead({
       document: dom.window.document,
-    })
+    }))
 
     csrHead.push(AppSchema)
     const index = csrHead.addReactiveEntry(IndexSchema)

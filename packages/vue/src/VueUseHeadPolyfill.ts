@@ -1,6 +1,5 @@
-import type { CreateHeadOptions, HeadEntryOptions, MergeHead } from '@unhead/schema'
+import type { HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { VueHeadClient } from './createHead'
-import { createHead as _createHead } from './createHead'
 import type { UseHeadInput } from './'
 import { useHead } from './'
 
@@ -35,24 +34,24 @@ export type VueHeadClientPollyFill<T extends MergeHead> = VueHeadClient<T> & {
   unhead: VueHeadClient<T>
 }
 
-export function createHead<T extends MergeHead>(options: Omit<CreateHeadOptions, 'domDelayFn'> = {}): VueHeadClientPollyFill<T> {
-  const head = _createHead(options) as VueHeadClientPollyFill<T>
+export function polyfillAsVueUseHead<T extends MergeHead>(head: VueHeadClient<T>): VueHeadClientPollyFill<T> {
+  const polyfilled = head as VueHeadClientPollyFill<T>
   // add a bunch of @vueuse/head compat functions
-  head.headTags = head.resolveTags
-  head.addEntry = head.push
-  head.addHeadObjs = head.push
-  head.addReactiveEntry = (input, options) => {
+  polyfilled.headTags = head.resolveTags
+  polyfilled.addEntry = head.push
+  polyfilled.addHeadObjs = head.push
+  polyfilled.addReactiveEntry = (input, options) => {
     const api = useHead(input, options)
     if (typeof api !== 'undefined')
       return api.dispose
     return () => {}
   }
   // not able to handle this
-  head.removeHeadObjs = () => {}
+  polyfilled.removeHeadObjs = () => {}
   // trigger DOM
-  head.updateDOM = () => {
+  polyfilled.updateDOM = () => {
     head.hooks.callHook('entries:updated', head)
   }
-  head.unhead = head
-  return head
+  polyfilled.unhead = head
+  return polyfilled
 }
