@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "name": "@unhead/shared",
+    "dependencies": [
+      "@unhead/schema"
+    ],
+    "versions": {
+      "export-size": "0.5.2",
+      "esbuild": "^0.13.8",
+      "brotli-size": "^4.0.0"
+    }
+  },
+  "exports": [
+    {
+      "name": "tagDedupeKey",
+      "path": "dist/index.mjs",
+      "minified": 404,
+      "minzipped": 245,
+      "bundled": 702
+    },
+    {
+      "name": "hashTag",
+      "path": "dist/index.mjs",
+      "minified": 306,
+      "minzipped": 207,
+      "bundled": 433
+    },
+    {
+      "name": "computeHashes",
+      "path": "dist/index.mjs",
+      "minified": 183,
+      "minzipped": 137,
+      "bundled": 296
+    },
+    {
+      "name": "hashCode",
+      "path": "dist/index.mjs",
+      "minified": 166,
+      "minzipped": 131,
+      "bundled": 245
+    },
+    {
+      "name": "ValidHeadTags",
+      "path": "dist/index.mjs",
+      "minified": 138,
+      "minzipped": 100,
+      "bundled": 222
+    },
+    {
+      "name": "TagConfigKeys",
+      "path": "dist/index.mjs",
+      "minified": 101,
+      "minzipped": 92,
+      "bundled": 155
+    },
+    {
+      "name": "UniqueTags",
+      "path": "dist/index.mjs",
+      "minified": 79,
+      "minzipped": 78,
+      "bundled": 127
+    },
+    {
+      "name": "HasElementTags",
+      "path": "dist/index.mjs",
+      "minified": 73,
+      "minzipped": 77,
+      "bundled": 144
+    },
+    {
+      "name": "TagsWithInnerContent",
+      "path": "dist/index.mjs",
+      "minified": 60,
+      "minzipped": 64,
+      "bundled": 127
+    },
+    {
+      "name": "asArray",
+      "path": "dist/index.mjs",
+      "minified": 60,
+      "minzipped": 64,
+      "bundled": 122
+    },
+    {
+      "name": "SelfClosingTags",
+      "path": "dist/index.mjs",
+      "minified": 45,
+      "minzipped": 49,
+      "bundled": 101
+    },
+    {
+      "name": "defineHeadPlugin",
+      "path": "dist/index.mjs",
+      "minified": 39,
+      "minzipped": 43,
+      "bundled": 109
+    }
+  ]
+}
