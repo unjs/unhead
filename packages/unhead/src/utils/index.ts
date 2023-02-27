@@ -1,5 +1,4 @@
 export * from './meta'
 export * from './normalise'
-export * from './transforms'
 export * from './safe'
 export * from '@unhead/shared'

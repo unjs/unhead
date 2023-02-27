@@ -1,9 +1,8 @@
 import type { TransformValueOptions } from 'packrup'
-import { PropertyPrefixKeys } from '..'
 
 export type ValidMetaType = 'name' | 'http-equiv' | 'property' | 'charset'
 
-interface PackingDefinition {
+export interface PackingDefinition {
   metaKey?: ValidMetaType
   keyValue?: string
   unpack?: TransformValueOptions
@@ -57,8 +56,4 @@ export const MetaPackingSchema: Record<string, PackingDefinition> = {
   refresh: {
     metaKey: 'http-equiv',
   },
-}
-
-export function resolveMetaKeyType(key: string): ValidMetaType {
-  return PropertyPrefixKeys.test(key) ? 'property' : (MetaPackingSchema[key]?.metaKey || 'name')
 }

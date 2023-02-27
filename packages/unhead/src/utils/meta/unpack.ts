@@ -1,9 +1,47 @@
 import type { Head, MetaFlatInput } from '@unhead/schema'
 import { unpackToArray, unpackToString } from 'packrup'
-import { changeKeyCasingDeep, fixKeyCase } from '..'
-import { MetaPackingSchema, resolveMetaKeyType } from './utils'
+import { MetaPackingSchema } from './utils'
 
 const ArrayableInputs = ['Image', 'Video', 'Audio']
+
+const ColonPrefixKeys = /^(og|twitter|fb)/
+
+const PropertyPrefixKeys = /^(og|fb)/
+
+export function resolveMetaKeyType(key: string): string {
+  return PropertyPrefixKeys.test(key) ? 'property' : (MetaPackingSchema[key]?.metaKey || 'name')
+}
+
+export function resolveMetaKeyValue(key: string): string {
+  return MetaPackingSchema[key]?.keyValue || fixKeyCase(key)
+}
+
+function fixKeyCase(key: string) {
+  key = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  if (ColonPrefixKeys.test(key)) {
+    key = key
+      .replace('secure-url', 'secure_url')
+      .replace(/-/g, ':')
+  }
+  return key
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
+function changeKeyCasingDeep<T extends any>(input: T): T {
+  if (Array.isArray(input)) {
+    // @ts-expect-error untyped
+    return input.map(entry => changeKeyCasingDeep(entry))
+  }
+  if (typeof input !== 'object' || Array.isArray(input))
+    return input
+
+  const output: Record<string, any> = {}
+  for (const [key, value] of Object.entries(input as object))
+    output[fixKeyCase(key)] = changeKeyCasingDeep(value)
+
+  return output as T
+}
+
 /**
  * Converts a flat meta object into an array of meta entries.
  * @param input
@@ -46,7 +84,7 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
       return key === 'charset' ? 'charset' : 'content'
     },
     resolveKeyData({ key }) {
-      return MetaPackingSchema[key]?.keyValue || fixKeyCase(key)
+      return resolveMetaKeyValue(key)
     },
     resolveValueData({ value, key }) {
       if (value === null)

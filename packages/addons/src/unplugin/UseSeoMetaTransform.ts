@@ -1,7 +1,11 @@
 import { pathToFileURL } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
 import { createUnplugin } from 'unplugin'
-import { MetaPackingSchema, fixKeyCase, resolveMetaKeyType, resolvePackedMetaObjectValue } from 'unhead'
+import {
+  resolveMetaKeyType,
+  resolveMetaKeyValue,
+  resolvePackedMetaObjectValue,
+} from 'unhead'
 import { parseQuery, parseURL } from 'ufo'
 import type { ObjectProperty } from '@babel/types'
 import MagicString from 'magic-string'
@@ -126,7 +130,7 @@ export const UseSeoMetaTransform = createUnplugin(() => {
                 return
               // store the AST object in meta
               const key = resolveMetaKeyType(property.key.name)
-              const keyValue = MetaPackingSchema[property.key.name]?.keyValue || fixKeyCase(property.key.name)
+              const keyValue = resolveMetaKeyValue(property.key.name)
               const valueKey = key === 'charset' ? 'charset' : 'content'
               let value = code.substring(property.value.start, property.value.end)
               if (property.value.type === 'ArrayExpression') {
