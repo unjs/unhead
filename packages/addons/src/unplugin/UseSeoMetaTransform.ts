@@ -7,7 +7,7 @@ import {
   resolvePackedMetaObjectValue,
 } from 'unhead'
 import { parseQuery, parseURL } from 'ufo'
-import type { ImportDeclaration, ObjectProperty} from '@babel/types'
+import type { ImportDeclaration, ObjectProperty } from '@babel/types'
 import MagicString from 'magic-string'
 import type { SourceMapInput } from 'rollup'
 import type { Node } from 'estree-walker'
