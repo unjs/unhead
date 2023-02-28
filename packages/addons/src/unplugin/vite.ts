@@ -1,14 +1,11 @@
-import type { BaseTransformerTypes } from '@unhead/addons/src/unplugin/types'
 import type { Plugin } from 'vite'
-import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
-import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
+import type { UnpluginOptions } from './types'
 
-export default (options: {
-  treeshake?: TreeshakeServerComposablesOptions
-  transformSeoMeta?: UseSeoMetaTransformOptions
-} & BaseTransformerTypes = {}): Plugin[] => {
+export type { UnpluginOptions }
+
+export default (options: UnpluginOptions = {}): Plugin[] => {
   return [
     TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.treeshake || {} }),
     UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.transformSeoMeta || {} }),
