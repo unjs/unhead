@@ -3,11 +3,12 @@ import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposa
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
+import type { Plugin } from 'vite'
 
 export default (options: {
   treeshake?: TreeshakeServerComposablesOptions
   transformSeoMeta?: UseSeoMetaTransformOptions
-} & BaseTransformerTypes = {}) => {
+} & BaseTransformerTypes = {}): Plugin[] => {
   return [
     TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.treeshake || {} }),
     UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.transformSeoMeta || {} }),

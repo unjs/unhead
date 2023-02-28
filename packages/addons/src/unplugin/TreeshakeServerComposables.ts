@@ -21,7 +21,7 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
   enabled?: boolean
 }
 
-export const TreeshakeServerComposables = createUnplugin((options: TreeshakeServerComposablesOptions = {}) => {
+export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
   options.enabled = typeof options.enabled !== 'undefined' ? options.enabled : true
 
   return {

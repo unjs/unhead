@@ -35,7 +35,7 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
  *  ],
  * })
  */
-export const UseSeoMetaTransform = createUnplugin((options: UseSeoMetaTransformOptions = {}) => {
+export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
   options.imports = options.imports || true
   return {
     name: 'unhead:use-seo-meta-transform',
