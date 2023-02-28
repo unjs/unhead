@@ -5,6 +5,7 @@ import { transform } from 'unplugin-ast'
 import type { CallExpression } from '@babel/types'
 import type { ConfigEnv, UserConfig } from 'vite'
 import { parseQuery, parseURL } from 'ufo'
+import type { BaseTransformerTypes } from './types'
 
 const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> => ({
   onNode: node =>
@@ -16,8 +17,12 @@ const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> =
   },
 })
 
-export const TreeshakeServerComposables = createUnplugin(() => {
-  let enabled = true
+export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
+  enabled?: boolean
+}
+
+export const TreeshakeServerComposables = createUnplugin((options: TreeshakeServerComposablesOptions = {}) => {
+  options.enabled = typeof options.enabled !== 'undefined' ? options.enabled : true
 
   return {
     name: 'unhead:remove-server-composables',
@@ -25,13 +30,21 @@ export const TreeshakeServerComposables = createUnplugin(() => {
 
     transformInclude(id) {
       // should only run on client builds
-      if (!enabled)
+      if (!options.enabled)
         return false
 
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
-      if (pathname.includes('node_modules'))
+      if (pathname.match(/[\\/]node_modules[\\/]/))
+        return false
+
+      // Included
+      if (options.filter?.include?.some(pattern => id.match(pattern)))
+        return true
+
+      // Excluded
+      if (options.filter?.exclude?.some(pattern => id.match(pattern)))
         return false
 
       // vue files
@@ -75,12 +88,12 @@ export const TreeshakeServerComposables = createUnplugin(() => {
     },
     webpack(ctx) {
       if (ctx.name === 'server')
-        enabled = false
+        options.enabled = false
     },
     vite: {
       apply(config: UserConfig, env: ConfigEnv) {
         if (env.ssrBuild) {
-          enabled = false
+          options.enabled = false
           return true
         }
         return false

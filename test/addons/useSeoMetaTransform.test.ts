@@ -87,12 +87,37 @@ describe('UseSeoMetaTransform', () => {
     `)
   })
 
-  it('handles nested objects', async () => {
+  it('fails gracefully with nested objects', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'unhead\'',
       'useSeoMeta({ title: \'Hello\', robots: { noindex: true, nofollow: true } })',
     ])
-    expect(code).toMatchInlineSnapshot('undefined')
+    expect(code).toBeUndefined()
+  })
+
+  it('handles @unhead/vue', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'@unhead/vue\'',
+      'useSeoMeta({ charset: \'utf-8\' })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from '@unhead/vue'
+      import { useSeoMeta } from '@unhead/vue'
+      useHead({
+        meta: [
+          { charset: 'utf-8' },
+        ]
+      })"
+    `)
+  })
+
+  it('handles node_module', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'@unhead/vue\'',
+      'useSeoMeta({ charset: \'utf-8\' })',
+    ], '/home/harlan/Projects/unhead/node_modules/@unhead/vue/dist/index.js')
+
+    expect(code).toBeUndefined()
   })
 
   it('handles charset', async () => {
