@@ -1,7 +1,7 @@
 {
   "name": "@unhead/dom",
   "type": "module",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "packageManager": "pnpm@7.28.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
