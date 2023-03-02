@@ -44,8 +44,7 @@ export function TemplateParamsPlugin() {
         // we always process params so we can substitute the title
         const params = idx !== -1 ? tags[idx].textContent as unknown as TemplateParams : {}
         params.pageTitle = params.pageTitle || title || ''
-        delete tags[idx]
-        for (const tag of tags.filter(Boolean)) {
+        for (const tag of tags) {
           if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string')
             tag.textContent = processTemplateParams(tag.textContent, params)
           else if (tag.tag === 'meta' && typeof tag.props.content === 'string')
@@ -53,7 +52,7 @@ export function TemplateParamsPlugin() {
           else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && typeof tag.innerHTML === 'string')
             tag.innerHTML = processTemplateParams(tag.innerHTML, params)
         }
-        ctx.tags = tags.filter(Boolean)
+        ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
       },
     },
   })
