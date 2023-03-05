@@ -26,6 +26,9 @@ export const MetaPackingSchema: Record<string, PackingDefinition> = {
     keyValue: 'fb:app_id',
     metaKey: 'property',
   },
+  ogSiteName: {
+    keyValue: 'og:site_name'
+  },
   msapplicationTileImage: {
     keyValue: 'msapplication-TileImage',
   },
