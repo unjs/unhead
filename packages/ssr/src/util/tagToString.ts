@@ -12,6 +12,8 @@ export function encodeInnerHtml(str: string) {
    * ' --> &#x27;
    * / --> &#x2F;
    */
+  if (typeof str !== 'string') return String(str || '')
+
   return str.replace(/[&<>"'/]/g, (char) => {
     switch (char) {
       case '&':
