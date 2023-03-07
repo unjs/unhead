@@ -27,6 +27,48 @@ describe('ssr', () => {
       }
     `)
   })
+
+  it('number title', async () => {
+    const head = createHead()
+
+    head.push({
+      // @ts-expect-error handle numbers
+      title: 12345
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>12345</title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('object title', async () => {
+    const head = createHead()
+
+    head.push({
+      title: {
+        foo: 'bar'
+      }
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>[object Object]</title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
   it ('boolean props', async () => {
     const head = createHead()
 

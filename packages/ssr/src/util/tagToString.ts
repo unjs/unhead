@@ -40,9 +40,9 @@ export const tagToString = <T extends HeadTag>(tag: T) => {
     return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
 
   // dangerously using innerHTML, we don't encode this
-  let content = tag.innerHTML || ''
+  let content = String(tag.innerHTML || '')
   if (tag.textContent)
     // content needs to be encoded to avoid XSS, only for title
-    content = encodeInnerHtml(tag.textContent)
+    content = encodeInnerHtml(String(tag.textContent))
   return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

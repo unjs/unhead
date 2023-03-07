@@ -46,37 +46,37 @@
     {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3734,
-      "minzipped": 1395,
-      "bundled": 6935
+      "minified": 3771,
+      "minzipped": 1405,
+      "bundled": 6985
     },
     {
       "name": "useServerTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3686,
-      "minzipped": 1381,
-      "bundled": 6888
+      "minified": 3723,
+      "minzipped": 1400,
+      "bundled": 6938
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3681,
-      "minzipped": 1369,
-      "bundled": 6807
+      "minified": 3718,
+      "minzipped": 1389,
+      "bundled": 6857
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3634,
-      "minzipped": 1364,
-      "bundled": 6753
+      "minified": 3671,
+      "minzipped": 1386,
+      "bundled": 6803
     },
     {
       "name": "unpackMeta",
       "path": "dist/index.mjs",
-      "minified": 3389,
-      "minzipped": 1250,
-      "bundled": 6222
+      "minified": 3426,
+      "minzipped": 1279,
+      "bundled": 6272
     },
     {
       "name": "normaliseEntryTags",
@@ -88,9 +88,9 @@
     {
       "name": "packMeta",
       "path": "dist/index.mjs",
-      "minified": 2213,
-      "minzipped": 893,
-      "bundled": 4089
+      "minified": 2250,
+      "minzipped": 920,
+      "bundled": 4139
     },
     {
       "name": "useServerHeadSafe",
@@ -107,18 +107,18 @@
       "bundled": 5353
     },
     {
+      "name": "resolvePackedMetaObjectValue",
+      "path": "dist/index.mjs",
+      "minified": 2152,
+      "minzipped": 813,
+      "bundled": 3727
+    },
+    {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
       "minified": 2103,
       "minzipped": 803,
       "bundled": 3435
-    },
-    {
-      "name": "resolvePackedMetaObjectValue",
-      "path": "dist/index.mjs",
-      "minified": 2115,
-      "minzipped": 800,
-      "bundled": 3677
     },
     {
       "name": "EventHandlersPlugin",
@@ -158,9 +158,9 @@
     {
       "name": "resolveMetaKeyValue",
       "path": "dist/index.mjs",
-      "minified": 1367,
-      "minzipped": 495,
-      "bundled": 2209
+      "minified": 1404,
+      "minzipped": 511,
+      "bundled": 2259
     },
     {
       "name": "ProvideTagHashPlugin",
@@ -172,9 +172,9 @@
     {
       "name": "resolveMetaKeyType",
       "path": "dist/index.mjs",
-      "minified": 1244,
-      "minzipped": 461,
-      "bundled": 2030
+      "minified": 1281,
+      "minzipped": 474,
+      "bundled": 2080
     },
     {
       "name": "TitleTemplatePlugin",

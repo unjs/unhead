@@ -59,6 +59,7 @@ describe('composables', () => {
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],
+      ogSiteName: 'Example Name'
     })
 
     const ctx = await renderSSRHead(head)
@@ -70,7 +71,8 @@ describe('composables', () => {
         "headTags": "<meta charset=\\"utf-8\\">
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <meta property=\\"og:site_name\\" content=\\"Example Name\\">",
         "htmlAttrs": "",
       }
     `)
