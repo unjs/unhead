@@ -45,7 +45,7 @@ describe('ssr vue templateParams', () => {
         {
           property: 'og:title',
           content: '%s %titleSeparator %siteName',
-        }
+        },
       ],
       script: [
         {
@@ -141,5 +141,4 @@ describe('ssr vue templateParams', () => {
       }
     `)
   })
-
 })
