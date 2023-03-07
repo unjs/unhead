@@ -1,16 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
-
-export const renderTitleTemplate = (
-  template: string | ((title?: string) => string | null) | null,
-  title?: string,
-): string | null => {
-  if (template == null)
-    return title || null
-  if (typeof template === 'function')
-    return template(title)
-
-  return template.replace('%s', title ?? '')
-}
+import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
 export const TitleTemplatePlugin = () => {
   return defineHeadPlugin({
@@ -20,7 +8,7 @@ export const TitleTemplatePlugin = () => {
         let titleTemplateIdx = tags.findIndex(i => i.tag === 'titleTemplate')
         const titleIdx = tags.findIndex(i => i.tag === 'title')
         if (titleIdx !== -1 && titleTemplateIdx !== -1) {
-          const newTitle = renderTitleTemplate(
+          const newTitle = resolveTitleTemplate(
             tags[titleTemplateIdx].textContent!,
             tags[titleIdx].textContent,
           )
@@ -34,7 +22,7 @@ export const TitleTemplatePlugin = () => {
         }
         // titleTemplate is set but title is not set, convert to a title
         else if (titleTemplateIdx !== -1) {
-          const newTitle = renderTitleTemplate(
+          const newTitle = resolveTitleTemplate(
             tags[titleTemplateIdx].textContent!,
           )
           if (newTitle !== null) {

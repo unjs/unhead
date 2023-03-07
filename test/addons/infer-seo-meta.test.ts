@@ -90,13 +90,10 @@ describe('InferSeoMetaPlugin', () => {
   })
   it('template params', async () => {
     const head = createHead({
-      plugins: [InferSeoMetaPlugin({
-        ogTitle: '%s - %siteName',
-        robots: false,
-      })],
+      plugins: [InferSeoMetaPlugin()],
     })
     head.push({
-      title: 'Title',
+      title: 'Title - %siteName',
       templateParams: {
         siteName: 'My Site',
       },
@@ -107,7 +104,7 @@ describe('InferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>Title</title>
+        "headTags": "<title>Title - My Site</title>
       <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
         "htmlAttrs": "",
       }
@@ -116,9 +113,7 @@ describe('InferSeoMetaPlugin', () => {
 
   it('title and then remove title', async () => {
     const head = createHead({
-      plugins: [InferSeoMetaPlugin({
-        robots: false,
-      })],
+      plugins: [InferSeoMetaPlugin()],
     })
     const entry = head.push({
       title: 'Title',
@@ -157,9 +152,7 @@ describe('InferSeoMetaPlugin', () => {
 
   it('no title and then add title', async () => {
     const head = createHead({
-      plugins: [InferSeoMetaPlugin({
-        robots: false,
-      })],
+      plugins: [InferSeoMetaPlugin()],
     })
     head.push({
       title: null,
@@ -191,14 +184,13 @@ describe('InferSeoMetaPlugin', () => {
     `)
   })
 
-  it('custom template', async () => {
+  it('handles title template', async () => {
     const head = createHead({
-      plugins: [InferSeoMetaPlugin({
-        ogTitle: '%s - My Site',
-      })],
+      plugins: [InferSeoMetaPlugin()],
     })
     head.push({
       title: 'Title',
+      titleTemplate: '%s - My Site',
     })
 
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
@@ -206,8 +198,58 @@ describe('InferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>Title</title>
+        "headTags": "<title>Title - My Site</title>
       <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('null title / title template', async () => {
+    const head = createHead({
+      plugins: [InferSeoMetaPlugin()],
+    })
+    head.push({
+      title: null,
+      titleTemplate: '%s %separator My Site',
+      templateParams: {
+        separator: '-',
+      },
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>My Site</title>
+      <meta property=\\"og:title\\" content=\\"My Site\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('multiple title templates', async () => {
+    const head = createHead({
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    head.push({
+      title: 'test',
+      titleTemplate: '%s %separator My Site',
+    })
+
+    head.push({
+      titleTemplate: null,
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>test</title>
+      <meta property=\\"og:title\\" content=\\"test\\">",
         "htmlAttrs": "",
       }
     `)

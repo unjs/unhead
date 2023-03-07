@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 import type { Head } from '@unhead/schema'
 
 export interface InferSeoMetaPluginOptions {
@@ -22,16 +22,25 @@ export interface InferSeoMetaPluginOptions {
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 
-export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => {
-  options = options || {}
+export const InferSeoMetaPlugin = (options: InferSeoMetaPluginOptions = {}) => {
   return defineHeadPlugin({
     hooks: {
       entries: {
         resolve({ entries }) {
+          // need to find the last titleTemplate entry
+          let titleTemplate = null
+          for (const entry of entries) {
+            const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
+            const input = entry[inputKey]
+            if (typeof input.titleTemplate !== 'undefined')
+              titleTemplate = input.titleTemplate
+          }
+
           for (const entry of entries) {
             const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
             const input = entry[inputKey]
             const resolvedMeta: Required<Head>['meta'] = input.meta || []
+            titleTemplate = resolveTitleTemplate(titleTemplate, input.title)
             const title = input.title
             const description = resolvedMeta.find(meta => meta.name === 'description')?.content
 
@@ -42,8 +51,8 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => {
 
             // ensure meta exists
             entry[inputKey].meta = input.meta || []
-            if (title && !hasOgTitle) {
-              let newOgTitle = options?.ogTitle || title
+            if (titleTemplate && !hasOgTitle) {
+              let newOgTitle = options?.ogTitle || titleTemplate
               if (typeof newOgTitle === 'function')
                 newOgTitle = newOgTitle(title)
 
