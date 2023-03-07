@@ -42,6 +42,10 @@ describe('ssr vue templateParams', () => {
           name: 'description',
           content: 'Welcome to %siteName!',
         },
+        {
+          property: 'og:title',
+          content: '%s %titleSeparator %siteName',
+        }
       ],
       script: [
         {
@@ -71,9 +75,71 @@ describe('ssr vue templateParams', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>hello world · Nuxt Playground</title>
       <meta name=\\"description\\" content=\\"Welcome to Nuxt Playground!\\">
+      <meta property=\\"og:title\\" content=\\"hello world · Nuxt Playground\\">
       <script type=\\"application/json\\">{\\"title\\":\\"hello world\\",\\"description\\":\\"A Nuxt 3 playground\\"}</script>",
         "htmlAttrs": "",
       }
     `)
   })
+
+  it('no input', async () => {
+    const headResult = await ssrRenderOptionsHead({
+      title: null,
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+      },
+    })
+
+    expect(headResult).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title></title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('just separator input', async () => {
+    const headResult = await ssrRenderOptionsHead({
+      title: null,
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        separator: '/',
+      },
+    })
+
+    expect(headResult).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title></title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('with siteName', async () => {
+    const headResult = await ssrRenderOptionsHead({
+      title: null,
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        separator: '/',
+        siteName: 'My Awesome Site',
+      },
+    })
+
+    expect(headResult).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>My Awesome Site</title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
 })

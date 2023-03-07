@@ -91,6 +91,32 @@ describe('InferSeoMetaPlugin', () => {
       }
     `)
   })
+  it('template params', async () => {
+    const head = createHead({
+      plugins: [InferSeoMetaPlugin({
+        ogTitle: '%s - %siteName',
+        robots: false,
+      })],
+    })
+    head.push({
+      title: 'Title',
+      templateParams: {
+        siteName: 'My Site',
+      }
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>Title</title>
+      <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
   it('custom template', async () => {
     const head = createHead({
       plugins: [InferSeoMetaPlugin({

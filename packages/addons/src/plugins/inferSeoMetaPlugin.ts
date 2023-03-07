@@ -51,14 +51,14 @@ export const InferSeoMetaPlugin = (options?: InferSeoMetaPluginOptions) => {
             if (title && !ogTitle) {
               entry[inputKey].meta.push({
                 property: 'og:title',
-                content: (typeof ogTitleTemplate === 'function' ? ogTitleTemplate(title) : ogTitleTemplate).replace('%s', title),
+                content: (typeof ogTitleTemplate === 'function' ? ogTitleTemplate(title) : ogTitleTemplate)
               })
             }
             if (description && !ogDescription) {
               const desc = String(description)
               entry[inputKey].meta.push({
                 property: 'og:description',
-                content: (typeof ogDescriptionTemplate === 'function' ? ogDescriptionTemplate(desc) : ogDescriptionTemplate).replace('%s', desc),
+                content: (typeof ogDescriptionTemplate === 'function' ? ogDescriptionTemplate(desc) : ogDescriptionTemplate)
               })
             }
           }
