@@ -68,6 +68,13 @@
       "bundled": 144
     },
     {
+      "name": "resolveTitleTemplate",
+      "path": "dist/index.mjs",
+      "minified": 73,
+      "minzipped": 70,
+      "bundled": 246
+    },
+    {
       "name": "TagsWithInnerContent",
       "path": "dist/index.mjs",
       "minified": 60,
