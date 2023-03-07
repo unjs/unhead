@@ -27,7 +27,7 @@ export const MetaPackingSchema: Record<string, PackingDefinition> = {
     metaKey: 'property',
   },
   ogSiteName: {
-    keyValue: 'og:site_name'
+    keyValue: 'og:site_name',
   },
   msapplicationTileImage: {
     keyValue: 'msapplication-TileImage',

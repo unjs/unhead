@@ -33,7 +33,7 @@ describe('ssr', () => {
 
     head.push({
       // @ts-expect-error handle numbers
-      title: 12345
+      title: 12345,
     })
 
     const ctx = await renderSSRHead(head)
@@ -53,8 +53,8 @@ describe('ssr', () => {
 
     head.push({
       title: {
-        foo: 'bar'
-      }
+        foo: 'bar',
+      },
     })
 
     const ctx = await renderSSRHead(head)
@@ -104,6 +104,7 @@ describe('ssr', () => {
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],
+      twitterCard: 'summary_large_image',
       ogImage: [
         {
           url: 'https://example.com/image.png',
@@ -128,7 +129,8 @@ describe('ssr', () => {
       <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
       <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">",
+      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }
     `)
