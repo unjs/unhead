@@ -37,9 +37,9 @@ describe('ssr templateParams', () => {
           type: 'application/json',
           innerHTML: {
             title: '%s',
-          }
-        }
-      ]
+          },
+        },
+      ],
     })
     const { headTags } = await renderSSRHead(head)
 
