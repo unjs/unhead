@@ -1,6 +1,7 @@
 import { describe, it } from 'vitest'
-import { useHead } from 'unhead'
+import {createHead, useHead} from 'unhead'
 import { useDOMHead, useDelayedSerializedDom } from './util'
+import {renderSSRHead} from "@unhead/ssr";
 
 describe('templateParams', () => {
   it('basic', async () => {
@@ -78,6 +79,38 @@ describe('templateParams', () => {
       "<!DOCTYPE html><html><head>
 
       <title>My Page - My Site</title></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+
+  it('json', async () => {
+    useDOMHead()
+
+    useHead({
+      title: 'Home & //<"With Encoding">\\',
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: JSON.stringify({
+            title: '%s',
+          })
+        }
+      ]
+    })
+
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      <title>Home &amp; //&lt;\\"With Encoding\\"&gt;\\\\</title><script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script></head>
       <body>
 
       <div>

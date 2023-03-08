@@ -49,8 +49,15 @@ export function TemplateParamsPlugin() {
             tag.textContent = processTemplateParams(tag.textContent, params)
           else if (tag.tag === 'meta' && typeof tag.props.content === 'string')
             tag.props.content = processTemplateParams(tag.props.content, params)
-          else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && typeof tag.innerHTML === 'string')
-            tag.innerHTML = processTemplateParams(tag.innerHTML, params)
+          else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && typeof tag.innerHTML === 'string') {
+            try {
+              tag.innerHTML = JSON.stringify(JSON.parse(tag.innerHTML), (key, val) => {
+                if (typeof val === 'string')
+                  return processTemplateParams(val, params)
+                return val
+              })
+            } catch {}
+          }
         }
         ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
       },

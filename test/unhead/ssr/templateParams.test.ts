@@ -27,4 +27,25 @@ describe('ssr templateParams', () => {
       <meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\">"
     `)
   })
+
+  it('json', async () => {
+    const head = createHead()
+    head.push({
+      title: 'Home & //<"With Encoding">\\',
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: {
+            title: '%s',
+          }
+        }
+      ]
+    })
+    const { headTags } = await renderSSRHead(head)
+
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\\\</title>
+      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script>"
+    `)
+  })
 })
