@@ -20,28 +20,28 @@
       "path": "dist/index.mjs",
       "minified": 9172,
       "minzipped": 3272,
-      "bundled": 18006
+      "bundled": 18014
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
       "minified": 8914,
       "minzipped": 3177,
-      "bundled": 17666
+      "bundled": 17674
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
       "minified": 8860,
       "minzipped": 3152,
-      "bundled": 17493
+      "bundled": 17501
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
       "minified": 5943,
       "minzipped": 2160,
-      "bundled": 12242
+      "bundled": 12250
     },
     {
       "name": "useServerSeoMeta",
@@ -146,7 +146,7 @@
       "path": "dist/index.mjs",
       "minified": 1814,
       "minzipped": 714,
-      "bundled": 3300
+      "bundled": 3308
     },
     {
       "name": "SortTagsPlugin",
