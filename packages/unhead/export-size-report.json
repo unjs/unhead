@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9087,
-      "minzipped": 3244,
-      "bundled": 17772
+      "minified": 9172,
+      "minzipped": 3272,
+      "bundled": 18006
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 8829,
-      "minzipped": 3149,
-      "bundled": 17432
+      "minified": 8914,
+      "minzipped": 3177,
+      "bundled": 17666
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 8775,
-      "minzipped": 3125,
-      "bundled": 17259
+      "minified": 8860,
+      "minzipped": 3152,
+      "bundled": 17493
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 5858,
-      "minzipped": 2127,
-      "bundled": 12008
+      "minified": 5943,
+      "minzipped": 2160,
+      "bundled": 12242
     },
     {
       "name": "useServerSeoMeta",
@@ -144,9 +144,9 @@
     {
       "name": "TemplateParamsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1729,
-      "minzipped": 661,
-      "bundled": 3066
+      "minified": 1814,
+      "minzipped": 714,
+      "bundled": 3300
     },
     {
       "name": "SortTagsPlugin",
