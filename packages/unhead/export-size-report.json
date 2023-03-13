@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9172,
-      "minzipped": 3272,
-      "bundled": 18014
+      "minified": 9216,
+      "minzipped": 3274,
+      "bundled": 18001
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 8914,
-      "minzipped": 3177,
-      "bundled": 17674
+      "minified": 8958,
+      "minzipped": 3188,
+      "bundled": 17661
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 8860,
-      "minzipped": 3152,
-      "bundled": 17501
+      "minified": 8904,
+      "minzipped": 3165,
+      "bundled": 17488
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 5943,
-      "minzipped": 2160,
-      "bundled": 12250
+      "minified": 5987,
+      "minzipped": 2180,
+      "bundled": 12237
     },
     {
       "name": "useServerSeoMeta",
@@ -135,18 +135,18 @@
       "bundled": 4845
     },
     {
-      "name": "DedupesTagsPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1677,
-      "minzipped": 732,
-      "bundled": 3548
-    },
-    {
       "name": "TemplateParamsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1814,
+      "minified": 1898,
+      "minzipped": 750,
+      "bundled": 3384
+    },
+    {
+      "name": "DedupesTagsPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1637,
       "minzipped": 714,
-      "bundled": 3308
+      "bundled": 3459
     },
     {
       "name": "SortTagsPlugin",
