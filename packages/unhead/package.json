@@ -2,7 +2,7 @@
   "name": "unhead",
   "type": "module",
   "version": "1.1.23",
-  "packageManager": "pnpm@7.28.0",
+  "packageManager": "pnpm@7.29.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -38,7 +38,7 @@
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "hookable": "^5.4.2"
+    "hookable": "^5.5.1"
   },
   "devDependencies": {
     "packrup": "^0.1.0"

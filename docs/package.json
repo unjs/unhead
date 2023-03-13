@@ -9,7 +9,7 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "1.9.1",
+    "@nuxt-themes/docus": "1.9.9",
     "@nuxtjs/fontaine": "^0.2.4",
     "nuxt": "3.2.3",
     "nuxt-windicss": "latest",
@@ -18,7 +18,7 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.12",
     "@nuxtlabs/github-module": "^1.6.1",
-    "nuxt-seo-kit": "^1.3.2",
+    "nuxt-seo-kit": "^1.3.4",
     "vue-github-button": "^3.1.0"
   },
   "resolutions": {
