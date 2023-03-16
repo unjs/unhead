@@ -1,7 +1,3 @@
-
-// disable studio
-process.env.THEME_DEV_STUDIO_PATH='@nuxt-themes/tokens'
-
 export default defineNuxtConfig({
   extends: [
     '@nuxt-themes/docus',
@@ -41,11 +37,10 @@ export default defineNuxtConfig({
   },
 
   studio: {
-    enabled: false,
+    // enabled: false,
   },
 
   pinceau: {
-    studio: false,
     debug: true,
     followSymbolicLinks: false,
   },
