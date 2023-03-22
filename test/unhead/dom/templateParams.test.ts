@@ -54,6 +54,11 @@ describe('templateParams', () => {
       ],
     })
 
+    useHead({
+      templateParams: {
+        path: '/some/other/page',
+      },
+    })
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
