@@ -13,6 +13,7 @@ describe('templateParams', () => {
           url: 'https://example.com',
         },
         separator: '-',
+        path: '/some/page',
       },
       title: 'My Page',
       titleTemplate: '%s %separator %site.name',
@@ -45,12 +46,18 @@ describe('templateParams', () => {
           content: '%site.url/my-page',
         },
       ],
+      link: [
+        {
+          rel: 'canonical',
+          href: '%site.url%path',
+        },
+      ],
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\"><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"></head>
+      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\"><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"><link rel=\\"canonical\\" href=\\"https://example.com/some/page\\"></head>
       <body>
 
       <div>
