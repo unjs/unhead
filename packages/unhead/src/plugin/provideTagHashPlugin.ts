@@ -1,6 +1,5 @@
 import { defineHeadPlugin, hashCode, hashTag } from '@unhead/shared'
 import { getActiveHead } from '..'
-import { IsBrowser } from '../env'
 
 export const ProvideTagHashPlugin = () => {
   return defineHeadPlugin({
