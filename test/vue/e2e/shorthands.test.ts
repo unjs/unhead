@@ -42,7 +42,7 @@ describe('unhead vue e2e shorthands', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <style>.test { color: red; }</style>
-      <style>.test { color: red; }</style></head>
+      </head>
       <body>
 
       <div>
@@ -91,7 +91,7 @@ describe('unhead vue e2e shorthands', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <script>console.log('Hello World')</script>
-      <script>console.log('Hello World')</script></head>
+      </head>
       <body>
 
       <div>
