@@ -59,7 +59,7 @@ describe('composables', () => {
       charset: 'utf-8',
       description: 'test',
       ogLocaleAlternate: ['fr', 'zh'],
-      ogSiteName: 'Example Name'
+      ogSiteName: 'Example Name',
     })
 
     const ctx = await renderSSRHead(head)

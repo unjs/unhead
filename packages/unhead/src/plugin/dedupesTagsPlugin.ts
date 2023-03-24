@@ -1,20 +1,14 @@
-import type { HeadTag, HeadTagKeys } from '@unhead/schema'
+import type { HeadTag } from '@unhead/schema'
 import { defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
-
-export interface DedupesTagsPluginOptions {
-  dedupeKeys?: string[]
-}
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
-export const DedupesTagsPlugin = (options?: DedupesTagsPluginOptions) => {
-  options = options || {}
-  const dedupeKeys = options.dedupeKeys || ['hid', 'vmid', 'key'] as HeadTagKeys
+export const DedupesTagsPlugin = () => {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': function ({ tag }) {
         // support for third-party dedupe keys
-        dedupeKeys.forEach((key) => {
+        ['hid', 'vmid', 'key'].forEach((key) => {
           if (tag.props[key]) {
             tag.key = tag.props[key]
             delete tag.props[key]

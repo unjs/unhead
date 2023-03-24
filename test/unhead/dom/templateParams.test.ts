@@ -29,6 +29,10 @@ describe('templateParams', () => {
       ],
       meta: [
         {
+          property: 'twitter:image',
+          content: 'https://cdn.example.com/some%20image.jpg',
+        },
+        {
           name: 'description',
           content: 'Welcome to %site.name.',
         },
@@ -46,7 +50,7 @@ describe('templateParams', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"></head>
+      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\"><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"></head>
       <body>
 
       <div>
@@ -78,6 +82,37 @@ describe('templateParams', () => {
       "<!DOCTYPE html><html><head>
 
       <title>My Page - My Site</title></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+  it('json', async () => {
+    useDOMHead()
+
+    useHead({
+      title: 'Home & //<"With Encoding">\\',
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: JSON.stringify({
+            title: '%s',
+          }),
+        },
+      ],
+    })
+
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      <title>Home &amp; //&lt;\\"With Encoding\\"&gt;\\\\</title><script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script></head>
       <body>
 
       <div>
