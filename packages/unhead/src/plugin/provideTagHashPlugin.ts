@@ -19,7 +19,7 @@ export const ProvideTagHashPlugin = () => {
           'style',
           'script',
           'noscript',
-        ].includes(tag.tag) || !tag.key || IsBrowser || getActiveHead()?.resolvedOptions?.document)
+        ].includes(tag.tag) || !tag.key || getActiveHead()?.resolvedOptions?.document)
           return
 
 
