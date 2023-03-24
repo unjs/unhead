@@ -3,7 +3,12 @@ import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray, hashCode }
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
-  if (['title', 'titleTemplate', 'templateParams'].includes(tagName)) {
+  if (tagName === 'templateParams') {
+    // @ts-expect-error untyped
+    tag.props = input
+    return tag
+  }
+  if (['title', 'titleTemplate'].includes(tagName)) {
     tag.textContent = (input instanceof Promise ? await input : input) as string
     return tag
   }

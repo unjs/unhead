@@ -128,4 +128,46 @@ describe('templateParams', () => {
       </body></html>"
     `)
   })
+
+  it('inheritance', async () => {
+    useDOMHead()
+
+    useHead({
+      templateParams: {
+        site: {
+          name: 'My Site',
+          url: 'https://example.com',
+        },
+        separator: '-',
+        path: '',
+      },
+      meta: [
+        {
+          property: 'og:url',
+          content: '%site.url%path',
+        },
+      ],
+    })
+
+    useHead({
+      templateParams: {
+        path: '/some/page',
+      },
+    })
+
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+
+      <meta property=\\"og:url\\" content=\\"https://example.com/some/page\\"></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
 })
