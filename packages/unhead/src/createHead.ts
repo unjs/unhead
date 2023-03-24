@@ -142,10 +142,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         // apply any custom transformers applied to the entry
         const transformer = entry._t || (i => i)
         entry.resolvedInput = transformer(entry.resolvedInput || entry.input)
-        for (const tag of await normaliseEntryTags<T>(entry)) {
-          const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
-          await hooks.callHook('tag:normalise', tagCtx)
-          resolveCtx.tags.push(tagCtx.tag)
+        if (entry.resolvedInput) {
+          for (const tag of await normaliseEntryTags<T>(entry)) {
+            const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
+            await hooks.callHook('tag:normalise', tagCtx)
+            resolveCtx.tags.push(tagCtx.tag)
+          }
         }
       }
       await hooks.callHook('tags:resolve', resolveCtx)
