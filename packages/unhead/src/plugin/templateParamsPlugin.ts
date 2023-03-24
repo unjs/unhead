@@ -1,17 +1,19 @@
 import { defineHeadPlugin } from '@unhead/shared'
 import type { TemplateParams } from '@unhead/schema'
 
-function processTemplateParams(s: string, config: TemplateParams) {
+export function processTemplateParams(s: string, config: TemplateParams) {
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   function sub(token: string) {
-    let val: string = ''
     if (['s', 'pageTitle'].includes(token))
-      val = config.pageTitle as string
+      return config.pageTitle as string
+    let val: string | undefined
     // support . notation
-    else if (token.includes('.'))
+    if (token.includes('.')) {
       // @ts-expect-error untyped
-      val = token.split('.').reduce((acc, key) => acc[key] || '', config) as string
-    return (val || config[token] || '') as string
+      val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, config) as string
+    }
+    else { val = config[token] as string | undefined }
+    return typeof val !== 'undefined' ? (val || '') : false
   }
 
   // need to avoid replacing url encoded values
@@ -24,7 +26,11 @@ function processTemplateParams(s: string, config: TemplateParams) {
   const tokens: string[] = (decoded.match(/%(\w+\.+\w+)|%(\w+)/g) || []).sort().reverse()
   // for each tokens, replace in the original string s
   tokens.forEach((token) => {
-    s = s.replaceAll(token, sub(token.slice(1))).trim()
+    const re = sub(token.slice(1))
+    if (typeof re === 'string') {
+      // replace the re using regex as word seperators
+      s = s.replaceAll(new RegExp(`\\${token}(\\W|$)`, 'g'), `${re}$1`).trim()
+    }
   })
 
   if (config.separator) {
