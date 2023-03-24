@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9321,
-      "minzipped": 3318,
-      "bundled": 18178
+      "minified": 9334,
+      "minzipped": 3326,
+      "bundled": 18235
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 9063,
-      "minzipped": 3233,
-      "bundled": 17838
+      "minified": 9076,
+      "minzipped": 3239,
+      "bundled": 17895
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 9009,
-      "minzipped": 3207,
-      "bundled": 17665
+      "minified": 9022,
+      "minzipped": 3212,
+      "bundled": 17722
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 6092,
-      "minzipped": 2227,
-      "bundled": 12414
+      "minified": 6086,
+      "minzipped": 2226,
+      "bundled": 12408
     },
     {
       "name": "useServerSeoMeta",
@@ -81,9 +81,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 2425,
-      "minzipped": 939,
-      "bundled": 3958
+      "minified": 2444,
+      "minzipped": 944,
+      "bundled": 4021
     },
     {
       "name": "packMeta",
@@ -116,16 +116,16 @@
     {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
-      "minified": 2103,
-      "minzipped": 805,
-      "bundled": 3457
+      "minified": 2122,
+      "minzipped": 811,
+      "bundled": 3520
     },
     {
       "name": "TemplateParamsPlugin",
       "path": "dist/index.mjs",
-      "minified": 2003,
-      "minzipped": 795,
-      "bundled": 3561
+      "minified": 1997,
+      "minzipped": 794,
+      "bundled": 3555
     },
     {
       "name": "EventHandlersPlugin",
