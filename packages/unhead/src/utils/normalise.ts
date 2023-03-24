@@ -1,5 +1,5 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
-import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray, hashCode } from '@unhead/shared'
+import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '@unhead/shared'
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
@@ -19,13 +19,12 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       return false
 
     // if string starts with "/", "http://" or "https://" then assume it's a src
-    if (tagName === 'script' && (/^(https?:)?\/\//.test(input) || input.startsWith('/'))) {
+    if (tagName === 'script' && (/^(https?:)?\/\//.test(input) || input.startsWith('/')))
       tag.props.src = input
-    }
-    else {
+
+    else
       tag.innerHTML = input
-      tag.key = hashCode(input)
-    }
+
     return tag
   }
 

@@ -76,7 +76,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   function setupTagRenderCtx(tag: HeadTag) {
     const entry = head.headEntries().find(e => e._i === tag._e)
     const renderCtx: DomRenderTagContext = {
-      renderId: tag._d || hashTag(tag),
+      renderId: (!tag.key && tag._d) ? tag._d : hashTag(tag),
       $el: null,
       shouldRender: true,
       tag,
