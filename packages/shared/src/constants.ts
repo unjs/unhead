@@ -22,6 +22,6 @@ export const ValidHeadTags = [
   'noscript',
 ]
 
-export const UniqueTags = ['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs']
+export const UniqueTags = ['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams']
 
 export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent']

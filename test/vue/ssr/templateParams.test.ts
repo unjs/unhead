@@ -95,7 +95,7 @@ describe('ssr vue templateParams', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title></title>",
+        "headTags": "<title>%separator %siteName</title>",
         "htmlAttrs": "",
       }
     `)
@@ -115,7 +115,7 @@ describe('ssr vue templateParams', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title></title>",
+        "headTags": "<title>%siteName</title>",
         "htmlAttrs": "",
       }
     `)

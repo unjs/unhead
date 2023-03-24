@@ -210,7 +210,7 @@ describe('dedupe', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<meta name=\\"description\\" content=\\"test\\">
-      <link rel=\\"icon\\" href=\\"/favicon.ico\\">"
+      <link rel=\\"icon\\" href=\\"/favicon.ico\\" data-h-e16a2dd=\\"\\">"
     `,
     )
   })

@@ -14,9 +14,9 @@
     {
       "name": "tagDedupeKey",
       "path": "dist/index.mjs",
-      "minified": 404,
-      "minzipped": 245,
-      "bundled": 702
+      "minified": 421,
+      "minzipped": 251,
+      "bundled": 720
     },
     {
       "name": "hashTag",
@@ -56,9 +56,9 @@
     {
       "name": "UniqueTags",
       "path": "dist/index.mjs",
-      "minified": 79,
-      "minzipped": 78,
-      "bundled": 127
+      "minified": 96,
+      "minzipped": 85,
+      "bundled": 145
     },
     {
       "name": "HasElementTags",
