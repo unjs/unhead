@@ -25,9 +25,9 @@ import { IsBrowser } from './env'
 
 export const CorePlugins = () => [
   // dedupe needs to come first
-  TemplateParamsPlugin(),
   DedupesTagsPlugin(),
   SortTagsPlugin(),
+  TemplateParamsPlugin(),
   TitleTemplatePlugin(),
   ProvideTagHashPlugin(),
   EventHandlersPlugin(),
