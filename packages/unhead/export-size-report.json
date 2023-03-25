@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9293,
-      "minzipped": 3297,
-      "bundled": 18125
+      "minified": 9245,
+      "minzipped": 3283,
+      "bundled": 17995
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 9035,
-      "minzipped": 3207,
-      "bundled": 17785
+      "minified": 8987,
+      "minzipped": 3189,
+      "bundled": 17655
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 8981,
-      "minzipped": 3187,
-      "bundled": 17612
+      "minified": 8931,
+      "minzipped": 3161,
+      "bundled": 17466
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 6024,
-      "minzipped": 2191,
-      "bundled": 12241
+      "minified": 5974,
+      "minzipped": 2173,
+      "bundled": 12095
     },
     {
       "name": "useServerSeoMeta",
@@ -184,18 +184,18 @@
       "bundled": 2248
     },
     {
-      "name": "ProvideTagHashPlugin",
-      "path": "dist/index.mjs",
-      "minified": 958,
-      "minzipped": 416,
-      "bundled": 1744
-    },
-    {
       "name": "useServerTagMeta",
       "path": "dist/index.mjs",
       "minified": 912,
       "minzipped": 393,
       "bundled": 1703
+    },
+    {
+      "name": "ProvideTagHashPlugin",
+      "path": "dist/index.mjs",
+      "minified": 908,
+      "minzipped": 388,
+      "bundled": 1598
     },
     {
       "name": "useServerTagBase",
