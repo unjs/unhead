@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9208,
-      "minzipped": 3281,
-      "bundled": 17968
+      "minified": 9293,
+      "minzipped": 3297,
+      "bundled": 18125
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 8950,
-      "minzipped": 3197,
-      "bundled": 17628
+      "minified": 9035,
+      "minzipped": 3207,
+      "bundled": 17785
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 8896,
-      "minzipped": 3176,
-      "bundled": 17455
+      "minified": 8981,
+      "minzipped": 3187,
+      "bundled": 17612
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 5939,
-      "minzipped": 2173,
-      "bundled": 12084
+      "minified": 6024,
+      "minzipped": 2191,
+      "bundled": 12241
     },
     {
       "name": "useServerSeoMeta",
@@ -116,9 +116,9 @@
     {
       "name": "TemplateParamsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1997,
-      "minzipped": 794,
-      "bundled": 3539
+      "minified": 2082,
+      "minzipped": 806,
+      "bundled": 3696
     },
     {
       "name": "normaliseTag",
