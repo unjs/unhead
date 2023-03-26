@@ -1,4 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
+import type { ResolvedHeadTag} from '@unhead/schema'
 import { defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
@@ -20,10 +20,10 @@ export const DedupesTagsPlugin = () => {
       },
       'tags:resolve': function (ctx) {
         // 1. Dedupe tags
-        const deduping: Record<string, HeadTag> = {}
+        const deduping: Record<string, ResolvedHeadTag> = {}
         ctx.tags.forEach((tag) => {
           const dedupeKey = tag._d || tag._p!
-          const dupedTag: HeadTag = deduping[dedupeKey]
+          const dupedTag: ResolvedHeadTag = deduping[dedupeKey]
           // handling a duplicate tag
           if (dupedTag) {
             // default strategy is replace, unless we're dealing with a html or body attrs
@@ -68,7 +68,7 @@ export const DedupesTagsPlugin = () => {
           }
           deduping[dedupeKey] = tag
         })
-        const newTags: HeadTag[] = []
+        const newTags: ResolvedHeadTag[] = []
         Object.values(deduping).forEach((tag) => {
           // @ts-expect-error runtime type
           const dupes = tag._duped

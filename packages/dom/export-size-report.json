@@ -15,44 +15,30 @@
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
       "path": "dist/index.mjs",
-      "minified": 3480,
-      "minzipped": 1458,
-      "bundled": 6559
+      "minified": 2986,
+      "minzipped": 1260,
+      "bundled": 5476
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 3190,
-      "minzipped": 1351,
-      "bundled": 6040
+      "minified": 2696,
+      "minzipped": 1155,
+      "bundled": 4957
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 3037,
-      "minzipped": 1283,
-      "bundled": 5659
+      "minified": 2543,
+      "minzipped": 1083,
+      "bundled": 4576
     },
     {
-      "name": "setAttrs",
+      "name": "HashHydrationPlugin",
       "path": "dist/index.mjs",
-      "minified": 627,
-      "minzipped": 333,
-      "bundled": 1228
-    },
-    {
-      "name": "maybeGetSSRHash",
-      "path": "dist/index.mjs",
-      "minified": 138,
-      "minzipped": 110,
-      "bundled": 319
-    },
-    {
-      "name": "domUpdatePromise",
-      "path": "dist/index.mjs",
-      "minified": 50,
-      "minzipped": 54,
-      "bundled": 210
+      "minified": 273,
+      "minzipped": 198,
+      "bundled": 742
     }
   ]
 }

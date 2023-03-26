@@ -254,4 +254,29 @@ describe('InferSeoMetaPlugin', () => {
       }
     `)
   })
+
+  it('nuxt-unhead #2', async () => {
+    const head = createHead({
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    head.push({
+      titleTemplate: '%s %separator %siteName',
+    })
+
+    head.push({
+      title: null,
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>test</title>
+      <meta property=\\"og:title\\" content=\\"test\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

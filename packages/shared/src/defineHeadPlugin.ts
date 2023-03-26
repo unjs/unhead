@@ -1,5 +1,5 @@
-import type { HeadPlugin } from '@unhead/schema'
+import type { ResolvableHeadPlugin } from '@unhead/schema'
 
-export function defineHeadPlugin(plugin: HeadPlugin): HeadPlugin {
+export function defineHeadPlugin(plugin: ResolvableHeadPlugin): ResolvableHeadPlugin {
   return plugin
 }

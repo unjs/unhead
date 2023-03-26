@@ -10,8 +10,8 @@ export function hashCode(s: string) {
     .toLowerCase()
 }
 
-export function hashTag(tag: HeadTag) {
-  return hashCode(`${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`)
+export function tagHash(tag: HeadTag) {
+  return tag._d || hashCode(`${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`)
 }
 
 export function computeHashes(hashes: string[]) {

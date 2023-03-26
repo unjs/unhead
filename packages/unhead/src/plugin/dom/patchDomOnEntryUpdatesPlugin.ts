@@ -1,12 +1,8 @@
 import { defineHeadPlugin } from '@unhead/shared'
-import type { RenderDomHeadOptions } from './renderDOMHead'
-import { debouncedRenderDOMHead } from './renderDOMHead'
+import type { DebouncedRenderDomHeadOptions } from '@unhead/dom'
+import { debouncedRenderDOMHead } from '@unhead/dom'
 
-export interface TriggerDomPatchingOnUpdatesPluginOptions extends RenderDomHeadOptions {
-  delayFn?: (fn: () => void) => void
-}
-
-export const PatchDomOnEntryUpdatesPlugin = (options?: TriggerDomPatchingOnUpdatesPluginOptions) => {
+export const PatchDomOnEntryUpdatesPlugin = (options?: DebouncedRenderDomHeadOptions) => {
   return defineHeadPlugin({
     hooks: {
       'entries:updated': function (head) {

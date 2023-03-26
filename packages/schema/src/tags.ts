@@ -109,4 +109,6 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   textContent?: string
 }
 
+export type ResolvedHeadTag = Required<HeadTag>
+
 export type HeadTagKeys = (keyof HeadTag)[]

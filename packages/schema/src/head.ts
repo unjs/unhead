@@ -1,7 +1,7 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { HeadTag } from './tags'
 import type { Head } from './schema'
+import {ResolvedHeadTag} from "./tags";
 
 /**
  * Side effects are mapped with a key and their cleanup function.
@@ -39,15 +39,11 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _i: number
-  /**
-   * Side effects
-   *
-   * @internal
-   */
-  _sde: SideEffectsRecord
 }
 
 export type HeadPlugin = Omit<CreateHeadOptions, 'plugins'>
+
+export type ResolvableHeadPlugin = HeadPlugin | ((head: Unhead) => HeadPlugin)
 
 /**
  * An active head entry provides an API to manipulate it.
@@ -70,15 +66,16 @@ export interface ActiveHeadEntry<Input> {
 export interface CreateHeadOptions {
   domDelayFn?: (fn: () => void) => void
   document?: Document
-  plugins?: HeadPlugin[]
+  plugins?: ResolvableHeadPlugin[]
   hooks?: NestedHooks<HeadHooks>
-  experimentalHashHydration?: boolean
 }
 
 export interface HeadEntryOptions {
   mode?: RuntimeMode
   transform?: (input: unknown) => unknown
 }
+
+export type UnheadState = Partial<Record<'hash' | 'templateParams' | 'titleTemplate' | (string & Record<never, never>), any>>
 
 export interface Unhead<Input extends {} = Head> {
   /**
@@ -92,7 +89,7 @@ export interface Unhead<Input extends {} = Head> {
   /**
    * Resolve tags from head entries.
    */
-  resolveTags: () => Promise<HeadTag[]>
+  resolveTags: () => Promise<ResolvedHeadTag[]>
   /**
    * Exposed hooks for easier extension.
    */
@@ -105,13 +102,6 @@ export interface Unhead<Input extends {} = Head> {
    * Use a head plugin, loads the plugins hooks.
    */
   use: (plugin: HeadPlugin) => void
-  /**
-   * @internal
-   */
-  _popSideEffectQueue: () => SideEffectsRecord
-  /**
-   * @internal
-   */
-  _elMap: Record<string, Element>
-  _hash?: string | false
+
+  state: UnheadState
 }

@@ -5,23 +5,19 @@ import type {
   HeadEntry,
   HeadHooks,
   HeadPlugin,
-  HeadTag,
-  SideEffectsRecord,
+  HeadTag, ResolvedHeadTag,
   Unhead,
+  UnheadState,
 } from '@unhead/schema'
-import { PatchDomOnEntryUpdatesPlugin, maybeGetSSRHash } from '@unhead/dom'
-import { setActiveHead } from './runtime/state'
 import {
   DedupesTagsPlugin,
-  DeprecatedTagAttrPlugin,
-  EventHandlersPlugin,
+  DeprecatedPlugin,
   ProvideTagHashPlugin,
   SortTagsPlugin,
   TemplateParamsPlugin,
   TitleTemplatePlugin,
 } from './plugin'
 import { normaliseEntryTags } from './utils'
-import { IsBrowser } from './env'
 
 export const CorePlugins = () => [
   // dedupe needs to come first
@@ -30,30 +26,10 @@ export const CorePlugins = () => [
   TemplateParamsPlugin(),
   TitleTemplatePlugin(),
   ProvideTagHashPlugin(),
-  EventHandlersPlugin(),
-  DeprecatedTagAttrPlugin(),
+  // EventHandlersPlugin(),
+  DeprecatedPlugin(),
 ]
 
-export const DOMPlugins = (options: CreateHeadOptions = {}) => [
-  PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
-]
-
-export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>({
-    ...options,
-    plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
-  })
-  if (options.experimentalHashHydration && head.resolvedOptions.document)
-    head._hash = maybeGetSSRHash(head.resolvedOptions.document)
-  setActiveHead(head)
-  return head
-}
-
-export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>(options)
-  setActiveHead(head)
-  return head
-}
 
 /**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
@@ -63,24 +39,11 @@ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions
  */
 export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
   let entries: HeadEntry<T>[] = []
-  // queued side effects
-  let _sde: SideEffectsRecord = {}
   // counter for keeping unique ids of head object entries
   let _eid = 0
+  const state: UnheadState = {}
   const hooks = createHooks<HeadHooks>()
-  if (options?.hooks)
-    hooks.addHooks(options.hooks)
-
-  options.plugins = [
-    ...CorePlugins(),
-    ...(options?.plugins || []),
-  ]
-  options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
-  options.document = options.document || (IsBrowser ? document : undefined)
-
-  // does the dom rendering by default
-  // es-lint-disable-next-line @typescript-eslint/no-use-before-define
-  const updated = () => hooks.callHook('entries:updated', head)
+  options?.hooks && hooks.addHooks(options.hooks)
 
   const head: Unhead<T> = {
     resolvedOptions: options,
@@ -95,41 +58,23 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         hooks.addHooks(plugin.hooks)
     },
     push(input, options) {
-      const activeEntry: HeadEntry<T> = {
-        _i: _eid++,
-        input,
-        _sde: {},
-      }
+      const activeEntry: HeadEntry<T> = { _i: _eid++, input }
       // if a mode is provided via options, set it
-      if (options?.mode)
-        activeEntry._m = options?.mode
-      if (options?.transform) {
-        // @ts-expect-error untyped
-        activeEntry._t = options?.transform
-      }
+      options?.mode && (activeEntry._m = options?.mode)
+      // used for useHeadSafe
+      // @ts-expect-error untyped
+      options?.transform && (activeEntry._t = options?.transform)
 
       entries.push(activeEntry)
-      updated()
       return {
         dispose() {
-          entries = entries.filter((e) => {
-            if (e._i !== activeEntry._i)
-              return true
-            // queue side effects
-            _sde = { ..._sde, ...e._sde || {} }
-            e._sde = {}
-            updated()
-            return false
-          })
+          entries = entries.filter(e => e._i !== activeEntry._i)
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
           entries = entries.map((e) => {
-            if (e._i === activeEntry._i) {
-              // bit hacky syncing
-              activeEntry.input = e.input = input
-              updated()
-            }
+            // bit hacky syncing
+            e._i === activeEntry._i && (activeEntry.input = e.input = input)
             return e
           })
         },
@@ -148,17 +93,31 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
           resolveCtx.tags.push(tagCtx.tag)
         }
       }
-      await hooks.callHook('tags:resolve', resolveCtx)
-      return resolveCtx.tags
+      const resolvedCtx = {
+        tags: resolveCtx.tags as ResolvedHeadTag[],
+        entries: resolveCtx.entries
+      }
+      await hooks.callHook('tags:resolve', resolvedCtx)
+      return resolvedCtx.tags
     },
-    _popSideEffectQueue() {
-      const sde = { ..._sde }
-      _sde = {}
-      return sde
-    },
-    _elMap: {},
+    state,
   }
+  // set a proxy on entries, when it updates we will trigger the entires:updated hook
+  entries = new Proxy(entries, {
+    set(target, key, value) {
+      hooks.callHook('entries:updated', head)
+      return Reflect.set(target, key, value)
+    },
+  })
 
-  head.hooks.callHook('init', head)
+  options.plugins = [
+    ...CorePlugins(),
+    ...(options?.plugins || []),
+  ]
+  options.plugins.forEach((p) => {
+    // @ts-expect-error untyped
+    p = typeof p === 'function' ? p(head) : p
+    p.hooks && hooks.addHooks(p.hooks)
+  })
   return head
 }

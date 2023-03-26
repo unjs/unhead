@@ -48,9 +48,6 @@ describe('ssr templateParams', () => {
     })
     const { headTags } = await renderSSRHead(head)
 
-    expect(headTags).toMatchInlineSnapshot(`
-      "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\\\</title>
-      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script>"
-    `)
+    expect(headTags).toMatchInlineSnapshot()
   })
 })

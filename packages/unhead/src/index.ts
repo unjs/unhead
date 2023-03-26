@@ -1,5 +1,7 @@
 export * from './plugin'
 export * from './runtime'
 export * from './createHead'
+export * from './dom'
+export * from './ssr'
 export * from './autoImports'
 export * from './utils'
