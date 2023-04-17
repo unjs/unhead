@@ -1,5 +1,5 @@
 import type { HeadTag } from '@unhead/schema'
-import { defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
@@ -14,7 +14,8 @@ export function DedupesTagsPlugin() {
             delete tag.props[key]
           }
         })
-        const dedupe = tag.key ? `${tag.tag}:${tag.key}` : tagDedupeKey(tag)
+        const generatedKey = tagDedupeKey(tag)
+        const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
         if (dedupe)
           tag._d = dedupe
       },
@@ -22,7 +23,8 @@ export function DedupesTagsPlugin() {
         // 1. Dedupe tags
         const deduping: Record<string, HeadTag> = {}
         ctx.tags.forEach((tag) => {
-          const dedupeKey = tag._d || tag._p!
+          // need a seperate dedupe key other than _d
+          const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || tag._p!
           const dupedTag: HeadTag = deduping[dedupeKey]
           // handling a duplicate tag
           if (dupedTag) {
@@ -59,12 +61,13 @@ export function DedupesTagsPlugin() {
               dupedTag._duped.push(tag)
               return
             }
-            const propCount = Object.keys(tag.props).length
-            // if the new tag does not have any props, we're trying to remove the dupedTag
-            if (((propCount === 0) || (propCount === 1 && typeof tag.props['data-h-key'] !== 'undefined')) && !tag.innerHTML && !tag.textContent) {
-              delete deduping[dedupeKey]
-              return
-            }
+          }
+          const propCount = Object.keys(tag.props).length + (tag.innerHTML ? 1 : 0) + (tag.textContent ? 1 : 0)
+          // if the new tag does not have any props, we're trying to remove the duped tag from the DOM
+          if (HasElementTags.includes(tag.tag) && propCount === 0) {
+            // find the tag with the same key
+            delete deduping[dedupeKey]
+            return
           }
           deduping[dedupeKey] = tag
         })
