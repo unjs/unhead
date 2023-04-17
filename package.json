@@ -47,7 +47,7 @@
     "@antfu/eslint-config": "^0.38.4",
     "@types/fs-extra": "^11.0.1",
     "@types/jsdom": "^21.1.1",
-    "@vitest/ui": "^0.30.0",
+    "@vitest/ui": "^0.30.1",
     "@vue/server-renderer": "^3.2.47",
     "acorn-loose": "^8.3.0",
     "bumpp": "^9.1.0",
@@ -55,9 +55,9 @@
     "fs-extra": "^11.1.1",
     "jsdom": "^21.1.1",
     "typescript": "^5.0.4",
-    "unbuild": "^1.2.0",
+    "unbuild": "^1.2.1",
     "utility-types": "^3.10.0",
-    "vitest": "^0.30.0",
+    "vitest": "^0.30.1",
     "vue": "^3.2.47"
   },
   "resolutions": {
