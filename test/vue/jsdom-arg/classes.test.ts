@@ -1,8 +1,9 @@
 import { describe, it } from 'vitest'
 import { createHead, useHead } from '@unhead/vue'
-import { computed, ref } from 'vue'
+import {computed, defineComponent, nextTick, ref, onMounted} from 'vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
+import {mount} from "../util";
 
 describe('vue dom classes', () => {
   it('empty class', async () => {
@@ -54,5 +55,32 @@ describe('vue dom classes', () => {
 
       </body></html>"
     `)
+  })
+
+  it('reactive string class', async () => {
+    const dom = useDom()
+
+    const Comp1 = defineComponent({
+      setup() {
+        const theme = ref('dark')
+
+        useHead({
+          htmlAttrs: {
+            class: theme
+          }
+        })
+
+        onMounted(() => {
+          theme.value = 'light'
+        })
+      },
+      render() {
+        return '<h1>home</h1>'
+      },
+    })
+
+    const app = mount(Comp1, () => ({ head: createHead({ document: dom.window.document }) }))
+    await nextTick()
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot()
   })
 })
