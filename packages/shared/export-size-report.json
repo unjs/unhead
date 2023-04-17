@@ -70,9 +70,9 @@
     {
       "name": "resolveTitleTemplate",
       "path": "dist/index.mjs",
-      "minified": 73,
-      "minzipped": 70,
-      "bundled": 246
+      "minified": 83,
+      "minzipped": 74,
+      "bundled": 244
     },
     {
       "name": "TagsWithInnerContent",
