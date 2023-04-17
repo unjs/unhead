@@ -1,6 +1,6 @@
 import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
-export const TitleTemplatePlugin = () => {
+export function TitleTemplatePlugin() {
   return defineHeadPlugin({
     hooks: {
       'tags:resolve': (ctx) => {

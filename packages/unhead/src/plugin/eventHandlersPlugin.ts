@@ -8,7 +8,7 @@ const ValidEventTags = ['script', 'link', 'bodyAttrs']
  *
  * When SSR we need to strip out these values. On CSR we
  */
-export const EventHandlersPlugin = () => {
+export function EventHandlersPlugin() {
   const stripEventHandlers = (mode: 'ssr' | 'dom', tag: HeadTag) => {
     const props: HeadTag['props'] = {}
     const eventHandlers: HeadTag['props'] = {}

@@ -7,7 +7,7 @@ import { useHead } from './index'
 
 export type UseSeoMetaInput = MaybeComputedRefEntries<MetaFlatInput> & { title?: ReactiveHead['title']; titleTemplate?: ReactiveHead['titleTemplate'] }
 
-export const useSeoMeta = (input: UseSeoMetaInput, options?: HeadEntryOptions): ActiveHeadEntry<any> | void => {
+export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): ActiveHeadEntry<any> | void {
   const headInput: any = ref({})
   watchEffect(() => {
     const resolvedMeta = resolveUnrefHeadInput(input)

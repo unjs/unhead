@@ -18,22 +18,28 @@ import type {
 /**
  * @deprecated Use `useHead`
  */
-export const useTagTitle = (title: ReactiveHead['title']): ActiveHeadEntry<any> | void => useHead({ title })
+export function useTagTitle(title: ReactiveHead['title']): ActiveHeadEntry<any> | void {
+  return useHead({ title })
+}
 
 /**
  * @deprecated Use `useHead`
  */
-export const useTitleTemplate = (titleTemplate: ReactiveHead['titleTemplate']): ActiveHeadEntry<any> | void => useHead({ titleTemplate })
+export function useTitleTemplate(titleTemplate: ReactiveHead['titleTemplate']): ActiveHeadEntry<any> | void {
+  return useHead({ titleTemplate })
+}
 
 /**
  * @deprecated Use `useHead`
  */
-export const useTagMeta = (meta: Arrayable<Meta>): ActiveHeadEntry<any> | void => useHead({ meta: asArray(meta) })
+export function useTagMeta(meta: Arrayable<Meta>): ActiveHeadEntry<any> | void {
+  return useHead({ meta: asArray(meta) })
+}
 
 /**
  * @deprecated Use `useHead`
  */
-export const useTagMetaFlat = (meta: MaybeComputedRefEntries<MetaFlatInput>): ActiveHeadEntry<any> | void => {
+export function useTagMetaFlat(meta: MaybeComputedRefEntries<MetaFlatInput>): ActiveHeadEntry<any> | void {
   const input: any = ref({})
   watchEffect(() => {
     // need to unref data so we can unpack it properly
@@ -45,47 +51,67 @@ export const useTagMetaFlat = (meta: MaybeComputedRefEntries<MetaFlatInput>): Ac
 /**
  * @deprecated Use `useHead`
  */
-export const useTagLink = (link: Arrayable<Link>): ActiveHeadEntry<any> | void => useHead({ link: asArray(link) })
+export function useTagLink(link: Arrayable<Link>): ActiveHeadEntry<any> | void {
+  return useHead({ link: asArray(link) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useTagScript = (script: Arrayable<Script>): ActiveHeadEntry<any> | void => useHead({ script: asArray(script) })
+export function useTagScript(script: Arrayable<Script>): ActiveHeadEntry<any> | void {
+  return useHead({ script: asArray(script) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useTagStyle = (style: Arrayable<Style>): ActiveHeadEntry<any> | void => useHead({ style: asArray(style) })
+export function useTagStyle(style: Arrayable<Style>): ActiveHeadEntry<any> | void {
+  return useHead({ style: asArray(style) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useTagNoscript = (noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void => useHead({ noscript: asArray(noscript) })
+export function useTagNoscript(noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void {
+  return useHead({ noscript: asArray(noscript) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useTagBase = (base: ReactiveHead['base']): ActiveHeadEntry<any> | void => useHead({ base })
+export function useTagBase(base: ReactiveHead['base']): ActiveHeadEntry<any> | void {
+  return useHead({ base })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useHtmlAttrs = (attrs: ReactiveHead['htmlAttrs']): ActiveHeadEntry<any> | void => useHead({ htmlAttrs: attrs })
+export function useHtmlAttrs(attrs: ReactiveHead['htmlAttrs']): ActiveHeadEntry<any> | void {
+  return useHead({ htmlAttrs: attrs })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useBodyAttrs = (attrs: ReactiveHead['bodyAttrs']): ActiveHeadEntry<any> | void => useHead({ bodyAttrs: attrs })
+export function useBodyAttrs(attrs: ReactiveHead['bodyAttrs']): ActiveHeadEntry<any> | void {
+  return useHead({ bodyAttrs: attrs })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagTitle = (title: ReactiveHead['title']): ActiveHeadEntry<any> | void => useServerHead({ title })
+export function useServerTagTitle(title: ReactiveHead['title']): ActiveHeadEntry<any> | void {
+  return useServerHead({ title })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTitleTemplate = (titleTemplate: ReactiveHead['titleTemplate']): ActiveHeadEntry<any> | void => useServerHead({ titleTemplate })
+export function useServerTitleTemplate(titleTemplate: ReactiveHead['titleTemplate']): ActiveHeadEntry<any> | void {
+  return useServerHead({ titleTemplate })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagMeta = (meta: Arrayable<Meta>): ActiveHeadEntry<any> | void => useServerHead({ meta: asArray(meta) })
+export function useServerTagMeta(meta: Arrayable<Meta>): ActiveHeadEntry<any> | void {
+  return useServerHead({ meta: asArray(meta) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagMetaFlat = (meta: MaybeComputedRefEntries<MetaFlatInput>): ActiveHeadEntry<any> | void => {
+export function useServerTagMetaFlat(meta: MaybeComputedRefEntries<MetaFlatInput>): ActiveHeadEntry<any> | void {
   const input: any = ref({})
   watchEffect(() => {
     // need to unref data so we can unpack it properly
@@ -96,28 +122,42 @@ export const useServerTagMetaFlat = (meta: MaybeComputedRefEntries<MetaFlatInput
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagLink = (link: Arrayable<Link>): ActiveHeadEntry<any> | void => useServerHead({ link: asArray(link) })
+export function useServerTagLink(link: Arrayable<Link>): ActiveHeadEntry<any> | void {
+  return useServerHead({ link: asArray(link) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagScript = (script: Arrayable<Script>): ActiveHeadEntry<any> | void => useServerHead({ script: asArray(script) })
+export function useServerTagScript(script: Arrayable<Script>): ActiveHeadEntry<any> | void {
+  return useServerHead({ script: asArray(script) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagStyle = (style: Arrayable<Style>): ActiveHeadEntry<any> | void => useServerHead({ style: asArray(style) })
+export function useServerTagStyle(style: Arrayable<Style>): ActiveHeadEntry<any> | void {
+  return useServerHead({ style: asArray(style) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagNoscript = (noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void => useServerHead({ noscript: asArray(noscript) })
+export function useServerTagNoscript(noscript: Arrayable<Noscript>): ActiveHeadEntry<any> | void {
+  return useServerHead({ noscript: asArray(noscript) })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerTagBase = (base: ReactiveHead['base']): ActiveHeadEntry<any> | void => useServerHead({ base })
+export function useServerTagBase(base: ReactiveHead['base']): ActiveHeadEntry<any> | void {
+  return useServerHead({ base })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerHtmlAttrs = (attrs: ReactiveHead['htmlAttrs']): ActiveHeadEntry<any> | void => useServerHead({ htmlAttrs: attrs })
+export function useServerHtmlAttrs(attrs: ReactiveHead['htmlAttrs']): ActiveHeadEntry<any> | void {
+  return useServerHead({ htmlAttrs: attrs })
+}
 /**
  * @deprecated Use `useHead`
  */
-export const useServerBodyAttrs = (attrs: ReactiveHead['bodyAttrs']): ActiveHeadEntry<any> | void => useHead({ bodyAttrs: attrs })
+export function useServerBodyAttrs(attrs: ReactiveHead['bodyAttrs']): ActiveHeadEntry<any> | void {
+  return useHead({ bodyAttrs: attrs })
+}

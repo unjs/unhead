@@ -6,7 +6,7 @@ export interface TriggerDomPatchingOnUpdatesPluginOptions extends RenderDomHeadO
   delayFn?: (fn: () => void) => void
 }
 
-export const PatchDomOnEntryUpdatesPlugin = (options?: TriggerDomPatchingOnUpdatesPluginOptions) => {
+export function PatchDomOnEntryUpdatesPlugin(options?: TriggerDomPatchingOnUpdatesPluginOptions) {
   return defineHeadPlugin({
     hooks: {
       'entries:updated': function (head) {

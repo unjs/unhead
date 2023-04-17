@@ -7,15 +7,17 @@ import type { ConfigEnv, UserConfig } from 'vite'
 import { parseQuery, parseURL } from 'ufo'
 import type { BaseTransformerTypes } from './types'
 
-const RemoveFunctions = (functionNames: string[]): Transformer<CallExpression> => ({
-  onNode: node =>
-    node.type === 'CallExpression'
+function RemoveFunctions(functionNames: string[]): Transformer<CallExpression> {
+  return {
+    onNode: node =>
+      node.type === 'CallExpression'
     && node.callee.type === 'Identifier'
     && functionNames.includes(node.callee.name),
-  transform() {
-    return false
-  },
-})
+    transform() {
+      return false
+    },
+  }
+}
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
   enabled?: boolean

@@ -1,7 +1,7 @@
 // legacy tag support
 import { defineHeadPlugin } from '@unhead/shared'
 
-export const DeprecatedTagAttrPlugin = () => {
+export function DeprecatedTagAttrPlugin() {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': function ({ tag }) {

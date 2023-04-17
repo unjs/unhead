@@ -32,7 +32,7 @@ export function encodeInnerHtml(str: string) {
   })
 }
 
-export const tagToString = <T extends HeadTag>(tag: T) => {
+export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
   // get the encoding depending on the tag type

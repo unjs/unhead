@@ -1,8 +1,8 @@
-import {defineHeadPlugin, hashCode, hashTag} from '@unhead/shared'
+import { defineHeadPlugin, hashCode, hashTag } from '@unhead/shared'
 
 const DupeableTags = ['link', 'style', 'script', 'noscript']
 
-export const ProvideTagHashPlugin = () => {
+export function ProvideTagHashPlugin() {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': ({ tag, resolvedOptions }) => {

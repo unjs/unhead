@@ -1,4 +1,4 @@
-export const propsToString = (props: Record<string, any>) => {
+export function propsToString(props: Record<string, any>) {
   const handledAttributes = []
 
   for (const [key, value] of Object.entries(props)) {

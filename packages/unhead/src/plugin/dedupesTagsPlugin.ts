@@ -3,7 +3,7 @@ import { defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
-export const DedupesTagsPlugin = () => {
+export function DedupesTagsPlugin() {
   return defineHeadPlugin({
     hooks: {
       'tag:normalise': function ({ tag }) {

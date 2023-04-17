@@ -4,7 +4,7 @@ import type { DomRenderTagContext } from '@unhead/schema'
 /**
  * Set attributes on a DOM element, while adding entry side effects.
  */
-export const setAttrs = (ctx: DomRenderTagContext, newEntry = false, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) => {
+export function setAttrs(ctx: DomRenderTagContext, newEntry = false, markSideEffect?: (ctx: DomRenderTagContext, k: string, fn: () => void) => void) {
   const { tag, $el } = ctx
   if (!$el)
     return

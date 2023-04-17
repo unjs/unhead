@@ -3,7 +3,7 @@ import { parse } from 'acorn-loose'
 
 import { TreeshakeServerComposables } from '../../packages/addons/src/unplugin/TreeshakeServerComposables'
 
-const transform = async (code: string | string[], id = 'some-id.js') => {
+async function transform(code: string | string[], id = 'some-id.js') {
   const plugin = TreeshakeServerComposables.vite() as any
   const res = await plugin.transform.call(
     { parse: (code: string) => parse(code, { ecmaVersion: 2022, sourceType: 'module' }) },

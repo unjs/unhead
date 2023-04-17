@@ -23,20 +23,24 @@ import {
 import { normaliseEntryTags } from './utils'
 import { IsBrowser } from './env'
 
-export const CorePlugins = () => [
+export function CorePlugins() {
+  return [
   // dedupe needs to come first
-  DedupesTagsPlugin(),
-  SortTagsPlugin(),
-  TemplateParamsPlugin(),
-  TitleTemplatePlugin(),
-  ProvideTagHashPlugin(),
-  EventHandlersPlugin(),
-  DeprecatedTagAttrPlugin(),
-]
+    DedupesTagsPlugin(),
+    SortTagsPlugin(),
+    TemplateParamsPlugin(),
+    TitleTemplatePlugin(),
+    ProvideTagHashPlugin(),
+    EventHandlersPlugin(),
+    DeprecatedTagAttrPlugin(),
+  ]
+}
 
-export const DOMPlugins = (options: CreateHeadOptions = {}) => [
-  PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
-]
+export function DOMPlugins(options: CreateHeadOptions = {}) {
+  return [
+    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
+  ]
+}
 
 export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>({
