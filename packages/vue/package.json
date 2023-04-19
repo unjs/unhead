@@ -2,7 +2,7 @@
   "name": "@unhead/vue",
   "type": "module",
   "version": "1.1.25",
-  "packageManager": "pnpm@7.32.0",
+  "packageManager": "pnpm@7.32.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
