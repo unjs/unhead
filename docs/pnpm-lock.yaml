@@ -11,8 +11,8 @@ importers:
         specifier: ^1.7.13
         version: 1.7.13(vue@3.2.47)
       '@nuxtlabs/github-module':
-        specifier: ^1.6.2
-        version: 1.6.2(rollup@3.21.1)
+        specifier: ^1.6.3
+        version: 1.6.3(rollup@3.21.1)
       nuxt-seo-kit:
         specifier: ^1.3.8
         version: 1.3.8(@unhead/vue@1.1.26)(rollup@3.21.1)(vue@3.2.47)
@@ -1125,14 +1125,17 @@ packages:
       - supports-color
     dev: true
 
-  /@nuxtlabs/github-module@1.6.2(rollup@3.21.1):
-    resolution: {integrity: sha512-piHpTQ2SjVJhcBEesHcvRkRmCfAQKsID4UtlH53tnfRBnmbmWCMYPTOWleJJqKeS9dY3ytObgP4MkcDiOznZhA==}
+  /@nuxtlabs/github-module@1.6.3(rollup@3.21.1):
+    resolution: {integrity: sha512-oeZKBToETzJJGK9tB3vy6+pTdN6e9p8KIUHBK3kObO9VJZOeOuB4t9kK9jC6ld3LIB2CwWUT5WVkEB+TATdIMw==}
     dependencies:
-      '@nuxt/kit': 3.4.1(rollup@3.21.1)
+      '@nuxt/kit': 3.4.3(rollup@3.21.1)
       '@octokit/graphql': 5.0.5
       '@octokit/rest': 19.0.7
+      defu: 6.1.2
+      h3: 1.6.4
       remark-gfm: 3.0.1
       remark-github: 11.2.4
+      ufo: 1.1.1
     transitivePeerDependencies:
       - encoding
       - rollup
@@ -2523,7 +2526,6 @@ packages:
 
   /cookie-es@0.5.0:
     resolution: {integrity: sha512-RyZrFi6PNpBFbIaQjXDlFIhFVqV42QeKSZX1yQIl6ihImq6vcHNGMtqQ/QzY3RMPuYSkvsRwtnt5M9NeYxKt0g==}
-    dev: true
 
   /core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
@@ -3476,7 +3478,6 @@ packages:
       radix3: 1.0.1
       ufo: 1.1.1
       uncrypto: 0.1.2
-    dev: true
 
   /has-bigints@1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -3766,7 +3767,6 @@ packages:
 
   /iron-webcrypto@0.6.0:
     resolution: {integrity: sha512-WYgEQttulX/+JTv1BTJFYY3OsAb+ZnCuA53IjppZMyiRsVdGeEuZ/k4fJrg77Rzn0pp9/PgWtXUF+5HndDA5SQ==}
-    dev: true
 
   /is-absolute-url@4.0.1:
     resolution: {integrity: sha512-/51/TKE88Lmm7Gc4/8btclNXWS+g50wXhYJq8HWIBAGUBnoAdRu1aXeh364t/O7wXDAcTJDP8PNuNKWUDWie+A==}
@@ -6914,7 +6914,6 @@ packages:
 
   /uncrypto@0.1.2:
     resolution: {integrity: sha512-kuZwRKV615lEw/Xx3Iz56FKk3nOeOVGaVmw0eg+x4Mne28lCotNFbBhDW7dEBCBKyKbRQiCadEZeNAFPVC5cgw==}
-    dev: true
 
   /unctx@2.3.0:
     resolution: {integrity: sha512-xs79V1T5JEQ/5aQ3j4ipbQEaReMosMz/ktOdsZMEtKv1PfbdRrKY/PaU0CxdspkX3zEink2keQU4nRzAXgui1A==}
