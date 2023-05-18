@@ -29,7 +29,7 @@ export function processTemplateParams(s: string, config: TemplateParams) {
     const re = sub(token.slice(1))
     if (typeof re === 'string') {
       // replace the re using regex as word seperators
-      s = s.replaceAll(new RegExp(`\\${token}(\\W|$)`, 'g'), `${re}$1`).trim()
+      s = s.replace(new RegExp(`\\${token}(\\W|$)`, 'g'), `${re}$1`).trim()
     }
   })
 
