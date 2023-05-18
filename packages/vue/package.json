@@ -49,6 +49,6 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "vue": "^3.3.2"
+    "vue": "^3.3.4"
   }
 }

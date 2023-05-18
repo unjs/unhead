@@ -9,9 +9,9 @@
     "preview": "nuxi preview"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "1.11.1",
+    "@nuxt-themes/docus": "1.12.0",
     "@nuxtjs/fontaine": "^0.2.5",
-    "nuxt": "3.4.3",
+    "nuxt": "3.5.0",
     "nuxt-windicss": "latest",
     "playwright": "^1.33.0"
   },
