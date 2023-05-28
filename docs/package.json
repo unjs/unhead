@@ -11,9 +11,9 @@
   "devDependencies": {
     "@nuxt-themes/docus": "1.12.0",
     "@nuxtjs/fontaine": "^0.2.5",
-    "nuxt": "3.5.0",
+    "nuxt": "3.5.1",
     "nuxt-windicss": "latest",
-    "playwright": "^1.33.0"
+    "playwright": "^1.34.3"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.13",
