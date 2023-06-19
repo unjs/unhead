@@ -14,6 +14,7 @@ export default defineAppConfig({
       repo: 'unhead',
       branch: 'main',
       edit: true,
+      dir: 'docs/content',
     },
     main: {
       fluid: true,
