@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -83,7 +83,7 @@ importers:
     devDependencies:
       '@vitejs/plugin-react':
         specifier: latest
-        version: 4.0.0(vite@4.3.8)
+        version: 3.1.0(vite@4.3.8)
       compression:
         specifier: ^1.7.4
         version: 1.7.4
@@ -3548,15 +3548,16 @@ packages:
       - supports-color
     dev: true
 
-  /@vitejs/plugin-react@4.0.0(vite@4.3.8):
-    resolution: {integrity: sha512-HX0XzMjL3hhOYm+0s95pb0Z7F8O81G7joUHgfDd/9J/ZZf5k4xX6QAMFkKsHFxaHlf6X7GD7+XuaZ66ULiJuhQ==}
+  /@vitejs/plugin-react@3.1.0(vite@4.3.8):
+    resolution: {integrity: sha512-AfgcRL8ZBhAlc3BFdigClmTUMISmmzHn7sB2h9U1odvc5U/MjWXsAaz18b/WoppUTDBzxOJwo2VdClfUcItu9g==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
-      vite: ^4.2.0
+      vite: ^4.1.0-beta.0
     dependencies:
       '@babel/core': 7.21.8
       '@babel/plugin-transform-react-jsx-self': 7.21.0(@babel/core@7.21.8)
       '@babel/plugin-transform-react-jsx-source': 7.19.6(@babel/core@7.21.8)
+      magic-string: 0.27.0
       react-refresh: 0.14.0
       vite: 4.3.8(@types/node@20.2.1)
     transitivePeerDependencies:
