@@ -2,33 +2,39 @@ import type { HeadTag } from '@unhead/schema'
 import { defineHeadPlugin } from '@unhead/shared'
 
 export const TAG_WEIGHTS = {
-  // aliases
-  critical: 2,
-  high: 9,
-  low: 12,
   // tags
   base: -1,
   title: 1,
-  meta: 10,
+} as const
+
+export const TAG_ALIASES = {
+  // relative scores to their default values
+  critical: -8,
+  high: -1,
+  low: 2,
 } as const
 
 export function tagWeight<T extends HeadTag>(tag: T) {
-  if (typeof tag.tagPriority === 'number')
-    return tag.tagPriority
+  let weight = 10
+  const priority = tag.tagPriority
+  if (typeof priority === 'number')
+    return priority
   if (tag.tag === 'meta') {
     // charset must come early in case there's non-utf8 characters in the HTML document
     if (tag.props.charset)
-      return -2
+      weight = -2
     // CSP needs to be as it effects the loading of assets
     if (tag.props['http-equiv'] === 'content-security-policy')
-      return 0
+      weight = 0
   }
-  const key = tag.tagPriority || tag.tag
-  if (key in TAG_WEIGHTS) {
+  else if (tag.tag in TAG_WEIGHTS) {
+    weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
+  }
+  if (typeof priority === 'string' && priority in TAG_ALIASES) {
     // @ts-expect-error untyped
-    return TAG_WEIGHTS[key]
+    return weight + TAG_ALIASES[priority]
   }
-  return 10
+  return weight
 }
 export const SortModifiers = [{ prefix: 'before:', offset: -1 }, { prefix: 'after:', offset: 1 }]
 
