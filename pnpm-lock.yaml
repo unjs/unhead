@@ -515,7 +515,7 @@ packages:
       '@babel/compat-data': 7.22.5
       '@babel/core': 7.22.5
       '@babel/helper-validator-option': 7.22.5
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       semver: 6.3.0
     dev: true
 
@@ -3628,6 +3628,17 @@ packages:
       vue: 3.3.4
     dev: true
 
+  /@vitejs/plugin-vue@4.2.3(vite@4.3.8)(vue@3.3.4):
+    resolution: {integrity: sha512-R6JDUfiZbJA9cMiguQ7jxALsgiprjBeHL5ikpXfJCH62pPHtI+JdJ5xWj6Ev73yXSlYl86+blXn1kZHQ7uElxw==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    peerDependencies:
+      vite: ^4.0.0
+      vue: ^3.2.25
+    dependencies:
+      vite: 4.3.8(@types/node@20.2.1)
+      vue: 3.3.4
+    dev: true
+
   /@vitest/expect@0.32.2:
     resolution: {integrity: sha512-6q5yzweLnyEv5Zz1fqK5u5E83LU+gOMVBDuxBl2d2Jfx1BAp5M+rZgc5mlyqdnxquyoiOXpXmFNkcGcfFnFH3Q==}
     dependencies:
@@ -4741,7 +4752,7 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-lite: 1.0.30001508
       fraction.js: 4.2.0
       normalize-range: 0.1.2
@@ -5069,7 +5080,7 @@ packages:
   /caniuse-api@3.0.0:
     resolution: {integrity: sha512-bsTwuIg/BZZK/vreVTYYbSWoe2F+71P7K5QGEX+pT250DZbfU1MQ5prOKpPR+LL6uWKK3KMwMCAS74QB3Um1uw==}
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-lite: 1.0.30001508
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
@@ -8313,7 +8324,7 @@ packages:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
     hasBin: true
     dependencies:
-      minimist: 1.2.7
+      minimist: 1.2.8
     dev: true
 
   /json5@2.2.3:
@@ -8866,7 +8877,7 @@ packages:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
     dependencies:
-      minimist: 1.2.7
+      minimist: 1.2.8
     dev: true
 
   /mkdirp@1.0.4:
@@ -8875,7 +8886,7 @@ packages:
     hasBin: true
     dev: true
 
-  /mkdist@1.2.0(typescript@5.1.3):
+  /mkdist@1.2.0(typescript@5.0.4):
     resolution: {integrity: sha512-UTqu/bXmIk/+VKNVgufAeMyjUcNy1dn9Bl7wL1zZlCKVrpDgj/VllmZBeh3ZCC/2HWqUrt6frNFTKt9TRZbNvQ==}
     hasBin: true
     peerDependencies:
@@ -8895,7 +8906,7 @@ packages:
       mlly: 1.3.0
       mri: 1.2.0
       pathe: 1.1.0
-      typescript: 5.1.3
+      typescript: 5.0.4
     dev: true
 
   /mlly@1.3.0:
@@ -9640,6 +9651,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /pify@3.0.0:
+    resolution: {integrity: sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg==}
+    engines: {node: '>=4'}
+    dev: true
+
   /pinia@2.0.23(typescript@5.1.3)(vue@3.3.4):
     resolution: {integrity: sha512-N15hFf4o5STrxpNrib1IEb1GOArvPYf1zPvQVRGOO1G1d74Ak0J0lVyalX/SmrzdT4Q0nlEFjbURsmBmIGUR5Q==}
     peerDependencies:
@@ -9721,7 +9737,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       colord: 2.9.3
       postcss: 8.4.19
@@ -9734,7 +9750,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       colord: 2.9.3
       postcss: 8.4.23
@@ -9760,7 +9776,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.19
       postcss-value-parser: 4.2.0
     dev: true
@@ -9771,7 +9787,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.23
       postcss-value-parser: 4.2.0
     dev: true
@@ -9908,7 +9924,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.4.19)
       postcss: 8.4.19
@@ -9921,7 +9937,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.4.23)
       postcss: 8.4.23
@@ -9991,7 +10007,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       cssnano-utils: 3.1.0(postcss@8.4.19)
       postcss: 8.4.19
       postcss-value-parser: 4.2.0
@@ -10003,7 +10019,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       cssnano-utils: 3.1.0(postcss@8.4.23)
       postcss: 8.4.23
       postcss-value-parser: 4.2.0
@@ -10194,7 +10210,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.19
       postcss-value-parser: 4.2.0
     dev: true
@@ -10205,7 +10221,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.23
       postcss-value-parser: 4.2.0
     dev: true
@@ -10280,7 +10296,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       postcss: 8.4.19
     dev: true
@@ -10291,7 +10307,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       caniuse-api: 3.0.0
       postcss: 8.4.23
     dev: true
@@ -10866,7 +10882,7 @@ packages:
       glob: 7.2.3
     dev: true
 
-  /rollup-plugin-dts@5.3.0(rollup@3.20.4)(typescript@5.1.3):
+  /rollup-plugin-dts@5.3.0(rollup@3.20.4)(typescript@5.0.4):
     resolution: {integrity: sha512-8FXp0ZkyZj1iU5klkIJYLjIq/YZSwBoERu33QBDxm/1yw5UU4txrEtcmMkrq+ZiKu3Q4qvPCNqc3ovX6rjqzbQ==}
     engines: {node: '>=v14'}
     peerDependencies:
@@ -10875,7 +10891,7 @@ packages:
     dependencies:
       magic-string: 0.30.0
       rollup: 3.20.4
-      typescript: 5.1.3
+      typescript: 5.0.4
     optionalDependencies:
       '@babel/code-frame': 7.22.5
     dev: true
@@ -11462,7 +11478,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.19
       postcss-selector-parser: 6.0.11
     dev: true
@@ -11473,7 +11489,7 @@ packages:
     peerDependencies:
       postcss: ^8.2.15
     dependencies:
-      browserslist: 4.21.4
+      browserslist: 4.21.9
       postcss: 8.4.23
       postcss-selector-parser: 6.0.11
     dev: true
@@ -11793,6 +11809,12 @@ packages:
       is-typed-array: 1.1.10
     dev: true
 
+  /typescript@5.0.4:
+    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
+    engines: {node: '>=12.20'}
+    hasBin: true
+    dev: true
+
   /typescript@5.1.3:
     resolution: {integrity: sha512-XH627E9vkeqhlZFQuL+UsyAXEnibT0kWR2FWONlr4sTjvxyJYnyefgrkyECLzM5NenmKzRAy2rR/OlYLA1HkZw==}
     engines: {node: '>=14.17'}
@@ -11828,16 +11850,16 @@ packages:
       hookable: 5.5.3
       jiti: 1.18.2
       magic-string: 0.30.0
-      mkdist: 1.2.0(typescript@5.1.3)
+      mkdist: 1.2.0(typescript@5.0.4)
       mlly: 1.3.0
       mri: 1.2.0
       pathe: 1.1.0
       pkg-types: 1.0.2
       pretty-bytes: 6.1.0
       rollup: 3.20.4
-      rollup-plugin-dts: 5.3.0(rollup@3.20.4)(typescript@5.1.3)
+      rollup-plugin-dts: 5.3.0(rollup@3.20.4)(typescript@5.0.4)
       scule: 1.0.0
-      typescript: 5.1.3
+      typescript: 5.0.4
       untyped: 1.3.2
     transitivePeerDependencies:
       - sass
