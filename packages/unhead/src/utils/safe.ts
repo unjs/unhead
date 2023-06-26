@@ -62,22 +62,18 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
             .map((meta) => {
               const link: Record<string, string> = {}
               WhitelistAttributes.link.forEach((key) => {
+                const val = meta[key]
                 // block bad rel types
-                if (key === 'rel' && ['stylesheet', 'canonical', 'modulepreload', 'prerender', 'preload', 'prefetch'].includes(meta[key]))
+                if (key === 'rel' && ['stylesheet', 'canonical', 'modulepreload', 'prerender', 'preload', 'prefetch'].includes(val))
                   return
 
                 if (key === 'href') {
-                  try {
-                    const url = new URL(meta[key])
-                    if (['javascript:', 'data:'].includes(url.protocol))
-                      return
-
-                    link[key] = meta[key]
-                  }
-                  catch (e) {}
+                  if (val.includes('javascript:') || val.includes('data:'))
+                    return
+                  link[key] = val
                 }
-                else if (meta[key] || key.startsWith('data-')) {
-                  link[key] = meta[key]
+                else if (val || key.startsWith('data-')) {
+                  link[key] = val
                 }
               })
               return link

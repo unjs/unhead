@@ -1,5 +1,6 @@
 import type { HeadTag } from '@unhead/schema'
 import { HasElementTags, defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
+import { tagWeight } from './'
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 
@@ -61,6 +62,10 @@ export function DedupesTagsPlugin() {
               dupedTag._duped.push(tag)
               return
             }
+            else if (tagWeight(tag) > tagWeight(dupedTag)) {
+              // check tag weights
+              return
+            }
           }
           const propCount = Object.keys(tag.props).length + (tag.innerHTML ? 1 : 0) + (tag.textContent ? 1 : 0)
           // if the new tag does not have any props, we're trying to remove the duped tag from the DOM
@@ -69,6 +74,7 @@ export function DedupesTagsPlugin() {
             delete deduping[dedupeKey]
             return
           }
+          // make sure the tag we're replacing has a lower tag weight
           deduping[dedupeKey] = tag
         })
         const newTags: HeadTag[] = []

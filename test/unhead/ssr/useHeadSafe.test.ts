@@ -21,4 +21,36 @@ describe('dom useHeadSafe', () => {
       }
     `)
   })
+
+  it('link href', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      link: [
+        // relative from root
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: '/icon.png',
+        },
+        // relative to path
+        {
+          rel: 'icon',
+          href: 'favicon.ico',
+        }
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<link href=\\"/icon.png\\" rel=\\"apple-touch-icon\\" sizes=\\"180x180\\">
+      <link href=\\"favicon.ico\\" rel=\\"icon\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

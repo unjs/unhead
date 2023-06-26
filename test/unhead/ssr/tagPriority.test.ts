@@ -242,4 +242,37 @@ describe('tag priority', () => {
     `,
     )
   })
+
+  test('title priority', async () => {
+    const head = createHead()
+    head.push({
+      title: {
+        textContent: 'high-priority title',
+        tagPriority: 'high',
+      },
+    })
+    head.push({
+      title: {
+        textContent: 'title override',
+      },
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot('"<title>high-priority title</title>"')
+  })
+
+  test('titleTemplate priority', async () => {
+    const head = createHead()
+    head.push({
+      title: 'test',
+      titleTemplate: {
+        textContent: '%s - high-priority title template',
+        tagPriority: 'high',
+      },
+    })
+    head.push({
+      titleTemplate: '%s - override title template',
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot('"<title>test - high-priority title template</title>"')
+  })
 })

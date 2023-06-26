@@ -9,6 +9,8 @@ export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & Resol
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
 
 export interface SchemaAugmentations extends MergeHead {
+  title: TagPriority
+  titleTemplate: TagPriority
   base: UserAttributesConfig
   htmlAttrs: UserAttributesConfig
   bodyAttrs: UserAttributesConfig
@@ -59,8 +61,10 @@ export type MaybeFunctionEntries<T> = {
   [key in keyof T]?: T[key] | ((e: Event) => void)
 }
 
-export type Title = string | null
-export type TitleTemplate = string | null | ((title?: string) => string | null)
+type TitleTemplateResolver = string | ((title?: string) => string | null)
+
+export type Title = MaybePromiseProps<string | ({ textContent: string } & SchemaAugmentations['title']) | null>
+export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
 export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], MaybePromiseProps<_Base>>> & DefinedValueOrEmptyObject<E>
 export type Link<E extends EntryAugmentation = {}> = MaybePromiseProps<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
 export type Meta<E extends EntryAugmentation = {}> = MaybePromiseProps<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
