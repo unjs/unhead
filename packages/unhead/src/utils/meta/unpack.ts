@@ -2,7 +2,9 @@ import type { Head, MetaFlatInput } from '@unhead/schema'
 import { unpackToArray, unpackToString } from 'packrup'
 import { MetaPackingSchema } from './utils'
 
-const ArrayableInputs = ['Image', 'Video', 'Audio']
+const OpenGraphInputs = ['Image', 'Video', 'Audio']
+
+const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
 
 const ColonPrefixKeys = /^(og|twitter|fb)/
 
@@ -49,7 +51,7 @@ function changeKeyCasingDeep<T extends any>(input: T): T {
 export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
   const extras: Record<string, any>[] = []
 
-  ArrayableInputs.forEach((key) => {
+  OpenGraphInputs.forEach((key) => {
     const ogKey = `og:${key.toLowerCase()}`
     const inputKey = `og${key}` as keyof MetaFlatInput
     const val = input[inputKey]
@@ -76,6 +78,22 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
       delete input[inputKey]
     }
   })
+
+  SimpleArrayUnpackMetas.forEach((meta: keyof T) => {
+    if (input[meta]) {
+      // maybe it's an array, convert to array
+      const val = (Array.isArray(input[meta]) ? input[meta] : [input[meta]]) as (Record<string, string>)[]
+      // for each array entry
+      delete input[meta]
+      val.forEach((entry) => {
+        extras.push({
+          name: fixKeyCase(meta as string),
+          ...entry,
+        })
+      })
+    }
+  })
+
   const meta = unpackToArray((input), {
     key({ key }) {
       return resolveMetaKeyType(key) as string
