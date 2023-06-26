@@ -63,7 +63,7 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>[object Object]</title>",
+        "headTags": "<title></title>",
         "htmlAttrs": "",
       }
     `)

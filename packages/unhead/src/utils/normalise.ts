@@ -1,15 +1,26 @@
-import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
+import type { Head, HeadEntry, HeadTag, TagPriority } from '@unhead/schema'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '@unhead/shared'
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
+  if (input instanceof Promise)
+    input = await input
+
   if (tagName === 'templateParams') {
     // @ts-expect-error untyped
     tag.props = input
     return tag
   }
   if (['title', 'titleTemplate'].includes(tagName)) {
-    tag.textContent = (input instanceof Promise ? await input : input) as string
+    // title and titleTemplate can be a string or an object with the priority
+    if (input && typeof input === 'object') {
+      tag.textContent = input.textContent
+      if (input.tagPriority)
+        tag.tagPriority = input.tagPriority as TagPriority['tagPriority']
+    }
+    else {
+      tag.textContent = input as string
+    }
     return tag
   }
   // allow shorthands
