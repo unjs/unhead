@@ -7,33 +7,19 @@
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
-  "homepage": "https://github.com/harlan-zw/unhead#readme",
+  "homepage": "https://github.com/unjs/unhead#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harlan-zw/unhead.git"
+    "url": "git+https://github.com/unjs/unhead.git"
   },
   "bugs": {
-    "url": "https://github.com/harlan-zw/unhead/issues"
+    "url": "https://github.com/unjs/unhead/issues"
   },
   "keywords": [
     "meta tags",
     "node",
     "seo",
     "head"
-  ],
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.mjs"
-    }
-  },
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
   ],
   "scripts": {
     "build": "pnpm -r --filter=./packages/** run build",
