@@ -260,6 +260,14 @@ describe('UseSeoMetaTransform', () => {
     `)
   })
 
+  it('does not handle spread operator', async () => {
+    const code = await transform([
+      'const data = { title: \'Hello\', description: \'World\'  }',
+      'useSeoMeta({ ...data })',
+    ])
+    expect(code).toBeUndefined()
+  })
+
   it('vue sfc example - useSeoMeta', async () => {
     const code = await transform(`
 import { defineComponent as _defineComponent } from "vue";

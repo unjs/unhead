@@ -152,6 +152,12 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               output.push('  meta: [')
 
             meta.forEach((property) => {
+              // not supported
+              // @ts-expect-error untyped
+              if (property.type === 'SpreadElement') {
+                output = false
+                return
+              }
               if (property.key.type !== 'Identifier' || !property.value) {
                 output = false
                 return
