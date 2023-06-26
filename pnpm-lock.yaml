@@ -3505,8 +3505,22 @@ packages:
       '@unhead/shared': 1.1.27
     dev: true
 
+  /@unhead/dom@1.1.28:
+    resolution: {integrity: sha512-o5w3GUo1en9OWNHpUkrkZxmlx2Xf7q++VLb5Lm0MtbHYM578lWmB1zLfmJMN13kvaNKN8RUhTYG5WMtKMzDfGw==}
+    dependencies:
+      '@unhead/schema': 1.1.28
+      '@unhead/shared': 1.1.28
+    dev: true
+
   /@unhead/schema@1.1.27:
     resolution: {integrity: sha512-S+xhPoBxBXDrsW9ltcF9Cv3cntMbSx+dfSmE7RNyDhogqHd3+lDEV2dnQpHKWTGjujwwMCALV5SADunAn785bw==}
+    dependencies:
+      hookable: 5.5.3
+      zhead: 2.0.7
+    dev: true
+
+  /@unhead/schema@1.1.28:
+    resolution: {integrity: sha512-KDAPSYcYZHC3ni3Hd3Ye/piBasaHa/uQWCLICOVADwKi1Pm6hhMxCCwpsPSJtfekN31kOvIA09vZv8roPwTthQ==}
     dependencies:
       hookable: 5.5.3
       zhead: 2.0.7
@@ -3516,6 +3530,12 @@ packages:
     resolution: {integrity: sha512-ElZ5WcMnhVlg44OAwTNq4XBkNePcL/BHZk7WKFcqpeGTJrEvSfs40lGJoo4sMsgDAd+XQdhJDd4dJu48jQB3kg==}
     dependencies:
       '@unhead/schema': 1.1.27
+    dev: true
+
+  /@unhead/shared@1.1.28:
+    resolution: {integrity: sha512-mC0k7a4Cb4vKsASjD/Ws5hrRdZfTf5uapRF+1ekVqeyo1VVISoXNB6CdxTjHgqi8vKQr5wmvoSvEt1fOoU1PQQ==}
+    dependencies:
+      '@unhead/schema': 1.1.28
     dev: true
 
   /@unhead/ssr@1.1.27:
@@ -4303,8 +4323,8 @@ packages:
     peerDependencies:
       vue: '>=2.7 || >=3'
     dependencies:
-      '@unhead/dom': 1.1.27
-      '@unhead/schema': 1.1.27
+      '@unhead/dom': 1.1.28
+      '@unhead/schema': 1.1.28
       '@unhead/ssr': 1.1.27
       '@unhead/vue': 1.1.27(vue@3.3.4)
       vue: 3.3.4
@@ -9246,7 +9266,7 @@ packages:
       ufo: 1.1.2
       unctx: 2.1.2
       unenv: 1.2.0
-      unhead: 1.1.27
+      unhead: 1.1.28
       unimport: 2.2.4(rollup@3.20.4)
       unplugin: 1.3.1
       untyped: 1.2.2
@@ -11894,6 +11914,15 @@ packages:
       '@unhead/dom': 1.1.27
       '@unhead/schema': 1.1.27
       '@unhead/shared': 1.1.27
+      hookable: 5.5.3
+    dev: true
+
+  /unhead@1.1.28:
+    resolution: {integrity: sha512-lJqXq5YMAD3p+Nhnvb7fNJwkU91kJNhrnZNcEuAlaTB+0L4es69UvMzekT/wvoE7pde4Yxs0upcTyL4BBz4vQw==}
+    dependencies:
+      '@unhead/dom': 1.1.28
+      '@unhead/schema': 1.1.28
+      '@unhead/shared': 1.1.28
       hookable: 5.5.3
     dev: true
 
