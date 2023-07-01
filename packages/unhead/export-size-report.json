@@ -44,39 +44,39 @@
       "bundled": 12417
     },
     {
-      "name": "useServerTagMetaFlat",
-      "path": "dist/index.mjs",
-      "minified": 3901,
-      "minzipped": 1459,
-      "bundled": 7358
-    },
-    {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3921,
-      "minzipped": 1455,
-      "bundled": 7381
+      "minified": 3944,
+      "minzipped": 1467,
+      "bundled": 7417
+    },
+    {
+      "name": "useServerTagMetaFlat",
+      "path": "dist/index.mjs",
+      "minified": 3924,
+      "minzipped": 1467,
+      "bundled": 7394
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 3868,
-      "minzipped": 1444,
-      "bundled": 7253
+      "minified": 3891,
+      "minzipped": 1447,
+      "bundled": 7289
     },
     {
       "name": "useTagMetaFlat",
       "path": "dist/index.mjs",
-      "minified": 3849,
-      "minzipped": 1439,
-      "bundled": 7223
+      "minified": 3872,
+      "minzipped": 1441,
+      "bundled": 7259
     },
     {
       "name": "unpackMeta",
       "path": "dist/index.mjs",
-      "minified": 3562,
-      "minzipped": 1323,
-      "bundled": 6656
+      "minified": 3585,
+      "minzipped": 1341,
+      "bundled": 6692
     },
     {
       "name": "normaliseEntryTags",
