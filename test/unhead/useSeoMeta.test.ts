@@ -3,7 +3,7 @@ import { renderSSRHead } from '@unhead/ssr'
 import { describe, it } from 'vitest'
 
 describe('useSeoMeta', () => {
-  it('themeColor', async () => {
+  it('themeColor array', async () => {
     const head = createHead()
 
     useSeoMeta({
@@ -24,4 +24,23 @@ describe('useSeoMeta', () => {
       }
     `)
   })
+
+  it('themeColor string', async () => {
+    const head = createHead()
+
+    useSeoMeta({
+      themeColor: 'cyan'
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name=\\"theme-color\\" content=\\"cyan\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
 })

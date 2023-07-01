@@ -80,16 +80,16 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   })
 
   SimpleArrayUnpackMetas.forEach((meta: keyof T) => {
-    if (input[meta]) {
+    if (input[meta] && typeof input[meta] !== 'string') {
       // maybe it's an array, convert to array
       const val = (Array.isArray(input[meta]) ? input[meta] : [input[meta]]) as (Record<string, string>)[]
       // for each array entry
       delete input[meta]
       val.forEach((entry) => {
-        extras.push({
-          name: fixKeyCase(meta as string),
-          ...entry,
-        })
+          extras.push({
+            name: fixKeyCase(meta as string),
+            ...entry,
+          })
       })
     }
   })
