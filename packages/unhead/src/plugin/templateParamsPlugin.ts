@@ -1,18 +1,20 @@
 import { defineHeadPlugin } from '@unhead/shared'
 import type { TemplateParams } from '@unhead/schema'
 
-export function processTemplateParams(s: string, config: TemplateParams) {
+export function processTemplateParams(s: unknown, p: TemplateParams) {
+  if (typeof s !== 'string')
+    return s
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   function sub(token: string) {
     if (['s', 'pageTitle'].includes(token))
-      return config.pageTitle as string
+      return p.pageTitle as string
     let val: string | undefined
     // support . notation
     if (token.includes('.')) {
       // @ts-expect-error untyped
-      val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, config) as string
+      val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, p) as string
     }
-    else { val = config[token] as string | undefined }
+    else { val = p[token] as string | undefined }
     return typeof val !== 'undefined' ? (val || '') : false
   }
 
@@ -33,14 +35,15 @@ export function processTemplateParams(s: string, config: TemplateParams) {
     }
   })
 
-  if (config.separator) {
-    // avoid the title ending with a separator
-    if (s.endsWith(config.separator))
-      s = s.slice(0, -config.separator.length).trim()
-    if (s.startsWith(config.separator))
-      s = s.slice(config.separator.length).trim()
+  // avoid dangling separators
+  const sep = p.separator!
+  if (s.includes(sep)) {
+    if (s.endsWith(sep))
+      s = s.slice(0, -sep.length).trim()
+    if (s.startsWith(sep))
+      s = s.slice(sep.length).trim()
     // make sure we don't have two separators next to each other
-    s = s.replace(new RegExp(`\\${config.separator}\\s*\\${config.separator}`, 'g'), config.separator)
+    s = s.replace(new RegExp(`\\${sep}\\s*\\${sep}`, 'g'), sep)
   }
   return s
 }
@@ -54,6 +57,8 @@ export function TemplateParamsPlugin() {
         const idx = tags.findIndex(tag => tag.tag === 'templateParams')
         // we always process params so we can substitute the title
         const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
+        // ensure a seperator exists
+        params.separator = params.separator || '|'
         // pre-process title
         params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params)
         for (const tag of tags) {

@@ -97,7 +97,7 @@ describe('ssr vue templateParams', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>%separator %siteName</title>",
+        "headTags": "<title>%siteName</title>",
         "htmlAttrs": "",
       }
     `)
@@ -173,7 +173,7 @@ describe('ssr vue templateParams', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
-      "<title>my tag line %separator test</title>
+      "<title>my tag line | test</title>
       <meta name=\\"description\\" content=\\"Hi, welcome to the dev v0.0.0 of test.\\">"
     `)
   })
