@@ -24,9 +24,9 @@
     {
       "name": "InferSeoMetaPlugin",
       "path": "dist/index.mjs",
-      "minified": 995,
-      "minzipped": 382,
-      "bundled": 2631
+      "minified": 994,
+      "minzipped": 384,
+      "bundled": 2630
     },
     {
       "name": "DefaultCriticalTags",
