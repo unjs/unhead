@@ -54,7 +54,8 @@ export function TemplateParamsPlugin() {
         const idx = tags.findIndex(tag => tag.tag === 'templateParams')
         // we always process params so we can substitute the title
         const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
-        params.pageTitle = params.pageTitle || title || ''
+        // pre-process title
+        params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params)
         for (const tag of tags) {
           if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string') {
             tag.textContent = processTemplateParams(tag.textContent, params)

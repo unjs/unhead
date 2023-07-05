@@ -1,5 +1,7 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
+import { createHead } from 'unhead'
+import { renderSSRHead } from '@unhead/ssr'
 import { ssrRenderOptionsHead } from '../util'
 
 describe('ssr vue templateParams', () => {
@@ -139,6 +141,40 @@ describe('ssr vue templateParams', () => {
         "headTags": "<title>My Awesome Site</title>",
         "htmlAttrs": "",
       }
+    `)
+  })
+
+  test('edge case', async () => {
+    const head = createHead()
+    head.push({
+      title: '%site.tagline',
+      // DEV - My page title - My cool site
+      titleTemplate: '%s %separator %site.name',
+      meta: [
+        {
+          name: 'description',
+          // Hi, welcome to the dev v0.0.0 of Nuxt Playground.
+          content: 'Hi, welcome to the %envName v%app.version of %site.name.',
+        },
+      ],
+    })
+    head.push({
+      templateParams: {
+        foo: 'bar',
+        envName: 'dev',
+        app: {
+          version: '0.0.0',
+        },
+        site: {
+          name: 'test',
+          tagline: 'my tag line',
+        },
+      },
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>my tag line %separator test</title>
+      <meta name=\\"description\\" content=\\"Hi, welcome to the dev v0.0.0 of test.\\">"
     `)
   })
 })
