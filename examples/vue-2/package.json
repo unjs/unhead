@@ -11,9 +11,9 @@
     "vue": "^2.6.14"
   },
   "devDependencies": {
+    "@unhead/vue": "link:../../packages/vue",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "@unhead/vue": "link:../../packages/vue",
     "vue-template-compiler": "^2.6.14"
   },
   "browserslist": [

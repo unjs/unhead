@@ -30,5 +30,5 @@
       "@unhead/shared": ["packages/shared/src"],
       "@unhead/shared/*": ["packages/shared/*"]
     }
-  },
+  }
 }

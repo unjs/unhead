@@ -3,16 +3,16 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import * as url from 'url';
+import * as url from 'node:url'
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-const toAbsolute = (p) => path.resolve(__dirname, p)
+const toAbsolute = p => path.resolve(__dirname, p)
 
 console.log('preload import')
 const manifest = (await import('./dist/static/ssr-manifest.json', {
-  assert: { type: 'json' }
-}) ).default
+  assert: { type: 'json' },
+})).default
 const template = fs.readFileSync(toAbsolute('dist/static/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
@@ -21,7 +21,7 @@ const routesToPrerender = fs
   .readdirSync(toAbsolute('src/pages'))
   .map((file) => {
     const name = file.replace(/\.vue$/, '').toLowerCase()
-    return name === 'home' ? `/` : `/${name}`
+    return name === 'home' ? '/' : `/${name}`
   })
 
 ;(async () => {
@@ -30,8 +30,8 @@ const routesToPrerender = fs
     const [appHtml, preloadLinks, headHtml] = await render(url, manifest)
 
     let html = template
-      .replace(`<!--preload-links-->`, preloadLinks)
-      .replace(`<!--app-html-->`, appHtml)
+      .replace('<!--preload-links-->', preloadLinks)
+      .replace('<!--app-html-->', appHtml)
 
     Object.entries(headHtml).forEach(([key, value]) => {
       html = html.replace(`<!--${key}-->`, value)

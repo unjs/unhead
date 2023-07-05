@@ -25,8 +25,8 @@ useHead({
   bodyAttrs: {
     onscroll: (e) => { isFixedHeader.value = window.top.scrollY > 100 },
     class: {
-      ['fixed-header']: isFixedHeader
-    }
+      'fixed-header': isFixedHeader,
+    },
   },
 })
 
@@ -41,21 +41,25 @@ useHead({
     {
       key: 'page-styles',
       tagPosition: 'bodyClose',
-      children: () => `.${String(route.value.name)}-${typeof window === 'undefined' ? 'ssr': 'spa'} { background-color: red; }`,
-    }
-  ]
+      children: () => `.${String(route.value.name)}-${typeof window === 'undefined' ? 'ssr' : 'spa'} { background-color: red; }`,
+    },
+  ],
 })
 </script>
 
 <template>
-<div>
   <div>
-    <NuxtPage />
+    <div>
+      <NuxtPage />
+    </div>
+    <nuxt-link to="/" style="margin-top: 10px;" as="div">
+      Home
+    </nuxt-link>
+    <button @click="isNavActive = !isNavActive">
+      Nav open
+    </button>
+    <div style="margin-top: 30px;">
+      <DebugHead />
+    </div>
   </div>
-  <nuxt-link to="/" style="margin-top: 10px;" as="div">Home</nuxt-link>
-  <button @click="isNavActive = !isNavActive">Nav open</button>
-  <div style="margin-top: 30px;">
-    <DebugHead />
-  </div>
-</div>
 </template>

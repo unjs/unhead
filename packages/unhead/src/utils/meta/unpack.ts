@@ -86,10 +86,10 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
       // for each array entry
       delete input[meta]
       val.forEach((entry) => {
-          extras.push({
-            name: fixKeyCase(meta as string),
-            ...entry,
-          })
+        extras.push({
+          name: fixKeyCase(meta as string),
+          ...entry,
+        })
       })
     }
   })

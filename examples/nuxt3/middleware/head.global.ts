@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
       title: () => {
         console.log('title:', to.meta, String(to.meta.title))
         return String(to.meta.title)
-      }
+      },
     })
   }
 })

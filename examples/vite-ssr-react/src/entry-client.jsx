@@ -8,5 +8,5 @@ ReactDOM.hydrateRoot(
   document.getElementById('app'),
   <BrowserRouter>
     <App />
-  </BrowserRouter>
+  </BrowserRouter>,
 )

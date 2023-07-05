@@ -13,8 +13,9 @@ useMetaTags({
   },
 })
 </script>
+
 <template>
-<div>
-  <h2>meta tags</h2>
-</div>
+  <div>
+    <h2>meta tags</h2>
+  </div>
 </template>

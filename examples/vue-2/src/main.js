@@ -1,7 +1,6 @@
 import Vue from 'vue'
+import { Vue2ProvideUnheadPlugin, createHead } from '@unhead/vue'
 import App from './App.vue'
-import { createHead, Vue2ProvideUnheadPlugin } from "@unhead/vue"
-
 
 Vue.config.productionTip = false
 

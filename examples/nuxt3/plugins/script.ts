@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useHead, ref } from '#imports'
+import { defineNuxtPlugin, ref, useHead } from '#imports'
 
 const configure = [
   'window.loadTurnstile = new Promise(resolve => {',

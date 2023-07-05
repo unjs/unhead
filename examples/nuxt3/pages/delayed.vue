@@ -1,3 +1,3 @@
 <template>
-<DelayedUseHead />
+  <DelayedUseHead />
 </template>

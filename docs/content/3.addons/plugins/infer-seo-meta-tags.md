@@ -24,7 +24,7 @@ const head = createHead({
   ]
 })
 
-// or 
+// or
 
 head.use(InferSeoMetaPlugin())
 ```
@@ -64,7 +64,7 @@ import { InferSeoMetaPlugin } from '@unhead/addons'
 const head = createHead({
   plugins: [
     InferSeoMetaPlugin({
-      ogTitle: (title) => title.replace('- My Site', '')
+      ogTitle: title => title.replace('- My Site', '')
     })
   ]
 })

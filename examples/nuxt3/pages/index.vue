@@ -28,93 +28,92 @@ useHead({
 </script>
 
 <template>
-<div>
-  Nuxt module playground!
-  <NuxtLink to="/delayed">
-    delayed
-  </NuxtLink>
-  <button @click="count++">
-    Click me
-  </button>
-  <h1>API</h1>
-  <h2>Component</h2>
   <div>
-    <NuxtLink to="/api/component/reactivity">
-      reactivity
+    Nuxt module playground!
+    <NuxtLink to="/delayed">
+      delayed
     </NuxtLink>
+    <button @click="count++">
+      Click me
+    </button>
+    <h1>API</h1>
+    <h2>Component</h2>
+    <div>
+      <NuxtLink to="/api/component/reactivity">
+        reactivity
+      </NuxtLink>
+    </div>
+    <h2>Composition</h2>
+    <div>
+      <NuxtLink to="/api/composition/reactivity">
+        reactivity
+      </NuxtLink>
+    </div>
+    <h2>Option</h2>
+    <div>
+      <NuxtLink to="/api/option/basic">
+        Basic
+      </NuxtLink>
+    </div>
+    <h1>Functionality</h1>
+    <h2>Features</h2>
+    <div>
+      <NuxtLink to="/features/delay">
+        delay
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/features/meta">
+        meta
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/features/priority">
+        priority
+      </NuxtLink>
+    </div>
+    <h2>Raw</h2>
+    <div>
+      <NuxtLink to="/raw/events">
+        events
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/raw/html">
+        html
+      </NuxtLink>
+    </div>
+    <h2>Examples</h2>
+    <div>
+      <NuxtLink to="/examples/red">
+        red bg
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/examples/script-load">
+        script onload event
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/meta">
+        meta
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/mount">
+        mount
+      </NuxtLink>
+    </div>
+    <h2>Benchmarks</h2>
+    <div>
+      <NuxtLink to="/benchmark">
+        1000x
+      </NuxtLink>
+    </div>
+    <div>
+      <NuxtLink to="/benchmark/simple">
+        1x
+      </NuxtLink>
+    </div>
   </div>
-  <h2>Composition</h2>
-  <div>
-    <NuxtLink to="/api/composition/reactivity">
-      reactivity
-    </NuxtLink>
-  </div>
-  <h2>Option</h2>
-  <div>
-    <NuxtLink to="/api/option/basic">
-      Basic
-    </NuxtLink>
-  </div>
-  <h1>Functionality</h1>
-  <h2>Features</h2>
-  <div>
-    <NuxtLink to="/features/delay">
-      delay
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/features/meta">
-      meta
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/features/priority">
-      priority
-    </NuxtLink>
-  </div>
-  <h2>Raw</h2>
-  <div>
-    <NuxtLink to="/raw/events">
-      events
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/raw/html">
-      html
-    </NuxtLink>
-  </div>
-  <h2>Examples</h2>
-  <div>
-    <NuxtLink to="/examples/red">
-      red bg
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/examples/script-load">
-      script onload event
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/meta">
-      meta
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/mount">
-      mount
-    </NuxtLink>
-  </div>
-  <h2>Benchmarks</h2>
-  <div>
-    <NuxtLink to="/benchmark">
-      1000x
-    </NuxtLink>
-  </div>
-  <div>
-    <NuxtLink to="/benchmark/simple">
-      1x
-    </NuxtLink>
-  </div>
-
-</div>
 </template>

@@ -1,33 +1,33 @@
-<template>
-  <h1>About</h1>
-</template>
-
 <script>
 export default {
   async setup() {
     useHead({
       title: 'About',
       htmlAttrs: {
-        class: 'about-page'
+        class: 'about-page',
       },
       bodyAttrs: {
-        style: 'background-color: aquamarine'
+        style: 'background-color: aquamarine',
       },
       meta: [
         {
           name: 'description',
           content: 'This is an about page',
-        }
+        },
       ],
       style: [
         {
           children: '#app { background: aqua; color: white; }',
-        }
-      ]
+        },
+      ],
     })
   },
 }
 </script>
+
+<template>
+  <h1>About</h1>
+</template>
 
 <style scoped>
 h1 {

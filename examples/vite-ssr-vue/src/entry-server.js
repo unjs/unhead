@@ -1,7 +1,7 @@
 import { basename } from 'node:path'
 import { renderToString } from 'vue/server-renderer'
-import { createApp } from './main'
 import { renderSSRHead } from '@unhead/ssr'
+import { createApp } from './main'
 
 export async function render(url, manifest) {
   const { app, router, head } = createApp()
@@ -52,19 +52,26 @@ function renderPreloadLinks(modules, manifest) {
 function renderPreloadLink(file) {
   if (file.endsWith('.js')) {
     return `<link rel="modulepreload" crossorigin href="${file}">`
-  } else if (file.endsWith('.css')) {
+  }
+  else if (file.endsWith('.css')) {
     return `<link rel="stylesheet" href="${file}">`
-  } else if (file.endsWith('.woff')) {
+  }
+  else if (file.endsWith('.woff')) {
     return ` <link rel="preload" href="${file}" as="font" type="font/woff" crossorigin>`
-  } else if (file.endsWith('.woff2')) {
+  }
+  else if (file.endsWith('.woff2')) {
     return ` <link rel="preload" href="${file}" as="font" type="font/woff2" crossorigin>`
-  } else if (file.endsWith('.gif')) {
+  }
+  else if (file.endsWith('.gif')) {
     return ` <link rel="preload" href="${file}" as="image" type="image/gif">`
-  } else if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
+  }
+  else if (file.endsWith('.jpg') || file.endsWith('.jpeg')) {
     return ` <link rel="preload" href="${file}" as="image" type="image/jpeg">`
-  } else if (file.endsWith('.png')) {
+  }
+  else if (file.endsWith('.png')) {
     return ` <link rel="preload" href="${file}" as="image" type="image/png">`
-  } else {
+  }
+  else {
     // TODO
     return ''
   }

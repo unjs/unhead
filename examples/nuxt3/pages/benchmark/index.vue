@@ -42,9 +42,9 @@ const count = ref(0)
 const end = performance.now()
 // round the total time as seconds
 timeTaken.value = Math.round(end - start) / 1000
-const react = () => {
+function react() {
   console.time('patch')
-  page.value.image = page.value.image.replace('_' + String(count.value), '_' + String(++count.value))
+  page.value.image = page.value.image.replace(`_${String(count.value)}`, `_${String(++count.value)}`)
   page.value.title = `Updated ${count.value}`
   nextTick(() => {
     console.timeEnd('patch')
@@ -53,11 +53,11 @@ const react = () => {
 </script>
 
 <template>
-<div>
-  <h1>Bench test</h1>
-  <p>Mount: {{ timeTaken }}ms</p>
-  <button @click="react">
-    react
-  </button>
-</div>
+  <div>
+    <h1>Bench test</h1>
+    <p>Mount: {{ timeTaken }}ms</p>
+    <button @click="react">
+      react
+    </button>
+  </div>
 </template>

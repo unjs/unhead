@@ -8,8 +8,7 @@ description: How to use the useHead composable.
 **Type:** 
 
 ```ts
-function useHead<T extends MergeHead>
-    (input: UseHeadInput<T>, options: HeadEntryOptions = {}) : void
+function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): void
 ```
 
 The `useHead` composable is the primary way to manage the head of the document at runtime.

@@ -1,9 +1,4 @@
-<template>
-  <h1>Red</h1>
-</template>
-
 <script>
-
 export default {
   async setup() {
     useHead({
@@ -13,11 +8,15 @@ export default {
       },
       bodyAttrs: {
         class: ['white'],
-      }
+      },
     })
   },
 }
 </script>
+
+<template>
+  <h1>Red</h1>
+</template>
 
 <style>
 .white {

@@ -8,7 +8,7 @@ const body = ref([...document.querySelector('body').attributes])
 
 const filter = ref('')
 
-const tagColour = (tag: string) => {
+function tagColour(tag: string) {
   switch (tag) {
     case 'META':
       return '#dcfce7'
@@ -61,7 +61,7 @@ onBeforeUnmount(() => {
   observer?.disconnect()
 })
 
-const setFilter = (val) => {
+function setFilter(val) {
   filter.value = val
 }
 </script>

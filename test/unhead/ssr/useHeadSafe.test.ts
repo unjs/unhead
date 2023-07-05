@@ -37,7 +37,7 @@ describe('dom useHeadSafe', () => {
         {
           rel: 'icon',
           href: 'favicon.ico',
-        }
+        },
       ],
     })
 

@@ -8,7 +8,7 @@ description: Render Unhead to a string that be can be server side rendered.
 **Type:**
 
 ```ts
-function renderSSRHead<T extends {}>(head: Unhead<T>) : SSRHeadPayload
+function renderSSRHead<T extends {}>(head: Unhead<T>): SSRHeadPayload
 ```
 
 ```ts
@@ -30,10 +30,10 @@ This is useful for when you want to render the tags to a string that can be used
 ```ts
 import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/dom'
-  
+
 const head = createHead()
 
-head.push({ title: 'Hello World '})
+head.push({ title: 'Hello World ' })
 
 const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head)
 

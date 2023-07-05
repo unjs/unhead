@@ -8,8 +8,7 @@ description: Render the Unhead tags to the DOM using a debounce function.
 **Type:**
 
 ```ts
-function debouncedRenderDOMHead<T extends Unhead>
-    (head: T, options: DebouncedRenderDomHeadOptions = {}) : Promise<void>
+function debouncedRenderDOMHead<T extends Unhead>(head: T, options: DebouncedRenderDomHeadOptions = {}): Promise<void>
 ```
 
 ```ts
@@ -37,10 +36,10 @@ import { debouncedRenderDOMHead } from '@unhead/dom'
 
 const head = createHead()
 
-head.push({ title: 'Hello World '})
+head.push({ title: 'Hello World ' })
 
 debouncedRenderDOMHead(head, {
   // wait 1 second before rendering
-  delayFn: (fn) => setTimeout(fn, 1000)
+  delayFn: fn => setTimeout(fn, 1000)
 })
 ```

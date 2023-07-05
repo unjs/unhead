@@ -6,12 +6,12 @@ export default {
   components: {
     HelloWorld,
   },
-  data () {
+  data() {
     return {
       helloWorld: true,
     }
   },
-  head () {
+  head() {
     return {
       title: 'Vue 2 Head',
       meta: [
@@ -35,7 +35,9 @@ export default {
 <template>
   <div id="app">
     <HelloWorld v-if="helloWorld" msg="Welcome to Your Vue.js App" />
-    <button @click="helloWorld = !helloWorld">Toggle Hello World</button>
+    <button @click="helloWorld = !helloWorld">
+      Toggle Hello World
+    </button>
   </div>
 </template>
 

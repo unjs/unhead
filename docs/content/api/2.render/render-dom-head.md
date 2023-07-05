@@ -8,7 +8,7 @@ description: Render the head to the DOM.
 **Type:**
 
 ```ts
-function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) : void
+function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): void
 ```
 
 ```ts
@@ -31,8 +31,8 @@ import { createHead } from 'unhead'
 import { renderDOMHead } from '@unhead/dom'
 
 const head = createHead()
-  
-head.push({ title: 'Hello World '})
+
+head.push({ title: 'Hello World ' })
 
 renderDOMHead(head)
 ```

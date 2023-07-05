@@ -34,5 +34,5 @@ export default defineAppConfig({
     cover: {
       src: 'https://unhead.harlanzw.com/og.png',
     },
-  }
+  },
 })

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useHead } from '#head'
+
 const page = ref({
   title: 'Home',
   description: 'Home page description',
@@ -37,7 +38,7 @@ useHead({
 })
 const count = ref(0)
 console.timeEnd('useHead x1')
-const react = () => {
+function react() {
   console.time('patch')
   count.value += 1
   page.value.title = `Updated title: ${count.value}`

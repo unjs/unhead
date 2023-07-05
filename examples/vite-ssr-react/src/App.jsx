@@ -9,7 +9,7 @@ const routes = Object.keys(pages).map((path) => {
   return {
     name,
     path: name === 'Home' ? '/' : `/${name.toLowerCase()}`,
-    component: pages[path].default
+    component: pages[path].default,
   }
 })
 

@@ -6,16 +6,19 @@ const state = reactive({
 })
 
 useHead({
-  title: () => state.count + ' times',
+  title: () => `${state.count} times`,
 
 })
 </script>
+
 <template>
   <h1>Home</h1>
   <p>
-    <img src="../assets/logo.png" alt="logo" />
+    <img src="../assets/logo.png" alt="logo">
   </p>
-  <button @click="state.count++">count is: {{ state.count }}</button>
+  <button @click="state.count++">
+    count is: {{ state.count }}
+  </button>
 </template>
 
 <style scoped>

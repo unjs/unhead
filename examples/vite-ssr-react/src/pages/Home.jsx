@@ -2,7 +2,6 @@ import { addAndMultiply } from '../add'
 import { multiplyAndAdd } from '../multiply'
 
 export default function Home() {
-
   return (
     <>
       <h1>Home</h1>

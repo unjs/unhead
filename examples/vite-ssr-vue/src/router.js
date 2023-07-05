@@ -1,7 +1,7 @@
 import {
   createRouter as _createRouter,
   createMemoryHistory,
-  createWebHistory
+  createWebHistory,
 } from 'vue-router'
 
 // Auto generates routes from vue files under ./pages
@@ -12,7 +12,7 @@ const routes = Object.keys(pages).map((path) => {
   const name = path.match(/\.\/pages(.*)\.vue$/)[1].toLowerCase()
   return {
     path: name === '/home' ? '/' : name,
-    component: pages[path] // () => import('./pages/*.vue')
+    component: pages[path], // () => import('./pages/*.vue')
   }
 })
 
@@ -23,6 +23,6 @@ export function createRouter() {
     history: import.meta.env.SSR
       ? createMemoryHistory('/test/')
       : createWebHistory('/test/'),
-    routes
+    routes,
   })
 }

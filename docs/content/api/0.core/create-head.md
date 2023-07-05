@@ -8,8 +8,7 @@ description: How to create your Unhead instance.
 **Type:**
 
 ```ts
-export function createHead<T extends {} = Head>
-    (options: CreateHeadOptions = {}) : Unhead
+export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}): Unhead
 ```
 
 The `createHead` function is used to create an instance of Unhead.

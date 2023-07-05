@@ -1,8 +1,8 @@
 {
   "name": "test-ssr-react",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
     "dev": "node server",
     "build": "npm run build:client && npm run build:server",

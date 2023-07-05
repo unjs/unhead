@@ -19,8 +19,8 @@ export async function serve(): Promise<{ close(): Promise<void> }> {
         target: 'esnext',
         minify: false,
         ssrManifest: true,
-        outDir: 'dist/client'
-      }
+        outDir: 'dist/client',
+      },
     })
     // server build
     await build({
@@ -32,10 +32,10 @@ export async function serve(): Promise<{ close(): Promise<void> }> {
         outDir: 'dist/server',
         rollupOptions: {
           output: {
-            entryFileNames: 'entry-server.js'
-          }
-        }
-      }
+            entryFileNames: 'entry-server.js',
+          },
+        },
+      },
     })
   }
 
@@ -45,7 +45,7 @@ export async function serve(): Promise<{ close(): Promise<void> }> {
   const { app, vite } = await createServer(
     rootDir,
     isBuild,
-    hmrPorts['ssr-react']
+    hmrPorts['ssr-react'],
   )
 
   return new Promise((resolve, reject) => {
@@ -57,13 +57,13 @@ export async function serve(): Promise<{ close(): Promise<void> }> {
             await new Promise((resolve) => {
               server.close(resolve)
             })
-            if (vite) {
+            if (vite)
               await vite.close()
-            }
-          }
+          },
         })
       })
-    } catch (e) {
+    }
+    catch (e) {
       reject(e)
     }
   })

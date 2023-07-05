@@ -8,8 +8,7 @@ description: Using the useServerHead for minimal client-side bundles.
 **Type:**
 
 ```ts
-function useServerHead<T extends MergeHead>
-    (input: UseHeadInput<T>, options: HeadEntryOptions = {}) : void
+function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): void
 ```
 
 The `useServerHead` composable lets you add tags for the server only.

@@ -29,7 +29,7 @@ describe('useSeoMeta', () => {
     const head = createHead()
 
     useSeoMeta({
-      themeColor: 'cyan'
+      themeColor: 'cyan',
     })
 
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
@@ -42,5 +42,4 @@ describe('useSeoMeta', () => {
       }
     `)
   })
-
 })

@@ -1,6 +1,5 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { MetaObject } from '@nuxt/schema'
 
 export default defineComponent({
   head: {
@@ -20,7 +19,7 @@ export default defineComponent({
 </script>
 
 <template>
-<div>
-  options api - basic
-</div>
+  <div>
+    options api - basic
+  </div>
 </template>

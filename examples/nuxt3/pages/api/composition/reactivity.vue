@@ -20,7 +20,6 @@ useHead(() => {
 useHead(() => ({
   title: `Html: ${colour.value} Body: ${nextColour.value}`,
 }))
-
 </script>
 
 <template>

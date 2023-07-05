@@ -1,15 +1,10 @@
 <script lang="ts">
-import { defineComponent, } from 'vue'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
   data() {
     return {
       title: 'Options API',
-    }
-  },
-  methods: {
-    update() {
-      this.title = 'Updated Options API'
     }
   },
   head() {
@@ -23,18 +18,23 @@ export default defineComponent({
         },
       ],
       link: [
-        {rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'},
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
     }
+  },
+  methods: {
+    update() {
+      this.title = 'Updated Options API'
+    },
   },
 })
 </script>
 
 <template>
-<div>
-  options api - basic
-  <button @click="update">
-    update
-  </button>
-</div>
+  <div>
+    options api - basic
+    <button @click="update">
+      update
+    </button>
+  </div>
 </template>

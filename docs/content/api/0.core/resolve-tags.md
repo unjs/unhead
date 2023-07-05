@@ -21,7 +21,7 @@ import { createHead } from 'unhead'
 
 const head = createHead()
 
-head.push({ title: 'Hello World '})
+head.push({ title: 'Hello World ' })
 
 await head.resolveTags()
 

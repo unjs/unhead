@@ -1,7 +1,5 @@
-import { fileURLToPath } from 'url'
+import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
-import { addPlugin } from '@nuxt/kit'
-import { resolve } from 'pathe'
 
 const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
 const rootDir = fileURLToPath(new URL('../../', import.meta.url))

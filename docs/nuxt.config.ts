@@ -13,7 +13,7 @@ export default defineNuxtConfig({
       trailingSlash: false,
       siteDescription: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
       language: 'en',
-    }
+    },
   },
 
   // vite: {
@@ -26,15 +26,15 @@ export default defineNuxtConfig({
 
   modules: [
     'nuxt-windicss',
-    '@nuxtjs/fontaine'
+    '@nuxtjs/fontaine',
   ],
 
   hooks: {
-    'nitro:config'(nitro) {
-      nitro.virtual["#build/dist/server/styles.mjs"] = "export default {}";
+    'nitro:config': function (nitro) {
+      nitro.virtual['#build/dist/server/styles.mjs'] = 'export default {}'
       // prev [/[/\\]node_modules[/\\]/, /[/\\]\.git[/\\]/],
       // nitro.options.imports.exclude = [/[/\\]\.git[/\\]/]
-    }
+    },
   },
 
   studio: {

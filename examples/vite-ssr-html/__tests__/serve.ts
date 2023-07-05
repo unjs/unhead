@@ -22,13 +22,13 @@ export async function serve(): Promise<{ close(): Promise<void> }> {
             await new Promise((resolve) => {
               server.close(resolve)
             })
-            if (vite) {
+            if (vite)
               await vite.close()
-            }
-          }
+          },
         })
       })
-    } catch (e) {
+    }
+    catch (e) {
       reject(e)
     }
   })
