@@ -1,7 +1,7 @@
 import { defineHeadPlugin } from '@unhead/shared'
 import type { TemplateParams } from '@unhead/schema'
 
-export function processTemplateParams(s: unknown, p: TemplateParams) {
+export function processTemplateParams(s: string, p: TemplateParams) {
   if (typeof s !== 'string')
     return s
   // for each %<word> token replace it with the corresponding runtime config or an empty value

@@ -2,7 +2,7 @@ import type { Head, MetaFlatInput } from '@unhead/schema'
 import { unpackToArray, unpackToString } from 'packrup'
 import { MetaPackingSchema } from './utils'
 
-const OpenGraphInputs = ['Image', 'Video', 'Audio']
+const OpenGraphInputs = ['og:Image', 'og:Video', 'og:Audio', 'twitter:Image']
 
 const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
 
@@ -52,8 +52,8 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   const extras: Record<string, any>[] = []
 
   OpenGraphInputs.forEach((key) => {
-    const ogKey = `og:${key.toLowerCase()}`
-    const inputKey = `og${key}` as keyof MetaFlatInput
+    const propKey = key.toLowerCase()
+    const inputKey = `${key.replace(':' , '')}` as keyof MetaFlatInput
     const val = input[inputKey]
     if (typeof val === 'object') {
       (Array.isArray(val) ? val : [val])
@@ -61,10 +61,10 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
           if (!entry)
             return
           const unpackedEntry = unpackToArray(entry as Record<string, any>, {
-            key: 'property',
+            key: key.startsWith('og') ? 'property' : 'name',
             value: 'content',
             resolveKeyData({ key }) {
-              return fixKeyCase(`${ogKey}${key !== 'url' ? `:${key}` : ''}`)
+              return fixKeyCase(`${propKey}${key !== 'url' ? `:${key}` : ''}`)
             },
             resolveValueData({ value }) {
               return typeof value === 'number' ? value.toString() : value
@@ -72,7 +72,7 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
           })
           extras.push(
             // need to sort the entry and make sure the `og:image` is first
-            ...unpackedEntry.sort((a, b) => (a.property === ogKey ? -1 : b.property === ogKey ? 1 : 0)),
+            ...unpackedEntry.sort((a, b) => (a.property === propKey ? -1 : b.property === propKey ? 1 : 0)),
           )
         })
       delete input[inputKey]

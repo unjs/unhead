@@ -40,6 +40,6 @@
   },
   "dependencies": {
     "hookable": "^5.5.3",
-    "zhead": "^2.0.7"
+    "zhead": "^2.0.9"
   }
 }
