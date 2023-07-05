@@ -8,6 +8,15 @@ export interface ResolvesDuplicates {
    */
   key?: string
   /**
+   * The strategy to use when a duplicate tag is encountered.
+   *
+   * - `replace` - Replace the existing tag with the new tag
+   * - `merge` - Merge the existing tag with the new tag
+   *
+   * @default 'replace' (some tags will default to 'merge', such as htmlAttr)
+   */
+  tagDuplicateStrategy?: 'replace' | 'merge'
+  /**
    * @deprecated Use `key` instead
    */
   hid?: string
@@ -15,12 +24,6 @@ export interface ResolvesDuplicates {
    * @deprecated Use `key` instead
    */
   vmid?: string
-  /**
-   * Specify where to render the tag.
-   *
-   * @default 'head'
-   */
-  tagDuplicateStrategy?: 'replace' | 'merge'
 }
 
 export type ValidTagPositions = 'head' | 'bodyClose' | 'bodyOpen'
@@ -67,11 +70,11 @@ export interface TagPriority {
    * (besides some special tags).
    *
    * The following special tags have default priorities:
-   * * -2 <meta charset ...>
-   * * -1 <base>
-   * * 0 <meta http-equiv="content-security-policy" ...>
+   * * -2 `<meta charset ...>`
+   * * -1 `<base>`
+   * * 0 `<meta http-equiv="content-security-policy" ...>`
    *
-   * All other tags have a default priority of 10: <meta>, <script>, <link>, <style>, etc
+   * All other tags have a default priority of 10: `<meta>`, `<script>`, `<link>`, `<style>`, etc
    */
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
