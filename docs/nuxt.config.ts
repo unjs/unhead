@@ -2,6 +2,11 @@ export default defineNuxtConfig({
   extends: [
     '@nuxt-themes/docus',
     'nuxt-seo-kit',
+    'nuxt-lego',
+  ],
+
+  modules: [
+    'nuxt-og-image',
   ],
 
   runtimeConfig: {

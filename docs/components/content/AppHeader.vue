@@ -24,14 +24,15 @@ const githubColorScheme = computed(() => color.value === 'dark' ? 'no-preference
 
       <section class="right">
         <AppSearch v-if="hasDocSearch" />
-        <ClientOnly>
-          <GithubButton class="hidden xl:inline h-[20px]" href="https://github.com/unjs/unhead" :data-color-scheme="githubColorScheme" data-icon="octicon-star" data-show-count="true" aria-label="Star on GitHub">
-            Star
-          </GithubButton>
-          <GithubButton class="hidden xl:inline h-[20px]" href="https://github.com/sponsors/harlan-zw" :data-color-scheme="githubColorScheme" data-icon="octicon-heart" aria-label="Sponsor @harlan-zw on GitHub">
-            Sponsor
-          </GithubButton>
-        </ClientOnly>
+        <LegoGithubStar v-slot="{ stars }" repo="unjs/unhead" class="hidden md:flex mr-5 group border dark:bg-gray-900 dark:hover:bg-gray-700 hover:bg-gray-200 dark:bg-gray-900 bg-gray-100 transition rounded-lg text-sm justify-center">
+          <div class="flex items-center transition rounded-l px-2 py-1 space-x-1">
+            <Icon name="uil:star" class="group-hover:op75 " />
+            <div>Star</div>
+          </div>
+          <div class="px-2 py-1 dark:bg-black bg-white rounded-r-lg">
+            {{ stars }}
+          </div>
+        </LegoGithubStar>
         <ThemeSelect />
         <AppSocialIcons />
         <a class="hidden sm:flex items-center ml-5" href="https://harlanzw.com" title="View Harlan's site." target="_blank">
