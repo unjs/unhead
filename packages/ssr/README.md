@@ -1,4 +1,4 @@
-# @unhead/dom
+# @unhead/ssr
 
 ## Install
 
