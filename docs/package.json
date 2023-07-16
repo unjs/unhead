@@ -19,8 +19,8 @@
   "devDependencies": {
     "@nuxt-themes/docus": "1.14.3",
     "@nuxtjs/fontaine": "^0.4.0",
-    "nuxt": "3.6.2",
+    "nuxt": "3.6.3",
     "nuxt-windicss": "latest",
-    "playwright": "^1.36.0"
+    "playwright": "^1.36.1"
   }
 }
