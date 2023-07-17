@@ -59,8 +59,8 @@ describe('useSeoMeta', () => {
           alt: 'test',
           width: 100,
           height: 100,
-        }
-      ]
+        },
+      ],
     })
 
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`

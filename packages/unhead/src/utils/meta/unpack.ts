@@ -53,7 +53,7 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
 
   OpenGraphInputs.forEach((key) => {
     const propKey = key.toLowerCase()
-    const inputKey = `${key.replace(':' , '')}` as keyof MetaFlatInput
+    const inputKey = `${key.replace(':', '')}` as keyof MetaFlatInput
     const val = input[inputKey]
     if (typeof val === 'object') {
       (Array.isArray(val) ? val : [val])
