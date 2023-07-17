@@ -54,7 +54,10 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
 }
 
 export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>(options)
+  const head = createHeadCore<T>({
+    ...options,
+    mode: 'server',
+  })
   setActiveHead(head)
   return head
 }

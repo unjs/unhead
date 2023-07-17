@@ -1,6 +1,6 @@
 import type { Plugin } from 'vue'
 import { getCurrentInstance, inject, nextTick } from 'vue'
-import { createHead as _createHead, getActiveHead } from 'unhead'
+import { createHead as _createHead, createServerHead as _createServerHead, getActiveHead } from 'unhead'
 import type { CreateHeadOptions, MergeHead, Unhead } from '@unhead/schema'
 import type { MaybeComputedRef, ReactiveHead } from './types'
 import { Vue3 } from './env'
@@ -32,7 +32,6 @@ function vueInstall(head: VueHeadClient<any>) {
 export function createServerHead<T extends MergeHead>(options: Omit<CreateHeadOptions, 'domDelayFn' | 'document'> = {}): VueHeadClient<T> {
   const head = _createServerHead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
-    mode: 'server',
     plugins: [
       VueReactiveUseHeadPlugin(),
       ...(options?.plugins || []),
