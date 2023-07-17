@@ -26,7 +26,7 @@ export interface HeadEntry<Input> {
    *
    * @internal
    */
-  _m?: RuntimeMode
+  mode?: RuntimeMode
   /**
    * Transformer function for the entry.
    *
@@ -68,6 +68,7 @@ export interface ActiveHeadEntry<Input> {
 }
 
 export interface CreateHeadOptions {
+  mode?: 'server' | 'client'
   domDelayFn?: (fn: () => void) => void
   document?: Document
   plugins?: HeadPlugin[]

@@ -104,6 +104,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         input,
         _sde: {},
       }
+      const mode = activeEntry?.mode || options.mode
       // if a mode is provided via options, set it
       if (options?.mode)
         activeEntry._m = options?.mode

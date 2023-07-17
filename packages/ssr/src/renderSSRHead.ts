@@ -26,7 +26,7 @@ export async function renderSSRHead<T extends {}>(head: Unhead<T>) {
               // find entry
               const entry = head.headEntries().find(entry => entry._i === t._e)
               // we don't care about server entries
-              return entry?._m !== 'server'
+              return entry?.mode !== 'server'
             })
             .map(tag => tag._h!),
         ),
