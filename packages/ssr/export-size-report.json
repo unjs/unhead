@@ -15,9 +15,9 @@
     {
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
-      "minified": 1710,
-      "minzipped": 748,
-      "bundled": 2992
+      "minified": 1712,
+      "minzipped": 749,
+      "bundled": 2994
     },
     {
       "name": "ssrRenderTags",
