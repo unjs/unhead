@@ -1,7 +1,7 @@
 import type { Head, HeadEntry, HeadTag, TagPriority } from '@unhead/schema'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '@unhead/shared'
 
-export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string): Promise<T | T[] | false> {
+export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
   if (input instanceof Promise)
     input = await input
@@ -59,6 +59,15 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       }
       delete tag.props[k]
     })
+
+  // merge options from the entry
+  TagConfigKeys.forEach((k) => {
+    // @ts-expect-error untyped
+    if (!tag[k] && e[k]) {
+      // @ts-expect-error untyped
+      tag[k] = e[k]
+    }
+  })
 
   // normalise tag content
   ;(['innerHTML', 'textContent'] as const).forEach((k) => {
@@ -140,7 +149,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .forEach(([k, value]) => {
       const v = asArray(value)
       // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props)).flat())
+      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props, e)).flat())
     })
   return (await Promise.all(tagPromises))
     .flat()

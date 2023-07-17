@@ -1,6 +1,6 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { HeadTag } from './tags'
+import type { HeadTag, TagPosition, TagPriority } from './tags'
 import type { Head } from './schema'
 
 /**
@@ -32,7 +32,7 @@ export interface HeadEntry<Input> {
    *
    * @internal
    */
-  _t?: (input: Input) => Input
+  transform?: (input: unknown) => unknown
   /**
    * Head entry index
    *
@@ -45,6 +45,18 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _sde: SideEffectsRecord
+  /**
+   * Default tag position.
+   *
+   * @internal
+   */
+  tagPosition?: TagPosition['tagPosition']
+  /**
+   * Default tag priority.
+   *
+   * @internal
+   */
+  tagPriority?: TagPriority['tagPriority']
 }
 
 export type HeadPlugin = Omit<CreateHeadOptions, 'plugins'>
