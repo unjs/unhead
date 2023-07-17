@@ -88,7 +88,7 @@ export interface CreateHeadOptions {
   experimentalHashHydration?: boolean
 }
 
-export interface HeadEntryOptions {
+export interface HeadEntryOptions extends TagPosition, TagPriority {
   mode?: RuntimeMode
   transform?: (input: unknown) => unknown
 }
