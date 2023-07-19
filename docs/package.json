@@ -2,7 +2,7 @@
   "name": "@unhead/docs",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@8.6.7",
+  "packageManager": "pnpm@8.6.9",
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi build",
@@ -19,7 +19,7 @@
   "devDependencies": {
     "@nuxt-themes/docus": "1.14.3",
     "@nuxtjs/fontaine": "^0.4.0",
-    "nuxt": "3.6.3",
+    "nuxt": "3.6.5",
     "nuxt-windicss": "latest",
     "playwright": "^1.36.1"
   }
