@@ -1,13 +1,14 @@
 export default defineNuxtConfig({
   extends: [
     '@nuxt-themes/docus',
-    'nuxt-seo-kit',
     'nuxt-lego',
   ],
 
-  modules: [
-    'nuxt-og-image',
-  ],
+  site: {
+    titleSeparator: '·',
+    name: 'Unhead',
+    url: 'https://unhead.harlanzw.com',
+  },
 
   runtimeConfig: {
     indexable: true,
@@ -21,30 +22,11 @@ export default defineNuxtConfig({
     },
   },
 
-  // vite: {
-  //   server: {
-  //     fs: {
-  //       allow: ['..'],
-  //     }
-  //   }
-  // },
-
   modules: [
+    'nuxt-seo-kit-module',
     'nuxt-windicss',
     '@nuxtjs/fontaine',
   ],
-
-  hooks: {
-    'nitro:config': function (nitro) {
-      nitro.virtual['#build/dist/server/styles.mjs'] = 'export default {}'
-      // prev [/[/\\]node_modules[/\\]/, /[/\\]\.git[/\\]/],
-      // nitro.options.imports.exclude = [/[/\\]\.git[/\\]/]
-    },
-  },
-
-  studio: {
-    // enabled: false,
-  },
 
   pinceau: {
     debug: true,
@@ -54,6 +36,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       link: [
+        // @todo nuxt-seo-experiments to handle light / dark
         { rel: 'icon', href: '/logo.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:no-preference)' },
         { rel: 'icon', href: '/logo-dark.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:dark)' },
         { rel: 'icon', href: '/logo-light.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:light)' },

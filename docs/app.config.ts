@@ -31,6 +31,10 @@ export default defineAppConfig({
       title: false,
       logo: true,
     },
+    search: {
+      enabled: true,
+      mode: 'meta',
+    },
     cover: {
       src: 'https://unhead.harlanzw.com/og.png',
     },
