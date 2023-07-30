@@ -18,23 +18,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9572,
-      "minzipped": 3352,
-      "bundled": 18698
+      "minified": 9613,
+      "minzipped": 3365,
+      "bundled": 18760
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 9318,
-      "minzipped": 3277,
-      "bundled": 18375
+      "minified": 9359,
+      "minzipped": 3284,
+      "bundled": 18437
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 9228,
-      "minzipped": 3245,
-      "bundled": 18141
+      "minified": 9269,
+      "minzipped": 3254,
+      "bundled": 18203
     },
     {
       "name": "CorePlugins",
