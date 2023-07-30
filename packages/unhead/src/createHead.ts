@@ -154,6 +154,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
           }
         }
       }
+      await hooks.callHook('tags:beforeResolve', resolveCtx)
       await hooks.callHook('tags:resolve', resolveCtx)
       return resolveCtx.tags
     },
