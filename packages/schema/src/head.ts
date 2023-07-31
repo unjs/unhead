@@ -32,7 +32,7 @@ export interface HeadEntry<Input> {
    *
    * @internal
    */
-  transform?: (input: unknown) => unknown
+  transform?: (input: Input) => Promise<Input> | Input
   /**
    * Head entry index
    *

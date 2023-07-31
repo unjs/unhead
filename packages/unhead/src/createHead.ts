@@ -106,7 +106,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         _i: _eid++,
         input,
         _sde: {},
-        ...entryOptions,
+        ...entryOptions as Partial<HeadEntry<T>>,
       }
       const mode = activeEntry?.mode || options.mode
       // if a mode is provided via options, set it
@@ -145,7 +145,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       for (const entry of resolveCtx.entries) {
         // apply any custom transformers applied to the entry
         const resolved = entry.resolvedInput || entry.input
-        entry.resolvedInput = (entry.transform ? entry.transform(resolved) : resolved) as T
+        entry.resolvedInput = await (entry.transform ? entry.transform(resolved) : resolved) as T
         if (entry.resolvedInput) {
           for (const tag of await normaliseEntryTags<T>(entry)) {
             const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
