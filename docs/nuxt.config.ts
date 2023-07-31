@@ -8,18 +8,8 @@ export default defineNuxtConfig({
     titleSeparator: '·',
     name: 'Unhead',
     url: 'https://unhead.harlanzw.com',
-  },
-
-  runtimeConfig: {
-    indexable: true,
-    public: {
-      titleSeparator: '·',
-      siteUrl: 'https://unhead.harlanzw.com/',
-      siteName: 'Unhead',
-      trailingSlash: false,
-      siteDescription: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
-      language: 'en',
-    },
+    description: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
+    defaultLocale: 'en',
   },
 
   modules: [
