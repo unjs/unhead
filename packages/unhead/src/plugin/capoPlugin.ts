@@ -2,7 +2,7 @@ import { defineHeadPlugin } from '@unhead/shared'
 
 const importRe = /@import/
 
-/* @__NO_SIDE_EFFECTS__ */  export function CapoPlugin() {
+/* @__NO_SIDE_EFFECTS__ */ export function CapoPlugin() {
   return defineHeadPlugin({
     hooks: {
       'tags:beforeResolve': function ({ tags }) {
