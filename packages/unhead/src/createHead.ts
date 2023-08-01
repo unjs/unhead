@@ -36,13 +36,13 @@ export function CorePlugins() {
   ]
 }
 
-export function DOMPlugins(options: CreateHeadOptions = {}) {
+/* @__NO_SIDE_EFFECTS__ */ export function DOMPlugins(options: CreateHeadOptions = {}) {
   return [
     PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
   ]
 }
 
-export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+/* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>({
     ...options,
     plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
@@ -53,7 +53,7 @@ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {})
   return head
 }
 
-export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+/* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>({
     ...options,
     mode: 'server',
