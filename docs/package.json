@@ -13,7 +13,7 @@
     "@headlessui/vue": "^1.7.15",
     "@nuxtlabs/github-module": "^1.6.3",
     "nuxt-lego": "latest",
-    "nuxt-seo-kit-module": "2.0.0-beta.6"
+    "nuxt-seo-kit-module": "2.0.0-beta.9"
   },
   "devDependencies": {
     "@nuxt-themes/docus": "1.14.4",
