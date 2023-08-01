@@ -18,30 +18,30 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 9620,
-      "minzipped": 3366,
-      "bundled": 18768
+      "minified": 9666,
+      "minzipped": 3387,
+      "bundled": 18852
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 9366,
-      "minzipped": 3286,
-      "bundled": 18445
+      "minified": 9412,
+      "minzipped": 3307,
+      "bundled": 18529
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 9276,
-      "minzipped": 3256,
-      "bundled": 18211
+      "minified": 9322,
+      "minzipped": 3274,
+      "bundled": 18295
     },
     {
       "name": "CorePlugins",
       "path": "dist/index.mjs",
-      "minified": 6135,
-      "minzipped": 2208,
-      "bundled": 12476
+      "minified": 6181,
+      "minzipped": 2231,
+      "bundled": 12560
     },
     {
       "name": "useServerSeoMeta",
@@ -93,18 +93,18 @@
       "bundled": 4161
     },
     {
+      "name": "DedupesTagsPlugin",
+      "path": "dist/index.mjs",
+      "minified": 2042,
+      "minzipped": 888,
+      "bundled": 4297
+    },
+    {
       "name": "useServerHeadSafe",
       "path": "dist/index.mjs",
       "minified": 2631,
       "minzipped": 883,
       "bundled": 5394
-    },
-    {
-      "name": "DedupesTagsPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1996,
-      "minzipped": 869,
-      "bundled": 4213
     },
     {
       "name": "useHeadSafe",
@@ -151,9 +151,9 @@
     {
       "name": "SortTagsPlugin",
       "path": "dist/index.mjs",
-      "minified": 1357,
-      "minzipped": 583,
-      "bundled": 2523
+      "minified": 1403,
+      "minzipped": 607,
+      "bundled": 2607
     },
     {
       "name": "processTemplateParams",
@@ -168,6 +168,13 @@
       "minified": 1404,
       "minzipped": 509,
       "bundled": 2281
+    },
+    {
+      "name": "CapoPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1361,
+      "minzipped": 506,
+      "bundled": 2484
     },
     {
       "name": "resolveMetaKeyType",
@@ -186,9 +193,9 @@
     {
       "name": "tagWeight",
       "path": "dist/index.mjs",
-      "minified": 920,
-      "minzipped": 390,
-      "bundled": 1737
+      "minified": 966,
+      "minzipped": 410,
+      "bundled": 1821
     },
     {
       "name": "ProvideTagHashPlugin",
