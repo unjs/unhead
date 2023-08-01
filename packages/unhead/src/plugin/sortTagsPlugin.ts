@@ -27,6 +27,10 @@ export function tagWeight<T extends HeadTag>(tag: T) {
     if (tag.props['http-equiv'] === 'content-security-policy')
       weight = 0
   }
+  else if (tag.tag == 'link' && tag.props.rel === 'preconnect') {
+    // preconnects should almost always come first
+    weight = 2
+  }
   else if (tag.tag in TAG_WEIGHTS) {
     weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
   }
