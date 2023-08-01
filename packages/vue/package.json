@@ -18,13 +18,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     },
     "./polyfill": {
       "types": "./dist/polyfill.d.ts",
-      "require": "./dist/polyfill.cjs",
-      "import": "./dist/polyfill.mjs"
+      "import": "./dist/polyfill.mjs",
+      "require": "./dist/polyfill.cjs"
     }
   },
   "main": "dist/index.cjs",
