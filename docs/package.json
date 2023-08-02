@@ -16,7 +16,7 @@
     "nuxt-seo-kit-module": "2.0.0-beta.9"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "1.14.4",
+    "@nuxt-themes/docus": "1.14.6",
     "@nuxtjs/fontaine": "^0.4.1",
     "nuxt": "3.6.5",
     "nuxt-windicss": "latest",
