@@ -156,6 +156,13 @@
       "bundled": 2607
     },
     {
+      "name": "CapoPlugin",
+      "path": "dist/index.mjs",
+      "minified": 1459,
+      "minzipped": 548,
+      "bundled": 2677
+    },
+    {
       "name": "processTemplateParams",
       "path": "dist/index.mjs",
       "minified": 1266,
@@ -168,13 +175,6 @@
       "minified": 1404,
       "minzipped": 509,
       "bundled": 2281
-    },
-    {
-      "name": "CapoPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1361,
-      "minzipped": 506,
-      "bundled": 2484
     },
     {
       "name": "resolveMetaKeyType",
