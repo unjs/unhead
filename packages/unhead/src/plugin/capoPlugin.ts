@@ -8,7 +8,8 @@ const importRe = /@import/
       'tags:beforeResolve': function ({ tags }) {
         // handle 9 and down in capo
         for (const tag of tags) {
-          if (tag.tagPriority)
+          // skip if already prioritised
+          if (tag.tagPriority || (tag.tagPosition && tag.tagPosition !== 'head'))
             continue
 
           const isTruthy = (val?: string) => val === ''
