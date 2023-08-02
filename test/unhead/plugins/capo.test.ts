@@ -5,7 +5,9 @@ describe('capo', () => {
   it('basic', async () => {
     const head = createHead({
       plugins: [
-        CapoPlugin(),
+        CapoPlugin({
+          track: true,
+        }),
       ],
     })
     // add each type of capo tag in a random order
@@ -92,143 +94,6 @@ describe('capo', () => {
         content: 'description',
       },
     })
-
-    expect(await head.resolveTags()).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "title",
-          "_e": 8,
-          "_p": 8192,
-          "props": {},
-          "tag": "title",
-          "textContent": "title",
-        },
-        {
-          "_e": 9,
-          "_p": 9216,
-          "props": {
-            "href": "https://example.com",
-            "rel": "preconnect",
-          },
-          "tag": "link",
-        },
-        {
-          "_e": 4,
-          "_p": 4096,
-          "props": {
-            "async": "",
-            "src": "async-script.js",
-          },
-          "tag": "script",
-          "tagPriority": 3,
-        },
-        {
-          "_e": 6,
-          "_p": 6144,
-          "innerHTML": "@import \\"imported.css\\"",
-          "props": {},
-          "tag": "style",
-          "tagPriority": 4,
-        },
-        {
-          "_e": 1,
-          "_p": 1024,
-          "props": {
-            "src": "sync-script.js",
-          },
-          "tag": "script",
-          "tagPriority": 5,
-        },
-        {
-          "_e": 2,
-          "_p": 2048,
-          "innerHTML": ".sync-style { color: red }",
-          "props": {},
-          "tag": "style",
-          "tagPriority": 6,
-        },
-        {
-          "_e": 7,
-          "_p": 7168,
-          "props": {
-            "href": "sync-styles.css",
-            "rel": "stylesheet",
-          },
-          "tag": "link",
-          "tagPriority": 6,
-        },
-        {
-          "_e": 3,
-          "_p": 3072,
-          "props": {
-            "href": "modulepreload.js",
-            "rel": "modulepreload",
-          },
-          "tag": "link",
-          "tagPriority": 7,
-        },
-        {
-          "_e": 5,
-          "_p": 5120,
-          "props": {
-            "href": "preload.js",
-            "rel": "preload",
-          },
-          "tag": "link",
-          "tagPriority": 7,
-        },
-        {
-          "_e": 0,
-          "_p": 0,
-          "props": {
-            "defer": "",
-            "src": "defer-script.js",
-          },
-          "tag": "script",
-          "tagPriority": 8,
-        },
-        {
-          "_e": 10,
-          "_p": 10240,
-          "props": {
-            "href": "https://example.com",
-            "rel": "dns-prefetch",
-          },
-          "tag": "link",
-          "tagPriority": 9,
-        },
-        {
-          "_e": 11,
-          "_p": 11264,
-          "props": {
-            "href": "https://example.com",
-            "rel": "prefetch",
-          },
-          "tag": "link",
-          "tagPriority": 9,
-        },
-        {
-          "_e": 12,
-          "_p": 12288,
-          "props": {
-            "href": "https://example.com",
-            "rel": "prerender",
-          },
-          "tag": "link",
-          "tagPriority": 9,
-        },
-        {
-          "_d": "meta:name:description",
-          "_e": 13,
-          "_p": 13312,
-          "props": {
-            "content": "description",
-            "name": "description",
-          },
-          "tag": "meta",
-        },
-      ]
-    `)
 
     const resolvedTags = await head.resolveTags()
     // TITLE
