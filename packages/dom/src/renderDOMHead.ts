@@ -213,6 +213,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   // clear all side effects still pending
   Object.values(staleSideEffects).forEach(fn => fn())
+  await head.hooks.callHook('dom:rendered', { renders })
 }
 
 /**
