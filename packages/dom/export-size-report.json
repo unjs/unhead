@@ -15,23 +15,23 @@
     {
       "name": "PatchDomOnEntryUpdatesPlugin",
       "path": "dist/index.mjs",
-      "minified": 3497,
-      "minzipped": 1453,
-      "bundled": 6555
+      "minified": 3548,
+      "minzipped": 1471,
+      "bundled": 6613
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 3195,
-      "minzipped": 1352,
-      "bundled": 6038
+      "minified": 3246,
+      "minzipped": 1365,
+      "bundled": 6096
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 3042,
-      "minzipped": 1285,
-      "bundled": 5657
+      "minified": 3093,
+      "minzipped": 1296,
+      "bundled": 5715
     },
     {
       "name": "setAttrs",
