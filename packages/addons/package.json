@@ -65,7 +65,7 @@
     "unplugin-ast": "^0.8.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.22.5",
+    "@babel/types": "^7.22.10",
     "estree-walker": "^3.0.3"
   }
 }
