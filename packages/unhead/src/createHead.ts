@@ -69,7 +69,14 @@ export function CorePlugins() {
  * @param options
  */
 export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  let entries: HeadEntry<T>[] = []
+  let entries: HeadEntry<T>[] = new Proxy([], {
+    set(target, prop, value) {
+      // @ts-expect-error untyped
+      target[prop] = value
+      updated()
+      return true
+    },
+  })
   // queued side effects
   let _sde: SideEffectsRecord = {}
   // counter for keeping unique ids of head object entries
@@ -113,7 +120,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       if (mode)
         activeEntry.mode = mode
       entries.push(activeEntry)
-      updated()
       return {
         dispose() {
           entries = entries.filter((e) => {
@@ -122,7 +128,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
             // queue side effects
             _sde = { ..._sde, ...e._sde || {} }
             e._sde = {}
-            updated()
             return false
           })
         },
@@ -132,7 +137,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
             if (e._i === activeEntry._i) {
               // bit hacky syncing
               activeEntry.input = e.input = input
-              updated()
             }
             return e
           })
