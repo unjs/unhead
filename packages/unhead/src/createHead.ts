@@ -15,7 +15,7 @@ import {
   DedupesTagsPlugin,
   DeprecatedTagAttrPlugin,
   EventHandlersPlugin,
-  ProvideTagHashPlugin,
+  ProvideTagKeyHash,
   SortTagsPlugin,
   TemplateParamsPlugin,
   TitleTemplatePlugin,
@@ -30,7 +30,7 @@ export function CorePlugins() {
     SortTagsPlugin(),
     TemplateParamsPlugin(),
     TitleTemplatePlugin(),
-    ProvideTagHashPlugin(),
+    ProvideTagKeyHash(),
     EventHandlersPlugin(),
     DeprecatedTagAttrPlugin(),
   ]
