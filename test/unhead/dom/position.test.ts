@@ -10,7 +10,7 @@ describe('dom position', () => {
       script: [
         {
           innerHTML: 'Hello World',
-          body: true,
+          tagPosition: 'bodyClose',
         },
       ],
     })

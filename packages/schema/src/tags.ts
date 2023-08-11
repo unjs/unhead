@@ -35,12 +35,6 @@ export interface TagPosition {
    * @default 'head'
    */
   tagPosition?: ValidTagPositions
-  /**
-   * Render the tag before the body close.
-   *
-   * @deprecated Use `tagPosition: 'bodyClose'` instead.
-   */
-  body?: true
 }
 
 export type InnerContentVal = string | Record<string, any>
