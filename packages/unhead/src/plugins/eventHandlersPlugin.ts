@@ -52,7 +52,6 @@ export function EventHandlersPlugin() {
         const { props, eventHandlers, delayedSrc } = stripEventHandlers('dom', ctx.tag)
         if (!Object.keys(eventHandlers).length)
           return
-
         // stripped props
         ctx.tag.props = props
         // add the event handlers so we can reference once the element is rendered
@@ -84,10 +83,10 @@ export function EventHandlersPlugin() {
           $el!.setAttribute(eventDedupeKey, '')
           $eventListenerTarget!.addEventListener(eventName, handler)
           if (ctx.entry) {
-            ctx.entry._sde[sdeKey] = () => {
+            ctx.markSideEffect(sdeKey, () => {
               $eventListenerTarget!.removeEventListener(eventName, handler)
               $el!.removeAttribute(eventDedupeKey)
-            }
+            })
           }
         })
         // only after the event listeners are added do we set the src

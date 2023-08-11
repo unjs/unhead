@@ -1,12 +1,11 @@
-import { HasElementTags, hashTag, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, TagsWithInnerContent, hashTag, tagDedupeKey } from '@unhead/shared'
 import type {
+  DomBeforeRenderCtx,
   DomRenderTagContext,
+  DomState,
   HeadTag,
-  ShouldRenderContext,
-  SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
-import { setAttrs } from './setAttrs'
 
 export interface RenderDomHeadOptions {
   /**
@@ -15,214 +14,156 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
-  /**
-   * Specify a custom delay function for delaying the render.
-   */
-  delayFn?: (fn: () => void) => void
+function elementToTag($el: Element) {
+  const props = $el.getAttributeNames()
+    .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
+  const tag: HeadTag = { tag: $el.tagName.toLowerCase() as HeadTag['tag'], props }
+  const d = tagDedupeKey(tag)
+  if (d)
+    tag._d = d
+  if ($el.innerHTML)
+    tag.innerHTML = $el.innerHTML
+  return tag
 }
 
 /**
  * Render the head tags to the DOM.
  */
 export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
-  const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
+  const dom: Document | undefined = options.document || head.resolvedOptions.document
+  if (!dom)
+    return
+
+  const tags: DomRenderTagContext[] = (await head.resolveTags())
+    .map(tag => <DomRenderTagContext> {
+      $el: null,
+      tag,
+      id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
+      shouldRender: true,
+    })
+
+  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)
     return
 
-  const dom: Document = options.document || head.resolvedOptions.document || window.document
-
-  const tagContexts: DomRenderTagContext[] = (await head.resolveTags())
-    .map(setupTagRenderCtx)
-
-  const hookCtx: ShouldRenderContext & { tags: DomRenderTagContext[] } = { shouldRender: true, tags: tagContexts }
-  await head.hooks.callHook('dom:resolveTags', hookCtx)
-  // allow integrations to block to the render
-  if (!hookCtx.shouldRender)
-    return
-
-  // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
-  // run queued side effects immediately
+  let state = head._dom as DomState
+  // let's hydrate - fill the elMap for fast lookups
+  if (!state) {
+    state = { elMap: {} } as DomState
+    for (const key of ['body', 'head']) {
+      const children = dom?.[key as 'head' | 'body']?.children
+      for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase())))
+        state.elMap[c.getAttribute('data-hid') || hashTag(elementToTag(c))] = c
+    }
+  }
 
   // presume all side effects are stale, we mark them as not stale if they're re-introduced
-  const staleSideEffects: SideEffectsRecord = head._popSideEffectQueue()
-  head.headEntries()
-    .map(entry => entry._sde)
-    .forEach((sde) => {
-      Object.entries(sde).forEach(([key, fn]) => {
-        staleSideEffects[key] = fn
-      })
+  state.pendingSideEffects = { ...state.sideEffects || {} }
+  state.sideEffects = {}
+
+  function setAttrs(ctx: DomRenderTagContext, $el: Element, sideEffects = false) {
+    const tag = ctx.tag
+    // add new attributes
+    Object.entries(tag.props).forEach(([k, value]) => {
+      value = String(value)
+      const attrSdeKey = `attr:${k}`
+      // class attributes have their own side effects to allow for merging
+      if (k === 'class') {
+        // if the user is providing an empty string, then it's removing the class
+        // the side effect clean up should remove it
+        for (const c of (value || '').split(' ').filter(Boolean)) {
+          // always clear side effects
+          sideEffects && trackSideEffect(ctx, `${attrSdeKey}:${c}`, () => $el.classList.remove(c))
+          !$el.classList.contains(c) && $el.classList.add(c)
+        }
+        return
+      }
+      if (sideEffects && !(k as string).startsWith('data-h-'))
+        trackSideEffect(ctx, attrSdeKey, () => $el.removeAttribute(k))
+
+      // attribute values get set directly
+      $el.getAttribute(k) !== value && $el.setAttribute(k, value)
     })
-
-  const markSideEffect = (ctx: DomRenderTagContext, key: string, fn: () => void) => {
-    key = `${ctx.renderId}:${key}`
-    // may not have an entry for some reason
-    if (ctx.entry)
-      ctx.entry._sde[key] = fn
-    delete staleSideEffects[key]
-  }
-
-  function setupTagRenderCtx(tag: HeadTag) {
-    const entry = head.headEntries().find(e => e._i === tag._e)
-    const renderCtx: DomRenderTagContext = {
-      renderId: tag._d || hashTag(tag),
-      $el: null,
-      shouldRender: true,
-      tag,
-      entry,
-      markSideEffect: (key, fn) => markSideEffect(renderCtx, key, fn),
+    if (TagsWithInnerContent.includes(tag.tag)) {
+      if (tag.textContent && tag.textContent !== $el.textContent)
+        $el.textContent = tag.textContent
+      else if (tag.innerHTML && (tag.innerHTML !== $el.innerHTML))
+        $el.innerHTML = tag.innerHTML
     }
-    return renderCtx
   }
 
-  const renders: DomRenderTagContext[] = []
-  const pendingRenders: Record<'body' | 'head', DomRenderTagContext[]> = {
-    body: [],
-    head: [],
+  function trackSideEffect({ id }: DomRenderTagContext, scope: string, fn: () => void) {
+    state.sideEffects[`${id}:${scope}`] = fn
+    delete state.pendingSideEffects[`${id}:${scope}`]
   }
 
-  const markEl = (ctx: DomRenderTagContext) => {
-    head._elMap[ctx.renderId] = ctx.$el!
-    renders.push(ctx)
-    markSideEffect(ctx, 'el', () => {
-      ctx.$el?.remove()
-      delete head._elMap[ctx.renderId]
+  function setupTagElement(ctx: DomRenderTagContext, el: Element) {
+    setAttrs(ctx, el)
+    state.elMap[ctx.id] = el
+    // we are removing an element
+    trackSideEffect(ctx, 'el', () => {
+      state.elMap[ctx.id].remove()
+      delete state.elMap[ctx.id]
     })
   }
 
-  // first render all tags which we can match quickly
-  for (const ctx of tagContexts) {
-    await head.hooks.callHook('dom:beforeRenderTag', ctx)
-    if (!ctx.shouldRender)
-      continue
-    const { tag } = ctx
-    // 1. render tags which don't create a new element
-    if (tag.tag === 'title') {
-      // we don't handle title side effects
-      dom.title = tag.textContent || ''
-      renders.push(ctx)
-      continue
-    }
-    if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      ctx.$el = dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body']
-      setAttrs(ctx, false, markSideEffect)
-      renders.push(ctx)
-      continue
-    }
-    // 2. Hydrate based on either SSR or CSR mapping
-    ctx.$el = head._elMap[ctx.renderId]
-    if (!ctx.$el && tag.key)
-      ctx.$el = dom.querySelector(`${tag.tagPosition?.startsWith('body') ? 'body' : 'head'} > ${tag.tag}[data-h-${tag._h}]`)
-
-    if (ctx.$el) {
-      // if we don't have a dedupe keys, then the attrs will be the same
-      if (ctx.tag._d)
-        setAttrs(ctx)
-      markEl(ctx)
-      continue
-    }
-
-    pendingRenders[tag.tagPosition?.startsWith('body') ? 'body' : 'head'].push(ctx)
-  }
-
+  const pendingRenders: DomRenderTagContext[] = []
   const fragments: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
     bodyClose: undefined,
     bodyOpen: undefined,
     head: undefined,
   } as const
 
+  // first render all tags which we can match quickly
+  for (const ctx of tags) {
+    await head.hooks.callHook('dom:beforeRenderTag', ctx)
+    const { tag, shouldRender, id } = ctx
+    if (!shouldRender)
+      continue
+    // 1. render tags which don't create a new element
+    if (tag.tag === 'title') {
+      const prevTitle = dom.title
+      dom.title = tag.textContent || ''
+      trackSideEffect(ctx, 'el', () => { dom.title = prevTitle })
+      continue
+    }
+    if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+      setAttrs(ctx, dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], true)
+      continue
+    }
+    // 2. Hydrate based on either SSR or CSR mapping
+    const $el: Element | null = state.elMap[id]
+    // tag exists, we don't need to re-render it, just track side effects, update attributes
+    if ($el)
+      setupTagElement(ctx, $el)
+
+    else
+    // tag does not exist, we need to render it (if it's an element tag)
+      HasElementTags.includes(tag.tag) && pendingRenders.push(ctx)
+  }
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
-  Object.entries(pendingRenders)
-    .forEach(([pos, queue]) => {
-      if (!queue.length)
-        return
-      const children = dom?.[pos as 'head' | 'body']?.children
-      if (!children)
-        return
-
-      // 3a. try and find a matching existing element (we only scan the DOM once per render tree)
-      for (const $el of [...children].reverse()) {
-        const elTag = $el.tagName.toLowerCase() as HeadTag['tag']
-        // only valid element tags
-        if (!HasElementTags.includes(elTag))
-          continue
-
-        // convert attributes to object
-        const props = $el.getAttributeNames()
-          .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
-
-        const tmpTag: HeadTag = { tag: elTag, props }
-        if ($el.innerHTML)
-          tmpTag.innerHTML = $el.innerHTML
-
-        const tmpRenderId = hashTag(tmpTag)
-        // avoid using DOM API, let's use our own hash verification
-        let matchIdx = queue.findIndex(ctx => ctx?.renderId === tmpRenderId)
-        // there was no match for the index, we need to do a more expensive lookup
-        if (matchIdx === -1) {
-          const tmpDedupeKey = tagDedupeKey(tmpTag)
-          // avoid using DOM API, let's use our own hash verification
-          matchIdx = queue.findIndex(ctx => ctx?.tag._d && ctx.tag._d === tmpDedupeKey)
-        }
-
-        if (matchIdx !== -1) {
-          const ctx = queue[matchIdx]
-          ctx.$el = $el
-          // if all the props are the same, we can ignore
-          setAttrs(ctx)
-          markEl(ctx)
-          delete queue[matchIdx]
-        }
-      }
-
-      queue.forEach((ctx) => {
-        const pos = ctx.tag.tagPosition || 'head'
-        fragments[pos] = fragments[pos] || dom.createDocumentFragment()
-        if (!ctx.$el) {
-          //  create the new dom element
-          ctx.$el = dom.createElement(ctx.tag.tag)
-          setAttrs(ctx, true)
-        }
-        fragments[pos]!.appendChild(ctx.$el!)
-        markEl(ctx)
-      })
-    })
+  for (const ctx of pendingRenders) {
+    // finally, we are free to make new elements
+    const pos = ctx.tag.tagPosition || 'head'
+    fragments[pos] = fragments[pos] || dom.createDocumentFragment()
+    const el = dom.createElement(ctx.tag.tag)
+    setupTagElement(ctx, el)
+    fragments[pos]!.appendChild(el)
+  }
   // finally, write the tags
-  if (fragments.head)
-    dom.head.appendChild(fragments.head)
+  fragments.head && dom.head.appendChild(fragments.head)
+  fragments.bodyOpen && dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
+  fragments.bodyClose && dom.body.appendChild(fragments.bodyClose)
 
-  if (fragments.bodyOpen)
-    dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
-
-  if (fragments.bodyClose)
-    dom.body.appendChild(fragments.bodyClose)
-
-  for (const ctx of renders)
+  for (const ctx of tags) {
+    ctx.markSideEffect = (scope: string, fn: () => void) => trackSideEffect(ctx, scope, fn)
     await head.hooks.callHook('dom:renderTag', ctx)
+  }
 
   // clear all side effects still pending
-  Object.values(staleSideEffects).forEach(fn => fn())
-  await head.hooks.callHook('dom:rendered', { renders })
-}
-
-/**
- * Global instance of the dom update promise. Used for debounding head updates.
- */
-// eslint-disable-next-line import/no-mutable-exports
-export let domUpdatePromise: Promise<void> | null = null
-
-/**
- * Queue a debounced update of the DOM head.
- */
-export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: DebouncedRenderDomHeadOptions = {}) {
-  // within the debounced dom update we need to compute all the tags so that watchEffects still works
-  function doDomUpdate() {
-    domUpdatePromise = null
-    return renderDOMHead(head, options)
-  }
-  // we want to delay for the hydration chunking
-  const delayFn = options.delayFn || (fn => setTimeout(fn, 10))
-  return domUpdatePromise = domUpdatePromise || new Promise(resolve => delayFn(() => resolve(doDomUpdate())))
+  Object.values(state.pendingSideEffects).forEach(fn => fn())
+  head._dom = state
+  await head.hooks.callHook('dom:rendered', { renders: tags })
 }

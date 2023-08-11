@@ -15,12 +15,12 @@ import type { Unhead } from '@unhead/schema'
         // always generate a hash
         const hash = hashCode(
           tags
+            // tag must not be server only
             .filter((tag) => {
-              // tag must not be server only
               const entry = head.headEntries().find(e => e._i === tag._e)
               return entry && entry.mode !== 'server'
             })
-            .map(tag => tag._h || hashTag(tag))
+            .map(tag => hashTag(tag))
             .join(''),
         )
         // the SSR hash matches the CSR hash, we can skip the render
@@ -29,7 +29,7 @@ import type { Unhead } from '@unhead/schema'
         else
           prevHash = hash
       },
-      'dom:resolveTags': function (ctx) {
+      'dom:beforeRender': function (ctx) {
         ctx.shouldRender = dirty
         dirty = false
       },

@@ -89,7 +89,7 @@ describe('unhead e2e ssrHash', () => {
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta property=\\"og:title\\" content=\\"Home\\">
       <meta name=\\"description\\" content=\\"This is the home page\\">
-      <meta name=\\"unhead:ssr\\" content=\\"49ff87f\\">",
+      <meta name=\\"unhead:ssr\\" content=\\"f033696\\">",
         "htmlAttrs": " lang=\\"en\\"",
       }
     `)
@@ -125,7 +125,7 @@ describe('unhead e2e ssrHash', () => {
       <script src=\\"https://my-app.com/home.js\\"></script>
       <meta property=\\"og:title\\" content=\\"Home\\">
       <meta name=\\"description\\" content=\\"This is the home page\\">
-      <meta name=\\"unhead:ssr\\" content=\\"49ff87f\\">
+      <meta name=\\"unhead:ssr\\" content=\\"f033696\\">
       </head>
       <body>
 

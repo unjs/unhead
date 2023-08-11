@@ -21,9 +21,9 @@
     {
       "name": "hashTag",
       "path": "dist/index.mjs",
-      "minified": 306,
-      "minzipped": 207,
-      "bundled": 433
+      "minified": 322,
+      "minzipped": 219,
+      "bundled": 461
     },
     {
       "name": "hashCode",
@@ -80,6 +80,13 @@
       "minified": 60,
       "minzipped": 64,
       "bundled": 122
+    },
+    {
+      "name": "IsBrowser",
+      "path": "dist/index.mjs",
+      "minified": 49,
+      "minzipped": 53,
+      "bundled": 94
     },
     {
       "name": "SelfClosingTags",

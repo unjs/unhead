@@ -1,12 +1,13 @@
 import { describe, it } from 'vitest'
-import { renderDOMHead } from '@unhead/dom'
 import { InferSeoMetaPlugin } from '@unhead/addons'
-import { activeDom, useDOMHead, useDelayedSerializedDom } from '../dom/util'
+import { useDOMHead, useDelayedSerializedDom } from '../dom/util'
 
 describe('hooks', () => {
   it('delay dom', async () => {
     const head = useDOMHead({
-      hooks: InferSeoMetaPlugin().hooks,
+      plugins: [
+        InferSeoMetaPlugin(),
+      ],
     })
 
     head.push({
@@ -15,8 +16,6 @@ describe('hooks', () => {
         { name: 'description', content: 'description' },
       ],
     })
-    // even try a force render
-    await renderDOMHead(head, { document: activeDom!.window.document })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

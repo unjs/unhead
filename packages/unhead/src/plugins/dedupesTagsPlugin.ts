@@ -1,6 +1,6 @@
 import type { HeadTag } from '@unhead/schema'
 import { HasElementTags, defineHeadPlugin, tagDedupeKey } from '@unhead/shared'
-import { tagWeight } from './'
+import { tagWeight } from './index'
 
 const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
 

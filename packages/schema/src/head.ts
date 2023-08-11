@@ -40,12 +40,6 @@ export interface HeadEntry<Input> {
    */
   _i: number
   /**
-   * Side effects
-   *
-   * @internal
-   */
-  _sde: SideEffectsRecord
-  /**
    * Default tag position.
    *
    * @internal
@@ -117,12 +111,14 @@ export interface Unhead<Input extends {} = Head> {
    * Use a head plugin, loads the plugins hooks.
    */
   use: (plugin: HeadPlugin) => void
-  /**
-   * @internal
-   */
-  _popSideEffectQueue: () => SideEffectsRecord
-  /**
-   * @internal
-   */
-  _elMap: Record<string, Element>
+  ssr: boolean
+  // dom specific runtime state
+  _dom?: DomState
+  _domUpdatePromise?: Promise<void>
+}
+
+export interface DomState {
+  pendingSideEffects: SideEffectsRecord
+  sideEffects: SideEffectsRecord
+  elMap: Record<string, Element>
 }

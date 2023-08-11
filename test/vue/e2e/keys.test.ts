@@ -27,7 +27,7 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel=\\"icon\\" href=\\"/page-index.ico\\" data-h-6b4a565=\\"\\">",
+        "headTags": "<link rel=\\"icon\\" href=\\"/page-index.ico\\" data-hid=\\"6b4a565\\">",
         "htmlAttrs": "",
       }
     `)
@@ -44,7 +44,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"icon\\" href=\\"/page-index.ico\\" data-h-6b4a565=\\"\\">
+      <link rel=\\"icon\\" href=\\"/page-index.ico\\" data-hid=\\"6b4a565\\">
       </head>
       <body>
 
@@ -70,7 +70,7 @@ describe('vue e2e keys', () => {
           "_p": 1024,
           "key": "main-icon",
           "props": {
-            "data-h-6b4a565": "",
+            "data-hid": "6b4a565",
             "href": "/page-about.ico",
             "rel": "icon",
           },
@@ -79,10 +79,10 @@ describe('vue e2e keys', () => {
       ]
     `)
 
-    expect(csrHead._elMap).toMatchInlineSnapshot(`
+    expect(csrHead._dom.elMap).toMatchInlineSnapshot(`
       {
-        "link:main-icon": <link
-          data-h-6b4a565=""
+        "6b4a565": <link
+          data-hid="6b4a565"
           href="/page-index.ico"
           rel="icon"
         />,
@@ -93,7 +93,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"icon\\" href=\\"/page-about.ico\\" data-h-6b4a565=\\"\\">
+      <link rel=\\"icon\\" href=\\"/page-about.ico\\" data-hid=\\"6b4a565\\">
       </head>
       <body>
 
@@ -139,9 +139,9 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-h-f59c689=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-h-66d43fa=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-h-5e41b59=\\"\\">",
+        "headTags": "<link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-hid=\\"f59c689\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-hid=\\"66d43fa\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-hid=\\"5e41b59\\">",
         "htmlAttrs": "",
       }
     `)
@@ -158,9 +158,9 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-h-f59c689=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-h-66d43fa=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-h-5e41b59=\\"\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-hid=\\"f59c689\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-hid=\\"66d43fa\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-hid=\\"5e41b59\\">
       </head>
       <body>
 
@@ -178,9 +178,9 @@ describe('vue e2e keys', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison&amp;text=Allison\\" data-h-f59c689=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon\\" data-h-66d43fa=\\"\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento\\" data-h-5e41b59=\\"\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison&amp;text=Allison\\" data-hid=\\"f59c689\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon\\" data-hid=\\"66d43fa\\">
+      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento\\" data-hid=\\"5e41b59\\">
       </head>
       <body>
 
