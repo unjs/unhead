@@ -21,7 +21,7 @@ import type { Unhead } from '@unhead/schema'
               return entry && entry.mode !== 'server'
             })
             .map(tag => tag._h || hashTag(tag))
-            .join('')
+            .join(''),
         )
         // the SSR hash matches the CSR hash, we can skip the render
         if (prevHash !== hash && prevHash !== false)

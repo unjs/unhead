@@ -1,6 +1,5 @@
 export * from './sortTagsPlugin'
 export * from './titleTemplatePlugin'
-export * from './deprecatedTagAttrPlugin'
 export * from './provideTagKeyHash'
 export * from './eventHandlersPlugin'
 export * from './dedupesTagsPlugin'

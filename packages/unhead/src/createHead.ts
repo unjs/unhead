@@ -13,7 +13,6 @@ import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
   DedupesTagsPlugin,
-  DeprecatedTagAttrPlugin,
   EventHandlersPlugin,
   ProvideTagKeyHash,
   SortTagsPlugin,
@@ -22,19 +21,6 @@ import {
 } from './plugin'
 import { normaliseEntryTags } from './utils'
 import { IsBrowser } from './env'
-
-export function CorePlugins() {
-  return [
-  // dedupe needs to come first
-    DedupesTagsPlugin(),
-    SortTagsPlugin(),
-    TemplateParamsPlugin(),
-    TitleTemplatePlugin(),
-    ProvideTagKeyHash(),
-    EventHandlersPlugin(),
-    DeprecatedTagAttrPlugin(),
-  ]
-}
 
 /* @__NO_SIDE_EFFECTS__ */ export function DOMPlugins(options: CreateHeadOptions = {}) {
   return [
@@ -84,7 +70,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     hooks.addHooks(options.hooks)
 
   options.plugins = [
-    ...CorePlugins(),
+    DedupesTagsPlugin(),
+    SortTagsPlugin(),
+    TemplateParamsPlugin(),
+    TitleTemplatePlugin(),
+    ProvideTagKeyHash(),
+    EventHandlersPlugin(),
     ...(options?.plugins || []),
   ]
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
