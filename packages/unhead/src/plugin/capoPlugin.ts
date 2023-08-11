@@ -48,7 +48,7 @@ const importRe = /@import/
           tag: 'htmlAttrs',
           props: {
             'data-capo': '',
-          }
+          },
         })
       },
     },
