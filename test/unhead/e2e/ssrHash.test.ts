@@ -1,15 +1,18 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead, useServerHead } from 'unhead'
+import { HashHydrationPlugin, createHead, useHead, useServerHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import type { Head } from '@unhead/schema'
 import { useDom } from '../../fixtures'
 
-describe('unhead e2e', () => {
+describe('unhead e2e ssrHash', () => {
   it('basic hydration', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead({
-      experimentalHashHydration: true,
+      plugins: [
+        HashHydrationPlugin(),
+      ],
     })
     // i.e App.vue
     useServerHead({
@@ -49,9 +52,8 @@ describe('unhead e2e', () => {
         },
       ],
     })
-
     // i.e pages/index.vue
-    useHead({
+    const HomeHead: Head = {
       title: 'Home',
       script: [
         {
@@ -68,7 +70,8 @@ describe('unhead e2e', () => {
           content: 'This is the home page',
         },
       ],
-    })
+    }
+    useHead(HomeHead)
 
     const data = await renderSSRHead(ssrHead)
 
@@ -95,26 +98,11 @@ describe('unhead e2e', () => {
 
     const csrHead = createHead({
       document: dom.window.document,
-      experimentalHashHydration: true,
-    })
-    csrHead.push({
-      title: 'Home',
-      script: [
-        {
-          src: 'https://my-app.com/home.js',
-        },
-      ],
-      meta: [
-        {
-          property: 'og:title',
-          content: 'Home',
-        },
-        {
-          name: 'description',
-          content: 'This is the home page',
-        },
+      plugins: [
+        HashHydrationPlugin(),
       ],
     })
+    csrHead.push(HomeHead)
 
     let renderingTags = false
     csrHead.hooks.hook('dom:beforeRenderTag', () => {

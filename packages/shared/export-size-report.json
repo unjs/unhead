@@ -26,13 +26,6 @@
       "bundled": 433
     },
     {
-      "name": "computeHashes",
-      "path": "dist/index.mjs",
-      "minified": 183,
-      "minzipped": 137,
-      "bundled": 296
-    },
-    {
       "name": "hashCode",
       "path": "dist/index.mjs",
       "minified": 166,

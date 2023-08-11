@@ -9,7 +9,7 @@ import type {
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
-import { PatchDomOnEntryUpdatesPlugin, maybeGetSSRHash } from '@unhead/dom'
+import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { setActiveHead } from './runtime/state'
 import {
   DedupesTagsPlugin,
@@ -47,8 +47,6 @@ export function CorePlugins() {
     ...options,
     plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
   })
-  if (options.experimentalHashHydration && head.resolvedOptions.document)
-    head._hash = maybeGetSSRHash(head.resolvedOptions.document)
   setActiveHead(head)
   return head
 }
