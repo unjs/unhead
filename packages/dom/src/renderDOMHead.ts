@@ -1,8 +1,8 @@
-import { HasElementTags, computeHashes, hashTag, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, hashTag, tagDedupeKey } from '@unhead/shared'
 import type {
-  BeforeRenderContext,
   DomRenderTagContext,
   HeadTag,
+  ShouldRenderContext,
   SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
@@ -22,13 +22,11 @@ export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
   delayFn?: (fn: () => void) => void
 }
 
-let prevHash: string | false = false
-
 /**
  * Render the head tags to the DOM.
  */
 export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
-  const beforeRenderCtx: BeforeRenderContext = { shouldRender: true }
+  const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)
@@ -39,18 +37,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const tagContexts: DomRenderTagContext[] = (await head.resolveTags())
     .map(setupTagRenderCtx)
 
-  // if enabled, we may be able to skip the entire dom render
-  if (head.resolvedOptions.experimentalHashHydration) {
-    prevHash = prevHash || head._hash || false
-    if (prevHash) {
-      const hash = computeHashes(tagContexts.map(ctx => ctx.tag._h!))
-      // the SSR hash matches the CSR hash, we can skip the render
-      if (prevHash === hash)
-        return
-
-      prevHash = hash
-    }
-  }
+  const hookCtx: ShouldRenderContext & { tags: DomRenderTagContext[] } = { shouldRender: true, tags: tagContexts }
+  await head.hooks.callHook('dom:resolveTags', hookCtx)
+  // allow integrations to block to the render
+  if (!hookCtx.shouldRender)
+    return
 
   // queue everything to be deleted, and then we'll conditionally remove side effects which we don't want to fire
   // run queued side effects immediately
