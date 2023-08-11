@@ -26,13 +26,6 @@
       "bundled": 433
     },
     {
-      "name": "computeHashes",
-      "path": "dist/index.mjs",
-      "minified": 183,
-      "minzipped": 137,
-      "bundled": 296
-    },
-    {
       "name": "hashCode",
       "path": "dist/index.mjs",
       "minified": 166,
@@ -87,13 +80,6 @@
       "minified": 60,
       "minzipped": 64,
       "bundled": 122
-    },
-    {
-      "name": "EntryConfigKeys",
-      "path": "dist/index.mjs",
-      "minified": 52,
-      "minzipped": 56,
-      "bundled": 107
     },
     {
       "name": "SelfClosingTags",
