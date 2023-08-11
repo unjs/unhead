@@ -22,7 +22,7 @@ export interface InferSeoMetaPluginOptions {
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 
-export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
+/* @__NO_SIDE_EFFECTS__ */ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin({
     hooks: {
       entries: {
