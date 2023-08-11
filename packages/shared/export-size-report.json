@@ -89,13 +89,6 @@
       "bundled": 122
     },
     {
-      "name": "EntryConfigKeys",
-      "path": "dist/index.mjs",
-      "minified": 52,
-      "minzipped": 56,
-      "bundled": 107
-    },
-    {
       "name": "SelfClosingTags",
       "path": "dist/index.mjs",
       "minified": 45,
