@@ -18,44 +18,44 @@
     {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1305,
-      "minzipped": 631,
-      "bundled": 2874
-    },
-    {
-      "name": "VueHeadMixin",
-      "path": "dist/index.mjs",
-      "minified": 1245,
-      "minzipped": 599,
-      "bundled": 2755
+      "minified": 1268,
+      "minzipped": 612,
+      "bundled": 2821
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1252,
-      "minzipped": 598,
-      "bundled": 2756
+      "minified": 1215,
+      "minzipped": 583,
+      "bundled": 2703
+    },
+    {
+      "name": "VueHeadMixin",
+      "path": "dist/index.mjs",
+      "minified": 1208,
+      "minzipped": 581,
+      "bundled": 2702
     },
     {
       "name": "useServerHeadSafe",
       "path": "dist/index.mjs",
-      "minified": 1188,
-      "minzipped": 579,
-      "bundled": 2648
+      "minified": 1151,
+      "minzipped": 559,
+      "bundled": 2595
     },
     {
       "name": "useHeadSafe",
       "path": "dist/index.mjs",
-      "minified": 1136,
-      "minzipped": 559,
-      "bundled": 2529
+      "minified": 1099,
+      "minzipped": 543,
+      "bundled": 2476
     },
     {
       "name": "useHead",
       "path": "dist/index.mjs",
-      "minified": 1062,
-      "minzipped": 529,
-      "bundled": 2407
+      "minified": 1025,
+      "minzipped": 512,
+      "bundled": 2354
     },
     {
       "name": "createHead",

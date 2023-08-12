@@ -18,36 +18,36 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 6011,
-      "minzipped": 2318,
-      "bundled": 12048
+      "minified": 8840,
+      "minzipped": 3148,
+      "bundled": 17489
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 5877,
-      "minzipped": 2271,
-      "bundled": 11864
+      "minified": 8705,
+      "minzipped": 3102,
+      "bundled": 17305
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 5783,
-      "minzipped": 2235,
-      "bundled": 11630
+      "minified": 8611,
+      "minzipped": 3073,
+      "bundled": 17071
     },
     {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
       "minified": 3470,
-      "minzipped": 1368,
+      "minzipped": 1347,
       "bundled": 6763
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
       "minified": 3417,
-      "minzipped": 1323,
+      "minzipped": 1342,
       "bundled": 6635
     },
     {
@@ -72,32 +72,11 @@
       "bundled": 3693
     },
     {
-      "name": "DedupesTagsPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1641,
-      "minzipped": 796,
-      "bundled": 3829
-    },
-    {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
       "minified": 1844,
       "minzipped": 748,
       "bundled": 3304
-    },
-    {
-      "name": "TemplateParamsPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1710,
-      "minzipped": 737,
-      "bundled": 3300
-    },
-    {
-      "name": "useServerHeadSafe",
-      "path": "dist/index.mjs",
-      "minified": 2100,
-      "minzipped": 735,
-      "bundled": 4667
     },
     {
       "name": "resolvePackedMetaObjectValue",
@@ -107,10 +86,17 @@
       "bundled": 3281
     },
     {
+      "name": "useServerHeadSafe",
+      "path": "dist/index.mjs",
+      "minified": 2100,
+      "minzipped": 729,
+      "bundled": 4667
+    },
+    {
       "name": "useHeadSafe",
       "path": "dist/index.mjs",
       "minified": 2048,
-      "minzipped": 721,
+      "minzipped": 715,
       "bundled": 4548
     },
     {
@@ -121,32 +107,11 @@
       "bundled": 4265
     },
     {
-      "name": "EventHandlersPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1636,
-      "minzipped": 663,
-      "bundled": 3429
-    },
-    {
-      "name": "SortTagsPlugin",
-      "path": "dist/index.mjs",
-      "minified": 1007,
-      "minzipped": 513,
-      "bundled": 2139
-    },
-    {
       "name": "CapoPlugin",
       "path": "dist/index.mjs",
       "minified": 1063,
       "minzipped": 467,
       "bundled": 2209
-    },
-    {
-      "name": "processTemplateParams",
-      "path": "dist/index.mjs",
-      "minified": 870,
-      "minzipped": 443,
-      "bundled": 1712
     },
     {
       "name": "resolveMetaKeyValue",
@@ -170,27 +135,6 @@
       "bundled": 1634
     },
     {
-      "name": "TitleTemplatePlugin",
-      "path": "dist/index.mjs",
-      "minified": 708,
-      "minzipped": 365,
-      "bundled": 1794
-    },
-    {
-      "name": "tagWeight",
-      "path": "dist/index.mjs",
-      "minified": 570,
-      "minzipped": 353,
-      "bundled": 1353
-    },
-    {
-      "name": "ProvideTagKeyHash",
-      "path": "dist/index.mjs",
-      "minified": 444,
-      "minzipped": 261,
-      "bundled": 990
-    },
-    {
       "name": "normaliseProps",
       "path": "dist/index.mjs",
       "minified": 462,
@@ -205,6 +149,13 @@
       "bundled": 913
     },
     {
+      "name": "useServerHead",
+      "path": "dist/index.mjs",
+      "minified": 357,
+      "minzipped": 204,
+      "bundled": 926
+    },
+    {
       "name": "DOMPlugins",
       "path": "dist/index.mjs",
       "minified": 348,
@@ -215,36 +166,8 @@
       "name": "useHead",
       "path": "dist/index.mjs",
       "minified": 305,
-      "minzipped": 191,
+      "minzipped": 188,
       "bundled": 815
-    },
-    {
-      "name": "useServerHead",
-      "path": "dist/index.mjs",
-      "minified": 357,
-      "minzipped": 191,
-      "bundled": 926
-    },
-    {
-      "name": "TAG_ALIASES",
-      "path": "dist/index.mjs",
-      "minified": 266,
-      "minzipped": 184,
-      "bundled": 723
-    },
-    {
-      "name": "SortModifiers",
-      "path": "dist/index.mjs",
-      "minified": 296,
-      "minzipped": 183,
-      "bundled": 755
-    },
-    {
-      "name": "TAG_WEIGHTS",
-      "path": "dist/index.mjs",
-      "minified": 256,
-      "minzipped": 166,
-      "bundled": 709
     },
     {
       "name": "setActiveHead",

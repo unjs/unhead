@@ -2,7 +2,7 @@ import type {
   ActiveHeadEntry,
   HeadEntryOptions, HeadSafe,
 } from '@unhead/schema'
-import { whitelistSafeInput } from '../..'
+import { whitelistSafeInput } from '../utils/safe'
 import { useHead } from './useHead'
 
 export function useHeadSafe(input: HeadSafe, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> | void {

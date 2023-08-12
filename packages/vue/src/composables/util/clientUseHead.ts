@@ -1,8 +1,8 @@
 import type { Ref } from 'vue'
 import { getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, ref, watch, watchEffect } from 'vue'
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { ReactiveHead, UseHeadInput, VueHeadClient } from '../../..'
-import { resolveUnrefHeadInput } from '../../..'
+import type { ReactiveHead, UseHeadInput, VueHeadClient } from '../../index'
+import { resolveUnrefHeadInput } from '../../utils'
 
 export function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions<UseHeadInput<T>> = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const deactivated = ref(false)
@@ -13,7 +13,6 @@ export function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input
       ? {}
       : resolveUnrefHeadInput(input)
   })
-  console.log('pushing input', resolvedInput.value)
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
   watch(resolvedInput, (e) => {
     entry.patch(e)

@@ -1,5 +1,5 @@
-export * from './plugin'
-export * from './runtime'
+export * from './optionalPlugins'
+export * from './composables'
 export * from './createHead'
 export * from './autoImports'
 export * from './utils'

@@ -1,6 +1,6 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { UseHeadInput } from '../../'
-import { injectHead } from '../../'
+import type { UseHeadInput } from '@unhead/vue'
+import { injectHead } from '../'
 import { clientUseHead } from './util/clientUseHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {

@@ -3,7 +3,7 @@ import type {
   Head,
   HeadEntryOptions,
 } from '@unhead/schema'
-import { useHead } from './useHead'
+import { useHead } from '.'
 
 export function useServerHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
   return useHead(input, { ...options, mode: 'server' })

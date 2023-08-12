@@ -10,7 +10,7 @@ import type {
 } from '@unhead/schema'
 import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
 import { IsBrowser } from '@unhead/shared'
-import { setActiveHead } from './runtime/state'
+import { setActiveHead } from 'unhead/src/composables/state'
 import {
   DedupesTagsPlugin,
   EventHandlersPlugin,
@@ -18,7 +18,7 @@ import {
   SortTagsPlugin,
   TemplateParamsPlugin,
   TitleTemplatePlugin,
-} from './plugin'
+} from './plugins'
 import { normaliseEntryTags } from './utils'
 
 /* @__NO_SIDE_EFFECTS__ */ export function DOMPlugins(options: CreateHeadOptions = {}) {
