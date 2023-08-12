@@ -86,6 +86,13 @@
       "bundled": 1917
     },
     {
+      "name": "injectHead",
+      "path": "dist/index.mjs",
+      "minified": 780,
+      "minzipped": 405,
+      "bundled": 1801
+    },
+    {
       "name": "HashHydrationPlugin",
       "path": "dist/index.mjs",
       "minified": 173,

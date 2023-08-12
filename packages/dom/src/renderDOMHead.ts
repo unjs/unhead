@@ -26,6 +26,15 @@ function elementToTag($el: Element) {
   return tag
 }
 
+function elForTag(tag: HeadTag, dom: Document) {
+  if (tag.tag === 'htmlAttrs')
+    return dom.documentElement
+  if (tag.tag === 'bodyAttrs')
+    return dom.body
+  if (tag.tag === 'title')
+    return dom.head.querySelector('title')
+}
+
 /**
  * Render the head tags to the DOM.
  */
@@ -36,7 +45,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   const tags: DomRenderTagContext[] = (await head.resolveTags())
     .map(tag => <DomRenderTagContext> {
-      $el: null,
+      $el: elForTag(tag, dom),
       tag,
       id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
       shouldRender: true,
@@ -63,8 +72,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   state.pendingSideEffects = { ...state.sideEffects || {} }
   state.sideEffects = {}
 
-  function setAttrs(ctx: DomRenderTagContext, $el: Element, sideEffects = false) {
+  function setAttrs(ctx: DomRenderTagContext, sideEffects = false) {
     const tag = ctx.tag
+    const $el = ctx.$el!
     // add new attributes
     Object.entries(tag.props).forEach(([k, value]) => {
       value = String(value)
@@ -99,9 +109,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     delete state.pendingSideEffects[`${id}:${scope}`]
   }
 
-  function setupTagElement(ctx: DomRenderTagContext, el: Element) {
-    setAttrs(ctx, el)
-    state.elMap[ctx.id] = el
+  function setupTagElement(ctx: DomRenderTagContext) {
+    setAttrs(ctx)
+    // @ts-expect-error untyped
+    state.elMap[ctx.id] = ctx.$el
     // we are removing an element
     trackSideEffect(ctx, 'el', () => {
       state.elMap[ctx.id].remove()
@@ -130,15 +141,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       continue
     }
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      setAttrs(ctx, dom[tag.tag === 'htmlAttrs' ? 'documentElement' : 'body'], true)
+      setAttrs(ctx, true)
       continue
     }
-    // 2. Hydrate based on either SSR or CSR mapping
-    const $el: Element | null = state.elMap[id]
-    // tag exists, we don't need to re-render it, just track side effects, update attributes
-    if ($el)
-      setupTagElement(ctx, $el)
-
+    ctx.$el = ctx.$el || state.elMap[id]
+    if (ctx.$el)
+      setupTagElement(ctx)
     else
     // tag does not exist, we need to render it (if it's an element tag)
       HasElementTags.includes(tag.tag) && pendingRenders.push(ctx)
@@ -148,19 +156,16 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // finally, we are free to make new elements
     const pos = ctx.tag.tagPosition || 'head'
     fragments[pos] = fragments[pos] || dom.createDocumentFragment()
-    const el = dom.createElement(ctx.tag.tag)
-    setupTagElement(ctx, el)
-    fragments[pos]!.appendChild(el)
+    ctx.$el = dom.createElement(ctx.tag.tag)
+    setupTagElement(ctx)
+    fragments[pos]!.appendChild(ctx.$el)
+    ctx.markSideEffect = (scope: string, fn: () => void) => trackSideEffect(ctx, scope, fn)
+    await head.hooks.callHook('dom:renderTag', ctx, dom)
   }
   // finally, write the tags
   fragments.head && dom.head.appendChild(fragments.head)
   fragments.bodyOpen && dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
   fragments.bodyClose && dom.body.appendChild(fragments.bodyClose)
-
-  for (const ctx of tags) {
-    ctx.markSideEffect = (scope: string, fn: () => void) => trackSideEffect(ctx, scope, fn)
-    await head.hooks.callHook('dom:renderTag', ctx)
-  }
 
   // clear all side effects still pending
   Object.values(state.pendingSideEffects).forEach(fn => fn())

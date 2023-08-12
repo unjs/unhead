@@ -20,7 +20,7 @@ describe('dom event handlers', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script defer=\\"\\" data-h-load=\\"\\" src=\\"https://js.stripe.com/v3/\\"></script></head>
+      <script src=\\"https://js.stripe.com/v3/\\" defer=\\"\\" data-h-load=\\"\\"></script></head>
       <body>
 
       <div>

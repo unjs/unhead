@@ -22,6 +22,7 @@ export * from './Vue2ProvideUnheadPlugin'
 
 // composables
 export * from './autoImports'
+export * from './composables/injectHead'
 export * from './composables/useHead'
 export * from './composables/useHeadSafe'
 export * from './composables/useSeoMeta'

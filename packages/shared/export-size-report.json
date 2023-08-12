@@ -55,6 +55,13 @@
       "bundled": 3651
     },
     {
+      "name": "processTemplateParams",
+      "path": "dist/index.mjs",
+      "minified": 650,
+      "minzipped": 350,
+      "bundled": 1098
+    },
+    {
       "name": "resolveMetaKeyValue",
       "path": "dist/index.mjs",
       "minified": 788,

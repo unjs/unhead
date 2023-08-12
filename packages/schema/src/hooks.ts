@@ -38,7 +38,7 @@ export interface HeadHooks {
   // @unhead/dom
   'dom:beforeRender': (ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }) => HookResult
   'dom:beforeRenderTag': (ctx: DomRenderTagContext) => HookResult
-  'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
+  'dom:renderTag': (ctx: DomRenderTagContext, document: Document) => HookResult
   'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
 
   // @unhead/ssr
