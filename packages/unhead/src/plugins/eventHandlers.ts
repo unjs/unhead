@@ -54,10 +54,7 @@ export default defineHeadPlugin({
       if (!ctx.tag._eventHandlers)
         return
 
-      console.log('render', ctx)
-      // attach
       const $eventListenerTarget: Element | Window | null | undefined = ctx.tag.tag === 'bodyAttrs' ? dom.defaultView : ctx.$el
-
       // @ts-expect-error runtime hack
       Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {
         const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
