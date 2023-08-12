@@ -1,6 +1,7 @@
 import { getCurrentInstance } from 'vue'
 import { useHead } from '.'
 
+// TODO export under own subdirectory (vue2)
 export const VueHeadMixin = {
   created() {
     const instance = getCurrentInstance()

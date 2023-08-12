@@ -207,9 +207,6 @@ importers:
       ufo:
         specifier: ^1.2.0
         version: 1.2.0
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
       unplugin:
         specifier: ^1.4.0
         version: 1.4.0
@@ -247,6 +244,10 @@ importers:
       '@unhead/schema':
         specifier: workspace:*
         version: link:../schema
+    devDependencies:
+      packrup:
+        specifier: ^0.1.0
+        version: 0.1.0
 
   packages/ssr:
     dependencies:
@@ -271,10 +272,6 @@ importers:
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
-    devDependencies:
-      packrup:
-        specifier: ^0.1.0
-        version: 0.1.0
 
   packages/vue:
     dependencies:

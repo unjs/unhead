@@ -1,10 +1,67 @@
+import { packArray, unpackToArray, unpackToString } from 'packrup'
+import type { TransformValueOptions } from 'packrup'
 import type { Head, MetaFlatInput } from '@unhead/schema'
-import { unpackToArray, unpackToString } from 'packrup'
-import { MetaPackingSchema } from './utils'
 
-const OpenGraphInputs = ['og:Image', 'og:Video', 'og:Audio', 'twitter:Image']
+export type ValidMetaType = 'name' | 'http-equiv' | 'property' | 'charset'
 
-const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
+interface PackingDefinition {
+  metaKey?: ValidMetaType
+  keyValue?: string
+  unpack?: TransformValueOptions
+}
+
+const MetaPackingSchema: Record<string, PackingDefinition> = {
+  robots: {
+    unpack: {
+      keyValueSeparator: ':',
+    },
+  },
+  // Pragma directives
+  contentSecurityPolicy: {
+    unpack: {
+      keyValueSeparator: ' ',
+      entrySeparator: '; ',
+    },
+    metaKey: 'http-equiv',
+  },
+  fbAppId: {
+    keyValue: 'fb:app_id',
+    metaKey: 'property',
+  },
+  ogSiteName: {
+    keyValue: 'og:site_name',
+  },
+  msapplicationTileImage: {
+    keyValue: 'msapplication-TileImage',
+  },
+  /**
+   * Tile colour for windows
+   */
+  msapplicationTileColor: {
+    keyValue: 'msapplication-TileColor',
+  },
+  /**
+   * URL of a config for windows tile.
+   */
+  msapplicationConfig: {
+    keyValue: 'msapplication-Config',
+  },
+  charset: {
+    metaKey: 'charset',
+  },
+  contentType: {
+    metaKey: 'http-equiv',
+  },
+  defaultStyle: {
+    metaKey: 'http-equiv',
+  },
+  xUaCompatible: {
+    metaKey: 'http-equiv',
+  },
+  refresh: {
+    metaKey: 'http-equiv',
+  },
+} as const
 
 const ColonPrefixKeys = /^(og|twitter|fb)/
 
@@ -43,6 +100,33 @@ function changeKeyCasingDeep<T extends any>(input: T): T {
 
   return output as T
 }
+
+export function resolvePackedMetaObjectValue(value: string, key: string): string {
+  const definition = MetaPackingSchema[key]
+
+  // refresh is weird...
+  if (key === 'refresh')
+    // @ts-expect-error untyped
+    return `${value.seconds};url=${value.url}`
+
+  return unpackToString(
+    changeKeyCasingDeep(value), {
+      entrySeparator: ', ',
+      keyValueSeparator: '=',
+      resolve({ value, key }) {
+        if (value === null)
+          return ''
+        if (typeof value === 'boolean')
+          return `${key}`
+      },
+      ...definition?.unpack,
+    },
+  )
+}
+
+const OpenGraphInputs = ['og:Image', 'og:Video', 'og:Audio', 'twitter:Image']
+
+const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
 
 /**
  * Converts a flat meta object into an array of meta entries.
@@ -118,25 +202,26 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   return [...extras, ...meta].filter(v => typeof v.content === 'undefined' || v.content !== '_null')
 }
 
-export function resolvePackedMetaObjectValue(value: string, key: string): string {
-  const definition = MetaPackingSchema[key]
+/**
+ * Convert an array of meta entries to a flat object.
+ * @param inputs
+ */
+export function packMeta<T extends Required<Head>['meta']>(inputs: T): MetaFlatInput {
+  const mappedPackingSchema = Object.entries(MetaPackingSchema)
+    .map(([key, value]) => [key, value.keyValue])
 
-  // refresh is weird...
-  if (key === 'refresh')
-    // @ts-expect-error untyped
-    return `${value.seconds};url=${value.url}`
-
-  return unpackToString(
-    changeKeyCasingDeep(value), {
-      entrySeparator: ', ',
-      keyValueSeparator: '=',
-      resolve({ value, key }) {
-        if (value === null)
-          return ''
-        if (typeof value === 'boolean')
-          return `${key}`
-      },
-      ...definition?.unpack,
+  return packArray(inputs, {
+    key: ['name', 'property', 'httpEquiv', 'http-equiv', 'charset'],
+    value: ['content', 'charset'],
+    resolveKey(k) {
+      let key = (mappedPackingSchema.filter(sk => sk[1] === k)?.[0]?.[0] || k) as string
+      // turn : into a capital letter
+      // @ts-expect-error untyped
+      const replacer = (_, letter) => letter?.toUpperCase()
+      key = key
+        .replace(/:([a-z])/g, replacer)
+        .replace(/-([a-z])/g, replacer)
+      return key as string
     },
-  )
+  })
 }

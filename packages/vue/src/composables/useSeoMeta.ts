@@ -1,9 +1,9 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MetaFlatInput } from '@unhead/schema'
 import { ref, watchEffect } from 'vue'
-import { unpackMeta } from 'unhead'
+import { unpackMeta } from '@unhead/shared'
 import type { MaybeComputedRefEntries, ReactiveHead } from '../types'
 import { resolveUnrefHeadInput } from '../utils'
-import { useHead } from '.'
+import { useHead } from './useHead'
 
 export type UseSeoMetaInput = MaybeComputedRefEntries<MetaFlatInput> & { title?: ReactiveHead['title']; titleTemplate?: ReactiveHead['titleTemplate'] }
 

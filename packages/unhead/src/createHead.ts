@@ -9,31 +9,25 @@ import type {
   Unhead,
 } from '@unhead/schema'
 import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
-import { IsBrowser } from '@unhead/shared'
-import { setActiveHead } from 'unhead/src/composables/state'
-import {
-  DedupesTagsPlugin,
-  EventHandlersPlugin,
-  ProvideTagKeyHash,
-  SortTagsPlugin,
-  TemplateParamsPlugin,
-  TitleTemplatePlugin,
-} from './plugins'
-import { normaliseEntryTags } from './utils'
+import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import DedupePlugin from './plugins/dedupe'
+import EventHandlersPlugin from './plugins/eventHandlers'
+import HashKeyedPLugin from './plugins/hashKeyed'
+import SortPLugin from './plugins/sort'
+import TemplateParamsPlugin from './plugins/templateParams'
+import TitleTemplatePlugin from './plugins/titleTemplate'
 
-/* @__NO_SIDE_EFFECTS__ */ export function DOMPlugins(options: CreateHeadOptions = {}) {
-  return [
-    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
-  ]
-}
+// TODO drop support for non-context head
+// eslint-disable-next-line import/no-mutable-exports
+export let activeHead: Unhead<any> | undefined
 
+// TODO rename to createDomHead
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>({
-    ...options,
-    plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
-  })
-  setActiveHead(head)
-  return head
+  const head = createHeadCore<T>(options)
+  if (!head.ssr)
+    head.use(PatchDomOnEntryUpdatesPlugin())
+
+  return activeHead = head
 }
 
 /* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
@@ -41,8 +35,7 @@ import { normaliseEntryTags } from './utils'
     ...options,
     mode: 'server',
   })
-  setActiveHead(head)
-  return head
+  return activeHead = head
 }
 
 /**
@@ -67,12 +60,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     hooks.addHooks(options.hooks)
 
   options.plugins = [
-    DedupesTagsPlugin(),
-    SortTagsPlugin(),
-    TemplateParamsPlugin(),
-    TitleTemplatePlugin(),
-    ProvideTagKeyHash(),
-    EventHandlersPlugin(),
+    DedupePlugin,
+    EventHandlersPlugin,
+    HashKeyedPLugin,
+    SortPLugin,
+    TemplateParamsPlugin,
+    TitleTemplatePlugin,
     ...(options?.plugins || []),
   ]
   options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))

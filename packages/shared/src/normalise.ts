@@ -1,5 +1,5 @@
 import type { Head, HeadEntry, HeadTag, TagPriority } from '@unhead/schema'
-import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '@unhead/shared'
+import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
