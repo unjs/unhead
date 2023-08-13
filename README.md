@@ -29,13 +29,12 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 
 ## Highlights
 
-- 💎 Fully typed augmentable Schema powered by [zhead](https://github.com/harlan-zw/zhead)
-- 🧑‍🤝‍🧑 Side-effect based DOM patching, plays nicely your existing other tags and attributes
-- 🤝 Built for everyone: Vue, React (soon), Svelte (soon), (more soon).
-- 🚀 Optimised, tiny SSR and DOM bundles
-- 🖥️ `useServerHead` (supporting 0kb runtime) 
-- 🍣 Intuitive deduping, sorting, title templates, class merging and more
-- 🪝 Extensible hook / plugin based API
+- 🌳 Powerful pluggable core with a tiny footprint
+- 🍣 All the good stuff: deduping, sorting, title templates, template params, etc.
+- 🪨 Dependable DOM updates, fast and tiny (952 bytes minzipped)
+- 🚀 Add-ons for extra oomph: Capo.js, Hash Hydration and Vite tree-shaking
+- 💎 Fully typed with MDN docs
+- 🤝 Used by [Nuxt](https://nuxt.com/) with more framework support coming soon.
 
 ## Install
 
