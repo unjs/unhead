@@ -1,4 +1,4 @@
-import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MaybePromiseProps, Merge, MergeHead, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from 'zhead'
+import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MaybePromiseProps, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from 'zhead'
 import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
 
 export type Never<T> = {
@@ -149,5 +149,7 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
    */
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
+
+export type UseSeoMetaInput = MetaFlatInput & { title?: Title; titleTemplate?: TitleTemplate }
 
 export type { MetaFlatInput, BodyEvents, MergeHead, DataKeys, DefinedValueOrEmptyObject, SpeculationRules } from 'zhead'
