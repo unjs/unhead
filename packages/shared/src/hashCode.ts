@@ -11,5 +11,5 @@ export function hashCode(s: string) {
 }
 
 export function hashTag(tag: HeadTag) {
-  return hashCode(`${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`)
+  return tag._h || hashCode(tag._d ? tag._d : `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`)
 }

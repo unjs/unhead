@@ -1,6 +1,5 @@
 import type { HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { VueHeadClient } from './createHead'
-import type { UseHeadInput } from './'
+import type { UseHeadInput, VueHeadClient } from './types'
 import { useHead } from './'
 
 export type VueHeadClientPollyFill<T extends MergeHead> = VueHeadClient<T> & {

@@ -25,3 +25,15 @@ export const ValidHeadTags = [
 export const UniqueTags = ['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams']
 
 export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent']
+
+export const IsBrowser = typeof window !== 'undefined'
+
+export const composableNames = [
+  'getActiveHead',
+  'useHead',
+  'useSeoMeta',
+  'useHeadSafe',
+  'useServerHead',
+  'useServerSeoMeta',
+  'useServerHeadSafe',
+]

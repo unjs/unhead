@@ -20,6 +20,6 @@
     "@nuxtjs/fontaine": "^0.4.1",
     "nuxt": "3.6.5",
     "nuxt-windicss": "latest",
-    "playwright": "^1.36.2"
+    "playwright": "^1.37.0"
   }
 }

@@ -54,13 +54,12 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "@rollup/pluginutils": "^5.0.2",
+    "@rollup/pluginutils": "^5.0.3",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "magic-string": "^0.30.2",
     "mlly": "^1.4.0",
     "ufo": "^1.2.0",
-    "unhead": "workspace:*",
     "unplugin": "^1.4.0",
     "unplugin-ast": "^0.8.2"
   },

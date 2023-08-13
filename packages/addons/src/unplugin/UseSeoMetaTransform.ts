@@ -5,7 +5,7 @@ import {
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
-} from 'unhead'
+} from '@unhead/shared'
 import { parseQuery, parseURL } from 'ufo'
 import type { ImportDeclaration, ObjectProperty } from '@babel/types'
 import MagicString from 'magic-string'

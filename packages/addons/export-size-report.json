@@ -8,7 +8,6 @@
       "magic-string",
       "mlly",
       "ufo",
-      "unhead",
       "unplugin",
       "unplugin-ast",
       "@babel/types",

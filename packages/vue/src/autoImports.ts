@@ -1,4 +1,4 @@
-import { composableNames } from 'unhead'
+import { composableNames } from '@unhead/shared'
 
 const coreComposableNames = [
   'injectHead',

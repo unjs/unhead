@@ -13,12 +13,16 @@ export interface SSRHeadPayload {
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
-  renderId: string
-  $el?: Element | null
+  id: string
+  $el: Element
   shouldRender: boolean
   tag: HeadTag
   entry?: HeadEntry<any>
   markSideEffect: (key: string, fn: () => void) => void
+}
+
+export interface DomBeforeRenderCtx extends ShouldRenderContext {
+  tags: DomRenderTagContext[]
 }
 export interface ShouldRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
@@ -32,10 +36,8 @@ export interface HeadHooks {
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
-  'dom:beforeRender': (ctx: ShouldRenderContext) => HookResult
-  'dom:beforeRenderTag': (ctx: DomRenderTagContext) => HookResult
-  'dom:resolveTags': (ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }) => HookResult
-  'dom:renderTag': (ctx: DomRenderTagContext) => HookResult
+  'dom:beforeRender': (ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }) => HookResult
+  'dom:renderTag': (ctx: DomRenderTagContext, document: Document, track: any) => HookResult
   'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
 
   // @unhead/ssr
