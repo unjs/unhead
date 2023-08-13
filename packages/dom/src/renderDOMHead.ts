@@ -1,4 +1,4 @@
-import { HasElementTags, TagsWithInnerContent, hashTag, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, hashTag, tagDedupeKey } from '@unhead/shared'
 import type {
   DomBeforeRenderCtx,
   DomRenderTagContext,
@@ -14,25 +14,16 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-function elementToTag($el: Element) {
-  const props = $el.getAttributeNames()
-    .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {})
-  const tag: HeadTag = { tag: $el.tagName.toLowerCase() as HeadTag['tag'], props }
-  const d = tagDedupeKey(tag)
-  if (d)
-    tag._d = d
-  if ($el.innerHTML)
-    tag.innerHTML = $el.innerHTML
+function elementToTag($el: Element): HeadTag {
+  const tag: HeadTag = {
+    tag: $el.tagName.toLowerCase() as HeadTag['tag'],
+    props: $el.getAttributeNames()
+      .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
+    innerHTML: $el.innerHTML,
+  }
+  // @ts-expect-error untyped
+  tag._d = tagDedupeKey(tag)
   return tag
-}
-
-function elForTag(tag: HeadTag, dom: Document) {
-  if (tag.tag === 'htmlAttrs')
-    return dom.documentElement
-  if (tag.tag === 'bodyAttrs')
-    return dom.body
-  if (tag.tag === 'title')
-    return dom.head.querySelector('title')
 }
 
 /**
@@ -45,11 +36,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   const tags: DomRenderTagContext[] = (await head.resolveTags())
     .map(tag => <DomRenderTagContext> {
-      $el: elForTag(tag, dom),
       tag,
       id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
       shouldRender: true,
     })
+
+  console.log(tags)
 
   const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
@@ -60,7 +52,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   let state = head._dom as DomState
   // let's hydrate - fill the elMap for fast lookups
   if (!state) {
-    state = { elMap: {} } as DomState
+    state = {
+      elMap: { htmlAttrs: dom.documentElement, bodyAttrs: dom.body },
+    } as any as DomState
     for (const key of ['body', 'head']) {
       const children = dom?.[key as 'head' | 'body']?.children
       for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase())))
@@ -72,56 +66,49 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   state.pendingSideEffects = { ...state.sideEffects || {} }
   state.sideEffects = {}
 
-  function setAttrs(ctx: DomRenderTagContext, sideEffects = false) {
-    const tag = ctx.tag
-    const $el = ctx.$el!
+  function track(id: string, scope: string, fn: () => void) {
+    const k = `${id}:${scope}`
+    state.sideEffects[k] = fn
+    delete state.pendingSideEffects[k]
+  }
+
+  function trackCtx({ id, $el, tag }: DomRenderTagContext) {
+    const isAttrTag = tag.tag.endsWith('Attrs')
+    state.elMap[id] = $el
+    if (!isAttrTag) {
+      ;['textContent', 'innerHTML'].forEach((k) => {
+        // @ts-expect-error unkeyed
+        tag[k] && tag[k] !== $el[k] && ($el[k] = tag[k])
+      })
+      track(id, 'el', () => {
+        state.elMap[id].remove()
+        delete state.elMap[id]
+      })
+    }
     // add new attributes
     Object.entries(tag.props).forEach(([k, value]) => {
       value = String(value)
-      const attrSdeKey = `attr:${k}`
+      const ck = `attr:${k}`
       // class attributes have their own side effects to allow for merging
       if (k === 'class') {
         // if the user is providing an empty string, then it's removing the class
         // the side effect clean up should remove it
         for (const c of (value || '').split(' ').filter(Boolean)) {
           // always clear side effects
-          sideEffects && trackSideEffect(ctx, `${attrSdeKey}:${c}`, () => $el.classList.remove(c))
+          isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
           !$el.classList.contains(c) && $el.classList.add(c)
         }
-        return
       }
-      if (sideEffects && !(k as string).startsWith('data-h-'))
-        trackSideEffect(ctx, attrSdeKey, () => $el.removeAttribute(k))
-
-      // attribute values get set directly
-      $el.getAttribute(k) !== value && $el.setAttribute(k, value)
-    })
-    if (TagsWithInnerContent.includes(tag.tag)) {
-      if (tag.textContent && tag.textContent !== $el.textContent)
-        $el.textContent = tag.textContent
-      else if (tag.innerHTML && (tag.innerHTML !== $el.innerHTML))
-        $el.innerHTML = tag.innerHTML
-    }
-  }
-
-  function trackSideEffect({ id }: DomRenderTagContext, scope: string, fn: () => void) {
-    state.sideEffects[`${id}:${scope}`] = fn
-    delete state.pendingSideEffects[`${id}:${scope}`]
-  }
-
-  function setupTagElement(ctx: DomRenderTagContext) {
-    setAttrs(ctx)
-    // @ts-expect-error untyped
-    state.elMap[ctx.id] = ctx.$el
-    // we are removing an element
-    trackSideEffect(ctx, 'el', () => {
-      state.elMap[ctx.id].remove()
-      delete state.elMap[ctx.id]
+      else {
+        // attribute values get set directly
+        $el.getAttribute(k) !== value && $el.setAttribute(k, value)
+        isAttrTag && track(id, ck, () => $el.removeAttribute(k))
+      }
     })
   }
 
-  const pendingRenders: DomRenderTagContext[] = []
-  const fragments: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
+  const pending: DomRenderTagContext[] = []
+  const frag: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
     bodyClose: undefined,
     bodyOpen: undefined,
     head: undefined,
@@ -129,43 +116,35 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
   // first render all tags which we can match quickly
   for (const ctx of tags) {
-    await head.hooks.callHook('dom:beforeRenderTag', ctx)
     const { tag, shouldRender, id } = ctx
     if (!shouldRender)
       continue
     // 1. render tags which don't create a new element
     if (tag.tag === 'title') {
-      const prevTitle = dom.title
-      dom.title = tag.textContent || ''
-      trackSideEffect(ctx, 'el', () => { dom.title = prevTitle })
-      continue
-    }
-    if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      setAttrs(ctx, true)
+      dom.title = tag.textContent as string
       continue
     }
     ctx.$el = ctx.$el || state.elMap[id]
     if (ctx.$el)
-      setupTagElement(ctx)
+      trackCtx(ctx)
     else
-    // tag does not exist, we need to render it (if it's an element tag)
-      HasElementTags.includes(tag.tag) && pendingRenders.push(ctx)
+      // tag does not exist, we need to render it (if it's an element tag)
+      HasElementTags.includes(tag.tag) && pending.push(ctx)
   }
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
-  for (const ctx of pendingRenders) {
+  for (const ctx of pending) {
     // finally, we are free to make new elements
     const pos = ctx.tag.tagPosition || 'head'
-    fragments[pos] = fragments[pos] || dom.createDocumentFragment()
     ctx.$el = dom.createElement(ctx.tag.tag)
-    setupTagElement(ctx)
-    fragments[pos]!.appendChild(ctx.$el)
-    ctx.markSideEffect = (scope: string, fn: () => void) => trackSideEffect(ctx, scope, fn)
-    await head.hooks.callHook('dom:renderTag', ctx, dom)
+    trackCtx(ctx)
+    frag[pos] = frag[pos] || dom.createDocumentFragment()
+    frag[pos]!.appendChild(ctx.$el)
+    await head.hooks.callHook('dom:renderTag', ctx, dom, track)
   }
   // finally, write the tags
-  fragments.head && dom.head.appendChild(fragments.head)
-  fragments.bodyOpen && dom.body.insertBefore(fragments.bodyOpen, dom.body.firstChild)
-  fragments.bodyClose && dom.body.appendChild(fragments.bodyClose)
+  frag.head && dom.head.appendChild(frag.head)
+  frag.bodyOpen && dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
+  frag.bodyClose && dom.body.appendChild(frag.bodyClose)
 
   // clear all side effects still pending
   Object.values(state.pendingSideEffects).forEach(fn => fn())

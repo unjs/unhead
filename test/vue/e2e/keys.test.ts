@@ -79,14 +79,12 @@ describe('vue e2e keys', () => {
       ]
     `)
 
-    expect(csrHead._dom.elMap).toMatchInlineSnapshot(`
-      {
-        "6b4a565": <link
-          data-hid="6b4a565"
-          href="/page-index.ico"
-          rel="icon"
-        />,
-      }
+    expect(Object.values(csrHead._dom.elMap)[2]).toMatchInlineSnapshot(`
+      <link
+        data-hid="6b4a565"
+        href="/page-index.ico"
+        rel="icon"
+      />
     `)
 
     await renderDOMHead(csrHead, { document: dom.window.document })

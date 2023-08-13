@@ -54,10 +54,8 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     },
   })
   // counter for keeping unique ids of head object entries
-  let _eid = 0
   const hooks = createHooks<HeadHooks>()
-  if (options?.hooks)
-    hooks.addHooks(options.hooks)
+  hooks.addHooks(options.hooks || {})
 
   options.plugins = [
     DedupePlugin,
@@ -68,10 +66,11 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     TitleTemplatePlugin,
     ...(options?.plugins || []),
   ]
-  options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
+  options.plugins.forEach(p => hooks.addHooks(p.hooks || {}))
   options.document = options.document || (IsBrowser ? document : undefined)
   const ssr = !options.document
 
+  let entryCount = 0
   const head: Unhead<T> = {
     resolvedOptions: options,
     hooks,
@@ -84,7 +83,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     },
     push(input, entryOptions) {
       const activeEntry: HeadEntry<T> = {
-        _i: _eid++,
+        _i: entryCount++,
         input,
         ...entryOptions as Partial<HeadEntry<T>>,
       }
