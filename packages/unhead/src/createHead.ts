@@ -61,16 +61,9 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   options.plugins.forEach(p => hooks.addHooks(p.hooks || {}))
   options.document = options.document || (IsBrowser ? document : undefined)
   const ssr = !options.document
-
+  const updated = () => hooks.callHook('entries:updated', head)
   let entryCount = 0
-  let entries: HeadEntry<T>[] = new Proxy([], {
-    set(target, prop, value) {
-      // @ts-expect-error untyped
-      target[prop] = value
-      hooks.callHook('entries:updated', head)
-      return true
-    },
-  })
+  let entries: HeadEntry<T>[] = []
   const head: Unhead<T> = {
     resolvedOptions: options,
     hooks,
@@ -92,11 +85,15 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       if (mode)
         activeEntry.mode = mode
       // bit hacky but safer
-      if ((options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr) || !options.mode)
+      if ((options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr) || !options.mode) {
         entries.push(activeEntry)
+        updated()
+      }
       return {
         dispose() {
           entries = entries.filter(e => e._i !== activeEntry._i)
+          hooks.callHook('entries:updated', head)
+          updated()
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
@@ -107,6 +104,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
             }
             return e
           })
+          updated()
         },
       }
     },
