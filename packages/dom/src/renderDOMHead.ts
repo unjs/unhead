@@ -41,8 +41,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       shouldRender: true,
     })
 
-  console.log(tags)
-
   const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
@@ -139,8 +137,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     trackCtx(ctx)
     frag[pos] = frag[pos] || dom.createDocumentFragment()
     frag[pos]!.appendChild(ctx.$el)
-    await head.hooks.callHook('dom:renderTag', ctx, dom, track)
   }
+  // call hook
+  for (const ctx of tags)
+    await head.hooks.callHook('dom:renderTag', ctx, dom, track)
   // finally, write the tags
   frag.head && dom.head.appendChild(frag.head)
   frag.bodyOpen && dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)

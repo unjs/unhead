@@ -92,9 +92,9 @@
     {
       "name": "tagWeight",
       "path": "dist/index.mjs",
-      "minified": 350,
-      "minzipped": 218,
-      "bundled": 739
+      "minified": 351,
+      "minzipped": 216,
+      "bundled": 740
     },
     {
       "name": "normaliseProps",

@@ -45,14 +45,6 @@ export let activeHead: Unhead<any> | undefined
  * @param options
  */
 export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  let entries: HeadEntry<T>[] = new Proxy([], {
-    set(target, prop, value) {
-      // @ts-expect-error untyped
-      target[prop] = value
-      hooks.callHook('entries:updated', head)
-      return true
-    },
-  })
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
@@ -71,6 +63,14 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   const ssr = !options.document
 
   let entryCount = 0
+  let entries: HeadEntry<T>[] = new Proxy([], {
+    set(target, prop, value) {
+      // @ts-expect-error untyped
+      target[prop] = value
+      hooks.callHook('entries:updated', head)
+      return true
+    },
+  })
   const head: Unhead<T> = {
     resolvedOptions: options,
     hooks,

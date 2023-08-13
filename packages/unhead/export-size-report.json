@@ -17,22 +17,22 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5229,
-      "minzipped": 1984,
+      "minified": 5225,
+      "minzipped": 1989,
       "bundled": 11030
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 5181,
-      "minzipped": 1970,
+      "minified": 5177,
+      "minzipped": 1971,
       "bundled": 11012
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 5129,
-      "minzipped": 1949,
+      "minified": 5125,
+      "minzipped": 1950,
       "bundled": 10849
     },
     {

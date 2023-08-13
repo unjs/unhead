@@ -28,7 +28,7 @@ const importRe = /@import/
           else if (isScript && tag.props.src && !isTruthy(tag.props.defer) && !isTruthy(tag.props.async) && tag.props.type !== 'module' && !tag.props.type?.endsWith('json')) {
             tag.tagPriority = 5
           }
-          else if (isLink && tag.props.rel === 'stylesheet' || tag.tag === 'style') {
+          else if ((isLink && tag.props.rel === 'stylesheet') || tag.tag === 'style') {
             // SYNC_STYLES
             tag.tagPriority = 6
           }
