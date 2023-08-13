@@ -8,7 +8,7 @@ description: Add a plugin to Unhead.
 **Type:**
 
 ```ts
-(plugin: HeadPlugin) => void
+export type use = (plugin: HeadPlugin) => void
 ```
 
 Adds a plugin to Unhead.

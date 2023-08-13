@@ -2,7 +2,8 @@
   "meta": {
     "name": "@unhead/shared",
     "dependencies": [
-      "@unhead/schema"
+      "@unhead/schema",
+      "packrup"
     ],
     "versions": {
       "export-size": "0.5.2",
@@ -11,6 +12,69 @@
     }
   },
   "exports": [
+    {
+      "name": "unpackMeta",
+      "path": "dist/index.mjs",
+      "minified": 3030,
+      "minzipped": 1164,
+      "bundled": 5683
+    },
+    {
+      "name": "normaliseEntryTags",
+      "path": "dist/index.mjs",
+      "minified": 2153,
+      "minzipped": 814,
+      "bundled": 3617
+    },
+    {
+      "name": "packMeta",
+      "path": "dist/index.mjs",
+      "minified": 1634,
+      "minzipped": 720,
+      "bundled": 3079
+    },
+    {
+      "name": "resolvePackedMetaObjectValue",
+      "path": "dist/index.mjs",
+      "minified": 1536,
+      "minzipped": 647,
+      "bundled": 2667
+    },
+    {
+      "name": "normaliseTag",
+      "path": "dist/index.mjs",
+      "minified": 1699,
+      "minzipped": 646,
+      "bundled": 2863
+    },
+    {
+      "name": "whitelistSafeInput",
+      "path": "dist/index.mjs",
+      "minified": 1705,
+      "minzipped": 568,
+      "bundled": 3651
+    },
+    {
+      "name": "processTemplateParams",
+      "path": "dist/index.mjs",
+      "minified": 650,
+      "minzipped": 350,
+      "bundled": 1098
+    },
+    {
+      "name": "resolveMetaKeyValue",
+      "path": "dist/index.mjs",
+      "minified": 788,
+      "minzipped": 330,
+      "bundled": 1199
+    },
+    {
+      "name": "resolveMetaKeyType",
+      "path": "dist/index.mjs",
+      "minified": 665,
+      "minzipped": 272,
+      "bundled": 1020
+    },
     {
       "name": "tagDedupeKey",
       "path": "dist/index.mjs",
@@ -21,9 +85,23 @@
     {
       "name": "hashTag",
       "path": "dist/index.mjs",
-      "minified": 306,
-      "minzipped": 207,
-      "bundled": 433
+      "minified": 322,
+      "minzipped": 219,
+      "bundled": 461
+    },
+    {
+      "name": "tagWeight",
+      "path": "dist/index.mjs",
+      "minified": 351,
+      "minzipped": 216,
+      "bundled": 740
+    },
+    {
+      "name": "normaliseProps",
+      "path": "dist/index.mjs",
+      "minified": 242,
+      "minzipped": 144,
+      "bundled": 518
     },
     {
       "name": "hashCode",
@@ -31,6 +109,13 @@
       "minified": 166,
       "minzipped": 131,
       "bundled": 245
+    },
+    {
+      "name": "normaliseClassProp",
+      "path": "dist/index.mjs",
+      "minified": 201,
+      "minzipped": 126,
+      "bundled": 299
     },
     {
       "name": "ValidHeadTags",
@@ -47,6 +132,13 @@
       "bundled": 155
     },
     {
+      "name": "composableNames",
+      "path": "dist/index.mjs",
+      "minified": 132,
+      "minzipped": 89,
+      "bundled": 208
+    },
+    {
       "name": "UniqueTags",
       "path": "dist/index.mjs",
       "minified": 96,
@@ -59,6 +151,13 @@
       "minified": 73,
       "minzipped": 77,
       "bundled": 144
+    },
+    {
+      "name": "SortModifiers",
+      "path": "dist/index.mjs",
+      "minified": 80,
+      "minzipped": 75,
+      "bundled": 141
     },
     {
       "name": "resolveTitleTemplate",
@@ -79,7 +178,21 @@
       "path": "dist/index.mjs",
       "minified": 60,
       "minzipped": 64,
-      "bundled": 122
+      "bundled": 126
+    },
+    {
+      "name": "TAG_ALIASES",
+      "path": "dist/index.mjs",
+      "minified": 50,
+      "minzipped": 54,
+      "bundled": 109
+    },
+    {
+      "name": "IsBrowser",
+      "path": "dist/index.mjs",
+      "minified": 49,
+      "minzipped": 53,
+      "bundled": 94
     },
     {
       "name": "SelfClosingTags",
@@ -89,11 +202,25 @@
       "bundled": 101
     },
     {
+      "name": "TAG_WEIGHTS",
+      "path": "dist/index.mjs",
+      "minified": 40,
+      "minzipped": 44,
+      "bundled": 95
+    },
+    {
       "name": "defineHeadPlugin",
       "path": "dist/index.mjs",
       "minified": 39,
       "minzipped": 43,
       "bundled": 109
+    },
+    {
+      "name": "TagEntityBits",
+      "path": "dist/index.mjs",
+      "minified": 25,
+      "minzipped": 29,
+      "bundled": 75
     }
   ]
 }

@@ -6,35 +6,28 @@ import type {
   HeadHooks,
   HeadPlugin,
   HeadTag,
-  SideEffectsRecord,
   Unhead,
 } from '@unhead/schema'
 import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
-import { setActiveHead } from './runtime/state'
-import {
-  DedupesTagsPlugin,
-  EventHandlersPlugin,
-  ProvideTagKeyHash,
-  SortTagsPlugin,
-  TemplateParamsPlugin,
-  TitleTemplatePlugin,
-} from './plugin'
-import { normaliseEntryTags } from './utils'
-import { IsBrowser } from './env'
+import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import DedupePlugin from './plugins/dedupe'
+import EventHandlersPlugin from './plugins/eventHandlers'
+import HashKeyedPLugin from './plugins/hashKeyed'
+import SortPLugin from './plugins/sort'
+import TemplateParamsPlugin from './plugins/templateParams'
+import TitleTemplatePlugin from './plugins/titleTemplate'
 
-/* @__NO_SIDE_EFFECTS__ */ export function DOMPlugins(options: CreateHeadOptions = {}) {
-  return [
-    PatchDomOnEntryUpdatesPlugin({ document: options?.document, delayFn: options?.domDelayFn }),
-  ]
-}
+// TODO drop support for non-context head
+// eslint-disable-next-line import/no-mutable-exports
+export let activeHead: Unhead<any> | undefined
 
+// TODO rename to createDomHead
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>({
-    ...options,
-    plugins: [...DOMPlugins(options), ...(options?.plugins || [])],
-  })
-  setActiveHead(head)
-  return head
+  const head = createHeadCore<T>(options)
+  if (!head.ssr)
+    head.use(PatchDomOnEntryUpdatesPlugin())
+
+  return activeHead = head
 }
 
 /* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
@@ -42,8 +35,7 @@ import { IsBrowser } from './env'
     ...options,
     mode: 'server',
   })
-  setActiveHead(head)
-  return head
+  return activeHead = head
 }
 
 /**
@@ -53,45 +45,37 @@ import { IsBrowser } from './env'
  * @param options
  */
 export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
+  // counter for keeping unique ids of head object entries
+  const hooks = createHooks<HeadHooks>()
+  hooks.addHooks(options.hooks || {})
+
+  options.plugins = [
+    DedupePlugin,
+    EventHandlersPlugin,
+    HashKeyedPLugin,
+    SortPLugin,
+    TemplateParamsPlugin,
+    TitleTemplatePlugin,
+    ...(options?.plugins || []),
+  ]
+  options.plugins.forEach(p => hooks.addHooks(p.hooks || {}))
+  options.document = options.document || (IsBrowser ? document : undefined)
+  const ssr = !options.document
+
+  let entryCount = 0
   let entries: HeadEntry<T>[] = new Proxy([], {
     set(target, prop, value) {
       // @ts-expect-error untyped
       target[prop] = value
-      updated()
+      hooks.callHook('entries:updated', head)
       return true
     },
   })
-  // queued side effects
-  let _sde: SideEffectsRecord = {}
-  // counter for keeping unique ids of head object entries
-  let _eid = 0
-  const hooks = createHooks<HeadHooks>()
-  if (options?.hooks)
-    hooks.addHooks(options.hooks)
-
-  options.plugins = [
-    DedupesTagsPlugin(),
-    SortTagsPlugin(),
-    TemplateParamsPlugin(),
-    TitleTemplatePlugin(),
-    ProvideTagKeyHash(),
-    EventHandlersPlugin(),
-    ...(options?.plugins || []),
-  ]
-  options.plugins.forEach(p => p.hooks && hooks.addHooks(p.hooks))
-  options.document = options.document || (IsBrowser ? document : undefined)
-
-  // does the dom rendering by default
-  // es-lint-disable-next-line @typescript-eslint/no-use-before-define
-  const updated = () => hooks.callHook('entries:updated', head)
-
   const head: Unhead<T> = {
     resolvedOptions: options,
+    hooks,
     headEntries() {
       return entries
-    },
-    get hooks() {
-      return hooks
     },
     use(plugin: HeadPlugin) {
       if (plugin.hooks)
@@ -99,26 +83,20 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     },
     push(input, entryOptions) {
       const activeEntry: HeadEntry<T> = {
-        _i: _eid++,
+        _i: entryCount++,
         input,
-        _sde: {},
         ...entryOptions as Partial<HeadEntry<T>>,
       }
       const mode = activeEntry?.mode || options.mode
       // if a mode is provided via options, set it
       if (mode)
         activeEntry.mode = mode
-      entries.push(activeEntry)
+      // bit hacky but safer
+      if ((options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr) || !options.mode)
+        entries.push(activeEntry)
       return {
         dispose() {
-          entries = entries.filter((e) => {
-            if (e._i !== activeEntry._i)
-              return true
-            // queue side effects
-            _sde = { ..._sde, ...e._sde || {} }
-            e._sde = {}
-            return false
-          })
+          entries = entries.filter(e => e._i !== activeEntry._i)
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
@@ -151,12 +129,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       await hooks.callHook('tags:resolve', resolveCtx)
       return resolveCtx.tags
     },
-    _popSideEffectQueue() {
-      const sde = { ..._sde }
-      _sde = {}
-      return sde
-    },
-    _elMap: {},
+    ssr,
   }
 
   head.hooks.callHook('init', head)

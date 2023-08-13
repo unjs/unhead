@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.0",
-    "@types/node": "^20.4.9",
+    "@types/node": "^20.4.10",
     "@unhead/vue": "link:../../packages/vue",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vue/tsconfig": "^0.4.0",

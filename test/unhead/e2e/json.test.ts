@@ -27,7 +27,7 @@ describe('unhead e2e json', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type=\\"application/ld+json\\" data-h-7632c5f=\\"\\"></script>",
+        "headTags": "<script type=\\"application/ld+json\\" data-hid=\\"7632c5f\\"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -49,7 +49,7 @@ describe('unhead e2e json', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script type=\\"application/ld+json\\" data-h-7632c5f=\\"\\"></script>
+      <script type=\\"application/ld+json\\" data-hid=\\"7632c5f\\"></script>
       </head>
       <body>
 

@@ -14,7 +14,6 @@ describe('state', () => {
       [
         {
           "_i": 0,
-          "_sde": {},
           "input": {
             "title": "hello",
           },

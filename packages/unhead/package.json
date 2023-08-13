@@ -38,8 +38,5 @@
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3"
-  },
-  "devDependencies": {
-    "packrup": "^0.1.0"
   }
 }

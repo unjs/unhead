@@ -6,7 +6,10 @@ import { basicSchema, useDom } from '../../fixtures'
 
 describe('vue dom', () => {
   it('basic ref', async () => {
-    const head = createHead()
+    const dom = useDom()
+    const head = createHead({
+      document: dom.window.document,
+    })
 
     const lang = ref('de')
 
@@ -18,9 +21,7 @@ describe('vue dom', () => {
       },
     })
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
+    await renderDOMHead(head)
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\"><head>
@@ -39,13 +40,15 @@ describe('vue dom', () => {
   })
 
   it('update', async () => {
-    const head = createHead()
-
+    const dom = useDom()
+    const head = createHead({
+      document: dom.window.document,
+    })
     const lang = ref('de')
 
     useHead(basicSchema)
 
-    const pageSchema = head.push({
+    const pageSchema = useHead({
       htmlAttrs: {
         'class': 'pre-update',
         'lang': lang.value,
@@ -53,10 +56,7 @@ describe('vue dom', () => {
       },
     })
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
+    await renderDOMHead(head)
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\" class=\\"pre-update\\" data-something-to-remove=\\"test\\"><head>
 
