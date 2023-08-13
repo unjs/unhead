@@ -50,7 +50,7 @@ export default defineHeadPlugin({
         return tag
       })
     },
-    'dom:renderTag': function (ctx, dom) {
+    'dom:renderTag': function (ctx, dom, track) {
       if (!ctx.tag._eventHandlers)
         return
 
@@ -60,7 +60,7 @@ export default defineHeadPlugin({
         const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
         const eventName = k.slice(2).toLowerCase()
         const eventDedupeKey = `data-h-${eventName}`
-        ctx.markSideEffect(sdeKey, () => {})
+        track(ctx.id, sdeKey, () => {})
         if (ctx.$el!.hasAttribute(eventDedupeKey))
           return
 
@@ -69,7 +69,7 @@ export default defineHeadPlugin({
         ctx.$el!.setAttribute(eventDedupeKey, '')
         $eventListenerTarget!.addEventListener(eventName, handler)
         if (ctx.entry) {
-          ctx.markSideEffect(sdeKey, () => {
+          track(ctx.id, sdeKey, () => {
             $eventListenerTarget!.removeEventListener(eventName, handler)
             ctx.$el!.removeAttribute(eventDedupeKey)
           })
