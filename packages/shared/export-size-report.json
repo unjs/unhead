@@ -22,9 +22,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 2215,
-      "minzipped": 830,
-      "bundled": 3709
+      "minified": 2179,
+      "minzipped": 833,
+      "bundled": 3687
     },
     {
       "name": "packMeta",
@@ -36,9 +36,9 @@
     {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
-      "minified": 1761,
-      "minzipped": 669,
-      "bundled": 2955
+      "minified": 1725,
+      "minzipped": 665,
+      "bundled": 2933
     },
     {
       "name": "resolvePackedMetaObjectValue",
