@@ -12,6 +12,12 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
   },
 
+  app: {
+    head: {
+      titleTemplate: '%s %separator Unhead',
+    }
+  },
+
   modules: [
     'nuxt-seo-kit-module',
     'nuxt-windicss',
