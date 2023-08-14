@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       titleTemplate: '%s %separator Unhead',
-    }
+    },
   },
 
   modules: [

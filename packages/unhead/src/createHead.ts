@@ -8,14 +8,16 @@ import type {
   HeadTag,
   Unhead,
 } from '@unhead/schema'
-import { PatchDomOnEntryUpdatesPlugin } from '@unhead/dom'
+import { DomPlugin } from '@unhead/dom'
 import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
 import DedupePlugin from './plugins/dedupe'
+import PayloadPlugin from './plugins/payload'
 import EventHandlersPlugin from './plugins/eventHandlers'
-import HashKeyedPLugin from './plugins/hashKeyed'
-import SortPLugin from './plugins/sort'
+import HashKeyedPlugin from './plugins/hashKeyed'
+import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
+import {RuntimeMode} from "@unhead/schema";
 
 // TODO drop support for non-context head
 // eslint-disable-next-line import/no-mutable-exports
@@ -24,9 +26,9 @@ export let activeHead: Unhead<any> | undefined
 // TODO rename to createDomHead
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>(options)
-  if (!head.ssr)
-    head.use(PatchDomOnEntryUpdatesPlugin())
-
+  if (!head.ssr) {
+    head.use(DomPlugin())
+  }
   return activeHead = head
 }
 
@@ -34,6 +36,9 @@ export let activeHead: Unhead<any> | undefined
   return activeHead = createHeadCore<T>(options)
 }
 
+function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
+  return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
+}
 /**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.
@@ -44,19 +49,20 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
+  options.document = options.document || (IsBrowser ? document : undefined)
+  const ssr = !options.document
 
   options.plugins = [
     DedupePlugin,
+    PayloadPlugin,
     EventHandlersPlugin,
-    HashKeyedPLugin,
-    SortPLugin,
+    HashKeyedPlugin,
+    SortPlugin,
     TemplateParamsPlugin,
     TitleTemplatePlugin,
     ...(options?.plugins || []),
   ]
-  options.plugins.forEach(p => hooks.addHooks(p.hooks || {}))
-  options.document = options.document || (IsBrowser ? document : undefined)
-  const ssr = !options.document
+
   const updated = () => hooks.callHook('entries:updated', head)
   let entryCount = 0
   let entries: HeadEntry<T>[] = []
@@ -67,33 +73,33 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       return entries
     },
     use(plugin: HeadPlugin) {
+      plugin = typeof plugin === 'function' ? plugin(head) : plugin
       if (plugin.hooks)
         hooks.addHooks(plugin.hooks)
     },
     push(input, entryOptions) {
-      const activeEntry: HeadEntry<T> = {
+      const e: HeadEntry<T> = {
         _i: entryCount++,
         input,
         ...entryOptions as Partial<HeadEntry<T>>,
       }
-      const mode = activeEntry.mode
       // bit hacky but safer
-      if (!mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)) {
-        entries.push(activeEntry)
+      if (filterMode(e.mode, ssr)) {
+        entries.push(e)
         updated()
       }
       return {
         dispose() {
-          entries = entries.filter(e => e._i !== activeEntry._i)
+          entries = entries.filter(e => e._i !== e._i)
           hooks.callHook('entries:updated', head)
           updated()
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
           entries = entries.map((e) => {
-            if (e._i === activeEntry._i) {
+            if (e._i === e._i) {
               // bit hacky syncing
-              activeEntry.input = e.input = input
+              e.input = e.input = input
             }
             return e
           })
@@ -123,6 +129,10 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     ssr,
   }
 
+  options.plugins
+    .map(p => typeof p === 'function' ? p(head) : p)
+    .filter(p => filterMode(p.mode, ssr))
+    .forEach(p => hooks.addHooks(p.hooks || {}))
   head.hooks.callHook('init', head)
   return head
 }

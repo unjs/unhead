@@ -10,7 +10,7 @@ import type { Head } from './schema'
  */
 export type SideEffectsRecord = Record<string, () => void>
 
-export type RuntimeMode = 'server' | 'client' | 'all'
+export type RuntimeMode = 'server' | 'client'
 
 export interface HeadEntry<Input> {
   /**
@@ -53,7 +53,9 @@ export interface HeadEntry<Input> {
   tagPriority?: TagPriority['tagPriority']
 }
 
-export type HeadPlugin = Omit<CreateHeadOptions, 'plugins'>
+export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'> & { mode?: RuntimeMode }
+
+export type HeadPlugin = HeadPluginOptions | ((head: Unhead) => HeadPluginOptions)
 
 /**
  * An active head entry provides an API to manipulate it.
@@ -112,7 +114,13 @@ export interface Unhead<Input extends {} = Head> {
   use: (plugin: HeadPlugin) => void
   ssr: boolean
   // dom specific runtime state
+  /**
+   * @internal
+   */
   _dom?: DomState
+  /**
+   * @internal
+   */
   _domUpdatePromise?: Promise<void>
 }
 

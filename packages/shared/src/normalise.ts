@@ -53,7 +53,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     // clean up
     delete input.children
   }
-  tag.props = await normaliseProps<T>(tagName, { ...input })
+  tag.props = await normaliseProps<T>({ ...input})
 
   Object.keys(tag.props)
     .filter(k => TagConfigKeys.includes(k))
@@ -117,7 +117,7 @@ export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['clas
     .join(' ')
 }
 
-export async function normaliseProps<T extends HeadTag>(tagName: T['tag'], props: T['props']): Promise<T['props']> {
+export async function normaliseProps<T extends HeadTag>(props: T['props']): Promise<T['props']> {
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
     // data keys get special treatment, we opt for more verbose syntax
@@ -162,6 +162,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .filter(Boolean)
     .map((t: HeadTag, i) => {
       t._e = e._i
+      t._m = e.mode
       t._p = (e._i << TagEntityBits) + i
       return t
     }) as unknown as HeadTag[]

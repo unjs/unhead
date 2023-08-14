@@ -18,6 +18,19 @@ useHead({
       href: 'https://vueuse.org/logo.png',
     },
   ],
+  bodyAttrs: {
+    onresize: () => {
+      console.log('resized')
+    }
+  },
+  script: [
+    {
+      src: 'https://unpkg.com/vue@next',
+      onload: () => {
+        console.log('loaded')
+      }
+    }
+  ]
 })
 </script>
 
