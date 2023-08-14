@@ -17,23 +17,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5235,
+      "minified": 5212,
       "minzipped": 1971,
-      "bundled": 11068
+      "bundled": 11028
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 5187,
-      "minzipped": 1961,
-      "bundled": 11050
+      "minified": 5145,
+      "minzipped": 1945,
+      "bundled": 10956
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 5135,
-      "minzipped": 1940,
-      "bundled": 10887
+      "minified": 5112,
+      "minzipped": 1932,
+      "bundled": 10847
     },
     {
       "name": "CapoPlugin",
@@ -45,9 +45,9 @@
     {
       "name": "HashHydrationPlugin",
       "path": "dist/index.mjs",
-      "minified": 4456,
-      "minzipped": 1706,
-      "bundled": 9377
+      "minified": 4494,
+      "minzipped": 1715,
+      "bundled": 9538
     },
     {
       "name": "useServerSeoMeta",

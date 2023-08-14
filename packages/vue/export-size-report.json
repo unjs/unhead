@@ -81,9 +81,9 @@
     {
       "name": "useServerHead",
       "path": "dist/index.mjs",
-      "minified": 820,
-      "minzipped": 422,
-      "bundled": 1917
+      "minified": 839,
+      "minzipped": 434,
+      "bundled": 1940
     },
     {
       "name": "injectHead",
