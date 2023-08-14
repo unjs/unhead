@@ -9,20 +9,27 @@ import type { Unhead } from '@unhead/schema'
     hooks: {
       'init': function (_head) {
         head = _head
-        prevHash = head.resolvedOptions.document?.head.querySelector('meta[name="unhead:ssr"]')?.getAttribute('content') || false
+        if (!head.ssr)
+          prevHash = head.resolvedOptions.document?.head.querySelector('meta[name="unhead:ssr"]')?.getAttribute('content') || false
+        if (!prevHash)
+          dirty = true
       },
       'tags:resolve': function ({ tags }) {
+        const nonServerTags = tags
+          // tag must not be server only
+          .filter((tag) => {
+            const entry = head.headEntries().find(e => e._i === tag._e)
+            return entry && entry.mode !== 'server'
+          })
+
         // always generate a hash
-        const hash = hashCode(
-          tags
-            // tag must not be server only
-            .filter((tag) => {
-              const entry = head.headEntries().find(e => e._i === tag._e)
-              return entry && entry.mode !== 'server'
-            })
-            .map(tag => hashTag(tag))
-            .join(''),
-        )
+        const hash = !nonServerTags.length
+          ? false
+          : hashCode(
+            nonServerTags
+              .map(tag => hashTag(tag))
+              .join(''),
+          )
         // the SSR hash matches the CSR hash, we can skip the render
         if (prevHash !== hash && prevHash !== false)
           dirty = true
@@ -34,7 +41,7 @@ import type { Unhead } from '@unhead/schema'
         dirty = false
       },
       'ssr:render': function ({ tags }) {
-        tags.push({ tag: 'meta', props: { name: 'unhead:ssr', content: String(prevHash) } })
+        prevHash && tags.push({ tag: 'meta', props: { name: 'unhead:ssr', content: String(prevHash) } })
       },
     },
   })

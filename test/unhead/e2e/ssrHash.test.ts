@@ -105,7 +105,8 @@ describe('unhead e2e ssrHash', () => {
     csrHead.push(HomeHead)
 
     let renderingTags = false
-    csrHead.hooks.hook('dom:beforeRenderTag', () => {
+    csrHead.hooks.hook('dom:rendered', (ctx) => {
+      // renderingTags = true
       renderingTags = true
     })
 
@@ -126,6 +127,61 @@ describe('unhead e2e ssrHash', () => {
       <meta property=\\"og:title\\" content=\\"Home\\">
       <meta name=\\"description\\" content=\\"This is the home page\\">
       <meta name=\\"unhead:ssr\\" content=\\"f033696\\">
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+  it('ssr to csr', async () => {
+    // scenario: we are injecting root head schema which will not have a hydration step,
+    // but we are also injecting a child head schema which will have a hydration step
+    const ssrHead = createHead({
+      plugins: [
+        HashHydrationPlugin(),
+      ],
+    })
+    // i.e App.vue
+    useServerHead({
+      title: 'My amazing site',
+    })
+
+    const data = await renderSSRHead(ssrHead)
+
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>My amazing site</title>",
+        "htmlAttrs": "",
+      }
+    `)
+
+    const dom = useDom(data)
+
+    const csrHead = createHead({
+      document: dom.window.document,
+      plugins: [
+        HashHydrationPlugin(),
+      ],
+    })
+    csrHead.push({
+      title: 'new title',
+    })
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <title>new title</title>
       </head>
       <body>
 
