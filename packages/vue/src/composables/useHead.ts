@@ -7,9 +7,11 @@ import { injectHead } from './injectHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = injectHead()
-  if (!head.ssr)
-    return clientUseHead(head, input, options)
-  return head.push(input, options)
+  if (head) {
+    if (!head.ssr)
+      return clientUseHead(head, input, options)
+    return head.push(input, options)
+  }
 }
 
 function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
