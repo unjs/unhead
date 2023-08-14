@@ -23,7 +23,28 @@ describe('tagPosition', () => {
       }
     `)
   })
-  test('head', async () => {
+  test('body: true', async () => {
+    const head = createHead()
+    head.push({
+      script: [
+        {
+          src: '/my-important-script.js',
+          body: true,
+        },
+      ],
+    })
+    const tags = await renderSSRHead(head)
+    expect(tags).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "<script src=\\"/my-important-script.js\\"></script>",
+        "bodyTagsOpen": "",
+        "headTags": "",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+  test('bodyOpen', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -44,7 +65,7 @@ describe('tagPosition', () => {
       }
     `)
   })
-  test('head', async () => {
+  test('bodyClose', async () => {
     const head = createHead()
     head.push({
       script: [
