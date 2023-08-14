@@ -76,10 +76,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         input,
         ...entryOptions as Partial<HeadEntry<T>>,
       }
-      const mode = activeEntry?.mode
-      // if a mode is provided via options, set it
-      if (mode)
-        activeEntry.mode = mode
+      const mode = activeEntry.mode
       // bit hacky but safer
       if (!mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)) {
         entries.push(activeEntry)
