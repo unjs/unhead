@@ -17,23 +17,23 @@
     {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5212,
-      "minzipped": 1971,
-      "bundled": 11028
+      "minified": 5196,
+      "minzipped": 1964,
+      "bundled": 10978
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
-      "minified": 5145,
-      "minzipped": 1945,
-      "bundled": 10956
+      "minified": 5129,
+      "minzipped": 1935,
+      "bundled": 10906
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 5112,
-      "minzipped": 1932,
-      "bundled": 10847
+      "minified": 5096,
+      "minzipped": 1923,
+      "bundled": 10797
     },
     {
       "name": "CapoPlugin",
