@@ -74,7 +74,6 @@ export interface ActiveHeadEntry<Input> {
 }
 
 export interface CreateHeadOptions {
-  mode?: 'server' | 'client'
   domDelayFn?: (fn: () => void) => void
   document?: Document
   plugins?: HeadPlugin[]

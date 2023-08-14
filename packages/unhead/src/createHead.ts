@@ -31,11 +31,7 @@ export let activeHead: Unhead<any> | undefined
 }
 
 /* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>({
-    ...options,
-    mode: 'server',
-  })
-  return activeHead = head
+  return activeHead = createHeadCore<T>(options)
 }
 
 /**
@@ -80,12 +76,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         input,
         ...entryOptions as Partial<HeadEntry<T>>,
       }
-      const mode = activeEntry?.mode || options.mode
+      const mode = activeEntry?.mode
       // if a mode is provided via options, set it
       if (mode)
         activeEntry.mode = mode
       // bit hacky but safer
-      if ((options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr) || !options.mode) {
+      if (!mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)) {
         entries.push(activeEntry)
         updated()
       }
