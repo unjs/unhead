@@ -41,13 +41,20 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
 
   tag.props = await normaliseProps<T>(tagName, { ...input })
 
+  // Deprecated prop support
+  if (tag.props.body) {
+    // inserting dangerous javascript potentially
+    tag.tagPosition = 'bodyClose'
+    // clean up
+    delete tag.props.body
+  }
   // `children` is deprecated but still supported
   if (tag.props.children) {
     // inserting dangerous javascript potentially
     tag.props.innerHTML = tag.props.children
+    // clean up
+    delete tag.props.children
   }
-  // clean up
-  delete tag.props.children
 
   Object.keys(tag.props)
     .filter(k => TagConfigKeys.includes(k))
