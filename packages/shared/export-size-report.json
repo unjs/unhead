@@ -22,9 +22,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 2179,
-      "minzipped": 833,
-      "bundled": 3687
+      "minified": 2197,
+      "minzipped": 841,
+      "bundled": 3700
     },
     {
       "name": "packMeta",
@@ -36,9 +36,9 @@
     {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
-      "minified": 1725,
-      "minzipped": 665,
-      "bundled": 2933
+      "minified": 1721,
+      "minzipped": 663,
+      "bundled": 2915
     },
     {
       "name": "resolvePackedMetaObjectValue",
@@ -99,9 +99,9 @@
     {
       "name": "normaliseProps",
       "path": "dist/index.mjs",
-      "minified": 242,
-      "minzipped": 144,
-      "bundled": 518
+      "minified": 240,
+      "minzipped": 142,
+      "bundled": 509
     },
     {
       "name": "hashCode",

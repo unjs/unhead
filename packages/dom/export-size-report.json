@@ -13,11 +13,11 @@
   },
   "exports": [
     {
-      "name": "PatchDomOnEntryUpdatesPlugin",
+      "name": "DomPlugin",
       "path": "dist/index.mjs",
-      "minified": 2454,
-      "minzipped": 1060,
-      "bundled": 4098
+      "minified": 2606,
+      "minzipped": 1127,
+      "bundled": 4314
     },
     {
       "name": "debouncedRenderDOMHead",
