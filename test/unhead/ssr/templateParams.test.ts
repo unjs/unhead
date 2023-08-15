@@ -53,4 +53,21 @@ describe('ssr templateParams', () => {
       <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script>"
     `)
   })
+
+  it('ssr payload', async () => {
+    const head = createHead()
+    head.push({
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        separator: '|',
+        siteName: 'My Awesome Site',
+      },
+    }, { mode: 'server' })
+    const { headTags } = await renderSSRHead(head)
+
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>My Awesome Site</title>
+      <script type=\\"text/javascript\\" id=\\"unhead:payload\\">{\\"titleTemplate\\":\\"%s %separator %siteName\\",\\"templateParams\\":{\\"separator\\":\\"|\\",\\"siteName\\":\\"My Awesome Site\\"}}</script>"
+    `)
+  })
 })

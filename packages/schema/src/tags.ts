@@ -1,5 +1,6 @@
 import type { MaybePromiseProps } from 'zhead'
 import type { Head } from './schema'
+import type { RuntimeMode } from './head'
 
 export interface ResolvesDuplicates {
   /**
@@ -84,26 +85,34 @@ export interface HasTemplateParams {
 }
 
 export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateParams {
-  /**
-   * Entry ID
-   */
-  _e?: number
-  /**
-   * Position
-   */
-  _p?: number
-  /**
-   * Dedupe key
-   */
-  _d?: string
-  /**
-   * Hash code used to represent the tag.
-   */
-  _h?: string
   tag: TagKey
   props: Record<string, string>
   innerHTML?: string
   textContent?: string
+  /**
+   * Entry ID
+   * @internal
+   */
+  _e?: number
+  /**
+   * Position
+   * @internal
+   */
+  _p?: number
+  /**
+   * Dedupe key
+   * @internal
+   */
+  _d?: string
+  /**
+   * Hash code used to represent the tag.
+   * @internal
+   */
+  _h?: string
+  /**
+   * @internal
+   */
+  _m?: RuntimeMode
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

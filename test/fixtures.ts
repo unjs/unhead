@@ -2,7 +2,7 @@ import type { Head } from '@unhead/schema'
 import { JSDOM } from 'jsdom'
 import type { SSRHeadPayload } from '@unhead/ssr'
 
-export function useDom(payload?: SSRHeadPayload, extra?: SSRHeadPayload) {
+export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
   return new JSDOM(
     `<!DOCTYPE html>
 <html ${extra?.htmlAttrs || ''}${payload?.htmlAttrs || ''}>

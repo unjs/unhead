@@ -1,5 +1,6 @@
 import { describe, it } from 'vitest'
-import { useHead } from 'unhead'
+import { createHead, useHead } from 'unhead'
+import { useDom } from '../../fixtures'
 import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('templateParams', () => {
@@ -166,6 +167,37 @@ describe('templateParams', () => {
       "<!DOCTYPE html><html><head>
 
       <meta property=\\"og:url\\" content=\\"https://example.com/some/page\\"></head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
+  it('payload', async () => {
+    const dom = useDom({
+      headTags: '<title>default</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>',
+    })
+    createHead({
+      document: dom.window.document,
+    })
+    useHead({
+      title: 'test',
+    })
+
+    const html = await new Promise<string>((resolve) => {
+      setTimeout(() => resolve(dom!.serialize()), 250)
+    })
+
+    expect(html).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <title>test | Test</title><script id=\\"unhead:payload\\">{\\"templateParams\\": {\\"siteName\\": \\"Test\\"}, \\"titleTemplate\\": \\"%s %separator %siteName\\"}</script>
+      </head>
       <body>
 
       <div>

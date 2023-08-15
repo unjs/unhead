@@ -15,12 +15,7 @@ import type { Unhead } from '@unhead/schema'
           dirty = true
       },
       'tags:resolve': function ({ tags }) {
-        const nonServerTags = tags
-          // tag must not be server only
-          .filter((tag) => {
-            const entry = head.headEntries().find(e => e._i === tag._e)
-            return entry && entry.mode !== 'server'
-          })
+        const nonServerTags = tags.filter(tag => tag._m !== 'server')
 
         // always generate a hash
         const hash = !nonServerTags.length
