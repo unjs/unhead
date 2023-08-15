@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
-import {createHead, useHead} from 'unhead'
-import {useDOMHead, useDelayedSerializedDom, activeDom} from './util'
-import {useDom} from "../../fixtures";
+import { createHead, useHead } from 'unhead'
+import { useDom } from '../../fixtures'
+import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('templateParams', () => {
   it('basic', async () => {
@@ -181,7 +181,7 @@ describe('templateParams', () => {
 
   it('payload', async () => {
     const dom = useDom({
-      headTags: '<script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>'
+      headTags: '<title>default</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>',
     })
     createHead({
       document: dom.window.document,
@@ -196,8 +196,8 @@ describe('templateParams', () => {
 
     expect(html).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script id=\\"unhead:payload\\">{\\"templateParams\\": {\\"siteName\\": \\"Test\\"}, \\"titleTemplate\\": \\"%s %separator %siteName\\"}</script>
-      <title>test | Test</title></head>
+      <title>test | Test</title><script id=\\"unhead:payload\\">{\\"templateParams\\": {\\"siteName\\": \\"Test\\"}, \\"titleTemplate\\": \\"%s %separator %siteName\\"}</script>
+      </head>
       <body>
 
       <div>

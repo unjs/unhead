@@ -53,7 +53,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     // clean up
     delete input.children
   }
-  tag.props = await normaliseProps<T>({ ...input})
+  tag.props = await normaliseProps<T>({ ...input })
 
   Object.keys(tag.props)
     .filter(k => TagConfigKeys.includes(k))
@@ -162,7 +162,7 @@ export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): 
     .filter(Boolean)
     .map((t: HeadTag, i) => {
       t._e = e._i
-      t._m = e.mode
+      e.mode && (t._m = e.mode)
       t._p = (e._i << TagEntityBits) + i
       return t
     }) as unknown as HeadTag[]

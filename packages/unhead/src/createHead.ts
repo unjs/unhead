@@ -6,6 +6,7 @@ import type {
   HeadHooks,
   HeadPlugin,
   HeadTag,
+  RuntimeMode,
   Unhead,
 } from '@unhead/schema'
 import { DomPlugin } from '@unhead/dom'
@@ -17,7 +18,6 @@ import HashKeyedPlugin from './plugins/hashKeyed'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
-import {RuntimeMode} from "@unhead/schema";
 
 // TODO drop support for non-context head
 // eslint-disable-next-line import/no-mutable-exports
@@ -26,9 +26,7 @@ export let activeHead: Unhead<any> | undefined
 // TODO rename to createDomHead
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>(options)
-  if (!head.ssr) {
-    head.use(DomPlugin())
-  }
+  head.use(DomPlugin())
   return activeHead = head
 }
 
@@ -72,34 +70,34 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     headEntries() {
       return entries
     },
-    use(plugin: HeadPlugin) {
-      plugin = typeof plugin === 'function' ? plugin(head) : plugin
-      if (plugin.hooks)
-        hooks.addHooks(plugin.hooks)
+    use(p: HeadPlugin) {
+      // @ts-expect-error untyped
+      const plugin = (typeof p === 'function' ? p(head) : p)
+      filterMode(plugin.mode, ssr) && hooks.addHooks(plugin.hooks || {})
     },
     push(input, entryOptions) {
-      const e: HeadEntry<T> = {
+      const entry: HeadEntry<T> = {
         _i: entryCount++,
         input,
         ...entryOptions as Partial<HeadEntry<T>>,
       }
       // bit hacky but safer
-      if (filterMode(e.mode, ssr)) {
-        entries.push(e)
+      if (filterMode(entry.mode, ssr)) {
+        entries.push(entry)
         updated()
       }
       return {
         dispose() {
-          entries = entries.filter(e => e._i !== e._i)
+          entries = entries.filter(e => e._i !== entry._i)
           hooks.callHook('entries:updated', head)
           updated()
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
           entries = entries.map((e) => {
-            if (e._i === e._i) {
+            if (e._i === entry._i) {
               // bit hacky syncing
-              e.input = e.input = input
+              e.input = entry.input = input
             }
             return e
           })
@@ -129,10 +127,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     ssr,
   }
 
-  options.plugins
-    .map(p => typeof p === 'function' ? p(head) : p)
-    .filter(p => filterMode(p.mode, ssr))
-    .forEach(p => hooks.addHooks(p.hooks || {}))
+  options.plugins.forEach(p => head.use(p))
   head.hooks.callHook('init', head)
   return head
 }

@@ -1,6 +1,6 @@
 import type { MaybePromiseProps } from 'zhead'
 import type { Head } from './schema'
-import {RuntimeMode} from "@unhead/schema/src/head";
+import type { RuntimeMode } from './head'
 
 export interface ResolvesDuplicates {
   /**

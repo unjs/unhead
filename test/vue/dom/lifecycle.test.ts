@@ -74,7 +74,7 @@ describe('vue dom', () => {
 
     lang.value = 'en'
 
-    pageSchema.patch({
+    pageSchema!.patch({
       htmlAttrs: {
         class: 'post-update',
         lang: lang.value,
@@ -84,7 +84,7 @@ describe('vue dom', () => {
       },
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    await renderDOMHead(head)
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\" class=\\"post-update\\"><head>
 
