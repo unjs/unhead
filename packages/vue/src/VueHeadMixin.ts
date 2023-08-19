@@ -1,21 +1,34 @@
 import { getCurrentInstance } from 'vue'
+import { Vue3 } from './env'
 import { useHead } from '.'
 
 // TODO export under own subdirectory (vue2)
 export const VueHeadMixin = {
   created() {
-    const instance = getCurrentInstance()
-    if (!instance)
-      return
+    let source = false
+    if (Vue3) {
+      const instance = getCurrentInstance()
+      if (!instance)
+        return
+      const options = instance.type
+      if (!options || !('head' in options))
+        return
 
-    const options = instance.type
-    if (!options || !('head' in options))
-      return
+      source = typeof options.head === 'function'
+        ? () => options.head.call(instance.proxy)
+        : options.head
+    }
+    else {
+      // @ts-expect-error vue 2
+      const head = this.$options.head
+      if (head) {
+        source = typeof head === 'function'
+          ? () => head.call(this)
+          : head
+      }
+    }
 
-    const source = typeof options.head === 'function'
-      ? () => options.head.call(instance.proxy)
-      : options.head
-
-    useHead(source)
+    // @ts-expect-error vue 2
+    source && useHead(source)
   },
 }
