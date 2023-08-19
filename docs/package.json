@@ -10,15 +10,15 @@
     "preview": "nuxi preview"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.15",
+    "@headlessui/vue": "^1.7.16",
     "nuxt-lego": "latest",
-    "nuxt-seo-kit-module": "2.0.0-beta.9"
+    "nuxt-seo-kit-module": "2.0.0-beta.11"
   },
   "devDependencies": {
     "@nuxt-themes/docus": "1.14.6",
     "@nuxtjs/fontaine": "^0.4.1",
     "nuxt": "3.6.5",
     "nuxt-windicss": "latest",
-    "playwright": "^1.37.0"
+    "playwright": "^1.37.1"
   }
 }
