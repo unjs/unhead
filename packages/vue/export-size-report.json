@@ -16,6 +16,13 @@
   },
   "exports": [
     {
+      "name": "VueHeadMixin",
+      "path": "dist/index.mjs",
+      "minified": 1418,
+      "minzipped": 680,
+      "bundled": 3162
+    },
+    {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
       "minified": 1387,
@@ -28,13 +35,6 @@
       "minified": 1334,
       "minzipped": 646,
       "bundled": 2945
-    },
-    {
-      "name": "VueHeadMixin",
-      "path": "dist/index.mjs",
-      "minified": 1327,
-      "minzipped": 642,
-      "bundled": 2944
     },
     {
       "name": "useHeadSafe",
