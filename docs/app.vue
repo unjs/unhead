@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { defineOgImageScreenshot, useSeoKit } from '#imports'
+import { defineOgImageScreenshot } from '#imports'
 
-useSeoKit()
 defineOgImageScreenshot()
 </script>
 
