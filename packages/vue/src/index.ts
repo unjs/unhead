@@ -1,5 +1,6 @@
 import { CapoPlugin, HashHydrationPlugin, createHeadCore } from 'unhead'
 import { createHead, createServerHead } from './createHead'
+import { resolveUnrefHeadInput } from './utils'
 
 // create
 export {
@@ -12,6 +13,11 @@ export {
 export {
   CapoPlugin,
   HashHydrationPlugin,
+}
+
+// utils
+export {
+  resolveUnrefHeadInput
 }
 
 // types
