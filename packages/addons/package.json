@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -57,7 +57,7 @@
     "@rollup/pluginutils": "^5.0.3",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "magic-string": "^0.30.2",
+    "magic-string": "^0.30.3",
     "mlly": "^1.4.0",
     "ufo": "^1.2.0",
     "unplugin": "^1.4.0",

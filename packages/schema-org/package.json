@@ -1,0 +1,62 @@
+{
+  "name": "@unhead/schema-org",
+  "version": "1.3.6",
+  "description": "Node Schema.org for Simple and Automated Google Rich Results",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://github.com/harlan-zw/@unhead/schema-org#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harlan-zw/@unhead/schema-org.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harlan-zw/@unhead/schema-org/issues"
+  },
+  "keywords": [
+    "schema.org",
+    "node",
+    "seo"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub",
+    "test": "vitest",
+    "release": "bumpp package.json --commit --push --tag",
+    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
+  },
+  "peerDependencies": {
+    "@unhead/shared": "workspace:*",
+    "unhead": ">=1.3.5"
+  },
+  "dependencies": {
+    "ufo": "^1.2.0"
+  },
+  "devDependencies": {
+    "@unhead/schema": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
+    "unplugin-vue-components": "^0.25.1",
+    "vue": "^3.3.4"
+  }
+}
