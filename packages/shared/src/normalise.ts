@@ -75,24 +75,14 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     }
   })
 
-  // normalise tag content
-  ;(['innerHTML', 'textContent'] as const).forEach((k) => {
-    // avoid accidental XSS in json blobs
-    if (tag.tag === 'script' && typeof tag[k] === 'string' && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
-      // recreate the json blob, ensure it's JSON
-      try {
-        // @ts-expect-error untyped
-        tag[k] = JSON.parse(tag[k])
-      }
-      catch (e) {
-        // invalid json, fail silently
-        tag[k] = ''
-      }
-    }
-    // always convert objects to strings
-    if (typeof tag[k] === 'object')
-      tag[k] = JSON.stringify(tag[k])
-  })
+  // stringify js objects
+  if (tag.tag === 'script' && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
+    if (typeof tag.innerHTML === 'object')
+      tag.innerHTML = JSON.stringify(tag.innerHTML)
+    if (tag.innerHTML)
+      // ensure </script> tags get encoded
+      tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')
+  }
 
   if (tag.props.class)
     tag.props.class = normaliseClassProp(tag.props.class)
