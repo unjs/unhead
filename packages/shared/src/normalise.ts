@@ -1,6 +1,11 @@
 import type { Head, HeadEntry, HeadTag, TagPriority } from '@unhead/schema'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
 
+function encodeJson(v: string) {
+  // avoid </script> tags closing the script tag
+  return v.replace(/</g, '\\u003C')
+}
+
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Promise<T | T[] | false> {
   const tag = { tag: tagName, props: {} } as T
   if (input instanceof Promise)
@@ -91,7 +96,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     }
     // always convert objects to strings
     if (typeof tag[k] === 'object')
-      tag[k] = JSON.stringify(tag[k])
+      tag[k] = encodeJson(JSON.stringify(tag[k], null, 2))
   })
 
   if (tag.props.class)
