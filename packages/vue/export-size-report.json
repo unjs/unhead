@@ -93,6 +93,13 @@
       "bundled": 1801
     },
     {
+      "name": "resolveUnrefHeadInput",
+      "path": "dist/index.mjs",
+      "minified": 673,
+      "minzipped": 357,
+      "bundled": 1686
+    },
+    {
       "name": "HashHydrationPlugin",
       "path": "dist/index.mjs",
       "minified": 173,

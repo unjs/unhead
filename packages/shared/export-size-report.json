@@ -22,9 +22,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 2197,
-      "minzipped": 841,
-      "bundled": 3700
+      "minified": 2044,
+      "minzipped": 792,
+      "bundled": 3448
     },
     {
       "name": "packMeta",
@@ -34,18 +34,18 @@
       "bundled": 3079
     },
     {
-      "name": "normaliseTag",
-      "path": "dist/index.mjs",
-      "minified": 1721,
-      "minzipped": 663,
-      "bundled": 2915
-    },
-    {
       "name": "resolvePackedMetaObjectValue",
       "path": "dist/index.mjs",
       "minified": 1536,
       "minzipped": 647,
       "bundled": 2667
+    },
+    {
+      "name": "normaliseTag",
+      "path": "dist/index.mjs",
+      "minified": 1568,
+      "minzipped": 613,
+      "bundled": 2663
     },
     {
       "name": "whitelistSafeInput",
