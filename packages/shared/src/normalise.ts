@@ -76,8 +76,13 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
   })
 
   // stringify js objects
-  if (tag.tag === 'script' && typeof tag.innerHTML === 'object')
-    tag.innerHTML = JSON.stringify(tag.innerHTML)
+  if (tag.tag === 'script' && ['application/ld+json', 'application/json'].includes(tag.props.type)) {
+    if (typeof tag.innerHTML === 'object')
+      tag.innerHTML = JSON.stringify(tag.innerHTML)
+    if (tag.innerHTML)
+      // ensure </script> tags get encoded
+      tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')
+  }
 
   if (tag.props.class)
     tag.props.class = normaliseClassProp(tag.props.class)
