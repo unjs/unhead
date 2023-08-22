@@ -13,7 +13,7 @@ export default defineHeadPlugin(head => ({
       Object.keys(csrPayload).length && ctx.tags.push({
         tag: 'script',
         innerHTML: JSON.stringify(csrPayload),
-        props: { type: 'text/javascript', id: 'unhead:payload' },
+        props: { id: 'unhead:payload' },
       })
     },
   },
