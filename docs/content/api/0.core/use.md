@@ -1,9 +1,7 @@
 ---
-title: use
+title: Use
 description: Add a plugin to Unhead.
 ---
-
-# use
 
 **Type:**
 

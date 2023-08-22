@@ -1,45 +1,77 @@
+import colors from 'tailwindcss/colors'
+import { excludeColors } from './colors'
+import { version } from './package.json'
+
+delete colors.lightBlue
+delete colors.warmGray
+delete colors.trueGray
+delete colors.coolGray
+delete colors.blueGray
+
 export default defineNuxtConfig({
   extends: [
-    '@nuxt-themes/docus',
     'nuxt-lego',
   ],
-
+  modules: [
+    '@nuxthq/ui',
+    '@vueuse/nuxt',
+    '@nuxt/content',
+    'nuxt-lodash',
+    'nuxt-icon',
+    '@nuxtseo/module',
+  ],
   site: {
-    titleSeparator: '·',
-    name: 'Unhead',
-    url: 'https://unhead.harlanzw.com',
-    description: 'Universal document <head> tag manager. Framework agnostic. Platform agnostic.',
-    defaultLocale: 'en',
+    url: 'unhead.unjs.io',
   },
-
-  app: {
-    head: {
-      titleTemplate: '%s %separator Unhead',
+  runtimeConfig: {
+    public: {
+      version,
     },
   },
-
-  modules: [
-    'nuxt-seo-kit-module',
-    'nuxt-windicss',
-    '@nuxtjs/fontaine',
-  ],
-
-  pinceau: {
-    debug: true,
-    followSymbolicLinks: false,
+  content: {
+    highlight: {
+      theme: {
+        light: 'github-light',
+        default: 'material-theme-lighter',
+        dark: 'material-theme-palenight',
+      },
+      preload: ['json', 'js', 'ts', 'html', 'css', 'vue', 'diff', 'shell', 'markdown', 'yaml', 'bash', 'ini'],
+    },
   },
-
+  ui: {
+    global: true,
+    icons: ['heroicons', 'simple-icons'],
+    safelistColors: excludeColors(colors),
+  },
+  sitemap: {
+    strictNuxtContentPaths: true,
+    xslColumns: [
+      { label: 'URL', width: '50%' },
+      { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
+      { label: 'Priority', select: 'sitemap:priority', width: '12.5%' },
+      { label: 'Change Frequency', select: 'sitemap:changefreq', width: '12.5%' },
+    ],
+  },
   app: {
+    seoMeta: {
+      themeColor: [
+        { content: '#18181b', media: '(prefers-color-scheme: dark)' },
+        { content: 'white', media: '(prefers-color-scheme: light)' },
+      ],
+    },
     head: {
+      titleTemplate: '%s %separator %site.name',
       link: [
-        // @todo nuxt-seo-experiments to handle light / dark
-        { rel: 'icon', href: '/logo.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:no-preference)' },
-        { rel: 'icon', href: '/logo-dark.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:dark)' },
-        { rel: 'icon', href: '/logo-light.svg', type: 'image/svg+xml', media: '(prefers-color-scheme:light)' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: 'anonymous' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600&display=swap' },
+        { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
       ],
+
+      bodyAttrs: {
+        class: 'antialiased font-sans text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900',
+      },
+
       script: [
         {
           'src': 'https://cdn.usefathom.com/script.js',
@@ -50,8 +82,18 @@ export default defineNuxtConfig({
       ],
     },
   },
-  //
-  fontMetrics: {
-    fonts: ['Inter'],
+  devtools: {
+    enabled: true,
+  },
+  typescript: {
+    strict: false,
+    includeWorkspace: true,
+  },
+  experimental: {
+    // asyncContext: true,
+    headNext: true,
+  },
+  generate: {
+    routes: ['/'],
   },
 })

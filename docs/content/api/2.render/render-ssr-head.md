@@ -3,8 +3,6 @@ title: renderSSRHead
 description: Render Unhead to a string that be can be server side rendered.
 ---
 
-# renderSSRHead
-
 **Type:**
 
 ```ts

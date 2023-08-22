@@ -3,8 +3,6 @@ title: renderDOMHead
 description: Render the head to the DOM.
 ---
 
-# renderDOMHead
-
 **Type:**
 
 ```ts

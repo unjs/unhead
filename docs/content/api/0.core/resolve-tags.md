@@ -1,9 +1,7 @@
 ---
-title: resolveTags
+title: Resolve Tags
 description: Generate the list of tags that will be rendered.
 ---
-
-# resolveTags
 
 **Type:**
 

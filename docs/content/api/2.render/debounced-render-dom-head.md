@@ -3,8 +3,6 @@ title: debouncedRenderDOMHead
 description: Render the Unhead tags to the DOM using a debounce function.
 ---
 
-# debouncedRenderDOMHead
-
 **Type:**
 
 ```ts

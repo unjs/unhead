@@ -1,9 +1,7 @@
 ---
-title: push
+title: Push
 description: Push an entry to Unhead.
 ---
-
-# push
 
 **Type:**
 

@@ -1,9 +1,7 @@
 ---
-title: createHead
+title: Create Head
 description: How to create your Unhead instance.
 ---
-
-# createHead
 
 **Type:**
 
@@ -45,9 +43,5 @@ createHead()
      * Resolved options
      */
     resolvedOptions: CreateHeadOptions
-    /**
-     * @internal
-     */
-    _popSideEffectQueue: () => SideEffectsRecord
   }
   ```
