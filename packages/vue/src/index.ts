@@ -17,7 +17,7 @@ export {
 
 // utils
 export {
-  resolveUnrefHeadInput
+  resolveUnrefHeadInput,
 }
 
 // types

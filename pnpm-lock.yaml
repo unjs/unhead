@@ -239,31 +239,6 @@ importers:
         specifier: ^2.0.10
         version: 2.0.10
 
-  packages/schema-org:
-    dependencies:
-      ufo:
-        specifier: ^1.2.0
-        version: 1.2.0
-    devDependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@unhead/vue':
-        specifier: workspace:*
-        version: link:../vue
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-      unplugin-vue-components:
-        specifier: ^0.25.1
-        version: 0.25.1(rollup@3.28.1)(vue@3.3.4)
-      vue:
-        specifier: ^3.3.4
-        version: 3.3.4
-
   packages/shared:
     dependencies:
       '@unhead/schema':
@@ -439,6 +414,7 @@ packages:
 
   /@antfu/utils@0.7.5:
     resolution: {integrity: sha512-dlR6LdS+0SzOAPx/TPRhnoi7hE251OVeT2Snw0RguNbBSbjUHdWr0l3vcUUDg26rEysT89kCbtw1lVorBXLLCg==}
+    dev: false
 
   /@babel/code-frame@7.22.10:
     resolution: {integrity: sha512-/KKIMG4UEL35WmI9OlvMhurwtytjvXoFcGNrOvyG9zIzA8YmPjVtIZUf7b05+TPO7G7/GEmLHDaoCgACHl9hhA==}
@@ -12155,35 +12131,6 @@ packages:
     transitivePeerDependencies:
       - rollup
     dev: false
-
-  /unplugin-vue-components@0.25.1(rollup@3.28.1)(vue@3.3.4):
-    resolution: {integrity: sha512-kzS2ZHVMaGU2XEO2keYQcMjNZkanDSGDdY96uQT9EPe+wqSZwwgbFfKVJ5ti0+8rGAcKHColwKUvctBhq2LJ3A==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@babel/parser': ^7.15.8
-      '@nuxt/kit': ^3.2.2
-      vue: 2 || 3
-    peerDependenciesMeta:
-      '@babel/parser':
-        optional: true
-      '@nuxt/kit':
-        optional: true
-    dependencies:
-      '@antfu/utils': 0.7.5
-      '@rollup/pluginutils': 5.0.3(rollup@3.28.1)
-      chokidar: 3.5.3
-      debug: 4.3.4
-      fast-glob: 3.3.1
-      local-pkg: 0.4.3
-      magic-string: 0.30.3
-      minimatch: 9.0.2
-      resolve: 1.22.3
-      unplugin: 1.4.0
-      vue: 3.3.4
-    transitivePeerDependencies:
-      - rollup
-      - supports-color
-    dev: true
 
   /unplugin-vue-router@0.6.4(rollup@3.28.1)(vue-router@4.2.4)(vue@3.3.4):
     resolution: {integrity: sha512-9THVhhtbVFxbsIibjK59oPwMI1UCxRWRPX7azSkTUABsxovlOXJys5SJx0kd/0oKIqNJuYgkRfAgPuO77SqCOg==}
