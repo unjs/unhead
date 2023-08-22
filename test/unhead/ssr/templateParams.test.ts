@@ -67,7 +67,7 @@ describe('ssr templateParams', () => {
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>My Awesome Site</title>
-      <script type=\\"text/javascript\\" id=\\"unhead:payload\\">{\\"titleTemplate\\":\\"%s %separator %siteName\\",\\"templateParams\\":{\\"separator\\":\\"|\\",\\"siteName\\":\\"My Awesome Site\\"}}</script>"
+      <script id=\\"unhead:payload\\">{\\"titleTemplate\\":\\"%s %separator %siteName\\",\\"templateParams\\":{\\"separator\\":\\"|\\",\\"siteName\\":\\"My Awesome Site\\"}}</script>"
     `)
   })
 })
