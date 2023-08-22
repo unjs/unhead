@@ -24,15 +24,8 @@ export default defineHeadPlugin({
         else if (tag.tag === 'link' && typeof tag.props.href === 'string') {
           tag.props.href = processTemplateParams(tag.props.href, params)
         }
-        else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && typeof tag.innerHTML === 'string') {
-          try {
-            tag.innerHTML = JSON.stringify(JSON.parse(tag.innerHTML), (key, val) => {
-              if (typeof val === 'string')
-                return processTemplateParams(val, params)
-              return val
-            })
-          }
-          catch {}
+        else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && tag.innerHTML) {
+          tag.innerHTML = processTemplateParams(tag.innerHTML, params)
         }
       }
       ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')

@@ -50,7 +50,7 @@ describe('ssr templateParams', () => {
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\\\</title>
-      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\\\\\"}</script>"
+      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\"With Encoding\\">\\\\\\"}</script>"
     `)
   })
 

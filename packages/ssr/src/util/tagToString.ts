@@ -2,7 +2,7 @@ import type { HeadTag } from '@unhead/schema'
 import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import { propsToString } from './propsToString'
 
-export function encodeInnerHtml(str: string) {
+export function escapeHtml(str: string) {
   /**
    * Encode the following characters:
    * & --> &amp;
@@ -32,6 +32,10 @@ export function encodeInnerHtml(str: string) {
   })
 }
 
+export function escapeJson(str: string) {
+  return str.replace(/</g, '\\u003C')
+}
+
 export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
@@ -43,6 +47,9 @@ export function tagToString<T extends HeadTag>(tag: T) {
   let content = String(tag.innerHTML || '')
   if (tag.textContent)
     // content needs to be encoded to avoid XSS, only for title
-    content = encodeInnerHtml(String(tag.textContent))
+    content = escapeHtml(String(tag.textContent))
+  if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
+    // ensure </script> tags get encoded
+    tag.innerHTML = escapeJson(tag.innerHTML)
   return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

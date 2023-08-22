@@ -32,19 +32,19 @@ describe('dom innerHTML', () => {
       ],
     })
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
-        "<!DOCTYPE html><html><head>
+      "<!DOCTYPE html><html><head>
 
-        <script>{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script><script type=\\"speculationrules\\">{\\"prefetch\\":[{\\"source\\":\\"list\\",\\"urls\\":[\\"/test\\"],\\"requires\\":[\\"anonymous-client-ip-when-cross-origin\\"]}]}</script></head>
-        <body>
+      <script>{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script><script type=\\"speculationrules\\">{\\"prefetch\\":[{\\"source\\":\\"list\\",\\"urls\\":[\\"/test\\"],\\"requires\\":[\\"anonymous-client-ip-when-cross-origin\\"]}]}</script></head>
+      <body>
 
-        <div>
-        <h1>hello world</h1>
-        </div>
+      <div>
+      <h1>hello world</h1>
+      </div>
 
 
 
-        </body></html>"
-      `)
+      </body></html>"
+    `)
   })
 
   it('noscript', async () => {
