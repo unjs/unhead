@@ -63,8 +63,8 @@ importers:
         specifier: ^2.7.2
         version: 2.7.2(rollup@3.28.1)
       '@nuxtseo/module':
-        specifier: 2.0.0-beta.15
-        version: 2.0.0-beta.15(@nuxt/devtools@0.8.0)(@unhead/vue@packages+vue)(nuxt@3.6.5)(postcss@8.4.28)(rollup@3.28.1)(vite@4.4.9)(vue@3.3.4)(webpack@5.75.0)
+        specifier: ^2.0.0-beta.16
+        version: 2.0.0-beta.16(@nuxt/devtools@0.8.0)(@unhead/vue@packages+vue)(nuxt@3.6.5)(postcss@8.4.28)(rollup@3.28.1)(vite@4.4.9)(vue@3.3.4)(webpack@5.75.0)
       nuxt-icon:
         specifier: ^0.5.0
         version: 0.5.0(rollup@3.28.1)(vue@3.3.4)
@@ -3142,8 +3142,8 @@ packages:
       - webpack
     dev: true
 
-  /@nuxtseo/module@2.0.0-beta.15(@nuxt/devtools@0.8.0)(@unhead/vue@packages+vue)(nuxt@3.6.5)(postcss@8.4.28)(rollup@3.28.1)(vite@4.4.9)(vue@3.3.4)(webpack@5.75.0):
-    resolution: {integrity: sha512-LS2oqLXMwtOIkhJ1UarBweCUNsci/aVLfKRl7i2GvZSW3G3u1QDDgn3Ejs1GulhcaYf82W0Fhmgqpq+j5PSY5Q==}
+  /@nuxtseo/module@2.0.0-beta.16(@nuxt/devtools@0.8.0)(@unhead/vue@packages+vue)(nuxt@3.6.5)(postcss@8.4.28)(rollup@3.28.1)(vite@4.4.9)(vue@3.3.4)(webpack@5.75.0):
+    resolution: {integrity: sha512-UJEIN1ajbL9NS73JDtUIxzZhN0LBbk5KWdumg5q8xPmhGjHcFQa2p2rZqIZ0wX8hHNESMw7aA6jC4oQIe1CfcA==}
     dependencies:
       '@nuxt/kit': 3.6.5(rollup@3.28.1)
       chalk: 5.3.0
@@ -11685,7 +11685,7 @@ packages:
       nuxt-site-config: 1.0.10(rollup@3.28.1)
       nuxt-site-config-kit: 1.0.10(rollup@3.28.1)
       pathe: 1.1.1
-      radix3: 1.0.1
+      radix3: 1.1.0
       shiki-es: 0.14.0
       sirv: 2.0.3
       site-config-stack: 1.0.10(rollup@3.28.1)
@@ -11750,7 +11750,7 @@ packages:
       ohash: 1.1.3
       pathe: 1.1.1
       playwright-core: 1.37.1
-      radix3: 1.0.1
+      radix3: 1.1.0
       satori: 0.10.2
       satori-html: 0.3.2
       sirv: 2.0.3
@@ -11807,7 +11807,7 @@ packages:
       nuxt-site-config: 1.0.10(rollup@3.28.1)
       nuxt-site-config-kit: 1.0.10(rollup@3.28.1)
       pathe: 1.1.1
-      radix3: 1.0.1
+      radix3: 1.1.0
       ufo: 1.2.0
     transitivePeerDependencies:
       - rollup
