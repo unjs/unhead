@@ -1,7 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "deploy": "NITRO_PRESET=netlify nuxt build && npx netlify deploy"
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "generate": "nuxi build",
+    "preview": "nuxi preview"
   },
   "dependencies": {
     "@nuxt/content": "^2.7.2",

@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     '@nuxtseo/module',
   ],
   site: {
+    name: 'Unhead',
     url: 'unhead.unjs.io',
   },
   runtimeConfig: {
@@ -81,6 +82,9 @@ export default defineNuxtConfig({
         },
       ],
     },
+  },
+  tailwind: {
+    viewer: false,
   },
   devtools: {
     enabled: true,

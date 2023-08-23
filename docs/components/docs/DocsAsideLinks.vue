@@ -10,7 +10,7 @@ const route = useRoute()
 const children = computed(() => {
   return navigation.value.find((item) => {
     return route.path.startsWith(item._path)
-  }).children
+  })?.children || []
 })
 </script>
 
