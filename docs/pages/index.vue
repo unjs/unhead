@@ -19,7 +19,7 @@ const { data } = await useAsyncData('code-example', () => queryContent('/_code-e
           </p>
 
           <div class="mt-6 flex flex-col items-center justify-center gap-4 sm:mt-10 sm:flex-row sm:gap-6 lg:justify-start">
-            <UButton size="xl" to="/setup/head/introduction" class="transition">
+            <UButton size="xl" to="/setup/unhead/introduction" class="transition">
               Get setup
             </UButton>
             <UButton to="/usage/composables/use-head" size="xl" variant="ghost">
