@@ -44,7 +44,7 @@ npm i unhead
 
 ## Usage
 
-For specific frameworks integrations, see the [docs](https://unhead.harlanzw.com/).
+For specific frameworks integrations, see the [docs](https://unhead.unjs.io/).
 
 ### Basic
 
@@ -72,7 +72,7 @@ useHead({
 
 ## Docs
 
-Visit the [documentation site](https://unhead.harlanzw.com/) for guides and API reference.
+Visit the [documentation site](https://unhead.unjs.io/) for guides and API reference.
 
 ## Sponsors
 

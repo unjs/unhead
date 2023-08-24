@@ -9,4 +9,4 @@ npm install @unhead/ssr
 
 ## Documentation
 
-See the [Unhead](https://unhead.harlanzw.com/) for more details.
+See the [Unhead](https://unhead.unjs.io/) for more details.
