@@ -93,6 +93,9 @@ export default defineNuxtConfig({
     strict: false,
     includeWorkspace: true,
   },
+  seo: {
+    canonicalDomain: true,
+  },
   experimental: {
     // asyncContext: true,
     headNext: true,
