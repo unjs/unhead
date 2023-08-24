@@ -80,7 +80,7 @@ export function useModuleList() {
       // },
       to: '/schema-org/getting-started/installation',
       description: 'The quickest and easiest way to build Schema.org graphs.',
-      repo: 'harlan-zw/unhead-schema-org',
+      repo: 'harlan-zw/nuxt-schema-org',
     },
     {
       label: 'SEO UI',

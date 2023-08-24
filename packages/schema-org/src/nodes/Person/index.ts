@@ -3,6 +3,7 @@ import {
   IdentityId,
   idReference,
   resolveAsGraphKey, setIfEmpty,
+  resolveWithBase
 } from '../../utils'
 import type { WebPage } from '../WebPage'
 import { PrimaryWebPageId } from '../WebPage'
@@ -41,7 +42,7 @@ export interface PersonSimple extends Thing {
   url?: string
 }
 
-export interface Person extends PersonSimple {}
+export interface Person extends PersonSimple { }
 
 /**
  * Describes an individual person. Most commonly used to identify the author of a piece of content (such as an Article or Comment).
@@ -59,6 +60,11 @@ export const personResolver = defineSchemaOrgResolver<Person>({
     '@type': 'Person',
   },
   idPrefix: ['host', IdentityId],
+  resolve(node, ctx) {
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
+    return node
+  },
   resolveRootNode(node, { find, meta }) {
     // if this person is the identity
     if (resolveAsGraphKey(node['@id']) === IdentityId) {

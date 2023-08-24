@@ -84,4 +84,28 @@ describe('definePerson', () => {
       `)
     })
   })
+
+  it('resolve url with base', async () => {
+    await useSetup(async () => {
+      useSchemaOrg([
+        definePerson({
+          name: 'test',
+          url: '/test'
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg()
+
+      expect(graphNodes).toMatchInlineSnapshot(`
+        [
+          {
+            "@id": "https://example.com/#identity",
+            "@type": "Person",
+            "name": "test",
+            "url": "https://example.com/test",
+          },
+        ]
+      `)
+    })
+  })
 })

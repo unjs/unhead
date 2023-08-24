@@ -61,7 +61,6 @@ export default defineNuxtConfig({
       ],
     },
     head: {
-      titleTemplate: '%s %separator %site.name',
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: 'anonymous' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
@@ -83,15 +82,11 @@ export default defineNuxtConfig({
       ],
     },
   },
-  tailwind: {
-    viewer: false,
-  },
   devtools: {
     enabled: true,
   },
-  typescript: {
-    strict: false,
-    includeWorkspace: true,
+  tailwindcss: {
+    viewer: false,
   },
   seo: {
     canonicalDomain: true,
