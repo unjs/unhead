@@ -1,6 +1,6 @@
 import { defineHeadPlugin } from '@unhead/shared'
 
-export default defineHeadPlugin(head => ({
+export default defineHeadPlugin({
   mode: 'server',
   hooks: {
     'tags:resolve': function (ctx) {
@@ -13,8 +13,8 @@ export default defineHeadPlugin(head => ({
       Object.keys(csrPayload).length && ctx.tags.push({
         tag: 'script',
         innerHTML: JSON.stringify(csrPayload),
-        props: { id: 'unhead:payload' },
+        props: { id: 'unhead:payload', type: 'application/json' },
       })
     },
   },
-}))
+})
