@@ -90,7 +90,7 @@ describe('definePerson', () => {
       useSchemaOrg([
         definePerson({
           name: 'test',
-          url: '/test'
+          url: '/test',
         }),
       ])
 
