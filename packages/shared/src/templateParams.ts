@@ -5,16 +5,18 @@ export function processTemplateParams(s: string, p: TemplateParams) {
     return s
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   function sub(token: string) {
-    if (['s', 'pageTitle'].includes(token))
-      return p.pageTitle as string
     let val: string | undefined
+    if (['s', 'pageTitle'].includes(token)) { val = p.pageTitle as string }
     // support . notation
-    if (token.includes('.')) {
+    else if (token.includes('.')) {
       // @ts-expect-error untyped
       val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, p) as string
     }
     else { val = p[token] as string | undefined }
-    return typeof val !== 'undefined' ? (val || '') : false
+    return typeof val !== 'undefined'
+      // need to escape val for json
+      ? (val || '').replace(/"/g, '\\"')
+      : false
   }
 
   // need to avoid replacing url encoded values
@@ -29,7 +31,7 @@ export function processTemplateParams(s: string, p: TemplateParams) {
   tokens.forEach((token) => {
     const re = sub(token.slice(1))
     if (typeof re === 'string') {
-      // replace the re using regex as word seperators
+      // replace the re using regex as word separators
       s = s.replace(new RegExp(`\\${token}(\\W|$)`, 'g'), (_, args) => `${re}${args}`).trim()
     }
   })

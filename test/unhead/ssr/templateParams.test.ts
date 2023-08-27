@@ -7,7 +7,7 @@ describe('ssr templateParams', () => {
   it('basic', async () => {
     const head = createHead()
     head.push({
-      title: 'hello world',
+      title: 'hello world ":',
       titleTemplate: '%s %separator %siteName',
       meta: [
         {
@@ -19,6 +19,14 @@ describe('ssr templateParams', () => {
           content: 'https://cdn.example.com/some%20image.jpg',
         },
       ],
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: JSON.stringify({
+            title: '%s',
+          }),
+        },
+      ],
       templateParams: {
         separator: '|',
         siteName: 'My Awesome Site',
@@ -27,9 +35,10 @@ describe('ssr templateParams', () => {
     const { headTags } = await renderSSRHead(head)
 
     expect(headTags).toMatchInlineSnapshot(`
-      "<title>hello world | My Awesome Site</title>
+      "<title>hello world \\\\&quot;: | My Awesome Site</title>
       <meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\">
-      <meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\">"
+      <meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\">
+      <script type=\\"application/json\\">{\\"title\\":\\"hello world \\\\\\":\\"}</script>"
     `)
   })
 
@@ -50,7 +59,7 @@ describe('ssr templateParams', () => {
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\\\</title>
-      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\"With Encoding\\">\\\\\\"}</script>"
+      <script type=\\"application/json\\">{\\"title\\":\\"Home & //<\\\\\\"With Encoding\\\\\\">\\\\\\"}</script>"
     `)
   })
 
