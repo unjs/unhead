@@ -82,7 +82,7 @@ describe('unhead e2e ssrHash', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
