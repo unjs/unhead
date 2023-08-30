@@ -7,7 +7,7 @@ export function propsToString(props: Record<string, any>) {
 
     let attribute = key
 
-    if (value !== true && value !== '')
+    if ((key.startsWith('data-') || value !== true) && value !== '')
       attribute += `="${String(value).replace(/"/g, '&quot;')}"`
 
     handledAttributes.push(attribute)
