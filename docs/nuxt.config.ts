@@ -89,7 +89,7 @@ export default defineNuxtConfig({
     viewer: false,
   },
   seo: {
-    canonicalDomain: true,
+    redirectToCanonicalSiteUrl: true,
   },
   experimental: {
     // asyncContext: true,
