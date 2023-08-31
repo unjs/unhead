@@ -16,88 +16,88 @@
   },
   "exports": [
     {
+      "name": "useSeoMeta",
+      "path": "dist/index.mjs",
+      "minified": 1359,
+      "minzipped": 697,
+      "bundled": 2967
+    },
+    {
       "name": "VueHeadMixin",
       "path": "dist/index.mjs",
-      "minified": 1418,
-      "minzipped": 680,
-      "bundled": 3162
+      "minified": 1443,
+      "minzipped": 690,
+      "bundled": 3184
     },
     {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1387,
-      "minzipped": 666,
-      "bundled": 3063
-    },
-    {
-      "name": "useSeoMeta",
-      "path": "dist/index.mjs",
-      "minified": 1334,
-      "minzipped": 646,
-      "bundled": 2945
-    },
-    {
-      "name": "useHeadSafe",
-      "path": "dist/index.mjs",
-      "minified": 1218,
-      "minzipped": 627,
-      "bundled": 2718
+      "minified": 1412,
+      "minzipped": 680,
+      "bundled": 3085
     },
     {
       "name": "useServerHeadSafe",
       "path": "dist/index.mjs",
-      "minified": 1270,
-      "minzipped": 617,
-      "bundled": 2837
+      "minified": 1295,
+      "minzipped": 630,
+      "bundled": 2859
+    },
+    {
+      "name": "useHeadSafe",
+      "path": "dist/index.mjs",
+      "minified": 1243,
+      "minzipped": 613,
+      "bundled": 2740
     },
     {
       "name": "useHead",
       "path": "dist/index.mjs",
-      "minified": 1144,
-      "minzipped": 595,
-      "bundled": 2596
+      "minified": 1169,
+      "minzipped": 596,
+      "bundled": 2618
     },
     {
       "name": "createHead",
       "path": "dist/index.mjs",
       "minified": 958,
-      "minzipped": 473,
-      "bundled": 2210
+      "minzipped": 474,
+      "bundled": 2231
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
       "minified": 907,
       "minzipped": 445,
-      "bundled": 2151
+      "bundled": 2172
     },
     {
       "name": "useServerHead",
       "path": "dist/index.mjs",
-      "minified": 854,
+      "minified": 855,
       "minzipped": 441,
-      "bundled": 1954
+      "bundled": 1976
     },
     {
       "name": "Vue2ProvideUnheadPlugin",
       "path": "dist/index.mjs",
       "minified": 855,
       "minzipped": 434,
-      "bundled": 2229
+      "bundled": 2250
     },
     {
       "name": "injectHead",
       "path": "dist/index.mjs",
-      "minified": 780,
-      "minzipped": 405,
-      "bundled": 1801
+      "minified": 781,
+      "minzipped": 409,
+      "bundled": 1823
     },
     {
       "name": "resolveUnrefHeadInput",
       "path": "dist/index.mjs",
       "minified": 673,
-      "minzipped": 357,
-      "bundled": 1686
+      "minzipped": 356,
+      "bundled": 1707
     },
     {
       "name": "HashHydrationPlugin",
