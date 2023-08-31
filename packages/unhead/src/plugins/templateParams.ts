@@ -22,7 +22,7 @@ export default defineHeadPlugin({
           tag.props.content = processTemplateParams(tag.props.content, params, sep)
         else if (tag.tag === 'link' && typeof tag.props.href === 'string')
           tag.props.href = processTemplateParams(tag.props.href, params, sep)
-        else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && tag.innerHTML)
+        else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && tag.innerHTML && tag.props.id !== 'unhead:payload')
           tag.innerHTML = processTemplateParams(tag.innerHTML, params, sep)
       }
       ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
