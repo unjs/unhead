@@ -9,8 +9,8 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
-    { input: 'src/unplugin/vite' },
-    { input: 'src/unplugin/webpack' },
+    { input: 'src/unplugin/vite', name: 'vite' },
+    { input: 'src/unplugin/webpack', name: 'webpack' },
   ],
   externals: [
     'vite',
