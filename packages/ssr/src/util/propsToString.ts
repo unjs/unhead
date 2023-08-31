@@ -1,17 +1,14 @@
+function encodeAttribute(value: string) {
+  return String(value).replace(/"/g, '&quot;')
+}
+
 export function propsToString(props: Record<string, any>) {
-  const handledAttributes = []
+  const attrs: string[] = []
 
   for (const [key, value] of Object.entries(props)) {
-    if (value === false || value == null)
-      continue
-
-    let attribute = key
-
-    if ((key.startsWith('data-') || value !== true) && value !== '')
-      attribute += `="${String(value).replace(/"/g, '&quot;')}"`
-
-    handledAttributes.push(attribute)
+    if (value !== false && value !== null)
+      attrs.push(value === true ? key : `${key}="${encodeAttribute(value)}"`)
   }
 
-  return handledAttributes.length > 0 ? ` ${handledAttributes.join(' ')}` : ''
+  return `${attrs.length > 0 ? ' ' : ''}${attrs.join(' ')}`
 }

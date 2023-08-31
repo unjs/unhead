@@ -12,7 +12,7 @@ const importRe = /@import/
           if (tag.tagPriority || (tag.tagPosition && tag.tagPosition !== 'head'))
             continue
 
-          const isTruthy = (val?: string) => val === ''
+          const isTruthy = (val?: string | boolean) => val === '' || val === true
 
           const isScript = tag.tag === 'script'
           const isLink = tag.tag === 'link'

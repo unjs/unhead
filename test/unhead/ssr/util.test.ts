@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { propsToString } from '@unhead/ssr'
 
 describe('propsToString', () => {
@@ -17,7 +17,7 @@ describe('propsToString', () => {
       'binary': 0b1010,
       'boolean-false': false,
       'boolean-true': true,
-      'data-foo': true,
+      'data-foo': 'true',
       'hex': 0xF00D,
       'null': null,
       'number': 1337,
@@ -27,6 +27,6 @@ describe('propsToString', () => {
       'string': 'string',
       'symbol': Symbol('a'),
       undefined,
-    })).toStrictEqual(' array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty string="string" symbol="Symbol(a)"')
+    })).toStrictEqual(' array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty="" string="string" symbol="Symbol(a)" undefined="undefined"')
   })
 })
