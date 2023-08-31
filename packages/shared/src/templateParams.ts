@@ -1,7 +1,10 @@
 import type { TemplateParams } from '@unhead/schema'
 
-export function processTemplateParams(s: string, p: TemplateParams) {
-  if (typeof s !== 'string')
+const sepSub = '%separator'
+
+export function processTemplateParams(s: string, p: TemplateParams, sep: string) {
+  // return early
+  if (typeof s !== 'string' || !s.includes('%'))
     return s
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   function sub(token: string) {
@@ -36,15 +39,17 @@ export function processTemplateParams(s: string, p: TemplateParams) {
     }
   })
 
-  // avoid dangling separators
-  const sep = p.separator!
-  if (s.includes(sep)) {
-    if (s.endsWith(sep))
-      s = s.slice(0, -sep.length).trim()
-    if (s.startsWith(sep))
-      s = s.slice(sep.length).trim()
+  // we wait to transform the separator as we need to transform all other tokens first
+  // we need to remove separators if they're next to each other or if they're at the start or end of the string
+  // for example: %separator %separator %title should return %title
+  if (s.includes(sepSub)) {
+    if (s.endsWith(sepSub))
+      s = s.slice(0, -sepSub.length).trim()
+    if (s.startsWith(sepSub))
+      s = s.slice(sepSub.length).trim()
     // make sure we don't have two separators next to each other
-    s = s.replace(new RegExp(`\\${sep}\\s*\\${sep}`, 'g'), sep)
+    s = s.replace(new RegExp(`\\${sepSub}\\s*\\${sepSub}`, 'g'), sepSub)
+    s = processTemplateParams(s, { separator: sep }, sep)
   }
   return s
 }

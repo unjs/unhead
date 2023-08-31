@@ -11,18 +11,19 @@ export default defineHeadPlugin({
       // we always process params so we can substitute the title
       const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
       // ensure a separator exists
-      params.separator = params.separator || '|'
+      const sep = params.separator || '|'
+      delete params.separator
       // pre-process title
-      params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params)
+      params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params, sep)
       for (const tag of tags) {
         if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string')
-          tag.textContent = processTemplateParams(tag.textContent, params)
+          tag.textContent = processTemplateParams(tag.textContent, params, sep)
         else if (tag.tag === 'meta' && typeof tag.props.content === 'string')
-          tag.props.content = processTemplateParams(tag.props.content, params)
+          tag.props.content = processTemplateParams(tag.props.content, params, sep)
         else if (tag.tag === 'link' && typeof tag.props.href === 'string')
-          tag.props.href = processTemplateParams(tag.props.href, params)
+          tag.props.href = processTemplateParams(tag.props.href, params, sep)
         else if (tag.tag === 'script' && ['application/json', 'application/ld+json'].includes(tag.props.type) && tag.innerHTML)
-          tag.innerHTML = processTemplateParams(tag.innerHTML, params)
+          tag.innerHTML = processTemplateParams(tag.innerHTML, params, sep)
       }
       ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
     },
