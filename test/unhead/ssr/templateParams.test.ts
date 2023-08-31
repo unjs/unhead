@@ -42,6 +42,27 @@ describe('ssr templateParams', () => {
     `)
   })
 
+  it('does not affect other content', async () => {
+    const head = createHead()
+    head.push({
+      title: 'This|is|an|example||with||multiple||||pipes',
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: {
+            title: '{"title":"This|is|an|example||with||multiple||||pipes"}',
+          },
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+
+    expect(headTags).toMatchInlineSnapshot(`
+      "<title>This|is|an|example||with||multiple||||pipes</title>
+      <script type=\\"application/json\\">{\\"title\\":\\"{\\\\\\"title\\\\\\":\\\\\\"This|is|an|example||with||multiple||||pipes\\\\\\"}\\"}</script>"
+    `)
+  })
+
   it('json', async () => {
     const head = createHead()
     head.push({
