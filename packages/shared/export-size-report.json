@@ -22,9 +22,9 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 2044,
-      "minzipped": 792,
-      "bundled": 3448
+      "minified": 2041,
+      "minzipped": 820,
+      "bundled": 3467
     },
     {
       "name": "packMeta",
@@ -43,9 +43,9 @@
     {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
-      "minified": 1568,
-      "minzipped": 613,
-      "bundled": 2663
+      "minified": 1565,
+      "minzipped": 635,
+      "bundled": 2682
     },
     {
       "name": "whitelistSafeInput",
@@ -57,9 +57,9 @@
     {
       "name": "processTemplateParams",
       "path": "dist/index.mjs",
-      "minified": 650,
-      "minzipped": 350,
-      "bundled": 1098
+      "minified": 663,
+      "minzipped": 361,
+      "bundled": 1129
     },
     {
       "name": "resolveMetaKeyValue",
@@ -83,6 +83,13 @@
       "bundled": 720
     },
     {
+      "name": "normaliseProps",
+      "path": "dist/index.mjs",
+      "minified": 470,
+      "minzipped": 241,
+      "bundled": 853
+    },
+    {
       "name": "hashTag",
       "path": "dist/index.mjs",
       "minified": 322,
@@ -95,13 +102,6 @@
       "minified": 351,
       "minzipped": 216,
       "bundled": 740
-    },
-    {
-      "name": "normaliseProps",
-      "path": "dist/index.mjs",
-      "minified": 240,
-      "minzipped": 142,
-      "bundled": 509
     },
     {
       "name": "hashCode",
