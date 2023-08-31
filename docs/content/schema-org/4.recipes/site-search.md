@@ -36,7 +36,7 @@ useSchemaOrg([
 
 ```vue [Component API]
 <template>
-  <SchemaOrgWebsite
+  <SchemaOrgWebSite
     :potential-action="[defineSearchAction({ target: '/search?q={search_term_string}' })]"
   />
 </template>
