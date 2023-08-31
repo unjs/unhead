@@ -10,7 +10,7 @@ export default defineHeadPlugin({
       const idx = tags.findIndex(tag => tag.tag === 'templateParams')
       // we always process params so we can substitute the title
       const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
-      // ensure a seperator exists
+      // ensure a separator exists
       params.separator = params.separator || '|'
       // pre-process title
       params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params)

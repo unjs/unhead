@@ -5,9 +5,9 @@
 useHead({
   // Titles
   title: 'Hello World',
-  titleTemplate: '%s %seperator %siteName',
+  titleTemplate: '%s %separator %siteName',
   // Template params
-  templateParams: { seperator: '|', siteName: 'My App' },
+  templateParams: { separator: '|', siteName: 'My App' },
   // Classes
   bodyAttrs: { class: { overflow: true } },
   // Deduping
