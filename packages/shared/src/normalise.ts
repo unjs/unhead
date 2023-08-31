@@ -79,9 +79,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object')
     tag.innerHTML = JSON.stringify(tag.innerHTML)
 
-  if (tag.props.class)
-    tag.props.class = normaliseClassProp(tag.props.class)
-
   // allow meta to be resolved into multiple tags if an array is provided on content
   if (tag.props.content && Array.isArray(tag.props.content))
     return tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
@@ -105,26 +102,30 @@ export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['clas
 export async function normaliseProps<T extends HeadTag>(props: T['props']): Promise<T['props']> {
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
-    // data keys get special treatment, we opt for more verbose syntax
-    const isDataKey = k.startsWith('data-')
+    // class has special handling
+    if (k === 'class') {
+      // @ts-expect-error untyped
+      props[k] = normaliseClassProp(props[k])
+      continue
+    }
     // first resolve any promises
     // @ts-expect-error untyped
-    if (props[k] instanceof Promise) {
+    if (props[k] instanceof Promise)
       // @ts-expect-error untyped
       props[k] = await props[k]
-    }
-    if (String(props[k]) === 'true') {
+    const v = String(props[k])
+    // data keys get special treatment, we opt for more verbose syntax
+    const isDataKey = k.startsWith('data-')
+    if (v === 'true' || v === '') {
       // @ts-expect-error untyped
-      props[k] = isDataKey ? 'true' : ''
+      props[k] = isDataKey ? 'true' : true
     }
-    else if (String(props[k]) === 'false') {
-      if (isDataKey) {
+    else if (!props[k]) {
+      if (isDataKey && v === 'false')
         // @ts-expect-error untyped
         props[k] = 'false'
-      }
-      else {
+      else
         delete props[k]
-      }
     }
   }
   return props

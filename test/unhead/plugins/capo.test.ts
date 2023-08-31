@@ -103,7 +103,7 @@ describe('capo', () => {
     expect(resolvedTags[1].props.rel).toEqual('preconnect')
     // ASYNC SCRIPT
     expect(resolvedTags[2].tag).toEqual('script')
-    expect(resolvedTags[2].props.async).toEqual('')
+    expect(resolvedTags[2].props.async).toEqual(true)
     // IMPORTED CSS
     expect(resolvedTags[3].tag).toEqual('style')
     expect(resolvedTags[3].innerHTML).toEqual('@import "imported.css"')
@@ -122,7 +122,7 @@ describe('capo', () => {
     expect(resolvedTags[8].props.rel).toEqual('preload')
     // DEFER SCRIPT
     expect(resolvedTags[9].tag).toEqual('script')
-    expect(resolvedTags[9].props.defer).toEqual('')
+    expect(resolvedTags[9].props.defer).toEqual(true)
     // DNS-PREFETCH
     expect(resolvedTags[10].tag).toEqual('link')
     expect(resolvedTags[10].props.rel).toEqual('dns-prefetch')

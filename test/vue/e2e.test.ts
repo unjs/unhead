@@ -83,7 +83,7 @@ describe('vue e2e', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:locale\\" content=\\"en_US\\">
@@ -203,7 +203,7 @@ describe('vue e2e', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta name=\\"description\\" content=\\"My amazing site\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">

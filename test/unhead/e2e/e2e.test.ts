@@ -74,7 +74,7 @@ describe('unhead e2e', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
@@ -189,7 +189,7 @@ describe('unhead e2e', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta name=\\"description\\" content=\\"My amazing site\\">
       <meta property=\\"og:title\\" content=\\"My amazing site\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
@@ -301,10 +301,10 @@ describe('unhead e2e', () => {
     expect(html).toContain('<html data-my-app="" class="layout-default" style="color: red" lang="en"')
 
     expect(dom.serialize().replaceAll('\n\n', '')).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
+      "<!DOCTYPE html><html data-my-app class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
@@ -345,10 +345,10 @@ describe('unhead e2e', () => {
     html = dom.serialize().replaceAll('\n\n', '')
 
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-about\\" style=\\"color: red\\" lang=\\"en\\"><head>
+      "<!DOCTYPE html><html data-my-app class=\\"layout-default page-about\\" style=\\"color: red\\" lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\">
       <title>About</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
@@ -365,10 +365,10 @@ describe('unhead e2e', () => {
     html = dom.serialize().replaceAll('\n\n', '')
 
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
+      "<!DOCTYPE html><html data-my-app class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
       <meta charset=\\"utf-8\\">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
+      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
       <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">

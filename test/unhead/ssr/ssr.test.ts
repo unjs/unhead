@@ -89,7 +89,7 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script>",
+        "headTags": "<script defer src=\\"https://cdn.example.com/script.js\\"></script>",
         "htmlAttrs": "",
       }
     `)

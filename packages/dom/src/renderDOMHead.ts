@@ -1,4 +1,4 @@
-import { HasElementTags, hashTag, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
 import type {
   DomBeforeRenderCtx,
   DomRenderTagContext,
@@ -14,11 +14,13 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-function elementToTag($el: Element): HeadTag {
+async function elementToTag($el: Element): Promise<HeadTag> {
   const tag: HeadTag = {
     tag: $el.tagName.toLowerCase() as HeadTag['tag'],
-    props: $el.getAttributeNames()
-      .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
+    props: await normaliseProps(
+      $el.getAttributeNames()
+        .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
+    ),
     innerHTML: $el.innerHTML,
   }
   // @ts-expect-error untyped
@@ -56,7 +58,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     for (const key of ['body', 'head']) {
       const children = dom?.[key as 'head' | 'body']?.children
       for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase())))
-        state.elMap[c.getAttribute('data-hid') || hashTag(elementToTag(c))] = c
+        state.elMap[c.getAttribute('data-hid') || hashTag(await elementToTag(c))] = c
     }
   }
 
@@ -85,7 +87,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     // add new attributes
     Object.entries(tag.props).forEach(([k, value]) => {
-      value = String(value)
       const ck = `attr:${k}`
       // class attributes have their own side effects to allow for merging
       if (k === 'class') {
@@ -99,7 +100,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       }
       else {
         // attribute values get set directly
-        $el.getAttribute(k) !== value && $el.setAttribute(k, value)
+        $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
         isAttrTag && track(id, ck, () => $el.removeAttribute(k))
       }
     })

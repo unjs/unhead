@@ -30,7 +30,7 @@ describe('unhead e2e data true', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"foo\\" data-foo=\\"true\\" data-bar=\\"false\\" data-bar-false=\\"false\\" data-foo-true=\\"true\\" content=\\"\\">",
+        "headTags": "<meta name=\\"foo\\" data-foo=\\"true\\" data-bar=\\"false\\" data-bar-false=\\"false\\" data-foo-true=\\"true\\" content>",
         "htmlAttrs": "",
       }
     `)
