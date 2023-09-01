@@ -4,7 +4,7 @@
 
   Describes an individual video (usually in the context of an embedded media object).
 
-- **Component**: `SchemaOrgVideo` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgVideo` _(see [how components work](/schema-org/guides/components))_
 
 
 ## Useful Links
