@@ -4,7 +4,7 @@
 
   Describes an `Product` on a `WebPage`.
 
-- **Component**: `SchemaOrgProduct` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgProduct` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

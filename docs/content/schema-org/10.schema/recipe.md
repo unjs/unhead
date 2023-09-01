@@ -4,7 +4,7 @@
 
   Describes a Recipe, which contains a series of instructions, ingredients, and optional fields.
 
-- **Component**: `SchemaOrgRecipe` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgRecipe` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

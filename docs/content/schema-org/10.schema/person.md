@@ -4,7 +4,7 @@
 
   Describes an individual person. Most commonly used to identify the author of a piece of content (such as an Article or Comment).
 
-- **Component**: `SchemaOrgPerson` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgPerson` _(see [how components work](/schema-org/guides/components))_
 
 
 ## Useful Links

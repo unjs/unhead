@@ -14,7 +14,7 @@ title: eCommerce
 
 ## Marking up a Product
 
-The [defineProduct](/schema/product) function and [SchemaOrgProduct](/guide/guides/components) component are provided
+The [defineProduct](/schema/product) function and [SchemaOrgProduct](/schema-org/guides/components) component are provided
 to create Product Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Route Meta Resolving](/guide/getting-started/how-it-works#route-meta-resolving)

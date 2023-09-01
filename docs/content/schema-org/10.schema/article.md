@@ -4,7 +4,7 @@
 
   Describes an `Article` on a `WebPage`.
 
-- **Component**: `SchemaOrgArticle` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgArticle` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

@@ -4,7 +4,7 @@
 
   Describes a business which allows public visitation. Typically used to represent the business 'behind' the website, or on a page about a specific business.
 
-- **Component**: `SchemaOrgLocalBusiness` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgLocalBusiness` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

@@ -4,7 +4,7 @@
 
   Describes an individual question. Most commonly used for creating an FAQ type page.
 
-- **Component**: `SchemaOrgQuestion` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgQuestion` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

@@ -4,7 +4,7 @@
 
   Describes a Course.
 
-- **Component**: `SchemaOrgCourse` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgCourse` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

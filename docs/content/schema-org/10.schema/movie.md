@@ -4,7 +4,7 @@
 
   Describes a movie.
 
-- **Component**: `SchemaOrgMovie` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgMovie` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

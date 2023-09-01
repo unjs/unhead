@@ -4,7 +4,7 @@
 
   Describes a HowTo guide, which contains a series of steps.
 
-- **Component**: `SchemaOrgHowTo` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgHowTo` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 
