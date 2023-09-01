@@ -16,7 +16,7 @@ by helping Google optimise how your site is shown.
 
 ## Marking up an Article
 
-The [defineArticle](/schema/article) function and [SchemaOrgArticle](/guide/guides/components) component are provided
+The [defineArticle](/schema/article) function and [SchemaOrgArticle](/schema-org/guides/components) component are provided
 to create Article Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Route Meta Resolving](/guide/getting-started/how-it-works#route-meta-resolving)
