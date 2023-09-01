@@ -61,7 +61,7 @@ defineLocalBusiness({
 - **@type**: `LocalBusiness`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}` 
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/guide/guides/user-config)
+- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/guides/user-config)
 
 ## Sub-Types
 

@@ -22,7 +22,7 @@ Describes an individual image (usually in the context of an embedded media objec
 
 - **@type**: `ImageObject`
 - **@id**: `${canonicalUrl}#/schema/image/${hash(image.url)}`
-- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/guide/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/guides/user-config))_
 - **contentUrl**: is set to `url`
 
 

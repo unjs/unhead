@@ -37,7 +37,7 @@ defineQuestion({
 
 - **@type**: `Question`
 - **@id**: `${canonicalUrl}#/schema/question/${questionId}`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/guide/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
 
 ## Resolves
 
