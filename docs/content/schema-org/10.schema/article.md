@@ -30,7 +30,7 @@
 
 - **author** `AuthorInput` (conditional)
 
-  If the author of the article is not your identity (see [Choosing an identity](/guide/guides/identity)) you will need to provide authors
+  If the author of the article is not your identity (see [Choosing an identity](/schema-org/guides/identity)) you will need to provide authors
   manually.
 
   The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema/person).

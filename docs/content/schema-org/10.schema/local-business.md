@@ -11,7 +11,7 @@
 - [LocalBusiness - Schema.org](https://schema.org/LocalBusiness)
 - [Local Business Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/local-business)
 - [LocalBusiness - Yoast](https://developer.yoast.com/features/schema/pieces/localBusiness)
-- [Choose an Identity - Local Business](/guide/guides/identity#local-business)
+- [Choose an Identity - Local Business](/schema-org/guides/identity#local-business)
 
 ## Required properties
 

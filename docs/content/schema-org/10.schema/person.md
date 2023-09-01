@@ -10,7 +10,7 @@
 ## Useful Links
 
 - [Schema.org Person](https://schema.org/Person)
-- [Choose an Identity - Person](/guide/guides/identity#person)
+- [Choose an Identity - Person](/schema-org/guides/identity#person)
 
 
 ## Required properties
