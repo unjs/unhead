@@ -4,7 +4,7 @@
 
 A list of items of any sort. Used for breadcrumbs and carousals mainly.
 
-- **Component**: `SchemaOrgItemList` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgItemList` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

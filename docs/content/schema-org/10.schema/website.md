@@ -4,7 +4,7 @@
 
   Describes a WebSite. Parent to WebPage.
 
-- **Component**: `SchemaOrgWebSite` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgWebSite` _(see [how components work](/schema-org/guides/components))_
 
 
 ## Useful Links
@@ -25,7 +25,7 @@
 - **@type**: `WebSite`
 - **@id**: `${canonicalHost}#website`
 - **url**: `canonicalHost`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/guide/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
 - **isPartOf**: WebSite reference
 - **publisher**: Identity reference
 

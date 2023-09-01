@@ -6,7 +6,7 @@
 
   Acts as a connector from a page's content to the parent WebSite (and in turn, to the Organization).
 
-- **Component**: `SchemaOrgWebPage` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgWebPage` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

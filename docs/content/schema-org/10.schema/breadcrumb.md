@@ -4,7 +4,7 @@
 
   Describes an `Breadcrumb` on a `WebPage`.
 
-- **Component**: `SchemaOrgBreadcrumb` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgBreadcrumb` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

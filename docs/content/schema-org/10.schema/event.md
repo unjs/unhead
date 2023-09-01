@@ -4,7 +4,7 @@
 
   Describes an Event.
 
-- **Component**: `SchemaOrgEvent` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgEvent` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 

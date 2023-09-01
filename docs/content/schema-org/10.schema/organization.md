@@ -4,13 +4,13 @@
 
   Describes an organization (a company, business or institution). Most commonly used to identify the publisher of a WebSite.
 
-- **Component**: `SchemaOrgOrganization` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgOrganization` _(see [how components work](/schema-org/guides/components))_
 
 ## Useful Links
 
 - [Organization - Schema.org](https://schema.org/Organization)
 - [Organization - Yoast](https://developer.yoast.com/features/schema/pieces/organization)
-- [Choose an Identity - Organization](/guide/guides/identity#organization)
+- [Choose an Identity - Organization](/schema-org/guides/identity#organization)
 
 ## Required properties
 

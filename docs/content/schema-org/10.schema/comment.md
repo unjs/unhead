@@ -4,7 +4,7 @@
 
   Describes a review. Usually in the context of an Article or a WebPage.
 
-- **Component**: `SchemaOrgComment` _(see [how components work](/guide/guides/components))_
+- **Component**: `SchemaOrgComment` _(see [how components work](/schema-org/guides/components))_
 
 
 ## Useful Links

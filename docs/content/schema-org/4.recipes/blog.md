@@ -16,7 +16,7 @@ by helping Google optimise how your site is shown.
 
 ## Marking up an Article
 
-The [defineArticle](/schema/article) function and [SchemaOrgArticle](/guide/guides/components) component are provided
+The [defineArticle](/schema/article) function and [SchemaOrgArticle](/schema-org/guides/components) component are provided
 to create Article Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Route Meta Resolving](/guide/getting-started/how-it-works#route-meta-resolving)
@@ -76,7 +76,7 @@ See the [Article Types](/schema/article#sub-types) for the list of available typ
 
 ## Providing an author
 
-If the author of the article isn't the [site identity](/guide/guides/identity), then you'll need to 
+If the author of the article isn't the [site identity](/schema-org/guides/identity), then you'll need to 
 config the author or authors.
 
 When defining a Person when an Article is present, it will automatically associate them as the author.
