@@ -1,5 +1,5 @@
 import { hash } from 'ohash'
-import { defu } from 'defu'
+import { createDefu } from 'defu'
 import type { Id, SchemaOrgNode } from '../types'
 import { resolveAsGraphKey } from '../utils'
 
@@ -13,6 +13,24 @@ function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[])
   }, {} as { [key: string]: T[] })
 }
 
+function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
+  // get last item
+  return Object.values(groupBy(array, predicate)).map((a) => a[a.length - 1])
+}
+
+const merge = createDefu((object, key, value) => {
+  // dedupe merge arrays
+  if (Array.isArray(object[key])) {
+    // @ts-expect-error untyped
+    object[key] = [...new Set([...object[key], ...value])]
+    if (key === 'itemListElement') {
+      // @ts-expect-error untyped
+      object[key] = [...uniqueBy(object[key], (item) => item.position)]
+    }
+    return true
+  }
+})
+
 /**
  * Dedupe, flatten and a collection of nodes. Will also sort node keys and remove meta keys.
  * @param nodes
@@ -24,7 +42,7 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
     const n = nodes[key]
     const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
     if (dedupedNodes[nodeKey])
-      dedupedNodes[nodeKey] = defu(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
+      dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
     else
       dedupedNodes[nodeKey] = nodes[key]
   }
@@ -56,7 +74,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
     for (const key of keys)
       newNode[key] = n[key]
     if (dedupedNodes[nodeKey])
-      newNode = defu(newNode, dedupedNodes[nodeKey]) as SchemaOrgNode
+      newNode = merge(newNode, dedupedNodes[nodeKey]) as SchemaOrgNode
     dedupedNodes[nodeKey] = newNode
   }
   return Object.values(dedupedNodes)

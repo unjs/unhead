@@ -90,12 +90,6 @@ describe('defineBreadcrumb', async () => {
             "itemListElement": [
               {
                 "@type": "ListItem",
-                "item": "https://example.com/blog/test",
-                "name": "Some joining page",
-                "position": 3,
-              },
-              {
-                "@type": "ListItem",
                 "item": "https://example.com",
                 "name": "Home",
                 "position": 1,
@@ -105,6 +99,12 @@ describe('defineBreadcrumb', async () => {
                 "item": "https://example.com/blog",
                 "name": "Blog",
                 "position": 2,
+              },
+              {
+                "@type": "ListItem",
+                "item": "https://example.com/blog/test",
+                "name": "Some joining page",
+                "position": 3,
               },
               {
                 "@type": "ListItem",
@@ -121,12 +121,6 @@ describe('defineBreadcrumb', async () => {
               {
                 "@type": "ListItem",
                 "item": "https://example.com/blog/bar",
-                "name": "Some other link",
-                "position": 1,
-              },
-              {
-                "@type": "ListItem",
-                "item": "https://example.com/blog/foo",
                 "name": "Some other link",
                 "position": 1,
               },
