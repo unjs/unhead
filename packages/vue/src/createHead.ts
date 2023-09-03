@@ -32,7 +32,7 @@ export function createServerHead<T extends MergeHead>(options: Omit<CreateHeadOp
 
 // TODO rename to createDOMHead
 export function createHead<T extends MergeHead>(options: CreateHeadOptions = {}): VueHeadClient<T> {
-  options.domDelayFn = options.domDelayFn || (fn => nextTick(() => fn()))
+  options.domDelayFn = options.domDelayFn || (fn => nextTick(() => setTimeout(() => fn(), 0)))
   const head = _createHead<MaybeComputedRef<ReactiveHead<T>>>(options) as VueHeadClient<T>
   head.use(VueReactivityPlugin)
   head.install = vueInstall(head)
