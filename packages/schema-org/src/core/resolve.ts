@@ -140,7 +140,7 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph,
     if (Object.keys(a).length === 1 && a['@id'] || Object.keys(a).length === 2 && a['@id'] && a['@type']) {
       return {
         // we drop @type
-        '@id': ctx.find(a['@id'])?.['@id'] || a['@id']
+        '@id': ctx.find(a['@id'])?.['@id'] || a['@id'],
       }
     }
 

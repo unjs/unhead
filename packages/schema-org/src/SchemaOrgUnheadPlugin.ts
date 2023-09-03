@@ -1,4 +1,4 @@
-import type { HeadPlugin } from '@unhead/schema'
+import { defineHeadPlugin } from '@unhead/shared'
 import type { MetaInput, ResolvedMeta } from './types'
 import {
   createSchemaOrgGraph, resolveMeta,
@@ -9,7 +9,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   const resolvedMeta = {} as ResolvedMeta
-  return <HeadPlugin> ({
+  return defineHeadPlugin({
     hooks: {
       'entries:resolve': function () {
         graph = createSchemaOrgGraph()

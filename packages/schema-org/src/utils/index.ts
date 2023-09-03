@@ -2,9 +2,7 @@ import { hasProtocol, joinURL, withBase } from 'ufo'
 import type {
   Arrayable,
   Id,
-  SchemaOrgNodeDefinition,
   Thing,
-  WithResolver,
 } from '../types'
 
 export function idReference<T extends Thing>(node: T | string) {
@@ -134,11 +132,4 @@ export function stripEmptyProperties(obj: any) {
       delete obj[k]
   })
   return obj
-}
-
-export function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<T>) {
-  return <WithResolver<T>> {
-    ...(input || {}),
-    _resolver: resolver,
-  }
 }

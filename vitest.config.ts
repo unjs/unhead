@@ -20,10 +20,11 @@ export default defineConfig({
       '@unhead/dom': resolve(__dirname, 'packages/dom/src'),
       '@unhead/vue/polyfill': resolve(__dirname, 'packages/vue/src/VueUseHeadPolyfill.ts'),
       '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
+      '@unhead/schema-org': resolve(__dirname, 'packages/schema-org/src'),
     },
   },
   test: {
-    include: ['test/**/*.test.ts'],
+    // include: ['test/**/*.test.ts'],
     globals: true,
     reporters: 'dot',
     isolate: true,

@@ -15,7 +15,7 @@ function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[])
 
 function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   // get last item
-  return Object.values(groupBy(array, predicate)).map((a) => a[a.length - 1])
+  return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
 const merge = createDefu((object, key, value) => {
@@ -25,7 +25,7 @@ const merge = createDefu((object, key, value) => {
     object[key] = [...new Set([...object[key], ...value])]
     if (key === 'itemListElement') {
       // @ts-expect-error untyped
-      object[key] = [...uniqueBy(object[key], (item) => item.position)]
+      object[key] = [...uniqueBy(object[key], item => item.position)]
     }
     return true
   }
