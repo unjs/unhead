@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@nuxt/content':
-        specifier: ^2.8.1
-        version: 2.8.1(vue@3.3.4)
+        specifier: ^2.8.2
+        version: 2.8.2(vue@3.3.4)
       '@nuxtseo/module':
         specifier: ^2.0.0-beta.22
         version: 2.0.0-beta.22(@nuxt/devtools@0.8.2)(@unhead/vue@1.4.1)(nuxt@3.7.0)(postcss@8.4.29)(vite@4.4.9)(vue@3.3.4)(webpack@5.88.2)
@@ -1035,8 +1035,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@nuxt/content@2.8.1(vue@3.3.4):
-    resolution: {integrity: sha512-uFhZXuP/5MVkK8rhj/1QPQKasW1ThyjE9JfLwTF0QEH/KJWgDg1FssKhGY7aCidR3ycUI+V3zHd407uSrdoCFw==}
+  /@nuxt/content@2.8.2(vue@3.3.4):
+    resolution: {integrity: sha512-fi5/axuYNGccJ/dXyaf5C/WqgEd5wSijpGHZ9O+pH7754S2NeKyx8fUFGfXsLN9VyJP+Mx8EUihfWKJm09SCRA==}
     dependencies:
       '@nuxt/kit': 3.7.0
       '@nuxtjs/mdc': 0.1.6
@@ -1623,6 +1623,7 @@ packages:
     dependencies:
       is-glob: 4.0.3
       micromatch: 4.0.5
+      napi-wasm: 1.1.0
     bundledDependencies:
       - napi-wasm
 
@@ -6870,6 +6871,9 @@ packages:
     resolution: {integrity: sha512-7ZtY5KTCNheRGfEFxnedV5zFiORN1+Y1N6zvPTnHQd8ENUvfaDBeuJDZb2bN/oXwXxu3qkTXDzy57W5vAmDTBw==}
     engines: {node: ^14 || ^16 || >=18}
     hasBin: true
+
+  /napi-wasm@1.1.0:
+    resolution: {integrity: sha512-lHwIAJbmLSjF9VDRm9GoVOy9AGp3aIvkjv+Kvz9h16QR3uSVYH78PNQUnT2U4X53mhlnV2M7wrhibQ3GHicDmg==}
 
   /negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
