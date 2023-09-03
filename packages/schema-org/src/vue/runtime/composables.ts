@@ -155,18 +155,7 @@ export function defineBookEdition<T extends Record<string, any>>(input?: DeepMay
 
 type Arrayable<T> = T | Array<T>
 
-let isSPA: null | true = null
-
 export function useSchemaOrg(input?: Arrayable<any>): any {
-  // if we're not in development, and we already have a schema org entry, do nothing
-  // Note: usage of this function should be removed by the bundler in production
-  if (process.env.NODE_ENV !== 'development' && typeof window !== 'undefined') {
-    if (isSPA === null && !window.document.querySelector('#schema-org-graph'))
-      isSPA = true
-
-    if (!isSPA)
-      return
-  }
   return useHead({
     script: [
       {
@@ -177,5 +166,5 @@ export function useSchemaOrg(input?: Arrayable<any>): any {
         nodes: input,
       },
     ],
-  }, { mode: isSPA ? undefined : 'server' })
+  })
 }
