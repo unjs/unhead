@@ -150,7 +150,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     // actions may be a function that need resolving
     node.potentialAction = resolveRelation(node.potentialAction, ctx, readActionResolver)
 
-    if (node['@type'] === 'WebPage') {
+    if (node['@type'] === 'WebPage' && ctx.meta.url) {
       // if the type hasn't been augmented
       setIfEmpty(node, 'potentialAction', [
         {
