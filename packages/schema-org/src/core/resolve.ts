@@ -136,8 +136,9 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph,
     return input
 
   const ids = asArray(input).map((a) => {
+    const keys = Object.keys(a).length
     // filter out id references
-    if (Object.keys(a).length === 1 && a['@id'] || Object.keys(a).length === 2 && a['@id'] && a['@type']) {
+    if ((keys === 1 && a['@id']) || (keys === 2 && a['@id'] && a['@type'])) {
       return {
         // we drop @type
         '@id': ctx.find(a['@id'])?.['@id'] || a['@id'],

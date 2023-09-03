@@ -303,9 +303,7 @@ describe('defineArticle', () => {
           {
             "@id": "https://example.com/#identity",
             "@type": "Organization",
-            "logo": {
-              "@id": "https://example.com/#logo",
-            },
+            "logo": "https://example.com/test.png",
             "name": "Identity",
             "url": "https://example.com/",
           },
@@ -326,7 +324,7 @@ describe('defineArticle', () => {
               },
             ],
             "primaryImageOfPage": {
-              "@id": "https://example.com/#logo",
+              "@id": "https://example.com/test.png",
             },
             "url": "https://example.com/",
           },
