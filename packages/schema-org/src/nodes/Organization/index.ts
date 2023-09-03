@@ -79,7 +79,7 @@ export const organizationResolver
       const webPage = ctx.find<WebPage>(PrimaryWebPageId)
       if (node.logo) {
         // create a node for the logo
-        resolveRelation(node.logo, ctx, imageResolver, {
+        const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
           root: true,
           afterResolve(logo) {
             if (isIdentity)
@@ -91,8 +91,8 @@ export const organizationResolver
         // prefer url over an object for the logo
         node.logo = resolveRelation(node.logo, ctx, imageResolver, { root: false }).url
 
-        if (webPage)
-          setIfEmpty(webPage, 'primaryImageOfPage', idReference(ctx.find('#logo')))
+        if (webPage && logoNode)
+          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
       }
 
       if (isIdentity && webPage)
