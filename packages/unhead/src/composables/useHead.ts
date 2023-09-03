@@ -6,5 +6,6 @@ import type {
 import { getActiveHead } from './useActiveHead'
 
 export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
-  return getActiveHead()?.push(input, options)
+  const head = options.head || getActiveHead()
+  return head?.push(input, options)
 }

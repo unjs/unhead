@@ -1,7 +1,6 @@
-import type { HeadEntryOptions } from '@unhead/schema'
-import type { UseHeadSafeInput } from '../types'
+import type { UseHeadOptions, UseHeadSafeInput } from '../types'
 import { useHeadSafe } from './useHeadSafe'
 
-export function useServerHeadSafe(input: UseHeadSafeInput, options: HeadEntryOptions = {}) {
+export function useServerHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}) {
   return useHeadSafe(input, { ...options, mode: 'server' })
 }

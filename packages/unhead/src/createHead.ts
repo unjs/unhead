@@ -76,6 +76,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       filterMode(plugin.mode, ssr) && hooks.addHooks(plugin.hooks || {})
     },
     push(input, entryOptions) {
+      delete entryOptions?.head
       const entry: HeadEntry<T> = {
         _i: entryCount++,
         input,

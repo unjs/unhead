@@ -85,7 +85,7 @@ export interface CreateHeadOptions {
 export interface HeadEntryOptions extends TagPosition, TagPriority {
   mode?: RuntimeMode
   transform?: (input: unknown) => unknown
-  head?: VueHeadClient<any>
+  head?: Unhead
 }
 
 export interface Unhead<Input extends {} = Head> {

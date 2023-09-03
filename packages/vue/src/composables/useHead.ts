@@ -1,16 +1,16 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { Ref } from 'vue'
 import { getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, ref, watch, watchEffect } from 'vue'
-import type { ReactiveHead, UseHeadInput, VueHeadClient } from '../types'
+import type { ReactiveHead, UseHeadInput, UseHeadOptions, VueHeadClient } from '../types'
 import { resolveUnrefHeadInput } from '../utils'
 import { injectHead } from './injectHead'
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = options.head || injectHead()
   if (head) {
     if (!head.ssr)
-      return clientUseHead(head, input, options)
-    return head.push(input, options)
+      return clientUseHead(head, input, options as HeadEntryOptions)
+    return head.push(input, options as HeadEntryOptions)
   }
 }
 
