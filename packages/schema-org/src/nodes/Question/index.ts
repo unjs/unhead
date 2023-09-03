@@ -49,10 +49,14 @@ export const questionResolver = defineSchemaOrgResolver<Question>({
   ],
   idPrefix: 'url',
   resolve(question, ctx) {
-    if (question.question)
+    if (question.question) {
       question.name = question.question
-    if (question.answer)
+      delete question.question
+    }
+    if (question.answer) {
       question.acceptedAnswer = question.answer
+      delete question.answer
+    }
     // resolve string answer to Answer
     question.acceptedAnswer = resolveRelation(question.acceptedAnswer, ctx, answerResolver)
     return question
