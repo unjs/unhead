@@ -1,5 +1,5 @@
 export * from './core'
 export * from './nodes'
-export * from './SchemaOrgUnheadPlugin'
+export * from './plugin'
 export * from './runtime'
 export * from './types'

@@ -5,7 +5,19 @@ import {
 } from '.'
 import type { SchemaOrgGraph } from '.'
 
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<string, any>): any {
+export interface PluginSchemaOrgOptions {
+  minify?: boolean
+}
+
+export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
+  const fallback = () => ({})
+  return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
+}
+
+/**
+ * @deprecated Use `PluginSchemaOrg` instead.
+ */
+export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<string, any>, options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   const resolvedMeta = {} as ResolvedMeta
@@ -41,10 +53,11 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
         // find the schema.org node
         for (const tag of ctx.tags) {
           if (tag.tag === 'script' && tag.key === 'schema-org-graph') {
+            const minify = options?.minify || process.env.NODE_ENV === 'production'
             tag.innerHTML = JSON.stringify({
               '@context': 'https://schema.org',
-              '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta()) }),
-            }, null, 2)
+              '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
+            }, null, minify ? 0 : 2)
             delete tag.props.nodes
           }
         }
