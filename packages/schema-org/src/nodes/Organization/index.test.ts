@@ -30,19 +30,9 @@ describe('defineOrganization', () => {
               "postalCode": "2000",
               "streetAddress": "123 st",
             },
-            "logo": {
-              "@id": "https://example.com/#logo",
-            },
+            "logo": "https://example.com/logo.png",
             "name": "test",
             "url": "https://example.com/",
-          },
-          {
-            "@id": "https://example.com/#logo",
-            "@type": "ImageObject",
-            "caption": "test",
-            "contentUrl": "https://example.com/logo.png",
-            "inLanguage": "en-AU",
-            "url": "https://example.com/logo.png",
           },
         ]
       `)
