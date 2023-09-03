@@ -20,6 +20,7 @@
       "unhead": ["packages/unhead/src"],
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
+      "@unhead/schema-org": ["packages/schema-org/src"],
       "@unhead/vue/polyfill": ["packages/vue/src/VueUseHeadPolyfill.ts"],
       "@unhead/vue": ["packages/vue/src"],
       "@unhead/addons": ["packages/addons/src"],
@@ -28,7 +29,8 @@
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
-      "@unhead/shared/*": ["packages/shared/*"]
+      "@unhead/shared/*": ["packages/shared/*"],
+      "@unhead/schema-org/*": ["packages/schema-org/*"]
     }
   }
 }
