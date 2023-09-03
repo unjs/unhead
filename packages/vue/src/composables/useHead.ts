@@ -6,7 +6,7 @@ import { resolveUnrefHeadInput } from '../utils'
 import { injectHead } from './injectHead'
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
-  const head = injectHead()
+  const head = options.head || injectHead()
   if (head) {
     if (!head.ssr)
       return clientUseHead(head, input, options)
@@ -29,7 +29,6 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   })
 
   const vm = getCurrentInstance()
-
   if (vm) {
     onBeforeUnmount(() => {
       entry.dispose()
