@@ -160,7 +160,9 @@ describe('unhead e2e ssrHash', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>My amazing site</title>",
+        "headTags": "<title>My amazing site</title>
+      <script id=\\"unhead:payload\\" type=\\"application/json\\">{\\"title\\":\\"My amazing site\\"}</script>
+      <meta name=\\"unhead:ssr\\" content=\\"6f28288\\">",
         "htmlAttrs": "",
       }
     `)
@@ -182,6 +184,8 @@ describe('unhead e2e ssrHash', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <title>new title</title>
+      <script id=\\"unhead:payload\\" type=\\"application/json\\">{\\"title\\":\\"My amazing site\\"}</script>
+      <meta name=\\"unhead:ssr\\" content=\\"6f28288\\">
       </head>
       <body>
 
