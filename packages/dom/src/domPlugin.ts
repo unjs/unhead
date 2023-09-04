@@ -10,7 +10,10 @@ export interface DomPluginOptions extends RenderDomHeadOptions {
   return defineHeadPlugin((head) => {
     // restore initial entry from payload (titleTemplate and templateParams)
     const initialPayload = head.resolvedOptions.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-    initialPayload && head.push(JSON.parse(initialPayload))
+    initialPayload && head.push({
+      title: document.title,
+      ...JSON.parse(initialPayload),
+    })
     return {
       mode: 'client',
       hooks: {
