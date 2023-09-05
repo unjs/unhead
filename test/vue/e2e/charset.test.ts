@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -31,6 +31,7 @@ describe('vue e2e charset', () => {
 
     // ssr render on the index page
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
 
     useHead(AppSchema)
     useHead(IndexSchema)
@@ -53,6 +54,7 @@ describe('vue e2e charset', () => {
     const csrHead = createHead({
       document: dom.window.document,
     })
+    setHeadInjectionHandler(() => csrHead)
 
     useHead(AppSchema)
     const index = csrHead.push(IndexSchema)

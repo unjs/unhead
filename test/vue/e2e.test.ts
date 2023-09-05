@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { createHead, useHead, useServerHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead, useServerHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'
@@ -11,6 +11,7 @@ describe('vue e2e', () => {
     // but we are also injecting a child head schema which will have a hydration step
 
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
     // i.e App.vue
     useServerHead({
       title: 'My amazing site',
@@ -100,6 +101,7 @@ describe('vue e2e', () => {
     const csrHead = createHead({
       document: dom.window.document,
     })
+    setHeadInjectionHandler(() => csrHead)
     csrHead.push({
       title: 'Home',
       script: [
@@ -151,6 +153,7 @@ describe('vue e2e', () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
 
     const schema = <ReactiveHead> {
       title: 'My amazing site',
@@ -222,6 +225,7 @@ describe('vue e2e', () => {
     })
 
     const csrHead = createHead()
+    setHeadInjectionHandler(() => csrHead)
     useHead(schema)
 
     await renderDOMHead(csrHead, { document: dom.window.document })

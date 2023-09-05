@@ -1,6 +1,6 @@
 import { it } from 'vitest'
 import { ref } from 'vue'
-import { createHead, useHead, useSeoMeta } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead, useSeoMeta } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../../fixtures'
 import { ssrRenderHeadToString } from '../util'
@@ -114,7 +114,7 @@ describe('vue ssr examples', () => {
 
   it('useSeoMeta', async () => {
     const head = createHead()
-
+    setHeadInjectionHandler(() => head)
     const data = ref<null | { title: string; description: string }>(null)
 
     useSeoMeta({

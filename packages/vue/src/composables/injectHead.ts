@@ -23,14 +23,12 @@ export function setHeadInjectionHandler(handler: () => VueHeadClient<any> | unde
 }
 
 export function injectHead<T extends MergeHead>() {
-  let head: VueHeadClient<T> | undefined
-  if (globalKey in _global)
+  if (globalKey in _global) {
     // @ts-expect-error global injection
-    head = _global[globalKey]()
-  if (head)
-    return head
+    return _global[globalKey]() as VueHeadClient<T>
+  }
   // fallback resolver
-  head = inject(headSymbol)
+  const head = inject(headSymbol)
   if (!head && process.env.NODE_ENV !== 'production')
     console.warn('Unhead is missing Vue context, falling back to shared context. This may have unexpected results.')
   return (head || getActiveHead()) as VueHeadClient<T>

@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { polyfillAsVueUseHead } from '@unhead/vue/polyfill'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
@@ -32,6 +32,7 @@ describe('vue e2e vueuse/head', () => {
 
     // ssr render on the index page
     const ssrHead = polyfillAsVueUseHead(createHead())
+    setHeadInjectionHandler(() => ssrHead)
 
     ssrHead.push(AppSchema)
     ssrHead.addReactiveEntry(IndexSchema)
@@ -54,6 +55,7 @@ describe('vue e2e vueuse/head', () => {
     const csrHead = polyfillAsVueUseHead(createHead({
       document: dom.window.document,
     }))
+    setHeadInjectionHandler(() => csrHead)
 
     csrHead.push(AppSchema)
     const index = csrHead.addReactiveEntry(IndexSchema)

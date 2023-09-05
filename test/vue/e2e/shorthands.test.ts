@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -9,6 +9,7 @@ describe('unhead vue e2e shorthands', () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
     // i.e App.vue
     useHead({
       style: [
@@ -58,6 +59,7 @@ describe('unhead vue e2e shorthands', () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
     // i.e App.vue
     useHead({
       script: [
@@ -107,6 +109,7 @@ describe('unhead vue e2e shorthands', () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createHead()
+    setHeadInjectionHandler(() => ssrHead)
     // i.e App.vue
     useHead({
       noscript: [

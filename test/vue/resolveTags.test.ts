@@ -1,11 +1,12 @@
 import { describe, it } from 'vitest'
 import type { Ref } from 'vue'
 import { ref } from 'vue'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 
 describe('resolveTags', () => {
   it('basic resolve tags', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     useHead({
       htmlAttrs: { class: 'first-class' },
@@ -33,6 +34,7 @@ describe('resolveTags', () => {
 
   it('conditional classes', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     const theme: Ref<'dark' | 'light'> = ref('dark')
 
@@ -81,6 +83,7 @@ describe('resolveTags', () => {
   })
   it('basic resolve tags', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     useHead({
       htmlAttrs: { class: 'first-class' },

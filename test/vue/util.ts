@@ -1,11 +1,12 @@
 import type { App, Component } from 'vue'
 import { createApp, createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { VueHeadMixin, createHead } from '@unhead/vue'
+import { VueHeadMixin, createHead, setHeadInjectionHandler } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 
 export async function ssrRenderHeadToString(fn: () => void) {
   const head = createHead()
+  setHeadInjectionHandler(() => head)
   const app = createSSRApp({
     setup() {
       fn()
