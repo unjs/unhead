@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { basicSchema, useDom } from '../../fixtures'
 
@@ -10,6 +10,7 @@ describe('vue dom', () => {
     const head = createHead({
       document: dom.window.document,
     })
+    setHeadInjectionHandler(() => head)
 
     const lang = ref('de')
 
@@ -44,6 +45,7 @@ describe('vue dom', () => {
     const head = createHead({
       document: dom.window.document,
     })
+    setHeadInjectionHandler(() => head)
     const lang = ref('de')
 
     useHead(basicSchema)

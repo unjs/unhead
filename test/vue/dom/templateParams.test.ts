@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { ref } from 'vue'
 import { useDom } from '../../fixtures'
@@ -8,6 +8,7 @@ describe('vue templateParams', () => {
   it('basic', async () => {
     const dom = useDom()
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     const separator = ref('/')
 
@@ -47,6 +48,7 @@ describe('vue templateParams', () => {
   it('nuxt/nuxt issue #22363', async () => {
     const dom = useDom()
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     const separator = ref('/')
 

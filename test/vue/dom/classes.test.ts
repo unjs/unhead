@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { computed, ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -9,6 +9,7 @@ describe('vue dom classes', () => {
     const dom = useDom()
 
     const head = createHead({ document: dom.window.document })
+    setHeadInjectionHandler(() => head)
 
     const isNavActive = ref(false)
 

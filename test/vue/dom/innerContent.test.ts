@@ -1,11 +1,12 @@
 import { describe, it } from 'vitest'
-import { createHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('vue dom innerContent', () => {
   it('update innerHtml', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     const entry = head.push({
       script: [

@@ -1,5 +1,5 @@
 import { describe } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
@@ -7,6 +7,7 @@ describe('vue dom titleTemplate', () => {
   test('basic', async () => {
     const dom = useDom()
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     useHead({
       title: 'test',

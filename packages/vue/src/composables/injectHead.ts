@@ -15,24 +15,23 @@ const _global
           ? self
           : {}
 
-const globalKey = '__unhead_failed_injection_handler__'
+const globalKey = '__unhead_injection_handler__'
 
-export function setFailedInjectionHandler(handler: () => void) {
+export function setHeadInjectionHandler(handler: () => VueHeadClient<any> | undefined) {
   // @ts-expect-error global injection
   _global[globalKey] = handler
 }
 
-function callFailedInjectHandler() {
+export function injectHead<T extends MergeHead>() {
+  let head: VueHeadClient<T> | undefined
   if (globalKey in _global)
     // @ts-expect-error global injection
-    return _global[globalKey]()
-  if (process.env.NODE_ENV !== 'production')
+    head = _global[globalKey]()
+  if (head)
+    return head
+  // fallback resolver
+  head = inject(headSymbol)
+  if (!head && process.env.NODE_ENV !== 'production')
     console.warn('Unhead is missing Vue context, falling back to shared context. This may have unexpected results.')
-}
-
-export function injectHead<T extends MergeHead>() {
-  const injectedHead = inject(headSymbol)
-  // Vue warnings were thrown
-  !injectedHead && callFailedInjectHandler()
-  return (injectedHead || getActiveHead()) as VueHeadClient<T>
+  return (head || getActiveHead()) as VueHeadClient<T>
 }

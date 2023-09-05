@@ -1,11 +1,12 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('vue events', () => {
   it('basic', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     useHead({
       bodyAttrs: {

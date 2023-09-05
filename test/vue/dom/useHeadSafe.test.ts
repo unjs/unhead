@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useHeadSafe } from 'unhead'
-import { createHead } from '@unhead/vue'
+import { createHead, setHeadInjectionHandler } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { ref } from 'vue'
 import { basicSchema, useDom } from '../../fixtures'
@@ -9,6 +9,7 @@ describe('vue dom useHeadSafe', () => {
   it('basic', async () => {
     const dom = useDom()
     const head = createHead()
+    setHeadInjectionHandler(() => head)
 
     useHeadSafe(basicSchema)
 
