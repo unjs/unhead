@@ -16,8 +16,14 @@ describe('vue dom useHeadSafe', () => {
     useHeadSafe({
       bodyAttrs: {
         onresize: ref('alert(1)'),
+        ['data-bar']: 'foo',
       },
       link: [
+        {
+          rel: 'icon',
+          href: '/valid.png',
+          'data-bar': 'foo',
+        },
         {
           rel: 'icon',
           href: () => 'javascript:alert(1)',
@@ -25,11 +31,13 @@ describe('vue dom useHeadSafe', () => {
         {
           rel: 'stylesheet',
           href: 'https://cdn.example.com/style.css',
+          'data-bar': 'foo',
         },
       ],
       style: [
         {
           innerHTML: 'body { background: url("javascript:alert(1)") }',
+          'data-foo': 'bar',
         },
       ],
       script: () => [
@@ -40,6 +48,7 @@ describe('vue dom useHeadSafe', () => {
         {
           innerHTML: 'alert(1)',
           textContent: { value: 'alert(1)' },
+          ['data-foo']: 'test'
         },
       ],
     })
@@ -49,8 +58,8 @@ describe('vue dom useHeadSafe', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
 
-      <meta charset=\\"utf-8\\"><link href=\\"https://cdn.example.com/favicon.ico\\" rel=\\"icon\\" type=\\"image/x-icon\\"><script>{\\"value\\":\\"alert(1)\\"}</script></head>
-      <body class=\\"dark\\">
+      <meta charset=\\"utf-8\\"><link href=\\"https://cdn.example.com/favicon.ico\\" rel=\\"icon\\" type=\\"image/x-icon\\"><link data-bar=\\"foo\\" href=\\"/valid.png\\" rel=\\"icon\\"><script data-foo=\\"test\\">{\\"value\\":\\"alert(1)\\"}</script></head>
+      <body class=\\"dark\\" data-bar=\\"foo\\">
 
       <div>
       <h1>hello world</h1>

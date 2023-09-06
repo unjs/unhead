@@ -8,6 +8,18 @@ const WhitelistAttributes = {
   script: ['id', 'type', 'textContent'],
   link: ['id', 'color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'],
 }
+
+function acceptDataAttrs(value: Record<string, string>) {
+  const filtered: Record<string, string> = {}
+  // add any data attributes
+  Object.keys(value || {})
+    .filter(a => a.startsWith('data-'))
+    .forEach((a) => {
+      filtered[a] = value[a]
+    })
+  return filtered
+}
+
 export function whitelistSafeInput(input: Record<string, MaybeArray<Record<string, string>>>): HeadSafe {
   const filtered: Record<string, MaybeArray<Record<string, string>>> = {}
   // remove any keys that can be used for XSS
@@ -24,7 +36,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         break
       case 'htmlAttrs':
       case 'bodyAttrs':
-        filtered[key] = {}
+        filtered[key] = acceptDataAttrs(tagValue as Record<string, string>)
         // @ts-expect-error untyped
         WhitelistAttributes[key].forEach((a) => {
           // @ts-expect-error untyped
@@ -32,22 +44,15 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
             // @ts-expect-error untyped
             filtered[key][a] = tagValue[a]
         })
-        // add any data attributes
-        Object.keys(tagValue || {})
-          .filter(a => a.startsWith('data-'))
-          .forEach((a) => {
-            // @ts-expect-error untyped
-            filtered[key][a] = tagValue[a]
-          })
         break
       // meta is safe, except for http-equiv
       case 'meta':
         if (Array.isArray(tagValue)) {
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
-              const safeMeta: Record<string, string> = {}
+              const safeMeta: Record<string, string> = acceptDataAttrs(meta)
               WhitelistAttributes.meta.forEach((key) => {
-                if (meta[key] || key.startsWith('data-'))
+                if (meta[key])
                   safeMeta[key] = meta[key]
               })
               return safeMeta
@@ -60,7 +65,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         if (Array.isArray(tagValue)) {
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
-              const link: Record<string, string> = {}
+              const link: Record<string, string> = acceptDataAttrs(meta)
               WhitelistAttributes.link.forEach((key) => {
                 const val = meta[key]
                 // block bad rel types
@@ -72,7 +77,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
                     return
                   link[key] = val
                 }
-                else if (val || key.startsWith('data-')) {
+                else if (val) {
                   link[key] = val
                 }
               })
@@ -85,9 +90,9 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         if (Array.isArray(tagValue)) {
           filtered[key] = (tagValue as Record<string, string>[])
             .map((meta) => {
-              const noscript: Record<string, string> = {}
+              const noscript: Record<string, string> = acceptDataAttrs(meta)
               WhitelistAttributes.noscript.forEach((key) => {
-                if (meta[key] || key.startsWith('data-'))
+                if (meta[key])
                   noscript[key] = meta[key]
               })
               return noscript
@@ -100,9 +105,9 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
         if (Array.isArray(tagValue)) {
           filtered[key] = (tagValue as Record<string, string>[])
             .map((script) => {
-              const safeScript: Record<string, string> = {}
+              const safeScript: Record<string, string> = acceptDataAttrs(script)
               WhitelistAttributes.script.forEach((s) => {
-                if (script[s] || s.startsWith('data-')) {
+                if (script[s]) {
                   if (s === 'textContent') {
                     try {
                       const jsonVal = typeof script[s] === 'string' ? JSON.parse(script[s]) : script[s]
