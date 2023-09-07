@@ -46,7 +46,7 @@ export interface InferSeoMetaPluginOptions {
 
             const hasOgTitle = !!resolvedMeta.find(meta => meta.property === 'og:title')
             const hasOgImage = !!resolvedMeta.find(meta => meta.property === 'og:image')
-            const hasTwitterCard = !!resolvedMeta.find(meta => meta.content === 'twitter:card')
+            const hasTwitterCard = !!resolvedMeta.find(meta => meta.name === 'twitter:card')
             const hasOgDescription = !!resolvedMeta.find(meta => meta.property === 'og:description')
 
             // ensure meta exists
