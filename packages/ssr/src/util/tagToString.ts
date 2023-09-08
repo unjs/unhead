@@ -43,13 +43,14 @@ export function tagToString<T extends HeadTag>(tag: T) {
   if (!TagsWithInnerContent.includes(tag.tag))
     return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
 
+  if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
+    // ensure </script> tags get encoded
+    tag.innerHTML = escapeJson(tag.innerHTML)
+
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.innerHTML || '')
   if (tag.textContent)
     // content needs to be encoded to avoid XSS, only for title
     content = escapeHtml(String(tag.textContent))
-  if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
-    // ensure </script> tags get encoded
-    tag.innerHTML = escapeJson(tag.innerHTML)
   return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }
