@@ -29,6 +29,30 @@ describe('ssr innerHTML', () => {
     `)
   })
 
+  it('json escaping', async () => {
+    const head = createHead()
+    head.push({
+      script: [
+        {
+          type: 'application/json',
+          innerHTML: {
+            escape: '</script>',
+          },
+        },
+      ],
+    })
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<script type=\\"application/json\\">{\\"escape\\":\\"\\\\u003C/script>\\"}</script>",
+        "htmlAttrs": "",
+      }
+    `)
+  });
+
   it('noscript', async () => {
     const head = createHead()
     head.push({
