@@ -57,7 +57,7 @@ function isActive(item) {
         />
 
         <UButton
-          to="https://github.com/harlan-zw"
+          to="https://github.com/unjs/unhead"
           target="_blank"
           color="gray"
           variant="ghost"
