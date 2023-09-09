@@ -7,7 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "core-js": "^3.32.1",
+    "core-js": "^3.32.2",
     "vue": "^3.3.4"
   },
   "devDependencies": {
