@@ -1,89 +1,60 @@
-import type { Head, HeadEntry, HeadTag, TagPriority } from '@unhead/schema'
+import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
 
 export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Promise<T | T[] | false> {
-  const tag = { tag: tagName, props: {} } as T
-  if (input instanceof Promise)
-    input = await input
-
-  if (tagName === 'templateParams') {
-    // @ts-expect-error untyped
-    tag.props = input
-    return tag
-  }
-  if (['title', 'titleTemplate'].includes(tagName)) {
-    // title and titleTemplate can be a string or an object with the priority
-    if (input && typeof input === 'object') {
-      tag.textContent = input.textContent
-      if (input.tagPriority)
-        tag.tagPriority = input.tagPriority as TagPriority['tagPriority']
-    }
-    else {
-      tag.textContent = input as string
-    }
-    return tag
-  }
-  // allow shorthands
-  if (typeof input === 'string') {
-    // unsupported shorthand
-    if (!['script', 'noscript', 'style'].includes(tagName))
-      return false
-
-    // if string starts with "/", "http://" or "https://" then assume it's a src
-    if (tagName === 'script' && (/^(https?:)?\/\//.test(input) || input.startsWith('/')))
-      tag.props.src = input
-
-    else
-      tag.innerHTML = input
-
-    return tag
-  }
-
-  // Deprecated prop support
-  if (input.body) {
-    // inserting dangerous javascript potentially
-    input.tagPosition = 'bodyClose'
-    // clean up
-    delete input.body
-  }
-  // `children` is deprecated but still supported
-  if (input.children) {
-    // inserting dangerous javascript potentially
-    input.innerHTML = input.children
-    // clean up
-    delete input.children
-  }
-  tag.props = await normaliseProps<T>({ ...input })
-
-  Object.keys(tag.props)
-    .filter(k => TagConfigKeys.includes(k))
-    .forEach((k) => {
-      // strip innerHTML and textContent for tags which don't support it
-      if (!['innerHTML', 'textContent'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
-        // @ts-expect-error untyped
-        tag[k] = tag.props[k]
-      }
-      delete tag.props[k]
-    })
-
+  // input can be a function or an object, we need to clone it
+  const tag = {
+    tag: tagName,
+    props: await normaliseProps<T>(
+      // explicitly check for an object
+      typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
+        ? { ...input }
+        : { [['script', 'noscript', 'style'].includes(tagName) ? 'innerHTML' : 'textContent']: input },
+      ['templateParams', 'titleTemplate'].includes(tagName),
+    ),
+  } as T
   // merge options from the entry
   TagConfigKeys.forEach((k) => {
     // @ts-expect-error untyped
-    if (!tag[k] && e[k]) {
-      // @ts-expect-error untyped
-      tag[k] = e[k]
+    const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
+    if (typeof val !== 'undefined') {
+      // strip innerHTML and textContent for tags which don't support it
+      if (!['innerHTML', 'textContent'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
+        // @ts-expect-error untyped
+        tag[k] = val
+      }
+      delete tag.props[k]
     }
   })
-
-  // stringify js objects
-  if (tag.tag === 'script' && typeof tag.innerHTML === 'object')
+  // Deprecated prop support
+  if (tag.props.body) {
+    // inserting dangerous javascript potentially
+    tag.tagPosition = 'bodyClose'
+    // clean up
+    delete tag.props.body
+  }
+  // `children` is deprecated but still supported
+  if (tag.props.children) {
+    // inserting dangerous javascript potentially
+    tag.innerHTML = tag.props.children
+    // clean up
+    delete tag.props.children
+  }
+  // shorthand for objects
+  if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
     tag.innerHTML = JSON.stringify(tag.innerHTML)
-
+    tag.props.type = tag.props.type || 'application/json'
+  }
+  else
+    // shorthand script: [ 'https://example.com/script.js' ]
+    if (tag.tag === 'script' && tag.innerHTML && (/^(https?:)?\/\//.test(tag.innerHTML) || tag.innerHTML.startsWith('/'))) {
+      tag.props.src = tag.innerHTML
+      delete tag.innerHTML
+    }
   // allow meta to be resolved into multiple tags if an array is provided on content
-  if (tag.props.content && Array.isArray(tag.props.content))
-    return tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
-
-  return tag
+  return Array.isArray(tag.props.content)
+    ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
+    : tag
 }
 
 export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['class']>) {
@@ -99,7 +70,7 @@ export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['clas
     .join(' ')
 }
 
-export async function normaliseProps<T extends HeadTag>(props: T['props']): Promise<T['props']> {
+export async function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: boolean): Promise<T['props']> {
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
     // class has special handling
@@ -113,19 +84,21 @@ export async function normaliseProps<T extends HeadTag>(props: T['props']): Prom
     if (props[k] instanceof Promise)
       // @ts-expect-error untyped
       props[k] = await props[k]
-    const v = String(props[k])
-    // data keys get special treatment, we opt for more verbose syntax
-    const isDataKey = k.startsWith('data-')
-    if (v === 'true' || v === '') {
-      // @ts-expect-error untyped
-      props[k] = isDataKey ? 'true' : true
-    }
-    else if (!props[k]) {
-      if (isDataKey && v === 'false')
+    if (!virtual && !TagConfigKeys.includes(k)) {
+      const v = String(props[k])
+      // data keys get special treatment, we opt for more verbose syntax
+      const isDataKey = k.startsWith('data-')
+      if (v === 'true' || v === '') {
         // @ts-expect-error untyped
-        props[k] = 'false'
-      else
-        delete props[k]
+        props[k] = isDataKey ? 'true' : true
+      }
+      else if (!props[k]) {
+        if (isDataKey && v === 'false')
+          // @ts-expect-error untyped
+          props[k] = 'false'
+        else
+          delete props[k]
+      }
     }
   }
   return props

@@ -23,7 +23,7 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script>{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script>",
+        "headTags": "<script type=\\"application/json\\">{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script>",
         "htmlAttrs": "",
       }
     `)

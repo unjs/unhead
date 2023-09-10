@@ -1,5 +1,5 @@
 export const SelfClosingTags = ['meta', 'link', 'base']
-export const TagsWithInnerContent = ['title', 'script', 'style', 'noscript']
+export const TagsWithInnerContent = ['title', 'titleTemplate', 'script', 'style', 'noscript']
 export const HasElementTags = [
   'base',
   'meta',
