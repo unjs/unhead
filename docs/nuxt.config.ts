@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     'nuxt-lego',
   ],
   modules: [
-    '@nuxthq/ui',
+    '@nuxt/ui',
     '@vueuse/nuxt',
     '@nuxt/content',
     'nuxt-lodash',

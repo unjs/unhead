@@ -16,7 +16,7 @@
     "@iconify-json/heroicons": "^1.1.12",
     "@iconify-json/simple-icons": "^1.1.69",
     "@nuxt/devtools": "^0.8.3",
-    "@nuxthq/ui": "^2.7.0",
+    "@nuxt/ui": "^2.8.0",
     "@nuxtjs/fontaine": "^0.4.1",
     "@vueuse/nuxt": "^10.4.1",
     "nuxt": "3.7.1",
