@@ -123,6 +123,10 @@ export interface Unhead<Input extends {} = Head> {
    * @internal
    */
   _domUpdatePromise?: Promise<void>
+  /**
+   * @internal
+   */
+  dirty: boolean
 }
 
 export interface DomState {

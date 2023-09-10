@@ -40,6 +40,8 @@ describe('vue dom classes', () => {
 
     isNavActive.value = true
 
+    // wait 100ms
+    await new Promise(resolve => setTimeout(resolve, 100))
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

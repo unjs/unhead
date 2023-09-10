@@ -149,5 +149,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   // clear all side effects still pending
   Object.values(state.pendingSideEffects).forEach(fn => fn())
   head._dom = state
+  head.dirty = false
   await head.hooks.callHook('dom:rendered', { renders: tags })
 }

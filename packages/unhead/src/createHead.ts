@@ -61,10 +61,14 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     ...(options?.plugins || []),
   ]
 
-  const updated = () => hooks.callHook('entries:updated', head)
+  const updated = () => {
+    head.dirty = true
+    hooks.callHook('entries:updated', head)
+  }
   let entryCount = 0
   let entries: HeadEntry<T>[] = []
   const head: Unhead<T> = {
+    dirty: false,
     resolvedOptions: options,
     hooks,
     headEntries() {
