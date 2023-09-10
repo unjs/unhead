@@ -236,8 +236,8 @@ importers:
         specifier: ^5.5.3
         version: 5.5.3
       zhead:
-        specifier: ^2.1.0
-        version: 2.1.0
+        specifier: ^2.1.1
+        version: 2.1.1
 
   packages/schema-org:
     dependencies:
@@ -3225,7 +3225,7 @@ packages:
     resolution: {integrity: sha512-0+XS8nduMBfOshviNVzNOLjnlAnNfEZGsO4VAvfHBQLdBKY7AYFHZLfbOURFpWzgyfxGZzankrkmLw76PwxFRg==}
     dependencies:
       hookable: 5.5.3
-      zhead: 2.1.0
+      zhead: 2.1.1
     dev: true
 
   /@unhead/shared@1.5.4:
@@ -12909,8 +12909,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zhead@2.1.0:
-    resolution: {integrity: sha512-1Qglm8Z9xyLZwXneufeg9nnaTPQbtdLILS+jLXbZmSrR4tNP3WdnsQbxSN5XPG2p4ZYn2wnJlFVLSClqTEoy1Q==}
+  /zhead@2.1.1:
+    resolution: {integrity: sha512-FRmjAFioi07R+bmL+fqbkXF/pCbC9PwcKQ8RDluC5xTaVbNBgYRQ4eKuS1C8c7Sil//UIxet/AGp7D6royoHhA==}
 
   /zip-stream@4.1.0:
     resolution: {integrity: sha512-zshzwQW7gG7hjpBlgeQP9RuyPGNxvJdzR8SUM3QhxCnLjWN2E7j3dOvpeDcQoETfHx0urRS7EtmVToql7YpU4A==}
