@@ -51,7 +51,7 @@ describe('ssr innerHTML', () => {
         "htmlAttrs": "",
       }
     `)
-  });
+  })
 
   it('noscript', async () => {
     const head = createHead()

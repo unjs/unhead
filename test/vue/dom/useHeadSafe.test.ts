@@ -15,13 +15,13 @@ describe('vue dom useHeadSafe', () => {
 
     useHeadSafe({
       bodyAttrs: {
-        onresize: ref('alert(1)'),
-        ['data-bar']: 'foo',
+        'onresize': ref('alert(1)'),
+        'data-bar': 'foo',
       },
       link: [
         {
-          rel: 'icon',
-          href: '/valid.png',
+          'rel': 'icon',
+          'href': '/valid.png',
           'data-bar': 'foo',
         },
         {
@@ -29,14 +29,14 @@ describe('vue dom useHeadSafe', () => {
           href: () => 'javascript:alert(1)',
         },
         {
-          rel: 'stylesheet',
-          href: 'https://cdn.example.com/style.css',
+          'rel': 'stylesheet',
+          'href': 'https://cdn.example.com/style.css',
           'data-bar': 'foo',
         },
       ],
       style: [
         {
-          innerHTML: 'body { background: url("javascript:alert(1)") }',
+          'innerHTML': 'body { background: url("javascript:alert(1)") }',
           'data-foo': 'bar',
         },
       ],
@@ -46,9 +46,9 @@ describe('vue dom useHeadSafe', () => {
           onload: 'alert(1)',
         },
         {
-          innerHTML: 'alert(1)',
-          textContent: { value: 'alert(1)' },
-          ['data-foo']: 'test'
+          'innerHTML': 'alert(1)',
+          'textContent': { value: 'alert(1)' },
+          'data-foo': 'test',
         },
       ],
     })
