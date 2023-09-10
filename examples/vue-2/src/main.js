@@ -1,13 +1,12 @@
 import Vue from 'vue'
-import { Vue2ProvideUnheadPlugin, VueHeadMixin, createHead } from '@unhead/vue'
+import { UnheadPlugin } from '@unhead/vue/vue2'
+import { createHead } from '@unhead/vue'
 import App from './App.vue'
 
 Vue.config.productionTip = false
 
 const head = createHead()
-Vue.use(Vue2ProvideUnheadPlugin, head)
-Vue.use(head)
-Vue.mixin(VueHeadMixin)
+Vue.mixin(UnheadPlugin(head))
 
 new Vue({
   render: h => h(App),
