@@ -7,6 +7,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     tag: tagName,
     props: await normaliseProps<T>(
       // explicitly check for an object
+      // @ts-expect-error untyped
       typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
         ? { ...input }
         : { [['script', 'noscript', 'style'].includes(tagName) ? 'innerHTML' : 'textContent']: input },
