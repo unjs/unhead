@@ -1,4 +1,4 @@
-import { getCurrentInstance } from 'vue/dist/vue'
+import { getCurrentInstance } from 'vue'
 import { headSymbol } from '../createHead'
 import { useHead } from '../composables/useHead'
 import type { VueHeadClient } from '../types'
