@@ -25,6 +25,11 @@
       "types": "./dist/polyfill.d.ts",
       "import": "./dist/polyfill.mjs",
       "require": "./dist/polyfill.cjs"
+    },
+    "./vue2": {
+      "types": "./dist/vue2.d.ts",
+      "import": "./dist/vue2.mjs",
+      "require": "./dist/vue2.cjs"
     }
   },
   "main": "dist/index.cjs",

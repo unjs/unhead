@@ -11,5 +11,6 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/VueUseHeadPolyfill', name: 'polyfill' },
+    { input: 'src/vue2/index', name: 'vue2' },
   ],
 })

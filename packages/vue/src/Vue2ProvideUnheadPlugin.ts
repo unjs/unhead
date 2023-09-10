@@ -1,7 +1,9 @@
 import type { Plugin } from 'vue'
 import { headSymbol } from './createHead'
 
-// TODO export under own subdirectory (vue2)
+/**
+ * @deprecated Import { UnheadPlugin } from `@unhead/vue/vue2` and use Vue.mixin(UnheadPlugin(head)) instead.
+ */
 export const Vue2ProvideUnheadPlugin: Plugin = function (_Vue, head) {
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
