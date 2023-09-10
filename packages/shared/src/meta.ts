@@ -64,7 +64,7 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   ogImageHeight: p('og:image:height'),
   ogImageSecureUrl: p('og:image:secure_url'),
   ogImageType: p('og:image:type'),
-  ogImageUrl: p('og:image:url'),
+  ogImageUrl: p('og:image'),
   ogImageWidth: p('og:image:width'),
   ogLocale: p('og:locale'),
   ogLocaleAlternate: p('og:locale:alternate'),
