@@ -3,7 +3,7 @@ import { InferSeoMetaPlugin } from '@unhead/addons'
 import { useDOMHead, useDelayedSerializedDom } from '../dom/util'
 
 describe('hooks', () => {
-  it('delay dom', async () => {
+  it('infer-seo-meta', async () => {
     const head = useDOMHead({
       plugins: [
         InferSeoMetaPlugin(),

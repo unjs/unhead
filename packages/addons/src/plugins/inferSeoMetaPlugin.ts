@@ -44,15 +44,16 @@ export interface InferSeoMetaPluginOptions {
             const title = input.title
             const description = resolvedMeta.find(meta => meta.name === 'description')?.content
 
-            const hasOgTitle = !!resolvedMeta.find(meta => meta.property === 'og:title')
-            const hasOgImage = !!resolvedMeta.find(meta => meta.property === 'og:image')
-            const hasTwitterCard = !!resolvedMeta.find(meta => meta.name === 'twitter:card')
-            const hasOgDescription = !!resolvedMeta.find(meta => meta.property === 'og:description')
+            const hasOgTitle = resolvedMeta.some(meta => meta.property === 'og:title')
+            const hasOgImage = resolvedMeta.some(meta => meta.property === 'og:image')
+            const hasTwitterCard = resolvedMeta.some(meta => meta.name === 'twitter:card')
+            const hasOgDescription = resolvedMeta.some(meta => meta.property === 'og:description')
 
             // ensure meta exists
             entry[inputKey].meta = input.meta || []
-            if (titleTemplate && !hasOgTitle) {
-              let newOgTitle = options?.ogTitle || titleTemplate
+            // entry must contain a title or titleTemplate
+            if (!hasOgTitle && (input.titleTemplate || input.title)) {
+              let newOgTitle = options?.ogTitle || titleTemplate || input.title
               if (typeof newOgTitle === 'function')
                 newOgTitle = newOgTitle(title)
 
