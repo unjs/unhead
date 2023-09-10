@@ -10,6 +10,9 @@ interface PackingDefinition {
   unpack?: TransformValueOptions
 }
 
+const p = (p: string ) => ({ keyValue: p, metaKey: 'property' }) as PackingDefinition
+const k = (p: string ) => ({ keyValue: p }) as PackingDefinition
+
 const MetaPackingSchema: Record<string, PackingDefinition> = {
   appleItunesApp: {
     unpack: {
@@ -19,46 +22,16 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
       },
     },
   },
-  articleAuthor: {
-    keyValue: 'article:author',
-    metaKey: 'property',
-  },
-  articleExpirationTime: {
-    keyValue: 'article:expiration_time',
-    metaKey: 'property',
-  },
-  articleModifiedTime: {
-    keyValue: 'article:modified_time',
-    metaKey: 'property',
-  },
-  articlePublishedTime: {
-    keyValue: 'article:published_time',
-    metaKey: 'property',
-  },
-  articleSection: {
-    keyValue: 'article:section',
-    metaKey: 'property',
-  },
-  articleTag: {
-    keyValue: 'article:tag',
-    metaKey: 'property',
-  },
-  bookAuthor: {
-    keyValue: 'book:author',
-    metaKey: 'property',
-  },
-  bookIsbn: {
-    keyValue: 'book:isbn',
-    metaKey: 'property',
-  },
-  bookReleaseDate: {
-    keyValue: 'book:release_date',
-    metaKey: 'property',
-  },
-  bookTag: {
-    keyValue: 'book:tag',
-    metaKey: 'property',
-  },
+  articleAuthor: p('article:author'),
+  articleExpirationTime: p('article:expiration_time'),
+  articleModifiedTime: p('article:modified_time'),
+  articlePublishedTime: p('article:published_time'),
+  articleSection: p('article:section'),
+  articleTag: p('article:tag'),
+  bookAuthor: p('book:author'),
+  bookIsbn: p('book:isbn'),
+  bookReleaseDate: p('book:release_date'),
+  bookTag: p('book:tag'),
   charset: {
     metaKey: 'charset',
   },
@@ -77,135 +50,39 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   defaultStyle: {
     metaKey: 'http-equiv',
   },
-  fbAppId: {
-    keyValue: 'fb:app_id',
-    metaKey: 'property',
-  },
-  msapplicationConfig: {
-    keyValue: 'msapplication-Config',
-  },
-  msapplicationTileColor: {
-    keyValue: 'msapplication-TileColor',
-  },
-  msapplicationTileImage: {
-    keyValue: 'msapplication-TileImage',
-  },
-  ogAudioSecureUrl: {
-    keyValue: 'og:audio:secure_url',
-    metaKey: 'property',
-  },
-  ogAudioType: {
-    keyValue: 'og:audio:type',
-    metaKey: 'property',
-  },
-  ogAudioUrl: {
-    keyValue: 'og:audio',
-    metaKey: 'property',
-  },
-  ogDescription: {
-    keyValue: 'og:description',
-    metaKey: 'property',
-  },
-  ogDeterminer: {
-    keyValue: 'og:determiner',
-    metaKey: 'property',
-  },
-  ogImage: {
-    keyValue: 'og:image',
-    metaKey: 'property',
-  },
-  ogImageAlt: {
-    keyValue: 'og:image:alt',
-    metaKey: 'property',
-  },
-  ogImageHeight: {
-    keyValue: 'og:image:height',
-    metaKey: 'property',
-  },
-  ogImageSecureUrl: {
-    keyValue: 'og:image:secure_url',
-    metaKey: 'property',
-  },
-  ogImageType: {
-    keyValue: 'og:image:type',
-    metaKey: 'property',
-  },
-  ogImageUrl: {
-    keyValue: 'og:image',
-    metaKey: 'property',
-  },
-  ogImageWidth: {
-    keyValue: 'og:image:width',
-    metaKey: 'property',
-  },
-  ogLocale: {
-    keyValue: 'og:locale',
-    metaKey: 'property',
-  },
-  ogLocaleAlternate: {
-    keyValue: 'og:locale:alternate',
-    metaKey: 'property',
-  },
-  ogSiteName: {
-    keyValue: 'og:site_name',
-    metaKey: 'property',
-  },
-  ogTitle: {
-    keyValue: 'og:title',
-    metaKey: 'property',
-  },
-  ogType: {
-    keyValue: 'og:type',
-    metaKey: 'property',
-  },
-  ogUrl: {
-    keyValue: 'og:url',
-    metaKey: 'property',
-  },
-  ogVideo: {
-    keyValue: 'og:video',
-    metaKey: 'property',
-  },
-  ogVideoAlt: {
-    keyValue: 'og:video:alt',
-    metaKey: 'property',
-  },
-  ogVideoHeight: {
-    keyValue: 'og:video:height',
-    metaKey: 'property',
-  },
-  ogVideoSecureUrl: {
-    keyValue: 'og:video:secure_url',
-    metaKey: 'property',
-  },
-  ogVideoType: {
-    keyValue: 'og:video:type',
-    metaKey: 'property',
-  },
-  ogVideoUrl: {
-    keyValue: 'og:video',
-    metaKey: 'property',
-  },
-  ogVideoWidth: {
-    keyValue: 'og:video:width',
-    metaKey: 'property',
-  },
-  profileFirstName: {
-    keyValue: 'profile:first_name',
-    metaKey: 'property',
-  },
-  profileGender: {
-    keyValue: 'profile:gender',
-    metaKey: 'property',
-  },
-  profileLastName: {
-    keyValue: 'profile:last_name',
-    metaKey: 'property',
-  },
-  profileUsername: {
-    keyValue: 'profile:username',
-    metaKey: 'property',
-  },
+  fbAppId: p('fb:app_id'),
+  msapplicationConfig: k('msapplication-Config'),
+  msapplicationTileColor: k('msapplication-TileColor'),
+  msapplicationTileImage: k('msapplication-TileImage'),
+  ogAudioSecureUrl: p('og:audio:secure_url'),
+  ogAudioType: p('og:audio:type'),
+  ogAudioUrl: p('og:audio'),
+  ogDescription: p('og:description'),
+  ogDeterminer: p('og:determiner'),
+  ogImage: p('og:image'),
+  ogImageAlt: p('og:image:alt'),
+  ogImageHeight: p('og:image:height'),
+  ogImageSecureUrl: p('og:image:secure_url'),
+  ogImageType: p('og:image:type'),
+  ogImageUrl: p('og:image:url'),
+  ogImageWidth: p('og:image:width'),
+  ogLocale: p('og:locale'),
+  ogLocaleAlternate: p('og:locale:alternate'),
+  ogSiteName: p('og:site_name'),
+  ogTitle: p('og:title'),
+  ogType: p('og:type'),
+  ogUrl: p('og:url'),
+  ogVideo: p('og:video'),
+  ogVideoAlt: p('og:video:alt'),
+  ogVideoHeight: p('og:video:height'),
+  ogVideoSecureUrl: p('og:video:secure_url'),
+  ogVideoType: p('og:video:type'),
+  ogVideoUrl: p('og:video'),
+  ogVideoWidth: p('og:video:width'),
+  profileFirstName: p('profile:first_name'),
+  profileGender: p('profile:gender'),
+  profileLastName: p('profile:last_name'),
+  profileUsername: p('profile:username'),
   refresh: {
     metaKey: 'http-equiv',
     unpack: {
@@ -228,99 +105,39 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
       },
     },
   },
-  twitterAppIdGoogleplay: {
-    keyValue: 'twitter:app:id:googleplay',
-  },
-  twitterAppIdIpad: {
-    keyValue: 'twitter:app:id:ipad',
-  },
-  twitterAppIdIphone: {
-    keyValue: 'twitter:app:id:iphone',
-  },
-  twitterAppNameGoogleplay: {
-    keyValue: 'twitter:app:name:googleplay',
-  },
-  twitterAppNameIpad: {
-    keyValue: 'twitter:app:name:ipad',
-  },
-  twitterAppNameIphone: {
-    keyValue: 'twitter:app:name:iphone',
-  },
-  twitterAppUrlGoogleplay: {
-    keyValue: 'twitter:app:url:googleplay',
-  },
-  twitterAppUrlIpad: {
-    keyValue: 'twitter:app:url:ipad',
-  },
-  twitterAppUrlIphone: {
-    keyValue: 'twitter:app:url:iphone',
-  },
-  twitterCard: {
-    keyValue: 'twitter:card',
-  },
-  twitterCreator: {
-    keyValue: 'twitter:creator',
-  },
-  twitterCreatorId: {
-    keyValue: 'twitter:creator:id',
-  },
-  twitterData1: {
-    keyValue: 'twitter:data1',
-  },
-  twitterData2: {
-    keyValue: 'twitter:data2',
-  },
-  twitterDescription: {
-    keyValue: 'twitter:description',
-  },
-  twitterImage: {
-    keyValue: 'twitter:image',
-  },
-  twitterImageAlt: {
-    keyValue: 'twitter:image:alt',
-  },
+  twitterAppIdGoogleplay: k('twitter:app:id:googleplay'),
+  twitterAppIdIpad: k('twitter:app:id:ipad'),
+  twitterAppIdIphone: k('twitter:app:id:iphone'),
+  twitterAppNameGoogleplay: k('twitter:app:name:googleplay'),
+  twitterAppNameIpad: k('twitter:app:name:ipad'),
+  twitterAppNameIphone: k('twitter:app:name:iphone'),
+  twitterAppUrlGoogleplay: k('twitter:app:url:googleplay'),
+  twitterAppUrlIpad: k('twitter:app:url:ipad'),
+  twitterAppUrlIphone: k('twitter:app:url:iphone'),
+  twitterCard: k('twitter:card'),
+  twitterCreator: k('twitter:creator'),
+  twitterCreatorId: k('twitter:creator:id'),
+  twitterData1: k('twitter:data1'),
+  twitterData2: k('twitter:data2'),
+  twitterDescription: k('twitter:description'),
+  twitterImage: k('twitter:image'),
+  twitterImageAlt: k('twitter:image:alt'),
   /*************************************************/
   // not part of Twitter's card specification anymore
-  twitterImageHeight: {
-    keyValue: 'twitter:image:height',
-  },
-  twitterImageType: {
-    keyValue: 'twitter:image:type',
-  },
-  twitterImageUrl: {
-    keyValue: 'twitter:image',
-  },
-  twitterImageWidth: {
-    keyValue: 'twitter:image:width',
-  },
+  twitterImageHeight: k('twitter:image:height'),
+  twitterImageType: k('twitter:image:type'),
+  twitterImageUrl: k('twitter:image'),
+  twitterImageWidth: k('twitter:image:width'),
   /**************************************************/
-  twitterLabel1: {
-    keyValue: 'twitter:label1',
-  },
-  twitterLabel2: {
-    keyValue: 'twitter:label2',
-  },
-  twitterPlayer: {
-    keyValue: 'twitter:player',
-  },
-  twitterPlayerHeight: {
-    keyValue: 'twitter:player:height',
-  },
-  twitterPlayerStream: {
-    keyValue: 'twitter:player:stream',
-  },
-  twitterPlayerWidth: {
-    keyValue: 'twitter:player:width',
-  },
-  twitterSite: {
-    keyValue: 'twitter:site',
-  },
-  twitterSiteId: {
-    keyValue: 'twitter:site:id',
-  },
-  twitterTitle: {
-    keyValue: 'twitter:title',
-  },
+  twitterLabel1: k('twitter:label1'),
+  twitterLabel2: k('twitter:label2'),
+  twitterPlayer: k('twitter:player'),
+  twitterPlayerHeight: k('twitter:player:height'),
+  twitterPlayerStream: k('twitter:player:stream'),
+  twitterPlayerWidth: k('twitter:player:width'),
+  twitterSite: k('twitter:site'),
+  twitterSiteId: k('twitter:site:id'),
+  twitterTitle: k('twitter:title'),
   xUaCompatible: {
     metaKey: 'http-equiv',
   },
