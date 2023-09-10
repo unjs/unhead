@@ -15,9 +15,37 @@
     {
       "name": "unpackMeta",
       "path": "dist/index.mjs",
-      "minified": 3030,
-      "minzipped": 1164,
-      "bundled": 5683
+      "minified": 7068,
+      "minzipped": 1814,
+      "bundled": 11360
+    },
+    {
+      "name": "packMeta",
+      "path": "dist/index.mjs",
+      "minified": 5749,
+      "minzipped": 1431,
+      "bundled": 8606
+    },
+    {
+      "name": "resolvePackedMetaObjectValue",
+      "path": "dist/index.mjs",
+      "minified": 5471,
+      "minzipped": 1228,
+      "bundled": 7918
+    },
+    {
+      "name": "resolveMetaKeyType",
+      "path": "dist/index.mjs",
+      "minified": 4746,
+      "minzipped": 941,
+      "bundled": 6466
+    },
+    {
+      "name": "resolveMetaKeyValue",
+      "path": "dist/index.mjs",
+      "minified": 4745,
+      "minzipped": 938,
+      "bundled": 6478
     },
     {
       "name": "normaliseEntryTags",
@@ -25,20 +53,6 @@
       "minified": 2041,
       "minzipped": 820,
       "bundled": 3467
-    },
-    {
-      "name": "packMeta",
-      "path": "dist/index.mjs",
-      "minified": 1634,
-      "minzipped": 720,
-      "bundled": 3079
-    },
-    {
-      "name": "resolvePackedMetaObjectValue",
-      "path": "dist/index.mjs",
-      "minified": 1536,
-      "minzipped": 647,
-      "bundled": 2667
     },
     {
       "name": "normaliseTag",
@@ -50,30 +64,16 @@
     {
       "name": "whitelistSafeInput",
       "path": "dist/index.mjs",
-      "minified": 1705,
-      "minzipped": 568,
-      "bundled": 3651
+      "minified": 1649,
+      "minzipped": 562,
+      "bundled": 3692
     },
     {
       "name": "processTemplateParams",
       "path": "dist/index.mjs",
-      "minified": 663,
-      "minzipped": 361,
-      "bundled": 1129
-    },
-    {
-      "name": "resolveMetaKeyValue",
-      "path": "dist/index.mjs",
-      "minified": 788,
-      "minzipped": 330,
-      "bundled": 1199
-    },
-    {
-      "name": "resolveMetaKeyType",
-      "path": "dist/index.mjs",
-      "minified": 665,
-      "minzipped": 272,
-      "bundled": 1020
+      "minified": 704,
+      "minzipped": 383,
+      "bundled": 1237
     },
     {
       "name": "tagDedupeKey",
@@ -90,18 +90,18 @@
       "bundled": 853
     },
     {
+      "name": "tagWeight",
+      "path": "dist/index.mjs",
+      "minified": 359,
+      "minzipped": 223,
+      "bundled": 748
+    },
+    {
       "name": "hashTag",
       "path": "dist/index.mjs",
       "minified": 322,
       "minzipped": 219,
       "bundled": 461
-    },
-    {
-      "name": "tagWeight",
-      "path": "dist/index.mjs",
-      "minified": 351,
-      "minzipped": 216,
-      "bundled": 740
     },
     {
       "name": "hashCode",
@@ -183,9 +183,9 @@
     {
       "name": "TAG_ALIASES",
       "path": "dist/index.mjs",
-      "minified": 50,
-      "minzipped": 54,
-      "bundled": 109
+      "minified": 53,
+      "minzipped": 57,
+      "bundled": 112
     },
     {
       "name": "IsBrowser",
@@ -204,9 +204,9 @@
     {
       "name": "TAG_WEIGHTS",
       "path": "dist/index.mjs",
-      "minified": 40,
-      "minzipped": 44,
-      "bundled": 95
+      "minified": 42,
+      "minzipped": 46,
+      "bundled": 97
     },
     {
       "name": "defineHeadPlugin",

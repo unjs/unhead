@@ -16,21 +16,21 @@
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
       "minified": 1665,
-      "minzipped": 681,
+      "minzipped": 692,
       "bundled": 2769
     },
     {
       "name": "ssrRenderTags",
       "path": "dist/index.mjs",
       "minified": 1309,
-      "minzipped": 560,
+      "minzipped": 565,
       "bundled": 2181
     },
     {
       "name": "tagToString",
       "path": "dist/index.mjs",
       "minified": 908,
-      "minzipped": 415,
+      "minzipped": 416,
       "bundled": 1548
     },
     {
