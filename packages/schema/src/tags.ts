@@ -74,11 +74,13 @@ export interface TagPriority {
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
-export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates
+export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates & ProcessesTemplateParams
 
 export type TagKey = keyof Head
 
 export type TemplateParams = { separator?: string } & Record<string, null | string | Record<string, string>>
+
+export interface ProcessesTemplateParams { processTemplateParams?: boolean }
 
 export interface HasTemplateParams {
   templateParams?: TemplateParams
@@ -87,6 +89,7 @@ export interface HasTemplateParams {
 export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateParams {
   tag: TagKey
   props: Record<string, string>
+  processTemplateParams?: boolean
   innerHTML?: string
   textContent?: string
   /**

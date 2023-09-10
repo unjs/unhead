@@ -27,6 +27,7 @@ describe('templateParams', () => {
             siteName: '%site.name',
             siteUrl: '%site.url',
           },
+          processTemplateParams: true,
         },
       ],
       meta: [
@@ -117,6 +118,7 @@ describe('templateParams', () => {
           innerHTML: JSON.stringify({
             title: '%s',
           }),
+          processTemplateParams: true,
         },
       ],
     })

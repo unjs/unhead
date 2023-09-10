@@ -56,6 +56,7 @@ describe('ssr vue templateParams', () => {
             title: '%s',
             description: '%site.description',
           },
+          processTemplateParams: true,
         },
       ],
       templateParams: {
@@ -176,5 +177,17 @@ describe('ssr vue templateParams', () => {
       "<title>my tag line | test</title>
       <meta name=\\"description\\" content=\\"Hi, welcome to the dev v0.0.0 of test.\\">"
     `)
+  })
+
+  test('entry opt-out', async () => {
+    const head = createHead()
+    head.push({
+      title: 'Hello %name',
+      templateParams: { name: 'World' },
+    }, {
+      processTemplateParams: false,
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot('"<title>Hello %name</title>"')
   })
 })

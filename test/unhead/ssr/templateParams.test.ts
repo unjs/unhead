@@ -25,6 +25,7 @@ describe('ssr templateParams', () => {
           innerHTML: JSON.stringify({
             title: '%s',
           }),
+          processTemplateParams: true,
         },
       ],
       templateParams: {
@@ -73,6 +74,7 @@ describe('ssr templateParams', () => {
           innerHTML: {
             title: '%s',
           },
+          processTemplateParams: true,
         },
       ],
     })

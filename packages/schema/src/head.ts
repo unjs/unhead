@@ -1,6 +1,6 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { HeadTag, TagPosition, TagPriority } from './tags'
+import type { HeadTag, ProcessesTemplateParams, TagPosition, TagPriority } from './tags'
 import type { Head } from './schema'
 
 /**
@@ -82,7 +82,7 @@ export interface CreateHeadOptions {
   hooks?: NestedHooks<HeadHooks>
 }
 
-export interface HeadEntryOptions extends TagPosition, TagPriority {
+export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams {
   mode?: RuntimeMode
   transform?: (input: unknown) => unknown
   head?: Unhead

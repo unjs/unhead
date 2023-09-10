@@ -5,7 +5,7 @@ export type Never<T> = {
   [P in keyof T]?: never
 }
 
-export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent>
+export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
 
 export interface SchemaAugmentations extends MergeHead {
