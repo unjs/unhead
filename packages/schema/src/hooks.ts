@@ -22,6 +22,9 @@ export interface DomRenderTagContext {
 }
 
 export interface DomBeforeRenderCtx extends ShouldRenderContext {
+  /**
+   * @deprecated will always be empty, prefer other hooks
+   */
   tags: DomRenderTagContext[]
 }
 export interface ShouldRenderContext { shouldRender: boolean }
@@ -36,7 +39,7 @@ export interface HeadHooks {
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
-  'dom:beforeRender': (ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }) => HookResult
+  'dom:beforeRender': (ctx: DomBeforeRenderCtx) => HookResult
   'dom:renderTag': (ctx: DomRenderTagContext, document: Document, track: any) => HookResult
   'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
 

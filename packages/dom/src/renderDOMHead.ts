@@ -36,19 +36,18 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   if (!dom)
     return
 
-  const tags: DomRenderTagContext[] = (await head.resolveTags())
-    .map(tag => <DomRenderTagContext> {
-      tag,
-      id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
-      shouldRender: true,
-    })
-
-  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags }
+  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: head.dirty, tags: [] }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)
     return
 
+  const tags = (await head.resolveTags())
+    .map(tag => <DomRenderTagContext> {
+      tag,
+      id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
+      shouldRender: true,
+    })
   let state = head._dom as DomState
   // let's hydrate - fill the elMap for fast lookups
   if (!state) {
