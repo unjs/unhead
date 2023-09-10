@@ -81,15 +81,43 @@ describe('useSeoMeta', () => {
     `)
   })
 
-  it('twitter image', async () => {
+  it('og image', async () => {
     const head = createHead()
+
+    useSeoMeta({
+      ogImage: [
+        {
+          url: '/og-image.png',
+          alt: 'test',
+          width: 100,
+          height: 100,
+        },
+        {
+          url: '/og-image2.png',
+        },
+        {
+          url: '/og-image3.png',
+          alt: 'test',
+          width: 100,
+          height: 100,
+        },
+      ],
+    })
 
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<meta property=\\"og:image\\" content=\\"/og-image.png\\">
+      <meta property=\\"og:image:alt\\" content=\\"test\\">
+      <meta property=\\"og:image:width\\" content=\\"100\\">
+      <meta property=\\"og:image:height\\" content=\\"100\\">
+      <meta property=\\"og:image\\" content=\\"/og-image2.png\\">
+      <meta property=\\"og:image\\" content=\\"/og-image3.png\\">
+      <meta property=\\"og:image:alt\\" content=\\"test\\">
+      <meta property=\\"og:image:width\\" content=\\"100\\">
+      <meta property=\\"og:image:height\\" content=\\"100\\">",
         "htmlAttrs": "",
       }
     `)
