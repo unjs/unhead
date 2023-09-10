@@ -10,8 +10,8 @@ interface PackingDefinition {
   unpack?: TransformValueOptions
 }
 
-const p = (p: string ) => ({ keyValue: p, metaKey: 'property' }) as PackingDefinition
-const k = (p: string ) => ({ keyValue: p }) as PackingDefinition
+const p = (p: string) => ({ keyValue: p, metaKey: 'property' }) as PackingDefinition
+const k = (p: string) => ({ keyValue: p }) as PackingDefinition
 
 const MetaPackingSchema: Record<string, PackingDefinition> = {
   appleItunesApp: {
