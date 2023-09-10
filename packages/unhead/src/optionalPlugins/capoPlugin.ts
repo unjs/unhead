@@ -18,30 +18,30 @@ const importRe = /@import/
           const isLink = tag.tag === 'link'
           if (isScript && isTruthy(tag.props.async)) {
             // ASYNC_SCRIPT
-            tag.tagPriority = 3
+            tag.tagPriority = 30
             // SYNC_SCRIPT
           }
           else if (tag.tag === 'style' && tag.innerHTML && importRe.test(tag.innerHTML)) {
             // IMPORTED_STYLES
-            tag.tagPriority = 4
+            tag.tagPriority = 40
           }
           else if (isScript && tag.props.src && !isTruthy(tag.props.defer) && !isTruthy(tag.props.async) && tag.props.type !== 'module' && !tag.props.type?.endsWith('json')) {
-            tag.tagPriority = 5
+            tag.tagPriority = 50
           }
           else if ((isLink && tag.props.rel === 'stylesheet') || tag.tag === 'style') {
             // SYNC_STYLES
-            tag.tagPriority = 6
+            tag.tagPriority = 60
           }
           else if (isLink && ['preload', 'modulepreload'].includes(tag.props.rel)) {
             // PRELOAD
-            tag.tagPriority = 7
+            tag.tagPriority = 70
           }
           else if (isScript && isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) {
             // DEFER_SCRIPT
-            tag.tagPriority = 8
+            tag.tagPriority = 80
           }
           else if (isLink && ['prefetch', 'dns-prefetch', 'prerender'].includes(tag.props.rel)) {
-            tag.tagPriority = 9
+            tag.tagPriority = 90
           }
         }
         options?.track && tags.push({
