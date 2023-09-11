@@ -18,7 +18,7 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 <tbody>
 <td align="center">
 <img width="800" height="0" /><br>
-<i>Status:</i> <a href="https://github.com/unjs/unhead/releases/tag/v1.4.0">v1.4 Released</a></b> <br>
+<i>Status:</i> <a href="https://github.com/unjs/unhead/releases/tag/v1.6.0">v1.6 Released</a></b> <br>
 <sup> Please report any issues 🐛</sup><br>
 <sub>Made possible by my <a href="https://github.com/sponsors/harlan-zw">Sponsor Program 💖</a><br> Follow me <a href="https://twitter.com/harlan_zw">@harlan_zw</a> 🐦 • Join <a href="https://discord.gg/275MBUBvgP">Discord</a> for help</sub><br>
 <img width="800" height="0" />
