@@ -25,13 +25,13 @@ importers:
         specifier: ^1.1.12
         version: 1.1.12
       '@iconify-json/simple-icons':
-        specifier: ^1.1.69
-        version: 1.1.69
+        specifier: ^1.1.70
+        version: 1.1.70
       '@nuxt/devtools':
         specifier: ^0.8.3
         version: 0.8.3(nuxt@3.7.1)(vite@4.4.9)
       '@nuxt/ui':
-        specifier: ^2.8.0
+        specifier: ^2.8.1
         version: 2.8.1(vue@3.3.4)(webpack@5.88.2)
       '@nuxtjs/fontaine':
         specifier: ^0.4.1
@@ -843,8 +843,8 @@ packages:
       '@iconify/types': 2.0.0
     dev: false
 
-  /@iconify-json/simple-icons@1.1.69:
-    resolution: {integrity: sha512-NkWhAj8irGjI4cleB1rVukLd1MZZwq2GN6bQa+NSjn9ZNnEWv3SVHcDDiUPVX7PK1EUyAETwaCKINUa25tzjhg==}
+  /@iconify-json/simple-icons@1.1.70:
+    resolution: {integrity: sha512-YZoHn180s0PELhjlMMTMVG8FxQOfP3AIn7P6KNV8xONzt/GwqMkYQ92DNYZbvSyQ4NhRajm27YkaOeSwNusr7A==}
     dependencies:
       '@iconify/types': 2.0.0
     dev: true

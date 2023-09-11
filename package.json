@@ -2,7 +2,7 @@
   "name": "unhead-monorepo",
   "version": "1.6.2",
   "private": "true",
-  "packageManager": "pnpm@8.7.4",
+  "packageManager": "pnpm@8.7.5",
   "description": "Typed utilities for defining, validating and building best-practice document &lt;head&gt;'s.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
