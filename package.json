@@ -30,7 +30,7 @@
     "lint": "eslint . --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^0.41.0",
+    "@antfu/eslint-config": "^0.41.2",
     "@types/fs-extra": "^11.0.1",
     "@types/jsdom": "^21.1.2",
     "@vitest/ui": "^0.34.4",

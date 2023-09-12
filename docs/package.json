@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@nuxt/content": "^2.8.2",
-    "@nuxtseo/module": "^2.0.0-beta.27",
+    "@nuxtseo/module": "^2.0.0-beta.29",
     "nuxt-icon": "^0.5.0",
     "nuxt-lego": "^0.0.14"
   },
