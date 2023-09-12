@@ -81,8 +81,26 @@ describe('useSeoMeta', () => {
     `)
   })
 
-  it('twitter image', async () => {
+  it('removing with null', async () => {
     const head = createHead()
+
+    useSeoMeta({
+      description: 'test',
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name=\\"description\\" content=\\"test\\">",
+        "htmlAttrs": "",
+      }
+    `)
+
+    useSeoMeta({
+      description: null,
+    })
 
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
       {

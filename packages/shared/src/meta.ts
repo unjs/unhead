@@ -1,11 +1,9 @@
 import { packArray, unpackToArray, unpackToString } from 'packrup'
 import type { TransformValueOptions } from 'packrup'
-import type { Head, MetaFlatInput } from '@unhead/schema'
-
-export type ValidMetaType = 'name' | 'http-equiv' | 'property' | 'charset'
+import type { BaseMeta, Head, MetaFlatInput } from '@unhead/schema'
 
 interface PackingDefinition {
-  metaKey?: ValidMetaType
+  metaKey?: keyof BaseMeta
   keyValue?: string
   unpack?: TransformValueOptions
 }
@@ -143,7 +141,7 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   },
 } as const
 
-export function resolveMetaKeyType(key: string): string {
+export function resolveMetaKeyType(key: string): keyof BaseMeta {
   return MetaPackingSchema[key]?.metaKey || 'name'
 }
 
@@ -195,14 +193,15 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
 
 const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
 
-function getMeta(key: string, value: string) {
-  const meta: Record<string, string> = {}
+function getMeta(key: string, value?: string) {
+  const meta: BaseMeta = {}
   const metaKeyType = resolveMetaKeyType(key)
 
   if (metaKeyType === 'charset') {
     meta[metaKeyType] = value
   }
   else {
+    // @ts-expect-error not sure
     meta[metaKeyType] = resolveMetaKeyValue(key)
     meta.content = value
   }
@@ -210,15 +209,22 @@ function getMeta(key: string, value: string) {
   return meta
 }
 
-function flattenMetaObjects(input: Record<string, any>, prefix: string = '') {
-  const extras: Record<string, any>[] = []
-
-  for (const [key, value] of Object.entries(input)) {
+function flattenMetaObjects(input: MetaFlatInput, prefix: string = '') {
+  const extras: BaseMeta[] = []
+  for (const [k, v] of Object.entries(input)) {
+    const key = k as keyof MetaFlatInput
+    const value = v as MetaFlatInput
     const fullkey = `${prefix}${prefix === '' ? key : key.charAt(0).toUpperCase() + key.slice(1)}`
     const unpacker = MetaPackingSchema[key]?.unpack
 
     if (unpacker) {
-      extras.push(getMeta(fullkey, unpackToString(value, unpacker)))
+      extras.push(getMeta(fullkey, unpackToString(value as Record<string, any>, unpacker)))
+      delete input[key]
+      continue
+    }
+
+    if (!value) {
+      extras.push(getMeta(fullkey, value))
       delete input[key]
       continue
     }
@@ -227,7 +233,9 @@ function flattenMetaObjects(input: Record<string, any>, prefix: string = '') {
       const children = Array.isArray(value) ? value : [value]
 
       for (const child of children) {
-        if (typeof child === 'object')
+        if (!child)
+          extras.push(getMeta(fullkey, child))
+        else if (typeof child === 'object')
           extras.push(...flattenMetaObjects(child, fullkey))
         else
           extras.push(getMeta(fullkey, child))
@@ -249,8 +257,8 @@ function flattenMetaObjects(input: Record<string, any>, prefix: string = '') {
  * Converts a flat meta object into an array of meta entries.
  * @param input
  */
-export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
-  const extras: Record<string, string>[] = []
+export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta']  {
+  const extras: BaseMeta[] = []
 
   SimpleArrayUnpackMetas.forEach((meta: keyof T) => {
     if (input[meta] && typeof input[meta] !== 'string') {
@@ -302,9 +310,9 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
 
       return typeof value === 'number' ? value.toString() : value
     },
-  })
+  }) as BaseMeta[]
   // remove keys with defined but empty content
-  return [...extras, ...meta].filter(v => typeof v.content === 'undefined' || v.content !== '_null')
+  return [...extras, ...meta] as unknown as Required<Head>['meta']
 }
 
 /**

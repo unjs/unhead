@@ -87,6 +87,13 @@ export default defineHeadPlugin({
           newTags.push(...dupes)
       })
       ctx.tags = newTags
+      // now filter out invalid meta
+      // TODO separate plugin
+      ctx.tags = ctx.tags.filter((t) => {
+        if (t.tag === 'meta' && t.props.name && !t.props.content)
+          return false
+        return true
+      })
     },
   },
 })
