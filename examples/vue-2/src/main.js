@@ -7,8 +7,9 @@ Vue.config.productionTip = false
 
 const head = createHead()
 
-Vue.use(UnheadPlugin, head);
+Vue.use(UnheadPlugin);
 
 new Vue({
   render: h => h(App),
+  unhead: head,
 }).$mount('#app')
