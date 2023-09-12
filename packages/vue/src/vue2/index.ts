@@ -1,4 +1,5 @@
 import { getCurrentInstance } from 'vue'
+import type { Plugin } from 'vue'
 import { headSymbol } from '../createHead'
 import { useHead } from '../composables/useHead'
 import type { VueHeadClient } from '../types'
@@ -34,11 +35,11 @@ export const HeadOptions = {
   },
 }
 
-export function UnheadPlugin(head: VueHeadClient<any>) {
-  return {
+export const UnheadPlugin: Plugin = function (_Vue, head: VueHeadClient<any>) {
+  // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
+  _Vue.mixin({
     ...HeadOptions,
     beforeCreate() {
-      // @ts-expect-error vue 2
       const options = this.$options
       const origProvide = options.provide
       options.provide = function () {
@@ -54,5 +55,5 @@ export function UnheadPlugin(head: VueHeadClient<any>) {
         }
       }
     },
-  }
+  })
 }

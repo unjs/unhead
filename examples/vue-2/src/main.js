@@ -6,7 +6,8 @@ import App from './App.vue'
 Vue.config.productionTip = false
 
 const head = createHead()
-Vue.mixin(UnheadPlugin(head))
+
+Vue.use(UnheadPlugin, head);
 
 new Vue({
   render: h => h(App),
