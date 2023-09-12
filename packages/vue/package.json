@@ -30,6 +30,11 @@
       "types": "./dist/vue2.d.ts",
       "import": "./dist/vue2.mjs",
       "require": "./dist/vue2.cjs"
+    },
+    "./components": {
+      "types": "./dist/components.d.ts",
+      "import": "./dist/components.mjs",
+      "require": "./dist/components.cjs"
     }
   },
   "main": "dist/index.cjs",

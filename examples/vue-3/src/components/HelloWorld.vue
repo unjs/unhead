@@ -6,7 +6,6 @@ defineProps<{
 }>()
 
 useHead({
-  title: 'Vue 3 updated',
   meta: [
     {
       name: 'description',

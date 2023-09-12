@@ -2,9 +2,9 @@
 import { useHead } from '@unhead/vue'
 import TheWelcome from './components/TheWelcome.vue'
 import HelloWorld from './components/HelloWorld.vue'
+import { Head } from '@unhead/vue/components'
 
 useHead({
-  title: 'Vue 3 Head',
   meta: [
     {
       name: 'description',
@@ -36,6 +36,9 @@ useHead({
 
 <template>
   <header>
+    <Head>
+      <title>Vue 3 Head</title>
+    </Head>
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125">
 
     <div class="wrapper">
