@@ -33,6 +33,9 @@ export type VueHeadClientPollyFill<T extends MergeHead> = VueHeadClient<T> & {
   unhead: VueHeadClient<T>
 }
 
+/**
+ * @deprecated Will be removed in v2.
+ */
 export function polyfillAsVueUseHead<T extends MergeHead>(head: VueHeadClient<T>): VueHeadClientPollyFill<T> {
   const polyfilled = head as VueHeadClientPollyFill<T>
   // add a bunch of @vueuse/head compat functions
