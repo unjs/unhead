@@ -58,8 +58,8 @@ describe('unhead e2e', () => {
         },
         {
           type: 'application/json',
-          innerHTML: JSON.stringify({ val: '<' + '/script>' })
-        }
+          innerHTML: JSON.stringify({ val: '<' + '/script>' }),
+        },
       ],
       meta: [
         {
@@ -101,8 +101,8 @@ describe('unhead e2e', () => {
         },
         {
           type: 'application/json',
-          innerHTML: JSON.stringify({ val: '<' + '/script>' })
-        }
+          innerHTML: JSON.stringify({ val: '<' + '/script>' }),
+        },
       ],
       meta: [
         {

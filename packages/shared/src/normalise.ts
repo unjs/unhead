@@ -46,12 +46,13 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     if (typeof tag.innerHTML === 'object') {
       tag.innerHTML = JSON.stringify(tag.innerHTML)
       tag.props.type = tag.props.type || 'application/json'
-    } else
-      // shorthand script: [ 'https://example.com/script.js' ]
-    if (tag.tag === 'script' && tag.innerHTML && (/^(https?:)?\/\//.test(tag.innerHTML) || tag.innerHTML.startsWith('/'))) {
-      tag.props.src = tag.innerHTML
-      delete tag.innerHTML
     }
+    else
+      // shorthand script: [ 'https://example.com/script.js' ]
+      if (tag.tag === 'script' && tag.innerHTML && (/^(https?:)?\/\//.test(tag.innerHTML) || tag.innerHTML.startsWith('/'))) {
+        tag.props.src = tag.innerHTML
+        delete tag.innerHTML
+      }
     if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
       // ensure </script> tags get encoded
       tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')

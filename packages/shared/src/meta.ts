@@ -257,7 +257,7 @@ function flattenMetaObjects(input: MetaFlatInput, prefix: string = '') {
  * Converts a flat meta object into an array of meta entries.
  * @param input
  */
-export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta']  {
+export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
   const extras: BaseMeta[] = []
 
   SimpleArrayUnpackMetas.forEach((meta: keyof T) => {

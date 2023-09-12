@@ -1,4 +1,4 @@
-import type { Ref, VNode, DefineComponent } from 'vue'
+import type { DefineComponent, Ref, VNode } from 'vue'
 import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
 import type { ReactiveHead } from '../types'
 import { injectHead } from '../composables/injectHead'

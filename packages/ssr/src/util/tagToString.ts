@@ -32,7 +32,6 @@ export function escapeHtml(str: string) {
   })
 }
 
-
 export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
