@@ -42,16 +42,20 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     delete tag.props.children
   }
   // shorthand for objects
-  if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
-    tag.innerHTML = JSON.stringify(tag.innerHTML)
-    tag.props.type = tag.props.type || 'application/json'
-  }
-  else
-    // shorthand script: [ 'https://example.com/script.js' ]
+  if (tag.tag === 'script') {
+    if (typeof tag.innerHTML === 'object') {
+      tag.innerHTML = JSON.stringify(tag.innerHTML)
+      tag.props.type = tag.props.type || 'application/json'
+    } else
+      // shorthand script: [ 'https://example.com/script.js' ]
     if (tag.tag === 'script' && tag.innerHTML && (/^(https?:)?\/\//.test(tag.innerHTML) || tag.innerHTML.startsWith('/'))) {
       tag.props.src = tag.innerHTML
       delete tag.innerHTML
     }
+    if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
+      // ensure </script> tags get encoded
+      tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')
+  }
   // allow meta to be resolved into multiple tags if an array is provided on content
   return Array.isArray(tag.props.content)
     ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))

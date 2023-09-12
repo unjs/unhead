@@ -56,6 +56,10 @@ describe('unhead e2e', () => {
         {
           src: 'https://my-app.com/home.js',
         },
+        {
+          type: 'application/json',
+          innerHTML: JSON.stringify({ val: '<' + '/script>' })
+        }
       ],
       meta: [
         {
@@ -80,6 +84,7 @@ describe('unhead e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
+      <script type=\\"application/json\\">{\\"val\\":\\"\\\\u003C/script>\\"}</script>
       <meta name=\\"description\\" content=\\"This is the home page\\">",
         "htmlAttrs": " lang=\\"en\\"",
       }
@@ -94,6 +99,10 @@ describe('unhead e2e', () => {
         {
           src: 'https://my-app.com/home.js',
         },
+        {
+          type: 'application/json',
+          innerHTML: JSON.stringify({ val: '<' + '/script>' })
+        }
       ],
       meta: [
         {
@@ -119,6 +128,7 @@ describe('unhead e2e', () => {
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
       <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
       <script src=\\"https://my-app.com/home.js\\"></script>
+      <script type=\\"application/json\\">{\\"val\\":\\"\\\\u003C/script>\\"}</script>
       <meta name=\\"description\\" content=\\"This is the home page\\">
       </head>
       <body>
