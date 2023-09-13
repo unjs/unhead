@@ -80,9 +80,3 @@ function isActive(item) {
     </div>
   </div>
 </template>
-<style>
-// gradient from black to transparent going right
-.graidnent {
-  background: linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0));
-}
-</style>
