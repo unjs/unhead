@@ -1,5 +1,6 @@
 {
   "private": true,
+  "name": "unhead-docs",
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi build",
