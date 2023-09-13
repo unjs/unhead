@@ -12,8 +12,8 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2(vue@3.3.4)
       '@nuxthq/elements':
-        specifier: npm:@nuxthq/elements-edge@0.0.1-28241821.23b95ff
-        version: /@nuxthq/elements-edge@0.0.1-28241821.23b95ff(vue@3.3.4)(webpack@5.88.2)
+        specifier: npm:@nuxthq/elements-edge@0.0.1-28242263.01d174c
+        version: /@nuxthq/elements-edge@0.0.1-28242263.01d174c(vue@3.3.4)(webpack@5.88.2)
       '@nuxtseo/module':
         specifier: ^2.0.0-beta.29
         version: 2.0.0-beta.29(@nuxt/devtools@0.8.3)(@unhead/shared@1.6.2)(nuxt@3.7.2)(postcss@8.4.29)(unhead@1.7.0)(vite@4.4.9)(vue@3.3.4)(webpack@5.88.2)
@@ -1477,8 +1477,8 @@ packages:
       - vti
       - vue-tsc
 
-  /@nuxthq/elements-edge@0.0.1-28241821.23b95ff(vue@3.3.4)(webpack@5.88.2):
-    resolution: {integrity: sha512-E2ZneDYwPtwuwluOqvVCb9AhgxH414wSefKsnGA43kfBaeIRuDIE9LHmeZUgq8bFbIVjkcKOVT7XFjcoUJ2EUg==}
+  /@nuxthq/elements-edge@0.0.1-28242263.01d174c(vue@3.3.4)(webpack@5.88.2):
+    resolution: {integrity: sha512-bROLdEguvLjtNTFIlVpPpehv/2+w1nBUsA5cFo3x/FBYMFcm4GCbXF/0cFAN3gJNaa1Pw08npDw0VwlS2gIT2Q==}
     dependencies:
       '@nuxt/ui': 2.8.1(vue@3.3.4)(webpack@5.88.2)
       '@vueuse/core': 10.4.1(vue@3.3.4)
