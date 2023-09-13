@@ -11,6 +11,7 @@ delete colors.blueGray
 export default defineNuxtConfig({
   extends: [
     'nuxt-lego',
+    '@nuxthq/elements',
   ],
   modules: [
     '@nuxt/ui',

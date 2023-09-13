@@ -11,7 +11,7 @@
 - [BreadcrumbList - Schema.org ](https://schema.org/BreadcrumbList)
 - [Breadcrumb Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/breadcrumb)
 - [Breadcrumb - Yoast](https://developer.yoast.com/features/schema/pieces/breadcrumb)
-- [Recipe: Breadcrumbs](/guide/recipes/breadcrumbs)
+- [Recipe: Breadcrumbs](/schema-org/recipes/breadcrumbs)
 
 ## Required properties
 
@@ -40,7 +40,7 @@ defineBreadcrumb({
 
 ## Relation Transforms
 
-[WebPage](/schema/webpage)
+[WebPage](/schema-org/schema/webpage)
 
 - sets default `breadcrumb` to this node
 

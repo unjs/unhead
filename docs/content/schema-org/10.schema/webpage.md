@@ -49,7 +49,7 @@ Home page only
 
 ## Relation Transforms
 
-[WebPage](/schema/webpage)
+[WebPage](/schema-org/schema/webpage)
 
 - sets `potentialAction` to `ReadAction`
 - sets `dateModified` to articles `dateModified`

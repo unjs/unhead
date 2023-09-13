@@ -11,7 +11,7 @@
 - [Product - Schema.org](https://schema.org/Product)
 - [Product Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
 - [Product - Yoast](https://developer.yoast.com/features/schema/pieces/product)
-- [Recipe: eCommerce](/guide/recipes/e-commerce)
+- [Recipe: eCommerce](/schema-org/recipes/e-commerce)
 
 
 ## Required properties

@@ -2,6 +2,9 @@
 const route = useRoute()
 
 const { data: page } = await useAsyncData(`docs-${route.path}`, () => queryContent(route.path).findOne())
+if (!page.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Page not found' })
+}
 const { data: surround } = await useAsyncData(`docs-${route.path}-surround`, () => queryContent()
   .only(['_path', 'title', 'navigation', 'description'])
   .where({ _extension: 'md', navigation: { $ne: false } })
@@ -19,9 +22,8 @@ defineOgImage()
 </script>
 
 <template>
-  <div class="grid lg:grid-cols-10 lg:gap-8">
+  <div v-if="page" class="grid lg:grid-cols-10 lg:gap-8">
     <DocsAside class="lg:col-span-2" />
-
     <div class="lg:col-span-8 min-h-0 flex flex-col">
       <div v-if="page" class="grid lg:grid-cols-10 lg:gap-8">
         <div class="pt-8 pb-16" :class="page.body?.toc ? 'lg:col-span-8' : 'lg:col-span-10'">
@@ -38,7 +40,7 @@ defineOgImage()
           <DocsFooter class="mt-16" />
         </div>
 
-        <DocsToc v-if="page.body?.toc" :toc="page.body.toc" class="lg:col-span-2 order-first lg:order-last" />
+        <DocsToc v-if="page.body?.toc?.links?.length" :toc="page.body.toc" class="lg:col-span-2 order-first lg:order-last" />
       </div>
       <div v-else class="flex-1 flex flex-col items-center justify-center">
         <div class="text-center">

@@ -11,7 +11,7 @@
 - [Article - Schema.org](https://schema.org/Article)
 - [Article Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/article)
 - [Article - Yoast](https://developer.yoast.com/features/schema/pieces/article)
-- [Recipe: Blog](/guide/recipes/blog)
+- [Recipe: Blog](/schema-org/recipes/blog)
 
 ## Required properties
 
@@ -33,7 +33,7 @@
   If the author of the article is not your identity (see [Choosing an identity](/schema-org/guides/identity)) you will need to provide authors
   manually.
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema/person).
+  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
 
 ## Recommended Properties
 
@@ -70,7 +70,7 @@
 
 ## Relation Transforms
 
-[WebPage](/schema/webpage)
+[WebPage](/schema-org/schema/webpage)
 
 - sets default `potentialAction` to `ReadAction`
 - sets default `dateModified` to articles `dateModified`
@@ -107,7 +107,7 @@ defineArticle({
 
 ## Examples
 
-See the [blog](/guide/recipes/blog) recipe for more examples.
+See the [blog](/schema-org/recipes/blog) recipe for more examples.
 
 ### Minimal
 

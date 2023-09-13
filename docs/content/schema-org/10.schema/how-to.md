@@ -11,7 +11,7 @@
 - [HowTo - Schema.org](https://schema.org/HowTo)
 - [How-To Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/how-to)
 - [HowTo - Yoast](https://developer.yoast.com/features/schema/pieces/howto)
-- [Recipe: How To](/guide/recipes/how-to)
+- [Recipe: How To](/schema-org/recipes/how-to)
 
 ## Required properties
 

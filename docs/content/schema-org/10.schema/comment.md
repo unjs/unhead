@@ -11,7 +11,7 @@
 
 - [Comment - Schema.org](https://schema.org/Comment)
 - [Comment - Yoast](https://developer.yoast.com/features/schema/pieces/comment)
-- [Recipe: Blog](/guide/recipes/blog)
+- [Recipe: Blog](/schema-org/recipes/blog)
 
 ## Required properties
 
@@ -24,7 +24,7 @@
 
 - **author** `Person`
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema/person).
+  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
 
 
 ## Defaults
@@ -39,7 +39,7 @@
 
 ## Examples
 
-See the [blog](/guide/recipes/blog) recipe for more examples.
+See the [blog](/schema-org/recipes/blog) recipe for more examples.
 
 ### Minimal
 

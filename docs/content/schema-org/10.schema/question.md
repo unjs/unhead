@@ -9,7 +9,7 @@
 ## Useful Links
 
 - [Schema.org Question](https://schema.org/Question)
-- [Recipe: FAQ](/guide/recipes/faq)
+- [Recipe: FAQ](/schema-org/recipes/faq)
 
 ## Required properties
 
@@ -48,7 +48,7 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 
 ## Relation Transforms
 
-[WebPage](/schema/webpage)
+[WebPage](/schema-org/schema/webpage)
 
 - Each question will append an entry on to `mainEntity`
 

@@ -8,13 +8,13 @@ title: eCommerce
 
 ## Useful Links
 
-- [defineProduct](/schema/product)
+- [defineProduct](/schema-org/schema/product)
 - [Product | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
 - [Product | Yoast](https://developer.yoast.com/features/schema/pieces/product)
 
 ## Marking up a Product
 
-The [defineProduct](/schema/product) function and [SchemaOrgProduct](/schema-org/guides/components) component are provided
+The [defineProduct](/schema-org/schema/product) function and [SchemaOrgProduct](/schema-org/guides/components) component are provided
 to create Product Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Route Meta Resolving](/guide/getting-started/how-it-works#route-meta-resolving)
