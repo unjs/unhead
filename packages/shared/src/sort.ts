@@ -19,12 +19,14 @@ export function tagWeight<T extends HeadTag>(tag: T) {
   if (typeof priority === 'number')
     return priority
   if (tag.tag === 'meta') {
+    // CSP needs to be as it effects the loading of assets
+    if (tag.props['http-equiv'] === 'content-security-policy')
+      weight = -30
     // charset must come early in case there's non-utf8 characters in the HTML document
     if (tag.props.charset)
       weight = -20
-    // CSP needs to be as it effects the loading of assets
-    if (tag.props['http-equiv'] === 'content-security-policy')
-      weight = 0
+    if (tag.props.name === 'viewport')
+      weight = -15
   }
   else if (tag.tag === 'link' && tag.props.rel === 'preconnect') {
     // preconnects should almost always come first

@@ -94,46 +94,55 @@ describe('capo', () => {
         content: 'description',
       },
     })
+    head.push({
+      meta: {
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1.0',
+      },
+    })
 
     const resolvedTags = await head.resolveTags()
+    // VIEWPORT
+    expect(resolvedTags[0].tag).toEqual('meta')
+    expect(resolvedTags[0].props.name).toEqual('viewport')
     // TITLE
-    expect(resolvedTags[0].tag).toEqual('title')
+    expect(resolvedTags[1].tag).toEqual('title')
     // PRECONNECT
-    expect(resolvedTags[1].tag).toEqual('link')
-    expect(resolvedTags[1].props.rel).toEqual('preconnect')
+    expect(resolvedTags[2].tag).toEqual('link')
+    expect(resolvedTags[2].props.rel).toEqual('preconnect')
     // ASYNC SCRIPT
-    expect(resolvedTags[2].tag).toEqual('script')
-    expect(resolvedTags[2].props.async).toEqual(true)
+    expect(resolvedTags[3].tag).toEqual('script')
+    expect(resolvedTags[3].props.async).toEqual(true)
     // IMPORTED CSS
-    expect(resolvedTags[3].tag).toEqual('style')
-    expect(resolvedTags[3].innerHTML).toEqual('@import "imported.css"')
+    expect(resolvedTags[4].tag).toEqual('style')
+    expect(resolvedTags[4].innerHTML).toEqual('@import "imported.css"')
     // SYNC SCRIPT
-    expect(resolvedTags[4].tag).toEqual('script')
-    expect(resolvedTags[4].props.src).toEqual('sync-script.js')
+    expect(resolvedTags[5].tag).toEqual('script')
+    expect(resolvedTags[5].props.src).toEqual('sync-script.js')
     // SYNC STYLE
-    expect(resolvedTags[5].tag).toEqual('style')
-    expect(resolvedTags[5].innerHTML).toEqual('.sync-style { color: red }')
-    expect(resolvedTags[6].tag).toEqual('link')
-    expect(resolvedTags[6].props.rel).toEqual('stylesheet')
-    // PRELOAD
+    expect(resolvedTags[6].tag).toEqual('style')
+    expect(resolvedTags[6].innerHTML).toEqual('.sync-style { color: red }')
     expect(resolvedTags[7].tag).toEqual('link')
-    expect(resolvedTags[7].props.rel).toEqual('modulepreload')
+    expect(resolvedTags[7].props.rel).toEqual('stylesheet')
+    // PRELOAD
     expect(resolvedTags[8].tag).toEqual('link')
-    expect(resolvedTags[8].props.rel).toEqual('preload')
+    expect(resolvedTags[8].props.rel).toEqual('modulepreload')
+    expect(resolvedTags[9].tag).toEqual('link')
+    expect(resolvedTags[9].props.rel).toEqual('preload')
     // DEFER SCRIPT
-    expect(resolvedTags[9].tag).toEqual('script')
-    expect(resolvedTags[9].props.defer).toEqual(true)
+    expect(resolvedTags[10].tag).toEqual('script')
+    expect(resolvedTags[10].props.defer).toEqual(true)
     // DNS-PREFETCH
-    expect(resolvedTags[10].tag).toEqual('link')
-    expect(resolvedTags[10].props.rel).toEqual('dns-prefetch')
-    // PREFETCH
     expect(resolvedTags[11].tag).toEqual('link')
-    expect(resolvedTags[11].props.rel).toEqual('prefetch')
-    // PRERENDER
+    expect(resolvedTags[11].props.rel).toEqual('dns-prefetch')
+    // PREFETCH
     expect(resolvedTags[12].tag).toEqual('link')
-    expect(resolvedTags[12].props.rel).toEqual('prerender')
+    expect(resolvedTags[12].props.rel).toEqual('prefetch')
+    // PRERENDER
+    expect(resolvedTags[13].tag).toEqual('link')
+    expect(resolvedTags[13].props.rel).toEqual('prerender')
     // META
-    expect(resolvedTags[13].tag).toEqual('meta')
-    expect(resolvedTags[13].props.name).toEqual('description')
+    expect(resolvedTags[14].tag).toEqual('meta')
+    expect(resolvedTags[14].props.name).toEqual('description')
   })
 })

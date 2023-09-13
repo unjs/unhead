@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import {defineHeadPlugin, tagWeight} from '@unhead/shared'
 
 const importRe = /@import/
 
@@ -8,8 +8,11 @@ const importRe = /@import/
       'tags:beforeResolve': function ({ tags }) {
         // handle 9 and down in capo
         for (const tag of tags) {
+          if (tag.tagPosition && tag.tagPosition !== 'head')
+            continue
+          tag.tagPriority = tag.tagPriority || tagWeight(tag)
           // skip if already prioritised
-          if (tag.tagPriority || (tag.tagPosition && tag.tagPosition !== 'head'))
+          if (tag.tagPriority !== 100)
             continue
 
           const isTruthy = (val?: string | boolean) => val === '' || val === true
