@@ -42,11 +42,12 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   const head = injectHead()
   const options = _options || {}
   const resolved = resolveUnrefHeadInput(input) || {} as Script
+  // TODO warn about non-src / non-key input
   const key = `script-${hashCode(resolved.key || resolved.src)}`
   if (head._scripts?.[key])
     return head._scripts[key]
 
-  async function transform(entry: Head) {
+  async function transform(entry: Head) : Promise<Head> {
     options.transform = options.transform || ((input: Script) => input)
     return { script: [options.transform(entry.script![0] as Script)] }
   }
@@ -60,7 +61,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       ],
     }, {
       ...options as any as HeadEntryOptions,
-      transform: transform as (input: unknown) => unknown,
+      transform,
     })
   }
 
@@ -72,6 +73,8 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     waitForUse: () => new Promise(() => {}),
   }
 
+  // 1. Normalise the DOM event handler `load`, `error` for hydrating a script tag
+  // TODO move this to eventHandlers plugin
   if (head.ssr) {
     // if we don't have a trigger we can insert the script right away
     if (!options.trigger)
@@ -79,7 +82,10 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   }
   else {
     // hydrating a ssr script has limited support for events, we need to trigger them a bit differently
+
+
     // TODO handle errors
+    // TODO move to event handlers
     const isHydrating = !!document.querySelector(`script[data-hid="${hashCode(key)}"]`)
     if (isHydrating) {
       script.status!.value = 'loading'
@@ -125,6 +131,16 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
         })
     }
     else {
+      // TODO handle sync script
+      head.hooks.hook('dom:renderTag', (ctx) => {
+        if (ctx.tag.key === key && ctx.tag.innerHTML) {
+          // trigger the onload if the script is using innerHTML
+          script.status.value = 'loaded'
+        }
+      })
+
+      // 2. Specifying when useHead should actually be called (via a promise)
+
       // check if it already exists
       let startScriptLoadPromise = Promise.resolve()
       // change mode to client
@@ -141,14 +157,6 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
         console.log('onload')
         // instance && instance.runWithContext(onload)
       }
-
-      // TODO handle sync script
-      head.hooks.hook('dom:renderTag', (ctx) => {
-        if (ctx.tag.key === key && ctx.tag.innerHTML) {
-          // trigger the onload if the script is using innerHTML
-          script.status.value = 'loaded'
-        }
-      })
 
       startScriptLoadPromise
         .then(() => {
@@ -184,6 +192,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     }
   }
 
+  // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
       if (fn === '$script')
@@ -211,6 +220,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       }
     },
   }) as any as T & { $script: ScriptInstance<T> }
+  // 4. Providing a unique context for the script
   head._scripts = head._scripts || {}
   head._scripts[key] = instance
   return instance
