@@ -9,7 +9,6 @@ export {
 }
 
 // optional plugins
-export * from './optionalPlugins/hashHydrationPlugin'
 export * from './optionalPlugins/capoPlugin'
 
 // composables

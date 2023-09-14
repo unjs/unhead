@@ -36,7 +36,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   if (!dom)
     return
 
-  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: head.dirty, tags: [] }
+  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: head.dirty }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)

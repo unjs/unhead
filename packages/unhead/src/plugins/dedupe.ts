@@ -7,12 +7,10 @@ export default defineHeadPlugin({
   hooks: {
     'tag:normalise': function ({ tag }) {
       // support for third-party dedupe keys
-      ['hid', 'vmid', 'key'].forEach((key) => {
-        if (tag.props[key]) {
-          tag.key = tag.props[key]
-          delete tag.props[key]
-        }
-      })
+      if (tag.props.key) {
+        tag.key = tag.props.key
+        delete tag.props.key
+      }
       const generatedKey = tagDedupeKey(tag)
       const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
       if (dedupe)

@@ -27,20 +27,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       delete tag.props[k]
     }
   })
-  // TODO remove v2
-  if (tag.props.body) {
-    // inserting dangerous javascript potentially
-    tag.tagPosition = 'bodyClose'
-    // clean up
-    delete tag.props.body
-  }
-  // TODO remove v2
-  if (tag.props.children) {
-    // inserting dangerous javascript potentially
-    tag.innerHTML = tag.props.children
-    // clean up
-    delete tag.props.children
-  }
   // shorthand for objects
   if (tag.tag === 'script') {
     if (typeof tag.innerHTML === 'object') {

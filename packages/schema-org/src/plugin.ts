@@ -1,24 +1,19 @@
 import { defineHeadPlugin } from '@unhead/shared'
 import type { MetaInput, ResolvedMeta } from './types'
 import {
-  createSchemaOrgGraph, resolveMeta,
+  createSchemaOrgGraph,
 } from '.'
 import type { SchemaOrgGraph } from '.'
+import { loadResolver } from './resolver'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
+  tagPosition?: 'head' | 'body'
 }
 
-export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
-  const fallback = () => ({})
-  return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
-}
-
-/**
- * @deprecated Use `PluginSchemaOrg` instead.
- */
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<string, any>, options?: PluginSchemaOrgOptions) {
-  config = resolveMeta({ ...config })
+export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Promise<Record<string, any>> }) {
+  options = options || {}
+  const meta = options?.resolveMeta || (() => ({}))
   let graph: SchemaOrgGraph
   const resolvedMeta = {} as ResolvedMeta
   return defineHeadPlugin({
@@ -29,7 +24,6 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
       'tag:normalise': async function ({ tag }) {
         if (tag.key === 'schema-org-graph') {
           // this is a bit expensive, load in seperate chunk
-          const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
           for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
             const newNode = {
@@ -38,7 +32,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
             }
             graph.push(newNode)
           }
-          tag.tagPosition = config.tagPosition === 'head' ? 'head' : 'bodyClose'
+          tag.tagPosition = options?.tagPosition === 'head' ? 'head' : 'bodyClose'
         }
         if (tag.tag === 'title')
           resolvedMeta.title = tag.textContent
@@ -56,7 +50,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
             const minify = options?.minify || process.env.NODE_ENV === 'production'
             tag.innerHTML = JSON.stringify({
               '@context': 'https://schema.org',
-              '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
+              '@graph': graph.resolveGraph({ ...options, ...resolvedMeta, ...(await meta() || {}) }),
             }, null, minify ? 0 : 2)
             delete tag.props.nodes
           }

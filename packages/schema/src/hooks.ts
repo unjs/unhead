@@ -22,10 +22,6 @@ export interface DomRenderTagContext {
 }
 
 export interface DomBeforeRenderCtx extends ShouldRenderContext {
-  /**
-   * @deprecated will always be empty, prefer other hooks
-   */
-  tags: DomRenderTagContext[]
 }
 export interface ShouldRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
