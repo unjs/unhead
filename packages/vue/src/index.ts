@@ -22,9 +22,6 @@ export {
 
 // types
 export * from './types'
-// vue 2
-export * from './VueHeadMixin'
-export * from './Vue2ProvideUnheadPlugin'
 
 // composables
 export * from './autoImports'

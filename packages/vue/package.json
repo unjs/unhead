@@ -49,7 +49,7 @@
     "export:sizes": "npx export-size . -r"
   },
   "peerDependencies": {
-    "vue": ">=2.7 || >=3"
+    "vue": ">=3"
   },
   "dependencies": {
     "@unhead/schema": "workspace:*",
