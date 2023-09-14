@@ -3,7 +3,7 @@ import type {
   Head,
   HeadEntryOptions,
 } from '@unhead/schema'
-import { getActiveHead } from './useActiveHead'
+import { injectHead } from './injectHead'
 
 export function useHead<T extends Head>(input: T, options: HeadEntryOptions = {}): ActiveHeadEntry<T> | void {
   const head = options.head || injectHead()

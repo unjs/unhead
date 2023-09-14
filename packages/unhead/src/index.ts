@@ -1,10 +1,11 @@
-import { createHead, createHeadCore, createServerHead } from './createHead'
+import { createHead, createHeadCore, createServerHead, createSharedHead } from './createHead'
 
 // create
 export {
   createHead,
   createServerHead,
   createHeadCore,
+  createSharedHead,
 }
 
 // optional plugins

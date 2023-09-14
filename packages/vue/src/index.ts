@@ -35,6 +35,7 @@ export * from './composables/useSeoMeta'
 export * from './composables/useServerHead'
 export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
+export * from './composables/useScript'
 export { setHeadInjectionHandler }
 
 export type { HeadTag, MergeHead, ActiveHeadEntry, Head, Unhead, HeadEntryOptions } from '@unhead/schema'
