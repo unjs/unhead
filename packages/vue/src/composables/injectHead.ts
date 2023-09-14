@@ -8,6 +8,5 @@ export function injectHead<T extends MergeHead>() {
   // requires Vue 3.3
   if (hasInjectionContext())
     return inject<VueHeadClient<T>>(headSymbol)
-
   return _injectHead<VueHeadClient<T>>()
 }
