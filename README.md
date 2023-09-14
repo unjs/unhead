@@ -36,17 +36,19 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 - 💎 Fully typed with MDN docs
 - 🤝 Used by [Nuxt](https://nuxt.com/) with more framework support coming soon.
 
+  
+## Docs
+
+Visit the [documentation site](https://unhead.unjs.io/) for guides and API references.
+
+
 ## Install
 
 ```bash
 npm i unhead
 ```
 
-## Usage
-
-For specific frameworks integrations, see the [docs](https://unhead.unjs.io/).
-
-### Basic
+### Quick Setup
 
 Create the head client somewhere in your root application.
 
@@ -70,9 +72,9 @@ useHead({
 })
 ```
 
-## Docs
+## Demos
 
-Visit the [documentation site](https://unhead.unjs.io/) for guides and API reference.
+- [StackBlitz - Vue SPA](https://stackblitz.com/edit/vitejs-vite-uijgqa?file=package.json)
 
 ## Sponsors
 
