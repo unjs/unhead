@@ -21,4 +21,6 @@ export function setHeadInjectionHandler<T>(handler: () => T | undefined) {
     // @ts-expect-error global injection
     return _global[globalKey]() as T
   }
+  else { console.warn('No head injection handler found. Did you forget to call `setHeadInjectionHandler`?') }
+  console.warn('The head injection handler didn\'t return a head instance.')
 }
