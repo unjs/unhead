@@ -113,6 +113,9 @@ export interface Unhead<Input extends {} = Head> {
    * Use a head plugin, loads the plugins hooks.
    */
   use: (plugin: HeadPlugin) => void
+  /**
+   * Is it a server-side render context.
+   */
   ssr: boolean
   // dom specific runtime state
   /**
