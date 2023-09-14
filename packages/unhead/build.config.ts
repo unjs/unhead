@@ -9,5 +9,6 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/composables/index', name: 'composables' },
   ],
 })

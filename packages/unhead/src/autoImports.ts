@@ -2,7 +2,7 @@ import { composableNames } from '@unhead/shared'
 
 export const unheadComposablesImports = [
   {
-    from: 'unhead',
+    from: 'unhead/composables',
     imports: composableNames,
   },
 ]
