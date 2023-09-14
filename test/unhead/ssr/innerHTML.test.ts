@@ -75,4 +75,42 @@ describe('ssr innerHTML', () => {
       }
     `)
   })
+
+  it('bug #228', async () => {
+    const head = createHead()
+      head.push({
+        script: [{ innerHTML: `/* eslint-disable */
+/* prettier-ignore */
+// @ts-nocheck
+
+(() => {
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('vueuse-color-scheme') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()`,
+          // @ts-expect-error untyped
+          once: true }],
+      })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<script once>/* eslint-disable */
+      /* prettier-ignore */
+      // @ts-nocheck
+
+      (() => {
+        const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches
+        const setting = localStorage.getItem('vueuse-color-scheme') || 'auto'
+        if (setting === 'dark' || (prefersDark && setting !== 'light'))
+          document.documentElement.classList.toggle('dark', true)
+      })()</script>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

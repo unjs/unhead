@@ -27,14 +27,14 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       delete tag.props[k]
     }
   })
-  // Deprecated prop support
+  // TODO remove v2
   if (tag.props.body) {
     // inserting dangerous javascript potentially
     tag.tagPosition = 'bodyClose'
     // clean up
     delete tag.props.body
   }
-  // `children` is deprecated but still supported
+  // TODO remove v2
   if (tag.props.children) {
     // inserting dangerous javascript potentially
     tag.innerHTML = tag.props.children
@@ -47,12 +47,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       tag.innerHTML = JSON.stringify(tag.innerHTML)
       tag.props.type = tag.props.type || 'application/json'
     }
-    else
-      // shorthand script: [ 'https://example.com/script.js' ]
-      if (tag.tag === 'script' && tag.innerHTML && (/^(https?:)?\/\//.test(tag.innerHTML) || tag.innerHTML.startsWith('/'))) {
-        tag.props.src = tag.innerHTML
-        delete tag.innerHTML
-      }
     if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
       // ensure </script> tags get encoded
       tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')

@@ -78,8 +78,8 @@ describe('unhead e2e shorthands', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<script>console.log('Hello World')</script>
-      <script src=\\"/my-script.js\\"></script>
-      <script src=\\"https://example.com/script.js\\"></script>",
+      <script>/my-script.js</script>
+      <script>https://example.com/script.js</script>",
         "htmlAttrs": "",
       }
     `)
@@ -100,8 +100,8 @@ describe('unhead e2e shorthands', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <script>console.log('Hello World')</script>
-      <script src=\\"/my-script.js\\"></script>
-      <script src=\\"https://example.com/script.js\\"></script>
+      <script>/my-script.js</script>
+      <script>https://example.com/script.js</script>
       </head>
       <body>
 
