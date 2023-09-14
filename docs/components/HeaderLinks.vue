@@ -24,13 +24,13 @@ function isActive(item) {
           <div class="flex items-center">
             <div class="flex items-center mr-3 mb-1">
               <div class="relative">
-              <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all group-hover:opacity-30" />
-              <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all absolute left-0 top-0 group-hover:-translate-x-2" />
+                <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all group-hover:opacity-30" />
+                <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all absolute left-0 top-0 group-hover:-translate-x-2" />
               </div>
               <div class="ml-3">
                 <h1 class="font-bold text-xl group-hover:drop-shadow-md">
                   Unhead
-                  <div class="h-[2px] bg-gradient-to-b from-gray-800 to-transparent to-60% transition-all group-hover:opacity-70 group-hover:translate-y-0 opacity-0 translate-y-2"></div>
+                  <div class="h-[2px] bg-gradient-to-b from-gray-800 to-transparent to-60% transition-all group-hover:opacity-70 group-hover:translate-y-0 opacity-0 translate-y-2" />
                 </h1>
               </div>
             </div>

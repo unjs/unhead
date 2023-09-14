@@ -65,9 +65,9 @@ export interface TagPriority {
    * (besides some special tags).
    *
    * The following special tags have default priorities:
-   * * -2 `<meta charset ...>`
-   * * -1 `<base>`
-   * * 0 `<meta http-equiv="content-security-policy" ...>`
+   * -2 `<meta charset ...>`
+   * -1 `<base>`
+   * 0 `<meta http-equiv="content-security-policy" ...>`
    *
    * All other tags have a default priority of 10: `<meta>`, `<script>`, `<link>`, `<style>`, etc
    */

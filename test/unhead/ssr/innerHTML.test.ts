@@ -78,8 +78,9 @@ describe('ssr innerHTML', () => {
 
   it('bug #228', async () => {
     const head = createHead()
-      head.push({
-        script: [{ innerHTML: `/* eslint-disable */
+    head.push({
+      script: [{
+        innerHTML: `/* eslint-disable */
 /* prettier-ignore */
 // @ts-nocheck
 
@@ -89,9 +90,10 @@ describe('ssr innerHTML', () => {
   if (setting === 'dark' || (prefersDark && setting !== 'light'))
     document.documentElement.classList.toggle('dark', true)
 })()`,
-          // @ts-expect-error untyped
-          once: true }],
-      })
+        // @ts-expect-error untyped
+        once: true,
+      }],
+    })
 
     const ctx = await renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`

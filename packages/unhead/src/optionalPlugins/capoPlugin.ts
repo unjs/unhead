@@ -1,4 +1,4 @@
-import {defineHeadPlugin, tagWeight} from '@unhead/shared'
+import { defineHeadPlugin, tagWeight } from '@unhead/shared'
 
 const importRe = /@import/
 
