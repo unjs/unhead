@@ -77,6 +77,11 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
 
   setup(_, { slots }) {
     const head = injectHead()
+    if (!head) {
+      return () => {
+        return null
+      }
+    }
 
     const obj: Ref<ReactiveHead> = ref({})
 
