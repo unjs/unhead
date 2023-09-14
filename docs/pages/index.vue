@@ -49,7 +49,7 @@ const { data } = await useAsyncData('code-example', () => queryContent('/_code-e
         <ShowcaseCard label="Pluggable Core" description="Hook into any part of the head rendering process using Hookable.">
           <Icon name="noto:deciduous-tree" class="w-1/2 h-1/2" />
         </ShowcaseCard>
-        <ShowcaseCard label="Plugins for Extra Oomph" description="Boost your performance with Capo.js ordering, Vite tree-shaking and hash hydration.">
+        <ShowcaseCard label="Plugins for Extra Oomph" description="Boost your performance with custom plugins: Capo.js ordering, Vite tree-shaking, etc.">
           <Icon name="noto:rocket" class="w-1/2 h-1/2" />
         </ShowcaseCard>
         <ShowcaseCard label="Totally Typed" description="Full TypeScript head schema with MDN documentation.">
