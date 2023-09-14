@@ -2,7 +2,7 @@
 
 Schema.org for Vue. Supports typed and automated Google Rich Results
 
-[Documentation](https://unhead-schema-org.harlanzw.com//)
+[Documentation](https://unhead.unjs.io/schema-org)
 
 ## License
 
