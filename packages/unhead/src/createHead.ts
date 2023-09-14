@@ -19,19 +19,15 @@ import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
 
-// TODO drop support for non-context head
-// eslint-disable-next-line import/no-mutable-exports
-export let activeHead: Unhead<any> | undefined
-
-// TODO rename to createDomHead
+// TODO rename to createDomHead, move to client subpath
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>(options)
   head.use(DomPlugin())
-  return activeHead = head
+  return head
 }
 
 /* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  return activeHead = createHeadCore<T>(options)
+  return createHeadCore<T>(options)
 }
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
