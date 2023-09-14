@@ -18,20 +18,26 @@ import HashKeyedPlugin from './plugins/hashKeyed'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
+import { setHeadInjectionHandler } from './composables/injectHead'
 
-// TODO drop support for non-context head
-// eslint-disable-next-line import/no-mutable-exports
-export let activeHead: Unhead<any> | undefined
-
-// TODO rename to createDomHead
+// TODO rename to createDomHead, move to client subpath
 /* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>(options)
+  const head = createSharedHead<T>(options)
   head.use(DomPlugin())
-  return activeHead = head
+  return head
 }
 
+// TODO move to server subpath
 /* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  return activeHead = createHeadCore<T>(options)
+  // not safe to set a global head instance
+  return createHeadCore<T>(options)
+}
+
+export function createSharedHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+  const head = createHeadCore<T>(options)
+  // safe to set a global head instance in a browser
+  setHeadInjectionHandler(() => head)
+  return head
 }
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {

@@ -1,10 +1,11 @@
-import { createHead, createHeadCore, createServerHead } from './createHead'
+import { createHead, createHeadCore, createServerHead, createSharedHead } from './createHead'
 
 // create
 export {
   createHead,
   createServerHead,
   createHeadCore,
+  createSharedHead,
 }
 
 // optional plugins
@@ -13,7 +14,7 @@ export * from './optionalPlugins/capoPlugin'
 
 // composables
 export * from './autoImports'
-export * from './composables/useActiveHead'
+export * from './composables/injectHead'
 export * from './composables/useHead'
 export * from './composables/useHeadSafe'
 export * from './composables/useServerHead'

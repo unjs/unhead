@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead, getActiveHead, useHead } from 'unhead'
+import { createHead, injectHead, useHead } from 'unhead'
 
 describe('state', () => {
   it('exists', async () => {
@@ -9,7 +9,7 @@ describe('state', () => {
       title: 'hello',
     })
 
-    const head = getActiveHead()
+    const head = injectHead()
     expect(head.headEntries()).toMatchInlineSnapshot(`
       [
         {

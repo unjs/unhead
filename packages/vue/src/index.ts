@@ -1,4 +1,4 @@
-import { CapoPlugin, HashHydrationPlugin, createHeadCore } from 'unhead'
+import { CapoPlugin, HashHydrationPlugin, createHeadCore, setHeadInjectionHandler } from 'unhead'
 import { createHead, createServerHead } from './createHead'
 import { resolveUnrefHeadInput } from './utils'
 
@@ -35,5 +35,6 @@ export * from './composables/useSeoMeta'
 export * from './composables/useServerHead'
 export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
+export { setHeadInjectionHandler }
 
 export type { HeadTag, MergeHead, ActiveHeadEntry, Head, Unhead, HeadEntryOptions } from '@unhead/schema'

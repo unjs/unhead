@@ -29,7 +29,7 @@ export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrateg
 export const IsBrowser = typeof window !== 'undefined'
 
 export const composableNames = [
-  'getActiveHead',
+  'injectHead',
   'useHead',
   'useSeoMeta',
   'useHeadSafe',
