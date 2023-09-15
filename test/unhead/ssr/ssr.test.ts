@@ -123,13 +123,13 @@ describe('ssr', () => {
         "bodyTagsOpen": "",
         "headTags": "<meta charset=\\"utf-8\\">
       <title>page name - site</title>
-      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta property=\\"og:image:width\\" content=\\"800\\">
-      <meta property=\\"og:image:height\\" content=\\"600\\">
-      <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
-      <meta name=\\"description\\" content=\\"test\\">
       <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
       <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
+      <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
+      <meta property=\\"og:image:width\\" content=\\"800\\">
+      <meta property=\\"og:image:height\\" content=\\"600\\">
+      <meta name=\\"description\\" content=\\"test\\">
       <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }
@@ -153,10 +153,10 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta name=\\"description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
+        "headTags": "<meta name=\\"description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
       <meta property=\\"og:description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
       <meta property=\\"og:title\\" content=\\"My Amazing Site\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
       <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
         "htmlAttrs": "",
       }

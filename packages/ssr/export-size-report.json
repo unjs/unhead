@@ -15,23 +15,23 @@
     {
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
-      "minified": 1665,
-      "minzipped": 692,
-      "bundled": 2769
+      "minified": 1509,
+      "minzipped": 631,
+      "bundled": 2561
     },
     {
       "name": "ssrRenderTags",
       "path": "dist/index.mjs",
-      "minified": 1309,
-      "minzipped": 565,
-      "bundled": 2181
+      "minified": 1153,
+      "minzipped": 515,
+      "bundled": 1973
     },
     {
       "name": "tagToString",
       "path": "dist/index.mjs",
-      "minified": 908,
-      "minzipped": 416,
-      "bundled": 1548
+      "minified": 752,
+      "minzipped": 371,
+      "bundled": 1340
     },
     {
       "name": "propsToString",
@@ -46,13 +46,6 @@
       "minified": 249,
       "minzipped": 136,
       "bundled": 504
-    },
-    {
-      "name": "escapeJson",
-      "path": "dist/index.mjs",
-      "minified": 86,
-      "minzipped": 85,
-      "bundled": 188
     }
   ]
 }
