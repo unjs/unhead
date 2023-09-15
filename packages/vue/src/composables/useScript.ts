@@ -79,6 +79,11 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     // if we don't have a trigger we can insert the script right away
     if (!options.trigger)
       insert()
+
+    // set the scripts data-loaded to true so we can check if it's loaded
+    // TODO
+    script.onload = 'this.dataset.loaded = true'
+    script.onerror = 'this.dataset.error = true'
   }
   else {
     // hydrating a ssr script has limited support for events, we need to trigger them a bit differently
