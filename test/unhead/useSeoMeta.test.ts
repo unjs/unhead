@@ -102,13 +102,12 @@ describe('useSeoMeta', () => {
       description: null,
     })
 
-    // TODO this is wrong, it needs to _remove_ the description
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"description\\" content=\\"test\\">",
+        "headTags": "",
         "htmlAttrs": "",
       }
     `)

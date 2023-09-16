@@ -190,10 +190,8 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   // need to handle array input of the object
   const primitives: Record<string, any> = {}
   Object.entries(input).forEach(([key, value]) => {
-    if (!value)
-      return
     if (!Array.isArray(value)) {
-      if (typeof value === 'object') {
+      if (typeof value === 'object' && value) {
         if (ObjectArrayEntries.includes(fixKeyCase(key) as keyof MetaFlatInput)) {
           extras.push(...handleObjectEntry(key, value))
           return
@@ -231,7 +229,11 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
     },
   }) as BaseMeta[]
   // remove keys with defined but empty content
-  return [...extras, ...meta] as unknown as Required<Head>['meta']
+  return [...extras, ...meta].map((m) => {
+    if (m.content === '_null')
+      m.content = null
+    return m
+  }) as unknown as Required<Head>['meta']
 }
 
 /**
