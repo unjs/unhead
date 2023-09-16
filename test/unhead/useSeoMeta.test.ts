@@ -113,6 +113,43 @@ describe('useSeoMeta', () => {
     `)
   })
 
+  it('string object', async () => {
+    const head = createHead()
+    useSeoMeta({
+      robots: 'noindex, nofollow',
+    })
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name=\\"robots\\" content=\\"noindex, nofollow\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('robots falsy', async () => {
+    const head = createHead()
+    useSeoMeta({
+      robots: {
+        index: true,
+        nofollow: false,
+        noindex: false,
+        maxSnippet: -1,
+      },
+    })
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name=\\"robots\\" content=\\"index, max-snippet:-1\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
   it('generates correct meta tags', async () => {
     const head = createHead()
     const dateString = new Date(0).toISOString()
@@ -192,14 +229,14 @@ describe('useSeoMeta', () => {
       ogDescription: 'Description',
       ogDeterminer: 'auto',
       ogImage: [{
-        alt: 'Alt',
+        alt: 'First',
         height: 1337,
         secureUrl: 'https://example.com',
         type: 'image/gif',
         url: 'https://example.com',
         width: 1337,
       }],
-      ogImageAlt: 'Alt',
+      ogImageAlt: 'Second',
       ogImageHeight: 1337,
       ogImageSecureUrl: 'https://example.com',
       ogImageType: 'image/gif',
@@ -299,38 +336,41 @@ describe('useSeoMeta', () => {
       <meta charset=\\"utf-8\\">
       <meta name=\\"viewport\\" content=\\"width=device-width, initial-scale=1\\">
       <title>Title</title>
-      <meta property=\\"og:image:alt\\" content=\\"Alt\\">
+      <meta property=\\"article:author\\" content=\\"https://example.com/some.html\\">
+      <meta property=\\"article:author\\" content=\\"https://example.com/one.html\\">
+      <meta property=\\"article:tag\\" content=\\"Apple\\">
+      <meta property=\\"article:tag\\" content=\\"Steve Jobs\\">
+      <meta property=\\"book:author\\" content=\\"https://example.com/some.html\\">
+      <meta property=\\"book:author\\" content=\\"https://example.com/one.html\\">
+      <meta property=\\"book:tag\\" content=\\"Apple\\">
+      <meta property=\\"book:tag\\" content=\\"Steve Jobs\\">
+      <meta property=\\"og:audio\\" content=\\"https://example.com\\">
+      <meta property=\\"og:audio:type\\" content=\\"audio/mpeg\\">
+      <meta property=\\"og:audio:secure_url\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image:alt\\" content=\\"First\\">
+      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
+      <meta property=\\"og:image:width\\" content=\\"1337\\">
       <meta property=\\"og:image:height\\" content=\\"1337\\">
       <meta property=\\"og:image:secure_url\\" content=\\"https://example.com\\">
-      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com\\">
-      <meta property=\\"og:image:width\\" content=\\"1337\\">
-      <meta property=\\"og:image:alt\\" content=\\"Alt\\">
-      <meta property=\\"og:image:height\\" content=\\"1337\\">
-      <meta property=\\"og:image:secure_url\\" content=\\"https://example.com\\">
-      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com\\">
-      <meta property=\\"og:image:width\\" content=\\"1337\\">
+      <meta property=\\"og:video\\" content=\\"https://example.com\\">
+      <meta property=\\"og:video:alt\\" content=\\"Alt\\">
+      <meta property=\\"og:video:type\\" content=\\"application/x-shockwave-flash\\">
+      <meta property=\\"og:video:width\\" content=\\"1337\\">
+      <meta property=\\"og:video:height\\" content=\\"1337\\">
+      <meta property=\\"og:video:secure_url\\" content=\\"https://example.com\\">
       <meta name=\\"apple-itunes-app\\" content=\\"app-id=id, app-argument=https://example.com\\">
       <meta name=\\"apple-mobile-web-app-capable\\" content=\\"yes\\">
       <meta name=\\"apple-mobile-web-app-status-bar-style\\" content=\\"black\\">
       <meta name=\\"apple-mobile-web-app-title\\" content=\\"Title\\">
       <meta name=\\"application-name\\" content=\\"Name\\">
-      <meta property=\\"article:author\\" content=\\"https://example.com/some.html\\">
-      <meta property=\\"article:author\\" content=\\"https://example.com/one.html\\">
       <meta property=\\"article:expiration_time\\" content=\\"1970-01-01T00:00:00.000Z\\">
       <meta property=\\"article:modified_time\\" content=\\"1970-01-01T00:00:00.000Z\\">
       <meta property=\\"article:published_time\\" content=\\"1970-01-01T00:00:00.000Z\\">
       <meta property=\\"article:section\\" content=\\"Technology\\">
-      <meta property=\\"article:tag\\" content=\\"Apple\\">
-      <meta property=\\"article:tag\\" content=\\"Steve Jobs\\">
       <meta name=\\"author\\" content=\\"Name\\">
-      <meta property=\\"book:author\\" content=\\"https://example.com/some.html\\">
-      <meta property=\\"book:author\\" content=\\"https://example.com/one.html\\">
       <meta property=\\"book:isbn\\" content=\\"978-3-16-148410-0\\">
       <meta property=\\"book:release_date\\" content=\\"1970-01-01T00:00:00.000Z\\">
-      <meta property=\\"book:tag\\" content=\\"Apple\\">
-      <meta property=\\"book:tag\\" content=\\"Steve Jobs\\">
       <meta name=\\"color-scheme\\" content=\\"normal\\">
       <meta http-equiv=\\"content-type\\" content=\\"text/html; charset=utf-8\\">
       <meta name=\\"creator\\" content=\\"Name\\">
@@ -349,23 +389,20 @@ describe('useSeoMeta', () => {
       <meta property=\\"og:audio:secure_url\\" content=\\"https://example.com\\">
       <meta property=\\"og:audio:type\\" content=\\"audio/mpeg\\">
       <meta property=\\"og:audio\\" content=\\"https://example.com\\">
-      <meta property=\\"og:audio:secure_url\\" content=\\"https://example.com\\">
-      <meta property=\\"og:audio:type\\" content=\\"audio/mpeg\\">
-      <meta property=\\"og:audio\\" content=\\"https://example.com\\">
       <meta property=\\"og:description\\" content=\\"Description\\">
       <meta property=\\"og:determiner\\" content=\\"auto\\">
+      <meta property=\\"og:image:alt\\" content=\\"Second\\">
+      <meta property=\\"og:image:height\\" content=\\"1337\\">
+      <meta property=\\"og:image:secure_url\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
+      <meta property=\\"og:image\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image:width\\" content=\\"1337\\">
       <meta property=\\"og:locale\\" content=\\"en-US\\">
       <meta property=\\"og:locale:alternate\\" content=\\"de-DE\\">
       <meta property=\\"og:site_name\\" content=\\"Name\\">
       <meta property=\\"og:title\\" content=\\"Title\\">
       <meta property=\\"og:type\\" content=\\"article\\">
       <meta property=\\"og:url\\" content=\\"https://example.com\\">
-      <meta property=\\"og:video:alt\\" content=\\"Alt\\">
-      <meta property=\\"og:video:height\\" content=\\"1337\\">
-      <meta property=\\"og:video:secure_url\\" content=\\"https://example.com\\">
-      <meta property=\\"og:video:type\\" content=\\"application/x-shockwave-flash\\">
-      <meta property=\\"og:video\\" content=\\"https://example.com\\">
-      <meta property=\\"og:video:width\\" content=\\"1337\\">
       <meta property=\\"og:video:alt\\" content=\\"Alt\\">
       <meta property=\\"og:video:height\\" content=\\"1337\\">
       <meta property=\\"og:video:secure_url\\" content=\\"https://example.com\\">
@@ -412,6 +449,148 @@ describe('useSeoMeta', () => {
       <meta name=\\"twitter:site:id\\" content=\\"id\\">
       <meta name=\\"twitter:title\\" content=\\"Title\\">
       <meta http-equiv=\\"x-ua-compatible\\" content=\\"IE=edge\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('arrayable meta tags', async () => {
+    const head = createHead()
+    useSeoMeta({
+      ogAudio: [{
+        secureUrl: 'https://example.com',
+        type: 'audio/mpeg',
+        url: 'https://example.com',
+      }],
+      ogImage: [{
+        alt: 'First',
+        height: 1337,
+        secureUrl: 'https://first.com',
+        type: 'image/gif',
+        url: 'https://first.com',
+        width: 1337,
+      },
+      {
+        alt: 'Second',
+        height: 1337,
+        secureUrl: 'https://second.com',
+        type: 'image/gif',
+        url: 'https://second.com',
+        width: 1337,
+      }],
+      ogVideo: [{
+        alt: 'Alt',
+        height: 1337,
+        secureUrl: 'https://example.com',
+        type: 'application/x-shockwave-flash',
+        url: 'https://example.com',
+        width: 1337,
+      }],
+      twitterImage: [
+        {
+          url: 'https://example.com',
+          alt: 'Alt',
+          width: 1337,
+          height: 1337,
+          type: 'image/gif',
+        },
+      ],
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta property=\\"og:audio\\" content=\\"https://example.com\\">
+      <meta property=\\"og:audio:type\\" content=\\"audio/mpeg\\">
+      <meta property=\\"og:audio:secure_url\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image\\" content=\\"https://first.com\\">
+      <meta property=\\"og:image:alt\\" content=\\"First\\">
+      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
+      <meta property=\\"og:image:width\\" content=\\"1337\\">
+      <meta property=\\"og:image:height\\" content=\\"1337\\">
+      <meta property=\\"og:image:secure_url\\" content=\\"https://first.com\\">
+      <meta property=\\"og:image\\" content=\\"https://second.com\\">
+      <meta property=\\"og:image:alt\\" content=\\"Second\\">
+      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
+      <meta property=\\"og:image:width\\" content=\\"1337\\">
+      <meta property=\\"og:image:height\\" content=\\"1337\\">
+      <meta property=\\"og:image:secure_url\\" content=\\"https://second.com\\">
+      <meta property=\\"og:video\\" content=\\"https://example.com\\">
+      <meta property=\\"og:video:alt\\" content=\\"Alt\\">
+      <meta property=\\"og:video:type\\" content=\\"application/x-shockwave-flash\\">
+      <meta property=\\"og:video:width\\" content=\\"1337\\">
+      <meta property=\\"og:video:height\\" content=\\"1337\\">
+      <meta property=\\"og:video:secure_url\\" content=\\"https://example.com\\">
+      <meta name=\\"twitter:image\\" content=\\"https://example.com\\">
+      <meta name=\\"twitter:image:alt\\" content=\\"Alt\\">
+      <meta name=\\"twitter:image:type\\" content=\\"image/gif\\">
+      <meta name=\\"twitter:image:width\\" content=\\"1337\\">
+      <meta name=\\"twitter:image:height\\" content=\\"1337\\">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('object meta tags', async () => {
+    const head = createHead()
+    useSeoMeta({
+      ogAudio: {
+        secureUrl: 'https://example.com',
+        type: 'audio/mpeg',
+        url: 'https://example.com',
+      },
+      ogImage: {
+        alt: 'First',
+        height: 1337,
+        secureUrl: 'https://first.com',
+        type: 'image/gif',
+        url: 'https://first.com',
+        width: 1337,
+      },
+      ogVideo: {
+        alt: 'Alt',
+        height: 1337,
+        secureUrl: 'https://example.com',
+        type: 'application/x-shockwave-flash',
+        url: 'https://example.com',
+        width: 1337,
+      },
+      twitterImage: {
+        url: 'https://example.com',
+        alt: 'Alt',
+        width: 1337,
+        height: 1337,
+        type: 'image/gif',
+      },
+    })
+
+    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta property=\\"og:audio\\" content=\\"https://example.com\\">
+      <meta property=\\"og:audio:type\\" content=\\"audio/mpeg\\">
+      <meta property=\\"og:audio:secure_url\\" content=\\"https://example.com\\">
+      <meta property=\\"og:image\\" content=\\"https://first.com\\">
+      <meta property=\\"og:image:alt\\" content=\\"First\\">
+      <meta property=\\"og:image:type\\" content=\\"image/gif\\">
+      <meta property=\\"og:image:width\\" content=\\"1337\\">
+      <meta property=\\"og:image:height\\" content=\\"1337\\">
+      <meta property=\\"og:image:secure_url\\" content=\\"https://first.com\\">
+      <meta property=\\"og:video\\" content=\\"https://example.com\\">
+      <meta property=\\"og:video:alt\\" content=\\"Alt\\">
+      <meta property=\\"og:video:type\\" content=\\"application/x-shockwave-flash\\">
+      <meta property=\\"og:video:width\\" content=\\"1337\\">
+      <meta property=\\"og:video:height\\" content=\\"1337\\">
+      <meta property=\\"og:video:secure_url\\" content=\\"https://example.com\\">
+      <meta name=\\"twitter:image\\" content=\\"https://example.com\\">
+      <meta name=\\"twitter:image:alt\\" content=\\"Alt\\">
+      <meta name=\\"twitter:image:type\\" content=\\"image/gif\\">
+      <meta name=\\"twitter:image:width\\" content=\\"1337\\">
+      <meta name=\\"twitter:image:height\\" content=\\"1337\\">",
         "htmlAttrs": "",
       }
     `)
