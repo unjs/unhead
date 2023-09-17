@@ -20,16 +20,10 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
       },
     },
   },
-  articleAuthor: p('article:author'),
   articleExpirationTime: p('article:expiration_time'),
   articleModifiedTime: p('article:modified_time'),
   articlePublishedTime: p('article:published_time'),
-  articleSection: p('article:section'),
-  articleTag: p('article:tag'),
-  bookAuthor: p('book:author'),
-  bookIsbn: p('book:isbn'),
   bookReleaseDate: p('book:release_date'),
-  bookTag: p('book:tag'),
   charset: {
     metaKey: 'charset',
   },
@@ -53,32 +47,13 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   msapplicationTileColor: k('msapplication-TileColor'),
   msapplicationTileImage: k('msapplication-TileImage'),
   ogAudioSecureUrl: p('og:audio:secure_url'),
-  ogAudioType: p('og:audio:type'),
   ogAudioUrl: p('og:audio'),
-  ogDescription: p('og:description'),
-  ogDeterminer: p('og:determiner'),
-  ogImage: p('og:image'),
-  ogImageAlt: p('og:image:alt'),
-  ogImageHeight: p('og:image:height'),
   ogImageSecureUrl: p('og:image:secure_url'),
-  ogImageType: p('og:image:type'),
   ogImageUrl: p('og:image'),
-  ogImageWidth: p('og:image:width'),
-  ogLocale: p('og:locale'),
-  ogLocaleAlternate: p('og:locale:alternate'),
   ogSiteName: p('og:site_name'),
-  ogTitle: p('og:title'),
-  ogType: p('og:type'),
-  ogUrl: p('og:url'),
-  ogVideo: p('og:video'),
-  ogVideoAlt: p('og:video:alt'),
-  ogVideoHeight: p('og:video:height'),
   ogVideoSecureUrl: p('og:video:secure_url'),
-  ogVideoType: p('og:video:type'),
   ogVideoUrl: p('og:video'),
-  ogVideoWidth: p('og:video:width'),
   profileFirstName: p('profile:first_name'),
-  profileGender: p('profile:gender'),
   profileLastName: p('profile:last_name'),
   profileUsername: p('profile:username'),
   refresh: {
@@ -103,45 +78,22 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
       },
     },
   },
-  twitterAppIdGoogleplay: k('twitter:app:id:googleplay'),
-  twitterAppIdIpad: k('twitter:app:id:ipad'),
-  twitterAppIdIphone: k('twitter:app:id:iphone'),
-  twitterAppNameGoogleplay: k('twitter:app:name:googleplay'),
-  twitterAppNameIpad: k('twitter:app:name:ipad'),
-  twitterAppNameIphone: k('twitter:app:name:iphone'),
-  twitterAppUrlGoogleplay: k('twitter:app:url:googleplay'),
-  twitterAppUrlIpad: k('twitter:app:url:ipad'),
-  twitterAppUrlIphone: k('twitter:app:url:iphone'),
-  twitterCard: k('twitter:card'),
-  twitterCreator: k('twitter:creator'),
-  twitterCreatorId: k('twitter:creator:id'),
-  twitterData1: k('twitter:data1'),
-  twitterData2: k('twitter:data2'),
-  twitterDescription: k('twitter:description'),
-  twitterImage: k('twitter:image'),
-  twitterImageAlt: k('twitter:image:alt'),
-  /*************************************************/
-  // not part of Twitter's card specification anymore
-  twitterImageHeight: k('twitter:image:height'),
-  twitterImageType: k('twitter:image:type'),
-  twitterImageUrl: k('twitter:image'),
-  twitterImageWidth: k('twitter:image:width'),
-  /**************************************************/
-  twitterLabel1: k('twitter:label1'),
-  twitterLabel2: k('twitter:label2'),
-  twitterPlayer: k('twitter:player'),
-  twitterPlayerHeight: k('twitter:player:height'),
-  twitterPlayerStream: k('twitter:player:stream'),
-  twitterPlayerWidth: k('twitter:player:width'),
-  twitterSite: k('twitter:site'),
-  twitterSiteId: k('twitter:site:id'),
-  twitterTitle: k('twitter:title'),
   xUaCompatible: {
     metaKey: 'http-equiv',
   },
 } as const
 
+const openGraphNamespaces = [
+  'og',
+  'book',
+  'article',
+  'profile',
+]
+
 export function resolveMetaKeyType(key: string): keyof BaseMeta {
+  const fKey = fixKeyCase(key).split(':')[0]
+  if (openGraphNamespaces.includes(fKey))
+    return 'property'
   return MetaPackingSchema[key]?.metaKey || 'name'
 }
 
@@ -150,7 +102,11 @@ export function resolveMetaKeyValue(key: string): string {
 }
 
 function fixKeyCase(key: string) {
-  return key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  const fKey = updated.split('-')[0]
+  if (openGraphNamespaces.includes(fKey) || fKey === 'twitter')
+    return key.replace(/([A-Z])/g, ':$1').toLowerCase()
+  return updated
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
@@ -191,66 +147,38 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   )
 }
 
-const SimpleArrayUnpackMetas: (keyof MetaFlatInput)[] = ['themeColor']
+const ObjectArrayEntries = ['og:image', 'og:video', 'og:audio', 'twitter:image']
 
-function getMeta(key: string, value?: string) {
-  const meta: BaseMeta = {}
-  const metaKeyType = resolveMetaKeyType(key)
-
-  if (metaKeyType === 'charset') {
-    meta[metaKeyType] = value
-  }
-  else {
-    // @ts-expect-error not sure
-    meta[metaKeyType] = resolveMetaKeyValue(key)
-    meta.content = value
-  }
-
-  return meta
+function sanitize(input: Record<string, any>) {
+  const out: Record<string, any> = {}
+  Object.entries(input).forEach(([k, v]) => {
+    if (String(v) !== 'false' && k)
+      out[k] = v
+  })
+  return out
 }
 
-function flattenMetaObjects(input: MetaFlatInput, prefix: string = '') {
-  const extras: BaseMeta[] = []
-  for (const [k, v] of Object.entries(input)) {
-    const key = k as keyof MetaFlatInput
-    const value = v as MetaFlatInput
-    const fullkey = `${prefix}${prefix === '' ? key : key.charAt(0).toUpperCase() + key.slice(1)}`
-    const unpacker = MetaPackingSchema[key]?.unpack
-
-    if (unpacker) {
-      extras.push(getMeta(fullkey, unpackToString(value as Record<string, any>, unpacker)))
-      delete input[key]
-      continue
-    }
-
-    if (!value) {
-      extras.push(getMeta(fullkey, value))
-      delete input[key]
-      continue
-    }
-
-    if (typeof value === 'object') {
-      const children = Array.isArray(value) ? value : [value]
-
-      for (const child of children) {
-        if (!child)
-          extras.push(getMeta(fullkey, child))
-        else if (typeof child === 'object')
-          extras.push(...flattenMetaObjects(child, fullkey))
-        else
-          extras.push(getMeta(fullkey, child))
-      }
-
-      delete input[key]
-    }
-    else {
-      extras.push(getMeta(fullkey, value))
-      if (typeof input === 'object')
-        delete input[key]
-    }
+function handleObjectEntry(key: string, v: Record<string, any>) {
+  // filter out falsy values
+  const value: Record<string, any> = sanitize(v)
+  const fKey = fixKeyCase(key)
+  const attr = resolveMetaKeyType(fKey)
+  if (ObjectArrayEntries.includes(fKey as keyof MetaFlatInput)) {
+    const input: MetaFlatInput = {}
+    // we need to prefix the keys with og:
+    Object.entries(value).forEach(([k, v]) => {
+      // @ts-expect-error untyped
+      input[`${key}${k === 'url' ? '' : `${k.charAt(0).toUpperCase()}${k.slice(1)}`}`] = v
+    })
+    const unpacked = unpackMeta(input)
+      // sort by property name
+      .sort((a, b) =>
+        // @ts-expect-error untyped
+        (a[attr]?.length || 0) - (b[attr]?.length || 0),
+      ) as BaseMeta[]
+    return unpacked
   }
-
-  return extras
+  return [{ [attr]: fKey, ...value }] as BaseMeta[]
 }
 
 /**
@@ -259,39 +187,28 @@ function flattenMetaObjects(input: MetaFlatInput, prefix: string = '') {
  */
 export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
   const extras: BaseMeta[] = []
-
-  SimpleArrayUnpackMetas.forEach((meta: keyof T) => {
-    if (input[meta] && typeof input[meta] !== 'string') {
-      // maybe it's an array, convert to array
-      const val = (Array.isArray(input[meta]) ? input[meta] : [input[meta]]) as (Record<string, string>)[]
-      // for each array entry
-      delete input[meta]
-      val.forEach((entry) => {
-        extras.push({
-          name: fixKeyCase(meta as string),
-          ...entry,
-        })
-      })
+  // need to handle array input of the object
+  const primitives: Record<string, any> = {}
+  Object.entries(input).forEach(([key, value]) => {
+    if (!Array.isArray(value)) {
+      if (typeof value === 'object' && value) {
+        if (ObjectArrayEntries.includes(fixKeyCase(key) as keyof MetaFlatInput)) {
+          extras.push(...handleObjectEntry(key, value))
+          return
+        }
+        primitives[key] = sanitize(value)
+      }
+      else {
+        primitives[key] = value
+      }
+      return
     }
+    value.forEach((v) => {
+      extras.push(...(typeof v === 'string' ? unpackMeta({ [key]: v }) as BaseMeta[] : handleObjectEntry(key, v)))
+    })
   })
 
-  extras.push(
-    // need to sort the entry and make sure the `og:image` is first
-    ...flattenMetaObjects(input).sort((a, b) => {
-      if (a.property?.startsWith('og:image')) {
-        if (b.property?.startsWith('og:image'))
-          return 0
-        else
-          return -1
-      }
-
-      if (b.property?.startsWith('og:image'))
-        return 1
-
-      return 0
-    }))
-
-  const meta = unpackToArray((input), {
+  const meta = unpackToArray((primitives), {
     key({ key }) {
       return resolveMetaKeyType(key) as string
     },
@@ -312,7 +229,11 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
     },
   }) as BaseMeta[]
   // remove keys with defined but empty content
-  return [...extras, ...meta] as unknown as Required<Head>['meta']
+  return [...extras, ...meta].map((m) => {
+    if (m.content === '_null')
+      m.content = null
+    return m
+  }) as unknown as Required<Head>['meta']
 }
 
 /**

@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -64,7 +64,7 @@
     "unplugin-ast": "^0.8.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.22.17",
+    "@babel/types": "^7.22.19",
     "estree-walker": "^3.0.3"
   }
 }

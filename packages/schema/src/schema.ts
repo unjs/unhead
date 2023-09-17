@@ -52,7 +52,7 @@ export interface BaseMeta extends Omit<_Meta, 'content'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-content
    */
-  content?: MaybeArray<Stringable>
+  content?: MaybeArray<Stringable> | null
 }
 
 export type EntryAugmentation = undefined | Record<string, any>
