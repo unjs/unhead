@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { mapContentNavigation, findPageHeadline } from '#imports'
+
 const route = useRoute()
 
 const { data: page } = await useAsyncData(`docs-${route.path}`, () => queryContent(route.path).findOne())
@@ -19,50 +21,79 @@ useSeoMeta({
 })
 
 defineOgImage()
+
+const navigation = inject('navigation')
+const children = computed(() => {
+  return navigation.value.find((item) => {
+    return route.path.startsWith(item._path)
+  })?.children || []
+})
+
+const headline = computed(() => findPageHeadline(page.value))
+const communityLinks = computed(() => [
+  {
+    icon: 'i-ph-pen-duotone',
+    label: 'Edit this page',
+    to: `https://github.com/unjs/unhead/edit/main/docs/content/${page?.value?._file}`,
+    target: '_blank',
+  },
+  {
+    icon: 'i-ph-chat-centered-text-duotone',
+    label: 'Discord Support',
+    to: 'https://discord.gg/275MBUBvgP',
+    target: '_blank',
+  },
+  {
+    icon: 'i-ph-hand-heart-duotone',
+    label: 'Become a Sponsor',
+    to: 'https://github.com/sponsors/harlan-zw',
+    target: '_blank',
+  },
+])
+
+const ecosystemLinks = [
+  {
+    label: 'Unlighthouse',
+    to: 'https://unlighthouse.dev',
+    target: '_blank',
+  },
+]
 </script>
 
 <template>
-  <div v-if="page" class="grid lg:grid-cols-10 lg:gap-8">
-    <DocsAside class="lg:col-span-2" />
-    <div class="lg:col-span-8 min-h-0 flex flex-col">
-      <div v-if="page" class="grid lg:grid-cols-10 lg:gap-8">
-        <div class="pt-8 pb-16" :class="page.body?.toc ? 'lg:col-span-8' : 'lg:col-span-10'">
-          <DocsPageHeader :page="page" />
+<UMain>
+  <UPage :ui="{ wrapper: 'xl:gap-10' }">
+    <template #left>
+    <UAside>
+      <UNavigationTree :links="mapContentNavigation(children)" />
+    </UAside>
+    </template>
+    <div>
+      <UPage :ui="{ wrapper: 'xl:gap-18' }">
+        <UPageHeader :title="page.title" :description="page.description" :links="page.links" :headline="headline" />
 
-          <ContentRenderer v-if="page.body" :value="page" class="prose prose-primary dark:prose-invert max-w-none" />
+        <UPageBody prose class="pb-0">
+          <ContentRenderer v-if="page.body" :value="page" />
+          <hr v-if="surround?.length" class="my-8">
+          <UDocsSurround :surround="surround" />
+        </UPageBody>
 
-          <DocsPageFooter :page="page" class="mt-12" />
-
-          <hr class="border-gray-200 dark:border-gray-800 my-6">
-
-          <DocsPrevNext :prev="prev" :next="next" />
-
-          <DocsFooter class="mt-16" />
-        </div>
-
-        <DocsToc v-if="page.body?.toc?.links?.length" :toc="page.body.toc" class="lg:col-span-2 order-first lg:order-last" />
-      </div>
-      <div v-else class="flex-1 flex flex-col items-center justify-center">
-        <div class="text-center">
-          <p class="text-base font-semibold text-primary-500 dark:text-primary-400">
-            404
-          </p>
-          <h1 class="mt-2 text-4xl tracking-tight font-extrabold u-text-gray-900 sm:text-5xl">
-            Page not found
-          </h1>
-          <p class="mt-2 text-base u-text-gray-500">
-            Sorry, we couldn’t find the page you’re looking for.
-          </p>
-          <div class="mt-6">
-            <NuxtLink to="/" class="text-base font-medium text-primary-500 dark:text-primary-400 hover:u-text-gray-900">
-              Go back home
-              <span aria-hidden="true"> &rarr;</span>
-            </NuxtLink>
+        <template #right>
+        <UDocsToc :links="page.body?.toc?.links || []">
+          <template #bottom>
+          <div class="hidden !mt-6 lg:block space-y-6">
+            <UDivider v-if="page.body?.toc?.links?.length" dashed />
+            <UPageLinks title="Community" :links="communityLinks" />
+            <UDivider dashed />
+            <UPageLinks title="Ecosystem" :links="ecosystemLinks" />
           </div>
-        </div>
-      </div>
+          </template>
+        </UDocsToc>
+        </template>
+      </UPage>
     </div>
-  </div>
+  </UPage>
+</UMain>
 </template>
 
 <style>

@@ -9,9 +9,14 @@
   },
   "dependencies": {
     "@nuxt/content": "^2.8.2",
-    "@nuxthq/elements": "npm:@nuxthq/elements-edge@0.0.1-28254979.521622f",
-    "@nuxtseo/module": "2.0.0-beta.15",
+    "@nuxtseo/module": "2.0.0-beta.31",
+    "@nuxt/ui": "npm:@nuxt/ui-edge@latest",
+    "@nuxt/ui-pro": "npm:@nuxt/ui-pro-edge@0.0.1-28256330.75f2e3a",
     "nuxt-icon": "^0.5.0",
+    "@iconify-json/heroicons": "^1.1.12",
+    "@iconify-json/simple-icons": "^1.1.72",
+    "@iconify-json/noto": "^1.1.12",
+    "@iconify-json/ph": "^1.1.6",
     "nuxt-lego": "^0.0.14"
   },
   "devDependencies": {
