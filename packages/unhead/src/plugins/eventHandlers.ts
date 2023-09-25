@@ -1,17 +1,20 @@
 import type { HeadTag } from '@unhead/schema'
-import { defineHeadPlugin } from '@unhead/shared'
+import { NetworkEvents, defineHeadPlugin, hashCode } from '@unhead/shared'
 
 const ValidEventTags = ['script', 'link', 'bodyAttrs']
 
 function stripEventHandlers(tag: HeadTag) {
   const props: HeadTag['props'] = {}
-  const eventHandlers: HeadTag['props'] = {}
+  const eventHandlers: Record<string, (e: Event) => {}> = {}
   Object.entries(tag.props)
     .forEach(([key, value]) => {
-      if (key.startsWith('on') && typeof value === 'function')
+      if (key.startsWith('on') && typeof value === 'function') {
+        // insert a inline script to set the status of onload and onerror
+        if (NetworkEvents.includes(key))
+          props[key] = `this.dataset.${key} = true`
         eventHandlers[key] = value
-      else
-        props[key] = value
+      }
+      else { props[key] = value }
     })
   return { props, eventHandlers }
 }
@@ -21,41 +24,28 @@ function stripEventHandlers(tag: HeadTag) {
  *
  * When SSR we need to strip out these values. On CSR we
  */
-export default defineHeadPlugin({
+export default defineHeadPlugin(head => ({
   hooks: {
-    'ssr:render': function (ctx) {
-      // when server-side rendering we need to strip out all event handlers that are functions
-      ctx.tags = ctx.tags.map((tag) => {
-        // must be a valid tag
-        if (!ValidEventTags.includes(tag.tag))
-          return tag
-          // must have events
-        if (!Object.entries(tag.props).find(([key, value]) => key.startsWith('on') && typeof value === 'function'))
-          return tag
-        tag.props = stripEventHandlers(tag).props
-        return tag
-      })
-    },
     'tags:resolve': function (ctx) {
-      // strip event handlers
-      ctx.tags = ctx.tags.map((tag) => {
+      for (const tag of ctx.tags) {
         // must be a valid tag
-        if (!ValidEventTags.includes(tag.tag))
-          return tag
-        const { props, eventHandlers } = stripEventHandlers(tag)
-        if (Object.keys(eventHandlers).length) {
+        if (ValidEventTags.includes(tag.tag)) {
+          const { props, eventHandlers } = stripEventHandlers(tag)
           tag.props = props
-          tag._eventHandlers = eventHandlers
+          if (Object.keys(eventHandlers).length) {
+            // need a key
+            if (tag.props.src || tag.props.href)
+              tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
+            tag._eventHandlers = eventHandlers
+          }
         }
-        return tag
-      })
+      }
     },
     'dom:renderTag': function (ctx, dom, track) {
       if (!ctx.tag._eventHandlers)
         return
 
       const $eventListenerTarget: Element | Window | null | undefined = ctx.tag.tag === 'bodyAttrs' ? dom.defaultView : ctx.$el
-      // @ts-expect-error runtime hack
       Object.entries(ctx.tag._eventHandlers).forEach(([k, value]) => {
         const sdeKey = `${ctx.tag._d || ctx.tag._p}:${k}`
         const eventName = k.slice(2).toLowerCase()
@@ -64,17 +54,38 @@ export default defineHeadPlugin({
         if (ctx.$el!.hasAttribute(eventDedupeKey))
           return
 
-        const handler = value as EventListener
-        // check if $el has the event listener
         ctx.$el!.setAttribute(eventDedupeKey, '')
-        $eventListenerTarget!.addEventListener(eventName, handler)
-        if (ctx.entry) {
-          track(ctx.id, sdeKey, () => {
-            $eventListenerTarget!.removeEventListener(eventName, handler)
-            ctx.$el!.removeAttribute(eventDedupeKey)
+
+        let observer: MutationObserver
+        const handler = (e: Event) => {
+          value(e)
+          observer?.disconnect()
+        }
+        if (k in ctx.$el.dataset) {
+          handler(new Event(k.replace('on', '')))
+        }
+        else if (NetworkEvents.includes(k) && typeof MutationObserver !== 'undefined') {
+          observer = new MutationObserver((e) => {
+            const hasAttr = e.some(m => m.attributeName === `data-${k}`)
+            if (hasAttr) {
+              handler(new Event(k.replace('on', '')))
+              observer?.disconnect()
+            }
+          })
+          observer.observe(ctx.$el, {
+            attributes: true,
           })
         }
+        else {
+          // check if $el has the event listener
+          $eventListenerTarget!.addEventListener(eventName, handler)
+        }
+        track(ctx.id, sdeKey, () => {
+          observer?.disconnect()
+          $eventListenerTarget!.removeEventListener(eventName, handler)
+          ctx.$el!.removeAttribute(eventDedupeKey)
+        })
       })
     },
   },
-})
+}))
