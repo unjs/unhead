@@ -1,7 +1,9 @@
 import { withBase } from 'ufo'
 import type { OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import {
-  resolvableDateToIso, resolveWithBase, setIfEmpty,
+  resolvableDateToIso,
+  resolveWithBase,
+  setIfEmpty,
 } from '../../utils'
 import { defineSchemaOrgResolver } from '../../core'
 

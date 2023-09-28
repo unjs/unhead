@@ -3,7 +3,8 @@ import type {
   Identity,
   NodeRelation,
   NodeRelations,
-  OptionalSchemaOrgPrefix, ResolvableDate,
+  OptionalSchemaOrgPrefix,
+  ResolvableDate,
   Thing,
 } from '../../types'
 import {

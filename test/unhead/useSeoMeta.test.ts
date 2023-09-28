@@ -469,8 +469,7 @@ describe('useSeoMeta', () => {
         type: 'image/gif',
         url: 'https://first.com',
         width: 1337,
-      },
-      {
+      }, {
         alt: 'Second',
         height: 1337,
         secureUrl: 'https://second.com',

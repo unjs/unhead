@@ -1,5 +1,4 @@
-export function resolveTitleTemplate(template: string | ((title?: string) => string | null) | null,
-  title?: string): string | null {
+export function resolveTitleTemplate(template: string | ((title?: string) => string | null) | null, title?: string): string | null {
   if (template == null)
     return title || null
   if (typeof template === 'function')

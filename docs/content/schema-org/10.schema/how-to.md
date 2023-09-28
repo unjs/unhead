@@ -43,14 +43,17 @@ defineHowTo({
       url: '#step-two',
       text: 'Cross the long end over the short end. This will form the basis for your knot.',
       image: '/1x1/photo.jpg',
-    }, {
+    },
+    {
       url: '#step-three',
       text: 'Bring the long end back under the short end, then throw it back over the top of the short end in the other direction. ',
       image: '/1x1/photo.jpg',
-    }, {
+    },
+    {
       text: 'Now pull the long and through the loop near your neck, forming another loop near your neck.',
       image: '/1x1/photo.jpg',
-    }, {
+    },
+    {
       text: 'Pull the long end through that new loop and tighten to fit! ',
       image: '/1x1/photo.jpg',
     },

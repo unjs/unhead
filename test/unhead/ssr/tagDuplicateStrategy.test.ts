@@ -9,8 +9,7 @@ describe('tagDuplicateStrategy', () => {
       htmlAttrs: {
         'data-layout': 'base',
       },
-    },
-    )
+    })
     head.push({
       htmlAttrs: {
         'data-page': 'page',
@@ -31,8 +30,7 @@ describe('tagDuplicateStrategy', () => {
         class: 'html-doc',
         style: 'color: red;',
       },
-    },
-    )
+    })
     head.push({
       htmlAttrs: {
         style: 'background: green;',

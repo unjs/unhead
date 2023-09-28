@@ -1,6 +1,7 @@
 import type { Thing } from '../../types'
 import {
-  resolveWithBase, setIfEmpty,
+  resolveWithBase,
+  setIfEmpty,
 } from '../../utils'
 import { defineSchemaOrgResolver } from '../../core'
 

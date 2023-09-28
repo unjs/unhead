@@ -2,7 +2,8 @@ import type { Id, NodeRelation, ResolvableDate, Thing } from '../../types'
 import {
   asArray,
   resolvableDateToIso,
-  resolveWithBase, setIfEmpty,
+  resolveWithBase,
+  setIfEmpty,
 } from '../../utils'
 import type { ImageObject } from '../Image'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'

@@ -104,9 +104,7 @@ export async function createServer(root = process.cwd(), hmrPort) {
 }
 
 if (!isTest) {
-  createServer().then(({ app }) =>
-    app.listen(5173, () => {
-      console.log('http://localhost:5173')
-    }),
-  )
+  createServer().then(({ app }) => app.listen(5173, () => {
+    console.log('http://localhost:5173')
+  }))
 }

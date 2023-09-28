@@ -1,7 +1,8 @@
 import type { Identity, NodeRelation, Thing } from '../../types'
 import {
   IdentityId,
-  idReference, setIfEmpty,
+  idReference,
+  setIfEmpty,
 } from '../../utils'
 import type { Organization } from '../Organization'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'

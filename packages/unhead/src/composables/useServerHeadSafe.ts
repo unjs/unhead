@@ -1,6 +1,7 @@
 import type {
   ActiveHeadEntry,
-  HeadEntryOptions, HeadSafe,
+  HeadEntryOptions,
+  HeadSafe,
 } from '@unhead/schema'
 import { useHeadSafe } from './useHeadSafe'
 

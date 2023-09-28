@@ -2,7 +2,8 @@ import type { Arrayable, NodeRelations, Thing } from '../../types'
 import {
   IdentityId,
   idReference,
-  resolveAsGraphKey, resolveWithBase,
+  resolveAsGraphKey,
+  resolveWithBase,
   setIfEmpty,
 } from '../../utils'
 import type { WebPage } from '../WebPage'

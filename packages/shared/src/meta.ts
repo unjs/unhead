@@ -134,7 +134,8 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
     return `${value.seconds};url=${value.url}`
 
   return unpackToString(
-    changeKeyCasingDeep(value), {
+    changeKeyCasingDeep(value), 
+{
       entrySeparator: ', ',
       resolve({ value, key }) {
         if (value === null)
@@ -172,10 +173,7 @@ function handleObjectEntry(key: string, v: Record<string, any>) {
     })
     const unpacked = unpackMeta(input)
       // sort by property name
-      .sort((a, b) =>
-        // @ts-expect-error untyped
-        (a[attr]?.length || 0) - (b[attr]?.length || 0),
-      ) as BaseMeta[]
+      .sort((a, b) =>        // @ts-expect-error untyped        (a[attr]?.length || 0) - (b[attr]?.length || 0),      ) as BaseMeta[]
     return unpacked
   }
   return [{ [attr]: fKey, ...value }] as BaseMeta[]

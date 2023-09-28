@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useHead } from '@unhead/vue'
+import { Head } from '@unhead/vue/components'
 import TheWelcome from './components/TheWelcome.vue'
 import HelloWorld from './components/HelloWorld.vue'
-import { Head } from '@unhead/vue/components'
 
 useHead({
   meta: [
@@ -21,16 +21,16 @@ useHead({
   bodyAttrs: {
     onresize: () => {
       console.log('resized')
-    }
+    },
   },
   script: [
     {
       src: 'https://unpkg.com/vue@next',
       onload: () => {
         console.log('loaded')
-      }
-    }
-  ]
+      },
+    },
+  ],
 })
 </script>
 

@@ -38,8 +38,7 @@ describe('dedupe', () => {
           content: 'my site wide description',
         },
       ],
-    },
-    )
+    })
     head.push({
       meta: [
         {
@@ -47,8 +46,7 @@ describe('dedupe', () => {
           content: 'my page description',
         },
       ],
-    },
-    )
+    })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot('"<meta name=\\"description\\" content=\\"my page description\\">"')
     expect(
@@ -287,8 +285,7 @@ describe('dedupe', () => {
           content: 'https://example.com/image1.jpg',
         },
       ],
-    },
-    )
+    })
     head.push({
       meta: [
         {
@@ -297,8 +294,7 @@ describe('dedupe', () => {
           content: 'https://example.com/image2.jpg',
         },
       ],
-    },
-    )
+    })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
@@ -318,16 +314,14 @@ describe('dedupe', () => {
           content: 'my description',
         },
       ],
-    },
-    )
+    })
     head.push({
       meta: [
         {
           key: 'description',
         },
       ],
-    },
-    )
+    })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot('""')
   })
