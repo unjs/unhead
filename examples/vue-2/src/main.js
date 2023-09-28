@@ -7,7 +7,7 @@ Vue.config.productionTip = false
 
 const head = createHead()
 
-Vue.use(UnheadPlugin);
+Vue.use(UnheadPlugin)
 
 new Vue({
   render: h => h(App),

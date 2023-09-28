@@ -1,7 +1,8 @@
 import { defineHeadPlugin } from '@unhead/shared'
 import type { MetaInput, ResolvedMeta } from './types'
 import {
-  createSchemaOrgGraph, resolveMeta,
+  createSchemaOrgGraph,
+  resolveMeta,
 } from '.'
 import type { SchemaOrgGraph } from '.'
 

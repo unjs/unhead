@@ -89,8 +89,7 @@ describe('vue ssr examples', () => {
           })), // this damages the type inference
           { rel: 'icon', type: 'image/svg', href: '/favicon.svg' },
         ],
-      }),
-    )
+      }))
 
     expect(headResult.headTags).toMatchInlineSnapshot(
       `

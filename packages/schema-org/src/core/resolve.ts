@@ -4,7 +4,8 @@ import type {
   Arrayable,
   MetaInput,
   ResolvedMeta,
-  SchemaOrgNodeDefinition, Thing,
+  SchemaOrgNodeDefinition,
+  Thing,
 } from '../types'
 import type { ResolverOptions } from '../utils'
 import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
@@ -128,10 +129,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
   return node
 }
 
-export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph,
-  fallbackResolver?: SchemaOrgNodeDefinition<any>,
-  options: ResolverOptions = {},
-) {
+export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fallbackResolver?: SchemaOrgNodeDefinition<any>, options: ResolverOptions = {}) {
   if (!input)
     return input
 

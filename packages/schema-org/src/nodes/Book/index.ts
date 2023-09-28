@@ -10,7 +10,9 @@ import type {
 } from '../../types'
 import {
   IdentityId,
-  idReference, resolvableDateToDate, setIfEmpty,
+  idReference,
+  resolvableDateToDate,
+  setIfEmpty,
 } from '../../utils'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { ReadAction } from '../WebPage'

@@ -2,7 +2,8 @@ import type { Arrayable, Identity, NodeRelations, Thing } from '../../types'
 import {
   IdentityId,
   idReference,
-  resolveAsGraphKey, setIfEmpty,
+  resolveAsGraphKey,
+  setIfEmpty,
 } from '../../utils'
 import type { Person } from '../Person'
 import type { Organization } from '../Organization'

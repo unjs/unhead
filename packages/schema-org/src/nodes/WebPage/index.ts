@@ -8,7 +8,10 @@ import type {
 } from '../../types'
 import {
   IdentityId,
-  idReference, resolvableDateToIso, resolveDefaultType, setIfEmpty,
+  idReference,
+  resolvableDateToIso,
+  resolveDefaultType,
+  setIfEmpty,
 } from '../../utils'
 import type { WebSite } from '../WebSite'
 import { PrimaryWebSiteId } from '../WebSite'

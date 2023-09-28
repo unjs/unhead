@@ -23,14 +23,12 @@ export async function useSetup(fn: () => void, meta: Partial<MetaInput> = {}) {
         host: 'https://example.com/',
         inLanguage: 'en-AU',
         ...meta,
-      },
-      () => {
+      }, () => {
         return {
           path: '/',
           ...meta,
         }
-      },
-      ),
+      }),
     ],
   })
   return fn()

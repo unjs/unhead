@@ -13,7 +13,8 @@ import {
   resolvableDateToIso,
   resolveDefaultType,
   resolveWithBase,
-  setIfEmpty, trimLength,
+  setIfEmpty,
+  trimLength,
 } from '../../utils'
 import type { WebPage } from '../WebPage'
 import { PrimaryWebPageId } from '../WebPage'

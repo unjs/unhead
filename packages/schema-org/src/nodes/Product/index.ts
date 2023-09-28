@@ -2,7 +2,8 @@ import { hash } from 'ohash'
 import type { NodeRelation, NodeRelations, Thing } from '../../types'
 import {
   IdentityId,
-  idReference, setIfEmpty,
+  idReference,
+  setIfEmpty,
 } from '../../utils'
 import type { WebPage } from '../WebPage'
 import { PrimaryWebPageId } from '../WebPage'

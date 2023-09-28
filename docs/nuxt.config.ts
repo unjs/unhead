@@ -11,7 +11,7 @@ delete colors.blueGray
 export default defineNuxtConfig({
   extends: [
     'nuxt-lego',
-    '@nuxthq/elements',
+    '@nuxt/ui-pro',
   ],
   modules: [
     '@nuxt/ui',
@@ -37,12 +37,11 @@ export default defineNuxtConfig({
         default: 'material-theme-lighter',
         dark: 'material-theme-palenight',
       },
-      preload: ['json', 'js', 'ts', 'html', 'css', 'vue', 'diff', 'shell', 'markdown', 'yaml', 'bash', 'ini'],
     },
   },
   ui: {
     global: true,
-    icons: ['heroicons', 'simple-icons'],
+    icons: ['heroicons', 'simple-icons', 'ph', 'noto'],
     safelistColors: excludeColors(colors),
   },
   sitemap: {

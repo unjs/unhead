@@ -1,6 +1,7 @@
 import type { NodeRelations, Thing } from '../../types'
 import {
-  idReference, setIfEmpty,
+  idReference,
+  setIfEmpty,
 } from '../../utils'
 import { PrimaryWebPageId } from '../WebPage'
 import type { VideoObject } from '../Video'

@@ -2,7 +2,10 @@ import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
 import {
   IdentityId,
   idReference,
-  prefixId, resolveAsGraphKey, resolveDefaultType, setIfEmpty,
+  prefixId,
+  resolveAsGraphKey,
+  resolveDefaultType,
+  setIfEmpty,
 } from '../../utils'
 import type { ImageObject } from '../Image'
 import { imageResolver } from '../Image'

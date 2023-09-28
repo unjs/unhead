@@ -1,6 +1,7 @@
 import {
   IdentityId,
-  prefixId, resolveDefaultType,
+  prefixId,
+  resolveDefaultType,
   setIfEmpty,
 } from '../../utils'
 import type { Organization } from '../Organization'

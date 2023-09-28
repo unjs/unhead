@@ -47,10 +47,10 @@
   },
   "peerDependencies": {
     "@unhead/shared": "workspace:*",
-    "unhead": ">=1.7.3"
+    "unhead": ">=1.7.4"
   },
   "dependencies": {
-    "ufo": "^1.3.0"
+    "ufo": "^1.3.1"
   },
   "devDependencies": {
     "@unhead/schema": "workspace:*",
