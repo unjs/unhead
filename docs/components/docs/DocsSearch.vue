@@ -39,15 +39,17 @@ const queryGroups = computed(() => navigation.value.map(item => ({
       to: file._path,
       description: file.description,
       icon: file.icon,
-    },    // @ts-expect-error    ...Object.entries(groupByHeading(file.body.children)).map(([hash, { title, children }]) => ({
-      id: `${file._path}${hash}`,
-      title,
-      prefix: `${file.navigation?.title || file.title} ->`,
-      prefixClass: 'text-gray-700 dark:text-gray-200',
-      to: `${file._path}${hash}`,
-      children: concatChildren(children),
-      icon: file.icon,
-    }))]
+    },
+      // @ts-expect-error
+      ...Object.entries(groupByHeading(file.body.children)).map(([hash, { title, children }]) => ({
+        id: `${file._path}${hash}`,
+        title,
+        prefix: `${file.navigation?.title || file.title} ->`,
+        prefixClass: 'text-gray-700 dark:text-gray-200',
+        to: `${file._path}${hash}`,
+        children: concatChildren(children),
+        icon: file.icon,
+      }))]
   }),
 })))
 
@@ -146,29 +148,29 @@ defineShortcuts({
 </script>
 
 <template>
-  <UModal
-    v-model="isSearchModalOpen"
-    :overlay="!isXs"
-    :transition="!isXs"
-    :ui="{
+<UModal
+  v-model="isSearchModalOpen"
+  :overlay="!isXs"
+  :transition="!isXs"
+  :ui="{
       padding: 'sm:p-4',
       rounded: 'sm:rounded-lg',
       width: 'sm:max-w-3xl',
       height: 'h-screen sm:h-[28rem]',
     }"
-  >
-    <UCommandPalette
-      ref="commandPaletteRef"
-      :groups="groups"
-      command-attribute="title"
-      :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'ghost', size: 'sm', class: '-mr-1.5' }"
-      :ui="{ input: { height: 'h-16 sm:h-12', icon: { size: 'h-5 w-5', padding: 'pl-11' } } }"
-      :fuse="{
+>
+  <UCommandPalette
+    ref="commandPaletteRef"
+    :groups="groups"
+    command-attribute="title"
+    :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'ghost', size: 'sm', class: '-mr-1.5' }"
+    :ui="{ input: { height: 'h-16 sm:h-12', icon: { size: 'h-5 w-5', padding: 'pl-11' } } }"
+    :fuse="{
         fuseOptions: { ignoreLocation: true, includeMatches: true, threshold: 0, keys: ['title', 'description', 'children.children.value', 'children.children.children.value'] },
         resultLimit: 10,
       }"
-      @update:model-value="onSelect"
-      @close="isSearchModalOpen = false"
-    />
-  </UModal>
+    @update:model-value="onSelect"
+    @close="isSearchModalOpen = false"
+  />
+</UModal>
 </template>
