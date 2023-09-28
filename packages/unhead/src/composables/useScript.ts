@@ -50,12 +50,14 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     // clone fn
     // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind({}) : null
-    // @ts-expect-error untyped
-    input[fn] = (e: Event) => {
-      script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
+    if (_fn) {
       // @ts-expect-error untyped
-      head.hooks.callHook(`script:${fn}`, hookCtx)
-      _fn && _fn(e)
+      input[fn] = (e: Event) => {
+        script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
+        // @ts-expect-error untyped
+        head.hooks.callHook(`script:${fn}`, hookCtx)
+        _fn && _fn(e)
+      }
     }
   })
 

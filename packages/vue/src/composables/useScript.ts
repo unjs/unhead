@@ -2,10 +2,10 @@ import type { UseScriptInput, UseScriptOptions, UseScriptStatus } from '@unhead/
 import { useScript as _useScript } from 'unhead'
 import type { ComputedRef, Ref } from 'vue'
 import { computed, getCurrentInstance, ref } from 'vue'
+import { NetworkEvents } from '@unhead/shared'
 import { resolveUnrefHeadInput } from '../utils'
 import type { MaybeComputedRefEntries } from '../types'
 import { injectHead } from './injectHead'
-import {NetworkEvents} from "@unhead/shared";
 
 export interface VueScriptInstance<T> {
   loaded: ComputedRef<boolean>

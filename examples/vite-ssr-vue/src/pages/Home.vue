@@ -22,11 +22,10 @@ useHead({
       },
       onerror() {
         console.log('script error')
-      }
-    }
-  ]
+      },
+    },
+  ],
 })
-
 </script>
 
 <template>
@@ -37,9 +36,9 @@ useHead({
   <button @click="state.count++">
     count is: {{ state.count }}
   </button>
-<div>
-  loaded: {{ isScriptLoaded }}
-</div>
+  <div>
+    loaded: {{ isScriptLoaded }}
+  </div>
 </template>
 
 <style scoped>

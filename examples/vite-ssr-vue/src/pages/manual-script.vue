@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { useScript } from "@unhead/vue";
+import { useScript } from '@unhead/vue'
 
 const isScriptLoaded = ref(false)
 
@@ -13,28 +13,28 @@ const { $script } = useScript({
   },
   onerror() {
     console.log('script error')
-  }
+  },
 }, {
-  trigger: 'manual'
+  trigger: 'manual',
 })
 
 console.log($script.status)
 
 useHead({
-  title: () => $script.status.value
+  title: () => $script.status.value,
 })
 </script>
 
 <template>
-<div>
-  <h1>manual-script</h1>
-  <button @click="$script.load">
-    load script
-  </button>
   <div>
-    script status: {{ $script.status }}
+    <h1>manual-script</h1>
+    <button @click="$script.load">
+      load script
+    </button>
+    <div>
+      script status: {{ $script.status }}
+    </div>
   </div>
-</div>
 </template>
 
 <style scoped>
