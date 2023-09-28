@@ -16,8 +16,8 @@
       "name": "unpackMeta",
       "path": "dist/index.mjs",
       "minified": 3870,
-      "minzipped": 1389,
-      "bundled": 6909
+      "minzipped": 1388,
+      "bundled": 6878
     },
     {
       "name": "normaliseEntryTags",

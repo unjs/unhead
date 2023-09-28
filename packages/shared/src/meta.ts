@@ -1,5 +1,5 @@
-import { packArray, unpackToArray, unpackToString } from 'packrup'
 import type { TransformValueOptions } from 'packrup'
+import { packArray, unpackToArray, unpackToString } from 'packrup'
 import type { BaseMeta, Head, MetaFlatInput } from '@unhead/schema'
 
 interface PackingDefinition {
@@ -134,8 +134,8 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
     return `${value.seconds};url=${value.url}`
 
   return unpackToString(
-    changeKeyCasingDeep(value), 
-{
+    changeKeyCasingDeep(value),
+    {
       entrySeparator: ', ',
       resolve({ value, key }) {
         if (value === null)
@@ -171,10 +171,10 @@ function handleObjectEntry(key: string, v: Record<string, any>) {
       // @ts-expect-error untyped
       input[`${key}${k === 'url' ? '' : `${k.charAt(0).toUpperCase()}${k.slice(1)}`}`] = v
     })
-    const unpacked = unpackMeta(input)
+    return unpackMeta(input)
       // sort by property name
-      .sort((a, b) =>        // @ts-expect-error untyped        (a[attr]?.length || 0) - (b[attr]?.length || 0),      ) as BaseMeta[]
-    return unpacked
+      // @ts-expect-error untyped
+      .sort((a, b) => (a[attr]?.length || 0) - (b[attr]?.length || 0)) as BaseMeta[]
   }
   return [{ [attr]: fKey, ...value }] as BaseMeta[]
 }
