@@ -17,8 +17,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   async function transform(entry: Head): Promise<Head> {
     const script = (options.transform || (input => input))(entry.script![0] as Script)
     const ctx = { script }
-    // @ts-expect-error untyped
-    await head!.hooks.callHook(ctx)
+    await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }
   }
 

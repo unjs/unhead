@@ -68,7 +68,7 @@ export interface HeadHooks {
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
-  'script:init': (ctx: { script: Script }) => HookResult
+  'script:transform': (ctx: { script: Script }) => HookResult
   'script:loaded': (ctx: { script: ScriptInstance<any> }) => HookResult
   'script:error': (ctx: { script: ScriptInstance<any> }) => HookResult
   'script:loading': (ctx: { script: ScriptInstance<any> }) => HookResult

@@ -5,7 +5,7 @@ import { useScript } from '@unhead/vue'
 const isScriptLoaded = ref(false)
 
 const { $script } = useScript({
-  src: 'https://js.stripe.com/v10',
+  src: 'https://js.stripe.com/v3/',
   onload() {
     console.log('script loaded')
     isScriptLoaded.value = true
@@ -26,7 +26,7 @@ useHead({
 
 <template>
   <div>
-    <h1>manual-script</h1>
+    <h1>idle-script</h1>
     <button @click="$script.load">
       load script
     </button>
