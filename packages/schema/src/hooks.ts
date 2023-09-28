@@ -1,4 +1,5 @@
-import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
+import type { Script } from '@unhead/schema/src/schema'
+import type { CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -10,6 +11,25 @@ export interface SSRHeadPayload {
   htmlAttrs: string
   bodyAttrs: string
 }
+
+export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error'
+
+export interface ScriptInstance<T> {
+  loaded: boolean
+  status: UseScriptStatus
+  // error: Ref<Error | null>
+  load: () => Promise<T>
+  waitForUse: () => Promise<T>
+}
+
+export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
+  use?: () => T | undefined | null
+  stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
+  transform?: (script: Script) => Script
+  trigger?: 'idle' | 'manual' | Promise<void>
+}
+
+export type UseScriptInput = Omit<Script, 'src'> & { src: string }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
@@ -47,4 +67,9 @@ export interface HeadHooks {
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
+
+  'script:transform': (ctx: { script: Script }) => HookResult
+  'script:loaded': (ctx: { script: ScriptInstance<any> }) => HookResult
+  'script:error': (ctx: { script: ScriptInstance<any> }) => HookResult
+  'script:loading': (ctx: { script: ScriptInstance<any> }) => HookResult
 }
