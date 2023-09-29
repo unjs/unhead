@@ -5,5 +5,5 @@ const coreComposableNames = [
 ]
 
 export const unheadVueComposablesImports = {
-  '@unhead/vue': [].concat(coreComposableNames, composableNames),
+  '@unhead/vue': [...coreComposableNames, ...(composableNames || [])],
 }
