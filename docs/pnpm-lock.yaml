@@ -27,8 +27,8 @@ importers:
         specifier: npm:@nuxt/ui-edge@latest
         version: /@nuxt/ui-edge@2.8.1-28266619.d46eafb(vue@3.3.4)(webpack@5.88.2)
       '@nuxt/ui-pro':
-        specifier: npm:@nuxt/ui-pro-edge@0.0.1-28266667.a18880c
-        version: /@nuxt/ui-pro-edge@0.0.1-28266667.a18880c(vue@3.3.4)(webpack@5.88.2)
+        specifier: npm:@nuxt/ui-pro-edge@0.0.1-28266776.ae6901f
+        version: /@nuxt/ui-pro-edge@0.0.1-28266776.ae6901f(vue@3.3.4)(webpack@5.88.2)
       '@nuxtseo/module':
         specifier: 2.0.0-beta.34
         version: 2.0.0-beta.34(@nuxt/devtools@0.8.5)(@unhead/shared@1.7.4)(nuxt@3.7.4)(postcss@8.4.30)(unhead@1.7.4)(vite@4.4.9)(vue@3.3.4)(webpack@5.88.2)
@@ -1583,8 +1583,8 @@ packages:
       - webpack
     dev: false
 
-  /@nuxt/ui-pro-edge@0.0.1-28266667.a18880c(vue@3.3.4)(webpack@5.88.2):
-    resolution: {integrity: sha512-hWAiUeMfg1/L5+yMR0ad5O5pjrVii1i5QPMztBm6sgr5jcNk7UKUCpVv+x0lgbI74BYIP1DsY1w8wysQpjYE/Q==}
+  /@nuxt/ui-pro-edge@0.0.1-28266776.ae6901f(vue@3.3.4)(webpack@5.88.2):
+    resolution: {integrity: sha512-usJ+d4EmbIGs7czZzDR5yZlTzguFo7baDcAu0W0ED5JxPQ7xxLwACsKOBeqjU9ls6vYo4qbZTo2PKUD1UyLqcA==}
     dependencies:
       '@nuxt/ui': /@nuxt/ui-edge@2.8.1-28266619.d46eafb(vue@3.3.4)(webpack@5.88.2)
       '@vueuse/core': 10.4.1(vue@3.3.4)
