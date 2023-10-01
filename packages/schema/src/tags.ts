@@ -78,7 +78,7 @@ export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<In
 
 export type TagKey = keyof Head
 
-export type TemplateParams = { separator?: string } & Record<string, null | string | Record<string, string>>
+export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
 
 export interface ProcessesTemplateParams { processTemplateParams?: boolean }
 
