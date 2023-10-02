@@ -4,7 +4,7 @@
 
   Describes a movie.
 
-- **Component**: `SchemaOrgMovie` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgMovie` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
