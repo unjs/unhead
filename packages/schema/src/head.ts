@@ -135,6 +135,10 @@ export interface Unhead<Input extends {} = Head> {
    * @internal
    */
   dirty: boolean
+  /**
+   * @internal
+   */
+  _scripts?: Record<string, any>
 }
 
 export interface DomState {

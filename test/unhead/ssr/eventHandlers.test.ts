@@ -23,7 +23,7 @@ describe('ssr event handlers', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script src=\\"https://js.stripe.com/v3/\\" defer></script>",
+        "headTags": "<script src=\\"https://js.stripe.com/v3/\\" defer onload=\\"this.dataset.onload = true\\"></script>",
         "htmlAttrs": "",
       }
     `)

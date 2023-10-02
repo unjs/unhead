@@ -93,6 +93,9 @@ importers:
 
   examples/vite-ssr-vue:
     dependencies:
+      '@unhead/vue':
+        specifier: workspace:*
+        version: link:../../packages/vue
       pinia:
         specifier: ^2.1.6
         version: 2.1.6(typescript@5.2.2)(vue@3.3.4)
@@ -124,9 +127,6 @@ importers:
       serve-static:
         specifier: ^1.15.0
         version: 1.15.0
-      unhead:
-        specifier: latest
-        version: link:../../packages/unhead
 
   examples/vue-2:
     dependencies:
