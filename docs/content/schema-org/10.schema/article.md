@@ -4,7 +4,7 @@
 
   Describes an `Article` on a `WebPage`.
 
-- **Component**: `SchemaOrgArticle` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgArticle` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -30,7 +30,7 @@
 
 - **author** `AuthorInput` (conditional)
 
-  If the author of the article is not your identity (see [Choosing an identity](/schema-org/guides/identity)) you will need to provide authors
+  If the author of the article is not your identity (see [Choosing an identity](/schema-org/recipes/identity)) you will need to provide authors
   manually.
 
   The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
@@ -46,12 +46,12 @@
 
 - **@type**: `Article`
 - **@id**: `${canonicalUrl}#article`
-- **headline**: `currentRouteMeta.title` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **image**: `currentRouteMeta.image` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **description**: `currentRouteMeta.description` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **dateModified**: `currentRouteMeta.dateModified` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
+- **headline**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/schema-org/getting-started/params))_
+- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **publisher**: Identity Reference
 - **author**: Identity Reference
 - **isPartOf**: WebPage Reference

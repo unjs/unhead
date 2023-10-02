@@ -7,6 +7,9 @@ describe('ssr templateParams', () => {
   it('basic', async () => {
     const head = createHead()
     head.push({
+      htmlAttrs: {
+        lang: '%locale',
+      },
       title: 'hello world ":',
       titleTemplate: '%s %separator %siteName',
       meta: [
@@ -30,11 +33,13 @@ describe('ssr templateParams', () => {
       ],
       templateParams: {
         separator: '|',
+        locale: 'en',
         siteName: 'My Awesome Site',
       },
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags, htmlAttrs } = await renderSSRHead(head)
 
+    expect(htmlAttrs).toMatchInlineSnapshot('" lang=\\"en\\""')
     expect(headTags).toMatchInlineSnapshot(`
       "<title>hello world \\\\&quot;: | My Awesome Site</title>
       <meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\">

@@ -1,6 +1,12 @@
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 import type { TemplateParams } from '@unhead/schema'
 
+const SupportedAttrs = {
+  meta: 'content',
+  link: 'href',
+  htmlAttrs: 'lang',
+} as const
+
 export default defineHeadPlugin({
   hooks: {
     'tags:resolve': (ctx) => {
@@ -15,19 +21,20 @@ export default defineHeadPlugin({
       delete params.separator
       // pre-process title
       params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params, sep)
-      for (const tag of tags) {
-        // allow opt-out
-        if (tag.processTemplateParams === false)
-          continue
-        if (['titleTemplate', 'title'].includes(tag.tag) && typeof tag.textContent === 'string') { tag.textContent = processTemplateParams(tag.textContent, params, sep) }
-        else if (tag.tag === 'meta' && typeof tag.props.content === 'string') { tag.props.content = processTemplateParams(tag.props.content, params, sep) }
-        else if (tag.tag === 'link' && typeof tag.props.href === 'string') { tag.props.href = processTemplateParams(tag.props.href, params, sep) }
+      for (const tag of tags.filter(t => t.processTemplateParams !== false)) {
+        // @ts-expect-error untyped
+        const v = SupportedAttrs[tag.tag]
+        if (v && typeof tag.props[v] === 'string') {
+          tag.props[v] = processTemplateParams(tag.props[v], params, sep)
+        }
         // everything else requires explicit opt-in
-        else if (tag.processTemplateParams === true) {
-          if (tag.innerHTML)
-            tag.innerHTML = processTemplateParams(tag.innerHTML, params, sep)
-          else if (tag.textContent)
-            tag.textContent = processTemplateParams(tag.textContent, params, sep)
+        else if (tag.processTemplateParams === true || ['titleTemplate', 'title'].includes(tag.tag)) {
+          ['innerHTML', 'textContent'].forEach((p) => {
+            // @ts-expect-error untyped
+            if (typeof tag[p] === 'string')
+              // @ts-expect-error untyped
+              tag[p] = processTemplateParams(tag[p], params, sep)
+          })
         }
       }
       ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')

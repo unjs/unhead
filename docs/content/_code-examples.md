@@ -42,7 +42,7 @@ useSeoMeta({
 ```
 
 ```ts [DOM events]
-// DOM events right in your head
+// DOM events right in your head that _just work_
 useHead({
   script: [
     {
@@ -54,6 +54,19 @@ useHead({
   ],
   htmlAttrs: { onclick: () => alert('just works') },
 })
+```
+
+```ts [useSchemaOrg]
+// schema.org graphs as simple as it gets
+useSchemaOrg([
+  defineWebPage(),
+  defineWebSite({
+    name: 'My Awesome Website',
+  }),
+  defineOrganization({
+    name: 'Acme Corp',
+  }),
+])
 ```
 
 ::

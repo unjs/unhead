@@ -4,7 +4,7 @@
 
   Describes a Course.
 
-- **Component**: `SchemaOrgCourse` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgCourse` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 

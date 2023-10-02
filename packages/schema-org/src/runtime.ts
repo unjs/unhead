@@ -1,4 +1,5 @@
 import { useHead } from 'unhead'
+import type { Arrayable, Thing } from './types'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -35,6 +36,8 @@ import type {
   WebPage,
   WebSite,
 } from './nodes'
+import { getActiveHead } from "unhead"
+import { UnheadSchemaOrg } from "./plugin"
 
 function provideResolver<T>(input?: T, resolver?: string) {
   if (!input)
@@ -151,9 +154,15 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 }
 /* end-simple-only */
 
-export function useSchemaOrg(input?: any): any {
-  // TODO runtime setting for if schema is reactive
-  return useHead({
+export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
+
+export function useSchemaOrg(input: UseSchemaOrgInput) {
+  // lazy initialise the plugin
+  const head = getActiveHead()
+  if (!head)
+    return
+  head.use(UnheadSchemaOrg())
+  return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
     script: [
       {
         type: 'application/ld+json',

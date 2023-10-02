@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema",
   "type": "module",
-  "version": "1.7.4",
+  "version": "1.7.5",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -39,6 +39,6 @@
   },
   "dependencies": {
     "hookable": "^5.5.3",
-    "zhead": "^2.1.1"
+    "zhead": "^2.1.3"
   }
 }

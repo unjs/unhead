@@ -22,7 +22,7 @@ This markup should go in your root Schema definition.
 
 ::code-group
 
-```ts [Composition API]
+```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebSite({
     potentialAction: [
@@ -34,7 +34,7 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Component API]
+```vue [Vue Components]
 <template>
   <SchemaOrgWebSite
     :potential-action="[defineSearchAction({ target: '/search?q={search_term_string}' })]"
@@ -49,7 +49,7 @@ Using your [WebPage](/schema-org/schema/webpage) Schema, you can define the page
 
 ::code-group
 
-```ts [Composition API]
+```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebPage({
     '@type': ['CollectionPage', 'SearchResultsPage'],
@@ -57,7 +57,7 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Component API]
+```vue [Vue Components]
 <template>
   <SchemaOrgWebPage :type="['CollectionPage', 'SearchResultsPage']" />
 </template>
