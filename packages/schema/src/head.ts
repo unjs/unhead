@@ -55,7 +55,8 @@ export interface HeadEntry<Input> {
 
 export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'> & { mode?: RuntimeMode }
 
-export type HeadPlugin = HeadPluginOptions | ((head: Unhead) => HeadPluginOptions)
+export type HeadPluginInput = HeadPluginOptions & { key?: string } | ((head: Unhead) => HeadPluginOptions & { key?: string })
+export type HeadPlugin = HeadPluginOptions & { key?: string }
 
 /**
  * An active head entry provides an API to manipulate it.
@@ -78,7 +79,7 @@ export interface ActiveHeadEntry<Input> {
 export interface CreateHeadOptions {
   domDelayFn?: (fn: () => void) => void
   document?: Document
-  plugins?: HeadPlugin[]
+  plugins?: HeadPluginInput[]
   hooks?: NestedHooks<HeadHooks>
 }
 
@@ -89,6 +90,10 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
 }
 
 export interface Unhead<Input extends {} = Head> {
+  /**
+   * Registered plugins.
+   */
+  plugins: HeadPlugin[]
   /**
    * The active head entries.
    */
@@ -112,7 +117,7 @@ export interface Unhead<Input extends {} = Head> {
   /**
    * Use a head plugin, loads the plugins hooks.
    */
-  use: (plugin: HeadPlugin) => void
+  use: (plugin: HeadPluginInput) => void
   /**
    * Is it a server-side render context.
    */

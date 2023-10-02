@@ -15,25 +15,25 @@
   },
   "exports": [
     {
-      "name": "createServerHead",
-      "path": "dist/index.mjs",
-      "minified": 5513,
-      "minzipped": 2111,
-      "bundled": 11426
-    },
-    {
       "name": "createHead",
       "path": "dist/index.mjs",
-      "minified": 5554,
-      "minzipped": 2108,
-      "bundled": 11460
+      "minified": 5587,
+      "minzipped": 2129,
+      "bundled": 11571
+    },
+    {
+      "name": "createServerHead",
+      "path": "dist/index.mjs",
+      "minified": 5546,
+      "minzipped": 2125,
+      "bundled": 11537
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
-      "minified": 5480,
-      "minzipped": 2083,
-      "bundled": 11317
+      "minified": 5513,
+      "minzipped": 2100,
+      "bundled": 11428
     },
     {
       "name": "CapoPlugin",
