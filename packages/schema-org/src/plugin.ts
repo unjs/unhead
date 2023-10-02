@@ -8,21 +8,30 @@ import type { SchemaOrgGraph } from '.'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
+  trailingSlash?: boolean
 }
 
+export function UnheadSchemaOrg(options?: PluginSchemaOrgOptions) {
+  return SchemaOrgUnheadPlugin({} as MetaInput, () => ({}), options)
+}
+
+/**
+ * @deprecated Providing a plugin is no longer required. You can remove this code.
+ */
 export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
   const fallback = () => ({})
   return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
 }
 
 /**
- * @deprecated Use `PluginSchemaOrg` instead.
+ * @deprecated Providing a plugin is no longer required. You can remove this code.
  */
 export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<string, any>, options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
-  const resolvedMeta = {} as ResolvedMeta
+  let resolvedMeta = {} as ResolvedMeta
   return defineHeadPlugin({
+    key: 'schema-org',
     hooks: {
       'entries:resolve': function () {
         graph = createSchemaOrgGraph()
@@ -41,14 +50,25 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
           }
           tag.tagPosition = config.tagPosition === 'head' ? 'head' : 'bodyClose'
         }
-        if (tag.tag === 'title')
-          resolvedMeta.title = tag.textContent
-        else if (tag.tag === 'meta' && tag.props.name === 'description')
-          resolvedMeta.description = tag.props.content
-        else if (tag.tag === 'link' && tag.props.rel === 'canonical')
+        if (tag.tag === 'htmlAttrs' && tag.props.lang) { resolvedMeta.inLanguage = tag.props.lang }
+        else if (tag.tag === 'title') { resolvedMeta.title = tag.textContent }
+        else if (tag.tag === 'meta' && tag.props.name === 'description') { resolvedMeta.description = tag.props.content }
+        else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
           resolvedMeta.url = tag.props.href
-        else if (tag.tag === 'meta' && tag.props.property === 'og:image')
-          resolvedMeta.image = tag.props.content
+          if (resolvedMeta.url && !resolvedMeta.host)
+            // let's hope they have a valid url in the canonical...
+            resolvedMeta.host = new URL(resolvedMeta.url).origin
+        }
+        else if (tag.tag === 'meta' && tag.props.property === 'og:image') { resolvedMeta.image = tag.props.content }
+        // use template params
+        else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
+          resolvedMeta = {
+            // @ts-expect-error untyped
+            ...tag.props.schemaOrg,
+            ...resolvedMeta,
+          }
+          delete tag.props.schemaOrg
+        }
       },
       'tags:resolve': async function (ctx) {
         // find the schema.org node

@@ -4,7 +4,7 @@
 
   Describes an `Product` on a `WebPage`.
 
-- **Component**: `SchemaOrgProduct` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgProduct` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -36,9 +36,9 @@
 
 - **@type**: `Product`
 - **@id**: `${canonicalUrl}#product`
-- **name**: `currentRouteMeta.title` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **image**: `currentRouteMeta.image` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **description**: `currentRouteMeta.description` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **brand**: id reference of the identity 
 - **mainEntityOfPage** id reference of the web page
 

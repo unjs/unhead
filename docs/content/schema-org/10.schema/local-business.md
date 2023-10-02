@@ -4,14 +4,14 @@
 
   Describes a business which allows public visitation. Typically used to represent the business 'behind' the website, or on a page about a specific business.
 
-- **Component**: `SchemaOrgLocalBusiness` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgLocalBusiness` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
 - [LocalBusiness - Schema.org](https://schema.org/LocalBusiness)
 - [Local Business Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/local-business)
 - [LocalBusiness - Yoast](https://developer.yoast.com/features/schema/pieces/localBusiness)
-- [Choose an Identity - Local Business](/schema-org/guides/identity#local-business)
+- [Choose an Identity - Local Business](/schema-org/recipes/identity#local-business)
 
 ## Required properties
 
@@ -61,7 +61,7 @@ defineLocalBusiness({
 - **@type**: `LocalBusiness`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}` 
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/guides/user-config)
+- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
 
 ## Sub-Types
 
