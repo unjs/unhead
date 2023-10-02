@@ -4,7 +4,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('vue dom titleTemplate', () => {
-  test('basic', async () => {
+  it('basic', async () => {
     const dom = useDom()
     const head = createHead()
     setHeadInjectionHandler(() => head)

@@ -4,7 +4,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('titleTemplate', () => {
-  test('string replace', async () => {
+  it('string replace', async () => {
     const head = createHead()
     head.push({
       titleTemplate: '%s - my template',
@@ -18,7 +18,7 @@ describe('titleTemplate', () => {
       '"test - my template"',
     )
   })
-  test('fn replace', async () => {
+  it('fn replace', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => `${title} - my template`,
@@ -29,7 +29,7 @@ describe('titleTemplate', () => {
       '"<title>test - my template</title>"',
     )
   })
-  test('titleTemplate as title', async () => {
+  it('titleTemplate as title', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
@@ -40,7 +40,7 @@ describe('titleTemplate', () => {
       '"<title>Default Title</title>"',
     )
   })
-  test('titleTemplate as title', async () => {
+  it('titleTemplate as title', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
@@ -59,7 +59,7 @@ describe('titleTemplate', () => {
       '"<title>Default Title</title>"',
     )
   })
-  test('reset title template', async () => {
+  it('reset title template', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
@@ -74,7 +74,7 @@ describe('titleTemplate', () => {
     )
   })
 
-  test('nested title template', async () => {
+  it('nested title template', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
@@ -88,7 +88,7 @@ describe('titleTemplate', () => {
     )
   })
 
-  test('null fn return', async () => {
+  it('null fn return', async () => {
     const head = createHead()
     head.push({
       titleTemplate: (title?: string) => title === 'test' ? null : `${title} - Template`,
@@ -100,7 +100,7 @@ describe('titleTemplate', () => {
     )
   })
 
-  test('empty title', async () => {
+  it('empty title', async () => {
     const head = createHead()
     head.push({
       title: '',

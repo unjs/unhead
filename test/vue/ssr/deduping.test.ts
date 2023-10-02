@@ -3,7 +3,7 @@ import { useHead } from '@unhead/vue'
 import { ssrRenderHeadToString } from '../util'
 
 describe('vue ssr deduping', () => {
-  test('script key', async () => {
+  it('script key', async () => {
     const headResult = await ssrRenderHeadToString(() => {
       useHead({
         script: [

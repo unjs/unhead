@@ -31,7 +31,7 @@ describe('vue ssr examples', () => {
     `)
   })
 
-  test('misc example', async () => {
+  it('misc example', async () => {
     const headResult = await ssrRenderHeadToString(() => {
       useHead({
         title: 'hello',
@@ -76,7 +76,7 @@ describe('vue ssr examples', () => {
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')
   })
 
-  test('#issue 138', async () => {
+  it('#issue 138', async () => {
     const headResult = await ssrRenderHeadToString(() =>
       useHead({
         link: [
@@ -99,7 +99,7 @@ describe('vue ssr examples', () => {
     )
   })
 
-  test('non-strings', async () => {
+  it('non-strings', async () => {
     const headResult = await ssrRenderHeadToString(() => useHead({
       htmlAttrs: {
         'data-something': true,

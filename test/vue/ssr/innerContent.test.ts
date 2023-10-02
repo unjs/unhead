@@ -3,7 +3,7 @@ import { useHead } from '@unhead/vue'
 import { ssrRenderHeadToString } from '../util'
 
 describe('vue ssr innerContent', () => {
-  test('children', async () => {
+  it('children', async () => {
     const headResult = await ssrRenderHeadToString(() => {
       useHead({
         script: [

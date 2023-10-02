@@ -13,7 +13,7 @@ async function transform(code: string | string[], id = 'some-id.js') {
   return res?.code
 }
 
-describe('TreeshakeServerComposables', () => {
+describe('treeshakeServerComposables', () => {
   const couldTransform = [
     'import { useServerHead } from \'unhead\'',
     'useServerHead({ title: \'Hello\', description: \'World\' })',

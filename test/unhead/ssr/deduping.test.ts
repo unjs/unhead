@@ -77,7 +77,7 @@ describe('dedupe', () => {
     expect(headTags.split('myCustomMeta').length === 2).toBeTruthy()
   })
 
-  test('dedupes canonical', async () => {
+  it('dedupes canonical', async () => {
     const head = createHead()
     head.push({
       link: [
@@ -104,7 +104,7 @@ describe('dedupe', () => {
     expect(headTags.split('canonical').length === 2).toBeTruthy()
   })
 
-  test('dedupes charset', async () => {
+  it('dedupes charset', async () => {
     const head = createHead()
     head.push(
       {
@@ -134,7 +134,7 @@ describe('dedupe', () => {
     expect(headTags.split('charset').length === 2).toBeTruthy()
   })
 
-  test('dedupes base', async () => {
+  it('dedupes base', async () => {
     const head = createHead()
     head.push({
       base: {
@@ -152,7 +152,7 @@ describe('dedupe', () => {
     expect(headTags.startsWith('<base href="/">')).toBeTruthy()
   })
 
-  test('dedupes http-equiv', async () => {
+  it('dedupes http-equiv', async () => {
     const head = createHead()
     head.push({
       meta: [
@@ -175,7 +175,7 @@ describe('dedupe', () => {
     expect(headTags.split('http-equiv').length === 2).toBeTruthy()
   })
 
-  test('issue #104', async () => {
+  it('issue #104', async () => {
     const head = createHead()
     head.push({
       link: [
@@ -192,7 +192,7 @@ describe('dedupe', () => {
     )
   })
 
-  test('doesn\'t dedupe over tag types', async () => {
+  it('doesn\'t dedupe over tag types', async () => {
     const head = createHead()
     head.push({
       meta: [
@@ -213,7 +213,7 @@ describe('dedupe', () => {
     )
   })
 
-  test('dedupes legacy', async () => {
+  it('dedupes legacy', async () => {
     const head = createHead()
     head.push({
       meta: [
@@ -242,7 +242,7 @@ describe('dedupe', () => {
     )
   })
 
-  test('no deduping for entry and content', async () => {
+  it('no deduping for entry and content', async () => {
     const head = createHead()
     head.push({
       meta: [
@@ -275,7 +275,7 @@ describe('dedupe', () => {
     )
   })
 
-  test('key example readme', async () => {
+  it('key example readme', async () => {
     const head = createHead()
     head.push({
       meta: [
@@ -304,7 +304,7 @@ describe('dedupe', () => {
     )
   })
 
-  test('removing tag with null props', async () => {
+  it('removing tag with null props', async () => {
     const head = createHead()
     head.push({
       meta: [

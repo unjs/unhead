@@ -5,7 +5,7 @@ import { createHead, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('vue ssr custom augmentation', () => {
-  test('link auto-completion', async () => {
+  it('link auto-completion', async () => {
     interface CustomHead extends MergeHead {
       link: {
         href: 'link-one' | 'link/two' | 'link/number/three'

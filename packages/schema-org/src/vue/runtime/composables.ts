@@ -38,7 +38,7 @@ import type {
   WebSite,
 } from '../../'
 import type { Arrayable } from '../../types'
-import { UnheadSchemaOrg } from "../../plugin";
+import { UnheadSchemaOrg } from '../../plugin'
 
 export type DeepMaybeRef<T> = {
   [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>

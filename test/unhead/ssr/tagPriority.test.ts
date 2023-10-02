@@ -2,7 +2,7 @@ import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('tag priority', () => {
-  test('basic int', async () => {
+  it('basic int', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -42,7 +42,7 @@ describe('tag priority', () => {
       ]
     `)
   })
-  test('charset first', async () => {
+  it('charset first', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -72,7 +72,7 @@ describe('tag priority', () => {
     expect(headTags.startsWith('<meta charset="utf-8"')).toBeTruthy()
   })
 
-  test('base early', async () => {
+  it('base early', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -107,7 +107,7 @@ describe('tag priority', () => {
     ).toBeTruthy()
   })
 
-  test('CSP early', async () => {
+  it('cSP early', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -142,7 +142,7 @@ describe('tag priority', () => {
     ).toBeTruthy()
   })
 
-  test('manual priority', async () => {
+  it('manual priority', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -171,7 +171,7 @@ describe('tag priority', () => {
     ).toBeTruthy()
   })
 
-  test('before priority', async () => {
+  it('before priority', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -198,7 +198,7 @@ describe('tag priority', () => {
     )
   })
 
-  test('before and after priority', async () => {
+  it('before and after priority', async () => {
     const head = createHead()
     head.push({
       script: [
@@ -243,7 +243,7 @@ describe('tag priority', () => {
     )
   })
 
-  test('title priority', async () => {
+  it('title priority', async () => {
     const head = createHead()
     head.push({
       title: {
@@ -260,7 +260,7 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot('"<title>high-priority title</title>"')
   })
 
-  test('titleTemplate priority', async () => {
+  it('titleTemplate priority', async () => {
     const head = createHead()
     head.push({
       title: 'test',

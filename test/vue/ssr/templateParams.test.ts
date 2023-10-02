@@ -145,7 +145,7 @@ describe('ssr vue templateParams', () => {
     `)
   })
 
-  test('edge case', async () => {
+  it('edge case', async () => {
     const head = createHead()
     head.push({
       title: '%site.tagline',
@@ -179,7 +179,7 @@ describe('ssr vue templateParams', () => {
     `)
   })
 
-  test('entry opt-out', async () => {
+  it('entry opt-out', async () => {
     const head = createHead()
     head.push({
       title: 'Hello %name',

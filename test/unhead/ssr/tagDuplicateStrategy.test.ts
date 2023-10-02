@@ -3,7 +3,7 @@ import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('tagDuplicateStrategy', () => {
-  test('basic', async () => {
+  it('basic', async () => {
     const head = createHead()
     head.push({
       htmlAttrs: {
@@ -23,7 +23,7 @@ describe('tagDuplicateStrategy', () => {
     )
   })
 
-  test('class / style merge', async () => {
+  it('class / style merge', async () => {
     const head = createHead()
     head.push({
       htmlAttrs: {

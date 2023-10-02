@@ -65,8 +65,8 @@ describe('schema.org e2e no plugin', () => {
       templateParams: {
         schemaOrg: {
           path: '/about',
-        }
-      }
+        },
+      },
     })
 
     useSchemaOrg([
@@ -141,8 +141,8 @@ describe('schema.org e2e no plugin', () => {
         schemaOrg: {
           path: '/about',
           host: 'https://example.com',
-        }
-      }
+        },
+      },
     })
 
     useSchemaOrg([
@@ -191,8 +191,8 @@ describe('schema.org e2e no plugin', () => {
         schemaOrg: {
           path: '/about',
           host: 'https://example.com',
-        }
-      }
+        },
+      },
     })
 
     useSchemaOrg([
@@ -256,17 +256,17 @@ describe('schema.org e2e no plugin', () => {
     const ssrHead = createHead()
     useSchemaOrg([
       defineWebPage({
-        name: 'One'
+        name: 'One',
       }),
     ])
     useSchemaOrg([
       defineWebPage({
-        name: 'Two'
+        name: 'Two',
       }),
     ])
     useSchemaOrg([
       defineWebPage({
-        name: 'Three'
+        name: 'Three',
       }),
     ])
     const data = await renderSSRHead(ssrHead)
@@ -283,5 +283,4 @@ describe('schema.org e2e no plugin', () => {
       }</script>"
     `)
   })
-
 })
