@@ -6,7 +6,7 @@
 
   Acts as a connector from a page's content to the parent WebSite (and in turn, to the Organization).
 
-- **Component**: `SchemaOrgWebPage` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgWebPage` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -26,7 +26,7 @@
 - **@type**: inferred from path, fallbacks to `WebPage`, see [resolves](#resolves)
 - **@id**: `${canonicalUrl}#webpage`
 - **url**: `canonicalUrl`
-- **name**: `currentRouteMeta.title` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **isPartOf**: WebSite reference
 
 Home page only

@@ -15,7 +15,7 @@ your faq pages search appearance.
 
 ## Marking up FAQs
 
-The [defineQuestion](/schema-org/schema/question) function and [SchemaOrgQuestion](/schema-org/guides/components) component are provided
+The [defineQuestion](/schema-org/schema/question) function and [SchemaOrgQuestion](/schema-org/getting-started/vue-components) component are provided
 to create Question Schema whilst handling relations for you.
 
 Note: When using a page with the path `/faq`, the page type will be automatically set for you. 
@@ -25,7 +25,7 @@ Tips:
 
 ::code-group
 
-```ts [Composition API]
+```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebPage({
     '@type': 'FAQPage',

@@ -4,7 +4,7 @@
 
   Describes an individual question. Most commonly used for creating an FAQ type page.
 
-- **Component**: `SchemaOrgQuestion` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgQuestion` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -37,7 +37,7 @@ defineQuestion({
 
 - **@type**: `Question`
 - **@id**: `${canonicalUrl}#/schema/question/${questionId}`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
 
 ## Resolves
 

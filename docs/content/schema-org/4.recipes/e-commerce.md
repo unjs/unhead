@@ -14,14 +14,14 @@ title: eCommerce
 
 ## Marking up a Product
 
-The [defineProduct](/schema-org/schema/product) function and [SchemaOrgProduct](/schema-org/guides/components) component are provided
+The [defineProduct](/schema-org/schema/product) function and [SchemaOrgProduct](/schema-org/getting-started/vue-components) component are provided
 to create Product Schema whilst handling relations for you.
 
-Note that some fields may already be inferred, see [Route Meta Resolving](/guide/getting-started/how-it-works#route-meta-resolving)
+Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 
 ::code-group
 
-```ts [Composition API]
+```ts [useSchemaOrg]
 useSchemaOrg([
   defineProduct({
     name: 'Schema.org Book',

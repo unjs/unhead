@@ -4,7 +4,7 @@
 
   Describes a HowTo guide, which contains a series of steps.
 
-- **Component**: `SchemaOrgHowTo` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgHowTo` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -65,10 +65,10 @@ defineHowTo({
 
 - **@type**: `HowTo`
 - **@id**: `${canonicalUrl}#howTo`
-- **name**: `currentRouteMeta.title` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **image**: `currentRouteMeta.image` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **description**: `currentRouteMeta.description` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
 - **mainEntityOfPage**: WebPage Reference
 
 

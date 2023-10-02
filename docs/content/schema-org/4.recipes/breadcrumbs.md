@@ -11,7 +11,7 @@ Creating breadcrumbs on your site is a great way to help your users understand y
 
 ## Marking up Breadcrumbs
 
-The [defineBreadcrumb](/schema-org/schema/breadcrumb) function and [SchemaOrgBreadcrumb](/schema-org/guides/components) component are provided
+The [defineBreadcrumb](/schema-org/schema/breadcrumb) function and [SchemaOrgBreadcrumb](/schema-org/getting-started/vue-components) component are provided
 to create Breadcrumb Schema whilst handling relations for you.
 
 
@@ -21,7 +21,7 @@ Note: Google recommends that the markup for the breadcrumbs should exist on the 
 
 ::code-group
 
-```vue [Composition API]
+```vue [useSchemaOrg]
 <script setup lang="ts">
 const breadcrumbs = [
   // item is the url and will be resolved to the absolute url
@@ -52,7 +52,7 @@ useSchemaOrg([
 </template>
 ```
 
-```vue [Component API]
+```vue [Vue Components]
 <script setup>
 const breadcrumb = [
   { item: '/', name: 'Home' },

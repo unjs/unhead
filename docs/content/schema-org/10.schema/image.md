@@ -4,7 +4,7 @@
 
 Describes an individual image (usually in the context of an embedded media object).
 
-- **Component**: `SchemaOrgImage` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgImage` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -22,7 +22,7 @@ Describes an individual image (usually in the context of an embedded media objec
 
 - **@type**: `ImageObject`
 - **@id**: `${canonicalUrl}#/schema/image/${hash(image.url)}`
-- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/getting-started/params))_
 - **contentUrl**: is set to `url`
 
 

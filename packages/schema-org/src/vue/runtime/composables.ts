@@ -1,5 +1,5 @@
 import type { MaybeComputedRefOrPromise } from '@unhead/vue'
-import { useHead } from '@unhead/vue'
+import { injectHead, useHead } from '@unhead/vue'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -31,11 +31,14 @@ import type {
   Review,
   SearchAction,
   SoftwareApp,
+  Thing,
   VideoObject,
   VirtualLocation,
   WebPage,
   WebSite,
 } from '../../'
+import type { Arrayable } from '../../types'
+import { UnheadSchemaOrg } from "../../plugin";
 
 export type DeepMaybeRef<T> = {
   [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>
@@ -153,16 +156,18 @@ export function defineBookEdition<T extends Record<string, any>>(input?: DeepMay
   return provideResolver(input, 'bookEdition')
 }
 
-type Arrayable<T> = T | Array<T>
+export type UseSchemaOrgInput = Arrayable<DeepMaybeRef<Thing | Record<string, any>>>
 
-export function useSchemaOrg(input?: Arrayable<any>): any {
-  return useHead({
+export function useSchemaOrg(input: UseSchemaOrgInput) {
+  // lazy initialise the plugin
+  const head = injectHead()
+  head.use(UnheadSchemaOrg())
+  return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
     script: [
       {
         type: 'application/ld+json',
         id: 'schema-org-graph',
         key: 'schema-org-graph',
-        // @ts-expect-error runtime type
         nodes: input,
       },
     ],

@@ -4,7 +4,7 @@
 
   Describes a Book.
 
-- **Component**: `SchemaOrgBook` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgBook` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 
 ## Useful Links

@@ -4,7 +4,7 @@
 
   Describes a WebSite. Parent to WebPage.
 
-- **Component**: `SchemaOrgWebSite` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgWebSite` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 
 ## Useful Links
@@ -25,7 +25,7 @@
 - **@type**: `WebSite`
 - **@id**: `${canonicalHost}#website`
 - **url**: `canonicalHost`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
 - **isPartOf**: WebSite reference
 - **publisher**: Identity reference
 

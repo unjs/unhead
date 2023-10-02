@@ -4,7 +4,7 @@
 
   Describes a Recipe, which contains a series of instructions, ingredients, and optional fields.
 
-- **Component**: `SchemaOrgRecipe` _(see [how components work](/schema-org/guides/components))_
+- **Component**: `SchemaOrgRecipe` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
@@ -39,11 +39,11 @@
 
 - **@type**: `Recipe`
 - **@id**: `${canonicalUrl}#recipe`
-- **name**: `currentRouteMeta.title` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **image**: `currentRouteMeta.image` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **description**: `currentRouteMeta.description` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/guides/user-config))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [route meta resolving](/guide/getting-started/how-it-works#route-meta-resolving))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
+- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **author**: (conditional) set to the current page article's author if one exists
 - **mainEntityOfPage**: WebPage Reference
 
