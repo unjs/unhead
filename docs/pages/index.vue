@@ -10,8 +10,8 @@ const { data } = await useAsyncData('code-example', () => queryContent('/_code-e
   <div>
     <section class="py-5 sm:py-10 xl:py-20">
       <div class="xl:grid gap-8 lg:grid-cols-12 mx-auto w-full sm:px-6 lg:px-0 px-0">
-        <div class="col-span-6 lg:mr-10 mb-10 lg:mb-0 flex flex-col justify-center">
-          <h1 class="font-title mb-7 text-gray-900 dark:text-gray-100 text-center text-4xl leading-25 font-extrabold tracking-tight sm:text-5xl lg:text-left lg:text-6xl" style="line-height: 1.3;">
+        <div class="col-span-5 mb-10 lg:mb-0 flex flex-col justify-center">
+          <h1 class="font-title mb-7 text-gray-900 dark:text-gray-100 text-center text-4xl leading-25 font-extrabold tracking-tight sm:text-5xl lg:text-left lg:text-5xl" style="line-height: 1.3;">
             <span class="max-w-2xl" v-html="siteConfig.tagline" />
           </h1>
           <p class="text-gray-600 dark:text-gray-300 max-w-4xl text-center text-xl lg:text-left">
@@ -28,7 +28,7 @@ const { data } = await useAsyncData('code-example', () => queryContent('/_code-e
           </div>
         </div>
 
-        <div class="prose prose-primary block-hero__right xl:col-span-6 max-w-full h-[400px] flex items-center justify-center relative">
+        <div class="prose prose-primary block-hero__right xl:col-span-7 max-w-full h-[400px] flex items-center justify-center relative">
           <div class="flex relative items-center block-hero__inner xl:p-6 bg-gradient-to-br to-green-200/50 from-blue-100/50 dark:from-green-500/10 dark:to-blue-500/20 rounded">
             <ContentRenderer :value="data" class="block-hero__right xl:col-span-6 max-w-full" />
           </div>
