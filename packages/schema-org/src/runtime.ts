@@ -158,6 +158,7 @@ export function useSchemaOrg(input?: any): any {
       {
         type: 'application/ld+json',
         key: 'schema-org-graph',
+        // @ts-expect-error untyped
         nodes: input,
       },
     ],

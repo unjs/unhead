@@ -5,6 +5,7 @@ import type {
   HeadEntry,
   HeadHooks,
   HeadPlugin,
+  HeadPluginInput,
   HeadTag,
   RuntimeMode,
   Unhead,
@@ -50,34 +51,29 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   options.document = options.document || (IsBrowser ? document : undefined)
   const ssr = !options.document
 
-  options.plugins = [
-    DedupePlugin,
-    PayloadPlugin,
-    EventHandlersPlugin,
-    HashKeyedPlugin,
-    SortPlugin,
-    TemplateParamsPlugin,
-    TitleTemplatePlugin,
-    ...(options?.plugins || []),
-  ]
-
   const updated = () => {
     head.dirty = true
     hooks.callHook('entries:updated', head)
   }
   let entryCount = 0
   let entries: HeadEntry<T>[] = []
+  const plugins: HeadPlugin[] = []
   const head: Unhead<T> = {
+    plugins,
     dirty: false,
     resolvedOptions: options,
     hooks,
     headEntries() {
       return entries
     },
-    use(p: HeadPlugin) {
+    use(p: HeadPluginInput) {
       // @ts-expect-error untyped
       const plugin = (typeof p === 'function' ? p(head) : p)
-      filterMode(plugin.mode, ssr) && hooks.addHooks(plugin.hooks || {})
+      // dedupe based on the plugin key
+      if (!plugin.key || !plugins.some(p => p.key === plugin.key)) {
+        plugins.push(plugin)
+        filterMode(plugin.mode, ssr) && hooks.addHooks(plugin.hooks || {})
+      }
     },
     push(input, entryOptions) {
       delete entryOptions?.head
@@ -131,8 +127,16 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     },
     ssr,
   }
-
-  options.plugins.forEach(p => head.use(p))
+  ;[
+    DedupePlugin,
+    PayloadPlugin,
+    EventHandlersPlugin,
+    HashKeyedPlugin,
+    SortPlugin,
+    TemplateParamsPlugin,
+    TitleTemplatePlugin,
+    ...(options?.plugins || []),
+  ].forEach(p => head.use(p))
   head.hooks.callHook('init', head)
   return head
 }

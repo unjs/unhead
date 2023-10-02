@@ -1,5 +1,5 @@
-import type { HeadPlugin } from '@unhead/schema'
+import type { HeadPluginInput } from '@unhead/schema'
 
-export function defineHeadPlugin(plugin: HeadPlugin): HeadPlugin {
+export function defineHeadPlugin(plugin: HeadPluginInput): HeadPluginInput {
   return plugin
 }
