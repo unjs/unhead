@@ -1,4 +1,4 @@
-import type { UseScriptInput, UseScriptOptions, UseScriptStatus } from '@unhead/schema'
+import type { ScriptInstance, UseScriptInput, UseScriptOptions, UseScriptStatus } from '@unhead/schema'
 import { useScript as _useScript } from 'unhead'
 import type { ComputedRef, Ref } from 'vue'
 import { computed, getCurrentInstance, ref } from 'vue'
@@ -7,12 +7,9 @@ import { resolveUnrefHeadInput } from '../utils'
 import type { MaybeComputedRefEntries } from '../types'
 import { injectHead } from './injectHead'
 
-export interface VueScriptInstance<T> {
+export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' | 'status'> {
   loaded: ComputedRef<boolean>
   status: Ref<UseScriptStatus>
-  // error: Ref<Error | null>
-  // load: () => Promise<void>
-  waitForUse: () => Promise<T>
 }
 
 export function useScript<T>(_input: MaybeComputedRefEntries<UseScriptInput>, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {

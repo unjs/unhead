@@ -18,7 +18,6 @@ export interface ScriptInstance<T> {
   id: string
   loaded: boolean
   status: UseScriptStatus
-  // error: Ref<Error | null>
   load: () => Promise<T>
   waitForUse: () => Promise<T>
 }
@@ -26,7 +25,7 @@ export interface ScriptInstance<T> {
 export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
   use?: () => T | undefined | null
   stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
-  transform?: (script: Script) => Script
+  transform?: (script: Script) => Promise<Script> | Script
   trigger?: 'idle' | 'manual' | Promise<void>
 }
 

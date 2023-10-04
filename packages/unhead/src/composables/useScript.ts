@@ -15,7 +15,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     return head._scripts[id]
 
   async function transform(entry: Head): Promise<Head> {
-    const script = (options.transform || (input => input))(entry.script![0] as Script)
+    const script = await (options.transform || (input => input))(entry.script![0] as Script)
     const ctx = { script }
     await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }
