@@ -22,6 +22,6 @@ export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): 
         ...t,
         meta,
       }
-    }
+    },
   })
 }

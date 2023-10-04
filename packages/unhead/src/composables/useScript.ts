@@ -9,19 +9,20 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     throw new Error('No active head found, please provide a head instance or use the useHead composable')
 
   // TODO warn about non-src / non-key input
-  const id = hashCode(input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
-  const key = `script-${id}`
+  const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+  const key = `use-script.${id}`
   if (head._scripts?.[id])
     return head._scripts[id]
 
   async function transform(entry: Head): Promise<Head> {
-    const script = (options.transform || (input => input))(entry.script![0] as Script)
+    const script = await (options.transform || (input => input))(entry.script![0] as Script)
     const ctx = { script }
     await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }
   }
 
   const script: ScriptInstance<T> = {
+    id,
     status: 'awaitingLoad',
     loaded: false,
     waitForUse: () => new Promise(() => {}),

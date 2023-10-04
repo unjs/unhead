@@ -6,7 +6,7 @@ describe('useSeoMeta vue ssr', () => {
   it('ssr reactivity', async () => {
     const head = createHead()
     const data = {
-      value: 'foo'
+      value: 'foo',
     }
     useSeoMeta({
       robots: () => data.value,
