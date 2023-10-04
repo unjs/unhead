@@ -16,7 +16,7 @@ describe('dom useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script src=\\"https://cdn.example.com/script.js\\" data-hid=\\"d6573fd\\"></script>",
+        "headTags": "<script src=\\"https://cdn.example.com/script.js\\" data-hid=\\"438d65b\\"></script>",
         "htmlAttrs": "",
       }
     `)

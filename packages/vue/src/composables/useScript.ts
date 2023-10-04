@@ -25,10 +25,12 @@ export function useScript<T>(_input: MaybeComputedRefEntries<UseScriptInput>, _o
   NetworkEvents.forEach((fn) => {
     // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind(ctx) : null
-    // @ts-expect-error untyped
-    input[fn] = (e: Event) => {
-      status.value = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-      _fn && _fn(e)
+    if (_fn) {
+      // @ts-expect-error untyped
+      input[fn] = (e: Event) => {
+        status.value = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
+        _fn && _fn(e)
+      }
     }
   })
 

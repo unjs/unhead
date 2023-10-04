@@ -13,7 +13,7 @@ describe('dom useScript', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script src=\\"https://cdn.example.com/script.js\\" data-hid=\\"d6573fd\\"></script></head>
+      <script src=\\"https://cdn.example.com/script.js\\" data-hid=\\"438d65b\\"></script></head>
       <body>
 
       <div>
