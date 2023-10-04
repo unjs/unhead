@@ -25,7 +25,8 @@ export function useScript<T>(_input: MaybeComputedRefEntries<UseScriptInput>, _o
   NetworkEvents.forEach((fn) => {
     // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind(ctx) : null
-    if (_fn) {
+    // TODO need to find a way where we don't need the DOM attribute events always
+    if (_fn || fn === 'onload' || fn === 'onerror') {
       // @ts-expect-error untyped
       input[fn] = (e: Event) => {
         status.value = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
