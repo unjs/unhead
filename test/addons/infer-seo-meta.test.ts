@@ -3,7 +3,7 @@ import { createHead } from 'unhead'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { renderSSRHead } from '@unhead/ssr'
 
-describe('InferSeoMetaPlugin', () => {
+describe('inferSeoMetaPlugin', () => {
   it('simple', async () => {
     const head = createHead({
       plugins: [InferSeoMetaPlugin()],

@@ -1,7 +1,7 @@
 import { ssrRenderOptionsHead } from '../util'
 
 describe('vue ssr options api', () => {
-  test('server', async () => {
+  it('server', async () => {
     const headResult = await ssrRenderOptionsHead({
       title: 'hello',
       htmlAttrs: {

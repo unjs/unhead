@@ -13,7 +13,7 @@ async function transform(code: string | string[], id = 'some-id.js') {
   return res?.code
 }
 
-describe('UseSeoMetaTransform', () => {
+describe('useSeoMetaTransform', () => {
   const couldTransform = [
     'import { useSeoMeta } from \'unhead\'',
     'useSeoMeta({ title: \'Hello\', description: \'World\' })',

@@ -1,21 +1,27 @@
 import type { ActiveHeadEntry } from '@unhead/schema'
-import { ref, watchEffect } from 'vue'
 import { unpackMeta } from '@unhead/shared'
-import { resolveUnrefHeadInput } from '../utils'
 import type { UseHeadOptions, UseSeoMetaInput } from '../types'
 import { useHead } from './useHead'
 
 export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> | void {
-  const headInput: any = ref({})
-  watchEffect(() => {
-    const resolvedMeta = resolveUnrefHeadInput(input)
-    const { title, titleTemplate, ...meta } = resolvedMeta
-    // need to unref data so we can unpack it properly
-    headInput.value = {
-      title,
-      titleTemplate,
-      meta: unpackMeta(meta),
+  const { title, titleTemplate, ...meta } = input
+  return useHead({
+    title,
+    titleTemplate,
+    // @ts-expect-error runtime type
+    _flatMeta: meta,
+  }, {
+    ...options,
+    transform(t) {
+      // @ts-expect-error runtime type
+      const meta = unpackMeta({ ...t._flatMeta })
+      // @ts-expect-error runtime type
+      delete t._flatMeta
+      return {
+        // @ts-expect-error runtime type
+        ...t,
+        meta,
+      }
     }
   })
-  return useHead(headInput, options)
 }

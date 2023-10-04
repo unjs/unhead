@@ -7,6 +7,21 @@ export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): 
   return useHead({
     title,
     titleTemplate,
-    meta: unpackMeta(meta),
-  }, options)
+    // we need to input the meta so the reactivity will be resolved
+    // @ts-expect-error runtime type
+    _flatMeta: meta,
+  }, {
+    ...options,
+    transform(t) {
+      // @ts-expect-error runtime type
+      const meta = unpackMeta({ ...t._flatMeta })
+      // @ts-expect-error runtime type
+      delete t._flatMeta
+      return {
+        // @ts-expect-error runtime type
+        ...t,
+        meta,
+      }
+    }
+  })
 }
