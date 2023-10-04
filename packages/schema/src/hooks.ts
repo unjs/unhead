@@ -15,6 +15,7 @@ export interface SSRHeadPayload {
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error'
 
 export interface ScriptInstance<T> {
+  id: string
   loaded: boolean
   status: UseScriptStatus
   // error: Ref<Error | null>
