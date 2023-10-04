@@ -66,7 +66,8 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     trigger === 'idle' && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
     // never resolves
     trigger === 'manual' && (trigger = new Promise(() => {}))
-    trigger.then(script.load)
+    // check trigger is a promise
+    trigger instanceof Promise && trigger.then(script.load)
   }
   else {
     script.load()
