@@ -5,6 +5,7 @@ import { useScript } from '@unhead/vue'
 const isScriptLoaded = ref(false)
 
 const { $script } = useScript({
+  key: 'test',
   innerHTML: 'console.log(\'hello world\')',
   onload() {
     console.log('script loaded')
@@ -13,6 +14,9 @@ const { $script } = useScript({
   onerror(e) {
     console.log('script error', e)
   },
+})
+$script.waitForUse().then(() => {
+  console.log('ready!')
 })
 
 useHead({
