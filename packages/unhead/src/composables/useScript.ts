@@ -1,5 +1,5 @@
 import { NetworkEvents, hashCode } from '@unhead/shared'
-import type { Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
+import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
 export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
@@ -82,6 +82,17 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       head.hooks.hook('script:loaded', ({ script }) => script.id === id && resolve(options.use()))
     }
   })
+
+  function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {
+    if (ctx.tag.key === key) {
+      // trigger load event
+      script.status = 'loaded'
+      head!.hooks.callHook('script:loaded', hookCtx)
+      typeof input.onload === 'function' && input.onload(new Event('load'))
+      head!.hooks.removeHook('dom:renderTag', resolveInnerHtmlLoad)
+    }
+  }
+  input.innerHTML && head.hooks.hook('dom:renderTag', resolveInnerHtmlLoad)
 
   // 3. Proxy the script API
   const instance = new Proxy({}, {
