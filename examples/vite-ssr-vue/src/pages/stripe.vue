@@ -8,7 +8,7 @@ const { elements, $script } = useScript<{ elements: (() => void) }>({
   trigger: 'idle',
 })
 
-$script.waitForUse().then(() => {
+$script.waitForLoad().then(() => {
   console.log(elements)
 })
 
