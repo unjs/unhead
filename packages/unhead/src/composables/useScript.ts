@@ -25,7 +25,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     id,
     status: 'awaitingLoad',
     loaded: false,
-    remove () {
+    remove() {
       if (script.status === 'loaded') {
         script.entry?.dispose()
         script.status = 'removed'
@@ -35,7 +35,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       }
       return false
     },
-    waitForLoad () {
+    waitForLoad() {
       return new Promise<T>((resolve) => {
         if (script.status === 'loaded')
           // @ts-expect-error untyped
@@ -49,7 +49,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
         head.hooks.hook('script:updated', watchForScriptLoaded)
       })
     },
-    load () {
+    load() {
       if (script.status !== 'awaitingLoad')
         return script.waitForLoad()
       script.status = 'loading'
