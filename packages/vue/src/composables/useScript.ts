@@ -25,13 +25,10 @@ export function useScript<T>(_input: MaybeComputedRefEntries<UseScriptInput>, _o
   NetworkEvents.forEach((fn) => {
     // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind(ctx) : null
-    // TODO need to find a way where we don't need the DOM attribute events always
-    if (_fn || fn === 'onload' || fn === 'onerror') {
+    // rebinding the events for the vue context
+    if (_fn) {
       // @ts-expect-error untyped
-      input[fn] = (e: Event) => {
-        status.value = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-        _fn && _fn(e)
-      }
+      input[fn] = (e: Event) => _fn(e)
     }
   })
 
@@ -44,5 +41,18 @@ export function useScript<T>(_input: MaybeComputedRefEntries<UseScriptInput>, _o
       }
     }
   }
-  return _useScript(input, options) as T & { $script: VueScriptInstance<T> }
+
+  const instance = _useScript(input, options) as T & { $script: VueScriptInstance<T> }
+
+  function syncStatus({ script }: { script: ScriptInstance<T> }) {
+    if (script.id === instance.$script.id) {
+      status.value = script.status
+      // clean up
+      if (script.status === 'removed')
+        head.hooks.removeHook(`script:updated`, syncStatus)
+    }
+  }
+  // sync the status
+  head.hooks.hook(`script:updated`, syncStatus)
+  return instance
 }

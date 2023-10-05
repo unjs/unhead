@@ -6,7 +6,7 @@ const isScriptLoaded = ref(false)
 
 const { $script } = useScript({
   key: 'test',
-  innerHTML: 'console.log(\'hello world\')',
+  src: 'example.js',
   onload() {
     console.log('script loaded')
     isScriptLoaded.value = true
@@ -14,6 +14,15 @@ const { $script } = useScript({
   onerror(e) {
     console.log('script error', e)
   },
+}, {
+  transform: async (script) => {
+    delete script.src
+    script.innerHTML = await new Promise((resolve) => {
+      resolve('console.log(\'hello world\')')
+    })
+    return script
+  },
+  trigger: 'manual',
 })
 $script.waitForUse().then(() => {
   console.log('ready!')
@@ -30,6 +39,12 @@ useHead({
     <div>
       script status: {{ $script.status }}
     </div>
+    <button v-if="$script.status.value === 'awaitingLoad'" @click="$script.load">
+      Load Script
+    </button>
+    <button v-if="$script.status.value === 'loaded'" @click="$script.remove">
+      Remove Script
+    </button>
   </div>
 </template>
 

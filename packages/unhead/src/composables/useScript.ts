@@ -64,8 +64,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       // @ts-expect-error untyped
       input[fn] = (e: Event) => {
         script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-        // @ts-expect-error untyped
-        head.hooks.callHook(`script:${fn}`, hookCtx)
+        head.hooks.callHook(`script:updated`, hookCtx)
         _fn && _fn(e)
       }
     }
@@ -94,15 +93,18 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   })
 
   function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {
+    // we don't know up front if they'll be innerHTML or src due to the transform step
     if (ctx.tag.key === key) {
-      // trigger load event
-      script.status = 'loaded'
-      head!.hooks.callHook('script:loaded', hookCtx)
-      typeof input.onload === 'function' && input.onload(new Event('load'))
+      if (ctx.tag.innerHTML) {
+        // trigger load event
+        script.status = 'loaded'
+        head!.hooks.callHook('script:updated', hookCtx)
+        typeof input.onload === 'function' && input.onload(new Event('load'))
+      }
       head!.hooks.removeHook('dom:renderTag', resolveInnerHtmlLoad)
     }
   }
-  input.innerHTML && head.hooks.hook('dom:renderTag', resolveInnerHtmlLoad)
+  head.hooks.hook('dom:renderTag', resolveInnerHtmlLoad)
 
   // 3. Proxy the script API
   const instance = new Proxy({}, {
