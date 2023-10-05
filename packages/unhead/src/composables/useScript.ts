@@ -30,6 +30,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
         script.entry?.dispose()
         script.status = 'removed'
         head.hooks.callHook(`script:updated`, hookCtx)
+        delete head._scripts?.[id]
         return true
       }
       return false
