@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "1.8.0-beta.8",
+  "version": "1.8.0-beta.9",
   "private": "true",
   "packageManager": "pnpm@8.8.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
