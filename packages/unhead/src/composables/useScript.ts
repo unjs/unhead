@@ -25,7 +25,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     id,
     status: 'awaitingLoad',
     loaded: false,
-    remove: () => {
+    remove () {
       if (script.status === 'loaded') {
         script.entry?.dispose()
         script.status = 'removed'
@@ -35,10 +35,23 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       }
       return false
     },
-    waitForUse: () => new Promise(() => {}),
-    load: () => {
+    waitForLoad () {
+      return new Promise<T>((resolve) => {
+        if (script.status === 'loaded')
+          // @ts-expect-error untyped
+          resolve(options.use())
+        function watchForScriptLoaded({ script }: { script: ScriptInstance<T> }) {
+          if (script.id === id && script.status === 'loaded') {
+            resolve(options.use?.() as T)
+            head!.hooks.removeHook('script:updated', watchForScriptLoaded)
+          }
+        }
+        head.hooks.hook('script:updated', watchForScriptLoaded)
+      })
+    },
+    load () {
       if (script.status !== 'awaitingLoad')
-        return script.waitForUse()
+        return script.waitForLoad()
       script.status = 'loading'
       head.hooks.callHook(`script:updated`, hookCtx)
       script.entry = head.push({
@@ -51,7 +64,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
         transform,
         head,
       })
-      return script.waitForUse()
+      return script.waitForLoad()
     },
   }
 
@@ -81,24 +94,16 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     script.load()
   }
 
-  script.waitForUse = () => new Promise<T>((resolve) => {
-    if (typeof options.use === 'function') {
-      if (script.status === 'loaded')
-        // @ts-expect-error untyped
-        resolve(options.use())
-      // @ts-expect-error untyped
-      head.hooks.hook('script:loaded', ({ script }) => script.id === id && resolve(options.use()))
-    }
-  })
-
   function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {
     // we don't know up front if they'll be innerHTML or src due to the transform step
     if (ctx.tag.key === key) {
       if (ctx.tag.innerHTML) {
-        // trigger load event
-        script.status = 'loaded'
-        head!.hooks.callHook('script:updated', hookCtx)
-        typeof input.onload === 'function' && input.onload(new Event('load'))
+        setTimeout(() => {
+          // trigger load event
+          script.status = 'loaded'
+          head!.hooks.callHook('script:updated', hookCtx)
+          typeof input.onload === 'function' && input.onload(new Event('load'))
+        }, 5 /* give inline script a chance to run */)
       }
       head!.hooks.removeHook('dom:renderTag', resolveInnerHtmlLoad)
     }
@@ -124,7 +129,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
           return api[fn](...args)
         }
         else {
-          return script.waitForUse().then(
+          return script.waitForLoad().then(
             (api) => {
               // @ts-expect-error untyped
               api[fn](...args)

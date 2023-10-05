@@ -1,10 +1,14 @@
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useScript } from '@unhead/vue'
 
 const isScriptLoaded = ref(false)
 
-const { $script } = useScript({
+interface TestApi {
+  test: () => void
+}
+
+const { $script, test } = useScript<TestApi>({
   key: 'test',
   src: 'example.js',
   onload() {
@@ -15,21 +19,25 @@ const { $script } = useScript({
     console.log('script error', e)
   },
 }, {
+  use() {
+    return window.myScript
+  },
   transform: async (script) => {
     delete script.src
     script.innerHTML = await new Promise((resolve) => {
-      resolve('console.log(\'hello world\')')
+      resolve('(function() { window.myScript = { test: () => console.log("hello world") } })()')
     })
     return script
   },
   trigger: 'manual',
 })
-$script.waitForUse().then(() => {
+test()
+$script.waitForLoad().then(() => {
   console.log('ready!')
 })
 
 useHead({
-  title: () => $script.status.value,
+  title: computed(() => $script.status.value)
 })
 </script>
 

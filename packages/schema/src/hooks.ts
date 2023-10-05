@@ -20,7 +20,7 @@ export interface ScriptInstance<T> {
   loaded: boolean
   status: UseScriptStatus
   load: () => Promise<T>
-  waitForUse: () => Promise<T>
+  waitForLoad: () => Promise<T>
   remove: () => boolean
 }
 
