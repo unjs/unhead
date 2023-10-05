@@ -61,13 +61,11 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     // clone fn
     // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind({}) : null
-    if (_fn) {
-      // @ts-expect-error untyped
-      input[fn] = (e: Event) => {
-        script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-        head.hooks.callHook(`script:updated`, hookCtx)
-        _fn && _fn(e)
-      }
+    // @ts-expect-error untyped
+    input[fn] = (e: Event) => {
+      script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
+      head.hooks.callHook(`script:updated`, hookCtx)
+      _fn && _fn(e)
     }
   })
 
