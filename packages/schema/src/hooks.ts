@@ -12,14 +12,16 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
-export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error'
+export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
 export interface ScriptInstance<T> {
   id: string
+  entry?: ActiveHeadEntry<any>
   loaded: boolean
   status: UseScriptStatus
   load: () => Promise<T>
   waitForUse: () => Promise<T>
+  remove: () => boolean
 }
 
 export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {

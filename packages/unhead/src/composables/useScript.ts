@@ -25,12 +25,22 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     id,
     status: 'awaitingLoad',
     loaded: false,
+    remove: () => {
+      if (script.status === 'loaded') {
+        script.entry?.dispose()
+        script.status = 'removed'
+        head.hooks.callHook(`script:updated`, hookCtx)
+        return true
+      }
+      return false
+    },
     waitForUse: () => new Promise(() => {}),
     load: () => {
       if (script.status !== 'awaitingLoad')
         return script.waitForUse()
       script.status = 'loading'
-      head.push({
+      head.hooks.callHook(`script:updated`, hookCtx)
+      script.entry = head.push({
         script: [
           { ...input, key },
         ],
