@@ -1,5 +1,5 @@
 import type { Script } from '@unhead/schema/src/schema'
-import type { CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
+import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -12,14 +12,16 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
-export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error'
+export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
 export interface ScriptInstance<T> {
   id: string
+  entry?: ActiveHeadEntry<any>
   loaded: boolean
   status: UseScriptStatus
   load: () => Promise<T>
   waitForUse: () => Promise<T>
+  remove: () => boolean
 }
 
 export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
@@ -69,7 +71,5 @@ export interface HeadHooks {
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
   'script:transform': (ctx: { script: Script }) => HookResult
-  'script:loaded': (ctx: { script: ScriptInstance<any> }) => HookResult
-  'script:error': (ctx: { script: ScriptInstance<any> }) => HookResult
-  'script:loading': (ctx: { script: ScriptInstance<any> }) => HookResult
+  'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
 }
