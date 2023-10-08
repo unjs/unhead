@@ -38,7 +38,7 @@ export default defineHeadPlugin({
             ;['class', 'style'].forEach((key) => {
               if (tag.props[key] && oldProps[key]) {
                 // ensure style merge doesn't result in invalid css
-                if (key === 'style' && !oldProps[key].endsWith(';'))
+                if (key === 'style' && typeof oldProps[key] === 'string' && !oldProps[key].endsWith(';'))
                   oldProps[key] += ';'
 
                 tag.props[key] = `${oldProps[key]} ${tag.props[key]}`
