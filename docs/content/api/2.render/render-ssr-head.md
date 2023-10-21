@@ -27,7 +27,7 @@ This is useful for when you want to render the tags to a string that can be used
 
 ```ts
 import { createHead } from 'unhead'
-import { renderSSRHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
 
 const head = createHead()
 
