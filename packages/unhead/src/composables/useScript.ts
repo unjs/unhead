@@ -2,6 +2,11 @@ import { NetworkEvents, hashCode } from '@unhead/shared'
 import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
+const UseScriptDefaults: Script = {
+  async: true,
+  fetchpriority: 'low'
+}
+
 export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
   const options = _options || {}
   const head = options.head || getActiveHead()
@@ -56,7 +61,8 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       head.hooks.callHook(`script:updated`, hookCtx)
       script.entry = head.push({
         script: [
-          { ...input, key },
+          // async by default
+          { ...UseScriptDefaults, ...input, key },
         ],
       }, {
         ...options as any as HeadEntryOptions,
