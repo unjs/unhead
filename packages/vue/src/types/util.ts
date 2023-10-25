@@ -8,3 +8,8 @@ export type MaybeComputedRefOrPromise<T> = T | MaybeReadonlyRef<T> | Ref<T> | Pr
 export type MaybeComputedRefEntries<T> = MaybeComputedRef<T> | {
   [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>
 }
+
+
+export type MaybeComputedRefEntriesOnly<T> = {
+  [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>
+}
