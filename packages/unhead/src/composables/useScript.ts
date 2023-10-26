@@ -36,9 +36,10 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       !head!.ssr
     )
       return
+    const key = `use-script.${id}.early-connection`
     head!.push({
-      link: [{ rel, href: new URL(input.src).origin }]
-    })
+      link: [{ key, rel, href: new URL(input.src).origin }]
+    }, { mode: 'server' })
   }
 
   const script: ScriptInstance<T> = {
