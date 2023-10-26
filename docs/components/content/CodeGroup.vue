@@ -47,7 +47,7 @@ export default {
     </div>
 
     <div class="[&>div>pre]:!rounded-t-none">
-      <component :is="selectedTab.component" />
+      <Component :is="selectedTab.component" />
     </div>
   </div>
 </template>

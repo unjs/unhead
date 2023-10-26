@@ -3,8 +3,8 @@ import { useScript as _useScript } from 'unhead'
 import type { ComputedRef, Ref } from 'vue'
 import { computed, getCurrentInstance, ref } from 'vue'
 import { NetworkEvents } from '@unhead/shared'
+import type { MaybeComputedRefEntriesOnly } from '../types'
 import { injectHead } from './injectHead'
-import {MaybeComputedRefEntriesOnly} from "../types";
 
 export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' | 'status'> {
   loaded: ComputedRef<boolean>

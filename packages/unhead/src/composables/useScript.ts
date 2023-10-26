@@ -4,7 +4,7 @@ import { getActiveHead } from './useActiveHead'
 
 const UseScriptDefaults: Script = {
   async: true,
-  fetchpriority: 'low'
+  fetchpriority: 'low',
 }
 
 export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {

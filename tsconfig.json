@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
-    "module": "esnext",
-    "rootDir": ".",
-    "moduleResolution": "node",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
+    "rootDir": ".",
+    "module": "esnext",
+    "moduleResolution": "node",
     "paths": {
       "unhead": ["packages/unhead/src"],
       "@unhead/dom": ["packages/dom/src"],
@@ -24,12 +24,12 @@
       "@unhead/schema-org/*": ["packages/schema-org/*"]
     },
     "resolveJsonModule": true,
-    "declaration": true,
-    "esModuleInterop": true,
     "strict": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "noUnusedLocals": true,
+    "declaration": true,
+    "esModuleInterop": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   }

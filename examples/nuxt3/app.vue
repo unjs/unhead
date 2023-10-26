@@ -52,9 +52,9 @@ useHead({
     <div>
       <NuxtPage />
     </div>
-    <nuxt-link to="/" style="margin-top: 10px;" as="div">
+    <NuxtLink to="/" style="margin-top: 10px;" as="div">
       Home
-    </nuxt-link>
+    </NuxtLink>
     <button @click="isNavActive = !isNavActive">
       Nav open
     </button>

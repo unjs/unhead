@@ -72,7 +72,7 @@ function vnodesToHeadObj(nodes: VNode[]) {
 }
 
 export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
-  // eslint-disable-next-line vue/no-reserved-component-names
+
   name: 'Head',
 
   setup(_, { slots }) {
