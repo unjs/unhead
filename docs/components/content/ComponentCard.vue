@@ -197,7 +197,7 @@ const { data: ast } = await useAsyncData(`${name}-ast-${JSON.stringify(props)}`,
     </div>
 
     <div class="flex border border-b-0 border-gray-200 dark:border-gray-700 relative not-prose" :class="[{ 'p-4': padding }, propsToSelect.length ? 'border-t-0' : 'rounded-t-md', backgroundClass, overflowClass]">
-      <component :is="name" v-model="vModel" v-bind="fullProps">
+      <Component :is="name" v-model="vModel" v-bind="fullProps">
         <ContentSlot v-if="$slots.default" :use="$slots.default" />
 
         <template v-for="slot in Object.keys(slots || {})" :key="slot" #[slot]>
@@ -205,7 +205,7 @@ const { data: ast } = await useAsyncData(`${name}-ast-${JSON.stringify(props)}`,
             <ContentSlot v-if="$slots[slot]" :use="$slots[slot]" />
           </ClientOnly>
         </template>
-      </component>
+      </Component>
     </div>
 
     <ContentRenderer v-if="!previewOnly" :value="ast" class="[&>div>pre]:!rounded-t-none" />

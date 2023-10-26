@@ -1,11 +1,11 @@
-import { bench, describe } from 'vitest'
+import { describe } from 'vitest'
 import { createHead, useHead } from '@unhead/vue'
 import { ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'
 
 describe('dom-useHead', () => {
-  bench('x1000', async () => {
+  it('x1000', async () => {
     const head = createHead()
     const page = ref({
       title: 'Home',

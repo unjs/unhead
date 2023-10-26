@@ -17,7 +17,7 @@ const linkAttrs = computed(() => {
 
 <template>
   <div class="showcase-card relative h-full">
-    <component :is="to ? NuxtLink : 'div'" v-bind="linkAttrs" class="h-full">
+    <Component :is="to ? NuxtLink : 'div'" v-bind="linkAttrs" class="h-full">
       <div class="group relative border hover:border-yellow-400 transition rounded-xl overflow-hidden h-full">
         <div
           class="h-48 relative flex items-center justify-center bg-no-repeat bg-cover border-b-2 border-gray-100/30 dark:border-gray-900/10"
@@ -41,6 +41,6 @@ const linkAttrs = computed(() => {
           </p>
         </div>
       </div>
-    </component>
+    </Component>
   </div>
 </template>

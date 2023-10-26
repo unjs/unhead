@@ -18,7 +18,7 @@ const NuxtLink = resolveComponent('NuxtLink')
 </script>
 
 <template>
-  <component
+  <Component
     :is="to ? NuxtLink : 'div'"
     :to="to"
     class="block pl-4 pr-6 py-3 rounded-md !border !border-gray-200 dark:!border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm leading-6 my-5 last:mb-0 font-normal group relative prose-code:bg-white dark:prose-code:bg-gray-900"
@@ -29,5 +29,5 @@ const NuxtLink = resolveComponent('NuxtLink')
     <UIcon v-if="icon" :name="icon" class="w-4 h-4 mr-2 inline-flex items-center align-text-top" :class="color" />
 
     <ContentSlot :use="$slots.default" unwrap="p" />
-  </component>
+  </Component>
 </template>

@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-/* eslint-disable vue/one-component-per-file */
 
 import { describe, it } from 'vitest'
 import { createHead, injectHead, useHead } from '@unhead/vue'

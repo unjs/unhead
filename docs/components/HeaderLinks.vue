@@ -24,8 +24,8 @@ function isActive(item) {
           <div class="flex items-center">
             <div class="flex items-center mr-3 mb-1">
               <div class="relative">
-                <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all group-hover:opacity-30" />
-                <icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all absolute left-0 top-0 group-hover:-translate-x-2" />
+                <Icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all group-hover:opacity-30" />
+                <Icon name="lucide:triangle" class="text-black dark:text-white w-7 h-7 transition-all absolute left-0 top-0 group-hover:-translate-x-2" />
               </div>
               <div class="ml-3">
                 <h1 class="font-bold text-xl group-hover:drop-shadow-md">

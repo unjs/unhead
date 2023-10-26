@@ -18,7 +18,7 @@ jobs:
         uses: pnpm/action-setup@v2.4.0
 
       - name: Use Node.js v18
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: v18
           registry-url: https://registry.npmjs.org/

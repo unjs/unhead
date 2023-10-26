@@ -2,6 +2,11 @@ import { NetworkEvents, hashCode } from '@unhead/shared'
 import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
+const UseScriptDefaults: Script = {
+  async: true,
+  fetchpriority: 'low',
+}
+
 export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
   const options = _options || {}
   const head = options.head || getActiveHead()
@@ -19,6 +24,22 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     const ctx = { script }
     await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }
+  }
+
+  function maybeHintEarlyConnection(rel: 'preconnect' | 'dns-prefetch') {
+    if (
+      // opt-out
+      options.skipEarlyConnections ||
+      // must be a valid absolute url
+      !input.src.includes('//') ||
+      // must be server-side
+      !head!.ssr
+    )
+      return
+    const key = `use-script.${id}.early-connection`
+    head!.push({
+      link: [{ key, rel, href: new URL(input.src).origin }]
+    }, { mode: 'server' })
   }
 
   const script: ScriptInstance<T> = {
@@ -56,7 +77,8 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
       head.hooks.callHook(`script:updated`, hookCtx)
       script.entry = head.push({
         script: [
-          { ...input, key },
+          // async by default
+          { ...UseScriptDefaults, ...input, key },
         ],
       }, {
         ...options as any as HeadEntryOptions,
@@ -84,14 +106,19 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
 
   let trigger = options.trigger
   if (trigger) {
-    trigger === 'idle' && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
+    const isIdle = trigger === 'idle'
+    isIdle && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
     // never resolves
     trigger === 'manual' && (trigger = new Promise(() => {}))
     // check trigger is a promise
     trigger instanceof Promise && trigger.then(script.load)
+    // if we're lazy it's likely it will load within the first 10 seconds, otherwise we just prefetch the DNS for a quicker load
+    maybeHintEarlyConnection(isIdle ? 'preconnect' : 'dns-prefetch')
   }
   else {
     script.load()
+    // safe to preconnect as we'll load this script quite early
+    maybeHintEarlyConnection('preconnect')
   }
 
   function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {

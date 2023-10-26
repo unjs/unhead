@@ -1,21 +1,21 @@
 <template>
   <div>
-    <router-link to="/">
+    <RouterLink to="/">
       Home
-    </router-link>|
-    <router-link to="/about">
+    </RouterLink>|
+    <RouterLink to="/about">
       About
-    </router-link>|
-    <router-link to="/red">
+    </RouterLink>|
+    <RouterLink to="/red">
       Red
-    </router-link>
-    <router-view v-slot="{ Component }">
+    </RouterLink>
+    <RouterView v-slot="{ Component }">
       <Suspense>
         <div>
-          <component :is="Component" />
+          <Component :is="Component" />
         </div>
       </Suspense>
-    </router-view>
+    </RouterView>
   </div>
 </template>
 
