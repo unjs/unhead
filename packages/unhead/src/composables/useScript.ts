@@ -26,6 +26,21 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     return { script: [ctx.script] }
   }
 
+  function maybeHintEarlyConnection(rel: 'preconnect' | 'dns-prefetch') {
+    if (
+      // opt-out
+      options.skipEarlyConnections ||
+      // must be a valid absolute url
+      !input.src.includes('//') ||
+      // must be server-side
+      !head!.ssr
+    )
+      return
+    head!.push({
+      link: [{ rel, href: new URL(input.src).origin }]
+    })
+  }
+
   const script: ScriptInstance<T> = {
     id,
     status: 'awaitingLoad',
@@ -90,14 +105,19 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
 
   let trigger = options.trigger
   if (trigger) {
-    trigger === 'idle' && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
+    const isIdle = trigger === 'idle'
+    isIdle && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
     // never resolves
     trigger === 'manual' && (trigger = new Promise(() => {}))
     // check trigger is a promise
     trigger instanceof Promise && trigger.then(script.load)
+    // if we're lazy it's likely it will load within the first 10 seconds, otherwise we just prefetch the DNS for a quicker load
+    maybeHintEarlyConnection(isIdle ? 'preconnect' : 'dns-prefetch')
   }
   else {
     script.load()
+    // safe to preconnect as we'll load this script quite early
+    maybeHintEarlyConnection('preconnect')
   }
 
   function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {

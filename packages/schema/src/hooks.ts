@@ -25,6 +25,12 @@ export interface ScriptInstance<T> {
 }
 
 export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
+  /**
+   * Should the `dns-prefetch` tag be skipped.
+   *
+   * Useful if loading the script through a local proxy.
+   */
+  skipEarlyConnections?: boolean
   use?: () => T | undefined | null
   stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
   transform?: (script: Script) => Promise<Script> | Script
