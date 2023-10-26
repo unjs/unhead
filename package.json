@@ -19,10 +19,10 @@
     "lint": "eslint . --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^1.0.0-beta.27",
+    "@antfu/eslint-config": "^1.0.0-beta.28",
     "@types/fs-extra": "^11.0.3",
     "@types/jsdom": "^21.1.4",
-    "@vue/server-renderer": "^3.3.6",
+    "@vue/server-renderer": "^3.3.7",
     "acorn-loose": "^8.3.0",
     "bumpp": "^9.2.0",
     "eslint": "^8.52.0",
@@ -32,7 +32,7 @@
     "unbuild": "^2.0.0",
     "utility-types": "^3.10.0",
     "vitest": "^0.34.6",
-    "vue": "^3.3.6"
+    "vue": "^3.3.7"
   },
   "resolutions": {
     "vue": "^3.3.6"

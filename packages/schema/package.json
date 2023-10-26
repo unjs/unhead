@@ -39,6 +39,6 @@
   },
   "dependencies": {
     "hookable": "^5.5.3",
-    "zhead": "^2.2.0"
+    "zhead": "^2.2.2"
   }
 }
