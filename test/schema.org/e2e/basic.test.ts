@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createHead } from 'unhead'
+import { createHead, useHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { SchemaOrgUnheadPlugin, defineOrganization, defineQuestion, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
@@ -241,6 +241,48 @@ describe('schema.org e2e', () => {
             \\"acceptedAnswer\\": {
               \\"@type\\": \\"Answer\\",
               \\"text\\": \\"Something else\\"
+            }
+          }
+        ]
+      }</script>"
+    `)
+  })
+
+  it('canonical', async () => {
+    const ssrHead = createHead({
+      plugins: [
+        SchemaOrgUnheadPlugin(),
+      ],
+    })
+
+    useHead({
+      link: [
+        { rel: 'canonical', href: `%siteUrl/some-path` },
+      ]
+    })
+
+    useSchemaOrg([
+      defineWebSite(),
+      defineWebPage({
+        name: 'test',
+      }),
+    ])
+
+    const data = await renderSSRHead(ssrHead)
+    expect(data.bodyTags).toMatchInlineSnapshot(`
+      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
+        \\"@context\\": \\"https://schema.org\\",
+        \\"@graph\\": [
+          {
+            \\"@id\\": \\"#website\\",
+            \\"@type\\": \\"WebSite\\"
+          },
+          {
+            \\"@id\\": \\"#webpage\\",
+            \\"@type\\": \\"WebPage\\",
+            \\"name\\": \\"test\\",
+            \\"isPartOf\\": {
+              \\"@id\\": \\"#website\\"
             }
           }
         ]

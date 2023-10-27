@@ -56,8 +56,10 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
         else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
           resolvedMeta.url = tag.props.href
           if (resolvedMeta.url && !resolvedMeta.host)
-            // let's hope they have a valid url in the canonical...
-            resolvedMeta.host = new URL(resolvedMeta.url).origin
+            // may be using template params that aren't resolved
+            try {
+              resolvedMeta.host = new URL(resolvedMeta.url).origin
+            } catch {}
         }
         else if (tag.tag === 'meta' && tag.props.property === 'og:image') { resolvedMeta.image = tag.props.content }
         // use template params
