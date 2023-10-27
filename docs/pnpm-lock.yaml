@@ -21,8 +21,8 @@ importers:
         specifier: ^1.1.76
         version: 1.1.76
       '@nuxt/content':
-        specifier: ^2.8.5
-        version: 2.8.5(vue@3.3.7)
+        specifier: ^2.9.0
+        version: 2.9.0(nuxt@3.8.0)(vue@3.3.7)
       '@nuxt/ui':
         specifier: npm:@nuxt/ui-edge@latest
         version: /@nuxt/ui-edge@2.9.0-28304246.c5ce997(vue@3.3.7)(webpack@5.89.0)
@@ -33,8 +33,8 @@ importers:
         specifier: 2.0.0-beta.39
         version: 2.0.0-beta.39(@nuxt/devtools@1.0.0)(@unhead/shared@1.7.4)(nuxt@3.8.0)(postcss@8.4.31)(unhead@1.7.4)(vite@4.5.0)(vue@3.3.7)(webpack@5.89.0)
       nuxt-icon:
-        specifier: ^0.6.0
-        version: 0.6.0(vue@3.3.7)
+        specifier: ^0.6.1
+        version: 0.6.1(vue@3.3.7)
       nuxt-lego:
         specifier: ^0.0.14
         version: 0.0.14(nuxt@3.8.0)(vue@3.3.7)
@@ -1075,12 +1075,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@nuxt/content@2.8.5(vue@3.3.7):
-    resolution: {integrity: sha512-sWVGoZJOjwEd8v6XYTrHYtQ7c11HR6yK9dcqruf+7WM2WJmwTSeY8B1ir6+9mE1FPQAFnqg26qSkxwafpS9o+g==}
+  /@nuxt/content@2.9.0(nuxt@3.8.0)(vue@3.3.7):
+    resolution: {integrity: sha512-//mt++/AgOmjT6TpanugNJpJfx6q8g7wV8/vnk7vSSrrgki8tG6jpupuJmxHHB8DcqqTJfuBWFIdaLhv/Z9Gzg==}
     dependencies:
       '@nuxt/kit': 3.8.0
-      '@nuxtjs/mdc': 0.2.5
+      '@nuxtjs/mdc': 0.2.6
+      '@vueuse/core': 10.5.0(vue@3.3.7)
       '@vueuse/head': 2.0.0(vue@3.3.7)
+      '@vueuse/nuxt': 10.5.0(nuxt@3.8.0)(vue@3.3.7)
       consola: 3.2.3
       defu: 6.1.3
       destr: 2.0.2
@@ -1092,6 +1094,7 @@ packages:
       micromark: 4.0.0
       micromark-util-sanitize-uri: 2.0.0
       micromark-util-types: 2.0.0
+      minisearch: 6.2.0
       ohash: 1.1.3
       pathe: 1.1.1
       scule: 1.0.0
@@ -1113,8 +1116,10 @@ packages:
       - '@planetscale/database'
       - '@upstash/redis'
       - '@vercel/kv'
+      - '@vue/composition-api'
       - bufferutil
       - idb-keyval
+      - nuxt
       - rollup
       - supports-color
       - utf-8-validate
@@ -1454,7 +1459,7 @@ packages:
       '@nuxt/ui': /@nuxt/ui-edge@2.9.0-28305242.8ba2a79(vue@3.3.7)(webpack@5.89.0)
       '@vueuse/core': 10.5.0(vue@3.3.7)
       defu: 6.1.3
-      nuxt-icon: 0.6.0(vue@3.3.7)
+      nuxt-icon: 0.6.1(vue@3.3.7)
       ofetch: 1.3.3
       pathe: 1.1.1
       tailwind-merge: 1.14.0
@@ -1567,8 +1572,8 @@ packages:
       - supports-color
     dev: true
 
-  /@nuxtjs/mdc@0.2.5:
-    resolution: {integrity: sha512-ZtVNcU6r02B/TPmWnR4GzIdgBksr5vjLLkFaGFE6IrhloJ+Wj8435do3f0yIe03nFlKlNU1MKC8MpnPSU9J9sw==}
+  /@nuxtjs/mdc@0.2.6:
+    resolution: {integrity: sha512-FDjJXfvFsNgtt3lm7mxjPymv5lovdOMS5bHxnAS/Vcoqd8qC4nkiSnKpZD2eLf4UGQKKNOMSn1mlC2viQHu2sg==}
     dependencies:
       '@nuxt/kit': 3.8.0
       '@types/hast': 3.0.2
@@ -6530,6 +6535,10 @@ packages:
     resolution: {integrity: sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==}
     engines: {node: '>=16 || 14 >=14.17'}
 
+  /minisearch@6.2.0:
+    resolution: {integrity: sha512-BECkorDF1TY2rGKt9XHdSeP9TP29yUbrAaCh/C03wpyf1vx3uYcP/+8XlMcpTkgoU0rBVnHMAOaP83Rc9Tm+TQ==}
+    dev: false
+
   /minizlib@2.1.2:
     resolution: {integrity: sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==}
     engines: {node: '>= 8'}
@@ -6895,8 +6904,8 @@ packages:
       - vue
     dev: false
 
-  /nuxt-icon@0.6.0(vue@3.3.7):
-    resolution: {integrity: sha512-yFhdd1inv8z4soCF8HZphVMn0wJJN+5m+ZHs1QQblrdxXJDV7UuZeTjN6Fy8VDHfWbZJm6coXSQrK483kU+ipA==}
+  /nuxt-icon@0.6.1(vue@3.3.7):
+    resolution: {integrity: sha512-a4/MEmbP2hXB0sLWBqevC+569FADEMs+VfYJ6nzbktUSJY57/PoHyen0PtqAAkMjGGhHgDVHAcjy5RCJyYZRYg==}
     dependencies:
       '@iconify/vue': 4.1.1(vue@3.3.7)
       '@nuxt/kit': 3.8.0
