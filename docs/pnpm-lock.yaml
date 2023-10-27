@@ -27,8 +27,8 @@ importers:
         specifier: npm:@nuxt/ui-edge@latest
         version: /@nuxt/ui-edge@2.9.0-28304246.c5ce997(vue@3.3.7)(webpack@5.89.0)
       '@nuxt/ui-pro':
-        specifier: npm:@nuxt/ui-pro-edge@0.2.1-28285496.298dd43
-        version: /@nuxt/ui-pro-edge@0.2.1-28285496.298dd43(vue@3.3.7)(webpack@5.89.0)
+        specifier: npm:@nuxt/ui-pro-edge@0.3.1-28305311.4b43117
+        version: /@nuxt/ui-pro-edge@0.3.1-28305311.4b43117(vue@3.3.7)(webpack@5.89.0)
       '@nuxtseo/module':
         specifier: 2.0.0-beta.39
         version: 2.0.0-beta.39(@nuxt/devtools@1.0.0)(@unhead/shared@1.7.4)(nuxt@3.8.0)(postcss@8.4.31)(unhead@1.7.4)(vite@4.5.0)(vue@3.3.7)(webpack@5.89.0)
@@ -1356,52 +1356,6 @@ packages:
       - rollup
       - supports-color
 
-  /@nuxt/ui-edge@2.9.0-28285290.0bd12fd(vue@3.3.7)(webpack@5.89.0):
-    resolution: {integrity: sha512-J3WPjXDnshda9gLTx/TEyItSUvkdZxXW+rEM+4I7ZxWu0iHDdmjJ8JpXQMFOxdQgAGyUr7xangkoWwIfJ9Mm7w==}
-    engines: {node: '>=v16.20.2'}
-    dependencies:
-      '@egoist/tailwindcss-icons': 1.4.0(tailwindcss@3.3.5)
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.3.5)
-      '@headlessui/vue': 1.7.16(vue@3.3.7)
-      '@iconify-json/heroicons': 1.1.13
-      '@nuxt/kit': 3.8.0
-      '@nuxtjs/color-mode': 3.3.0
-      '@nuxtjs/tailwindcss': 6.8.1(webpack@5.89.0)
-      '@popperjs/core': 2.11.8
-      '@tailwindcss/aspect-ratio': 0.4.2(tailwindcss@3.3.5)
-      '@tailwindcss/container-queries': 0.1.1(tailwindcss@3.3.5)
-      '@tailwindcss/forms': 0.5.6(tailwindcss@3.3.5)
-      '@tailwindcss/typography': 0.5.10(tailwindcss@3.3.5)
-      '@vueuse/core': 10.5.0(vue@3.3.7)
-      '@vueuse/integrations': 10.5.0(focus-trap@7.5.4)(fuse.js@6.6.2)(vue@3.3.7)
-      '@vueuse/math': 10.5.0(vue@3.3.7)
-      defu: 6.1.3
-      fuse.js: 6.6.2
-      ohash: 1.1.3
-      pathe: 1.1.1
-      scule: 1.0.0
-      tailwind-merge: 1.14.0
-      tailwindcss: 3.3.5
-    transitivePeerDependencies:
-      - '@vue/composition-api'
-      - async-validator
-      - axios
-      - change-case
-      - drauu
-      - focus-trap
-      - idb-keyval
-      - jwt-decode
-      - nprogress
-      - qrcode
-      - rollup
-      - sortablejs
-      - supports-color
-      - ts-node
-      - universal-cookie
-      - vue
-      - webpack
-    dev: false
-
   /@nuxt/ui-edge@2.9.0-28304246.c5ce997(vue@3.3.7)(webpack@5.89.0):
     resolution: {integrity: sha512-u0yS627oSU+0FVtoTVJA+Xia/GBCNDEA+wY9RF5Yu3hiHMNrCo0mavMECoqaT1UmQl309m5zcYr1qL/15JlxCw==}
     engines: {node: '>=v16.20.2'}
@@ -1448,13 +1402,59 @@ packages:
       - webpack
     dev: false
 
-  /@nuxt/ui-pro-edge@0.2.1-28285496.298dd43(vue@3.3.7)(webpack@5.89.0):
-    resolution: {integrity: sha512-Is01xCCnYsW9w0rcPwviCRfEHnVrXIp05YiF8/TPUrbcShnnNk2ZQm5Cly2O/sXgyBhmYvUNoVyv4rAOiK78yw==}
+  /@nuxt/ui-edge@2.9.0-28305242.8ba2a79(vue@3.3.7)(webpack@5.89.0):
+    resolution: {integrity: sha512-9MNPUiglccka/FUH40cGWTplG0ebynJt6xs79B0o3fO2A6hqEm6JWGuoECxksum1u/HnIjTeiQltYcU17nsJrg==}
+    engines: {node: '>=v16.20.2'}
     dependencies:
-      '@nuxt/ui': /@nuxt/ui-edge@2.9.0-28285290.0bd12fd(vue@3.3.7)(webpack@5.89.0)
+      '@egoist/tailwindcss-icons': 1.4.0(tailwindcss@3.3.5)
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.3.5)
+      '@headlessui/vue': 1.7.16(vue@3.3.7)
+      '@iconify-json/heroicons': 1.1.13
+      '@nuxt/kit': 3.8.0
+      '@nuxtjs/color-mode': 3.3.0
+      '@nuxtjs/tailwindcss': 6.8.1(webpack@5.89.0)
+      '@popperjs/core': 2.11.8
+      '@tailwindcss/aspect-ratio': 0.4.2(tailwindcss@3.3.5)
+      '@tailwindcss/container-queries': 0.1.1(tailwindcss@3.3.5)
+      '@tailwindcss/forms': 0.5.6(tailwindcss@3.3.5)
+      '@tailwindcss/typography': 0.5.10(tailwindcss@3.3.5)
+      '@vueuse/core': 10.5.0(vue@3.3.7)
+      '@vueuse/integrations': 10.5.0(focus-trap@7.5.4)(fuse.js@6.6.2)(vue@3.3.7)
+      '@vueuse/math': 10.5.0(vue@3.3.7)
+      defu: 6.1.3
+      fuse.js: 6.6.2
+      ohash: 1.1.3
+      pathe: 1.1.1
+      scule: 1.0.0
+      tailwind-merge: 1.14.0
+      tailwindcss: 3.3.5
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - async-validator
+      - axios
+      - change-case
+      - drauu
+      - focus-trap
+      - idb-keyval
+      - jwt-decode
+      - nprogress
+      - qrcode
+      - rollup
+      - sortablejs
+      - supports-color
+      - ts-node
+      - universal-cookie
+      - vue
+      - webpack
+    dev: false
+
+  /@nuxt/ui-pro-edge@0.3.1-28305311.4b43117(vue@3.3.7)(webpack@5.89.0):
+    resolution: {integrity: sha512-aTeIzRVgTfVOOjpLPH6WGcUvl7RxNwufab1sb7yBhGeSnGLbomJt99MMsLeRQz96R/Ps4BFPcFr4/D24IAjHjw==}
+    dependencies:
+      '@nuxt/ui': /@nuxt/ui-edge@2.9.0-28305242.8ba2a79(vue@3.3.7)(webpack@5.89.0)
       '@vueuse/core': 10.5.0(vue@3.3.7)
       defu: 6.1.3
-      nuxt-icon: 0.5.0(vue@3.3.7)
+      nuxt-icon: 0.6.0(vue@3.3.7)
       ofetch: 1.3.3
       pathe: 1.1.1
       tailwind-merge: 1.14.0
