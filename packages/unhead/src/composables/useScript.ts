@@ -107,7 +107,14 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   let trigger = options.trigger
   if (trigger) {
     const isIdle = trigger === 'idle'
-    isIdle && (trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve())))
+    if (isIdle) {
+      // we don't need idle trigger for server
+      if (head.ssr) {
+        trigger = 'manual'
+      } else
+        // won't work in a SSR environment
+        trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve()))
+    }
     // never resolves
     trigger === 'manual' && (trigger = new Promise(() => {}))
     // check trigger is a promise
