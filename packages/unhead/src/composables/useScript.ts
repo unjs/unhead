@@ -3,7 +3,7 @@ import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstanc
 import { getActiveHead } from './useActiveHead'
 
 const UseScriptDefaults: Script = {
-  async: true,
+  defer: true,
   fetchpriority: 'low',
 }
 
