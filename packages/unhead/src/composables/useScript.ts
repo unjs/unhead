@@ -7,6 +7,12 @@ const UseScriptDefaults: Script = {
   fetchpriority: 'low',
 }
 
+/**
+ * Load third-party scripts with SSR support and a proxied API.
+ *
+ * @experimental
+ * @see https://unhead.unjs.io/usage/composables/use-script
+ */
 export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
   const options = _options || {}
   const head = options.head || getActiveHead()
