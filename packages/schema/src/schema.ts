@@ -70,6 +70,7 @@ export type Link<E extends EntryAugmentation = {}> = MaybePromiseProps<LinkBase>
 export type Meta<E extends EntryAugmentation = {}> = MaybePromiseProps<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
 export type Style<E extends EntryAugmentation = {}> = MaybePromiseProps<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
 export type Script<E extends EntryAugmentation = {}> = MaybePromiseProps<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type ResolvedScript<E extends EntryAugmentation = {}> = ScriptBase & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
 export type Noscript<E extends EntryAugmentation = {}> = MaybePromiseProps<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
 export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
 export type BodyAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>

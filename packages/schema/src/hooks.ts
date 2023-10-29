@@ -1,4 +1,4 @@
-import type { Script } from '@unhead/schema/src/schema'
+import type { ResolvedScript, Script } from '@unhead/schema'
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
 
@@ -33,7 +33,7 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
   skipEarlyConnections?: boolean
   use?: () => T | undefined | null
   stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
-  transform?: (script: Script) => Promise<Script> | Script
+  transform?: (script: ResolvedScript) => Promise<ResolvedScript> | ResolvedScript
   trigger?: 'idle' | 'manual' | Promise<void>
 }
 
@@ -76,6 +76,6 @@ export interface HeadHooks {
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
-  'script:transform': (ctx: { script: Script }) => HookResult
+  'script:transform': (ctx: { script: ResolvedScript }) => HookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
 }
