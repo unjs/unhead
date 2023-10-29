@@ -1,4 +1,4 @@
-import type { ResolvedScript, Script } from '@unhead/schema'
+import type { ResolvedScript, Script } from './'
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
 
