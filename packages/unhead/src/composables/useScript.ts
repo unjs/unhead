@@ -1,5 +1,5 @@
 import { NetworkEvents, hashCode } from '@unhead/shared'
-import type { DomRenderTagContext, Head, HeadEntryOptions, ResolvedScript, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
+import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
 const UseScriptDefaults: Script = {
@@ -26,7 +26,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     return head._scripts[id]
 
   async function transform(entry: Head): Promise<Head> {
-    const script = await (options.transform || (input => input))(entry.script![0] as ResolvedScript)
+    const script = await (options.transform || (input => input))(entry.script![0] as UseScriptInput)
     const ctx = { script }
     await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }

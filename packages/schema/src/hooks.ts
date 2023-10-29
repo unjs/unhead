@@ -1,6 +1,6 @@
-import type { ResolvedScript, Script } from './'
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
+import type { Script } from './'
 
 export type HookResult = Promise<void> | void
 
@@ -33,7 +33,7 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
   skipEarlyConnections?: boolean
   use?: () => T | undefined | null
   stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
-  transform?: (script: ResolvedScript) => Promise<ResolvedScript> | ResolvedScript
+  transform?: (script: UseScriptInput) => Promise<UseScriptInput> | UseScriptInput
   trigger?: 'idle' | 'manual' | Promise<void>
 }
 
@@ -76,6 +76,6 @@ export interface HeadHooks {
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
-  'script:transform': (ctx: { script: ResolvedScript }) => HookResult
+  'script:transform': (ctx: { script: UseScriptInput }) => HookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
 }
