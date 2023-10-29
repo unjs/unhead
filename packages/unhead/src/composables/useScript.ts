@@ -35,16 +35,16 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
   function maybeHintEarlyConnection(rel: 'preconnect' | 'dns-prefetch') {
     if (
       // opt-out
-      options.skipEarlyConnections ||
+      options.skipEarlyConnections
       // must be a valid absolute url
-      !input.src.includes('//') ||
+      || !input.src.includes('//')
       // must be server-side
-      !head!.ssr
+      || !head!.ssr
     )
       return
     const key = `use-script.${id}.early-connection`
     head!.push({
-      link: [{ key, rel, href: new URL(input.src).origin }]
+      link: [{ key, rel, href: new URL(input.src).origin }],
     }, { mode: 'server' })
   }
 
@@ -115,9 +115,9 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     const isIdle = trigger === 'idle'
     if (isIdle) {
       // we don't need idle trigger for server
-      if (head.ssr) {
+      if (head.ssr)
         trigger = 'manual'
-      } else
+      else
         // won't work in a SSR environment
         trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve()))
     }

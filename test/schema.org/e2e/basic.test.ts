@@ -258,7 +258,7 @@ describe('schema.org e2e', () => {
     useHead({
       link: [
         { rel: 'canonical', href: `%siteUrl/some-path` },
-      ]
+      ],
     })
 
     useSchemaOrg([
