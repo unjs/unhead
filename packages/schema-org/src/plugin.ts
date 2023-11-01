@@ -68,9 +68,9 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         // use template params
         else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
           resolvedMeta = {
+            ...resolvedMeta,
             // @ts-expect-error untyped
             ...tag.props.schemaOrg,
-            ...resolvedMeta,
           }
           delete tag.props.schemaOrg
         }
@@ -83,7 +83,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             tag.innerHTML = processTemplateParams(
               JSON.stringify({
                 '@context': 'https://schema.org',
-                '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
+                '@graph': graph.resolveGraph({  ...(await meta?.() || {}), ...config, ...resolvedMeta, }),
               }, null, minify ? 0 : 2),
               head._templateParams!,
               head._separator!,
