@@ -37,7 +37,7 @@ export function resolveMeta(meta: Partial<MetaInput>) {
       meta.path = withoutTrailingSlash(meta.path)
   }
 
-  meta.url = joinURL(meta.host, meta.path)
+  meta.url = joinURL(meta.host || '', meta.path)
 
   return <ResolvedMeta> {
     ...meta,
