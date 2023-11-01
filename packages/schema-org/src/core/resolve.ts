@@ -12,7 +12,7 @@ import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from
 import { loadResolver } from '../resolver'
 import type { SchemaOrgGraph } from './graph'
 
-export function resolveMeta(meta: MetaInput) {
+export function resolveMeta(meta: Partial<MetaInput>) {
   if (!meta.host && meta.canonicalHost)
     meta.host = meta.canonicalHost
   if (!meta.tagPosition && meta.position)

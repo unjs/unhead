@@ -19,14 +19,14 @@ export function UnheadSchemaOrg(options?: PluginSchemaOrgOptions) {
  * @deprecated Providing a plugin is no longer required. You can remove this code.
  */
 export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
-  const fallback = () => ({})
+  const fallback = () => ({} as Partial<MetaInput>)
   return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
 }
 
 /**
  * @deprecated Providing a plugin is no longer required. You can remove this code.
  */
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<string, any>, options?: PluginSchemaOrgOptions) {
+export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
@@ -76,7 +76,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
         }
       },
       'tags:resolve': async function (ctx) {
-        // find the schema.org node
+        // find the schema.org node, should be a single instance
         for (const tag of ctx.tags) {
           if (tag.tag === 'script' && tag.key === 'schema-org-graph') {
             const minify = options?.minify || process.env.NODE_ENV === 'production'
@@ -85,6 +85,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Record<stri
               '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
             }, null, minify ? 0 : 2)
             delete tag.props.nodes
+            return
           }
         }
       },
