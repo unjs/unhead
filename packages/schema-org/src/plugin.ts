@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 import type { MetaInput, ResolvedMeta } from './types'
 import {
   createSchemaOrgGraph,
@@ -30,7 +30,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
-  return defineHeadPlugin({
+  return defineHeadPlugin(head => ({
     key: 'schema-org',
     hooks: {
       'entries:resolve': function () {
@@ -80,15 +80,19 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         for (const tag of ctx.tags) {
           if (tag.tag === 'script' && tag.key === 'schema-org-graph') {
             const minify = options?.minify || process.env.NODE_ENV === 'production'
-            tag.innerHTML = JSON.stringify({
-              '@context': 'https://schema.org',
-              '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
-            }, null, minify ? 0 : 2)
+            tag.innerHTML = processTemplateParams(
+              JSON.stringify({
+                '@context': 'https://schema.org',
+                '@graph': graph.resolveGraph({ ...config, ...resolvedMeta, ...(await meta?.() || {}) }),
+              }, null, minify ? 0 : 2),
+              head._templateParams!,
+              head._separator!,
+            )
             delete tag.props.nodes
             return
           }
         }
       },
     },
-  })
+  }))
 }

@@ -13,9 +13,16 @@ describe('schema.org e2e', () => {
       ],
     })
 
+    useHead({
+      templateParams: {
+        siteDescription: 'hello world',
+      },
+    })
+
     useSchemaOrg([
       defineWebPage({
         name: 'test',
+        description: '%siteDescription',
       }),
     ])
 
@@ -27,6 +34,7 @@ describe('schema.org e2e', () => {
           {
             \\"@id\\": \\"#webpage\\",
             \\"@type\\": \\"WebPage\\",
+            \\"description\\": \\"hello world\\",
             \\"name\\": \\"test\\"
           }
         ]
@@ -52,6 +60,7 @@ describe('schema.org e2e', () => {
           {
             \\"@id\\": \\"#webpage\\",
             \\"@type\\": \\"WebPage\\",
+            \\"description\\": \\"hello world\\",
             \\"name\\": \\"test\\"
           }
         ]

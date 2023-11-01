@@ -1,6 +1,6 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { HeadTag, ProcessesTemplateParams, TagPosition, TagPriority } from './tags'
+import type { HeadTag, ProcessesTemplateParams, TagPosition, TagPriority, TemplateParams } from './tags'
 import type { Head } from './schema'
 
 /**
@@ -139,6 +139,14 @@ export interface Unhead<Input extends {} = Head> {
    * @internal
    */
   _scripts?: Record<string, any>
+  /**
+   * @internal
+   */
+  _templateParams?: TemplateParams
+  /**
+   * @internal
+   */
+  _separator?: string
 }
 
 export interface DomState {

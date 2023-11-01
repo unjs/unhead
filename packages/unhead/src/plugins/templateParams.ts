@@ -7,7 +7,7 @@ const SupportedAttrs = {
   htmlAttrs: 'lang',
 } as const
 
-export default defineHeadPlugin({
+export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx
@@ -37,7 +37,10 @@ export default defineHeadPlugin({
           })
         }
       }
+      // resolved template params
+      head._templateParams = params
+      head._separator = sep
       ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
     },
   },
-})
+}))
