@@ -83,7 +83,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             tag.innerHTML = processTemplateParams(
               JSON.stringify({
                 '@context': 'https://schema.org',
-                '@graph': graph.resolveGraph({  ...(await meta?.() || {}), ...config, ...resolvedMeta, }),
+                '@graph': graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta }),
               }, null, minify ? 0 : 2),
               head._templateParams!,
               head._separator!,
