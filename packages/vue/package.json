@@ -37,6 +37,13 @@
       "require": "./dist/components.cjs"
     }
   },
+  "typesVersions": {
+    "*": {
+      "components": ["dist/components"],
+      "vue2": ["dist/vue2"],
+      "polyfill": ["dist/polyfill"]
+    }
+  },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
