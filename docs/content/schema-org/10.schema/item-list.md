@@ -2,14 +2,14 @@
 
 - **Type**: `defineItemList(input?: ItemList)`{lang="ts"}
 
-A list of items of any sort. Used for breadcrumbs and carousals mainly.
+A list of items of any sort. Mainly used for breadcrumbs and carousels.
 
 - **Component**: `SchemaOrgItemList` _(see [how components work](/schema-org/getting-started/vue-components))_
 
 ## Useful Links
 
 - [ItemList - Schema.org](https://schema.org/ItemList)
-- [Carousal - Google](https://developers.google.com/search/docs/advanced/structured-data/carousel)
+- [Carousel - Google](https://developers.google.com/search/docs/advanced/structured-data/carousel)
 
 ## Required properties
 
