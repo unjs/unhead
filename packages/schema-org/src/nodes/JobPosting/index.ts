@@ -1,5 +1,7 @@
+import type { Person, WebPage } from '@unhead/schema-org'
+import { PrimaryWebPageId } from '@unhead/schema-org'
 import type { NodeRelation, ResolvableDate, Thing } from '../../types'
-import { resolvableDateToIso } from '../../utils'
+import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { Organization } from '../Organization'
 import type { Place } from '../Place'
@@ -8,6 +10,9 @@ import { placeResolver } from '../Place'
 import type { MonetaryAmount } from '../MonetaryAmount'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 
+/**
+ * A listing that describes a job opening in a certain organization.
+ */
 export interface JobPostingSimple extends Thing {
   /**
    * The original date that employer posted the job in ISO 8601 format.
@@ -75,6 +80,7 @@ export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
   defaults: {
     '@type': 'JobPosting',
   },
+  idPrefix: ['url', '#job-posting'],
   resolve(node, ctx) {
     node.datePosted = resolvableDateToIso(node.datePosted)!
     node.hiringOrganization = resolveRelation(node.hiringOrganization, ctx, organizationResolver)
@@ -82,6 +88,18 @@ export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
     node.baseSalary = resolveRelation(node.baseSalary, ctx, monetaryAmountResolver)
     node.validThrough = resolvableDateToIso(node.validThrough)
     return node
+  },
+  resolveRootNode(jobPosting, { find }) {
+    const webPage = find<WebPage>(PrimaryWebPageId)
+    const identity = find<Person | Organization>(IdentityId)
+
+    if (identity)
+      setIfEmpty(jobPosting, 'hiringOrganization', idReference(identity))
+
+    if (webPage)
+      setIfEmpty(jobPosting, 'mainEntityOfPage', idReference(webPage))
+
+    return jobPosting
   },
 })
 
