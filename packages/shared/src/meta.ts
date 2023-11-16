@@ -135,7 +135,6 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   return unpackToString(
     changeKeyCasingDeep(value),
     {
-      keyValueSeparator: '=',
       entrySeparator: ', ',
       resolve({ value, key }) {
         if (value === null)
