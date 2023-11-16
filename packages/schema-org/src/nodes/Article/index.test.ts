@@ -303,7 +303,6 @@ describe('defineArticle', () => {
           {
             "@id": "https://example.com/#identity",
             "@type": "Organization",
-            "logo": "https://example.com/test.png",
             "name": "Identity",
             "url": "https://example.com/",
           },
@@ -377,6 +376,13 @@ describe('defineArticle', () => {
             "contentUrl": "https://example.com/test.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/test.png",
+          },
+          {
+            "@id": "#organization",
+            "@type": "Organization",
+            "logo": "https://example.com/test.png",
+            "name": "Identity",
+            "url": "https://example.com/",
           },
           {
             "@id": "https://example.com/#/schema/image/10ff64c",

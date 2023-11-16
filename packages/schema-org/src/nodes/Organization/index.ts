@@ -78,24 +78,32 @@ export const organizationResolver
     },
     resolveRootNode(node, ctx) {
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
-      // logo
       const webPage = ctx.find<WebPage>(PrimaryWebPageId)
       if (node.logo) {
+        if (!ctx.find('#organization')) {
         // create a node for the logo
-        const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
-          root: true,
-          afterResolve(logo) {
-            if (isIdentity)
-              logo['@id'] = prefixId(ctx.meta.host, '#logo')
-            setIfEmpty(logo, 'caption', node.name)
-          },
-        })
+          const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
+            root: true,
+            afterResolve(logo) {
+              if (isIdentity)
+                logo['@id'] = prefixId(ctx.meta.host, '#logo')
+              setIfEmpty(logo, 'caption', node.name)
+            },
+          })
 
-        // prefer url over an object for the logo
-        node.logo = resolveRelation(node.logo, ctx, imageResolver, { root: false }).url
+          if (webPage && logoNode)
+            setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
 
-        if (webPage && logoNode)
-          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
+          // push a separate node that will just be used for the Logo rich result
+          ctx.nodes.push({
+            ...node,
+            // needs to be a URL
+            'logo': resolveRelation(node.logo, ctx, imageResolver, { root: false }).url,
+            '_priority': -1,
+            '@id': '#organization', // avoid the id so nothing can link to it
+          })
+        }
+        delete node.logo
       }
 
       if (isIdentity && webPage)

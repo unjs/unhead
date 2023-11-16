@@ -30,7 +30,6 @@ describe('defineOrganization', () => {
               "postalCode": "2000",
               "streetAddress": "123 st",
             },
-            "logo": "https://example.com/logo.png",
             "name": "test",
             "url": "https://example.com/",
           },
@@ -41,6 +40,19 @@ describe('defineOrganization', () => {
             "contentUrl": "https://example.com/logo.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/logo.png",
+          },
+          {
+            "@id": "#organization",
+            "@type": "Organization",
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "logo": "https://example.com/logo.png",
+            "name": "test",
+            "url": "https://example.com/",
           },
         ]
       `)
