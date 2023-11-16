@@ -48,7 +48,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             }
             graph.push(newNode)
           }
-          tag.tagPosition = config.tagPosition === 'head' ? 'head' : 'bodyClose'
+          tag.tagPosition = tag.tagPosition  || config.tagPosition === 'head' ? 'head' : 'bodyClose'
         }
         if (tag.tag === 'htmlAttrs' && tag.props.lang) { resolvedMeta.inLanguage = tag.props.lang }
         else if (tag.tag === 'title') { resolvedMeta.title = tag.textContent }

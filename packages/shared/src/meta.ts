@@ -132,10 +132,10 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   if (key === 'refresh')
     // @ts-expect-error untyped
     return `${value.seconds};url=${value.url}`
-
   return unpackToString(
     changeKeyCasingDeep(value),
     {
+      keyValueSeparator: '=',
       entrySeparator: ', ',
       resolve({ value, key }) {
         if (value === null)
