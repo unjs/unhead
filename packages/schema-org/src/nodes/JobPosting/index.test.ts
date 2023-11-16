@@ -29,6 +29,7 @@ describe('defineJobPosting', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
+            "@id": "https://example.com/#job-posting",
             "@type": "JobPosting",
             "datePosted": "2023-04-01T00:00:00.000Z",
             "description": "<p>job description</p>",
