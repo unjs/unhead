@@ -19,7 +19,7 @@
     "lint": "eslint . --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^1.1.2",
+    "@antfu/eslint-config": "^1.1.3",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.5",
     "@vue/server-renderer": "^3.3.8",
