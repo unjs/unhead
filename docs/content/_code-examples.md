@@ -11,7 +11,7 @@ useHead({
   // Classes
   bodyAttrs: { class: { overflow: true } },
   // Deduping
-  script: [{ key: '123', src: 'https://example.com/script.js' }],
+  script: [{ key: '123', src: '/script.js' }],
 })
 ```
 
