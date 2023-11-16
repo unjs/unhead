@@ -17,7 +17,7 @@ describe('useSeoMeta vue ssr', () => {
       refresh: {
         seconds: 60,
         url: 'https://example.com',
-      }
+      },
     })
     expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
       {

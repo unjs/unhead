@@ -117,7 +117,6 @@ defineJobPosting({
 ## Types
 
 ```ts
-
 /**
  * A listing that describes a job opening in a certain organization.
  */

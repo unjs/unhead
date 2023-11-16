@@ -1,5 +1,6 @@
-import type { Person, WebPage } from '@unhead/schema-org'
-import { PrimaryWebPageId } from '@unhead/schema-org'
+import type { Person } from '../Person'
+import type { WebPage } from '../WebPage'
+import { PrimaryWebPageId } from '../WebPage'
 import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
