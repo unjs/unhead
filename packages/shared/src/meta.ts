@@ -60,7 +60,6 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
     metaKey: 'http-equiv',
     unpack: {
       entrySeparator: ';',
-      keyValueSeparator: '=',
       resolve({ key, value }) {
         if (key === 'seconds')
           return `${value}`
@@ -135,6 +134,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   return unpackToString(
     changeKeyCasingDeep(value),
     {
+      keyValueSeparator: '=',
       entrySeparator: ', ',
       resolve({ value, key }) {
         if (value === null)
