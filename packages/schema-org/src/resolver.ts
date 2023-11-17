@@ -9,6 +9,7 @@ import {
   commentResolver,
   courseResolver,
   eventResolver,
+  foodEstablishmentResolver,
   howToResolver,
   howToStepResolver,
   imageResolver,
@@ -52,6 +53,8 @@ export function loadResolver(resolver: string): SchemaOrgNodeDefinition<any> | n
       return commentResolver
     case 'event':
       return eventResolver
+    case 'foodEstablishment':
+      return foodEstablishmentResolver
     case 'virtualLocation':
       return virtualLocationResolver
     case 'place':

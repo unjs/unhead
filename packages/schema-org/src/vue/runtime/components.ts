@@ -6,6 +6,7 @@ import {
   defineComment,
   defineCourse,
   defineEvent,
+  defineFoodEstablishment,
   defineHowTo,
   defineImage,
   defineItemList,
@@ -105,6 +106,7 @@ export const SchemaOrgArticle = /* @__PURE__ */ defineSchemaOrgComponent('Schema
 export const SchemaOrgBreadcrumb = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgBreadcrumb', defineBreadcrumb)
 export const SchemaOrgComment = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgComment', defineComment)
 export const SchemaOrgEvent = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgEvent', defineEvent)
+export const SchemaOrgFoodEstablishment = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgFoodEstablishment', defineFoodEstablishment)
 export const SchemaOrgHowTo = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgHowTo', defineHowTo)
 export const SchemaOrgImage = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgImage', defineImage)
 export const SchemaOrgJobPosting = /* @__PURE__ */ defineSchemaOrgComponent('SchemaOrgJobPosting', defineJobPosting)

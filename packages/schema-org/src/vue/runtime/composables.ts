@@ -10,6 +10,7 @@ import type {
   Comment,
   Course,
   Event,
+  FoodEstablishment,
   HowTo,
   HowToStep,
   ImageObject,
@@ -73,6 +74,9 @@ export function defineComment<T extends Record<string, any>>(input?: DeepMaybeRe
 }
 export function defineEvent<T extends Record<string, any>>(input?: DeepMaybeRef<Event & T>) {
   return provideResolver(input, 'event')
+}
+export function defineFoodEstablishment<T extends Record<string, any>>(input?: DeepMaybeRef<FoodEstablishment & T>) {
+  return provideResolver(input, 'foodEstablishment')
 }
 export function defineVirtualLocation<T extends Record<string, any>>(input?: DeepMaybeRef<VirtualLocation & T>) {
   return provideResolver(input, 'virtualLocation')
