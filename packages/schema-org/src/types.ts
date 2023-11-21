@@ -70,7 +70,7 @@ export interface SchemaOrgNodeDefinition<ResolvedInput> {
   alias?: string
   cast?: (node: any, ctx: SchemaOrgGraph) => ResolvedInput
   idPrefix?: 'host' | 'url' | ['host' | 'url', string ]
-  inheritMeta?: (keyof ResolvedMeta | { key: keyof ResolvedInput; meta: keyof ResolvedMeta })[]
+  inheritMeta?: (keyof ResolvedMeta | { key: keyof ResolvedInput, meta: keyof ResolvedMeta })[]
   defaults?: Partial<ResolvedInput> | ((ctx: SchemaOrgGraph) => Partial<any>)
   required?: (keyof ResolvedInput)[]
   resolve?: (node: ResolvedInput, ctx: SchemaOrgGraph) => ResolvedInput

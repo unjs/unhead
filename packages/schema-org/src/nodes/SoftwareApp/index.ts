@@ -9,28 +9,28 @@ import { reviewResolver } from '../Review'
 import { resolveDefaultType } from '../../utils'
 
 type ApplicationCategory =
-'GameApplication' |
-'SocialNetworkingApplication' |
-'TravelApplication' |
-'ShoppingApplication' |
-'SportsApplication' |
-'LifestyleApplication' |
-'BusinessApplication' |
-'DesignApplication' |
-'DeveloperApplication' |
-'DriverApplication' |
-'EducationalApplication' |
-'HealthApplication' |
-'FinanceApplication' |
-'SecurityApplication' |
-'BrowserApplication' |
-'CommunicationApplication' |
-'DesktopEnhancementApplication' |
-'EntertainmentApplication' |
-'MultimediaApplication' |
-'HomeApplication' |
-'UtilitiesApplication' |
-'ReferenceApplication'
+  'GameApplication' |
+  'SocialNetworkingApplication' |
+  'TravelApplication' |
+  'ShoppingApplication' |
+  'SportsApplication' |
+  'LifestyleApplication' |
+  'BusinessApplication' |
+  'DesignApplication' |
+  'DeveloperApplication' |
+  'DriverApplication' |
+  'EducationalApplication' |
+  'HealthApplication' |
+  'FinanceApplication' |
+  'SecurityApplication' |
+  'BrowserApplication' |
+  'CommunicationApplication' |
+  'DesktopEnhancementApplication' |
+  'EntertainmentApplication' |
+  'MultimediaApplication' |
+  'HomeApplication' |
+  'UtilitiesApplication' |
+  'ReferenceApplication'
 
 export interface SoftwareAppSimple extends Thing {
   '@type'?: Arrayable<'SoftwareApplication' | 'MobileApplication' | 'VideoGame' | 'WebApplication'>

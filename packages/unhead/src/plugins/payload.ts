@@ -4,7 +4,7 @@ export default defineHeadPlugin({
   mode: 'server',
   hooks: {
     'tags:resolve': function (ctx) {
-      const payload: { titleTemplate?: string | ((s: string) => string); templateParams?: Record<string, string>; title?: string } = {}
+      const payload: { titleTemplate?: string | ((s: string) => string), templateParams?: Record<string, string>, title?: string } = {}
       ctx.tags.filter(tag => ['titleTemplate', 'templateParams', 'title'].includes(tag.tag) && tag._m === 'server')
         .forEach((tag) => {
           // @ts-expect-error untyped

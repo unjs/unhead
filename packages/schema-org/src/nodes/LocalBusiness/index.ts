@@ -11,35 +11,35 @@ import { addressResolver } from '../PostalAddress'
 import { organizationResolver } from '../Organization'
 
 type ValidLocalBusinessSubTypes = 'AnimalShelter' |
-'ArchiveOrganization' |
-'AutomotiveBusiness' |
-'ChildCare' |
-'Dentist' |
-'DryCleaningOrLaundry' |
-'EmergencyService' |
-'EmploymentAgency' |
-'EntertainmentBusiness' |
-'FinancialService' |
-'FoodEstablishment' |
-'GovernmentOffice' |
-'HealthAndBeautyBusiness' |
-'HomeAndConstructionBusiness' |
-'InternetCafe' |
-'LegalService' |
-'Library' |
-'LodgingBusiness' |
-'MedicalBusiness' |
-'ProfessionalService' |
-'RadioStation' |
-'RealEstateAgent' |
-'RecyclingCenter' |
-'SelfStorage' |
-'ShoppingCenter' |
-'SportsActivityLocation' |
-'Store' |
-'TelevisionStation' |
-'TouristInformationCenter' |
-'TravelAgency'
+  'ArchiveOrganization' |
+  'AutomotiveBusiness' |
+  'ChildCare' |
+  'Dentist' |
+  'DryCleaningOrLaundry' |
+  'EmergencyService' |
+  'EmploymentAgency' |
+  'EntertainmentBusiness' |
+  'FinancialService' |
+  'FoodEstablishment' |
+  'GovernmentOffice' |
+  'HealthAndBeautyBusiness' |
+  'HomeAndConstructionBusiness' |
+  'InternetCafe' |
+  'LegalService' |
+  'Library' |
+  'LodgingBusiness' |
+  'MedicalBusiness' |
+  'ProfessionalService' |
+  'RadioStation' |
+  'RealEstateAgent' |
+  'RecyclingCenter' |
+  'SelfStorage' |
+  'ShoppingCenter' |
+  'SportsActivityLocation' |
+  'Store' |
+  'TelevisionStation' |
+  'TouristInformationCenter' |
+  'TravelAgency'
 
 export interface LocalBusinessSimple extends Organization {
   '@type'?: ['Organization', 'LocalBusiness'] | ['Organization', 'LocalBusiness', ValidLocalBusinessSubTypes] | ValidLocalBusinessSubTypes

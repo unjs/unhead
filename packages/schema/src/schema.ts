@@ -150,6 +150,6 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
-export type UseSeoMetaInput = MetaFlatInput & { title?: Title; titleTemplate?: TitleTemplate }
+export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
 
 export type { ScriptBase, MetaFlatInput, BodyEvents, MergeHead, DataKeys, DefinedValueOrEmptyObject, SpeculationRules } from 'zhead'

@@ -108,7 +108,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       }
     },
     async resolveTags() {
-      const resolveCtx: { tags: HeadTag[]; entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
+      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
         // apply any custom transformers applied to the entry

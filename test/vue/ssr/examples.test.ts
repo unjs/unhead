@@ -114,7 +114,7 @@ describe('vue ssr examples', () => {
   it('useSeoMeta', async () => {
     const head = createHead()
     setHeadInjectionHandler(() => head)
-    const data = ref<null | { title: string; description: string }>(null)
+    const data = ref<null | { title: string, description: string }>(null)
 
     useSeoMeta({
       title: () => data.value?.title || 'Page',
