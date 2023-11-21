@@ -10,6 +10,7 @@ import type {
   Comment,
   Course,
   Event,
+  FoodEstablishment,
   HowTo,
   HowToStep,
   ImageObject,
@@ -67,6 +68,9 @@ export function defineComment<T extends Record<string, any>>(input?: Comment & T
 }
 export function defineEvent<T extends Record<string, any>>(input?: Event & T) {
   return provideResolver(input, 'event')
+}
+export function defineFoodEstablishment<T extends Record<string, any>>(input?: FoodEstablishment & T) {
+  return provideResolver(input, 'foodEstablishment')
 }
 export function defineVirtualLocation<T extends Record<string, any>>(input?: VirtualLocation & T) {
   return provideResolver(input, 'virtualLocation')
