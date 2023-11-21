@@ -1,16 +1,14 @@
 import {
   IdentityId,
-  prefixId,
   resolveDefaultType,
-  setIfEmpty,
 } from '../../utils'
 import type { Organization } from '../Organization'
 import type { OpeningHoursSpecification } from '../OpeningHours'
 import { openingHoursResolver } from '../OpeningHours'
-import { imageResolver } from '../Image'
 import type { NodeRelations } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import { addressResolver } from '../PostalAddress'
+import { organizationResolver } from '../Organization'
 
 type ValidLocalBusinessSubTypes = 'AnimalShelter' |
 'ArchiveOrganization' |
@@ -107,15 +105,9 @@ export const localBusinessResolver = defineSchemaOrgResolver<LocalBusiness>({
 
     node.address = resolveRelation(node.address, ctx, addressResolver)
     node.openingHoursSpecification = resolveRelation(node.openingHoursSpecification, ctx, openingHoursResolver)
-    node.logo = resolveRelation(node.logo, ctx, imageResolver, {
-      afterResolve(logo) {
-        const hasLogo = !!ctx.find('#logo')
-        if (!hasLogo)
-          logo['@id'] = prefixId(ctx.meta.host, '#logo')
 
-        setIfEmpty(logo, 'caption', node.name)
-      },
-    })
-    return node
+    node = resolveNode({ ...node }, ctx, organizationResolver) as LocalBusiness
+    organizationResolver.resolveRootNode!(node, ctx)
+    return node as LocalBusiness
   },
 })

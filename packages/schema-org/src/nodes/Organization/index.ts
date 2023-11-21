@@ -96,11 +96,18 @@ export const organizationResolver
 
           // push a separate node that will just be used for the Logo rich result
           ctx.nodes.push({
-            ...node,
+            // we want to make a simple node that has the essentials, this will allow parent nodes to inject
+            // as well without inserting invalid data (i.e LocalBusiness operatingHours)
+            '@type': 'Organization',
+            'name': node.name,
+            'url': node.url,
+            'sameAs': node.sameAs,
+            // 'image': idReference(logoNode),
+            'address': node.address,
             // needs to be a URL
             'logo': resolveRelation(node.logo, ctx, imageResolver, { root: false }).url,
             '_priority': -1,
-            '@id': '#organization', // avoid the id so nothing can link to it
+            '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
           })
         }
         delete node.logo

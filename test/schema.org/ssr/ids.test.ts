@@ -21,7 +21,6 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-
     const tags = await ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot('"https://example.com/#foo"')

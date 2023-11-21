@@ -378,7 +378,7 @@ describe('defineArticle', () => {
             "url": "https://example.com/test.png",
           },
           {
-            "@id": "#organization",
+            "@id": "https://example.com/#organization",
             "@type": "Organization",
             "logo": "https://example.com/test.png",
             "name": "Identity",

@@ -48,14 +48,6 @@ describe('defineLocalBusiness', () => {
               "streetAddress": "123 st",
             },
             "currenciesAccepted": "AUD",
-            "logo": {
-              "@id": "https://example.com/#logo",
-              "@type": "ImageObject",
-              "caption": "test",
-              "contentUrl": "https://example.com/logo.png",
-              "inLanguage": "en-AU",
-              "url": "https://example.com/logo.png",
-            },
             "name": "test",
             "openingHoursSpecification": [
               {
@@ -74,6 +66,27 @@ describe('defineLocalBusiness', () => {
                 "opens": "10:30",
               },
             ],
+            "url": "https://example.com/",
+          },
+          {
+            "@id": "https://example.com/#/schema/image/acd40d1",
+            "@type": "ImageObject",
+            "caption": "test",
+            "contentUrl": "https://example.com/logo.png",
+            "inLanguage": "en-AU",
+            "url": "https://example.com/logo.png",
+          },
+          {
+            "@id": "https://example.com/#organization",
+            "@type": "Organization",
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "logo": "https://example.com/logo.png",
+            "name": "test",
             "url": "https://example.com/",
           },
         ]
