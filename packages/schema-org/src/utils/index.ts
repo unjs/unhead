@@ -75,7 +75,7 @@ export function dedupeMerge<T extends Thing>(node: T, field: keyof T, value: any
 export function prefixId(url: string, id: Id | string) {
   // already prefixed
   if (hasProtocol(id))
-    return url as Id
+    return id as Id
   if (!id.startsWith('#'))
     id = `#${id}`
   return joinURL(url, id) as Id
