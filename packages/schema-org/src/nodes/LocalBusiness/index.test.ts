@@ -80,4 +80,46 @@ describe('defineLocalBusiness', () => {
       `)
     })
   })
+
+  it('can have custom id', async () => {
+    await useSetup(async () => {
+      useSchemaOrg([
+        defineLocalBusiness({
+          '@type': 'Dentist',
+          'name': 'test',
+          'address': {
+            addressCountry: 'Australia',
+            postalCode: '2000',
+            streetAddress: '123 st',
+          },
+          '@id': 'https://example.com/place/123#identity',
+          'url': 'https://www.test.com',
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg()
+
+      expect(graphNodes).toMatchInlineSnapshot(`
+        [
+          {
+            "@id": "https://example.com/place/123#identity",
+            "@type": [
+              "Organization",
+              "LocalBusiness",
+              "Dentist",
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "currenciesAccepted": "AUD",
+            "name": "test",
+            "url": "https://www.test.com",
+          },
+        ]
+      `)
+    })
+  })
 })

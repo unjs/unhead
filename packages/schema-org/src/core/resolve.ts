@@ -105,7 +105,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     return node
   }
 
-  const rootId = Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined
+  const rootId = node['@id'] || (Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined)
   // transform ['host', PrimaryWebPageId] to https://host.com/#webpage
   if (resolveAsRoot && rootId) {
     // allow overriding root ids
