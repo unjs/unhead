@@ -65,6 +65,7 @@ export interface HeadHooks {
   'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:beforeResolve': (ctx: { tags: HeadTag[] }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
+  'tags:afterResolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => HookResult
