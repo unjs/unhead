@@ -93,7 +93,8 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
     },
     vite: {
       apply(config: UserConfig, env: ConfigEnv) {
-        if (env.ssrBuild) {
+        // @ts-expect-error Vite 4 support
+        if (env.ssrBuild || env.isSsrBuild) {
           options.enabled = false
           return true
         }
