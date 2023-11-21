@@ -5,22 +5,22 @@ import {
 import type { LocalBusiness } from '../LocalBusiness'
 import type { Rating } from '../Rating'
 import type { NodeRelations } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation, resolveNode } from '../../core'
+import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import { ratingResolver } from '../Rating'
 import { localBusinessResolver } from '../LocalBusiness'
 
 type ValidFoodEstablishmentSubTypes = 'Bakery' |
-'BarOrPub' |
-'Brewery' |
-'Dentist' |
-'CafeOrCoffeeShop' |
-'Distillery' |
-'FastFoodRestaurant' |
-'IceCreamShop' |
-'Restaurant' |
-'Winery'
+  'BarOrPub' |
+  'Brewery' |
+  'Dentist' |
+  'CafeOrCoffeeShop' |
+  'Distillery' |
+  'FastFoodRestaurant' |
+  'IceCreamShop' |
+  'Restaurant' |
+  'Winery'
 
-export interface FoodEstablishmentSimple extends Omit<LocalBusiness, "@type"> {
+export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes
   /**
    * Indicates whether a FoodEstablishment accepts reservations.

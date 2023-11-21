@@ -11,7 +11,7 @@ describe('defineLocalBusiness', () => {
           'servesCuisine': 'Traditional food',
           'hasMenu': 'https://www.test.com/menu.pdf',
           'acceptsReservations': 'https://www.test.com/reserve',
-          'starRating': {ratingValue: 4, worstRating: 1, bestRating: 5},
+          'starRating': { ratingValue: 4, worstRating: 1, bestRating: 5 },
           'name': 'test',
           'logo': '/logo.png',
           'address': {
@@ -31,7 +31,7 @@ describe('defineLocalBusiness', () => {
               closes: '15:30',
             },
           ],
-          'url': 'https://www.test.com'
+          'url': 'https://www.test.com',
         }),
       ])
 

@@ -91,17 +91,17 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 
 ```ts
 type ValidFoodEstablishmentSubTypes = 'Bakery' |
-'BarOrPub' |
-'Brewery' |
-'Dentist' |
-'CafeOrCoffeeShop' |
-'Distillery' |
-'FastFoodRestaurant' |
-'IceCreamShop' |
-'Restaurant' |
-'Winery'
+  'BarOrPub' |
+  'Brewery' |
+  'Dentist' |
+  'CafeOrCoffeeShop' |
+  'Distillery' |
+  'FastFoodRestaurant' |
+  'IceCreamShop' |
+  'Restaurant' |
+  'Winery'
 
-export interface FoodEstablishmentSimple extends Omit<LocalBusiness, "@type"> {
+export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes
   /**
    * Indicates whether a FoodEstablishment accepts reservations.
