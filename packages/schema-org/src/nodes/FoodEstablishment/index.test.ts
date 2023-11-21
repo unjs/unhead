@@ -56,14 +56,6 @@ describe('defineLocalBusiness', () => {
             },
             "currenciesAccepted": "AUD",
             "hasMenu": "https://www.test.com/menu.pdf",
-            "logo": {
-              "@id": "https://example.com/#logo",
-              "@type": "ImageObject",
-              "caption": "test",
-              "contentUrl": "https://example.com/logo.png",
-              "inLanguage": "en-AU",
-              "url": "https://example.com/logo.png",
-            },
             "name": "test",
             "openingHoursSpecification": [
               {
@@ -89,6 +81,27 @@ describe('defineLocalBusiness', () => {
               "ratingValue": 4,
               "worstRating": 1,
             },
+            "url": "https://www.test.com",
+          },
+          {
+            "@id": "https://example.com/#/schema/image/acd40d1",
+            "@type": "ImageObject",
+            "caption": "test",
+            "contentUrl": "https://example.com/logo.png",
+            "inLanguage": "en-AU",
+            "url": "https://example.com/logo.png",
+          },
+          {
+            "@id": "https://example.com/#organization",
+            "@type": "Organization",
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "logo": "https://example.com/logo.png",
+            "name": "test",
             "url": "https://www.test.com",
           },
         ]
