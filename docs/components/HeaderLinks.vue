@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NavItem } from '@nuxt/content/dist/runtime/types'
 
-const props = defineProps<{ modelValue: boolean; links: { to: string; label: string }[] }>()
+const props = defineProps<{ modelValue: boolean, links: { to: string, label: string }[] }>()
 const emit = defineEmits(['update:modelValue'])
 
 const isDialogOpen = useVModel(props, 'modelValue', emit)

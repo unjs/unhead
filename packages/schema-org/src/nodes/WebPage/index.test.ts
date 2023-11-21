@@ -292,7 +292,7 @@ describe('defineWebPage', () => {
             "url": "https://example.com/logo.png",
           },
           {
-            "@id": "#organization",
+            "@id": "https://example.com/#organization",
             "@type": "Organization",
             "logo": "https://example.com/logo.png",
             "name": "Harlan Wilton",

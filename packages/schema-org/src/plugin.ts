@@ -80,14 +80,15 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         for (const tag of ctx.tags) {
           if (tag.tag === 'script' && tag.key === 'schema-org-graph') {
             const minify = options?.minify || process.env.NODE_ENV === 'production'
-            tag.innerHTML = processTemplateParams(
-              JSON.stringify({
-                '@context': 'https://schema.org',
-                '@graph': graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta }),
-              }, null, minify ? 0 : 2),
-              head._templateParams!,
-              head._separator!,
-            )
+            tag.innerHTML = JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta }),
+            }, (_, value) => {
+              // process template params here
+              if (typeof value !== 'object')
+                return processTemplateParams(value, head._templateParams!, head._separator!)
+              return value
+            }, minify ? 0 : 2)
             delete tag.props.nodes
             return
           }

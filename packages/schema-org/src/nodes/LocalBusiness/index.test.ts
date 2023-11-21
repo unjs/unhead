@@ -48,14 +48,6 @@ describe('defineLocalBusiness', () => {
               "streetAddress": "123 st",
             },
             "currenciesAccepted": "AUD",
-            "logo": {
-              "@id": "https://example.com/#logo",
-              "@type": "ImageObject",
-              "caption": "test",
-              "contentUrl": "https://example.com/logo.png",
-              "inLanguage": "en-AU",
-              "url": "https://example.com/logo.png",
-            },
             "name": "test",
             "openingHoursSpecification": [
               {
@@ -75,6 +67,69 @@ describe('defineLocalBusiness', () => {
               },
             ],
             "url": "https://example.com/",
+          },
+          {
+            "@id": "https://example.com/#/schema/image/acd40d1",
+            "@type": "ImageObject",
+            "caption": "test",
+            "contentUrl": "https://example.com/logo.png",
+            "inLanguage": "en-AU",
+            "url": "https://example.com/logo.png",
+          },
+          {
+            "@id": "https://example.com/#organization",
+            "@type": "Organization",
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "logo": "https://example.com/logo.png",
+            "name": "test",
+            "url": "https://example.com/",
+          },
+        ]
+      `)
+    })
+  })
+
+  it('can have custom id', async () => {
+    await useSetup(async () => {
+      useSchemaOrg([
+        defineLocalBusiness({
+          '@type': 'Dentist',
+          'name': 'test',
+          'address': {
+            addressCountry: 'Australia',
+            postalCode: '2000',
+            streetAddress: '123 st',
+          },
+          '@id': 'https://example.com/place/123#identity',
+          'url': 'https://www.test.com',
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg()
+
+      expect(graphNodes).toMatchInlineSnapshot(`
+        [
+          {
+            "@id": "https://example.com/place/123#identity",
+            "@type": [
+              "Organization",
+              "LocalBusiness",
+              "Dentist",
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+              "postalCode": "2000",
+              "streetAddress": "123 st",
+            },
+            "currenciesAccepted": "AUD",
+            "name": "test",
+            "url": "https://www.test.com",
           },
         ]
       `)

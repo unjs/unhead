@@ -19,6 +19,7 @@ import HashKeyedPlugin from './plugins/hashKeyed'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
+import XSSPlugin from './plugins/xss'
 
 // TODO drop support for non-context head
 // eslint-disable-next-line import/no-mutable-exports
@@ -107,7 +108,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       }
     },
     async resolveTags() {
-      const resolveCtx: { tags: HeadTag[]; entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
+      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
         // apply any custom transformers applied to the entry
@@ -123,6 +124,8 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       }
       await hooks.callHook('tags:beforeResolve', resolveCtx)
       await hooks.callHook('tags:resolve', resolveCtx)
+      // post-processing mainly for XSS prevention
+      await hooks.callHook('tags:afterResolve', resolveCtx)
       return resolveCtx.tags
     },
     ssr,
@@ -135,6 +138,7 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
     SortPlugin,
     TemplateParamsPlugin,
     TitleTemplatePlugin,
+    XSSPlugin,
     ...(options?.plugins || []),
   ].forEach(p => head.use(p))
   head.hooks.callHook('init', head)

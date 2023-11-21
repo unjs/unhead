@@ -47,9 +47,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       tag.innerHTML = JSON.stringify(tag.innerHTML)
       tag.props.type = tag.props.type || 'application/json'
     }
-    if (tag.innerHTML && ['application/ld+json', 'application/json'].includes(tag.props.type))
-      // ensure </script> tags get encoded
-      tag.innerHTML = tag.innerHTML.replace(/</g, '\\u003C')
   }
   // allow meta to be resolved into multiple tags if an array is provided on content
   return Array.isArray(tag.props.content)

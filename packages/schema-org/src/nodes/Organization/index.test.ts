@@ -42,7 +42,7 @@ describe('defineOrganization', () => {
             "url": "https://example.com/logo.png",
           },
           {
-            "@id": "#organization",
+            "@id": "https://example.com/#organization",
             "@type": "Organization",
             "address": {
               "@type": "PostalAddress",

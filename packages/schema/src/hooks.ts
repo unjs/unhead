@@ -32,14 +32,14 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
    */
   skipEarlyConnections?: boolean
   use?: () => T | undefined | null
-  stub?: ((ctx: { script: ScriptInstance<T>; fn: string | symbol }) => any)
+  stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
   transform?: (script: UseScriptInput) => Promise<UseScriptInput> | UseScriptInput
   trigger?: 'idle' | 'manual' | Promise<void>
 }
 
 export type UseScriptInput = Omit<Script, 'src'> & { src: string }
 
-export interface EntryResolveCtx<T> { tags: HeadTag[]; entries: HeadEntry<T>[] }
+export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
   id: string
   $el: Element
@@ -56,15 +56,16 @@ export interface DomBeforeRenderCtx extends ShouldRenderContext {
   tags: DomRenderTagContext[]
 }
 export interface ShouldRenderContext { shouldRender: boolean }
-export interface SSRRenderContext { tags: HeadTag[]; html: SSRHeadPayload }
+export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
 export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }) => HookResult
+  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:beforeResolve': (ctx: { tags: HeadTag[] }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
+  'tags:afterResolve': (ctx: { tags: HeadTag[] }) => HookResult
 
   // @unhead/dom
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => HookResult
