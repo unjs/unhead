@@ -115,4 +115,25 @@ describe('ssr innerHTML', () => {
       }
     `)
   })
+
+  it('empty innerHTML', async () => {
+    const head = createHead()
+    head.push({
+      script: [
+        {
+          innerHTML: '',
+        },
+      ],
+    })
+    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
+
+    head.push({
+      script: [
+        {
+          children: '',
+        },
+      ],
+    })
+    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
+  })
 })

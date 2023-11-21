@@ -20,9 +20,9 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
     if (typeof val !== 'undefined') {
       // strip innerHTML and textContent for tags which don't support it
-      if (!['innerHTML', 'textContent'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
+      if (!['innerHTML', 'textContent', 'children'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
         // @ts-expect-error untyped
-        tag[k] = val
+        tag[k === 'children' ? 'innerHTML' : k] = val
       }
       delete tag.props[k]
     }
@@ -33,13 +33,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     tag.tagPosition = 'bodyClose'
     // clean up
     delete tag.props.body
-  }
-  // TODO remove v2
-  if (tag.props.children) {
-    // inserting dangerous javascript potentially
-    tag.innerHTML = tag.props.children
-    // clean up
-    delete tag.props.children
   }
   // shorthand for objects
   if (tag.tag === 'script') {
