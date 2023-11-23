@@ -63,7 +63,7 @@ export const foodEstablishmentResolver = defineSchemaOrgResolver<FoodEstablishme
     return node
   },
   resolveRootNode(node, ctx) {
-    localBusinessResolver.resolveRootNode!(node, ctx)
+    localBusinessResolver.resolveRootNode!(node as LocalBusiness, ctx)
     return node
   },
 })
