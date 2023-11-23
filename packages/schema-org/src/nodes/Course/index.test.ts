@@ -21,6 +21,7 @@ describe('defineCourse', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
+            "@id": "https://example.com/#/schema/course/2c0273",
             "@type": "Course",
             "description": "Introductory CS course laying out the basics.",
             "name": "Introduction to Computer Science and Programming",

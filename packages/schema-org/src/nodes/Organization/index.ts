@@ -79,14 +79,13 @@ export const organizationResolver
     resolveRootNode(node, ctx) {
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
       const webPage = ctx.find<WebPage>(PrimaryWebPageId)
-      if (node.logo) {
+      if (node.logo && isIdentity) {
         if (!ctx.find('#organization')) {
         // create a node for the logo
           const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
             root: true,
             afterResolve(logo) {
-              if (isIdentity)
-                logo['@id'] = prefixId(ctx.meta.host, '#logo')
+              logo['@id'] = prefixId(ctx.meta.host, '#logo')
               setIfEmpty(logo, 'caption', node.name)
             },
           })

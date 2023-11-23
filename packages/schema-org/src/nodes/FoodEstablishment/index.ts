@@ -60,7 +60,10 @@ export const foodEstablishmentResolver = defineSchemaOrgResolver<FoodEstablishme
 
     node.starRating = resolveRelation(node.starRating, ctx, ratingResolver)
     node = resolveNode(node as LocalBusiness, ctx, localBusinessResolver) as FoodEstablishment
-
+    return node
+  },
+  resolveRootNode(node, ctx) {
+    localBusinessResolver.resolveRootNode!(node, ctx)
     return node
   },
 })

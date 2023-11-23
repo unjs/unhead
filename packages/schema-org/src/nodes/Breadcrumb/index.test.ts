@@ -114,7 +114,7 @@ describe('defineBreadcrumb', async () => {
             ],
           },
           {
-            "@id": "https://example.com/#subbreadcrumb",
+            "@id": "https://example.com/#/schema/breadcrumb-list/#subbreadcrumb",
             "@type": "BreadcrumbList",
             "custom": "test",
             "itemListElement": [

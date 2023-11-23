@@ -241,12 +241,12 @@ describe('defineEvent', () => {
               "@id": "https://example.com/#/schema/organization/ff95f9d",
             },
             "performer": {
-              "@id": "https://example.com/#/schema/performinggroup/1a358dc",
+              "@id": "https://example.com/#/schema/performing-group/1a358dc",
             },
             "startDate": "2025-07-21T19:00-05:00",
           },
           {
-            "@id": "https://example.com/#/schema/performinggroup/1a358dc",
+            "@id": "https://example.com/#/schema/performing-group/1a358dc",
             "@type": "PerformingGroup",
             "name": "Kira and Morrison",
           },

@@ -84,7 +84,7 @@ describe('defineLocalBusiness', () => {
             "url": "https://www.test.com",
           },
           {
-            "@id": "https://example.com/#/schema/image/acd40d1",
+            "@id": "https://example.com/#logo",
             "@type": "ImageObject",
             "caption": "test",
             "contentUrl": "https://example.com/logo.png",

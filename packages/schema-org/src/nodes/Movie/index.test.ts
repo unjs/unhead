@@ -30,6 +30,7 @@ describe('defineMovie', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
+            "@id": "https://example.com/#/schema/movie/514c83d",
             "@type": "Movie",
             "aggregateRating": {
               "@type": "AggregateRating",

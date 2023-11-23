@@ -93,39 +93,37 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
 }
 
 export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver: SchemaOrgNodeDefinition<T>, resolveAsRoot = false) {
-  const prefix = Array.isArray(resolver.idPrefix) ? resolver.idPrefix[0] : resolver.idPrefix
-
-  // may not need an @id
-  if (!prefix)
+  // already fully qualified
+  if (node['@id'] && node['@id'].startsWith('http'))
     return node
 
-  // transform #my-id into https://host.com/#my-id
-  if (node['@id'] && !(node['@id'] as string).startsWith(ctx.meta.host)) {
+  const prefix = (Array.isArray(resolver.idPrefix) ? resolver.idPrefix[0] : resolver.idPrefix) || 'url'
+  const rootId = node['@id'] || (Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined)
+
+  if (!node['@id'] && resolveAsRoot && rootId) {
+    // transform ['host', PrimaryWebPageId] to https://host.com/#webpage
+    // allow overriding root ids
+    node['@id'] = prefixId(ctx.meta[prefix], rootId)
+    return node
+  }
+  if (node['@id']?.startsWith('#/schema/')) {
     node['@id'] = prefixId(ctx.meta[prefix], node['@id'])
     return node
   }
-
-  const rootId = node['@id'] || (Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined)
-  // transform ['host', PrimaryWebPageId] to https://host.com/#webpage
-  if (resolveAsRoot && rootId) {
-    // allow overriding root ids
-    node['@id'] = prefixId(ctx.meta[prefix], rootId)
-  }
   // transform 'host' to https://host.com/#schema/webpage/gj5g59gg
-  if (!node['@id']) {
-    let alias = resolver?.alias
-    if (!alias) {
-      const type = asArray(node['@type'])?.[0] || ''
-      alias = type.toLowerCase()
-    }
-    const hashNodeData: Record<string, any> = {}
-    Object.entries(node).forEach(([key, val]) => {
-      // remove runtime private fields
-      if (!key.startsWith('_'))
-        hashNodeData[key] = val
-    })
-    node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${hashCode(JSON.stringify(hashNodeData))}`)
+  let alias = resolver?.alias
+  if (!alias) {
+    const type = asArray(node['@type'])?.[0] || ''
+    // kebab case type
+    alias = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   }
+  const hashNodeData: Record<string, any> = {}
+  Object.entries(node).forEach(([key, val]) => {
+    // remove runtime private fields
+    if (!key.startsWith('_'))
+      hashNodeData[key] = val
+  })
+  node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || hashCode(JSON.stringify(hashNodeData))}`)
   return node
 }
 

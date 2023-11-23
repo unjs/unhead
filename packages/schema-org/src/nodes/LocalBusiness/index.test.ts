@@ -69,7 +69,7 @@ describe('defineLocalBusiness', () => {
             "url": "https://example.com/",
           },
           {
-            "@id": "https://example.com/#/schema/image/acd40d1",
+            "@id": "https://example.com/#logo",
             "@type": "ImageObject",
             "caption": "test",
             "contentUrl": "https://example.com/logo.png",
@@ -130,6 +130,36 @@ describe('defineLocalBusiness', () => {
             "currenciesAccepted": "AUD",
             "name": "test",
             "url": "https://www.test.com",
+          },
+        ]
+      `)
+    })
+  })
+
+  it('support multiple local businesses', async () => {
+    await useSetup(async () => {
+      useSchemaOrg([
+        defineLocalBusiness({
+          '@id': '#my-biz-123',
+          'name': 'My Custom Business',
+          'logo': '/logo-1.png',
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg()
+
+      expect(graphNodes).toMatchInlineSnapshot(`
+        [
+          {
+            "@id": "https://example.com/#/schema/organization/#my-biz-123",
+            "@type": [
+              "Organization",
+              "LocalBusiness",
+            ],
+            "currenciesAccepted": "AUD",
+            "logo": "/logo-1.png",
+            "name": "My Custom Business",
+            "url": "https://example.com/",
           },
         ]
       `)

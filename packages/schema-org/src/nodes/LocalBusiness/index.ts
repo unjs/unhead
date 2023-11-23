@@ -107,7 +107,10 @@ export const localBusinessResolver = defineSchemaOrgResolver<LocalBusiness>({
     node.openingHoursSpecification = resolveRelation(node.openingHoursSpecification, ctx, openingHoursResolver)
 
     node = resolveNode({ ...node }, ctx, organizationResolver) as LocalBusiness
-    organizationResolver.resolveRootNode!(node, ctx)
     return node as LocalBusiness
+  },
+  resolveRootNode(node, ctx) {
+    organizationResolver.resolveRootNode!(node, ctx)
+    return node
   },
 })

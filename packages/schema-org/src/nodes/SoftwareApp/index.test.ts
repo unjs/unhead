@@ -27,6 +27,7 @@ describe('defineSoftwareApp', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
+            "@id": "https://example.com/#/schema/software-application/2656092",
             "@type": "SoftwareApplication",
             "aggregateRating": {
               "@type": "AggregateRating",

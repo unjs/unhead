@@ -1,4 +1,4 @@
-import { hasProtocol, joinURL, withBase } from 'ufo'
+import { hasProtocol, withBase } from 'ufo'
 import type {
   Arrayable,
   Id,
@@ -78,7 +78,7 @@ export function prefixId(url: string, id: Id | string) {
     return id as Id
   if (!id.startsWith('#'))
     id = `#${id}`
-  return joinURL(url, id) as Id
+  return withBase(id, url) as Id
 }
 
 export function trimLength(val: string | undefined, length: number) {
