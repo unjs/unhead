@@ -19,7 +19,12 @@ useSeoMeta({
   description: () => page.value?.description,
 })
 
-defineOgImage()
+defineOgImageComponent('Fallback', {
+  title: page.value?.title,
+  description: page.value?.description,
+  colorMode: 'light',
+  theme: '#ecdc5a'
+})
 
 const navigation = inject('navigation')
 const children = computed(() => {

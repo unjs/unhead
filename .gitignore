@@ -8,3 +8,4 @@ coverage
 /integrations/nuxt/playground/.nuxt/
 samples
 .vercel
+.env

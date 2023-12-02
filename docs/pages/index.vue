@@ -4,6 +4,13 @@ import { queryContent } from '#imports'
 const siteConfig = useSiteConfig()
 
 const { data } = await useAsyncData('code-example', () => queryContent('/_code-examples').findOne())
+
+defineOgImageComponent('Fallback', {
+  title: 'Unhead',
+  description: 'The any-framework document head manager built for performance and delightful developer experience.',
+  colorMode: 'light',
+  theme: '#ecdc5a'
+})
 </script>
 
 <template>

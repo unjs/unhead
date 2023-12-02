@@ -45,7 +45,8 @@ export default defineNuxtConfig({
     safelistColors: excludeColors(colors),
   },
   sitemap: {
-    strictNuxtContentPaths: true,
+    excludeAppSources: true,
+    strictNuxtContentPaths: false,
     xslColumns: [
       { label: 'URL', width: '50%' },
       { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
@@ -90,6 +91,9 @@ export default defineNuxtConfig({
   },
   seo: {
     redirectToCanonicalSiteUrl: true,
+  },
+  ogImage: {
+    debug: process.dev,
   },
   experimental: {
     // asyncContext: true,

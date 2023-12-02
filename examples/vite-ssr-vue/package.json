@@ -18,9 +18,9 @@
     "@unhead/schema-org": "workspace:*",
     "@unhead/vue": "workspace:*",
     "pinia": "^2.1.7",
-    "unplugin-auto-import": "^0.16.7",
-    "vite": "^5.0.0",
-    "vue": "^3.3.8",
+    "unplugin-auto-import": "^0.17.1",
+    "vite": "^5.0.4",
+    "vue": "^3.3.9",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
