@@ -24,15 +24,15 @@ describe('schema.org ssr xss', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"#webpage\\",
-            \\"@type\\": \\"WebPage\\",
-            \\"description\\": \\"\\\\u003C/script>\\\\u003Cscript>alert(1)\\\\u003C/script>\\",
-            \\"foo\\": \\"\\\\\\"}\\\\u003C/script>\\\\u003Cscript>alert(2)\\\\u003C/script>\\",
-            \\"name\\": \\"test\\"
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "description": "\\u003C/script>\\u003Cscript>alert(1)\\u003C/script>",
+            "foo": "\\"}\\u003C/script>\\u003Cscript>alert(2)\\u003C/script>",
+            "name": "test"
           }
         ]
       }</script>"

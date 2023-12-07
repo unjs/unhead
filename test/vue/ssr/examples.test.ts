@@ -20,13 +20,13 @@ describe('vue ssr examples', () => {
 
     expect(headResult).toMatchInlineSnapshot(`
       {
-        "bodyAttrs": " class=\\"dark\\"",
+        "bodyAttrs": " class="dark"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
-      <script src=\\"https://cdn.example.com/script.js\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">",
-        "htmlAttrs": " lang=\\"de\\"",
+        "headTags": "<meta charset="utf-8">
+      <script src="https://cdn.example.com/script.js"></script>
+      <link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico">",
+        "htmlAttrs": " lang="de"",
       }
     `)
   })
@@ -67,10 +67,10 @@ describe('vue ssr examples', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>hello</title>
-      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
-      <script src=\\"foo.js\\"></script>
-      <meta name=\\"description\\" content=\\"desc 2\\">"
+      <meta property="og:locale:alternate" content="fr">
+      <meta property="og:locale:alternate" content="zh">
+      <script src="foo.js"></script>
+      <meta name="description" content="desc 2">"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')
@@ -93,8 +93,8 @@ describe('vue ssr examples', () => {
 
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
-      "<link href=\\"/\\">
-      <link rel=\\"icon\\" type=\\"image/svg\\" href=\\"/favicon.svg\\">"
+      "<link href="/">
+      <link rel="icon" type="image/svg" href="/favicon.svg">"
     `,
     )
   })
@@ -107,7 +107,7 @@ describe('vue ssr examples', () => {
     }))
 
     expect(headResult.htmlAttrs).toMatchInlineSnapshot(
-      '" data-something=\\"true\\""',
+      `" data-something="true""`,
     )
   })
 
@@ -140,11 +140,11 @@ describe('vue ssr examples', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>page name - My Site</title>
-      <meta property=\\"og:image\\" content=\\"https://example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image2.jpg\\">
-      <meta property=\\"og:title\\" content=\\"page name - My Site\\">
-      <meta name=\\"description\\" content=\\"my page description\\">
-      <meta property=\\"og:description\\" content=\\"my page description\\">",
+      <meta property="og:image" content="https://example.com/image.jpg">
+      <meta property="og:image" content="https://example.com/image2.jpg">
+      <meta property="og:title" content="page name - My Site">
+      <meta name="description" content="my page description">
+      <meta property="og:description" content="my page description">",
         "htmlAttrs": "",
       }
     `)

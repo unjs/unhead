@@ -34,7 +34,7 @@ describe('dom innerHTML', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script type=\\"application/json\\">{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script><script type=\\"speculationrules\\">{\\"prefetch\\":[{\\"source\\":\\"list\\",\\"urls\\":[\\"/test\\"],\\"requires\\":[\\"anonymous-client-ip-when-cross-origin\\"]}]}</script></head>
+      <script type="application/json">{"test":"test","something":{"else":123}}</script><script type="speculationrules">{"prefetch":[{"source":"list","urls":["/test"],"requires":["anonymous-client-ip-when-cross-origin"]}]}</script></head>
       <body>
 
       <div>
@@ -61,8 +61,8 @@ describe('dom innerHTML', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <noscript>&lt;iframe src=\\"https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX\\"
-          height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"&gt;&lt;/iframe&gt;</noscript></head>
+      <noscript>&lt;iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+          height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript></head>
       <body>
 
       <div>

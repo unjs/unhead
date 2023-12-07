@@ -32,7 +32,7 @@ describe('vue templateParams', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>hello world / My Awesome Site</title><meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\"></head>
+      <title>hello world / My Awesome Site</title><meta name="description" content="Welcome to My Awesome Site!"></head>
       <body>
 
       <div>
@@ -72,7 +72,7 @@ describe('vue templateParams', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>XYZ training, certification and compliance for $17.95 / My Awesome Site</title><meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\"></head>
+      <title>XYZ training, certification and compliance for $17.95 / My Awesome Site</title><meta name="description" content="Welcome to My Awesome Site!"></head>
       <body>
 
       <div>

@@ -24,9 +24,9 @@ describe('useSeoMeta vue ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"viewport\\" content=\\"width=device-width, initial-scale=1\\">
-      <meta name=\\"robots\\" content=\\"index, follow\\">
-      <meta http-equiv=\\"refresh\\" content=\\"60;url=https://example.com\\">",
+        "headTags": "<meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="robots" content="index, follow">
+      <meta http-equiv="refresh" content="60;url=https://example.com">",
         "htmlAttrs": "",
       }
     `)
@@ -45,7 +45,7 @@ describe('useSeoMeta vue ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"robots\\" content=\\"bar\\">",
+        "headTags": "<meta name="robots" content="bar">",
         "htmlAttrs": "",
       }
     `)

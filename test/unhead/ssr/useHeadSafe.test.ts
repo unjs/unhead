@@ -12,12 +12,12 @@ describe('dom useHeadSafe', () => {
     const ctx = await renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
-        "bodyAttrs": " class=\\"dark\\"",
+        "bodyAttrs": " class="dark"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
-      <link href=\\"https://cdn.example.com/favicon.ico\\" rel=\\"icon\\" type=\\"image/x-icon\\">",
-        "htmlAttrs": " lang=\\"en\\" dir=\\"ltr\\"",
+        "headTags": "<meta charset="utf-8">
+      <link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon">",
+        "htmlAttrs": " lang="en" dir="ltr"",
       }
     `)
   })
@@ -47,8 +47,8 @@ describe('dom useHeadSafe', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link href=\\"/icon.png\\" rel=\\"apple-touch-icon\\" sizes=\\"180x180\\">
-      <link href=\\"favicon.ico\\" rel=\\"icon\\">",
+        "headTags": "<link href="/icon.png" rel="apple-touch-icon" sizes="180x180">
+      <link href="favicon.ico" rel="icon">",
         "htmlAttrs": "",
       }
     `)

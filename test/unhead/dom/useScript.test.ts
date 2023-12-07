@@ -13,7 +13,7 @@ describe('dom useScript', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script defer=\\"\\" fetchpriority=\\"low\\" src=\\"https://cdn.example.com/script.js\\" onload=\\"this.dataset.onload = true\\" onerror=\\"this.dataset.onerror = true\\" onabort=\\"this.dataset.onabort = true\\" onprogress=\\"this.dataset.onprogress = true\\" onloadstart=\\"this.dataset.onloadstart = true\\" data-hid=\\"438d65b\\" data-h-load=\\"\\" data-h-error=\\"\\" data-h-abort=\\"\\" data-h-progress=\\"\\" data-h-loadstart=\\"\\"></script></head>
+      <script defer="" fetchpriority="low" src="https://cdn.example.com/script.js" onload="this.dataset.onload = true" onerror="this.dataset.onerror = true" onabort="this.dataset.onabort = true" onprogress="this.dataset.onprogress = true" onloadstart="this.dataset.onloadstart = true" data-hid="438d65b" data-h-load="" data-h-error="" data-h-abort="" data-h-progress="" data-h-loadstart=""></script></head>
       <body>
 
       <div>

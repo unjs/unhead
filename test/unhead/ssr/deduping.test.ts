@@ -22,8 +22,8 @@ describe('dedupe', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"google-site-verification\\" content=\\"123\\">
-      <meta name=\\"google-site-verification\\" content=\\"321\\">",
+        "headTags": "<meta name="google-site-verification" content="123">
+      <meta name="google-site-verification" content="321">",
         "htmlAttrs": "",
       }
     `)
@@ -48,7 +48,7 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('"<meta name=\\"description\\" content=\\"my page description\\">"')
+    expect(headTags).toMatchInlineSnapshot(`"<meta name="description" content="my page description">"`)
     expect(
       headTags.includes('<meta name="description" content="my page description"'),
     ).toBeTruthy()
@@ -186,8 +186,8 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<link rel=\\"icon\\" href=\\"/favicon.ico\\">
-      <link rel=\\"canonical\\" href=\\"https://mydomain.me\\">"
+      "<link rel="icon" href="/favicon.ico">
+      <link rel="canonical" href="https://mydomain.me">"
     `,
     )
   })
@@ -207,8 +207,8 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<meta name=\\"description\\" content=\\"test\\">
-      <link rel=\\"icon\\" href=\\"/favicon.ico\\" data-hid=\\"e16a2dd\\">"
+      "<meta name="description" content="test">
+      <link rel="icon" href="/favicon.ico" data-hid="e16a2dd">"
     `,
     )
   })
@@ -236,8 +236,8 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<meta unknown-key=\\"description\\" content=\\"test\\">
-      <meta unknown-key=\\"description\\" content=\\"test 2\\">"
+      "<meta unknown-key="description" content="test">
+      <meta unknown-key="description" content="test 2">"
     `,
     )
   })
@@ -265,12 +265,12 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<meta property=\\"og:image\\" content=\\"https://example.com/image1.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image2.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image3.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image4.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image5.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image6.jpg\\">"
+      "<meta property="og:image" content="https://example.com/image1.jpg">
+      <meta property="og:image" content="https://example.com/image2.jpg">
+      <meta property="og:image" content="https://example.com/image3.jpg">
+      <meta property="og:image" content="https://example.com/image4.jpg">
+      <meta property="og:image" content="https://example.com/image5.jpg">
+      <meta property="og:image" content="https://example.com/image6.jpg">"
     `,
     )
   })
@@ -298,8 +298,8 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<meta name=\\"og:image\\" content=\\"https://example.com/image1.jpg\\">
-      <meta name=\\"og:image\\" content=\\"https://example.com/image2.jpg\\">"
+      "<meta name="og:image" content="https://example.com/image1.jpg">
+      <meta name="og:image" content="https://example.com/image2.jpg">"
     `,
     )
   })

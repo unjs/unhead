@@ -35,7 +35,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link array=\\"a,1\\" big-int=\\"1\\" big=\\"100\\" binary=\\"10\\" boolean-true data-foo=\\"true\\" hex=\\"61453\\" number=\\"1337\\" object=\\"[object Object]\\" octal=\\"484\\" string-empty string=\\"string\\" symbol=\\"Symbol(a)\\">",
+        "headTags": "<link array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty string="string" symbol="Symbol(a)">",
         "htmlAttrs": "",
       }
     `)

@@ -42,8 +42,8 @@ describe('xss', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script>[{\\"state\\":1},\\"\\\\u003C/script>\\"]</script>
-      <script type=\\"application/json\\">[{\\"state\\":1},\\"\\\\u003C/script>\\"]</script>",
+        "headTags": "<script>[{"state":1},"\\u003C/script>"]</script>
+      <script type="application/json">[{"state":1},"\\u003C/script>"]</script>",
         "htmlAttrs": "",
       }
     `)

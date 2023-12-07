@@ -82,18 +82,18 @@ describe('vue e2e', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
+        "headTags": "<meta charset="utf-8">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:locale\\" content=\\"en_US\\">
-      <meta property=\\"og:locale\\" content=\\"en_AU\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <script src=\\"https://my-app.com/home.js\\"></script>
-      <meta name=\\"description\\" content=\\"This is the home page\\">",
-        "htmlAttrs": " lang=\\"en\\"",
+      <script src="https://analytics.example.com/script.js" defer async></script>
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:locale" content="en_US">
+      <meta property="og:locale" content="en_AU">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      <script src="https://my-app.com/home.js"></script>
+      <meta name="description" content="This is the home page">",
+        "htmlAttrs": " lang="en"",
       }
     `)
 
@@ -124,18 +124,18 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html lang="en"><head>
+      <meta charset="utf-8">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta property=\\"og:title\\" content=\\"Home\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:locale\\" content=\\"en_US\\">
-      <meta property=\\"og:locale\\" content=\\"en_AU\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <script src=\\"https://my-app.com/home.js\\"></script>
-      <meta name=\\"description\\" content=\\"This is the home page\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta property="og:title" content="Home">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:locale" content="en_US">
+      <meta property="og:locale" content="en_AU">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      <script src="https://my-app.com/home.js"></script>
+      <meta name="description" content="This is the home page">
       </head>
       <body>
 
@@ -204,15 +204,15 @@ describe('vue e2e', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
+        "headTags": "<meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
-      <meta name=\\"description\\" content=\\"My amazing site\\">
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">",
-        "htmlAttrs": " class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"",
+      <script src="https://analytics.example.com/script.js" defer async></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">",
+        "htmlAttrs": " class="layout-default" style="color: red" lang="en"",
       }
     `)
 
@@ -231,17 +231,17 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      <meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"My amazing site\\">
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
-      <body class=\\"test\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg"></head>
+      <body class="test">
 
       <div>
       <h1>hello world</h1>
@@ -279,17 +279,17 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-home\\" style=\\"color: red; background-color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-home" style="color: red; background-color: red" lang="en"><head>
+      <meta charset="utf-8">
       <title>Home</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"This is the home page\\">
-      <meta property=\\"og:title\\" content=\\"Home\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/home.js\\"></script></head>
-      <body class=\\"test\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="This is the home page">
+      <meta property="og:title" content="Home">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg"><script src="https://my-app.com/home.js"></script></head>
+      <body class="test">
 
       <div>
       <h1>hello world</h1>
@@ -305,17 +305,17 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      <meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"My amazing site\\">
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
-      <body class=\\"test\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg"></head>
+      <body class="test">
 
       <div>
       <h1>hello world</h1>
@@ -355,17 +355,17 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default page-about\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-about" style="color: red" lang="en"><head>
+      <meta charset="utf-8">
       <title>About</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"This is the about page\\">
-      <meta property=\\"og:title\\" content=\\"About\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"><script src=\\"https://my-app.com/about.js\\"></script></head>
-      <body class=\\"test overflow-hidden\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="This is the about page">
+      <meta property="og:title" content="About">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg"><script src="https://my-app.com/about.js"></script></head>
+      <body class="test overflow-hidden">
 
       <div>
       <h1>hello world</h1>
@@ -380,17 +380,17 @@ describe('vue e2e', () => {
 
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app=\\"\\" class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      <meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer=\\"\\" async=\\"\\"></script>
-      <meta name=\\"description\\" content=\\"My amazing site\\">
-      <meta property=\\"og:title\\" content=\\"My amazing site\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
-      <body class=\\"test\\">
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg"></head>
+      <body class="test">
 
       <div>
       <h1>hello world</h1>

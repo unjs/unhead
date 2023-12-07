@@ -47,7 +47,7 @@ describe('vue dom classes', () => {
       "<!DOCTYPE html><html><head>
 
       </head>
-      <body class=\\"active-navbar-body\\">
+      <body class="active-navbar-body">
 
       <div>
       <h1>hello world</h1>

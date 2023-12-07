@@ -18,7 +18,7 @@ describe('tagPosition', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script src=\\"/my-important-script.js\\"></script>",
+        "headTags": "<script src="/my-important-script.js"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -37,7 +37,7 @@ describe('tagPosition', () => {
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
-        "bodyTags": "<script src=\\"/my-important-script.js\\"></script>",
+        "bodyTags": "<script src="/my-important-script.js"></script>",
         "bodyTagsOpen": "",
         "headTags": "",
         "htmlAttrs": "",
@@ -59,7 +59,7 @@ describe('tagPosition', () => {
       {
         "bodyAttrs": "",
         "bodyTags": "",
-        "bodyTagsOpen": "<script src=\\"/my-important-script.js\\"></script>",
+        "bodyTagsOpen": "<script src="/my-important-script.js"></script>",
         "headTags": "",
         "htmlAttrs": "",
       }
@@ -79,7 +79,7 @@ describe('tagPosition', () => {
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
-        "bodyTags": "<script src=\\"/my-important-script.js\\"></script>",
+        "bodyTags": "<script src="/my-important-script.js"></script>",
         "bodyTagsOpen": "",
         "headTags": "",
         "htmlAttrs": "",

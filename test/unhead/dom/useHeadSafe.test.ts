@@ -41,10 +41,10 @@ describe('dom useHeadSafe', () => {
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><link href=\\"https://cdn.example.com/favicon.ico\\" rel=\\"icon\\" type=\\"image/x-icon\\"><script>{\\"value\\":\\"alert(1)\\"}</script></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><script>{"value":"alert(1)"}</script></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>

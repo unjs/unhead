@@ -28,7 +28,7 @@ describe('vue events', () => {
       "<!DOCTYPE html><html><head>
 
       </head>
-      <body data-h-resize=\\"\\">
+      <body data-h-resize="">
 
       <div>
       <h1>hello world</h1>

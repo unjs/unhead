@@ -28,7 +28,7 @@ describe('unhead e2e json', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type=\\"application/json\\">{\\"foo\\":\\"bar\\"}</script>",
+        "headTags": "<script type="application/json">{"foo":"bar"}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -51,7 +51,7 @@ describe('unhead e2e json', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script type=\\"application/json\\">{\\"foo\\":\\"bar\\"}</script>
+      <script type="application/json">{"foo":"bar"}</script>
       </head>
       <body>
 

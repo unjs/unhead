@@ -29,7 +29,7 @@ describe('ssr vue templateParams', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>hello world &#x2F; My Awesome Site</title>
-      <meta name=\\"description\\" content=\\"Welcome to My Awesome Site!\\">",
+      <meta name="description" content="Welcome to My Awesome Site!">",
         "htmlAttrs": "",
       }
     `)
@@ -77,9 +77,9 @@ describe('ssr vue templateParams', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>hello world · Nuxt Playground</title>
-      <meta name=\\"description\\" content=\\"Welcome to Nuxt Playground!\\">
-      <meta property=\\"og:title\\" content=\\"hello world · Nuxt Playground\\">
-      <script type=\\"application/json\\">{\\"title\\":\\"hello world\\",\\"description\\":\\"A Nuxt 3 playground\\"}</script>",
+      <meta name="description" content="Welcome to Nuxt Playground!">
+      <meta property="og:title" content="hello world · Nuxt Playground">
+      <script type="application/json">{"title":"hello world","description":"A Nuxt 3 playground"}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -175,7 +175,7 @@ describe('ssr vue templateParams', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
       "<title>my tag line | test</title>
-      <meta name=\\"description\\" content=\\"Hi, welcome to the dev v0.0.0 of test.\\">"
+      <meta name="description" content="Hi, welcome to the dev v0.0.0 of test.">"
     `)
   })
 

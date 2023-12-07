@@ -56,10 +56,10 @@ describe('vue dom useHeadSafe', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><link href=\\"https://cdn.example.com/favicon.ico\\" rel=\\"icon\\" type=\\"image/x-icon\\"><link data-bar=\\"foo\\" href=\\"/valid.png\\" rel=\\"icon\\"><script data-foo=\\"test\\">{\\"value\\":\\"alert(1)\\"}</script></head>
-      <body class=\\"dark\\" data-bar=\\"foo\\">
+      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><script data-foo="test">{"value":"alert(1)"}</script></head>
+      <body class="dark" data-bar="foo">
 
       <div>
       <h1>hello world</h1>

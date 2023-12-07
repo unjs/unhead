@@ -16,8 +16,8 @@ describe('dom useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel=\\"preconnect\\" href=\\"https://cdn.example.com\\" data-hid=\\"7b546a7\\">
-      <script defer fetchpriority=\\"low\\" src=\\"https://cdn.example.com/script.js\\" onload=\\"this.dataset.onload = true\\" onerror=\\"this.dataset.onerror = true\\" onabort=\\"this.dataset.onabort = true\\" onprogress=\\"this.dataset.onprogress = true\\" onloadstart=\\"this.dataset.onloadstart = true\\" data-hid=\\"438d65b\\"></script>",
+        "headTags": "<link rel="preconnect" href="https://cdn.example.com" data-hid="7b546a7">
+      <script defer fetchpriority="low" src="https://cdn.example.com/script.js" onload="this.dataset.onload = true" onerror="this.dataset.onerror = true" onabort="this.dataset.onabort = true" onprogress="this.dataset.onprogress = true" onloadstart="this.dataset.onloadstart = true" data-hid="438d65b"></script>",
         "htmlAttrs": "",
       }
     `)

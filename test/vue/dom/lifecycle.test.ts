@@ -25,10 +25,10 @@ describe('vue dom', () => {
     await renderDOMHead(head)
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="de" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>
@@ -60,10 +60,10 @@ describe('vue dom', () => {
 
     await renderDOMHead(head)
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"de\\" dir=\\"ltr\\" class=\\"pre-update\\" data-something-to-remove=\\"test\\"><head>
+      "<!DOCTYPE html><html lang="de" dir="ltr" class="pre-update" data-something-to-remove="test"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>
@@ -88,10 +88,10 @@ describe('vue dom', () => {
 
     await renderDOMHead(head)
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\" class=\\"post-update\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr" class="post-update"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark test\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark test">
 
       <div>
       <h1>hello world</h1>
@@ -113,10 +113,10 @@ describe('vue dom', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>
@@ -136,7 +136,7 @@ describe('vue dom', () => {
       "<!DOCTYPE html><html><head>
 
       </head>
-      <body class=\\"\\">
+      <body class="">
 
       <div>
       <h1>hello world</h1>
@@ -158,10 +158,10 @@ describe('vue dom', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>
@@ -190,10 +190,10 @@ describe('vue dom', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"de\\" dir=\\"rtl\\"><head>
+      "<!DOCTYPE html><html lang="de" dir="rtl"><head>
 
       </head>
-      <body class=\\"test\\">
+      <body class="test">
 
       <div>
       <h1>hello world</h1>
@@ -211,7 +211,7 @@ describe('vue dom', () => {
       "<!DOCTYPE html><html><head>
 
       </head>
-      <body class=\\"\\">
+      <body class="">
 
       <div>
       <h1>hello world</h1>

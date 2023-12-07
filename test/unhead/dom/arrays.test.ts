@@ -21,7 +21,7 @@ describe('arrays', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image1.jpg\\"><meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\"></head>
+      <meta property="og:image" content="https://cdn.example.com/image1.jpg"><meta property="og:image" content="https://cdn.example.com/image2.jpg"></head>
       <body>
 
       <div>
@@ -61,7 +61,7 @@ describe('arrays', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/new.jpg\\"></head>
+      <meta property="og:image" content="https://cdn.example.com/new.jpg"></head>
       <body>
 
       <div>

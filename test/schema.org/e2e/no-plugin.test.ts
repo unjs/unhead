@@ -17,13 +17,13 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"#webpage\\",
-            \\"@type\\": \\"WebPage\\",
-            \\"name\\": \\"test\\"
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "name": "test"
           }
         ]
       }</script>"
@@ -42,13 +42,13 @@ describe('schema.org e2e no plugin', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      <script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"#webpage\\",
-            \\"@type\\": \\"WebPage\\",
-            \\"name\\": \\"test\\"
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "name": "test"
           }
         ]
       }</script>
@@ -84,16 +84,16 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"/about/#webpage\\",
-            \\"name\\": \\"About\\",
-            \\"url\\": \\"/about\\",
-            \\"@type\\": [
-              \\"WebPage\\",
-              \\"AboutPage\\"
+            "@id": "/about/#webpage",
+            "name": "About",
+            "url": "/about",
+            "@type": [
+              "WebPage",
+              "AboutPage"
             ]
           }
         ]
@@ -113,16 +113,16 @@ describe('schema.org e2e no plugin', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      <script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"/about/#webpage\\",
-            \\"name\\": \\"About\\",
-            \\"url\\": \\"/about\\",
-            \\"@type\\": [
-              \\"WebPage\\",
-              \\"AboutPage\\"
+            "@id": "/about/#webpage",
+            "name": "About",
+            "url": "/about",
+            "@type": [
+              "WebPage",
+              "AboutPage"
             ]
           }
         ]
@@ -160,22 +160,22 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"https://example.com/#identity\\",
-            \\"@type\\": \\"Organization\\",
-            \\"name\\": \\"test\\",
-            \\"url\\": \\"https://example.com\\"
+            "@id": "https://example.com/#identity",
+            "@type": "Organization",
+            "name": "test",
+            "url": "https://example.com"
           },
           {
-            \\"@id\\": \\"https://example.com/#website\\",
-            \\"@type\\": \\"WebSite\\",
-            \\"name\\": \\"test\\",
-            \\"url\\": \\"https://example.com\\",
-            \\"publisher\\": {
-              \\"@id\\": \\"https://example.com/#identity\\"
+            "@id": "https://example.com/#website",
+            "@type": "WebSite",
+            "name": "test",
+            "url": "https://example.com",
+            "publisher": {
+              "@id": "https://example.com/#identity"
             }
           }
         ]
@@ -210,41 +210,41 @@ describe('schema.org e2e no plugin', () => {
     ])
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"https://example.com/about/#webpage\\",
-            \\"url\\": \\"https://example.com/about\\",
-            \\"@type\\": [
-              \\"WebPage\\",
-              \\"FAQPage\\"
+            "@id": "https://example.com/about/#webpage",
+            "url": "https://example.com/about",
+            "@type": [
+              "WebPage",
+              "FAQPage"
             ],
-            \\"mainEntity\\": [
+            "mainEntity": [
               {
-                \\"@id\\": \\"https://example.com/about/#/schema/question/ab1c398\\"
+                "@id": "https://example.com/about/#/schema/question/ab1c398"
               },
               {
-                \\"@id\\": \\"https://example.com/about/#/schema/question/6396da9\\"
+                "@id": "https://example.com/about/#/schema/question/6396da9"
               }
             ]
           },
           {
-            \\"@id\\": \\"https://example.com/about/#/schema/question/ab1c398\\",
-            \\"@type\\": \\"Question\\",
-            \\"name\\": \\"What is your return policy?\\",
-            \\"acceptedAnswer\\": {
-              \\"@type\\": \\"Answer\\",
-              \\"text\\": \\"Most unopened items in new condition and returned within 90 days will receive a refund or exchange.\\"
+            "@id": "https://example.com/about/#/schema/question/ab1c398",
+            "@type": "Question",
+            "name": "What is your return policy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most unopened items in new condition and returned within 90 days will receive a refund or exchange."
             }
           },
           {
-            \\"@id\\": \\"https://example.com/about/#/schema/question/6396da9\\",
-            \\"@type\\": \\"Question\\",
-            \\"name\\": \\"What is something else?\\",
-            \\"acceptedAnswer\\": {
-              \\"@type\\": \\"Answer\\",
-              \\"text\\": \\"Something else\\"
+            "@id": "https://example.com/about/#/schema/question/6396da9",
+            "@type": "Question",
+            "name": "What is something else?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Something else"
             }
           }
         ]
@@ -271,13 +271,13 @@ describe('schema.org e2e no plugin', () => {
     ])
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type=\\"application/ld+json\\" data-hid=\\"3437552\\">{
-        \\"@context\\": \\"https://schema.org\\",
-        \\"@graph\\": [
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
           {
-            \\"@id\\": \\"#webpage\\",
-            \\"@type\\": \\"WebPage\\",
-            \\"name\\": \\"Three\\"
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "name": "Three"
           }
         ]
       }</script>"

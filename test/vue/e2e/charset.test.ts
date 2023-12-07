@@ -43,7 +43,7 @@ describe('vue e2e charset', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
+        "headTags": "<meta charset="utf-8">
       <title>Home page</title>",
         "htmlAttrs": "",
       }
@@ -63,7 +63,7 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta charset=\\"utf-8\\">
+      <meta charset="utf-8">
       <title>Home page</title>
       </head>
       <body>
@@ -85,7 +85,7 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta charset=\\"utf-8\\">
+      <meta charset="utf-8">
       <title>About page</title>
       </head>
       <body>
@@ -107,7 +107,7 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta charset=\\"utf-8\\">
+      <meta charset="utf-8">
       <title>Home page</title>
       </head>
       <body>

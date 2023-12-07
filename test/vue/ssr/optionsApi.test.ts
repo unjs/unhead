@@ -27,10 +27,10 @@ describe('vue ssr options api', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>hello</title>
-      <meta name=\\"description\\" content=\\"desc\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
-      <script src=\\"foo.js\\"></script>"
+      <meta name="description" content="desc">
+      <meta property="og:locale:alternate" content="fr">
+      <meta property="og:locale:alternate" content="zh">
+      <script src="foo.js"></script>"
     `,
     )
     expect(headResult.htmlAttrs).toEqual(' lang="zh"')

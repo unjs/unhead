@@ -63,7 +63,7 @@ describe('templateParams', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>My Page - My Site</title><script id=\\"site-data\\" type=\\"application/json\\">{\\"pageTitle\\":\\"My Page\\",\\"siteName\\":\\"My Site\\",\\"siteUrl\\":\\"https://example.com\\"}</script><meta property=\\"twitter:image\\" content=\\"https://cdn.example.com/some%20image.jpg\\"><meta name=\\"description\\" content=\\"Welcome to My Site.\\"><meta property=\\"og:image\\" content=\\"https://firebasestorage.googleapis.com/v0/b/buuger.appspot.com/o/accounts%2Ffotobuukmy%2Fseries%2Fwedding-studio%2Fbuuks%2Fapril-film-studio%2Fcover.jpg?alt=media&amp;token=8b93a6d5-dec2-4f28-9792-4568d73eeb5b\\"><meta property=\\"og:site_name\\" content=\\"My Site\\"><meta property=\\"og:url\\" content=\\"https://example.com/my-page\\"><link rel=\\"canonical\\" href=\\"https://example.com/some/page\\"></head>
+      <title>My Page - My Site</title><script id="site-data" type="application/json">{"pageTitle":"My Page","siteName":"My Site","siteUrl":"https://example.com"}</script><meta property="twitter:image" content="https://cdn.example.com/some%20image.jpg"><meta name="description" content="Welcome to My Site."><meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/buuger.appspot.com/o/accounts%2Ffotobuukmy%2Fseries%2Fwedding-studio%2Fbuuks%2Fapril-film-studio%2Fcover.jpg?alt=media&amp;token=8b93a6d5-dec2-4f28-9792-4568d73eeb5b"><meta property="og:site_name" content="My Site"><meta property="og:url" content="https://example.com/my-page"><link rel="canonical" href="https://example.com/some/page"></head>
       <body>
 
       <div>
@@ -126,7 +126,7 @@ describe('templateParams', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <title>Home &amp; //&lt;\\"With Encoding\\"&gt;\\\\</title><script type=\\"application/json\\">{\\"title\\":\\"Home & //\\\\u003C\\\\\\"With Encoding\\\\\\">\\\\\\"}</script></head>
+      <title>Home &amp; //&lt;"With Encoding"&gt;\\</title><script type="application/json">{"title":"Home & //\\u003C\\"With Encoding\\">\\"}</script></head>
       <body>
 
       <div>
@@ -168,7 +168,7 @@ describe('templateParams', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta property=\\"og:url\\" content=\\"https://example.com/some/page\\"></head>
+      <meta property="og:url" content="https://example.com/some/page"></head>
       <body>
 
       <div>
@@ -198,7 +198,7 @@ describe('templateParams', () => {
 
     expect(html).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <title>test | Test</title><script id=\\"unhead:payload\\">{\\"templateParams\\": {\\"siteName\\": \\"Test\\"}, \\"titleTemplate\\": \\"%s %separator %siteName\\"}</script>
+      <title>test | Test</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>
       </head>
       <body>
 

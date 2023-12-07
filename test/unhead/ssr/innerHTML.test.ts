@@ -23,7 +23,7 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type=\\"application/json\\">{\\"test\\":\\"test\\",\\"something\\":{\\"else\\":123}}</script>",
+        "headTags": "<script type="application/json">{"test":"test","something":{"else":123}}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -47,7 +47,7 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type=\\"application/json\\">{\\"escape\\":\\"\\\\u003C/script>\\"}</script>",
+        "headTags": "<script type="application/json">{"escape":"\\u003C/script>"}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -69,8 +69,8 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<noscript><iframe src=\\"https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX\\"
-          height=\\"0\\" width=\\"0\\" style=\\"display:none;visibility:hidden\\"></iframe></noscript>",
+        "headTags": "<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+          height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>",
         "htmlAttrs": "",
       }
     `)

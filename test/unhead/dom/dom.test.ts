@@ -10,10 +10,10 @@ describe('dom', () => {
     useHead(basicSchema)
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang=\\"en\\" dir=\\"ltr\\"><head>
+      "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset=\\"utf-8\\"><script src=\\"https://cdn.example.com/script.js\\"></script><link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\"></head>
-      <body class=\\"dark\\">
+      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark">
 
       <div>
       <h1>hello world</h1>
@@ -41,7 +41,7 @@ describe('dom', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script defer=\\"\\" src=\\"https://cdn.example.com/script.js\\"></script></head>
+      <script defer="" src="https://cdn.example.com/script.js"></script></head>
       <body>
 
       <div>

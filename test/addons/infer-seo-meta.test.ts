@@ -29,11 +29,11 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>My Title</title>
-      <meta name=\\"description\\" content=\\"My Description\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image.jpg\\">
-      <meta property=\\"og:title\\" content=\\"My Title\\">
-      <meta property=\\"og:description\\" content=\\"My Description\\">
-      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
+      <meta name="description" content="My Description">
+      <meta property="og:image" content="https://example.com/image.jpg">
+      <meta property="og:title" content="My Title">
+      <meta property="og:description" content="My Description">
+      <meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
       }
     `)
@@ -63,8 +63,8 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
-      <meta name=\\"og:description\\" content=\\"My OG description\\">
-      <meta property=\\"og:title\\" content=\\"My OG title\\">",
+      <meta name="og:description" content="My OG description">
+      <meta property="og:title" content="My OG title">",
         "htmlAttrs": "",
       }
     `)
@@ -83,7 +83,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
-      <meta property=\\"og:title\\" content=\\"Title\\">",
+      <meta property="og:title" content="Title">",
         "htmlAttrs": "",
       }
     `)
@@ -105,7 +105,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
-      <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
+      <meta property="og:title" content="Title - My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -128,7 +128,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
-      <meta property=\\"og:title\\" content=\\"Title\\">",
+      <meta property="og:title" content="Title">",
         "htmlAttrs": "",
       }
     `)
@@ -178,7 +178,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
-      <meta property=\\"og:title\\" content=\\"test\\">",
+      <meta property="og:title" content="test">",
         "htmlAttrs": "",
       }
     `)
@@ -199,7 +199,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
-      <meta property=\\"og:title\\" content=\\"Title - My Site\\">",
+      <meta property="og:title" content="Title - My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -223,7 +223,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>My Site</title>
-      <meta property=\\"og:title\\" content=\\"My Site\\">",
+      <meta property="og:title" content="My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -249,7 +249,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
-      <meta property=\\"og:title\\" content=\\"test\\">",
+      <meta property="og:title" content="test">",
         "htmlAttrs": "",
       }
     `)

@@ -27,7 +27,7 @@ describe('dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta name=\\"description\\" content=\\"desc\\"><meta name=\\"description\\" content=\\"desc 2\\"></head>
+      <meta name="description" content="desc"><meta name="description" content="desc 2"></head>
       <body>
 
       <div>
@@ -79,7 +79,7 @@ describe('dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta name=\\"description\\" content=\\"desc\\"></head>
+      <meta name="description" content="desc"></head>
       <body>
 
       <div>

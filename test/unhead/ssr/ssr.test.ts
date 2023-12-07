@@ -17,13 +17,13 @@ describe('ssr', () => {
     const ctx = await renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
-        "bodyAttrs": " class=\\"dark\\"",
+        "bodyAttrs": " class="dark"",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
-      <script src=\\"https://cdn.example.com/script.js\\"></script>
-      <link rel=\\"icon\\" type=\\"image/x-icon\\" href=\\"https://cdn.example.com/favicon.ico\\">",
-        "htmlAttrs": " lang=\\"de\\"",
+        "headTags": "<meta charset="utf-8">
+      <script src="https://cdn.example.com/script.js"></script>
+      <link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico">",
+        "htmlAttrs": " lang="de"",
       }
     `)
   })
@@ -63,7 +63,7 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title foo=\\"bar\\"></title>",
+        "headTags": "<title foo="bar"></title>",
         "htmlAttrs": "",
       }
     `)
@@ -89,7 +89,7 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer src=\\"https://cdn.example.com/script.js\\"></script>",
+        "headTags": "<script defer src="https://cdn.example.com/script.js"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -121,16 +121,16 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta charset=\\"utf-8\\">
+        "headTags": "<meta charset="utf-8">
       <title>page name - site</title>
-      <meta property=\\"og:locale:alternate\\" content=\\"fr\\">
-      <meta property=\\"og:locale:alternate\\" content=\\"zh\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta property=\\"og:image:alt\\" content=\\"My amazing image\\">
-      <meta property=\\"og:image:width\\" content=\\"800\\">
-      <meta property=\\"og:image:height\\" content=\\"600\\">
-      <meta name=\\"description\\" content=\\"test\\">
-      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
+      <meta property="og:locale:alternate" content="fr">
+      <meta property="og:locale:alternate" content="zh">
+      <meta property="og:image" content="https://example.com/image.png">
+      <meta property="og:image:alt" content="My amazing image">
+      <meta property="og:image:width" content="800">
+      <meta property="og:image:height" content="600">
+      <meta name="description" content="test">
+      <meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
       }
     `)
@@ -153,11 +153,11 @@ describe('ssr', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name=\\"description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
-      <meta property=\\"og:description\\" content=\\"This is my amazing site, let me tell you all about it.\\">
-      <meta property=\\"og:title\\" content=\\"My Amazing Site\\">
-      <meta property=\\"og:image\\" content=\\"https://example.com/image.png\\">
-      <meta name=\\"twitter:card\\" content=\\"summary_large_image\\">",
+        "headTags": "<meta name="description" content="This is my amazing site, let me tell you all about it.">
+      <meta property="og:description" content="This is my amazing site, let me tell you all about it.">
+      <meta property="og:title" content="My Amazing Site">
+      <meta property="og:image" content="https://example.com/image.png">
+      <meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
       }
     `)

@@ -27,11 +27,11 @@ describe('e2e double-space-class-list', () => {
 
     expect(data).toMatchInlineSnapshot(`
       {
-        "bodyAttrs": " class=\\"foo bar baz relative min-h-screen\\"",
+        "bodyAttrs": " class="foo bar baz relative min-h-screen"",
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "",
-        "htmlAttrs": " class=\\"a bunch of different classes\\"",
+        "htmlAttrs": " class="a bunch of different classes"",
       }
     `)
 
@@ -51,10 +51,10 @@ describe('e2e double-space-class-list', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html class=\\"a bunch of different classes\\"><head>
+      "<!DOCTYPE html><html class="a bunch of different classes"><head>
 
       </head>
-      <body class=\\"foo bar baz relative min-h-screen\\">
+      <body class="foo bar baz relative min-h-screen">
 
       <div>
       <h1>hello world</h1>
@@ -89,11 +89,11 @@ describe('e2e double-space-class-list', () => {
 
     expect(data).toMatchInlineSnapshot(`
       {
-        "bodyAttrs": " class=\\"foo bar\\"",
+        "bodyAttrs": " class="foo bar"",
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "",
-        "htmlAttrs": " class=\\"a bunch of different classes\\"",
+        "htmlAttrs": " class="a bunch of different classes"",
       }
     `)
 
@@ -117,10 +117,10 @@ describe('e2e double-space-class-list', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html class=\\"a bunch of different classes\\"><head>
+      "<!DOCTYPE html><html class="a bunch of different classes"><head>
 
       </head>
-      <body class=\\"foo bar\\">
+      <body class="foo bar">
 
       <div>
       <h1>hello world</h1>

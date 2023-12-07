@@ -27,7 +27,7 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel=\\"icon\\" href=\\"/page-index.ico\\" data-hid=\\"6b4a565\\">",
+        "headTags": "<link rel="icon" href="/page-index.ico" data-hid="6b4a565">",
         "htmlAttrs": "",
       }
     `)
@@ -44,7 +44,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"icon\\" href=\\"/page-index.ico\\" data-hid=\\"6b4a565\\">
+      <link rel="icon" href="/page-index.ico" data-hid="6b4a565">
       </head>
       <body>
 
@@ -91,7 +91,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"icon\\" href=\\"/page-about.ico\\" data-hid=\\"6b4a565\\">
+      <link rel="icon" href="/page-about.ico" data-hid="6b4a565">
       </head>
       <body>
 
@@ -137,9 +137,9 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-hid=\\"f59c689\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-hid=\\"66d43fa\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-hid=\\"5e41b59\\">",
+        "headTags": "<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">",
         "htmlAttrs": "",
       }
     `)
@@ -156,9 +156,9 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison\\" data-hid=\\"f59c689\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon\\" data-hid=\\"66d43fa\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento\\" data-hid=\\"5e41b59\\">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">
       </head>
       <body>
 
@@ -176,9 +176,9 @@ describe('vue e2e keys', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Allison&amp;text=Allison\\" data-hid=\\"f59c689\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon\\" data-hid=\\"66d43fa\\">
-      <link rel=\\"stylesheet\\" href=\\"https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento\\" data-hid=\\"5e41b59\\">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="f59c689">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon" data-hid="66d43fa">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento" data-hid="5e41b59">
       </head>
       <body>
 
