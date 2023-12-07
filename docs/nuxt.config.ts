@@ -1,12 +1,4 @@
-import colors from 'tailwindcss/colors'
-import { excludeColors } from './colors'
 import { version } from './package.json'
-
-delete colors.lightBlue
-delete colors.warmGray
-delete colors.trueGray
-delete colors.coolGray
-delete colors.blueGray
 
 export default defineNuxtConfig({
   extends: [
@@ -18,6 +10,7 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/content',
     'nuxt-lodash',
+    'nuxt-og-image',
     'nuxt-icon',
     '@nuxtseo/module',
   ],
@@ -42,7 +35,6 @@ export default defineNuxtConfig({
   ui: {
     global: true,
     icons: ['heroicons', 'simple-icons', 'ph', 'noto'],
-    safelistColors: excludeColors(colors),
   },
   sitemap: {
     excludeAppSources: true,

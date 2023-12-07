@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { findPageHeadline, mapContentNavigation } from '#imports'
+import { defineOgImageComponent, findPageHeadline, mapContentNavigation } from '#imports'
 
 const route = useRoute()
 
@@ -19,11 +19,11 @@ useSeoMeta({
   description: () => page.value?.description,
 })
 
-defineOgImageComponent('Fallback', {
+defineOgImageComponent('NuxtSeo', {
   title: page.value?.title,
   description: page.value?.description,
   colorMode: 'light',
-  theme: '#ecdc5a'
+  theme: '#ecdc5a',
 })
 
 const navigation = inject('navigation')

@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  nuxt-og-image: 3.0.0-beta.17
+  nuxt-og-image: 3.0.0-beta.55
 
 importers:
 
@@ -21,8 +21,8 @@ importers:
         specifier: ^1.1.8
         version: 1.1.8
       '@iconify-json/simple-icons':
-        specifier: ^1.1.81
-        version: 1.1.81
+        specifier: ^1.1.82
+        version: 1.1.82
       '@nuxt/content':
         specifier: ^2.9.0
         version: 2.9.0(nuxt@3.8.2)(vue@3.3.9)
@@ -42,14 +42,14 @@ importers:
         specifier: 2.0.0-beta.45
         version: 2.0.0-beta.45(@nuxt/devtools@1.0.4)(@unhead/shared@1.8.8)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(unhead@1.8.8)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
       '@vueuse/nuxt':
-        specifier: ^10.6.1
-        version: 10.6.1(nuxt@3.8.2)(vue@3.3.9)
+        specifier: ^10.7.0
+        version: 10.7.0(nuxt@3.8.2)(vue@3.3.9)
       nuxt:
         specifier: 3.8.2
         version: 3.8.2(vite@4.5.0)
       nuxt-icon:
-        specifier: ^0.6.6
-        version: 0.6.6(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
+        specifier: ^0.6.7
+        version: 0.6.7(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
       nuxt-lego:
         specifier: ^0.0.14
         version: 0.0.14(nuxt@3.8.2)(vue@3.3.9)
@@ -57,8 +57,8 @@ importers:
         specifier: ^2.5.3
         version: 2.5.3
       nuxt-og-image:
-        specifier: 3.0.0-beta.17
-        version: 3.0.0-beta.17(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
+        specifier: 3.0.0-beta.55
+        version: 3.0.0-beta.55(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
 
 packages:
 
@@ -510,12 +510,6 @@ packages:
       tailwindcss: 3.3.5
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@emnapi/runtime@0.44.0:
-    resolution: {integrity: sha512-ZX/etZEZw8DR7zAB1eVQT40lNo0jeqpb6dCgOvctB6FIQ5PoXfMuNY8+ayQfu8tNQbAB8gQWSSJupR8NxeiZXw==}
-    dependencies:
-      tslib: 2.6.2
     dev: true
 
   /@esbuild/android-arm64@0.18.20:
@@ -989,8 +983,8 @@ packages:
       '@iconify/types': 2.0.0
     dev: true
 
-  /@iconify-json/simple-icons@1.1.81:
-    resolution: {integrity: sha512-QNEZ8W3zjzoulR+anZPxBWzPEZslCcqj2+UCgi1KwWLA3lyuPg8OzKvuYwx9FZWNeNKUuLIvHQNN3mH7Sb6Ibw==}
+  /@iconify-json/simple-icons@1.1.82:
+    resolution: {integrity: sha512-kaBn6XjUn+v5WzoejOKjQFDnqtUSHawMwp4+aOL1C3N//cKjAG4RzNGDahBzgSJBUqCrHvQA1ow/RGQpKe3E2A==}
     dependencies:
       '@iconify/types': 2.0.0
     dev: true
@@ -1001,8 +995,8 @@ packages:
       '@iconify/types': 2.0.0
     dev: true
 
-  /@iconify/collections@1.0.363:
-    resolution: {integrity: sha512-2nCsHXZWOhMC5MNjqhTrHLzZTuoEYfPaM+baHkPgO51OIfyMR8v/yIeePaKTDtwlkOZXMCWBrOJJ00yqU1YGFg==}
+  /@iconify/collections@1.0.366:
+    resolution: {integrity: sha512-xILFf0SeEPYTreD0oLVq+dXiZYIQeErlkIkxwQCRu49RXnMIYrRq+GzCGliZ6fUK3wonPJAAUX3aLOHgdcZvVQ==}
     dependencies:
       '@iconify/types': 2.0.0
     dev: true
@@ -1032,192 +1026,6 @@ packages:
       '@iconify/types': 2.0.0
       vue: 3.3.9
     dev: true
-
-  /@img/sharp-darwin-arm64@0.33.0:
-    resolution: {integrity: sha512-070tEheekI1LJWTGPC9WlQEa5UoKTXzzlORBHMX4TbfUxMiL336YHR8vBEUNsjse0RJCX8dZ4ZXwT595aEF1ug==}
-    engines: {glibc: '>=2.26', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-darwin-arm64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-darwin-x64@0.33.0:
-    resolution: {integrity: sha512-pu/nvn152F3qbPeUkr+4e9zVvEhD3jhwzF473veQfMPkOYo9aoWXSfdZH/E6F+nYC3qvFjbxbvdDbUtEbghLqw==}
-    engines: {glibc: '>=2.26', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-darwin-x64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-darwin-arm64@1.0.0:
-    resolution: {integrity: sha512-VzYd6OwnUR81sInf3alj1wiokY50DjsHz5bvfnsFpxs5tqQxESoHtJO6xyksDs3RIkyhMWq2FufXo6GNSU9BMw==}
-    engines: {macos: '>=11', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-darwin-x64@1.0.0:
-    resolution: {integrity: sha512-dD9OznTlHD6aovRswaPNEy8dKtSAmNo4++tO7uuR4o5VxbVAOoEQ1uSmN4iFAdQneTHws1lkTZeiXPrcCkh6IA==}
-    engines: {macos: '>=10.13', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linux-arm64@1.0.0:
-    resolution: {integrity: sha512-xTYThiqEZEZc0PRU90yVtM3KE7lw1bKdnDQ9kCTHWbqWyHOe4NpPOtMGy27YnN51q0J5dqRrvicfPbALIOeAZA==}
-    engines: {glibc: '>=2.26', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linux-arm@1.0.0:
-    resolution: {integrity: sha512-VwgD2eEikDJUk09Mn9Dzi1OW2OJFRQK+XlBTkUNmAWPrtj8Ly0yq05DFgu1VCMx2/DqCGQVi5A1dM9hTmxf3uw==}
-    engines: {glibc: '>=2.28', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linux-s390x@1.0.0:
-    resolution: {integrity: sha512-o9E46WWBC6JsBlwU4QyU9578G77HBDT1NInd+aERfxeOPbk0qBZHgoDsQmA2v9TbqJRWzoBPx1aLOhprBMgPjw==}
-    engines: {glibc: '>=2.28', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [s390x]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linux-x64@1.0.0:
-    resolution: {integrity: sha512-naldaJy4hSVhWBgEjfdBY85CAa4UO+W1nx6a1sWStHZ7EUfNiuBTTN2KUYT5dH1+p/xij1t2QSXfCiFJoC5S/Q==}
-    engines: {glibc: '>=2.26', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linuxmusl-arm64@1.0.0:
-    resolution: {integrity: sha512-OdorplCyvmSAPsoJLldtLh3nLxRrkAAAOHsGWGDYfN0kh730gifK+UZb3dWORRa6EusNqCTjfXV4GxvgJ/nPDQ==}
-    engines: {musl: '>=1.2.2', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-libvips-linuxmusl-x64@1.0.0:
-    resolution: {integrity: sha512-FW8iK6rJrg+X2jKD0Ajhjv6y74lToIBEvkZhl42nZt563FfxkCYacrXZtd+q/sRQDypQLzY5WdLkVTbJoPyqNg==}
-    engines: {musl: '>=1.2.2', npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-linux-arm64@0.33.0:
-    resolution: {integrity: sha512-dcomVSrtgF70SyOr8RCOCQ8XGVThXwe71A1d8MGA+mXEVRJ/J6/TrCbBEJh9ddcEIIsrnrkolaEvYSHqVhswQw==}
-    engines: {glibc: '>=2.26', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linux-arm64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-linux-arm@0.33.0:
-    resolution: {integrity: sha512-4horD3wMFd5a0ddbDY8/dXU9CaOgHjEHALAddXgafoR5oWq5s8X61PDgsSeh4Qupsdo6ycfPPSSNBrfVQnwwrg==}
-    engines: {glibc: '>=2.28', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linux-arm': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-linux-s390x@0.33.0:
-    resolution: {integrity: sha512-TiVJbx38J2rNVfA309ffSOB+3/7wOsZYQEOlKqOUdWD/nqkjNGrX+YQGz7nzcf5oy2lC+d37+w183iNXRZNngQ==}
-    engines: {glibc: '>=2.28', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [s390x]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linux-s390x': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-linux-x64@0.33.0:
-    resolution: {integrity: sha512-PaZM4Zi7/Ek71WgTdvR+KzTZpBqrQOFcPe7/8ZoPRlTYYRe43k6TWsf4GVH6XKRLMYeSp8J89RfAhBrSP4itNA==}
-    engines: {glibc: '>=2.26', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linux-x64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-linuxmusl-arm64@0.33.0:
-    resolution: {integrity: sha512-1QLbbN0zt+32eVrg7bb1lwtvEaZwlhEsY1OrijroMkwAqlHqFj6R33Y47s2XUv7P6Ie1PwCxK/uFnNqMnkd5kg==}
-    engines: {musl: '>=1.2.2', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linuxmusl-arm64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-linuxmusl-x64@0.33.0:
-    resolution: {integrity: sha512-CecqgB/CnkvCWFhmfN9ZhPGMLXaEBXl4o7WtA6U3Ztrlh/s7FUKX4vNxpMSYLIrWuuzjiaYdfU3+Tdqh1xaHfw==}
-    engines: {musl: '>=1.2.2', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    optionalDependencies:
-      '@img/sharp-libvips-linuxmusl-x64': 1.0.0
-    dev: true
-    optional: true
-
-  /@img/sharp-wasm32@0.33.0:
-    resolution: {integrity: sha512-Hn4js32gUX9qkISlemZBUPuMs0k/xNJebUNl/L6djnU07B/HAA2KaxRVb3HvbU5fL242hLOcp0+tR+M8dvJUFw==}
-    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [wasm32]
-    dependencies:
-      '@emnapi/runtime': 0.44.0
-    dev: true
-
-  /@img/sharp-win32-ia32@0.33.0:
-    resolution: {integrity: sha512-5HfcsCZi3l5nPRF2q3bllMVMDXBqEWI3Q8KQONfzl0TferFE5lnsIG0A1YrntMAGqvkzdW6y1Ci1A2uTvxhfzg==}
-    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [ia32]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@img/sharp-win32-x64@0.33.0:
-    resolution: {integrity: sha512-i3DtP/2ce1yKFj4OzOnOYltOEL/+dp4dc4dJXJBv6god1AFTcmkaA99H/7SwOmkCOBQkbVvA3lCGm3/5nDtf9Q==}
-    engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
-    cpu: [x64]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
 
   /@ioredis/commands@1.2.0:
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
@@ -1434,7 +1242,7 @@ packages:
       '@nuxtjs/mdc': 0.2.8
       '@vueuse/core': 10.6.1(vue@3.3.9)
       '@vueuse/head': 2.0.0(vue@3.3.9)
-      '@vueuse/nuxt': 10.6.1(nuxt@3.8.2)(vue@3.3.9)
+      '@vueuse/nuxt': 10.7.0(nuxt@3.8.2)(vue@3.3.9)
       consola: 3.2.3
       defu: 6.1.3
       destr: 2.0.2
@@ -1520,7 +1328,7 @@ packages:
       '@unocss/reset': 0.57.7
       '@vueuse/core': 10.6.1(vue@3.3.9)
       '@vueuse/integrations': 10.6.1(focus-trap@7.5.4)(fuse.js@7.0.0)(vue@3.3.9)
-      '@vueuse/nuxt': 10.6.1(nuxt@3.8.2)(vue@3.3.9)
+      '@vueuse/nuxt': 10.7.0(nuxt@3.8.2)(vue@3.3.9)
       defu: 6.1.3
       focus-trap: 7.5.4
       splitpanes: 3.1.5
@@ -1762,7 +1570,7 @@ packages:
       '@vueuse/math': 10.6.1(vue@3.3.9)
       defu: 6.1.3
       fuse.js: 6.6.2
-      nuxt-icon: 0.6.6(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
+      nuxt-icon: 0.6.7(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
       ohash: 1.1.3
       pathe: 1.1.1
       scule: 1.1.1
@@ -1948,7 +1756,7 @@ packages:
       chalk: 5.3.0
       defu: 6.1.3
       nuxt-link-checker: 2.1.10(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
-      nuxt-og-image: 3.0.0-beta.17(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
+      nuxt-og-image: 3.0.0-beta.55(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
       nuxt-schema-org: 3.2.1(@nuxt/devtools@1.0.4)(@unhead/shared@1.8.8)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(unhead@1.8.8)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
       nuxt-seo-experiments: 3.1.9(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
       nuxt-seo-ui: 0.4.4(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
@@ -2851,10 +2659,20 @@ packages:
     resolution: {integrity: sha512-1d36M0CV3yC80J0pqOa5rH1BX6g2iZdtKmIb3oSBN4AWnMCSrrJEPBrUikyMq2TEQTrYWJIVDzv5A9hBUat3TA==}
     dev: true
 
+  /@unocss/core@0.58.0:
+    resolution: {integrity: sha512-KhABQXGE2AgtO9vE28d+HnciuyGDcuygsnQdUwlzUuR4K05OSw2kRE9emRN4HaMycD+gA/zDbQrJxTXb6mQUiA==}
+    dev: true
+
   /@unocss/extractor-arbitrary-variants@0.57.7:
     resolution: {integrity: sha512-JdyhPlsgS0x4zoF8WYXDcusPcpU4ysE6Rkkit4a9+xUZEvg7vy7InH6PQ8dL8B9oY7pbxF7G6eFguUDpv9xx4Q==}
     dependencies:
       '@unocss/core': 0.57.7
+    dev: true
+
+  /@unocss/extractor-arbitrary-variants@0.58.0:
+    resolution: {integrity: sha512-s9wK2UugJM0WK1HpgPz2kTbpeyQc46zais+nauN/ykVX6NMq8PtGzSWszzf+0aIbtWAQGiqAfiYNTpf09tJHfg==}
+    dependencies:
+      '@unocss/core': 0.58.0
     dev: true
 
   /@unocss/inspector@0.57.7:
@@ -2930,6 +2748,14 @@ packages:
       '@unocss/rule-utils': 0.57.7
     dev: true
 
+  /@unocss/preset-mini@0.58.0:
+    resolution: {integrity: sha512-oMliJZVTN3ecAvf52yN+MyJszaJOZoKwMMbUAFqVis62MaqRzZ8mSw12QFLFyX2pltulDFpMBTAKro+hP0wXEg==}
+    dependencies:
+      '@unocss/core': 0.58.0
+      '@unocss/extractor-arbitrary-variants': 0.58.0
+      '@unocss/rule-utils': 0.58.0
+    dev: true
+
   /@unocss/preset-tagify@0.57.7:
     resolution: {integrity: sha512-va25pTJ5OtbqCHFBIj8myVk0PwuSucUqTx840r/YSHka0P9th6UGRS1LU30OUgjgr7FhLaWXtJMN4gkCUtQSoA==}
     dependencies:
@@ -2967,6 +2793,14 @@ packages:
       '@unocss/rule-utils': 0.57.7
     dev: true
 
+  /@unocss/preset-wind@0.58.0:
+    resolution: {integrity: sha512-2zgaIy9RAGie9CsUYCkYRDSERBi8kG6Q/mQLgNfP9HMz5IThlnDHFWF/hLAVD51xQUg9gH8qWBR9kN/1ioT5Tw==}
+    dependencies:
+      '@unocss/core': 0.58.0
+      '@unocss/preset-mini': 0.58.0
+      '@unocss/rule-utils': 0.58.0
+    dev: true
+
   /@unocss/reset@0.57.7:
     resolution: {integrity: sha512-oN9024WVrMewGbornnAPIpzHeKPIfVmZ5IsZGilWR761TnI5jTjHUkswsVoFx7tZdpCN2/bqS3JK/Ah0aot3NQ==}
     dev: true
@@ -2976,6 +2810,14 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       '@unocss/core': 0.57.7
+      magic-string: 0.30.5
+    dev: true
+
+  /@unocss/rule-utils@0.58.0:
+    resolution: {integrity: sha512-LBJ9dJ/j5UIMzJF7pmIig55MtJAYtG+tn/zQRveZuPRVahzP+KqwlyB7u3uCUnQhdgo/MJODMcqyr0jl6+kTuA==}
+    engines: {node: '>=14'}
+    dependencies:
+      '@unocss/core': 0.58.0
       magic-string: 0.30.5
     dev: true
 
@@ -3249,6 +3091,18 @@ packages:
       - vue
     dev: true
 
+  /@vueuse/core@10.7.0(vue@3.3.9):
+    resolution: {integrity: sha512-4EUDESCHtwu44ZWK3Gc/hZUVhVo/ysvdtwocB5vcauSV4B7NiGY5972WnsojB3vRNdxvAt7kzJWE2h9h7C9d5w==}
+    dependencies:
+      '@types/web-bluetooth': 0.0.20
+      '@vueuse/metadata': 10.7.0
+      '@vueuse/shared': 10.7.0(vue@3.3.9)
+      vue-demi: 0.14.6(vue@3.3.9)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: true
+
   /@vueuse/head@2.0.0(vue@3.3.9):
     resolution: {integrity: sha512-ykdOxTGs95xjD4WXE4na/umxZea2Itl0GWBILas+O4oqS7eXIods38INvk3XkJKjqMdWPcpCyLX/DioLQxU1KA==}
     peerDependencies:
@@ -3376,14 +3230,18 @@ packages:
     resolution: {integrity: sha512-qhdwPI65Bgcj23e5lpGfQsxcy0bMjCAsUGoXkJ7DsoeDUdasbZ2DBa4dinFCOER3lF4gwUv+UD2AlA11zdzMFw==}
     dev: true
 
-  /@vueuse/nuxt@10.6.1(nuxt@3.8.2)(vue@3.3.9):
-    resolution: {integrity: sha512-MnXg0ZviWHKcf2CsBYeHXhK9Pqn2TF7EJfaLgd+3rHEyb6XlSLUKBTPNCiO+5VH3Ck1IJAez90KS3VAdSqqs1w==}
+  /@vueuse/metadata@10.7.0:
+    resolution: {integrity: sha512-GlaH7tKP2iBCZ3bHNZ6b0cl9g0CJK8lttkBNUX156gWvNYhTKEtbweWLm9rxCPIiwzYcr/5xML6T8ZUEt+DkvA==}
+    dev: true
+
+  /@vueuse/nuxt@10.7.0(nuxt@3.8.2)(vue@3.3.9):
+    resolution: {integrity: sha512-CYKMFRwTlZmfUuopC2jGJZ03s7RL5H1L/Xoz9xhQfs7seMS6kCSsVUT9iB0LqiuLxeP7WiInThgFnBbBc6LMTw==}
     peerDependencies:
       nuxt: ^3.0.0
     dependencies:
       '@nuxt/kit': 3.8.2
-      '@vueuse/core': 10.6.1(vue@3.3.9)
-      '@vueuse/metadata': 10.6.1
+      '@vueuse/core': 10.7.0(vue@3.3.9)
+      '@vueuse/metadata': 10.7.0
       local-pkg: 0.5.0
       nuxt: 3.8.2(vite@4.5.0)
       vue-demi: 0.14.6(vue@3.3.9)
@@ -3396,6 +3254,15 @@ packages:
 
   /@vueuse/shared@10.6.1(vue@3.3.9):
     resolution: {integrity: sha512-TECVDTIedFlL0NUfHWncf3zF9Gc4VfdxfQc8JFwoVZQmxpONhLxFrlm0eHQeidHj4rdTPL3KXJa0TZCk1wnc5Q==}
+    dependencies:
+      vue-demi: 0.14.6(vue@3.3.9)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: true
+
+  /@vueuse/shared@10.7.0(vue@3.3.9):
+    resolution: {integrity: sha512-kc00uV6CiaTdc3i1CDC4a3lBxzaBE9AgYNtFN87B5OOscqeWElj/uza8qVDmk7/U8JbqoONLbtqiLJ5LGRuqlw==}
     dependencies:
       vue-demi: 0.14.6(vue@3.3.9)
     transitivePeerDependencies:
@@ -4162,24 +4029,9 @@ packages:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: true
 
-  /color-string@1.9.1:
-    resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==}
-    dependencies:
-      color-name: 1.1.4
-      simple-swizzle: 0.2.2
-    dev: true
-
   /color-support@1.1.3:
     resolution: {integrity: sha512-qiBjkpbMLO/HL68y+lh4q0/O1MZFj2RX6X/KmMa3+gJD3z+WwI1ZzDHysvqHGS3mP6mznPckpXmw1nI9cJjyRg==}
     hasBin: true
-    dev: true
-
-  /color@4.2.3:
-    resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
-    engines: {node: '>=12.5.0'}
-    dependencies:
-      color-convert: 2.0.1
-      color-string: 1.9.1
     dev: true
 
   /colord@2.9.3:
@@ -5766,10 +5618,6 @@ packages:
     dependencies:
       is-alphabetical: 2.0.1
       is-decimal: 2.0.1
-    dev: true
-
-  /is-arrayish@0.3.2:
-    resolution: {integrity: sha512-eVRqCvVlZbuw3GrM63ovNSNAeA1K16kaR/LRY/92w0zxQ5/1YzwblUX652i4Xs9RwAGjW9d9y6X88t8OaAJfWQ==}
     dev: true
 
   /is-binary-path@2.1.0:
@@ -7527,10 +7375,10 @@ packages:
       - vue
     dev: true
 
-  /nuxt-icon@0.6.6(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9):
-    resolution: {integrity: sha512-rTRUIjYVlYAyj6ZPVVwGxyyiINNudhC6r9vF96Ec5ZaLOC6mSdUBnJ3oV6sJgViYrIkDLwbIjviFvRcZzvgu3g==}
+  /nuxt-icon@0.6.7(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9):
+    resolution: {integrity: sha512-0QnQM0yqJCb8PWt+gAn6RiXy1/CHScFuOPbsfIIwHMvyKkea+blj5/unq7F9ZHMkfrHozyCID8ErFPSzwEYLeA==}
     dependencies:
-      '@iconify/collections': 1.0.363
+      '@iconify/collections': 1.0.366
       '@iconify/vue': 4.1.1(vue@3.3.9)
       '@nuxt/devtools-kit': 1.0.4(nuxt@3.8.2)(vite@4.5.0)
       '@nuxt/kit': 3.8.2
@@ -7546,7 +7394,7 @@ packages:
     resolution: {integrity: sha512-78HdXDfXHkMRcTKq6IEIoXyajul/c88zCU3xcALShkb0cW4qMhir+He9eMi7l1uKSP1bwLZfmCVFiokyWeFZig==}
     dependencies:
       '@vueuse/core': 10.6.1(vue@3.3.9)
-      '@vueuse/nuxt': 10.6.1(nuxt@3.8.2)(vue@3.3.9)
+      '@vueuse/nuxt': 10.7.0(nuxt@3.8.2)(vue@3.3.9)
       nuxt-icon: 0.4.2(vue@3.3.9)
     transitivePeerDependencies:
       - '@vue/composition-api'
@@ -7611,15 +7459,17 @@ packages:
       - supports-color
     dev: true
 
-  /nuxt-og-image@3.0.0-beta.17(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0):
-    resolution: {integrity: sha512-uU6g8I7wIZXWNLyhOltwwrRow/SiLzWSAdHb19wFgu6L+pW9BlQwAJ4Clc9tjZu66Cfp914b6jUHD2JVn+ZcZw==}
+  /nuxt-og-image@3.0.0-beta.55(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0):
+    resolution: {integrity: sha512-UW/tILeubI2o62IuE0XXfR8N0w1wAGFv1C3dW/3c2oh2n7iyJqyIARdrfPj09LjX0z3RW5CkhVO8POJNJaOnTw==}
     dependencies:
       '@iconify-json/noto': 1.1.17
-      '@img/sharp-wasm32': 0.33.0
       '@nuxt/devtools-kit': 1.0.4(nuxt@3.8.2)(vite@4.5.0)
       '@nuxt/kit': 3.8.2
       '@resvg/resvg-js': 2.6.0
       '@resvg/resvg-wasm': 2.6.0
+      '@unocss/core': 0.58.0
+      '@unocss/preset-wind': 0.58.0
+      '@vueuse/core': 10.7.0(vue@3.3.9)
       chrome-launcher: 1.1.0
       css-inline: 0.11.0
       defu: 6.1.3
@@ -7636,7 +7486,6 @@ packages:
       radix3: 1.1.0
       satori: 0.10.11
       satori-html: 0.3.2
-      sharp: 0.33.0
       sirv: 2.0.3
       std-env: 3.6.0
       terminate: 2.6.1
@@ -7748,7 +7597,7 @@ packages:
     resolution: {integrity: sha512-/zrtEXbnTygV2n61Y+KVFmK53AUgszkH2Kk/XL+nGaaGJOtrgMZMtfIhLjKzCy/TvMW8SJ0hX6hBWvC7H8CeTg==}
     dependencies:
       '@nuxt/kit': 3.8.2
-      nuxt-icon: 0.6.6(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
+      nuxt-icon: 0.6.7(nuxt@3.8.2)(vite@4.5.0)(vue@3.3.9)
       nuxt-site-config: 1.6.6(@nuxt/devtools@1.0.4)(@vue/compiler-core@3.3.9)(nuxt@3.8.2)(postcss@8.4.32)(vite@4.5.0)(vue@3.3.9)(webpack@5.89.0)
       nuxt-site-config-kit: 1.6.6(vue@3.3.9)
       pathe: 1.1.1
@@ -9270,36 +9119,6 @@ packages:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
     dev: true
 
-  /sharp@0.33.0:
-    resolution: {integrity: sha512-99DZKudjm/Rmz+M0/26t4DKpXyywAOJaayGS9boEn7FvgtG0RYBi46uPE2c+obcJRtA3AZa0QwJot63gJQ1F0Q==}
-    engines: {libvips: '>=8.15.0', node: ^18.17.0 || ^20.3.0 || >=21.0.0}
-    requiresBuild: true
-    dependencies:
-      color: 4.2.3
-      detect-libc: 2.0.2
-      semver: 7.5.4
-    optionalDependencies:
-      '@img/sharp-darwin-arm64': 0.33.0
-      '@img/sharp-darwin-x64': 0.33.0
-      '@img/sharp-libvips-darwin-arm64': 1.0.0
-      '@img/sharp-libvips-darwin-x64': 1.0.0
-      '@img/sharp-libvips-linux-arm': 1.0.0
-      '@img/sharp-libvips-linux-arm64': 1.0.0
-      '@img/sharp-libvips-linux-s390x': 1.0.0
-      '@img/sharp-libvips-linux-x64': 1.0.0
-      '@img/sharp-libvips-linuxmusl-arm64': 1.0.0
-      '@img/sharp-libvips-linuxmusl-x64': 1.0.0
-      '@img/sharp-linux-arm': 0.33.0
-      '@img/sharp-linux-arm64': 0.33.0
-      '@img/sharp-linux-s390x': 0.33.0
-      '@img/sharp-linux-x64': 0.33.0
-      '@img/sharp-linuxmusl-arm64': 0.33.0
-      '@img/sharp-linuxmusl-x64': 0.33.0
-      '@img/sharp-wasm32': 0.33.0
-      '@img/sharp-win32-ia32': 0.33.0
-      '@img/sharp-win32-x64': 0.33.0
-    dev: true
-
   /shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -9355,12 +9174,6 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /simple-swizzle@0.2.2:
-    resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
-    dependencies:
-      is-arrayish: 0.3.2
     dev: true
 
   /sirv@2.0.3:
