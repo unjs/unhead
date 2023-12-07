@@ -13,7 +13,7 @@
     "@iconify-json/ph": "^1.1.8",
     "@iconify-json/simple-icons": "^1.1.82",
     "@nuxt/content": "^2.9.0",
-    "@nuxt/devtools": "^1.0.4",
+    "@nuxt/devtools": "^1.0.5",
     "@nuxt/ui": "2.11.0",
     "@nuxt/ui-pro": "0.5.0",
     "@nuxtjs/fontaine": "^0.4.1",
@@ -23,9 +23,9 @@
     "nuxt-icon": "^0.6.7",
     "nuxt-lego": "^0.0.14",
     "nuxt-lodash": "^2.5.3",
-    "nuxt-og-image": "3.0.0-beta.55"
+    "nuxt-og-image": "3.0.0-beta.56"
   },
   "resolutions": {
-    "nuxt-og-image": "3.0.0-beta.55"
+    "nuxt-og-image": "3.0.0-beta.56"
   }
 }
