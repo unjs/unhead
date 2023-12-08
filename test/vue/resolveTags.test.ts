@@ -109,4 +109,57 @@ describe('resolveTags', () => {
       ]
     `)
   })
+  it('resolve multiple conditional classes entries', async () => {
+    const head = createHead()
+    setHeadInjectionHandler(() => head)
+
+    useHead({
+      htmlAttrs: {
+        class: {
+          someTrue: true,
+        },
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: ['someArrayClass'],
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: {
+          someFalsy: false,
+        },
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: [],
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: '',
+      },
+    })
+
+    const tags = await head.resolveTags()
+    expect(tags).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "htmlAttrs",
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "class": "someTrue someArrayClass",
+          },
+          "tag": "htmlAttrs",
+        },
+      ]
+    `)
+  })
 })
