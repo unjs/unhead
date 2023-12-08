@@ -17,14 +17,12 @@ Describes an individual image (usually in the context of an embedded media objec
 
   The URL of the image file (e.g., /images/cat.jpg).
 
-
 ## Defaults
 
 - **@type**: `ImageObject`
 - **@id**: `${canonicalUrl}#/schema/image/${hash(image.url)}`
 - **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/getting-started/params))_
 - **contentUrl**: is set to `url`
-
 
 ## Resolves
 
@@ -34,7 +32,6 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 
 ## Examples
 
-
 ### Minimal
 
 ```ts
@@ -42,7 +39,6 @@ defineImage({
   url: '/cat.jpg',
 })
 ```
-
 
 ## Types
 

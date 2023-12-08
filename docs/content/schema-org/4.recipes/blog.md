@@ -76,7 +76,7 @@ See the [Article Types](/schema-org/schema/article#sub-types) for the list of av
 
 ## Providing an author
 
-If the author of the article isn't the [site identity](/schema-org/recipes/identity), then you'll need to 
+If the author of the article isn't the [site identity](/schema-org/recipes/identity), then you'll need to
 config the author or authors.
 
 When defining a Person when an Article is present, it will automatically associate them as the author.

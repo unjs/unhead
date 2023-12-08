@@ -11,7 +11,7 @@ description: Access the hooks of Unhead.
 
 Can be used to register and call the hooks of Unhead. Powered by Hookable.
 
-Hooks are used for all core functionality within Unhead. 
+Hooks are used for all core functionality within Unhead.
 
 ## Examples
 
@@ -42,30 +42,30 @@ const head = createHead({
 
 ### Core hooks
 
-- `'init'`: `ctx: Unhead<any>`. 
-    
-- `'entries:updated'`: `ctx: Unhead<any>`. 
+- `'init'`: `ctx: Unhead<any>`.
 
-- `'entries:resolve'`: `ctx: EntryResolveCtx<any>`. 
+- `'entries:updated'`: `ctx: Unhead<any>`.
 
-- `'tag:normalise'`: `ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }`. 
+- `'entries:resolve'`: `ctx: EntryResolveCtx<any>`.
 
-- `'tags:beforeResolve'`: `ctx: { tags: HeadTag[] }`. 
+- `'tag:normalise'`: `ctx: { tag: HeadTag; entry: HeadEntry<any>; resolvedOptions: CreateHeadOptions }`.
 
-- `'tags:resolve'`: `ctx: { tags: HeadTag[] }`. 
+- `'tags:beforeResolve'`: `ctx: { tags: HeadTag[] }`.
+
+- `'tags:resolve'`: `ctx: { tags: HeadTag[] }`.
 
 ### DOM hooks
 
-- `'dom:beforeRender'`: `ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }`. 
+- `'dom:beforeRender'`: `ctx: ShouldRenderContext & { tags: DomRenderTagContext[] }`.
 
-- `'dom:renderTag'`: `ctx: DomRenderTagContext`, `document: Document`, and `track: any`. 
+- `'dom:renderTag'`: `ctx: DomRenderTagContext`, `document: Document`, and `track: any`.
 
-- `'dom:rendered'`: `ctx: { renders: DomRenderTagContext[] }`. 
+- `'dom:rendered'`: `ctx: { renders: DomRenderTagContext[] }`.
 
 ### SSR hooks
 
-- `'ssr:beforeRender'`: `ctx: ShouldRenderContext`. 
+- `'ssr:beforeRender'`: `ctx: ShouldRenderContext`.
 
-- `'ssr:render'`: `ctx: { tags: HeadTag[] }`. 
+- `'ssr:render'`: `ctx: { tags: HeadTag[] }`.
 
-- `'ssr:rendered'`: `ctx: SSRRenderContext`. 
+- `'ssr:rendered'`: `ctx: SSRRenderContext`.

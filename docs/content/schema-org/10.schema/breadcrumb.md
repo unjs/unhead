@@ -48,7 +48,6 @@ defineBreadcrumb({
 
 - `itemListElement.position` is computed for each list element
 
-
 ## Types
 
 ```ts

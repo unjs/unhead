@@ -30,7 +30,7 @@
 - **isPartOf**: WebSite reference
 
 Home page only
-- **about**: Identity Reference 
+- **about**: Identity Reference
 - **primaryImageOfPage**: Logo reference
 
 ## Sub-Types
@@ -57,7 +57,7 @@ Home page only
 
 ## Resolves
 
-- `dateModified` or `datePublished` can be resolved from Date objects 
+- `dateModified` or `datePublished` can be resolved from Date objects
 
 ```ts
 defineWebPage({
@@ -86,7 +86,6 @@ defineWebPage({
   -- `/contact`, `/get-in-touch`, `/contact-us` -> `ContactPage`
 
   -- `/faq` -> `FAQPage`
-
 
 ## Example
 

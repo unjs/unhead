@@ -1,9 +1,9 @@
 ---
 title: "Capo.js"
-description: "Sort your tags in a more performant way by using the Capo.js plugin." 
+description: "Sort your tags in a more performant way by using the Capo.js plugin."
 ---
 
-[Capo.js](https://rviscomi.github.io/capo.js/) is an awesome project trying to bring some structure to the head, making sure tags are rendered in 
+[Capo.js](https://rviscomi.github.io/capo.js/) is an awesome project trying to bring some structure to the head, making sure tags are rendered in
 a specific way to get the best performance.
 
 The plugin is experimental and may be moved in to the core with more testing.

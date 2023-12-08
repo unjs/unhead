@@ -1,4 +1,4 @@
-# 
+#
 
 Schema.org for Vue. Supports typed and automated Google Rich Results
 

@@ -2,7 +2,7 @@
 title: FAQ
 ---
 
-Creating a FAQ page on your site is a great way to help your users understand your website. 
+Creating a FAQ page on your site is a great way to help your users understand your website.
 
 Providing Schema.org for these Questions and Answers can help improve your organic reach by allowing Google to optimise
 your faq pages search appearance.
@@ -18,7 +18,7 @@ your faq pages search appearance.
 The [defineQuestion](/schema-org/schema/question) function and [SchemaOrgQuestion](/schema-org/getting-started/vue-components) component are provided
 to create Question Schema whilst handling relations for you.
 
-Note: When using a page with the path `/faq`, the page type will be automatically set for you. 
+Note: When using a page with the path `/faq`, the page type will be automatically set for you.
 
 Tips:
 - The answer may contain HTML content such as links and lists.

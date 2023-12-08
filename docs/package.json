@@ -23,7 +23,7 @@
     "nuxt-icon": "^0.6.7",
     "nuxt-lego": "^0.0.14",
     "nuxt-lodash": "^2.5.3",
-    "nuxt-og-image": "3.0.0-beta.56"
+    "nuxt-og-image": "3.0.0-beta.57"
   },
   "resolutions": {
     "nuxt-og-image": "3.0.0-beta.56"

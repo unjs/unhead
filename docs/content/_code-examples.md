@@ -29,7 +29,6 @@ useServerHead({
 })
 ```
 
-
 ```ts [useSeoMeta]
 // the easiest meta tags
 useSeoMeta({

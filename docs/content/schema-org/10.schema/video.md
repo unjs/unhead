@@ -6,7 +6,6 @@
 
 - **Component**: `SchemaOrgVideo` _(see [how components work](/schema-org/getting-started/vue-components))_
 
-
 ## Useful Links
 
 - [VideoObject - Schema.org](https://schema.org/VideoObject)
@@ -45,7 +44,6 @@
 - **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/getting-started/params))_
 - **contentUrl**: is set to `url`
 
-
 ## Resolves
 
 See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
@@ -61,7 +59,6 @@ defineVideo({
   url: '/image.png',
 })
 ```
-
 
 ## Types
 

@@ -14,7 +14,6 @@ Creating breadcrumbs on your site is a great way to help your users understand y
 The [defineBreadcrumb](/schema-org/schema/breadcrumb) function and [SchemaOrgBreadcrumb](/schema-org/getting-started/vue-components) component are provided
 to create Breadcrumb Schema whilst handling relations for you.
 
-
 Imagine we want to generate the following markup with the appropriate Schema.
 
 Note: Google recommends that the markup for the breadcrumbs should exist on the page matching the Schema.org entry.
@@ -79,7 +78,6 @@ const breadcrumb = [
 </template>
 ```
 ::
-
 
 ## Adding Multiple Breadcrumbs
 

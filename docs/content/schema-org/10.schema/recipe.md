@@ -11,7 +11,6 @@
 - [Schema.org Recipe](https://schema.org/Recipe)
 - [Recipe Structed Data](https://developers.google.com/search/docs/advanced/structured-data/recipe)
 
-
 ## Required properties
 
 - **name** `string`
@@ -19,7 +18,6 @@
   A string describing the recipe.
 
   A name can be provided using route meta on the `title` key, see [defaults](#defaults).
-
 
 - **image** `string|ImageObject`
 
@@ -47,13 +45,11 @@
 - **author**: (conditional) set to the current page article's author if one exists
 - **mainEntityOfPage**: WebPage Reference
 
-
 ## Resolves
 
 See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
 
 - `datePublished` can be resolved from Date objects
-
 
 ### Minimal
 

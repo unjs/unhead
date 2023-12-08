@@ -21,7 +21,6 @@
 
   The text content of the answer.
 
-
 ## Examples
 
 ### Minimal

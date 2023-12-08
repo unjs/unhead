@@ -11,7 +11,6 @@ description: Generate the list of tags that will be rendered.
 
 Generate the list of tags that will be rendered. This is used internally for DOM rendering and SSR render.
 
-
 ## Example
 
 ```ts

@@ -8,7 +8,6 @@
 <a href="https://github.com/unjs/unhead" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/harlan-zw/unhead?flat&colorA=002438&colorB=28CF8D"></a>
 </p>
 
-
 <p align="center">
 Universal document <head> tag manager. Tiny, adaptable and full featured.
 </p>
@@ -36,11 +35,9 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 - 💎 Fully typed with MDN docs
 - 🤝 Used by [Nuxt](https://nuxt.com/) with more framework support coming soon.
 
-  
 ## Docs
 
 Visit the [documentation site](https://unhead.unjs.io/) for guides and API references.
-
 
 ## Install
 
@@ -83,7 +80,6 @@ useHead({
     <img src='https://raw.githubusercontent.com/harlan-zw/static/main/sponsors.svg'/>
   </a>
 </p>
-
 
 ## License
 

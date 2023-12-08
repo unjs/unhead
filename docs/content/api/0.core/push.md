@@ -45,4 +45,3 @@ entry.patch(entry)
 // remove entry
 entry.dispose()
 ```
-

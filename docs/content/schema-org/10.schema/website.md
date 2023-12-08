@@ -6,7 +6,6 @@
 
 - **Component**: `SchemaOrgWebSite` _(see [how components work](/schema-org/getting-started/vue-components))_
 
-
 ## Useful Links
 
 - [Schema.org WebSite](https://schema.org/WebSite)

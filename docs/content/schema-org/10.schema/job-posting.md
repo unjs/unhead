@@ -17,7 +17,6 @@
 
   The title of the job (not the title of the posting). For example, "Software Engineer" or "Barista"
 
-
 - **description**  `string`
 
   The full description of the job in HTML format.

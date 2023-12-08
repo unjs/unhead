@@ -13,13 +13,11 @@
 - [Product - Yoast](https://developer.yoast.com/features/schema/pieces/product)
 - [Recipe: eCommerce](/schema-org/recipes/e-commerce)
 
-
 ## Required properties
 
 - **name** `string`
 
   The name of the product. Provided via route meta key `title` or `name` manually.
-
 
 - **image**  `Arrayable<ImageInput>`
 
@@ -31,7 +29,6 @@
 
   Add [Offer](https://schema.org/Offer) properties.
 
-
 ## Defaults
 
 - **@type**: `Product`
@@ -39,9 +36,8 @@
 - **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **brand**: id reference of the identity 
+- **brand**: id reference of the identity
 - **mainEntityOfPage** id reference of the web page
-
 
 ## Resolves
 
@@ -87,8 +83,6 @@ defineProduct({
   ],
 })
 ```
-
-
 
 ## Types
 

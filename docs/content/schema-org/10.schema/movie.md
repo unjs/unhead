@@ -11,7 +11,6 @@
 - [Movie - Schema.org](https://schema.org/Movie)
 - [Movie Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/movie)
 
-
 ### Example
 
 ```ts
@@ -33,7 +32,6 @@ defineMovie({
   },
 })
 ```
-
 
 ## Types
 

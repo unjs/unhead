@@ -21,12 +21,11 @@
 
   A name can be provided using route meta on the `title` key, see [defaults](#defaults).
 
+- **image** `Arrayable<string|ImageObject>`
 
-- **image** `Arrayable<string|ImageObject>` 
+  Link a primary image or a collection of images to used to the article.
 
-  Link a primary image or a collection of images to used to the article. 
-
-  A single image URL can be provided using route meta on the `image` key, see [defaults](#defaults). 
+  A single image URL can be provided using route meta on the `image` key, see [defaults](#defaults).
 
 - **author** `AuthorInput` (conditional)
 
@@ -37,10 +36,9 @@
 
 ## Recommended Properties
 
-- **@type** [sub-types](#sub-types) 
+- **@type** [sub-types](#sub-types)
 
   Select the most appropriate type for your content for the article.
- 
 
 ## Defaults
 
@@ -86,7 +84,7 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 
 - `thumbnailUrl` will be set to the first image
 
-- `dateModified` or `datePublished` can be resolved from Date objects 
+- `dateModified` or `datePublished` can be resolved from Date objects
 
 ```ts
 defineArticle({
@@ -103,7 +101,6 @@ defineArticle({
   '@type': 'TechArticle',
 })
 ```
-
 
 ## Examples
 

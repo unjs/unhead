@@ -12,13 +12,13 @@
 
 ## Required properties
 
-- **name** `string` 
+- **name** `string`
 
   The name of the business.
 
 - **address** `AddressInput` - [PostalAddress](https://schema.org/PostalAddress)
 
-  Physical postal address of the business. 
+  Physical postal address of the business.
 
 ## Recommended Properties
 
@@ -60,7 +60,7 @@ defineFoodEstablishment({
 
 - **@type**: `FoodEstablishment`
 - **@id**: `${canonicalHost}#identity`
-- **url**: `${canonicalHost}` 
+- **url**: `${canonicalHost}`
 - **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
 
 ## Sub-Types
@@ -85,7 +85,6 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 - `@type` resolve: `Restaurant` -> `['Organization', 'LocalBusiness', 'FoodEstablishment', 'Restaurant']`
 
 - `starRating` will be resolved as a [Rating](https://schema.org/Rating)
-
 
 ## Types
 

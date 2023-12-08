@@ -6,7 +6,6 @@
 
 - **Component**: `SchemaOrgComment` _(see [how components work](/schema-org/getting-started/vue-components))_
 
-
 ## Useful Links
 
 - [Comment - Schema.org](https://schema.org/Comment)
@@ -21,11 +20,9 @@
 
 ## Recommended Properties
 
-
 - **author** `Person`
 
   The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
-
 
 ## Defaults
 

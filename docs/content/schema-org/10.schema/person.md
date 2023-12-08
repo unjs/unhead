@@ -6,12 +6,10 @@
 
 - **Component**: `SchemaOrgPerson` _(see [how components work](/schema-org/getting-started/vue-components))_
 
-
 ## Useful Links
 
 - [Schema.org Person](https://schema.org/Person)
 - [Choose an Identity - Person](/schema-org/recipes/identity#person)
-
 
 ## Required properties
 

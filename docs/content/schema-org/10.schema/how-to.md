@@ -22,7 +22,6 @@
 - **step** `HowToStep[]`.
 
   An array of objects describing the steps in the guide. Appends the [HowToStep](https://developers.google.com/search/docs/advanced/structured-data/how-to#how-to-step) entries on to the HowTo. Completes `@type` and resolves `url` and `image`.
-  
 
 - **step.text** The full instruction text of this step.
 
@@ -70,7 +69,6 @@ defineHowTo({
 - **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
 - **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
 - **mainEntityOfPage**: WebPage Reference
-
 
 ## Types
 

@@ -15,20 +15,19 @@
 
 ## Required properties
 
-- **name** `string` 
+- **name** `string`
 
   The name of the business.
 
 - **address** `AddressInput` - [PostalAddress](https://schema.org/PostalAddress)
 
-  Physical postal address of the business. 
+  Physical postal address of the business.
 
 ## Recommended Properties
 
 - **openingHoursSpecification**  `OpeningHoursInput[]` - [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
 
   The specification for when the business is open.
-
 
 ### Minimal Example
 
@@ -60,7 +59,7 @@ defineLocalBusiness({
 
 - **@type**: `LocalBusiness`
 - **@id**: `${canonicalHost}#identity`
-- **url**: `${canonicalHost}` 
+- **url**: `${canonicalHost}`
 - **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
 
 ## Sub-Types
@@ -103,7 +102,6 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 - `logo` will be resolved from a string into an ImageObject and added to `image`
 
 - `@type` resolve: `Dentist` -> `['Organization', 'LocalBusiness', 'Dentist']`
-
 
 ## Types
 

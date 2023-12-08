@@ -7,7 +7,7 @@ Unhead is internally powered by a hook system which you can plug into to add you
 
 One example of this is the inferring the SEO meta tags to display on your page before a render.
 
-This plugin will automatically infer the `og:title`, `og:description` when a title and description are set respectively. 
+This plugin will automatically infer the `og:title`, `og:description` when a title and description are set respectively.
 
 It will also make sure a the `twitter:card` meta tag is set when using a `og:image`.
 
