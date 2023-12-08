@@ -36,12 +36,16 @@ export default defineHeadPlugin({
             const oldProps = dupedTag.props
             // apply oldProps to current props
             ;['class', 'style'].forEach((key) => {
-              if (tag.props[key] && oldProps[key]) {
-                // ensure style merge doesn't result in invalid css
-                if (key === 'style' && !oldProps[key].endsWith(';'))
-                  oldProps[key] += ';'
+              if(oldProps[key]) {
+                if (tag.props[key]) {
+                  // ensure style merge doesn't result in invalid css
+                  if (key === 'style' && !oldProps[key].endsWith(';'))
+                    oldProps[key] += ';'
 
-                tag.props[key] = `${oldProps[key]} ${tag.props[key]}`
+                  tag.props[key] = `${oldProps[key]} ${tag.props[key]}`
+                } else {
+                  tag.props[key] = oldProps[key]
+                }
               }
             })
             deduping[dedupeKey].props = {
