@@ -42,11 +42,19 @@ describe('resolveTags', () => {
       htmlAttrs: {
         class: {
           'layout-theme-dark': () => theme.value === 'dark',
-          'layout-theme-light': () => theme.value === 'light',
         },
       },
       bodyAttrs: {
         class: ['test', () => `theme-${theme.value}`],
+      },
+    })
+
+    //Cover multiple entries with falsy value
+    useHead({
+      htmlAttrs: {
+        class: {
+          'layout-theme-light': () => theme.value === 'light',
+        },
       },
     })
 
