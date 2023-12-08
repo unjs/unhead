@@ -134,7 +134,7 @@ importers:
   examples/vue-2:
     dependencies:
       core-js:
-        specifier: ^3.34.0
+        specifier: ^3.32.2
         version: 3.34.0
       vue:
         specifier: ^3.3.10
@@ -150,7 +150,7 @@ importers:
         specifier: ~5.0.8
         version: 5.0.8(@vue/compiler-sfc@3.3.10)(vue-template-compiler@2.7.15)(vue@3.3.10)
       vue-template-compiler:
-        specifier: ^2.7.15
+        specifier: ^2.7.14
         version: 2.7.15
 
   examples/vue-3:
