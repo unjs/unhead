@@ -42,19 +42,11 @@ describe('resolveTags', () => {
       htmlAttrs: {
         class: {
           'layout-theme-dark': () => theme.value === 'dark',
+          'layout-theme-light': () => theme.value === 'light',
         },
       },
       bodyAttrs: {
         class: ['test', () => `theme-${theme.value}`],
-      },
-    })
-
-    //Cover multiple entries with falsy value
-    useHead({
-      htmlAttrs: {
-        class: {
-          'layout-theme-light': () => theme.value === 'light',
-        },
       },
     })
 
@@ -113,6 +105,59 @@ describe('resolveTags', () => {
           },
           "tag": "htmlAttrs",
           "tagDuplicateStrategy": "replace",
+        },
+      ]
+    `)
+  })
+  it('resolve multiple conditional classes entries', async () => {
+    const head = createHead()
+    setHeadInjectionHandler(() => head)
+
+    useHead({
+      htmlAttrs: {
+        class: {
+          someTrue: true,
+        },
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: ['someArrayClass'],
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: {
+          someFalsy: false,
+        },
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: [],
+      },
+    })
+
+    useHead({
+      htmlAttrs: {
+        class: '',
+      },
+    })
+
+    const tags = await head.resolveTags()
+    expect(tags).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "htmlAttrs",
+          "_e": 0,
+          "_p": 0,
+          "props": {
+            "class": "someTrue someArrayClass",
+          },
+          "tag": "htmlAttrs",
         },
       ]
     `)
