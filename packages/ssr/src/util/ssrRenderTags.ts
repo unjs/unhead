@@ -17,9 +17,9 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[]) {
   }
 
   return {
-    headTags: schema.tags.head.join('\n'),
-    bodyTags: schema.tags.bodyClose.join('\n'),
-    bodyTagsOpen: schema.tags.bodyOpen.join('\n'),
+    headTags: schema.tags.head.join(''),
+    bodyTags: schema.tags.bodyClose.join(''),
+    bodyTagsOpen: schema.tags.bodyOpen.join(''),
     htmlAttrs: propsToString(schema.htmlAttrs),
     bodyAttrs: propsToString(schema.bodyAttrs),
   }
