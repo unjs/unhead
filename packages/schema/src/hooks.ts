@@ -12,6 +12,10 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
+export interface RenderSSRHeadOptions {
+  omitLineBreaks?: boolean
+}
+
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
 export interface ScriptInstance<T> {

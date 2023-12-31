@@ -95,6 +95,33 @@ describe('ssr', () => {
     `)
   })
 
+  it('remove break lines', async () => {
+    const head = createHead()
+
+    head.push({
+      script: [
+        {
+          src: 'https://cdn.example.com/script-1.js',
+        },
+        {
+          src: 'https://cdn.example.com/script-2.js',
+        },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head, { omitLineBreaks: true })
+
+    expect(ctx).toMatchInlineSnapshot(`
+    {
+      "bodyAttrs": "",
+      "bodyTags": "",
+      "bodyTagsOpen": "",
+      "headTags": "<script src="https://cdn.example.com/script-1.js"></script><script src="https://cdn.example.com/script-2.js"></script>",
+      "htmlAttrs": "",
+    }
+  `)
+  })
+
   it('useSeoMeta', async () => {
     const head = createHead()
 
