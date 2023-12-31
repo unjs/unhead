@@ -12,7 +12,7 @@ export interface SSRHeadPayload {
   bodyAttrs: string
 }
 
-export interface SSRHeadOptions {
+export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
 }
 
