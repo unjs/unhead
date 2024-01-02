@@ -1,7 +1,7 @@
-import type { HeadTag } from '@unhead/schema'
+import type { HeadTag, RenderSSRHeadOptions } from '@unhead/schema'
 import { propsToString, tagToString } from '.'
 
-export function ssrRenderTags<T extends HeadTag>(tags: T[]) {
+export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRHeadOptions) {
   const schema: {
     tags: Record<'head' | 'bodyClose' | 'bodyOpen', string[]>
     htmlAttrs: HeadTag['props']
@@ -16,10 +16,12 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[]) {
     schema.tags[tag.tagPosition || 'head'].push(tagToString(tag))
   }
 
+  const lineBreaks = !options?.omitLineBreaks ? '\n' : ''
+
   return {
-    headTags: schema.tags.head.join('\n'),
-    bodyTags: schema.tags.bodyClose.join('\n'),
-    bodyTagsOpen: schema.tags.bodyOpen.join('\n'),
+    headTags: schema.tags.head.join(lineBreaks),
+    bodyTags: schema.tags.bodyClose.join(lineBreaks),
+    bodyTagsOpen: schema.tags.bodyOpen.join(lineBreaks),
     htmlAttrs: propsToString(schema.htmlAttrs),
     bodyAttrs: propsToString(schema.bodyAttrs),
   }
