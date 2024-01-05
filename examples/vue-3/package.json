@@ -10,17 +10,17 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
   },
   "dependencies": {
-    "vue": "^3.3.11"
+    "vue": "^3.4.5"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
-    "@types/node": "^20.10.4",
+    "@types/node": "^20.10.6",
     "@unhead/vue": "link:../../packages/vue",
-    "@vitejs/plugin-vue": "^4.5.2",
-    "@vue/tsconfig": "^0.4.0",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "@vue/tsconfig": "^0.5.1",
     "npm-run-all": "^4.1.5",
     "typescript": "~5.3.3",
-    "vite": "^5.0.7",
-    "vue-tsc": "^1.8.25"
+    "vite": "^5.0.11",
+    "vue-tsc": "^1.8.27"
   }
 }

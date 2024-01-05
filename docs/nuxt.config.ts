@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     'nuxt-lodash',
     'nuxt-og-image',
     'nuxt-icon',
-    '@nuxtseo/module',
+    '@nuxtjs/seo',
   ],
   site: {
     name: 'Unhead',

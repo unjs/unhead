@@ -2,7 +2,11 @@
   "name": "unhead",
   "type": "module",
   "version": "1.8.9",
-  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "author": {
+    "name": "Harlan Wilton",
+    "email": "harlan@harlanzw.com",
+    "url": "https://harlanzw.com/"
+  },
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
   "homepage": "https://unhead.unjs.io",
