@@ -172,7 +172,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
           return script.waitForLoad().then(
             (api) => {
               // @ts-expect-error untyped
-              api[fn](...args)
+              return api[fn](...args)
             },
           )
         }
