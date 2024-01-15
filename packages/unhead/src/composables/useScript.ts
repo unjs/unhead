@@ -69,6 +69,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
           resolve(options.use())
         function watchForScriptLoaded({ script }: { script: ScriptInstance<T> }) {
           if (script.id === id && script.status === 'loaded') {
+            script.loaded = true
             resolve(options.use?.() as T)
             head!.hooks.removeHook('script:updated', watchForScriptLoaded)
           }
@@ -172,7 +173,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
           return script.waitForLoad().then(
             (api) => {
               // @ts-expect-error untyped
-              api[fn](...args)
+              return api[fn](...args)
             },
           )
         }
