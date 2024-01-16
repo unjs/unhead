@@ -2,7 +2,6 @@ import { getCurrentInstance } from 'vue'
 import { Vue3 } from './env'
 import { useHead } from '.'
 
-
 export const VueHeadMixin = {
   created() {
     let source = false
