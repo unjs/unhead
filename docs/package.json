@@ -17,7 +17,7 @@
     "@nuxt/ui": "2.12.0",
     "@nuxt/ui-pro": "0.7.0",
     "@nuxtjs/fontaine": "^0.4.1",
-    "@nuxtjs/seo": "2.0.0-rc.4",
+    "@nuxtjs/seo": "2.0.0-rc.5",
     "@vueuse/nuxt": "^10.7.2",
     "nuxt": "3.9.1",
     "nuxt-icon": "^0.6.8",
