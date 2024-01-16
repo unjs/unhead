@@ -2,9 +2,7 @@ import { getCurrentInstance } from 'vue'
 import { Vue3 } from './env'
 import { useHead } from '.'
 
-/**
- * @deprecated No longer needed for Vue2 if using UnheadPlugin. Import { HeadOptions } from `@unhead/vue/vue2` and use Vue.mixin(HeadOptions) instead.
- */
+
 export const VueHeadMixin = {
   created() {
     let source = false
