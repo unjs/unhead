@@ -432,42 +432,44 @@ describe('defineArticle', () => {
 
       const client = await injectSchemaOrg()
 
-      expect(client[2]).toEqual({
-        '@type': 'Article',
-        '@id': 'https://kootingalpecancompany.com/pecan-tree-kootingal/#article',
-        'isPartOf': {
-          '@id': 'https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage',
-        },
-        'author': {
-          '@id': 'https://kootingalpecancompany.com/#/schema/person/13c25c1e03aefc2d21fbd03df3d17432',
-        },
-        'headline': 'The pecan tree &#8220;Carya illinoinensis&#8221;',
-        'dateModified': '2022-04-06T08:00:53.000Z',
-        'datePublished': '2022-04-06T08:00:51.000Z',
-        'mainEntityOfPage': {
-          '@id': 'https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage',
-        },
-        'wordCount': 381,
-        'publisher': {
-          '@id': 'https://kootingalpecancompany.com/#identity',
-        },
-        'image': {
-          '@id': 'https://kootingalpecancompany.com/#/schema/image/ea5d710',
-        },
-        'thumbnailUrl': 'https://res.cloudinary.com/kootingalpecancompany/images/w_1920,h_2560/f_auto,q_auto/v1648723707/IMG_0446/IMG_0446.jpg?_i=AA',
-        'keywords': [
-          'certified organic pecans',
-          'Kootingal',
-          'Orchard',
-          'organic nuts',
-          'Pecan tree',
-        ],
-        'articleSection': [
-          'Organic pecans, activated pecans, single source, Australian organic pecans',
-          'Pecan tree',
-        ],
-        'inLanguage': 'en-US',
-      })
+      expect(client[2]).toMatchInlineSnapshot(`
+        {
+          "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#article",
+          "@type": "Article",
+          "articleSection": [
+            "Organic pecans, activated pecans, single source, Australian organic pecans",
+            "Pecan tree",
+          ],
+          "author": {
+            "@id": "https://kootingalpecancompany.com/#/schema/person/13c25c1e03aefc2d21fbd03df3d17432",
+          },
+          "dateModified": "2022-04-06T08:00:53+00:00",
+          "datePublished": "2022-04-06T08:00:51+00:00",
+          "headline": "The pecan tree &#8220;Carya illinoinensis&#8221;",
+          "image": {
+            "@id": "https://kootingalpecancompany.com/#/schema/image/ea5d710",
+          },
+          "inLanguage": "en-US",
+          "isPartOf": {
+            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage",
+          },
+          "keywords": [
+            "certified organic pecans",
+            "Kootingal",
+            "Orchard",
+            "organic nuts",
+            "Pecan tree",
+          ],
+          "mainEntityOfPage": {
+            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage",
+          },
+          "publisher": {
+            "@id": "https://kootingalpecancompany.com/#identity",
+          },
+          "thumbnailUrl": "https://res.cloudinary.com/kootingalpecancompany/images/w_1920,h_2560/f_auto,q_auto/v1648723707/IMG_0446/IMG_0446.jpg?_i=AA",
+          "wordCount": 381,
+        }
+      `)
     }, {
       host: 'https://kootingalpecancompany.com/',
       inLanguage: 'en-US',
