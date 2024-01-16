@@ -21,12 +21,24 @@ export function resolvableDateToDate(val: Date | string) {
   return typeof val === 'string' ? val : val.toString()
 }
 
+const IS_VALID_W3C_DATE = [
+  /(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,
+  /^\d{4}-[01]\d-[0-3]\d$/,
+  /^\d{4}-[01]\d$/,
+  /^\d{4}$/,
+]
+export function isValidW3CDate(d: string) {
+  return IS_VALID_W3C_DATE.some(r => r.test(d))
+}
+
 export function resolvableDateToIso(val: Date | string | undefined) {
   if (!val)
     return val
   try {
     if (val instanceof Date)
       return val.toISOString()
+    else if (isValidW3CDate(val))
+      return val
     else
       return new Date(Date.parse(val)).toISOString()
   }
