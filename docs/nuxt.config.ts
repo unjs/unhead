@@ -37,8 +37,7 @@ export default defineNuxtConfig({
     icons: ['heroicons', 'simple-icons', 'ph', 'noto'],
   },
   sitemap: {
-    excludeAppSources: true,
-    strictNuxtContentPaths: false,
+    strictNuxtContentPaths: true,
     xslColumns: [
       { label: 'URL', width: '50%' },
       { label: 'Last Modified', select: 'sitemap:lastmod', width: '25%' },
