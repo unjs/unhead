@@ -47,6 +47,7 @@ export default defineNuxtConfig({
   },
   app: {
     seoMeta: {
+      googleSiteVerification: 'SnwVo-uFg39U69WHDoKma6bdT7hoh7sNYrviT8QuJww',
       themeColor: [
         { content: '#18181b', media: '(prefers-color-scheme: dark)' },
         { content: 'white', media: '(prefers-color-scheme: light)' },
