@@ -6,7 +6,7 @@ description: Render Unhead to a string that be can be server side rendered.
 **Type:**
 
 ```ts
-function renderSSRHead<T extends {}>(head: Unhead<T>): SSRHeadPayload
+function renderSSRHead<T extends {}>(head: Unhead<T>): Promise<SSRHeadPayload>
 ```
 
 ```ts
@@ -33,7 +33,8 @@ const head = createHead()
 
 head.push({ title: 'Hello World ' })
 
-const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head)
+// requires top-level await
+const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head)
 
 return `
 <!DOCTYPE html>
