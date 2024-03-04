@@ -105,18 +105,18 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   /**
    * Indicates whether a FoodEstablishment accepts reservations.
    */
-  acceptsReservations?: string | boolean
+  'acceptsReservations'?: string | boolean
   /**
    * URL of the menu.
    */
-  hasMenu?: string
+  'hasMenu'?: string
   /**
    * The cuisine of the restaurant.
    */
-  servesCuisine?: string
+  'servesCuisine'?: string
   /**
    * An official rating for a lodging business or food establishment
    */
-  starRating?: NodeRelations<Rating>
+  'starRating'?: NodeRelations<Rating>
 }
 ```

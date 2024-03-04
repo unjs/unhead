@@ -3,7 +3,7 @@ import { defineSchemaOrgResolver } from '../../core'
 
 export interface VirtualLocationSimple extends Thing {
   '@type'?: 'VirtualLocation'
-  url: string
+  'url': string
 }
 
 export interface VirtualLocation extends VirtualLocationSimple {}

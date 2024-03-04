@@ -11,15 +11,15 @@ export interface RatingSimple extends Thing {
    * The default scale for numbers is a 5-point scale, where 1 is the lowest value and 5 is the highest value.
    * If another scale is intended, use bestRating and worstRating.
    */
-  ratingValue: number | string
+  'ratingValue': number | string
   /**
    * The highest value allowed in this rating system. If bestRating is omitted, 5 is assumed.
    */
-  bestRating?: number
+  'bestRating'?: number
   /**
    * The lowest value allowed in this rating system. If worstRating is omitted, 1 is assumed.
    */
-  worstRating?: number
+  'worstRating'?: number
 }
 
 export interface Rating extends RatingSimple {}

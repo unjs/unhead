@@ -22,7 +22,7 @@ export interface SearchAction {
    * An object of type EntryPoint, with a relative URL which describes the URL pattern of the internal search function
    * (e.g., /search?query={search_term_string}).
    */
-  target: SearchTarget | {
+  'target': SearchTarget | {
     '@type'?: 'EntryPoint'
     'urlTemplate'?: SearchTarget
   }

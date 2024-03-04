@@ -37,7 +37,7 @@ export async function ssrRenderOptionsHead(input: any) {
 }
 
 type InstanceType<V> = V extends { new (...arg: any[]): infer X } ? X : never
-type VM<V> = InstanceType<V> & { unmount(): void }
+type VM<V> = InstanceType<V> & { unmount: () => void }
 
 export function mount<V extends Component>(Comp: V, hook?: (p: { app: App }) => any) {
   const el = document.createElement('div')

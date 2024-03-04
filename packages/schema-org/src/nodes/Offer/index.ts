@@ -24,25 +24,25 @@ export interface OfferSimple extends Thing {
   /**
    * A schema.org URL representing a schema itemAvailability value (e.g., https://schema.org/OutOfStock).
    */
-  availability?: OptionalSchemaOrgPrefix<ItemAvailability>
+  'availability'?: OptionalSchemaOrgPrefix<ItemAvailability>
   /**
    * The price, omitting any currency symbols, and using '.' to indicate a decimal place.
    */
-  price: number | string
+  'price': number | string
   /**
    * The currency used to describe the product price, in three-letter ISO 4217 format.
    */
-  priceCurrency?: string
+  'priceCurrency'?: string
   /**
    * @todo A PriceSpecification object, including a valueAddedTaxIncluded property (of either true or false).
    */
-  priceSpecification?: unknown
+  'priceSpecification'?: unknown
   /**
    * The date after which the price is no longer available.
    */
-  priceValidUntil?: ResolvableDate
+  'priceValidUntil'?: ResolvableDate
 
-  url?: string
+  'url'?: string
 }
 
 export interface Offer extends OfferSimple {}

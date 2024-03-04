@@ -40,16 +40,16 @@ const queryGroups = computed(() => navigation.value.map(item => ({
       description: file.description,
       icon: file.icon,
     },
-      // @ts-expect-error
-      ...Object.entries(groupByHeading(file.body.children)).map(([hash, { title, children }]) => ({
-        id: `${file._path}${hash}`,
-        title,
-        prefix: `${file.navigation?.title || file.title} ->`,
-        prefixClass: 'text-gray-700 dark:text-gray-200',
-        to: `${file._path}${hash}`,
-        children: concatChildren(children),
-        icon: file.icon,
-      }))]
+    // @ts-expect-error untyped
+    ...Object.entries(groupByHeading(file.body.children)).map(([hash, { title, children }]) => ({
+      id: `${file._path}${hash}`,
+      title,
+      prefix: `${file.navigation?.title || file.title} ->`,
+      prefixClass: 'text-gray-700 dark:text-gray-200',
+      to: `${file._path}${hash}`,
+      children: concatChildren(children),
+      icon: file.icon,
+    }))]
   }),
 })))
 

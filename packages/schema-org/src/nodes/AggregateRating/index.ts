@@ -6,11 +6,11 @@ export interface AggregateRatingSimple extends Thing {
   /**
    * The total number of ratings for the item on your site. At least one of ratingCount or reviewCount is required.
    */
-  ratingCount?: number | string
+  'ratingCount'?: number | string
   /**
    * Specifies the number of people who provided a review with or without an accompanying rating. At least one of ratingCount or reviewCount is required.
    */
-  reviewCount?: number | string
+  'reviewCount'?: number | string
   /**
    * A numerical quality rating for the item, either a number, fraction, or percentage
    * (for example, "4", "60%", or "6 / 10").
@@ -19,15 +19,15 @@ export interface AggregateRatingSimple extends Thing {
    * The default scale for numbers is a 5-point scale, where 1 is the lowest value and 5 is the highest value.
    * If another scale is intended, use bestRating and worstRating.
    */
-  ratingValue: number | string
+  'ratingValue': number | string
   /**
    * The highest value allowed in this rating system. If bestRating is omitted, 5 is assumed.
    */
-  bestRating?: number | string
+  'bestRating'?: number | string
   /**
    * The lowest value allowed in this rating system. If worstRating is omitted, 1 is assumed.
    */
-  worstRating?: number | string
+  'worstRating'?: number | string
 }
 
 export interface AggregateRating extends AggregateRatingSimple {}

@@ -142,42 +142,42 @@ export interface LocalBusinessSimple extends Organization {
   /**
    * The primary public telephone number of the business.
    */
-  telephone?: string
+  'telephone'?: string
   /**
    * The primary public email address of the business.
    */
-  email?: string
+  'email'?: string
   /**
    * The primary public fax number of the business.
    */
-  faxNumber?: string
+  'faxNumber'?: string
   /**
    * The price range of the business, represented by a string of dollar symbols (e.g., $, $$, or $$$ ).
    */
-  priceRange?: string
+  'priceRange'?: string
   /**
    * An array of GeoShape, Place or string definitions.
    */
-  areaServed?: unknown
+  'areaServed'?: unknown
   /**
    * A GeoCoordinates object.
    */
-  geo?: unknown
+  'geo'?: unknown
   /**
    * The VAT ID of the business.
    */
-  vatID?: string
+  'vatID'?: string
   /**
    * The tax ID of the business.
    */
-  taxID?: string
+  'taxID'?: string
   /**
    * The currency accepted.
    */
-  currenciesAccepted?: string
+  'currenciesAccepted'?: string
   /**
    * The operating hours of the business.
    */
-  openingHoursSpecification?: NodeRelations<OpeningHoursSpecification>
+  'openingHoursSpecification'?: NodeRelations<OpeningHoursSpecification>
 }
 ```

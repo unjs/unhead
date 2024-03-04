@@ -83,17 +83,17 @@ export interface Thing {
   /**
    * A reference-by-ID to the WebPage node.
    */
-  mainEntityOfPage?: Arrayable<IdReference>
+  'mainEntityOfPage'?: Arrayable<IdReference>
   /**
    * A reference-by-ID to the WebPage node.
    */
-  mainEntity?: Arrayable<IdReference>
+  'mainEntity'?: Arrayable<IdReference>
   /**
    * An image object or referenced by ID.
    * - Must be at least 696 pixels wide.
    * - Must be of the following formats+file extensions: .jpg, .png, .gif ,or .webp.
    */
-  image?: NodeRelations<ImageObject | string>
+  'image'?: NodeRelations<ImageObject | string>
 
   /**
    * Allow any arbitrary keys

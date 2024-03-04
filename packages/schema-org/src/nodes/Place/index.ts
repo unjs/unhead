@@ -5,10 +5,10 @@ import { addressResolver } from '../PostalAddress'
 
 export interface PlaceSimple extends Thing {
   '@type'?: 'Place'
-  name: string
-  address: NodeRelation<PostalAddress | string>
-  latitude?: number | string
-  longitude?: number | string
+  'name': string
+  'address': NodeRelation<PostalAddress | string>
+  'latitude'?: number | string
+  'longitude'?: number | string
 }
 
 export interface Place extends PlaceSimple {}

@@ -17,23 +17,23 @@ export interface OpeningHoursSimple extends Thing {
   /**
    * The day of the week for which these opening hours are valid.
    */
-  dayOfWeek: Arrayable<DayOfWeek>
+  'dayOfWeek': Arrayable<DayOfWeek>
   /**
    * The opening hour of the place or service on the given day(s) of the week.
    */
-  opens?: Time
+  'opens'?: Time
   /**
    * The closing hour of the place or service on the given day(s) of the week.
    */
-  closes?: Time
+  'closes'?: Time
   /**
    * The date when the item becomes valid.
    */
-  validFrom?: ResolvableDate
+  'validFrom'?: ResolvableDate
   /**
    * The date after when the item is not valid. For example, the end of an offer, salary period, or a period of opening hours.
    */
-  validThrough?: ResolvableDate
+  'validThrough'?: ResolvableDate
 }
 
 export interface OpeningHoursSpecification extends OpeningHoursSimple {}

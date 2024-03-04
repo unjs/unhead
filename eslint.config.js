@@ -4,4 +4,8 @@ export default antfu({
   rules: {
     'no-use-before-define': 'off',
   },
+}, {
+  ignores: [
+    'examples/*',
+  ],
 })

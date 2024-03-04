@@ -10,17 +10,17 @@ export interface ListItemSimple extends Thing {
   /**
    *  The name of the page in question, as it appears in the breadcrumb navigation.
    */
-  name?: string
+  'name'?: string
   /**
    * The unmodified canonical URL of the page in question.
    * - If a relative path is provided, it will be resolved to absolute.
    * - Item is not required for the last entry
    */
-  item?: string | Thing
+  'item'?: string | Thing
   /**
    *  An integer (starting at 1), counting the 'depth' of the page from (including) the homepage.
    */
-  position?: number
+  'position'?: number
 }
 
 export interface ListItem extends ListItemSimple {}

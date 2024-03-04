@@ -57,14 +57,14 @@
     "@rollup/pluginutils": "^5.1.0",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "magic-string": "^0.30.7",
-    "mlly": "^1.5.0",
+    "magic-string": "^0.30.8",
+    "mlly": "^1.6.1",
     "ufo": "^1.4.0",
-    "unplugin": "^1.7.1",
+    "unplugin": "^1.8.0",
     "unplugin-ast": "^0.8.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.23.9",
+    "@babel/types": "^7.24.0",
     "estree-walker": "^3.0.3"
   }
 }

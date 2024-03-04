@@ -153,6 +153,6 @@ export interface NutritionInformation extends Thing {
   /**
    * A calorie count as a string (e.g., "270 calories").
    */
-  calories: string
+  'calories': string
 }
 ```

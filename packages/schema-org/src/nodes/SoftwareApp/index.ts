@@ -37,29 +37,29 @@ export interface SoftwareAppSimple extends Thing {
   /**
    * The name of the app.
    */
-  name?: string
+  'name'?: string
   /**
    * An offer to sell the app.
    * For developers, offers can indicate the marketplaces that carry the application.
    * For marketplaces, use offers to indicate the price of the app for a specific app instance.
    */
-  offers: NodeRelations<Offer>
+  'offers': NodeRelations<Offer>
   /**
    * The average review score of the app.
    */
-  aggregateRating?: NodeRelation<AggregateRating>
+  'aggregateRating'?: NodeRelation<AggregateRating>
   /**
    * A single review of the app.
    */
-  review?: NodeRelation<Review>
+  'review'?: NodeRelation<Review>
   /**
    * The type of app (for example, BusinessApplication or GameApplication). The value must be a supported app type.
    */
-  applicationCategory?: ApplicationCategory
+  'applicationCategory'?: ApplicationCategory
   /**
    * The operating system(s) required to use the app (for example, Windows 7, OSX 10.6, Android 1.6)
    */
-  operatingSystem?: string
+  'operatingSystem'?: string
 }
 
 export interface SoftwareApp extends SoftwareAppSimple {}
