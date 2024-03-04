@@ -6,6 +6,16 @@ const UseScriptDefaults: Script = {
   defer: true,
   fetchpriority: 'low',
 }
+const requestIdleCallback: Window['requestIdleCallback'] = typeof window === 'undefined'
+  ? (() => {}) as any
+  : (globalThis.requestIdleCallback || ((cb) => {
+      const start = Date.now()
+      const idleDeadline = {
+        didTimeout: false,
+        timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+      }
+      return setTimeout(() => { cb(idleDeadline) }, 1)
+    }))
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
