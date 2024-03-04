@@ -14,20 +14,6 @@ export interface RenderDomHeadOptions {
   document?: Document
 }
 
-async function elementToTag($el: Element): Promise<HeadTag> {
-  const tag: HeadTag = {
-    tag: $el.tagName.toLowerCase() as HeadTag['tag'],
-    props: await normaliseProps(
-      $el.getAttributeNames()
-        .reduce((props, name) => ({ ...props, [name]: $el.getAttribute(name) }), {}),
-    ),
-    innerHTML: $el.innerHTML,
-  }
-  // @ts-expect-error untyped
-  tag._d = tagDedupeKey(tag)
-  return tag
-}
-
 /**
  * Render the head tags to the DOM.
  */
@@ -56,8 +42,25 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     } as any as DomState
     for (const key of ['body', 'head']) {
       const children = dom?.[key as 'head' | 'body']?.children
-      for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase())))
-        state.elMap[c.getAttribute('data-hid') || hashTag(await elementToTag(c))] = c
+      const tags: HeadTag[] = []
+      for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase()))) {
+        const t: HeadTag = {
+          tag: c.tagName.toLowerCase() as HeadTag['tag'],
+          props: await normaliseProps(
+            c.getAttributeNames()
+              .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
+          ),
+          innerHTML: c.innerHTML,
+        }
+        // we need to account for the fact that duplicate tags may exist as some are supported, increment the dedupe key
+        let i = 1
+        let d = tagDedupeKey(t)
+        while (d && tags.find(t => t._d === d))
+          d = `${d}:${i++}`
+        t._d = d || undefined
+        tags.push(t)
+        state.elMap[c.getAttribute('data-hid') || hashTag(t)] = c
+      }
     }
   }
 
