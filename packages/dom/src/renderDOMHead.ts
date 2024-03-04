@@ -101,6 +101,16 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           !$el.classList.contains(c) && $el.classList.add(c)
         }
       }
+      else if (k === 'style') {
+        // style attributes have their own side effects to allow for merging
+        for (const c of value.split(';').filter(Boolean)) {
+          const [k, v] = c.split(':').map(s => s.trim())
+          track(id, `${ck}:${c}:${k}`, () => {
+            ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
+          })
+          ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
+        }
+      }
       else {
         // attribute values get set directly
         $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))

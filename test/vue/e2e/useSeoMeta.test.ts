@@ -54,7 +54,7 @@ describe('unhead vue e2e useSeoMeta', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-
+      <meta property="article:tag" content="test">
 
       </head>
       <body>

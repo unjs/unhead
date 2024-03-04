@@ -279,7 +279,7 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default page-home" style="color: red; background-color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-home" style="color: red; background-color: red;" lang="en"><head>
       <meta charset="utf-8">
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -305,7 +305,7 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red;" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -355,7 +355,7 @@ describe('vue e2e', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default page-about" style="color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-about" style="color: red;" lang="en"><head>
       <meta charset="utf-8">
       <title>About</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -380,7 +380,7 @@ describe('vue e2e', () => {
 
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red;" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>

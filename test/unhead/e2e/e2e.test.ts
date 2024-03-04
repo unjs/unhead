@@ -273,7 +273,7 @@ describe('unhead e2e', () => {
     html = dom.serialize().replaceAll('\n\n', '')
 
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default page-home" style="color: red; background-color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-home" style="color: red; background-color: red;" lang="en"><head>
       <meta charset="utf-8">
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -296,7 +296,7 @@ describe('unhead e2e', () => {
     expect(html).not.toContain('<meta name="description" content="My amazing site"')
     // merging class / style to work
     expect(html).toContain('class="layout-default page-home"')
-    expect(html).toContain('style="color: red; background-color: red"')
+    expect(html).toContain('style="color: red; background-color: red;"')
 
     return
 
