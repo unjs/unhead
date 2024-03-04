@@ -83,7 +83,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         tag[k] && tag[k] !== $el[k] && ($el[k] = tag[k])
       })
       track(id, 'el', () => {
-        state.elMap[id].remove()
+        // the element may have been removed by a duplicate tag or something out of our control
+        state.elMap[id]?.remove()
         delete state.elMap[id]
       })
     }
