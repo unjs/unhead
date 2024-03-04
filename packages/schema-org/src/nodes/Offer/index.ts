@@ -1,11 +1,15 @@
 import { withBase } from 'ufo'
-import type { OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import type { OpeningHoursSpecification } from '../OpeningHours'
+import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
+import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import {
   resolvableDateToIso,
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import { defineSchemaOrgResolver } from '../../core'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import type { OfferShippingDetails } from '../OfferShippingDetails'
+import { offerShippingDetailsResolver } from '../OfferShippingDetails'
 
 type ItemAvailability =
   'BackOrder' |
@@ -19,8 +23,17 @@ type ItemAvailability =
   'PreSale' |
   'SoldOut'
 
+type OfferItemCondition =
+  'NewCondition' |
+  'RefurbishedCondition' |
+  'UsedCondition'
+
 export interface OfferSimple extends Thing {
   '@type'?: 'Offer'
+  /**
+   * Condition of the item offered for sale.
+   */
+  'itemCondition'?: OptionalSchemaOrgPrefix<OfferItemCondition>
   /**
    * A schema.org URL representing a schema itemAvailability value (e.g., https://schema.org/OutOfStock).
    */
@@ -43,6 +56,14 @@ export interface OfferSimple extends Thing {
   'priceValidUntil'?: ResolvableDate
 
   'url'?: string
+  /**
+   * Nested information about the return policies associated with an Offer. If you decide to add hasMerchantReturnPolicy, add the required and recommended MerchantReturnPolicy properties.
+   */
+  'hasMerchantReturnPolicy'?: NodeRelation<OpeningHoursSpecification>
+  /**
+   * Nested information about the shipping policies and options associated with an Offer. If you decide to add shippingDetails, add the required and recommended OfferShippingDetails properties.
+   */
+  'shippingDetails'?: OfferShippingDetails
 }
 
 export interface Offer extends OfferSimple {}
@@ -68,9 +89,14 @@ export const offerResolver = defineSchemaOrgResolver<Offer>({
 
     if (node.availability)
       node.availability = withBase(node.availability, 'https://schema.org/') as ItemAvailability
+    if (node.itemCondition)
+      node.itemCondition = withBase(node.itemCondition, 'https://schema.org/') as OfferItemCondition
 
     if (node.priceValidUntil)
       node.priceValidUntil = resolvableDateToIso(node.priceValidUntil)
+
+    node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy, ctx, merchantReturnPolicyResolver)
+    node.shippingDetails = resolveRelation(node.shippingDetails, ctx, offerShippingDetailsResolver)
     return node
   },
 })
