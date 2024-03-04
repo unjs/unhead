@@ -1,6 +1,6 @@
 import type { BaseBodyAttr, BaseHtmlAttr, BodyEvents, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, HeadEntryOptions, MaybeArray, MaybeFunctionEntries, MergeHead, MetaFlatInput, SchemaAugmentations, Unhead, Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate } from '@unhead/schema'
 import type { Plugin, Ref } from 'vue'
-import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
+import type { MaybeComputedRef, MaybeComputedRefEntries, MaybeComputedRefEntriesOnly } from './util'
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   /**
@@ -104,5 +104,5 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
 export type UseHeadInput<T extends MergeHead = {}> = MaybeComputedRef<ReactiveHead<T>>
-export type UseSeoMetaInput = MaybeComputedRefEntries<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
+export type UseSeoMetaInput = MaybeComputedRefEntriesOnly<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
