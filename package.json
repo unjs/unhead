@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "1.8.10",
+  "version": "1.8.11",
   "private": "true",
   "packageManager": "pnpm@8.15.4",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -14,6 +14,7 @@
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
+    "test:memory": "vitest --expose-gc  run memory",
     "export:sizes": "pnpm -r --parallel --filter=./packages/** run export:sizes",
     "release": "bumpp package.json packages/*/package.json --commit --push --tag",
     "lint": "eslint . --fix"
