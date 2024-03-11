@@ -12,7 +12,6 @@ describe('styles', () => {
       },
     })!
 
-
     const el = useHead({
       htmlAttrs: {
         style: `--color-primary:red;--color-secondary:blue;`,

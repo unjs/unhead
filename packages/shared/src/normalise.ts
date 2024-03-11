@@ -47,7 +47,6 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     : tag
 }
 
-
 export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
   const sep = key === 'class' ? ' ' : ';'
   if (typeof v === 'object' && !Array.isArray(v)) {

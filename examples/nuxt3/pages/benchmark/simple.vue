@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useHead } from '#head'
+import { useHead } from '#imports'
 
 const page = ref({
   title: 'Home',

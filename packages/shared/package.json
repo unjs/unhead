@@ -42,6 +42,6 @@
     "@unhead/schema": "workspace:*"
   },
   "devDependencies": {
-    "packrup": "^0.1.0"
+    "packrup": "^0.1.2"
   }
 }
