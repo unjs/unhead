@@ -41,7 +41,7 @@ describe('tagDuplicateStrategy', () => {
 
     const { htmlAttrs } = await renderSSRHead(head)
     expect(htmlAttrs).toMatchInlineSnapshot(
-      `" class="html-doc my-specific-page" style="color: red; background: green;""`,
+      `" class="html-doc my-specific-page" style="color: red; background: green""`,
     )
   })
 })

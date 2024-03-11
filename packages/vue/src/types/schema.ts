@@ -11,13 +11,19 @@ export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
 }
 
-export interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
   class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  style?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<string | boolean>>
 }
 
 export type Title = MaybeComputedRef<_Title>

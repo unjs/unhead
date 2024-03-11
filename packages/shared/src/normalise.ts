@@ -47,26 +47,29 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     : tag
 }
 
-export function normaliseClassProp(v: Required<Required<Head>['htmlAttrs']['class']>) {
+
+export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
+  const sep = key === 'class' ? ' ' : ';'
   if (typeof v === 'object' && !Array.isArray(v)) {
-    // @ts-expect-error untyped
-    v = Object.keys(v).filter(k => v[k])
+    v = Object.entries(v)
+      .filter(([, v]) => v)
+      .map(([k, v]) => key === 'style' ? `${k}:${v}` : k)
   }
   // finally, check we don't have spaces, we may need to split again
-  return (Array.isArray(v) ? v.join(' ') : v as string)
-    .split(' ')
+  return (Array.isArray(v) ? v.join(sep) : v as string)
+    .split(sep)
     .filter(c => c.trim())
     .filter(Boolean)
-    .join(' ')
+    .join(sep)
 }
 
 export async function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: boolean): Promise<T['props']> {
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
     // class has special handling
-    if (k === 'class') {
+    if (['class', 'style'].includes(k)) {
       // @ts-expect-error untyped
-      props[k] = normaliseClassProp(props[k])
+      props[k] = normaliseStyleClassProps(k, props[k])
       continue
     }
     // first resolve any promises
