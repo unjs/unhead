@@ -30,6 +30,21 @@ describe('vue dom styles', () => {
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual('background-color: red;')
   })
+  it('url style', async () => {
+    const dom = useDom()
+
+    const head = createHead({ document: dom.window.document })
+    setHeadInjectionHandler(() => head)
+
+    useHead({
+      bodyAttrs: {
+        style: '--cover-image: url(\'https://example-url-to-image.com\')',
+      },
+    })
+
+    await renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.body.getAttribute('style')).toEqual('--cover-image: url(\'https://example-url-to-image.com\');')
+  })
   it('array style', async () => {
     const dom = useDom()
 
