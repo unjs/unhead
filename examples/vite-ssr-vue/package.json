@@ -15,6 +15,9 @@
     "debug": "node --inspect-brk server"
   },
   "dependencies": {
+    "unhead": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/dom": "workspace:*",
     "@unhead/schema-org": "workspace:*",
     "@unhead/vue": "workspace:*",
     "pinia": "^2.1.7",

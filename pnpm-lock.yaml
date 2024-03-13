@@ -93,15 +93,24 @@ importers:
 
   examples/vite-ssr-vue:
     dependencies:
+      '@unhead/dom':
+        specifier: workspace:*
+        version: link:../../packages/dom
       '@unhead/schema-org':
         specifier: workspace:*
         version: link:../../packages/schema-org
+      '@unhead/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
       pinia:
         specifier: ^2.1.7
         version: 2.1.7(typescript@5.4.2)(vue@3.4.21)
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
       unplugin-auto-import:
         specifier: ^0.17.5
         version: 0.17.5(rollup@3.29.4)
