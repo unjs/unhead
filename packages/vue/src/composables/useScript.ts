@@ -1,4 +1,11 @@
-import type { UseScriptInput as BaseUseScriptInput, ScriptBase, ScriptInstance, UseScriptOptions, UseScriptStatus } from '@unhead/schema'
+import type {
+  UseScriptInput as BaseUseScriptInput,
+  SchemaAugmentations,
+  ScriptBase,
+  ScriptInstance,
+  UseScriptOptions,
+  UseScriptStatus,
+} from '@unhead/schema'
 import { useScript as _useScript } from 'unhead'
 import type { ComputedRef, Ref } from 'vue'
 import { computed, getCurrentInstance, ref } from 'vue'
@@ -11,7 +18,7 @@ export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' |
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase, 'src'>> & { src: string })
+export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & SchemaAugmentations['script'], 'src'>> & { src: string })
 
 export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {
   const input = typeof _input === 'string' ? { src: _input } : _input

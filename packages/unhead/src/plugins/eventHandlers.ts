@@ -25,9 +25,8 @@ export default defineHeadPlugin(head => ({
               tag._eventHandlers![key] = value
             }
           })
-        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href)) {
+        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href))
           tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
-        }
       }
     },
     'dom:renderTag': function (ctx) {
