@@ -90,11 +90,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
     // we need to attach event listeners as they can have side effects such as onload
     for (const [k, value] of Object.entries(tag._eventHandlers || {})) {
-      // avoid overriding
-      ;(tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el)!.addEventListener(
-        k.replace('on', ''),
-        value.bind($el),
-      )
+      if ($el.getAttribute(`data-${k}`) !== '') {
+        // avoid overriding
+        (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(k.replace('on', ''), value.bind($el))
+        $el.setAttribute(`data-${k}`, '')
+      }
     }
     Object.entries(tag.props).forEach(([k, value]) => {
       const ck = `attr:${k}`
