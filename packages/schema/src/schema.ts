@@ -65,14 +65,14 @@ type TitleTemplateResolver = string | ((title?: string) => string | null)
 
 export type Title = MaybePromiseProps<string | ({ textContent: string } & SchemaAugmentations['title']) | null>
 export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base<E extends EntryAugmentation = {}> = Partial<Merge<SchemaAugmentations['base'], MaybePromiseProps<_Base>>> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = {}> = MaybePromiseProps<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = {}> = MaybePromiseProps<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = {}> = MaybePromiseProps<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = {}> = MaybePromiseProps<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = {}> = MaybePromiseProps<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = {}> = MaybePromiseProps<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], MaybePromiseProps<_Base>>> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = MaybePromiseProps<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface HeadUtils {
   /**
