@@ -23,7 +23,8 @@ const requestIdleCallback: Window['requestIdleCallback'] = typeof window === 'un
  * @experimental
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
+export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
+  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || getActiveHead()
   if (!head)
@@ -36,7 +37,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
     return head._scripts[id]
 
   async function transform(entry: Head): Promise<Head> {
-    const script = await (options.transform || (input => input))(entry.script![0] as UseScriptInput)
+    const script = await (options.transform || (input => input))(entry.script![0] as UseScriptResolvedInput)
     const ctx = { script }
     await head!.hooks.callHook('script:transform', ctx)
     return { script: [ctx.script] }
@@ -111,9 +112,7 @@ export function useScript<T>(input: UseScriptInput, _options?: UseScriptOptions<
 
   NetworkEvents.forEach((fn) => {
     // clone fn
-    // @ts-expect-error untyped
     const _fn = typeof input[fn] === 'function' ? input[fn].bind({}) : null
-    // @ts-expect-error untyped
     input[fn] = (e: Event) => {
       script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
       head.hooks.callHook(`script:updated`, hookCtx)

@@ -1,4 +1,4 @@
-import type { ScriptInstance, UseScriptInput, UseScriptOptions, UseScriptStatus } from '@unhead/schema'
+import type { UseScriptInput as BaseUseScriptInput, ScriptBase, ScriptInstance, UseScriptOptions, UseScriptStatus } from '@unhead/schema'
 import { useScript as _useScript } from 'unhead'
 import type { ComputedRef, Ref } from 'vue'
 import { computed, getCurrentInstance, ref } from 'vue'
@@ -11,7 +11,10 @@ export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' |
   status: Ref<UseScriptStatus>
 }
 
-export function useScript<T>(input: MaybeComputedRefEntriesOnly<Omit<UseScriptInput, 'src'>> & { src: string }, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {
+export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase, 'src'>> & { src: string })
+
+export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {
+  const input = typeof _input === 'string' ? { src: _input } : _input
   const head = injectHead()
   const ctx = getCurrentInstance()
   const options = _options || {}
@@ -39,7 +42,7 @@ export function useScript<T>(input: MaybeComputedRefEntriesOnly<Omit<UseScriptIn
     }
   }
 
-  const instance = _useScript(input as UseScriptInput, options) as T & { $script: VueScriptInstance<T> }
+  const instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> }
 
   function syncStatus({ script }: { script: ScriptInstance<T> }) {
     if (script.id === instance.$script.id) {

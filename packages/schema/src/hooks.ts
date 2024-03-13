@@ -1,6 +1,6 @@
-import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
+import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
-import type { Script } from './'
+import type { ScriptInstance, UseScriptResolvedInput } from './'
 
 export type HookResult = Promise<void> | void
 
@@ -15,33 +15,6 @@ export interface SSRHeadPayload {
 export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
 }
-
-export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
-
-export interface ScriptInstance<T> {
-  id: string
-  entry?: ActiveHeadEntry<any>
-  loaded: boolean
-  status: UseScriptStatus
-  load: () => Promise<T>
-  waitForLoad: () => Promise<T>
-  remove: () => boolean
-}
-
-export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
-  /**
-   * Should the `dns-prefetch` tag be skipped.
-   *
-   * Useful if loading the script through a local proxy.
-   */
-  skipEarlyConnections?: boolean
-  use?: () => T | undefined | null
-  stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
-  transform?: (script: UseScriptInput) => Promise<UseScriptInput> | UseScriptInput
-  trigger?: 'idle' | 'manual' | Promise<void>
-}
-
-export type UseScriptInput = Omit<Script, 'src'> & { src: string }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
@@ -81,6 +54,6 @@ export interface HeadHooks {
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
-  'script:transform': (ctx: { script: UseScriptInput }) => HookResult
+  'script:transform': (ctx: { script: UseScriptResolvedInput }) => HookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
 }
