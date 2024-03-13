@@ -1,5 +1,14 @@
 import { NetworkEvents, hashCode } from '@unhead/shared'
-import type { DomRenderTagContext, Head, HeadEntryOptions, Script, ScriptInstance, UseScriptInput, UseScriptOptions } from '@unhead/schema'
+import type {
+  DomRenderTagContext,
+  Head,
+  HeadEntryOptions,
+  Script,
+  ScriptInstance,
+  UseScriptInput,
+  UseScriptOptions,
+  UseScriptResolvedInput,
+} from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
 const UseScriptDefaults: Script = {

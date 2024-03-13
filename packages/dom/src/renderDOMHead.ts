@@ -88,7 +88,14 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         delete state.elMap[id]
       })
     }
-    // add new attributes
+    // we need to attach event listeners as they can have side effects such as onload
+    for (const [k, value] of Object.entries(tag._eventHandlers || {})) {
+      // avoid overriding
+      ;(tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el)!.addEventListener(
+        k.replace('on', ''),
+        value.bind($el),
+      )
+    }
     Object.entries(tag.props).forEach(([k, value]) => {
       const ck = `attr:${k}`
       // class attributes have their own side effects to allow for merging
