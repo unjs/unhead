@@ -4,9 +4,9 @@ import { useDOMHead, useDelayedSerializedDom } from './util'
 
 describe('dom useScript', () => {
   it('basic', async () => {
-    useDOMHead()
+    const head = useDOMHead()
 
-    useScript({
+    const instance = useScript<{ test: (foo: string) => void }>({
       src: 'https://cdn.example.com/script.js',
     })
 
@@ -24,5 +24,21 @@ describe('dom useScript', () => {
 
       </body></html>"
     `)
+
+    let calledFn
+    let calledFnArgs
+    const hookPromise = new Promise<void>((resolve) => {
+      head.hooks.hook('script:instance-fn', ({ script, fn, args }) => {
+        if (script.id === instance.$script.id) {
+          calledFn = fn
+          calledFnArgs = args
+          resolve()
+        }
+      })
+    })
+    instance.test('hello-world')
+    await hookPromise
+    expect(calledFn).toBe('test')
+    expect(calledFnArgs).toEqual(['hello-world'])
   })
 })

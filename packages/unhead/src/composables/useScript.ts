@@ -179,12 +179,15 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
+      if (fn === '$script')
+        return script
       const stub = options.stub?.({ script, fn })
       if (stub)
         return stub
-      if (fn === '$script')
-        return script
       return (...args: any[]) => {
+        const hookCtx = { script, fn, args }
+        // we can't await this, mainly used for debugging
+        head.hooks.callHook('script:instance-fn', hookCtx)
         // third party scripts only run on client-side, mock the function
         if (head.ssr || !options.use)
           return

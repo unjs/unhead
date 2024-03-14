@@ -56,4 +56,5 @@ export interface HeadHooks {
 
   'script:transform': (ctx: { script: UseScriptResolvedInput }) => HookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
+  'script:instance-fn': (ctx: { script: ScriptInstance<any>, fn: string | symbol, args: any }) => HookResult
 }
