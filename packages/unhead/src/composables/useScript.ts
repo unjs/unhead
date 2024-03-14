@@ -179,11 +179,12 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
-      if (fn === '$script')
-        return script
       const stub = options.stub?.({ script, fn })
       if (stub)
         return stub
+      // $script is stubbed by abstraction layers
+      if (fn === '$script')
+        return script
       return (...args: any[]) => {
         const hookCtx = { script, fn, args }
         // we can't await this, mainly used for debugging
