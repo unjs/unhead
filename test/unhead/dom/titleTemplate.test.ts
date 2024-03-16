@@ -15,7 +15,7 @@ describe('titleTemplate', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      '"test - my template"',
+      `"test - my template"`,
     )
   })
   it('fn replace', async () => {

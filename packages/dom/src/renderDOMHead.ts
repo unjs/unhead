@@ -19,10 +19,10 @@ export interface RenderDomHeadOptions {
  */
 export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
-  if (!dom)
+  if (!dom || !head.dirty)
     return
 
-  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: head.dirty, tags: [] }
+  const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
   await head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)
