@@ -15,14 +15,14 @@
     "debug": "node --inspect-brk server"
   },
   "dependencies": {
-    "unhead": "workspace:*",
-    "@unhead/shared": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema-org": "workspace:*",
+    "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "pinia": "^2.1.7",
+    "unhead": "workspace:*",
     "unplugin-auto-import": "^0.17.5",
-    "vite": "^5.1.5",
+    "vite": "^5.1.6",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   },

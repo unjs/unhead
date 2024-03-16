@@ -59,8 +59,8 @@
     "@unhead/shared": "workspace:*",
     "magic-string": "^0.30.8",
     "mlly": "^1.6.1",
-    "ufo": "^1.4.0",
-    "unplugin": "^1.9.0",
+    "ufo": "^1.5.1",
+    "unplugin": "^1.10.0",
     "unplugin-ast": "^0.8.2"
   },
   "devDependencies": {
