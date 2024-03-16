@@ -9,7 +9,6 @@ import type {
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
-import { defu } from 'defu'
 import { getActiveHead } from './useActiveHead'
 
 const UseScriptDefaults: Script = {
@@ -86,8 +85,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     waitForLoad() {
       return new Promise<T>((resolve) => {
         if (script.status === 'loaded')
-          // @ts-expect-error untyped
-          resolve(options.use())
+          resolve(options.use?.() as T)
         function watchForScriptLoaded({ script }: { script: ScriptInstance<T> }) {
           if (script.id === id && script.status === 'loaded') {
             script.loaded = true
@@ -114,9 +112,6 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         transform,
         head,
       })
-      head._scripts = defu(head._scripts, {
-        [id]: script,
-      })
       return script.waitForLoad()
     },
   }
@@ -130,9 +125,6 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
       head.hooks.callHook(`script:updated`, hookCtx)
       _fn && _fn(e)
-      head._scripts = defu(head._scripts, {
-        [id]: script,
-      })
     }
   })
 
