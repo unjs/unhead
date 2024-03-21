@@ -50,7 +50,7 @@
     "unhead": ">=1.8.20"
   },
   "dependencies": {
-    "ufo": "^1.5.1"
+    "ufo": "^1.5.3"
   },
   "devDependencies": {
     "@unhead/schema": "workspace:*",
