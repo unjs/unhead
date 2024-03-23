@@ -59,23 +59,9 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       }
       return false
     },
-    waitForLoad() {
-      return new Promise<T>((resolve) => {
-        if (script.status === 'loaded')
-          resolve(options.use?.() as T)
-        function watchForScriptLoaded({ script }: { script: ScriptInstance<T> }) {
-          if (script.id === id && script.status === 'loaded') {
-            script.loaded = true
-            resolve(options.use?.() as T)
-            head!.hooks.removeHook('script:updated', watchForScriptLoaded)
-          }
-        }
-        head.hooks.hook('script:updated', watchForScriptLoaded)
-      })
-    },
     load() {
       if (script.status !== 'awaitingLoad')
-        return script.waitForLoad()
+        return script.loadPromise
       script.status = 'loading'
       head.hooks.callHook(`script:updated`, hookCtx)
       script.entry = head.push({
@@ -83,15 +69,19 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
           // async by default
           { ...UseScriptDefaults, ...input, key },
         ],
-      }, {
-        ...options as any as HeadEntryOptions,
-        // @ts-expect-error untyped
-        transform,
-        head,
-      })
-      return script.waitForLoad()
+      }, options)
+      return script.loadPromise
     },
-  }
+  } as any as ScriptInstance<T>
+  script.loadPromise = new Promise<T>((resolve, reject) => {
+    const removeHook = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
+      if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
+        script.status === 'loaded' && resolve(options.use?.() as T)
+        script.status === 'error' && reject(new Error(`Failed to load script: ${input.src}`))
+        removeHook()
+      }
+    })
+  })
 
   const hookCtx = { script }
 
@@ -136,12 +126,13 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
-      const stub = options.stub?.({ script, fn })
+      const $script = Object.assign(script.loadPromise, script)
+      const stub = options.stub?.({ script: $script, fn })
       if (stub)
         return stub
       // $script is stubbed by abstraction layers
       if (fn === '$script')
-        return script
+        return $script
       return (...args: any[]) => {
         const hookCtx = { script, fn, args }
         // we can't await this, mainly used for debugging
@@ -149,20 +140,8 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         // third party scripts only run on client-side, mock the function
         if (head.ssr || !options.use)
           return
-        // TODO mock invalid environments
-        if (script.loaded) {
-          const api = options.use()
-          // @ts-expect-error untyped
-          return api[fn](...args)
-        }
-        else {
-          return script.waitForLoad().then(
-            (api) => {
-              // @ts-expect-error untyped
-              return api[fn](...args)
-            },
-          )
-        }
+        // @ts-expect-error untyped
+        return script.status === 'loaded' ? options.use()[fn](...args) : script.loadPromise.then(api => api[fn](...args))
       }
     },
   }) as any as T & { $script: ScriptInstance<T> }

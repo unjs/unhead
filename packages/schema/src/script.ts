@@ -9,15 +9,16 @@ export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 
-export interface ScriptInstance<T> {
+export type ScriptInstance<T> = {
   id: string
   entry?: ActiveHeadEntry<any>
   loaded: boolean
   status: UseScriptStatus
+  loadPromise: Promise<T>
+  entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
-  waitForLoad: () => Promise<T>
   remove: () => boolean
-}
+} & Promise<T>
 
 export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
   /**
