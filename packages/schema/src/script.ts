@@ -18,13 +18,7 @@ export type ScriptInstance<T> = {
   remove: () => boolean
 } & Promise<T>
 
-export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'> {
-  /**
-   * Should the `dns-prefetch` tag be skipped.
-   *
-   * Useful if loading the script through a local proxy.
-   */
-  skipEarlyConnections?: boolean
+export interface UseScriptOptions<T> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.
    */
@@ -35,10 +29,9 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
   stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
   /**
    * The trigger to load the script:
-   * - `manual` - Load the script manually by calling `$script.load()` or `$script.waitForLoad()`.
+   * - `manual` - Load the script manually by calling `$script.load()`.
    * - `Promise` - Load the script when the promise resolves.
    */
-  trigger?: 'idle' | 'manual' | Promise<void>
   trigger?: 'manual' | Promise<void>
   /**
    * Context to run events with. This is useful in Vue to attach the current instance context before

@@ -96,14 +96,8 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const trigger = options.trigger
   if (options.trigger)
     trigger instanceof Promise && trigger.then(script.load)
-    // if we're lazy it's likely it will load within the first 10 seconds, otherwise we just prefetch the DNS for a quicker load
-    maybeHintEarlyConnection(isIdle ? 'preconnect' : 'dns-prefetch')
-  }
-  else {
+  else
     script.load()
-    // safe to preconnect as we'll load this script quite early
-    maybeHintEarlyConnection('preconnect')
-  }
 
   function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {
     // we don't know up front if they'll be innerHTML or src due to the transform step
