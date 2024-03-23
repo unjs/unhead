@@ -1,5 +1,6 @@
 import type {
   UseScriptInput as BaseUseScriptInput,
+  DataKeys,
   SchemaAugmentations,
   ScriptBase,
   ScriptInstance,
@@ -18,7 +19,7 @@ export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' |
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & SchemaAugmentations['script'], 'src'>> & { src: string })
+export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
 
 export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {
   const input = typeof _input === 'string' ? { src: _input } : _input
