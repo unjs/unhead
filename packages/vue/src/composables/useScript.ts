@@ -8,14 +8,12 @@ import type {
   UseScriptStatus,
 } from '@unhead/schema'
 import { useScript as _useScript } from 'unhead'
-import type { ComputedRef, Ref } from 'vue'
-import { computed, getCurrentInstance, ref } from 'vue'
-import { NetworkEvents } from '@unhead/shared'
+import type { Ref } from 'vue'
+import { getCurrentInstance, ref } from 'vue'
 import type { MaybeComputedRefEntriesOnly } from '../types'
 import { injectHead } from './injectHead'
 
 export interface VueScriptInstance<T> extends Omit<ScriptInstance<T>, 'loaded' | 'status'> {
-  loaded: ComputedRef<boolean>
   status: Ref<UseScriptStatus>
 }
 
@@ -42,11 +40,9 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
 
   options.stub = ({ script, fn }) => {
     if (fn === '$script') {
-      return {
-        ...script,
+      return Object.assign(script, {
         status,
-        loaded: computed(() => status.value === 'loaded'),
-      }
+      })
     }
   }
 

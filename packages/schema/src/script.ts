@@ -11,8 +11,6 @@ export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 
 export type ScriptInstance<T> = {
   id: string
-  entry?: ActiveHeadEntry<any>
-  loaded: boolean
   status: UseScriptStatus
   loadPromise: Promise<T>
   entry?: ActiveHeadEntry<any>
