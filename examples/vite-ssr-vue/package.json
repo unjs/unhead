@@ -22,7 +22,7 @@
     "pinia": "^2.1.7",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^0.17.5",
-    "vite": "^5.1.6",
+    "vite": "^5.2.3",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   },
@@ -30,7 +30,7 @@
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.7.4",
-    "express": "^4.18.3",
+    "express": "^4.19.1",
     "serve-static": "^1.15.0"
   }
 }
