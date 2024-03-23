@@ -5,15 +5,18 @@ const { elements, $script } = useScript<{ elements: (() => void) }>({
   src: 'https://js.stripe.com/v3/',
 }, {
   use: () => window.Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'),
-  trigger: 'idle',
+  trigger: new Promise((resolve) => {
+    // Note: This does not work in all browsers, you should use a polyfill if needed
+    typeof window !== 'undefined' && window.requestIdleCallback(resolve)
+  })
 })
 
-$script.waitForLoad().then(() => {
-  console.log(elements)
+$script.then((res) => {
+  console.log('ready!', res)
 })
 
 useHead({
-  title: () => $script.status.value,
+  title: $script.status,
 })
 </script>
 

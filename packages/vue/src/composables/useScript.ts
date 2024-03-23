@@ -29,6 +29,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const status = ref('awaitingLoad')
 
   options.stub = ({ script, fn }) => {
+    // need to add reactive properties
     if (fn === '$script') {
       return Object.assign(script, {
         status,
@@ -43,10 +44,10 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       status.value = script.status
       // clean up
       if (script.status === 'removed')
-        head.hooks.removeHook(`script:updated`, syncStatus)
+        head.hooks.removeHook('script:updated', syncStatus)
     }
   }
   // sync the status
-  head.hooks.hook(`script:updated`, syncStatus)
+  head.hooks.hook('script:updated', syncStatus)
   return instance
 }

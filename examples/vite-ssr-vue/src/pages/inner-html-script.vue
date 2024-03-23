@@ -32,7 +32,7 @@ const { $script, test } = useScript<TestApi>({
   trigger: 'manual',
 })
 test()
-$script.waitForLoad().then(() => {
+$script.then(() => {
   console.log('ready!')
 })
 

@@ -1,30 +1,12 @@
 import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
   DomRenderTagContext,
-  Head,
-  HeadEntryOptions,
-  Script,
   ScriptInstance,
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
-
-const UseScriptDefaults: Script = {
-  defer: true,
-  fetchpriority: 'low',
-}
-const requestIdleCallback: Window['requestIdleCallback'] = typeof window === 'undefined'
-  ? (() => {}) as any
-  : (globalThis.requestIdleCallback || ((cb) => {
-      const start = Date.now()
-      const idleDeadline = {
-        didTimeout: false,
-        timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
-      }
-      return setTimeout(() => { cb(idleDeadline) }, 1)
-    }))
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -37,9 +19,8 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const options = _options || {}
   const head = options.head || getActiveHead()
   if (!head)
-    throw new Error('No active head found, please provide a head instance or use the useHead composable')
+    throw new Error('Missing Unhead context.')
 
-  // TODO warn about non-src / non-key input
   const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
   const key = `use-script.${id}`
   if (head._scripts?.[id])
@@ -66,8 +47,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       head.hooks.callHook(`script:updated`, hookCtx)
       script.entry = head.push({
         script: [
-          // async by default
-          { ...UseScriptDefaults, ...input, key },
+          { defer: true, fetchpriority: 'low', ...input, key },
         ],
       }, options)
       return script.loadPromise
@@ -99,21 +79,21 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   else
     script.load()
 
-  function resolveInnerHtmlLoad(ctx: DomRenderTagContext) {
+  // handle innerHTMl script events
+  const removeHook = head.hooks.hook('dom:renderTag', (ctx: DomRenderTagContext) => {
     // we don't know up front if they'll be innerHTML or src due to the transform step
-    if (ctx.tag.key === key) {
-      if (ctx.tag.innerHTML) {
-        setTimeout(() => {
-          // trigger load event
-          script.status = 'loaded'
-          head!.hooks.callHook('script:updated', hookCtx)
-          typeof input.onload === 'function' && input.onload(new Event('load'))
-        }, 5 /* give inline script a chance to run */)
-      }
-      head!.hooks.removeHook('dom:renderTag', resolveInnerHtmlLoad)
+    if (ctx.tag.key !== key)
+      return
+    if (ctx.tag.innerHTML) {
+      setTimeout(() => {
+        // trigger load event
+        script.status = 'loaded'
+        head!.hooks.callHook('script:updated', hookCtx)
+        typeof input.onload === 'function' && input.onload.call(options.eventContext, new Event('load'))
+      }, 5 /* give inline script a chance to run */)
     }
-  }
-  head.hooks.hook('dom:renderTag', resolveInnerHtmlLoad)
+    removeHook()
+  })
 
   // 3. Proxy the script API
   const instance = new Proxy({}, {
@@ -138,7 +118,9 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     },
   }) as any as T & { $script: ScriptInstance<T> }
   // 4. Providing a unique context for the script
-  head._scripts = head._scripts || {}
-  head._scripts[id] = instance
+  head._scripts = Object.assign(
+    head._scripts || {},
+    { [id]: instance },
+  )
   return instance
 }
