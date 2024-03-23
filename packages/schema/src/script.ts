@@ -35,12 +35,7 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
    */
   stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
   /**
-   * Transform the script instance before it's resolved.
-   */
-  transform?: (script: UseScriptResolvedInput) => Promise<UseScriptResolvedInput> | UseScriptResolvedInput
-  /**
    * The trigger to load the script:
-   * - `idle` - Load the script when the browser is idle.
    * - `manual` - Load the script manually by calling `$script.load()` or `$script.waitForLoad()`.
    * - `Promise` - Load the script when the promise resolves.
    */

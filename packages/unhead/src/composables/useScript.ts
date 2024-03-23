@@ -45,30 +45,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   if (head._scripts?.[id])
     return head._scripts[id]
 
-  async function transform(entry: Head): Promise<Head> {
-    const script = await (options.transform || (input => input))(entry.script![0] as UseScriptResolvedInput)
-    const ctx = { script }
-    await head!.hooks.callHook('script:transform', ctx)
-    return { script: [ctx.script] }
-  }
-
-  function maybeHintEarlyConnection(rel: 'preconnect' | 'dns-prefetch') {
-    if (
-      // opt-out
-      options.skipEarlyConnections
-      // must be a valid absolute url
-      || !input.src.includes('//')
-      // must be server-side
-      || !head!.ssr
-    )
-      return
-    const key = `use-script.${id}.early-connection`
-    head!.push({
-      link: [{ key, rel, href: new URL(input.src).origin }],
-    }, { mode: 'server' })
-  }
-
-  const script: ScriptInstance<T> = {
+  const script = {
     id,
     status: 'awaitingLoad',
     loaded: false,
@@ -128,20 +105,8 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     }
   })
 
-  let trigger = options.trigger
-  if (trigger) {
-    const isIdle = trigger === 'idle'
-    if (isIdle) {
-      // we don't need idle trigger for server
-      if (head.ssr)
-        trigger = 'manual'
-      else
-        // won't work in a SSR environment
-        trigger = new Promise<void>(resolve => requestIdleCallback(() => resolve()))
-    }
-    // never resolves
-    trigger === 'manual' && (trigger = new Promise(() => {}))
-    // check trigger is a promise
+  const trigger = options.trigger
+  if (options.trigger)
     trigger instanceof Promise && trigger.then(script.load)
     // if we're lazy it's likely it will load within the first 10 seconds, otherwise we just prefetch the DNS for a quicker load
     maybeHintEarlyConnection(isIdle ? 'preconnect' : 'dns-prefetch')

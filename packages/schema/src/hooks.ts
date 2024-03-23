@@ -54,7 +54,6 @@ export interface HeadHooks {
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
-  'script:transform': (ctx: { script: UseScriptResolvedInput }) => HookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
   'script:instance-fn': (ctx: { script: ScriptInstance<any>, fn: string | symbol, args: any }) => HookResult
 }
