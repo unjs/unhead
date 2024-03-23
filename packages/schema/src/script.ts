@@ -39,4 +39,10 @@ export interface UseScriptOptions<T> extends Omit<HeadEntryOptions, 'transform'>
    * - `Promise` - Load the script when the promise resolves.
    */
   trigger?: 'idle' | 'manual' | Promise<void>
+  trigger?: 'manual' | Promise<void>
+  /**
+   * Context to run events with. This is useful in Vue to attach the current instance context before
+   * calling the event, allowing the event to be reactive.
+   */
+  eventContext?: any
 }

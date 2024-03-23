@@ -1,4 +1,4 @@
-import { NetworkEvents, hashCode } from '@unhead/shared'
+import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
   DomRenderTagContext,
   Head,
@@ -84,16 +84,14 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   })
 
   const hookCtx = { script }
-
-  NetworkEvents.forEach((fn) => {
-    // clone fn
-    const _fn = typeof input[fn] === 'function' ? input[fn].bind({}) : null
-    input[fn] = (e: Event) => {
-      script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-      head.hooks.callHook(`script:updated`, hookCtx)
-      _fn && _fn(e)
-    }
-  })
+  ScriptNetworkEvents
+    .forEach((fn) => {
+      input[fn] = (e: Event) => {
+        script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
+        head.hooks.callHook(`script:updated`, hookCtx)
+        typeof input[fn] === 'function' && input[fn].call(options.eventContext, e)
+      }
+    })
 
   const trigger = options.trigger
   if (options.trigger)

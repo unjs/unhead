@@ -22,21 +22,11 @@ export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBa
 export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: VueScriptInstance<T> } {
   const input = typeof _input === 'string' ? { src: _input } : _input
   const head = injectHead()
-  const ctx = getCurrentInstance()
   const options = _options || {}
   // @ts-expect-error untyped
   options.head = head
+  options.eventContext = getCurrentInstance()
   const status = ref('awaitingLoad')
-
-  NetworkEvents.forEach((fn) => {
-    // @ts-expect-error untyped
-    const _fn = typeof input[fn] === 'function' ? input[fn].bind(ctx) : null
-    // rebinding the events for the vue context
-    if (_fn) {
-      // @ts-expect-error untyped
-      input[fn] = (e: Event) => _fn(e)
-    }
-  })
 
   options.stub = ({ script, fn }) => {
     if (fn === '$script') {
