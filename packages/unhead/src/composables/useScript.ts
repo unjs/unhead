@@ -31,7 +31,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     status: 'awaitingLoad',
     loaded: false,
     remove() {
-      if (script.status === 'loaded') {
+      if (script.entry) {
         script.entry?.dispose()
         script.status = 'removed'
         head.hooks.callHook(`script:updated`, hookCtx)
@@ -66,10 +66,11 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const hookCtx = { script }
   ScriptNetworkEvents
     .forEach((fn) => {
+      const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
       input[fn] = (e: Event) => {
         script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
         head.hooks.callHook(`script:updated`, hookCtx)
-        typeof input[fn] === 'function' && input[fn].call(options.eventContext, e)
+        _fn?.(e)
       }
     })
 
