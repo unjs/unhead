@@ -30,8 +30,8 @@ Universal document <head> tag manager. Tiny, adaptable and full featured.
 
 - 🌳 Powerful pluggable core with a tiny footprint
 - 🍣 All the good stuff: deduping, sorting, title templates, template params, etc.
-- 🪨 Rock-solid DOM updates, fast and tiny (952 bytes minzipped)
-- 🚀 Add-ons for extra oomph: Capo.js, Hash Hydration and Vite tree-shaking
+- 🪨 Rock-solid DOM updates, fast and tiny (~1kB minzipped)
+- 🚀 Add-ons for extra oomph: Capo.js, Tree-shaking, `useSeoMeta`, `useScript`, etc.
 - 💎 Fully typed with MDN docs
 - 🤝 Used by [Nuxt](https://nuxt.com/) with more framework support coming soon.
 
