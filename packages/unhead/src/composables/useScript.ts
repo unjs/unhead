@@ -26,30 +26,31 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   if (head._scripts?.[id])
     return head._scripts[id]
 
+  const syncStatus = (s: ScriptInstance<T>['status']) => {
+    script.status = s
+    head.hooks.callHook(`script:updated`, hookCtx)
+  }
   const script = {
     id,
     status: 'awaitingLoad',
     loaded: false,
     remove() {
       if (script.entry) {
-        script.entry?.dispose()
-        script.status = 'removed'
-        head.hooks.callHook(`script:updated`, hookCtx)
+        script.entry.dispose()
+        syncStatus('removed')
         delete head._scripts?.[id]
         return true
       }
       return false
     },
     load() {
-      if (script.status !== 'awaitingLoad')
-        return script.loadPromise
-      script.status = 'loading'
-      head.hooks.callHook(`script:updated`, hookCtx)
-      script.entry = head.push({
-        script: [
-          { defer: true, fetchpriority: 'low', ...input, key },
-        ],
-      }, options)
+      if (!script.entry) {
+        syncStatus('loading')
+        // status should get updated from script events
+        script.entry = head.push({
+          script: [{ defer: true, fetchpriority: 'low', ...input, key }],
+        }, options)
+      }
       return script.loadPromise
     },
   } as any as ScriptInstance<T>
@@ -68,8 +69,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     .forEach((fn) => {
       const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
       input[fn] = (e: Event) => {
-        script.status = fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading'
-        head.hooks.callHook(`script:updated`, hookCtx)
+        syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
         _fn?.(e)
       }
     })
@@ -88,8 +88,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     if (ctx.tag.innerHTML) {
       setTimeout(() => {
         // trigger load event
-        script.status = 'loaded'
-        head!.hooks.callHook('script:updated', hookCtx)
+        syncStatus('loaded')
         typeof input.onload === 'function' && input.onload.call(options.eventContext, new Event('load'))
       }, 5 /* give inline script a chance to run */)
     }
