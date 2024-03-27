@@ -36,18 +36,16 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       })
     }
   }
-
-  const instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> }
-
-  function syncStatus({ script }: { script: ScriptInstance<T> }) {
-    if (script.id === instance.$script.id) {
+  let instance: T & { $script: VueScriptInstance<T> }
+  // sync the status, need to register before useScript
+  const rmHook = head.hooks.hook('script:updated', ({ script }) => {
+    if (instance && script.id === instance.$script.id) {
       status.value = script.status
       // clean up
       if (script.status === 'removed')
-        head.hooks.removeHook('script:updated', syncStatus)
+        rmHook()
     }
-  }
-  // sync the status
-  head.hooks.hook('script:updated', syncStatus)
+  })
+  instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> }
   return instance
 }
