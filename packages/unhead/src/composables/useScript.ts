@@ -30,6 +30,15 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
   }
+  const trigger = options.trigger
+  ScriptNetworkEvents
+    .forEach((fn) => {
+      const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
+      input[fn] = (e: Event) => {
+        syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
+        _fn?.(e)
+      }
+    })
   const script = {
     id,
     status: 'awaitingLoad',
@@ -57,22 +66,16 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   script.loadPromise = new Promise<T>((resolve, reject) => {
     const removeHook = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        script.status === 'loaded' && resolve(options.use?.() as T)
-        script.status === 'error' && reject(new Error(`Failed to load script: ${input.src}`))
+        if (script.status === 'loaded')
+          resolve(options.use?.() as T)
+        else if (script.status === 'error')
+          reject(new Error(`Failed to load script: ${input.src}`))
         removeHook()
       }
     })
   })
 
   const hookCtx = { script }
-  ScriptNetworkEvents
-    .forEach((fn) => {
-      const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
-      input[fn] = (e: Event) => {
-        syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
-        _fn?.(e)
-      }
-    })
 
   if (trigger) {
     if (trigger instanceof Promise)
