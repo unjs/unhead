@@ -16,11 +16,10 @@ export default defineHeadPlugin(head => ({
           .forEach(([key, value]) => {
             if (key.startsWith('on') && typeof value === 'function') {
               // insert a inline script to set the status of onload and onerror
-              if (head.ssr && NetworkEvents.includes(key)) {
-                tag.props[key] = `this.dataset.${key} = true`
-                tag.props['data-unhead-events'] = ''
-              }
-              else { delete tag.props[key] }
+              if (head.ssr && NetworkEvents.includes(key))
+                tag.props[key] = `this.dataset.${key}fired = true`
+
+              else delete tag.props[key]
               tag._eventHandlers = tag._eventHandlers || {}
               tag._eventHandlers![key] = value
             }
@@ -29,23 +28,11 @@ export default defineHeadPlugin(head => ({
           tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
       }
     },
-    'dom:renderTag': function (ctx) {
+    'dom:renderTag': function ({ $el, tag }) {
       // this is only handling SSR rendered tags with event handlers
-      const $el = ctx.$el as HTMLScriptElement
-      if (!$el?.dataset || !('unheadEvents' in $el.dataset))
-        return
-      delete $el.dataset.unheadEvents
-      const handler = (k: string) => ctx.tag._eventHandlers?.[k]?.call(ctx.$el, new Event(k.replace('on', '')))
-      for (const k of Object.keys($el.dataset).filter(k => NetworkEvents.includes(k)))
-        handler(k)
-      if (typeof MutationObserver !== 'undefined') {
-        // we need to handle SSR events, as they are not triggered
-        const observer = new MutationObserver((e) => {
-          e.filter(m => m.attributeName && NetworkEvents.includes(m.attributeName!.replace('data-', '')))
-            .map(m => m.attributeName!.replace('data-', ''))
-            .map(handler)
-        })
-        observer.observe(ctx.$el, { attributes: true })
+      for (const k of Object.keys($el?.dataset as HTMLScriptElement || {}).filter(k => NetworkEvents.some(e => `${e}fired` === k))) {
+        const ek = k.replace('fired', '')
+        tag._eventHandlers?.[ek]?.call($el, new Event(ek.replace('on', '')))
       }
     },
   },

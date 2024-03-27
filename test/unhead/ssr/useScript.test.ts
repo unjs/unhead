@@ -16,7 +16,7 @@ describe('dom useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" src="https://cdn.example.com/script.js" onload="this.dataset.onload = true" onerror="this.dataset.onerror = true" data-hid="438d65b" data-unhead-events=""></script>",
+        "headTags": "<script defer fetchpriority="low" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="438d65b"></script>",
         "htmlAttrs": "",
       }
     `)
