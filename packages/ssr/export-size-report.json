@@ -6,25 +6,24 @@
       "@unhead/shared"
     ],
     "versions": {
-      "export-size": "0.5.2",
-      "esbuild": "^0.13.8",
-      "brotli-size": "^4.0.0"
+      "export-size": "0.7.0",
+      "esbuild": "^0.19.5"
     }
   },
   "exports": [
     {
       "name": "renderSSRHead",
       "path": "dist/index.mjs",
-      "minified": 1509,
-      "minzipped": 631,
-      "bundled": 2561
+      "minified": 1542,
+      "minzipped": 656,
+      "bundled": 2665
     },
     {
       "name": "ssrRenderTags",
       "path": "dist/index.mjs",
-      "minified": 1153,
-      "minzipped": 515,
-      "bundled": 1973
+      "minified": 1182,
+      "minzipped": 539,
+      "bundled": 2059
     },
     {
       "name": "tagToString",
@@ -37,7 +36,7 @@
       "name": "propsToString",
       "path": "dist/index.mjs",
       "minified": 248,
-      "minzipped": 187,
+      "minzipped": 171,
       "bundled": 502
     },
     {

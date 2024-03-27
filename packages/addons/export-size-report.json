@@ -14,18 +14,17 @@
       "estree-walker"
     ],
     "versions": {
-      "export-size": "0.5.2",
-      "esbuild": "^0.13.8",
-      "brotli-size": "^4.0.0"
+      "export-size": "0.7.0",
+      "esbuild": "^0.19.5"
     }
   },
   "exports": [
     {
       "name": "InferSeoMetaPlugin",
       "path": "dist/index.mjs",
-      "minified": 1017,
-      "minzipped": 395,
-      "bundled": 2657
+      "minified": 1008,
+      "minzipped": 393,
+      "bundled": 2756
     },
     {
       "name": "DefaultCriticalTags",

@@ -9,137 +9,136 @@
       "vue"
     ],
     "versions": {
-      "export-size": "0.5.2",
-      "esbuild": "^0.13.8",
-      "brotli-size": "^4.0.0"
+      "export-size": "0.7.0",
+      "esbuild": "^0.19.5"
     }
   },
   "exports": [
     {
       "name": "VueHeadMixin",
       "path": "dist/index.mjs",
-      "minified": 1819,
-      "minzipped": 832,
-      "bundled": 3799
+      "minified": 1782,
+      "minzipped": 823,
+      "bundled": 3764
     },
     {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1788,
-      "minzipped": 820,
-      "bundled": 3700
+      "minified": 1768,
+      "minzipped": 821,
+      "bundled": 3747
     },
     {
       "name": "useSeoMeta",
       "path": "dist/index.mjs",
-      "minified": 1735,
-      "minzipped": 795,
-      "bundled": 3582
+      "minified": 1715,
+      "minzipped": 800,
+      "bundled": 3629
     },
     {
       "name": "useServerHeadSafe",
       "path": "dist/index.mjs",
-      "minified": 1671,
-      "minzipped": 771,
-      "bundled": 3474
+      "minified": 1634,
+      "minzipped": 770,
+      "bundled": 3439
     },
     {
       "name": "useHeadSafe",
       "path": "dist/index.mjs",
-      "minified": 1619,
-      "minzipped": 753,
-      "bundled": 3355
-    },
-    {
-      "name": "useScript",
-      "path": "dist/index.mjs",
-      "minified": 1571,
-      "minzipped": 750,
-      "bundled": 2959
+      "minified": 1582,
+      "minzipped": 749,
+      "bundled": 3320
     },
     {
       "name": "useHead",
       "path": "dist/index.mjs",
-      "minified": 1545,
-      "minzipped": 743,
-      "bundled": 3233
+      "minified": 1508,
+      "minzipped": 745,
+      "bundled": 3198
+    },
+    {
+      "name": "useScript",
+      "path": "dist/index.mjs",
+      "minified": 1502,
+      "minzipped": 717,
+      "bundled": 2922
     },
     {
       "name": "useServerHead",
       "path": "dist/index.mjs",
-      "minified": 1227,
-      "minzipped": 576,
-      "bundled": 2403
+      "minified": 1191,
+      "minzipped": 575,
+      "bundled": 2384
     },
     {
       "name": "injectHead",
       "path": "dist/index.mjs",
-      "minified": 1131,
-      "minzipped": 533,
-      "bundled": 2211
+      "minified": 1095,
+      "minzipped": 529,
+      "bundled": 2192
     },
     {
       "name": "createHead",
       "path": "dist/index.mjs",
       "minified": 991,
-      "minzipped": 482,
-      "bundled": 2171
+      "minzipped": 481,
+      "bundled": 2152
     },
     {
       "name": "createServerHead",
       "path": "dist/index.mjs",
       "minified": 922,
-      "minzipped": 444,
-      "bundled": 2091
+      "minzipped": 447,
+      "bundled": 2072
     },
     {
       "name": "Vue2ProvideUnheadPlugin",
       "path": "dist/index.mjs",
       "minified": 870,
-      "minzipped": 434,
-      "bundled": 2169
+      "minzipped": 433,
+      "bundled": 2150
     },
     {
       "name": "setHeadInjectionHandler",
       "path": "dist/index.mjs",
-      "minified": 887,
-      "minzipped": 428,
-      "bundled": 1940
+      "minified": 851,
+      "minzipped": 420,
+      "bundled": 1921
     },
     {
       "name": "resolveUnrefHeadInput",
       "path": "dist/index.mjs",
       "minified": 688,
-      "minzipped": 359,
-      "bundled": 1626
+      "minzipped": 356,
+      "bundled": 1607
     },
     {
       "name": "HashHydrationPlugin",
       "path": "dist/index.mjs",
       "minified": 188,
-      "minzipped": 128,
-      "bundled": 497
+      "minzipped": 129,
+      "bundled": 458
     },
     {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
       "minified": 183,
       "minzipped": 127,
-      "bundled": 492
+      "bundled": 453
     },
     {
       "name": "unheadVueComposablesImports",
       "path": "dist/index.mjs",
       "minified": 158,
       "minzipped": 124,
-      "bundled": 505
+      "bundled": 466
     },
     {
       "name": "CapoPlugin",
       "path": "dist/index.mjs",
       "minified": 179,
       "minzipped": 123,
-      "bundled": 488
+      "bundled": 449
     }
   ]
 }

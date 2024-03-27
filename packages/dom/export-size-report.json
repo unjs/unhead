@@ -6,32 +6,31 @@
       "@unhead/shared"
     ],
     "versions": {
-      "export-size": "0.5.2",
-      "esbuild": "^0.13.8",
-      "brotli-size": "^4.0.0"
+      "export-size": "0.7.0",
+      "esbuild": "^0.19.5"
     }
   },
   "exports": [
     {
       "name": "DomPlugin",
       "path": "dist/index.mjs",
-      "minified": 2676,
-      "minzipped": 1171,
-      "bundled": 4397
+      "minified": 3131,
+      "minzipped": 1332,
+      "bundled": 5215
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 2430,
-      "minzipped": 1052,
-      "bundled": 3974
+      "minified": 2885,
+      "minzipped": 1224,
+      "bundled": 4768
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 2242,
-      "minzipped": 991,
-      "bundled": 3640
+      "minified": 2697,
+      "minzipped": 1158,
+      "bundled": 4434
     }
   ]
 }
