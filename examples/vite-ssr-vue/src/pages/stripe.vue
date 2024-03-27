@@ -5,10 +5,7 @@ const { elements, $script } = useScript<{ elements: (() => void) }>({
   src: 'https://js.stripe.com/v3/',
 }, {
   use: () => window.Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'),
-  trigger: new Promise((resolve) => {
-    // Note: This does not work in all browsers, you should use a polyfill if needed
-    typeof window !== 'undefined' && window.requestIdleCallback(resolve)
-  })
+  trigger: typeof window !== 'undefined' ? window.requestIdleCallback : 'manual'
 })
 
 $script.then((res) => {
