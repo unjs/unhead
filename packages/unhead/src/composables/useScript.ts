@@ -39,6 +39,17 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         _fn?.(e)
       }
     })
+  const loadPromise = new Promise<T>((resolve, reject) => {
+    const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
+      if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
+        if (script.status === 'loaded')
+          resolve(options.use?.() as T)
+        else if (script.status === 'error')
+          reject(new Error(`Failed to load script: ${input.src}`))
+        cleanUp()
+      }
+    })
+  })
   const script = {
     id,
     status: 'awaitingLoad',
@@ -60,20 +71,9 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
           script: [{ defer: true, fetchpriority: 'low', ...input, key }],
         }, options)
       }
-      return script.loadPromise
+      return loadPromise
     },
   } as any as ScriptInstance<T>
-  script.loadPromise = new Promise<T>((resolve, reject) => {
-    const removeHook = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
-      if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        if (script.status === 'loaded')
-          resolve(options.use?.() as T)
-        else if (script.status === 'error')
-          reject(new Error(`Failed to load script: ${input.src}`))
-        removeHook()
-      }
-    })
-  })
 
   const hookCtx = { script }
 
@@ -103,7 +103,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
-      const $script = Object.assign(script.loadPromise, script)
+      const $script = Object.assign(loadPromise, script)
       const stub = options.stub?.({ script: $script, fn })
       if (stub)
         return stub
