@@ -28,13 +28,15 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   options.eventContext = getCurrentInstance()
   const status = ref('awaitingLoad')
 
+  const stubOptions = options.stub
   options.stub = ({ script, fn }) => {
     // need to add reactive properties
     if (fn === '$script') {
-      return Object.assign(script, {
-        status,
-      })
+      // @ts-expect-error untyped
+      script.status = status
+      return script
     }
+    return stubOptions?.({ script: $script, fn })
   }
   let instance: T & { $script: VueScriptInstance<T> }
   // sync the status, need to register before useScript
@@ -46,6 +48,5 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         rmHook()
     }
   })
-  instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> }
-  return instance
+  return (instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> })
 }
