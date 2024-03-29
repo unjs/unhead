@@ -118,7 +118,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         if (head.ssr || !options.use)
           return
         // @ts-expect-error untyped
-        return script.status === 'loaded' ? options.use()[fn](...args) : script.loadPromise.then(api => api[fn](...args))
+        return script.status === 'loaded' ? options.use()[fn]?.(...args) : loadPromise.then(api => api[fn]?.(...args))
       }
     },
   }) as any as T & { $script: ScriptInstance<T> }
