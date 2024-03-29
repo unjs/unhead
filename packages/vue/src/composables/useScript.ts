@@ -30,13 +30,12 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
 
   const stubOptions = options.stub
   options.stub = ({ script, fn }) => {
+    // @ts-expect-error untyped
+    script.status = status
     // need to add reactive properties
-    if (fn === '$script') {
-      // @ts-expect-error untyped
-      script.status = status
+    if (fn === '$script')
       return script
-    }
-    return stubOptions?.({ script: $script, fn })
+    return stubOptions?.({ script, fn })
   }
   let instance: T & { $script: VueScriptInstance<T> }
   // sync the status, need to register before useScript
