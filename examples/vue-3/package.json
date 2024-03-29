@@ -13,7 +13,7 @@
     "vue": "^3.4.21"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^18.2.3",
+    "@tsconfig/node18": "^18.2.4",
     "@types/node": "^20.11.30",
     "@unhead/vue": "link:../../packages/vue",
     "@vitejs/plugin-vue": "^5.0.4",
