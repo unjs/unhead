@@ -33,7 +33,7 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
    * - `Promise` - Load the script when the promise resolves.
    * - `Function` - Register a callback function to load the script.
    */
-  trigger?: 'manual' | Promise<void> | ((fn: Function) => any)
+  trigger?: 'manual' | Promise<void> | ((fn: any) => any)
   /**
    * Context to run events with. This is useful in Vue to attach the current instance context before
    * calling the event, allowing the event to be reactive.
