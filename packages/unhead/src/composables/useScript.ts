@@ -77,13 +77,12 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
 
   const hookCtx = { script }
 
-  if (trigger !== 'server') {
-    if (trigger instanceof Promise)
-      trigger.then(script.load)
-    else if (typeof trigger === 'function')
-      trigger(script.load)
-  }
-  else { script.load() }
+  if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
+    script.load()
+  else if (trigger instanceof Promise)
+    trigger.then(script.load)
+  else if (typeof trigger === 'function')
+    trigger(script.load)
 
   // handle innerHTMl script events
   const removeHook = head.hooks.hook('dom:renderTag', (ctx: DomRenderTagContext) => {

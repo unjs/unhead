@@ -3,11 +3,31 @@ import { createHead, useScript } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('dom useScript', () => {
-  it('basic', async () => {
+  it('default', async () => {
     const head = createHead()
 
     useScript({
       src: 'https://cdn.example.com/script.js',
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+  it('server', async () => {
+    const head = createHead()
+
+    useScript({
+      src: 'https://cdn.example.com/script.js',
+    }, {
+      trigger: 'server',
     })
 
     const ctx = await renderSSRHead(head)
