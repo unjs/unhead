@@ -29,11 +29,13 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
   stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
   /**
    * The trigger to load the script:
-   * - `manual` - Load the script manually by calling `$script.load()`.
-   * - `Promise` - Load the script when the promise resolves.
-   * - `Function` - Register a callback function to load the script.
+   * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
+   * - `manual` - Load the script manually by calling `$script.load()`, exists only on the client.
+   * - `Promise` - Load the script when the promise resolves, exists only on the client.
+   * - `Function` - Register a callback function to load the script, exists only on the client.
+   * - `server` - Have the script injected on the server.
    */
-  trigger?: 'manual' | Promise<void> | ((fn: any) => any)
+  trigger?: 'client' | 'server' | 'manual' | Promise<void> | ((fn: any) => any) | null
   /**
    * Context to run events with. This is useful in Vue to attach the current instance context before
    * calling the event, allowing the event to be reactive.

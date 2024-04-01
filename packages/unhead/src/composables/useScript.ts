@@ -30,7 +30,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
   }
-  const trigger = options.trigger
+  const trigger = typeof options.trigger !== 'undefined' ? options.trigger : 'client'
   ScriptNetworkEvents
     .forEach((fn) => {
       const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
@@ -77,7 +77,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
 
   const hookCtx = { script }
 
-  if (trigger) {
+  if (trigger !== 'server') {
     if (trigger instanceof Promise)
       trigger.then(script.load)
     else if (typeof trigger === 'function')
