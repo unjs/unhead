@@ -56,7 +56,7 @@ export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v:
   }
   // finally, check we don't have spaces, we may need to split again
   return (Array.isArray(v) ? v.join(sep) : v as string)
-    .split(sep)
+    ?.split(sep)
     .filter(c => c.trim())
     .filter(Boolean)
     .join(sep)
