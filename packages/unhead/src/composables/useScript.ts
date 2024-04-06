@@ -26,6 +26,18 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   if (head._scripts?.[id])
     return head._scripts[id]
 
+  let _usePromise: Promise<T> | undefined
+  function use() {
+    return _usePromise || (_usePromise = new Promise<T>((resolve) => {
+      const end = setInterval(() => {
+        const api = !!options.use?.()
+        if (api) {
+          resolve(api)
+          clearInterval(end)
+        }
+      }, 5)
+    }))
+  }
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
@@ -42,10 +54,11 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const loadPromise = new Promise<T>((resolve, reject) => {
     const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        if (script.status === 'loaded')
-          resolve(options.use?.() as T)
-        else if (script.status === 'error')
-          reject(new Error(`Failed to load script: ${input.src}`))
+        if (script.status === 'loaded') {
+          script.loaded = true
+          use().then(api => resolve(api))
+        }
+        else if (script.status === 'error') { reject(new Error(`Failed to load script: ${input.src}`)) }
         cleanUp()
       }
     })
@@ -117,7 +130,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         if (head.ssr || !options.use)
           return
         // @ts-expect-error untyped
-        return script.status === 'loaded' ? options.use()[fn]?.(...args) : loadPromise.then(api => api[fn]?.(...args))
+        return loadPromise.then(api => api[fn]?.(...args))
       }
     },
   }) as any as T & { $script: ScriptInstance<T> }
