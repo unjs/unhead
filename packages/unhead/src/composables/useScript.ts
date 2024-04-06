@@ -30,7 +30,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   function use() {
     return _usePromise || (_usePromise = new Promise<T>((resolve) => {
       const end = setInterval(() => {
-        const api = !!options.use?.()
+        const api = options.use?.()
         if (api) {
           resolve(api)
           clearInterval(end)
@@ -54,11 +54,11 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const loadPromise = new Promise<T>((resolve, reject) => {
     const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        if (script.status === 'loaded') {
-          script.loaded = true
+        if (script.status === 'loaded')
           use().then(api => resolve(api))
-        }
-        else if (script.status === 'error') { reject(new Error(`Failed to load script: ${input.src}`)) }
+
+        else if (script.status === 'error')
+          reject(new Error(`Failed to load script: ${input.src}`))
         cleanUp()
       }
     })
