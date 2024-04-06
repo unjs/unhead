@@ -28,9 +28,11 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
 
   let _usePromise: Promise<T> | undefined
   function use() {
+    if (!options.use)
+      return Promise.reject()
     return _usePromise || (_usePromise = new Promise<T>((resolve) => {
       const end = setInterval(() => {
-        const api = options.use?.()
+        const api = options.use()
         if (api) {
           resolve(api)
           clearInterval(end)
