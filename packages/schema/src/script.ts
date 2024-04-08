@@ -22,7 +22,7 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.
    */
-  use?: () => T | undefined | null
+  use?: () => (Promise<T | undefined> | T | undefined)
   /**
    * Stub the script instance. Useful for SSR or testing.
    */

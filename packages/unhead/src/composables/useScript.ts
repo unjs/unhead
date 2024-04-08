@@ -27,19 +27,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     return head._scripts[id]
 
   let _usePromise: Promise<T> | undefined
-  function use() {
-    if (!options.use)
-      return Promise.reject()
-    return _usePromise || (_usePromise = new Promise<T>((resolve) => {
-      const end = setInterval(() => {
-        const api = options.use()
-        if (api) {
-          resolve(api)
-          clearInterval(end)
-        }
-      }, 5)
-    }))
-  }
+  const use = () => _usePromise || (_usePromise = Promise.resolve(options.use?.()))
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
@@ -54,6 +42,9 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       }
     })
   const loadPromise = new Promise<T>((resolve, reject) => {
+    // never resolve server side
+    if (head.ssr)
+      return
     const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
         if (script.status === 'loaded')
@@ -128,9 +119,6 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         const hookCtx = { script, fn, args }
         // we can't await this, mainly used for debugging
         head.hooks.callHook('script:instance-fn', hookCtx)
-        // third party scripts only run on client-side, mock the function
-        if (head.ssr || !options.use)
-          return
         // @ts-expect-error untyped
         return loadPromise.then(api => api[fn]?.(...args))
       }
