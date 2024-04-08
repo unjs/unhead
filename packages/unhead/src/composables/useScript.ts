@@ -26,8 +26,10 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   if (head._scripts?.[id])
     return head._scripts[id]
 
-  let _usePromise: Promise<T> | undefined
-  const use = () => _usePromise || (_usePromise = Promise.resolve(options.use?.()))
+  const use = () => new Promise<T>(
+    // only resolve with a valid API
+    resolve => Promise.resolve(options.use?.()).then(api => api && resolve(api)),
+  )
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
@@ -49,7 +51,6 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
         if (script.status === 'loaded')
           use().then(api => resolve(api))
-
         else if (script.status === 'error')
           reject(new Error(`Failed to load script: ${input.src}`))
         cleanUp()
