@@ -1,6 +1,7 @@
 import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
   DomRenderTagContext,
+  Head,
   ScriptInstance,
   UseScriptInput,
   UseScriptOptions,
@@ -21,6 +22,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   if (!head)
     throw new Error('Missing Unhead context.')
 
+  const isAbsolute = input.src && (input.src.startsWith('http') || input.src.startsWith('//'))
   const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
   const key = `use-script.${id}`
   if (head._scripts?.[id])
@@ -66,9 +68,17 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     load() {
       if (!script.entry) {
         syncStatus('loading')
+        const defaults: Required<Head>['script'][0] = {
+          defer: true,
+          fetchpriority: 'low',
+        }
+        if (isAbsolute) {
+          defaults.crossorigin = 'anonymous'
+          defaults.referrerpolicy = 'no-referrer'
+        }
         // status should get updated from script events
         script.entry = head.push({
-          script: [{ defer: true, fetchpriority: 'low', ...input, key }],
+          script: [{ ...defaults, ...input, key }],
         }, options)
       }
       return loadPromise
