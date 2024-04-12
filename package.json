@@ -27,7 +27,7 @@
     "@vue/server-renderer": "^3.4.21",
     "acorn-loose": "^8.4.0",
     "bumpp": "^9.4.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.0.0",
     "fs-extra": "^11.2.0",
     "jsdom": "^24.0.0",
     "typescript": "^5.4.5",
