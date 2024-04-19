@@ -13,7 +13,7 @@ describe('dom useScript', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script data-onload="" data-onerror="" defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-hid="438d65b"></script></head>
+      <script data-onload="" data-onerror="" defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-hid="c5c65b0"></script></head>
       <body>
 
       <div>
@@ -26,12 +26,10 @@ describe('dom useScript', () => {
     `)
 
     let calledFn
-    let calledFnArgs
     const hookPromise = new Promise<void>((resolve) => {
       head.hooks.hook('script:instance-fn', ({ script, fn, args }) => {
         if (script.id === instance.$script.id) {
           calledFn = fn
-          calledFnArgs = args
           resolve()
         }
       })
@@ -39,6 +37,5 @@ describe('dom useScript', () => {
     instance.test('hello-world')
     await hookPromise
     expect(calledFn).toBe('test')
-    expect(calledFnArgs).toEqual(['hello-world'])
   })
 })

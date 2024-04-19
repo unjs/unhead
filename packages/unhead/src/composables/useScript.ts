@@ -27,7 +27,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const key = `use-script.${id}`
   if (head._scripts?.[id])
     return head._scripts[id]
-
+  options.beforeInit?.()
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
@@ -44,9 +44,11 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   const loadPromise = new Promise<T>((resolve, reject) => {
     const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        if (script.status === 'loaded')
-          resolve(options.use?.() as T)
-        else if (script.status === 'error')
+        if (script.status === 'loaded') {
+          const api = options.use?.()
+          api && resolve(api)
+        }
+        else if (script.status === 'error') {
           reject(new Error(`Failed to load script: ${input.src}`))
         cleanUp()
       }
@@ -105,16 +107,19 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       // $script is stubbed by abstraction layers
       if (fn === '$script')
         return $script
-      return (...args: any[]) => {
-        const hookCtx = { script, fn, args }
+      const attempt = (args?: any[]) => {
+        if (head.ssr)
+          return
+        const api = options.use?.()
+        const exists = !!(api && fn in api)
+        const hookCtx = { script, fn, args, exists }
         // we can't await this, mainly used for debugging
         head.hooks.callHook('script:instance-fn', hookCtx)
-        // third party scripts only run on client-side, mock the function
-        if (head.ssr || !options.use)
-          return
-        // @ts-expect-error untyped
-        return script.status === 'loaded' ? options.use()[fn]?.(...args) : loadPromise.then(api => api[fn]?.(...args))
+        return exists && api[fn]
       }
+      // api may already be loaded
+      // for instance GTM will already have dataLayer available, we can expose it directly
+      return attempt() || ((...args: any[]) => loadPromise.then(() => attempt(args)(...args)))
     },
   }) as any as T & { $script: ScriptInstance<T> }
   // 4. Providing a unique context for the script
