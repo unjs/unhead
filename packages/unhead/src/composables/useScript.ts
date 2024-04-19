@@ -95,21 +95,6 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
   else if (typeof trigger === 'function')
     trigger(script.load)
 
-  // handle innerHTMl script events
-  const removeHook = head.hooks.hook('dom:renderTag', (ctx: DomRenderTagContext) => {
-    // we don't know up front if they'll be innerHTML or src due to the transform step
-    if (ctx.tag.key !== key)
-      return
-    if (ctx.tag.innerHTML) {
-      setTimeout(() => {
-        // trigger load event
-        syncStatus('loaded')
-        typeof input.onload === 'function' && input.onload.call(options.eventContext, new Event('load'))
-      }, 5 /* give inline script a chance to run */)
-    }
-    removeHook()
-  })
-
   // 3. Proxy the script API
   const instance = new Proxy({}, {
     get(_, fn) {
