@@ -67,6 +67,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     },
     load() {
       if (!script.entry) {
+        options.beforeInit?.()
         syncStatus('loading')
         const defaults: Required<Head>['script'][0] = {
           defer: true,

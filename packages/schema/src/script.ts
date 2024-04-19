@@ -41,4 +41,9 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
    * calling the event, allowing the event to be reactive.
    */
   eventContext?: any
+  /**
+   * Called before the script is initialized. Will not be triggered when the script is already loaded. This means
+   * this is guaranteed to be called only once, unless the script is removed and re-added.
+   */
+  beforeInit?: () => void
 }
