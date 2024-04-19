@@ -1,6 +1,5 @@
 import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
-  DomRenderTagContext,
   Head,
   ScriptInstance,
   UseScriptInput,
@@ -15,16 +14,14 @@ import { getActiveHead } from './useActiveHead'
  * @experimental
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: ScriptInstance<T> } {
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: Promise<T> & ScriptInstance<T> } {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || getActiveHead()
   if (!head)
     throw new Error('Missing Unhead context.')
 
-  const isAbsolute = input.src && (input.src.startsWith('http') || input.src.startsWith('//'))
   const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
-  const key = `use-script.${id}`
   if (head._scripts?.[id])
     return head._scripts[id]
   options.beforeInit?.()
@@ -42,7 +39,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       }
     })
   const loadPromise = new Promise<T>((resolve, reject) => {
-    const cleanUp = head.hooks.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
+    const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
         if (script.status === 'loaded') {
           const api = options.use?.()
@@ -50,14 +47,14 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
         }
         else if (script.status === 'error') {
           reject(new Error(`Failed to load script: ${input.src}`))
-        cleanUp()
+        }
+        _()
       }
     })
   })
-  const script = {
+  const script: ScriptInstance<T> = {
     id,
     status: 'awaitingLoad',
-    loaded: false,
     remove() {
       if (script.entry) {
         script.entry.dispose()
@@ -69,25 +66,24 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     },
     load() {
       if (!script.entry) {
-        options.beforeInit?.()
         syncStatus('loading')
         const defaults: Required<Head>['script'][0] = {
           defer: true,
           fetchpriority: 'low',
         }
-        if (isAbsolute) {
+        // is absolute, add privacy headers
+        if (input.src && (input.src.startsWith('http') || input.src.startsWith('//'))) {
           defaults.crossorigin = 'anonymous'
           defaults.referrerpolicy = 'no-referrer'
         }
         // status should get updated from script events
         script.entry = head.push({
-          script: [{ ...defaults, ...input, key }],
+          script: [{ ...defaults, ...input, key: `script.${id}` }],
         }, options)
       }
       return loadPromise
     },
-  } as any as ScriptInstance<T>
-
+  }
   const hookCtx = { script }
 
   if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
@@ -121,7 +117,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
       // for instance GTM will already have dataLayer available, we can expose it directly
       return attempt() || ((...args: any[]) => loadPromise.then(() => attempt(args)(...args)))
     },
-  }) as any as T & { $script: ScriptInstance<T> }
+  }) as any as T & { $script: ScriptInstance<T> & Promise<T> }
   // 4. Providing a unique context for the script
   head._scripts = Object.assign(
     head._scripts || {},

@@ -9,14 +9,13 @@ export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 
-export type ScriptInstance<T> = {
+export interface ScriptInstance<T> {
   id: string
   status: UseScriptStatus
-  loadPromise: Promise<T>
   entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
   remove: () => boolean
-} & Promise<T>
+}
 
 export interface UseScriptOptions<T> extends HeadEntryOptions {
   /**
@@ -26,7 +25,7 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
   /**
    * Stub the script instance. Useful for SSR or testing.
    */
-  stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
+  stub?: ((ctx: { script: Promise<T> & ScriptInstance<T>, fn: string | symbol }) => any)
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
