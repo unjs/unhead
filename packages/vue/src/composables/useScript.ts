@@ -48,4 +48,7 @@ export function useScript<T>(_input: UseScriptInput, _options?: UseScriptOptions
     }
   })
   return (instance = _useScript(input as BaseUseScriptInput, options) as T & { $script: VueScriptInstance<T> })
+  const scope = getCurrentInstance()
+  if (scope && !options.trigger)
+    options.trigger = onMounted
 }
