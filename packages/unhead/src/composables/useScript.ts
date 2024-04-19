@@ -103,19 +103,25 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       // $script is stubbed by abstraction layers
       if (fn === '$script')
         return $script
-      const attempt = (args?: any[]) => {
+      const attempt = (api?: T | null | undefined, args?: any[]) => {
         if (head.ssr)
           return
-        const api = options.use?.()
+        api = api || options.use?.()
         const exists = !!(api && fn in api)
         const hookCtx = { script, fn, args, exists }
         // we can't await this, mainly used for debugging
         head.hooks.callHook('script:instance-fn', hookCtx)
-        return exists && api[fn]
+        if (exists) {
+          // check if it's a function, if so call it
+          if (typeof api![fn] === 'function')
+            return api![fn](...(args || []))
+          // return property
+          return api![fn]
+        }
       }
       // api may already be loaded
       // for instance GTM will already have dataLayer available, we can expose it directly
-      return attempt() || ((...args: any[]) => loadPromise.then(() => attempt(args)(...args)))
+      return attempt() || ((...args: any[]) => loadPromise.then(api => attempt(api, args)))
     },
   }) as any as T & { $script: ScriptInstance<T> & Promise<T> }
   // 4. Providing a unique context for the script
