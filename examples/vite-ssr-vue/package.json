@@ -22,9 +22,9 @@
     "pinia": "^2.1.7",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^0.17.5",
-    "vite": "^5.2.8",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vite": "^5.2.9",
+    "vue": "^3.4.23",
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "latest",
