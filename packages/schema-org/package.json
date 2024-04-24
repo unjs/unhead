@@ -47,7 +47,7 @@
   },
   "peerDependencies": {
     "@unhead/shared": "workspace:*",
-    "unhead": ">=1.9.4"
+    "unhead": ">=1.9.7"
   },
   "dependencies": {
     "ufo": "^1.5.3"
@@ -58,6 +58,6 @@
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
     "unplugin-vue-components": "^0.26.0",
-    "vue": "^3.4.23"
+    "vue": "^3.4.25"
   }
 }
