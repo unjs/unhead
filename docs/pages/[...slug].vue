@@ -57,6 +57,11 @@ const communityLinks = computed(() => [
 
 const ecosystemLinks = [
   {
+    label: 'Zhead',
+    to: 'https://zhead.dev',
+    target: '_blank',
+  },
+  {
     label: 'Unlighthouse',
     to: 'https://unlighthouse.dev',
     target: '_blank',
