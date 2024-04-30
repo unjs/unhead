@@ -66,6 +66,11 @@ const ecosystemLinks = [
     to: 'https://unlighthouse.dev',
     target: '_blank',
   },
+  {
+    label: 'Request Indexing',
+    to: 'https://requestindexing.com',
+    target: '_blank',
+  },
 ]
 </script>
 
