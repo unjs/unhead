@@ -95,7 +95,7 @@ const ecosystemLinks = [
           <template #right>
             <UDocsToc :links="page.body?.toc?.links || []">
               <template #bottom>
-              <div class="hidden !mt-6 lg:block space-y-6">
+                <div class="hidden !mt-6 lg:block space-y-6">
                   <UDivider dashed />
                   <Ads />
                   <UDivider v-if="page.body?.toc?.links?.length" dashed />
