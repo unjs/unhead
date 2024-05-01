@@ -38,6 +38,8 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         _fn?.(e)
       }
     })
+
+  const proxyApi = (!head.ssr && options?.use?.()) || {} as T
   const loadPromise = new Promise<T>((resolve, reject) => {
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
@@ -51,7 +53,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         _()
       }
     })
-  })
+  }).then(api => Object.assign(proxyApi, api))
   const script: ScriptInstance<T> = {
     id,
     status: 'awaitingLoad',
@@ -85,7 +87,6 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     },
   }
   const hookCtx = { script }
-
   if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
     script.load()
   else if (trigger instanceof Promise)
@@ -94,7 +95,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     trigger(script.load)
 
   // 3. Proxy the script API
-  const instance = new Proxy({}, {
+  const instance = new Proxy<T>(proxyApi, {
     get(_, fn) {
       const $script = Object.assign(loadPromise, script)
       const stub = options.stub?.({ script: $script, fn })
@@ -103,25 +104,11 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       // $script is stubbed by abstraction layers
       if (fn === '$script')
         return $script
-      const attempt = (api?: T | null | undefined, args?: any[]) => {
-        if (head.ssr)
-          return
-        api = api || options.use?.()
-        const exists = !!(api && fn in api)
-        const hookCtx = { script, fn, args, exists }
-        // we can't await this, mainly used for debugging
-        head.hooks.callHook('script:instance-fn', hookCtx)
-        if (exists) {
-          // check if it's a function, if so call it
-          if (typeof api![fn] === 'function')
-            return api![fn](...(args || []))
-          // return property
-          return api![fn]
-        }
-      }
-      // api may already be loaded
-      // for instance GTM will already have dataLayer available, we can expose it directly
-      return attempt() || ((...args: any[]) => loadPromise.then(api => attempt(api, args)))
+      const exists = fn in _
+      head.hooks.callHook('script:instance-fn', { script, fn, exists: fn in _ })
+      return exists
+        ? Reflect.get(_, fn)
+        : (...args: any[]) => loadPromise.then(api => Reflect.apply(api[fn], api, args))
     },
   }) as any as T & { $script: ScriptInstance<T> & Promise<T> }
   // 4. Providing a unique context for the script
