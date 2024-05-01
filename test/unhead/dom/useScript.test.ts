@@ -27,7 +27,7 @@ describe('dom useScript', () => {
 
     let calledFn
     const hookPromise = new Promise<void>((resolve) => {
-      head.hooks.hook('script:instance-fn', ({ script, fn, args }) => {
+      head.hooks.hook('script:instance-fn', ({ script, fn }) => {
         if (script.id === instance.$script.id) {
           calledFn = fn
           resolve()

@@ -39,7 +39,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     })
 
-  const proxyApi = (!head.ssr && options?.use?.()) || {} as T
+  const proxy = { value: (!head.ssr && options?.use?.()) || {} as T }
   const loadPromise = new Promise<T>((resolve, reject) => {
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
@@ -53,7 +53,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         _()
       }
     })
-  }).then(api => Object.assign(proxyApi, api))
+  }).then(api => (proxy.value = api))
   const script: ScriptInstance<T> = {
     id,
     status: 'awaitingLoad',
@@ -95,20 +95,25 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     trigger(script.load)
 
   // 3. Proxy the script API
-  const instance = new Proxy<T>(proxyApi, {
-    get(_, fn) {
+  const instance = new Proxy<{ value: T }>(proxy, {
+    get({ value: _ }, k) {
       const $script = Object.assign(loadPromise, script)
-      const stub = options.stub?.({ script: $script, fn })
+      const stub = options.stub?.({ script: $script, fn: k })
       if (stub)
         return stub
       // $script is stubbed by abstraction layers
-      if (fn === '$script')
+      if (k === '$script')
         return $script
-      const exists = fn in _
-      head.hooks.callHook('script:instance-fn', { script, fn, exists: fn in _ })
+      const exists = k in _
+      head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
       return exists
-        ? Reflect.get(_, fn)
-        : (...args: any[]) => loadPromise.then(api => Reflect.apply(api[fn], api, args))
+        ? Reflect.get(_, k)
+        : (...args: any[]) => loadPromise.then((api) => {
+            const _k = Reflect.get(api, k)
+            return typeof _k === 'function'
+              ? Reflect.apply(api[k], api, args)
+              : _k
+          })
     },
   }) as any as T & { $script: ScriptInstance<T> & Promise<T> }
   // 4. Providing a unique context for the script
