@@ -104,7 +104,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       // $script is stubbed by abstraction layers
       if (k === '$script')
         return $script
-      const exists = k in _
+      const exists = k in _ && typeof _[k] !== 'undefined'
       head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
       return exists
         ? Reflect.get(_, k)
