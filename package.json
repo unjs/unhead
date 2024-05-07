@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.9.9",
   "private": "true",
-  "packageManager": "pnpm@9.0.6",
+  "packageManager": "pnpm@9.1.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -21,22 +21,22 @@
     "lint": "eslint . --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.16.1",
+    "@antfu/eslint-config": "^2.16.2",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.6",
-    "@vue/server-renderer": "^3.4.26",
+    "@vue/server-renderer": "^3.4.27",
     "acorn-loose": "^8.4.0",
     "bumpp": "^9.4.1",
-    "eslint": "^9.1.1",
+    "eslint": "^9.2.0",
     "fs-extra": "^11.2.0",
     "jsdom": "^24.0.0",
     "typescript": "^5.4.5",
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
-    "vitest": "^1.5.3",
-    "vue": "^3.4.26"
+    "vitest": "^1.6.0",
+    "vue": "^3.4.27"
   },
   "resolutions": {
-    "vue": "^3.4.26"
+    "vue": "^3.4.27"
   }
 }

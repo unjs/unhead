@@ -61,7 +61,7 @@
     "mlly": "^1.7.0",
     "ufo": "^1.5.3",
     "unplugin": "^1.10.1",
-    "unplugin-ast": "^0.9.0"
+    "unplugin-ast": "^0.10.0"
   },
   "devDependencies": {
     "@babel/types": "^7.24.5",

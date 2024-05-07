@@ -58,6 +58,6 @@
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
     "unplugin-vue-components": "^0.27.0",
-    "vue": "^3.4.26"
+    "vue": "^3.4.27"
   }
 }
