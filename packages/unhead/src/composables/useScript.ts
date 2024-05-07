@@ -44,8 +44,14 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
         if (script.status === 'loaded') {
-          const api = options.use?.()
-          api && resolve(api)
+          if (typeof options.use === 'function') {
+            const api = options.use()
+            api && resolve(api)
+          }
+          // scripts without any use() function
+          else {
+            resolve({} as T)
+          }
         }
         else if (script.status === 'error') {
           reject(new Error(`Failed to load script: ${input.src}`))
