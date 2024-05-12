@@ -47,7 +47,7 @@
   },
   "peerDependencies": {
     "@unhead/shared": "workspace:*",
-    "unhead": ">=1.9.7"
+    "unhead": ">=1.9.10"
   },
   "dependencies": {
     "ufo": "^1.5.3"
