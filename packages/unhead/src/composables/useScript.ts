@@ -24,7 +24,6 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
   if (head._scripts?.[id])
     return head._scripts[id]
-  options.beforeInit?.()
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
@@ -84,6 +83,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
           defaults.crossorigin = 'anonymous'
           defaults.referrerpolicy = 'no-referrer'
         }
+        options.beforeInit?.()
         // status should get updated from script events
         script.entry = head.push({
           script: [{ ...defaults, ...input, key: `script.${id}` }],
