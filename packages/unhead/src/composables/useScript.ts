@@ -41,16 +41,17 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
 
   const proxy = { value: (!head.ssr && options?.use?.()) || {} as T }
   const loadPromise = new Promise<T>((resolve, reject) => {
+    const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
         if (script.status === 'loaded') {
           if (typeof options.use === 'function') {
             const api = options.use()
-            api && resolve(api)
+            api && emit(api)
           }
           // scripts without any use() function
           else {
-            resolve({} as T)
+            emit({} as T)
           }
         }
         else if (script.status === 'error') {
@@ -98,7 +99,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   else if (trigger instanceof Promise)
     trigger.then(script.load)
   else if (typeof trigger === 'function')
-    trigger(script.load)
+    trigger(async () => script.load())
 
   // 3. Proxy the script API
   const instance = new Proxy<{ value: T }>(proxy, {
