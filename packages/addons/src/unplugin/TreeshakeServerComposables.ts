@@ -65,8 +65,9 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         && !code.includes('useServerHeadSafe')
         && !code.includes('useServerSeoMeta')
         && !code.includes('useSchemaOrg')
-      )
+      ) {
         return
+      }
 
       let transformed
       try {
