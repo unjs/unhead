@@ -58,13 +58,13 @@
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "magic-string": "^0.30.10",
-    "mlly": "^1.7.0",
+    "mlly": "^1.7.1",
     "ufo": "^1.5.3",
     "unplugin": "^1.10.1",
     "unplugin-ast": "^0.10.0"
   },
   "devDependencies": {
-    "@babel/types": "^7.24.6",
+    "@babel/types": "^7.24.7",
     "estree-walker": "^3.0.3"
   }
 }

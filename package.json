@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.9.12",
   "private": "true",
-  "packageManager": "pnpm@9.1.4",
+  "packageManager": "pnpm@9.3.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -21,7 +21,7 @@
     "lint": "eslint . --fix"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.19.2",
+    "@antfu/eslint-config": "^2.21.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "@vue/server-renderer": "^3.4.27",
