@@ -44,7 +44,8 @@ export const monetaryAmountResolver = defineSchemaOrgResolver<MonetaryAmount>({
     '@type': 'MonetaryAmount',
   },
   resolve(node, ctx) {
-    node.value = resolveRelation(node.value, ctx, quantitativeValueResolver)
+    if (typeof node.value !== 'number')
+      node.value = resolveRelation(node.value, ctx, quantitativeValueResolver)
     return node
   },
 })
