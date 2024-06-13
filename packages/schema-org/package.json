@@ -45,10 +45,6 @@
     "release": "bumpp package.json --commit --push --tag",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
-  "peerDependencies": {
-    "@unhead/shared": "workspace:*",
-    "unhead": ">=1.9.11"
-  },
   "dependencies": {
     "ufo": "^1.5.3"
   },
