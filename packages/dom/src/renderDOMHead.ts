@@ -112,7 +112,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         // style attributes have their own side effects to allow for merging
         for (const c of (value || '').split(';').filter(Boolean)) {
           const [k, ...v] = c.split(':').map(s => s.trim())
-          track(id, `${ck}:${c}:${k}`, () => {
+          track(id, `${ck}:${k}`, () => {
             ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
           })
           ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v.join(':'))

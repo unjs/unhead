@@ -52,4 +52,53 @@ describe('styles', () => {
       </body></html>"
     `)
   })
+  it('overrides', async () => {
+    useDOMHead()
+
+    useHead({
+      bodyAttrs: {
+        style: '--c-bg: #03D57E;--c-text: #000;',
+      },
+    })
+
+    const el = useHead({
+      bodyAttrs: {
+        style: '--c-bg: #000;--c-text: white;',
+      },
+    })
+
+    activeDom?.window.document.documentElement.style.setProperty('--header-height', '50px')
+
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html style="--header-height: 50px;"><head>
+
+      </head>
+      <body style="--c-bg: #000; --c-text: white;">
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+
+    el.dispose()
+
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html style="--header-height: 50px;"><head>
+
+      </head>
+      <body style="--c-bg: #03D57E; --c-text: #000;">
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
 })
