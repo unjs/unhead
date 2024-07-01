@@ -11,8 +11,9 @@ export default defineNuxtConfig({
     '@nuxt/content',
     'nuxt-lodash',
     'nuxt-og-image',
-    '@nuxt/icon',
+    'nuxt-icon',
     '@nuxtjs/seo',
+    '@nuxt/image',
   ],
   site: {
     name: 'Unhead',
@@ -82,7 +83,7 @@ export default defineNuxtConfig({
     viewer: false,
   },
   seo: {
-    redirectToCanonicalSiteUrl: true,
+    // redirectToCanonicalSiteUrl: true,
   },
   ogImage: {
     debug: process.dev,
