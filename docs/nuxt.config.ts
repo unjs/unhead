@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     '@nuxt/content',
     'nuxt-lodash',
     'nuxt-og-image',
-    'nuxt-icon',
+    '@nuxt/icon',
     '@nuxtjs/seo',
   ],
   site: {
