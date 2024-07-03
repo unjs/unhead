@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-Universal document <head> tag manager. Tiny, adaptable and full featured.
+Universal document &lt;head&gt tag manager. Tiny, adaptable and full featured.
 </p>
 
 <p align="center">
