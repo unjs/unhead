@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     'nuxt-icon',
     '@nuxtjs/seo',
     '@nuxt/image',
+    '@nuxt/scripts',
   ],
   site: {
     name: 'Unhead',
@@ -22,6 +23,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       version,
+    },
+  },
+  scripts: {
+    registry: {
+      fathomAnalytics: {
+        site: 'BRDEJWKJ',
+      },
     },
   },
   content: {
