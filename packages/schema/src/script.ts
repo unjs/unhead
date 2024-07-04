@@ -25,7 +25,7 @@ export interface UseScriptOptions<T> extends HeadEntryOptions {
   /**
    * Stub the script instance. Useful for SSR or testing.
    */
-  stub?: ((ctx: { script: Promise<T> & ScriptInstance<T>, fn: string | symbol }) => any)
+  stub?: ((ctx: { script: ScriptInstance<T>, fn: string | symbol }) => any)
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.

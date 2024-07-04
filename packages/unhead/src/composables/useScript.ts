@@ -39,7 +39,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     })
 
-  const proxy = { value: (!head.ssr && options?.use?.()) || {} as T }
+  const proxy = { instance: (!head.ssr && options?.use?.()) || {} } as { instance: T, $script: ScriptInstance<T> }
   const loadPromise = new Promise<T>((resolve, reject) => {
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
@@ -60,7 +60,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         _()
       }
     })
-  }).then(api => (proxy.value = api))
+  }).then(api => (proxy.instance = api))
   const script: ScriptInstance<T> = {
     id,
     status: 'awaitingLoad',
@@ -102,17 +102,16 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     trigger(async () => script.load())
 
   // 3. Proxy the script API
-  const instance = new Proxy<{ value: T }>(proxy, {
-    get({ value: _ }, k) {
-      const $script = Object.assign(loadPromise, script)
-      const stub = options.stub?.({ script: $script, fn: k })
+  proxy.$script = Object.assign(loadPromise, script)
+  const instance = new Proxy<{ instance: T }>(proxy, {
+    get({ instance: _ }, k) {
+      const stub = options.stub?.({ script: proxy.$script, fn: k })
       if (stub)
         return stub
-      // $script is stubbed by abstraction layers
       if (k === '$script')
-        return $script
-      const exists = k in _ && typeof _[k] !== 'undefined'
-      head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
+        return proxy.$script
+      const exists = _ && k in _ && typeof _[k] !== 'undefined'
+      head.hooks.callHook('script:instance-fn', { script, fn: k, exists })
       return exists
         ? Reflect.get(_, k)
         : (...args: any[]) => loadPromise.then((api) => {
