@@ -5,7 +5,7 @@ export default defineHeadPlugin({
   hooks: {
     'tags:resolve': function (ctx) {
       const payload: { titleTemplate?: string | ((s: string) => string), templateParams?: Record<string, string>, title?: string } = {}
-      ctx.tags.filter(tag => ['titleTemplate', 'templateParams', 'title'].includes(tag.tag) && tag._m === 'server')
+      ctx.tags.filter(tag => (tag.tag === 'titleTemplate' || tag.tag === 'templateParams' || tag.tag === 'title') && tag._m === 'server')
         .forEach((tag) => {
           // @ts-expect-error untyped
           payload[tag.tag] = tag.tag.startsWith('title') ? tag.textContent : tag.props

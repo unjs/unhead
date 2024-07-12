@@ -10,8 +10,8 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
       // @ts-expect-error untyped
       typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
         ? { ...input }
-        : { [['script', 'noscript', 'style'].includes(tagName) ? 'innerHTML' : 'textContent']: input },
-      ['templateParams', 'titleTemplate'].includes(tagName),
+        : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: input },
+      (tagName === 'templateParams' || tagName === 'titleTemplate'),
     ),
   } as T
   // merge options from the entry
@@ -19,8 +19,8 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     // @ts-expect-error untyped
     const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
     if (typeof val !== 'undefined') {
-      // strip innerHTML and textContent for tags which don't support it
-      if (!['innerHTML', 'textContent', 'children'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
+      // strip innerHTML and textContent for tags which don't support it=
+      if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.includes(tag.tag)) {
         // @ts-expect-error untyped
         tag[k === 'children' ? 'innerHTML' : k] = val
       }
@@ -66,7 +66,7 @@ export async function normaliseProps<T extends HeadTag>(props: T['props'], virtu
   // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
   for (const k of Object.keys(props)) {
     // class has special handling
-    if (['class', 'style'].includes(k)) {
+    if (k === 'class' || k === 'style') {
       // @ts-expect-error untyped
       props[k] = normaliseStyleClassProps(k, props[k])
       continue

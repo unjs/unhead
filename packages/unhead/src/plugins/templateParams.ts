@@ -28,7 +28,7 @@ export default defineHeadPlugin(head => ({
           tag.props[v] = processTemplateParams(tag.props[v], params, sep)
         }
         // everything else requires explicit opt-in
-        else if (tag.processTemplateParams === true || ['titleTemplate', 'title'].includes(tag.tag)) {
+        else if (tag.processTemplateParams === true || tag.tag === 'titleTemplate' || tag.tag === 'title') {
           ['innerHTML', 'textContent'].forEach((p) => {
             // @ts-expect-error untyped
             if (typeof tag[p] === 'string')

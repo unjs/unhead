@@ -9,7 +9,9 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string)
   // for each %<word> token replace it with the corresponding runtime config or an empty value
   function sub(token: string) {
     let val: string | undefined
-    if (['s', 'pageTitle'].includes(token)) { val = p.pageTitle as string }
+    if (token === 's' || token === 'pageTitle') {
+      val = p.pageTitle as string
+    }
     // support . notation
     else if (token.includes('.')) {
       // @ts-expect-error untyped

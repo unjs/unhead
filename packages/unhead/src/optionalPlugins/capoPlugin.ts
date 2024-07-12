@@ -35,7 +35,7 @@ const importRe = /@import/
             // SYNC_STYLES
             tag.tagPriority = 60
           }
-          else if (isLink && ['preload', 'modulepreload'].includes(tag.props.rel)) {
+          else if (isLink && (tag.props.rel === 'preload' || tag.props.rel === 'modulepreload')) {
             // PRELOAD
             tag.tagPriority = 70
           }
@@ -43,7 +43,7 @@ const importRe = /@import/
             // DEFER_SCRIPT
             tag.tagPriority = 80
           }
-          else if (isLink && ['prefetch', 'dns-prefetch', 'prerender'].includes(tag.props.rel)) {
+          else if (isLink && (tag.props.rel === 'prefetch' || tag.props.rel === 'dns-prefetch' || tag.props.rel === 'prerender')) {
             tag.tagPriority = 90
           }
         }
