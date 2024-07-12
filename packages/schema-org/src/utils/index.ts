@@ -88,7 +88,7 @@ export function prefixId(url: string, id: Id | string) {
   // already prefixed
   if (hasProtocol(id))
     return id as Id
-  if (!id.startsWith('#'))
+  if (id[0] !== '#')
     id = `#${id}`
   return withBase(id, url) as Id
 }
@@ -117,7 +117,7 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
 
 export function resolveWithBase(base: string, urlOrPath: string) {
   // can't apply base if there's a protocol
-  if (!urlOrPath || hasProtocol(urlOrPath) || (!urlOrPath.startsWith('/') && !urlOrPath.startsWith('#')))
+  if (!urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
     return urlOrPath
   return withBase(urlOrPath, base)
 }

@@ -120,7 +120,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
   const hashNodeData: Record<string, any> = {}
   Object.entries(node).forEach(([key, val]) => {
     // remove runtime private fields
-    if (!key.startsWith('_'))
+    if (key[0] !== '_')
       hashNodeData[key] = val
   })
   node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || hashCode(JSON.stringify(hashNodeData))}`)
