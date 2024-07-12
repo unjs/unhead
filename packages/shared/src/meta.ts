@@ -90,7 +90,9 @@ const openGraphNamespaces = new Set([
 ])
 
 export function resolveMetaKeyType(key: string): keyof BaseMeta {
-  if (openGraphNamespaces.has(fKey))
+  const fKey = fixKeyCase(key)
+  const prefixIndex = fKey.indexOf(':')
+  if (openGraphNamespaces.has(fKey.substring(0, prefixIndex)))
     return 'property'
   return MetaPackingSchema[key]?.metaKey || 'name'
 }
@@ -101,6 +103,8 @@ export function resolveMetaKeyValue(key: string): string {
 
 function fixKeyCase(key: string) {
   const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  const prefixIndex = updated.indexOf('-')
+  const fKey = updated.substring(0, prefixIndex)
   if (openGraphNamespaces.has(fKey) || fKey === 'twitter')
     return key.replace(/([A-Z])/g, ':$1').toLowerCase()
   return updated
