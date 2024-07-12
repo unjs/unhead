@@ -20,7 +20,7 @@ export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: 
     const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
     if (typeof val !== 'undefined') {
       // strip innerHTML and textContent for tags which don't support it=
-      if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.includes(tag.tag)) {
+      if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.has(tag.tag)) {
         // @ts-expect-error untyped
         tag[k === 'children' ? 'innerHTML' : k] = val
       }
@@ -76,7 +76,7 @@ export async function normaliseProps<T extends HeadTag>(props: T['props'], virtu
     if (props[k] instanceof Promise)
       // @ts-expect-error untyped
       props[k] = await props[k]
-    if (!virtual && !TagConfigKeys.includes(k)) {
+    if (!virtual && !TagConfigKeys.has(k)) {
       const v = String(props[k])
       // data keys get special treatment, we opt for more verbose syntax
       const isDataKey = k.startsWith('data-')
@@ -102,7 +102,7 @@ export const TagEntityBits = 10
 export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
   const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
   Object.entries(e.resolvedInput as {})
-    .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
+    .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.has(k))
     .forEach(([k, value]) => {
       const v = asArray(value)
       // @ts-expect-error untyped

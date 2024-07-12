@@ -82,16 +82,15 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   },
 } as const
 
-const openGraphNamespaces = [
+const openGraphNamespaces = new Set([
   'og',
   'book',
   'article',
   'profile',
-]
+])
 
 export function resolveMetaKeyType(key: string): keyof BaseMeta {
-  const fKey = fixKeyCase(key).split(':')[0]
-  if (openGraphNamespaces.includes(fKey))
+  if (openGraphNamespaces.has(fKey))
     return 'property'
   return MetaPackingSchema[key]?.metaKey || 'name'
 }
@@ -102,8 +101,7 @@ export function resolveMetaKeyValue(key: string): string {
 
 function fixKeyCase(key: string) {
   const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-  const fKey = updated.split('-')[0]
-  if (openGraphNamespaces.includes(fKey) || fKey === 'twitter')
+  if (openGraphNamespaces.has(fKey) || fKey === 'twitter')
     return key.replace(/([A-Z])/g, ':$1').toLowerCase()
   return updated
 }
@@ -147,7 +145,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   )
 }
 
-const ObjectArrayEntries = ['og:image', 'og:video', 'og:audio', 'twitter:image']
+const ObjectArrayEntries = new Set(['og:image', 'og:video', 'og:audio', 'twitter:image'])
 
 function sanitize(input: Record<string, any>) {
   const out: Record<string, any> = {}
@@ -163,7 +161,7 @@ function handleObjectEntry(key: string, v: Record<string, any>) {
   const value: Record<string, any> = sanitize(v)
   const fKey = fixKeyCase(key)
   const attr = resolveMetaKeyType(fKey)
-  if (ObjectArrayEntries.includes(fKey as keyof MetaFlatInput)) {
+  if (ObjectArrayEntries.has(fKey as keyof MetaFlatInput)) {
     const input: MetaFlatInput = {}
     // we need to prefix the keys with og:
     Object.entries(value).forEach(([k, v]) => {
@@ -189,7 +187,7 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   Object.entries(input).forEach(([key, value]) => {
     if (!Array.isArray(value)) {
       if (typeof value === 'object' && value) {
-        if (ObjectArrayEntries.includes(fixKeyCase(key) as keyof MetaFlatInput)) {
+        if (ObjectArrayEntries.has(fixKeyCase(key) as keyof MetaFlatInput)) {
           extras.push(...handleObjectEntry(key, value))
           return
         }

@@ -4,7 +4,7 @@ import { UniqueTags } from '.'
 export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => boolean): string | false {
   const { props, tag: tagName } = tag
   // must only be a single base so we always dedupe
-  if (UniqueTags.includes(tagName))
+  if (UniqueTags.has(tagName))
     return tagName
 
   // support only a single canonical

@@ -1,7 +1,7 @@
 import type { HeadTag } from '@unhead/schema'
 import { HasElementTags, defineHeadPlugin, tagDedupeKey, tagWeight } from '@unhead/shared'
 
-const UsesMergeStrategy = ['templateParams', 'htmlAttrs', 'bodyAttrs']
+const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
 export default defineHeadPlugin({
   hooks: {
@@ -29,7 +29,7 @@ export default defineHeadPlugin({
         if (dupedTag) {
           // default strategy is replace, unless we're dealing with a html or body attrs
           let strategy = tag?.tagDuplicateStrategy
-          if (!strategy && UsesMergeStrategy.includes(tag.tag))
+          if (!strategy && UsesMergeStrategy.has(tag.tag))
             strategy = 'merge'
 
           if (strategy === 'merge') {
@@ -72,7 +72,7 @@ export default defineHeadPlugin({
         }
         const propCount = Object.keys(tag.props).length + (tag.innerHTML ? 1 : 0) + (tag.textContent ? 1 : 0)
         // if the new tag does not have any props, we're trying to remove the duped tag from the DOM
-        if (HasElementTags.includes(tag.tag) && propCount === 0) {
+        if (HasElementTags.has(tag.tag) && propCount === 0) {
           // find the tag with the same key
           delete deduping[dedupeKey]
           return

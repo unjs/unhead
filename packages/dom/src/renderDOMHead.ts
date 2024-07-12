@@ -31,7 +31,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const tags = (await head.resolveTags())
     .map(tag => <DomRenderTagContext> {
       tag,
-      id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
+      id: HasElementTags.has(tag.tag) ? hashTag(tag) : tag.tag,
       shouldRender: true,
     })
   let state = head._dom as DomState
@@ -43,7 +43,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     for (const key of ['body', 'head']) {
       const children = dom[key as 'head' | 'body']?.children
       const tags: HeadTag[] = []
-      for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase()))) {
+      for (const c of [...children].filter(c => HasElementTags.has(c.tagName.toLowerCase()))) {
         const t: HeadTag = {
           tag: c.tagName.toLowerCase() as HeadTag['tag'],
           props: await normaliseProps(
@@ -148,7 +148,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       trackCtx(ctx)
     else
       // tag does not exist, we need to render it (if it's an element tag)
-      HasElementTags.includes(tag.tag) && pending.push(ctx)
+      HasElementTags.has(tag.tag) && pending.push(ctx)
   }
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
   for (const ctx of pending) {
