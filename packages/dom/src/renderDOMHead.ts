@@ -65,7 +65,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
 
   // presume all side effects are stale, we mark them as not stale if they're re-introduced
-  state.pendingSideEffects = { ...state.sideEffects || {} }
+  state.pendingSideEffects = { ...state.sideEffects }
   state.sideEffects = {}
 
   function track(id: string, scope: string, fn: () => void) {
