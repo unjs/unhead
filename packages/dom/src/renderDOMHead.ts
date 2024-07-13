@@ -102,7 +102,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       if (k === 'class') {
         // if the user is providing an empty string, then it's removing the class
         // the side effect clean up should remove it
-        for (const c of (value || '').split(' ').filter(Boolean)) {
+        for (const c of (value || '').split(' ')) {
+          if (!c) {
+            continue
+          }
           // always clear side effects
           isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
           !$el.classList.contains(c) && $el.classList.add(c)
@@ -110,7 +113,10 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       }
       else if (k === 'style') {
         // style attributes have their own side effects to allow for merging
-        for (const c of (value || '').split(';').filter(Boolean)) {
+        for (const c of (value || '').split(';')) {
+          if (!c) {
+            continue
+          }
           const [k, ...v] = c.split(':').map(s => s.trim())
           track(id, `${ck}:${k}`, () => {
             ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
