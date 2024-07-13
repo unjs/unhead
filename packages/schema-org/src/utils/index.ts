@@ -75,13 +75,10 @@ export function asArray(input: any) {
 }
 
 export function dedupeMerge<T extends Thing>(node: T, field: keyof T, value: any) {
-  const dedupeMerge: any[] = []
-  const input = asArray(node[field])
-  dedupeMerge.push(...input)
-  const data = new Set(dedupeMerge)
+  const data = new Set(asArray(node[field]))
   data.add(value)
   // @ts-expect-error untyped key
-  node[field] = [...data.values()].filter(Boolean)
+  node[field] = [...data].filter(Boolean)
 }
 
 export function prefixId(url: string, id: Id | string) {
