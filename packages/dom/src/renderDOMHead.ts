@@ -117,11 +117,13 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           if (!c) {
             continue
           }
-          const [k, ...v] = c.split(':').map(s => s.trim())
+          const propIndex = c.indexOf(':')
+          const k = c.substring(0, propIndex).trim()
+          const v = c.substring(propIndex + 1).trim()
           track(id, `${ck}:${k}`, () => {
             ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
           })
-          ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v.join(':'))
+          ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
         }
       }
       else {
