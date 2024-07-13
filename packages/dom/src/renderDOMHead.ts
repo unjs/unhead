@@ -43,9 +43,13 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     for (const key of ['body', 'head']) {
       const children = dom[key as 'head' | 'body']?.children
       const tags: HeadTag[] = []
-      for (const c of [...children].filter(c => HasElementTags.has(c.tagName.toLowerCase()))) {
+      for (const c of [...children]) {
+        const tag = c.tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(tag)) {
+          continue
+        }
         const t: HeadTag = {
-          tag: c.tagName.toLowerCase() as HeadTag['tag'],
+          tag,
           props: await normaliseProps(
             c.getAttributeNames()
               .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
