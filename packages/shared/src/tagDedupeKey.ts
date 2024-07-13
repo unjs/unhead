@@ -20,7 +20,7 @@ export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => bo
     name.push('name', 'property', 'http-equiv')
   for (const n of name) {
     // open graph props can have multiple tags with the same property
-    if (typeof props[n] !== 'undefined') {
+    if (props[n] !== undefined) {
       const val = String(props[n])
       if (fn && !fn(val))
         return false

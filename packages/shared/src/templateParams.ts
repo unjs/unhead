@@ -18,7 +18,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string)
       val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, p) as string
     }
     else { val = p[token] as string | undefined }
-    return typeof val !== 'undefined'
+    return val !== undefined
       // need to escape val for json
       ? (val || '').replace(/"/g, '\\"')
       : false

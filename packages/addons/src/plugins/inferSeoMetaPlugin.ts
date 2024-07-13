@@ -32,7 +32,7 @@ export interface InferSeoMetaPluginOptions {
           for (const entry of entries) {
             const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
             const input = entry[inputKey]
-            if (typeof input.titleTemplate !== 'undefined')
+            if (input.titleTemplate !== undefined)
               titleTemplate = input.titleTemplate
           }
 

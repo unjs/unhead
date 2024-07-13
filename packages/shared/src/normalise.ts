@@ -21,8 +21,8 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
       // merge options from the entry
       TagConfigKeys.forEach((k) => {
         // @ts-expect-error untyped
-        const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
-        if (typeof val !== 'undefined') {
+        const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
+        if (val !== undefined) {
           // strip innerHTML and textContent for tags which don't support it=
           if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.has(tag.tag)) {
             // @ts-expect-error untyped
@@ -117,7 +117,7 @@ export const TagEntityBits = 10
 export function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
   const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
   Object.entries(e.resolvedInput as {})
-    .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.has(k))
+    .filter(([k, v]) => v !== undefined && ValidHeadTags.has(k))
     .forEach(([k, value]) => {
       const v = asArray(value)
       // @ts-expect-error untyped

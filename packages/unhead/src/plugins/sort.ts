@@ -12,7 +12,7 @@ export default defineHeadPlugin({
           const position = tagPositionForKey(
             (tag.tagPriority as string).replace(prefix, ''),
           )
-          if (typeof position !== 'undefined')
+          if (position !== undefined)
             tag._p = position + offset
         }
       }

@@ -137,7 +137,7 @@ export function stripEmptyProperties(obj: any) {
       stripEmptyProperties(obj[k])
       return
     }
-    if (obj[k] === '' || obj[k] === null || typeof obj[k] === 'undefined')
+    if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
       delete obj[k]
   })
   return obj

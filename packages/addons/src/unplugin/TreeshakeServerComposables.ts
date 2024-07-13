@@ -23,7 +23,7 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
 }
 
 export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
-  options.enabled = typeof options.enabled !== 'undefined' ? options.enabled : true
+  options.enabled = options.enabled !== undefined ? options.enabled : true
 
   return {
     name: 'unhead:remove-server-composables',
