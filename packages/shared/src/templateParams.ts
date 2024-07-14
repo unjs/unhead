@@ -40,21 +40,18 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string)
     return s
   }
 
-  tokens.sort().reverse()
-
   const hasSepSub = s.includes(sepSub)
 
-  // for each tokens, replace in the original string s
-  tokens.forEach((token) => {
-    if (token === sepSub) {
-      return
+  s = s.replace(/%\w+(?:\.\w+)?/g, (token) => {
+    if (token === sepSub || !tokens.includes(token)) {
+      return token
     }
+
     const re = sub(p, token.slice(1))
-    if (re !== undefined) {
-      // replace the re using regex as word separators
-      s = s.replace(new RegExp(`\\${token}(\\W|$)`, 'g'), (_, args) => re + args).trim()
-    }
-  })
+    return re !== undefined
+      ? re
+      : token
+  }).trim()
 
   // we wait to transform the separator as we need to transform all other tokens first
   // we need to remove separators if they're next to each other or if they're at the start or end of the string
