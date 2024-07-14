@@ -18,7 +18,8 @@
     "export:sizes": "pnpm -r --parallel --filter=./packages/** run export:sizes",
     "bump": "bumpp package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "benchmark": "vitest bench"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.21.2",
