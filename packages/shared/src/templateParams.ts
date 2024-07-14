@@ -10,15 +10,18 @@ function sub(p: TemplateParams, token: string) {
   }
   // support . notation
   else if (token.includes('.')) {
+    const dotIndex = token.indexOf('.')
     // @ts-expect-error untyped
-    val = token.split('.').reduce((acc, key) => acc ? (acc[key] || undefined) : undefined, p) as string
+    val = p[token.substring(0, dotIndex)]?.[token.substring(dotIndex + 1)]
   }
   else { val = p[token] as string | undefined }
   return val !== undefined
     // need to escape val for json
     ? (val || '').replace(/"/g, '\\"')
-    : false
+    : undefined
 }
+
+const sepSubRe = new RegExp(`${sepSub}(?:\\s*${sepSub})*`, 'g')
 
 export function processTemplateParams(s: string, p: TemplateParams, sep: string) {
   // return early
@@ -31,27 +34,38 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string)
   }
   catch {}
   // find all tokens in decoded
-  const tokens: string[] = (decoded.match(/%(\w+\.+\w+)|%(\w+)/g) || []).sort().reverse()
+  const tokens = decoded.match(/%\w+(?:\.\w+)?/g)
+
+  if (!tokens) {
+    return s
+  }
+
+  tokens.sort().reverse()
+
+  const hasSepSub = s.includes(sepSub)
+
   // for each tokens, replace in the original string s
   tokens.forEach((token) => {
+    if (token === sepSub) {
+      return
+    }
     const re = sub(p, token.slice(1))
-    if (typeof re === 'string') {
+    if (re !== undefined) {
       // replace the re using regex as word separators
-      s = s.replace(new RegExp(`\\${token}(\\W|$)`, 'g'), (_, args) => `${re}${args}`).trim()
+      s = s.replace(new RegExp(`\\${token}(\\W|$)`, 'g'), (_, args) => re + args).trim()
     }
   })
 
   // we wait to transform the separator as we need to transform all other tokens first
   // we need to remove separators if they're next to each other or if they're at the start or end of the string
   // for example: %separator %separator %title should return %title
-  if (s.includes(sepSub)) {
+  if (hasSepSub) {
     if (s.endsWith(sepSub))
-      s = s.slice(0, -sepSub.length).trim()
+      s = s.slice(0, -sepSub.length)
     if (s.startsWith(sepSub))
-      s = s.slice(sepSub.length).trim()
+      s = s.slice(sepSub.length)
     // make sure we don't have two separators next to each other
-    s = s.replace(new RegExp(`\\${sepSub}\\s*\\${sepSub}`, 'g'), sepSub)
-    s = processTemplateParams(s, { separator: sep }, sep)
+    s = s.replace(sepSubRe, sep).trim()
   }
   return s
 }
