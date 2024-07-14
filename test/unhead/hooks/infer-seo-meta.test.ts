@@ -32,4 +32,48 @@ describe('hooks', () => {
       </body></html>"
     `)
   })
+
+  it('infer-seo-meta multiple titleTemplates', async () => {
+    const head = useDOMHead({
+      plugins: [
+        InferSeoMetaPlugin(),
+      ],
+    })
+
+    head.push({
+      titleTemplate: {
+        textContent: '%s | 1',
+        tagPriority: 50,
+      },
+      title: 'Hello World',
+      meta: [
+        { name: 'description', content: 'description' },
+      ],
+    })
+
+    head.push({
+      titleTemplate: '%s | 2',
+      title: 'Hello World',
+      meta: [
+        { name: 'description', content: 'description' },
+      ],
+    }, {
+      tagPriority: -5,
+    })
+
+    head.push({
+      titleTemplate: '%s | 3',
+      title: 'Hello World',
+      meta: [
+        { name: 'description', content: 'description' },
+      ],
+    }, {
+      tagPriority: 103,
+    })
+    const dom = await useDelayedSerializedDom()
+    const title = dom.match(/<title>Hello World \| (\d)<\/title>/)?.[1]
+    const ogTitle = dom.match(/<meta property="og:title" content="Hello World \| (\d)">/)?.[1]
+    expect(title).toEqual(ogTitle)
+    expect(title).toEqual(`2`)
+  })
 })
