@@ -156,11 +156,13 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       continue
     }
     ctx.$el = ctx.$el || state.elMap[id]
-    if (ctx.$el)
+    if (ctx.$el) {
       trackCtx(ctx)
-    else
+    }
+    else if (HasElementTags.has(tag.tag)) {
       // tag does not exist, we need to render it (if it's an element tag)
-      HasElementTags.has(tag.tag) && pending.push(ctx)
+      pending.push(ctx)
+    }
   }
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
   for (const ctx of pending) {
