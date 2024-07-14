@@ -29,11 +29,15 @@ export interface InferSeoMetaPluginOptions {
         resolve({ entries }) {
           // need to find the last titleTemplate entry
           let titleTemplate = null
+          let lastWeight = 999
           for (const entry of entries) {
             const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
             const input = entry[inputKey]
-            if (typeof input.titleTemplate !== 'undefined')
+            const weight = (typeof input.titleTemplate === 'object' ? input.titleTemplate?.tagPriority : false) || entry.tagPriority || 100
+            if (typeof input.titleTemplate !== 'undefined' && weight <= lastWeight) {
               titleTemplate = input.titleTemplate
+              lastWeight = weight
+            }
           }
 
           for (const entry of entries) {
