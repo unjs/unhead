@@ -1,12 +1,13 @@
-import { describe } from 'vitest'
-import { createHead, useHead } from '@unhead/vue'
+import { bench, describe } from 'vitest'
+import {createHead, setHeadInjectionHandler, useHead} from '@unhead/vue'
 import { ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'
 
 describe('dom-useHead', () => {
-  it('x1000', async () => {
+  bench('x50', async () => {
     const head = createHead()
+    setHeadInjectionHandler(() => head)
     const page = ref({
       title: 'Home',
       description: 'Home page description',
@@ -50,5 +51,7 @@ describe('dom-useHead', () => {
     page.value.title = 'Updated'
 
     await renderDOMHead(head, { document: dom.window.document })
+  }, {
+    iterations: 100,
   })
 })
