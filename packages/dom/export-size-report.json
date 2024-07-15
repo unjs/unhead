@@ -14,23 +14,23 @@
     {
       "name": "DomPlugin",
       "path": "dist/index.mjs",
-      "minified": 3131,
-      "minzipped": 1332,
-      "bundled": 5215
+      "minified": 3126,
+      "minzipped": 1329,
+      "bundled": 5210
     },
     {
       "name": "debouncedRenderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 2885,
-      "minzipped": 1224,
-      "bundled": 4768
+      "minified": 2880,
+      "minzipped": 1222,
+      "bundled": 4763
     },
     {
       "name": "renderDOMHead",
       "path": "dist/index.mjs",
-      "minified": 2697,
+      "minified": 2692,
       "minzipped": 1158,
-      "bundled": 4434
+      "bundled": 4429
     }
   ]
 }

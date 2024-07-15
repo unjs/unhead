@@ -16,9 +16,9 @@
     {
       "name": "useScript",
       "path": "dist/index.mjs",
-      "minified": 5951,
-      "minzipped": 2301,
-      "bundled": 11892
+      "minified": 6187,
+      "minzipped": 2430,
+      "bundled": 12180
     },
     {
       "name": "createHead",
