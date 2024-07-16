@@ -3,7 +3,7 @@ import { UniqueTags } from '.'
 
 const allowedMetaProperties = ['name', 'property', 'http-equiv']
 
-export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => boolean): string | false {
+export function tagDedupeKey<T extends HeadTag>(tag: T): string | false {
   const { props, tag: tagName } = tag
   // must only be a single base so we always dedupe
   if (UniqueTags.has(tagName))
@@ -16,15 +16,13 @@ export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => bo
   if (props.charset)
     return 'charset'
 
-  if (props.id && fn && fn(String(props.id))) {
+  if (props.id) {
     return `${tagName}:id:${props.id}`
   }
 
   for (const n of allowedMetaProperties) {
     // open graph props can have multiple tags with the same property
     if (props[n] !== undefined) {
-      if (fn && !fn(String(props[n])))
-        return false
       // for example: meta-name-description
       return `${tagName}:${n}:${props[n]}`
     }
