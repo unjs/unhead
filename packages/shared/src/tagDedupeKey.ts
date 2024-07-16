@@ -1,6 +1,8 @@
 import type { HeadTag } from '@unhead/schema'
 import { UniqueTags } from '.'
 
+const allowedMetaProperties = ['name', 'property', 'http-equiv']
+
 export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => boolean): string | false {
   const { props, tag: tagName } = tag
   // must only be a single base so we always dedupe
@@ -11,21 +13,20 @@ export function tagDedupeKey<T extends HeadTag>(tag: T, fn?: (key: string) => bo
   if (tagName === 'link' && props.rel === 'canonical')
     return 'canonical'
 
-  // must only be a single charset
   if (props.charset)
     return 'charset'
 
-  const name = ['id']
-  if (tagName === 'meta')
-    name.push('name', 'property', 'http-equiv')
-  for (const n of name) {
+  if (props.id && fn && fn(String(props.id))) {
+    return `${tagName}:id:${props.id}`
+  }
+
+  for (const n of allowedMetaProperties) {
     // open graph props can have multiple tags with the same property
     if (props[n] !== undefined) {
-      const val = String(props[n])
-      if (fn && !fn(val))
+      if (fn && !fn(String(props[n])))
         return false
       // for example: meta-name-description
-      return `${tagName}:${n}:${val}`
+      return `${tagName}:${n}:${props[n]}`
     }
   }
   return false
