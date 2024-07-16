@@ -3,7 +3,7 @@ import { resolveUnrefHeadInput } from '../utils'
 
 export default defineHeadPlugin({
   hooks: {
-    'entries:resolve': function (ctx) {
+    'entries:resolve': (ctx) => {
       for (const entry of ctx.entries)
         entry.resolvedInput = resolveUnrefHeadInput(entry.input)
     },

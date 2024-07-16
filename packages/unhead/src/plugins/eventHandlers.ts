@@ -9,7 +9,7 @@ const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
  */
 export default defineHeadPlugin(head => ({
   hooks: {
-    'tags:resolve': function (ctx) {
+    'tags:resolve': (ctx) => {
       for (const tag of ctx.tags.filter(t => ValidEventTags.has(t.tag))) {
         // must be a valid tag
         Object.entries(tag.props)
@@ -28,7 +28,7 @@ export default defineHeadPlugin(head => ({
           tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
       }
     },
-    'dom:renderTag': function ({ $el, tag }) {
+    'dom:renderTag': ({ $el, tag }) => {
       // this is only handling SSR rendered tags with event handlers
       for (const k in (($el as HTMLScriptElement | undefined)?.dataset || {})) {
         if (!k.endsWith('fired')) {

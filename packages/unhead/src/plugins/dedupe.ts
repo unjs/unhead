@@ -5,7 +5,7 @@ const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
 export default defineHeadPlugin({
   hooks: {
-    'tag:normalise': function ({ tag }) {
+    'tag:normalise': ({ tag }) => {
       // support for third-party dedupe keys
       ['hid', 'vmid', 'key'].forEach((key) => {
         if (tag.props[key]) {
@@ -18,7 +18,7 @@ export default defineHeadPlugin({
       if (dedupe)
         tag._d = dedupe
     },
-    'tags:resolve': function (ctx) {
+    'tags:resolve': (ctx) => {
       // 1. Dedupe tags
       const deduping: Record<string, HeadTag> = {}
       ctx.tags.forEach((tag) => {

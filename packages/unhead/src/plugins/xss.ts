@@ -2,7 +2,7 @@ import { defineHeadPlugin } from '@unhead/shared'
 
 export default defineHeadPlugin({
   hooks: {
-    'tags:afterResolve': function (ctx) {
+    'tags:afterResolve': (ctx) => {
       for (const tag of ctx.tags) {
         if (typeof tag.innerHTML === 'string') {
           if (tag.innerHTML && (tag.props.type === 'application/ld+json' || tag.props.type === 'application/json')) {

@@ -33,10 +33,10 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
   return defineHeadPlugin(head => ({
     key: 'schema-org',
     hooks: {
-      'entries:resolve': function () {
+      'entries:resolve': () => {
         graph = createSchemaOrgGraph()
       },
-      'tag:normalise': async function ({ tag }) {
+      'tag:normalise': async ({ tag }) => {
         if (tag.key === 'schema-org-graph') {
           // this is a bit expensive, load in seperate chunk
           const { loadResolver } = await import('./resolver')
@@ -75,7 +75,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           delete tag.props.schemaOrg
         }
       },
-      'tags:resolve': async function (ctx) {
+      'tags:resolve': async (ctx) => {
         // find the schema.org node, should be a single instance
         for (const tag of ctx.tags) {
           if (tag.tag === 'script' && tag.key === 'schema-org-graph') {

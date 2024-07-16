@@ -5,7 +5,7 @@ const importRe = /@import/
 /* @__NO_SIDE_EFFECTS__ */ export function CapoPlugin(options: { track?: boolean }) {
   return defineHeadPlugin({
     hooks: {
-      'tags:beforeResolve': function ({ tags }) {
+      'tags:beforeResolve': ({ tags }) => {
         // handle 9 and down in capo
         for (const tag of tags) {
           if (tag.tagPosition && tag.tagPosition !== 'head')
