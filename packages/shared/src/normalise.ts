@@ -2,7 +2,7 @@ import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import { type Thenable, thenable } from './thenable'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
 
-export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Thenable<T | T[] | false> {
+export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Thenable<T | T[]> {
   return thenable(
     normaliseProps<T>(
       // explicitly check for an object
@@ -113,25 +113,29 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: b
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
-export function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
-  const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
-  Object.entries(e.resolvedInput as {})
+export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Thenable<HeadTag[]> {
+  const tagPromises = Object.entries(e.resolvedInput as object)
     .filter(([k, v]) => v !== undefined && ValidHeadTags.has(k))
-    .forEach(([k, value]) => {
+    .flatMap(([k, value]) => {
       const v = asArray(value)
+
       // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props, e)).flat())
+      return v.map(props => normaliseTag(k as keyof Head, props, e))
     })
+
+  if (tagPromises.length === 0) {
+    return []
+  }
+
   return Promise.all(tagPromises)
     .then(headTags => (
       headTags
         .flat()
-        .filter(Boolean)
-        .map((t: HeadTag, i) => {
+        .map((t, i) => {
           t._e = e._i
           e.mode && (t._m = e.mode)
           t._p = (e._i << TagEntityBits) + i
           return t
-        }) as unknown as HeadTag[]
+        })
     ))
 }
