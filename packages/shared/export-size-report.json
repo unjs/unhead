@@ -21,16 +21,16 @@
     {
       "name": "normaliseEntryTags",
       "path": "dist/index.mjs",
-      "minified": 3532,
-      "minzipped": 1290,
-      "bundled": 5583
+      "minified": 3539,
+      "minzipped": 1292,
+      "bundled": 5590
     },
     {
       "name": "normaliseTag",
       "path": "dist/index.mjs",
-      "minified": 3065,
-      "minzipped": 1112,
-      "bundled": 4794
+      "minified": 3072,
+      "minzipped": 1113,
+      "bundled": 4801
     },
     {
       "name": "whitelistSafeInput",
@@ -63,9 +63,9 @@
     {
       "name": "normaliseProps",
       "path": "dist/index.mjs",
-      "minified": 2254,
-      "minzipped": 847,
-      "bundled": 3457
+      "minified": 2261,
+      "minzipped": 850,
+      "bundled": 3464
     },
     {
       "name": "tagDedupeKey",
@@ -91,9 +91,9 @@
     {
       "name": "normaliseStyleClassProps",
       "path": "dist/index.mjs",
-      "minified": 1823,
-      "minzipped": 659,
-      "bundled": 2642
+      "minified": 1830,
+      "minzipped": 663,
+      "bundled": 2649
     },
     {
       "name": "hashCode",
