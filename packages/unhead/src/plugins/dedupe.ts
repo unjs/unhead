@@ -10,12 +10,12 @@ export default defineHeadPlugin({
   hooks: {
     'tag:normalise': ({ tag }) => {
       // support for third-party dedupe keys
-      thirdPartyDedupeKeys.forEach((key) => {
+      for (const key of thirdPartyDedupeKeys) {
         if (tag.props[key]) {
           tag.key = tag.props[key]
           delete tag.props[key]
         }
-      })
+      }
       const generatedKey = tagDedupeKey(tag)
       const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
       if (dedupe)
@@ -24,7 +24,7 @@ export default defineHeadPlugin({
     'tags:resolve': (ctx) => {
       // 1. Dedupe tags
       const deduping: Record<string, HeadTag> = {}
-      ctx.tags.forEach((tag) => {
+      for (const tag of ctx.tags) {
         // need a seperate dedupe key other than _d
         const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || tag._p!
         const dupedTag: HeadTag = deduping[dedupeKey]
@@ -38,7 +38,7 @@ export default defineHeadPlugin({
           if (strategy === 'merge') {
             const oldProps = dupedTag.props
             // apply oldProps to current props
-            mergeCommonProps.forEach((key) => {
+            for (const key of mergeCommonProps) {
               if (oldProps[key]) {
                 if (tag.props[key]) {
                   // ensure style merge doesn't result in invalid css
@@ -51,12 +51,12 @@ export default defineHeadPlugin({
                   tag.props[key] = oldProps[key]
                 }
               }
-            })
+            }
             deduping[dedupeKey].props = {
               ...oldProps,
               ...tag.props,
             }
-            return
+            continue
           }
           else if (tag._e === dupedTag._e) {
             // add the duped tag to the current tag
@@ -66,11 +66,11 @@ export default defineHeadPlugin({
             tag._d = `${dupedTag._d}:${dupedTag._duped.length + 1}`
             // @ts-expect-error runtime type
             dupedTag._duped.push(tag)
-            return
+            continue
           }
           else if (tagWeight(tag) > tagWeight(dupedTag)) {
             // check tag weights
-            return
+            continue
           }
         }
         const propCount = Object.keys(tag.props).length + (tag.innerHTML ? 1 : 0) + (tag.textContent ? 1 : 0)
@@ -78,11 +78,11 @@ export default defineHeadPlugin({
         if (HasElementTags.has(tag.tag) && propCount === 0) {
           // find the tag with the same key
           delete deduping[dedupeKey]
-          return
+          continue
         }
         // make sure the tag we're replacing has a lower tag weight
         deduping[dedupeKey] = tag
-      })
+      }
       const newTags: HeadTag[] = []
       for (const key in deduping) {
         if (!Object.prototype.hasOwnProperty.call(deduping, key)) {
