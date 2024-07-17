@@ -10,22 +10,44 @@ const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
 export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
-      for (const tag of ctx.tags.filter(t => ValidEventTags.has(t.tag))) {
-        // must be a valid tag
-        Object.entries(tag.props)
-          .forEach(([key, value]) => {
-            if (key.startsWith('on') && typeof value === 'function') {
-              // insert a inline script to set the status of onload and onerror
-              if (head.ssr && NetworkEvents.has(key))
-                tag.props[key] = `this.dataset.${key}fired = true`
+      for (const tag of ctx.tags) {
+        if (!ValidEventTags.has(tag.tag)) {
+          continue
+        }
 
-              else delete tag.props[key]
-              tag._eventHandlers = tag._eventHandlers || {}
-              tag._eventHandlers![key] = value
-            }
-          })
-        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href))
+        const props = tag.props
+
+        for (const key in props) {
+          // on
+          if (!(key[0] === 'o' && key[1] === 'n')) {
+            continue
+          }
+
+          if (!Object.prototype.hasOwnProperty.call(props, key)) {
+            continue
+          }
+
+          const value = props[key]
+
+          if (typeof value !== 'function') {
+            continue
+          }
+
+          // insert a inline script to set the status of onload and onerror
+          if (head.ssr && NetworkEvents.has(key)) {
+            props[key] = `this.dataset.${key}fired = true`
+          }
+          else {
+            delete props[key]
+          }
+
+          tag._eventHandlers = tag._eventHandlers || {}
+          tag._eventHandlers![key] = value
+        }
+
+        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href)) {
           tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
+        }
       }
     },
     'dom:renderTag': ({ $el, tag }) => {
