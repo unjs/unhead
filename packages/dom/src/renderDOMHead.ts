@@ -100,13 +100,21 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         $el.setAttribute(`data-${k}`, '')
       }
     }
-    Object.entries(tag.props).forEach(([k, value]) => {
+    for (const k in tag.props) {
+      if (!Object.prototype.hasOwnProperty.call(tag.props, k)) {
+        continue
+      }
+      const value = tag.props[k]
+
       const ck = `attr:${k}`
       // class attributes have their own side effects to allow for merging
       if (k === 'class') {
+        if (!value) {
+          continue
+        }
         // if the user is providing an empty string, then it's removing the class
         // the side effect clean up should remove it
-        for (const c of (value || '').split(' ')) {
+        for (const c of value.split(' ')) {
           if (!c) {
             continue
           }
@@ -116,8 +124,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
       }
       else if (k === 'style') {
+        if (!value) {
+          continue
+        }
         // style attributes have their own side effects to allow for merging
-        for (const c of (value || '').split(';')) {
+        for (const c of value.split(';')) {
           if (!c) {
             continue
           }
@@ -135,7 +146,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
         isAttrTag && track(id, ck, () => $el.removeAttribute(k))
       }
-    })
+    }
   }
 
   const pending: DomRenderTagContext[] = []
