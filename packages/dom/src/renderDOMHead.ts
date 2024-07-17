@@ -197,7 +197,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   frag.bodyClose && dom.body.appendChild(frag.bodyClose)
 
   // clear all side effects still pending
-  Object.values(state.pendingSideEffects).forEach(fn => fn())
+  for (const k in state.pendingSideEffects) {
+    state.pendingSideEffects[k]()
+  }
   head._dom = state
   head.dirty = false
   await head.hooks.callHook('dom:rendered', { renders: tags })
