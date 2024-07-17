@@ -3,12 +3,19 @@ function encodeAttribute(value: string) {
 }
 
 export function propsToString(props: Record<string, any>) {
-  const attrs: string[] = []
+  let attrs = ' '
 
-  for (const [key, value] of Object.entries(props)) {
-    if (value !== false && value !== null)
-      attrs.push(value === true ? key : `${key}="${encodeAttribute(value)}"`)
+  for (const key in props) {
+    if (!Object.prototype.hasOwnProperty.call(props, key)) {
+      continue
+    }
+
+    const value = props[key]
+
+    if (value !== false && value !== null) {
+      attrs += value === true ? `${key} ` : `${key}="${encodeAttribute(value)}" `
+    }
   }
 
-  return `${attrs.length > 0 ? ' ' : ''}${attrs.join(' ')}`
+  return attrs.trimEnd()
 }
