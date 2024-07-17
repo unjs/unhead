@@ -118,6 +118,27 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
+function nestedNormaliseEntryTags(headTags: HeadTag[], resolvedTags: Thenable<HeadTag | HeadTag[]>[], startIndex: number): Thenable<unknown> {
+  for (let i = startIndex; resolvedTags.length < i; i += 1) {
+    const tags = resolvedTags[i]
+
+    if (tags instanceof Promise) {
+      return tags.then((val) => {
+        resolvedTags[i] = val
+
+        return nestedNormaliseEntryTags(headTags, resolvedTags, i)
+      })
+    }
+
+    if (Array.isArray(tags)) {
+      headTags.push(...tags)
+    }
+    else {
+      headTags.push(tags)
+    }
+  }
+}
+
 export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Thenable<HeadTag[]> {
   const tagPromises: Thenable<HeadTag | HeadTag[]>[] = []
   const input = e.resolvedInput as T
@@ -144,22 +165,7 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Th
 
   const headTags: HeadTag[] = []
 
-  let thenableRet: Thenable<HeadTag | HeadTag[]> = tagPromises.shift()!
-
-  for (let i = 0, l = tagPromises.length + 1; i !== l; i += 1) {
-    thenableRet = thenable(thenableRet, (tags) => {
-      if (Array.isArray(tags)) {
-        headTags.push(...tags)
-      }
-      else {
-        headTags.push(tags)
-      }
-
-      return tagPromises[i]
-    }) as Thenable<HeadTag | HeadTag[]>
-  }
-
-  return thenable(thenableRet, () => (
+  return thenable(nestedNormaliseEntryTags(headTags, tagPromises, 0), () => (
     headTags.map((t, i) => {
       t._e = e._i
       e.mode && (t._m = e.mode)
