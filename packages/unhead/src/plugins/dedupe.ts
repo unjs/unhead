@@ -84,7 +84,11 @@ export default defineHeadPlugin({
         deduping[dedupeKey] = tag
       })
       const newTags: HeadTag[] = []
-      Object.values(deduping).forEach((tag) => {
+      for (const key in deduping) {
+        if (!Object.prototype.hasOwnProperty.call(deduping, key)) {
+          continue
+        }
+        const tag = deduping[key]
         // @ts-expect-error runtime type
         const dupes = tag._duped
         // @ts-expect-error runtime type
@@ -93,7 +97,7 @@ export default defineHeadPlugin({
         // add the duped tags to the new tags
         if (dupes)
           newTags.push(...dupes)
-      })
+      }
       ctx.tags = newTags
       // now filter out invalid meta
       // TODO separate plugin
