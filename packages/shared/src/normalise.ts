@@ -1,6 +1,6 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import { type Thenable, thenable } from './thenable'
-import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
+import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from '.'
 
 export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Thenable<T | T[]> {
   return thenable(
@@ -114,14 +114,24 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: b
 export const TagEntityBits = 10
 
 export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Thenable<HeadTag[]> {
-  const tagPromises = Object.entries(e.resolvedInput as object)
-    .filter(([k, v]) => v !== undefined && ValidHeadTags.has(k))
-    .flatMap(([k, value]) => {
-      const v = asArray(value)
-
+  const tagPromises: Thenable<HeadTag | HeadTag[]>[] = []
+  const input = e.resolvedInput as T
+  for (const k in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, k)) {
+      continue
+    }
+    const v = input[k as keyof typeof input]
+    if (v === undefined || !ValidHeadTags.has(k)) {
+      continue
+    }
+    if (Array.isArray(v)) {
       // @ts-expect-error untyped
-      return v.map(props => normaliseTag(k as keyof Head, props, e))
-    })
+      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props, e)))
+      continue
+    }
+    // @ts-expect-error untyped
+    tagPromises.push(normaliseTag(k as keyof Head, v, e))
+  }
 
   if (tagPromises.length === 0) {
     return []
