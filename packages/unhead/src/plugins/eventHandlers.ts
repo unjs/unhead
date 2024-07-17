@@ -57,13 +57,15 @@ export default defineHeadPlugin(head => ({
           continue
         }
 
-        const ek = k.replace('fired', '')
+        // onloadfired -> onload
+        const ek = k.slice(0, -5)
 
         if (!NetworkEvents.has(ek)) {
           continue
         }
 
-        tag._eventHandlers?.[ek]?.call($el, new Event(ek.replace('on', '')))
+        // onload -> load
+        tag._eventHandlers?.[ek]?.call($el, new Event(ek.substring(2)))
       }
     },
   },
