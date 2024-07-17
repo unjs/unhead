@@ -40,6 +40,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     state = {
       elMap: { htmlAttrs: dom.documentElement, bodyAttrs: dom.body },
     } as any as DomState
+
+    const takenDedupeKeys = new Set()
+
     for (const key of ['body', 'head']) {
       const children = dom[key as 'head' | 'body']?.children
       const tags: HeadTag[] = []
@@ -57,11 +60,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           innerHTML: c.innerHTML,
         }
         // we need to account for the fact that duplicate tags may exist as some are supported, increment the dedupe key
+        const dedupeKey = tagDedupeKey(t)
+        let d = dedupeKey
         let i = 1
-        let d = tagDedupeKey(t)
-        while (d && tags.find(t => t._d === d))
-          d = `${d}:${i++}`
-        t._d = d || undefined
+        while (d && takenDedupeKeys.has(d))
+          d = `${dedupeKey}:${i++}`
+        if (d) {
+          t._d = d
+          takenDedupeKeys.add(d)
+        }
         tags.push(t)
         state.elMap[c.getAttribute('data-hid') || hashTag(t)] = c
       }
