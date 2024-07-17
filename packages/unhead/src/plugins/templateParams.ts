@@ -11,16 +11,18 @@ export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx
-      // find templateParams
-      const title = tags.find(tag => tag.tag === 'title')?.textContent
-      const idx = tags.findIndex(tag => tag.tag === 'templateParams')
       // we always process params so we can substitute the title
-      const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
+      const params = (tags.find(tag => tag.tag === 'templateParams')?.props || {}) as TemplateParams
       // ensure a separator exists
       const sep = params.separator || '|'
       delete params.separator
       // pre-process title
-      params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params, sep)
+      params.pageTitle = processTemplateParams(
+        // find templateParams
+        params.pageTitle as string || tags.find(tag => tag.tag === 'title')?.textContent || '',
+        params,
+        sep,
+      )
       for (const tag of tags.filter(t => t.processTemplateParams !== false)) {
         // @ts-expect-error untyped
         const v = SupportedAttrs[tag.tag]
