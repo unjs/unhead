@@ -8,7 +8,11 @@ export default defineHeadPlugin({
       // 2a. Sort based on priority
       // now we need to check render priority for each before: rule and use the dedupe key index
       for (const { prefix, offset } of SortModifiers) {
-        for (const tag of ctx.tags.filter(tag => typeof tag.tagPriority === 'string' && tag.tagPriority!.startsWith(prefix))) {
+        for (const tag of ctx.tags) {
+          if (typeof tag.tagPriority !== 'string' || !tag.tagPriority!.startsWith(prefix)) {
+            continue
+          }
+
           const position = tagPositionForKey(
             (tag.tagPriority as string).replace(prefix, ''),
           )
