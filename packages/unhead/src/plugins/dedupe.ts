@@ -22,7 +22,7 @@ export default defineHeadPlugin({
     },
     'tags:resolve': (ctx) => {
       // 1. Dedupe tags
-      const deduping: Record<string, HeadTag> = {}
+      const deduping: Record<string, HeadTag> = Object.create(null)
       for (const tag of ctx.tags) {
         // need a seperate dedupe key other than _d
         const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || tag._p!
@@ -85,9 +85,6 @@ export default defineHeadPlugin({
       }
       const newTags: HeadTag[] = []
       for (const key in deduping) {
-        if (!Object.prototype.hasOwnProperty.call(deduping, key)) {
-          continue
-        }
         const tag = deduping[key]
         // @ts-expect-error runtime type
         const dupes = tag._duped
