@@ -129,22 +129,19 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Th
 
   const headTags: HeadTag[] = []
 
-  let thenableRet: Thenable<unknown>
+  let thenableRet: Thenable<HeadTag | HeadTag[]> = tagPromises.shift()!
 
-  for (const tagPromise of tagPromises) {
-    const res = thenable(tagPromise, (tags) => {
+  for (let i = 0, l = tagPromises.length + 1; i !== l; i += 1) {
+    thenableRet = thenable(thenableRet, (tags) => {
       if (Array.isArray(tags)) {
         headTags.push(...tags)
       }
       else {
         headTags.push(tags)
       }
-    })
 
-    if (res instanceof Promise) {
-      const prevThenableRet = thenableRet
-      thenableRet = res.then(() => prevThenableRet)
-    }
+      return tagPromises[i]
+    }) as Thenable<HeadTag | HeadTag[]>
   }
 
   return thenable(thenableRet, () => (
