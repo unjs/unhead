@@ -82,10 +82,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const isAttrTag = tag.tag.endsWith('Attrs')
     state.elMap[id] = $el
     if (!isAttrTag) {
-      ;['textContent', 'innerHTML'].forEach((k) => {
-        // @ts-expect-error unkeyed
-        tag[k] && tag[k] !== $el[k] && ($el[k] = tag[k])
-      })
+      if (tag.textContent && tag.textContent !== $el.textContent) {
+        $el.textContent = tag.textContent
+      }
+      if (tag.innerHTML && tag.innerHTML !== $el.innerHTML) {
+        $el.innerHTML = tag.innerHTML
+      }
       track(id, 'el', () => {
         // the element may have been removed by a duplicate tag or something out of our control
         state.elMap[id]?.remove()
