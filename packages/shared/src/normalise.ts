@@ -67,7 +67,7 @@ export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v:
     .join(sep)
 }
 
-export function nestedNormaliseProps<T extends HeadTag>(
+function nestedNormaliseProps<T extends HeadTag>(
   props: T['props'],
   virtual: boolean,
   keys: (keyof T['props'])[],
