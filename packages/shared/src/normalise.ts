@@ -112,7 +112,13 @@ function nestedNormaliseProps<T extends HeadTag>(
 }
 
 export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: boolean = false): Thenable<T['props']> {
-  return thenable(nestedNormaliseProps(props, virtual, Object.keys(props), 0), () => props)
+  const resolvedProps = nestedNormaliseProps(props, virtual, Object.keys(props), 0)
+
+  if (resolvedProps instanceof Promise) {
+    return resolvedProps.then(() => props)
+  }
+
+  return props
 }
 
 // support 1024 tag ids per entry (includes updates)
