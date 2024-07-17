@@ -2,55 +2,56 @@ import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
 import { type Thenable, thenable } from './thenable'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from '.'
 
-export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Thenable<T | T[]> {
-  return thenable(
-    normaliseProps<T>(
-      // explicitly check for an object
-      // @ts-expect-error untyped
-      typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
-        ? { ...input }
-        : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: input },
-      (tagName === 'templateParams' || tagName === 'titleTemplate'),
-    ),
-    (props) => {
-      // input can be a function or an object, we need to clone it
-      const tag = {
-        tag: tagName,
-        props: props as T['props'],
-      } as T
-      // merge options from the entry
-      TagConfigKeys.forEach((k) => {
-        // @ts-expect-error untyped
-        const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
-        if (val !== undefined) {
-          // strip innerHTML and textContent for tags which don't support it=
-          if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.has(tag.tag)) {
-            // @ts-expect-error untyped
-            tag[k === 'children' ? 'innerHTML' : k] = val
-          }
-          delete tag.props[k]
-        }
-      })
-      // TODO remove v2
-      if (tag.props.body) {
-        // inserting dangerous javascript potentially
-        tag.tagPosition = 'bodyClose'
-        // clean up
-        delete tag.props.body
-      }
-      // shorthand for objects
-      if (tag.tag === 'script') {
-        if (typeof tag.innerHTML === 'object') {
-          tag.innerHTML = JSON.stringify(tag.innerHTML)
-          tag.props.type = tag.props.type || 'application/json'
-        }
-      }
-      // allow meta to be resolved into multiple tags if an array is provided on content
-      return Array.isArray(tag.props.content)
-        ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
-        : tag
-    },
+export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): Thenable<T | T[]> {
+  const props = normalizedProps || normaliseProps<T>(
+    // explicitly check for an object
+    // @ts-expect-error untyped
+    typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
+      ? { ...input }
+      : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: input },
+    (tagName === 'templateParams' || tagName === 'titleTemplate'),
   )
+
+  if (props instanceof Promise) {
+    return props.then(val => normaliseTag(tagName, input, e, val))
+  }
+
+  // input can be a function or an object, we need to clone it
+  const tag = {
+    tag: tagName,
+    props: props as T['props'],
+  } as T
+  // merge options from the entry
+  TagConfigKeys.forEach((k) => {
+    // @ts-expect-error untyped
+    const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
+    if (val !== undefined) {
+      // strip innerHTML and textContent for tags which don't support it=
+      if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.has(tag.tag)) {
+        // @ts-expect-error untyped
+        tag[k === 'children' ? 'innerHTML' : k] = val
+      }
+      delete tag.props[k]
+    }
+  })
+  // TODO remove v2
+  if (tag.props.body) {
+    // inserting dangerous javascript potentially
+    tag.tagPosition = 'bodyClose'
+    // clean up
+    delete tag.props.body
+  }
+  // shorthand for objects
+  if (tag.tag === 'script') {
+    if (typeof tag.innerHTML === 'object') {
+      tag.innerHTML = JSON.stringify(tag.innerHTML)
+      tag.props.type = tag.props.type || 'application/json'
+    }
+  }
+  // allow meta to be resolved into multiple tags if an array is provided on content
+  return Array.isArray(tag.props.content)
+    ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } } as T))
+    : tag
 }
 
 export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
