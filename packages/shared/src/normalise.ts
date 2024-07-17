@@ -118,15 +118,15 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
-function nestedNormaliseEntryTags(headTags: HeadTag[], resolvedTags: Thenable<HeadTag | HeadTag[]>[], startIndex: number): Thenable<unknown> {
-  for (let i = startIndex; i < resolvedTags.length; i += 1) {
-    const tags = resolvedTags[i]
+function nestedNormaliseEntryTags(headTags: HeadTag[], tagPromises: Thenable<HeadTag | HeadTag[]>[], startIndex: number): Thenable<unknown> {
+  for (let i = startIndex; i < tagPromises.length; i += 1) {
+    const tags = tagPromises[i]
 
     if (tags instanceof Promise) {
       return tags.then((val) => {
-        resolvedTags[i] = val
+        tagPromises[i] = val
 
-        return nestedNormaliseEntryTags(headTags, resolvedTags, i)
+        return nestedNormaliseEntryTags(headTags, tagPromises, i)
       })
     }
 
