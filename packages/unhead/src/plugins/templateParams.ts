@@ -23,7 +23,10 @@ export default defineHeadPlugin(head => ({
         params,
         sep,
       )
-      for (const tag of tags.filter(t => t.processTemplateParams !== false)) {
+      for (const tag of tags) {
+        if (tag.processTemplateParams === false) {
+          continue
+        }
         // @ts-expect-error untyped
         const v = SupportedAttrs[tag.tag]
         if (v && typeof tag.props[v] === 'string') {
