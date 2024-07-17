@@ -76,7 +76,7 @@ export default defineHeadPlugin({
         // PERF: compute the number of props keys after static check
         const hasProps = tag.innerHTML || tag.textContent || Object.keys(tag.props).length !== 0
         // if the new tag does not have any props, we're trying to remove the duped tag from the DOM
-        if (HasElementTags.has(tag.tag) && !hasProps) {
+        if (!hasProps && HasElementTags.has(tag.tag)) {
           // find the tag with the same key
           delete deduping[dedupeKey]
           continue
