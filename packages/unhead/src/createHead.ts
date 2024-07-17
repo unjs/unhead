@@ -96,13 +96,12 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
-          entries = entries.map((e) => {
+          for (const e of entries) {
             if (e._i === entry._i) {
               // bit hacky syncing
               e.input = entry.input = input
             }
-            return e
-          })
+          }
           updated()
         },
       }
