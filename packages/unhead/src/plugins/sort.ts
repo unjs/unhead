@@ -26,11 +26,21 @@ export default defineHeadPlugin({
         }
       }
 
-      ctx.tags
-        // 2b. sort tags in their natural order
-        .sort((a, b) => a._p! - b._p!)
+      ctx.tags.sort((a, b) => {
+        const aWeight = tagWeight(a)
+        const bWeight = tagWeight(b)
+
         // 2c. sort based on critical tags
-        .sort((a, b) => tagWeight(a) - tagWeight(b))
+        if (aWeight < bWeight) {
+          return -1
+        }
+        else if (aWeight > bWeight) {
+          return 1
+        }
+
+        // 2b. sort tags in their natural order
+        return a._p! - b._p!
+      })
     },
   },
 })
