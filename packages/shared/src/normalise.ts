@@ -22,7 +22,7 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
     props: props as T['props'],
   } as T
   // merge options from the entry
-  TagConfigKeys.forEach((k) => {
+  for (const k of TagConfigKeys) {
     // @ts-expect-error untyped
     const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
     if (val !== undefined) {
@@ -33,7 +33,7 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
       }
       delete tag.props[k]
     }
-  })
+  }
   // TODO remove v2
   if (tag.props.body) {
     // inserting dangerous javascript potentially
