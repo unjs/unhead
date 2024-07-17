@@ -5,7 +5,7 @@ function resolveUnref(r: any) {
   return typeof r === 'function' ? r() : unref(r)
 }
 
-export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): any {
+export function resolveUnrefHeadInput(ref: any): any {
   // allow promises to bubble through
   if (ref instanceof Promise)
     return ref
@@ -14,17 +14,27 @@ export function resolveUnrefHeadInput(ref: any, lastKey: string | number = ''): 
     return root
 
   if (Array.isArray(root))
-    return root.map(r => resolveUnrefHeadInput(r, lastKey))
+    return root.map(r => resolveUnrefHeadInput(r))
 
   if (typeof root === 'object') {
-    return Object.fromEntries(
-      Object.entries(root).map(([k, v]) => {
-        // title template and raw dom events should stay functions, we support a ref'd string though
-        if (k === 'titleTemplate' || k.startsWith('on'))
-          return [k, unref(v)]
-        return [k, resolveUnrefHeadInput(v, k)]
-      }),
-    )
+    const resolved: Record<string, string> = {}
+
+    for (const k in root) {
+      if (!Object.prototype.hasOwnProperty.call(root, k)) {
+        continue
+      }
+
+      if (k === 'titleTemplate' || (k[0] === 'o' && k[1] === 'n')) {
+        resolved[k] = unref(root[k])
+
+        continue
+      }
+
+      resolved[k] = resolveUnrefHeadInput(root[k])
+    }
+
+    return resolved
   }
+
   return root
 }
