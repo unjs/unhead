@@ -92,12 +92,22 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         delete state.elMap[id]
       })
     }
-    // we need to attach event listeners as they can have side effects such as onload
-    for (const [k, value] of Object.entries(tag._eventHandlers || {})) {
-      if ($el.getAttribute(`data-${k}`) !== '') {
-        // avoid overriding
-        (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(k.replace('on', ''), value.bind($el))
-        $el.setAttribute(`data-${k}`, '')
+    if (tag._eventHandlers) {
+      // we need to attach event listeners as they can have side effects such as onload
+      for (const k in tag._eventHandlers) {
+        if (!Object.prototype.hasOwnProperty.call(tag._eventHandlers, k)) {
+          continue
+        }
+
+        if ($el.getAttribute(`data-${k}`) !== '') {
+          // avoid overriding
+          (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(
+            // onload -> load
+            k.substring(2),
+            tag._eventHandlers[k].bind($el),
+          )
+          $el.setAttribute(`data-${k}`, '')
+        }
       }
     }
     for (const k in tag.props) {
@@ -115,9 +125,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         // if the user is providing an empty string, then it's removing the class
         // the side effect clean up should remove it
         for (const c of value.split(' ')) {
-          if (!c) {
-            continue
-          }
           // always clear side effects
           isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
           !$el.classList.contains(c) && $el.classList.add(c)
@@ -129,9 +136,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
         // style attributes have their own side effects to allow for merging
         for (const c of value.split(';')) {
-          if (!c) {
-            continue
-          }
           const propIndex = c.indexOf(':')
           const k = c.substring(0, propIndex).trim()
           const v = c.substring(propIndex + 1).trim()
