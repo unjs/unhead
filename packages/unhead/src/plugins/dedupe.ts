@@ -4,6 +4,7 @@ import { HasElementTags, defineHeadPlugin, tagDedupeKey, tagWeight } from '@unhe
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
 const thirdPartyDedupeKeys = ['hid', 'vmid', 'key']
+const mergeCommonProps = ['class', 'style']
 
 export default defineHeadPlugin({
   hooks: {
@@ -37,7 +38,7 @@ export default defineHeadPlugin({
           if (strategy === 'merge') {
             const oldProps = dupedTag.props
             // apply oldProps to current props
-            ;['class', 'style'].forEach((key) => {
+            mergeCommonProps.forEach((key) => {
               if (oldProps[key]) {
                 if (tag.props[key]) {
                   // ensure style merge doesn't result in invalid css
