@@ -7,6 +7,8 @@ const SupportedAttrs = {
   htmlAttrs: 'lang',
 } as const
 
+const contentAttrs = ['innerHTML', 'textContent']
+
 export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
@@ -45,13 +47,13 @@ export default defineHeadPlugin(head => ({
           tag.props[v] = processTemplateParams(tag.props[v], params, sep)
         }
         // everything else requires explicit opt-in
-        else if (tag.processTemplateParams === true || tag.tag === 'titleTemplate' || tag.tag === 'title') {
-          ['innerHTML', 'textContent'].forEach((p) => {
+        else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
+          for (const p of contentAttrs) {
             // @ts-expect-error untyped
             if (typeof tag[p] === 'string')
               // @ts-expect-error untyped
               tag[p] = processTemplateParams(tag[p], params, sep)
-          })
+          }
         }
       }
       // resolved template params
