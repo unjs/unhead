@@ -119,7 +119,7 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
 export const TagEntityBits = 10
 
 function nestedNormaliseEntryTags(headTags: HeadTag[], resolvedTags: Thenable<HeadTag | HeadTag[]>[], startIndex: number): Thenable<unknown> {
-  for (let i = startIndex; resolvedTags.length < i; i += 1) {
+  for (let i = startIndex; i < resolvedTags.length; i += 1) {
     const tags = resolvedTags[i]
 
     if (tags instanceof Promise) {
