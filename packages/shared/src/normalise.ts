@@ -67,10 +67,14 @@ export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v:
     .join(sep)
 }
 
-export function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: boolean): Thenable<T['props']> {
-  let thanableRet: Thenable<unknown>
-
-  for (const k of Object.keys(props)) {
+export function nestedNormaliseProps<T extends HeadTag>(
+  props: T['props'],
+  virtual: boolean,
+  keys: (keyof T['props'])[],
+  startIndex: number,
+): Thenable<void> {
+  for (let i = startIndex; i < keys.length; i += 1) {
+    const k = keys[i]
     // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
     // class has special handling
     if (k === 'class' || k === 'style') {
@@ -79,35 +83,36 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: b
       continue
     }
 
-    const result = thenable(props[k], (prop) => {
-      // @ts-expect-error untyped
-      props[k] = prop
+    // @ts-expect-error no reason for: The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+    if (props[k] instanceof Promise) {
+      return props[k].then((val) => {
+        props[k] = val
 
-      if (!virtual && !TagConfigKeys.has(k as string)) {
-        const v = String(props[k])
-        // data keys get special treatment, we opt for more verbose syntax
-        const isDataKey = k.startsWith('data-')
-        if (v === 'true' || v === '') {
-          // @ts-expect-error untyped
-          props[k] = isDataKey ? 'true' : true
-        }
-        else if (!props[k]) {
-          if (isDataKey && v === 'false')
-            // @ts-expect-error untyped
-            props[k] = 'false'
-          else
-            delete props[k]
-        }
+        return nestedNormaliseProps(props, virtual, keys, i)
+      })
+    }
+
+    if (!virtual && !TagConfigKeys.has(k as string)) {
+      const v = String(props[k])
+      // data keys get special treatment, we opt for more verbose syntax
+      const isDataKey = (k as string).startsWith('data-')
+      if (v === 'true' || v === '') {
+        // @ts-expect-error untyped
+        props[k] = isDataKey ? 'true' : true
       }
-    })
-
-    if (result instanceof Promise) {
-      const prevThenableRet = thanableRet
-      thanableRet = result.then(() => prevThenableRet)
+      else if (!props[k]) {
+        if (isDataKey && v === 'false')
+          // @ts-expect-error untyped
+          props[k] = 'false'
+        else
+          delete props[k]
+      }
     }
   }
+}
 
-  return thenable(thanableRet, () => props)
+export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: boolean = false): Thenable<T['props']> {
+  return thenable(nestedNormaliseProps(props, virtual, Object.keys(props), 0), () => props)
 }
 
 // support 1024 tag ids per entry (includes updates)
