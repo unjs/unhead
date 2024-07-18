@@ -19,7 +19,7 @@ export default defineHeadPlugin(head => ({
 
         for (const key in props) {
           // on
-          if (!(key[0] === 'o' && key[1] === 'n')) {
+          if (key[0] !== 'o' || key[1] !== 'n') {
             continue
           }
 
@@ -51,8 +51,14 @@ export default defineHeadPlugin(head => ({
       }
     },
     'dom:renderTag': ({ $el, tag }) => {
+      const dataset = ($el as HTMLScriptElement | undefined)?.dataset
+
+      if (!dataset) {
+        return
+      }
+
       // this is only handling SSR rendered tags with event handlers
-      for (const k in (($el as HTMLScriptElement | undefined)?.dataset || {})) {
+      for (const k in dataset) {
         if (!k.endsWith('fired')) {
           continue
         }
