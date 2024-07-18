@@ -105,7 +105,7 @@ function fixKeyCase(key: string) {
   const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
   const prefixIndex = updated.indexOf('-')
   const fKey = updated.substring(0, prefixIndex)
-  if (openGraphNamespaces.has(fKey) || fKey === 'twitter')
+  if (fKey === 'twitter' || openGraphNamespaces.has(fKey))
     return key.replace(/([A-Z])/g, ':$1').toLowerCase()
   return updated
 }
