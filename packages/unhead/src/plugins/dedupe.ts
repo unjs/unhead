@@ -88,12 +88,13 @@ export default defineHeadPlugin({
         const tag = deduping[key]
         // @ts-expect-error runtime type
         const dupes = tag._duped
-        // @ts-expect-error runtime type
-        delete tag._duped
         newTags.push(tag)
         // add the duped tags to the new tags
-        if (dupes)
+        if (dupes) {
+          // @ts-expect-error runtime type
+          delete tag._duped
           newTags.push(...dupes)
+        }
       }
       ctx.tags = newTags
       // now filter out invalid meta
