@@ -158,8 +158,10 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Th
       continue
     }
     if (Array.isArray(v)) {
-      // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props, e)))
+      for (const props of v) {
+        // @ts-expect-error untyped
+        tagPromises.push(normaliseTag(k as keyof Head, props, e))
+      }
       continue
     }
     // @ts-expect-error untyped
