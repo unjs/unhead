@@ -129,7 +129,11 @@ export function resolveAsGraphKey(key?: Id | string) {
  * Removes attributes which have a null or undefined value
  */
 export function stripEmptyProperties(obj: any) {
-  Object.keys(obj).forEach((k) => {
+  for (const k in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) {
+      continue
+    }
+
     if (obj[k] && typeof obj[k] === 'object') {
       // avoid walking vue reactivity
       if (obj[k].__v_isReadonly || obj[k].__v_isRef)
@@ -139,6 +143,7 @@ export function stripEmptyProperties(obj: any) {
     }
     if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
       delete obj[k]
-  })
+  }
+
   return obj
 }
