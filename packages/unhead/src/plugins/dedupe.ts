@@ -3,17 +3,21 @@ import { HasElementTags, defineHeadPlugin, tagDedupeKey, tagWeight } from '@unhe
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
-const thirdPartyDedupeKeys = ['hid', 'vmid', 'key']
-
 export default defineHeadPlugin({
   hooks: {
     'tag:normalise': ({ tag }) => {
       // support for third-party dedupe keys
-      for (const key of thirdPartyDedupeKeys) {
-        if (tag.props[key]) {
-          tag.key = tag.props[key]
-          delete tag.props[key]
-        }
+      if (tag.props.hid) {
+        tag.key = tag.props.hid
+        delete tag.props.hid
+      }
+      if (tag.props.vmid) {
+        tag.key = tag.props.vmid
+        delete tag.props.vmid
+      }
+      if (tag.props.key) {
+        tag.key = tag.props.key
+        delete tag.props.key
       }
       const generatedKey = tagDedupeKey(tag)
       const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
