@@ -118,11 +118,18 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     alias = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   }
   const hashNodeData: Record<string, any> = {}
-  Object.entries(node).forEach(([key, val]) => {
-    // remove runtime private fields
-    if (key[0] !== '_')
-      hashNodeData[key] = val
-  })
+  for (const key in node) {
+    if (key[0] === '_') {
+      continue
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(node, key)) {
+      continue
+    }
+
+    hashNodeData[key] = node[key]
+  }
+
   node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || hashCode(JSON.stringify(hashNodeData))}`)
   return node
 }
