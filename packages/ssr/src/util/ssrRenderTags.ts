@@ -12,7 +12,7 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
 
   for (const tag of tags) {
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-      schema[tag.tag] = { ...schema[tag.tag], ...tag.props }
+      Object.assign(schema[tag.tag], tag.props)
       continue
     }
     const s = tagToString(tag)
