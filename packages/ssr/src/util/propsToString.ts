@@ -3,7 +3,7 @@ function encodeAttribute(value: string) {
 }
 
 export function propsToString(props: Record<string, any>) {
-  let attrs = ' '
+  let attrs = ''
 
   for (const key in props) {
     if (!Object.prototype.hasOwnProperty.call(props, key)) {
@@ -13,9 +13,9 @@ export function propsToString(props: Record<string, any>) {
     const value = props[key]
 
     if (value !== false && value !== null) {
-      attrs += value === true ? `${key} ` : `${key}="${encodeAttribute(value)}" `
+      attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value)}"`
     }
   }
 
-  return attrs.trimEnd()
+  return attrs
 }
