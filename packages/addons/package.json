@@ -59,12 +59,12 @@
     "@unhead/shared": "workspace:*",
     "magic-string": "^0.30.10",
     "mlly": "^1.7.1",
-    "ufo": "^1.5.3",
+    "ufo": "^1.5.4",
     "unplugin": "^1.11.0",
     "unplugin-ast": "^0.10.0"
   },
   "devDependencies": {
-    "@babel/types": "^7.24.7",
+    "@babel/types": "^7.24.9",
     "estree-walker": "^3.0.3"
   }
 }
