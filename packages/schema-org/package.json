@@ -46,14 +46,14 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "dependencies": {
-    "ufo": "^1.5.3"
+    "ufo": "^1.5.4"
   },
   "devDependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.27.2",
-    "vue": "^3.4.31"
+    "unplugin-vue-components": "^0.27.3",
+    "vue": "^3.4.33"
   }
 }
