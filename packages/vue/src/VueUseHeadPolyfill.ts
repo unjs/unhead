@@ -44,7 +44,7 @@ export function polyfillAsVueUseHead<T extends MergeHead>(head: VueHeadClient<T>
   polyfilled.addHeadObjs = head.push
   polyfilled.addReactiveEntry = (input, options) => {
     const api = useHead(input, options)
-    if (typeof api !== 'undefined')
+    if (api !== undefined)
       return api.dispose
     return () => {}
   }

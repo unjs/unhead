@@ -7,40 +7,58 @@ const SupportedAttrs = {
   htmlAttrs: 'lang',
 } as const
 
+const contentAttrs = ['innerHTML', 'textContent']
+
 export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx
-      // find templateParams
-      const title = tags.find(tag => tag.tag === 'title')?.textContent
-      const idx = tags.findIndex(tag => tag.tag === 'templateParams')
+      let templateParams: TemplateParams | undefined
+      for (let i = 0; i < tags.length; i += 1) {
+        const tag = tags[i]
+
+        if (tag.tag !== 'templateParams') {
+          continue
+        }
+
+        templateParams = ctx.tags.splice(i, 1)[0].props
+
+        i -= 1
+      }
       // we always process params so we can substitute the title
-      const params = idx !== -1 ? tags[idx].props as unknown as TemplateParams : {}
+      const params = (templateParams || {}) as TemplateParams
       // ensure a separator exists
       const sep = params.separator || '|'
       delete params.separator
       // pre-process title
-      params.pageTitle = processTemplateParams(params.pageTitle as string || title || '', params, sep)
-      for (const tag of tags.filter(t => t.processTemplateParams !== false)) {
+      params.pageTitle = processTemplateParams(
+        // find templateParams
+        params.pageTitle as string || tags.find(tag => tag.tag === 'title')?.textContent || '',
+        params,
+        sep,
+      )
+      for (const tag of tags) {
+        if (tag.processTemplateParams === false) {
+          continue
+        }
         // @ts-expect-error untyped
         const v = SupportedAttrs[tag.tag]
         if (v && typeof tag.props[v] === 'string') {
           tag.props[v] = processTemplateParams(tag.props[v], params, sep)
         }
         // everything else requires explicit opt-in
-        else if (tag.processTemplateParams === true || ['titleTemplate', 'title'].includes(tag.tag)) {
-          ['innerHTML', 'textContent'].forEach((p) => {
+        else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
+          for (const p of contentAttrs) {
             // @ts-expect-error untyped
             if (typeof tag[p] === 'string')
               // @ts-expect-error untyped
               tag[p] = processTemplateParams(tag[p], params, sep)
-          })
+          }
         }
       }
       // resolved template params
       head._templateParams = params
       head._separator = sep
-      ctx.tags = tags.filter(tag => tag.tag !== 'templateParams')
     },
   },
 }))

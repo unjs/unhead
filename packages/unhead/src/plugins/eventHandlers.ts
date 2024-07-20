@@ -1,6 +1,6 @@
 import { NetworkEvents, defineHeadPlugin, hashCode } from '@unhead/shared'
 
-const ValidEventTags = ['script', 'link', 'bodyAttrs']
+const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
 
 /**
  * Supports DOM event handlers (i.e `onload`) as functions.
@@ -9,30 +9,69 @@ const ValidEventTags = ['script', 'link', 'bodyAttrs']
  */
 export default defineHeadPlugin(head => ({
   hooks: {
-    'tags:resolve': function (ctx) {
-      for (const tag of ctx.tags.filter(t => ValidEventTags.includes(t.tag))) {
-        // must be a valid tag
-        Object.entries(tag.props)
-          .forEach(([key, value]) => {
-            if (key.startsWith('on') && typeof value === 'function') {
-              // insert a inline script to set the status of onload and onerror
-              if (head.ssr && NetworkEvents.includes(key))
-                tag.props[key] = `this.dataset.${key}fired = true`
+    'tags:resolve': (ctx) => {
+      for (const tag of ctx.tags) {
+        if (!ValidEventTags.has(tag.tag)) {
+          continue
+        }
 
-              else delete tag.props[key]
-              tag._eventHandlers = tag._eventHandlers || {}
-              tag._eventHandlers![key] = value
-            }
-          })
-        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href))
+        const props = tag.props
+
+        for (const key in props) {
+          // on
+          if (key[0] !== 'o' || key[1] !== 'n') {
+            continue
+          }
+
+          if (!Object.prototype.hasOwnProperty.call(props, key)) {
+            continue
+          }
+
+          const value = props[key]
+
+          if (typeof value !== 'function') {
+            continue
+          }
+
+          // insert a inline script to set the status of onload and onerror
+          if (head.ssr && NetworkEvents.has(key)) {
+            props[key] = `this.dataset.${key}fired = true`
+          }
+          else {
+            delete props[key]
+          }
+
+          tag._eventHandlers = tag._eventHandlers || {}
+          tag._eventHandlers![key] = value
+        }
+
+        if (head.ssr && tag._eventHandlers && (tag.props.src || tag.props.href)) {
           tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
+        }
       }
     },
-    'dom:renderTag': function ({ $el, tag }) {
+    'dom:renderTag': ({ $el, tag }) => {
+      const dataset = ($el as HTMLScriptElement | undefined)?.dataset
+
+      if (!dataset) {
+        return
+      }
+
       // this is only handling SSR rendered tags with event handlers
-      for (const k of Object.keys($el?.dataset as HTMLScriptElement || {}).filter(k => NetworkEvents.some(e => `${e}fired` === k))) {
-        const ek = k.replace('fired', '')
-        tag._eventHandlers?.[ek]?.call($el, new Event(ek.replace('on', '')))
+      for (const k in dataset) {
+        if (!k.endsWith('fired')) {
+          continue
+        }
+
+        // onloadfired -> onload
+        const ek = k.slice(0, -5)
+
+        if (!NetworkEvents.has(ek)) {
+          continue
+        }
+
+        // onload -> load
+        tag._eventHandlers?.[ek]?.call($el, new Event(ek.substring(2)))
       }
     },
   },

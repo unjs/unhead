@@ -11,5 +11,19 @@ export function hashCode(s: string) {
 }
 
 export function hashTag(tag: HeadTag) {
-  return tag._h || hashCode(tag._d ? tag._d : `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([key, value]) => `${key}:${String(value)}`).join(',')}`)
+  if (tag._h) {
+    return tag._h
+  }
+
+  if (tag._d) {
+    return hashCode(tag._d)
+  }
+
+  let content = `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:`
+
+  for (const key in tag.props) {
+    content += `${key}:${tag.props[key]},`
+  }
+
+  return hashCode(content)
 }

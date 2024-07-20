@@ -82,16 +82,17 @@ const MetaPackingSchema: Record<string, PackingDefinition> = {
   },
 } as const
 
-const openGraphNamespaces = [
+const openGraphNamespaces = new Set([
   'og',
   'book',
   'article',
   'profile',
-]
+])
 
 export function resolveMetaKeyType(key: string): keyof BaseMeta {
-  const fKey = fixKeyCase(key).split(':')[0]
-  if (openGraphNamespaces.includes(fKey))
+  const fKey = fixKeyCase(key)
+  const prefixIndex = fKey.indexOf(':')
+  if (openGraphNamespaces.has(fKey.substring(0, prefixIndex)))
     return 'property'
   return MetaPackingSchema[key]?.metaKey || 'name'
 }
@@ -102,8 +103,9 @@ export function resolveMetaKeyValue(key: string): string {
 
 function fixKeyCase(key: string) {
   const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-  const fKey = updated.split('-')[0]
-  if (openGraphNamespaces.includes(fKey) || fKey === 'twitter')
+  const prefixIndex = updated.indexOf('-')
+  const fKey = updated.substring(0, prefixIndex)
+  if (fKey === 'twitter' || openGraphNamespaces.has(fKey))
     return key.replace(/([A-Z])/g, ':$1').toLowerCase()
   return updated
 }
@@ -118,8 +120,12 @@ function changeKeyCasingDeep<T extends any>(input: T): T {
     return input
 
   const output: Record<string, any> = {}
-  for (const [key, value] of Object.entries(input as object))
-    output[fixKeyCase(key)] = changeKeyCasingDeep(value)
+  for (const key in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) {
+      continue
+    }
+    output[fixKeyCase(key)] = changeKeyCasingDeep(input[key])
+  }
 
   return output as T
 }
@@ -147,14 +153,18 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   )
 }
 
-const ObjectArrayEntries = ['og:image', 'og:video', 'og:audio', 'twitter:image']
+const ObjectArrayEntries = new Set(['og:image', 'og:video', 'og:audio', 'twitter:image'])
 
 function sanitize(input: Record<string, any>) {
   const out: Record<string, any> = {}
-  Object.entries(input).forEach(([k, v]) => {
+  for (const k in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, k)) {
+      continue
+    }
+    const v = input[k]
     if (String(v) !== 'false' && k)
       out[k] = v
-  })
+  }
   return out
 }
 
@@ -163,13 +173,17 @@ function handleObjectEntry(key: string, v: Record<string, any>) {
   const value: Record<string, any> = sanitize(v)
   const fKey = fixKeyCase(key)
   const attr = resolveMetaKeyType(fKey)
-  if (ObjectArrayEntries.includes(fKey as keyof MetaFlatInput)) {
+  if (ObjectArrayEntries.has(fKey as keyof MetaFlatInput)) {
     const input: MetaFlatInput = {}
-    // we need to prefix the keys with og:
-    Object.entries(value).forEach(([k, v]) => {
+    for (const k in value) {
+      if (!Object.prototype.hasOwnProperty.call(value, k)) {
+        continue
+      }
+
+      // we need to prefix the keys with og:
       // @ts-expect-error untyped
-      input[`${key}${k === 'url' ? '' : `${k.charAt(0).toUpperCase()}${k.slice(1)}`}`] = v
-    })
+      input[`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`] = value[k]
+    }
     return unpackMeta(input)
       // sort by property name
       // @ts-expect-error untyped
@@ -186,24 +200,30 @@ export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['m
   const extras: BaseMeta[] = []
   // need to handle array input of the object
   const primitives: Record<string, any> = {}
-  Object.entries(input).forEach(([key, value]) => {
+  for (const key in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) {
+      continue
+    }
+
+    const value = input[key]
+
     if (!Array.isArray(value)) {
       if (typeof value === 'object' && value) {
-        if (ObjectArrayEntries.includes(fixKeyCase(key) as keyof MetaFlatInput)) {
+        if (ObjectArrayEntries.has(fixKeyCase(key) as keyof MetaFlatInput)) {
           extras.push(...handleObjectEntry(key, value))
-          return
+          continue
         }
         primitives[key] = sanitize(value)
       }
       else {
         primitives[key] = value
       }
-      return
+      continue
     }
-    value.forEach((v) => {
+    for (const v of value) {
       extras.push(...(typeof v === 'string' ? unpackMeta({ [key]: v }) as BaseMeta[] : handleObjectEntry(key, v)))
-    })
-  })
+    }
+  }
 
   const meta = unpackToArray((primitives), {
     key({ key }) {

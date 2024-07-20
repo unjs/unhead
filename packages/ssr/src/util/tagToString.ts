@@ -36,13 +36,13 @@ export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
   // get the encoding depending on the tag type
-  if (!TagsWithInnerContent.includes(tag.tag))
-    return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
+  if (!TagsWithInnerContent.has(tag.tag))
+    return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.innerHTML || '')
   if (tag.textContent)
     // content needs to be encoded to avoid XSS, only for title
     content = escapeHtml(String(tag.textContent))
-  return SelfClosingTags.includes(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
+  return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

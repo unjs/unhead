@@ -31,7 +31,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   const tags = (await head.resolveTags())
     .map(tag => <DomRenderTagContext> {
       tag,
-      id: HasElementTags.includes(tag.tag) ? hashTag(tag) : tag.tag,
+      id: HasElementTags.has(tag.tag) ? hashTag(tag) : tag.tag,
       shouldRender: true,
     })
   let state = head._dom as DomState
@@ -40,12 +40,19 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     state = {
       elMap: { htmlAttrs: dom.documentElement, bodyAttrs: dom.body },
     } as any as DomState
+
+    const takenDedupeKeys = new Set()
+
     for (const key of ['body', 'head']) {
       const children = dom[key as 'head' | 'body']?.children
       const tags: HeadTag[] = []
-      for (const c of [...children].filter(c => HasElementTags.includes(c.tagName.toLowerCase()))) {
+      for (const c of children) {
+        const tag = c.tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(tag)) {
+          continue
+        }
         const t: HeadTag = {
-          tag: c.tagName.toLowerCase() as HeadTag['tag'],
+          tag,
           props: await normaliseProps(
             c.getAttributeNames()
               .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
@@ -53,11 +60,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           innerHTML: c.innerHTML,
         }
         // we need to account for the fact that duplicate tags may exist as some are supported, increment the dedupe key
+        const dedupeKey = tagDedupeKey(t)
+        let d = dedupeKey
         let i = 1
-        let d = tagDedupeKey(t)
-        while (d && tags.find(t => t._d === d))
-          d = `${d}:${i++}`
-        t._d = d || undefined
+        while (d && takenDedupeKeys.has(d))
+          d = `${dedupeKey}:${i++}`
+        if (d) {
+          t._d = d
+          takenDedupeKeys.add(d)
+        }
         tags.push(t)
         state.elMap[c.getAttribute('data-hid') || hashTag(t)] = c
       }
@@ -65,7 +76,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
 
   // presume all side effects are stale, we mark them as not stale if they're re-introduced
-  state.pendingSideEffects = { ...state.sideEffects || {} }
+  state.pendingSideEffects = { ...state.sideEffects }
   state.sideEffects = {}
 
   function track(id: string, scope: string, fn: () => void) {
@@ -78,44 +89,69 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const isAttrTag = tag.tag.endsWith('Attrs')
     state.elMap[id] = $el
     if (!isAttrTag) {
-      ;['textContent', 'innerHTML'].forEach((k) => {
-        // @ts-expect-error unkeyed
-        tag[k] && tag[k] !== $el[k] && ($el[k] = tag[k])
-      })
+      if (tag.textContent && tag.textContent !== $el.textContent) {
+        $el.textContent = tag.textContent
+      }
+      if (tag.innerHTML && tag.innerHTML !== $el.innerHTML) {
+        $el.innerHTML = tag.innerHTML
+      }
       track(id, 'el', () => {
         // the element may have been removed by a duplicate tag or something out of our control
         state.elMap[id]?.remove()
         delete state.elMap[id]
       })
     }
-    // we need to attach event listeners as they can have side effects such as onload
-    for (const [k, value] of Object.entries(tag._eventHandlers || {})) {
-      if ($el.getAttribute(`data-${k}`) !== '') {
-        // avoid overriding
-        (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(k.replace('on', ''), value.bind($el))
-        $el.setAttribute(`data-${k}`, '')
+    if (tag._eventHandlers) {
+      // we need to attach event listeners as they can have side effects such as onload
+      for (const k in tag._eventHandlers) {
+        if (!Object.prototype.hasOwnProperty.call(tag._eventHandlers, k)) {
+          continue
+        }
+
+        if ($el.getAttribute(`data-${k}`) !== '') {
+          // avoid overriding
+          (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(
+            // onload -> load
+            k.substring(2),
+            tag._eventHandlers[k].bind($el),
+          )
+          $el.setAttribute(`data-${k}`, '')
+        }
       }
     }
-    Object.entries(tag.props).forEach(([k, value]) => {
+    for (const k in tag.props) {
+      if (!Object.prototype.hasOwnProperty.call(tag.props, k)) {
+        continue
+      }
+      const value = tag.props[k]
+
       const ck = `attr:${k}`
       // class attributes have their own side effects to allow for merging
       if (k === 'class') {
+        if (!value) {
+          continue
+        }
         // if the user is providing an empty string, then it's removing the class
         // the side effect clean up should remove it
-        for (const c of (value || '').split(' ').filter(Boolean)) {
+        for (const c of value.split(' ')) {
           // always clear side effects
           isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
           !$el.classList.contains(c) && $el.classList.add(c)
         }
       }
       else if (k === 'style') {
+        if (!value) {
+          continue
+        }
         // style attributes have their own side effects to allow for merging
-        for (const c of (value || '').split(';').filter(Boolean)) {
-          const [k, ...v] = c.split(':').map(s => s.trim())
+        for (const c of value.split(';')) {
+          const propIndex = c.indexOf(':')
+          const k = c.substring(0, propIndex).trim()
+          const v = c.substring(propIndex + 1).trim()
           track(id, `${ck}:${k}`, () => {
             ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
           })
-          ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v.join(':'))
+          ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
         }
       }
       else {
@@ -123,7 +159,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
         isAttrTag && track(id, ck, () => $el.removeAttribute(k))
       }
-    })
+    }
   }
 
   const pending: DomRenderTagContext[] = []
@@ -144,11 +180,13 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       continue
     }
     ctx.$el = ctx.$el || state.elMap[id]
-    if (ctx.$el)
+    if (ctx.$el) {
       trackCtx(ctx)
-    else
+    }
+    else if (HasElementTags.has(tag.tag)) {
       // tag does not exist, we need to render it (if it's an element tag)
-      HasElementTags.includes(tag.tag) && pending.push(ctx)
+      pending.push(ctx)
+    }
   }
   // 3. render tags which require a dom element to be created or requires scanning DOM to determine duplicate
   for (const ctx of pending) {
@@ -168,7 +206,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   frag.bodyClose && dom.body.appendChild(frag.bodyClose)
 
   // clear all side effects still pending
-  Object.values(state.pendingSideEffects).forEach(fn => fn())
+  for (const k in state.pendingSideEffects) {
+    state.pendingSideEffects[k]()
+  }
   head._dom = state
   head.dirty = false
   await head.hooks.callHook('dom:rendered', { renders: tags })

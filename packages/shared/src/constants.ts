@@ -1,14 +1,14 @@
-export const SelfClosingTags = ['meta', 'link', 'base']
-export const TagsWithInnerContent = ['title', 'titleTemplate', 'script', 'style', 'noscript']
-export const HasElementTags = [
+export const SelfClosingTags = new Set(['meta', 'link', 'base'])
+export const TagsWithInnerContent = new Set(['title', 'titleTemplate', 'script', 'style', 'noscript'])
+export const HasElementTags = new Set([
   'base',
   'meta',
   'link',
   'style',
   'script',
   'noscript',
-]
-export const ValidHeadTags = [
+])
+export const ValidHeadTags = new Set([
   'title',
   'titleTemplate',
   'templateParams',
@@ -20,11 +20,11 @@ export const ValidHeadTags = [
   'style',
   'script',
   'noscript',
-]
+])
 
-export const UniqueTags = ['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams']
+export const UniqueTags = new Set(['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams'])
 
-export const TagConfigKeys = ['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'children', 'innerHTML', 'textContent', 'processTemplateParams']
+export const TagConfigKeys = new Set(['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'children', 'innerHTML', 'textContent', 'processTemplateParams'])
 
 export const IsBrowser = typeof window !== 'undefined'
 
