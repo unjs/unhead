@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.9.16",
   "private": "true",
-  "packageManager": "pnpm@9.5.0",
+  "packageManager": "pnpm@9.6.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -30,11 +30,11 @@
     "bumpp": "^9.4.1",
     "eslint": "^9.7.0",
     "fs-extra": "^11.2.0",
-    "jsdom": "^24.1.0",
+    "jsdom": "^24.1.1",
     "typescript": "^5.5.3",
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
-    "vitest": "^2.0.3",
+    "vitest": "^2.0.4",
     "vue": "^3.4.33"
   },
   "resolutions": {
