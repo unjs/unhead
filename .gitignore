@@ -9,3 +9,5 @@ coverage
 samples
 .vercel
 .env
+docs/.nuxt
+**/auto-imports.d.ts
