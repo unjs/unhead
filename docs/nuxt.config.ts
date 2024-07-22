@@ -5,6 +5,7 @@ export default defineNuxtConfig({
     'nuxt-lego',
     '@nuxt/ui-pro',
   ],
+
   modules: [
     '@nuxt/ui',
     '@vueuse/nuxt',
@@ -16,15 +17,18 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/scripts',
   ],
+
   site: {
     name: 'Unhead',
     url: 'unhead.unjs.io',
   },
+
   runtimeConfig: {
     public: {
       version,
     },
   },
+
   scripts: {
     registry: {
       fathomAnalytics: {
@@ -32,6 +36,7 @@ export default defineNuxtConfig({
       },
     },
   },
+
   content: {
     highlight: {
       theme: {
@@ -41,10 +46,12 @@ export default defineNuxtConfig({
       },
     },
   },
+
   ui: {
     global: true,
     icons: ['heroicons', 'simple-icons', 'ph', 'noto'],
   },
+
   sitemap: {
     strictNuxtContentPaths: true,
     xslColumns: [
@@ -54,6 +61,7 @@ export default defineNuxtConfig({
       { label: 'Change Frequency', select: 'sitemap:changefreq', width: '12.5%' },
     ],
   },
+
   app: {
     seoMeta: {
       googleSiteVerification: 'SnwVo-uFg39U69WHDoKma6bdT7hoh7sNYrviT8QuJww',
@@ -84,23 +92,31 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   devtools: {
     enabled: true,
   },
+
   tailwindcss: {
     viewer: false,
   },
+
   seo: {
     // redirectToCanonicalSiteUrl: true,
   },
+
   ogImage: {
     debug: process.dev,
   },
+
   experimental: {
     // asyncContext: true,
     headNext: true,
   },
+
   generate: {
     routes: ['/'],
   },
+
+  compatibilityDate: '2024-07-22',
 })

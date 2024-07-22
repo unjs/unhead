@@ -2,3 +2,4 @@ packages:
   - packages/*
   - integrations/*
   - examples/*
+  - docs
