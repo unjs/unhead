@@ -14,7 +14,7 @@ export interface DomPluginOptions extends RenderDomHeadOptions {
     return {
       mode: 'client',
       hooks: {
-        'entries:updated': function (head) {
+        'entries:updated': (head) => {
           // async load the renderDOMHead function
           debouncedRenderDOMHead(head, options)
         },

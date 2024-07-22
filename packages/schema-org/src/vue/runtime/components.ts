@@ -49,7 +49,7 @@ function ignoreKey(s: string) {
   if (s.startsWith('aria-') || s.startsWith('data-'))
     return false
 
-  return ['class', 'style'].includes(s)
+  return s === 'class' || s === 'style'
 }
 
 export function defineSchemaOrgComponent(name: string, defineFn: (input: any) => any): ReturnType<typeof defineComponent> {

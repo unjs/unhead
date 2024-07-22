@@ -1,2 +1,2 @@
-export const NetworkEvents = ['onload', 'onerror', 'onabort', 'onprogress', 'onloadstart']
-export const ScriptNetworkEvents = ['onload', 'onerror']
+export const NetworkEvents = new Set(['onload', 'onerror', 'onabort', 'onprogress', 'onloadstart'])
+export const ScriptNetworkEvents = new Set(['onload', 'onerror'])

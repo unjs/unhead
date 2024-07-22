@@ -34,7 +34,7 @@ export interface InferSeoMetaPluginOptions {
             const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
             const input = entry[inputKey]
             const weight = (typeof input.titleTemplate === 'object' ? input.titleTemplate?.tagPriority : false) || entry.tagPriority || 100
-            if (typeof input.titleTemplate !== 'undefined' && weight <= lastWeight) {
+            if (input.titleTemplate !== undefined && weight <= lastWeight) {
               titleTemplate = input.titleTemplate
               lastWeight = weight
             }

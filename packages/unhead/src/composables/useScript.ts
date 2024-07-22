@@ -29,7 +29,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
   }
-  const trigger = typeof options.trigger !== 'undefined' ? options.trigger : 'client'
+  const trigger = options.trigger !== undefined ? options.trigger : 'client'
   ScriptNetworkEvents
     .forEach((fn) => {
       const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
@@ -110,7 +110,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         return stub
       if (k === '$script')
         return proxy.$script
-      const exists = _ && k in _ && typeof _[k] !== 'undefined'
+      const exists = _ && k in _ && _[k] !== undefined
       head.hooks.callHook('script:instance-fn', { script, fn: k, exists })
       return exists
         ? Reflect.get(_, k)

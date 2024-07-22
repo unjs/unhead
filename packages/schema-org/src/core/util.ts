@@ -59,7 +59,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
     const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
     const groupedKeys = groupBy(Object.keys(n), (key) => {
       const val = n[key]
-      if (key.startsWith('_'))
+      if (key[0] === '_')
         return 'ignored'
       if (Array.isArray(val) || typeof val === 'object')
         return 'relations'

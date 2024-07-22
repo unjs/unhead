@@ -1,32 +1,39 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
-import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags, asArray } from '.'
+import { type Thenable, thenable } from './thenable'
+import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from '.'
 
-export async function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>): Promise<T | T[] | false> {
+export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): Thenable<T | T[]> {
+  const props = normalizedProps || normaliseProps<T>(
+    // explicitly check for an object
+    // @ts-expect-error untyped
+    typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
+      ? { ...input }
+      : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: input },
+    (tagName === 'templateParams' || tagName === 'titleTemplate'),
+  )
+
+  if (props instanceof Promise) {
+    return props.then(val => normaliseTag(tagName, input, e, val))
+  }
+
   // input can be a function or an object, we need to clone it
   const tag = {
     tag: tagName,
-    props: await normaliseProps<T>(
-      // explicitly check for an object
-      // @ts-expect-error untyped
-      typeof input === 'object' && typeof input !== 'function' && !(input instanceof Promise)
-        ? { ...input }
-        : { [['script', 'noscript', 'style'].includes(tagName) ? 'innerHTML' : 'textContent']: input },
-      ['templateParams', 'titleTemplate'].includes(tagName),
-    ),
+    props: props as T['props'],
   } as T
   // merge options from the entry
-  TagConfigKeys.forEach((k) => {
+  for (const k of TagConfigKeys) {
     // @ts-expect-error untyped
-    const val = typeof tag.props[k] !== 'undefined' ? tag.props[k] : e[k]
-    if (typeof val !== 'undefined') {
-      // strip innerHTML and textContent for tags which don't support it
-      if (!['innerHTML', 'textContent', 'children'].includes(k) || TagsWithInnerContent.includes(tag.tag)) {
+    const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
+    if (val !== undefined) {
+      // strip innerHTML and textContent for tags which don't support it=
+      if (!(k === 'innerHTML' || k === 'textContent' || k === 'children') || TagsWithInnerContent.has(tag.tag)) {
         // @ts-expect-error untyped
         tag[k === 'children' ? 'innerHTML' : k] = val
       }
       delete tag.props[k]
     }
-  })
+  }
   // TODO remove v2
   if (tag.props.body) {
     // inserting dangerous javascript potentially
@@ -57,29 +64,39 @@ export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v:
   // finally, check we don't have spaces, we may need to split again
   return String((Array.isArray(v) ? v.join(sep) : v))
     ?.split(sep)
-    .filter(c => c.trim())
-    .filter(Boolean)
+    .filter(c => Boolean(c.trim()))
     .join(sep)
 }
 
-export async function normaliseProps<T extends HeadTag>(props: T['props'], virtual?: boolean): Promise<T['props']> {
-  // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
-  for (const k of Object.keys(props)) {
+function nestedNormaliseProps<T extends HeadTag>(
+  props: T['props'],
+  virtual: boolean,
+  keys: (keyof T['props'])[],
+  startIndex: number,
+): Thenable<void> {
+  for (let i = startIndex; i < keys.length; i += 1) {
+    const k = keys[i]
+    // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
     // class has special handling
-    if (['class', 'style'].includes(k)) {
+    if (k === 'class' || k === 'style') {
       // @ts-expect-error untyped
       props[k] = normaliseStyleClassProps(k, props[k])
       continue
     }
-    // first resolve any promises
-    // @ts-expect-error untyped
-    if (props[k] instanceof Promise)
-      // @ts-expect-error untyped
-      props[k] = await props[k]
-    if (!virtual && !TagConfigKeys.includes(k)) {
+
+    // @ts-expect-error no reason for: The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+    if (props[k] instanceof Promise) {
+      return props[k].then((val) => {
+        props[k] = val
+
+        return nestedNormaliseProps(props, virtual, keys, i)
+      })
+    }
+
+    if (!virtual && !TagConfigKeys.has(k as string)) {
       const v = String(props[k])
       // data keys get special treatment, we opt for more verbose syntax
-      const isDataKey = k.startsWith('data-')
+      const isDataKey = (k as string).startsWith('data-')
       if (v === 'true' || v === '') {
         // @ts-expect-error untyped
         props[k] = isDataKey ? 'true' : true
@@ -93,28 +110,76 @@ export async function normaliseProps<T extends HeadTag>(props: T['props'], virtu
       }
     }
   }
+}
+
+export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: boolean = false): Thenable<T['props']> {
+  const resolvedProps = nestedNormaliseProps(props, virtual, Object.keys(props), 0)
+
+  if (resolvedProps instanceof Promise) {
+    return resolvedProps.then(() => props)
+  }
+
   return props
 }
 
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
-export async function normaliseEntryTags<T extends {} = Head>(e: HeadEntry<T>): Promise<HeadTag[]> {
-  const tagPromises: Promise<HeadTag | HeadTag[]>[] = []
-  Object.entries(e.resolvedInput as {})
-    .filter(([k, v]) => typeof v !== 'undefined' && ValidHeadTags.includes(k))
-    .forEach(([k, value]) => {
-      const v = asArray(value)
-      // @ts-expect-error untyped
-      tagPromises.push(...v.map(props => normaliseTag(k as keyof Head, props, e)).flat())
-    })
-  return (await Promise.all(tagPromises))
-    .flat()
-    .filter(Boolean)
-    .map((t: HeadTag, i) => {
+function nestedNormaliseEntryTags(headTags: HeadTag[], tagPromises: Thenable<HeadTag | HeadTag[]>[], startIndex: number): Thenable<unknown> {
+  for (let i = startIndex; i < tagPromises.length; i += 1) {
+    const tags = tagPromises[i]
+
+    if (tags instanceof Promise) {
+      return tags.then((val) => {
+        tagPromises[i] = val
+
+        return nestedNormaliseEntryTags(headTags, tagPromises, i)
+      })
+    }
+
+    if (Array.isArray(tags)) {
+      headTags.push(...tags)
+    }
+    else {
+      headTags.push(tags)
+    }
+  }
+}
+
+export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): Thenable<HeadTag[]> {
+  const tagPromises: Thenable<HeadTag | HeadTag[]>[] = []
+  const input = e.resolvedInput as T
+  for (const k in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, k)) {
+      continue
+    }
+    const v = input[k as keyof typeof input]
+    if (v === undefined || !ValidHeadTags.has(k)) {
+      continue
+    }
+    if (Array.isArray(v)) {
+      for (const props of v) {
+        // @ts-expect-error untyped
+        tagPromises.push(normaliseTag(k as keyof Head, props, e))
+      }
+      continue
+    }
+    // @ts-expect-error untyped
+    tagPromises.push(normaliseTag(k as keyof Head, v, e))
+  }
+
+  if (tagPromises.length === 0) {
+    return []
+  }
+
+  const headTags: HeadTag[] = []
+
+  return thenable(nestedNormaliseEntryTags(headTags, tagPromises, 0), () => (
+    headTags.map((t, i) => {
       t._e = e._i
       e.mode && (t._m = e.mode)
       t._p = (e._i << TagEntityBits) + i
       return t
-    }) as unknown as HeadTag[]
+    })
+  ))
 }

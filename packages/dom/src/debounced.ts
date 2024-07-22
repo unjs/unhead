@@ -12,11 +12,13 @@ export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
 /**
  * Queue a debounced update of the DOM head.
  */
-export async function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: DebouncedRenderDomHeadOptions = {}) {
+export function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: DebouncedRenderDomHeadOptions = {}) {
   const fn = options.delayFn || (fn => setTimeout(fn, 10))
-  return head._domUpdatePromise = head._domUpdatePromise || new Promise<void>(resolve => fn(async () => {
-    await renderDOMHead(head, options)
-    delete head._domUpdatePromise
-    resolve()
+  return head._domUpdatePromise = head._domUpdatePromise || new Promise<void>(resolve => fn(() => {
+    return renderDOMHead(head, options)
+      .then(() => {
+        delete head._domUpdatePromise
+        resolve()
+      })
   }))
 }

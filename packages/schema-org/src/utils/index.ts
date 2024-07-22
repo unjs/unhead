@@ -75,20 +75,17 @@ export function asArray(input: any) {
 }
 
 export function dedupeMerge<T extends Thing>(node: T, field: keyof T, value: any) {
-  const dedupeMerge: any[] = []
-  const input = asArray(node[field])
-  dedupeMerge.push(...input)
-  const data = new Set(dedupeMerge)
+  const data = new Set(asArray(node[field]))
   data.add(value)
   // @ts-expect-error untyped key
-  node[field] = [...data.values()].filter(Boolean)
+  node[field] = [...data].filter(Boolean)
 }
 
 export function prefixId(url: string, id: Id | string) {
   // already prefixed
   if (hasProtocol(id))
     return id as Id
-  if (!id.startsWith('#'))
+  if (id[0] !== '#')
     id = `#${id}`
   return withBase(id, url) as Id
 }
@@ -117,7 +114,7 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
 
 export function resolveWithBase(base: string, urlOrPath: string) {
   // can't apply base if there's a protocol
-  if (!urlOrPath || hasProtocol(urlOrPath) || (!urlOrPath.startsWith('/') && !urlOrPath.startsWith('#')))
+  if (!urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
     return urlOrPath
   return withBase(urlOrPath, base)
 }
@@ -132,7 +129,11 @@ export function resolveAsGraphKey(key?: Id | string) {
  * Removes attributes which have a null or undefined value
  */
 export function stripEmptyProperties(obj: any) {
-  Object.keys(obj).forEach((k) => {
+  for (const k in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) {
+      continue
+    }
+
     if (obj[k] && typeof obj[k] === 'object') {
       // avoid walking vue reactivity
       if (obj[k].__v_isReadonly || obj[k].__v_isRef)
@@ -140,8 +141,9 @@ export function stripEmptyProperties(obj: any) {
       stripEmptyProperties(obj[k])
       return
     }
-    if (obj[k] === '' || obj[k] === null || typeof obj[k] === 'undefined')
+    if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
       delete obj[k]
-  })
+  }
+
   return obj
 }

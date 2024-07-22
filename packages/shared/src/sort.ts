@@ -14,18 +14,18 @@ export const TAG_ALIASES = {
 } as const
 
 export function tagWeight<T extends HeadTag>(tag: T) {
-  let weight = 100
   const priority = tag.tagPriority
   if (typeof priority === 'number')
     return priority
+  let weight = 100
   if (tag.tag === 'meta') {
     // CSP needs to be as it effects the loading of assets
     if (tag.props['http-equiv'] === 'content-security-policy')
       weight = -30
     // charset must come early in case there's non-utf8 characters in the HTML document
-    if (tag.props.charset)
+    else if (tag.props.charset)
       weight = -20
-    if (tag.props.name === 'viewport')
+    else if (tag.props.name === 'viewport')
       weight = -15
   }
   else if (tag.tag === 'link' && tag.props.rel === 'preconnect') {
@@ -35,9 +35,9 @@ export function tagWeight<T extends HeadTag>(tag: T) {
   else if (tag.tag in TAG_WEIGHTS) {
     weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
   }
-  if (typeof priority === 'string' && priority in TAG_ALIASES) {
-    // @ts-expect-error untyped
-    return weight + TAG_ALIASES[priority]
+  if (priority && priority in TAG_ALIASES) {
+    // @ts-expect-e+rror untyped
+    return weight + TAG_ALIASES[priority as keyof typeof TAG_ALIASES]
   }
   return weight
 }

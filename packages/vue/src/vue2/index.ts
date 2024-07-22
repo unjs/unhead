@@ -4,7 +4,7 @@ import { headSymbol } from '../createHead'
 import { useHead } from '../composables/useHead'
 import { Vue3 } from '../env'
 
-export const UnheadPlugin: Plugin = function (_Vue) {
+export const UnheadPlugin: Plugin = (_Vue) => {
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
     created() {

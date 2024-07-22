@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.9.16",
   "private": "true",
-  "packageManager": "pnpm@9.4.0",
+  "packageManager": "pnpm@9.5.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -18,28 +18,26 @@
     "export:sizes": "pnpm -r --parallel --filter=./packages/** run export:sizes",
     "bump": "bumpp package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "benchmark": "vitest bench"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.21.2",
+    "@antfu/eslint-config": "^2.23.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
-    "@vue/server-renderer": "^3.4.31",
+    "@vue/server-renderer": "^3.4.33",
     "acorn-loose": "^8.4.0",
     "bumpp": "^9.4.1",
-    "eslint": "^9.6.0",
+    "eslint": "^9.7.0",
     "fs-extra": "^11.2.0",
     "jsdom": "^24.1.0",
     "typescript": "^5.5.3",
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
     "vitest": "^2.0.3",
-    "vue": "^3.4.31"
+    "vue": "^3.4.33"
   },
   "resolutions": {
-    "vue": "^3.4.31",
-    "shiki": "1.10.1",
-    "nuxt": "3.12.3",
-    "@nuxt/schema": "3.12.3"
+    "vue": "^3.4.33"
   }
 }

@@ -4,7 +4,7 @@ import { headSymbol } from './createHead'
 /**
  * @deprecated Import { UnheadPlugin } from `@unhead/vue/vue2` and use Vue.mixin(UnheadPlugin(head)) instead.
  */
-export const Vue2ProvideUnheadPlugin: Plugin = function (_Vue, head) {
+export const Vue2ProvideUnheadPlugin: Plugin = (_Vue, head) => {
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
     beforeCreate() {
