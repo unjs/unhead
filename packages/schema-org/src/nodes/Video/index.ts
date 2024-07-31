@@ -21,7 +21,11 @@ export interface VideoSimple extends Thing {
   /**
    * A reference-by-ID to an imageObject.
    */
-  thumbnailUrl?: NodeRelation<ImageObject>
+  thumbnail?: NodeRelation<ImageObject>
+  /**
+   * A thumbnail image relevant to the Video.
+   */
+  thumbnailUrl?: string
   /**
    * The date the video was published, in ISO 8601 format (e.g., 2020-01-20).
    */
@@ -105,15 +109,15 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject>({
     if (!video.description)
       video.description = 'No description'
 
-    if (video.thumbnailUrl)
-      video.thumbnailUrl = resolveRelation(video.thumbnailUrl, ctx, imageResolver)
+    if (video.thumbnail)
+      video.thumbnail = resolveRelation(video.thumbnail, ctx, imageResolver)
 
     return video
   },
   resolveRootNode(video, { find }) {
-    if (video.image && !video.thumbnailUrl) {
+    if (video.image && !video.thumbnail) {
       const firstImage = asArray(video.image)[0] as ImageObject
-      setIfEmpty(video, 'thumbnailUrl', find<ImageObject>(firstImage['@id'] as Id)?.url)
+      setIfEmpty(video, 'thumbnail', find<ImageObject>(firstImage['@id'] as Id)?.url)
     }
   },
 })

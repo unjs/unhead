@@ -25,6 +25,12 @@
 
   Can be provided using route meta on the `description` key, see [defaults](#defaults).
 
+- **thumbnail** `ImageObject`
+
+  An image of the video thumbnail.
+
+  Can be provided using route meta on the `image` key, see [defaults](#defaults).
+
 - **thumbnailUrl** `string`
 
   An image of the video thumbnail.
