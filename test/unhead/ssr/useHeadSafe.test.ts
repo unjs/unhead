@@ -53,4 +53,53 @@ describe('dom useHeadSafe', () => {
       }
     `)
   })
+
+  it('meta charset allows safe', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      meta: [
+        {
+          charset: 'utf-8',
+        },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta charset="utf-8">",
+        "htmlAttrs": "",
+      }
+    `)
+
+  });
+
+  it('meta charset is actually safe', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      meta: [
+        {
+          charset: 'utf-8"><script>alert("pwned?")</script>',
+        },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta charset="utf-8&quot;><script>alert(&quot;pwned?&quot;)</script>">",
+        "htmlAttrs": "",
+      }
+    `)
+
+  });
+
 })
