@@ -11,7 +11,7 @@ import type {
 
 export type SafeBodyAttr = Pick<BodyAttr, 'id' | 'class'> & DataKeys
 export type SafeHtmlAttr = Pick<HtmlAttr, 'id' | 'class' | 'lang' | 'dir'> & DataKeys
-export type SafeMeta = Pick<_Meta, 'id' | 'name' | 'property' | 'content'> & DataKeys
+export type SafeMeta = Pick<_Meta, 'id' | 'name' | 'property' | 'content' | 'charset'> & DataKeys
 export type SafeLink = Pick<Link, 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesizes' | 'imagesrcset' | 'integrity' | 'media'
   | 'referrerpolicy' | 'sizes' | 'id'> & {
     rel?: Omit<Link['rel'], 'stylesheet' | 'canonical' | 'modulepreload' | 'prerender' | 'preload' | 'prefetch'>
