@@ -23,6 +23,7 @@
     "nuxt": "3.12.4",
     "nuxt-icon": "0.6.10",
     "nuxt-lego": "^0.0.14",
-    "nuxt-lodash": "^2.5.3"
+    "nuxt-lodash": "^2.5.3",
+    "shiki": "1.10.1"
   }
 }

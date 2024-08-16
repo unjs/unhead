@@ -43,7 +43,7 @@
     "@unhead/ssr": "workspace:*",
     "@unhead/schema-org": "workspace:*",
     "vue": "^3.4.37",
-    "shiki": "1.12.1",
+    "shiki": "1.10.1",
     "nuxt": "3.12.4",
     "@nuxt/schema": "3.12.4"
   }

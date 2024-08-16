@@ -118,6 +118,10 @@ export default defineNuxtConfig({
     headNext: true,
   },
 
+  build: {
+    transpile: ['shiki'],
+  },
+
   generate: {
     routes: ['/'],
   },
