@@ -29,10 +29,6 @@ export default defineNuxtConfig({
     tagline: 'Get your &lt;head&gt; in the game.',
   },
 
-  experimental: {
-    externalVue: false,
-  },
-
   runtimeConfig: {
     public: {
       version,
@@ -122,6 +118,7 @@ export default defineNuxtConfig({
   experimental: {
     // asyncContext: true,
     headNext: true,
+    externalVue: false,
   },
 
   build: {
