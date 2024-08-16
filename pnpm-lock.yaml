@@ -110,9 +110,6 @@ importers:
       shiki:
         specifier: 1.10.1
         version: 1.10.1
-      vue:
-        specifier: 3.4.38
-        version: 3.4.38(typescript@5.5.4)
 
   examples/nuxt3:
     devDependencies:
