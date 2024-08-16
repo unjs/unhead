@@ -45,6 +45,8 @@
     "unhead": "workspace:*",
     "vue": "3.4.32",
     "@vue/server-renderer": "3.4.32",
-    "nuxt": "3.12.4"
+    "nuxt": "3.12.4",
+    "@nuxt/vite-builder": "3.12.4",
+    "vite": "5.3.4"
   }
 }
