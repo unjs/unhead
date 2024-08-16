@@ -64,13 +64,15 @@
   "peerDependencies": {
     "vue": ">=2.7 || >=3"
   },
+  "build": {
+    "external": [
+      "vue"
+    ]
+  },
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
-  },
-  "devDependencies": {
-    "vue": "^3.4.37"
   }
 }

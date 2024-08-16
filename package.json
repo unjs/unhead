@@ -34,7 +34,7 @@
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
     "vitest": "^2.0.5",
-    "vue": "^3.4.32"
+    "vue": "3.4.32"
   },
   "resolutions": {
     "@unhead/dom": "workspace:*",
@@ -44,6 +44,7 @@
     "shiki": "1.10.1",
     "unhead": "workspace:*",
     "vue": "3.4.32",
+    "@vue/server-renderer": "3.4.32",
     "nuxt": "3.12.4"
   }
 }
