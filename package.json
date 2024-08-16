@@ -42,6 +42,7 @@
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
     "shiki": "1.10.1",
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "vue": "3.4.38"
   }
 }
