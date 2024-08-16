@@ -8,13 +8,20 @@ import type {
 } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
+export type UseScriptContext<T extends Record<symbol | string, any>> = (Promise<T> & ScriptInstance<T>) & {
+  /**
+   * @deprecated Use top-level functions instead.
+   */
+  $script: Promise<T> & ScriptInstance<T>
+}
+
 /**
  * Load third-party scripts with SSR support and a proxied API.
  *
  * @experimental
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): T & { $script: Promise<T> & ScriptInstance<T> } {
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || getActiveHead()
@@ -39,7 +46,6 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     })
 
-  const proxy = { instance: (!head.ssr && options?.use?.()) || {} } as { instance: T, $script: ScriptInstance<T> }
   const loadPromise = new Promise<T>((resolve, reject) => {
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
@@ -60,8 +66,10 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         _()
       }
     })
-  }).then(api => (proxy.instance = api))
-  const script: ScriptInstance<T> = {
+  })
+  const script = Object.assign(loadPromise, {
+    instance: (!head.ssr && options?.use?.()) || null,
+    proxy: null,
     id,
     status: 'awaitingLoad',
     remove() {
@@ -87,12 +95,13 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         }
         // status should get updated from script events
         script.entry = head.push({
-          script: [{ ...defaults, ...input, key: `script.${id}` }],
+          script: [{ ...defaults, ...input, key: id }],
         }, options)
       }
       return loadPromise
     },
-  }
+  }) as any as UseScriptContext<T>
+  loadPromise.then(api => (script.instance = api))
   const hookCtx = { script }
   if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
     script.load()
@@ -101,31 +110,33 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   else if (typeof trigger === 'function')
     trigger(async () => script.load())
 
-  // 3. Proxy the script API
-  proxy.$script = Object.assign(loadPromise, script)
-  const instance = new Proxy<{ instance: T }>(proxy, {
-    get({ instance: _ }, k) {
-      const stub = options.stub?.({ script: proxy.$script, fn: k })
-      if (stub)
-        return stub
-      if (k === '$script')
-        return proxy.$script
-      const exists = _ && k in _ && _[k] !== undefined
-      head.hooks.callHook('script:instance-fn', { script, fn: k, exists })
-      return exists
-        ? Reflect.get(_, k)
-        : (...args: any[]) => loadPromise.then((api) => {
-            const _k = Reflect.get(api, k)
-            return typeof _k === 'function'
-              ? Reflect.apply(api[k], api, args)
-              : _k
-          })
-    },
-  }) as any as T & { $script: ScriptInstance<T> & Promise<T> }
+  // support deprecated behavior
+  script.$script = script
   // 4. Providing a unique context for the script
   head._scripts = Object.assign(
     head._scripts || {},
-    { [id]: instance },
+    { [id]: script },
   )
-  return instance
+  // this is deprecated behavior, user should call explicitly
+  if (options.use) {
+    script.proxy = new Proxy({} as any as Required<Required<T>['instance']>['proxy'], {
+      get(_, k) {
+        // remove in v2
+        const stub = options.stub?.({ script, fn: k })
+        if (stub)
+          return stub
+        const $_ = script.instance
+        const exists = Boolean(!!$_ && k in $_ && $_[k] !== undefined)
+        // remove in v2
+        head.hooks.callHook('script:instance-fn', { script, fn: k, exists })
+        return (...args: any[]) => loadPromise.then((api) => {
+          const _k = Reflect.get(api, k)
+          return typeof _k === 'function'
+            ? Reflect.apply(api[k], api, args)
+            : _k
+        })
+      },
+    })
+  }
+  return script
 }
