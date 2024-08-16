@@ -1,9 +1,8 @@
-import {bench, describe} from 'vitest'
+import { bench, describe } from 'vitest'
 import { createHead, useHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 
 describe('ssr bench', () => {
-
   bench('x50 ssr', async () => {
     const head = createHead()
     const page = {

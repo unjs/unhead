@@ -6,7 +6,6 @@ import type { Head } from '@unhead/schema'
 import { UnheadSchemaOrg, definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 
 describe('ssr e2e bench', () => {
-  // eslint-disable-next-line
   bench('e2e', async () => {
     // we're going to replicate the logic needed to render the tags for a harlanzw.com page
 

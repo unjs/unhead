@@ -75,8 +75,7 @@ describe('dom useHeadSafe', () => {
         "htmlAttrs": "",
       }
     `)
-
-  });
+  })
 
   it('meta charset is actually safe', async () => {
     const head = createHead()
@@ -99,7 +98,5 @@ describe('dom useHeadSafe', () => {
         "htmlAttrs": "",
       }
     `)
-
-  });
-
+  })
 })

@@ -1,5 +1,6 @@
 packages:
   - packages/*
   - integrations/*
+  - '!examples/vue-2'
   - examples/*
   - docs

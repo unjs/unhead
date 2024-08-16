@@ -1,5 +1,5 @@
 import { bench, describe } from 'vitest'
-import {createHead, setHeadInjectionHandler, useHead} from '@unhead/vue'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'

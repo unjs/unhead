@@ -22,11 +22,11 @@
     "benchmark": "vitest bench"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^2.25.0",
+    "@antfu/eslint-config": "^2.25.2",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
-    "bumpp": "^9.4.2",
+    "bumpp": "^9.5.1",
     "eslint": "^9.9.0",
     "fs-extra": "^11.2.0",
     "jsdom": "^24.1.1",
@@ -34,17 +34,14 @@
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
     "vitest": "^2.0.5",
-    "vue": "^3.4.37"
+    "vue": "^3.4.38"
   },
   "resolutions": {
-    "unhead": "workspace:*",
-    "@unhead/vue": "workspace:*",
     "@unhead/dom": "workspace:*",
-    "@unhead/ssr": "workspace:*",
     "@unhead/schema-org": "workspace:*",
-    "vue": "^3.4.37",
+    "@unhead/ssr": "workspace:*",
+    "@unhead/vue": "workspace:*",
     "shiki": "1.10.1",
-    "nuxt": "3.12.4",
-    "@nuxt/schema": "3.12.4"
+    "unhead": "workspace:*"
   }
 }
