@@ -43,6 +43,7 @@
     "@unhead/vue": "workspace:*",
     "shiki": "1.10.1",
     "unhead": "workspace:*",
-    "vue": "3.4.38"
+    "vue": "3.4.38",
+    "nuxt": "3.12.4"
   }
 }
