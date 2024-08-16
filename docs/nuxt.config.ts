@@ -29,6 +29,10 @@ export default defineNuxtConfig({
     tagline: 'Get your &lt;head&gt; in the game.',
   },
 
+  experimental: {
+    externalVue: false,
+  },
+
   runtimeConfig: {
     public: {
       version,
