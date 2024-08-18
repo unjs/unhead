@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { onMounted } from 'vue'
 import { useScript } from '@unhead/vue'
 
 export interface FathomAnalyticsApi {
@@ -8,13 +9,13 @@ export interface FathomAnalyticsApi {
   isTrackingEnabled: () => boolean
   send: (type: string, data: unknown) => void
   setSite: (siteId: string) => void
-  sideId: string
+  siteId: string
   trackPageview: (ctx?: { url: string, referrer?: string }) => void
   trackGoal: (goalId: string, cents: number) => void
   trackEvent: (eventName: string, value: { _value: number }) => void
 }
 
-const { trackPageview, blockTrackingForMe } = useScript<FathomAnalyticsApi>({
+const { trackPageview, blockTrackingForMe, siteId } = useScript<FathomAnalyticsApi>({
   src: 'https://cdn.usefathom.com/script.js',
   ['data-site']: 'KGILBQDV',
 }, {
@@ -27,6 +28,9 @@ blockTrackingForMe()
 trackPageview({
   url: '/test',
   referrer: '',
+})
+onMounted(async () => {
+  console.log(siteId, await siteId())
 })
 </script>
 <template>

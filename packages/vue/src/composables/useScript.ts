@@ -1,4 +1,5 @@
 import type {
+  AsAsyncFunctionValues,
   UseScriptInput as BaseUseScriptInput,
   DataKeys,
   SchemaAugmentations,
@@ -19,12 +20,18 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
 
 export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = (Promise<T> & VueScriptInstance<T>) & {
-  $script: Promise<T> & VueScriptInstance<T>
-}
+export type UseScriptContext<T extends Record<symbol | string, any>> =
+  (Promise<T> & VueScriptInstance<T>)
+  & AsAsyncFunctionValues<T>
+  & {
+  /**
+   * @deprecated Use top-level functions instead.
+   */
+    $script: Promise<T> & VueScriptInstance<T>
+  }
 
 export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
-  const input = typeof _input === 'string' ? { src: _input } : _input
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as ScriptBase
   const head = injectHead()
   const options = _options || {}
   // @ts-expect-error untyped

@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { useScript } from '@unhead/vue'
 
-const { dataLayer, $script } = useScript<{ dataLayer: any[] }>({
+const gtag = useScript<{ dataLayer: any[] }>({
   src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
 }, {
-  stub({ fn }) {
-    return fn === 'dataLayer' && typeof window === 'undefined' ? [] : undefined
-  },
   beforeInit() {
     if (typeof window !== 'undefined') {
       window.dataLayer = window.dataLayer || []
@@ -20,13 +17,17 @@ const { dataLayer, $script } = useScript<{ dataLayer: any[] }>({
   },
   trigger: typeof window !== 'undefined' ? window.requestIdleCallback : 'manual'
 })
+const { $script } = gtag
+const dataLayer = gtag.proxy
+
+const status = gtag.status
 
 dataLayer.push({
   event: 'page_view',
   page_path: '/stripe',
 })
 
-$script.then((res) => {
+gtag.then((res) => {
   console.log('ready!', res)
 })
 
@@ -39,7 +40,7 @@ useHead({
 <div>
   <h1>gtm</h1>
   <div>
-    script status: {{ $script.status }}
+    script status: {{ status }}
   </div>
   <div>
     data layer:

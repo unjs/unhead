@@ -1,5 +1,6 @@
 import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
+  AsAsyncFunctionValues,
   Head,
   ScriptInstance,
   UseScriptInput,
@@ -8,17 +9,19 @@ import type {
 } from '@unhead/schema'
 import { getActiveHead } from './useActiveHead'
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = (Promise<T> & ScriptInstance<T>) & {
+export type UseScriptContext<T extends Record<symbol | string, any>> =
+  (Promise<T> & ScriptInstance<T>)
+  & AsAsyncFunctionValues<T>
+  & {
   /**
    * @deprecated Use top-level functions instead.
    */
-  $script: Promise<T> & ScriptInstance<T>
-}
+    $script: Promise<T> & ScriptInstance<T>
+  }
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
  *
- * @experimental
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
 export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
@@ -117,26 +120,61 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     head._scripts || {},
     { [id]: script },
   )
-  // this is deprecated behavior, user should call explicitly
+  // remove in v2, we can just return the script instance and assign .proxy
   if (options.use) {
-    script.proxy = new Proxy({} as any as Required<Required<T>['instance']>['proxy'], {
+    // we want to make an infinite proxy chain that we can keep a reference of the access chain
+    // we should be able to do dataLayer.push
+    // we should be able to something.callFunction
+    const proxyChain = (accessor: string | symbol, instance: any, accessors: (string | symbol)[] = []) => {
+      const fakeFn = () => {}
+      fakeFn.fake = true
+      return new Proxy(instance?.[accessor] || fakeFn, {
+        get(_, k, r) {
+          if (_ && k in _) {
+            return Reflect.get(_, k, r)
+          }
+          // mock an empty array to iterate over
+          if (k === Symbol.iterator) {
+            return [][Symbol.iterator]
+          }
+          return proxyChain(k, instance?.[accessor]?.[k], [...accessors, accessor])
+        },
+        apply(_, _this, args) {
+          const p = _this[accessors[accessors.length - 1]] ? Promise.resolve(script.instance) : loadPromise
+          return p.then((i) => {
+            let _t = i
+            let fn
+            for (let i = 0; i < accessors.length; i++) {
+              // @ts-expect-error untyped
+              fn = _t[accessors[i]]
+              _t = fn
+            }
+            return typeof fn === 'function' ? Reflect.apply(fn, i, args) : fn
+          })
+        },
+      })
+    }
+    script.proxy = new Proxy(script.instance || {} as any as Required<Required<T>['instance']>['proxy'], {
       get(_, k) {
-        // remove in v2
-        const stub = options.stub?.({ script, fn: k })
-        if (stub)
-          return stub
-        const $_ = script.instance
-        const exists = Boolean(!!$_ && k in $_ && $_[k] !== undefined)
-        // remove in v2
-        head.hooks.callHook('script:instance-fn', { script, fn: k, exists })
-        return (...args: any[]) => loadPromise.then((api) => {
-          const _k = Reflect.get(api, k)
-          return typeof _k === 'function'
-            ? Reflect.apply(api[k], api, args)
-            : _k
-        })
+        head.hooks.callHook('script:instance-fn', { script, fn: k, exists: false })
+        return options.stub?.({ script, fn: k }) || proxyChain(k, script.instance, [k])
       },
     })
   }
-  return script
+  // remove in v2, just return the script
+  return new Proxy(script, {
+    get(_, k) {
+      const target = k in script ? script : script.proxy
+      if (k === 'then' || k === 'catch') {
+        return script[k].bind(script)
+      }
+      if (target)
+        return Reflect.get(target, k, target)
+      return false
+    },
+    set(_, k, v) {
+      // just do the set on script
+      return Reflect.set(script, k, v)
+    },
+  })
 }

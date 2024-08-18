@@ -11,7 +11,11 @@ export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 type BaseScriptApi = Record<symbol | string, any>
 
 export type AsAsyncFunctionValues<T extends BaseScriptApi> = {
-  [key in keyof T]: T[key] extends (...args: infer A) => infer R ? (...args: A) => Promise<R> : () => Promise<T[key]>
+  [key in keyof T]:
+  // arays return literals
+  T[key] extends any[] ? T[key] :
+    T[key] extends object ? AsAsyncFunctionValues<T[key]> :
+      T[key] extends (...args: infer A) => infer R ? (...args: A) => Promise<R> : () => Promise<T[key]>
 }
 
 export interface ScriptInstance<T extends BaseScriptApi> {
