@@ -8,6 +8,12 @@ describe('dom useScript', () => {
 
     const instance = useScript<{ test: (foo: string) => void }>({
       src: 'https://cdn.example.com/script.js',
+    }, {
+      use() {
+        return {
+          test: (foo: string) => {},
+        }
+      },
     })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
@@ -37,5 +43,20 @@ describe('dom useScript', () => {
     instance.test('hello-world')
     await hookPromise
     expect(calledFn).toBe('test')
+  })
+  it('proxy', async () => {
+    const head = useDOMHead()
+
+    const instance = useScript<{ test: (foo: string) => string }>({
+      src: 'https://cdn.example.com/script.js',
+    }, {
+      use() {
+        return {
+          test: (foo: string) => foo,
+        }
+      },
+    })
+
+    expect(await instance.proxy.test('hello-world')).toEqual('hello-world')
   })
 })

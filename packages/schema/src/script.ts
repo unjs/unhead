@@ -8,8 +8,19 @@ export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 
  */
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
+type BaseScriptApi = Record<symbol | string, any>
 
-export interface ScriptInstance<T> {
+export type AsAsyncFunctionValues<T extends BaseScriptApi> = {
+  [key in keyof T]:
+  // arays return literals
+  T[key] extends any[] ? T[key] :
+    T[key] extends object ? AsAsyncFunctionValues<T[key]> :
+      T[key] extends (...args: infer A) => infer R ? (...args: A) => Promise<R> : () => Promise<T[key]>
+}
+
+export interface ScriptInstance<T extends BaseScriptApi> {
+  proxy: AsAsyncFunctionValues<T>
+  instance?: T
   id: string
   status: UseScriptStatus
   entry?: ActiveHeadEntry<any>
@@ -17,7 +28,7 @@ export interface ScriptInstance<T> {
   remove: () => boolean
 }
 
-export interface UseScriptOptions<T> extends HeadEntryOptions {
+export interface UseScriptOptions<T extends BaseScriptApi> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.
    */
