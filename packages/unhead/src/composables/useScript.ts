@@ -140,9 +140,11 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       },
       async apply(_, _this, args) {
         // we are faking, just return, avoid promise handles
-        if (_[ScriptProxyTarget])
+        if (head.ssr && _[ScriptProxyTarget])
           return
+        let instance: any
         const access = (fn?: T) => {
+          instance = fn || instance
           for (let i = 0; i < accessors.length; i++) {
             const k = accessors[i]
             fn = fn?.[k]
@@ -150,7 +152,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
           return fn
         }
         const fn = access(script.instance) || access(await loadPromise)
-        return typeof fn === 'function' ? Reflect.apply(fn, _this, args) : fn
+        return typeof fn === 'function' ? Reflect.apply(fn, instance, args) : fn
       },
     })
   }
@@ -170,10 +172,6 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       if (target)
         return Reflect.get(target, k, target)
       return false
-    },
-    set(_, k, v) {
-      // just do the set on script
-      return Reflect.set(script, k, v)
     },
   })
 }
