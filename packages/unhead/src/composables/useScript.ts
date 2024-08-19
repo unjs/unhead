@@ -109,7 +109,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         }
         // status should get updated from script events
         script.entry = head.push({
-          script: [{ ...defaults, ...input, key: id }],
+          script: [{ ...defaults, ...input, key: `script.${id}` }],
         }, options)
       }
       return loadPromise
