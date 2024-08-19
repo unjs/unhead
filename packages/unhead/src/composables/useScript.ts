@@ -20,6 +20,12 @@ export type UseScriptContext<T extends Record<symbol | string, any>> =
   }
 
 const ScriptProxyTarget = Symbol('ScriptProxyTarget')
+function sharedTarget() {}
+sharedTarget[ScriptProxyTarget] = true
+
+export function resolveScriptKey(input: UseScriptResolvedInput) {
+  return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+}
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -33,7 +39,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   if (!head)
     throw new Error('Missing Unhead context.')
 
-  const id = input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+  const id = resolveScriptKey(input)
   if (head._scripts?.[id])
     return head._scripts[id]
   options.beforeInit?.()
@@ -120,23 +126,21 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
 
   // support deprecated behavior
   script.$script = script
-  // 4. Providing a unique context for the script
-  head._scripts = Object.assign(
-    head._scripts || {},
-    { [id]: script },
-  )
-  const proxyChain = (accessor: string | symbol, instance: any, accessors: (string | symbol)[] = []) => {
-    const target = () => {}
-    target[ScriptProxyTarget] = true
-    return new Proxy(instance?.[accessor] || target, {
+  const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
+    return new Proxy((!accessor ? instance : instance?.[accessor]) || sharedTarget, {
       get(_, k, r) {
+        if (!accessor) {
+          const stub = options.stub?.({ script, fn: k })
+          if (stub)
+            return stub
+        }
         if (_ && k in _) {
           return Reflect.get(_, k, r)
         }
         if (k === Symbol.iterator) {
           return [][Symbol.iterator]
         }
-        return proxyChain(k, instance?.[accessor]?.[k], [...accessors, accessor])
+        return proxyChain(accessor ? instance?.[accessor] : instance, k, accessors || [k])
       },
       async apply(_, _this, args) {
         // we are faking, just return, avoid promise handles
@@ -145,8 +149,8 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         let instance: any
         const access = (fn?: T) => {
           instance = fn || instance
-          for (let i = 0; i < accessors.length; i++) {
-            const k = accessors[i]
+          for (let i = 0; i < (accessors || []).length; i++) {
+            const k = (accessors || [])[i]
             fn = fn?.[k]
           }
           return fn
@@ -156,22 +160,17 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       },
     })
   }
-  script.proxy = new Proxy(script.instance || {} as any as Required<Required<T>['instance']>['proxy'], {
-    get(_, k) {
-      head.hooks.callHook('script:instance-fn', { script, fn: k, exists: false })
-      return options.stub?.({ script, fn: k }) || proxyChain(k, script.instance, [k])
-    },
-  })
+  script.proxy = proxyChain(script.instance)
   // remove in v2, just return the script
-  return new Proxy(script, {
+  const res = new Proxy(script, {
     get(_, k) {
       const target = k in script ? script : script.proxy
       if (k === 'then' || k === 'catch') {
         return script[k].bind(script)
       }
-      if (target)
-        return Reflect.get(target, k, target)
-      return false
+      return Reflect.get(target, k, target)
     },
   })
+  head._scripts = Object.assign(head._scripts || {}, { [id]: res })
+  return res
 }

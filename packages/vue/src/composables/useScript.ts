@@ -6,9 +6,10 @@ import type {
   ScriptBase,
   ScriptInstance,
   UseScriptOptions,
+  UseScriptResolvedInput,
   UseScriptStatus,
 } from '@unhead/schema'
-import { useScript as _useScript } from 'unhead'
+import { useScript as _useScript, resolveScriptKey } from 'unhead'
 import type { Ref } from 'vue'
 import { getCurrentInstance, onMounted, ref } from 'vue'
 import type { MaybeComputedRefEntriesOnly } from '../types'
@@ -31,14 +32,21 @@ export type UseScriptContext<T extends Record<symbol | string, any>> =
   }
 
 export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as ScriptBase
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
   const head = injectHead()
   const options = _options || {}
   // @ts-expect-error untyped
   options.head = head
   options.eventContext = getCurrentInstance()
-  const status = ref<UseScriptStatus>('awaitingLoad')
+  const scope = getCurrentInstance()
+  if (scope && !options.trigger)
+    options.trigger = onMounted
+  const key = resolveScriptKey(input)
+  if (head._scripts?.[key])
+    return head._scripts[key]
   let script: UseScriptContext<T>
+  // we may be re-using an existing script
+  const status = ref<UseScriptStatus>('awaitingLoad')
   // sync the status, need to register before useScript
   const _ = head.hooks.hook('script:updated', ({ script: s }) => {
     if (script && s.id === script.id) {
@@ -49,9 +57,6 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     }
   })
-  const scope = getCurrentInstance()
-  if (scope && !options.trigger)
-    options.trigger = onMounted
   script = _useScript(input as BaseUseScriptInput, options) as any as UseScriptContext<T>
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   script.status = status
