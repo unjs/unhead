@@ -19,6 +19,8 @@ export type UseScriptContext<T extends Record<symbol | string, any>> =
     $script: Promise<T> & ScriptInstance<T>
   }
 
+const ScriptProxyTarget = Symbol('ScriptProxyTarget')
+
 /**
  * Load third-party scripts with SSR support and a proxied API.
  *
@@ -50,6 +52,9 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     })
 
   const loadPromise = new Promise<T>((resolve, reject) => {
+    // promise never resolves
+    if (head.ssr)
+      return
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
@@ -120,47 +125,41 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
     head._scripts || {},
     { [id]: script },
   )
-  // remove in v2, we can just return the script instance and assign .proxy
-  if (options.use) {
-    // we want to make an infinite proxy chain that we can keep a reference of the access chain
-    // we should be able to do dataLayer.push
-    // we should be able to something.callFunction
-    const proxyChain = (accessor: string | symbol, instance: any, accessors: (string | symbol)[] = []) => {
-      const fakeFn = () => {}
-      fakeFn.fake = true
-      return new Proxy(instance?.[accessor] || fakeFn, {
-        get(_, k, r) {
-          if (_ && k in _) {
-            return Reflect.get(_, k, r)
+  const proxyChain = (accessor: string | symbol, instance: any, accessors: (string | symbol)[] = []) => {
+    const target = () => {}
+    target[ScriptProxyTarget] = true
+    return new Proxy(instance?.[accessor] || target, {
+      get(_, k, r) {
+        if (_ && k in _) {
+          return Reflect.get(_, k, r)
+        }
+        if (k === Symbol.iterator) {
+          return [][Symbol.iterator]
+        }
+        return proxyChain(k, instance?.[accessor]?.[k], [...accessors, accessor])
+      },
+      async apply(_, _this, args) {
+        // we are faking, just return, avoid promise handles
+        if (_[ScriptProxyTarget])
+          return
+        const access = (fn?: T) => {
+          for (let i = 0; i < accessors.length; i++) {
+            const k = accessors[i]
+            fn = fn?.[k]
           }
-          // mock an empty array to iterate over
-          if (k === Symbol.iterator) {
-            return [][Symbol.iterator]
-          }
-          return proxyChain(k, instance?.[accessor]?.[k], [...accessors, accessor])
-        },
-        apply(_, _this, args) {
-          const p = _this[accessors[accessors.length - 1]] ? Promise.resolve(script.instance) : loadPromise
-          return p.then((i) => {
-            let _t = i
-            let fn
-            for (let i = 0; i < accessors.length; i++) {
-              // @ts-expect-error untyped
-              fn = _t[accessors[i]]
-              _t = fn
-            }
-            return typeof fn === 'function' ? Reflect.apply(fn, i, args) : fn
-          })
-        },
-      })
-    }
-    script.proxy = new Proxy(script.instance || {} as any as Required<Required<T>['instance']>['proxy'], {
-      get(_, k) {
-        head.hooks.callHook('script:instance-fn', { script, fn: k, exists: false })
-        return options.stub?.({ script, fn: k }) || proxyChain(k, script.instance, [k])
+          return fn
+        }
+        let fn = access(script.instance) || access(await loadPromise)
+        return typeof fn === 'function' ? Reflect.apply(fn, _this, args) : fn
       },
     })
   }
+  script.proxy = new Proxy(script.instance || {} as any as Required<Required<T>['instance']>['proxy'], {
+    get(_, k) {
+      head.hooks.callHook('script:instance-fn', { script, fn: k, exists: false })
+      return options.stub?.({ script, fn: k }) || proxyChain(k, script.instance, [k])
+    },
+  })
   // remove in v2, just return the script
   return new Proxy(script, {
     get(_, k) {
