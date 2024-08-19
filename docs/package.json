@@ -20,11 +20,11 @@
     "@nuxt/ui-pro": "1.4.1",
     "@nuxtjs/seo": "2.0.0-rc.18",
     "@vueuse/nuxt": "^10.11.1",
-    "vue": "3.4.32",
     "nuxt": "3.12.4",
     "nuxt-icon": "0.6.10",
     "nuxt-lego": "^0.0.14",
     "nuxt-lodash": "^2.5.3",
-    "shiki": "1.10.1"
+    "shiki": "1.10.1",
+    "vue": "3.4.32"
   }
 }

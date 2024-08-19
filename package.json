@@ -37,16 +37,16 @@
     "vue": "3.4.32"
   },
   "resolutions": {
+    "@nuxt/vite-builder": "3.12.4",
     "@unhead/dom": "workspace:*",
     "@unhead/schema-org": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "shiki": "1.10.1",
-    "unhead": "workspace:*",
-    "vue": "3.4.32",
     "@vue/server-renderer": "3.4.32",
     "nuxt": "3.12.4",
-    "@nuxt/vite-builder": "3.12.4",
-    "vite": "5.3.4"
+    "shiki": "1.10.1",
+    "unhead": "workspace:*",
+    "vite": "5.3.4",
+    "vue": "3.4.32"
   }
 }
