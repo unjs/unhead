@@ -18,7 +18,7 @@ const gtag = useScript<{ dataLayer: any[] }>({
   trigger: typeof window !== 'undefined' ? window.requestIdleCallback : 'manual'
 })
 const { $script } = gtag
-const dataLayer = gtag.proxy
+const { dataLayer } = gtag.proxy
 
 const status = gtag.status
 

@@ -67,9 +67,10 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
         if (script.status === 'loaded') {
           if (typeof options.use === 'function') {
             const api = options.use()
-            api && emit(api)
+            if (api) {
+              emit(api)
+            }
           }
-          // scripts without any use() function
           else {
             emit({} as T)
           }

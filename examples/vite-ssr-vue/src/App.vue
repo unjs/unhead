@@ -8,6 +8,15 @@
     </RouterLink>|
     <RouterLink to="/red">
       Red
+    </RouterLink>|
+    <RouterLink to="/stripe">
+      Stripe
+    </RouterLink>|
+    <RouterLink to="/fathom">
+      Fathom
+    </RouterLink>|
+    <RouterLink to="/js-confetti">
+      JS Confetti
     </RouterLink>
     <RouterView v-slot="{ Component }">
       <Suspense>
@@ -40,3 +49,5 @@
   margin-top: 60px;
 }
 </style>
+<script setup lang="ts">
+</script>
