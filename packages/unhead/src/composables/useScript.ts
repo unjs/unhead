@@ -129,6 +129,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
     return new Proxy((!accessor ? instance : instance?.[accessor]) || sharedTarget, {
       get(_, k, r) {
+        head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
         if (!accessor) {
           const stub = options.stub?.({ script, fn: k })
           if (stub)
