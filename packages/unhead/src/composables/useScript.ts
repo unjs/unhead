@@ -149,7 +149,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
           }
           return fn
         }
-        let fn = access(script.instance) || access(await loadPromise)
+        const fn = access(script.instance) || access(await loadPromise)
         return typeof fn === 'function' ? Reflect.apply(fn, _this, args) : fn
       },
     })
