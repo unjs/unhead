@@ -22,8 +22,8 @@ export type UseScriptContext<T extends Record<symbol | string, any>> =
   }
 
 const ScriptProxyTarget = Symbol('ScriptProxyTarget')
-function sharedTarget() {}
-sharedTarget[ScriptProxyTarget] = true
+function scriptProxy() {}
+scriptProxy[ScriptProxyTarget] = true
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
   return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
@@ -164,7 +164,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
-    return new Proxy((!accessor ? instance : instance?.[accessor]) || sharedTarget, {
+    return new Proxy((!accessor ? instance : instance?.[accessor]) || scriptProxy, {
       get(_, k, r) {
         head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
         if (!accessor) {
@@ -172,7 +172,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           if (stub)
             return stub
         }
-        if (_ && k in _) {
+        if (_ && k in _ && typeof _[k] !== 'undefined') {
           return Reflect.get(_, k, r)
         }
         if (k === Symbol.iterator) {

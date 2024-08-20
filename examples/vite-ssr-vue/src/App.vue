@@ -18,6 +18,9 @@
     <RouterLink to="/js-confetti">
       JS Confetti
     </RouterLink>|
+    <RouterLink to="/custom-script">
+      Custom Script
+    </RouterLink>|
     <RouterLink to="/manual-script">
       Manual
     </RouterLink>

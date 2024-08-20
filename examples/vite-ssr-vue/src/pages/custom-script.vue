@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useScript } from '@unhead/vue'
 
-const instance = useScript<{ myScript: (arg: string) => void }>('/test/myScript.js', {
+const { myScript } = useScript<{ myScript: (arg: string) => void }>('/test/myScript.js', {
   trigger: typeof window === 'undefined' ? undefined : new Promise(resolve => {
     requestIdleCallback(() => {
       resolve()
@@ -15,8 +15,8 @@ const instance = useScript<{ myScript: (arg: string) => void }>('/test/myScript.
   },
 })
 
-console.log(instance.value, instance.myScript)
-instance.myScript('test')
+console.log(myScript)
+myScript('test')
 </script>
 
 <template>
