@@ -154,7 +154,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       _cbs.error = null
     })
   const hookCtx = { script }
-  if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
+  if ((trigger === 'client' && !head.ssr) || trigger === 'server')
     script.load()
   else if (trigger instanceof Promise)
     trigger.then(script.load)
