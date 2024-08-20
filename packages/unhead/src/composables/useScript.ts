@@ -61,8 +61,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
   const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    const i: number = _cbs[key].push(cb)
-    return () => _cbs[key].splice(i - 1, 1)
+    if (_cbs[key]) {
+      const i: number = _cbs[key].push(cb)
+      return () => _cbs[key]?.splice(i - 1, 1)
+    }
+    // the event has already happened, run immediately
+    cb(script.instance)
+    return () => {}
   }
   const loadPromise = new Promise<T>((resolve, reject) => {
     // promise never resolves
@@ -70,8 +75,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
-      if (script.id === id && (script.status === 'loaded' || script.status === 'error')) {
-        if (script.status === 'loaded') {
+      // vue augmentation... not ideal
+      // @ts-expect-error runtime augmentation
+      const status = typeof script.status === 'object' ? script.status.value : script.status
+      if (script.id === id && (status === 'loaded' || status === 'error')) {
+        if (status === 'loaded') {
           if (typeof options.use === 'function') {
             const api = options.use()
             if (api) {
@@ -82,7 +90,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
             emit({} as T)
           }
         }
-        else if (script.status === 'error') {
+        else if (status === 'error') {
           reject(new Error(`Failed to load script: ${input.src}`))
         }
         _()
@@ -136,12 +144,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   loadPromise
     .then((api) => {
       script.instance = api
-      _cbs.loaded.forEach(cb => cb(api))
-      _cbs.loaded = []
+      if (_cbs.loaded)
+        _cbs.loaded.forEach(cb => cb(api))
+      _cbs.loaded = null
     })
     .catch((err) => {
-      _cbs.error.forEach(cb => cb(err))
-      _cbs.error = []
+      if (_cbs.error)
+        _cbs.error.forEach(cb => cb(err))
+      _cbs.error = null
     })
   const hookCtx = { script }
   if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))

@@ -64,11 +64,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   script.status = status
   if (scope) {
     const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+      if (!script._cbs[key]) {
+        cb(script.instance)
+        return () => {}
+      }
       let i: number | null = script._cbs[key].push(cb)
       const destroy = () => {
         // avoid removing the wrong callback
         if (i) {
-          script._cbs[key].splice(i - 1, 1)
+          script._cbs[key]?.splice(i - 1, 1)
           i = null
         }
       }

@@ -33,8 +33,8 @@ export interface ScriptInstance<T extends BaseScriptApi> {
    * @internal
    */
   _cbs: {
-    loaded: ((instance: T) => void | Promise<void>)[]
-    error: ((err?: Error) => void | Promise<void>)[]
+    loaded: null | ((instance: T) => void | Promise<void>)[]
+    error: null | ((err?: Error) => void | Promise<void>)[]
   }
 }
 
