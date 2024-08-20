@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { useScript } from '@unhead/vue'
 
-const gtag = useScript<{ dataLayer: any[] }>({
+declare global {
+  interface Window {
+    dataLayer: any[]
+  }
+}
+
+const gtag = useScript({
   src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
 }, {
   beforeInit() {

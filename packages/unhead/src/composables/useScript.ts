@@ -3,10 +3,12 @@ import type {
   AsAsyncFunctionValues,
   Head,
   ScriptInstance,
+  UseFunctionType,
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
+
 import { getActiveHead } from './useActiveHead'
 
 export type UseScriptContext<T extends Record<symbol | string, any>> =
@@ -32,7 +34,7 @@ export function resolveScriptKey(input: UseScriptResolvedInput) {
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || getActiveHead()

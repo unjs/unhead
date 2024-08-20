@@ -5,6 +5,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
   ScriptInstance,
+  UseFunctionType,
   UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptStatus,
@@ -12,6 +13,7 @@ import type {
 import { useScript as _useScript, resolveScriptKey } from 'unhead'
 import type { Ref } from 'vue'
 import { getCurrentInstance, onMounted, onScopeDispose, ref } from 'vue'
+
 import type { MaybeComputedRefEntriesOnly } from '../types'
 import { injectHead } from './injectHead'
 
@@ -31,7 +33,7 @@ export type UseScriptContext<T extends Record<symbol | string, any>> =
     $script: Promise<T> & VueScriptInstance<T>
   }
 
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
   const head = injectHead()
   const options = _options || {}
