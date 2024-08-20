@@ -57,6 +57,11 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     })
 
+  const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
+  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+    const i: number = _cbs[key].push(cb)
+    return () => _cbs[key].splice(i - 1, 1)
+  }
   const loadPromise = new Promise<T>((resolve, reject) => {
     // promise never resolves
     if (head.ssr)
@@ -82,7 +87,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
     })
   })
-  const script = Object.assign(loadPromise, {
+  const script = Object.assign(loadPromise, <Partial<UseScriptContext<T>>> {
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
     id,
@@ -96,7 +101,7 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
       }
       return false
     },
-    load() {
+    load(cb?: () => void | Promise<void>) {
       if (!script.entry) {
         syncStatus('loading')
         const defaults: Required<Head>['script'][0] = {
@@ -113,10 +118,29 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
           script: [{ ...defaults, ...input, key: `script.${id}` }],
         }, options)
       }
+      if (cb)
+        _registerCb('loaded', cb)
       return loadPromise
     },
-  }) as any as UseScriptContext<T>
-  loadPromise.then(api => (script.instance = api))
+    onLoaded(cb: (instance: T) => void | Promise<void>) {
+      return _registerCb('loaded', cb)
+    },
+    onError(cb: (err?: Error) => void | Promise<void>) {
+      return _registerCb('error', cb)
+    },
+    _cbs,
+  }) as UseScriptContext<T>
+  // script is ready
+  loadPromise
+    .then((api) => {
+      script.instance = api
+      _cbs.loaded.forEach(cb => cb(api))
+      _cbs.loaded = []
+    })
+    .catch((err) => {
+      _cbs.error.forEach(cb => cb(err))
+      _cbs.error = []
+    })
   const hookCtx = { script }
   if ((trigger === 'client' && !head.ssr) || (trigger === 'server' && head.ssr))
     script.load()

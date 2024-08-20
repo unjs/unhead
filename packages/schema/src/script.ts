@@ -26,6 +26,16 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
   remove: () => boolean
+  // cbs
+  onLoaded: (fn: (instance: T) => void | Promise<void>) => void
+  onError: (fn: (err?: Error) => void | Promise<void>) => void
+  /**
+   * @internal
+   */
+  _cbs: {
+    loaded: ((instance: T) => void | Promise<void>)[]
+    error: ((err?: Error) => void | Promise<void>)[]
+  }
 }
 
 export interface UseScriptOptions<T extends BaseScriptApi> extends HeadEntryOptions {
