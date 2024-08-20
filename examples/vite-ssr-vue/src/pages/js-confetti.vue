@@ -7,7 +7,7 @@ interface JSConfettiApi {
 }
 
 const jsConfetti = useScript<JSConfettiApi>({
-  src: 'https://cdn.jsdelivr.net/npm/js-confetti@0.12.0/dist/js-confetti.browser.jss',
+  src: 'https://cdn.jsdelivr.net/npm/js-confetti@0.12.0/dist/js-confetti.browser.js',
 }, {
   trigger: 'client',
   use() {

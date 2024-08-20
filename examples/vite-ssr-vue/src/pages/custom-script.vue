@@ -1,12 +1,8 @@
 <script lang="ts" setup>
 import { useScript } from '@unhead/vue'
 
-const { myScript } = useScript<{ myScript: (arg: string) => void }>('/test/myScript.js', {
-  trigger: typeof window === 'undefined' ? undefined : new Promise(resolve => {
-    requestIdleCallback(() => {
-      resolve()
-    })
-  }),
+const { myScript, status, onLoaded } = useScript<{ myScript: (arg: string) => void }>('/test/myScript.js', {
+  trigger: 'server',
   use() {
     return {
       // @ts-expect-error untyped
@@ -15,10 +11,17 @@ const { myScript } = useScript<{ myScript: (arg: string) => void }>('/test/myScr
   },
 })
 
+onLoaded(() => {
+  console.log('onloaded')
+})
+
 console.log(myScript)
 myScript('test')
 </script>
 
 <template>
-<div>hello world</div>
+<div>
+  hello world
+  <div>status: {{ status }}</div>
+</div>
 </template>
