@@ -17,6 +17,9 @@
     </RouterLink>|
     <RouterLink to="/js-confetti">
       JS Confetti
+    </RouterLink>|
+    <RouterLink to="/manual-script">
+      Manual
     </RouterLink>
     <RouterView v-slot="{ Component }">
       <Suspense>

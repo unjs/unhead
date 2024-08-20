@@ -11,7 +11,7 @@ import type {
 } from '@unhead/schema'
 import { useScript as _useScript, resolveScriptKey } from 'unhead'
 import type { Ref } from 'vue'
-import { getCurrentInstance, onMounted, ref } from 'vue'
+import { getCurrentInstance, onMounted, onScopeDispose, ref } from 'vue'
 import type { MaybeComputedRefEntriesOnly } from '../types'
 import { injectHead } from './injectHead'
 
@@ -60,5 +60,22 @@ export function useScript<T extends Record<symbol | string, any>>(_input: UseScr
   script = _useScript(input as BaseUseScriptInput, options) as any as UseScriptContext<T>
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   script.status = status
+  if (scope) {
+    const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+      let i: number | null = script._cbs[key].push(cb)
+      const destroy = () => {
+        // avoid removing the wrong callback
+        if (i) {
+          script._cbs[key].splice(i - 1, 1)
+          i = null
+        }
+      }
+      onScopeDispose(destroy)
+      return destroy
+    }
+    // if we have a scope we should make these callbacks reactive
+    script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
+    script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  }
   return script
 }

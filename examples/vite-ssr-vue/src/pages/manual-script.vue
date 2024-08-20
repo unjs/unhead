@@ -1,14 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useScript } from '@unhead/vue'
 
 const isScriptLoaded = ref(false)
 
-const { $script } = useScript({
+const { $script, onLoaded } = useScript({
   key: 'stripe',
   src: 'https://js.stripe.com/v3/',
   onload() {
-    console.log('script loaded')
+    console.log('script onload input')
     isScriptLoaded.value = true
   },
   onerror() {
@@ -18,7 +18,16 @@ const { $script } = useScript({
   trigger: 'manual',
 })
 
-console.log($script.status)
+onLoaded(() => {
+  console.log('on loaded callback')
+})
+$script.then(() => {
+  console.log('script promise callback')
+})
+
+onUnmounted(() => {
+  $script.load()
+})
 
 useHead({
   title: () => $script.status.value,
