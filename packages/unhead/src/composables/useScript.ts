@@ -76,8 +76,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
     const _ = head.hooks.hook('script:updated', ({ script }) => {
       // vue augmentation... not ideal
-      // @ts-expect-error runtime augmentation
-      const status = typeof script.status === 'object' ? script.status.value : script.status
+      const status = script.status
       if (script.id === id && (status === 'loaded' || status === 'error')) {
         if (status === 'loaded') {
           if (typeof options.use === 'function') {

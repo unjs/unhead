@@ -61,7 +61,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   })
   script = _useScript(input as BaseUseScriptInput, options) as any as UseScriptContext<T>
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
-  script.status = status
   if (scope) {
     const _registerCb = (key: 'loaded' | 'error', cb: any) => {
       if (!script._cbs[key]) {
@@ -83,5 +82,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
     script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
   }
-  return script
+  return new Proxy(script, {
+    get(_, key, a) {
+      // we can't override status as there's a race condition
+      if (key === 'status')
+        return status
+      return Reflect.get(_, key, a)
+    },
+  })
 }
