@@ -13,7 +13,7 @@ type BaseScriptApi = Record<symbol | string, any>
 export type AsAsyncFunctionValues<T extends BaseScriptApi> = {
   [key in keyof T]:
   T[key] extends any[] ? T[key] :
-    T[key] extends (...args: infer A) => infer R ? (...args: A) => R :
+    T[key] extends (...args: infer A) => infer R ? (...args: A) => R extends Promise<any> ? R : Promise<R> :
       T[key] extends Record<any, any> ? AsAsyncFunctionValues<T[key]> :
         never
 }
