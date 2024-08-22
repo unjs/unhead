@@ -89,7 +89,7 @@ See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for f
 ```ts
 defineArticle({
   // will resolve to ISO 8601 format
-  datePublished: new Date(2020, 10, 1)
+  datePublished: new Date(2024, 05, 29)
 })
 ```
 
@@ -131,8 +131,8 @@ defineArticle({
   headline: 'Article Title',
   description: 'Article description',
   image: '/articles/article-title-image.jpg',
-  datePublished: new Date(2020, 19, 1),
-  dateModified: new Date(2020, 19, 1),
+  datePublished: new Date(2024, 05, 29),
+  dateModified: new Date(2024, 05, 29),
   // attaching an author when the identity is an organization
   author: {
     name: 'Harlan Wilton',
