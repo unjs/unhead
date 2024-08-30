@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
+import { createHead, useHead, useScript } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
@@ -52,5 +52,25 @@ describe('unhead e2e scripts', () => {
 
       </body></html>"
     `)
+  })
+
+  it('expect to update trigger', async () => {
+    const promise = new Promise<void>(() => {})
+    const script = useScript({
+      src: 'https://cdn.example.com/script.js',
+    }, {
+      trigger: promise,
+    })
+
+    const newPromise = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve()
+      }, 25)
+    })
+    expect(script.status).toBe('awaitingLoad')
+    script.updateTrigger(newPromise)
+    expect(script.status).toBe('awaitingLoad')
+    await newPromise
+    expect(script.status).toBe('loading')
   })
 })

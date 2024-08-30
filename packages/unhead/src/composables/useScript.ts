@@ -2,7 +2,9 @@ import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
   AsAsyncFunctionValues,
   Head,
+  SchemaAugmentations,
   ScriptInstance,
+  Unhead,
   UseFunctionType,
   UseScriptInput,
   UseScriptOptions,
@@ -96,6 +98,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
     })
   })
+
+  const triggerAbortController = new AbortController()
   const script = Object.assign(loadPromise, <Partial<UseScriptContext<T>>> {
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
@@ -137,6 +141,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     onError(cb: (err?: Error) => void | Promise<void>) {
       return _registerCb('error', cb)
     },
+    updateTrigger(trigger: UseScriptOptions['trigger']) {
+      // cancel previous trigger
+      triggerAbortController.abort()
+      handleTrigger(trigger, triggerAbortController, script, head)
+    },
     _cbs,
   }) as UseScriptContext<T>
   // script is ready
@@ -153,13 +162,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       _cbs.error = null
     })
   const hookCtx = { script }
-  if ((trigger === 'client' && !head.ssr) || trigger === 'server')
-    script.load()
-  else if (trigger instanceof Promise)
-    trigger.then(script.load)
-  else if (typeof trigger === 'function')
-    trigger(async () => script.load())
 
+  handleTrigger(trigger, triggerAbortController, script, head)
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
@@ -210,4 +214,21 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   })
   head._scripts = Object.assign(head._scripts || {}, { [id]: res })
   return res
+}
+
+function handleTrigger(trigger: UseScriptOptions['trigger'], abortController: AbortController, script: UseScriptContext<any>, head: Unhead<Head<SchemaAugmentations>>) {
+  if ((trigger === 'client' && !head.ssr) || trigger === 'server') {
+    script.load()
+  }
+  else if (trigger instanceof Promise) {
+    new Promise((resolve, reject) => {
+      trigger.then(script.load).then(resolve)
+      abortController.signal.addEventListener('abort', reject)
+    }).catch(() => {
+      // cancelled
+    })
+  }
+  else if (typeof trigger === 'function') {
+    trigger(async () => script.load())
+  }
 }
