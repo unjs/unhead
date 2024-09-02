@@ -33,6 +33,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
+  _triggerAbortController?: AbortController
+  /**
+   * @internal
+   */
   _cbs: {
     loaded: null | ((instance: T) => void | Promise<void>)[]
     error: null | ((err?: Error) => void | Promise<void>)[]
