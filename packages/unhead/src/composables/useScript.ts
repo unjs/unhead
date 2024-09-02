@@ -142,16 +142,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     updateTrigger(trigger: UseScriptOptions['trigger']) {
       // cancel previous trigger
       script._triggerAbortController?.abort()
-      if (head.ssr) {
-        if (trigger === 'server') {
-          script.load()
-        }
-      }
-      else if (trigger === 'client' || typeof trigger === 'undefined') {
+      if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
         script.load()
-      }
-      else if (typeof trigger === 'function') {
-        trigger(script.load)
       }
       else if (trigger instanceof Promise) {
         script._triggerAbortController = new AbortController()
@@ -163,6 +155,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         ]).then((res) => {
           res?.()
         })
+      }
+      else if (typeof trigger === 'function') {
+        trigger(script.load)
       }
     },
     _cbs,
