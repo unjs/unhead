@@ -45,7 +45,7 @@ describe('dom useScript', () => {
     expect(calledFn).toBe('test')
   })
   it('proxy', async () => {
-    const head = useDOMHead()
+    useDOMHead()
 
     const instance = useScript<{ test: (foo: string) => string }>({
       src: 'https://cdn.example.com/script.js',

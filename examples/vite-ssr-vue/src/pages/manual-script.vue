@@ -4,7 +4,7 @@ import { useScript } from '@unhead/vue'
 
 const isScriptLoaded = ref(false)
 
-const { $script, onLoaded } = useScript({
+const { status, $script, onLoaded } = useScript({
   key: 'stripe',
   src: 'https://js.stripe.com/v3/',
   onload() {
@@ -41,7 +41,7 @@ useHead({
       load script
     </button>
     <div>
-      script status: {{ $script.status }}
+      script status: {{ status }}
     </div>
   </div>
 </template>
