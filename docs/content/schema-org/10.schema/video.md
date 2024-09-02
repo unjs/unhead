@@ -31,11 +31,9 @@
 
   Can be provided using route meta on the `image` key, see [defaults](#defaults).
 
-- **thumbnailUrl** `string`
+- **thumbnailUrl** `string | string[]`
 
-  An image of the video thumbnail.
-
-  Can be provided using route meta on the `image` key, see [defaults](#defaults).
+  A URL pointing to the video thumbnail image file. Follow the [thumbnail image guidelines](https://developers.google.com/search/docs/appearance/video#provide-a-high-quality-thumbnail).
 
 - **uploadDate** `string`
 
