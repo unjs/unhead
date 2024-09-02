@@ -110,7 +110,7 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject>({
       video.description = 'No description'
 
     if (video.thumbnailUrl && (typeof video.thumbnailUrl === 'string' || Array.isArray(video.thumbnailUrl))) {
-      const images = asArray(video.image).map(image => resolveWithBase(ctx.meta.host, image))
+      const images = asArray(video.thumbnailUrl).map(image => resolveWithBase(ctx.meta.host, image))
       video.thumbnailUrl = images.length > 1 ? images : images[0]
     }
 
