@@ -1,4 +1,4 @@
-import type { Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { Arrayable, Id, NodeRelation, ResolvableDate, Thing } from '../../types'
 import {
   asArray,
   resolvableDateToIso,
@@ -23,9 +23,9 @@ export interface VideoSimple extends Thing {
    */
   thumbnail?: NodeRelation<ImageObject>
   /**
-   * A thumbnail image relevant to the Video.
+   * A URL pointing to the video thumbnail image file. Follow the [thumbnail image guidelines](https://developers.google.com/search/docs/appearance/video#provide-a-high-quality-thumbnail).
    */
-  thumbnailUrl?: string
+  thumbnailUrl?: Arrayable<string>
   /**
    * The date the video was published, in ISO 8601 format (e.g., 2020-01-20).
    */
@@ -109,8 +109,13 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject>({
     if (!video.description)
       video.description = 'No description'
 
+    if (video.thumbnailUrl && (typeof video.thumbnailUrl === 'string' || Array.isArray(video.thumbnailUrl))) {
+      const images = asArray(video.image).map(image => resolveWithBase(ctx.meta.host, image))
+      video.thumbnailUrl = images.length > 1 ? images : images[0]
+    }
+
     if (video.thumbnail)
-      video.thumbnail = resolveRelation(video.thumbnail, ctx, imageResolver)
+      video.thumbnail = resolveRelation(video.thumbnailUrl, ctx, imageResolver)
 
     return video
   },
