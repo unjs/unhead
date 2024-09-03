@@ -74,7 +74,7 @@ describe('unhead e2e scripts', () => {
       }, 25)
     })
     expect(script.status).toBe('awaitingLoad')
-    script.updateTrigger(newPromise)
+    script.setupTriggerHandler(newPromise)
     expect(script.status).toBe('awaitingLoad')
     await newPromise
 
@@ -114,17 +114,14 @@ describe('unhead e2e scripts', () => {
       head: csrHead,
     })
 
-    expect(originalAborted).toBeTruthy()
-
-    expect(scriptA.status).toEqual(scriptB.status)
-    expect(scriptA.status).toEqual(`awaitingLoad`)
-
     // next tick
     await new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve()
       }, 25)
     })
+
+    expect(originalAborted).toBeTruthy()
 
     expect(scriptA.status).toEqual(scriptB.status)
     expect(scriptA.status).toEqual(`loading`)

@@ -43,7 +43,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const id = resolveScriptKey(input)
   const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
   if (prevScript) {
-    prevScript.updateTrigger(options.trigger)
+    prevScript.setupTriggerHandler(options.trigger)
     return prevScript
   }
   options.beforeInit?.()
@@ -113,6 +113,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return false
     },
     load(cb?: () => void | Promise<void>) {
+      // cancel any pending triggers as we've started loading
+      script._triggerAbortController?.abort()
+      script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
         const defaults: Required<Head>['script'][0] = {
@@ -139,22 +142,24 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     onError(cb: (err?: Error) => void | Promise<void>) {
       return _registerCb('error', cb)
     },
-    updateTrigger(trigger: UseScriptOptions['trigger']) {
-      // cancel previous trigger
-      script._triggerAbortController?.abort()
+    setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
+      if (script.status !== 'awaitingLoad') {
+        return
+      }
       if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
         script.load()
       }
       else if (trigger instanceof Promise) {
-        script._triggerAbortController = new AbortController()
-        Promise.race([
+        script._triggerAbortController = script._triggerAbortController || new AbortController()
+        script._triggerPromises = script._triggerPromises || []
+        script._triggerPromises.push(Promise.race([
           trigger.then(() => script.load),
           new Promise<void>((resolve) => {
             script._triggerAbortController!.signal.addEventListener('abort', () => resolve())
           }),
         ]).then((res) => {
           res?.()
-        })
+        }))
       }
       else if (typeof trigger === 'function') {
         trigger(script.load)
@@ -177,7 +182,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
   const hookCtx = { script }
 
-  script.updateTrigger(options.trigger)
+  script.setupTriggerHandler(options.trigger)
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {

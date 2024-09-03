@@ -26,7 +26,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
   remove: () => boolean
-  updateTrigger: (trigger: UseScriptOptions['trigger']) => void
+  setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
   // cbs
   onLoaded: (fn: (instance: T) => void | Promise<void>) => void
   onError: (fn: (err?: Error) => void | Promise<void>) => void
@@ -34,6 +34,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
    * @internal
    */
   _triggerAbortController?: AbortController
+  /**
+   * @internal
+   */
+  _triggerPromises?: Promise<void>[]
   /**
    * @internal
    */

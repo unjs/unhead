@@ -64,8 +64,8 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
-  const head = injectHead()
   const options = _options || {}
+  const head = options?.head || injectHead()
   // @ts-expect-error untyped
   options.head = head
   const scope = getCurrentInstance()
