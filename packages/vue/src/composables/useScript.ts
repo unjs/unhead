@@ -85,5 +85,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   // @ts-expect-error untyped
   registerVueScopeHandlers(script, scope)
-  return script as any as UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
+  return new Proxy(script, {
+    get(_, key, a) {
+      // we can't override status as it will break the unhead useScript API
+      return Reflect.get(_, key === 'status' ? '_statusRef' : key, a)
+    },
+  }) as any as UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
 }

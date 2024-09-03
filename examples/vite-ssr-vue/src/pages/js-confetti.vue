@@ -29,6 +29,7 @@ function doConfetti() {
   jsConfetti.addConfetti({ emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'] })
 }
 const status = jsConfetti.status
+console.log(status)
 </script>
 
 <template>
