@@ -219,7 +219,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // remove in v2, just return the script
   const res = new Proxy(script, {
     get(_, k) {
-      const target = k in script ? script : script.proxy
+      // _ keys are reserved for internal overrides
+      const target = (k in script || String(k)[0] === '_') ? script : script.proxy
       if (k === 'then' || k === 'catch') {
         return script[k].bind(script)
       }

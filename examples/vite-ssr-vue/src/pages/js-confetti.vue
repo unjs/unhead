@@ -28,6 +28,8 @@ function doConfetti() {
   console.log('pre doConfetti', jsConfetti, typeof jsConfetti.addConfetti, jsConfetti.addConfetti)
   jsConfetti.addConfetti({ emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'] })
 }
+const status = jsConfetti.status
+console.log(status)
 </script>
 
 <template>
@@ -36,4 +38,7 @@ function doConfetti() {
   >
     Add Confetti
   </button>
+<div>
+  status: {{ status }}
+</div>
 </template>
