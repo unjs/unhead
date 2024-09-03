@@ -10,10 +10,9 @@ import type {
   UseScriptResolvedInput,
   UseScriptStatus,
 } from '@unhead/schema'
-import { useScript as _useScript, resolveScriptKey } from 'unhead'
+import { useScript as _useScript } from 'unhead'
 import type { ComponentInternalInstance, Ref } from 'vue'
 import { getCurrentInstance, onMounted, onScopeDispose, ref } from 'vue'
-
 import type { MaybeComputedRefEntriesOnly } from '../types'
 import { injectHead } from './injectHead'
 
@@ -73,36 +72,18 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   options.eventContext = scope
   if (scope && typeof options.trigger === 'undefined')
     options.trigger = onMounted
-  const id = resolveScriptKey(input)
-  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
-  if (prevScript) {
-    prevScript.updateTrigger(options.trigger)
-    // prev script scope may be lost if not loaded
-    registerVueScopeHandlers(prevScript, scope)
-    return prevScript
-  }
-  let script: UseScriptContext<T>
   // we may be re-using an existing script
-  const status = ref<UseScriptStatus>('awaitingLoad')
   // sync the status, need to register before useScript
-  const _ = head.hooks.hook('script:updated', ({ script: s }) => {
-    if (script && s.id === script.id) {
-      status.value = s.status
-      // clean up
-      if (s.status === 'removed') {
-        _()
-      }
-    }
+  // @ts-expect-error untyped
+  head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
+    // @ts-expect-error untyped
+    s._statusRef.value = s.status
   })
-  script = _useScript(input as BaseUseScriptInput, options) as any as UseScriptContext<T>
+  const script = _useScript(input as BaseUseScriptInput, options)
+  // @ts-expect-error untyped
+  script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
+  // @ts-expect-error untyped
   registerVueScopeHandlers(script, scope)
-  return new Proxy(script, {
-    get(_, key, a) {
-      // we can't override status as there's a race condition
-      if (key === 'status')
-        return status
-      return Reflect.get(_, key, a)
-    },
-  })
+  return script as any as UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
 }
