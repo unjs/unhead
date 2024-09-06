@@ -1,6 +1,6 @@
-import type { MaybePromiseProps } from 'zhead'
 import type { Head } from './schema'
 import type { RuntimeMode } from './head'
+import type { FalsyEntries } from './util'
 
 export interface ResolvesDuplicates {
   /**
@@ -74,7 +74,7 @@ export interface TagPriority {
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
-export type TagUserProperties = TagPriority & TagPosition & MaybePromiseProps<InnerContent> & ResolvesDuplicates & ProcessesTemplateParams
+export type TagUserProperties = FalsyEntries<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
 export type TagKey = keyof Head
 

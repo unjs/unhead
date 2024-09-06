@@ -1,4 +1,4 @@
-import type { MaybeComputedRefOrPromise } from '@unhead/vue'
+import type { MaybeComputedRefOrFalsy } from '@unhead/vue'
 import { injectHead, useHead } from '@unhead/vue'
 import type {
   AggregateOffer,
@@ -42,7 +42,7 @@ import type { Arrayable } from '../../types'
 import { UnheadSchemaOrg } from '../../plugin'
 
 export type DeepMaybeRef<T> = {
-  [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>
+  [key in keyof T]?: MaybeComputedRefOrFalsy<T[key]>
 }
 
 function provideResolver<T>(input?: T, resolver?: string) {

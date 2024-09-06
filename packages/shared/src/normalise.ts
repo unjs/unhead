@@ -56,7 +56,7 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
 
 export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
   const sep = key === 'class' ? ' ' : ';'
-  if (typeof v === 'object' && !Array.isArray(v)) {
+  if (v && typeof v === 'object' && !Array.isArray(v)) {
     v = Object.entries(v)
       .filter(([, v]) => v)
       .map(([k, v]) => key === 'style' ? `${k}:${v}` : k)

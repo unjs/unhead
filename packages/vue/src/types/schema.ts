@@ -44,7 +44,7 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title
    */
-  title?: Title | Promise<Title>
+  title?: Title
   /**
    * Generate the title from a template.
    */
