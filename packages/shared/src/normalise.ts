@@ -99,7 +99,7 @@ function nestedNormaliseProps<T extends HeadTag>(
       const isDataKey = (k as string).startsWith('data-')
       if (v === 'true' || v === '') {
         // @ts-expect-error untyped
-        props[k] = isDataKey ? 'true' : true
+        props[k] = isDataKey ? props[k] : true
       }
       else if (!props[k]) {
         if (isDataKey && v === 'false')
