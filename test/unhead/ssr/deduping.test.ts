@@ -297,10 +297,7 @@ describe('dedupe', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      `
-      "<meta name="og:image" content="https://example.com/image1.jpg">
-      <meta name="og:image" content="https://example.com/image2.jpg">"
-    `,
+      `"<meta name="og:image" content="https://example.com/image2.jpg">"`,
     )
   })
 
@@ -323,7 +320,7 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('""')
+    expect(headTags).toMatchInlineSnapshot(`"<meta name="description" content="my description">"`)
   })
 
   it('null attr override', async () => {
@@ -355,5 +352,51 @@ describe('dedupe', () => {
 
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="722c761">console.log('B')</script>"`)
+  })
+
+  it('duplicate viewport', async () => {
+    const head = createHead()
+    head.push({
+      meta: [
+        {
+          key: 'test',
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1',
+        },
+        // charset
+        {
+          charset: 'utf-8',
+        },
+        {
+          key: 'desc',
+          name: 'description',
+          content: 'test',
+        },
+      ],
+    })
+    head.push({
+      meta: [
+        {
+          key: 'test2',
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=2',
+        },
+        {
+          charset: 'utf-1',
+        },
+        {
+          key: 'des123c',
+          name: 'description',
+          content: 'test 2',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<meta charset="utf-1">
+      <meta name="viewport" content="width=device-width, initial-scale=2">
+      <meta name="description" content="test 2">"
+    `)
   })
 })

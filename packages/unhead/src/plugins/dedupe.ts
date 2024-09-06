@@ -20,6 +20,9 @@ export default defineHeadPlugin({
         delete tag.props.key
       }
       const generatedKey = tagDedupeKey(tag)
+      if (generatedKey && !generatedKey.startsWith('meta:og:') && !generatedKey.startsWith('meta:twitter:')) {
+        delete tag.key
+      }
       const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
       if (dedupe)
         tag._d = dedupe

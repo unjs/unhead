@@ -94,7 +94,7 @@ describe('dom', () => {
     head.push({
       meta: [
         {
-          key: 'description',
+          key: 'name:description',
         },
       ],
     })
