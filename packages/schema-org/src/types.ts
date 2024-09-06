@@ -96,6 +96,15 @@ export interface Thing {
   'image'?: NodeRelations<ImageObject | string>
 
   /**
+   * The work that this work has been translated from. E.g. 物种起源 is a translationOf “On the Origin of Species”.
+   */
+  'translationOfWork'?: NodeRelations<Thing>
+  /**
+   * A work that is a translation of the content of this work. E.g. 西遊記 has an English workTranslation “Journey to the West”, a German workTranslation “Monkeys Pilgerfahrt” and a Vietnamese translation Tây du ký bình khảo.
+   */
+  'workTranslation'?: NodeRelations<Thing>
+
+  /**
    * Allow any arbitrary keys
    */
   [key: string]: any
@@ -114,4 +123,5 @@ export interface IdReference {
   '@id': string
 }
 
-export type Id = `#${string}` | `https://${string}#${string}`
+// we support string for DX
+export type Id = string | `#${string}` | `https://${string}#${string}`

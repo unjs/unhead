@@ -12,6 +12,11 @@ export interface SchemaOrgGraph {
   find: <T extends Thing>(id: Id | string) => T | null
 }
 
+const baseRelationNodes = [
+  'translationOfWork',
+  'workTranslation',
+] as const
+
 export function createSchemaOrgGraph(): SchemaOrgGraph {
   const ctx: SchemaOrgGraph = {
     find<T extends Thing>(id: Id | string) {
@@ -47,6 +52,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
               root: true,
             })
           }
+          baseRelationNodes.forEach((k) => {
+            node[k] = resolveRelation(node[k], ctx)
+          })
           if (node._resolver?.resolveRootNode)
             node._resolver.resolveRootNode(node, ctx)
 
