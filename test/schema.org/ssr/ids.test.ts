@@ -23,7 +23,7 @@ describe('schema.org ssr ids', () => {
 
     const tags = await ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
-    expect(id).toMatchInlineSnapshot('"https://example.com/#/schema/web-page/#foo"')
+    expect(id).toMatchInlineSnapshot(`"https://example.com/#/schema/web-page/#foo"`)
   })
   it('allows ids with custom domains', async () => {
     const ssrHead = createHead()
@@ -46,5 +46,27 @@ describe('schema.org ssr ids', () => {
     const tags = await ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot('"https://custom-domain.com/#foo"')
+  })
+  it('full relative paths', async () => {
+    const ssrHead = createHead()
+
+    useHead({
+      templateParams: {
+        schemaOrg: {
+          host: 'https://example.com',
+        },
+      },
+    })
+
+    useSchemaOrg([
+      defineWebPage({
+        '@id': '/fr#website',
+        'name': 'foo',
+      }),
+    ])
+
+    const tags = await ssrHead.resolveTags()
+    const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
+    expect(id).toMatchInlineSnapshot(`"https://example.com/fr#website"`)
   })
 })
