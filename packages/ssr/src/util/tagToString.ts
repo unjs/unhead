@@ -3,15 +3,6 @@ import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import { propsToString } from './propsToString'
 
 export function escapeHtml(str: string) {
-  /**
-   * Encode the following characters:
-   * & --> &amp;
-   * < --> &lt;
-   * > --> &gt;
-   * " --> &quot;
-   * ' --> &#x27;
-   * / --> &#x2F;
-   */
   return str.replace(/[&<>"'/]/g, (char) => {
     switch (char) {
       case '&':

@@ -15,7 +15,7 @@ describe('vue ssr innerContent', () => {
     })
 
     expect(headResult.headTags).toMatchInlineSnapshot(
-      '"<script>console.log(\'hi\')</script>"',
+      `"<script>console.log('hi')</script>"`,
     )
   })
 })

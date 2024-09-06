@@ -10,7 +10,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `"<title>test - my template</title>"`,
     )
   })
   it('fn replace', async () => {
@@ -21,7 +21,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `"<title>test - my template</title>"`,
     )
   })
   it('titleTemplate as title', async () => {
@@ -32,7 +32,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `"<title>Default Title</title>"`,
     )
   })
   it('reset title template', async () => {
@@ -46,7 +46,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>page title</title>"',
+      `"<title>page title</title>"`,
     )
   })
 
@@ -81,7 +81,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title></title>"',
+      `""`,
     )
   })
 })

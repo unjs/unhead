@@ -188,6 +188,6 @@ describe('ssr vue templateParams', () => {
       processTemplateParams: false,
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('"<title>Hello %name</title>"')
+    expect(headTags).toMatchInlineSnapshot(`"<title>Hello %name</title>"`)
   })
 })

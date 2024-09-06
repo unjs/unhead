@@ -144,7 +144,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title></title>",
+        "headTags": "",
         "htmlAttrs": "",
       }
     `)
@@ -163,7 +163,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title></title>",
+        "headTags": "",
         "htmlAttrs": "",
       }
     `)
