@@ -30,7 +30,7 @@ describe('schema.org e2e', () => {
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
-        "bodyTags": "<script type="application/ld+json" id="schema-org-graph" data-hid="3437552">{
+        "bodyTags": "<script type="application/ld+json" data-hid="3437552">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -82,7 +82,7 @@ describe('schema.org e2e', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type="application/ld+json" id="schema-org-graph" data-hid="3437552">{
+      <script type="application/ld+json" data-hid="3437552">{
         "@context": "https://schema.org",
         "@graph": [
           {

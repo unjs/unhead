@@ -170,7 +170,6 @@ export function useSchemaOrg(input: UseSchemaOrgInput) {
     script: [
       {
         type: 'application/ld+json',
-        id: 'schema-org-graph',
         key: 'schema-org-graph',
         nodes: input,
       },
