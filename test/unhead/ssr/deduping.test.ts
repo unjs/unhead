@@ -325,4 +325,35 @@ describe('dedupe', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot('""')
   })
+
+  it('null attr override', async () => {
+    const head = createHead()
+    head.push({
+      script: [
+        {
+          src: 'test',
+          key: 'my-script',
+          fetchpriority: 'high',
+          crossorigin: 'anonymous',
+          referrerpolicy: 'no-referrer-when-downgrade',
+          innerHTML: 'console.log(\'A\')',
+        },
+      ],
+    })
+    head.push({
+      script: [
+        {
+          key: 'my-script',
+          fetchpriority: undefined,
+          crossorigin: false,
+          referrerpolicy: null,
+          foo: 'bar',
+          innerHTML: 'console.log(\'B\')',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="722c761">console.log('B')</script>"`)
+  })
 })

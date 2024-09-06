@@ -3,12 +3,13 @@ import type { Plugin } from 'vue'
 import { headSymbol } from '../createHead'
 import { useHead } from '../composables/useHead'
 import { Vue3 } from '../env'
+import type { UseHeadInput } from '../types'
 
 export const UnheadPlugin: Plugin = (_Vue) => {
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
     created() {
-      let source = false
+      let source: false | UseHeadInput = false
       if (Vue3) {
         const instance = getCurrentInstance()
         if (!instance)
@@ -30,8 +31,9 @@ export const UnheadPlugin: Plugin = (_Vue) => {
         }
       }
 
-      // @ts-expect-error vue 2
-      source && useHead(source)
+      if (source) {
+        useHead(source)
+      }
     },
 
     beforeCreate() {
