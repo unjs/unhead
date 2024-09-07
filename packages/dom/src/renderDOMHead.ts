@@ -214,11 +214,12 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     for (const k in state.pendingSideEffects) {
       state.pendingSideEffects[k]()
     }
-    head._domUpdatePromise = undefined
     head._dom = state
-    head.dirty = false
     await head.hooks.callHook('dom:rendered', { renders: tags })
     resolve()
+  }).finally(() => {
+    head._domUpdatePromise = undefined
+    head.dirty = false
   })
   return head._domUpdatePromise
 }
