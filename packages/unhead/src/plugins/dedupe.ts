@@ -1,4 +1,4 @@
-import { defineHeadPlugin, HasElementTags, tagDedupeKey, tagWeight } from '@unhead/shared'
+import {defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight} from '@unhead/shared'
 import type { HeadTag } from '@unhead/schema'
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
@@ -32,7 +32,7 @@ export default defineHeadPlugin({
       const deduping: Record<string, HeadTag> = Object.create(null)
       for (const tag of ctx.tags) {
         // need a seperate dedupe key other than _d
-        const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || tag._p!
+        const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || hashTag(tag)
         const dupedTag: HeadTag = deduping[dedupeKey]
         // handling a duplicate tag
         if (dupedTag) {

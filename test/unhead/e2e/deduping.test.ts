@@ -189,4 +189,62 @@ describe('unhead e2e deduping', () => {
       </body></html>"
     `)
   })
+
+  it('duplicate no key', async () => {
+    const input = {
+      style: ['this will be inserted twice'],
+
+      // this will be inserted once
+      link: [
+        {
+          rel: 'canonical',
+          href: 'https://test.com',
+        },
+      ],
+
+      meta: [
+        {
+          name: 'x-test',
+          content: 'once',
+        },
+      ],
+    }
+    const ssrHead = createHead()
+    ssrHead.push(input)
+    ssrHead.push(input)
+    const data = await renderSSRHead(ssrHead)
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<style>this will be inserted twice</style>
+      <link rel="canonical" href="https://test.com">
+      <meta name="x-test" content="once">",
+        "htmlAttrs": "",
+      }
+    `)
+    const dom = useDom(data)
+    const csrHead = createHead()
+    csrHead.push(input)
+    csrHead.push(input)
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <style>this will be inserted twice</style>
+      <link rel="canonical" href="https://test.com">
+      <meta name="x-test" content="once">
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
 })
