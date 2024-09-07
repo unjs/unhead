@@ -134,6 +134,10 @@ export interface Unhead<Input extends {} = Head> {
   /**
    * @internal
    */
+  _domDebouncedUpdatePromise?: Promise<void>
+  /**
+   * @internal
+   */
   dirty: boolean
   /**
    * @internal
