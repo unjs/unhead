@@ -84,4 +84,22 @@ describe('titleTemplate', () => {
       `""`,
     )
   })
+  it('function titleTemplate with templateParams', async () => {
+    const head = createHead()
+    head.push({
+      titleTemplate: () => '%s %separator %subPage% %separator %site.name',
+      title: 'test %foo',
+      templateParams: {
+        site: {
+          name: 'test',
+        },
+        subPage: 'subPage',
+        foo: 'foo',
+      },
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(
+      `"<title>test foo | subPage% | test</title>"`,
+    )
+  })
 })

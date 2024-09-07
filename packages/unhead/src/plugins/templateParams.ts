@@ -1,5 +1,5 @@
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
-import type { TemplateParams } from '@unhead/schema'
+import type {HeadTag, TemplateParams} from '@unhead/schema'
 
 const SupportedAttrs = {
   meta: 'content',
@@ -59,6 +59,21 @@ export default defineHeadPlugin(head => ({
       // resolved template params
       head._templateParams = params
       head._separator = sep
+    },
+    'tags:afterResolve': ({ tags }) => {
+      // we need to re-process in case then user had a function as the titleTemplate
+      // TODO drop support for function in v2
+      let title: HeadTag | undefined
+      for (let i = 0; i < tags.length; i += 1) {
+        const tag = tags[i]
+
+        if (tag.tag === 'title' && tag.processTemplateParams !== false) {
+          title = tag
+        }
+      }
+      if (title?.textContent) {
+        title.textContent = processTemplateParams(title.textContent, head._templateParams!, head._separator!)
+      }
     },
   },
 }))
