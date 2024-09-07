@@ -1,3 +1,4 @@
+import { defu } from 'defu'
 import { getCurrentInstance } from 'vue'
 import type { Plugin } from 'vue'
 import { useHead } from '../composables/useHead'
@@ -6,6 +7,16 @@ import { Vue3 } from '../env'
 import type { UseHeadInput } from '../types'
 
 export const UnheadPlugin: Plugin = (_Vue) => {
+  _Vue.config.optionMergeStrategies.head = function (toVal, fromVal) {
+    // resolve both from functions
+    if (typeof toVal === 'function') {
+      toVal = toVal()
+    }
+    if (typeof fromVal === 'function') {
+      fromVal = fromVal()
+    }
+    return defu(toVal as any, fromVal as any) as unknown
+  }
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
     created() {

@@ -72,6 +72,7 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
+    "defu": "^6.1.4",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
   }
