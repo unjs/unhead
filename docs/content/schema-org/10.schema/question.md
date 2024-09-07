@@ -28,7 +28,7 @@
 ```ts
 defineQuestion({
   name: 'What is the meaning of life?',
-  answer: '42',
+  acceptedAnswer: '42',
 })
 ```
 
