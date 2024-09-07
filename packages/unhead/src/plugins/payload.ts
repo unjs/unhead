@@ -3,7 +3,7 @@ import { defineHeadPlugin } from '@unhead/shared'
 export default defineHeadPlugin({
   mode: 'server',
   hooks: {
-    'tags:resolve': (ctx) => {
+    'tags:beforeResolve': (ctx) => {
       const payload: { titleTemplate?: string | ((s: string) => string), templateParams?: Record<string, string>, title?: string } = {}
 
       let hasPayload = false
