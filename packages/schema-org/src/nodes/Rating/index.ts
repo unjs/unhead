@@ -1,5 +1,5 @@
-import type { Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
+import type { Thing } from '../../types'
 
 export interface RatingSimple extends Thing {
   '@type'?: 'Rating'

@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useHeadSafe } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHeadSafe } from 'unhead'
+import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
 
 describe('dom useHeadSafe', () => {

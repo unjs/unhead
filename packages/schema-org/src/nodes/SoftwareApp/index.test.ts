@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
-import { injectSchemaOrg, useSetup } from '../../../.test'
 import { defineSoftwareApp, useSchemaOrg } from '../../'
+import { injectSchemaOrg, useSetup } from '../../../.test'
 
 describe('defineSoftwareApp', () => {
   it('can be defined', async () => {

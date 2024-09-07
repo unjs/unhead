@@ -1,11 +1,11 @@
-import type { NodeRelations, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
   setIfEmpty,
 } from '../../utils'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { Offer } from '../Offer'
 import { offerResolver } from '../Offer'
+import type { NodeRelations, Thing } from '../../types'
+import type { Offer } from '../Offer'
 
 export interface AggregateOfferSimple extends Thing {
   /**

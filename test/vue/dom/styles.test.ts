@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
-import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
-import { computed, ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
+import { describe, it } from 'vitest'
+import { computed, ref } from 'vue'
 import { useDom } from '../../fixtures'
 
 describe('vue dom styles', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { defineArticle, defineOrganization, defineWebPage, useSchemaOrg } from '../..'
 import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
 import type { Article } from '../..'
-import { defineArticle, defineOrganization, defineWebPage, useSchemaOrg } from '../..'
 
 const mockDate = new Date(Date.UTC(2021, 10, 10, 10, 10, 10, 0))
 

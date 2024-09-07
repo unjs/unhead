@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
-import { injectSchemaOrg, useSetup } from '../../../.test'
 import { defineHowTo, useSchemaOrg } from '../../'
+import { injectSchemaOrg, useSetup } from '../../../.test'
 
 describe('defineHowTo', () => {
   it('can be registered', async () => {

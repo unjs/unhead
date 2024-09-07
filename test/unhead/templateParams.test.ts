@@ -1,5 +1,5 @@
-import { describe, it } from 'vitest'
 import { processTemplateParams } from '@unhead/shared'
+import { describe, it } from 'vitest'
 
 describe('templateParams', () => {
   it('uri encoding', async () => {

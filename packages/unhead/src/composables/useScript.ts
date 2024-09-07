@@ -1,4 +1,4 @@
-import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
+import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 import type {
   AsAsyncFunctionValues,
   Head,

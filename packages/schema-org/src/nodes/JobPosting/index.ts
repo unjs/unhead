@@ -1,15 +1,15 @@
-import type { Person } from '../Person'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
-import type { NodeRelation, ResolvableDate, Thing } from '../../types'
-import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { Organization } from '../Organization'
-import type { Place } from '../Place'
+import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
+import { monetaryAmountResolver } from '../MonetaryAmount'
 import { organizationResolver } from '../Organization'
 import { placeResolver } from '../Place'
+import { PrimaryWebPageId } from '../WebPage'
+import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { MonetaryAmount } from '../MonetaryAmount'
-import { monetaryAmountResolver } from '../MonetaryAmount'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { Place } from '../Place'
+import type { WebPage } from '../WebPage'
 
 /**
  * A listing that describes a job opening in a certain organization.

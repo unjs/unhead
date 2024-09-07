@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, setHeadInjectionHandler } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
+import { createHead, setHeadInjectionHandler } from '@unhead/vue'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
 
 describe('vue dom innerContent', () => {

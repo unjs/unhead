@@ -1,7 +1,7 @@
 import { getCurrentInstance } from 'vue'
 import type { Plugin } from 'vue'
-import { headSymbol } from '../createHead'
 import { useHead } from '../composables/useHead'
+import { headSymbol } from '../createHead'
 import { Vue3 } from '../env'
 import type { UseHeadInput } from '../types'
 

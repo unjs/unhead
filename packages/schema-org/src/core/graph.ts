@@ -1,8 +1,8 @@
-import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
-import { asArray, resolveAsGraphKey } from '../utils'
 import { imageResolver } from '../nodes'
+import { asArray, resolveAsGraphKey } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 import { dedupeNodes, normaliseNodes } from './util'
+import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
 
 export interface SchemaOrgGraph {
   nodes: SchemaOrgNode[]

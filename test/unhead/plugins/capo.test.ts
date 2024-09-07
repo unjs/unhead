@@ -1,5 +1,5 @@
-import { describe, it } from 'vitest'
 import { CapoPlugin, createHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('capo', () => {
   it('basic', async () => {

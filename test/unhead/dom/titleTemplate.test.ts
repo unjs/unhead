@@ -1,6 +1,6 @@
-import { createHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 import { useDom } from '../../fixtures'
 
 describe('titleTemplate', () => {

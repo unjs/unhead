@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useScript } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useScript } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('ssr useScript', () => {
   it('default', async () => {

@@ -1,8 +1,8 @@
-import { createHead, useHead } from '@unhead/vue'
-import { createSSRApp, ref } from 'vue'
-import { renderToString } from '@vue/server-renderer'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from '@unhead/vue'
+import { renderToString } from '@vue/server-renderer'
 import { describe, it } from 'vitest'
+import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr asyncSetup', () => {
   it('basic', async () => {

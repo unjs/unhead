@@ -1,7 +1,7 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { HeadTag, ProcessesTemplateParams, TagPosition, TagPriority, TemplateParams } from './tags'
 import type { Head } from './schema'
+import type { HeadTag, ProcessesTemplateParams, TagPosition, TagPriority, TemplateParams } from './tags'
 
 /**
  * Side effects are mapped with a key and their cleanup function.

@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
 import { useHeadSafe } from 'unhead'
+import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
-import { useDOMHead, useDelayedSerializedDom } from './util'
+import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('dom useHeadSafe', () => {
   it('basic', async () => {

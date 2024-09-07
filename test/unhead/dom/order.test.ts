@@ -1,7 +1,7 @@
+import { renderDOMHead } from '@unhead/dom'
+import { createHead, getActiveHead, useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import type { HeadTag } from '@unhead/schema'
-import { createHead, getActiveHead, useHead } from 'unhead'
-import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../../fixtures'
 
 describe('dom order', () => {

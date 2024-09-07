@@ -1,8 +1,8 @@
-import type { MergeHead } from '@unhead/schema'
-import { inject } from 'vue'
 import { getActiveHead } from 'unhead'
-import type { VueHeadClient } from '../types'
+import { inject } from 'vue'
+import type { MergeHead } from '@unhead/schema'
 import { headSymbol } from '../createHead'
+import type { VueHeadClient } from '../types'
 
 const _global
   = typeof globalThis !== 'undefined'

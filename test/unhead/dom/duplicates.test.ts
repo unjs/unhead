@@ -1,5 +1,5 @@
-import { describe, it } from 'vitest'
 import { renderDOMHead } from '@unhead/dom'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
 import { useDOMHead } from './util'
 

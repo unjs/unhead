@@ -1,10 +1,10 @@
-import type { Plugin } from 'vue'
-import { nextTick } from 'vue'
 import { createHead as _createHead, createServerHead as _createServerHead } from 'unhead'
+import { nextTick } from 'vue'
 import type { CreateHeadOptions, MergeHead } from '@unhead/schema'
-import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from './types'
+import type { Plugin } from 'vue'
 import { Vue3 } from './env'
 import VueReactivityPlugin from './plugins/VueReactivityPlugin'
+import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from './types'
 
 export const headSymbol = 'usehead'
 

@@ -1,6 +1,6 @@
 import { createHead } from 'unhead'
-import type { MetaInput } from '../src'
 import { SchemaOrgUnheadPlugin } from '../src'
+import type { MetaInput } from '../src'
 import type { SchemaOrgNode } from '../src/types'
 
 let head

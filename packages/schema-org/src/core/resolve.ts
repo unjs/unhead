@@ -1,5 +1,7 @@
-import { hasTrailingSlash, joinURL, withTrailingSlash, withoutTrailingSlash } from 'ufo'
 import { hashCode } from '@unhead/shared'
+import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
+import { loadResolver } from '../resolver'
+import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
 import type {
   Arrayable,
   MetaInput,
@@ -8,8 +10,6 @@ import type {
   Thing,
 } from '../types'
 import type { ResolverOptions } from '../utils'
-import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
-import { loadResolver } from '../resolver'
 import type { SchemaOrgGraph } from './graph'
 
 export function resolveMeta(meta: Partial<MetaInput>) {

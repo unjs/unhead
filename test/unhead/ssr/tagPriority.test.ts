@@ -1,5 +1,5 @@
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 
 describe('tag priority', () => {
   it('basic int', async () => {

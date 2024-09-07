@@ -1,4 +1,5 @@
 import type {
+  Meta as _Meta,
   BodyAttr,
   DataKeys,
   Head,
@@ -6,7 +7,6 @@ import type {
   Link,
   Noscript,
   Script,
-  Meta as _Meta,
 } from './schema'
 
 export type SafeBodyAttr = Pick<BodyAttr, 'id' | 'class'> & DataKeys

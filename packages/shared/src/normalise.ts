@@ -1,6 +1,6 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
-import { type Thenable, thenable } from './thenable'
 import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from '.'
+import { type Thenable, thenable } from './thenable'
 
 export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): Thenable<T | T[]> {
   const props = normalizedProps || normaliseProps<T>(

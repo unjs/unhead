@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { parse } from 'acorn-loose'
+import { describe, expect, it } from 'vitest'
 
 import { TreeshakeServerComposables } from '../../packages/addons/src/unplugin/TreeshakeServerComposables'
 

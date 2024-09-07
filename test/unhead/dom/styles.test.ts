@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
 import { useHead } from 'unhead'
-import { activeDom, useDOMHead, useDelayedSerializedDom } from './util'
+import { describe, it } from 'vitest'
+import { activeDom, useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('styles', () => {
   it('basic', async () => {

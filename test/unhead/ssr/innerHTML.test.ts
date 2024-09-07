@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('ssr innerHTML', () => {
   it('json', async () => {

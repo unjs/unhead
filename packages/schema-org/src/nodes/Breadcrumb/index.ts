@@ -1,12 +1,12 @@
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
   setIfEmpty,
 } from '../../utils'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
 import { listItemResolver } from '../ListItem'
+import { PrimaryWebPageId } from '../WebPage'
 import type { ItemList } from '../ItemList'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import type { WebPage } from '../WebPage'
 
 /**
  * A BreadcrumbList is an ItemList consisting of a chain of linked Web pages,

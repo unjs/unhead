@@ -1,13 +1,13 @@
-import type { Arrayable, Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
   resolvableDateToIso,
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { imageResolver } from '../Image'
+import type { Arrayable, Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { ImageObject } from '../Image'
 
 export interface VideoSimple extends Thing {
   /**

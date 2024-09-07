@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
 import { defineWebPage, useSchemaOrg } from '@unhead/schema-org'
+import { createHead, useHead } from 'unhead'
+import { describe, expect, it } from 'vitest'
 
 describe('schema.org ssr ids', () => {
   it('adds host prefix to custom id without host', async () => {

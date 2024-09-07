@@ -1,5 +1,5 @@
 import { getActiveHead, useHead } from 'unhead'
-import type { Arrayable, Thing } from './types'
+import { UnheadSchemaOrg } from './plugin'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -37,7 +37,7 @@ import type {
   WebPage,
   WebSite,
 } from './nodes'
-import { UnheadSchemaOrg } from './plugin'
+import type { Arrayable, Thing } from './types'
 
 function provideResolver<T>(input?: T, resolver?: string) {
   if (!input)

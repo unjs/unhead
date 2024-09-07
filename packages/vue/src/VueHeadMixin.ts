@@ -1,6 +1,6 @@
 import { getCurrentInstance } from 'vue'
-import { Vue3 } from './env'
 import { useHead } from '.'
+import { Vue3 } from './env'
 
 export const VueHeadMixin = {
   created() {

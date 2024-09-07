@@ -1,12 +1,12 @@
-import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { Offer } from '../Offer'
-import { offerResolver } from '../Offer'
-import type { AggregateRating } from '../AggregateRating'
-import { aggregateRatingResolver } from '../AggregateRating'
-import type { Review } from '../Review'
-import { reviewResolver } from '../Review'
 import { resolveDefaultType } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
+import { offerResolver } from '../Offer'
+import { reviewResolver } from '../Review'
+import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
+import type { AggregateRating } from '../AggregateRating'
+import type { Offer } from '../Offer'
+import type { Review } from '../Review'
 
 type ApplicationCategory =
   'GameApplication' |

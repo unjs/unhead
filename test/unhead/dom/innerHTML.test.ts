@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
 import { useHead } from 'unhead'
+import { describe, it } from 'vitest'
 import type { SpeculationRules } from '@unhead/schema'
-import { useDOMHead, useDelayedSerializedDom } from './util'
+import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('dom innerHTML', () => {
   it('json', async () => {

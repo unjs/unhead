@@ -1,8 +1,8 @@
+import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, setHeadInjectionHandler, useHead, useServerHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { createHead, setHeadInjectionHandler, useHead, useServerHead } from '@unhead/vue'
-import { renderSSRHead } from '@unhead/ssr'
-import { renderDOMHead } from '@unhead/dom'
 import { useDom } from '../fixtures'
 
 describe('vue e2e', () => {

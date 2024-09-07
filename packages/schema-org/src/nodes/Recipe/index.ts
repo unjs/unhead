@@ -1,3 +1,11 @@
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import {
+  idReference,
+  setIfEmpty,
+} from '../../utils'
+import { PrimaryArticleId } from '../Article'
+import { howToStepResolver } from '../HowTo'
+import { PrimaryWebPageId } from '../WebPage'
 import type {
   IdReference,
   NodeRelation,
@@ -5,20 +13,12 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
-import {
-  idReference,
-  setIfEmpty,
-} from '../../utils'
 import type { Article } from '../Article'
-import { PrimaryArticleId } from '../Article'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
-import type { VideoObject } from '../Video'
 import type { HowToStep } from '../HowTo'
-import { howToStepResolver } from '../HowTo'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
+import type { VideoObject } from '../Video'
+import type { WebPage } from '../WebPage'
 
 export interface RecipeSimple extends Thing {
   /**

@@ -1,5 +1,5 @@
-import { resolveWithBase } from '../../../utils'
 import { defineSchemaOrgResolver } from '../../../core'
+import { resolveWithBase } from '../../../utils'
 
 type SearchTarget = string | `${string}{search_term_string}${string | undefined}`
 

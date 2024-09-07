@@ -1,6 +1,6 @@
 import type { SafeBodyAttr, SafeHtmlAttr, SafeLink, SafeMeta, SafeNoscript, SafeScript } from '@unhead/schema'
-import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
 import type { ReactiveHead } from './schema'
+import type { MaybeComputedRef, MaybeComputedRefEntries } from './util'
 
 export interface HeadSafe extends Pick<ReactiveHead, 'title' | 'titleTemplate' | 'templateParams'> {
   meta?: MaybeComputedRefEntries<SafeMeta>[]

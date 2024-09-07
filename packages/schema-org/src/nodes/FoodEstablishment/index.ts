@@ -1,13 +1,13 @@
+import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
   resolveDefaultType,
 } from '../../utils'
+import { localBusinessResolver } from '../LocalBusiness'
+import { ratingResolver } from '../Rating'
+import type { NodeRelations } from '../../types'
 import type { LocalBusiness } from '../LocalBusiness'
 import type { Rating } from '../Rating'
-import type { NodeRelations } from '../../types'
-import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
-import { ratingResolver } from '../Rating'
-import { localBusinessResolver } from '../LocalBusiness'
 
 type ValidFoodEstablishmentSubTypes = 'Bakery' |
   'BarOrPub' |

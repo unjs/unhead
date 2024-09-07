@@ -1,8 +1,8 @@
 import { withBase } from 'ufo'
-import type { OptionalSchemaOrgPrefix, Thing } from '../../types'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { MonetaryAmount } from '../MonetaryAmount'
 import { monetaryAmountResolver } from '../MonetaryAmount'
+import type { OptionalSchemaOrgPrefix, Thing } from '../../types'
+import type { MonetaryAmount } from '../MonetaryAmount'
 
 type MerchantReturnEnumeration =
   'MerchantReturnFiniteReturnWindow'

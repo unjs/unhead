@@ -1,7 +1,7 @@
 import { renderSSRHead } from '@unhead/ssr'
 
-import { describe, it } from 'vitest'
 import { createHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('ssr templateParams', () => {
   it('basic', async () => {

@@ -1,5 +1,5 @@
-import { describe, it } from 'vitest'
 import { createHead } from '@unhead/vue'
+import { describe, it } from 'vitest'
 
 describe('vue promises', () => {
   it('basic', async () => {

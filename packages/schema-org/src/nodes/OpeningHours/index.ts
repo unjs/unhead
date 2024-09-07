@@ -1,5 +1,5 @@
-import type { Arrayable, ResolvableDate, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
+import type { Arrayable, ResolvableDate, Thing } from '../../types'
 
 type DayOfWeek = 'Friday' |
   'Monday' |

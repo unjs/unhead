@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
 import { useHead } from 'unhead'
-import { useDOMHead, useDelayedSerializedDom } from './util'
+import { describe, it } from 'vitest'
+import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('dom event handlers', () => {
   it('basic', async () => {

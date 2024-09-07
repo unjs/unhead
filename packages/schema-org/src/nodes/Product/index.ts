@@ -1,24 +1,24 @@
 import { hash } from 'ohash'
-import type { NodeRelation, NodeRelations, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
   setIfEmpty,
 } from '../../utils'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
-import type { Person } from '../Person'
-import type { Organization } from '../Organization'
-import type { Review } from '../Review'
-import { reviewResolver } from '../Review'
-import type { AggregateRating } from '../AggregateRating'
-import { aggregateRatingResolver } from '../AggregateRating'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { AggregateOffer } from '../AggregateOffer'
 import { aggregateOfferResolver } from '../AggregateOffer'
-import type { Offer } from '../Offer'
+import { aggregateRatingResolver } from '../AggregateRating'
 import { offerResolver } from '../Offer'
+import { reviewResolver } from '../Review'
+import { PrimaryWebPageId } from '../WebPage'
+import type { NodeRelation, NodeRelations, Thing } from '../../types'
+import type { AggregateOffer } from '../AggregateOffer'
+import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
+import type { Offer } from '../Offer'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { Review } from '../Review'
+import type { WebPage } from '../WebPage'
 
 /**
  * Any offered product or service.

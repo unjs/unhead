@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
+import { describe, expect, it } from 'vitest'
 
 describe('normalise', () => {
   it('handles booleans nicely', async () => {

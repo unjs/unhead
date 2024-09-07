@@ -1,4 +1,4 @@
-import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from 'zhead'
+import type { Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style, BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable } from 'zhead'
 import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
 import type { FalsyEntries, Never } from './util'
 
@@ -149,4 +149,4 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
 
-export type { ScriptBase, MetaFlatInput, BodyEvents, MergeHead, DataKeys, DefinedValueOrEmptyObject, SpeculationRules } from 'zhead'
+export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'

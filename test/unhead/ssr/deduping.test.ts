@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('dedupe', () => {
   it('arrays', async () => {

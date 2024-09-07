@@ -1,5 +1,5 @@
-import { describe } from 'vitest'
 import { useHead } from '@unhead/vue'
+import { describe } from 'vitest'
 import { ssrRenderHeadToString } from '../util'
 
 describe('vue ssr innerContent', () => {

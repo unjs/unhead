@@ -1,4 +1,4 @@
-import type { RenderSSRHeadOptions, SSRHeadPayload, SSRRenderContext, ShouldRenderContext, Unhead } from '@unhead/schema'
+import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
 import { ssrRenderTags } from './util'
 
 export async function renderSSRHead<T extends {}>(head: Unhead<T>, options?: RenderSSRHeadOptions) {

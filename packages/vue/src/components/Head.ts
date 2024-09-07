@@ -1,8 +1,8 @@
-import type { DefineComponent, Ref, VNode } from 'vue'
 import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
-import type { ReactiveHead } from '../types'
+import type { DefineComponent, Ref, VNode } from 'vue'
 import { injectHead } from '../composables/injectHead'
 import { Vue3 } from '../env'
+import type { ReactiveHead } from '../types'
 
 function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
   // @ts-expect-error vue2 vnode API

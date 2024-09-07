@@ -1,14 +1,14 @@
-import type { NodeRelations, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
   setIfEmpty,
 } from '../../utils'
 import { PrimaryWebPageId } from '../WebPage'
-import type { VideoObject } from '../Video'
-import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { HowToStep } from './HowToStep'
 import { howToStepResolver } from './HowToStep'
+import type { NodeRelations, Thing } from '../../types'
+import type { ImageObject } from '../Image'
+import type { VideoObject } from '../Video'
+import type { HowToStep } from './HowToStep'
 
 /**
  * Instructions that explain how to achieve a result by performing a sequence of steps.

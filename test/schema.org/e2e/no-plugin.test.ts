@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
 import { defineOrganization, defineQuestion, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from 'unhead'
+import { describe, expect, it } from 'vitest'
 import { useDom } from '../../fixtures'
 
 describe('schema.org e2e no plugin', () => {

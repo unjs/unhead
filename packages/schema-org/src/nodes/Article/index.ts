@@ -1,14 +1,7 @@
-import type {
-  Arrayable,
-  IdReference,
-  Identity,
-  NodeRelations,
-  ResolvableDate,
-  Thing,
-} from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
-  IdentityId,
   asArray,
+  IdentityId,
   idReference,
   resolvableDateToIso,
   resolveDefaultType,
@@ -16,12 +9,19 @@ import {
   setIfEmpty,
   trimLength,
 } from '../../utils'
-import type { WebPage } from '../WebPage'
+import { personResolver } from '../Person'
 import { PrimaryWebPageId } from '../WebPage'
+import type {
+  Arrayable,
+  Identity,
+  IdReference,
+  NodeRelations,
+  ResolvableDate,
+  Thing,
+} from '../../types'
 import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
-import { personResolver } from '../Person'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import type { WebPage } from '../WebPage'
 
 type ValidArticleSubTypes = 'Article' | 'BlogPosting' | 'AdvertiserContentArticle' | 'NewsArticle' | 'Report' | 'SatiricalArticle' | 'ScholarlyArticle' | 'SocialMediaPosting' | 'TechArticle'
 

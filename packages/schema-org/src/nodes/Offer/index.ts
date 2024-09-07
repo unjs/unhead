@@ -1,15 +1,15 @@
 import { withBase } from 'ufo'
-import type { OpeningHoursSpecification } from '../OpeningHours'
-import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
-import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   resolvableDateToIso,
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { OfferShippingDetails } from '../OfferShippingDetails'
+import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { offerShippingDetailsResolver } from '../OfferShippingDetails'
+import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import type { OfferShippingDetails } from '../OfferShippingDetails'
+import type { OpeningHoursSpecification } from '../OpeningHours'
 
 type ItemAvailability =
   'BackOrder' |

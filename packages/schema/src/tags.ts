@@ -1,5 +1,5 @@
-import type { Head } from './schema'
 import type { RuntimeMode } from './head'
+import type { Head } from './schema'
 import type { FalsyEntries } from './util'
 
 export interface ResolvesDuplicates {

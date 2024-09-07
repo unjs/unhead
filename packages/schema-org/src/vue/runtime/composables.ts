@@ -1,5 +1,6 @@
-import type { MaybeComputedRefOrFalsy } from '@unhead/vue'
 import { injectHead, useHead } from '@unhead/vue'
+import type { MaybeComputedRefOrFalsy } from '@unhead/vue'
+import { UnheadSchemaOrg } from '../../plugin'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -39,7 +40,6 @@ import type {
   WebSite,
 } from '../../'
 import type { Arrayable } from '../../types'
-import { UnheadSchemaOrg } from '../../plugin'
 
 export type DeepMaybeRef<T> = {
   [key in keyof T]?: MaybeComputedRefOrFalsy<T[key]>

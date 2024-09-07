@@ -1,7 +1,7 @@
-import { bench, describe } from 'vitest'
-import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
-import { ref } from 'vue'
 import { renderDOMHead } from '@unhead/dom'
+import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
+import { bench, describe } from 'vitest'
+import { ref } from 'vue'
 import { useDom } from '../fixtures'
 
 describe('dom-useHead', () => {

@@ -22,7 +22,7 @@
     "pinia": "^2.2.2",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^0.18.2",
-    "vite": "^5.4.2",
+    "vite": "^5.4.3",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
@@ -31,6 +31,6 @@
     "compression": "^1.7.4",
     "express": "^4.19.2",
     "serve-static": "^1.15.0",
-    "vue": "^3.4.38"
+    "vue": "^3.5.3"
   }
 }

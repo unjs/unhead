@@ -1,6 +1,6 @@
 import type { HeadEntryOptions, MergeHead } from '@unhead/schema'
-import type { UseHeadInput, UseHeadOptions } from '../types'
 import { injectHead } from './injectHead'
+import type { UseHeadInput, UseHeadOptions } from '../types'
 
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}) {
   // ensure server mode

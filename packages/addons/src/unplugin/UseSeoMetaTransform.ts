@@ -1,19 +1,19 @@
 import { pathToFileURL } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
-import { createUnplugin } from 'unplugin'
 import {
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
 } from '@unhead/shared'
-import { parseQuery, parseURL } from 'ufo'
-import type { ImportDeclaration, ObjectProperty } from '@babel/types'
-import MagicString from 'magic-string'
-import type { SourceMapInput } from 'rollup'
-import type { Node } from 'estree-walker'
 import { walk } from 'estree-walker'
-import type { SimpleCallExpression } from 'estree'
+import MagicString from 'magic-string'
 import { findStaticImports, parseStaticImport } from 'mlly'
+import { parseQuery, parseURL } from 'ufo'
+import { createUnplugin } from 'unplugin'
+import type { ImportDeclaration, ObjectProperty } from '@babel/types'
+import type { SimpleCallExpression } from 'estree'
+import type { Node } from 'estree-walker'
+import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
 
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {

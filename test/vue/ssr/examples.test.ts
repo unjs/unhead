@@ -1,7 +1,7 @@
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, setHeadInjectionHandler, useHead, useSeoMeta } from '@unhead/vue'
 import { it } from 'vitest'
 import { ref } from 'vue'
-import { createHead, setHeadInjectionHandler, useHead, useSeoMeta } from '@unhead/vue'
-import { renderSSRHead } from '@unhead/ssr'
 import { basicSchema } from '../../fixtures'
 import { ssrRenderHeadToString } from '../util'
 

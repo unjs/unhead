@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { defineWebSite, useSchemaOrg } from '@unhead/schema-org'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from 'unhead'
+import { describe, expect, it } from 'vitest'
 
 describe('schema.org i18n', () => {
   it('basic websites', async () => {
