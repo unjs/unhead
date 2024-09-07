@@ -91,7 +91,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       return {
         dispose() {
           entries = entries.filter(e => e._i !== entry._i)
-          hooks.callHook('entries:updated', head)
           updated()
         },
         // a patch is the same as creating a new entry, just a nice DX
