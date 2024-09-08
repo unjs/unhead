@@ -23,6 +23,7 @@ const merge = createDefu((object, key, value) => {
   if (Array.isArray(object[key])) {
     if (Array.isArray(value)) {
       // unique set
+      // @ts-expect-error untyped
       object[key] = [...new Set([...object[key], ...value])]
       if (key === 'itemListElement') {
         // @ts-expect-error untyped
