@@ -1,4 +1,4 @@
-import { defineWebPage, useSchemaOrg } from '@unhead/schema-org'
+import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 import { createHead, useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
 
@@ -68,5 +68,81 @@ describe('schema.org ssr ids', () => {
     const tags = await ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot(`"https://example.com/fr#website"`)
+  })
+
+  it('full relative paths relations', async () => {
+    const ssrHead = createHead()
+
+    useHead({
+      templateParams: {
+        schemaOrg: {
+          host: 'https://example.com',
+        },
+      },
+    })
+
+    useSchemaOrg([
+      defineWebSite({
+        '@id': '/en#website',
+        'name': 'foo',
+        'workTranslation': [
+          { '@type': 'WebSite', '@id': '/es#website' },
+          { '@type': 'WebSite', '@id': '/fr#website' },
+        ],
+      }),
+      defineWebPage(),
+    ])
+
+    useSchemaOrg([
+      defineWebPage({
+        name: 'merge?',
+      }),
+    ])
+
+    useSchemaOrg([
+      defineWebPage({
+        potentialAction: {
+          '@type': 'ViewAction',
+          'target': ['https://example.com'],
+        },
+      }),
+    ], {
+      tagDuplicateStrategy: 'replace',
+    })
+
+    const tags = await ssrHead.resolveTags()
+    const graph = JSON.parse(tags[0]?.innerHTML!)?.['@graph']
+    expect(graph).toMatchInlineSnapshot(`
+      [
+        {
+          "@id": "https://example.com/en#website",
+          "@type": "WebSite",
+          "name": "foo",
+          "url": "https://example.com",
+          "workTranslation": [
+            {
+              "@id": "https://example.com/es#website",
+            },
+            {
+              "@id": "https://example.com/fr#website",
+            },
+          ],
+        },
+        {
+          "@id": "https://example.com/#webpage",
+          "@type": "WebPage",
+          "isPartOf": {
+            "@id": "https://example.com/en#website",
+          },
+          "potentialAction": {
+            "@type": "ViewAction",
+            "target": [
+              "https://example.com",
+            ],
+          },
+          "url": "https://example.com",
+        },
+      ]
+    `)
   })
 })

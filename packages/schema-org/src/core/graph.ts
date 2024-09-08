@@ -20,10 +20,23 @@ const baseRelationNodes = [
 export function createSchemaOrgGraph(): SchemaOrgGraph {
   const ctx: SchemaOrgGraph = {
     find<T extends Thing>(id: Id | string) {
-      const key = resolveAsGraphKey(id) as Id
+      // if it starts with # we can assume we match any fragment
+      // if it starts with / then we need to also match the path
+      // if it starts with http we need to match the full url
+      let resolver = (s: string) => s
+      if (id[0] === '#') {
+        // @ts-expect-error untyped
+        resolver = resolveAsGraphKey
+      }
+      else if (id[0] === '/') {
+        resolver = (s: string) => s
+          .replace(/(https?:)?\/\//, '')
+          .split('/')[0]
+      }
+      const key = resolver(id) as Id
       return ctx.nodes
         .filter(n => !!n['@id'])
-        .find(n => resolveAsGraphKey(n['@id'] as Id) === key) as unknown as T | null
+        .find(n => resolver(n['@id'] as Id) === key) as unknown as T | null
     },
     push(input: Arrayable<Thing>) {
       asArray(input).forEach((node) => {
