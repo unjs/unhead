@@ -44,6 +44,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
             const newNode = {
               ...node,
+              _dedupeStrategy: tag.tagDuplicateStrategy,
               _resolver: loadResolver(await node._resolver),
             }
             graph.push(newNode)

@@ -112,6 +112,7 @@ export interface Thing {
 
 export interface SchemaOrgNode extends Thing {
   _resolver?: SchemaOrgNodeDefinition<any>
+  _dedupeStrategy?: 'replace' | 'merge'
 }
 
 export type WithResolver<T> = T & {

@@ -41,7 +41,7 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
   for (const key of nodes.keys()) {
     const n = nodes[key]
     const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
-    if (dedupedNodes[nodeKey])
+    if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace')
       dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
     else
       dedupedNodes[nodeKey] = nodes[key]

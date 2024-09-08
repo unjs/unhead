@@ -1,4 +1,4 @@
-import {defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight} from '@unhead/shared'
+import { defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight } from '@unhead/shared'
 import type { HeadTag } from '@unhead/schema'
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
