@@ -35,7 +35,7 @@
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
     "vitest": "^2.0.5",
-    "vue": "3.4.38"
+    "vue": "^3.5.3"
   },
   "resolutions": {
     "@nuxt/vite-builder": "3.13.0",
@@ -51,6 +51,6 @@
     "shiki": "1.15.1",
     "unhead": "workspace:*",
     "vite": "5.4.2",
-    "vue": "3.4.38"
+    "vue": "^3.5.3"
   }
 }

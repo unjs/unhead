@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@vueuse/nuxt',
     '@nuxt/content',
+    '@nuxt/fonts',
     'nuxt-lodash',
     'nuxt-og-image',
     'nuxt-icon',
@@ -55,7 +56,6 @@ export default defineNuxtConfig({
 
   ui: {
     global: true,
-    icons: ['heroicons', 'simple-icons', 'ph', 'noto'],
   },
 
   sitemap: {
@@ -69,33 +69,21 @@ export default defineNuxtConfig({
   },
 
   app: {
-    seoMeta: {
-      googleSiteVerification: 'SnwVo-uFg39U69WHDoKma6bdT7hoh7sNYrviT8QuJww',
-      themeColor: [
-        { content: '#18181b', media: '(prefers-color-scheme: dark)' },
-        { content: 'white', media: '(prefers-color-scheme: light)' },
-      ],
-    },
     head: {
       link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: 'anonymous' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600&display=swap' },
         { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
       ],
 
       bodyAttrs: {
         class: 'antialiased font-sans text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900',
       },
-
-      script: [
-        {
-          'src': 'https://cdn.usefathom.com/script.js',
-          'data-spa': 'auto',
-          'data-site': 'BRDEJWKJ',
-          'defer': true,
-        },
-      ],
+      seoMeta: {
+        googleSiteVerification: 'SnwVo-uFg39U69WHDoKma6bdT7hoh7sNYrviT8QuJww',
+        themeColor: [
+          { content: '#18181b', media: '(prefers-color-scheme: dark)' },
+          { content: 'white', media: '(prefers-color-scheme: light)' },
+        ],
+      },
     },
   },
 
@@ -119,10 +107,6 @@ export default defineNuxtConfig({
     // asyncContext: true,
     headNext: true,
     externalVue: false,
-  },
-
-  build: {
-    transpile: ['shiki'],
   },
 
   generate: {
