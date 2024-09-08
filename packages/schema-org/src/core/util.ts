@@ -21,12 +21,16 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
 const merge = createDefu((object, key, value) => {
   // dedupe merge arrays
   if (Array.isArray(object[key])) {
-    // @ts-expect-error untyped
-    object[key] = [...new Set([...object[key], ...value])]
-    if (key === 'itemListElement') {
-      // @ts-expect-error untyped
-      object[key] = [...uniqueBy(object[key], item => item.position)]
+    if (Array.isArray(value)) {
+      // unique set
+      object[key] = [...new Set([...object[key], ...value])]
+      if (key === 'itemListElement') {
+        // @ts-expect-error untyped
+        object[key] = [...uniqueBy(object[key], item => item.position)]
+      }
+      return true
     }
+    object[key] = merge(object[key], Array.isArray(value) ? value : [value])
     return true
   }
 })
