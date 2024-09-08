@@ -37,7 +37,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         graph = createSchemaOrgGraph()
       },
       'tag:normalise': async ({ tag }) => {
-        if (tag.key === 'schema-org-graph' || tag.props.id === 'schema-org-graph') {
+        if (tag.props.type === 'application/ld+json' && tag.props.nodes) {
           // this is a bit expensive, load in seperate chunk
           const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
