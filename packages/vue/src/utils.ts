@@ -33,7 +33,7 @@ export function resolveUnrefHeadInput(ref: any): any {
       resolved[k] = resolveUnrefHeadInput(root[k])
     }
 
-    return Object.keys(resolved) ? resolved : root
+    return resolved
   }
 
   return root

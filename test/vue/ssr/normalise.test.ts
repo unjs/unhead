@@ -1,11 +1,15 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
+import { createHead } from '@unhead/vue'
 import { describe, expect, it } from 'vitest'
 
 describe('normalise', () => {
   it('handles booleans nicely', async () => {
     const head = createHead()
 
+    const fn = () => {}
+    fn.toString = () => {
+      return 'stringified function'
+    }
     head.push({
       link: [
         {
@@ -25,20 +29,28 @@ describe('normalise', () => {
           'string': 'string',
           'symbol': Symbol('a'),
           'regex': /a/,
+          'function': fn,
           undefined,
         },
       ],
     })
 
     const ctx = await renderSSRHead(head)
-    expect(ctx).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<link array="a,1" big-int="1" big="100" binary="10" boolean-true data-foo="true" hex="61453" number="1337" object="[object Object]" octal="484" string-empty string="string" symbol="Symbol(a)" regex="/a/">",
-        "htmlAttrs": "",
-      }
+    expect(ctx.headTags.split('" ')).toMatchInlineSnapshot(`
+      [
+        "<link array="a,1",
+        "big-int="1",
+        "big="100",
+        "binary="10",
+        "boolean-true data-foo="true",
+        "hex="61453",
+        "number="1337",
+        "object="[object Object]",
+        "octal="484",
+        "string-empty string="string",
+        "symbol="Symbol(a)",
+        "regex="/a/">",
+      ]
     `)
   })
 })
