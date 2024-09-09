@@ -107,7 +107,7 @@ describe('vue ssr examples', () => {
     }))
 
     expect(headResult.htmlAttrs).toMatchInlineSnapshot(
-      `" data-something"`,
+      `" data-something="true""`,
     )
   })
 
