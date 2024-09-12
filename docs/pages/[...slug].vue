@@ -93,7 +93,7 @@ const ecosystemLinks = [
           </UPageBody>
 
           <template #right>
-            <UContentSurround :links="page.body?.toc?.links || []">
+            <UContentToc :links="page.body?.toc?.links || []">
               <template #bottom>
                 <div class="hidden !mt-6 lg:block space-y-6">
                   <UDivider dashed />
@@ -104,7 +104,7 @@ const ecosystemLinks = [
                   <UPageLinks title="Ecosystem" :links="ecosystemLinks" />
                 </div>
               </template>
-            </UContentSurround>
+            </UContentToc>
           </template>
         </UPage>
       </div>
