@@ -36,6 +36,13 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "vue": [
+        "dist/vue"
+      ]
+    }
+  },
   "files": [
     "dist"
   ],
