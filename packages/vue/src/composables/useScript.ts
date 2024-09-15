@@ -1,14 +1,15 @@
 import { useScript as _useScript } from 'unhead'
-import { getCurrentInstance, onMounted, onScopeDispose, ref } from 'vue'
+import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import type {
   AsAsyncFunctionValues,
   UseScriptInput as BaseUseScriptInput,
+  UseScriptOptions as BaseUseScriptOptions,
   DataKeys,
+  HeadEntryOptions,
   SchemaAugmentations,
   ScriptBase,
   ScriptInstance,
   UseFunctionType,
-  UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptStatus,
 } from '@unhead/schema'
@@ -21,6 +22,18 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
 }
 
 export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
+export interface UseScriptOptions<T extends Record<symbol | string, any> = {}, U = {}> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T, U>, 'use' | 'stub' | 'eventContext' | 'beforeInit'> {
+  /**
+   * The trigger to load the script:
+   * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
+   * - `manual` - Load the script manually by calling `$script.load()`, exists only on the client.
+   * - `Promise` - Load the script when the promise resolves, exists only on the client.
+   * - `Function` - Register a callback function to load the script, exists only on the client.
+   * - `server` - Have the script injected on the server.
+   * - `ref` - Load the script when the ref is true.
+   */
+  trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean>
+}
 
 export type UseScriptContext<T extends Record<symbol | string, any>> =
   (Promise<T> & VueScriptInstance<T>)
@@ -70,8 +83,26 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   options.head = head
   const scope = getCurrentInstance()
   options.eventContext = scope
-  if (scope && typeof options.trigger === 'undefined')
+  if (scope && typeof options.trigger === 'undefined') {
     options.trigger = onMounted
+  }
+  else if (isRef(options.trigger)) {
+    const refTrigger = options.trigger as Ref<boolean>
+    options.trigger = new Promise<boolean>((resolve) => {
+      const off = watch(refTrigger, (val) => {
+        if (val) {
+          off()
+          resolve(true)
+        }
+      }, {
+        immediate: true,
+      })
+      onScopeDispose(() => {
+        off()
+        resolve(false)
+      }, true)
+    })
+  }
   // we may be re-using an existing script
   // sync the status, need to register before useScript
   // @ts-expect-error untyped
@@ -79,6 +110,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // @ts-expect-error untyped
     s._statusRef.value = s.status
   })
+  // @ts-expect-error untyped
   const script = _useScript(input as BaseUseScriptInput, options)
   // @ts-expect-error untyped
   script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
