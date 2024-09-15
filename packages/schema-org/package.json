@@ -31,7 +31,8 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs",
       "require": "./dist/vue.cjs"
-    }
+    },
+    "./*": "./*"
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
