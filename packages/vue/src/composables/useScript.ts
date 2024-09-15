@@ -65,11 +65,6 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
     onScopeDispose(destroy)
     return destroy
   }
-  onScopeDispose(() => {
-    // if we registered the script using a promise trigger we need to drop the promise on dispose
-    // i.e shouldn't load if we've out of the scope
-    script._triggerAbortController?.abort()
-  })
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
   script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
