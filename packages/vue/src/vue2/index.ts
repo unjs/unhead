@@ -7,13 +7,14 @@ import { Vue3 } from '../env'
 import type { UseHeadInput } from '../types'
 
 export const UnheadPlugin: Plugin = (_Vue) => {
-  _Vue.config.optionMergeStrategies.head = function (toVal, fromVal) {
+  // @ts-expect-error vue3 type augments
+  _Vue.config.optionMergeStrategies.head = function (toVal, fromVal, vm) {
     // resolve both from functions
     if (typeof toVal === 'function') {
-      toVal = toVal()
+      toVal = toVal.call(vm || this || _Vue)
     }
     if (typeof fromVal === 'function') {
-      fromVal = fromVal()
+      fromVal = fromVal.call(vm || this || _Vue)
     }
     return defu(toVal as any, fromVal as any) as unknown
   }
