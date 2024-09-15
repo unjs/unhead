@@ -10,8 +10,8 @@ import type { BaseTransformerTypes } from './types'
 function RemoveFunctions(functionNames: string[]): Transformer<CallExpression> {
   return {
     onNode: node => node.type === 'CallExpression'
-    && node.callee.type === 'Identifier'
-    && functionNames.includes(node.callee.name),
+      && node.callee.type === 'Identifier'
+      && functionNames.includes(node.callee.name),
     transform() {
       return false
     },
