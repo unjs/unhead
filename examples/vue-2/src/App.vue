@@ -13,7 +13,7 @@ export default {
   },
   head() {
     return {
-      title: 'Vue 2 Head',
+      title: this.helloWorld ? 'Hello World' : 'Vue 2 Head',
       meta: [
         {
           name: 'description',
