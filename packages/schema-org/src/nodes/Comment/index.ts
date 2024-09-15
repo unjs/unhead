@@ -1,3 +1,6 @@
+import type { IdReference, NodeRelation, Thing } from '../../types'
+import type { Article } from '../Article'
+import type { Person } from '../Person'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
@@ -5,9 +8,6 @@ import {
 } from '../../utils'
 import { PrimaryArticleId } from '../Article'
 import { personResolver } from '../Person'
-import type { IdReference, NodeRelation, Thing } from '../../types'
-import type { Article } from '../Article'
-import type { Person } from '../Person'
 
 export interface CommentSimple extends Thing {
   /**

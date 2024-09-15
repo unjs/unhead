@@ -1,6 +1,6 @@
+import type { RenderDomHeadOptions } from './renderDOMHead'
 import { defineHeadPlugin } from '@unhead/shared'
 import { debouncedRenderDOMHead } from './debounced'
-import type { RenderDomHeadOptions } from './renderDOMHead'
 
 export interface DomPluginOptions extends RenderDomHeadOptions {
   delayFn?: (fn: () => void) => void

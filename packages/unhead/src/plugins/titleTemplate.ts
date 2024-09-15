@@ -1,5 +1,5 @@
-import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 import type { HeadTag } from '@unhead/schema'
+import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
 export default defineHeadPlugin({
   hooks: {

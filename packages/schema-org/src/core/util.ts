@@ -1,7 +1,7 @@
+import type { Id, SchemaOrgNode } from '../types'
 import { createDefu } from 'defu'
 import { hash } from 'ohash'
 import { resolveAsGraphKey } from '../utils'
-import type { Id, SchemaOrgNode } from '../types'
 
 function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   return array.reduce((acc, value, index, array) => {

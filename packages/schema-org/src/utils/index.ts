@@ -1,9 +1,9 @@
-import { hasProtocol, withBase } from 'ufo'
 import type {
   Arrayable,
   Id,
   Thing,
 } from '../types'
+import { hasProtocol, withBase } from 'ufo'
 
 export function idReference<T extends Thing>(node: T | string) {
   return {

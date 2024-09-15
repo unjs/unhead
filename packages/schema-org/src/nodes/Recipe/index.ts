@@ -1,11 +1,3 @@
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import {
-  idReference,
-  setIfEmpty,
-} from '../../utils'
-import { PrimaryArticleId } from '../Article'
-import { howToStepResolver } from '../HowTo'
-import { PrimaryWebPageId } from '../WebPage'
 import type {
   IdReference,
   NodeRelation,
@@ -19,6 +11,14 @@ import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
 import type { VideoObject } from '../Video'
 import type { WebPage } from '../WebPage'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import {
+  idReference,
+  setIfEmpty,
+} from '../../utils'
+import { PrimaryArticleId } from '../Article'
+import { howToStepResolver } from '../HowTo'
+import { PrimaryWebPageId } from '../WebPage'
 
 export interface RecipeSimple extends Thing {
   /**

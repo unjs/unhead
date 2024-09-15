@@ -1,17 +1,3 @@
-import { withBase } from 'ufo'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import {
-  IdentityId,
-  idReference,
-  resolvableDateToDate,
-  resolvableDateToIso,
-  setIfEmpty,
-} from '../../utils'
-import { offerResolver } from '../Offer'
-import { organizationResolver } from '../Organization'
-import { personResolver } from '../Person'
-import { placeResolver } from '../Place'
-import { virtualLocationResolver } from '../VirtualLocation'
 import type {
   Identity,
   NodeRelation,
@@ -26,6 +12,20 @@ import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Place } from '../Place'
 import type { VirtualLocation } from '../VirtualLocation'
+import { withBase } from 'ufo'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import {
+  IdentityId,
+  idReference,
+  resolvableDateToDate,
+  resolvableDateToIso,
+  setIfEmpty,
+} from '../../utils'
+import { offerResolver } from '../Offer'
+import { organizationResolver } from '../Organization'
+import { personResolver } from '../Person'
+import { placeResolver } from '../Place'
+import { virtualLocationResolver } from '../VirtualLocation'
 
 type EventAttendanceModeTypes = 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode'
 type EventStatusTypes = 'EventCancelled' | 'EventMovedOnline' | 'EventPostponed' | 'EventRescheduled' | 'EventScheduled'

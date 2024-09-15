@@ -1,5 +1,5 @@
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 
 export interface MonetaryAmountSimple extends Thing {
   /**

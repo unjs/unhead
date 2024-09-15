@@ -1,9 +1,9 @@
+import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { polyfillAsVueUseHead } from '@unhead/vue/polyfill'
 import { describe, it } from 'vitest'
-import type { ReactiveHead } from '@unhead/vue'
 import { useDom } from '../../fixtures'
 
 describe('vue e2e vueuse/head', () => {

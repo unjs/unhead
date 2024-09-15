@@ -1,3 +1,8 @@
+import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
+import type { ImageObject } from '../Image'
+import type { PostalAddress } from '../PostalAddress'
+import type { WebPage } from '../WebPage'
+import type { WebSite } from '../WebSite'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -11,11 +16,6 @@ import { imageResolver } from '../Image'
 import { addressResolver } from '../PostalAddress'
 import { PrimaryWebPageId } from '../WebPage'
 import { PrimaryWebSiteId } from '../WebSite'
-import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
-import type { ImageObject } from '../Image'
-import type { PostalAddress } from '../PostalAddress'
-import type { WebPage } from '../WebPage'
-import type { WebSite } from '../WebSite'
 
 /**
  * An organization such as a school, NGO, corporation, club, etc.

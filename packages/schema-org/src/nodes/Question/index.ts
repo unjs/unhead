@@ -1,3 +1,6 @@
+import type { NodeRelation, Thing } from '../../types'
+import type { WebPage } from '../WebPage'
+import type { Answer } from './Answer'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
@@ -6,9 +9,6 @@ import {
 } from '../../utils'
 import { PrimaryWebPageId } from '../WebPage'
 import { answerResolver } from './Answer'
-import type { NodeRelation, Thing } from '../../types'
-import type { WebPage } from '../WebPage'
-import type { Answer } from './Answer'
 
 /**
  * A specific question - e.g. from a user seeking answers online, or collected in a Frequently Asked Questions (FAQ) document.

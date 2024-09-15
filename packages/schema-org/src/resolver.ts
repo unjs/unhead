@@ -1,3 +1,4 @@
+import type { SchemaOrgNodeDefinition } from './types'
 import {
   addressResolver,
   aggregateOfferResolver,
@@ -35,7 +36,6 @@ import {
   webPageResolver,
   webSiteResolver,
 } from './nodes'
-import type { SchemaOrgNodeDefinition } from './types'
 
 export function loadResolver(resolver: string): SchemaOrgNodeDefinition<any> | null {
   switch (resolver) {

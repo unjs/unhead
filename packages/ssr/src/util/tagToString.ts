@@ -1,5 +1,5 @@
-import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import type { HeadTag } from '@unhead/schema'
+import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import { propsToString } from './propsToString'
 
 export function escapeHtml(str: string) {

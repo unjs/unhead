@@ -1,6 +1,6 @@
+import type { Thing } from '../../types'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolveWithBase } from '../../utils'
-import type { Thing } from '../../types'
 
 /**
  * A list item, e.g. a step in a checklist or how-to description.

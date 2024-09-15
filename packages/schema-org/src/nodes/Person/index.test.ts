@@ -1,8 +1,8 @@
+import type { Article } from '../Article'
 import { describe, expect, it } from 'vitest'
 import { defineArticle, defineOrganization, definePerson, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
 import { PrimaryArticleId } from '../Article'
-import type { Article } from '../Article'
 
 describe('definePerson', () => {
   it('can be registered', async () => {

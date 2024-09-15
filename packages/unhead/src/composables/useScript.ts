@@ -1,4 +1,3 @@
-import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 import type {
   AsAsyncFunctionValues,
   Head,
@@ -8,6 +7,7 @@ import type {
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
+import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 
 import { getActiveHead } from './useActiveHead'
 

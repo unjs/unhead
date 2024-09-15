@@ -1,9 +1,9 @@
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import { personResolver } from '../Person'
-import { ratingResolver } from '../Rating'
 import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { Person } from '../Person'
 import type { Rating } from '../Rating'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { personResolver } from '../Person'
+import { ratingResolver } from '../Rating'
 
 export interface ReviewSimple extends Thing {
   /**

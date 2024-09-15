@@ -1,7 +1,7 @@
+import type { Ref } from 'vue'
 import { createHead, setHeadInjectionHandler, useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import type { Ref } from 'vue'
 
 describe('resolveTags', () => {
   it('basic resolve tags', async () => {

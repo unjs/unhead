@@ -1,8 +1,8 @@
+import type { MergeHead } from '@unhead/schema'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead, useHead } from '@unhead/vue'
 import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, ref } from 'vue'
-import type { MergeHead } from '@unhead/schema'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {

@@ -1,5 +1,5 @@
-import { defineSchemaOrgResolver } from '../../core'
 import type { Thing } from '../../types'
+import { defineSchemaOrgResolver } from '../../core'
 
 export interface VirtualLocationSimple extends Thing {
   '@type'?: 'VirtualLocation'

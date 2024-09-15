@@ -1,4 +1,3 @@
-import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
 import type {
   DomBeforeRenderCtx,
   DomRenderTagContext,
@@ -6,6 +5,7 @@ import type {
   HeadTag,
   Unhead,
 } from '@unhead/schema'
+import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
 
 export interface RenderDomHeadOptions {
   /**

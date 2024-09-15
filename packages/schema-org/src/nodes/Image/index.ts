@@ -1,9 +1,9 @@
+import type { Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
 import {
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import type { Thing } from '../../types'
 
 export interface ImageSimple extends Thing {
   /**

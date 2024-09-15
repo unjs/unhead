@@ -1,5 +1,5 @@
-import { defineSchemaOrgResolver } from '../../core/define'
 import type { Thing } from '../../types'
+import { defineSchemaOrgResolver } from '../../core/define'
 
 export interface DefinedRegion extends Thing {
   /**

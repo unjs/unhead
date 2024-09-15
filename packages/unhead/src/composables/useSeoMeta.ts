@@ -1,5 +1,5 @@
-import { unpackMeta } from '@unhead/shared'
 import type { ActiveHeadEntry, HeadEntryOptions, UseSeoMetaInput } from '@unhead/schema'
+import { unpackMeta } from '@unhead/shared'
 import { useHead } from './useHead'
 
 export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): ActiveHeadEntry<any> | void {

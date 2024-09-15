@@ -1,5 +1,3 @@
-import { useScript as _useScript } from 'unhead'
-import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import type {
   AsAsyncFunctionValues,
   UseScriptInput as BaseUseScriptInput,
@@ -14,8 +12,10 @@ import type {
   UseScriptStatus,
 } from '@unhead/schema'
 import type { ComponentInternalInstance, Ref } from 'vue'
-import { injectHead } from './injectHead'
 import type { MaybeComputedRefEntriesOnly } from '../types'
+import { useScript as _useScript } from 'unhead'
+import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { injectHead } from './injectHead'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>

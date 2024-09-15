@@ -1,3 +1,6 @@
+import type { NodeRelations } from '../../types'
+import type { LocalBusiness } from '../LocalBusiness'
+import type { Rating } from '../Rating'
 import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -5,9 +8,6 @@ import {
 } from '../../utils'
 import { localBusinessResolver } from '../LocalBusiness'
 import { ratingResolver } from '../Rating'
-import type { NodeRelations } from '../../types'
-import type { LocalBusiness } from '../LocalBusiness'
-import type { Rating } from '../Rating'
 
 type ValidFoodEstablishmentSubTypes = 'Bakery' |
   'BarOrPub' |

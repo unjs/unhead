@@ -21,16 +21,16 @@
     "@unhead/vue": "workspace:*",
     "pinia": "^2.2.2",
     "unhead": "workspace:*",
-    "unplugin-auto-import": "^0.18.2",
-    "vite": "^5.4.3",
-    "vue-router": "^4.4.3"
+    "unplugin-auto-import": "^0.18.3",
+    "vite": "^5.4.5",
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.7.4",
-    "express": "^4.19.2",
-    "serve-static": "^1.15.0",
-    "vue": "^3.5.3"
+    "express": "^4.21.0",
+    "serve-static": "^1.16.2",
+    "vue": "^3.5.5"
   }
 }

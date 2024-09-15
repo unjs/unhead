@@ -1,5 +1,5 @@
-import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 import type { Head } from '@unhead/schema'
+import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
 export interface InferSeoMetaPluginOptions {
   /**

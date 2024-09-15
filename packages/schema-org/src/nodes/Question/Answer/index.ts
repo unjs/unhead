@@ -1,5 +1,5 @@
-import { defineSchemaOrgResolver } from '../../../core'
 import type { Thing } from '../../../types'
+import { defineSchemaOrgResolver } from '../../../core'
 
 /**
  * An answer offered to a question; perhaps correct, perhaps opinionated or wrong.

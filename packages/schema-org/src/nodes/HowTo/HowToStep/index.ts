@@ -1,13 +1,13 @@
+import type { NodeRelations, Thing } from '../../../types'
+import type { ImageObject } from '../../Image'
+import type { VideoObject } from '../../Video'
+import type { HowToDirection } from '../HowToStepDirection'
 import { defineSchemaOrgResolver, resolveRelation } from '../../../core'
 import {
   resolveWithBase,
 } from '../../../utils'
 import { imageResolver } from '../../Image'
 import { howToStepDirectionResolver } from '../HowToStepDirection'
-import type { NodeRelations, Thing } from '../../../types'
-import type { ImageObject } from '../../Image'
-import type { VideoObject } from '../../Video'
-import type { HowToDirection } from '../HowToStepDirection'
 
 export interface HowToStepSimple extends Thing {
   /**

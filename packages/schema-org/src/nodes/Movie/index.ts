@@ -1,9 +1,3 @@
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import { resolvableDateToDate } from '../../utils'
-import { aggregateRatingResolver } from '../AggregateRating'
-import { personResolver } from '../Person'
-import { reviewResolver } from '../Review'
-import { videoResolver } from '../Video'
 import type {
   NodeRelation,
   NodeRelations,
@@ -15,6 +9,12 @@ import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
 import type { Review } from '../Review'
 import type { VideoObject } from '../Video'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { resolvableDateToDate } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
+import { personResolver } from '../Person'
+import { reviewResolver } from '../Review'
+import { videoResolver } from '../Video'
 
 export interface MovieSimple extends Thing {
   /**

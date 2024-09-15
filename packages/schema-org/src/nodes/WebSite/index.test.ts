@@ -1,9 +1,9 @@
+import type { WebSite } from './index'
 import { expect } from 'vitest'
 import { defineOrganization, definePerson, defineSearchAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
 import { IdentityId, idReference, prefixId } from '../../utils'
 import { PrimaryWebSiteId } from './index'
-import type { WebSite } from './index'
 
 describe('defineWebSite', () => {
   it('can be registered', async () => {

@@ -1,6 +1,6 @@
+import type { UnpluginOptions } from './types'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
-import type { UnpluginOptions } from './types'
 
 export type { UnpluginOptions }
 

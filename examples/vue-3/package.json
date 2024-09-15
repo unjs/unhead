@@ -14,13 +14,13 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.4",
-    "@types/node": "^20.16.5",
+    "@types/node": "^22.5.5",
     "@unhead/vue": "link:../../packages/vue",
     "@vitejs/plugin-vue": "^5.1.3",
     "@vue/tsconfig": "^0.5.1",
     "npm-run-all": "^4.1.5",
-    "typescript": "~5.5.4",
-    "vite": "^5.4.3",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.5",
     "vue-tsc": "^2.1.6"
   }
 }

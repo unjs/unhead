@@ -1,6 +1,6 @@
 import type { Unhead } from '@unhead/schema'
-import { renderDOMHead } from './renderDOMHead'
 import type { RenderDomHeadOptions } from './renderDOMHead'
+import { renderDOMHead } from './renderDOMHead'
 
 export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
   /**

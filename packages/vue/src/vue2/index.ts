@@ -1,10 +1,10 @@
+import type { Plugin } from 'vue'
+import type { UseHeadInput } from '../types'
 import { defu } from 'defu'
 import { getCurrentInstance } from 'vue'
-import type { Plugin } from 'vue'
 import { useHead } from '../composables/useHead'
 import { headSymbol } from '../createHead'
 import { Vue3 } from '../env'
-import type { UseHeadInput } from '../types'
 
 export const UnheadPlugin: Plugin = (_Vue) => {
   // @ts-expect-error vue3 type augments

@@ -1,3 +1,12 @@
+import type { NodeRelation, NodeRelations, Thing } from '../../types'
+import type { AggregateOffer } from '../AggregateOffer'
+import type { AggregateRating } from '../AggregateRating'
+import type { ImageObject } from '../Image'
+import type { Offer } from '../Offer'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { Review } from '../Review'
+import type { WebPage } from '../WebPage'
 import { hash } from 'ohash'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -10,15 +19,6 @@ import { aggregateRatingResolver } from '../AggregateRating'
 import { offerResolver } from '../Offer'
 import { reviewResolver } from '../Review'
 import { PrimaryWebPageId } from '../WebPage'
-import type { NodeRelation, NodeRelations, Thing } from '../../types'
-import type { AggregateOffer } from '../AggregateOffer'
-import type { AggregateRating } from '../AggregateRating'
-import type { ImageObject } from '../Image'
-import type { Offer } from '../Offer'
-import type { Organization } from '../Organization'
-import type { Person } from '../Person'
-import type { Review } from '../Review'
-import type { WebPage } from '../WebPage'
 
 /**
  * Any offered product or service.

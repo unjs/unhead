@@ -1,3 +1,6 @@
+import type { NodeRelations } from '../../types'
+import type { OpeningHoursSpecification } from '../OpeningHours'
+import type { Organization } from '../Organization'
 import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -6,9 +9,6 @@ import {
 import { openingHoursResolver } from '../OpeningHours'
 import { organizationResolver } from '../Organization'
 import { addressResolver } from '../PostalAddress'
-import type { NodeRelations } from '../../types'
-import type { OpeningHoursSpecification } from '../OpeningHours'
-import type { Organization } from '../Organization'
 
 type ValidLocalBusinessSubTypes = 'AnimalShelter' |
   'ArchiveOrganization' |

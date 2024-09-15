@@ -1,3 +1,17 @@
+import type {
+  Arrayable,
+  NodeRelation,
+  NodeRelations,
+  ResolvableDate,
+  Thing,
+} from '../../types'
+import type { BreadcrumbList } from '../Breadcrumb'
+import type { ImageObject } from '../Image'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { VideoObject } from '../Video'
+import type { WebSite } from '../WebSite'
+import type { ReadAction } from './ReadAction'
 import { withoutTrailingSlash } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -13,20 +27,6 @@ import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 import { PrimaryWebSiteId } from '../WebSite'
 import { readActionResolver } from './ReadAction'
-import type {
-  Arrayable,
-  NodeRelation,
-  NodeRelations,
-  ResolvableDate,
-  Thing,
-} from '../../types'
-import type { BreadcrumbList } from '../Breadcrumb'
-import type { ImageObject } from '../Image'
-import type { Organization } from '../Organization'
-import type { Person } from '../Person'
-import type { VideoObject } from '../Video'
-import type { WebSite } from '../WebSite'
-import type { ReadAction } from './ReadAction'
 
 type ValidSubTypes = 'WebPage' | 'AboutPage' | 'CheckoutPage' | 'CollectionPage' | 'ContactPage' | 'FAQPage' | 'ItemPage' | 'MedicalWebPage' | 'ProfilePage' | 'QAPage' | 'RealEstateListing' | 'SearchResultsPage'
 

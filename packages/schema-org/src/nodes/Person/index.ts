@@ -1,3 +1,8 @@
+import type { Arrayable, NodeRelations, Thing } from '../../types'
+import type { Article } from '../Article'
+import type { ImageObject } from '../Image'
+import type { WebPage } from '../WebPage'
+import type { WebSite } from '../WebSite'
 import { defineSchemaOrgResolver } from '../../core'
 import {
   IdentityId,
@@ -9,11 +14,6 @@ import {
 import { PrimaryArticleId } from '../Article'
 import { PrimaryWebPageId } from '../WebPage'
 import { PrimaryWebSiteId } from '../WebSite'
-import type { Arrayable, NodeRelations, Thing } from '../../types'
-import type { Article } from '../Article'
-import type { ImageObject } from '../Image'
-import type { WebPage } from '../WebPage'
-import type { WebSite } from '../WebSite'
 
 /**
  * A person (alive, dead, undead, or fictional).

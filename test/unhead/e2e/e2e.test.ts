@@ -1,8 +1,8 @@
+import type { Head } from '@unhead/schema'
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead, useHead, useServerHead } from 'unhead'
 import { describe, it } from 'vitest'
-import type { Head } from '@unhead/schema'
 import { useDom } from '../../fixtures'
 
 describe('unhead e2e', () => {

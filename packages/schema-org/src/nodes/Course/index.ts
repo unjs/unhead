@@ -1,3 +1,5 @@
+import type { Identity, NodeRelation, Thing } from '../../types'
+import type { Organization } from '../Organization'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -5,8 +7,6 @@ import {
   setIfEmpty,
 } from '../../utils'
 import { organizationResolver } from '../Organization'
-import type { Identity, NodeRelation, Thing } from '../../types'
-import type { Organization } from '../Organization'
 
 /**
  * Any offered product or service.

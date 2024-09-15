@@ -1,6 +1,3 @@
-import { DomPlugin } from '@unhead/dom'
-import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
-import { createHooks } from 'hookable'
 import type {
   CreateHeadOptions,
   Head,
@@ -12,6 +9,9 @@ import type {
   RuntimeMode,
   Unhead,
 } from '@unhead/schema'
+import { DomPlugin } from '@unhead/dom'
+import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import { createHooks } from 'hookable'
 import DedupePlugin from './plugins/dedupe'
 import EventHandlersPlugin from './plugins/eventHandlers'
 import HashKeyedPlugin from './plugins/hashKeyed'

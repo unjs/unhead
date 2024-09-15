@@ -1,10 +1,10 @@
+import type { SchemaOrgGraph } from '.'
+import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 import {
   createSchemaOrgGraph,
   resolveMeta,
 } from '.'
-import type { SchemaOrgGraph } from '.'
-import type { MetaInput, ResolvedMeta } from './types'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean

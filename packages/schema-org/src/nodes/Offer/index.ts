@@ -1,3 +1,6 @@
+import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import type { OfferShippingDetails } from '../OfferShippingDetails'
+import type { OpeningHoursSpecification } from '../OpeningHours'
 import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -7,9 +10,6 @@ import {
 } from '../../utils'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { offerShippingDetailsResolver } from '../OfferShippingDetails'
-import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
-import type { OfferShippingDetails } from '../OfferShippingDetails'
-import type { OpeningHoursSpecification } from '../OpeningHours'
 
 type ItemAvailability =
   'BackOrder' |
