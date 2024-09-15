@@ -152,14 +152,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       else if (trigger instanceof Promise) {
         script._triggerAbortController = script._triggerAbortController || new AbortController()
         script._triggerPromises = script._triggerPromises || []
-        script._triggerPromises.push(Promise.race([
-          trigger.then(() => script.load),
+        const idx = script._triggerPromises.push(Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
           new Promise<void>((resolve) => {
             script._triggerAbortController!.signal.addEventListener('abort', () => resolve())
           }),
         ]).then((res) => {
           res?.()
+          // remove the promise from the list
+          script._triggerPromises?.splice(idx, 1)
         }))
       }
       else if (typeof trigger === 'function') {
