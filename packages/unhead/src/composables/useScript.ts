@@ -154,6 +154,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         script._triggerPromises = script._triggerPromises || []
         script._triggerPromises.push(Promise.race([
           trigger.then(() => script.load),
+          trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
           new Promise<void>((resolve) => {
             script._triggerAbortController!.signal.addEventListener('abort', () => resolve())
           }),

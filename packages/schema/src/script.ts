@@ -66,7 +66,7 @@ export interface UseScriptOptions<T extends BaseScriptApi = {}, U = {}> extends 
    * - `Function` - Register a callback function to load the script, exists only on the client.
    * - `server` - Have the script injected on the server.
    */
-  trigger?: 'client' | 'server' | 'manual' | Promise<void> | ((fn: any) => any) | null
+  trigger?: 'client' | 'server' | 'manual' | Promise<boolean | void> | ((fn: any) => any) | null
   /**
    * Context to run events with. This is useful in Vue to attach the current instance context before
    * calling the event, allowing the event to be reactive.
