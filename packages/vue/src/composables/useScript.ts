@@ -11,7 +11,7 @@ import type {
   UseScriptResolvedInput,
   UseScriptStatus,
 } from '@unhead/schema'
-import type { ComponentInternalInstance, Ref } from 'vue'
+import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { MaybeComputedRefEntriesOnly } from '../types'
 import { useScript as _useScript } from 'unhead'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
@@ -83,19 +83,19 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   else if (isRef(options.trigger)) {
     const refTrigger = options.trigger as Ref<boolean>
+    let off: WatchHandle
     options.trigger = new Promise<boolean>((resolve) => {
-      const off = watch(refTrigger, (val) => {
+      off = watch(refTrigger, (val) => {
         if (val) {
-          off()
           resolve(true)
         }
       }, {
         immediate: true,
       })
-      onScopeDispose(() => {
-        off()
-        resolve(false)
-      }, true)
+      onScopeDispose(() => resolve(false), true)
+    }).then((val) => {
+      off?.()
+      return val
     })
   }
   // we may be re-using an existing script
