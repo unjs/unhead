@@ -1,4 +1,7 @@
-import { version } from './package.json'
+import { dirname } from 'pathe'
+import { readPackageJSON } from 'pkg-types'
+
+const pkgJson = readPackageJSON(`${dirname(__dirname)}/package.json`)
 
 export default defineNuxtConfig({
   extends: [
@@ -32,7 +35,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      version,
+      version: pkgJson.version,
     },
   },
 
@@ -41,6 +44,14 @@ export default defineNuxtConfig({
       fathomAnalytics: {
         site: 'BRDEJWKJ',
       },
+    },
+  },
+
+  nitro: {
+    prerender: {
+      failOnError: false,
+      crawlLinks: true,
+      routes: ['/'],
     },
   },
 
@@ -107,10 +118,6 @@ export default defineNuxtConfig({
     // asyncContext: true,
     headNext: true,
     externalVue: false,
-  },
-
-  generate: {
-    routes: ['/'],
   },
 
   compatibilityDate: '2024-07-22',
