@@ -45,7 +45,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "vue.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
