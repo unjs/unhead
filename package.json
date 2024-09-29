@@ -48,7 +48,7 @@
     "@unhead/vue": "workspace:*",
     "@vue/server-renderer": "3.5.10",
     "nuxt": "3.13.2",
-    "shiki": "1.21.0",
+    "shiki": "1.17.0",
     "unhead": "workspace:*",
     "vite": "5.4.8",
     "vue": "^3.5.10"

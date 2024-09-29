@@ -19,6 +19,10 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
   ],
 
+  build: {
+    transpile: ['shiki'],
+  },
+
   site: {
     name: 'Unhead',
     url: 'unhead.unjs.io',
