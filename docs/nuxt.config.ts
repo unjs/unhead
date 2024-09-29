@@ -19,9 +19,9 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
   ],
 
-  build: {
-    transpile: ['shiki'],
-  },
+  // build: {
+  //   transpile: ['shiki'],
+  // },
 
   site: {
     name: 'Unhead',
