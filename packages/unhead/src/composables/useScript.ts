@@ -70,7 +70,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     cb(script.instance)
     return () => {}
   }
-  const loadPromise = new Promise<T>((resolve, reject) => {
+  const loadPromise = new Promise<T | false>((resolve) => {
     // promise never resolves
     if (head.ssr)
       return
@@ -91,7 +91,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           }
         }
         else if (status === 'error') {
-          reject(new Error(`Failed to load script: ${input.src}`))
+          resolve(false) // failed to load
         }
         _()
       }
@@ -176,15 +176,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // script is ready
   loadPromise
     .then((api) => {
-      script.instance = api
-      if (_cbs.loaded)
-        _cbs.loaded.forEach(cb => cb(api))
-      _cbs.loaded = null
-    })
-    .catch((err) => {
-      if (_cbs.error)
-        _cbs.error.forEach(cb => cb(err))
-      _cbs.error = null
+      if (api) {
+        script.instance = api
+        _cbs.loaded?.forEach(cb => cb(api))
+        _cbs.loaded = null
+      }
+      else {
+        _cbs.error?.forEach(cb => cb())
+        _cbs.error = null
+      }
     })
   const hookCtx = { script }
 
@@ -221,7 +221,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           }
           return fn
         }
-        const fn = access(script.instance) || access(await loadPromise)
+        let fn = access(script.instance)
+        if (!fn) {
+          const instance = await loadPromise
+          if (instance !== false) {
+            fn = access(instance)
+          }
+        }
         return typeof fn === 'function' ? Reflect.apply(fn, instance, args) : fn
       },
     })
