@@ -190,7 +190,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // script is ready
   loadPromise
     .then((api) => {
-      if (api) {
+      if (api !== false) {
         script.instance = api
         _cbs.loaded?.forEach(cb => cb(api))
         _cbs.loaded = null
@@ -237,10 +237,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         }
         let fn = access(script.instance)
         if (!fn) {
-          const instance = await loadPromise
-          if (instance !== false) {
-            fn = access(instance)
-          }
+          fn = await (new Promise<T | undefined>((resolve) => {
+            script.onLoaded(api => {
+              resolve(access(api))
+            })
+          }))
         }
         return typeof fn === 'function' ? Reflect.apply(fn, instance, args) : fn
       },
