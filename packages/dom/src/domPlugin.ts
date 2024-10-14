@@ -1,5 +1,5 @@
-import { defineHeadPlugin } from '@unhead/shared'
 import type { RenderDomHeadOptions } from './renderDOMHead'
+import { defineHeadPlugin } from '@unhead/shared'
 import { debouncedRenderDOMHead } from './debounced'
 
 export interface DomPluginOptions extends RenderDomHeadOptions {
@@ -10,7 +10,9 @@ export interface DomPluginOptions extends RenderDomHeadOptions {
   return defineHeadPlugin((head) => {
     // restore initial entry from payload (titleTemplate and templateParams)
     const initialPayload = head.resolvedOptions.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-    initialPayload && head.push(JSON.parse(initialPayload))
+    if (initialPayload) {
+      head.push(JSON.parse(initialPayload))
+    }
     return {
       mode: 'client',
       hooks: {

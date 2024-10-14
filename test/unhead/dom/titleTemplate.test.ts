@@ -1,6 +1,6 @@
-import { createHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 import { useDom } from '../../fixtures'
 
 describe('titleTemplate', () => {
@@ -26,7 +26,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `"<title>test - my template</title>"`,
     )
   })
   it('titleTemplate as title', async () => {
@@ -37,7 +37,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `"<title>Default Title</title>"`,
     )
   })
   it('titleTemplate as title', async () => {
@@ -46,17 +46,17 @@ describe('titleTemplate', () => {
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `"<title>Default Title</title>"`,
     )
     const entry = head.push({
       title: 'Hello world',
     })
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Hello world - Template</title>"',
+      `"<title>Hello world - Template</title>"`,
     )
     entry.dispose()
     expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `"<title>Default Title</title>"`,
     )
   })
   it('reset title template', async () => {
@@ -70,7 +70,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>page title</title>"',
+      `"<title>page title</title>"`,
     )
   })
 
@@ -107,7 +107,21 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title></title>"',
+      `""`,
+    )
+  })
+
+  it('replacing title with empty', async () => {
+    const head = createHead()
+    head.push({
+      title: 'test',
+    })
+    head.push({
+      title: '',
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(
+      `""`,
     )
   })
 })

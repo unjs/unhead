@@ -1,4 +1,4 @@
-import { SortModifiers, defineHeadPlugin, tagWeight } from '@unhead/shared'
+import { defineHeadPlugin, SortModifiers, tagWeight } from '@unhead/shared'
 
 export default defineHeadPlugin({
   hooks: {

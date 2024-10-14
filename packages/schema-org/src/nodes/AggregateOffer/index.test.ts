@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { injectSchemaOrg, useSetup } from '../../../.test'
 import { defineAggregateOffer, useSchemaOrg } from '../..'
+import { injectSchemaOrg, useSetup } from '../../../.test'
 
 describe('defineAggregateOffer', () => {
   it('can be registered simple', async () => {

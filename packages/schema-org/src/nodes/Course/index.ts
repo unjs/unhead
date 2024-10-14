@@ -1,11 +1,11 @@
 import type { Identity, NodeRelation, Thing } from '../../types'
+import type { Organization } from '../Organization'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
   setIfEmpty,
 } from '../../utils'
-import type { Organization } from '../Organization'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { organizationResolver } from '../Organization'
 
 /**

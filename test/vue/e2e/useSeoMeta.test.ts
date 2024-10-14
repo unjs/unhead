@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
-import { createHead, setHeadInjectionHandler, useSeoMeta } from '@unhead/vue'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, setHeadInjectionHandler, useSeoMeta } from '@unhead/vue'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
 
 describe('unhead vue e2e useSeoMeta', () => {

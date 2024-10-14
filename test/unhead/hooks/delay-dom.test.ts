@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
 import { renderDOMHead } from '@unhead/dom'
+import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
-import { activeDom, useDOMHead, useDelayedSerializedDom } from '../dom/util'
+import { activeDom, useDelayedSerializedDom, useDOMHead } from '../dom/util'
 
 describe('hooks', () => {
   it('delay dom', async () => {

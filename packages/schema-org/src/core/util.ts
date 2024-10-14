@@ -1,6 +1,6 @@
-import { hash } from 'ohash'
-import { createDefu } from 'defu'
 import type { Id, SchemaOrgNode } from '../types'
+import { createDefu } from 'defu'
+import { hash } from 'ohash'
 import { resolveAsGraphKey } from '../utils'
 
 function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
@@ -21,12 +21,17 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
 const merge = createDefu((object, key, value) => {
   // dedupe merge arrays
   if (Array.isArray(object[key])) {
-    // @ts-expect-error untyped
-    object[key] = [...new Set([...object[key], ...value])]
-    if (key === 'itemListElement') {
+    if (Array.isArray(value)) {
+      // unique set
       // @ts-expect-error untyped
-      object[key] = [...uniqueBy(object[key], item => item.position)]
+      object[key] = [...new Set([...object[key], ...value])]
+      if (key === 'itemListElement') {
+        // @ts-expect-error untyped
+        object[key] = [...uniqueBy(object[key], item => item.position)]
+      }
+      return true
     }
+    object[key] = merge(object[key], Array.isArray(value) ? value : [value])
     return true
   }
 })
@@ -41,7 +46,7 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
   for (const key of nodes.keys()) {
     const n = nodes[key]
     const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
-    if (dedupedNodes[nodeKey])
+    if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace')
       dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
     else
       dedupedNodes[nodeKey] = nodes[key]

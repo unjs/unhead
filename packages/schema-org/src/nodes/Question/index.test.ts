@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { injectSchemaOrg, useSetup } from '../../../.test'
 import { defineQuestion, defineWebPage, useSchemaOrg } from '../../'
+import { injectSchemaOrg, useSetup } from '../../../.test'
 
 describe('defineQuestion', () => {
   it('can be registered', async () => {

@@ -1,5 +1,4 @@
-import type { MaybeComputedRefOrPromise } from '@unhead/vue'
-import { injectHead, useHead } from '@unhead/vue'
+import type { MaybeComputedRefOrFalsy } from '@unhead/vue'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -39,10 +38,11 @@ import type {
   WebSite,
 } from '../../'
 import type { Arrayable } from '../../types'
+import { injectHead, useHead } from '@unhead/vue'
 import { UnheadSchemaOrg } from '../../plugin'
 
 export type DeepMaybeRef<T> = {
-  [key in keyof T]?: MaybeComputedRefOrPromise<T[key]>
+  [key in keyof T]?: MaybeComputedRefOrFalsy<T[key]>
 }
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -170,7 +170,6 @@ export function useSchemaOrg(input: UseSchemaOrgInput) {
     script: [
       {
         type: 'application/ld+json',
-        id: 'schema-org-graph',
         key: 'schema-org-graph',
         nodes: input,
       },

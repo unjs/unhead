@@ -1,4 +1,3 @@
-import { ScriptNetworkEvents, hashCode } from '@unhead/shared'
 import type {
   AsAsyncFunctionValues,
   Head,
@@ -8,6 +7,7 @@ import type {
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
+import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 
 import { getActiveHead } from './useActiveHead'
 
@@ -40,16 +40,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const head = options.head || getActiveHead()
   if (!head)
     throw new Error('Missing Unhead context.')
-
   const id = resolveScriptKey(input)
-  if (head._scripts?.[id])
-    return head._scripts[id]
+  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
+  if (prevScript) {
+    prevScript.setupTriggerHandler(options.trigger)
+    return prevScript
+  }
   options.beforeInit?.()
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     script.status = s
     head.hooks.callHook(`script:updated`, hookCtx)
   }
-  const trigger = options.trigger !== undefined ? options.trigger : 'client'
   ScriptNetworkEvents
     .forEach((fn) => {
       const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
@@ -96,6 +97,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
     })
   })
+
   const script = Object.assign(loadPromise, <Partial<UseScriptContext<T>>> {
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
@@ -111,6 +113,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return false
     },
     load(cb?: () => void | Promise<void>) {
+      // cancel any pending triggers as we've started loading
+      script._triggerAbortController?.abort()
+      script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
         const defaults: Required<Head>['script'][0] = {
@@ -137,6 +142,31 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     onError(cb: (err?: Error) => void | Promise<void>) {
       return _registerCb('error', cb)
     },
+    setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
+      if (script.status !== 'awaitingLoad') {
+        return
+      }
+      if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
+        script.load()
+      }
+      else if (trigger instanceof Promise) {
+        script._triggerAbortController = script._triggerAbortController || new AbortController()
+        script._triggerPromises = script._triggerPromises || []
+        const idx = script._triggerPromises.push(Promise.race([
+          trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
+          new Promise<void>((resolve) => {
+            script._triggerAbortController!.signal.addEventListener('abort', () => resolve())
+          }),
+        ]).then((res) => {
+          res?.()
+          // remove the promise from the list
+          script._triggerPromises?.splice(idx, 1)
+        }))
+      }
+      else if (typeof trigger === 'function') {
+        trigger(script.load)
+      }
+    },
     _cbs,
   }) as UseScriptContext<T>
   // script is ready
@@ -153,13 +183,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       _cbs.error = null
     })
   const hookCtx = { script }
-  if ((trigger === 'client' && !head.ssr) || trigger === 'server')
-    script.load()
-  else if (trigger instanceof Promise)
-    trigger.then(script.load)
-  else if (typeof trigger === 'function')
-    trigger(async () => script.load())
 
+  script.setupTriggerHandler(options.trigger)
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
@@ -201,7 +226,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // remove in v2, just return the script
   const res = new Proxy(script, {
     get(_, k) {
-      const target = k in script ? script : script.proxy
+      // _ keys are reserved for internal overrides
+      const target = (k in script || String(k)[0] === '_') ? script : script.proxy
       if (k === 'then' || k === 'catch') {
         return script[k].bind(script)
       }

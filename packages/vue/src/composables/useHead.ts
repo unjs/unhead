@@ -1,7 +1,7 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type { Ref } from 'vue'
-import { getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, ref, watch, watchEffect } from 'vue'
 import type { ReactiveHead, UseHeadInput, UseHeadOptions, VueHeadClient } from '../types'
+import { getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, ref, watch, watchEffect } from 'vue'
 import { resolveUnrefHeadInput } from '../utils'
 import { injectHead } from './injectHead'
 

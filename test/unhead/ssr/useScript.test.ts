@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useScript } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useScript } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('ssr useScript', () => {
   it('default', async () => {
@@ -45,7 +45,7 @@ describe('ssr useScript', () => {
     const head = createHead()
 
     // mock a promise, test that it isn't resolved in 1 second
-    const script = useScript<{ foo: 'bar' }>({
+    useScript<{ foo: 'bar' }>({
       src: 'https://cdn.example.com/script.js',
     }, {
       trigger: 'server',

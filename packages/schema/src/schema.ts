@@ -1,13 +1,6 @@
-import type { BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable, Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style } from 'zhead'
+import type { Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style, BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable } from 'zhead'
 import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
-
-export type Never<T> = {
-  [P in keyof T]?: never
-}
-
-export type MaybePromiseOrFalseProps<T> = {
-  [key in keyof T]?: T[key] | Promise<T[key]> | false
-}
+import type { FalsyEntries, Never } from './util'
 
 export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
@@ -67,16 +60,16 @@ export type MaybeFunctionEntries<T> = {
 
 type TitleTemplateResolver = string | ((title?: string) => string | null)
 
-export type Title = string | MaybePromiseOrFalseProps<({ textContent: string } & SchemaAugmentations['title']) | null>
+export type Title = string | FalsyEntries<({ textContent: string } & SchemaAugmentations['title']) | null>
 export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], MaybePromiseOrFalseProps<_Base>>> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = MaybePromiseOrFalseProps<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], FalsyEntries<_Base>>> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface HeadUtils {
   /**
@@ -98,7 +91,7 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title
    */
-  title?: Title | Promise<Title>
+  title?: Title
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.
@@ -156,4 +149,4 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
 
-export type { ScriptBase, MetaFlatInput, BodyEvents, MergeHead, DataKeys, DefinedValueOrEmptyObject, SpeculationRules } from 'zhead'
+export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'

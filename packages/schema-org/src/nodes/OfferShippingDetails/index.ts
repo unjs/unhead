@@ -1,10 +1,10 @@
 import type { Thing } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { MonetaryAmount } from '../MonetaryAmount'
-import { monetaryAmountResolver } from '../MonetaryAmount'
-import type { ShippingDeliveryTime } from '../ShippingDeliveryTime'
 import type { DefinedRegion } from '../DefinedRegion'
+import type { MonetaryAmount } from '../MonetaryAmount'
+import type { ShippingDeliveryTime } from '../ShippingDeliveryTime'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { definedRegionResolver } from '../DefinedRegion'
+import { monetaryAmountResolver } from '../MonetaryAmount'
 import { shippingDeliveryTimeResolver } from '../ShippingDeliveryTime'
 
 export interface OfferShippingDetails extends Thing {

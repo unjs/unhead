@@ -1,13 +1,13 @@
 import type { IdReference, NodeRelation, Thing } from '../../types'
+import type { Article } from '../Article'
+import type { Person } from '../Person'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
   setIfEmpty,
 } from '../../utils'
-import type { Article } from '../Article'
 import { PrimaryArticleId } from '../Article'
-import type { Person } from '../Person'
 import { personResolver } from '../Person'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 
 export interface CommentSimple extends Thing {
   /**

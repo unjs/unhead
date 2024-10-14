@@ -1,4 +1,9 @@
 import type { Arrayable, NodeRelations, Thing } from '../../types'
+import type { Article } from '../Article'
+import type { ImageObject } from '../Image'
+import type { WebPage } from '../WebPage'
+import type { WebSite } from '../WebSite'
+import { defineSchemaOrgResolver } from '../../core'
 import {
   IdentityId,
   idReference,
@@ -6,14 +11,9 @@ import {
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
-import type { WebSite } from '../WebSite'
-import { PrimaryWebSiteId } from '../WebSite'
-import type { Article } from '../Article'
 import { PrimaryArticleId } from '../Article'
-import { defineSchemaOrgResolver } from '../../core'
-import type { ImageObject } from '../Image'
+import { PrimaryWebPageId } from '../WebPage'
+import { PrimaryWebSiteId } from '../WebSite'
 
 /**
  * A person (alive, dead, undead, or fictional).

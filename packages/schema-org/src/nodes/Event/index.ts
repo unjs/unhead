@@ -1,4 +1,3 @@
-import { withBase } from 'ufo'
 import type {
   Identity,
   NodeRelation,
@@ -7,6 +6,14 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { ImageObject } from '../Image'
+import type { Offer } from '../Offer'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { Place } from '../Place'
+import type { VirtualLocation } from '../VirtualLocation'
+import { withBase } from 'ufo'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
@@ -14,17 +21,10 @@ import {
   resolvableDateToIso,
   setIfEmpty,
 } from '../../utils'
-import type { Organization } from '../Organization'
-import type { Person } from '../Person'
-import type { ImageObject } from '../Image'
-import { personResolver } from '../Person'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { Offer } from '../Offer'
 import { offerResolver } from '../Offer'
 import { organizationResolver } from '../Organization'
-import type { Place } from '../Place'
+import { personResolver } from '../Person'
 import { placeResolver } from '../Place'
-import type { VirtualLocation } from '../VirtualLocation'
 import { virtualLocationResolver } from '../VirtualLocation'
 
 type EventAttendanceModeTypes = 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode'
@@ -154,5 +154,5 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
   },
 })
 
-export * from '../VirtualLocation'
 export * from '../Place'
+export * from '../VirtualLocation'

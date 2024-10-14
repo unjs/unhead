@@ -1,6 +1,6 @@
-import { createHead } from 'unhead'
-import type { JSDOM } from 'jsdom'
 import type { CreateHeadOptions } from '@unhead/schema'
+import type { JSDOM } from 'jsdom'
+import { createHead } from 'unhead'
 import { useDom } from '../../fixtures'
 
 // eslint-disable-next-line import/no-mutable-exports

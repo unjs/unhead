@@ -1,4 +1,3 @@
-import { createHooks } from 'hookable'
 import type {
   CreateHeadOptions,
   Head,
@@ -12,10 +11,11 @@ import type {
 } from '@unhead/schema'
 import { DomPlugin } from '@unhead/dom'
 import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import { createHooks } from 'hookable'
 import DedupePlugin from './plugins/dedupe'
-import PayloadPlugin from './plugins/payload'
 import EventHandlersPlugin from './plugins/eventHandlers'
 import HashKeyedPlugin from './plugins/hashKeyed'
+import PayloadPlugin from './plugins/payload'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
@@ -91,7 +91,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
       return {
         dispose() {
           entries = entries.filter(e => e._i !== entry._i)
-          hooks.callHook('entries:updated', head)
           updated()
         },
         // a patch is the same as creating a new entry, just a nice DX

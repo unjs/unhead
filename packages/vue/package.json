@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "1.10.0",
+  "version": "1.11.7",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -72,6 +72,7 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
+    "defu": "^6.1.4",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
   }

@@ -1,17 +1,17 @@
-import { pathToFileURL } from 'node:url'
-import { createUnplugin } from 'unplugin'
-import type { Transformer } from 'unplugin-ast'
-import { transform } from 'unplugin-ast'
 import type { CallExpression } from '@babel/types'
+import type { Transformer } from 'unplugin-ast'
 import type { ConfigEnv, UserConfig } from 'vite'
-import { parseQuery, parseURL } from 'ufo'
 import type { BaseTransformerTypes } from './types'
+import { pathToFileURL } from 'node:url'
+import { parseQuery, parseURL } from 'ufo'
+import { createUnplugin } from 'unplugin'
+import { transform } from 'unplugin-ast'
 
 function RemoveFunctions(functionNames: string[]): Transformer<CallExpression> {
   return {
     onNode: node => node.type === 'CallExpression'
-    && node.callee.type === 'Identifier'
-    && functionNames.includes(node.callee.name),
+      && node.callee.type === 'Identifier'
+      && functionNames.includes(node.callee.name),
     transform() {
       return false
     },

@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
 import { useScript } from 'unhead'
-import { useDOMHead, useDelayedSerializedDom } from './util'
+import { describe, it } from 'vitest'
+import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('dom useScript', () => {
   it('basic', async () => {
@@ -45,7 +45,7 @@ describe('dom useScript', () => {
     expect(calledFn).toBe('test')
   })
   it('proxy', async () => {
-    const head = useDOMHead()
+    useDOMHead()
 
     const instance = useScript<{ test: (foo: string) => string }>({
       src: 'https://cdn.example.com/script.js',

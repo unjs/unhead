@@ -1,7 +1,7 @@
-import { withBase } from 'ufo'
 import type { OptionalSchemaOrgPrefix, Thing } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { MonetaryAmount } from '../MonetaryAmount'
+import { withBase } from 'ufo'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 
 type MerchantReturnEnumeration =

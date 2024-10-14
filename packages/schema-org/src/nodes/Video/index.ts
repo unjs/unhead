@@ -1,12 +1,12 @@
-import type { Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { Arrayable, Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { ImageObject } from '../Image'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
   resolvableDateToIso,
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { imageResolver } from '../Image'
 
 export interface VideoSimple extends Thing {
@@ -21,7 +21,11 @@ export interface VideoSimple extends Thing {
   /**
    * A reference-by-ID to an imageObject.
    */
-  thumbnailUrl?: NodeRelation<ImageObject>
+  thumbnail?: NodeRelation<ImageObject>
+  /**
+   * A URL pointing to the video thumbnail image file. Follow the [thumbnail image guidelines](https://developers.google.com/search/docs/appearance/video#provide-a-high-quality-thumbnail).
+   */
+  thumbnailUrl?: Arrayable<string>
   /**
    * The date the video was published, in ISO 8601 format (e.g., 2020-01-20).
    */
@@ -105,15 +109,20 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject>({
     if (!video.description)
       video.description = 'No description'
 
-    if (video.thumbnailUrl)
-      video.thumbnailUrl = resolveRelation(video.thumbnailUrl, ctx, imageResolver)
+    if (video.thumbnailUrl && (typeof video.thumbnailUrl === 'string' || Array.isArray(video.thumbnailUrl))) {
+      const images = asArray(video.thumbnailUrl).map(image => resolveWithBase(ctx.meta.host, image))
+      video.thumbnailUrl = images.length > 1 ? images : images[0]
+    }
+
+    if (video.thumbnail)
+      video.thumbnail = resolveRelation(video.thumbnailUrl, ctx, imageResolver)
 
     return video
   },
   resolveRootNode(video, { find }) {
-    if (video.image && !video.thumbnailUrl) {
+    if (video.image && !video.thumbnail) {
       const firstImage = asArray(video.image)[0] as ImageObject
-      setIfEmpty(video, 'thumbnailUrl', find<ImageObject>(firstImage['@id'] as Id)?.url)
+      setIfEmpty(video, 'thumbnail', find<ImageObject>(firstImage['@id'] as Id)?.url)
     }
   },
 })

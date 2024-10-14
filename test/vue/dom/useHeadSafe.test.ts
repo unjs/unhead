@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
-import { useHeadSafe } from 'unhead'
-import { createHead, setHeadInjectionHandler } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
+import { createHead, setHeadInjectionHandler } from '@unhead/vue'
+import { useHeadSafe } from 'unhead'
+import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { basicSchema, useDom } from '../../fixtures'
 

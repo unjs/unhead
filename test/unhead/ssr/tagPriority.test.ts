@@ -1,5 +1,5 @@
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 
 describe('tag priority', () => {
   it('basic int', async () => {
@@ -257,7 +257,7 @@ describe('tag priority', () => {
       },
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('"<title>high-priority title</title>"')
+    expect(headTags).toMatchInlineSnapshot(`"<title>high-priority title</title>"`)
   })
 
   it('titleTemplate priority', async () => {
@@ -273,6 +273,6 @@ describe('tag priority', () => {
       titleTemplate: '%s - override title template',
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('"<title>test - high-priority title template</title>"')
+    expect(headTags).toMatchInlineSnapshot(`"<title>test - high-priority title template</title>"`)
   })
 })

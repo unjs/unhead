@@ -1,6 +1,6 @@
+import type { ScriptInstance } from './'
 import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
-import type { ScriptInstance } from './'
 
 export type HookResult = Promise<void> | void
 

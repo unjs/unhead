@@ -4,16 +4,16 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
-import { resolvableDateToDate } from '../../utils'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { ImageObject } from '../Image'
 import type { AggregateRating } from '../AggregateRating'
-import { aggregateRatingResolver } from '../AggregateRating'
+import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
-import { personResolver } from '../Person'
 import type { Review } from '../Review'
-import { reviewResolver } from '../Review'
 import type { VideoObject } from '../Video'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { resolvableDateToDate } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
+import { personResolver } from '../Person'
+import { reviewResolver } from '../Review'
 import { videoResolver } from '../Video'
 
 export interface MovieSimple extends Thing {

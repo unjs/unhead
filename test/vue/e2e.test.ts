@@ -1,8 +1,8 @@
-import { describe, it } from 'vitest'
 import type { ReactiveHead } from '@unhead/vue'
-import { createHead, setHeadInjectionHandler, useHead, useServerHead } from '@unhead/vue'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, createServerHead, setHeadInjectionHandler, useHead, useServerHead } from '@unhead/vue'
+import { describe, it } from 'vitest'
 import { useDom } from '../fixtures'
 
 describe('vue e2e', () => {
@@ -92,7 +92,8 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script src="https://my-app.com/home.js"></script>
-      <meta name="description" content="This is the home page">",
+      <meta name="description" content="This is the home page">
+      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>",
         "htmlAttrs": " lang="en"",
       }
     `)
@@ -136,6 +137,7 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script src="https://my-app.com/home.js"></script>
       <meta name="description" content="This is the home page">
+      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>
       </head>
       <body>
 
@@ -400,5 +402,73 @@ describe('vue e2e', () => {
 
       </body></html>"
     `)
+  })
+
+  it('title', async () => {
+    const ssrHead = createServerHead()
+
+    // i.e App.vue
+    ssrHead.push({
+      title: 'Default title',
+      titleTemplate: '%s | Company',
+    }, {
+      mode: 'server',
+    })
+
+    ssrHead.push({
+      title: 'Home page',
+    })
+
+    const data = await renderSSRHead(ssrHead)
+
+    expect(data.headTags).toMatchInlineSnapshot(`
+      "<title>Home page | Company</title>
+      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>"
+    `)
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>Home page | Company</title>
+      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>",
+        "htmlAttrs": "",
+      }
+    `)
+    const dom = useDom(data)
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <title>Home page | Company</title>
+      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+
+    const csrHead = createHead({
+      document: dom.window.document,
+    })
+
+    const home = useHead({
+      title: 'Home Page',
+    }, {
+      head: csrHead,
+    })
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home Page | Company"`)
+    home.dispose()
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Default title | Company"`)
   })
 })

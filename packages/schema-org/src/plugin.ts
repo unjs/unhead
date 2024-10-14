@@ -1,10 +1,10 @@
-import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
+import type { SchemaOrgGraph } from '.'
 import type { MetaInput, ResolvedMeta } from './types'
+import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 import {
   createSchemaOrgGraph,
   resolveMeta,
 } from '.'
-import type { SchemaOrgGraph } from '.'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
@@ -37,13 +37,14 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         graph = createSchemaOrgGraph()
       },
       'tag:normalise': async ({ tag }) => {
-        if (tag.key === 'schema-org-graph') {
+        if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
           // this is a bit expensive, load in seperate chunk
           const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
           for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
             const newNode = {
               ...node,
+              _dedupeStrategy: tag.tagDuplicateStrategy,
               _resolver: loadResolver(await node._resolver),
             }
             graph.push(newNode)
@@ -78,7 +79,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       'tags:resolve': async (ctx) => {
         // find the schema.org node, should be a single instance
         for (const tag of ctx.tags) {
-          if (tag.tag === 'script' && tag.key === 'schema-org-graph') {
+          if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
             const minify = options?.minify || process.env.NODE_ENV === 'production'
             tag.innerHTML = JSON.stringify({
               '@context': 'https://schema.org',

@@ -1,7 +1,7 @@
-import { createHead } from 'unhead'
 import type { MetaInput } from '../src'
-import { SchemaOrgUnheadPlugin } from '../src'
 import type { SchemaOrgNode } from '../src/types'
+import { createHead } from 'unhead'
+import { SchemaOrgUnheadPlugin } from '../src'
 
 let head
 export async function injectSchemaOrg(): Promise<SchemaOrgNode[]> {

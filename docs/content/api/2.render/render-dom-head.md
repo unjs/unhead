@@ -25,8 +25,8 @@ This is useful for when you want to render the tags to the DOM immediately.
 ## Example
 
 ```ts
-import { createHead } from 'unhead'
 import { renderDOMHead } from '@unhead/dom'
+import { createHead } from 'unhead'
 
 const head = createHead()
 

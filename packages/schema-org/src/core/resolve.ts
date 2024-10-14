@@ -1,5 +1,3 @@
-import { hasTrailingSlash, joinURL, withTrailingSlash, withoutTrailingSlash } from 'ufo'
-import { hashCode } from '@unhead/shared'
 import type {
   Arrayable,
   MetaInput,
@@ -8,9 +6,11 @@ import type {
   Thing,
 } from '../types'
 import type { ResolverOptions } from '../utils'
-import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
-import { loadResolver } from '../resolver'
 import type { SchemaOrgGraph } from './graph'
+import { hashCode } from '@unhead/shared'
+import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
+import { loadResolver } from '../resolver'
+import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
 
 export function resolveMeta(meta: Partial<MetaInput>) {
   if (!meta.host && meta.canonicalHost)
@@ -92,13 +92,13 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
   return node
 }
 
-export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver: SchemaOrgNodeDefinition<T>, resolveAsRoot = false) {
+export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>, resolveAsRoot = false) {
   // already fully qualified
   if (node['@id'] && node['@id'].startsWith('http'))
     return node
 
-  const prefix = (Array.isArray(resolver.idPrefix) ? resolver.idPrefix[0] : resolver.idPrefix) || 'url'
-  const rootId = node['@id'] || (Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined)
+  const prefix = resolver ? (Array.isArray(resolver.idPrefix) ? resolver.idPrefix[0] : resolver.idPrefix) || 'url' : 'url'
+  const rootId = node['@id'] || (resolver ? (Array.isArray(resolver.idPrefix) ? resolver.idPrefix?.[1] : undefined) : '')
 
   if (!node['@id'] && resolveAsRoot && rootId) {
     // transform ['host', PrimaryWebPageId] to https://host.com/#webpage
@@ -106,7 +106,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     node['@id'] = prefixId(ctx.meta[prefix], rootId)
     return node
   }
-  if (node['@id']?.startsWith('#/schema/')) {
+  if (node['@id']?.startsWith('#/schema/') || node['@id']?.startsWith('/')) {
     node['@id'] = prefixId(ctx.meta[prefix], node['@id'])
     return node
   }
@@ -142,10 +142,10 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fall
     const keys = Object.keys(a).length
     // filter out id references
     if ((keys === 1 && a['@id']) || (keys === 2 && a['@id'] && a['@type'])) {
-      return {
+      return resolveNodeId({
         // we drop @type
         '@id': ctx.find(a['@id'])?.['@id'] || a['@id'],
-      }
+      }, ctx)
     }
 
     let resolver = fallbackResolver

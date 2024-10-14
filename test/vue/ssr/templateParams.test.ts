@@ -1,7 +1,7 @@
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { createHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { ssrRenderOptionsHead } from '../util'
 
 describe('ssr vue templateParams', () => {
@@ -188,6 +188,6 @@ describe('ssr vue templateParams', () => {
       processTemplateParams: false,
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('"<title>Hello %name</title>"')
+    expect(headTags).toMatchInlineSnapshot(`"<title>Hello %name</title>"`)
   })
 })

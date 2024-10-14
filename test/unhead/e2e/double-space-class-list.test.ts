@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
-import { createHead, useServerHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
 import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useServerHead } from 'unhead'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
 
 describe('e2e double-space-class-list', () => {

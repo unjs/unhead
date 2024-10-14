@@ -1,5 +1,5 @@
-import { createHead, useSeoMeta } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useSeoMeta } from '@unhead/vue'
 import { describe, it } from 'vitest'
 
 describe('useSeoMeta vue ssr', () => {

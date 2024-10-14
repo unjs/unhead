@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
-import { injectSchemaOrg, useSetup } from '../../../.test'
 import { defineBook, defineBookEdition, definePerson, useSchemaOrg } from '../..'
+import { injectSchemaOrg, useSetup } from '../../../.test'
 
 describe('defineBook', () => {
   it('can be registered', async () => {

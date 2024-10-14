@@ -1,6 +1,6 @@
 import type { NodeRelation, Thing } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { PostalAddress } from '../PostalAddress'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { addressResolver } from '../PostalAddress'
 
 export interface PlaceSimple extends Thing {

@@ -1,9 +1,9 @@
-import { expect } from 'vitest'
-import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
-import { PrimaryWebSiteId } from '../WebSite'
-import { IdentityId, idReference, prefixId } from '../../utils'
-import { defineImage, defineOrganization, defineReadAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
 import type { WebPage } from './index'
+import { expect } from 'vitest'
+import { defineImage, defineOrganization, defineReadAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
+import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
+import { IdentityId, idReference, prefixId } from '../../utils'
+import { PrimaryWebSiteId } from '../WebSite'
 import { PrimaryWebPageId } from './index'
 
 const mockDate = new Date(Date.UTC(2021, 10, 10, 10, 10, 10, 0))

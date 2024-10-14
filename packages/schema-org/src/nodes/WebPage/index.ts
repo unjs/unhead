@@ -1,4 +1,3 @@
-import { withoutTrailingSlash } from 'ufo'
 import type {
   Arrayable,
   NodeRelation,
@@ -6,6 +5,15 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { BreadcrumbList } from '../Breadcrumb'
+import type { ImageObject } from '../Image'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { VideoObject } from '../Video'
+import type { WebSite } from '../WebSite'
+import type { ReadAction } from './ReadAction'
+import { withoutTrailingSlash } from 'ufo'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
@@ -13,20 +21,12 @@ import {
   resolveDefaultType,
   setIfEmpty,
 } from '../../utils'
-import type { WebSite } from '../WebSite'
-import { PrimaryWebSiteId } from '../WebSite'
-import type { Organization } from '../Organization'
-import type { ImageObject } from '../Image'
-import type { BreadcrumbList } from '../Breadcrumb'
-import type { VideoObject } from '../Video'
-import { PrimaryBreadcrumbId, breadcrumbResolver } from '../Breadcrumb'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { Person } from '../Person'
+import { breadcrumbResolver, PrimaryBreadcrumbId } from '../Breadcrumb'
+import { imageResolver } from '../Image'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
-import { imageResolver } from '../Image'
+import { PrimaryWebSiteId } from '../WebSite'
 import { readActionResolver } from './ReadAction'
-import type { ReadAction } from './ReadAction'
 
 type ValidSubTypes = 'WebPage' | 'AboutPage' | 'CheckoutPage' | 'CollectionPage' | 'ContactPage' | 'FAQPage' | 'ItemPage' | 'MedicalWebPage' | 'ProfilePage' | 'QAPage' | 'RealEstateListing' | 'SearchResultsPage'
 

@@ -1,4 +1,3 @@
-import { withBase } from 'ufo'
 import type {
   Arrayable,
   Identity,
@@ -8,14 +7,15 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { ReadAction } from '../WebPage'
+import { withBase } from 'ufo'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
   resolvableDateToDate,
   setIfEmpty,
 } from '../../utils'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { ReadAction } from '../WebPage'
 
 export interface BookSimple extends Thing {
   /**

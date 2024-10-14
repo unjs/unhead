@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('dedupe', () => {
   it('arrays', async () => {
@@ -297,10 +297,7 @@ describe('dedupe', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      `
-      "<meta name="og:image" content="https://example.com/image1.jpg">
-      <meta name="og:image" content="https://example.com/image2.jpg">"
-    `,
+      `"<meta name="og:image" content="https://example.com/image2.jpg">"`,
     )
   })
 
@@ -323,6 +320,83 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot('""')
+    expect(headTags).toMatchInlineSnapshot(`"<meta name="description" content="my description">"`)
+  })
+
+  it('null attr override', async () => {
+    const head = createHead()
+    head.push({
+      script: [
+        {
+          src: 'test',
+          key: 'my-script',
+          fetchpriority: 'high',
+          crossorigin: 'anonymous',
+          referrerpolicy: 'no-referrer-when-downgrade',
+          innerHTML: 'console.log(\'A\')',
+        },
+      ],
+    })
+    head.push({
+      script: [
+        {
+          key: 'my-script',
+          fetchpriority: undefined,
+          crossorigin: false,
+          referrerpolicy: null,
+          foo: 'bar',
+          innerHTML: 'console.log(\'B\')',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="722c761">console.log('B')</script>"`)
+  })
+
+  it('duplicate viewport', async () => {
+    const head = createHead()
+    head.push({
+      meta: [
+        {
+          key: 'test',
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1',
+        },
+        // charset
+        {
+          charset: 'utf-8',
+        },
+        {
+          key: 'desc',
+          name: 'description',
+          content: 'test',
+        },
+      ],
+    })
+    head.push({
+      meta: [
+        {
+          key: 'test2',
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=2',
+        },
+        {
+          charset: 'utf-1',
+        },
+        {
+          key: 'des123c',
+          name: 'description',
+          content: 'test 2',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<meta charset="utf-1">
+      <meta name="viewport" content="width=device-width, initial-scale=2">
+      <meta name="description" content="test 2">"
+    `)
   })
 })

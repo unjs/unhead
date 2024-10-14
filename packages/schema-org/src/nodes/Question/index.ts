@@ -1,13 +1,13 @@
 import type { NodeRelation, Thing } from '../../types'
+import type { WebPage } from '../WebPage'
+import type { Answer } from './Answer'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
   dedupeMerge,
   idReference,
 } from '../../utils'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { WebPage } from '../WebPage'
 import { PrimaryWebPageId } from '../WebPage'
-import type { Answer } from './Answer'
 import { answerResolver } from './Answer'
 
 /**

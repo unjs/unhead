@@ -1,5 +1,4 @@
-import { getActiveHead, useHead } from 'unhead'
-import type { Arrayable, Thing } from './types'
+import type { HeadEntryOptions } from '@unhead/schema'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -37,6 +36,8 @@ import type {
   WebPage,
   WebSite,
 } from './nodes'
+import type { Arrayable, Thing } from './types'
+import { getActiveHead, useHead } from 'unhead'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -159,7 +160,7 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 
 export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput) {
+export function useSchemaOrg(input: UseSchemaOrgInput, options?: Pick<HeadEntryOptions, 'tagDuplicateStrategy'>) {
   // lazy initialise the plugin
   const head = getActiveHead()
   if (!head)
@@ -173,5 +174,5 @@ export function useSchemaOrg(input: UseSchemaOrgInput) {
         nodes: input,
       },
     ],
-  })
+  }, options)
 }

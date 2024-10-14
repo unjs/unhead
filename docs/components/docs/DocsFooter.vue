@@ -14,6 +14,7 @@ const config = useRuntimeConfig().public
           to="https://twitter.com/harlan_zw"
           target="_blank"
           color="gray"
+          title="X"
           size="2xs"
           variant="ghost"
           icon="i-simple-icons-twitter"
@@ -22,6 +23,7 @@ const config = useRuntimeConfig().public
         <UButton
           to="https://github.com/harlan-zw"
           target="_blank"
+          title="GitHub"
           color="gray"
           size="2xs"
           variant="ghost"
@@ -29,7 +31,7 @@ const config = useRuntimeConfig().public
         />
       </div>
 
-      <NuxtLink :to="`https://github.com/harlan-zw/nuxt-seo-kit/releases/tag/v${config.version}`" target="_blank">
+      <NuxtLink :to="`https://github.com/unjs/unhead/releases/tag/v${config.version}`" target="_blank">
         <UBadge :label="`v${config.version}`" />
       </NuxtLink>
     </div>

@@ -5,20 +5,20 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { Article } from '../Article'
+import type { HowToStep } from '../HowTo'
+import type { ImageObject } from '../Image'
+import type { Person } from '../Person'
+import type { VideoObject } from '../Video'
+import type { WebPage } from '../WebPage'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
   setIfEmpty,
 } from '../../utils'
-import type { Article } from '../Article'
 import { PrimaryArticleId } from '../Article'
-import type { WebPage } from '../WebPage'
-import { PrimaryWebPageId } from '../WebPage'
-import type { VideoObject } from '../Video'
-import type { HowToStep } from '../HowTo'
 import { howToStepResolver } from '../HowTo'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { ImageObject } from '../Image'
-import type { Person } from '../Person'
+import { PrimaryWebPageId } from '../WebPage'
 
 export interface RecipeSimple extends Thing {
   /**

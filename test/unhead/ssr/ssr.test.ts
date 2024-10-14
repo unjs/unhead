@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
-import { createHead, useSeoMeta } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useSeoMeta } from 'unhead'
+import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
 
 describe('ssr', () => {

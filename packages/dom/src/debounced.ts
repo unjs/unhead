@@ -14,10 +14,10 @@ export interface DebouncedRenderDomHeadOptions extends RenderDomHeadOptions {
  */
 export function debouncedRenderDOMHead<T extends Unhead<any>>(head: T, options: DebouncedRenderDomHeadOptions = {}) {
   const fn = options.delayFn || (fn => setTimeout(fn, 10))
-  return head._domUpdatePromise = head._domUpdatePromise || new Promise<void>(resolve => fn(() => {
+  return head._domDebouncedUpdatePromise = head._domDebouncedUpdatePromise || new Promise<void>(resolve => fn(() => {
     return renderDOMHead(head, options)
       .then(() => {
-        delete head._domUpdatePromise
+        delete head._domDebouncedUpdatePromise
         resolve()
       })
   }))

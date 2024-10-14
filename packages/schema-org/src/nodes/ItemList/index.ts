@@ -1,8 +1,8 @@
 import type { NodeRelations, Thing } from '../../types'
 import type { ListItem } from '../ListItem'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import { listItemResolver } from '../ListItem'
 import { setIfEmpty } from '../../utils'
+import { listItemResolver } from '../ListItem'
 
 export interface ItemListSimple extends Thing {
   /**

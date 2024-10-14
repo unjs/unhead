@@ -7,8 +7,9 @@ function resolveUnref(r: any) {
 
 export function resolveUnrefHeadInput(ref: any): any {
   // allow promises to bubble through
-  if (ref instanceof Promise)
+  if (ref instanceof Promise || ref instanceof Date || ref instanceof RegExp)
     return ref
+
   const root = resolveUnref(ref)
   if (!ref || !root)
     return root
@@ -26,7 +27,6 @@ export function resolveUnrefHeadInput(ref: any): any {
 
       if (k === 'titleTemplate' || (k[0] === 'o' && k[1] === 'n')) {
         resolved[k] = unref(root[k])
-
         continue
       }
 

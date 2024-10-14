@@ -1,5 +1,5 @@
-import { describe, it } from 'vitest'
 import { createHead, getActiveHead, useHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('state', () => {
   it('exists', async () => {

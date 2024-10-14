@@ -1,6 +1,6 @@
+import type { BaseMeta, Head, MetaFlatInput } from '@unhead/schema'
 import type { TransformValueOptions } from 'packrup'
 import { packArray, unpackToArray, unpackToString } from 'packrup'
-import type { BaseMeta, Head, MetaFlatInput } from '@unhead/schema'
 
 interface PackingDefinition {
   metaKey?: keyof BaseMeta

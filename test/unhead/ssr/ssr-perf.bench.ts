@@ -1,6 +1,6 @@
-import { bench, describe } from 'vitest'
-import { createHead, useHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from 'unhead'
+import { bench, describe } from 'vitest'
 
 describe('ssr bench', () => {
   bench('x50 ssr', async () => {

@@ -7,9 +7,11 @@ provide('navigation', navigation)
   <div>
     <Header />
 
-    <UContainer>
-      <NuxtPage />
-    </UContainer>
+    <main>
+      <UContainer>
+        <NuxtPage />
+      </UContainer>
+    </main>
 
     <ClientOnly>
       <DocsSearch />

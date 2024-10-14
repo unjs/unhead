@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest'
 import { InferSeoMetaPlugin } from '@unhead/addons'
-import { useDOMHead, useDelayedSerializedDom } from '../dom/util'
+import { describe, it } from 'vitest'
+import { useDelayedSerializedDom, useDOMHead } from '../dom/util'
 
 describe('hooks', () => {
   it('infer-seo-meta', async () => {

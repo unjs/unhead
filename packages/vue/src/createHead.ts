@@ -1,8 +1,8 @@
-import type { Plugin } from 'vue'
-import { nextTick } from 'vue'
-import { createHead as _createHead, createServerHead as _createServerHead } from 'unhead'
 import type { CreateHeadOptions, MergeHead } from '@unhead/schema'
+import type { Plugin } from 'vue'
 import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from './types'
+import { createHead as _createHead, createServerHead as _createServerHead } from 'unhead'
+import { nextTick } from 'vue'
 import { Vue3 } from './env'
 import VueReactivityPlugin from './plugins/VueReactivityPlugin'
 

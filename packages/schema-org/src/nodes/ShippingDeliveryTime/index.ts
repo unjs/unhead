@@ -1,6 +1,6 @@
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import type { Thing } from '../../types'
 import type { QuantitativeValue } from '../MonetaryAmount'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { quantitativeValueResolver } from '../MonetaryAmount'
 
 export interface ShippingDeliveryTime extends Thing {

@@ -1,6 +1,6 @@
 import type { Head } from '@unhead/schema'
-import { JSDOM } from 'jsdom'
 import type { SSRHeadPayload } from '@unhead/ssr'
+import { JSDOM } from 'jsdom'
 
 export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
   return new JSDOM(

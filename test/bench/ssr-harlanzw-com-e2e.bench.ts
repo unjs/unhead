@@ -1,9 +1,9 @@
-import { bench, describe } from 'vitest'
-import { CapoPlugin, createServerHead, useHead, useSeoMeta, useServerHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
-import { InferSeoMetaPlugin } from '@unhead/addons'
 import type { Head } from '@unhead/schema'
-import { UnheadSchemaOrg, definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
+import { InferSeoMetaPlugin } from '@unhead/addons'
+import { definePerson, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
+import { renderSSRHead } from '@unhead/ssr'
+import { CapoPlugin, createServerHead, useHead, useSeoMeta, useServerHead } from 'unhead'
+import { bench, describe } from 'vitest'
 
 describe('ssr e2e bench', () => {
   bench('e2e', async () => {

@@ -22,7 +22,7 @@ export function hashTag(tag: HeadTag) {
   let content = `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:`
 
   for (const key in tag.props) {
-    content += `${key}:${tag.props[key]},`
+    content += `${key}:${String(tag.props[key])},`
   }
 
   return hashCode(content)

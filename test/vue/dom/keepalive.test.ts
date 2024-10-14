@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { describe, it } from 'vitest'
 import { createHead, injectHead, useHead } from '@unhead/vue'
-import { KeepAlive, defineComponent, h, nextTick, ref } from 'vue'
+import { describe, it } from 'vitest'
+import { defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
 import { mount } from '../util'
 
 describe('keepalive', () => {

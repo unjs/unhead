@@ -3,21 +3,21 @@ import { createHead, createHeadCore, createServerHead } from './createHead'
 // create
 export {
   createHead,
-  createServerHead,
   createHeadCore,
+  createServerHead,
 }
-
-// optional plugins
-export * from './optionalPlugins/hashHydrationPlugin'
-export * from './optionalPlugins/capoPlugin'
 
 // composables
 export * from './autoImports'
 export * from './composables/useActiveHead'
+
 export * from './composables/useHead'
 export * from './composables/useHeadSafe'
+export * from './composables/useScript'
+export * from './composables/useSeoMeta'
 export * from './composables/useServerHead'
 export * from './composables/useServerHeadSafe'
-export * from './composables/useSeoMeta'
 export * from './composables/useServerSeoMeta'
-export * from './composables/useScript'
+export * from './optionalPlugins/capoPlugin'
+// optional plugins
+export * from './optionalPlugins/hashHydrationPlugin'

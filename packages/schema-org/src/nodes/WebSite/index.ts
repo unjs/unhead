@@ -1,16 +1,16 @@
 import type { Arrayable, Identity, NodeRelations, Thing } from '../../types'
+import type { Organization } from '../Organization'
+import type { Person } from '../Person'
+import type { WebPage } from '../WebPage'
+import type { SearchAction } from './SearchAction'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
   resolveAsGraphKey,
   setIfEmpty,
 } from '../../utils'
-import type { Person } from '../Person'
-import type { Organization } from '../Organization'
-import type { WebPage } from '../WebPage'
 import { PrimaryWebPageId } from '../WebPage'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
-import type { SearchAction } from './SearchAction'
 import { searchActionResolver } from './SearchAction'
 
 /**

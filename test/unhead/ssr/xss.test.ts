@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
 import { stringify } from 'devalue'
+import { createHead } from 'unhead'
+import { describe, it } from 'vitest'
 
 describe('xss', () => {
   it('basic', async () => {

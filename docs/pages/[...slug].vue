@@ -89,11 +89,11 @@ const ecosystemLinks = [
           <UPageBody prose class="pb-0">
             <ContentRenderer v-if="page.body" :value="page" />
             <hr v-if="surround?.length" class="my-8">
-            <UDocsSurround :surround="surround" />
+            <UContentSurround :surround="surround" />
           </UPageBody>
 
           <template #right>
-            <UDocsToc :links="page.body?.toc?.links || []">
+            <UContentToc :links="page.body?.toc?.links || []">
               <template #bottom>
                 <div class="hidden !mt-6 lg:block space-y-6">
                   <UDivider dashed />
@@ -104,7 +104,7 @@ const ecosystemLinks = [
                   <UPageLinks title="Ecosystem" :links="ecosystemLinks" />
                 </div>
               </template>
-            </UDocsToc>
+            </UContentToc>
           </template>
         </UPage>
       </div>

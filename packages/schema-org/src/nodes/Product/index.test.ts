@@ -1,9 +1,9 @@
+import type { WebSite } from '../WebSite'
 import { expect } from 'vitest'
+import { defineAggregateRating, definePerson, defineProduct, defineWebSite, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
 import { IdentityId, idReference } from '../../utils'
-import type { WebSite } from '../WebSite'
 import { PrimaryWebSiteId } from '../WebSite'
-import { defineAggregateRating, definePerson, defineProduct, defineWebSite, useSchemaOrg } from '../../'
 
 describe('defineProduct', () => {
   it('can be registered', async () => {

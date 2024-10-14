@@ -1,8 +1,8 @@
-import { describe, it } from 'vitest'
-import { createHead, useHead, useServerHead } from 'unhead'
-import { renderSSRHead } from '@unhead/ssr'
-import { renderDOMHead } from '@unhead/dom'
 import type { Head } from '@unhead/schema'
+import { renderDOMHead } from '@unhead/dom'
+import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead, useServerHead } from 'unhead'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
 
 describe('unhead e2e', () => {
@@ -85,7 +85,8 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script src="https://my-app.com/home.js"></script>
       <script type="application/json">{"val":"\\u003C/script>"}</script>
-      <meta name="description" content="This is the home page">",
+      <meta name="description" content="This is the home page">
+      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>",
         "htmlAttrs": " lang="en"",
       }
     `)
@@ -130,6 +131,7 @@ describe('unhead e2e', () => {
       <script src="https://my-app.com/home.js"></script>
       <script type="application/json">{"val":"\\u003C/script>"}</script>
       <meta name="description" content="This is the home page">
+      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>
       </head>
       <body>
 

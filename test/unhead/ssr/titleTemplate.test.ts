@@ -1,5 +1,5 @@
-import { createHead } from 'unhead'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead } from 'unhead'
 
 describe('titleTemplate', () => {
   it('string replace', async () => {
@@ -10,7 +10,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `"<title>test - my template</title>"`,
     )
   })
   it('fn replace', async () => {
@@ -21,7 +21,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>test - my template</title>"',
+      `"<title>test - my template</title>"`,
     )
   })
   it('titleTemplate as title', async () => {
@@ -32,7 +32,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>Default Title</title>"',
+      `"<title>Default Title</title>"`,
     )
   })
   it('reset title template', async () => {
@@ -46,7 +46,7 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title>page title</title>"',
+      `"<title>page title</title>"`,
     )
   })
 
@@ -81,7 +81,25 @@ describe('titleTemplate', () => {
     })
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
-      '"<title></title>"',
+      `""`,
+    )
+  })
+  it('function titleTemplate with templateParams', async () => {
+    const head = createHead()
+    head.push({
+      titleTemplate: () => '%s %separator %subPage% %separator %site.name',
+      title: 'test %foo',
+      templateParams: {
+        site: {
+          name: 'test',
+        },
+        subPage: 'subPage',
+        foo: 'foo',
+      },
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(
+      `"<title>test foo | subPage% | test</title>"`,
     )
   })
 })

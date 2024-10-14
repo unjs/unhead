@@ -1,14 +1,14 @@
+import type { NodeRelations } from '../../types'
+import type { OpeningHoursSpecification } from '../OpeningHours'
+import type { Organization } from '../Organization'
+import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
   resolveDefaultType,
 } from '../../utils'
-import type { Organization } from '../Organization'
-import type { OpeningHoursSpecification } from '../OpeningHours'
 import { openingHoursResolver } from '../OpeningHours'
-import type { NodeRelations } from '../../types'
-import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
-import { addressResolver } from '../PostalAddress'
 import { organizationResolver } from '../Organization'
+import { addressResolver } from '../PostalAddress'
 
 type ValidLocalBusinessSubTypes = 'AnimalShelter' |
   'ArchiveOrganization' |

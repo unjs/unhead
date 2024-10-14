@@ -1,8 +1,8 @@
-import { createSSRApp, ref } from 'vue'
-import { renderToString } from '@vue/server-renderer'
 import type { MergeHead } from '@unhead/schema'
-import { createHead, useHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
+import { createHead, useHead } from '@unhead/vue'
+import { renderToString } from '@vue/server-renderer'
+import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {
@@ -36,10 +36,7 @@ describe('vue ssr custom augmentation', () => {
 
     const headResult = await renderSSRHead(head)
     expect(headResult.headTags).toMatchInlineSnapshot(
-      `
-      "<title></title>
-      <link data-test="test" href="link-one" CUSTOM_FIELD="10">"
-    `,
+      `"<link data-test="test" href="link-one" CUSTOM_FIELD="10">"`,
     )
   })
 })

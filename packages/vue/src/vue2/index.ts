@@ -1,14 +1,27 @@
-import { getCurrentInstance } from 'vue'
 import type { Plugin } from 'vue'
-import { headSymbol } from '../createHead'
+import type { UseHeadInput } from '../types'
+import { defu } from 'defu'
+import { getCurrentInstance } from 'vue'
 import { useHead } from '../composables/useHead'
+import { headSymbol } from '../createHead'
 import { Vue3 } from '../env'
 
 export const UnheadPlugin: Plugin = (_Vue) => {
+  // @ts-expect-error vue3 type augments
+  _Vue.config.optionMergeStrategies.head = function (toVal, fromVal, vm) {
+    // resolve both from functions
+    if (typeof toVal === 'function') {
+      toVal = toVal.call(vm || this || _Vue)
+    }
+    if (typeof fromVal === 'function') {
+      fromVal = fromVal.call(vm || this || _Vue)
+    }
+    return defu(toVal as any, fromVal as any) as unknown
+  }
   // copied from https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/vue2-plugin.ts
   _Vue.mixin({
     created() {
-      let source = false
+      let source: false | UseHeadInput = false
       if (Vue3) {
         const instance = getCurrentInstance()
         if (!instance)
@@ -30,8 +43,9 @@ export const UnheadPlugin: Plugin = (_Vue) => {
         }
       }
 
-      // @ts-expect-error vue 2
-      source && useHead(source)
+      if (source) {
+        useHead(source)
+      }
     },
 
     beforeCreate() {

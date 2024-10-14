@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest'
 import { createHead, useHead } from 'unhead'
+import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
-import { useDOMHead, useDelayedSerializedDom } from './util'
+import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('templateParams', () => {
   it('basic', async () => {

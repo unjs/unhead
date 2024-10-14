@@ -1,5 +1,5 @@
 import type { HeadTag } from '@unhead/schema'
-import { HasElementTags, defineHeadPlugin, tagDedupeKey, tagWeight } from '@unhead/shared'
+import { defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight } from '@unhead/shared'
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
@@ -20,6 +20,9 @@ export default defineHeadPlugin({
         delete tag.props.key
       }
       const generatedKey = tagDedupeKey(tag)
+      if (generatedKey && !generatedKey.startsWith('meta:og:') && !generatedKey.startsWith('meta:twitter:')) {
+        delete tag.key
+      }
       const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
       if (dedupe)
         tag._d = dedupe
@@ -29,7 +32,7 @@ export default defineHeadPlugin({
       const deduping: Record<string, HeadTag> = Object.create(null)
       for (const tag of ctx.tags) {
         // need a seperate dedupe key other than _d
-        const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || tag._p!
+        const dedupeKey = (tag.key ? `${tag.tag}:${tag.key}` : tag._d) || hashTag(tag)
         const dupedTag: HeadTag = deduping[dedupeKey]
         // handling a duplicate tag
         if (dupedTag) {
