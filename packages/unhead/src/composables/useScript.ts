@@ -151,6 +151,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
       else if (trigger instanceof Promise) {
         script._triggerAbortController = script._triggerAbortController || new AbortController()
+        // promise triggers only work client side
+        if (head.ssr) {
+          return
+        }
         script._triggerPromises = script._triggerPromises || []
         const idx = script._triggerPromises.push(Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
