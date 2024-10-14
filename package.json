@@ -39,6 +39,7 @@
   },
   "resolutions": {
     "@nuxt/vite-builder": "3.13.2",
+    "@nuxtjs/mdc": "0.8.3",
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
@@ -51,7 +52,6 @@
     "shiki": "1.17.0",
     "unhead": "workspace:*",
     "vite": "5.4.8",
-    "vue": "^3.5.10",
-    "@nuxtjs/mdc": "0.8.3"
+    "vue": "^3.5.10"
   }
 }

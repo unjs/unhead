@@ -23,6 +23,12 @@
     </RouterLink>|
     <RouterLink to="/manual-script">
       Manual
+    </RouterLink> |
+    <RouterLink to="/timer-script">
+      Timer Script
+    </RouterLink> |
+    <RouterLink to="/timer-script2">
+      Timer Script 2
     </RouterLink>
     <RouterView v-slot="{ Component }">
       <Suspense>
