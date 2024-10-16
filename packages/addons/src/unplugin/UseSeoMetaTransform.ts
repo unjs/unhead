@@ -77,8 +77,10 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
       const importNames: Record<string, string> = {}
       for (const i of statements.flatMap(i => parseStaticImport(i))) {
         if (i.namedImports) {
-          for (const key in i.namedImports)
-            importNames[i.namedImports[key]] = key
+          for (const key in i.namedImports) {
+            if (key === 'useSeoMeta' || key === 'useServerSeoMeta')
+              importNames[i.namedImports[key]] = key
+          }
         }
         // note: namespaced imports are not supported
       }

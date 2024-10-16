@@ -179,10 +179,9 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useSeoMeta as usm, useHead } from 'unhead'
-      useHead({
-        title: 'test',
-      })
+      "import { useHead } from 'unhead'
+      import { useSeoMeta as usm, useHead } from 'unhead'
+      useHead({ title: 'test', })
       useHead({
         meta: [
           { name: 'description', content: 'World' },
@@ -233,7 +232,9 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useServerSeoMeta, useServerHead, useHead, SomethingRandom } from 'unhead'
+      "import { useHead } from 'unhead'
+      import { useServerHead } from 'unhead'
+      import { useServerSeoMeta, useServerHead, useHead, SomethingRandom } from 'unhead'
       useHead({
         title: 'Hello',
       });
@@ -521,5 +522,80 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
 
     expect(code).match(/useServerHead/)
     expect(code).match(/title:/)
+  })
+
+  it('#407', async () => {
+    const code = await transform(`
+import { defineComponent as _defineComponent } from "vue";
+import { useHead, useSeoMeta } from "@unhead/vue";
+
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "app",
+  setup(__props, { expose }) {
+    expose();
+    useHead({ title: 'test' });
+    useSeoMeta({ description: 'foo' });
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});`, 'app.js')
+
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from '@unhead/vue'
+
+      import { defineComponent as _defineComponent } from "vue";
+      import { useHead, useSeoMeta } from "@unhead/vue";
+
+      const _sfc_main = /* @__PURE__ */ _defineComponent({
+        __name: "app",
+        setup(__props, { expose }) {
+          expose();
+          useHead({ title: 'test' });
+          useHead({
+        meta: [
+          { name: 'description', content: 'foo' },
+        ]
+      });
+          Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+          return __returned__;
+        }
+      });"
+    `)
+  })
+
+  it('alt import as name', async () => {
+    const code = await transform(`
+import { defineComponent as _defineComponent } from "vue";
+import { useSeoMeta as SEOMETA } from "@unhead/vue";
+
+const _sfc_main = /* @__PURE__ */ _defineComponent({
+  __name: "app",
+  setup(__props, { expose }) {
+    expose();
+    SEOMETA({});
+    Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+    return __returned__;
+  }
+});`, 'app.js')
+
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from '@unhead/vue'
+
+      import { defineComponent as _defineComponent } from "vue";
+      import { useSeoMeta as SEOMETA } from "@unhead/vue";
+
+      const _sfc_main = /* @__PURE__ */ _defineComponent({
+        __name: "app",
+        setup(__props, { expose }) {
+          expose();
+          useHead({
+      });
+          Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+          return __returned__;
+        }
+      });"
+    `)
   })
 })
