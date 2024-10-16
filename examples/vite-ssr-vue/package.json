@@ -19,18 +19,18 @@
     "@unhead/schema-org": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "pinia": "^2.2.2",
+    "pinia": "^2.2.4",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^0.18.3",
-    "vite": "^5.4.8",
+    "vite": "^5.4.9",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.7.4",
-    "express": "^4.21.0",
+    "express": "^4.21.1",
     "serve-static": "^1.16.2",
-    "vue": "^3.5.10"
+    "vue": "^3.5.12"
   }
 }
