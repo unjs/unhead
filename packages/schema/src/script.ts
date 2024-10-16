@@ -33,7 +33,11 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
-  _triggerAbortController?: AbortController
+  _triggerAbortController?: AbortController | null
+  /**
+   * @internal
+   */
+  _triggerAbortPromise?: Promise<void>
   /**
    * @internal
    */

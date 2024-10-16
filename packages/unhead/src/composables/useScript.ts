@@ -70,7 +70,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     cb(script.instance)
     return () => {}
   }
-  const loadPromise = new Promise<T>((resolve, reject) => {
+  const loadPromise = new Promise<T | false>((resolve) => {
     // promise never resolves
     if (head.ssr)
       return
@@ -91,7 +91,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           }
         }
         else if (status === 'error') {
-          reject(new Error(`Failed to load script: ${input.src}`))
+          resolve(false) // failed to load
         }
         _()
       }
@@ -104,6 +104,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     id,
     status: 'awaitingLoad',
     remove() {
+      // cancel any pending triggers as we've started loading
+      script._triggerAbortController?.abort()
+      script._triggerPromises = [] // clear any pending promises
       if (script.entry) {
         script.entry.dispose()
         syncStatus('removed')
@@ -150,18 +153,33 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         script.load()
       }
       else if (trigger instanceof Promise) {
-        script._triggerAbortController = script._triggerAbortController || new AbortController()
+        // promise triggers only work client side
+        if (head.ssr) {
+          return
+        }
+        if (!script._triggerAbortController) {
+          script._triggerAbortController = new AbortController()
+          script._triggerAbortPromise = new Promise<void>((resolve) => {
+            script._triggerAbortController!.signal.addEventListener('abort', () => {
+              script._triggerAbortController = null
+              resolve()
+            })
+          })
+        }
         script._triggerPromises = script._triggerPromises || []
         const idx = script._triggerPromises.push(Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
-          new Promise<void>((resolve) => {
-            script._triggerAbortController!.signal.addEventListener('abort', () => resolve())
-          }),
-        ]).then((res) => {
-          res?.()
-          // remove the promise from the list
-          script._triggerPromises?.splice(idx, 1)
-        }))
+          script._triggerAbortPromise,
+        ])
+          // OK
+          .catch(() => {})
+          .then((res) => {
+            res?.()
+          })
+          .finally(() => {
+            // remove the promise from the list
+            script._triggerPromises?.splice(idx, 1)
+          }))
       }
       else if (typeof trigger === 'function') {
         trigger(script.load)
@@ -172,15 +190,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // script is ready
   loadPromise
     .then((api) => {
-      script.instance = api
-      if (_cbs.loaded)
-        _cbs.loaded.forEach(cb => cb(api))
-      _cbs.loaded = null
-    })
-    .catch((err) => {
-      if (_cbs.error)
-        _cbs.error.forEach(cb => cb(err))
-      _cbs.error = null
+      if (api !== false) {
+        script.instance = api
+        _cbs.loaded?.forEach(cb => cb(api))
+        _cbs.loaded = null
+      }
+      else {
+        _cbs.error?.forEach(cb => cb())
+        _cbs.error = null
+      }
     })
   const hookCtx = { script }
 
@@ -217,7 +235,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           }
           return fn
         }
-        const fn = access(script.instance) || access(await loadPromise)
+        let fn = access(script.instance)
+        if (!fn) {
+          fn = await (new Promise<T | undefined>((resolve) => {
+            script.onLoaded(api => {
+              resolve(access(api))
+            })
+          }))
+        }
         return typeof fn === 'function' ? Reflect.apply(fn, instance, args) : fn
       },
     })

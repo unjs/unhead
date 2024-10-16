@@ -68,6 +68,10 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
   script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  onScopeDispose(() => {
+    // stop any trigger promises
+    script._triggerAbortController?.abort()
+  })
 }
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
