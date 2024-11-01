@@ -6,7 +6,8 @@ const state = reactive({
 })
 
 useHead({
-  title: () => `${state.count} times`,
+  title: () => `"${state.count}" times`,
+  titleTemplate: '%s - myApp',
 })
 </script>
 

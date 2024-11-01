@@ -48,4 +48,23 @@ describe('xss', () => {
       }
     `)
   })
+  it('title quotes', async () => {
+    const head = createHead()
+
+    head.push({
+      title: '"test" times',
+      titleTemplate: '%s - myApp',
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>&quot;test&quot; times - myApp</title>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

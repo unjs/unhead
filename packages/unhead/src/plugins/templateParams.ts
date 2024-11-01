@@ -52,7 +52,7 @@ export default defineHeadPlugin(head => ({
             // @ts-expect-error untyped
             if (typeof tag[p] === 'string')
               // @ts-expect-error untyped
-              tag[p] = processTemplateParams(tag[p], params, sep)
+              tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && tag.props.type.endsWith('json'))
           }
         }
       }
