@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "latest",
-    "compression": "^1.7.4",
+    "compression": "^1.7.5",
     "express": "^4.21.1",
     "serve-static": "^1.16.2"
   }
