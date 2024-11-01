@@ -293,6 +293,9 @@ importers:
 
   packages/schema-org:
     dependencies:
+      ohash:
+        specifier: ^1.1.4
+        version: 1.1.4
       ufo:
         specifier: ^1.5.4
         version: 1.5.4
@@ -8674,7 +8677,7 @@ snapshots:
       jiti: 1.21.6
       mri: 1.2.0
       nanoid: 5.0.7
-      ofetch: 1.4.0
+      ofetch: 1.4.1
       package-manager-detector: 0.2.0
       parse-git-config: 3.0.0
       pathe: 1.1.2
@@ -9673,7 +9676,7 @@ snapshots:
     dependencies:
       '@iconify/utils': 2.1.33
       '@unocss/core': 0.62.4
-      ofetch: 1.4.0
+      ofetch: 1.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9708,7 +9711,7 @@ snapshots:
   '@unocss/preset-web-fonts@0.62.4':
     dependencies:
       '@unocss/core': 0.62.4
-      ofetch: 1.4.0
+      ofetch: 1.4.1
 
   '@unocss/preset-wind@0.62.4':
     dependencies:
@@ -10629,7 +10632,7 @@ snapshots:
       convert-gitmoji: 0.1.5
       mri: 1.2.0
       node-fetch-native: 1.6.4
-      ofetch: 1.4.0
+      ofetch: 1.4.1
       open: 10.1.0
       pathe: 1.1.2
       pkg-types: 1.2.0
@@ -13456,7 +13459,7 @@ snapshots:
       mlly: 1.7.2
       mri: 1.2.0
       node-fetch-native: 1.6.4
-      ofetch: 1.4.0
+      ofetch: 1.4.1
       ohash: 1.1.4
       openapi-typescript: 6.7.6
       pathe: 1.1.2
@@ -13809,7 +13812,7 @@ snapshots:
       nitropack: 2.9.7(magicast@0.3.5)(webpack-sources@3.2.3)
       nuxi: 3.14.0
       nypm: 0.3.12
-      ofetch: 1.4.0
+      ofetch: 1.4.1
       ohash: 1.1.4
       pathe: 1.1.2
       perfect-debounce: 1.0.0

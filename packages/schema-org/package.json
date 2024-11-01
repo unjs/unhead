@@ -55,6 +55,7 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "dependencies": {
+    "ohash": "^1.1.4",
     "ufo": "^1.5.4"
   },
   "build": {
