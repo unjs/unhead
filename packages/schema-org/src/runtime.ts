@@ -165,6 +165,9 @@ export function useSchemaOrg(input: UseSchemaOrgInput, options?: Pick<HeadEntryO
   const head = getActiveHead()
   if (!head)
     return
+  if ((Array.isArray(input) && input.length === 0) || !input) {
+    return
+  }
   head.use(UnheadSchemaOrg())
   return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
     script: [
