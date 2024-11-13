@@ -58,10 +58,10 @@
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "magic-string": "^0.30.12",
-    "mlly": "^1.7.2",
+    "mlly": "^1.7.3",
     "ufo": "^1.5.4",
     "unplugin": "^1.15.0",
-    "unplugin-ast": "^0.10.0"
+    "unplugin-ast": "^0.11.0"
   },
   "devDependencies": {
     "@babel/types": "^7.26.0",
