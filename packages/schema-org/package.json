@@ -54,6 +54,15 @@
     "release": "bumpp package.json --commit --push --tag",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
+  "peerDependencies": {
+    "@unhead/vue": "^1",
+    "unhead": "^1"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/vue": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "ohash": "^1.1.4",
     "ufo": "^1.5.4"
