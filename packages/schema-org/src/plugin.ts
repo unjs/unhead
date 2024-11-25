@@ -39,7 +39,6 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       },
       'tag:normalise': async ({ tag }) => {
         if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
-          console.log('tag', tag)
           // this is a bit expensive, load in seperate chunk
           const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
@@ -113,6 +112,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         for (const k in ctx.tags) {
           const tag = ctx.tags[k]
           if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
+            delete tag.props.nodes
             if (typeof firstNodeKey === 'undefined') {
               firstNodeKey = k as any
               continue
