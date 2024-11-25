@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "1.11.11",
+  "version": "1.11.12",
   "private": "true",
   "packageManager": "pnpm@9.14.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
