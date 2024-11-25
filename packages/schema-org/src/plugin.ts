@@ -1,6 +1,7 @@
 import type { SchemaOrgGraph } from '.'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
+import { defu } from 'defu'
 import {
   createSchemaOrgGraph,
   resolveMeta,
@@ -38,6 +39,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       },
       'tag:normalise': async ({ tag }) => {
         if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+          console.log('tag', tag)
           // this is a bit expensive, load in seperate chunk
           const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
@@ -85,6 +87,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
         for (const k in ctx.tags) {
           const tag = ctx.tags[k]
           if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+            delete tag.props.nodes
             const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
             if (!resolvedGraph.length) {
               // removes the tag
@@ -101,10 +104,28 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 return processTemplateParams(value, head._templateParams!, head._separator!)
               return value
             }, minify ? 0 : 2)
-            delete tag.props.nodes
             return
           }
         }
+      },
+      'tags:afterResolve': (ctx) => {
+        let firstNodeKey: number | undefined
+        for (const k in ctx.tags) {
+          const tag = ctx.tags[k]
+          if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
+            if (typeof firstNodeKey === 'undefined') {
+              firstNodeKey = k as any
+              continue
+            }
+            // merge props on to first node and delete
+            ctx.tags[firstNodeKey].props = defu(ctx.tags[firstNodeKey].props, tag.props)
+            delete ctx.tags[firstNodeKey].props.nodes
+            // @ts-expect-error untyped
+            ctx.tags[k] = false
+          }
+        }
+        // there many be multiple script nodes within the same entry
+        ctx.tags = ctx.tags.filter(Boolean)
       },
     },
   }))
