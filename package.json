@@ -31,7 +31,7 @@
     "eslint": "^9.15.0",
     "fs-extra": "^11.2.0",
     "jsdom": "^25.0.1",
-    "typescript": "^5.7.2",
+    "typescript": "5.6.3",
     "unbuild": "^2.0.0",
     "utility-types": "^3.11.0",
     "vitest": "^2.1.5",
@@ -40,6 +40,7 @@
   "resolutions": {
     "@nuxt/vite-builder": "3.14.1592",
     "@nuxtjs/mdc": "0.9.5",
+    "typescript": "5.6.3",
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
