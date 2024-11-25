@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "1.11.12",
+  "version": "1.11.13",
   "private": "true",
   "packageManager": "pnpm@9.14.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -40,7 +40,6 @@
   "resolutions": {
     "@nuxt/vite-builder": "3.14.1592",
     "@nuxtjs/mdc": "0.9.5",
-    "typescript": "5.6.3",
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
@@ -51,6 +50,7 @@
     "@vue/server-renderer": "3.5.13",
     "nuxt": "3.14.1592",
     "shiki": "1.23.1",
+    "typescript": "5.6.3",
     "unhead": "workspace:*",
     "vite": "5.4.11",
     "vue": "^3.5.13"
