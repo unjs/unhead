@@ -23,8 +23,12 @@ const merge = createDefu((object, key, value) => {
   if (Array.isArray(object[key])) {
     if (Array.isArray(value)) {
       // unique set
+      // make a record with hash'es as keys for [...object[key], ...value]
+      const map = {} as Record<string, any>
+      for (const item of [...object[key], ...value])
+        map[hash(item)] = item
       // @ts-expect-error untyped
-      object[key] = [...new Set([...object[key], ...value])]
+      object[key] = Object.values(map)
       if (key === 'itemListElement') {
         // @ts-expect-error untyped
         object[key] = [...uniqueBy(object[key], item => item.position)]

@@ -406,12 +406,6 @@ describe('defineWebPage', () => {
                   "https://example.com/",
                 ],
               },
-              {
-                "@type": "ReadAction",
-                "target": [
-                  "https://example.com/",
-                ],
-              },
             ],
             "url": "https://example.com/",
           },

@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "1.11.9",
+  "version": "1.11.13",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -54,7 +54,17 @@
     "release": "bumpp package.json --commit --push --tag",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
+  "peerDependencies": {
+    "@unhead/vue": "^1.11.13",
+    "unhead": "^1.11.13"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/vue": {
+      "optional": true
+    }
+  },
   "dependencies": {
+    "ohash": "^1.1.4",
     "ufo": "^1.5.4"
   },
   "build": {
@@ -67,6 +77,6 @@
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.27.4"
+    "unplugin-vue-components": "^0.27.5"
   }
 }

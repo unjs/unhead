@@ -239,7 +239,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         let fn = access(script.instance)
         if (!fn) {
           fn = await (new Promise<T | undefined>((resolve) => {
-            script.onLoaded(api => {
+            script.onLoaded((api) => {
               resolve(access(api))
             })
           }))

@@ -298,4 +298,21 @@ describe('schema.org e2e', () => {
       }</script>"
     `)
   })
+
+  it('empty', async () => {
+    const ssrHead = createHead({
+      plugins: [
+        SchemaOrgUnheadPlugin(),
+      ],
+    })
+    useSchemaOrg(['test'])
+    useSchemaOrg([])
+    // @ts-expect-error intentional
+    useSchemaOrg('')
+    // @ts-expect-error intentional
+    useSchemaOrg('test')
+
+    const data = await renderSSRHead(ssrHead)
+    expect(data.bodyTags).toMatchInlineSnapshot(`""`)
+  })
 })

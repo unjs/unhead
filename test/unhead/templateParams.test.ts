@@ -12,6 +12,6 @@ describe('templateParams', () => {
     const res = processTemplateParams('Something %nullish', {
       nullish: null,
     })
-    expect(res).toMatchInlineSnapshot('"Something"')
+    expect(res).toMatchInlineSnapshot(`"Something"`)
   })
 })

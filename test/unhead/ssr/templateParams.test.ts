@@ -41,7 +41,7 @@ describe('ssr templateParams', () => {
 
     expect(htmlAttrs).toMatchInlineSnapshot(`" lang="en""`)
     expect(headTags).toMatchInlineSnapshot(`
-      "<title>hello world \\&quot;: | My Awesome Site</title>
+      "<title>hello world &quot;: | My Awesome Site</title>
       <meta name="description" content="Welcome to My Awesome Site!">
       <meta property="twitter:image" content="https://cdn.example.com/some%20image.jpg">
       <script type="application/json">{"title":"hello world \\":"}</script>"

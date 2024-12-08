@@ -1,6 +1,7 @@
 import type { SchemaOrgGraph } from '.'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
+import { defu } from 'defu'
 import {
   createSchemaOrgGraph,
   resolveMeta,
@@ -42,6 +43,10 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           const { loadResolver } = await import('./resolver')
           const nodes = await tag.props.nodes
           for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
+            // malformed input
+            if (typeof node !== 'object' || Object.keys(node).length === 0) {
+              continue
+            }
             const newNode = {
               ...node,
               _dedupeStrategy: tag.tagDuplicateStrategy,
@@ -78,22 +83,49 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       },
       'tags:resolve': async (ctx) => {
         // find the schema.org node, should be a single instance
-        for (const tag of ctx.tags) {
+        for (const k in ctx.tags) {
+          const tag = ctx.tags[k]
           if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+            delete tag.props.nodes
+            const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
+            if (!resolvedGraph.length) {
+              // removes the tag
+              tag.props = {}
+              return
+            }
             const minify = options?.minify || process.env.NODE_ENV === 'production'
             tag.innerHTML = JSON.stringify({
               '@context': 'https://schema.org',
-              '@graph': graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta }),
+              '@graph': resolvedGraph,
             }, (_, value) => {
               // process template params here
               if (typeof value !== 'object')
                 return processTemplateParams(value, head._templateParams!, head._separator!)
               return value
             }, minify ? 0 : 2)
-            delete tag.props.nodes
             return
           }
         }
+      },
+      'tags:afterResolve': (ctx) => {
+        let firstNodeKey: number | undefined
+        for (const k in ctx.tags) {
+          const tag = ctx.tags[k]
+          if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
+            delete tag.props.nodes
+            if (typeof firstNodeKey === 'undefined') {
+              firstNodeKey = k as any
+              continue
+            }
+            // merge props on to first node and delete
+            ctx.tags[firstNodeKey].props = defu(ctx.tags[firstNodeKey].props, tag.props)
+            delete ctx.tags[firstNodeKey].props.nodes
+            // @ts-expect-error untyped
+            ctx.tags[k] = false
+          }
+        }
+        // there many be multiple script nodes within the same entry
+        ctx.tags = ctx.tags.filter(Boolean)
       },
     },
   }))
