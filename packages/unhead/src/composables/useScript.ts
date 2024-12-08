@@ -109,6 +109,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       script._triggerPromises = [] // clear any pending promises
       if (script.entry) {
         script.entry.dispose()
+        script.entry = undefined
         syncStatus('removed')
         delete head._scripts?.[id]
         return true

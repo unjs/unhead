@@ -59,4 +59,32 @@ describe('dom useScript', () => {
 
     expect(await instance.proxy.test('hello-world')).toEqual('hello-world')
   })
+  it('remove & re-add', async () => {
+    useDOMHead()
+
+    const instance = useScript<{ test: (foo: string) => void }>({
+      src: 'https://cdn.example.com/script.js',
+    })
+
+    let dom = await useDelayedSerializedDom()
+    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
+      [
+        "<script data-onload="" data-onerror="" defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-hid="c5c65b0"></script></head>",
+      ]
+    `)
+    instance.remove()
+    // wait
+    await new Promise((r) => setTimeout(r, 100))
+    dom = await useDelayedSerializedDom()
+    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`[]`)
+    // reload
+    instance.load()
+    await new Promise((r) => setTimeout(r, 100))
+    dom = await useDelayedSerializedDom()
+    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
+      [
+        "<script data-onload="" data-onerror="" defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-hid="c5c65b0"></script></head>",
+      ]
+    `)
+  })
 })
