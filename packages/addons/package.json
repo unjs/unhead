@@ -60,7 +60,7 @@
     "magic-string": "^0.30.14",
     "mlly": "^1.7.3",
     "ufo": "^1.5.4",
-    "unplugin": "^1.16.0",
+    "unplugin": "^2.0.0",
     "unplugin-ast": "^0.12.0"
   },
   "devDependencies": {
