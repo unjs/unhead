@@ -52,7 +52,7 @@
     "shiki": "1.24.1",
     "typescript": "5.7.2",
     "unhead": "workspace:*",
-    "vite": "5.4.11",
+    "vite": "6.0.3",
     "vue": "^3.5.13"
   }
 }
