@@ -15,12 +15,12 @@ export default <Partial<Config>> {
       maxWidth: {
         '8xl': '90rem',
       },
-      typography: (theme) => {
+      typography: () => {
         return {
           DEFAULT: {
             css: {
               'h1, h2, h3, h4': {
-                'fontWeight': theme('fontWeight.bold'),
+                'fontWeight': '600',
                 'scroll-margin-top': 'var(--scroll-mt)',
               },
               'h1 a, h2 a, h3 a, h4 a': {
@@ -29,7 +29,6 @@ export default <Partial<Config>> {
                 fontWeight: 'inherit',
               },
               'a': {
-                fontWeight: theme('fontWeight.medium'),
                 textDecoration: 'none',
                 borderBottom: '1px solid transparent',
               },
@@ -74,10 +73,7 @@ export default <Partial<Config>> {
               },
               'input[type="checkbox"]': {
                 'color': 'rgb(var(--color-primary-500))',
-                'borderRadius': theme('borderRadius.DEFAULT'),
                 'borderColor': 'rgb(var(--color-gray-300))',
-                'height': theme('spacing.4'),
-                'width': theme('spacing.4'),
                 'marginTop': '-3.5px !important',
                 'marginBottom': '0 !important',
                 '&:focus': {
@@ -95,10 +91,10 @@ export default <Partial<Config>> {
                 marginLeft: '-1.625em',
               },
               'ul ul': {
-                paddingLeft: theme('padding.6'),
+                // paddingLeft: theme('padding.6'),
               },
               'ul ol': {
-                paddingLeft: theme('padding.6'),
+                // paddingLeft: theme('padding.6'),
               },
               'ul > li.task-list-item': {
                 paddingLeft: '0 !important',
@@ -150,18 +146,18 @@ export default <Partial<Config>> {
               '--tw-prose-th-borders': 'rgb(var(--color-gray-300))',
               '--tw-prose-td-borders': 'rgb(var(--color-gray-200))',
               '--tw-prose-invert-body': 'rgb(var(--color-gray-200))',
-              '--tw-prose-invert-headings': theme('colors.white'),
+              // '--tw-prose-invert-headings': theme('colors.white'),
               '--tw-prose-invert-lead': 'rgb(var(--color-gray-400))',
               '--tw-prose-invert-links': 'rgb(var(--color-primary-400))',
-              '--tw-prose-invert-bold': theme('colors.white'),
+              // '--tw-prose-invert-bold': theme('colors.white'),
               '--tw-prose-invert-counters': 'rgb(var(--color-gray-400))',
               '--tw-prose-invert-bullets': 'rgb(var(--color-gray-600))',
               '--tw-prose-invert-hr': 'rgb(var(--color-gray-800))',
               '--tw-prose-invert-quotes': 'rgb(var(--color-gray-100))',
               '--tw-prose-invert-quote-borders': 'rgb(var(--color-gray-700))',
               '--tw-prose-invert-captions': 'rgb(var(--color-gray-400))',
-              '--tw-prose-invert-code': theme('colors.white'),
-              '--tw-prose-invert-pre-code': theme('colors.white'),
+              // '--tw-prose-invert-code': theme('colors.white'),
+              // '--tw-prose-invert-pre-code': theme('colors.white'),
               '--tw-prose-invert-pre-bg': 'rgb(var(--color-gray-800))',
               '--tw-prose-invert-pre-border': 'rgb(var(--color-gray-700))',
               '--tw-prose-invert-th-borders': 'rgb(var(--color-gray-700))',

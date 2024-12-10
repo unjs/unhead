@@ -14,7 +14,6 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/content',
     '@nuxt/fonts',
-    'nuxt-lodash',
     'nuxt-og-image',
     'nuxt-icon',
     '@nuxtjs/seo',
