@@ -57,7 +57,7 @@
     "@rollup/pluginutils": "^5.1.3",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "magic-string": "^0.30.14",
+    "magic-string": "^0.30.15",
     "mlly": "^1.7.3",
     "ufo": "^1.5.4",
     "unplugin": "^2.0.0",
