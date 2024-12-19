@@ -77,6 +77,6 @@
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.27.5"
+    "unplugin-vue-components": "^0.28.0"
   }
 }
