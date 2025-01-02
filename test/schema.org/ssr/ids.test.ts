@@ -23,7 +23,7 @@ describe('schema.org ssr ids', () => {
 
     const tags = await ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
-    expect(id).toMatchInlineSnapshot(`"https://example.com/#/schema/web-page/#foo"`)
+    expect(id).toMatchInlineSnapshot(`"https://example.com#/schema/web-page/#foo"`)
   })
   it('allows ids with custom domains', async () => {
     const ssrHead = createHead()
@@ -129,7 +129,7 @@ describe('schema.org ssr ids', () => {
           ],
         },
         {
-          "@id": "https://example.com/#webpage",
+          "@id": "https://example.com#webpage",
           "@type": "WebPage",
           "isPartOf": {
             "@id": "https://example.com/en#website",

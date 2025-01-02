@@ -3,7 +3,7 @@ import type {
   Id,
   Thing,
 } from '../types'
-import { hasProtocol, withBase } from 'ufo'
+import { cleanDoubleSlashes, hasProtocol, resolveURL, withBase } from 'ufo'
 
 export function idReference<T extends Thing>(node: T | string) {
   return {
@@ -87,7 +87,7 @@ export function prefixId(url: string, id: Id | string) {
     return id as Id
   if (!id.includes('#'))
     id = `#${id}`
-  return withBase(id, url) as Id
+  return cleanDoubleSlashes(resolveURL(url, id)) as Id
 }
 
 export function trimLength(val: string | undefined, length: number) {

@@ -88,7 +88,7 @@ describe('schema.org e2e no plugin', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "/about/#webpage",
+            "@id": "/about#webpage",
             "name": "About",
             "url": "/about",
             "@type": [
@@ -117,7 +117,7 @@ describe('schema.org e2e no plugin', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "/about/#webpage",
+            "@id": "/about#webpage",
             "name": "About",
             "url": "/about",
             "@type": [
@@ -164,18 +164,18 @@ describe('schema.org e2e no plugin', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "https://example.com/#identity",
+            "@id": "https://example.com#identity",
             "@type": "Organization",
             "name": "test",
             "url": "https://example.com"
           },
           {
-            "@id": "https://example.com/#website",
+            "@id": "https://example.com#website",
             "@type": "WebSite",
             "name": "test",
             "url": "https://example.com",
             "publisher": {
-              "@id": "https://example.com/#identity"
+              "@id": "https://example.com#identity"
             }
           }
         ]
@@ -214,7 +214,7 @@ describe('schema.org e2e no plugin', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "https://example.com/about/#webpage",
+            "@id": "https://example.com/about#webpage",
             "url": "https://example.com/about",
             "@type": [
               "WebPage",
@@ -222,15 +222,15 @@ describe('schema.org e2e no plugin', () => {
             ],
             "mainEntity": [
               {
-                "@id": "https://example.com/about/#/schema/question/ab1c398"
+                "@id": "https://example.com/about#/schema/question/ab1c398"
               },
               {
-                "@id": "https://example.com/about/#/schema/question/6396da9"
+                "@id": "https://example.com/about#/schema/question/6396da9"
               }
             ]
           },
           {
-            "@id": "https://example.com/about/#/schema/question/ab1c398",
+            "@id": "https://example.com/about#/schema/question/ab1c398",
             "@type": "Question",
             "name": "What is your return policy?",
             "acceptedAnswer": {
@@ -239,7 +239,7 @@ describe('schema.org e2e no plugin', () => {
             }
           },
           {
-            "@id": "https://example.com/about/#/schema/question/6396da9",
+            "@id": "https://example.com/about#/schema/question/6396da9",
             "@type": "Question",
             "name": "What is something else?",
             "acceptedAnswer": {

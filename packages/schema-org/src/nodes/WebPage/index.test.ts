@@ -53,7 +53,7 @@ describe('defineWebPage', () => {
 
       expect(webPage).toMatchInlineSnapshot(`
           {
-            "@id": "https://example.com/test/#webpage",
+            "@id": "https://example.com/test#webpage",
             "@type": "WebPage",
             "description": "description",
             "name": "headline",
@@ -156,7 +156,7 @@ describe('defineWebPage', () => {
 
       expect(webpage).toMatchInlineSnapshot(`
           {
-            "@id": "https://example.com/our-pages/about-us/#webpage",
+            "@id": "https://example.com/our-pages/about-us#webpage",
             "@type": [
               "WebPage",
               "AboutPage",
