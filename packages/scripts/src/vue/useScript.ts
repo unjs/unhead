@@ -1,5 +1,4 @@
 import type {
-  AsAsyncFunctionValues,
   UseScriptInput as BaseUseScriptInput,
   UseScriptOptions as BaseUseScriptOptions,
   DataKeys,
@@ -13,9 +12,9 @@ import type {
 } from '@unhead/schema'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { MaybeComputedRefEntriesOnly } from '../types'
+import { injectHead } from '@unhead/vue'
 import { useScript as _useScript } from 'unhead'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { injectHead } from './injectHead'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
@@ -35,15 +34,7 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = {}, U
   trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean>
 }
 
-export type UseScriptContext<T extends Record<symbol | string, any>> =
-  (Promise<T> & VueScriptInstance<T>)
-  & AsAsyncFunctionValues<T>
-  & {
-  /**
-   * @deprecated Use top-level functions instead.
-   */
-    $script: Promise<T> & VueScriptInstance<T>
-  }
+export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T> & VueScriptInstance<T>
 
 function registerVueScopeHandlers<T extends Record<symbol | string, any> = Record<symbol | string, any>>(script: UseScriptContext<UseFunctionType<UseScriptOptions<T, any>, T>>, scope?: ComponentInternalInstance | null) {
   if (!scope) {

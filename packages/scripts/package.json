@@ -1,0 +1,82 @@
+{
+  "name": "@unhead/scripts",
+  "type": "module",
+  "version": "1.11.14",
+  "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/schema-org"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "keywords": [
+    "schema.org",
+    "node",
+    "seo"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "vue": [
+        "dist/vue"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "vue.d.ts"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub",
+    "test": "vitest",
+    "release": "bumpp package.json --commit --push --tag",
+    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
+  },
+  "peerDependencies": {
+    "@unhead/vue": "^1.11.13",
+    "unhead": "^1.11.13"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/vue": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "ohash": "^1.1.4",
+    "ufo": "^1.5.4"
+  },
+  "build": {
+    "external": [
+      "vue"
+    ]
+  },
+  "devDependencies": {
+    "@unhead/schema": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
+    "unplugin-vue-components": "^0.27.5"
+  }
+}

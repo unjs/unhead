@@ -1,45 +1,25 @@
 import type {
-  AsAsyncFunctionValues,
   Head,
-  ScriptInstance,
-  UseFunctionType,
-  UseScriptInput,
-  UseScriptOptions,
-  UseScriptResolvedInput,
 } from '@unhead/schema'
+import type { ScriptInstance, UseFunctionType, UseScriptContext, UseScriptOptions, WarmupStrategy } from '../types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
-
-import { getActiveHead } from './useActiveHead'
-
-export type UseScriptContext<T extends Record<symbol | string, any>> =
-  (Promise<T> & ScriptInstance<T>)
-  & AsAsyncFunctionValues<T>
-  & {
-  /**
-   * @deprecated Use top-level functions instead.
-   */
-    $script: Promise<T> & ScriptInstance<T>
-  }
-
-const ScriptProxyTarget = Symbol('ScriptProxyTarget')
-function scriptProxy() {}
-scriptProxy[ScriptProxyTarget] = true
+import { createNoopedRecordingProxy, replayProxyRecordings } from '../utils/proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
   return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
 }
 
+const PreconnectServerModes = ['preconnect', 'dns-prefetch']
+
 /**
  * Load third-party scripts with SSR support and a proxied API.
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
- *
- * @deprecated Use @unhead/scripts -> useScript instead.
  */
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
-  const head = options.head || getActiveHead()
+  const head = options.head
   if (!head)
     throw new Error('Missing Unhead context.')
   const id = resolveScriptKey(input)
@@ -100,15 +80,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
   })
 
-  const script = Object.assign(loadPromise, <Partial<UseScriptContext<T>>> {
+  const script = Object.assign(loadPromise, {
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
     id,
     status: 'awaitingLoad',
+
     remove() {
       // cancel any pending triggers as we've started loading
       script._triggerAbortController?.abort()
       script._triggerPromises = [] // clear any pending promises
+      script._warmupEl?.dispose()
       if (script.entry) {
         script.entry.dispose()
         script.entry = undefined
@@ -117,6 +99,30 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         return true
       }
       return false
+    },
+    warmup(rel: WarmupStrategy) {
+      const { src } = input
+      const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
+      const isPreconnect = rel && PreconnectServerModes.includes(rel)
+      let href = src
+      if (!rel || (isPreconnect && !isCrossOrigin)) {
+        return
+      }
+      if (isPreconnect) {
+        const $url = new URL(src)
+        href = `${$url.protocol}//${$url.host}`
+      }
+      const link: Required<Head>['link'][0] = {
+        href,
+        rel,
+        crossorigin: input.crossorigin || isCrossOrigin ? 'anonymous' : undefined,
+        referrerpolicy: input.referrerpolicy || isCrossOrigin ? 'no-referrer' : undefined,
+        fetchpriority: input.fetchpriority || 'low',
+        integrity: input.integrity,
+        as: rel === 'preload' ? 'script' : undefined,
+      }
+      script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
+      return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
       // cancel any pending triggers as we've started loading
@@ -189,7 +195,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
     },
     _cbs,
-  }) as UseScriptContext<T>
+  }) as any as UseScriptContext<T>
   // script is ready
   loadPromise
     .then((api) => {
@@ -206,62 +212,20 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const hookCtx = { script }
 
   script.setupTriggerHandler(options.trigger)
-  // support deprecated behavior
-  script.$script = script
-  const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
-    return new Proxy((!accessor ? instance : instance?.[accessor]) || scriptProxy, {
-      get(_, k, r) {
-        head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
-        if (!accessor) {
-          const stub = options.stub?.({ script, fn: k })
-          if (stub)
-            return stub
-        }
-        if (_ && k in _ && typeof _[k] !== 'undefined') {
-          return Reflect.get(_, k, r)
-        }
-        if (k === Symbol.iterator) {
-          return [][Symbol.iterator]
-        }
-        return proxyChain(accessor ? instance?.[accessor] : instance, k, accessors || [k])
-      },
-      async apply(_, _this, args) {
-        // we are faking, just return, avoid promise handles
-        if (head.ssr && _[ScriptProxyTarget])
-          return
-        let instance: any
-        const access = (fn?: T) => {
-          instance = fn || instance
-          for (let i = 0; i < (accessors || []).length; i++) {
-            const k = (accessors || [])[i]
-            fn = fn?.[k]
-          }
-          return fn
-        }
-        let fn = access(script.instance)
-        if (!fn) {
-          fn = await (new Promise<T | undefined>((resolve) => {
-            script.onLoaded((api) => {
-              resolve(access(api))
-            })
-          }))
-        }
-        return typeof fn === 'function' ? Reflect.apply(fn, instance, args) : fn
-      },
+  if (options.use) {
+    const { proxy, stack } = createNoopedRecordingProxy()
+    script.proxy = proxy
+    script.onLoaded((instance) => {
+      replayProxyRecordings(instance, stack)
     })
   }
-  script.proxy = proxyChain(script.instance)
-  // remove in v2, just return the script
-  const res = new Proxy(script, {
-    get(_, k) {
-      // _ keys are reserved for internal overrides
-      const target = (k in script || String(k)[0] === '_') ? script : script.proxy
-      if (k === 'then' || k === 'catch') {
-        return script[k].bind(script)
-      }
-      return Reflect.get(target, k, target)
-    },
-  })
-  head._scripts = Object.assign(head._scripts || {}, { [id]: res })
-  return res
+  // need to make sure it's not already registered
+  if (!options.warmupStrategy && (typeof trigger === 'undefined' || trigger === 'client')) {
+    options.warmupStrategy = 'preload'
+  }
+  if (options.warmupStrategy) {
+    script.warmup(options.warmupStrategy)
+  }
+  head._scripts = Object.assign(head._scripts || {}, { [id]: script })
+  return script
 }

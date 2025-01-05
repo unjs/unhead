@@ -1,12 +1,12 @@
-import { useScript } from 'unhead'
 import { describe, it } from 'vitest'
-import { useDelayedSerializedDom, useDOMHead } from './util'
+import { useDelayedSerializedDom, useDOMHead } from '../../../test/unhead/dom/util'
+import { useScript } from '../src/vanilla/useScript'
 
 describe('dom useScript', () => {
   it('basic', async () => {
     const head = useDOMHead()
 
-    const instance = useScript<{ test: (foo: string) => void }>({
+    const instance = useScript({
       src: 'https://cdn.example.com/script.js',
     }, {
       use() {
@@ -74,12 +74,12 @@ describe('dom useScript', () => {
     `)
     instance.remove()
     // wait
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`[]`)
     // reload
     instance.load()
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
       [

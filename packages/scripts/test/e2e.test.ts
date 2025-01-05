@@ -2,7 +2,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead, useHead, useScript } from 'unhead'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
+import { useDom } from '../../../test/fixtures'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {
