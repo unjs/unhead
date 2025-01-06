@@ -8,8 +8,7 @@ import type {
   UseScriptResolvedInput,
 } from '@unhead/schema'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
-
-import { getActiveHead } from './useActiveHead'
+import { useUnhead } from '../context'
 
 export type UseScriptContext<T extends Record<symbol | string, any>> =
   (Promise<T> & ScriptInstance<T>)
@@ -37,9 +36,7 @@ export function resolveScriptKey(input: UseScriptResolvedInput) {
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
-  const head = options.head || getActiveHead()
-  if (!head)
-    throw new Error('Missing Unhead context.')
+  const head = options.head || useUnhead()
   const id = resolveScriptKey(input)
   const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
   if (prevScript) {

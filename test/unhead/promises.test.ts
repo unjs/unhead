@@ -1,9 +1,9 @@
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../util'
 
 describe('promises', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: new Promise(resolve => resolve('hello')),
       script: [

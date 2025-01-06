@@ -24,6 +24,7 @@
       "@unhead/schema-org/*": ["packages/schema-org/*"]
     },
     "resolveJsonModule": true,
+    "types": ["vitest/globals"],
     "strict": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,

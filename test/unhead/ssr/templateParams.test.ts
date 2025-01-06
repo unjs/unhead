@@ -1,11 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
 
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       htmlAttrs: {
         lang: '%locale',
@@ -49,7 +49,7 @@ describe('ssr templateParams', () => {
   })
 
   it('does not affect other content', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: 'This|is|an|example||with||multiple||||pipes',
       script: [
@@ -70,7 +70,7 @@ describe('ssr templateParams', () => {
   })
 
   it('json', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: 'Home & //<"With Encoding">\\',
       script: [
@@ -92,7 +92,7 @@ describe('ssr templateParams', () => {
   })
 
   it('ssr payload', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: 'test',
       titleTemplate: '%s %separator %siteName',

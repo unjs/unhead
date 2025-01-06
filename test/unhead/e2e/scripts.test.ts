@@ -1,14 +1,15 @@
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead, useScript } from 'unhead'
+import { useHead, useScript } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
     const input = {
       script: [
         {
@@ -32,7 +33,7 @@ describe('unhead e2e scripts', () => {
     `)
 
     const dom = useDom(data)
-    const csrHead = createHead({
+    const csrHead = createHeadWithContext({
       document: dom.window.document,
     })
     csrHead.push(input)
@@ -57,7 +58,7 @@ describe('unhead e2e scripts', () => {
 
   it('manually updating trigger', async () => {
     const dom = useDom()
-    const csrHead = createHead({
+    const csrHead = createHeadWithContext({
       document: dom.window.document,
     })
     const promise = new Promise<void>(() => {})
@@ -88,7 +89,7 @@ describe('unhead e2e scripts', () => {
 
   it('duplicate script registers', async () => {
     const dom = useDom()
-    const csrHead = createHead({
+    const csrHead = createHeadWithContext({
       document: dom.window.document,
     })
     const neverResolves = new Promise<void>(() => {})
