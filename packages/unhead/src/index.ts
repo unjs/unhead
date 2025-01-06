@@ -9,7 +9,6 @@ export {
 
 // composables
 export * from './autoImports'
-export * from './composables/useActiveHead'
 
 export * from './composables/useHead'
 export * from './composables/useHeadSafe'

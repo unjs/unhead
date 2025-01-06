@@ -1,19 +1,16 @@
 {
-  "name": "unhead",
+  "name": "@unhead/context",
   "type": "module",
-  "version": "1.11.13",
-  "author": {
-    "name": "Harlan Wilton",
-    "email": "harlan@harlanzw.com",
-    "url": "https://harlanzw.com/"
-  },
+  "version": "1.11.14",
+  "description": "",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
   "homepage": "https://unhead.unjs.io",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/unhead"
+    "directory": "packages/context"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
@@ -35,13 +32,15 @@
   "scripts": {
     "build": "unbuild .",
     "stub": "unbuild . --stub",
-    "export:sizes": "npx export-size . -r"
+    "test": "vitest",
+    "release": "bumpp package.json --commit --push --tag",
+    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
+  },
+  "peerDependencies": {
+    "unhead": "^1.11.13"
   },
   "dependencies": {
-    "@unhead/context": "workspace:*",
-    "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
-    "hookable": "^5.5.3"
+    "unctx": "^1.1.4"
   }
 }

@@ -1,35 +1,18 @@
-import type { MergeHead } from '@unhead/schema'
-import type { VueHeadClient } from '../types'
-import { getActiveHead } from 'unhead'
+import type { Unhead } from '@unhead/schema'
+import { tryUseUnhead } from '@unhead/context'
 import { inject } from 'vue'
 import { headSymbol } from '../createHead'
 
-const _global
-  = typeof globalThis !== 'undefined'
-    ? globalThis
-    : typeof window !== 'undefined'
-      ? window
-      : typeof global !== 'undefined'
-        ? global
-        : typeof self !== 'undefined'
-          ? self
-          : {}
-
-const globalKey = '__unhead_injection_handler__'
-
-export function setHeadInjectionHandler(handler: () => VueHeadClient<any> | undefined) {
-  // @ts-expect-error global injection
-  _global[globalKey] = handler
-}
-
-export function injectHead<T extends MergeHead>() {
-  if (globalKey in _global) {
-    // @ts-expect-error global injection
-    return _global[globalKey]() as VueHeadClient<T>
+export function injectHead() {
+  // allow custom context setting
+  const ctx = tryUseUnhead()
+  if (ctx) {
+    return ctx
   }
-  // fallback resolver
-  const head = inject(headSymbol)
-  if (!head && process.env.NODE_ENV !== 'production')
-    console.warn('Unhead is missing Vue context, falling back to shared context. This may have unexpected results.')
-  return (head || getActiveHead()) as VueHeadClient<T>
+  // fallback to vue context
+  const instance = inject<Unhead>(headSymbol)
+  if (!instance) {
+    throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
+  }
+  return instance
 }

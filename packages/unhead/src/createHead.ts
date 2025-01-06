@@ -21,19 +21,16 @@ import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
 import XSSPlugin from './plugins/xss'
 
-// TODO drop support for non-context head
-// eslint-disable-next-line import/no-mutable-exports
-export let activeHead: Unhead<any> | undefined
-
 // TODO rename to createDomHead
-/* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
+export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>(options)
   head.use(DomPlugin())
-  return activeHead = head
+  return head
 }
 
-/* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  return activeHead = createHeadCore<T>(options)
+export function createServerHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+  // @ts-expect-error untyped
+  return createHeadCore<T>({ ...options, document: false })
 }
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
@@ -45,11 +42,11 @@ function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
  *
  * @param options
  */
-export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
+export function createHeadCore<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
-  options.document = options.document || (IsBrowser ? document : undefined)
+  options.document = typeof options.document !== 'undefined' ? options.document : (IsBrowser ? document : undefined)
   const ssr = !options.document
 
   const updated = () => {

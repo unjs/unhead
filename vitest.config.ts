@@ -21,6 +21,7 @@ export default defineConfig({
       '@unhead/vue/polyfill': resolve(__dirname, 'packages/vue/src/VueUseHeadPolyfill.ts'),
       '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
       '@unhead/schema-org': resolve(__dirname, 'packages/schema-org/src'),
+      '@unhead/context': resolve(__dirname, 'packages/context/src'),
     },
   },
   test: {
