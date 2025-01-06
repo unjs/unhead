@@ -55,5 +55,4 @@ export interface HeadHooks {
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 
   'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
-  'script:instance-fn': (ctx: { script: ScriptInstance<any>, fn: string | symbol, exists: boolean }) => HookResult
 }

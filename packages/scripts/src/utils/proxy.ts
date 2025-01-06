@@ -35,15 +35,16 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
 
   let stackIdx = -1
   const handler = (reuseStack = false) => ({
-    get(_, prop) {
+    get(_, prop, receiver) {
       if (!reuseStack) {
+        const v = Reflect.get(_, prop, receiver)
+        if (typeof v !== 'undefined') {
+          return v
+        }
         stackIdx++ // root get triggers a new stack
         stack[stackIdx] = []
       }
       stack[stackIdx].push({ type: 'get', key: prop })
-      if (prop in _) {
-        return _[prop]
-      }
       return new Proxy(() => {}, handler(true))
     },
     apply(_, __, args) {
@@ -53,7 +54,7 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
   } as ProxyHandler<T>)
 
   return {
-    proxy: new Proxy(instance, handler()),
+    proxy: new Proxy(instance || {}, handler()),
     stack,
   }
 }

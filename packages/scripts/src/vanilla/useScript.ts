@@ -1,8 +1,16 @@
 import type {
   Head,
 } from '@unhead/schema'
-import type { ScriptInstance, UseFunctionType, UseScriptContext, UseScriptOptions, WarmupStrategy } from '../types'
+import type {
+  ScriptInstance,
+  UseFunctionType,
+  UseScriptContext,
+  UseScriptInput,
+  UseScriptOptions,
+  WarmupStrategy,
+} from '../types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
+import { getActiveHead } from 'unhead'
 import { createNoopedRecordingProxy, replayProxyRecordings } from '../utils/proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
@@ -19,7 +27,7 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
-  const head = options.head
+  const head = options.head || getActiveHead()
   if (!head)
     throw new Error('Missing Unhead context.')
   const id = resolveScriptKey(input)
@@ -213,14 +221,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   script.setupTriggerHandler(options.trigger)
   if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy()
+    const { proxy, stack } = createNoopedRecordingProxy<T>(options.use() || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
     })
   }
   // need to make sure it's not already registered
-  if (!options.warmupStrategy && (typeof trigger === 'undefined' || trigger === 'client')) {
+  if (!options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
     options.warmupStrategy = 'preload'
   }
   if (options.warmupStrategy) {

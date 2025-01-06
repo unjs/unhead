@@ -1,6 +1,7 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useScript } from 'unhead'
+import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { useScript } from '../../src/vanilla/useScript'
 
 describe('ssr useScript', () => {
   it('default', async () => {
@@ -16,7 +17,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script">",
         "htmlAttrs": "",
       }
     `)
@@ -64,7 +65,7 @@ describe('ssr useScript', () => {
   })
   it('google ', async () => {
     const head = createHead()
-
+    const window: any = {}
     const gtag = useScript<{ dataLayer: any[] }>({
       src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
     }, {

@@ -1,6 +1,6 @@
 import { createHead } from 'unhead'
 import { describe, expectTypeOf, it } from 'vitest'
-import { useScript } from '../src/vanilla/useScript'
+import { useScript } from '../../src/vanilla/useScript'
 
 describe('useScript', () => {
   it('types: inferred use()', async () => {

@@ -1,7 +1,7 @@
 import type { LinkBase } from 'zhead'
 import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
-import { useScript } from '../src/vanilla/useScript'
+import { useScript } from '../../src/vanilla/useScript'
 
 describe('warmup', () => {
   it('server', () => {

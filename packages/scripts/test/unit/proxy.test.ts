@@ -1,5 +1,7 @@
+import { createHead } from 'unhead'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import {createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings} from '../src/utils/proxy'
+import { createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings } from '../../src/utils/proxy'
+import { useScript } from '../../src/vanilla/useScript'
 
 interface Api {
   _paq: any[]
@@ -57,7 +59,6 @@ describe('proxy chain', () => {
     w._paq = []
     const stack = []
     w._paq = createSpyProxy(w._paq, (s, arg) => {
-      console.log('on apply', s, arg)
       stack.push(s)
     })
     w._paq.push(['test'])
@@ -88,5 +89,24 @@ describe('proxy chain', () => {
         ],
       ]
     `)
+  })
+  it('use() provided', () => {
+    const head = createHead()
+    const instance = useScript({
+      src: 'https://cdn.example.com/script.js',
+      head,
+    }, {
+      use() {
+        return {
+          greet: (foo: string) => {
+            console.log(foo)
+            return foo
+          },
+        }
+      },
+    })
+    const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    instance.proxy.greet('hello-world')
+    expect(consoleMock).toHaveBeenCalledWith('hello-world')
   })
 })

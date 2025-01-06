@@ -1,27 +1,22 @@
 import type {
-  UseScriptInput as BaseUseScriptInput,
-  UseScriptOptions as BaseUseScriptOptions,
   DataKeys,
   HeadEntryOptions,
   SchemaAugmentations,
   ScriptBase,
-  ScriptInstance,
-  UseFunctionType,
-  UseScriptResolvedInput,
-  UseScriptStatus,
 } from '@unhead/schema'
+import type { MaybeComputedRefEntriesOnly } from '@unhead/vue'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
-import type { MaybeComputedRefEntriesOnly } from '../types'
+import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
 import { injectHead } from '@unhead/vue'
-import { useScript as _useScript } from 'unhead'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { useScript as _useScript } from '../vanilla/useScript'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
 }
 
 export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = {}, U = {}> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T, U>, 'use' | 'stub' | 'eventContext' | 'beforeInit'> {
+export interface UseScriptOptions<T extends Record<symbol | string, any> = {}, U = {}> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T, U>, 'use' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -67,7 +62,7 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
-  const options = _options || {}
+  const options = _options || {} as UseScriptOptions<T, U>
   const head = options?.head || injectHead()
   // @ts-expect-error untyped
   options.head = head
@@ -97,7 +92,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // sync the status, need to register before useScript
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
-    // @ts-expect-error untyped
     s._statusRef.value = s.status
   })
   // @ts-expect-error untyped

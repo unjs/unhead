@@ -1,9 +1,10 @@
-import { createHead, useScript } from '@unhead/vue'
+import { createHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
-import { useDom } from '../../fixtures'
+import { useDom } from '../../../../test/fixtures'
+import { useScript } from '../../src/vue/useScript'
 
-describe('unhead vue e2e scripts', () => {
+describe('vue e2e scripts', () => {
   it('multiple active promise handles', async () => {
     const dom = useDom()
     const head = createHead({
