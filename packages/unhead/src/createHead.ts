@@ -12,6 +12,7 @@ import type {
 import { DomPlugin } from '@unhead/dom'
 import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
+import { unheadCtx } from './context'
 import DedupePlugin from './plugins/dedupe'
 import EventHandlersPlugin from './plugins/eventHandlers'
 import HashKeyedPlugin from './plugins/hashKeyed'
@@ -25,6 +26,10 @@ import XSSPlugin from './plugins/xss'
 export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   const head = createHeadCore<T>(options)
   head.use(DomPlugin())
+  // should only be one instance client-side
+  if (!head.ssr && IsBrowser) {
+    unheadCtx.set(head, true)
+  }
   return head
 }
 
