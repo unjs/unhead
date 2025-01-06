@@ -33,8 +33,6 @@ export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
 // types
 export * from './types'
-export * from './Vue2ProvideUnheadPlugin'
-// vue 2
 export * from './VueHeadMixin'
 
 export type { ActiveHeadEntry, Head, HeadEntryOptions, HeadTag, MergeHead, Unhead } from '@unhead/schema'
