@@ -1,9 +1,10 @@
-import { CapoPlugin, createHead } from 'unhead'
+import { CapoPlugin } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('capo', () => {
   it('basic', async () => {
-    const head = createHead({
+    const head = createHeadWithContext({
       plugins: [
         CapoPlugin({
           track: true,

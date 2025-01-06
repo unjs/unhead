@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { defineComment, useSchemaOrg } from '../../'
-import { injectSchemaOrg, useSetup } from '../../../.test'
+import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineComment', () => {
   it('can be registered', async () => {

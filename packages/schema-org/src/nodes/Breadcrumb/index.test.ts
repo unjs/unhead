@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { defineBreadcrumb, useSchemaOrg } from '../../'
-import { injectSchemaOrg, useSetup } from '../../../.test'
+import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineBreadcrumb', async () => {
   it('can be registered', async () => {

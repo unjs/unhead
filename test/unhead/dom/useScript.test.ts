@@ -11,7 +11,7 @@ describe('dom useScript', () => {
     }, {
       use() {
         return {
-          test: (foo: string) => {},
+          test: () => {},
         }
       },
     })
@@ -74,12 +74,12 @@ describe('dom useScript', () => {
     `)
     instance.remove()
     // wait
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`[]`)
     // reload
     instance.load()
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
       [
