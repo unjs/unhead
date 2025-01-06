@@ -21,9 +21,7 @@
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
       "@unhead/shared/*": ["packages/shared/*"],
-      "@unhead/schema-org/*": ["packages/schema-org/*"],
-      "@unhead/context": ["packages/context/src"],
-      "@unhead/context/*": ["packages/context/*"]
+      "@unhead/schema-org/*": ["packages/schema-org/*"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],

@@ -5,7 +5,7 @@ import type {
   MergeHead,
   Unhead,
 } from '@unhead/schema'
-import { useUnhead } from '@unhead/context'
+import { useUnhead } from '../context'
 
 export type UseHeadInput<T extends MergeHead> = Head<T>
 

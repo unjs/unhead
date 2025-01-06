@@ -1,5 +1,5 @@
 import type { Unhead } from '@unhead/schema'
-import { tryUseUnhead } from '@unhead/context'
+import { tryUseUnhead } from 'unhead'
 import { inject } from 'vue'
 import { headSymbol } from '../createHead'
 

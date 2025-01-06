@@ -271,18 +271,6 @@ importers:
         specifier: ^3.0.3
         version: 3.0.3
 
-  packages/context:
-    dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      unctx:
-        specifier: ^1.1.4
-        version: 1.2.0(esbuild@0.24.2)(rollup@3.29.5)(vite@6.0.6(@types/node@22.10.1)(jiti@2.4.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.6.1))(webpack@5.95.0(esbuild@0.24.2))
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-
   packages/dom:
     dependencies:
       '@unhead/schema':
@@ -347,9 +335,6 @@ importers:
 
   packages/unhead:
     dependencies:
-      '@unhead/context':
-        specifier: workspace:*
-        version: link:../context
       '@unhead/dom':
         specifier: workspace:*
         version: link:../dom
@@ -362,6 +347,9 @@ importers:
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
+      unctx:
+        specifier: ^2.4.1
+        version: 2.4.1
 
   packages/vue:
     dependencies:
@@ -4971,10 +4959,6 @@ packages:
     resolution: {integrity: sha512-C9sgUzVZtUtzCBoMdYtwrIRQ4IucGRFGgdhkjL7PXsVfPYmTuWtewqzk7dlipaCMWH/gOYehW9rgMoa4Oebtpw==}
     engines: {node: '>=16.14.0'}
 
-  magic-string@0.26.7:
-    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
-    engines: {node: '>=12'}
-
   magic-string@0.30.14:
     resolution: {integrity: sha512-5c99P1WKTed11ZC0HMJOj6CDIue6F8ySu+bJL+85q1zBEIY8IklrJ1eiKC2NDRh3Ct3FcvmJPyQHb9erXMTJNw==}
 
@@ -6512,10 +6496,6 @@ packages:
     resolution: {integrity: sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==}
     engines: {node: '>= 8'}
 
-  sourcemap-codec@1.4.8:
-    resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
-    deprecated: Please use @jridgewell/sourcemap-codec instead
-
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
 
@@ -6945,12 +6925,6 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
-  unctx@1.2.0:
-    resolution: {integrity: sha512-r3p62XKSMvgttYu3fFf52rteqcguwQENJ863dOGM1xM3uUbSNbr+zAuTohMyKx2pcZLmjusgcnl1cAWaZbCzKg==}
-
-  unctx@2.3.1:
-    resolution: {integrity: sha512-PhKke8ZYauiqh3FEMVNm7ljvzQiph0Mt3GBRve03IJm7ukfaON2OBK795tLwhbyfzknuRRkW0+Ze+CQUmzOZ+A==}
-
   unctx@2.4.1:
     resolution: {integrity: sha512-AbaYw0Nm4mK4qjhns67C+kgxR2YWiwlDBPzxrN8h8C6VtAdCgditAY5Dezu3IJy4XVqAnbrXt9oQJvsn3fyozg==}
 
@@ -7079,23 +7053,6 @@ packages:
       vue-router: ^4.4.0
     peerDependenciesMeta:
       vue-router:
-        optional: true
-
-  unplugin@0.6.3:
-    resolution: {integrity: sha512-CoW88FQfCW/yabVc4bLrjikN9HC8dEvMU4O7B6K2jsYMPK0l6iAnd9dpJwqGcmXJKRCU9vwSsy653qg+RK0G6A==}
-    peerDependencies:
-      esbuild: '>=0.13'
-      rollup: ^2.50.0
-      vite: 6.0.6
-      webpack: 4 || 5
-    peerDependenciesMeta:
-      esbuild:
-        optional: true
-      rollup:
-        optional: true
-      vite:
-        optional: true
-      webpack:
         optional: true
 
   unplugin@1.16.0:
@@ -7555,9 +7512,6 @@ packages:
   webpack-sources@3.2.3:
     resolution: {integrity: sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==}
     engines: {node: '>=10.13.0'}
-
-  webpack-virtual-modules@0.4.6:
-    resolution: {integrity: sha512-5tyDlKLqPfMqjT3Q9TAqf2YqjwmnUleZwzJi1A5qXnlBCdj2AtOJ6wAWdglTIDOPgOiOrXeBeFcsQ8+aGQ6QbA==}
 
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
@@ -8905,7 +8859,7 @@ snapshots:
       scule: 1.3.0
       semver: 7.6.3
       ufo: 1.5.4
-      unctx: 2.3.1
+      unctx: 2.4.1
       unimport: 3.14.3(rollup@4.28.1)
       untyped: 1.5.0
     transitivePeerDependencies:
@@ -8932,7 +8886,7 @@ snapshots:
       scule: 1.3.0
       semver: 7.6.3
       ufo: 1.5.4
-      unctx: 2.3.1
+      unctx: 2.4.1
       unimport: 3.14.3(rollup@4.28.1)
       untyped: 1.5.1
     transitivePeerDependencies:
@@ -9418,7 +9372,7 @@ snapshots:
       tailwind-config-viewer: 2.0.4(tailwindcss@3.4.16)
       tailwindcss: 3.4.16
       ufo: 1.5.4
-      unctx: 2.3.1
+      unctx: 2.4.1
     transitivePeerDependencies:
       - magicast
       - rollup
@@ -13598,10 +13552,6 @@ snapshots:
     dependencies:
       magic-string: 0.30.17
 
-  magic-string@0.26.7:
-    dependencies:
-      sourcemap-codec: 1.4.8
-
   magic-string@0.30.14:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -15806,8 +15756,6 @@ snapshots:
 
   source-map@0.7.4: {}
 
-  sourcemap-codec@1.4.8: {}
-
   space-separated-tokens@2.0.2: {}
 
   spdx-correct@3.2.0:
@@ -16099,18 +16047,6 @@ snapshots:
     optionalDependencies:
       esbuild: 0.23.1
 
-  terser-webpack-plugin@5.3.10(esbuild@0.24.2)(webpack@5.95.0(esbuild@0.24.2)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
-      jest-worker: 27.5.1
-      schema-utils: 3.3.0
-      serialize-javascript: 6.0.2
-      terser: 5.37.0
-      webpack: 5.95.0(esbuild@0.24.2)
-    optionalDependencies:
-      esbuild: 0.24.2
-    optional: true
-
   terser@5.37.0:
     dependencies:
       '@jridgewell/source-map': 0.3.6
@@ -16319,25 +16255,6 @@ snapshots:
       - supports-color
 
   uncrypto@0.1.3: {}
-
-  unctx@1.2.0(esbuild@0.24.2)(rollup@3.29.5)(vite@6.0.6(@types/node@22.10.1)(jiti@2.4.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.6.1))(webpack@5.95.0(esbuild@0.24.2)):
-    dependencies:
-      acorn: 8.14.0
-      estree-walker: 2.0.2
-      magic-string: 0.26.7
-      unplugin: 0.6.3(esbuild@0.24.2)(rollup@3.29.5)(vite@6.0.6(@types/node@22.10.1)(jiti@2.4.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.6.1))(webpack@5.95.0(esbuild@0.24.2))
-    transitivePeerDependencies:
-      - esbuild
-      - rollup
-      - vite
-      - webpack
-
-  unctx@2.3.1:
-    dependencies:
-      acorn: 8.14.0
-      estree-walker: 3.0.3
-      magic-string: 0.30.17
-      unplugin: 1.16.0
 
   unctx@2.4.1:
     dependencies:
@@ -16596,17 +16513,6 @@ snapshots:
     transitivePeerDependencies:
       - rollup
       - vue
-
-  unplugin@0.6.3(esbuild@0.24.2)(rollup@3.29.5)(vite@6.0.6(@types/node@22.10.1)(jiti@2.4.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.6.1))(webpack@5.95.0(esbuild@0.24.2)):
-    dependencies:
-      chokidar: 3.6.0
-      webpack-sources: 3.2.3
-      webpack-virtual-modules: 0.4.6
-    optionalDependencies:
-      esbuild: 0.24.2
-      rollup: 3.29.5
-      vite: 6.0.6(@types/node@22.10.1)(jiti@2.4.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.6.1)
-      webpack: 5.95.0(esbuild@0.24.2)
 
   unplugin@1.16.0:
     dependencies:
@@ -17009,8 +16915,6 @@ snapshots:
 
   webpack-sources@3.2.3: {}
 
-  webpack-virtual-modules@0.4.6: {}
-
   webpack-virtual-modules@0.6.2: {}
 
   webpack@5.95.0(esbuild@0.23.1):
@@ -17042,37 +16946,6 @@ snapshots:
       - '@swc/core'
       - esbuild
       - uglify-js
-
-  webpack@5.95.0(esbuild@0.24.2):
-    dependencies:
-      '@types/estree': 1.0.6
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.14.0
-      acorn-import-attributes: 1.9.5(acorn@8.14.0)
-      browserslist: 4.24.2
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.17.1
-      es-module-lexer: 1.5.4
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.10(esbuild@0.24.2)(webpack@5.95.0(esbuild@0.24.2))
-      watchpack: 2.4.2
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-    optional: true
 
   whatwg-encoding@3.1.1:
     dependencies:

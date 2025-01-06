@@ -38,10 +38,10 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "@unhead/context": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "hookable": "^5.5.3"
+    "hookable": "^5.5.3",
+    "unctx": "^2.4.1"
   }
 }

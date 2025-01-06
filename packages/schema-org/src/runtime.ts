@@ -37,8 +37,7 @@ import type {
   WebSite,
 } from './nodes'
 import type { Arrayable, Thing } from './types'
-import { useUnhead } from '@unhead/context'
-import { useHead } from 'unhead'
+import { useHead, useUnhead } from 'unhead'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {

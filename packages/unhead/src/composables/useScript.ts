@@ -7,8 +7,8 @@ import type {
   UseScriptOptions,
   UseScriptResolvedInput,
 } from '@unhead/schema'
-import { useUnhead } from '@unhead/context'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
+import { useUnhead } from '../context'
 
 export type UseScriptContext<T extends Record<symbol | string, any>> =
   (Promise<T> & ScriptInstance<T>)

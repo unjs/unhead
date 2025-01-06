@@ -3,7 +3,7 @@ import { getContext } from 'unctx'
 
 type UnheadInstance = Unhead<Head<MergeHead>>
 
-export const unheadCtx = getContext<UnheadInstance>('unhead')
+export const unheadCtx = getContext<Unhead<any>>('unhead')
 
 /**
  * Get access to Unhead instance.
