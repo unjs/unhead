@@ -74,7 +74,7 @@ export default defineHeadPlugin({
             dupedTag._duped.push(tag)
             continue
           }
-          else if (tagWeight(tag) > tagWeight(dupedTag)) {
+          else if ((!tag.key || !dupedTag.key) && tagWeight(tag) > tagWeight(dupedTag)) {
             // check tag weights
             continue
           }

@@ -300,8 +300,6 @@ describe('unhead e2e', () => {
     expect(html).toContain('class="layout-default page-home"')
     expect(html).toContain('style="color: red; background-color: red;"')
 
-    return
-
     homePageEntry.dispose()
 
     await renderDOMHead(csrHead, { document: dom.window.document })

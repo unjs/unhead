@@ -42,13 +42,6 @@
       "bundled": 11435
     },
     {
-      "name": "CapoPlugin",
-      "path": "dist/index.mjs",
-      "minified": 5113,
-      "minzipped": 1891,
-      "bundled": 10303
-    },
-    {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
       "minified": 4594,

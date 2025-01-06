@@ -38,6 +38,7 @@ describe('tag priority', () => {
             "src": "/not-important-script.js",
           },
           "tag": "script",
+          "tagPriority": 50,
         },
       ]
     `)
