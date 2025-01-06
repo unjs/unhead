@@ -1,14 +1,16 @@
-import ReactDOMServer from 'react-dom/server'
-import { StaticRouter } from 'react-router-dom/server'
-import { createHead } from '../../../packages/unhead/src/createHead'
-import { App } from './App'
+import { StrictMode } from 'react'
+import { renderToString } from 'react-dom/server'
+import App from './App'
+import { createServerHead, unheadCtx } from 'unhead'
 
-createHead()
-
-export function render(url, context) {
-  return ReactDOMServer.renderToString(
-    <StaticRouter location={url} context={context}>
+/**
+ * @param {string} _url
+ */
+export function render(_url) {
+  const html = renderToString(
+    <StrictMode>
       <App />
-    </StaticRouter>,
+    </StrictMode>,
   )
+  return { html }
 }
