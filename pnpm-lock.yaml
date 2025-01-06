@@ -123,12 +123,6 @@ importers:
         specifier: ^3.5.13
         version: 3.5.13(typescript@5.7.2)
 
-  examples/vite-ssr-html:
-    devDependencies:
-      express:
-        specifier: ^4.21.1
-        version: 4.21.1
-
   examples/vite-ssr-react:
     dependencies:
       react:
