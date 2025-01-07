@@ -55,7 +55,9 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
   const ssr = !options.document
 
   const updated = () => {
+    // eslint-disable-next-line ts/no-use-before-define
     head.dirty = true
+    // eslint-disable-next-line ts/no-use-before-define
     hooks.callHook('entries:updated', head)
   }
   let entryCount = 0

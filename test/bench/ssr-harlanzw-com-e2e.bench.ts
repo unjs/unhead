@@ -2,7 +2,7 @@ import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
-import { createServerHead, useHead, useSeoMeta, useServerHead } from 'unhead'
+import { createServerHead, unheadCtx, useHead, useSeoMeta, useServerHead } from 'unhead'
 import { bench, describe } from 'vitest'
 
 describe('ssr e2e bench', () => {
@@ -11,6 +11,7 @@ describe('ssr e2e bench', () => {
 
     // 1. Add nuxt.config meta tags
     const head = createServerHead()
+    unheadCtx.set(head)
     // nuxt.config app.head
     head.push({
       title: 'Harlan Wilton',
@@ -284,6 +285,7 @@ ${htmlContext.bodyPrepend.join('\n')}
 ${htmlContext.bodyAppend.join('\n')}
 </body>
 `
+    unheadCtx.unset()
   }, {
     iterations: 5000,
   })

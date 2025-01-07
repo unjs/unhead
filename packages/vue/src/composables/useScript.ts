@@ -22,7 +22,7 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
 }
 
 export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = {}, U = {}> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T, U>, 'use' | 'stub' | 'eventContext' | 'beforeInit'> {
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>, U = Record<string, any>> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T>, 'use' | 'stub' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.

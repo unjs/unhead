@@ -1,7 +1,6 @@
 import { defineHeadPlugin, SortModifiers, tagWeight } from '@unhead/shared'
 
-
-export default defineHeadPlugin((head => ({
+export default defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
       // 2a. Sort based on priority
@@ -46,4 +45,4 @@ export default defineHeadPlugin((head => ({
       })
     },
   },
-})))
+}))

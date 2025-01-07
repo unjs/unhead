@@ -85,7 +85,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         })
       }
       // safely fail
-      catch (e) {}
+      catch {}
       return transformed
     },
     webpack(ctx) {

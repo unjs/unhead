@@ -112,7 +112,7 @@ describe('schema.org ssr ids', () => {
     })
 
     const tags = await ssrHead.resolveTags()
-    const graph = JSON.parse(tags[0]?.innerHTML!)?.['@graph']
+    const graph = JSON.parse(tags[0]!.innerHTML!)?.['@graph']
     expect(graph).toMatchInlineSnapshot(`
       [
         {

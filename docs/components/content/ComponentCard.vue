@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// @ts-expect-error
 import { transformContent } from '@nuxt/content/transformers'
 
 const props = defineProps({
@@ -86,7 +85,6 @@ const propsToSelect = computed(() => Object.keys(componentProps).map((key) => {
   const keys = useGet(ui.value, dottedKey, {})
   let options = typeof keys === 'object' && Object.keys(keys)
   if (key.toLowerCase().endsWith('color')) {
-    // @ts-expect-error
     options = [...appConfig.ui.colors, ...props.extraColors]
   }
 
