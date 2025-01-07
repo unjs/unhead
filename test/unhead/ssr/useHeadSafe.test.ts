@@ -1,11 +1,12 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHeadSafe } from 'unhead'
+import { useHeadSafe } from 'unhead'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('dom useHeadSafe', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useHeadSafe(basicSchema)
 
@@ -23,7 +24,7 @@ describe('dom useHeadSafe', () => {
   })
 
   it('link href', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useHeadSafe({
       link: [
@@ -55,7 +56,7 @@ describe('dom useHeadSafe', () => {
   })
 
   it('meta charset allows safe', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useHeadSafe({
       meta: [
@@ -78,7 +79,7 @@ describe('dom useHeadSafe', () => {
   })
 
   it('meta charset is actually safe', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useHeadSafe({
       meta: [

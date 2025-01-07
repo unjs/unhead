@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.2",
-    "@iconify-json/lucide": "^1.2.20",
+    "@iconify-json/lucide": "^1.2.21",
     "@iconify-json/noto": "^1.2.2",
     "@iconify-json/ph": "^1.2.2",
     "@iconify-json/simple-icons": "^1.2.18",
@@ -21,8 +21,8 @@
     "@nuxt/ui": "2.20.0",
     "@nuxt/ui-pro": "1.6.0",
     "@nuxtjs/seo": "2.0.2",
-    "@vueuse/nuxt": "^12.2.0",
-    "nuxt": "3.15.0",
+    "@vueuse/nuxt": "^12.3.0",
+    "nuxt": "3.15.1",
     "nuxt-icon": "0.6.10",
     "nuxt-lego": "^0.0.14",
     "vue": "3.5.13"

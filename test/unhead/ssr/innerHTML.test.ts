@@ -1,10 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr innerHTML', () => {
   it('json', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -30,7 +30,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('json escaping', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -54,7 +54,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('noscript', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       noscript: [
         {
@@ -77,7 +77,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('bug #228', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [{
         innerHTML: `/* eslint-disable */
@@ -117,7 +117,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('empty innerHTML', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {

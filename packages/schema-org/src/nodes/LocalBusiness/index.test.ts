@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defineLocalBusiness, useSchemaOrg } from '../../'
-import { injectSchemaOrg, useSetup } from '../../../.test'
+import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineLocalBusiness', () => {
   it('can be registered', async () => {
