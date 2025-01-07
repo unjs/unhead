@@ -317,7 +317,7 @@ describe('schema.org e2e', () => {
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
   it('#441', async () => {
-    const ssrHead = createHead({
+    const ssrHead = createHeadWithContext({
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
