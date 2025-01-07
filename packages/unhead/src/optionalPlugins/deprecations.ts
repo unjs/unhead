@@ -3,7 +3,14 @@ import { defineHeadPlugin } from '@unhead/shared'
 export const DeprecationsPlugin = defineHeadPlugin({
   hooks: {
     'tag:normalise': ({ tag }) => {
-      // support for third-party dedupe keys
+      if (tag.props.children) {
+        tag.innerHTML = tag.props.children
+        delete tag.props.children
+      }
+      if (tag.props.body) {
+        tag.tagPosition = 'bodyClose'
+        delete tag.props.body
+      }
       if (tag.props.hid) {
         tag.key = tag.props.hid
         delete tag.props.hid
