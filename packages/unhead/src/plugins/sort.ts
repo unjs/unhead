@@ -21,11 +21,9 @@ export default defineHeadPlugin((head => ({
           const linkedTag = ctx.tags.find(tag => tag._d === key)
           if (linkedTag) {
             if (typeof linkedTag?.tagPriority === 'number') {
-              tag.tagPriority = linkedTag.tagPriority + offset
+              tag.tagPriority = linkedTag.tagPriority
             }
-            else {
-              tag._p = linkedTag._p! + offset
-            }
+            tag._p = linkedTag._p! + offset
             break
           }
         }
