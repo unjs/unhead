@@ -110,10 +110,8 @@ function fixKeyCase(key: string) {
   return updated
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
-function changeKeyCasingDeep<T extends any>(input: T): T {
+function changeKeyCasingDeep(input: any): any {
   if (Array.isArray(input)) {
-    // @ts-expect-error untyped
     return input.map(entry => changeKeyCasingDeep(entry))
   }
   if (typeof input !== 'object' || Array.isArray(input))
@@ -127,7 +125,7 @@ function changeKeyCasingDeep<T extends any>(input: T): T {
     output[fixKeyCase(key)] = changeKeyCasingDeep(input[key])
   }
 
-  return output as T
+  return output
 }
 
 export function resolvePackedMetaObjectValue(value: string, key: string): string {

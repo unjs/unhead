@@ -6,7 +6,7 @@ description: How to create your Unhead instance.
 **Type:**
 
 ```ts
-export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}): Unhead
+export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}): Unhead
 ```
 
 The `createHead` function is used to create an instance of Unhead.
@@ -22,7 +22,7 @@ createHead()
 ## Types
 
   ```ts
-  export interface Unhead<Input extends {} = Head> {
+  export interface Unhead<Input extends Record<string, any> = Head> {
     /**
      * The active head entries.
      */

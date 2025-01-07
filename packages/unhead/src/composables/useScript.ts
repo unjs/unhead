@@ -45,7 +45,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   options.beforeInit?.()
   const syncStatus = (s: ScriptInstance<T>['status']) => {
+    // eslint-disable-next-line ts/no-use-before-define
     script.status = s
+    // eslint-disable-next-line ts/no-use-before-define
     head.hooks.callHook(`script:updated`, hookCtx)
   }
   ScriptNetworkEvents
@@ -64,6 +66,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return () => _cbs[key]?.splice(i - 1, 1)
     }
     // the event has already happened, run immediately
+    // eslint-disable-next-line ts/no-use-before-define
     cb(script.instance)
     return () => {}
   }

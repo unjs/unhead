@@ -91,7 +91,7 @@ describe('defineEvent', () => {
     })
   })
 
-  it('handles startDate with time', async () => {
+  it('handles startDate with time #2', async () => {
     await useSetup(async () => {
       useSchemaOrg([
         defineEvent({

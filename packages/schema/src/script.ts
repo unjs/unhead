@@ -55,7 +55,7 @@ export type UseFunctionType<T, U> = T extends {
   use: infer V
 } ? V extends (...args: any) => any ? ReturnType<V> : U : U
 
-export interface UseScriptOptions<T extends BaseScriptApi = {}, U = {}> extends HeadEntryOptions {
+export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.
    */

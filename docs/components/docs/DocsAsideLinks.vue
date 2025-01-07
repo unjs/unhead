@@ -16,7 +16,7 @@ function mapContentLinks(links: NavItem[]) {
         <p class="text-sm font-semibold text-gray-900 dark:text-gray-200 truncate leading-6">
           {{ group.title }}
         </p>
-        <div v-for="(group2, index) in group.children" :key="index" class="ml-5">
+        <div v-for="(group2, i2) in group.children" :key="i2" class="ml-5">
           <p class="text-sm font-semibold text-gray-900 dark:text-gray-200 truncate leading-6">
             {{ group2.title }}
           </p>

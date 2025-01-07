@@ -119,7 +119,7 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   /**
    * @internal
    */
-  _eventHandlers?: Record<string, ((e: Event) => {})>
+  _eventHandlers?: Record<string, ((e: Event) => Record<string, any> | void)>
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

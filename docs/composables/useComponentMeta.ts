@@ -13,6 +13,7 @@ export async function fetchComponentMeta(name: string) {
   // Store promise to avoid multiple calls
 
   // add to nitro prerender
+  // eslint-disable-next-line node/prefer-global/process
   if (process.server) {
     const event = useRequestEvent()
     event.node.res.setHeader(

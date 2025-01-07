@@ -189,7 +189,7 @@ describe('defineWebSite', () => {
     })
   })
 
-  it('relation resolving works both ways #2', async () => {
+  it('relation resolving works both ways #3', async () => {
     await useSetup(async () => {
       useSchemaOrg([
         defineWebSite({

@@ -6,7 +6,7 @@ description: Render Unhead to a string that be can be server side rendered.
 **Type:**
 
 ```ts
-function renderSSRHead<T extends {}>(head: Unhead<T>): Promise<SSRHeadPayload>
+function renderSSRHead<T extends Record<string, any>>(head: Unhead<T>): Promise<SSRHeadPayload>
 ```
 
 ```ts

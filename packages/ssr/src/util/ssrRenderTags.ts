@@ -1,5 +1,6 @@
 import type { HeadTag, RenderSSRHeadOptions } from '@unhead/schema'
-import { propsToString, tagToString } from '.'
+import { propsToString } from './propsToString'
+import { tagToString } from './tagToString'
 
 export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRHeadOptions) {
   const schema: {

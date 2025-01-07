@@ -24,14 +24,13 @@ async function resolvePromisesRecursively(root: any): Promise<any> {
   return root
 }
 
-export const PromisesPlugin = defineHeadPlugin(head => ({
+export const PromisesPlugin = defineHeadPlugin({
   hooks: {
     'entries:resolve': async (ctx) => {
       for (const k in ctx.entries) {
         const resolved = await resolvePromisesRecursively(ctx.entries[k].input)
         ctx.entries[k].input = resolved
-        console.log('resolved', ctx.entries[k].input, resolved)
       }
     },
   },
-}))
+})

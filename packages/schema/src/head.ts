@@ -95,7 +95,7 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   head?: Unhead
 }
 
-export interface Unhead<Input extends {} = Head> {
+export interface Unhead<Input extends Record<string, any> = Head> {
   /**
    * Registered plugins.
    */
