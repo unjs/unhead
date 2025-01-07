@@ -6,7 +6,7 @@ export interface DomPluginOptions extends RenderDomHeadOptions {
   delayFn?: (fn: () => void) => void
 }
 
-/* @__NO_SIDE_EFFECTS__ */ export function DomPlugin(options?: DomPluginOptions) {
+export function DomPlugin(options?: DomPluginOptions) {
   return defineHeadPlugin((head) => {
     // restore initial entry from payload (titleTemplate and templateParams)
     const initialPayload = head.resolvedOptions.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderDOMHead } from '@unhead/dom'
-import { createHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../test/fixtures'
 

@@ -1,6 +1,7 @@
 import type { MergeHead } from '@unhead/schema'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from '@unhead/vue'
+import { useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, ref } from 'vue'
 

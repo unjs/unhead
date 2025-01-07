@@ -30,11 +30,9 @@
   ],
   "scripts": {
     "build": "unbuild .",
-    "stub": "unbuild . --stub",
-    "export:sizes": "npx export-size . -r"
+    "stub": "unbuild . --stub"
   },
-  "dependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*"
+  "peerDependencies": {
+    "unhead": "workspace:*"
   }
 }

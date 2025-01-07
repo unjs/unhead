@@ -4,12 +4,14 @@ import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
 import type { App, Component } from 'vue'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, createServerHead, VueHeadMixin } from '@unhead/vue'
+import { VueHeadMixin } from '@unhead/vue'
+import { createHead as createClientHead } from '@unhead/vue/client'
+import { createHead as createServerHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
 
 export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) {
-  const head = createHead({
+  const head = createClientHead({
     document: dom.window.document,
   })
   const app = createApp({
@@ -43,7 +45,7 @@ export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, option
 }
 
 export async function ssrRenderHeadToString(fn: () => void) {
-  const head = createHead()
+  const head = createServerHead()
   const app = createSSRApp({
     setup() {
       fn()
@@ -57,7 +59,7 @@ export async function ssrRenderHeadToString(fn: () => void) {
 }
 
 export async function ssrRenderOptionsHead(input: any) {
-  const head = createHead()
+  const head = createServerHead()
   const app = createSSRApp({
     head() {
       return input

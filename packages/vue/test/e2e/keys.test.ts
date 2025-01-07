@@ -1,7 +1,8 @@
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
+import { createHead as createServerHead } from '@unhead/vue/server'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../test/fixtures'
 
@@ -16,7 +17,7 @@ describe('vue e2e keys', () => {
     }
 
     // ssr render on the index page
-    const ssrHead = createHead()
+    const ssrHead = createServerHead()
 
     ssrHead.push(IndexSchema)
 

@@ -1,7 +1,7 @@
 import { renderSSRHead } from '@unhead/ssr'
 
 import { describe, it } from 'vitest'
-import { createHeadWithContext } from '../../util'
+import { createHeadWithContext, createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
   it('basic', async () => {
@@ -92,7 +92,7 @@ describe('ssr templateParams', () => {
   })
 
   it('ssr payload', async () => {
-    const head = createHeadWithContext()
+    const head = createServerHeadWithContext()
     head.push({
       title: 'test',
       titleTemplate: '%s %separator %siteName',
