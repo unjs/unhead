@@ -1,5 +1,5 @@
 import { renderDOMHead } from '@unhead/dom'
-import { defineOrganization, defineQuestion, defineWebPage, defineWebSite, SchemaOrgUnheadPlugin, useSchemaOrg } from '@unhead/schema-org'
+import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, SchemaOrgUnheadPlugin, useSchemaOrg } from '@unhead/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead, useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
@@ -314,5 +314,41 @@ describe('schema.org e2e', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
+  })
+  it('#441', async () => {
+    const ssrHead = createHead({
+      plugins: [
+        SchemaOrgUnheadPlugin(),
+      ],
+    })
+
+    useSchemaOrg([{
+      '@type': 'ImageGallery',
+      'name': 'Gallery',
+      'image': [defineImage({
+        url: 'test',
+      })],
+    }])
+
+    const data = await renderSSRHead(ssrHead)
+    expect(data.bodyTags).toMatchInlineSnapshot(`
+      "<script type="application/ld+json" data-hid="3437552">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#/schema/image-gallery/6e5ff96",
+            "@type": "ImageGallery",
+            "name": "Gallery",
+            "image": [
+              {
+                "@type": "ImageObject",
+                "url": "test",
+                "contentUrl": "test"
+              }
+            ]
+          }
+        ]
+      }</script>"
+    `)
   })
 })
