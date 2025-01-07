@@ -1,9 +1,12 @@
 import { describe, it } from 'vitest'
+import { PromisesPlugin } from '../../packages/unhead/src/optionalPlugins/promises'
 import { createHeadWithContext } from '../util'
 
 describe('promises', () => {
   it('basic', async () => {
-    const head = createHeadWithContext()
+    const head = createHeadWithContext({
+      plugins: [PromisesPlugin],
+    })
     head.push({
       title: new Promise(resolve => resolve('hello')),
       script: [

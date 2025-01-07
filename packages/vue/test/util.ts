@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
 import type { App, Component } from 'vue'
 import { renderSSRHead } from '@unhead/ssr'
@@ -28,8 +29,8 @@ export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) 
   return head
 }
 
-export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>) {
-  const head = createServerHead()
+export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, options?: CreateHeadOptions) {
+  const head = createServerHead(options)
   const app = createSSRApp({
     async setup() {
       fn()
