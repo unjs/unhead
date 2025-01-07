@@ -1,19 +1,26 @@
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import head from './mixins/head'
 
 export default {
   name: 'App',
   components: {
     HelloWorld,
   },
+  mixins: [
+    head,
+  ],
   data() {
     return {
       helloWorld: true,
+      meta: {
+        title: 'Unhead Test for Vue 2',
+      }
     }
   },
   head() {
     return {
-      title: this.helloWorld ? 'Hello World' : 'Vue 2 Head',
+      title: this.meta.title,
       meta: [
         {
           name: 'description',

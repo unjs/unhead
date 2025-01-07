@@ -49,10 +49,8 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       ctx.nodes
         .forEach((node, key) => {
           const resolver = node._resolver
-          if (resolver) {
-            node = resolveNode(node, ctx, resolver)
-            node = resolveNodeId(node, ctx, resolver, true)
-          }
+          node = resolveNode(node, ctx, resolver)
+          node = resolveNodeId(node, ctx, resolver, true)
           ctx.nodes[key] = node
         })
       ctx.nodes = dedupeNodes(ctx.nodes)

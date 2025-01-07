@@ -53,7 +53,7 @@ export function resolveMeta(meta: Partial<MetaInput>) {
   }
 }
 
-export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver: SchemaOrgNodeDefinition<T>) {
+export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>) {
   // allow casting from a primitive to an object
   if (resolver?.cast)
     node = resolver.cast(node, ctx)
@@ -71,7 +71,7 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
   }
 
   // handle meta inherits
-  resolver.inheritMeta?.forEach((entry) => {
+  resolver?.inheritMeta?.forEach((entry) => {
     if (typeof entry === 'string')
       setIfEmpty(node, entry, ctx.meta[entry])
     else
@@ -85,6 +85,13 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
   // if user registers some resolver we haven't coded
   for (const k in node) {
     const v = node[k]
+    if (Array.isArray(v)) {
+      v.forEach((v: any, k2: number) => {
+        if (typeof v === 'object' && v?._resolver) {
+          node[k][k2] = resolveRelation(v, ctx, v._resolver)
+        }
+      })
+    }
     if (typeof v === 'object' && v?._resolver)
       node[k] = resolveRelation(v, ctx, v._resolver)
   }

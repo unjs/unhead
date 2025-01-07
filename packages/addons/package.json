@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.11.13",
+  "version": "1.11.15",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -57,6 +57,7 @@
     "@rollup/pluginutils": "^5.1.4",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
+    "estree-walker": "^3.0.3",
     "magic-string": "^0.30.17",
     "mlly": "^1.7.3",
     "ufo": "^1.5.4",
@@ -64,7 +65,6 @@
     "unplugin-ast": "^0.13.1"
   },
   "devDependencies": {
-    "@babel/types": "^7.26.3",
-    "estree-walker": "^3.0.3"
+    "@babel/types": "^7.26.3"
   }
 }
