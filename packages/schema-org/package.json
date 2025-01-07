@@ -65,18 +65,19 @@
   },
   "dependencies": {
     "ohash": "^1.1.4",
-    "ufo": "^1.5.4"
+    "ufo": "^1.5.4",
+    "defu": "^6.1.4",
+    "@unhead/schema": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "unplugin-vue-components": "^0.28.0"
   },
   "build": {
     "external": [
       "vue"
     ]
-  },
-  "devDependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
-    "@unhead/vue": "workspace:*",
-    "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.28.0"
   }
 }

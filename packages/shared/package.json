@@ -39,9 +39,7 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*"
-  },
-  "devDependencies": {
+    "@unhead/schema": "workspace:*",
     "packrup": "^0.1.2"
   }
 }
