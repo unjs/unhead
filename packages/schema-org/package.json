@@ -64,12 +64,12 @@
     }
   },
   "dependencies": {
-    "ohash": "^1.1.4",
-    "ufo": "^1.5.4",
-    "defu": "^6.1.4",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
+    "defu": "^6.1.4",
+    "ohash": "^1.1.4",
+    "ufo": "^1.5.4",
     "unhead": "workspace:*"
   },
   "devDependencies": {
