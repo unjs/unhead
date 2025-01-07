@@ -1,6 +1,6 @@
 import type { RuntimeMode } from './head'
 import type { Head } from './schema'
-import type { FalsyEntries } from './util'
+import type { ResolvableValues } from './util'
 
 export interface ResolvesDuplicates {
   /**
@@ -74,7 +74,7 @@ export interface TagPriority {
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
-export type TagUserProperties = FalsyEntries<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
+export type TagUserProperties = ResolvableValues<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
 export type TagKey = keyof Head
 

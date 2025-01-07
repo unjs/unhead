@@ -1,9 +1,9 @@
 import type { ComputedRef, Ref } from 'vue'
 
 // copied from @vueuse/shared
-export type MaybeReadonlyRef<T> = (() => T) | ComputedRef<T>
+export type MaybeReadonlyRef<T> = ComputedRef<T>
 export type MaybeComputedRef<T> = T | MaybeReadonlyRef<T> | Ref<T>
-export type MaybeComputedRefOrFalsy<T> = undefined | false | null | T | MaybeReadonlyRef<T> | Ref<T>
+export type MaybeComputedRefOrFalsy<T> = T | MaybeReadonlyRef<T> | Ref<T>
 
 /**
  * @deprecated Use MaybeComputedRefOrFalsy

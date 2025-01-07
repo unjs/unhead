@@ -72,6 +72,7 @@ export interface InferSeoMetaPluginOptions {
             if (description && !hasOgDescription) {
               let newOgDescription = options?.ogDescription || description
               if (typeof newOgDescription === 'function')
+                // @ts-expect-error untyped
                 newOgDescription = newOgDescription(title)
 
               if (newOgDescription) {

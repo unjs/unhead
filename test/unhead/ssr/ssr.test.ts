@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useSeoMeta } from 'unhead'
+import { createHead, useHead, useSeoMeta } from 'unhead'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
 
@@ -32,7 +32,6 @@ describe('ssr', () => {
     const head = createHead()
 
     head.push({
-      // @ts-expect-error handle numbers
       title: 12345,
     })
 
@@ -185,6 +184,31 @@ describe('ssr', () => {
       <meta property="og:title" content="My Amazing Site">
       <meta property="og:image" content="https://example.com/image.png">
       <meta name="twitter:card" content="summary_large_image">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('title function', async () => {
+    const head = createHead()
+
+    useHead({
+      title: 'my default title',
+    })
+
+    useHead({
+      title: () => {
+        return undefined
+      },
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>my default title</title>",
         "htmlAttrs": "",
       }
     `)
