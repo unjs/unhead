@@ -1,9 +1,9 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
+import { createHeadWithContext } from '../../util'
 
 describe('tagPosition', () => {
   it('head', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -24,7 +24,7 @@ describe('tagPosition', () => {
     `)
   })
   it('body: true', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -45,7 +45,7 @@ describe('tagPosition', () => {
     `)
   })
   it('bodyOpen', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -66,7 +66,7 @@ describe('tagPosition', () => {
     `)
   })
   it('bodyClose', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {

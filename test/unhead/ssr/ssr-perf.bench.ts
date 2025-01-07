@@ -1,10 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { bench, describe } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr bench', () => {
   bench('x50 ssr', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     const page = {
       title: 'Home',
       description: 'Home page description',

@@ -1,9 +1,9 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
+import { createHeadWithContext } from '../../util'
 
 describe('tag priority', () => {
   it('basic int', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -44,7 +44,7 @@ describe('tag priority', () => {
     `)
   })
   it('charset first', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -74,7 +74,7 @@ describe('tag priority', () => {
   })
 
   it('base early', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -109,7 +109,7 @@ describe('tag priority', () => {
   })
 
   it('cSP early', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -144,7 +144,7 @@ describe('tag priority', () => {
   })
 
   it('manual priority', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -173,7 +173,7 @@ describe('tag priority', () => {
   })
 
   it('before priority', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -200,7 +200,7 @@ describe('tag priority', () => {
   })
 
   it('before and after priority', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -245,7 +245,7 @@ describe('tag priority', () => {
   })
 
   it('title priority', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: {
         textContent: 'high-priority title',
@@ -262,7 +262,7 @@ describe('tag priority', () => {
   })
 
   it('titleTemplate priority', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: 'test',
       titleTemplate: {

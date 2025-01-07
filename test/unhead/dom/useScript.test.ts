@@ -11,7 +11,7 @@ describe('dom useScript', () => {
     }, {
       use() {
         return {
-          test: (foo: string) => {},
+          test: () => {},
         }
       },
     })

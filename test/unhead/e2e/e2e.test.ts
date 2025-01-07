@@ -1,15 +1,16 @@
 import type { Head } from '@unhead/schema'
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead, useServerHead } from 'unhead'
+import { useHead, useServerHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('unhead e2e', () => {
   it('basic hydration', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
     // i.e App.vue
     useServerHead({
       title: 'My amazing site',
@@ -93,7 +94,7 @@ describe('unhead e2e', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHead()
+    const csrHead = createHeadWithContext()
     csrHead.push({
       title: 'Home',
       script: [
@@ -148,7 +149,7 @@ describe('unhead e2e', () => {
   it('hydration /w change page', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
 
     const schema = <Head> {
       title: 'My amazing site',
@@ -219,7 +220,7 @@ describe('unhead e2e', () => {
       bodyTagsOpen: '',
     })
 
-    const csrHead = createHead()
+    const csrHead = createHeadWithContext()
     useHead(schema)
 
     await renderDOMHead(csrHead, { document: dom.window.document })
@@ -308,18 +309,20 @@ describe('unhead e2e', () => {
 
     expect(html).toContain('<title>My amazing site</title>')
     expect(html).toContain('<meta charset="utf-8">')
-    expect(html).toContain('<html data-my-app="" class="layout-default" style="color: red" lang="en"')
+    expect(html).toContain('<html data-my-app="" class="layout-default" style="color: red;" lang="en"')
 
     expect(dom.serialize().replaceAll('\n\n', '')).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red;" lang="en"><head>
+      <meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <meta name=\\"description\\" content=\\"My amazing site\\"><meta property=\\"og:title\\" content=\\"My amazing site\\"></head>
-      <body class=\\"test\\"><div>
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      </head>
+      <body class="test"><div>
       <h1>hello world</h1>
       </div></body></html>"
     `)
@@ -355,15 +358,17 @@ describe('unhead e2e', () => {
     html = dom.serialize().replaceAll('\n\n', '')
 
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app class=\\"layout-default page-about\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default page-about" style="color: red;" lang="en"><head>
+      <meta charset="utf-8">
       <title>About</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <script src=\\"https://my-app.com/about.js\\"></script><meta property=\\"og:title\\" content=\\"About\\"><meta name=\\"description\\" content=\\"This is the about page\\"></head>
-      <body class=\\"test overflow-hidden\\"><div>
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="This is the about page">
+      <meta property="og:title" content="About">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      <script src="https://my-app.com/about.js"></script></head>
+      <body class="test overflow-hidden"><div>
       <h1>hello world</h1>
       </div></body></html>"
     `)
@@ -375,15 +380,17 @@ describe('unhead e2e', () => {
     html = dom.serialize().replaceAll('\n\n', '')
 
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app class=\\"layout-default\\" style=\\"color: red\\" lang=\\"en\\"><head>
-      <meta charset=\\"utf-8\\">
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red;" lang="en"><head>
+      <meta charset="utf-8">
       <title>My amazing site</title>
-      <script src=\\"https://analytics.example.com/script.js\\" defer async></script>
-      <meta property=\\"og:description\\" content=\\"This is my amazing site\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image.jpg\\">
-      <meta property=\\"og:image\\" content=\\"https://cdn.example.com/image2.jpg\\">
-      <meta name=\\"description\\" content=\\"My amazing site\\"><meta property=\\"og:title\\" content=\\"My amazing site\\"></head>
-      <body class=\\"test\\"><div>
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      </head>
+      <body class="test"><div>
       <h1>hello world</h1>
       </div></body></html>"
     `)

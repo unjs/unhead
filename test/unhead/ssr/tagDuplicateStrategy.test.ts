@@ -1,10 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
 import { describe } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('tagDuplicateStrategy', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       htmlAttrs: {
         'data-layout': 'base',
@@ -24,7 +24,7 @@ describe('tagDuplicateStrategy', () => {
   })
 
   it('class / style merge', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       htmlAttrs: {
         class: 'html-doc',

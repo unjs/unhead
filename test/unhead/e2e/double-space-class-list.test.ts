@@ -1,14 +1,15 @@
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useServerHead } from 'unhead'
+import { useServerHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('e2e double-space-class-list', () => {
   it('arrays', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
     // i.e App.vue
     useServerHead({
       htmlAttrs: {
@@ -37,7 +38,7 @@ describe('e2e double-space-class-list', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHead()
+    const csrHead = createHeadWithContext()
     csrHead.push({
       bodyAttrs: {
         class: [
@@ -69,7 +70,7 @@ describe('e2e double-space-class-list', () => {
   it('objects', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
     // i.e App.vue
     useServerHead({
       htmlAttrs: {
@@ -99,7 +100,7 @@ describe('e2e double-space-class-list', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHead()
+    const csrHead = createHeadWithContext()
     csrHead.push({
       htmlAttrs: {
         class: {

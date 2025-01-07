@@ -1,11 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { stringify } from 'devalue'
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('xss', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       title: '</title><script>alert(1)</script>',
@@ -23,7 +23,7 @@ describe('xss', () => {
     `)
   })
   it('json devalue', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       script: [
@@ -49,7 +49,7 @@ describe('xss', () => {
     `)
   })
   it('title quotes', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       title: '"test" times',
