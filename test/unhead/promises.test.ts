@@ -12,7 +12,7 @@ describe('promises', () => {
       script: [
         { src: new Promise(resolve => resolve('https://example.com/script.js')) },
         {
-          children: new Promise<string>(resolve => setTimeout(() => resolve('test'), 250)),
+          innerHTML: new Promise<string>(resolve => setTimeout(() => resolve('test'), 250)),
         },
       ],
     })

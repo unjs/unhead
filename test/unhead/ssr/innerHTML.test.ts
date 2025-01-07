@@ -58,7 +58,7 @@ describe('ssr innerHTML', () => {
     head.push({
       noscript: [
         {
-          children: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+          innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
     height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
         },
       ],
@@ -122,15 +122,6 @@ describe('ssr innerHTML', () => {
       script: [
         {
           innerHTML: '',
-        },
-      ],
-    })
-    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
-
-    head.push({
-      script: [
-        {
-          children: '',
         },
       ],
     })

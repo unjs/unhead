@@ -1,4 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
+import { DeprecationsPlugin } from 'unhead/optionalPlugins'
 import { createHeadWithContext } from '../../util'
 
 describe('tagPosition', () => {
@@ -24,7 +25,9 @@ describe('tagPosition', () => {
     `)
   })
   it('body: true', async () => {
-    const head = createHeadWithContext()
+    const head = createHeadWithContext({
+      plugins: [DeprecationsPlugin],
+    })
     head.push({
       script: [
         {

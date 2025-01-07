@@ -17,14 +17,6 @@ export interface ResolvesDuplicates {
    * @default 'replace' (some tags will default to 'merge', such as htmlAttr)
    */
   tagDuplicateStrategy?: 'replace' | 'merge'
-  /**
-   * @deprecated Use `key` instead
-   */
-  hid?: string
-  /**
-   * @deprecated Use `key` instead
-   */
-  vmid?: string
 }
 
 export type ValidTagPositions = 'head' | 'bodyClose' | 'bodyOpen'
@@ -51,12 +43,6 @@ export interface InnerContent {
    * Sets the textContent of an element. Safer for XSS.
    */
   textContent?: InnerContentVal
-  /**
-   * Sets the textContent of an element.
-   *
-   * @deprecated Use `textContent` or `innerHTML`.
-   */
-  children?: InnerContentVal
 }
 
 export interface TagPriority {
