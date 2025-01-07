@@ -80,11 +80,11 @@ describe('unhead e2e', () => {
         "headTags": "<meta charset="utf-8">
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer async></script>
+      <script src="https://my-app.com/home.js"></script>
       <meta property="og:title" content="My amazing site">
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
-      <script src="https://my-app.com/home.js"></script>
       <script type="application/json">{"val":"\\u003C/script>"}</script>
       <meta name="description" content="This is the home page">
       <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>",
@@ -125,11 +125,11 @@ describe('unhead e2e', () => {
       <meta charset="utf-8">
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <script src="https://my-app.com/home.js"></script>
       <meta property="og:title" content="Home">
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
-      <script src="https://my-app.com/home.js"></script>
       <script type="application/json">{"val":"\\u003C/script>"}</script>
       <meta name="description" content="This is the home page">
       <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>

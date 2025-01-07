@@ -2,7 +2,7 @@ import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
-import { CapoPlugin, createServerHead, useHead, useSeoMeta, useServerHead } from 'unhead'
+import { createServerHead, useHead, useSeoMeta, useServerHead } from 'unhead'
 import { bench, describe } from 'vitest'
 
 describe('ssr e2e bench', () => {
@@ -10,11 +10,7 @@ describe('ssr e2e bench', () => {
     // we're going to replicate the logic needed to render the tags for a harlanzw.com page
 
     // 1. Add nuxt.config meta tags
-    const head = createServerHead({
-      plugins: [
-        CapoPlugin({ track: false }),
-      ],
-    })
+    const head = createServerHead()
     // nuxt.config app.head
     head.push({
       title: 'Harlan Wilton',

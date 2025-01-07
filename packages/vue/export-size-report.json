@@ -113,13 +113,6 @@
       "bundled": 1618
     },
     {
-      "name": "CapoPlugin",
-      "path": "dist/index.mjs",
-      "minified": 179,
-      "minzipped": 132,
-      "bundled": 460
-    },
-    {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
       "minified": 183,

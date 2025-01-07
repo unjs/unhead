@@ -1,4 +1,4 @@
-import { CapoPlugin, createHeadCore, unheadCtx } from 'unhead'
+import { createHeadCore, unheadCtx } from 'unhead'
 import { createHead, createServerHead } from './createHead'
 import { resolveUnrefHeadInput } from './utils'
 
@@ -8,11 +8,6 @@ export {
   createHeadCore,
   createServerHead,
   unheadCtx,
-}
-
-// extra plugins
-export {
-  CapoPlugin,
 }
 
 // utils
