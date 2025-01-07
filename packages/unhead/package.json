@@ -24,13 +24,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./optionalPlugins": {
+      "types": "./dist/optionalPlugins.d.ts",
+      "import": "./dist/optionalPlugins.mjs",
+      "require": "./dist/optionalPlugins.cjs"
     }
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "optionalPlugins": {
+    "*": {
+      "optionalPlugins": [
+        "dist/optionalPlugins"
+      ]
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "optionalPlugins.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",

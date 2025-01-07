@@ -20,8 +20,7 @@ useHead({
 useServerHead({
   link: [
     {
-      // promises supported
-      href: import('~/assets/MyFont.css?url'),
+      href: '/assets/MyFont.css',
       rel: 'stylesheet',
       type: 'text/css'
     }
