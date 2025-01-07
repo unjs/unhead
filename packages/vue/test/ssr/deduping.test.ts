@@ -3,7 +3,7 @@ import { describe } from 'vitest'
 import { ssrRenderHeadToString } from '../util'
 
 describe('vue ssr deduping', () => {
-  it.only('script key', async () => {
+  it('script key', async () => {
     const headResult = await ssrRenderHeadToString(() => {
       useHead({
         script: [
