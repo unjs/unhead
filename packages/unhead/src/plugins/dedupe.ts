@@ -3,7 +3,7 @@ import { defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight } fr
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
-export default defineHeadPlugin({
+export default defineHeadPlugin(head => ({
   hooks: {
     'tag:normalise': ({ tag }) => {
       // support for third-party dedupe keys
@@ -74,7 +74,7 @@ export default defineHeadPlugin({
             dupedTag._duped.push(tag)
             continue
           }
-          else if ((!tag.key || !dupedTag.key) && tagWeight(tag) > tagWeight(dupedTag)) {
+          else if ((!tag.key || !dupedTag.key) && tagWeight(head, tag) > tagWeight(head, dupedTag)) {
             // check tag weights
             continue
           }
@@ -110,4 +110,4 @@ export default defineHeadPlugin({
         .filter(t => !(t.tag === 'meta' && (t.props.name || t.props.property) && !t.props.content))
     },
   },
-})
+}))
