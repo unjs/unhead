@@ -19,5 +19,3 @@ export * from './composables/useServerHead'
 export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
 export * from './optionalPlugins/capoPlugin'
-// optional plugins
-export * from './optionalPlugins/hashHydrationPlugin'
