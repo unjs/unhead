@@ -7,10 +7,6 @@ export const DeprecationsPlugin = defineHeadPlugin({
         tag.innerHTML = tag.props.children
         delete tag.props.children
       }
-      if (tag.props.body) {
-        tag.tagPosition = 'bodyClose'
-        delete tag.props.body
-      }
       if (tag.props.hid) {
         tag.key = tag.props.hid
         delete tag.props.hid
