@@ -1,10 +1,10 @@
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../fixtures'
+import { createHeadWithContext } from '../util'
 
 describe('resolveTags', () => {
   it('docs example', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       title: 'My title',
@@ -40,7 +40,7 @@ describe('resolveTags', () => {
     `)
   })
   it('basic resolve tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push(basicSchema)
 
@@ -149,7 +149,7 @@ describe('resolveTags', () => {
   })
 
   it('basic /w removal', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     const firstEntry = head.push(basicSchema)
 
@@ -180,7 +180,7 @@ describe('resolveTags', () => {
   })
 
   it('basic /w update', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     const firstEntry = head.push(basicSchema)
 
@@ -248,7 +248,7 @@ describe('resolveTags', () => {
   })
 
   it('class array merge support', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       htmlAttrs: {
@@ -294,7 +294,7 @@ describe('resolveTags', () => {
   })
 
   it('class object merge support', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       htmlAttrs: {
@@ -330,7 +330,7 @@ describe('resolveTags', () => {
   })
 
   it('duplicate tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       meta: [

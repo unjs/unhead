@@ -1,10 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useScript } from 'unhead'
+import { useScript } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr useScript', () => {
   it('default', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useScript({
       src: 'https://cdn.example.com/script.js',
@@ -22,7 +23,7 @@ describe('ssr useScript', () => {
     `)
   })
   it('server', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useScript({
       src: 'https://cdn.example.com/script.js',
@@ -42,7 +43,7 @@ describe('ssr useScript', () => {
     `)
   })
   it('await ', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     // mock a promise, test that it isn't resolved in 1 second
     useScript<{ foo: 'bar' }>({
@@ -63,7 +64,7 @@ describe('ssr useScript', () => {
     `)
   })
   it('google ', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     const gtag = useScript<{ dataLayer: any[] }>({
       src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',

@@ -1,14 +1,15 @@
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('unhead e2e json', () => {
   it('valid object json', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHead()
+    const ssrHead = createHeadWithContext()
     // i.e App.vue
     useHead({
       script: [
@@ -35,7 +36,7 @@ describe('unhead e2e json', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHead()
+    const csrHead = createHeadWithContext()
     csrHead.push({
       script: [
         {

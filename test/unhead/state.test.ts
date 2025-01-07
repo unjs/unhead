@@ -1,15 +1,14 @@
-import { createHead, getActiveHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../util'
 
 describe('state', () => {
   it('exists', async () => {
-    await createHead()
-
+    const head = createHeadWithContext()
     useHead({
       title: 'hello',
     })
 
-    const head = getActiveHead()
     expect(head.headEntries()).toMatchInlineSnapshot(`
       [
         {

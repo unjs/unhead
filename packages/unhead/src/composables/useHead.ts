@@ -5,11 +5,11 @@ import type {
   MergeHead,
   Unhead,
 } from '@unhead/schema'
-import { getActiveHead } from './useActiveHead'
+import { useUnhead } from '../context'
 
 export type UseHeadInput<T extends MergeHead> = Head<T>
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
-  const head = (options.head || getActiveHead()) as Unhead<UseHeadInput<T>>
-  return head?.push(input, options)
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
+  const head = (options.head || useUnhead()) as any as Unhead<UseHeadInput<T>>
+  return head.push(input, options)
 }

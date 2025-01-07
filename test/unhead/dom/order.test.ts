@@ -1,13 +1,14 @@
 import type { HeadTag } from '@unhead/schema'
 import { renderDOMHead } from '@unhead/dom'
-import { createHead, getActiveHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('dom order', () => {
   it('renders in registered order', async () => {
     let firstTagRendered: HeadTag | null = null
-    await createHead({
+    const head = createHeadWithContext({
       hooks: {
         'dom:rendered': ({ renders }) => {
           firstTagRendered = renders[0].tag
@@ -21,8 +22,6 @@ describe('dom order', () => {
       },
       script: [{ children: 'document.documentElement.classList.remove("no-js")' }],
     })
-
-    const head = getActiveHead()
 
     const dom = useDom()
 

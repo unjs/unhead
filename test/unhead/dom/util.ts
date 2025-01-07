@@ -1,14 +1,14 @@
 import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
-import { createHead } from 'unhead'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 // eslint-disable-next-line import/no-mutable-exports
 export let activeDom: JSDOM | null = null
 
 export function useDOMHead(options: CreateHeadOptions = {}) {
   activeDom = useDom()
-  return createHead({
+  return createHeadWithContext({
     document: activeDom.window.document,
     ...options,
   })
