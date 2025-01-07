@@ -1,4 +1,4 @@
-import { CapoPlugin, createHeadCore, HashHydrationPlugin, unheadCtx } from 'unhead'
+import { CapoPlugin, createHeadCore, unheadCtx } from 'unhead'
 import { createHead, createServerHead } from './createHead'
 import { resolveUnrefHeadInput } from './utils'
 
@@ -13,7 +13,6 @@ export {
 // extra plugins
 export {
   CapoPlugin,
-  HashHydrationPlugin,
 }
 
 // utils
