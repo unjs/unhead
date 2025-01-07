@@ -12,7 +12,6 @@
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
       "@unhead/schema-org": ["packages/schema-org/src"],
-      "@unhead/vue/polyfill": ["packages/vue/src/VueUseHeadPolyfill.ts"],
       "@unhead/vue": ["packages/vue/src"],
       "@unhead/addons": ["packages/addons/src"],
       "@unhead/addons/*": ["packages/addons/*"],

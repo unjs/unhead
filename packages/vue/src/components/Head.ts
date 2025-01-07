@@ -2,11 +2,9 @@ import type { DefineComponent, Ref, VNode } from 'vue'
 import type { ReactiveHead } from '../types'
 import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
 import { useHead } from '../composables/useHead'
-import { Vue3 } from '../env'
 
 function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
-  // @ts-expect-error vue2 vnode API
-  const nodeType = !Vue3 ? node.tag : node.type
+  const nodeType = node.type
   const type
     = nodeType === 'html'
       ? 'htmlAttrs'
@@ -17,22 +15,12 @@ function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
   if (typeof type !== 'string' || !(type in obj))
     return
 
-  // @ts-expect-error vue2 vnode API
-  const nodeData = !Vue3 ? node.data : node
-  const props: Record<string, any> = (!Vue3 ? nodeData.attrs : node.props) || {}
-  // handle class and style attrs
-  if (!Vue3) {
-    if (nodeData.staticClass)
-      props.class = nodeData.staticClass
-    if (nodeData.staticStyle)
-      props.style = Object.entries(nodeData.staticStyle).map(([key, value]) => `${key}:${value}`).join(';')
-  }
+  const props: Record<string, any> = (node.props) || {}
   if (node.children) {
-    const childrenAttr = !Vue3 ? 'text' : 'children'
+    const childrenAttr = 'children'
     props.children = Array.isArray(node.children)
       // @ts-expect-error untyped
       ? node.children[0]![childrenAttr]
-      // @ts-expect-error vue2 vnode API
       : node[childrenAttr]
   }
   if (Array.isArray(obj[type]))
