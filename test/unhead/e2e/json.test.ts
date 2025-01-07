@@ -15,7 +15,7 @@ describe('unhead e2e json', () => {
       script: [
         {
           type: 'application/json',
-          children: {
+          innerHTML: {
             foo: 'bar',
           },
         },
@@ -41,7 +41,7 @@ describe('unhead e2e json', () => {
       script: [
         {
           type: 'application/json',
-          children: {
+          innerHTML: {
             foo: 'bar',
           },
         },

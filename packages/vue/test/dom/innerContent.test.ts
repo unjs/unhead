@@ -12,7 +12,7 @@ describe('vue dom innerContent', () => {
     const entry = head.push({
       script: [
         {
-          children: 'console.log(\'hello\')',
+          innerHTML: 'console.log(\'hello\')',
         },
       ],
     })
@@ -38,7 +38,7 @@ describe('vue dom innerContent', () => {
     entry.patch({
       script: [
         {
-          children: 'console.log(\'hello world\')',
+          innerHTML: 'console.log(\'hello world\')',
         },
       ],
     })

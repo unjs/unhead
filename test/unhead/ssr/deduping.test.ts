@@ -1,5 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
+import { DeprecationsPlugin } from 'unhead/optionalPlugins'
 import { describe, it } from 'vitest'
 import { createHeadWithContext } from '../../util'
 
@@ -215,7 +216,9 @@ describe('dedupe', () => {
   })
 
   it('dedupes legacy', async () => {
-    const head = createHeadWithContext()
+    const head = createHeadWithContext({
+      plugins: [DeprecationsPlugin],
+    })
     head.push({
       meta: [
         {

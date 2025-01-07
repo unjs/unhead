@@ -139,7 +139,7 @@ describe('vue dom', () => {
       },
       script: [
         {
-          children: 'console.log(\'hello\')',
+          innerHTML: 'console.log(\'hello\')',
           tagPosition: 'bodyClose',
         },
       ],

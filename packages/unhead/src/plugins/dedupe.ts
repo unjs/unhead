@@ -6,15 +6,6 @@ const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 export default defineHeadPlugin(head => ({
   hooks: {
     'tag:normalise': ({ tag }) => {
-      // support for third-party dedupe keys
-      if (tag.props.hid) {
-        tag.key = tag.props.hid
-        delete tag.props.hid
-      }
-      if (tag.props.vmid) {
-        tag.key = tag.props.vmid
-        delete tag.props.vmid
-      }
       if (tag.props.key) {
         tag.key = tag.props.key
         delete tag.props.key
