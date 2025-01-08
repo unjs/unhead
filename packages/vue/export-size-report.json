@@ -113,20 +113,6 @@
       "bundled": 1618
     },
     {
-      "name": "CapoPlugin",
-      "path": "dist/index.mjs",
-      "minified": 179,
-      "minzipped": 132,
-      "bundled": 460
-    },
-    {
-      "name": "HashHydrationPlugin",
-      "path": "dist/index.mjs",
-      "minified": 188,
-      "minzipped": 128,
-      "bundled": 469
-    },
-    {
       "name": "createHeadCore",
       "path": "dist/index.mjs",
       "minified": 183,

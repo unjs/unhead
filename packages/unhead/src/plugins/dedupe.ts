@@ -1,32 +1,10 @@
 import type { HeadTag } from '@unhead/schema'
-import { defineHeadPlugin, HasElementTags, hashTag, tagDedupeKey, tagWeight } from '@unhead/shared'
+import { defineHeadPlugin, HasElementTags, hashTag, tagWeight } from '@unhead/shared'
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
-export default defineHeadPlugin({
+export default defineHeadPlugin(head => ({
   hooks: {
-    'tag:normalise': ({ tag }) => {
-      // support for third-party dedupe keys
-      if (tag.props.hid) {
-        tag.key = tag.props.hid
-        delete tag.props.hid
-      }
-      if (tag.props.vmid) {
-        tag.key = tag.props.vmid
-        delete tag.props.vmid
-      }
-      if (tag.props.key) {
-        tag.key = tag.props.key
-        delete tag.props.key
-      }
-      const generatedKey = tagDedupeKey(tag)
-      if (generatedKey && !generatedKey.startsWith('meta:og:') && !generatedKey.startsWith('meta:twitter:')) {
-        delete tag.key
-      }
-      const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
-      if (dedupe)
-        tag._d = dedupe
-    },
     'tags:resolve': (ctx) => {
       // 1. Dedupe tags
       const deduping: Record<string, HeadTag> = Object.create(null)
@@ -74,7 +52,7 @@ export default defineHeadPlugin({
             dupedTag._duped.push(tag)
             continue
           }
-          else if (tagWeight(tag) > tagWeight(dupedTag)) {
+          else if ((!tag.key || !dupedTag.key) && tagWeight(head, tag) > tagWeight(head, dupedTag)) {
             // check tag weights
             continue
           }
@@ -110,4 +88,4 @@ export default defineHeadPlugin({
         .filter(t => !(t.tag === 'meta' && (t.props.name || t.props.property) && !t.props.content))
     },
   },
-})
+}))

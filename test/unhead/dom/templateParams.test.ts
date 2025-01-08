@@ -1,6 +1,7 @@
-import { createHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 import { useDelayedSerializedDom, useDOMHead } from './util'
 
 describe('templateParams', () => {
@@ -185,7 +186,7 @@ describe('templateParams', () => {
     const dom = useDom({
       headTags: '<title>default</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>',
     })
-    createHead({
+    createHeadWithContext({
       document: dom.window.document,
     })
     useHead({

@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "1.11.14",
+  "version": "1.11.15",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -21,20 +21,20 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./polyfill": {
-      "types": "./dist/polyfill.d.ts",
-      "import": "./dist/polyfill.mjs",
-      "require": "./dist/polyfill.cjs"
-    },
-    "./vue2": {
-      "types": "./dist/vue2.d.ts",
-      "import": "./dist/vue2.mjs",
-      "require": "./dist/vue2.cjs"
-    },
     "./components": {
       "types": "./dist/components.d.ts",
       "import": "./dist/components.mjs",
       "require": "./dist/components.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -45,16 +45,18 @@
       "components": [
         "dist/components"
       ],
-      "vue2": [
-        "dist/vue2"
+      "server": [
+        "dist/server"
       ],
-      "polyfill": [
-        "dist/polyfill"
+      "client": [
+        "dist/client"
       ]
     }
   },
   "files": [
-    "dist"
+    "client.d.ts",
+    "dist",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
@@ -62,7 +64,7 @@
     "export:sizes": "npx export-size . -r"
   },
   "peerDependencies": {
-    "vue": ">=2.7 || >=3"
+    "vue": ">=3"
   },
   "build": {
     "external": [
@@ -72,7 +74,6 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "defu": "^6.1.4",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
   }

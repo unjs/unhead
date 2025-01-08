@@ -42,13 +42,6 @@
       "bundled": 11435
     },
     {
-      "name": "CapoPlugin",
-      "path": "dist/index.mjs",
-      "minified": 5113,
-      "minzipped": 1891,
-      "bundled": 10303
-    },
-    {
       "name": "useServerSeoMeta",
       "path": "dist/index.mjs",
       "minified": 4594,
@@ -96,13 +89,6 @@
       "minified": 4311,
       "minzipped": 1663,
       "bundled": 8711
-    },
-    {
-      "name": "HashHydrationPlugin",
-      "path": "dist/index.mjs",
-      "minified": 4286,
-      "minzipped": 1645,
-      "bundled": 8703
     },
     {
       "name": "getActiveHead",

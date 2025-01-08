@@ -12,7 +12,7 @@ describe('dom useScript', () => {
     }, {
       use() {
         return {
-          test: (foo: string) => {
+          test: () => {
             calledFn = 'test'
             return foo
           },

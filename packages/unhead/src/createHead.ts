@@ -9,32 +9,13 @@ import type {
   RuntimeMode,
   Unhead,
 } from '@unhead/schema'
-import { DomPlugin } from '@unhead/dom'
-import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import { normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
 import DedupePlugin from './plugins/dedupe'
-import EventHandlersPlugin from './plugins/eventHandlers'
-import HashKeyedPlugin from './plugins/hashKeyed'
-import PayloadPlugin from './plugins/payload'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
 import XSSPlugin from './plugins/xss'
-
-// TODO drop support for non-context head
-// eslint-disable-next-line import/no-mutable-exports
-export let activeHead: Unhead<any> | undefined
-
-// TODO rename to createDomHead
-/* @__NO_SIDE_EFFECTS__ */ export function createHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>(options)
-  head.use(DomPlugin())
-  return activeHead = head
-}
-
-/* @__NO_SIDE_EFFECTS__ */ export function createServerHead<T extends {} = Head>(options: CreateHeadOptions = {}) {
-  return activeHead = createHeadCore<T>(options)
-}
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
@@ -45,15 +26,16 @@ function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
  *
  * @param options
  */
-export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions = {}) {
+export function createHeadCore<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
-  options.document = options.document || (IsBrowser ? document : undefined)
   const ssr = !options.document
 
   const updated = () => {
+    // eslint-disable-next-line ts/no-use-before-define
     head.dirty = true
+    // eslint-disable-next-line ts/no-use-before-define
     hooks.callHook('entries:updated', head)
   }
   let entryCount = 0
@@ -130,9 +112,6 @@ export function createHeadCore<T extends {} = Head>(options: CreateHeadOptions =
   }
   ;[
     DedupePlugin,
-    PayloadPlugin,
-    EventHandlersPlugin,
-    HashKeyedPlugin,
     SortPlugin,
     TemplateParamsPlugin,
     TitleTemplatePlugin,

@@ -5,7 +5,7 @@
 </a>
 <a href="https://www.npmjs.com/package/unhead" target="__blank"><img src="https://img.shields.io/npm/v/unhead?style=flat&colorA=002438&colorB=28CF8D" alt="NPM version"></a>
 <a href="https://www.npmjs.com/package/unhead" target="__blank"><img alt="NPM Downloads" src="https://img.shields.io/npm/dm/unhead?flat&colorA=002438&colorB=28CF8D"></a>
-<a href="https://github.com/unjs/unhead" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/harlan-zw/unhead?flat&colorA=002438&colorB=28CF8D"></a>
+<a href="https://github.com/unjs/unhead" target="__blank"><img alt="GitHub stars" src="https://img.shields.io/github/stars/unjs/unhead?flat&colorA=002438&colorB=28CF8D"></a>
 </p>
 
 <p align="center">

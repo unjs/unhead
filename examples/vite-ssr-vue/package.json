@@ -16,11 +16,11 @@
   },
   "dependencies": {
     "@unhead/dom": "workspace:*",
+    "unhead": "workspace:*",
     "@unhead/schema-org": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "pinia": "^2.2.6",
-    "unhead": "workspace:*",
     "unplugin-auto-import": "^0.18.5",
     "vite": "^5.4.11",
     "vue-router": "^4.4.5"

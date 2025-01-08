@@ -1,10 +1,12 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from 'unhead'
+import { useHead } from 'unhead'
+import { DeprecationsPlugin } from 'unhead/optionalPlugins'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('dedupe', () => {
   it('arrays', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     // same entry duplicates should not be de-duped
     useHead({
@@ -30,7 +32,7 @@ describe('dedupe', () => {
   })
 
   it('desc', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -55,7 +57,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes key', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -78,7 +80,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes canonical', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       link: [
         {
@@ -105,7 +107,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes charset', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push(
       {
         meta: [
@@ -135,7 +137,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes base', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       base: {
         href: '/old',
@@ -153,7 +155,7 @@ describe('dedupe', () => {
   })
 
   it('dedupes http-equiv', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -176,7 +178,7 @@ describe('dedupe', () => {
   })
 
   it('issue #104', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       link: [
         { rel: 'icon', href: '/favicon.ico' },
@@ -193,7 +195,7 @@ describe('dedupe', () => {
   })
 
   it('doesn\'t dedupe over tag types', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -214,7 +216,9 @@ describe('dedupe', () => {
   })
 
   it('dedupes legacy', async () => {
-    const head = createHead()
+    const head = createHeadWithContext({
+      plugins: [DeprecationsPlugin],
+    })
     head.push({
       meta: [
         {
@@ -243,7 +247,7 @@ describe('dedupe', () => {
   })
 
   it('no deduping for entry and content', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -276,7 +280,7 @@ describe('dedupe', () => {
   })
 
   it('key example readme', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -302,7 +306,7 @@ describe('dedupe', () => {
   })
 
   it('removing tag with null props', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {
@@ -324,7 +328,7 @@ describe('dedupe', () => {
   })
 
   it('null attr override', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -355,7 +359,7 @@ describe('dedupe', () => {
   })
 
   it('duplicate viewport', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       meta: [
         {

@@ -1,6 +1,6 @@
 import type { RuntimeMode } from './head'
 import type { Head } from './schema'
-import type { FalsyEntries } from './util'
+import type { ResolvableValues } from './util'
 
 export interface ResolvesDuplicates {
   /**
@@ -17,14 +17,6 @@ export interface ResolvesDuplicates {
    * @default 'replace' (some tags will default to 'merge', such as htmlAttr)
    */
   tagDuplicateStrategy?: 'replace' | 'merge'
-  /**
-   * @deprecated Use `key` instead
-   */
-  hid?: string
-  /**
-   * @deprecated Use `key` instead
-   */
-  vmid?: string
 }
 
 export type ValidTagPositions = 'head' | 'bodyClose' | 'bodyOpen'
@@ -51,12 +43,6 @@ export interface InnerContent {
    * Sets the textContent of an element. Safer for XSS.
    */
   textContent?: InnerContentVal
-  /**
-   * Sets the textContent of an element.
-   *
-   * @deprecated Use `textContent` or `innerHTML`.
-   */
-  children?: InnerContentVal
 }
 
 export interface TagPriority {
@@ -74,7 +60,7 @@ export interface TagPriority {
   tagPriority?: number | 'critical' | 'high' | 'low' | `before:${string}` | `after:${string}`
 }
 
-export type TagUserProperties = FalsyEntries<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
+export type TagUserProperties = ResolvableValues<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
 export type TagKey = keyof Head
 
@@ -119,7 +105,7 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   /**
    * @internal
    */
-  _eventHandlers?: Record<string, ((e: Event) => {})>
+  _eventHandlers?: Record<string, ((e: Event) => Record<string, any> | void)>
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

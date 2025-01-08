@@ -17,7 +17,7 @@ export function resolvableDateToDate(val: Date | string) {
     return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
   }
   // not too fussed if it can't be resolved, this is on the user to validate
-  catch (e) {}
+  catch {}
   return typeof val === 'string' ? val : val.toString()
 }
 
@@ -43,7 +43,7 @@ export function resolvableDateToIso(val: Date | string | undefined) {
       return new Date(Date.parse(val)).toISOString()
   }
   // not too fussed if it can't be resolved, this is on the user to validate
-  catch (e) {}
+  catch {}
   return typeof val === 'string' ? val : val.toString()
 }
 

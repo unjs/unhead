@@ -5,13 +5,10 @@ import { getCurrentInstance, onActivated, onBeforeUnmount, onDeactivated, ref, w
 import { resolveUnrefHeadInput } from '../utils'
 import { injectHead } from './injectHead'
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const head = options.head || injectHead()
-  if (head) {
-    if (!head.ssr)
-      return clientUseHead(head, input, options as HeadEntryOptions)
-    return head.push(input, options as HeadEntryOptions)
-  }
+  // @ts-expect-error untyped
+  return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
 }
 
 function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {

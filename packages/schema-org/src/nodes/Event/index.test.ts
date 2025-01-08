@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defineEvent, defineOrganization, useSchemaOrg } from '../../'
-import { injectSchemaOrg, useSetup } from '../../../.test'
+import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineEvent', () => {
   it('can be registered', async () => {
@@ -91,7 +91,7 @@ describe('defineEvent', () => {
     })
   })
 
-  it('handles startDate with time', async () => {
+  it('handles startDate with time #2', async () => {
     await useSetup(async () => {
       useSchemaOrg([
         defineEvent({

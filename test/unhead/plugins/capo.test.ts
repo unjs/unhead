@@ -1,26 +1,19 @@
-import { CapoPlugin, createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('capo', () => {
   it('basic', async () => {
-    const head = createHead({
-      plugins: [
-        CapoPlugin({
-          track: true,
-        }),
-      ],
-    })
-    // add each type of capo tag in a random order
+    const head = createHeadWithContext()
     head.push({
-      script: {
+      script: [{
         defer: true,
         src: 'defer-script.js',
-      },
+      }],
     })
     head.push({
-      script: {
+      script: [{
         src: 'sync-script.js',
-      },
+      }],
     })
     head.push({
       style: [
@@ -28,22 +21,22 @@ describe('capo', () => {
       ],
     })
     head.push({
-      link: {
+      link: [{
         rel: 'modulepreload',
         href: 'modulepreload.js',
-      },
+      }],
     })
     head.push({
-      script: {
+      script: [{
         src: 'async-script.js',
         async: true,
-      },
+      }],
     })
     head.push({
-      link: {
+      link: [{
         rel: 'preload',
         href: 'preload.js',
-      },
+      }],
     })
     head.push({
       style: [
@@ -51,54 +44,54 @@ describe('capo', () => {
       ],
     })
     head.push({
-      link: {
+      link: [{
         rel: 'stylesheet',
         href: 'sync-styles.css',
-      },
+      }],
     })
     head.push({
       title: 'title',
     })
     // preconnect
     head.push({
-      link: {
+      link: [{
         rel: 'preconnect',
         href: 'https://example.com',
-      },
+      }],
     })
     // dns-prefetch
     head.push({
-      link: {
+      link: [{
         rel: 'dns-prefetch',
         href: 'https://example.com',
-      },
+      }],
     })
     // prefetch
     head.push({
-      link: {
+      link: [{
         rel: 'prefetch',
         href: 'https://example.com',
-      },
+      }],
     })
     // prerender
     head.push({
-      link: {
+      link: [{
         rel: 'prerender',
         href: 'https://example.com',
-      },
+      }],
     })
     // meta
     head.push({
-      meta: {
+      meta: [{
         name: 'description',
         content: 'description',
-      },
+      }],
     })
     head.push({
-      meta: {
+      meta: [{
         name: 'viewport',
         content: 'width=device-width, initial-scale=1.0',
-      },
+      }],
     })
 
     const resolvedTags = await head.resolveTags()

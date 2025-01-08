@@ -12,8 +12,6 @@ const { data: surround } = await useAsyncData(`docs-${route.path}-surround`, () 
   .where({ _extension: 'md', navigation: { $ne: false } })
   .findSurround(route.path.endsWith('/') ? route.path.slice(0, -1) : route.path))
 
-const [prev, next] = surround.value
-
 useSeoMeta({
   title: () => page.value?.title,
   description: () => page.value?.description,

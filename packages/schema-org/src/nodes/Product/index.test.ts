@@ -1,7 +1,7 @@
 import type { WebSite } from '../WebSite'
 import { expect } from 'vitest'
 import { defineAggregateRating, definePerson, defineProduct, defineWebSite, useSchemaOrg } from '../../'
-import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
+import { findNode, injectSchemaOrg, useSetup } from '../../../test'
 import { IdentityId, idReference } from '../../utils'
 import { PrimaryWebSiteId } from '../WebSite'
 

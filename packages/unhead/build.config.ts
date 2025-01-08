@@ -4,10 +4,13 @@ export default defineBuildConfig({
   clean: true,
   declaration: true,
   rollup: {
-    inlineDependencies: true,
     emitCJS: true,
   },
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/optionalPlugins/index', name: 'optionalPlugins' },
+    { input: 'src/server/index', name: 'server' },
+    { input: 'src/client/index', name: 'client' },
+    { input: 'src/legacy', name: 'legacy' },
   ],
 })

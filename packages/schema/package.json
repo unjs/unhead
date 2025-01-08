@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema",
   "type": "module",
-  "version": "1.11.14",
+  "version": "1.11.15",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",

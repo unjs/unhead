@@ -61,7 +61,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   }
 }
 
-export interface UseScriptOptions<T extends BaseScriptApi = {}, U = {}> extends HeadEntryOptions {
+export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.
    */

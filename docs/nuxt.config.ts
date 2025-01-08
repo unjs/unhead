@@ -110,6 +110,7 @@ export default defineNuxtConfig({
   },
 
   ogImage: {
+    // eslint-disable-next-line node/prefer-global/process
     debug: process.dev,
   },
 

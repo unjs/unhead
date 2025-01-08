@@ -1,7 +1,7 @@
 import type { WebPage } from './index'
 import { expect } from 'vitest'
 import { defineImage, defineOrganization, defineReadAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
-import { findNode, injectSchemaOrg, useSetup } from '../../../.test'
+import { findNode, injectSchemaOrg, useSetup } from '../../../test'
 import { IdentityId, idReference, prefixId } from '../../utils'
 import { PrimaryWebSiteId } from '../WebSite'
 import { PrimaryWebPageId } from './index'

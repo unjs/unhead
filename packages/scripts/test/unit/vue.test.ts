@@ -1,8 +1,16 @@
+<<<<<<<< HEAD:packages/scripts/test/unit/vue.test.ts
 import { createHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
 import { useDom } from '../../../../test/fixtures'
 import { useScript } from '../../src/vue/useScript'
+========
+import { useScript } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
+import { describe, it } from 'vitest'
+import { ref, watch } from 'vue'
+import { useDom } from '../../../../test/fixtures'
+>>>>>>>> 66a46616e56fafd065452f45f611986a3f36b5cc:packages/vue/test/e2e/scripts.test.ts
 
 describe('vue e2e scripts', () => {
   it('multiple active promise handles', async () => {

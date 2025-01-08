@@ -1,11 +1,12 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useSeoMeta } from 'unhead'
+import { useHead, useSeoMeta } from 'unhead'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       ...basicSchema,
@@ -29,10 +30,9 @@ describe('ssr', () => {
   })
 
   it('number title', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
-      // @ts-expect-error handle numbers
       title: 12345,
     })
 
@@ -49,7 +49,7 @@ describe('ssr', () => {
   })
 
   it('object title', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       title: {
@@ -70,7 +70,7 @@ describe('ssr', () => {
   })
 
   it ('boolean props', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       script: [
@@ -96,7 +96,7 @@ describe('ssr', () => {
   })
 
   it('remove break lines', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       script: [
@@ -123,7 +123,7 @@ describe('ssr', () => {
   })
 
   it('useSeoMeta', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       title: 'page name',
@@ -164,7 +164,7 @@ describe('ssr', () => {
   })
 
   it('useSeoMeta alt', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       description: 'This is my amazing site, let me tell you all about it.',
@@ -185,6 +185,31 @@ describe('ssr', () => {
       <meta property="og:title" content="My Amazing Site">
       <meta property="og:image" content="https://example.com/image.png">
       <meta name="twitter:card" content="summary_large_image">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('title function', async () => {
+    const head = createHeadWithContext()
+
+    useHead({
+      title: 'my default title',
+    })
+
+    useHead({
+      title: () => {
+        return undefined
+      },
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<title>my default title</title>",
         "htmlAttrs": "",
       }
     `)
