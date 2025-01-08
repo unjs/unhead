@@ -33,11 +33,8 @@ export default defineHeadPlugin(head => ({
         const bWeight = tagWeight(head, b)
 
         // 2c. sort based on critical tags
-        if (aWeight < bWeight) {
-          return -1
-        }
-        else if (aWeight > bWeight) {
-          return 1
+        if (aWeight !== bWeight) {
+          return aWeight - bWeight
         }
 
         // 2b. sort tags in their natural order

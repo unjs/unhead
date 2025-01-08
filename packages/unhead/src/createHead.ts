@@ -12,8 +12,6 @@ import type {
 import { normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
 import DedupePlugin from './plugins/dedupe'
-import EventHandlersPlugin from './plugins/eventHandlers'
-import HashKeyedPlugin from './plugins/hashKeyed'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
@@ -114,8 +112,6 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
   }
   ;[
     DedupePlugin,
-    EventHandlersPlugin,
-    HashKeyedPlugin,
     SortPlugin,
     TemplateParamsPlugin,
     TitleTemplatePlugin,

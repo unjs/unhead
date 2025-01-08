@@ -1,5 +1,7 @@
 import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
-import { TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from './constants'
+import { DupeableTags, TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from './constants'
+import { hashCode } from './hashCode'
+import { tagDedupeKey } from './tagDedupeKey'
 
 export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): T | T[] {
   const props = normalizedProps || normaliseProps<T>(
@@ -27,6 +29,19 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
       delete tag.props[k]
     }
   }
+  // only if the user has provided a key
+  // only tags which can't dedupe themselves, ssr only
+  if (tag.key && DupeableTags.has(tag.tag)) {
+    // add a HTML key so the client-side can hydrate without causing duplicates
+    tag.props['data-hid'] = tag._h = hashCode(tag.key!)
+  }
+  const generatedKey = tagDedupeKey(tag)
+  if (generatedKey && !generatedKey.startsWith('meta:og:') && !generatedKey.startsWith('meta:twitter:')) {
+    delete tag.key
+  }
+  const dedupe = generatedKey || (tag.key ? `${tag.tag}:${tag.key}` : false)
+  if (dedupe)
+    tag._d = dedupe
   // shorthand for objects
   if (tag.tag === 'script') {
     if (typeof tag.innerHTML === 'object') {
