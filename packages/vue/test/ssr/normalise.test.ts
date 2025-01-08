@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
 
 describe('normalise', () => {

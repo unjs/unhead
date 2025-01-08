@@ -29,6 +29,16 @@
       "types": "./dist/optionalPlugins.d.ts",
       "import": "./dist/optionalPlugins.mjs",
       "require": "./dist/optionalPlugins.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -38,12 +48,24 @@
     "*": {
       "optionalPlugins": [
         "dist/optionalPlugins"
+      ],
+      "server": [
+        "dist/server"
+      ],
+      "client": [
+        "dist/client"
+      ],
+      "legacy": [
+        "dist/legacy"
       ]
     }
   },
   "files": [
+    "client.d.ts",
     "dist",
-    "optionalPlugins.d.ts"
+    "legacy.d.ts",
+    "optionalPlugins.d.ts",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
@@ -51,7 +73,6 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",

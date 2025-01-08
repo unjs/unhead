@@ -1,6 +1,7 @@
 import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, unheadCtx, useHead } from 'unhead'
+import { unheadCtx, useHead } from 'unhead'
+import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useSetup } from '..'
 

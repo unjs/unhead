@@ -1,5 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from '@unhead/vue'
+import { useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vitest'
 import { createSSRApp, ref } from 'vue'

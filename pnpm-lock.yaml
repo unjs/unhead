@@ -233,12 +233,9 @@ importers:
 
   packages/dom:
     dependencies:
-      '@unhead/schema':
+      unhead:
         specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
+        version: link:../unhead
 
   packages/schema:
     dependencies:
@@ -288,18 +285,12 @@ importers:
 
   packages/ssr:
     dependencies:
-      '@unhead/schema':
+      unhead:
         specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
+        version: link:../unhead
 
   packages/unhead:
     dependencies:
-      '@unhead/dom':
-        specifier: workspace:*
-        version: link:../dom
       '@unhead/schema':
         specifier: workspace:*
         version: link:../schema

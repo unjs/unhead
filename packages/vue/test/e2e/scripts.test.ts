@@ -1,4 +1,5 @@
-import { createHead, useScript } from '@unhead/vue'
+import { useScript } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
 import { useDom } from '../../../../test/fixtures'

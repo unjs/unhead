@@ -1,7 +1,8 @@
 import type { MetaInput } from '@unhead/schema-org'
 import type { SchemaOrgNode } from '../src/types'
 import { SchemaOrgUnheadPlugin } from '@unhead/schema-org'
-import { createHead, unheadCtx } from 'unhead'
+import { unheadCtx } from 'unhead'
+import { createHead } from 'unhead/server'
 
 export async function injectSchemaOrg(): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag

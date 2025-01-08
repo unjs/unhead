@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
+import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { ssrRenderOptionsHead } from '../util'

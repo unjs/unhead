@@ -9,34 +9,15 @@ import type {
   RuntimeMode,
   Unhead,
 } from '@unhead/schema'
-import { DomPlugin } from '@unhead/dom'
-import { IsBrowser, normaliseEntryTags } from '@unhead/shared'
+import { normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
-import { unheadCtx } from './context'
 import DedupePlugin from './plugins/dedupe'
 import EventHandlersPlugin from './plugins/eventHandlers'
 import HashKeyedPlugin from './plugins/hashKeyed'
-import PayloadPlugin from './plugins/payload'
 import SortPlugin from './plugins/sort'
 import TemplateParamsPlugin from './plugins/templateParams'
 import TitleTemplatePlugin from './plugins/titleTemplate'
 import XSSPlugin from './plugins/xss'
-
-// TODO rename to createDomHead
-export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
-  const head = createHeadCore<T>(options)
-  head.use(DomPlugin())
-  // should only be one instance client-side
-  if (!head.ssr && IsBrowser) {
-    unheadCtx.set(head, true)
-  }
-  return head
-}
-
-export function createServerHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
-  // @ts-expect-error untyped
-  return createHeadCore<T>({ ...options, document: false })
-}
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
@@ -51,7 +32,6 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
-  options.document = typeof options.document !== 'undefined' ? options.document : (IsBrowser ? document : undefined)
   const ssr = !options.document
 
   const updated = () => {
@@ -134,7 +114,6 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
   }
   ;[
     DedupePlugin,
-    PayloadPlugin,
     EventHandlersPlugin,
     HashKeyedPlugin,
     SortPlugin,

@@ -1,12 +1,8 @@
-import { createHeadCore, unheadCtx } from 'unhead'
-import { createHead, createServerHead } from './createHead'
+import { unheadCtx } from 'unhead'
 import { resolveUnrefHeadInput } from './utils'
 
 // create
 export {
-  createHead,
-  createHeadCore,
-  createServerHead,
   unheadCtx,
 }
 

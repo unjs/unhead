@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { createHead, injectHead, useHead } from '@unhead/vue'
+import { injectHead, useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
 import { mount } from '../util'

@@ -2,7 +2,8 @@
 
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, unheadCtx, useHead } from '@unhead/vue'
+import { unheadCtx, useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../test/fixtures'
 import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../util'

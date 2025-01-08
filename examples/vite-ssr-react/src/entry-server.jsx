@@ -1,6 +1,6 @@
 import ReactDOMServer from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom/server'
-import { createHead } from '../../../packages/unhead/src/createHead'
+import { createHead } from 'unhead/server'
 import { App } from './App'
 
 createHead()

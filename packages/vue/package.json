@@ -25,6 +25,16 @@
       "types": "./dist/components.d.ts",
       "import": "./dist/components.mjs",
       "require": "./dist/components.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -34,11 +44,19 @@
     "*": {
       "components": [
         "dist/components"
+      ],
+      "server": [
+        "dist/server"
+      ],
+      "client": [
+        "dist/client"
       ]
     }
   },
   "files": [
-    "dist"
+    "client.d.ts",
+    "dist",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
