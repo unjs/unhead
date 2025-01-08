@@ -191,7 +191,7 @@ describe('ssr', () => {
   })
 
   it('title function', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useHead({
       title: 'my default title',
