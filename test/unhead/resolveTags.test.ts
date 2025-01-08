@@ -1,10 +1,10 @@
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../fixtures'
+import { createHeadWithContext } from '../util'
 
 describe('resolveTags', () => {
   it('docs example', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       title: 'My title',
@@ -40,7 +40,7 @@ describe('resolveTags', () => {
     `)
   })
   it('basic resolve tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push(basicSchema)
 
@@ -58,6 +58,14 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
+          "_e": 0,
+          "_p": 2,
+          "props": {
+            "src": "https://cdn.example.com/script.js",
+          },
+          "tag": "script",
+        },
+        {
           "_d": "htmlAttrs",
           "_e": 0,
           "_p": 0,
@@ -75,14 +83,6 @@ describe('resolveTags', () => {
             "class": "dark",
           },
           "tag": "bodyAttrs",
-        },
-        {
-          "_e": 0,
-          "_p": 2,
-          "props": {
-            "src": "https://cdn.example.com/script.js",
-          },
-          "tag": "script",
         },
         {
           "_e": 0,
@@ -96,60 +96,10 @@ describe('resolveTags', () => {
         },
       ]
     `)
-    expect(tags).toMatchInlineSnapshot(`
-      [
-        {
-          "_d": "charset",
-          "_e": 0,
-          "_p": 3,
-          "props": {
-            "charset": "utf-8",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
-          "props": {
-            "dir": "ltr",
-            "lang": "en",
-          },
-          "tag": "htmlAttrs",
-        },
-        {
-          "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
-          "props": {
-            "class": "dark",
-          },
-          "tag": "bodyAttrs",
-        },
-        {
-          "_e": 0,
-          "_p": 2,
-          "props": {
-            "src": "https://cdn.example.com/script.js",
-          },
-          "tag": "script",
-        },
-        {
-          "_e": 0,
-          "_p": 4,
-          "props": {
-            "href": "https://cdn.example.com/favicon.ico",
-            "rel": "icon",
-            "type": "image/x-icon",
-          },
-          "tag": "link",
-        },
-      ]
-    `, 'old')
   })
 
   it('basic /w removal', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     const firstEntry = head.push(basicSchema)
 
@@ -180,7 +130,7 @@ describe('resolveTags', () => {
   })
 
   it('basic /w update', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     const firstEntry = head.push(basicSchema)
 
@@ -207,6 +157,14 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
+          "_e": 0,
+          "_p": 2,
+          "props": {
+            "src": "https://cdn.example.com/script2.js",
+          },
+          "tag": "script",
+        },
+        {
           "_d": "htmlAttrs",
           "_e": 0,
           "_p": 0,
@@ -227,14 +185,6 @@ describe('resolveTags', () => {
         },
         {
           "_e": 0,
-          "_p": 2,
-          "props": {
-            "src": "https://cdn.example.com/script2.js",
-          },
-          "tag": "script",
-        },
-        {
-          "_e": 0,
           "_p": 4,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
@@ -248,7 +198,7 @@ describe('resolveTags', () => {
   })
 
   it('class array merge support', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       htmlAttrs: {
@@ -294,7 +244,7 @@ describe('resolveTags', () => {
   })
 
   it('class object merge support', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       htmlAttrs: {
@@ -330,7 +280,7 @@ describe('resolveTags', () => {
   })
 
   it('duplicate tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       meta: [

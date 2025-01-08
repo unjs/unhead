@@ -1,10 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useSeoMeta } from 'unhead'
+import { useSeoMeta } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../util'
 
 describe('useSeoMeta', () => {
   it('themeColor array', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       themeColor: [
@@ -26,7 +27,7 @@ describe('useSeoMeta', () => {
   })
 
   it('themeColor string', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       themeColor: 'cyan',
@@ -44,7 +45,7 @@ describe('useSeoMeta', () => {
   })
 
   it('twitter image', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       twitterImage: [
@@ -82,7 +83,7 @@ describe('useSeoMeta', () => {
   })
 
   it('removing with null', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     useSeoMeta({
       description: 'test',
@@ -114,7 +115,7 @@ describe('useSeoMeta', () => {
   })
 
   it('string object', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     useSeoMeta({
       robots: 'noindex, nofollow',
     })
@@ -130,7 +131,7 @@ describe('useSeoMeta', () => {
   })
 
   it('robots falsy', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     useSeoMeta({
       robots: {
         index: true,
@@ -151,7 +152,7 @@ describe('useSeoMeta', () => {
   })
 
   it('generates correct meta tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     const dateString = new Date(0).toISOString()
 
     useSeoMeta({
@@ -455,7 +456,7 @@ describe('useSeoMeta', () => {
   })
 
   it('arrayable meta tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     useSeoMeta({
       ogAudio: [{
         secureUrl: 'https://example.com',
@@ -533,7 +534,7 @@ describe('useSeoMeta', () => {
   })
 
   it('object meta tags', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     useSeoMeta({
       ogAudio: {
         secureUrl: 'https://example.com',

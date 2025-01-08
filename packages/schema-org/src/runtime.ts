@@ -37,7 +37,7 @@ import type {
   WebSite,
 } from './nodes'
 import type { Arrayable, Thing } from './types'
-import { getActiveHead, useHead } from 'unhead'
+import { useHead, useUnhead } from 'unhead'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -160,11 +160,9 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 
 export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput, options?: Pick<HeadEntryOptions, 'tagDuplicateStrategy'>) {
+export function useSchemaOrg(input: UseSchemaOrgInput, options?: HeadEntryOptions) {
   // lazy initialise the plugin
-  const head = getActiveHead()
-  if (!head)
-    return
+  const head = options?.head || useUnhead()
   if ((Array.isArray(input) && input.length === 0) || !input) {
     return
   }

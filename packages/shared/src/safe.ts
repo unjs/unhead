@@ -113,7 +113,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
                       const jsonVal = typeof script[s] === 'string' ? JSON.parse(script[s]) : script[s]
                       safeScript[s] = JSON.stringify(jsonVal, null, 0)
                     }
-                    catch (e) {}
+                    catch {}
                   }
                   else {
                     safeScript[s] = script[s]

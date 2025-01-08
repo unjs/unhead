@@ -28,14 +28,14 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
 
 export type Title = MaybeComputedRef<_Title>
 export type TitleTemplate = _TitleTemplate | Ref<_TitleTemplate> | ((title?: string) => _TitleTemplate)
-export type Base<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<_Base<E>>>
-export type Link<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Link<E>>
-export type Meta<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Meta<E>>
-export type Style<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Style<E>>
-export type Script<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Script<E>>
-export type Noscript<E extends EntryAugmentation = {}> = MaybeComputedRefEntries<_Noscript<E>>
-export type HtmlAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>>>
-export type BodyAttributes<E extends EntryAugmentation = {}> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>> & MaybeEventFnHandlers<BodyEvents>>
+export type Base<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<_Base<E>>>
+export type Link<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Link<E>>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Meta<E>>
+export type Style<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Style<E>>
+export type Script<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Script<E>>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Noscript<E>>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>>>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>> & MaybeEventFnHandlers<BodyEvents>>
 
 export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**
@@ -109,6 +109,6 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-export type UseHeadInput<T extends MergeHead = {}> = MaybeComputedRef<ReactiveHead<T>>
+export type UseHeadInput<T extends MergeHead = Record<string, any>> = MaybeComputedRef<ReactiveHead<T>>
 export type UseSeoMetaInput = MaybeComputedRefEntriesOnly<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin

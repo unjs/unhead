@@ -1,11 +1,11 @@
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
 import { useDom } from '../../fixtures'
+import { createHeadWithContext } from '../../util'
 
 describe('titleTemplate', () => {
   it('string replace', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: '%s - my template',
       title: 'test',
@@ -19,7 +19,7 @@ describe('titleTemplate', () => {
     )
   })
   it('fn replace', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => `${title} - my template`,
       title: 'test',
@@ -30,7 +30,7 @@ describe('titleTemplate', () => {
     )
   })
   it('titleTemplate as title', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
       title: null,
@@ -40,8 +40,8 @@ describe('titleTemplate', () => {
       `"<title>Default Title</title>"`,
     )
   })
-  it('titleTemplate as title', async () => {
-    const head = createHead()
+  it('titleTemplate as title - update', async () => {
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
@@ -60,7 +60,7 @@ describe('titleTemplate', () => {
     )
   })
   it('reset title template', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
@@ -75,7 +75,7 @@ describe('titleTemplate', () => {
   })
 
   it('nested title template', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
@@ -89,7 +89,7 @@ describe('titleTemplate', () => {
   })
 
   it('null fn return', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       titleTemplate: (title?: string) => title === 'test' ? null : `${title} - Template`,
       title: 'test',
@@ -101,7 +101,7 @@ describe('titleTemplate', () => {
   })
 
   it('empty title', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: '',
     })
@@ -112,7 +112,7 @@ describe('titleTemplate', () => {
   })
 
   it('replacing title with empty', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       title: 'test',
     })

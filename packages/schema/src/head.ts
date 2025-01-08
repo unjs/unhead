@@ -81,6 +81,12 @@ export interface CreateHeadOptions {
   document?: Document
   plugins?: HeadPluginInput[]
   hooks?: NestedHooks<HeadHooks>
+  /**
+   * Disable the Capo.js tag sorting algorithm.
+   *
+   * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
+   */
+  disableCapoSorting?: boolean
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
@@ -89,7 +95,7 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   head?: Unhead
 }
 
-export interface Unhead<Input extends {} = Head> {
+export interface Unhead<Input extends Record<string, any> = Head> {
   /**
    * Registered plugins.
    */

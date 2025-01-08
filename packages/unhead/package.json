@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "1.11.13",
+  "version": "1.11.15",
   "author": {
     "name": "Harlan Wilton",
     "email": "harlan@harlanzw.com",
@@ -24,13 +24,48 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./optionalPlugins": {
+      "types": "./dist/optionalPlugins.d.ts",
+      "import": "./dist/optionalPlugins.mjs",
+      "require": "./dist/optionalPlugins.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.mjs",
+      "require": "./dist/server.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.cjs"
     }
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "optionalPlugins": {
+    "*": {
+      "optionalPlugins": [
+        "dist/optionalPlugins"
+      ],
+      "server": [
+        "dist/server"
+      ],
+      "client": [
+        "dist/client"
+      ],
+      "legacy": [
+        "dist/legacy"
+      ]
+    }
+  },
   "files": [
-    "dist"
+    "client.d.ts",
+    "dist",
+    "legacy.d.ts",
+    "optionalPlugins.d.ts",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
@@ -38,9 +73,9 @@
     "export:sizes": "npx export-size . -r"
   },
   "dependencies": {
-    "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "hookable": "^5.5.3"
+    "hookable": "^5.5.3",
+    "unctx": "^2.4.1"
   }
 }

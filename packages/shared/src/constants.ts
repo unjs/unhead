@@ -24,12 +24,11 @@ export const ValidHeadTags = new Set([
 
 export const UniqueTags = new Set(['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams'])
 
-export const TagConfigKeys = new Set(['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'children', 'innerHTML', 'textContent', 'processTemplateParams'])
+export const TagConfigKeys = new Set(['tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
 
 export const IsBrowser = typeof window !== 'undefined'
 
 export const composableNames = [
-  'getActiveHead',
   'useHead',
   'useSeoMeta',
   'useHeadSafe',
@@ -37,3 +36,6 @@ export const composableNames = [
   'useServerSeoMeta',
   'useServerHeadSafe',
 ]
+
+export const NetworkEvents = new Set(['onload', 'onerror', 'onabort', 'onprogress', 'onloadstart'])
+export const ScriptNetworkEvents = new Set(['onload', 'onerror'])

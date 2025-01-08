@@ -1,11 +1,11 @@
-import type { SchemaOrgGraph } from '.'
+import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 import { defu } from 'defu'
 import {
   createSchemaOrgGraph,
-  resolveMeta,
-} from '.'
+} from './core/graph'
+import { resolveMeta } from './core/resolve'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
@@ -56,21 +56,28 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           }
           tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
         }
-        if (tag.tag === 'htmlAttrs' && tag.props.lang) { resolvedMeta.inLanguage = tag.props.lang }
-        else if (tag.tag === 'title') { resolvedMeta.title = tag.textContent }
-        else if (tag.tag === 'meta' && tag.props.name === 'description') { resolvedMeta.description = tag.props.content }
+        if (tag.tag === 'htmlAttrs' && tag.props.lang) {
+          resolvedMeta.inLanguage = tag.props.lang
+        }
+        else if (tag.tag === 'title') {
+          resolvedMeta.title = tag.textContent
+        }
+        else if (tag.tag === 'meta' && tag.props.name === 'description') {
+          resolvedMeta.description = tag.props.content
+        }
         else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
           resolvedMeta.url = tag.props.href
-          if (resolvedMeta.url && !resolvedMeta.host)
           // may be using template params that aren't resolved
-          {
+          if (resolvedMeta.url && !resolvedMeta.host) {
             try {
               resolvedMeta.host = new URL(resolvedMeta.url).origin
             }
             catch {}
           }
         }
-        else if (tag.tag === 'meta' && tag.props.property === 'og:image') { resolvedMeta.image = tag.props.content }
+        else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
+          resolvedMeta.image = tag.props.content
+        }
         // use template params
         else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
           resolvedMeta = {
@@ -93,6 +100,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
               tag.props = {}
               return
             }
+            // eslint-disable-next-line node/prefer-global/process
             const minify = options?.minify || process.env.NODE_ENV === 'production'
             tag.innerHTML = JSON.stringify({
               '@context': 'https://schema.org',

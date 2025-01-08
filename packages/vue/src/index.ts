@@ -1,18 +1,9 @@
-import { CapoPlugin, createHeadCore, HashHydrationPlugin } from 'unhead'
-import { createHead, createServerHead } from './createHead'
+import { unheadCtx } from 'unhead'
 import { resolveUnrefHeadInput } from './utils'
 
 // create
 export {
-  createHead,
-  createHeadCore,
-  createServerHead,
-}
-
-// extra plugins
-export {
-  CapoPlugin,
-  HashHydrationPlugin,
+  unheadCtx,
 }
 
 // utils
@@ -33,8 +24,6 @@ export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
 // types
 export * from './types'
-export * from './Vue2ProvideUnheadPlugin'
-// vue 2
 export * from './VueHeadMixin'
 
 export type { ActiveHeadEntry, Head, HeadEntryOptions, HeadTag, MergeHead, Unhead } from '@unhead/schema'

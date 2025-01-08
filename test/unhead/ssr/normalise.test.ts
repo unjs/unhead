@@ -1,10 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('normalise', () => {
   it('handles booleans nicely', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
 
     head.push({
       link: [

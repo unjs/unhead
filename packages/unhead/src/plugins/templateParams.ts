@@ -62,7 +62,6 @@ export default defineHeadPlugin(head => ({
     },
     'tags:afterResolve': ({ tags }) => {
       // we need to re-process in case then user had a function as the titleTemplate
-      // TODO drop support for function in v2
       let title: HeadTag | undefined
       for (let i = 0; i < tags.length; i += 1) {
         const tag = tags[i]

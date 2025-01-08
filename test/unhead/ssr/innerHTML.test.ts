@@ -1,10 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createHeadWithContext } from '../../util'
 
 describe('ssr innerHTML', () => {
   it('json', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -30,7 +30,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('json escaping', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
@@ -54,11 +54,11 @@ describe('ssr innerHTML', () => {
   })
 
   it('noscript', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       noscript: [
         {
-          children: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+          innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
     height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
         },
       ],
@@ -77,7 +77,7 @@ describe('ssr innerHTML', () => {
   })
 
   it('bug #228', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [{
         innerHTML: `/* eslint-disable */
@@ -117,20 +117,11 @@ describe('ssr innerHTML', () => {
   })
 
   it('empty innerHTML', async () => {
-    const head = createHead()
+    const head = createHeadWithContext()
     head.push({
       script: [
         {
           innerHTML: '',
-        },
-      ],
-    })
-    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
-
-    head.push({
-      script: [
-        {
-          children: '',
         },
       ],
     })
