@@ -220,6 +220,9 @@ importers:
       ufo:
         specifier: ^1.5.4
         version: 1.5.4
+      unhead:
+        specifier: workspace:*
+        version: link:../unhead
       unplugin:
         specifier: ^2.1.2
         version: 2.1.2
