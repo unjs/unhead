@@ -1,7 +1,7 @@
 import { createHead } from 'unhead'
 import { describe, expectTypeOf, it } from 'vitest'
 import { createServerHeadWithContext } from '../../../../test/util'
-import { useScript } from '../../src/vanilla/useScript'
+import { useScript } from '../../src/useScript'
 
 describe('useScript', () => {
   it('types: inferred use()', async () => {

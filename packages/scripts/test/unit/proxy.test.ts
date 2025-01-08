@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings } from '../../src/utils/proxy'
-import { useScript } from '../../src/vanilla/useScript'
+import { createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings } from '../../src/proxy'
+import { useScript } from '../../src/useScript'
 import {createServerHeadWithContext} from "../../../../test/util";
 
 

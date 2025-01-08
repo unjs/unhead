@@ -1,7 +1,7 @@
 import type { LinkBase } from 'zhead'
 import { describe, it } from 'vitest'
 import { createServerHeadWithContext } from '../../../../test/util'
-import { useScript } from '../../src/vanilla/useScript'
+import { useScript } from '../../src/useScript'
 
 describe('warmup', () => {
   it('server', () => {

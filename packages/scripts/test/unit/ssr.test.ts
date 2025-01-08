@@ -1,6 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
-import { useScript } from '../../src/vanilla/useScript'
+import { useScript } from '../../src/useScript'
 
 describe('ssr useScript', () => {
   it('default', async () => {

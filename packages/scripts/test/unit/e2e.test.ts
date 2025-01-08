@@ -4,7 +4,7 @@ import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../test/fixtures'
 import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
-import { useScript } from '../../src/vanilla/useScript'
+import { useScript } from '../../src/useScript'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {

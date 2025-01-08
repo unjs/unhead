@@ -7,11 +7,12 @@ import type {
   UseScriptContext,
   UseScriptInput,
   UseScriptOptions,
+  UseScriptResolvedInput,
   WarmupStrategy,
-} from '../types'
+} from './types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 import { useUnhead } from 'unhead'
-import { createNoopedRecordingProxy, replayProxyRecordings } from '../utils/proxy'
+import { createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
   return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
@@ -24,12 +25,12 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || useUnhead()
   const id = resolveScriptKey(input)
-  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
+  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
   if (prevScript) {
     prevScript.setupTriggerHandler(options.trigger)
     return prevScript
@@ -127,6 +128,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
       }
+      // @ts-expect-error untyped
       script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
       return script._warmupEl
     },

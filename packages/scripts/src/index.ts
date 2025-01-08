@@ -1,5 +1,3 @@
-export * from './core'
-export * from './nodes'
-export * from './plugin'
-export * from './runtime'
+export * from './proxy'
 export * from './types'
+export * from './useScript'

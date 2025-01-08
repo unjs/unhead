@@ -1,4 +1,4 @@
-import type { AsVoidFunctions } from '../types'
+import type { AsVoidFunctions } from './types'
 
 type RecordingEntry =
   | { type: 'get', key: string | symbol, args?: any[] }
@@ -23,6 +23,7 @@ export function createSpyProxy<T extends Record<string, any>>(instance: T = {} a
     apply(_, __, args) {
       stack[stackIdx].push({ type: 'apply', key: '', args })
       onApply(stack, args)
+      // @ts-expect-error untyped
       return Reflect.apply(_, __, args)
     },
   } as ProxyHandler<T>)
@@ -45,6 +46,7 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
         stack[stackIdx] = []
       }
       stack[stackIdx].push({ type: 'get', key: prop })
+      // @ts-expect-error untyped
       return new Proxy(() => {}, handler(true))
     },
     apply(_, __, args) {
@@ -69,6 +71,7 @@ export function replayProxyRecordings<T extends object>(target: T, stack: Record
         context = context[key]
       }
       else if (type === 'apply') {
+        // @ts-expect-error untyped
         context = (context as () => any).call(prevContext, ...args)
       }
     })

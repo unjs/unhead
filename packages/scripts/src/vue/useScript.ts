@@ -9,7 +9,7 @@ import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
 import { injectHead } from '@unhead/vue'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { useScript as _useScript } from '../vanilla/useScript'
+import { useScript as _useScript } from '../useScript'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
@@ -61,7 +61,7 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
 }
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T, U>
   const head = options?.head || injectHead()
   // @ts-expect-error untyped

@@ -7,6 +7,7 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T
  * Either a string source for the script or full script properties.
  */
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
+export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 type BaseScriptApi = Record<symbol | string, any>
 
 export type AsVoidFunctions<T extends BaseScriptApi> = {
