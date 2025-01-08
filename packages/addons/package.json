@@ -64,6 +64,9 @@
     "unplugin": "^2.1.2",
     "unplugin-ast": "^0.13.1"
   },
+  "peerDependencies": {
+    "unhead": "workspace:*"
+  },
   "devDependencies": {
     "@babel/types": "^7.26.3"
   }

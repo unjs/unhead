@@ -1,2 +1,3 @@
 export * from './constants'
-export * from './plugins'
+
+export { InferSeoMetaPlugin } from 'unhead/optionalPlugins'
