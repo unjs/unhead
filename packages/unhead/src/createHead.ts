@@ -28,7 +28,7 @@ function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
  *
  * @param options
  */
-export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+export function createHeadCore<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})

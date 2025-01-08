@@ -9,4 +9,4 @@ export * from './composables/useServerHeadSafe'
 export * from './composables/useServerSeoMeta'
 
 export * from './context'
-export { createHead } from './createHead'
+export * from './createHead'

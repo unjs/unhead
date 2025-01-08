@@ -54,12 +54,16 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "legacy": [
+        "dist/legacy"
       ]
     }
   },
   "files": [
     "client.d.ts",
     "dist",
+    "legacy.d.ts",
     "optionalPlugins.d.ts",
     "server.d.ts"
   ],

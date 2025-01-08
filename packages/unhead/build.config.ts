@@ -11,5 +11,6 @@ export default defineBuildConfig({
     { input: 'src/optionalPlugins/index', name: 'optionalPlugins' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },
+    { input: 'src/legacy', name: 'legacy' },
   ],
 })
