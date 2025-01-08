@@ -1,7 +1,8 @@
-import { createHead } from 'unhead'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings } from '../../src/utils/proxy'
 import { useScript } from '../../src/vanilla/useScript'
+import {createServerHeadWithContext} from "../../../../test/util";
+
 
 interface Api {
   _paq: any[]
@@ -91,7 +92,7 @@ describe('proxy chain', () => {
     `)
   })
   it('use() provided', () => {
-    const head = createHead()
+    const head = createServerHeadWithContext()
     const instance = useScript({
       src: 'https://cdn.example.com/script.js',
       head,

@@ -3,14 +3,14 @@ import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../test/fixtures'
+import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/vanilla/useScript'
-import { createHeadWithContext } from '../../util'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {
     // scenario: we are injecting root head schema which will not have a hydration step,
     // but we are also injecting a child head schema which will have a hydration step
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createServerHeadWithContext()
     const input = {
       script: [
         {

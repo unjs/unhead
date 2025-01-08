@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHeadWithContext, createServerHeadWithContext } from '../../util'
+import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/vanilla/useScript'
 
 describe('ssr useScript', () => {

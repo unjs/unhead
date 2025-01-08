@@ -17,7 +17,6 @@ export * from './composables/injectHead'
 export * from './composables/useHead'
 
 export * from './composables/useHeadSafe'
-export * from './composables/useScript'
 export * from './composables/useSeoMeta'
 export * from './composables/useServerHead'
 export * from './composables/useServerHeadSafe'

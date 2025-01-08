@@ -1,5 +1,6 @@
 import { createHead } from 'unhead'
 import { describe, expectTypeOf, it } from 'vitest'
+import { createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/vanilla/useScript'
 
 describe('useScript', () => {
@@ -7,7 +8,7 @@ describe('useScript', () => {
     const instance = useScript({
       src: 'https://cdn.example.com/script.js',
     }, {
-      head: createHead(),
+      head: createServerHeadWithContext(),
       use() {
         return {
           test: (foo: string) => 'foo',

@@ -1,11 +1,11 @@
 import type { LinkBase } from 'zhead'
-import { createHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/vanilla/useScript'
 
 describe('warmup', () => {
   it('server', () => {
-    const head = createHead()
+    const head = createServerHeadWithContext()
     useScript('https://cdn.example.com/script.js', {
       head,
       trigger: 'server',
@@ -15,7 +15,7 @@ describe('warmup', () => {
     expect(entry.link).toBeUndefined()
   })
   it('default / client', () => {
-    const head = createHead()
+    const head = createServerHeadWithContext()
     useScript('https://cdn.example.com/script.js', {
       head,
       trigger: 'client',
@@ -25,7 +25,7 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('relative: default / client', () => {
-    const head = createHead()
+    const head = createServerHeadWithContext()
     useScript('/script.js', {
       head,
       trigger: 'client',
@@ -35,7 +35,7 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('absolute: dns-prefetch', () => {
-    const head = createHead()
+    const head = createServerHeadWithContext()
     useScript('https://cdn.example.com/script.js', {
       head,
       trigger: 'client',

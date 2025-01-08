@@ -14,7 +14,7 @@ describe('dom useScript', () => {
         return {
           test: () => {
             calledFn = 'test'
-            return foo
+            return 'foo'
           },
         }
       },
