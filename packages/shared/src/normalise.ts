@@ -65,6 +65,10 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
     }
 
     if (!virtual && !TagConfigKeys.has(k as string)) {
+      if (typeof props[k] === 'function' && !String(k).startsWith('on')) {
+        // @ts-expect-error untyped
+        props[k] = props[k]()
+      }
       const v = String(props[k])
       // data keys get special treatment, we opt for more verbose syntax
       const isDataKey = (k as string).startsWith('data-')
@@ -103,6 +107,11 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): He
         // @ts-expect-error untyped
         tags.push(normaliseTag(k as keyof Head, props, e))
       }
+      continue
+    }
+    else if (typeof v === 'function' && k !== 'titleTemplate') {
+      // resolve titles that may be functions
+      input[k] = v()
       continue
     }
     // @ts-expect-error untyped

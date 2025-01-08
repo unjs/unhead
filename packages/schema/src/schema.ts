@@ -1,6 +1,6 @@
 import type { Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style, BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable } from 'zhead'
 import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
-import type { FalsyEntries, Never } from './util'
+import type { Falsey, MaybeFunction, Never, ResolvableValues } from './util'
 
 export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
@@ -54,22 +54,22 @@ export interface BaseMeta extends Omit<_Meta, 'content'> {
 
 export type EntryAugmentation = undefined | Record<string, any>
 
-export type MaybeFunctionEntries<T> = {
+export type MaybeEventFnHandlers<T> = {
   [key in keyof T]?: T[key] | ((e: Event) => void)
 }
 
 type TitleTemplateResolver = string | ((title?: string) => string | null)
 
-export type Title = string | FalsyEntries<({ textContent: string } & SchemaAugmentations['title']) | null>
+export type Title = MaybeFunction<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
 export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], FalsyEntries<_Base>>> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<LinkBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<ScriptBase> & MaybeFunctionEntries<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = FalsyEntries<BodyAttr> & MaybeFunctionEntries<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], ResolvableValues<_Base>>> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<LinkBase> & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase> & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BodyAttr> & MaybeEventFnHandlers<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface HeadUtils {
   /**
