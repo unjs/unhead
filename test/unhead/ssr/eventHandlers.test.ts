@@ -1,11 +1,11 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
-import { createHeadWithContext } from '../../util'
+import { createServerHeadWithContext } from '../../util'
 
 describe('ssr event handlers', () => {
   it('basic', async () => {
-    const head = createHeadWithContext()
+    const head = createServerHeadWithContext()
 
     useHead({
       script: [

@@ -53,6 +53,9 @@
     "stub": "unbuild . --stub",
     "export:sizes": "npx export-size . -r"
   },
+  "peerDependencies": {
+    "unhead": "workspace:*"
+  },
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",
     "@unhead/schema": "workspace:*",
@@ -63,9 +66,6 @@
     "ufo": "^1.5.4",
     "unplugin": "^2.1.2",
     "unplugin-ast": "^0.13.1"
-  },
-  "peerDependencies": {
-    "unhead": "workspace:*"
   },
   "devDependencies": {
     "@babel/types": "^7.26.3"
