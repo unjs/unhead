@@ -25,7 +25,7 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const head = options.head || useUnhead()
@@ -37,7 +37,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   options.beforeInit?.()
   const syncStatus = (s: ScriptInstance<T>['status']) => {
+    // eslint-disable-next-line ts/no-use-before-define
     script.status = s
+    // eslint-disable-next-line ts/no-use-before-define
     head.hooks.callHook(`script:updated`, hookCtx)
   }
   ScriptNetworkEvents
@@ -56,6 +58,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return () => _cbs[key]?.splice(i - 1, 1)
     }
     // the event has already happened, run immediately
+    // eslint-disable-next-line ts/no-use-before-define
     cb(script.instance)
     return () => {}
   }
@@ -87,7 +90,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
   })
 
-  const script = Object.assign(loadPromise, {
+  const script = {
+    _loadPromise: loadPromise,
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
     id,
@@ -203,7 +207,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
     },
     _cbs,
-  }) as any as UseScriptContext<T>
+  } as any as UseScriptContext<T>
   // script is ready
   loadPromise
     .then((api) => {

@@ -2,7 +2,7 @@ import type { ActiveHeadEntry, HeadEntryOptions, Script } from '@unhead/schema'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T> & ScriptInstance<T>
+export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptInstance<T>
 /**
  * Either a string source for the script or full script properties.
  */
@@ -37,6 +37,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   // cbs
   onLoaded: (fn: (instance: T) => void | Promise<void>) => void
   onError: (fn: (err?: Error) => void | Promise<void>) => void
+  /**
+   * @internal
+   */
+  _loadPromise: Promise<T | false>
   /**
    * @internal
    */
