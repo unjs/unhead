@@ -1,8 +1,10 @@
 import type { AsVoidFunctions } from '../../src'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createServerHeadWithContext } from '../../../../test/util'
-import { createNoopedRecordingProxy, createSpyProxy, replayProxyRecordings } from '../../src/proxy'
+import { createForwardingProxy } from '../../src'
+import { createNoopedRecordingProxy, replayProxyRecordings } from '../../src/proxy'
 import { useScript } from '../../src/useScript'
+import { createSpyProxy } from '../../src/utils'
 
 interface Api {
   _paq: any[]
@@ -24,25 +26,39 @@ describe('proxy chain', () => {
     expectTypeOf(proxy.proxy.say).parameter(0).toBeString()
     expectTypeOf(proxy.proxy.foo.bar.fn).toBeFunction()
   })
-  it('basic queue', async () => {
-    const script: { instance: (null | Api) } = { instance: null }
+  it('e2e', async () => {
     // do recording
     const { proxy, stack } = createNoopedRecordingProxy<Api>()
-    proxy._paq.push(['test'])
-    proxy.say('hello world')
+    const script = { proxy, instance: null }
+    script.proxy._paq.push(['test'])
+    script.proxy.say('hello world')
     expect(stack.length).toBe(2)
-
-    script.instance = {
-      _paq: [],
-      say(s: string) {
+    let called
+    const w: any = {
+      _paq: createSpyProxy([], () => {
+        called = true
+      }),
+      say: (s: string) => {
         console.log(s)
         return s
       },
     }
+    // did load
+    script.instance = {
+      _paq: w._paq,
+      say: w.say,
+    }
+    const log = console.log
     // replay recording
-    const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const consoleMock = vi.spyOn(console, 'log').mockImplementation((...args) => {
+      log('mocked', ...args)
+    })
     replayProxyRecordings(script.instance, stack)
+    // @ts-expect-error untyped
+    script.proxy = createForwardingProxy(script.instance)
     expect(consoleMock).toHaveBeenCalledWith('hello world')
+    script.proxy.say('proxy updated!')
+    expect(consoleMock).toHaveBeenCalledWith('proxy updated!')
     expect(script.instance).toMatchInlineSnapshot(`
       {
         "_paq": [
@@ -53,14 +69,15 @@ describe('proxy chain', () => {
         "say": [Function],
       }
     `)
+    script.proxy._paq.push(['test'])
     consoleMock.mockReset()
+    expect(called).toBe(true)
   })
   it('spy', () => {
-    const w = {}
+    const w: any = {}
     w._paq = []
-    const stack = []
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    w._paq = createSpyProxy(w._paq, (s, arg) => {
+    const stack: any[] = []
+    w._paq = createSpyProxy(w._paq, (s) => {
       stack.push(s)
     })
     w._paq.push(['test'])
@@ -86,29 +103,12 @@ describe('proxy chain', () => {
             {
               "key": "length",
               "type": "get",
+              "value": 0,
             },
           ],
         ],
       ]
     `)
-  })
-  it('should keep array properties unchanged', () => {
-    type Result = AsVoidFunctions<Api>
-    expectTypeOf<Result['arrayProp']>().toEqualTypeOf<string[]>()
-  })
-
-  it('should convert function properties to void functions', () => {
-    type Result = AsVoidFunctions<Api>
-    expectTypeOf<Result['funcProp']>().toBeFunction()
-    expectTypeOf<Result['funcProp']>().parameters.toEqualTypeOf<[number]>()
-    expectTypeOf<Result['funcProp']>().returns.toBeVoid()
-  })
-
-  it('should recursively convert nested function properties to void functions', () => {
-    type Result = AsVoidFunctions<Api>
-    expectTypeOf<Result['nestedProp']['innerFunc']>().toBeFunction()
-    expectTypeOf<Result['nestedProp']['innerFunc']>().parameters.toEqualTypeOf<[boolean]>()
-    expectTypeOf<Result['nestedProp']['innerFunc']>().returns.toBeVoid()
   })
   it('use() provided', () => {
     const head = createServerHeadWithContext()

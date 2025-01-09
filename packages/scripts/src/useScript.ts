@@ -12,7 +12,7 @@ import type {
 } from './types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 import { useUnhead } from 'unhead'
-import { createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
   return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
@@ -229,6 +229,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
+      // just forward everything with the same behavior
+      script.proxy = createForwardingProxy(instance)
     })
   }
   // need to make sure it's not already registered

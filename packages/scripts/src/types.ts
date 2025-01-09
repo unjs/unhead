@@ -66,6 +66,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   }
 }
 
+export type RecordingEntry =
+  | { type: 'get', key: string | symbol, args?: any[], value?: any }
+  | { type: 'apply', key: string | symbol, args: any[] }
+
 export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**
    * Resolve the script instance from the window.

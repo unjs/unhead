@@ -1,35 +1,4 @@
-import type { AsVoidFunctions } from './types'
-
-type RecordingEntry =
-  | { type: 'get', key: string | symbol, args?: any[] }
-  | { type: 'apply', key: string | symbol, args: any[] }
-
-export function createSpyProxy<T extends Record<string, any>>(instance: T = {} as T, onApply: any): T {
-  const stack: RecordingEntry[][] = []
-
-  let stackIdx = -1
-  const handler = (reuseStack = false) => ({
-    get(_, prop, receiver) {
-      if (!reuseStack) {
-        stackIdx++ // root get triggers a new stack
-        stack[stackIdx] = []
-      }
-      stack[stackIdx].push({ type: 'get', key: prop })
-      const v = Reflect.get(_, prop, receiver)
-      if (v) {
-        return new Proxy(v, handler(true))
-      }
-    },
-    apply(_, __, args) {
-      stack[stackIdx].push({ type: 'apply', key: '', args })
-      onApply(stack, args)
-      // @ts-expect-error untyped
-      return Reflect.apply(_, __, args)
-    },
-  } as ProxyHandler<T>)
-
-  return new Proxy(instance, handler())
-}
+import type { AsVoidFunctions, RecordingEntry } from './types'
 
 export function createNoopedRecordingProxy<T extends Record<string, any>>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][] } {
   const stack: RecordingEntry[][] = []
@@ -59,6 +28,25 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
     proxy: new Proxy(instance || {}, handler()),
     stack,
   }
+}
+
+export function createForwardingProxy<T extends Record<string, any>>(target: T): AsVoidFunctions<T> {
+  const handler: ProxyHandler<T> = {
+    get(_, prop, receiver) {
+      const v = Reflect.get(_, prop, receiver)
+      if (typeof v === 'object') {
+        return new Proxy(v, handler)
+      }
+      return v
+    },
+    apply(_, __, args) {
+      // does not return the apply output for consistency
+      // @ts-expect-error untyped
+      Reflect.apply(_, __, args)
+      return undefined
+    },
+  }
+  return new Proxy(target, handler) as AsVoidFunctions<T>
 }
 
 export function replayProxyRecordings<T extends object>(target: T, stack: RecordingEntry[][]) {
