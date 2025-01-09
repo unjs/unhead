@@ -1,28 +1,22 @@
 import type {
-  AsAsyncFunctionValues,
-  UseScriptInput as BaseUseScriptInput,
-  UseScriptOptions as BaseUseScriptOptions,
   DataKeys,
   HeadEntryOptions,
   SchemaAugmentations,
   ScriptBase,
-  ScriptInstance,
-  UseFunctionType,
-  UseScriptResolvedInput,
-  UseScriptStatus,
 } from '@unhead/schema'
+import type { MaybeComputedRefEntriesOnly } from '@unhead/vue'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
-import type { MaybeComputedRefEntriesOnly } from '../types'
-import { useScript as _useScript } from 'unhead'
+import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
+import { injectHead } from '@unhead/vue'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { injectHead } from './injectHead'
+import { useScript as _useScript } from '../useScript'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
 }
 
 export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>, U = Record<string, any>> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T>, 'use' | 'stub' | 'eventContext' | 'beforeInit'> {
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -35,17 +29,9 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean>
 }
 
-export type UseScriptContext<T extends Record<symbol | string, any>> =
-  (Promise<T> & VueScriptInstance<T>)
-  & AsAsyncFunctionValues<T>
-  & {
-  /**
-   * @deprecated Use top-level functions instead.
-   */
-    $script: Promise<T> & VueScriptInstance<T>
-  }
+export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T> & VueScriptInstance<T>
 
-function registerVueScopeHandlers<T extends Record<symbol | string, any> = Record<symbol | string, any>>(script: UseScriptContext<UseFunctionType<UseScriptOptions<T, any>, T>>, scope?: ComponentInternalInstance | null) {
+function registerVueScopeHandlers<T extends Record<symbol | string, any> = Record<symbol | string, any>>(script: UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>, scope?: ComponentInternalInstance | null) {
   if (!scope) {
     return
   }
@@ -74,9 +60,9 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   })
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>, U = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T, U>): UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptResolvedInput
-  const options = _options || {}
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
+  const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || injectHead()
   // @ts-expect-error untyped
   options.head = head
@@ -106,7 +92,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // sync the status, need to register before useScript
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
-    // @ts-expect-error untyped
     s._statusRef.value = s.status
   })
   // @ts-expect-error untyped
@@ -121,5 +106,5 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       // we can't override status as it will break the unhead useScript API
       return Reflect.get(_, key === 'status' ? '_statusRef' : key, a)
     },
-  }) as any as UseScriptContext<UseFunctionType<UseScriptOptions<T, U>, T>>
+  }) as any as UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
 }

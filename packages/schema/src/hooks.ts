@@ -1,4 +1,3 @@
-import type { ScriptInstance } from './'
 import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
 
@@ -53,7 +52,4 @@ export interface HeadHooks {
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
-
-  'script:updated': (ctx: { script: ScriptInstance<any> }) => HookResult
-  'script:instance-fn': (ctx: { script: ScriptInstance<any>, fn: string | symbol, exists: boolean }) => HookResult
 }

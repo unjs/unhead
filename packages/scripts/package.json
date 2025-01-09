@@ -1,0 +1,97 @@
+{
+  "name": "@unhead/scripts",
+  "type": "module",
+  "version": "1.11.14",
+  "description": "Unhead Scripts allows you to load third-party scripts with better performance, privacy, and security.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/schema-org"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "keywords": [
+    "schema.org",
+    "node",
+    "seo"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.cjs"
+    },
+    "./legacy": {
+      "types": "./dist/legacy.d.ts",
+      "import": "./dist/legacy.mjs",
+      "require": "./dist/legacy.cjs"
+    },
+    "./vue-legacy": {
+      "types": "./dist/vue-legacy.d.ts",
+      "import": "./dist/vue-legacy.mjs",
+      "require": "./dist/vue-legacy.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "vue": [
+        "dist/vue"
+      ],
+      "legacy": [
+        "dist/legacy"
+      ],
+      "vue-legacy": [
+        "dist/vue-legacy"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "legacy.d.ts",
+    "overrides.d.ts",
+    "vue.d.ts"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub",
+    "test": "vitest",
+    "release": "bumpp package.json --commit --push --tag",
+    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
+  },
+  "peerDependencies": {
+    "@unhead/shared": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/vue": {
+      "optional": true
+    }
+  },
+  "build": {
+    "external": [
+      "vue"
+    ]
+  },
+  "devDependencies": {
+    "@unhead/schema": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
+    "unplugin-vue-components": "^0.27.5"
+  }
+}
