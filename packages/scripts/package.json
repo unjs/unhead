@@ -2,7 +2,7 @@
   "name": "@unhead/scripts",
   "type": "module",
   "version": "1.11.14",
-  "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
+  "description": "Unhead Scripts allows you to load third-party scripts with better performance, privacy, and security.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",

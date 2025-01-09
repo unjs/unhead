@@ -1,8 +1,6 @@
-#
+# @unhead/scripts
 
-Schema.org for Vue. Supports typed and automated Google Rich Results
-
-[Documentation](https://unhead.unjs.io/schema-org)
+Unhead Scripts allows you to load third-party scripts with better performance, privacy, and security.
 
 ## License
 
