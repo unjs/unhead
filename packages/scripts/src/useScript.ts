@@ -2,6 +2,7 @@ import type {
   Head,
 } from '@unhead/schema'
 import type {
+  EventHandlerOptions,
   ScriptInstance,
   UseFunctionType,
   UseScriptContext,
@@ -52,7 +53,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+  const _uniqueCbs: Set<string> = new Set<string>()
+  const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
+    if (options?.key) {
+      const key = `${options?.key}:${options.key}`
+      if (_uniqueCbs.has(key)) {
+        return
+      }
+      _uniqueCbs.add(key)
+    }
     if (_cbs[key]) {
       const i: number = _cbs[key].push(cb)
       return () => _cbs[key]?.splice(i - 1, 1)
@@ -160,11 +169,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         _registerCb('loaded', cb)
       return loadPromise
     },
-    onLoaded(cb: (instance: T) => void | Promise<void>) {
-      return _registerCb('loaded', cb)
+    onLoaded(cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) {
+      return _registerCb('loaded', cb, options)
     },
-    onError(cb: (err?: Error) => void | Promise<void>) {
-      return _registerCb('error', cb)
+    onError(cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) {
+      return _registerCb('error', cb, options)
     },
     setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
       if (script.status !== 'awaitingLoad') {

@@ -28,15 +28,15 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   proxy: AsVoidFunctions<T>
   instance?: T
   id: string
-  status: UseScriptStatus
+  status: Readonly<UseScriptStatus>
   entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
   warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
   remove: () => boolean
   setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
   // cbs
-  onLoaded: (fn: (instance: T) => void | Promise<void>) => void
-  onError: (fn: (err?: Error) => void | Promise<void>) => void
+  onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => void
+  onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => void
   /**
    * @internal
    */
@@ -64,6 +64,13 @@ export interface ScriptInstance<T extends BaseScriptApi> {
     loaded: null | ((instance: T) => void | Promise<void>)[]
     error: null | ((err?: Error) => void | Promise<void>)[]
   }
+}
+
+export interface EventHandlerOptions {
+  /**
+   * Used to dedupe the event, allowing you to have an event run only a single time.
+   */
+  key?: string
 }
 
 export type RecordingEntry =
