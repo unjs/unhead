@@ -9,6 +9,7 @@
     "moduleResolution": "node",
     "paths": {
       "unhead": ["packages/unhead/src"],
+      "unhead/*": ["packages/unhead/src/*"],
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
       "@unhead/schema-org": ["packages/schema-org/src"],
@@ -17,7 +18,6 @@
       "@unhead/scripts/*": ["packages/scripts/*"],
       "@unhead/addons": ["packages/addons/src"],
       "@unhead/addons/*": ["packages/addons/*"],
-      "unhead/*": ["packages/unhead/*"],
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],

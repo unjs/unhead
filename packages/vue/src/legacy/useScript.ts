@@ -5,12 +5,12 @@ import type {
   ScriptBase,
 } from '@unhead/schema'
 import type { MaybeComputedRefEntriesOnly } from '@unhead/vue'
+import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/legacy'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from './types'
+import { useScript as _useScript } from 'unhead/legacy'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { useScript as _useScript } from './legacy'
 
-export { resolveScriptKey } from './useScript'
+export { resolveScriptKey } from 'unhead/legacy'
 
 export type { UseFunctionType }
 
@@ -99,6 +99,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   })
   // @ts-expect-error untyped
   const script = _useScript(input as BaseUseScriptInput, options)
+  // @ts-expect-error untyped
   script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   // @ts-expect-error untyped

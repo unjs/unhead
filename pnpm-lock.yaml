@@ -285,12 +285,13 @@ importers:
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
-      '@unhead/vue':
-        specifier: workspace:*
-        version: link:../vue
       unhead:
         specifier: workspace:*
         version: link:../unhead
+    devDependencies:
+      '@unhead/vue':
+        specifier: workspace:*
+        version: link:../vue
 
   packages/shared:
     dependencies:

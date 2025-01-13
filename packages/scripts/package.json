@@ -31,16 +31,6 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs",
       "require": "./dist/vue.cjs"
-    },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "import": "./dist/legacy.mjs",
-      "require": "./dist/legacy.cjs"
-    },
-    "./vue-legacy": {
-      "types": "./dist/vue-legacy.d.ts",
-      "import": "./dist/vue-legacy.mjs",
-      "require": "./dist/vue-legacy.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -50,18 +40,11 @@
     "*": {
       "vue": [
         "dist/vue"
-      ],
-      "legacy": [
-        "dist/legacy"
-      ],
-      "vue-legacy": [
-        "dist/vue-legacy"
       ]
     }
   },
   "files": [
     "dist",
-    "legacy.d.ts",
     "overrides.d.ts",
     "vue.d.ts"
   ],
@@ -80,11 +63,6 @@
     "@unhead/vue": {
       "optional": true
     }
-  },
-  "build": {
-    "external": [
-      "vue"
-    ]
   },
   "dependencies": {
     "@unhead/schema": "workspace:*",

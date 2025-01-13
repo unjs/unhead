@@ -12,5 +12,6 @@ export default defineBuildConfig({
     { input: 'src/components/index', name: 'components' },
     { input: 'src/server', name: 'server' },
     { input: 'src/client', name: 'client' },
+    { input: 'src/legacy/index', name: 'legacy' },
   ],
 })
