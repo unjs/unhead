@@ -11,11 +11,7 @@ import type {
 } from '@unhead/schema'
 import { normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
-import DedupePlugin from './plugins/dedupe'
-import SortPlugin from './plugins/sort'
-import TemplateParamsPlugin from './plugins/templateParams'
-import TitleTemplatePlugin from './plugins/titleTemplate'
-import XSSPlugin from './plugins/xss'
+import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
@@ -46,6 +42,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
     dirty: false,
     resolvedOptions: options,
     hooks,
+    ssr,
     headEntries() {
       return entries
     },
@@ -108,7 +105,6 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
       await hooks.callHook('tags:afterResolve', resolveCtx)
       return resolveCtx.tags
     },
-    ssr,
   }
   ;[
     DedupePlugin,

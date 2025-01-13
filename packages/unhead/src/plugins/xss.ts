@@ -1,6 +1,6 @@
 import { defineHeadPlugin } from '@unhead/shared'
 
-export default defineHeadPlugin({
+export const XSSPlugin = defineHeadPlugin({
   hooks: {
     'tags:afterResolve': (ctx) => {
       for (const tag of ctx.tags) {

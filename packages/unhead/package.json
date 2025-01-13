@@ -25,10 +25,10 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./optionalPlugins": {
-      "types": "./dist/optionalPlugins.d.ts",
-      "import": "./dist/optionalPlugins.mjs",
-      "require": "./dist/optionalPlugins.cjs"
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "import": "./dist/plugins.mjs",
+      "require": "./dist/plugins.cjs"
     },
     "./server": {
       "types": "./dist/server.d.ts",
@@ -46,8 +46,8 @@
   "types": "dist/index.d.ts",
   "optionalPlugins": {
     "*": {
-      "optionalPlugins": [
-        "dist/optionalPlugins"
+      "plugins": [
+        "dist/plugins"
       ],
       "server": [
         "dist/server"
@@ -64,7 +64,7 @@
     "client.d.ts",
     "dist",
     "legacy.d.ts",
-    "optionalPlugins.d.ts",
+    "plugins.d.ts",
     "server.d.ts"
   ],
   "scripts": {
@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@unhead/schema": "workspace:*",
+    "@unhead/scripts": "workspace:*",
     "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",
     "unctx": "^2.4.1"

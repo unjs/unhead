@@ -38,6 +38,7 @@ export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
+  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateHeadOptions }) => HookResult
   'tags:beforeResolve': (ctx: { tags: HeadTag[] }) => HookResult
   'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
   'tags:afterResolve': (ctx: { tags: HeadTag[] }) => HookResult

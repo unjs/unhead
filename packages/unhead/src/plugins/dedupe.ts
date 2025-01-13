@@ -3,7 +3,7 @@ import { defineHeadPlugin, HasElementTags, hashTag, tagWeight } from '@unhead/sh
 
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
-export default defineHeadPlugin(head => ({
+export const DedupePlugin = defineHeadPlugin(head => ({
   hooks: {
     'tags:resolve': (ctx) => {
       // 1. Dedupe tags
