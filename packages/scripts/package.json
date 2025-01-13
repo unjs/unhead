@@ -62,6 +62,9 @@
   "peerDependenciesMeta": {
     "@unhead/vue": {
       "optional": true
+    },
+    "unhead": {
+      "optional": true
     }
   },
   "dependencies": {

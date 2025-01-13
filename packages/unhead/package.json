@@ -73,7 +73,6 @@
   },
   "dependencies": {
     "@unhead/schema": "workspace:*",
-    "@unhead/scripts": "workspace:*",
     "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",
     "unctx": "^2.4.1"

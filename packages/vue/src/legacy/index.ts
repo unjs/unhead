@@ -11,7 +11,7 @@ import type {
   VueHeadClient,
 } from '../types'
 import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from '@unhead/shared'
-import { tryUseUnhead, unheadCtx } from 'unhead'
+import { createHeadCore, tryUseUnhead, unheadCtx } from 'unhead'
 import {
   getCurrentInstance,
   inject,
@@ -28,8 +28,7 @@ import { createHead as createServerHead } from '../server'
 import { resolveUnrefHeadInput } from '../utils'
 
 export * from './useScript'
-export { createServerHead }
-export { createHead }
+export { createHead, createHeadCore, createServerHead, resolveUnrefHeadInput }
 
 export const CapoPlugin = () => defineHeadPlugin({})
 
