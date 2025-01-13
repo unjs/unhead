@@ -1,7 +1,7 @@
 {
   "name": "@unhead/scripts",
   "type": "module",
-  "version": "1.11.14",
+  "version": "2.0.0-alpha.0",
   "description": "Unhead Scripts allows you to load third-party scripts with better performance, privacy, and security.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
