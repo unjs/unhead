@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { InferSeoMetaPlugin } from 'unhead/optionalPlugins'
+import { InferSeoMetaPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 

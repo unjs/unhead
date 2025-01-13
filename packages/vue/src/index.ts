@@ -1,8 +1,15 @@
-import { unheadCtx } from 'unhead'
+import { defineHeadPlugin } from '@unhead/shared'
+import { createHeadCore, unheadCtx } from 'unhead'
 import { resolveUnrefHeadInput } from './utils'
 
-// create
+/**
+ * @deprecated TODO remove
+ */
+export const CapoPlugin = () => defineHeadPlugin({})
+
+// core
 export {
+  createHeadCore,
   unheadCtx,
 }
 

@@ -1,5 +1,6 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
+import type { DomPluginOptions } from './plugins'
 import type { Head } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -32,7 +33,7 @@ export interface HeadEntry<Input> {
    *
    * @internal
    */
-  transform?: (input: Input) => Promise<Input> | Input
+  transform?: (input: Input) => Input
   /**
    * Head entry index
    *
@@ -77,7 +78,6 @@ export interface ActiveHeadEntry<Input> {
 }
 
 export interface CreateHeadOptions {
-  domDelayFn?: (fn: () => void) => void
   document?: Document
   plugins?: HeadPluginInput[]
   hooks?: NestedHooks<HeadHooks>
@@ -87,6 +87,13 @@ export interface CreateHeadOptions {
    * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
    */
   disableCapoSorting?: boolean
+}
+
+export interface CreateClientHeadOptions extends CreateHeadOptions {
+  /**
+   * Options to pass to the DomPlugin.
+   */
+  domOptions?: DomPluginOptions
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {

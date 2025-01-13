@@ -1,7 +1,7 @@
 import type { HeadTag } from '@unhead/schema'
 import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
-export default defineHeadPlugin({
+export const TitleTemplatePlugin = defineHeadPlugin({
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx

@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { DeprecationsPlugin } from 'unhead/optionalPlugins'
+import { DeprecationsPlugin } from 'unhead/plugins'
 import { createHeadWithContext } from '../../util'
 
 describe('tagPosition', () => {
