@@ -113,7 +113,7 @@ export default defineNuxtConfig({
 
   alias: {
     '#content/server': resolve('./server/content-v2'),
-    'unhead/optionalPlugins': resolve('../packages/unhead/src/optionalPlugins'),
+    'unhead/plugins': resolve('../packages/unhead/src/plugins'),
     'unhead/client': resolve('../packages/unhead/src/client'),
     'unhead/server': resolve('../packages/unhead/src/server'),
     'unhead/legacy': resolve('../packages/unhead/src/legacy'),

@@ -290,8 +290,8 @@ importers:
         specifier: ^0.30.17
         version: 0.30.17
       mlly:
-        specifier: ^1.7.3
-        version: 1.7.3
+        specifier: ^1.7.4
+        version: 1.7.4
       ufo:
         specifier: ^1.5.4
         version: 1.5.4
@@ -306,8 +306,8 @@ importers:
         version: 0.13.1(rollup@4.29.1)
     devDependencies:
       '@babel/types':
-        specifier: ^7.26.3
-        version: 7.26.3
+        specifier: ^7.26.5
+        version: 7.26.5
 
   packages/dom:
     dependencies:
@@ -353,7 +353,7 @@ importers:
         version: 28.0.0(@babel/parser@7.26.5)(@nuxt/kit@3.15.1(magicast@0.3.5)(rollup@4.29.1))(rollup@4.29.1)(vue@3.5.13(typescript@5.7.2))
 
   packages/scripts:
-    devDependencies:
+    dependencies:
       '@unhead/schema':
         specifier: workspace:*
         version: link:../schema
@@ -366,9 +366,6 @@ importers:
       unhead:
         specifier: workspace:*
         version: link:../unhead
-      unplugin-vue-components:
-        specifier: ^0.27.5
-        version: 0.27.5(@babel/parser@7.26.5)(@nuxt/kit@3.15.1(magicast@0.3.5)(rollup@4.29.1))(rollup@4.29.1)(vue@3.5.13(typescript@5.7.2))
 
   packages/shared:
     dependencies:
@@ -390,6 +387,9 @@ importers:
       '@unhead/schema':
         specifier: workspace:*
         version: link:../schema
+      '@unhead/scripts':
+        specifier: workspace:*
+        version: link:../scripts
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -823,10 +823,6 @@ packages:
 
   '@babel/traverse@7.25.9':
     resolution: {integrity: sha512-ZCuvfwOwlz/bawvAuvcj8rrithP2/N55Tzz342AkTvq4qaWbGfmCk/tKhNaV2cthijKrPAA8SRJV5WWe7IBMJw==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/types@7.26.3':
-    resolution: {integrity: sha512-vN5p+1kl59GVKMvTHt55NzzmYVxprfJD+ql7U9NFIfKCBkYE55LYtS+WtPlaYOyzydrKI8Nezd+aZextrd+FMA==}
     engines: {node: '>=6.9.0'}
 
   '@babel/types@7.26.5':
@@ -6434,8 +6430,8 @@ packages:
       vue-tsc:
         optional: true
 
-  mlly@1.7.3:
-    resolution: {integrity: sha512-xUsx5n/mN0uQf4V548PKQ+YShA4/IW0KI1dZhrNrPCLG+xizETbHTkOa1f8/xut9JRPp8kQuMnz0oqwkTiLo/A==}
+  mlly@1.7.4:
+    resolution: {integrity: sha512-qmdSIPC4bDJXgZTCR7XosJiNKySV7O215tsPtDN9iEO/7q/76b/ijtgRu/+epFXSJhijtTCCGp3DWS549P3xKw==}
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -9590,7 +9586,7 @@ snapshots:
       '@babel/parser': 7.26.2
       '@babel/template': 7.25.9
       '@babel/traverse': 7.25.9
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       convert-source-map: 2.0.0
       debug: 4.4.0(supports-color@9.4.0)
       gensync: 1.0.0-beta.2
@@ -9602,7 +9598,7 @@ snapshots:
   '@babel/generator@7.26.2':
     dependencies:
       '@babel/parser': 7.26.2
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
       jsesc: 3.0.2
@@ -9610,7 +9606,7 @@ snapshots:
   '@babel/generator@7.26.3':
     dependencies:
       '@babel/parser': 7.26.3
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
       jsesc: 3.0.2
@@ -9650,7 +9646,7 @@ snapshots:
   '@babel/helper-module-imports@7.25.9':
     dependencies:
       '@babel/traverse': 7.25.9
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
     transitivePeerDependencies:
       - supports-color
 
@@ -9696,7 +9692,7 @@ snapshots:
   '@babel/helpers@7.26.0':
     dependencies:
       '@babel/template': 7.25.9
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@babel/parser@7.26.2':
     dependencies:
@@ -9704,7 +9700,7 @@ snapshots:
 
   '@babel/parser@7.26.3':
     dependencies:
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@babel/parser@7.26.5':
     dependencies:
@@ -9786,7 +9782,7 @@ snapshots:
     dependencies:
       '@babel/code-frame': 7.26.2
       '@babel/parser': 7.26.2
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@babel/traverse@7.25.9':
     dependencies:
@@ -9794,16 +9790,11 @@ snapshots:
       '@babel/generator': 7.26.2
       '@babel/parser': 7.26.2
       '@babel/template': 7.25.9
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       debug: 4.4.0(supports-color@9.4.0)
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
-
-  '@babel/types@7.26.3':
-    dependencies:
-      '@babel/helper-string-parser': 7.25.9
-      '@babel/helper-validator-identifier': 7.25.9
 
   '@babel/types@7.26.5':
     dependencies:
@@ -10339,7 +10330,7 @@ snapshots:
       debug: 4.4.0(supports-color@9.4.0)
       kolorist: 1.8.0
       local-pkg: 0.5.1
-      mlly: 1.7.3
+      mlly: 1.7.4
     transitivePeerDependencies:
       - supports-color
 
@@ -10846,7 +10837,7 @@ snapshots:
       '@nuxt/kit': 3.15.1(magicast@0.3.5)(rollup@4.29.1)
       consola: 3.3.3
       local-pkg: 0.5.1
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 1.1.2
       std-env: 3.8.0
@@ -10907,7 +10898,7 @@ snapshots:
       jiti: 1.21.7
       klona: 2.0.6
       knitwork: 1.2.0
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.2.1
       scule: 1.3.0
@@ -10934,7 +10925,7 @@ snapshots:
       jiti: 2.4.2
       klona: 2.0.6
       knitwork: 1.2.0
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.3.0
       scule: 1.3.0
@@ -10960,7 +10951,7 @@ snapshots:
       jiti: 2.4.2
       klona: 2.0.6
       knitwork: 1.2.0
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 2.0.1
       pkg-types: 1.3.0
@@ -11035,7 +11026,7 @@ snapshots:
       defu: 6.1.4
       h3: 1.12.0
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       ofetch: 1.4.1
       ohash: 1.1.4
       pathe: 1.1.2
@@ -11196,7 +11187,7 @@ snapshots:
       get-port-please: 3.1.2
       knitwork: 1.2.0
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 1.1.2
       reka-ui: 1.0.0-alpha.6(typescript@5.7.2)(vue@3.5.13(typescript@5.7.2))
@@ -11268,7 +11259,7 @@ snapshots:
       jiti: 2.4.2
       knitwork: 1.2.0
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 2.0.0
       perfect-debounce: 1.0.0
@@ -12435,23 +12426,23 @@ snapshots:
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.26.2
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@types/babel__generator': 7.6.8
       '@types/babel__template': 7.4.4
       '@types/babel__traverse': 7.20.6
 
   '@types/babel__generator@7.6.8':
     dependencies:
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@types/babel__template@7.4.4':
     dependencies:
       '@babel/parser': 7.26.2
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@types/babel__traverse@7.20.6':
     dependencies:
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
 
   '@types/color-convert@2.0.4':
     dependencies:
@@ -13236,7 +13227,7 @@ snapshots:
 
   '@vue-macros/common@1.15.1(rollup@4.29.1)(vue@3.5.13(typescript@5.7.2))':
     dependencies:
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@rollup/pluginutils': 5.1.4(rollup@4.29.1)
       '@vue/compiler-sfc': 3.5.13
       ast-kit: 1.3.2
@@ -13256,7 +13247,7 @@ snapshots:
       '@babel/plugin-syntax-jsx': 7.24.7(@babel/core@7.26.0)
       '@babel/template': 7.25.9
       '@babel/traverse': 7.25.9
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@vue/babel-helper-vue-transform-on': 1.2.5
       '@vue/babel-plugin-resolve-type': 1.2.5(@babel/core@7.26.0)
       html-tags: 3.3.1
@@ -13980,7 +13971,7 @@ snapshots:
       dotenv: 16.4.7
       giget: 1.2.3
       jiti: 1.21.7
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 1.1.2
       perfect-debounce: 1.0.0
@@ -13997,7 +13988,7 @@ snapshots:
       dotenv: 16.4.5
       giget: 1.2.3
       jiti: 2.4.1
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 1.1.2
       perfect-debounce: 1.0.0
@@ -15330,7 +15321,7 @@ snapshots:
   externality@1.0.2:
     dependencies:
       enhanced-resolve: 5.17.1
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       ufo: 1.5.4
 
@@ -15984,7 +15975,7 @@ snapshots:
   impound@0.2.0(rollup@4.29.1):
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.29.1)
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       unenv: 1.10.0
       unplugin: 1.16.0
@@ -16393,7 +16384,7 @@ snapshots:
       h3: 1.13.0
       http-shutdown: 1.2.2
       jiti: 2.4.2
-      mlly: 1.7.3
+      mlly: 1.7.4
       node-forge: 1.3.1
       pathe: 1.1.2
       std-env: 3.8.0
@@ -16407,12 +16398,12 @@ snapshots:
 
   local-pkg@0.5.1:
     dependencies:
-      mlly: 1.7.3
+      mlly: 1.7.4
       pkg-types: 1.3.0
 
   local-pkg@1.0.0:
     dependencies:
-      mlly: 1.7.3
+      mlly: 1.7.4
       pkg-types: 1.3.0
 
   locate-path@5.0.0:
@@ -16455,7 +16446,7 @@ snapshots:
     dependencies:
       estree-walker: 3.0.3
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       regexp-tree: 0.1.27
       type-level-regexp: 0.1.17
       ufo: 1.5.4
@@ -16993,7 +16984,7 @@ snapshots:
       defu: 6.1.4
       esbuild: 0.24.2
       jiti: 1.21.7
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.3.0
       postcss: 8.4.49
@@ -17005,11 +16996,11 @@ snapshots:
       vue: 3.5.13(typescript@5.7.2)
       vue-tsc: 2.1.10(typescript@5.7.2)
 
-  mlly@1.7.3:
+  mlly@1.7.4:
     dependencies:
       acorn: 8.14.0
-      pathe: 1.1.2
-      pkg-types: 1.2.1
+      pathe: 2.0.1
+      pkg-types: 1.3.0
       ufo: 1.5.4
 
   mri@1.2.0: {}
@@ -17047,7 +17038,7 @@ snapshots:
   nitro-cloudflare-dev@0.2.1:
     dependencies:
       consola: 3.3.3
-      mlly: 1.7.3
+      mlly: 1.7.4
       pkg-types: 1.3.0
 
   nitropack@2.10.4(@libsql/client@0.14.0)(better-sqlite3@11.7.2)(typescript@5.7.2):
@@ -17095,7 +17086,7 @@ snapshots:
       magic-string: 0.30.17
       magicast: 0.3.5
       mime: 4.0.4
-      mlly: 1.7.3
+      mlly: 1.7.4
       node-fetch-native: 1.6.4
       ofetch: 1.4.1
       ohash: 1.1.4
@@ -17246,7 +17237,7 @@ snapshots:
     dependencies:
       '@nuxt/kit': 3.15.1(magicast@0.3.5)(rollup@4.29.1)
       citty: 0.1.6
-      mlly: 1.7.3
+      mlly: 1.7.4
       scule: 1.3.0
       typescript: 5.7.2
       ufo: 1.5.4
@@ -17355,7 +17346,7 @@ snapshots:
       acorn: 8.14.0
       estree-walker: 3.0.3
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       nuxt: 3.15.1(@libsql/client@0.14.0)(@parcel/watcher@2.4.1)(@types/node@22.10.5)(better-sqlite3@11.7.2)(db0@0.2.1(@libsql/client@0.14.0)(better-sqlite3@11.7.2))(eslint@9.17.0(jiti@2.4.2))(ioredis@5.4.1)(lightningcss@1.28.2)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.29.1)(terser@5.37.0)(tsx@4.19.1)(typescript@5.7.2)(vite@6.0.7(@types/node@22.10.5)(jiti@2.4.2)(lightningcss@1.28.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.7.0))(vue-tsc@2.1.10(typescript@5.7.2))(yaml@2.7.0)
       pathe: 1.1.2
     transitivePeerDependencies:
@@ -17388,7 +17379,7 @@ snapshots:
       escape-string-regexp: 5.0.0
       fast-glob: 3.3.3
       image-size: 1.2.0
-      mlly: 1.7.3
+      mlly: 1.7.4
       nuxt-site-config: 3.0.6(magicast@0.3.5)(rollup@4.29.1)(vite@6.0.7(@types/node@22.10.5)(jiti@2.4.2)(lightningcss@1.28.2)(terser@5.37.0)(tsx@4.19.1)(yaml@2.7.0))(vue@3.5.13(typescript@5.7.2))
       pathe: 1.1.2
       scule: 1.3.0
@@ -17467,7 +17458,7 @@ snapshots:
       klona: 2.0.6
       knitwork: 1.2.0
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       nanotar: 0.1.1
       nitropack: 2.10.4(@libsql/client@0.14.0)(better-sqlite3@11.7.2)(typescript@5.7.2)
       nuxi: 3.17.2
@@ -17857,19 +17848,19 @@ snapshots:
   pkg-types@1.2.0:
     dependencies:
       confbox: 0.1.7
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
 
   pkg-types@1.2.1:
     dependencies:
       confbox: 0.1.8
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
 
   pkg-types@1.3.0:
     dependencies:
       confbox: 0.1.8
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
 
   playwright-core@1.49.1: {}
@@ -19255,7 +19246,7 @@ snapshots:
       jiti: 2.4.2
       magic-string: 0.30.17
       mkdist: 2.2.0(typescript@5.7.2)(vue-tsc@2.1.10(typescript@5.7.2))(vue@3.5.13(typescript@5.7.2))
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.3.0
       pretty-bytes: 6.1.1
@@ -19303,7 +19294,7 @@ snapshots:
   unenv-nightly@2.0.0-20241218-183400-5d6aec3:
     dependencies:
       defu: 6.1.4
-      mlly: 1.7.3
+      mlly: 1.7.4
       ohash: 1.1.4
       pathe: 1.1.2
       ufo: 1.5.4
@@ -19356,7 +19347,7 @@ snapshots:
       fast-glob: 3.3.3
       local-pkg: 0.5.1
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.2.1
       scule: 1.3.0
@@ -19374,7 +19365,7 @@ snapshots:
       fast-glob: 3.3.3
       local-pkg: 0.5.1
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       picomatch: 4.0.2
       pkg-types: 1.3.0
@@ -19503,7 +19494,7 @@ snapshots:
       local-pkg: 0.5.1
       magic-string: 0.30.17
       minimatch: 9.0.5
-      mlly: 1.7.3
+      mlly: 1.7.4
       unplugin: 1.16.1
       vue: 3.5.13(typescript@5.7.2)
     optionalDependencies:
@@ -19523,7 +19514,7 @@ snapshots:
       local-pkg: 0.5.1
       magic-string: 0.30.17
       minimatch: 9.0.5
-      mlly: 1.7.3
+      mlly: 1.7.4
       unplugin: 2.1.2
       vue: 3.5.13(typescript@5.7.2)
     optionalDependencies:
@@ -19535,7 +19526,7 @@ snapshots:
 
   unplugin-vue-router@0.10.9(rollup@4.29.1)(vue-router@4.5.0(vue@3.5.13(typescript@5.7.2)))(vue@3.5.13(typescript@5.7.2)):
     dependencies:
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       '@rollup/pluginutils': 5.1.4(rollup@4.29.1)
       '@vue-macros/common': 1.15.1(rollup@4.29.1)(vue@3.5.13(typescript@5.7.2))
       ast-walker-scope: 0.6.2
@@ -19544,7 +19535,7 @@ snapshots:
       json5: 2.2.3
       local-pkg: 0.5.1
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       scule: 1.3.0
       unplugin: 2.0.0-beta.1
@@ -19616,7 +19607,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.26.0
       '@babel/standalone': 7.26.4
-      '@babel/types': 7.26.3
+      '@babel/types': 7.26.5
       citty: 0.1.6
       defu: 6.1.4
       jiti: 2.4.2
@@ -19629,7 +19620,7 @@ snapshots:
     dependencies:
       knitwork: 1.2.0
       magic-string: 0.30.17
-      mlly: 1.7.3
+      mlly: 1.7.4
       pathe: 1.1.2
       pkg-types: 1.3.0
       unplugin: 1.16.1

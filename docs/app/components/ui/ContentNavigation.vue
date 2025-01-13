@@ -7,6 +7,11 @@ import type { AccordionRootEmits, AccordionRootProps } from 'reka-ui'
 import _appConfig from '#build/app.config'
 import theme from '#build/ui-pro/content/content-navigation'
 import { tv, type VariantProps } from 'tailwind-variants'
+
+const appConfig = _appConfig as AppConfig & { uiPro: { contentNavigation: Partial<typeof theme> } }
+const contentNavigation = tv({ extend: tv(theme), ...(appConfig.uiPro?.contentNavigation || {}) })
+
+type ContentNavigationVariants = VariantProps<typeof contentNavigation>
 </script>
 
 <script setup lang="ts" generic="T extends ContentNavigationLink">
@@ -27,10 +32,6 @@ const props = withDefaults(defineProps<ContentNavigationProps<T>>(), {
 })
 const emits = defineEmits<ContentNavigationEmits>()
 const slots = defineSlots<ContentNavigationSlots<T>>()
-const appConfig = _appConfig as AppConfig & { uiPro: { contentNavigation: Partial<typeof theme> } }
-const contentNavigation = tv({ extend: tv(theme), ...(appConfig.uiPro?.contentNavigation || {}) })
-
-type ContentNavigationVariants = VariantProps<typeof contentNavigation>
 
 export interface ContentNavigationLink extends ContentNavigationItem {
   icon?: string
