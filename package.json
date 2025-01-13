@@ -37,8 +37,6 @@
     "vue": "^3.5.13"
   },
   "resolutions": {
-    "@nuxt/vite-builder": "3.15.1",
-    "@nuxtjs/mdc": "0.12.0",
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
@@ -46,12 +44,6 @@
     "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "@vue/server-renderer": "3.5.13",
-    "nuxt": "3.15.1",
-    "shiki": "1.26.1",
-    "typescript": "5.7.2",
-    "unhead": "workspace:*",
-    "vite": "6.0.7",
-    "vue": "^3.5.13"
+    "unhead": "workspace:*"
   }
 }
