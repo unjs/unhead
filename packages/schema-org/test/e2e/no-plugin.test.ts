@@ -1,16 +1,15 @@
-import { renderDOMHead } from '@unhead/dom'
 import { defineOrganization, defineQuestion, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
+import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
+import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { useDom } from '../../../../test/fixtures'
-import { createHeadWithContext } from '../../../../test/util'
+import { useDom } from '../../../unhead/test/fixtures'
 
 describe('schema.org e2e no plugin', () => {
   it('basic hydration', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createServerHead()
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'test',
       }),
@@ -32,7 +31,7 @@ describe('schema.org e2e no plugin', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHeadWithContext()
+    const csrHead = createClientHead()
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -60,9 +59,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('hierarchy', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createServerHead()
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           path: '/about',
@@ -70,13 +69,13 @@ describe('schema.org e2e no plugin', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'Home',
       }),
     ])
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@type': 'AboutPage',
         'name': 'About',
@@ -103,7 +102,7 @@ describe('schema.org e2e no plugin', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHeadWithContext()
+    const csrHead = createClientHead()
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -135,9 +134,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('linking', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createServerHead()
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           path: '/about',
@@ -146,7 +145,7 @@ describe('schema.org e2e no plugin', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineOrganization({
         name: 'test',
       }),
@@ -185,9 +184,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('faq', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createServerHead()
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           path: '/about',
@@ -196,7 +195,7 @@ describe('schema.org e2e no plugin', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@type': 'FAQPage',
       }),
@@ -254,18 +253,18 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('many registrations', async () => {
-    const ssrHead = createHeadWithContext()
-    useSchemaOrg([
+    const ssrHead = createServerHead()
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'One',
       }),
     ])
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'Two',
       }),
     ])
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'Three',
       }),

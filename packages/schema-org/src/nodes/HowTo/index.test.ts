@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineHowTo', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineHowTo({
           name: 'How to tie a tie',
           step: [
@@ -37,7 +37,7 @@ describe('defineHowTo', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -100,8 +100,8 @@ describe('defineHowTo', () => {
   })
 
   it('casting works', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineHowTo({
           name: 'How to tie a tie',
           step: [
@@ -118,7 +118,7 @@ describe('defineHowTo', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

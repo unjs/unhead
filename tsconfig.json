@@ -13,7 +13,9 @@
       "@unhead/dom": ["packages/dom/src"],
       "@unhead/ssr": ["packages/ssr/src"],
       "@unhead/schema-org": ["packages/schema-org/src"],
+      "@unhead/schema-org/*": ["packages/schema-org/src/*"],
       "@unhead/vue": ["packages/vue/src"],
+      "@unhead/vue/*": ["packages/vue/src/*"],
       "@unhead/scripts": ["packages/scripts/src"],
       "@unhead/scripts/*": ["packages/scripts/*"],
       "@unhead/addons": ["packages/addons/src"],
@@ -22,7 +24,6 @@
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
       "@unhead/shared/*": ["packages/shared/*"],
-      "@unhead/schema-org/*": ["packages/schema-org/*"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],

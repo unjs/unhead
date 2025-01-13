@@ -1,5 +1,5 @@
 import { defineHeadPlugin } from '@unhead/shared'
-import { createHeadCore, unheadCtx } from 'unhead'
+import { createHeadCore } from 'unhead'
 import { resolveUnrefHeadInput } from './utils'
 
 /**
@@ -10,7 +10,6 @@ export const CapoPlugin = () => defineHeadPlugin({})
 // core
 export {
   createHeadCore,
-  unheadCtx,
 }
 
 // utils

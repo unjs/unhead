@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineSoftwareApp', () => {
   it('can be defined', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineSoftwareApp({
           name: 'Angry Birds',
           operatingSystem: 'ANDROID',
@@ -22,7 +22,7 @@ describe('defineSoftwareApp', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

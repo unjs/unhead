@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineLocalBusiness', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineFoodEstablishment({
           '@type': 'BarOrPub',
           'servesCuisine': 'Traditional food',
@@ -35,7 +35,7 @@ describe('defineLocalBusiness', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -110,8 +110,8 @@ describe('defineLocalBusiness', () => {
   })
 
   it('can be registered with boolean acceptsReservation', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineFoodEstablishment({
           '@type': 'BarOrPub',
           'acceptsReservations': true,
@@ -119,7 +119,7 @@ describe('defineLocalBusiness', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

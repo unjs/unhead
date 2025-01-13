@@ -6,15 +6,15 @@ import { PrimaryArticleId } from '../Article'
 
 describe('definePerson', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         definePerson({
           name: 'test',
           image: '/logo.png',
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -40,29 +40,29 @@ describe('definePerson', () => {
   })
 
   it('will not create duplicate identities if one is provided', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'test',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         definePerson({
           name: 'harlan wilton',
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       expect(client.length).toBe(1)
       expect(client[0]['@type']).toBe('Person')
     })
   })
 
   it('links as article author if article present', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle({
           headline: 'test',
           description: 'test',
@@ -70,13 +70,13 @@ describe('definePerson', () => {
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         definePerson({
           name: 'Author',
         }),
       ])
 
-      const article = await findNode<Article>(PrimaryArticleId)
+      const article = await findNode<Article>(head, PrimaryArticleId)
       expect(article?.author).toMatchInlineSnapshot(`
           {
             "@id": "https://example.com/#identity",
@@ -86,15 +86,15 @@ describe('definePerson', () => {
   })
 
   it('resolve url with base', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         definePerson({
           name: 'test',
           url: '/test',
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

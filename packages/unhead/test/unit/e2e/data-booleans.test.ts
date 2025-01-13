@@ -1,0 +1,71 @@
+import { useHead } from 'unhead'
+import { renderDOMHead } from 'unhead/client'
+import { renderSSRHead } from 'unhead/server'
+import { describe, it } from 'vitest'
+import { useDom } from '../../fixtures'
+import { createClientHeadWithContext } from '../../util'
+
+describe('unhead e2e data true', () => {
+  it('truthy', async () => {
+    // scenario: we are injecting root head schema which will not have a hydration step,
+    // but we are also injecting a child head schema which will have a hydration step
+    const ssrHead = createClientHeadWithContext()
+    // i.e App.vue
+    useHead(ssrHead, {
+      meta: [
+        {
+          'name': 'foo',
+          'data-foo': 'true',
+          'data-bar': 'false',
+          'data-bar-false': false,
+          'data-foo-true': true,
+          'content': 'true',
+        },
+      ],
+    }, {
+      mode: 'server',
+    })
+
+    const data = await renderSSRHead(ssrHead)
+
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="foo" data-foo="true" data-bar="false" data-bar-false="false" data-foo-true="true" content>",
+        "htmlAttrs": "",
+      }
+    `)
+
+    const dom = useDom(data)
+
+    const csrHead = createClientHeadWithContext()
+    csrHead.push({
+      meta: [
+        {
+          'name': 'foo',
+          'data-foo': 'true',
+          'content': 'true',
+        },
+      ],
+    })
+
+    await renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <meta name="foo" data-foo="true" data-bar="false" data-bar-false="false" data-foo-true="true" content="">
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+})

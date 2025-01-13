@@ -1,13 +1,13 @@
+import { createHead as createServerHead } from 'unhead/server'
 import { describe, expectTypeOf, it } from 'vitest'
-import { createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/useScript'
 
 describe('useScript', () => {
   it('types: inferred use()', async () => {
-    const instance = useScript({
+    const head = createServerHead()
+    const instance = useScript(head, {
       src: 'https://cdn.example.com/script.js',
     }, {
-      head: createServerHeadWithContext(),
       use() {
         return {
           // eslint-disable-next-line unused-imports/no-unused-vars

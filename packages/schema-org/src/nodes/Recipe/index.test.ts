@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineRecipe', () => {
   it('can be defined', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineRecipe({
           name: 'Peanut Butter Cookies',
           image: 'https://example.com/photos/1x1/photo.jpg',
@@ -17,7 +17,7 @@ describe('defineRecipe', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

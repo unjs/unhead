@@ -1,21 +1,21 @@
+import type { Unhead } from '@unhead/schema'
 import type { MetaInput } from '@unhead/schema-org'
 import type { SchemaOrgNode } from '../src/types'
 import { SchemaOrgUnheadPlugin } from '@unhead/schema-org'
-import { unheadCtx } from 'unhead'
 import { createHead } from 'unhead/server'
 
-export async function injectSchemaOrg(): Promise<SchemaOrgNode[]> {
+export async function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag
-  const schemaOrg = (await unheadCtx.use()!.resolveTags()).find(tag => tag.key === 'schema-org-graph')!.innerHTML
+  const schemaOrg = (await unhead.resolveTags()).find(tag => tag.key === 'schema-org-graph')!.innerHTML
   return JSON.parse(<string> schemaOrg)['@graph']
 }
 
-export async function findNode<T>(id: string) {
-  const nodes = await injectSchemaOrg()
+export async function findNode<T>(unhead: Unhead<any>, id: string) {
+  const nodes = await injectSchemaOrg(unhead)
   // @ts-expect-error untyped
   return nodes.find(node => node['@id'] === id || node['@id'].endsWith(id)) as T
 }
-export async function useSetup(fn: () => void, meta: Partial<MetaInput> = {}) {
+export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<MetaInput> = {}) {
   const head = createHead({
     plugins: [
       SchemaOrgUnheadPlugin({
@@ -31,7 +31,6 @@ export async function useSetup(fn: () => void, meta: Partial<MetaInput> = {}) {
       }),
     ],
   })
-  unheadCtx.set(head, true)
-  await fn()
+  await fn(head)
   return head
 }

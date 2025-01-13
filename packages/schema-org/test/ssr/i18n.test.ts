@@ -1,14 +1,13 @@
 import { defineWebSite, useSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
+import { createHead, renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
-import { createHeadWithContext } from '../../../../test/util'
 
 describe('schema.org i18n', () => {
   it('basic websites', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead()
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           host: 'https://example.com',
@@ -16,7 +15,7 @@ describe('schema.org i18n', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebSite({
         '@id': '/#en-website',
         'url': '/',
