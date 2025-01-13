@@ -12,6 +12,10 @@
     "url": "git+https://github.com/unjs/unhead.git",
     "directory": "packages/vue"
   },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
   },

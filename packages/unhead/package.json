@@ -8,6 +8,10 @@
     "email": "harlan@harlanzw.com",
     "url": "https://harlanzw.com/"
   },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
   "homepage": "https://unhead.unjs.io",

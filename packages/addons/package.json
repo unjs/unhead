@@ -9,7 +9,11 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/ssr"
+    "directory": "packages/addons"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"

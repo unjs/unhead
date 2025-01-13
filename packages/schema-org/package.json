@@ -15,6 +15,10 @@
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
   },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
   "keywords": [
     "schema.org",
     "node",

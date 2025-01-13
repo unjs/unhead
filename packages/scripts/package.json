@@ -7,13 +7,14 @@
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "next"
   },
   "homepage": "https://unhead.unjs.io",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/schema-org"
+    "directory": "packages/scripts"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
