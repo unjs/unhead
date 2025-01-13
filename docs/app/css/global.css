@@ -1,0 +1,88 @@
+pre {
+  --scrollbar-thumb: #3b5178;
+}
+
+.dark pre {
+  --scrollbar-thumb: #acbad2;
+}
+
+* {
+  --scrollbar-track: initial;
+  --scrollbar-thumb: initial;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+  --scrollbar-thumb: #acbad2;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track)
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: .25rem
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px
+}
+
+.dark * {
+  --scrollbar-thumb: #3b5178;
+}
+
+
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.2s;
+}
+/* create a smooth beautifal fade in keyframe animation */
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(1rem);
+  filter: blur(0.2rem);
+}
+
+.gradient {
+  position: fixed;
+  top: 25vh;
+  width: 90%;
+  left: 5%;
+  height: 30vh;
+  background: radial-gradient(50% 50% at 50% 50%, #f0db4f 0%, #f0db4fc2 100%);
+  filter: blur(180px);
+  opacity: 0.6;
+  z-index: -1;
+}
+
+@keyframes slide-right {
+  from {
+    transform: scale(0.6) translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.slide-right {
+  animation: slide-right 400ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;;
+}
+
+.pop {
+  animation: pop 400ms cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
