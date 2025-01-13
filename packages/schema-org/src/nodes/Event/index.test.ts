@@ -4,14 +4,14 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineEvent', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'test',
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -27,8 +27,8 @@ describe('defineEvent', () => {
   })
 
   it('handles performing group', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'test',
           organizer: defineOrganization({
@@ -38,7 +38,7 @@ describe('defineEvent', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -66,15 +66,15 @@ describe('defineEvent', () => {
   })
 
   it('handles startDate with time', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'test',
           startDate: new Date(2021, 10, 10, 0),
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -92,15 +92,15 @@ describe('defineEvent', () => {
   })
 
   it('handles startDate with time #2', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'test',
           startDate: '2021-10-10',
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -118,8 +118,8 @@ describe('defineEvent', () => {
   })
 
   it('handles virtual', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'test',
           location: 'https://operaonline.stream5.com/',
@@ -127,7 +127,7 @@ describe('defineEvent', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -149,8 +149,8 @@ describe('defineEvent', () => {
   })
 
   it('replicate google example', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineEvent({
           name: 'The Adventures of Kira and Morrison',
           location: [
@@ -193,7 +193,7 @@ describe('defineEvent', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

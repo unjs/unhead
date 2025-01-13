@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineBreadcrumb', async () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineBreadcrumb({
           itemListElement: [
             { name: 'Home', item: '/' },
@@ -15,7 +15,7 @@ describe('defineBreadcrumb', async () => {
         }),
       ])
 
-      const breadcrumbs = await injectSchemaOrg()
+      const breadcrumbs = await injectSchemaOrg(head)
 
       expect(breadcrumbs).toMatchInlineSnapshot(`
         [
@@ -48,8 +48,8 @@ describe('defineBreadcrumb', async () => {
   })
 
   it('can handle duplicate', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineBreadcrumb({
           itemListElement: [
             { name: 'Home', item: '/', position: 1 },
@@ -80,7 +80,7 @@ describe('defineBreadcrumb', async () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client).toMatchInlineSnapshot(`
         [

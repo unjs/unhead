@@ -79,7 +79,6 @@
   "dependencies": {
     "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
-    "hookable": "^5.5.3",
-    "unctx": "^2.4.1"
+    "hookable": "^5.5.3"
   }
 }

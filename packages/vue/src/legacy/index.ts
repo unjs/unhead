@@ -11,7 +11,7 @@ import type {
   VueHeadClient,
 } from '../types'
 import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from '@unhead/shared'
-import { createHeadCore, tryUseUnhead, unheadCtx } from 'unhead'
+import { createHeadCore } from 'unhead'
 import {
   getCurrentInstance,
   inject,
@@ -36,15 +36,9 @@ export const CapoPlugin = () => defineHeadPlugin({})
  * @deprecated Please switch to non-legacy version
  */
 export function setHeadInjectionHandler(handler: () => VueHeadClient<any> | undefined) {
-  unheadCtx.set(handler(), true)
 }
 
 export function injectHead() {
-  // allow custom context setting
-  const ctx = tryUseUnhead()
-  if (ctx) {
-    return ctx
-  }
   // fallback to vue context
   return inject<Unhead>(headSymbol)
 }

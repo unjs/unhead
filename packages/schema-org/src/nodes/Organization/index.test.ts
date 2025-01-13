@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'test',
           logo: '/logo.png',
@@ -17,7 +17,7 @@ describe('defineOrganization', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client).toMatchInlineSnapshot(`
         [

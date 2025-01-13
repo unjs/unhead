@@ -1,12 +1,11 @@
-import { renderSSRHead } from '@unhead/ssr'
-import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
+import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
 import { useScript } from '../../src/useScript'
 
 describe('ssr useScript', () => {
   it('default', async () => {
-    const head = createHeadWithContext()
+    const head = createServerHead()
 
-    useScript({
+    useScript(head, {
       src: 'https://cdn.example.com/script.js',
     })
 
@@ -22,9 +21,9 @@ describe('ssr useScript', () => {
     `)
   })
   it('server', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHead()
 
-    useScript({
+    useScript(head, {
       src: 'https://cdn.example.com/script.js',
     }, {
       trigger: 'server',
@@ -42,10 +41,10 @@ describe('ssr useScript', () => {
     `)
   })
   it('await ', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHead()
 
     // mock a promise, test that it isn't resolved in 1 second
-    useScript<{ foo: 'bar' }>({
+    useScript<{ foo: 'bar' }>(head, {
       src: 'https://cdn.example.com/script.js',
     }, {
       trigger: 'server',
@@ -63,9 +62,9 @@ describe('ssr useScript', () => {
     `)
   })
   it('google ', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHead()
     const window: any = {}
-    const gtag = useScript<{ dataLayer: any[] }>({
+    const gtag = useScript<{ dataLayer: any[] }>(head, {
       src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
     }, {
       beforeInit() {

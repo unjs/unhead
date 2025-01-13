@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 
+import { createHead } from 'unhead/client'
 import { describe, it } from 'vitest'
-import { createHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/useScript'
 
 describe('useScript events', () => {
   it('simple', async () => {
-    createHeadWithContext()
-    const instance = useScript('/script.js', {
+    const head = createHead()
+    const instance = useScript(head, '/script.js', {
       trigger: 'server',
     })
     expect(await new Promise<true>((resolve) => {
@@ -18,8 +18,8 @@ describe('useScript events', () => {
     })).toBeTruthy()
   })
   it('dedupe', async () => {
-    createHeadWithContext()
-    const instance = useScript('/script.js', {
+    const head = createHead()
+    const instance = useScript(head, '/script.js', {
       trigger: 'server',
     })
     const calls: any[] = []

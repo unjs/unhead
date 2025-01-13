@@ -16,6 +16,19 @@ import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XS
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
 }
+
+function registerPlugins(head: Unhead<any>, plugins: HeadPluginInput[], ssr: boolean) {
+  plugins.forEach((p) => {
+    const plugin = (typeof p === 'function' ? p(head) : p)
+    if (!plugin.key || !head.plugins.some(existingPlugin => existingPlugin.key === plugin.key)) {
+      head.plugins.push(plugin)
+      if (filterMode(plugin.mode, ssr)) {
+        head.hooks.addHooks(plugin.hooks || {})
+      }
+    }
+  })
+}
+
 /**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.
@@ -47,13 +60,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
       return entries
     },
     use(p: HeadPluginInput) {
-      // @ts-expect-error untyped
-      const plugin = (typeof p === 'function' ? p(head) : p)
-      // dedupe based on the plugin key
-      if (!plugin.key || !plugins.some(p => p.key === plugin.key)) {
-        plugins.push(plugin)
-        filterMode(plugin.mode, ssr) && hooks.addHooks(plugin.hooks || {})
-      }
+      registerPlugins(head, [p], ssr)
     },
     push(input, entryOptions) {
       delete entryOptions?.head
@@ -106,14 +113,14 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
       return resolveCtx.tags
     },
   }
-  ;[
+  registerPlugins(head, [
     DedupePlugin,
     SortPlugin,
     TemplateParamsPlugin,
     TitleTemplatePlugin,
     XSSPlugin,
     ...(options?.plugins || []),
-  ].forEach(p => head.use(p))
+  ], ssr)
   head.hooks.callHook('init', head)
   return head
 }

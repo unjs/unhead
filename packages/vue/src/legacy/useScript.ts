@@ -68,7 +68,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || injectHead()
-  // @ts-expect-error untyped
   options.head = head
   const scope = getCurrentInstance()
   options.eventContext = scope

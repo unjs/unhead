@@ -1,4 +1,4 @@
-import type { HeadEntryOptions } from '@unhead/schema'
+import type { HeadEntryOptions, Unhead } from '@unhead/schema'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -37,7 +37,7 @@ import type {
   WebSite,
 } from './nodes'
 import type { Arrayable, Thing } from './types'
-import { useHead, useUnhead } from 'unhead'
+import { useHead } from 'unhead'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -160,14 +160,13 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 
 export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput, options?: HeadEntryOptions) {
+export function useSchemaOrg(head: Unhead<any>, input: UseSchemaOrgInput, options?: HeadEntryOptions) {
   // lazy initialise the plugin
-  const head = options?.head || useUnhead()
   if ((Array.isArray(input) && input.length === 0) || !input) {
     return
   }
   head.use(UnheadSchemaOrg())
-  return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
+  return useHead(head, {
     script: [
       {
         type: 'application/ld+json',

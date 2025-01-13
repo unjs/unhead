@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineLocalBusiness', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineLocalBusiness({
           '@type': 'Dentist',
           'name': 'test',
@@ -30,7 +30,7 @@ describe('defineLocalBusiness', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -95,8 +95,8 @@ describe('defineLocalBusiness', () => {
   })
 
   it('can have custom id', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineLocalBusiness({
           '@type': 'Dentist',
           'name': 'test',
@@ -110,7 +110,7 @@ describe('defineLocalBusiness', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -137,8 +137,8 @@ describe('defineLocalBusiness', () => {
   })
 
   it('support multiple local businesses', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineLocalBusiness({
           '@id': '#my-biz-123',
           'name': 'My Custom Business',
@@ -146,7 +146,7 @@ describe('defineLocalBusiness', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

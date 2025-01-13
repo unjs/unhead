@@ -1,26 +1,25 @@
-import { renderDOMHead } from '@unhead/dom'
 import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, SchemaOrgUnheadPlugin, useSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
+import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
+import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { useDom } from '../../../../test/fixtures'
-import { createHeadWithContext } from '../../../../test/util'
+import { useDom } from '../../../unhead/test/fixtures'
 
 describe('schema.org e2e', () => {
   it('basic hydration', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
     })
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         siteDescription: 'hello world',
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'test',
         description: '%siteDescription',
@@ -44,7 +43,7 @@ describe('schema.org e2e', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHeadWithContext()
+    const csrHead = createClientHead()
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -73,7 +72,7 @@ describe('schema.org e2e', () => {
   })
 
   it('hierarchy', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -81,13 +80,13 @@ describe('schema.org e2e', () => {
       ],
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'Home',
       }),
     ])
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@type': 'AboutPage',
         'name': 'About',
@@ -114,7 +113,7 @@ describe('schema.org e2e', () => {
 
     const dom = useDom(data)
 
-    const csrHead = createHeadWithContext()
+    const csrHead = createClientHead()
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -146,7 +145,7 @@ describe('schema.org e2e', () => {
   })
 
   it('linking', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -154,7 +153,7 @@ describe('schema.org e2e', () => {
         }),
       ],
     })
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineOrganization({
         name: 'test',
       }),
@@ -193,7 +192,7 @@ describe('schema.org e2e', () => {
   })
 
   it('faq', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -201,7 +200,7 @@ describe('schema.org e2e', () => {
         }),
       ],
     })
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@type': 'FAQPage',
       }),
@@ -259,19 +258,19 @@ describe('schema.org e2e', () => {
   })
 
   it('canonical', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
     })
 
-    useHead({
+    useHead(ssrHead, {
       link: [
         { rel: 'canonical', href: `%siteUrl/some-path` },
       ],
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebSite(),
       defineWebPage({
         name: 'test',
@@ -301,13 +300,13 @@ describe('schema.org e2e', () => {
   })
 
   it('empty', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
     })
-    useSchemaOrg(['test'])
-    useSchemaOrg([])
+    useSchemaOrg(ssrHead, ['test'])
+    useSchemaOrg(ssrHead, [])
     // @ts-expect-error intentional
     useSchemaOrg('')
     // @ts-expect-error intentional
@@ -317,13 +316,13 @@ describe('schema.org e2e', () => {
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
   it('#441', async () => {
-    const ssrHead = createHeadWithContext({
+    const ssrHead = createServerHead({
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
     })
 
-    useSchemaOrg([{
+    useSchemaOrg(ssrHead, [{
       '@type': 'ImageGallery',
       'name': 'Gallery',
       'image': [defineImage({

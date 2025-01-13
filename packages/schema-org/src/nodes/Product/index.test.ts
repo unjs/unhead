@@ -7,8 +7,8 @@ import { PrimaryWebSiteId } from '../WebSite'
 
 describe('defineProduct', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineProduct({
           name: 'test',
           image: '/product.png',
@@ -37,7 +37,7 @@ describe('defineProduct', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -91,8 +91,8 @@ describe('defineProduct', () => {
   })
 
   it('sets up publisher as identity', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         definePerson({
           name: 'Harlan Wilton',
           image: '/image/me.png',
@@ -102,16 +102,16 @@ describe('defineProduct', () => {
         }),
       ])
 
-      const website = await findNode<WebSite>(PrimaryWebSiteId)
-      const identity = await findNode<WebSite>(IdentityId)
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
+      const identity = await findNode<WebSite>(head, IdentityId)
 
       expect(website?.publisher).toEqual(idReference(identity!))
     })
   })
 
   it('merchant listing experience', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineProduct({
           sku: 'trinket-12345',
           gtin14: '12345678901234',
@@ -171,7 +171,7 @@ describe('defineProduct', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","bestRating":5,"worstRating":1,"ratingValue":4},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
     })

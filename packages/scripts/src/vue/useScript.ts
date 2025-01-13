@@ -64,7 +64,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || injectHead()
-  // @ts-expect-error untyped
   options.head = head
   const scope = getCurrentInstance()
   options.eventContext = scope
@@ -95,7 +94,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     s._statusRef.value = s.status
   })
   // @ts-expect-error untyped
-  const script = _useScript(input as BaseUseScriptInput, options)
+  const script = _useScript(head, input as BaseUseScriptInput, options)
   // @ts-expect-error untyped
   script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
