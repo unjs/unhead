@@ -3,7 +3,7 @@ import type { UseHeadOptions, UseSeoMetaInput } from '../types'
 import { unpackMeta } from '@unhead/shared'
 import { useHead } from './useHead'
 
-export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> | void {
+export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> {
   const { title, titleTemplate, ...meta } = input
   return useHead({
     title,
