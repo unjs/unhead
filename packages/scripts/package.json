@@ -6,6 +6,9 @@
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://unhead.unjs.io",
   "repository": {
     "type": "git",
@@ -15,11 +18,6 @@
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
   },
-  "keywords": [
-    "schema.org",
-    "node",
-    "seo"
-  ],
   "sideEffects": false,
   "exports": {
     ".": {
