@@ -39,6 +39,11 @@
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",
       "require": "./dist/client.cjs"
+    },
+    "./webworker": {
+      "types": "./dist/webworker.d.ts",
+      "import": "./dist/webworker.mjs",
+      "require": "./dist/webworker.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -57,6 +62,9 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "webworker": [
+        "dist/webworker"
       ]
     }
   },

@@ -1,0 +1,40 @@
+{
+  "name": "unhead-worker",
+  "type": "module",
+  "version": "1.11.15",
+  "author": {
+    "name": "Harlan Wilton",
+    "email": "harlan@harlanzw.com",
+    "url": "https://harlanzw.com/"
+  },
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/unhead"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs"
+    }
+  },
+  "module": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild .",
+    "stub": "unbuild . --stub"
+  },
+  "devDependencies": {
+    "@unhead/schema": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "rollup-plugin-web-worker-loader": "^1.6.1"
+  }
+}
