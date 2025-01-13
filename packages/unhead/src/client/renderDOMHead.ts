@@ -3,16 +3,10 @@ import type {
   DomRenderTagContext,
   DomState,
   HeadTag,
+  RenderDomHeadOptions,
   Unhead,
 } from '@unhead/schema'
 import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
-
-export interface RenderDomHeadOptions {
-  /**
-   * Document to use for rendering. Allows stubbing for testing.
-   */
-  document?: Document
-}
 
 /**
  * Render the head tags to the DOM.

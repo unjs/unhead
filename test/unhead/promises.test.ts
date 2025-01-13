@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest'
-import { PromisesPlugin } from '../../packages/unhead/src/optionalPlugins/promises'
+import { PromisesPlugin } from '../../packages/unhead/src/plugins/promises'
 import { createHeadWithContext } from '../util'
 
 describe('promises', () => {

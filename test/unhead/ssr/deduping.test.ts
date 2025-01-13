@@ -1,6 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
-import { DeprecationsPlugin } from 'unhead/optionalPlugins'
+import { DeprecationsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
 import { createHeadWithContext } from '../../util'
 

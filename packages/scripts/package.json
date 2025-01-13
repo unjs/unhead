@@ -31,16 +31,6 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs",
       "require": "./dist/vue.cjs"
-    },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "import": "./dist/legacy.mjs",
-      "require": "./dist/legacy.cjs"
-    },
-    "./vue-legacy": {
-      "types": "./dist/vue-legacy.d.ts",
-      "import": "./dist/vue-legacy.mjs",
-      "require": "./dist/vue-legacy.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -50,18 +40,11 @@
     "*": {
       "vue": [
         "dist/vue"
-      ],
-      "legacy": [
-        "dist/legacy"
-      ],
-      "vue-legacy": [
-        "dist/vue-legacy"
       ]
     }
   },
   "files": [
     "dist",
-    "legacy.d.ts",
     "overrides.d.ts",
     "vue.d.ts"
   ],
@@ -73,7 +56,6 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*"
   },
@@ -82,16 +64,8 @@
       "optional": true
     }
   },
-  "build": {
-    "external": [
-      "vue"
-    ]
-  },
-  "devDependencies": {
+  "dependencies": {
     "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
-    "@unhead/vue": "workspace:*",
-    "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.27.5"
+    "@unhead/shared": "workspace:*"
   }
 }

@@ -13,14 +13,14 @@
     "debug": "node --inspect-brk server"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.0.1"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "latest",
     "compression": "^1.7.5",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "serve-static": "^1.16.2"
   }
 }
