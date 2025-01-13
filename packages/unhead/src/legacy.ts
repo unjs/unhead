@@ -17,7 +17,6 @@ export { resolveScriptKey } from '@unhead/scripts/legacy'
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(input: UseScriptInput, options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
   return legacyUseScript(input, {
-    // @ts-expect-error untyped
     head: tryUseUnhead(),
     ...options,
   })

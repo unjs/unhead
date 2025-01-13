@@ -35,7 +35,7 @@ function scriptProxy() {}
 scriptProxy[ScriptProxyTarget] = true
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
-  const head = _options?.head!
+  const head = _options?.head
   const script = _useScript(_input, _options) as any as UseScriptContext<T>
   // support deprecated behavior
   script.$script = script
@@ -43,7 +43,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     return new Proxy((!accessor ? instance : instance?.[accessor]) || scriptProxy, {
       get(_, k, r) {
         // @ts-expect-error untyped
-        head.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
+        head?.hooks.callHook('script:instance-fn', { script, fn: k, exists: k in _ })
         if (!accessor) {
           const stub = _options?.stub?.({ script, fn: k })
           if (stub)
@@ -59,7 +59,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       },
       async apply(_, _this, args) {
         // we are faking, just return, avoid promise handles
-        if (head.ssr && _[ScriptProxyTarget])
+        if (head?.ssr && _[ScriptProxyTarget])
           return
         let instance: any
         const access = (fn?: T) => {

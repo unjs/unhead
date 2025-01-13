@@ -1,6 +1,6 @@
 import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
-import { PromisesPlugin } from '../../unhead/src/optionalPlugins/promises'
+import { PromisesPlugin } from '../../unhead/src/plugins/promises'
 import { ssrVueAppWithUnhead } from './util'
 
 describe('vue promises', () => {
