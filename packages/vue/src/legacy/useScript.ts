@@ -9,6 +9,7 @@ import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunct
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import { useScript as _useScript } from 'unhead/legacy'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { injectHead } from './index'
 
 export { resolveScriptKey } from 'unhead/legacy'
 
