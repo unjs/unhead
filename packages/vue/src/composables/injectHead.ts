@@ -1,7 +1,8 @@
 import type { Unhead } from '@unhead/schema'
 import { tryUseUnhead } from 'unhead'
 import { inject } from 'vue'
-import { headSymbol } from '../createHead'
+
+import { headSymbol } from '../install'
 
 export function injectHead() {
   // allow custom context setting

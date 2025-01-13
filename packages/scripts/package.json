@@ -73,7 +73,6 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*"
   },
@@ -87,11 +86,8 @@
       "vue"
     ]
   },
-  "devDependencies": {
+  "dependencies": {
     "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
-    "@unhead/vue": "workspace:*",
-    "unhead": "workspace:*",
-    "unplugin-vue-components": "^0.27.5"
+    "@unhead/shared": "workspace:*"
   }
 }

@@ -1,6 +1,7 @@
 import type { UseScriptOptions as CurrentUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptInput } from './types'
-import { useUnhead } from 'unhead'
 import { useScript as _useScript } from './useScript'
+
+export { resolveScriptKey } from './useScript'
 
 export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends CurrentUseScriptOptions {
   /**
@@ -34,7 +35,7 @@ function scriptProxy() {}
 scriptProxy[ScriptProxyTarget] = true
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
-  const head = _options?.head || useUnhead()
+  const head = _options?.head!
   const script = _useScript(_input, _options) as any as UseScriptContext<T>
   // support deprecated behavior
   script.$script = script

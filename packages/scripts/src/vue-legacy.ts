@@ -7,9 +7,12 @@ import type {
 import type { MaybeComputedRefEntriesOnly } from '@unhead/vue'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from './types'
-import { injectHead } from '@unhead/vue'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useScript as _useScript } from './legacy'
+
+export { resolveScriptKey } from './useScript'
+
+export type { UseFunctionType }
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
