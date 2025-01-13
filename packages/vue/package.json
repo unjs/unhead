@@ -2,6 +2,7 @@
   "name": "@unhead/vue",
   "type": "module",
   "version": "2.0.0-alpha.0",
+  "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",

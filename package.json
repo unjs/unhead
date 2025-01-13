@@ -17,7 +17,7 @@
     "test:memory": "vitest --expose-gc  run memory",
     "bump": "bumpp package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks",
-    "release:next": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks --tag next",
+    "release:next": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks --tag next --access public",
     "lint": "eslint . --fix",
     "benchmark": "vitest bench"
   },
