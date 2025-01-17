@@ -59,8 +59,8 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/vue": "^1.11.15",
-    "unhead": "^1.11.15"
+    "@unhead/vue": "^1.11.18",
+    "unhead": "^1.11.18"
   },
   "peerDependenciesMeta": {
     "@unhead/vue": {
