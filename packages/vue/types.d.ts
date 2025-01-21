@@ -1,1 +1,1 @@
-export * from './dist/legacy'
+export * from './dist/types'
