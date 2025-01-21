@@ -106,3 +106,5 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    */
   beforeInit?: () => void
 }
+
+export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>

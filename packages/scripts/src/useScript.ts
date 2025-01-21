@@ -10,6 +10,7 @@ import type {
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
+  UseScriptReturn,
   WarmupStrategy,
 } from './types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
@@ -26,7 +27,7 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const id = resolveScriptKey(input)
