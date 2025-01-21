@@ -1,11 +1,8 @@
-import { defineHeadPlugin } from '@unhead/shared'
 import { createHeadCore } from 'unhead'
 import { resolveUnrefHeadInput } from './utils'
 
-/**
- * @deprecated TODO remove
- */
-export const CapoPlugin = () => defineHeadPlugin({})
+// composables
+export * from './autoImports'
 
 // core
 export {
@@ -17,11 +14,10 @@ export {
   resolveUnrefHeadInput,
 }
 
-// composables
-export * from './autoImports'
 export * from './composables'
+export {
+  headSymbol,
+} from './install'
 // types
 export * from './types'
 export * from './VueHeadMixin'
-
-export type { ActiveHeadEntry, Head, HeadEntryOptions, HeadTag, MergeHead, Unhead } from '@unhead/schema'
