@@ -19,14 +19,7 @@ export {
 
 // composables
 export * from './autoImports'
-export * from './composables/injectHead'
-export * from './composables/useHead'
-
-export * from './composables/useHeadSafe'
-export * from './composables/useSeoMeta'
-export * from './composables/useServerHead'
-export * from './composables/useServerHeadSafe'
-export * from './composables/useServerSeoMeta'
+export * from './composables'
 // types
 export * from './types'
 export * from './VueHeadMixin'

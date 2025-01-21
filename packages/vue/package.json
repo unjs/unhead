@@ -40,6 +40,16 @@
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",
       "require": "./dist/client.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.mjs",
+      "require": "./dist/types.cjs"
+    },
+    "./legacy": {
+      "types": "./dist/legacy.d.ts",
+      "import": "./dist/legacy.mjs",
+      "require": "./dist/legacy.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -55,13 +65,21 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "types": [
+        "dist/types"
+      ],
+      "legacy": [
+        "dist/legacy"
       ]
     }
   },
   "files": [
     "client.d.ts",
     "dist",
-    "server.d.ts"
+    "server.d.ts",
+    "types.d.ts",
+    "legacy.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",

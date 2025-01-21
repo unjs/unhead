@@ -1,5 +1,5 @@
 import { getCurrentInstance } from 'vue'
-import { useHead } from './composables/useHead'
+import { useHead } from './composables'
 
 export const VueHeadMixin = {
   created() {

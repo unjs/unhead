@@ -1,7 +1,7 @@
 import type { DefineComponent, Ref, VNode } from 'vue'
-import type { ReactiveHead } from '../types'
+import type { ReactiveHead } from './types'
 import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
-import { useHead } from '../composables/useHead'
+import { useHead } from './composables'
 
 function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
   const nodeType = node.type
