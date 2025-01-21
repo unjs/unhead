@@ -23,7 +23,6 @@ export default defineNuxtConfig({
         // from sponsorkit
         nitro.options.alias.sharp = 'unenv/runtime/mock/empty'
         nitro.options.alias.pnpapi = 'unenv/runtime/mock/empty' // ?
-        nitro.options.alias['#content/server'] = resolve('./server/content-v2')
       })
     },
   ],
@@ -34,12 +33,7 @@ export default defineNuxtConfig({
     },
   },
 
-  robots: {
-    disableNuxtContentIntegration: true,
-  },
-
   sitemap: {
-    strictNuxtContentPaths: true,
     xslColumns: [
       { label: 'URL', width: '100%' },
     ],
@@ -112,7 +106,6 @@ export default defineNuxtConfig({
   },
 
   alias: {
-    '#content/server': resolve('./server/content-v2'),
     'unhead/plugins': resolve('../packages/unhead/src/plugins'),
     'unhead/client': resolve('../packages/unhead/src/client'),
     'unhead/server': resolve('../packages/unhead/src/server'),
@@ -217,7 +210,6 @@ export default defineNuxtConfig({
 
   ogImage: {
     zeroRuntime: true,
-    strictNuxtContentPaths: true,
     fonts: [
       'Hubot+Sans:400',
       'Hubot+Sans:700',
