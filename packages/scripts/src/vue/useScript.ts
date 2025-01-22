@@ -4,7 +4,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
 } from '@unhead/schema'
-import type { MaybeComputedRefEntriesOnly, VueHeadClient } from '@unhead/vue'
+import type { ResolvableProperties, VueHeadClient } from '@unhead/vue'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
 import { injectHead } from '@unhead/vue'
@@ -15,7 +15,7 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
+export type UseScriptInput = string | (ResolvableProperties<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
 export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:
