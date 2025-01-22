@@ -1,16 +1,15 @@
 import { defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
+import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { createHeadWithContext } from '../../../../test/util'
 
 describe('schema.org dupes', () => {
   it('basic websites', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead()
 
     ssrHead.use(UnheadSchemaOrg())
 
-    useHead({
+    useHead(ssrHead, {
       script: [
         {
           type: 'application/ld+json',

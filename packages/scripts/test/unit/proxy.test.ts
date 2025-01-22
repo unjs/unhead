@@ -1,6 +1,6 @@
 import type { AsVoidFunctions } from '../../src'
+import { createHead } from 'unhead/server'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createServerHeadWithContext } from '../../../../test/util'
 import { createForwardingProxy } from '../../src'
 import { createNoopedRecordingProxy, replayProxyRecordings } from '../../src/proxy'
 import { useScript } from '../../src/useScript'
@@ -111,10 +111,9 @@ describe('proxy chain', () => {
     `)
   })
   it('use() provided', () => {
-    const head = createServerHeadWithContext()
-    const instance = useScript({
+    const head = createHead()
+    const instance = useScript(head, {
       src: 'https://cdn.example.com/script.js',
-      head,
     }, {
       use() {
         return {

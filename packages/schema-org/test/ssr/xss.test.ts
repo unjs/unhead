@@ -1,6 +1,6 @@
 import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
-import { unheadCtx, useHead } from 'unhead'
+import { useHead } from 'unhead'
 import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useSetup } from '..'
@@ -8,22 +8,20 @@ import { useSetup } from '..'
 describe('schema.org ssr xss', () => {
   it('basic', async () => {
     const ssrHead = createHead()
-    unheadCtx.call(ssrHead, () => {
-      useHead({
-        templateParams: {
-          // use XSS for json script
-          xssVar: '</script><script>alert(1)</script>',
-        },
-      })
-
-      useSchemaOrg([
-        defineWebPage({
-          name: 'test',
-          description: '%xssVar',
-          foo: '"}</script><script>alert(2)</script>',
-        }),
-      ])
+    useHead(ssrHead, {
+      templateParams: {
+        // use XSS for json script
+        xssVar: '</script><script>alert(1)</script>',
+      },
     })
+
+    useSchemaOrg(ssrHead, [
+      defineWebPage({
+        name: 'test',
+        description: '%xssVar',
+        foo: '"}</script><script>alert(2)</script>',
+      }),
+    ])
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
@@ -43,8 +41,8 @@ describe('schema.org ssr xss', () => {
   })
 
   it('question', async () => {
-    const ssrHead = await useSetup(() => {
-      useSchemaOrg([
+    const ssrHead = await useSetup((head) => {
+      useSchemaOrg(head, [
         defineQuestion({
           name: 'What is the <i>meaning of life</i>?',
           acceptedAnswer: '<strong>Let me tell you!</strong>It\'s at least 42.',

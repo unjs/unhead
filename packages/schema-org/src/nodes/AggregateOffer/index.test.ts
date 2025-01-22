@@ -4,15 +4,15 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineAggregateOffer', () => {
   it('can be registered simple', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineAggregateOffer({
           lowPrice: 100,
           highPrice: 200,
         }),
       ])
 
-      const tag = await injectSchemaOrg()
+      const tag = await injectSchemaOrg(head)
 
       expect(tag).toMatchInlineSnapshot(`
         [
@@ -29,8 +29,8 @@ describe('defineAggregateOffer', () => {
   })
 
   it('can be registered offers', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineAggregateOffer({
           lowPrice: 100,
           highPrice: 200,
@@ -47,7 +47,7 @@ describe('defineAggregateOffer', () => {
         }),
       ])
 
-      const tag = await injectSchemaOrg()
+      const tag = await injectSchemaOrg(head)
 
       expect(tag).toMatchInlineSnapshot(`
         [

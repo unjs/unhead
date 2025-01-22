@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineQuestion', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           '@type': 'FAQPage',
         }),
@@ -19,7 +19,7 @@ describe('defineQuestion', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

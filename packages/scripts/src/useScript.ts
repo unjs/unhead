@@ -1,5 +1,6 @@
 import type {
   Head,
+  Unhead,
 } from '@unhead/schema'
 import type {
   EventHandlerOptions,
@@ -9,10 +10,10 @@ import type {
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
+  UseScriptReturn,
   WarmupStrategy,
 } from './types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
-import { useUnhead } from 'unhead'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
@@ -26,10 +27,9 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
-  const head = options.head || useUnhead()
   const id = resolveScriptKey(input)
   const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
   if (prevScript) {
@@ -141,7 +141,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
       }
-      // @ts-expect-error untyped
       script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
       return script._warmupEl
     },

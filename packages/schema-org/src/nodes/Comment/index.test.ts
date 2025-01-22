@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineComment', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineComment({
           text: 'This is a comment',
           author: {
@@ -14,7 +14,7 @@ describe('defineComment', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {

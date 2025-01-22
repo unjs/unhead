@@ -1,25 +1,24 @@
 {
   "name": "@unhead/scripts",
   "type": "module",
-  "version": "1.11.14",
+  "version": "2.0.0-alpha.7",
   "description": "Unhead Scripts allows you to load third-party scripts with better performance, privacy, and security.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
   "homepage": "https://unhead.unjs.io",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/schema-org"
+    "directory": "packages/scripts"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
   },
-  "keywords": [
-    "schema.org",
-    "node",
-    "seo"
-  ],
   "sideEffects": false,
   "exports": {
     ".": {
@@ -61,6 +60,9 @@
   },
   "peerDependenciesMeta": {
     "@unhead/vue": {
+      "optional": true
+    },
+    "unhead": {
       "optional": true
     }
   },

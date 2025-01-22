@@ -1,12 +1,12 @@
-import type { LinkBase } from 'zhead'
+import type { LinkBase } from '@unhead/schema'
+import { createHead as createServerHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { createServerHeadWithContext } from '../../../../test/util'
 import { useScript } from '../../src/useScript'
 
 describe('warmup', () => {
   it('server', () => {
-    const head = createServerHeadWithContext()
-    useScript('https://cdn.example.com/script.js', {
+    const head = createServerHead()
+    useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'server',
     })
@@ -15,8 +15,8 @@ describe('warmup', () => {
     expect(entry.link).toBeUndefined()
   })
   it('default / client', () => {
-    const head = createServerHeadWithContext()
-    useScript('https://cdn.example.com/script.js', {
+    const head = createServerHead()
+    useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'client',
     })
@@ -25,8 +25,8 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('relative: default / client', () => {
-    const head = createServerHeadWithContext()
-    useScript('/script.js', {
+    const head = createServerHead()
+    useScript(head, '/script.js', {
       head,
       trigger: 'client',
     })
@@ -35,8 +35,8 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('absolute: dns-prefetch', () => {
-    const head = createServerHeadWithContext()
-    useScript('https://cdn.example.com/script.js', {
+    const head = createServerHead()
+    useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'client',
       warmupStrategy: 'dns-prefetch',

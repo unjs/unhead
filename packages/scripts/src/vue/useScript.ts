@@ -4,7 +4,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
 } from '@unhead/schema'
-import type { MaybeComputedRefEntriesOnly } from '@unhead/vue'
+import type { ResolvableProperties, VueHeadClient } from '@unhead/vue'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
 import { injectHead } from '@unhead/vue'
@@ -15,8 +15,8 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (MaybeComputedRefEntriesOnly<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends HeadEntryOptions, Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'> {
+export type UseScriptInput = string | (ResolvableProperties<Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -27,6 +27,10 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
    * - `ref` - Load the script when the ref is true.
    */
   trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean>
+  /**
+   * Unhead instance.
+   */
+  head?: VueHeadClient<any>
 }
 
 export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T> & VueScriptInstance<T>
@@ -60,11 +64,12 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   })
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> {
+export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || injectHead()
-  // @ts-expect-error untyped
   options.head = head
   const scope = getCurrentInstance()
   options.eventContext = scope
@@ -95,7 +100,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     s._statusRef.value = s.status
   })
   // @ts-expect-error untyped
-  const script = _useScript(input as BaseUseScriptInput, options)
+  const script = _useScript(head, input as BaseUseScriptInput, options)
   // @ts-expect-error untyped
   script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
@@ -106,5 +111,5 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       // we can't override status as it will break the unhead useScript API
       return Reflect.get(_, key === 'status' ? '_statusRef' : key, a)
     },
-  }) as any as UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+  }) as any as UseScriptReturn<T>
 }

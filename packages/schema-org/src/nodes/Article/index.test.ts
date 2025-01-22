@@ -15,12 +15,12 @@ const defaultArticleInput = {
 
 describe('defineArticle', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle(defaultArticleInput),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client).toMatchInlineSnapshot(`
         [
@@ -50,14 +50,14 @@ describe('defineArticle', () => {
   })
 
   it('inherits attributes from useRoute()', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle(),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
-      const article = await findNode<Article>('#article')
+      const article = await findNode<Article>(head, '#article')
       expect(article?.headline).toEqual('Article headline')
       expect(article?.description).toEqual('my article description')
       expect(article?.image).toMatchInlineSnapshot(`
@@ -102,8 +102,8 @@ describe('defineArticle', () => {
   })
 
   it('can define article with custom fields', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle<{ somethingNew: 'test' }>({
           headline: 'test',
           datePublished: mockDate,
@@ -112,7 +112,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       expect(client).toMatchInlineSnapshot(`
         [
           {
@@ -130,8 +130,8 @@ describe('defineArticle', () => {
   })
 
   it('passes Date objects into iso string', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle({
           ...defaultArticleInput,
           datePublished: new Date(Date.UTC(2021, 10, 1, 0, 0, 0)),
@@ -139,7 +139,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       const article = client[0]
       expect(article?.datePublished).toEqual('2021-11-01T00:00:00.000Z')
       expect(article?.dateModified).toEqual('2022-02-01T00:00:00.000Z')
@@ -147,8 +147,8 @@ describe('defineArticle', () => {
   })
 
   it('allows overriding the type', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineArticle({
           '@type': 'TechArticle',
           ...defaultArticleInput,
@@ -157,7 +157,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       const article = client[0]
 
       expect(article?.['@type']).toEqual(['Article', 'TechArticle'])
@@ -165,13 +165,13 @@ describe('defineArticle', () => {
   })
 
   it('adds read action to web page', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
         defineArticle(defaultArticleInput),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       const webpage = client[0]
 
       expect(webpage?.potentialAction).toMatchInlineSnapshot(`
@@ -188,8 +188,8 @@ describe('defineArticle', () => {
   })
 
   it('clones date to web page', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
         defineArticle({
           '@id': '#my-article',
@@ -199,7 +199,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
       const webpage = client[0]
       const article = client[1]
 
@@ -209,8 +209,8 @@ describe('defineArticle', () => {
   })
 
   it('handles custom author', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Identity',
           logo: 'test.png',
@@ -227,7 +227,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client[2]).toMatchInlineSnapshot(`
         {
@@ -274,8 +274,8 @@ describe('defineArticle', () => {
   })
 
   it('handles custom authors', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Identity',
           logo: '/test.png',
@@ -296,7 +296,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client).toMatchInlineSnapshot(`
         [
@@ -397,8 +397,8 @@ describe('defineArticle', () => {
   })
 
   it('can match yoast schema', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Kootingal Pecan Company',
           logo: 'test',
@@ -406,7 +406,7 @@ describe('defineArticle', () => {
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineArticle({
           wordCount: 381,
           datePublished: '2022-04-06T08:00:51+00:00',
@@ -430,7 +430,7 @@ describe('defineArticle', () => {
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client[2]).toMatchInlineSnapshot(`
         {

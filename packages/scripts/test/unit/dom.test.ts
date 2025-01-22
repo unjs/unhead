@@ -1,13 +1,13 @@
 import { describe, it } from 'vitest'
-import { useDelayedSerializedDom, useDOMHead } from '../../../../test/unhead/dom/util'
+import { useDelayedSerializedDom, useDOMHead } from '../../../unhead/test/util'
 import { useScript } from '../../src/useScript'
 
 describe('dom useScript', () => {
   it('basic', async () => {
-    useDOMHead()
+    const head = useDOMHead()
 
     let calledFn
-    const instance = useScript({
+    const instance = useScript(head, {
       src: 'https://cdn.example.com/script.js',
     }, {
       use() {
@@ -32,9 +32,8 @@ describe('dom useScript', () => {
   it('proxy', async () => {
     const head = useDOMHead()
 
-    const instance = useScript<{ test: (foo: string) => string }>({
+    const instance = useScript<{ test: (foo: string) => string }>(head, {
       src: 'https://cdn.example.com/script.js',
-      head,
     }, {
       use() {
         return {
@@ -46,9 +45,9 @@ describe('dom useScript', () => {
     expect(instance.proxy.test('hello-world')).toEqual('hello-world')
   })
   it('remove & re-add', async () => {
-    useDOMHead()
+    const head = useDOMHead()
 
-    const instance = useScript<{ test: (foo: string) => void }>({
+    const instance = useScript<{ test: (foo: string) => void }>(head, {
       src: 'https://cdn.example.com/script.js',
     })
 

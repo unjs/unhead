@@ -1,7 +1,7 @@
 import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
-import { useDom } from '../../../../test/fixtures'
+import { useDom } from '../../../unhead/test/fixtures'
 import { useScript } from '../../src/vue/useScript'
 
 describe('vue e2e scripts', () => {

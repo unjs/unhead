@@ -2,8 +2,8 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../test/fixtures'
-import { createHeadWithContext, createServerHeadWithContext } from '../../../../test/util'
+import { useDom } from '../../../unhead/test/fixtures'
+import { createClientHeadWithContext, createServerHeadWithContext } from '../../../unhead/test/util'
 import { useScript } from '../../src/useScript'
 
 describe('unhead e2e scripts', () => {
@@ -19,7 +19,7 @@ describe('unhead e2e scripts', () => {
       ],
     }
     // i.e App.vue
-    useHead(input)
+    useHead(ssrHead, input)
 
     const data = await renderSSRHead(ssrHead)
 
@@ -34,7 +34,7 @@ describe('unhead e2e scripts', () => {
     `)
 
     const dom = useDom(data)
-    const csrHead = createHeadWithContext({
+    const csrHead = createClientHeadWithContext({
       document: dom.window.document,
     })
     csrHead.push(input)
@@ -59,11 +59,11 @@ describe('unhead e2e scripts', () => {
 
   it('manually updating trigger', async () => {
     const dom = useDom()
-    const csrHead = createHeadWithContext({
+    const csrHead = createClientHeadWithContext({
       document: dom.window.document,
     })
     const promise = new Promise<void>(() => {})
-    const script = useScript({
+    const script = useScript(csrHead, {
       src: 'https://cdn.example.com/script.js',
     }, {
       trigger: promise,
@@ -90,11 +90,11 @@ describe('unhead e2e scripts', () => {
 
   it('duplicate script registers', async () => {
     const dom = useDom()
-    const csrHead = createHeadWithContext({
+    const csrHead = createClientHeadWithContext({
       document: dom.window.document,
     })
     const neverResolves = new Promise<void>(() => {})
-    const scriptA = useScript({
+    const scriptA = useScript(csrHead, {
       src: 'https://cdn.example.com/script.js',
     }, {
       head: csrHead,
@@ -109,11 +109,10 @@ describe('unhead e2e scripts', () => {
     })
 
     // we're forcing a re-register of the script trigger
-    const scriptB = useScript({
+    const scriptB = useScript(csrHead, {
       src: 'https://cdn.example.com/script.js',
     }, {
       trigger: Promise.resolve(),
-      head: csrHead,
     })
 
     // next tick

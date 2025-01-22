@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "1.11.15",
+  "version": "2.0.0-alpha.7",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -14,6 +14,10 @@
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "keywords": [
     "schema.org",
@@ -55,8 +59,8 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/vue": "^1.11.15",
-    "unhead": "^1.11.15"
+    "@unhead/vue": "^1.11.18",
+    "unhead": "^1.11.18"
   },
   "peerDependenciesMeta": {
     "@unhead/vue": {

@@ -1,9 +1,8 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead, Unhead } from '@unhead/schema'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, MergeHead } from '@unhead/schema'
 import type {
   Ref,
 } from 'vue'
 import type {
-  ReactiveHead,
   UseHeadInput,
   UseHeadOptions,
   UseHeadSafeInput,
@@ -11,7 +10,8 @@ import type {
   VueHeadClient,
 } from '../types'
 import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from '@unhead/shared'
-import { tryUseUnhead, unheadCtx } from 'unhead'
+import { createHeadCore } from 'unhead'
+import { DeprecationsPlugin, PromisesPlugin } from 'unhead/plugins'
 import {
   getCurrentInstance,
   inject,
@@ -22,38 +22,56 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import { createHead } from '../client'
+import { createHead as createVueHead } from '../client'
 import { headSymbol } from '../install'
-import { createHead as createServerHead } from '../server'
+import { createHead as createVueServerHead } from '../server'
 import { resolveUnrefHeadInput } from '../utils'
 
 export * from './useScript'
-export { createServerHead }
-export { createHead }
+export { createHeadCore, resolveUnrefHeadInput }
 
 export const CapoPlugin = () => defineHeadPlugin({})
+
+export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
+  return createVueHead({
+    disableCapoSorting: true,
+    ...options,
+    plugins: [
+      DeprecationsPlugin,
+      PromisesPlugin,
+      ...(options.plugins || []),
+    ],
+  }) as VueHeadClient<T>
+}
+
+export function createServerHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
+  return createVueServerHead({
+    disableCapoSorting: true,
+    ...options,
+    plugins: [
+      DeprecationsPlugin,
+      PromisesPlugin,
+      ...(options.plugins || []),
+    ],
+  })
+}
 
 /**
  * @deprecated Please switch to non-legacy version
  */
+// eslint-disable-next-line unused-imports/no-unused-vars
 export function setHeadInjectionHandler(handler: () => VueHeadClient<any> | undefined) {
-  unheadCtx.set(handler(), true)
+  // noop
 }
 
 export function injectHead() {
-  // allow custom context setting
-  const ctx = tryUseUnhead()
-  if (ctx) {
-    return ctx
-  }
   // fallback to vue context
-  return inject<Unhead>(headSymbol)
+  return inject<VueHeadClient<any>>(headSymbol)
 }
 
 export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const head = options.head || injectHead()
   if (head) {
-    // @ts-expect-error untyped
     return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
   }
 }
@@ -61,7 +79,7 @@ export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: Us
 function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const deactivated = ref(false)
 
-  const resolvedInput: Ref<ReactiveHead> = ref({})
+  const resolvedInput: Ref<UseHeadInput<T>> = ref({})
   watchEffect(() => {
     resolvedInput.value = deactivated.value
       ? {}

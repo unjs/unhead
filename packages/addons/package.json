@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "1.11.15",
+  "version": "2.0.0-alpha.7",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -9,7 +9,11 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/ssr"
+    "directory": "packages/addons"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"

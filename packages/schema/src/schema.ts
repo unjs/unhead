@@ -1,5 +1,5 @@
 import type { Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style, BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable } from 'zhead'
-import type { InnerContent, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
 import type { Falsey, MaybeFunction, Never, ResolvableValues } from './util'
 
 export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
@@ -16,6 +16,19 @@ export interface SchemaAugmentations extends MergeHead {
   style: TagUserProperties
   script: TagUserProperties
   noscript: TagUserProperties
+}
+
+export interface ResolvedSchemaAugmentations extends MergeHead {
+  title: TagPriority
+  titleTemplate: TagPriority
+  base: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
+  htmlAttrs: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
+  bodyAttrs: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
+  link: TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false }
+  meta: TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false }
+  style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
+  script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
+  noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
 }
 
 export type MaybeArray<T> = T | T[]
@@ -62,14 +75,25 @@ type TitleTemplateResolver = string | ((title?: string) => string | null)
 
 export type Title = MaybeFunction<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
 export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<SchemaAugmentations['base'], ResolvableValues<_Base>>> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<LinkBase> & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & SchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BaseMeta> & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Style> & DataKeys & SchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase> & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & SchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Noscript> & DataKeys & SchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<HtmlAttr> & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BodyAttr> & MaybeEventFnHandlers<BodyEvents> & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
+export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase & DataKeys & SchemaAugmentations['script'] > & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
+
+export type ResolvedTitle = ({ textContent: string } & ResolvedSchemaAugmentations['title'])
+export type ResolvedTitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & ResolvedSchemaAugmentations['titleTemplate'])
+export type ResolvedBase<E extends EntryAugmentation = Record<string, any>> = Partial<Merge<ResolvedSchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E>
+export type ResolvedLink<E extends EntryAugmentation = Record<string, any>> = LinkBase & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & ResolvedSchemaAugmentations['link'] & DefinedValueOrEmptyObject<E>
+export type ResolvedMeta<E extends EntryAugmentation = Record<string, any>> = BaseMeta & DataKeys & SchemaAugmentations['meta'] & DefinedValueOrEmptyObject<E>
+export type ResolvedStyle<E extends EntryAugmentation = Record<string, any>> = _Style & DataKeys & ResolvedSchemaAugmentations['style'] & DefinedValueOrEmptyObject<E>
+export type ResolvedScript<E extends EntryAugmentation = Record<string, any>> = ScriptBase & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & ResolvedSchemaAugmentations['script'] & DefinedValueOrEmptyObject<E>
+export type ResolvedNoscript<E extends EntryAugmentation = Record<string, any>> = _Noscript & DataKeys & ResolvedSchemaAugmentations['noscript'] & DefinedValueOrEmptyObject<E>
+export type ResolvedHtmlAttributes<E extends EntryAugmentation = Record<string, any>> = HtmlAttr & DataKeys & ResolvedSchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>
+export type ResolvedBodyAttributes<E extends EntryAugmentation = Record<string, any>> = BodyAttr & MaybeEventFnHandlers<BodyEvents> & DataKeys & ResolvedSchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>
 
 export interface HeadUtils {
   /**
@@ -147,6 +171,18 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
 }
 
+export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations> extends HeadUtils {
+  title?: ResolvedTitle
+  base?: ResolvedBase<E['base']>
+  link?: ResolvedLink<E['link']>[]
+  meta?: ResolvedMeta<E['meta']>[]
+  style?: (ResolvedStyle<E['style']> | string)[]
+  script?: (ResolvedScript<E['script']> | string)[]
+  noscript?: (ResolvedNoscript<E['noscript']> | string)[]
+  htmlAttrs?: ResolvedHtmlAttributes<E['htmlAttrs']>
+  bodyAttrs?: ResolvedBodyAttributes<E['bodyAttrs']>
+}
+
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
 
-export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'
+export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'

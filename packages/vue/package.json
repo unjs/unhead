@@ -1,7 +1,8 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "1.11.15",
+  "version": "2.0.0-alpha.7",
+  "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -10,6 +11,10 @@
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
     "directory": "packages/vue"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
@@ -35,6 +40,16 @@
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",
       "require": "./dist/client.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.mjs",
+      "require": "./dist/types.cjs"
+    },
+    "./legacy": {
+      "types": "./dist/legacy.d.ts",
+      "import": "./dist/legacy.mjs",
+      "require": "./dist/legacy.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -50,20 +65,28 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "types": [
+        "dist/types"
+      ],
+      "legacy": [
+        "dist/legacy"
       ]
     }
   },
   "files": [
     "client.d.ts",
     "dist",
-    "server.d.ts"
+    "legacy.d.ts",
+    "server.d.ts",
+    "types.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
     "stub": "unbuild . --stub"
   },
   "peerDependencies": {
-    "vue": ">=3"
+    "vue": ">=3.5.13"
   },
   "build": {
     "external": [
