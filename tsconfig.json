@@ -23,7 +23,7 @@
       "@unhead/schema": ["packages/schema/src"],
       "@unhead/schema/*": ["packages/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
-      "@unhead/shared/*": ["packages/shared/*"],
+      "@unhead/shared/*": ["packages/shared/*"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],
