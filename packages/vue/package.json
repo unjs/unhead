@@ -77,9 +77,9 @@
   "files": [
     "client.d.ts",
     "dist",
+    "legacy.d.ts",
     "server.d.ts",
-    "types.d.ts",
-    "legacy.d.ts"
+    "types.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
