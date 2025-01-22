@@ -3,7 +3,6 @@ import type {
   Ref,
 } from 'vue'
 import type {
-  ReactiveHead,
   UseHeadInput,
   UseHeadOptions,
   UseHeadSafeInput,
@@ -80,7 +79,7 @@ export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: Us
 function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
   const deactivated = ref(false)
 
-  const resolvedInput: Ref<ReactiveHead> = ref({})
+  const resolvedInput: Ref<UseHeadInput<T>> = ref({})
   watchEffect(() => {
     resolvedInput.value = deactivated.value
       ? {}

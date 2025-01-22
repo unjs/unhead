@@ -1,4 +1,4 @@
-import type { LinkBase } from 'zhead'
+import type { LinkBase } from '@unhead/schema'
 import { createHead as createServerHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { useScript } from '../../src/useScript'

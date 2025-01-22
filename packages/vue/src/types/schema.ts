@@ -12,6 +12,8 @@ import type {
   EntryAugmentation,
   Falsey,
   HeadEntryOptions,
+  HttpEventAttributes,
+  LinkBase,
   MaybeArray,
   MaybeEventFnHandlers,
   MaybeFunction,
@@ -19,10 +21,10 @@ import type {
   MetaFlatInput,
   ResolvableValues,
   SchemaAugmentations,
+  ScriptBase,
   Unhead,
 } from '@unhead/schema'
 import type { Plugin, Ref } from 'vue'
-import type { HttpEventAttributes, LinkBase, ScriptBase } from 'zhead'
 import type { MaybeComputedRef, ResolvableArray, ResolvableProperties } from './util'
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {

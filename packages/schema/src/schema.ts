@@ -185,4 +185,4 @@ export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations>
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
 
-export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'
+export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'
