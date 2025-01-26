@@ -13,6 +13,6 @@ export default defineBuildConfig({
     { input: 'src/server', name: 'server' },
     { input: 'src/client', name: 'client' },
     { input: 'src/legacy/index', name: 'legacy' },
-    { input: 'src/types', name: 'types' },
+    { input: 'src/types/index', name: 'types' },
   ],
 })

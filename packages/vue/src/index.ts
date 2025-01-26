@@ -4,6 +4,8 @@ import { resolveUnrefHeadInput } from './utils'
 // composables
 export * from './autoImports'
 
+export const CapoPlugin = () => ({})
+
 // core
 export {
   createHeadCore,
