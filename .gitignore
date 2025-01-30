@@ -13,3 +13,5 @@ docs/.nuxt
 **/auto-imports.d.ts
 
 .data
+
+.angular

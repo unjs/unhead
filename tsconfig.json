@@ -3,6 +3,7 @@
     "target": "esnext",
     "jsx": "preserve",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "experimentalDecorators": true,
     "baseUrl": ".",
     "rootDir": ".",
     "module": "esnext",

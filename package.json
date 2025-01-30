@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "1.11.15",
+  "version": "2.0.0-alpha.7",
   "private": "true",
   "packageManager": "pnpm@9.15.4",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -15,27 +15,35 @@
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
     "test:memory": "vitest --expose-gc  run memory",
-    "export:sizes": "pnpm -r --parallel --filter=./packages/** run export:sizes",
     "bump": "bumpp package.json packages/*/package.json --commit --push --tag",
-    "release": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks",
-    "release:beta": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks --tag beta",
+    "release": "pnpm build && pnpm bump && pnpm publish --tag latest -r --no-git-checks",
+    "release:next": "pnpm build && pnpm bump && pnpm publish --tag next -r --no-git-checks",
     "lint": "eslint . --fix",
-    "benchmark": "vitest bench",
-    "lint:docs:fix": "markdownlint --fix ./docs --fix && case-police 'docs/**/*.md' *.md --fix"
+    "benchmark": "vitest bench"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.16.0",
+    "@antfu/eslint-config": "^4.1.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
-    "bumpp": "^9.11.2",
+    "bumpp": "^10.0.1",
     "eslint": "^9.19.0",
     "fs-extra": "^11.3.0",
     "jsdom": "^26.0.0",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "unbuild": "^3.3.1",
     "utility-types": "^3.11.0",
-    "vitest": "^3.0.3",
+    "vitest": "^3.0.4",
     "vue": "^3.5.13"
+  },
+  "resolutions": {
+    "@unhead/addons": "workspace:*",
+    "@unhead/dom": "workspace:*",
+    "@unhead/schema": "workspace:*",
+    "@unhead/schema-org": "workspace:*",
+    "@unhead/shared": "workspace:*",
+    "@unhead/ssr": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*"
   }
 }
