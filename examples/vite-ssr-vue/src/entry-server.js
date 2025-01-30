@@ -1,10 +1,21 @@
 import { basename } from 'node:path'
 import { renderToString } from 'vue/server-renderer'
-import { renderSSRHead } from '@unhead/ssr'
 import { createApp } from './main'
+import { createHead, VueHeadMixin, renderSSRHead } from "@unhead/vue/server"
 
 export async function render(url, manifest) {
-  const { app, router, head } = createApp()
+  const { app, router } = createApp()
+  const head = createHead()
+  app.use(head)
+  app.mixin(VueHeadMixin)
+  head.push({
+    htmlAttrs: {
+      class: 'layout-default',
+    },
+    bodyAttrs: {
+      style: 'overflow: hidden;',
+    },
+  })
 
   // set the router to the desired URL before rendering
   await router.push(url)

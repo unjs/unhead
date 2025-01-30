@@ -1,6 +1,5 @@
 import { createPinia } from 'pinia'
 import { createSSRApp } from 'vue'
-import { VueHeadMixin, createHead } from '@unhead/vue'
 import App from './App.vue'
 import { createRouter } from './router'
 
@@ -13,17 +12,6 @@ export function createApp() {
   app.use(pinia)
   const router = createRouter()
   app.use(router)
-  const head = createHead()
-  app.use(head)
-  app.mixin(VueHeadMixin)
 
-  head.push({
-    htmlAttrs: {
-      class: 'layout-default',
-    },
-    bodyAttrs: {
-      style: 'overflow: hidden;',
-    },
-  })
-  return { app, router, head }
+  return { app, router }
 }
