@@ -17,8 +17,8 @@
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": false,
-    "outDir": "./dist/out-tsc",
     "importHelpers": true,
+    "outDir": "./dist/out-tsc",
     "esModuleInterop": true,
     "isolatedModules": true,
     "skipLibCheck": true

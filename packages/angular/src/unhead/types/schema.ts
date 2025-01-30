@@ -1,3 +1,4 @@
+import type { Signal } from '@angular/core'
 import type {
   Base as _Base,
   Noscript as _Noscript,
@@ -25,7 +26,6 @@ import type {
   Unhead,
 } from '@unhead/schema'
 import type { MaybeSignal, ResolvableArray, ResolvableProperties } from './util'
-import type {Signal} from "@angular/core";
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   /**
