@@ -20,7 +20,8 @@
     "release": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks",
     "release:beta": "pnpm build && pnpm bump && pnpm -r publish --no-git-checks --tag beta",
     "lint": "eslint . --fix",
-    "benchmark": "vitest bench"
+    "benchmark": "vitest bench",
+    "lint:docs:fix": "markdownlint --fix ./docs --fix && case-police 'docs/**/*.md' *.md --fix"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.16.0",

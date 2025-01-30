@@ -21,6 +21,7 @@ analytics.proxy.trackEvent('page_view')
 ## What to Proxy
 
 ### Good Use Cases
+
   ```ts
 // Fire and forget events
 analytics.proxy.event('click')
@@ -33,6 +34,7 @@ player.proxy.play()
 ```
 
 ### Bad Use Cases
+
   ```ts
 // DON'T proxy getters
 const id = script.proxy.userId // Always undefined
@@ -47,6 +49,7 @@ await script.proxy.fetch() // Never resolves
 ## Real Examples
 
 ### Google Analytics
+
   ```ts
 const ga = useScript('gtag.js', {
   use() {
@@ -62,6 +65,7 @@ ga.proxy.event('timing_complete', {
 ```
 
 ### Crisp Chat
+
   ```ts
 const crisp = useScript('crisp.js', {
   use() {

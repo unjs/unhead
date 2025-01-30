@@ -66,6 +66,7 @@ useScript('chat.js', {
 ## Common Issues
 
 ### Script Order
+
 ```ts
 // Before: Scripts load in order
 <script src="dep.js" />
@@ -79,6 +80,7 @@ const main = useScript('main.js', {
 ```
 
 ### Global Variables
+
 ```ts
 // Before: Variables available globally
 <script>var CONFIG = { api: '/api' }</script>

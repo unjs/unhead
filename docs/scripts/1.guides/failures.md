@@ -20,6 +20,7 @@ const script = useScript('widget.js')
 ## Common Failures
 
 ### Timeout
+
 ```ts
 function loadWithTimeout(src: string, timeout = 3000) {
   return useScript(src, {
@@ -36,6 +37,7 @@ function loadWithTimeout(src: string, timeout = 3000) {
 ```
 
 ### Network Error
+
 ```ts
 const analytics = useScript('analytics.js')
   .catch(error => {
@@ -52,6 +54,7 @@ const analytics = useScript('analytics.js')
 ```
 
 ### Content Blockers
+
 ```ts
 const script = useScript('tracker.js')
   .catch(error => {

@@ -23,6 +23,7 @@ useScript('tracker.js', {
 ## Common Scripts
 
 ### Google Analytics
+
 ```ts
 useScript('gtag.js', {
   beforeInit() {
@@ -37,6 +38,7 @@ useScript('gtag.js', {
 ```
 
 ### Marketing Tags
+
 ```ts
 useScript('tags.js', {
   // Clear params from URL
@@ -61,12 +63,14 @@ Check what scripts can access:
 ## Privacy Tools Impact
 
 Scripts often break with:
+
 - uBlock Origin
 - Privacy Badger
 - DuckDuckGo App
 - Brave Browser
 
 Handle it gracefully:
+
 ```ts
 const script = useScript('tracker.js')
   .catch(error => {

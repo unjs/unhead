@@ -43,6 +43,7 @@ const analytics = useScript('https://www.googletagmanager.com/gtag/js', {
 ## Common Mistakes
 
 1. Don't type everything:
+
 ```ts
 // Bad - way too much typing
 interface ComplexScript {
@@ -56,6 +57,7 @@ interface ComplexScript {
 ```
 
 2. Don't type dynamic values:
+
 ```ts
 // Bad - these change often
 interface BadAnalytics {
