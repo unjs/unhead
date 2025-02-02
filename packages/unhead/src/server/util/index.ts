@@ -1,3 +1,4 @@
-export * from './propsToString'
-export * from './ssrRenderTags'
-export * from './tagToString'
+export { extractTagsFromHtml } from './extractTagsFromHtml'
+export { propsToString } from './propsToString'
+export { ssrRenderTags } from './ssrRenderTags'
+export { escapeHtml, tagToString } from './tagToString'
