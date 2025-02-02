@@ -1,4 +1,5 @@
 import typescriptLogo from './typescript.svg'
+import { createHead } from 'unhead/server'
 
 export function render(_url: string) {
   const html = `
@@ -18,5 +19,12 @@ export function render(_url: string) {
       </p>
     </div>
   `
-  return { html }
+  const head = createHead()
+  head.push({
+    title: 'Vite TS + Unhead',
+    meta: [
+      { name: 'description', content: 'Vite SSR with TypeScript & Unhead' }
+    ],
+  })
+  return { html, head }
 }
