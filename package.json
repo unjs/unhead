@@ -19,7 +19,10 @@
     "release": "pnpm build && pnpm bump && pnpm publish --tag latest -r --no-git-checks",
     "release:next": "pnpm build && pnpm bump && pnpm publish --tag next -r --no-git-checks",
     "lint": "eslint . --fix",
-    "benchmark": "vitest bench"
+    "benchmark": "vitest bench",
+    "lint:docs": "pnpx markdownlint-cli ./docs && pnpx case-police 'docs/**/*.md' *.md",
+    "lint:docs:fix": "pnpx markdownlint-cli ./docs --fix && pnpx case-police 'docs/**/*.md' *.md --fix",
+    "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.1.0",
