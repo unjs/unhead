@@ -303,4 +303,50 @@ describe('ssr', () => {
       "
     `)
   })
+  it('random template #2', async () => {
+    const html = `
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Test description">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.ico">
+  <base href="/">
+  <title>Test Document</title>
+  <style>body { font-family: Arial, sans-serif; }</style>
+  <script src="script.js" async></script>
+  <script>console.log('Inline script');</script>
+  <!-- Resource Hints -->
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="preload" href="script.js" as="script">
+  <link rel="dns-prefetch" href="//example.com">
+  <link rel="preconnect" href="//example.com">
+  <link rel="prefetch" href="another-script.js">
+</head>
+<body style="background-color: #f0f0f0;">
+  <div id="content">Hello, world!</div>
+  <script src="another-script.js"></script>
+</body>
+</html>`
+    const head = createServerHeadWithContext()
+    const processedHtml = await transformHtmlTemplate(head, html)
+    expect(processedHtml).toContain('<meta charset="UTF-8">')
+    expect(processedHtml).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
+    expect(processedHtml).toContain('<meta name="description" content="Test description">')
+    expect(processedHtml).toContain('<link rel="stylesheet" href="styles.css">')
+    expect(processedHtml).toContain('<link rel="icon" href="favicon.ico">')
+    expect(processedHtml).toContain('<base href="/">')
+    expect(processedHtml).toContain('<title>Test Document</title>')
+    expect(processedHtml).toContain('<style>body { font-family: Arial, sans-serif; }</style>')
+    expect(processedHtml).toContain('<script src="script.js" async></script>')
+    expect(processedHtml).toContain('<script>console.log(\'Inline script\');</script>')
+    expect(processedHtml).toContain('<link rel="preload" href="styles.css" as="style">')
+    expect(processedHtml).toContain('<link rel="preload" href="script.js" as="script">')
+    expect(processedHtml).toContain('<link rel="dns-prefetch" href="//example.com">')
+    expect(processedHtml).toContain('<link rel="preconnect" href="//example.com">')
+    expect(processedHtml).toContain('<link rel="prefetch" href="another-script.js">')
+    expect(processedHtml).toContain('<script src="another-script.js"></script>')
+  })
 })

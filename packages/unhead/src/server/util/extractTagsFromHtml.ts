@@ -1,41 +1,57 @@
+import type { UseHeadInput } from 'unhead'
+
+const Attrs = /(\w+)(?:=["']([^"']*)["'])?/g
+const HtmlTag = /<html[^>]*>/
+const BodyTag = /<body[^>]*>/
+const HeadContent = /<head[^>]*>(.*?)<\/head>/s
+const SelfClosingTags = /<(meta|link|base)[^>]*>/g
+const ClosingTags = /<(title|script|style)[^>]*>[\s\S]*?<\/\1>/g
+// eslint-disable-next-line regexp/no-misleading-capturing-group
+const NewLines = /(\n\s*)+/g
+
 function extractAttributes(tag: string) {
-  const attrs = tag.match(/([a-z-]+)="([^"]*)"/g)
+  // inner should be between the < and > (non greedy), split on ' ' and after index 0
+  const inner = tag.match(/<([^>]*)>/)?.[1].split(' ').slice(1).join(' ')
+  if (!inner)
+    return {}
+  const attrs = inner.match(Attrs)
   return attrs?.reduce((acc, attr) => {
-    const [key, ...valueParts] = attr.split('=')
-    // join value parts to support '=' within the quoted values
-    const val = valueParts.join('=').slice(1, -1)
+    const sep = attr.indexOf('=')
+    const key = sep > 0 ? attr.slice(0, sep) : attr
+    const val = sep > 0 ? attr.slice(sep + 1).slice(1, -1) : true
     return { ...acc, [key]: val, tagPriority: 'low' }
-  }, {})
+  }, {}) || {}
 }
 
 export function extractTagsFromHtml(html: string) {
-  const input = {}
-  // i should be able to give it a string of html and it should convert it to input for useHead()
-  // parse htmlAttrs, bodyAttrs
-  input.htmlAttrs = extractAttributes(html.match(/<html[^>]*>/)?.[0] || '')
+  const input: UseHeadInput<any> = {}
+  input.htmlAttrs = extractAttributes(html.match(HtmlTag)?.[0] || '')
+  html = html.replace(HtmlTag, '<html>')
 
-  html = html.replace(/<html[^>]*>/, '<html>')
-  input.bodyAttrs = extractAttributes(html.match(/<body[^>]*>/)?.[0] || '')
-  html = html.replace(/<body[^>]*>/, '<body>')
-  // parse headTags, need to split on /> and seperate each tag
-  const innerHead = html.match(/<head[^>]*>([\s\S]*)<\/head>/)?.[1]
-  // replace ['meta', 'link', 'base'] tags first because they're unique in that they don't have a closing tag
-  innerHead?.match(/<meta[^>]*>|<link[^>]*>|<base[^>]*>/g).forEach((s) => {
+  input.bodyAttrs = extractAttributes(html.match(BodyTag)?.[0] || '')
+  html = html.replace(BodyTag, '<body>')
+
+  const innerHead = html.match(HeadContent)?.[1] || ''
+  innerHead.match(SelfClosingTags)?.forEach((s) => {
     html = html.replace(s, '')
-    const tag = s.split(' ')[0].slice(1)
+    const tag = s.split(' ')[0].slice(1) as 'meta'
     input[tag] = input[tag] || []
-    input[tag].push(extractAttributes(s))
+    input[tag].push(extractAttributes(s) as any)
   })
-  innerHead?.match(/<title[^>]*>[\s\S]*?<\/title>|<script[^>]*>[\s\S]*?<\/script>|<style[^>]*>[\s\S]*?<\/style>/g)
-    .map(tag => tag.trim())
+
+  innerHead.match(ClosingTags)
+    ?.map(tag => tag.trim())
     .filter(Boolean)
     .forEach((tag) => {
       html = html.replace(tag, '')
-      const type = tag.match(/<([a-z-]+)/)?.[1]
+      const type = tag.match(/<([a-z-]+)/)?.[1] as 'script' | 'title'
       const res = {
         tagPriority: 'low',
-        [type !== 'script' ? 'textContent' : 'innerHTML']: tag.match(/>([\s\S]*)</)?.[1],
         ...extractAttributes(tag),
+      } as any
+      const innerContent = tag.match(/>([\s\S]*)</)?.[1]
+      if (innerContent) {
+        res[type !== 'script' ? 'textContent' : 'innerHTML'] = innerContent
       }
       if (type === 'title') {
         input.title = res
@@ -45,8 +61,7 @@ export function extractTagsFromHtml(html: string) {
         input[type].push(res)
       }
     })
-  // remove duplicate new lines from html, could be 2, 5 or 20 in a row
-  html = html.replace(/(\n\s*)+/g, '\n')
-  // we leave any body tags as the order is out of our control
+
+  html = html.replace(NewLines, '\n')
   return { html, input }
 }
