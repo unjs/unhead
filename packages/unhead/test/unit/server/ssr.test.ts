@@ -291,7 +291,7 @@ describe('ssr', () => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
       <link rel="stylesheet" href="style.css">
-      <script src="script.js" type="module"></script></head>
+      <script src="script.js" async type="module"></script></head>
       <body style="background-color: blue; accent-color: red">
       <div>hello</div>
       <script src="ssr.test.ts"></script>
