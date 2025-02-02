@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises'
 import express from 'express'
-import { transformHtmlTemplate } from "@unhead/vue/server";
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
@@ -54,10 +53,9 @@ app.use('*all', async (req, res) => {
 
     const rendered = await render(url)
 
-    const html = await transformHtmlTemplate(
-      rendered.head,
-      template.replace(`<!--app-html-->`, rendered.html ?? '')
-    )
+    const html = template
+      .replace(`<!--app-head-->`, rendered.head ?? '')
+      .replace(`<!--app-html-->`, rendered.html ?? '')
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {

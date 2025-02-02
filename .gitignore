@@ -15,3 +15,5 @@ docs/.nuxt
 .data
 
 .angular
+
+.vite-inspect

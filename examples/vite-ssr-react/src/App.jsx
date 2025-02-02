@@ -1,37 +1,34 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import './App.css'
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
 
-// Auto generates routes from files under ./pages
-// https://vitejs.dev/guide/features.html#glob-import
-const pages = import.meta.glob('./pages/*.jsx', { eager: true })
+function App() {
+  const [count, setCount] = useState(0)
 
-const routes = Object.keys(pages).map((path) => {
-  const name = path.match(/\.\/pages\/(.*)\.jsx$/)[1]
-  return {
-    name,
-    path: name === 'Home' ? '/' : `/${name.toLowerCase()}`,
-    component: pages[path].default,
-  }
-})
-
-export function App() {
   return (
     <>
-      <nav>
-        <ul>
-          {routes.map(({ name, path }) => {
-            return (
-              <li key={path}>
-                <Link to={path}>{name}</Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-      <Routes>
-        {routes.map(({ path, component: RouteComp }) => {
-          return <Route key={path} path={path} element={<RouteComp />}></Route>
-        })}
-      </Routes>
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src="/vite.svg" className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://reactjs.org" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
+      </div>
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.jsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
     </>
   )
 }
+
+export default App
