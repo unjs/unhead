@@ -1,5 +1,7 @@
 import { useHead, useSeoMeta } from 'unhead'
 import { renderSSRHead } from 'unhead/server'
+import { transformHtmlTemplate } from 'unhead/server/transformHtmlTemplate'
+import { extractTagsFromHtml } from 'unhead/server/util/extractTagsFromHtml'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
 import { createServerHeadWithContext } from '../../util'
@@ -212,6 +214,93 @@ describe('ssr', () => {
         "headTags": "<title>my default title</title>",
         "htmlAttrs": "",
       }
+    `)
+  })
+  it('vite template', async () => {
+    const html = `<!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Vue + TS</title>
+    <!--app-head-->
+    </head>
+    <body>
+    <div id="app"><!--app-html--></div>
+      <script type="module" src="/src/entry-client.ts"></script>
+      </body>
+      </html>`
+    const head = createServerHeadWithContext()
+    head.push({
+      title: 'new title',
+      meta: [
+        { charset: 'utf-16' },
+      ],
+    })
+    expect(await transformHtmlTemplate(head, html)).toMatchInlineSnapshot(`
+      "<!doctype html>
+      <html lang="en">
+      <head>
+      <!--app-head-->
+      <meta charset="utf-16">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>new title</title>
+      <link rel="icon" type="image/svg+xml" href="/vite.svg"></head>
+      <body>
+      <div id="app"><!--app-html--></div>
+      <script type="module" src="/src/entry-client.ts"></script>
+      </body>
+      </html>"
+    `)
+  })
+  it('random template', async () => {
+    const html = `
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Document</title>
+          <link rel="stylesheet" href="style.css">
+          <script src="script.js" async type="module"></script>
+        </head>
+        <body style="accent-color: red;">
+          <div>hello</div>
+          <script src="ssr.test.ts"></script>
+          <script>
+          console.log('hello')
+</script>
+        </body>
+      </html>
+    `
+    const head = createServerHeadWithContext()
+    head.push({
+      title: 'new title',
+      bodyAttrs: {
+        style: 'background-color: blue;',
+      },
+      meta: [
+        { charset: 'utf-16' },
+      ],
+    })
+    expect(await transformHtmlTemplate(head, html)).toMatchInlineSnapshot(`
+      "
+      <html lang="en">
+      <head>
+      <meta charset="utf-16">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>new title</title>
+      <link rel="stylesheet" href="style.css">
+      <script src="script.js" type="module"></script></head>
+      <body style="background-color: blue; accent-color: red">
+      <div>hello</div>
+      <script src="ssr.test.ts"></script>
+      <script>
+      console.log('hello')
+      </script>
+      </body>
+      </html>
+      "
     `)
   })
 })
