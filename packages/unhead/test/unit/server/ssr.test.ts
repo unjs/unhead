@@ -1,7 +1,6 @@
 import { useHead, useSeoMeta } from 'unhead'
 import { renderSSRHead } from 'unhead/server'
 import { transformHtmlTemplate } from 'unhead/server/transformHtmlTemplate'
-import { extractTagsFromHtml } from 'unhead/server/util/extractTagsFromHtml'
 import { describe, it } from 'vitest'
 import { basicSchema } from '../../fixtures'
 import { createServerHeadWithContext } from '../../util'

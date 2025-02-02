@@ -1,9 +1,9 @@
 import type { RenderSSRHeadOptions, Unhead } from '@unhead/schema'
 import { renderSSRHead } from './renderSSRHead'
-import { extractTagsFromHtml } from './util/extractTagsFromHtml'
+import { extractUnheadInputFromHtml } from './util/extractUnheadInputFromHtml'
 
 export async function transformHtmlTemplate(head: Unhead<any>, html: string, options?: RenderSSRHeadOptions) {
-  const { html: parsedHtml, input } = extractTagsFromHtml(html)
+  const { html: parsedHtml, input } = extractUnheadInputFromHtml(html)
   head.push(input)
   const headHtml = await renderSSRHead(head, options)
   return parsedHtml

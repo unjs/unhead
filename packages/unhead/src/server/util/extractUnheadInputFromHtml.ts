@@ -23,7 +23,7 @@ function extractAttributes(tag: string) {
   }, {}) || {}
 }
 
-export function extractTagsFromHtml(html: string) {
+export function extractUnheadInputFromHtml(html: string) {
   const input: UseHeadInput<any> = {}
   input.htmlAttrs = extractAttributes(html.match(HtmlTag)?.[0] || '')
   html = html.replace(HtmlTag, '<html>')
