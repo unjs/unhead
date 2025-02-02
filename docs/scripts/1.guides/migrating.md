@@ -51,7 +51,7 @@ useScript('widget.js', {
 <Helmet>
   <script src="chat.js" />
   <script>
-    {`window.$crisp = []`}
+    window.$crisp = []
   </script>
 </Helmet>
 

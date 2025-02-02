@@ -9,7 +9,7 @@ Most third-party scripts have bad or no types. Here's how to fix that.
 
 ```ts
 const fathom = useScript<{ trackPageview: () => void }>('https://cdn.usefathom.com/script.js', {
-  use() { 
+  use() {
     return window.fathom
   }
 })

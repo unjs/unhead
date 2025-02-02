@@ -11,10 +11,10 @@ Third-party scripts collect user data. Do it ethically.
 useScript('tracker.js', {
   // No referrer data sent
   referrerpolicy: 'no-referrer',
-  
+
   // No credentials sent
   crossorigin: 'anonymous',
-  
+
   // Load after consent
   trigger: hasConsent
 })
@@ -28,10 +28,10 @@ useScript('tracker.js', {
 useScript('gtag.js', {
   beforeInit() {
     window.dataLayer = window.dataLayer || []
-    window.gtag = function() { dataLayer.push(arguments) }
+    window.gtag = function () { dataLayer.push(arguments) }
     gtag('consent', 'default', {
-      'analytics_storage': 'denied',
-      'ad_storage': 'denied'
+      analytics_storage: 'denied',
+      ad_storage: 'denied'
     })
   }
 })
@@ -73,7 +73,7 @@ Handle it gracefully:
 
 ```ts
 const script = useScript('tracker.js')
-  .catch(error => {
+  .catch((error) => {
     if (error.name === 'SecurityError') {
       // Privacy tool blocked script
       disableTracking()

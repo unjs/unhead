@@ -120,7 +120,7 @@ Nuxt should not be effected by this change.
 - `getActiveHead()`{lang="ts"}, `activeHead`{lang="ts"} exports are removed
 - Vue Only: `setHeadInjectionHandler()`{lang="ts"} is removed
 - Vue Only: Error may be thrown when using `useHead()`{lang="ts"} after async operations
-  
+
 The implicit context implementation kept a global instance of Unhead available so that you could use the `useHead()`{lang="ts"} composables
 anywhere in your application.
 
@@ -145,7 +145,7 @@ don't need to worry about this.
 import { useHead } from 'unhead'
 
 // example of getting the instance
-const unheadInstance = useMyApp().unhead 
+const unheadInstance = useMyApp().unhead
 useHead(unheadInstance, {
   title: 'Looks good'
 })
@@ -198,9 +198,9 @@ These are already deduped magically so you can safely remove them there.
 
 ```diff
 useHead({
-  meta: [{ 
-    name: 'description', 
--   vmid: 'description' 
+  meta: [{
+    name: 'description',
+-   vmid: 'description'
 -   hid: 'description'
   }]
 })
@@ -213,8 +213,8 @@ rendering.
 
 ```diff
 useHead({
-  script: [{ 
--   vmid: 'my-key' 
+  script: [{
+-   vmid: 'my-key'
 -   hid: 'my-key'
 +   key: 'my-key',
   }]
@@ -232,7 +232,7 @@ When migrating your code ensure that you're not dynamically setting `innerHTML` 
 ```diff
 useHead({
   script: [
-      { 
+      {
 -        children: '..'
 +        innerHTML: '..'
       }
@@ -247,7 +247,7 @@ The `body` key should be updated to use the Tag Position feature.
 ```diff
 useHead({
   script: [
-      { 
+      {
 -        body: true
 +        tagPosition: 'bodyClose'
       }

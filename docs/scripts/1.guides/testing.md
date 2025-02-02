@@ -30,12 +30,12 @@ test('tracks page view', () => {
 ```ts
 test('handles network error', async () => {
   // Mock fetch to fail
-  global.fetch = vi.fn(() => 
+  global.fetch = vi.fn(() =>
     Promise.reject(new Error('Failed to load'))
   )
 
   const script = useScript('widget.js')
-  
+
   expect(script.status).toBe('error')
   expect(console.error).toHaveBeenCalled()
 })
@@ -49,7 +49,7 @@ Use local versions in development:
 const isProd = process.env.NODE_ENV === 'production'
 
 useScript(
-  isProd 
+  isProd
     ? 'https://cdn.analytics.com/script.js'
     : '/mocks/analytics.js'
 )

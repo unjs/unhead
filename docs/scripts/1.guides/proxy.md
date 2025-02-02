@@ -9,9 +9,9 @@ Use script functions before they load. All calls queue until the script is ready
 
   ```ts
 const analytics = useScript('analytics.js', {
-  use() {
-    return window.analytics
-  }
+    use() {
+      return window.analytics
+    }
 })
 
 // Works before script loads
@@ -52,15 +52,15 @@ await script.proxy.fetch() // Never resolves
 
   ```ts
 const ga = useScript('gtag.js', {
-  use() {
-    return window.gtag
-  }
+    use() {
+      return window.gtag
+    }
 })
 
 // Queues until script loads
 ga.proxy.event('timing_complete', {
-  name: 'load',
-  value: performance.now()
+    name: 'load',
+    value: performance.now()
 })
 ```
 
@@ -68,9 +68,9 @@ ga.proxy.event('timing_complete', {
 
   ```ts
 const crisp = useScript('crisp.js', {
-  use() {
-    return window.$crisp
-  }
+    use() {
+      return window.$crisp
+    }
 })
 
 // Safe to call anytime

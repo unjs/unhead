@@ -11,7 +11,7 @@ Scripts fail to load. Handle it gracefully.
 
 ```ts
 const script = useScript('widget.js')
-  .catch(error => {
+  .catch((error) => {
     console.error('Widget failed to load:', error)
     // Show fallback UI
   })
@@ -28,7 +28,7 @@ function loadWithTimeout(src: string, timeout = 3000) {
       const timer = setTimeout(() => {
         reject(new Error('Script load timeout'))
       }, timeout)
-      
+
       resolve()
       clearTimeout(timer)
     })
@@ -40,7 +40,7 @@ function loadWithTimeout(src: string, timeout = 3000) {
 
 ```ts
 const analytics = useScript('analytics.js')
-  .catch(error => {
+  .catch((error) => {
     if (error.name === 'NetworkError') {
       // Queue events for retry
       return {
@@ -57,7 +57,7 @@ const analytics = useScript('analytics.js')
 
 ```ts
 const script = useScript('tracker.js')
-  .catch(error => {
+  .catch((error) => {
     if (error.name === 'SecurityError') {
       // Ad blocker or privacy tool blocked script
       disableTracking()

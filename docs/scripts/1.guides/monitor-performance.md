@@ -25,7 +25,7 @@ const script = useScript('widget.js', {
 useScript('analytics.js', {
   onLoaded() {
     const entry = performance.getEntriesByName('script-load')[0]
-    
+
     sendToAnalytics({
       name: 'script_load',
       duration: entry.duration,
