@@ -17,9 +17,18 @@ describe('createDebouncedFn', () => {
     expect(callee).toHaveBeenCalledTimes(0)
 
     // Wait for the debounced function to execute
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 45))
+
+    // this resets the timer
+    debouncedFn()
+
+    await new Promise(resolve => setTimeout(resolve, 45))
 
     // Ensure the callee function was called only once
+    expect(callee).toHaveBeenCalledTimes(0)
+
+    await new Promise(resolve => setTimeout(resolve, 25))
+
     expect(callee).toHaveBeenCalledTimes(1)
   })
 })
