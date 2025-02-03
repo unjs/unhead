@@ -16,6 +16,7 @@ import { DeprecationsPlugin } from '../plugins/deprecations'
 import { PromisesPlugin } from '../plugins/promises'
 import { ServerEventHandlerPlugin } from '../server/plugins/eventHandlers'
 import { PayloadPlugin } from '../server/plugins/payload'
+import {createDebouncedFn, renderDOMHead} from "unhead/client";
 
 export * from './useScript'
 
@@ -42,7 +43,6 @@ export function createServerHead<T extends Record<string, any> = Head>(options: 
     document: false,
     plugins: [
       ...(options.plugins || []),
-      DomPlugin(),
       DeprecationsPlugin,
       PromisesPlugin,
       ServerEventHandlerPlugin,
@@ -57,7 +57,9 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
     ...options,
     plugins: [
       ...(options.plugins || []),
-      DomPlugin(),
+      DomPlugin({
+        render: createDebouncedFn(() => renderDOMHead(activeHead.value), fn => setTimeout(() => fn(), 10)),
+      }),
       DeprecationsPlugin,
       PromisesPlugin,
       ClientEventHandlerPlugin,
