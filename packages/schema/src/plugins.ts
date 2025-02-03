@@ -1,4 +1,4 @@
-import type { Unhead } from '@unhead/schema/src/head'
+import type { Unhead } from './head'
 
 export interface RenderDomHeadOptions {
   /**
@@ -8,5 +8,5 @@ export interface RenderDomHeadOptions {
 }
 
 export interface DomPluginOptions extends RenderDomHeadOptions {
-  render: ((head: Unhead<any>) => Promise<void>)
+  render: ((head: Unhead<any>) => void)
 }
