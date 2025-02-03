@@ -5,7 +5,6 @@ export function setupCounter(element: HTMLButtonElement) {
   const setCounter = (count: number) => {
     counter = count
     element.innerHTML = `count is ${counter}`
-    console.log('use head')
     useHead(window.__UNHEAD__, {
       title: () => counter ? `count is ${counter}` : null,
     })
