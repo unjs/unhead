@@ -3,6 +3,7 @@ import { IsBrowser } from '@unhead/shared'
 import { createHeadCore } from '../createHead'
 import { DomPlugin } from './plugins/domPlugin'
 import { ClientEventHandlerPlugin } from './plugins/eventHandlers'
+import { renderDOMHead } from './renderDOMHead'
 
 export function createHead<T extends Record<string, any> = Head>(options: CreateClientHeadOptions = {}) {
   return createHeadCore<T>({
@@ -10,7 +11,10 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
     ...options,
     plugins: [
       ...(options.plugins || []),
-      DomPlugin(options.domOptions),
+      DomPlugin({
+        render: renderDOMHead,
+        ...options.domOptions,
+      }),
       ClientEventHandlerPlugin,
     ],
   })

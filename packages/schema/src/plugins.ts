@@ -1,3 +1,5 @@
+import type { Unhead } from '@unhead/schema/src/head'
+
 export interface RenderDomHeadOptions {
   /**
    * Document to use for rendering. Allows stubbing for testing.
@@ -6,5 +8,5 @@ export interface RenderDomHeadOptions {
 }
 
 export interface DomPluginOptions extends RenderDomHeadOptions {
-  delayFn?: (fn: () => void) => void
+  render: ((head: Unhead<any>) => Promise<void>)
 }

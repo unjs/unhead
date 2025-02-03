@@ -4,6 +4,7 @@ import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
 import { createHead as _createClientHead } from 'unhead/client'
 import { createHead as _createServerHead } from 'unhead/server'
+import { createDebouncedDomRender } from 'unhead/src/client'
 import { Unhead } from '../lib/unhead.service'
 import { ReactivityPlugin } from '../unhead/ReactivityPlugin'
 
@@ -36,7 +37,7 @@ export function provideServerHead(options: Omit<CreateHeadOptions, 'domDelayFn' 
 export function provideClientHead(options: Omit<CreateHeadOptions, 'domOptions' | 'document'> = {}) {
   const head = _createClientHead<AngularUnhead>({
     domOptions: {
-      delayFn: fn => setTimeout(() => fn(), 10),
+      render: createDebouncedDomRender(fn => setTimeout(() => fn(), 0)),
     },
     ...options,
     plugins: [
