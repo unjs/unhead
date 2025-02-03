@@ -9,6 +9,7 @@ import type {
   UseSeoMetaInput,
 } from '@unhead/schema'
 import { composableNames, unpackMeta, whitelistSafeInput } from '@unhead/shared'
+import { createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { DomPlugin } from '../client/plugins/domPlugin'
 import { ClientEventHandlerPlugin } from '../client/plugins/eventHandlers'
 import { createHeadCore } from '../createHead'
@@ -42,7 +43,6 @@ export function createServerHead<T extends Record<string, any> = Head>(options: 
     document: false,
     plugins: [
       ...(options.plugins || []),
-      DomPlugin(),
       DeprecationsPlugin,
       PromisesPlugin,
       ServerEventHandlerPlugin,
@@ -57,7 +57,9 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
     ...options,
     plugins: [
       ...(options.plugins || []),
-      DomPlugin(),
+      DomPlugin({
+        render: createDebouncedFn(() => renderDOMHead(activeHead.value!), fn => setTimeout(() => fn(), 10)),
+      }),
       DeprecationsPlugin,
       PromisesPlugin,
       ClientEventHandlerPlugin,
