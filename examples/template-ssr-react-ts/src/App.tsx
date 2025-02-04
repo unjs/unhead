@@ -1,12 +1,41 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
+import { Head, useHead } from '@unhead/react'
+
+function PageHead() {
+  const [title, setTitle] = useState('Loading...')
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await new Promise(resolve => setTimeout(() => resolve({ title: 'Vite + React + Unhead' }), 1000))
+      setTitle(data.title)
+    }
+    loadData()
+  }, [])
+
+  useHead({
+    title
+  })
+
+  return null
+}
 
 function App() {
   const [count, setCount] = useState(0)
 
+  useHead({
+    bodyAttrs: {
+      style: 'background-color: salmon;',
+    }
+  })
+
   return (
     <>
+      <Head>
+        <title>Count is {count}</title>
+      </Head>
+      <PageHead />
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src="/vite.svg" className="logo" alt="Vite logo" />
@@ -15,13 +44,13 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      <h1>Vite + React + Unhead</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
         <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+          Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
       <p className="read-the-docs">
