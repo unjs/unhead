@@ -85,6 +85,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
             if (e._i === entry._i) {
               // bit hacky syncing
               e.input = entry.input = input
+              e.resolvedInput = undefined
             }
           }
           updated()
