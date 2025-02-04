@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import express from 'express'
+import { transformHtmlTemplate } from "@unhead/react/server";
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
@@ -39,13 +40,13 @@ app.use('*all', async (req, res) => {
 
     /** @type {string} */
     let template
-    /** @type {import('./src/entry-server.js').render} */
+    /** @type {import('./src/entry-server.ts').render} */
     let render
     if (!isProduction) {
       // Always read fresh template in development
       template = await fs.readFile('./index.html', 'utf-8')
       template = await vite.transformIndexHtml(url, template)
-      render = (await vite.ssrLoadModule('/src/entry-server.jsx')).render
+      render = (await vite.ssrLoadModule('/src/entry-server.tsx')).render
     } else {
       template = templateHtml
       render = (await import('./dist/server/entry-server.js')).render
@@ -53,10 +54,10 @@ app.use('*all', async (req, res) => {
 
     const rendered = await render(url)
 
-    const html = template
-      .replace(`<!--app-head-->`, rendered.head ?? '')
-      .replace(`<!--app-html-->`, rendered.html ?? '')
-
+    const html = await transformHtmlTemplate(
+      rendered.head,
+      template.replace(`<!--app-html-->`, rendered.html ?? '')
+    )
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {
     vite?.ssrFixStacktrace(e)
