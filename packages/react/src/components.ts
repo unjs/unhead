@@ -32,9 +32,9 @@ const Head: React.FC<HeadProps> = ({ children }) => {
       if (!ValidHeadTags.has(type as string)) {
         return
       }
-      const data = { ...props }
-      if (TagsWithInnerContent.has(type as string) && props.children) {
-        data[type === 'script' ? 'innerHTML' : 'textContent'] = Array.isArray(props.children) ? props.children.map(String).join('') : props.children
+      const data: Record<string, any> = { ...(typeof props === 'object' ? props : {}) }
+      if (TagsWithInnerContent.has(type as string) && data.children) {
+        data[type === 'script' ? 'innerHTML' : 'textContent'] = Array.isArray(data.children) ? data.children.map(String).join('') : data.children
       }
       delete data.children
       if (HasElementTags.has(type as string)) {
@@ -42,6 +42,7 @@ const Head: React.FC<HeadProps> = ({ children }) => {
         input[type as 'meta']!.push(data)
       }
       else {
+        // @ts-expect-error untyped
         input[type] = data
       }
     })

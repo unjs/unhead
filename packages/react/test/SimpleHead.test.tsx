@@ -19,7 +19,7 @@ describe('simpleHead component', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
       "<meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Default Title</title>
+      <title data-tagPriority="high">Default Title</title>
       <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
       <link rel="stylesheet" href="default-styles.css">
       <link rel="icon" href="favicon.ico">

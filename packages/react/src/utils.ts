@@ -1,7 +1,13 @@
 import { isValidElement } from 'react'
 
 function resolveUnref(r: any) {
-  return typeof r === 'function' ? r() : (r && 'current' in r ? r.current : r)
+  if (typeof r === 'function') {
+    return r()
+  }
+  if (typeof r === 'object' && 'current' in r) {
+    return r.current
+  }
+  return r
 }
 
 export function resolveUnrefHeadInput(ref: any): any {
