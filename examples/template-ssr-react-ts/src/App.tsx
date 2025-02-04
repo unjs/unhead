@@ -1,7 +1,25 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import { Head, useHead } from '@unhead/react'
+
+function PageHead() {
+  const [title, setTitle] = useState('Loading...')
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await new Promise(resolve => setTimeout(() => resolve({ title: 'Vite + React + Unhead' }), 1000))
+      setTitle(data.title)
+    }
+    loadData()
+  }, [])
+
+  useHead({
+    title
+  })
+
+  return null
+}
 
 function App() {
   const [count, setCount] = useState(0)
@@ -17,6 +35,7 @@ function App() {
       <Head>
         <title>Count is {count}</title>
       </Head>
+      <PageHead />
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src="/vite.svg" className="logo" alt="Vite logo" />

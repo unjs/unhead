@@ -7,9 +7,10 @@ import { useUnhead } from './composables'
 
 interface HeadProps {
   children: ReactNode
+  titleTemplate?: string
 }
 
-const Head: React.FC<HeadProps> = ({ children }) => {
+const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   const headRef = useRef<ActiveHeadEntry<any> | null>(null)
   const head = useUnhead()
 
@@ -23,7 +24,9 @@ const Head: React.FC<HeadProps> = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    const input: UseHeadInput<any> = {}
+    const input: UseHeadInput<any> = {
+      titleTemplate,
+    }
     const elements = React.Children.toArray(children).filter(React.isValidElement)
 
     elements.forEach((element: React.ReactElement) => {
@@ -53,7 +56,7 @@ const Head: React.FC<HeadProps> = ({ children }) => {
     else {
       headRef.current.patch(input)
     }
-  }, [children])
+  }, [children, titleTemplate])
 
   return null
 }
