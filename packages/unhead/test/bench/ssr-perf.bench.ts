@@ -1,7 +1,7 @@
 import { useHead } from 'unhead'
 import { renderSSRHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
-import { createServerHeadWithContext } from '../../util'
+import { createServerHeadWithContext } from '../util'
 
 describe('ssr bench', () => {
   bench('x50 ssr', async () => {
@@ -49,5 +49,6 @@ describe('ssr bench', () => {
     await renderSSRHead(head)
   }, {
     iterations: 1000,
+    time: 1000,
   })
 })
