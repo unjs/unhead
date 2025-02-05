@@ -21,7 +21,7 @@ Outside regular maintenance [Unhead](https://unhead.unjs.io) offers a modern alt
 React Helmet uses a `<Helmet>` component to manage head tags. Unhead provides a `<Head>` component, offering a similar
 API.
 
-```jsx [React Helmet]
+```tsx [React Helmet]
 import { Helmet } from 'react-helmet'
 
 function App() {
@@ -34,7 +34,7 @@ function App() {
 }
 ```
 
-```jsx [Unhead]
+```tsx [Unhead]
 import { Head } from '@unhead/react'
 
 function App() {
