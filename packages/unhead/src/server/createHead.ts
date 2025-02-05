@@ -1,9 +1,9 @@
-import type { CreateHeadOptions, Head } from '@unhead/schema'
+import type { CreateServerHeadOptions, Head } from '@unhead/schema'
 import { createHeadCore } from '../createHead'
 import { ServerEventHandlerPlugin } from './plugins/eventHandlers'
 import { PayloadPlugin } from './plugins/payload'
 
-export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+export function createHead<T extends Record<string, any> = Head>(options: CreateServerHeadOptions = {}) {
   return createHeadCore<T>({
     ...options,
     // @ts-expect-error untyped
