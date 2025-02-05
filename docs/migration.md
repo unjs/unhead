@@ -438,3 +438,14 @@ useHead({
   }
 })
 ```
+
+## CJS Exports Removed
+
+🚦 Impact Level: Low
+
+CommonJS exports have been removed in favor of ESM only.
+
+```diff
+-const { createHead } = require('unhead/client')
++import { createHead } from 'unhead/client'
+```
