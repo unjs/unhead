@@ -82,11 +82,29 @@ export interface CreateHeadOptions {
   plugins?: HeadPluginInput[]
   hooks?: NestedHooks<HeadHooks>
   /**
+   * Initial head input that should be added.
+   *
+   * Any tags here are added with low priority.
+   */
+  init?: (Head<any> | undefined)[]
+  /**
    * Disable the Capo.js tag sorting algorithm.
    *
    * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
    */
   disableCapoSorting?: boolean
+}
+
+export interface CreateServerHeadOptions extends CreateHeadOptions {
+  /**
+   * Should default important tags be skipped.
+   *
+   * Adds the following tags with low priority:
+   * - <html lang="en">
+   * - <meta charset="utf-8">
+   * - <meta name="viewport" content="width=device-width, initial-scale=1">
+   */
+  disableDefaults?: boolean
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {

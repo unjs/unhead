@@ -14,7 +14,9 @@ describe('vue ssr custom augmentation', () => {
       }
     }
 
-    const head = createHead<CustomHead>()
+    const head = createHead<CustomHead>({
+      disableDefaults: true,
+    })
     const app = createSSRApp({
       setup() {
         const title = ref('')

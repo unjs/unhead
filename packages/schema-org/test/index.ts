@@ -17,6 +17,7 @@ export async function findNode<T>(unhead: Unhead<any>, id: string) {
 }
 export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<MetaInput> = {}) {
   const head = createHead({
+    disableDefaults: true,
     plugins: [
       SchemaOrgUnheadPlugin({
         currency: 'AUD',

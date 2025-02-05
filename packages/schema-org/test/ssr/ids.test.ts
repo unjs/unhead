@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest'
 
 describe('schema.org ssr ids', () => {
   it('adds host prefix to custom id without host', async () => {
-    const ssrHead = createHead()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -27,7 +29,9 @@ describe('schema.org ssr ids', () => {
     expect(id).toMatchInlineSnapshot(`"https://example.com/#/schema/web-page/#foo"`)
   })
   it('allows ids with custom domains', async () => {
-    const ssrHead = createHead()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -49,7 +53,9 @@ describe('schema.org ssr ids', () => {
     expect(id).toMatchInlineSnapshot('"https://custom-domain.com/#foo"')
   })
   it('full relative paths', async () => {
-    const ssrHead = createHead()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -72,7 +78,9 @@ describe('schema.org ssr ids', () => {
   })
 
   it('full relative paths relations', async () => {
-    const ssrHead = createHead()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {

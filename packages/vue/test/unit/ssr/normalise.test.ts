@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest'
 
 describe('normalise', () => {
   it('handles booleans nicely', async () => {
-    const head = createHead()
+    const head = createHead({
+      disableDefaults: true,
+    })
 
     const fn = () => {}
     fn.toString = () => {

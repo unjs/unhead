@@ -6,6 +6,7 @@ import { describe, it } from 'vitest'
 describe('inferSeoMetaPlugin', () => {
   it('simple', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
 
@@ -40,6 +41,7 @@ describe('inferSeoMetaPlugin', () => {
   })
   it('conflicts', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
 
@@ -71,6 +73,7 @@ describe('inferSeoMetaPlugin', () => {
   })
   it('empty meta', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     head.push({
@@ -90,6 +93,7 @@ describe('inferSeoMetaPlugin', () => {
   })
   it('template params', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     head.push({
@@ -113,6 +117,7 @@ describe('inferSeoMetaPlugin', () => {
 
   it('title and then remove title', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     const entry = head.push({
@@ -152,6 +157,7 @@ describe('inferSeoMetaPlugin', () => {
 
   it('no title and then add title', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     head.push({
@@ -186,6 +192,7 @@ describe('inferSeoMetaPlugin', () => {
 
   it('handles title template', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     head.push({
@@ -207,6 +214,7 @@ describe('inferSeoMetaPlugin', () => {
 
   it('null title / title template', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
     head.push({
@@ -231,6 +239,7 @@ describe('inferSeoMetaPlugin', () => {
 
   it('multiple title templates', async () => {
     const head = createHead({
+      disableDefaults: true,
       plugins: [InferSeoMetaPlugin()],
     })
 

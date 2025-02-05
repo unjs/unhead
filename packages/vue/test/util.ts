@@ -32,7 +32,10 @@ export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) 
 }
 
 export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, options?: CreateHeadOptions) {
-  const head = createServerHead(options)
+  const head = createServerHead({
+    disableDefaults: true,
+    ...options,
+  })
   const app = createSSRApp({
     async setup() {
       fn()
@@ -45,7 +48,9 @@ export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, option
 }
 
 export async function ssrRenderHeadToString(fn: () => void) {
-  const head = createServerHead()
+  const head = createServerHead({
+    disableDefaults: true,
+  })
   const app = createSSRApp({
     setup() {
       fn()
@@ -59,7 +64,9 @@ export async function ssrRenderHeadToString(fn: () => void) {
 }
 
 export async function ssrRenderOptionsHead(input: any) {
-  const head = createServerHead()
+  const head = createServerHead({
+    disableDefaults: true,
+  })
   const app = createSSRApp({
     head() {
       return input

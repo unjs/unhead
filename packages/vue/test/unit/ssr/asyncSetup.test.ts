@@ -7,7 +7,9 @@ import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr asyncSetup', () => {
   it('basic', async () => {
-    const head = createHead()
+    const head = createHead({
+      disableDefaults: true,
+    })
     const app = createSSRApp({
       async setup() {
         const title = ref('initial title')

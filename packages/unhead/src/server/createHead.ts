@@ -8,6 +8,25 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
     ...options,
     // @ts-expect-error untyped
     document: false,
+    init: [
+      options.disableDefaults
+        ? undefined
+        : {
+            htmlAttrs: {
+              lang: 'en',
+            },
+            meta: [
+              {
+                charset: 'utf-8',
+              },
+              {
+                name: 'viewport',
+                content: 'width=device-width, initial-scale=1',
+              },
+            ],
+          },
+      ...(options.init || []),
+    ],
     plugins: [
       ...(options.plugins || []),
       PayloadPlugin,

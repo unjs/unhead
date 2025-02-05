@@ -5,7 +5,9 @@ import { useScript } from '../../src/useScript'
 
 describe('warmup', () => {
   it('server', () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'server',
@@ -15,7 +17,9 @@ describe('warmup', () => {
     expect(entry.link).toBeUndefined()
   })
   it('default / client', () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'client',
@@ -25,7 +29,9 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('relative: default / client', () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     useScript(head, '/script.js', {
       head,
       trigger: 'client',
@@ -35,7 +41,9 @@ describe('warmup', () => {
     expect(link.rel).toEqual('preload')
   })
   it('absolute: dns-prefetch', () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     useScript(head, 'https://cdn.example.com/script.js', {
       head,
       trigger: 'client',
