@@ -5,7 +5,7 @@ export const ReactivityPlugin = defineHeadPlugin({
   hooks: {
     'entries:resolve': (ctx) => {
       for (const entry of ctx.entries)
-        entry.resolvedInput = resolveSignalHeadInput(entry.input)
+        entry.input = resolveSignalHeadInput(entry.input)
     },
   },
 })

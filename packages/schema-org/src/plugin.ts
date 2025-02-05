@@ -37,63 +37,65 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       'entries:resolve': () => {
         graph = createSchemaOrgGraph()
       },
-      'tag:normalise': async ({ tag }) => {
-        if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
-          // this is a bit expensive, load in seperate chunk
-          const { loadResolver } = await import('./resolver')
-          const nodes = await tag.props.nodes
-          for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-            // malformed input
-            if (typeof node !== 'object' || Object.keys(node).length === 0) {
-              continue
+      'tags:beforeResolve': async (ctx) => {
+        for (const tag of ctx.tags) {
+          if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+            // this is a bit expensive, load in seperate chunk
+            const { loadResolver } = await import('./resolver')
+            const nodes = await tag.props.nodes
+            for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
+              // malformed input
+              if (typeof node !== 'object' || Object.keys(node).length === 0) {
+                continue
+              }
+              const newNode = {
+                ...node,
+                _dedupeStrategy: tag.tagDuplicateStrategy,
+                _resolver: loadResolver(await node._resolver),
+              }
+              graph.push(newNode)
             }
-            const newNode = {
-              ...node,
-              _dedupeStrategy: tag.tagDuplicateStrategy,
-              _resolver: loadResolver(await node._resolver),
+            tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
+          }
+          if (tag.tag === 'htmlAttrs' && tag.props.lang) {
+            resolvedMeta.inLanguage = tag.props.lang
+          }
+          else if (tag.tag === 'title') {
+            resolvedMeta.title = tag.textContent
+          }
+          else if (tag.tag === 'meta' && tag.props.name === 'description') {
+            resolvedMeta.description = tag.props.content
+          }
+          else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
+            resolvedMeta.url = tag.props.href
+            // may be using template params that aren't resolved
+            if (resolvedMeta.url && !resolvedMeta.host) {
+              try {
+                resolvedMeta.host = new URL(resolvedMeta.url).origin
+              }
+              catch {}
             }
-            graph.push(newNode)
           }
-          tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
-        }
-        if (tag.tag === 'htmlAttrs' && tag.props.lang) {
-          resolvedMeta.inLanguage = tag.props.lang
-        }
-        else if (tag.tag === 'title') {
-          resolvedMeta.title = tag.textContent
-        }
-        else if (tag.tag === 'meta' && tag.props.name === 'description') {
-          resolvedMeta.description = tag.props.content
-        }
-        else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
-          resolvedMeta.url = tag.props.href
-          // may be using template params that aren't resolved
-          if (resolvedMeta.url && !resolvedMeta.host) {
-            try {
-              resolvedMeta.host = new URL(resolvedMeta.url).origin
+          else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
+            resolvedMeta.image = tag.props.content
+          }
+          // use template params
+          else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
+            resolvedMeta = {
+              ...resolvedMeta,
+              // @ts-expect-error untyped
+              ...tag.props.schemaOrg,
             }
-            catch {}
+            delete tag.props.schemaOrg
           }
-        }
-        else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
-          resolvedMeta.image = tag.props.content
-        }
-        // use template params
-        else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
-          resolvedMeta = {
-            ...resolvedMeta,
-            // @ts-expect-error untyped
-            ...tag.props.schemaOrg,
-          }
-          delete tag.props.schemaOrg
         }
       },
       'tags:resolve': async (ctx) => {
         // find the schema.org node, should be a single instance
         for (const k in ctx.tags) {
           const tag = ctx.tags[k]
-          if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
-            delete tag.props.nodes
+          if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.key === 'schema-org-graph') {
+            // delete tag.props.nodes
             const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
             if (!resolvedGraph.length) {
               // removes the tag

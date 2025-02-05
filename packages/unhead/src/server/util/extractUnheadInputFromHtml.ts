@@ -1,4 +1,4 @@
-import type { UseHeadInput } from 'unhead'
+import type { UseHeadInput } from '../../types'
 
 const Attrs = /(\w+)(?:=["']([^"']*)["'])?/g
 const HtmlTag = /<html[^>]*>/

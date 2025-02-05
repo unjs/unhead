@@ -18,22 +18,32 @@ export interface HeadEntry<Input> {
    * User provided input for the entry.
    */
   input: Input
-  /**
-   * Optional resolved input which will be used if set.
-   */
-  resolvedInput?: Input
-  /**
-   * The mode that the entry should be used in.
-   *
-   * @internal
-   */
-  mode?: RuntimeMode
-  /**
-   * Transformer function for the entry.
-   *
-   * @internal
-   */
-  transform?: (input: Input) => Input
+  options?: {
+    /**
+     * Transformer function for the entry.
+     *
+     * @internal
+     */
+    transform?: (input: Input) => Input
+    /**
+     * The mode that the entry should be used in.
+     *
+     * @internal
+     */
+    mode?: RuntimeMode
+    /**
+     * Default tag position.
+     *
+     * @internal
+     */
+    tagPosition?: TagPosition['tagPosition']
+    /**
+     * Default tag priority.
+     *
+     * @internal
+     */
+    tagPriority?: TagPriority['tagPriority']
+  }
   /**
    * Head entry index
    *
@@ -41,17 +51,11 @@ export interface HeadEntry<Input> {
    */
   _i: number
   /**
-   * Default tag position.
+   * Resolved tags
    *
    * @internal
    */
-  tagPosition?: TagPosition['tagPosition']
-  /**
-   * Default tag priority.
-   *
-   * @internal
-   */
-  tagPriority?: TagPriority['tagPriority']
+  _tags: HeadTag[]
 }
 
 export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'> & { mode?: RuntimeMode }
@@ -75,6 +79,10 @@ export interface ActiveHeadEntry<Input> {
    * Will queue side effects for removal.
    */
   dispose: () => void
+  /**
+   * @internal
+   */
+  _poll: () => void
 }
 
 export interface CreateHeadOptions {
@@ -126,7 +134,13 @@ export interface Unhead<Input extends Record<string, any> = Head> {
    */
   plugins: HeadPlugin[]
   /**
+   * The head entries.
+   */
+  entries: Map<number, HeadEntry<Input>>
+  /**
    * The active head entries.
+   *
+   * @deprecated Use entries instead.
    */
   headEntries: () => HeadEntry<Input>[]
   /**
@@ -178,6 +192,10 @@ export interface Unhead<Input extends Record<string, any> = Head> {
    * @internal
    */
   _separator?: string
+  /**
+   * @internal
+   */
+  _entryCount: number
 }
 
 export interface DomState {

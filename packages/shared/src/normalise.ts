@@ -1,30 +1,29 @@
-import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
+import type { Head, HeadEntryOptions, HeadTag } from '@unhead/schema'
 import { DupeableTags, TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from './constants'
 import { hashCode } from './hashCode'
 import { tagDedupeKey } from './tagDedupeKey'
 
-export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): T | T[] {
-  const props = normalizedProps || normaliseProps<T>(
+export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, options?: HeadEntryOptions): T | T[] {
+  const props = normaliseProps<T>(
     // explicitly check for an object
     typeof input === 'object' && typeof input !== 'function'
       ? { ...input }
       : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: input },
     (tagName === 'templateParams' || tagName === 'titleTemplate'),
-  )
+  ) as T['props']
   // input can be a function or an object, we need to clone it
   const tag = {
     tag: tagName,
-    props: props as T['props'],
+    props,
+    ...options,
   } as T
   // merge options from the entry
   for (const k of TagConfigKeys) {
-    // @ts-expect-error untyped
-    const val = tag.props[k] !== undefined ? tag.props[k] : e[k]
-    if (val !== undefined) {
+    if (k in tag.props) {
       // strip innerHTML and textContent for tags which don't support it
       if (!(k === 'innerHTML' || k === 'textContent') || TagsWithInnerContent.has(tag.tag)) {
         // @ts-expect-error untyped
-        tag[k] = val
+        tag[k] = tag.props[k]
       }
       delete tag.props[k]
     }
@@ -106,9 +105,8 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
-export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): HeadTag[] {
+export function normaliseEntryToTags(key: number, input: Head<any>, options: HeadEntryOptions): HeadTag[] {
   const tags: (HeadTag | HeadTag[])[] = []
-  const input = e.resolvedInput as T
   for (const k in input) {
     if (!Object.prototype.hasOwnProperty.call(input, k)) {
       continue
@@ -120,7 +118,7 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): He
     if (Array.isArray(v)) {
       for (const props of v) {
         // @ts-expect-error untyped
-        tags.push(normaliseTag(k as keyof Head, props, e))
+        tags.push(normaliseTag(k as keyof Head, props, options))
       }
       continue
     }
@@ -130,13 +128,13 @@ export function normaliseEntryTags<T extends object = Head>(e: HeadEntry<T>): He
       continue
     }
     // @ts-expect-error untyped
-    tags.push(normaliseTag(k as keyof Head, v, e))
+    tags.push(normaliseTag(k as keyof Head, v, options))
   }
 
   return tags.flat().map((t, i) => {
-    t._e = e._i
-    e.mode && (t._m = e.mode)
-    t._p = (e._i << TagEntityBits) + i
+    t._e = key
+    options.mode && (t._m = options.mode)
+    t._p = (key << TagEntityBits) + i
     return t
   })
 }

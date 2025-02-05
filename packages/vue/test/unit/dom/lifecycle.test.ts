@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-
 import { setTimeout } from 'node:timers/promises'
 import { renderDOMHead } from '@unhead/dom'
 import { useHead } from '@unhead/vue'

@@ -1,4 +1,5 @@
 import type {
+  ActiveHeadEntry,
   CreateHeadOptions,
   Head,
   HeadEntry,
@@ -9,7 +10,7 @@ import type {
   RuntimeMode,
   Unhead,
 } from '@unhead/schema'
-import { normaliseEntryTags } from '@unhead/shared'
+import { normaliseEntryToTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
 
@@ -32,81 +33,66 @@ function registerPlugins(head: Unhead<any>, plugins: HeadPluginInput[], ssr: boo
 /**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.
- *
- * @param options
  */
-export function createHeadCore<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+export function createHeadCore<T extends Record<string, any> = Head>(resolvedOptions: CreateHeadOptions = {}) {
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
-  hooks.addHooks(options.hooks || {})
-  const ssr = !options.document
+  hooks.addHooks(resolvedOptions.hooks || {})
+  const ssr = !resolvedOptions.document
 
-  const updated = () => {
-    // eslint-disable-next-line ts/no-use-before-define
-    head.dirty = true
-    // eslint-disable-next-line ts/no-use-before-define
-    hooks.callHook('entries:updated', head)
-  }
-  let entryCount = 0
-  let entries: HeadEntry<T>[] = []
+  const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: HeadPlugin[] = []
   const head: Unhead<T> = {
+    _entryCount: 0,
     plugins,
     dirty: false,
-    resolvedOptions: options,
+    resolvedOptions,
     hooks,
     ssr,
+    entries,
     headEntries() {
-      return entries
+      return [...entries.values()]
     },
     use(p: HeadPluginInput) {
       registerPlugins(head, [p], ssr)
     },
-    push(input, entryOptions) {
-      delete entryOptions?.head
-      const entry: HeadEntry<T> = {
-        _i: entryCount++,
-        input,
-        ...entryOptions as Partial<HeadEntry<T>>,
-      }
-      // bit hacky but safer
-      if (filterMode(entry.mode, ssr)) {
-        entries.push(entry)
-        updated()
-      }
-      return {
+    push(input, options = {}) {
+      const _i = head._entryCount++
+      delete options?.head
+      const _: ActiveHeadEntry<T> = {
+        _poll() {
+          head.dirty = true
+          hooks.callHook('entries:updated', head)
+        },
         dispose() {
-          entries = entries.filter(e => e._i !== entry._i)
-          updated()
+          if (entries.delete(_i)) {
+            _._poll()
+          }
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
-          for (const e of entries) {
-            if (e._i === entry._i) {
-              // bit hacky syncing
-              e.input = entry.input = input
-              e.resolvedInput = undefined
-            }
+          if (filterMode(options.mode, ssr)) {
+            entries.set(_i, {
+              _i,
+              input,
+              options,
+            })
+            _._poll()
           }
-          updated()
         },
       }
+      _.patch(input)
+      return _
     },
     async resolveTags() {
-      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
+      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...head.entries.values()] }
       await hooks.callHook('entries:resolve', resolveCtx)
-      for (const entry of resolveCtx.entries) {
-        // apply any custom transformers applied to the entry
-        const resolved = entry.resolvedInput || entry.input
-        entry.resolvedInput = await (entry.transform ? entry.transform(resolved) : resolved) as T
-        if (entry.resolvedInput) {
-          for (const tag of await normaliseEntryTags<T>(entry)) {
-            const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
-            await hooks.callHook('tag:normalise', tagCtx)
-            resolveCtx.tags.push(tagCtx.tag)
-          }
-        }
-      }
+      resolveCtx.tags = resolveCtx.entries.flatMap((e) => {
+        // clone the entry to prevent mutation
+        const transform = e.options?.transform || (e => e)
+        e._tags = e._tags || normaliseEntryToTags(e._i, transform({ ...e.input }), e.options)
+        return e._tags.map(t => ({ ...t, props: { ...t.props } }))
+      })
       await hooks.callHook('tags:beforeResolve', resolveCtx)
       await hooks.callHook('tags:resolve', resolveCtx)
       // post-processing mainly for XSS prevention
@@ -120,11 +106,11 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
     TemplateParamsPlugin,
     TitleTemplatePlugin,
     XSSPlugin,
-    ...(options?.plugins || []),
+    ...(resolvedOptions?.plugins || []),
   ], ssr)
   head.hooks.callHook('init', head)
-  if (Array.isArray(options.init)) {
-    options.init
+  if (Array.isArray(resolvedOptions.init)) {
+    resolvedOptions.init
       .filter(Boolean)
       .forEach(e => head.push(e as T, { tagPriority: 'low' }))
   }

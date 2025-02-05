@@ -1,15 +1,11 @@
 import type {
   ActiveHeadEntry,
-  Head,
   HeadEntryOptions,
   HeadSafe,
-  MergeHead,
   Unhead,
   UseSeoMetaInput,
 } from '@unhead/schema'
 import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
-
-export type UseHeadInput<T extends MergeHead> = Head<T>
 
 export function useHead<T extends Unhead<any>>(unhead: T, input: Parameters<T['push']>[0], options: HeadEntryOptions = {}): ReturnType<T['push']> {
   return unhead.push(input, options) as ReturnType<T['push']>
