@@ -24,6 +24,7 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@unhead/react": "workspace:*",
+    "@unhead/scripts": "workspace:*",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "typescript": "~5.7.3",

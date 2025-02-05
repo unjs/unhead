@@ -9,6 +9,7 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index' },
     { input: 'src/vue/index', name: 'vue' },
+    { input: 'src/react/index', name: 'react' },
   ],
-  externals: ['vue'],
+  externals: ['vue', 'react'],
 })

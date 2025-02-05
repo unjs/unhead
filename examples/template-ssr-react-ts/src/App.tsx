@@ -2,6 +2,7 @@ import './App.css'
 import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import { Head, useHead } from '@unhead/react'
+import { ScriptComponent } from './ScriptComponent.tsx'
 
 function PageHead() {
   const [title, setTitle] = useState('Loading...')
@@ -24,18 +25,13 @@ function PageHead() {
 function App() {
   const [count, setCount] = useState(0)
 
-  useHead({
-    bodyAttrs: {
-      style: 'background-color: salmon;',
-    }
-  })
-
   return (
     <>
       <Head>
         <title>Count is {count}</title>
       </Head>
       <PageHead />
+      <ScriptComponent />
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src="/vite.svg" className="logo" alt="Vite logo" />

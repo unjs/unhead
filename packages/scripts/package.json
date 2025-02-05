@@ -30,6 +30,11 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs",
       "require": "./dist/vue.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.cjs"
     }
   },
   "main": "dist/index.cjs",
@@ -39,12 +44,16 @@
     "*": {
       "vue": [
         "dist/vue"
+      ],
+      "react": [
+        "dist/react"
       ]
     }
   },
   "files": [
     "dist",
     "overrides.d.ts",
+    "react.d.ts",
     "vue.d.ts"
   ],
   "scripts": {
@@ -55,10 +64,14 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
+    "@unhead/react": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*"
   },
   "peerDependenciesMeta": {
+    "@unhead/react": {
+      "optional": true
+    },
     "@unhead/vue": {
       "optional": true
     },
