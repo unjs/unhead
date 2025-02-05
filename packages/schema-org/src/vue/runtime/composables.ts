@@ -1,4 +1,4 @@
-import type { ResolvableProperties } from '@unhead/vue'
+import type { ResolvableProperties, UseHeadOptions } from '@unhead/vue'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -158,9 +158,9 @@ export function defineBookEdition<T extends Record<string, any>>(input?: Resolva
 
 export type UseSchemaOrgInput = Arrayable<ResolvableProperties<Thing | Record<string, any>>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput) {
+export function useSchemaOrg(input: UseSchemaOrgInput, options?: UseHeadOptions) {
   // lazy initialise the plugin
-  const head = injectHead()
+  const head = options?.head || injectHead()
   head.use(UnheadSchemaOrg())
   return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
     script: [
@@ -170,5 +170,7 @@ export function useSchemaOrg(input: UseSchemaOrgInput) {
         nodes: input,
       },
     ],
+  }, {
+    head,
   })
 }
