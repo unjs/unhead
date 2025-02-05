@@ -27,7 +27,9 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
 
 export type UseScriptContext<T extends Record<symbol | string, any>> = ReactScriptInstance<T>
 
-export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> & {
+  _mountCbs?: ((instance: UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>> | null) => void)[]
+}
 
 function initializeScript(
   head: any,
@@ -133,7 +135,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<string
     if (!script._cbs[key]) {
       script._mountCbs = script._mountCbs || []
       script._mountCbs.push(cb)
-      // cb(script.instance)
       return () => {}
     }
     const index = script._cbs[key].push(cb) - 1
