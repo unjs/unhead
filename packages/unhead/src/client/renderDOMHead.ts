@@ -6,7 +6,7 @@ import type {
   RenderDomHeadOptions,
   Unhead,
 } from '@unhead/schema'
-import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, hashTag, normalizeProps, tagDedupeKey } from '@unhead/shared'
 
 /**
  * Render the head tags to the DOM.
@@ -52,7 +52,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           }
           const t: HeadTag = {
             tag,
-            props: await normaliseProps(
+            props: await normalizeProps(
               c.getAttributeNames()
                 .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
             ),

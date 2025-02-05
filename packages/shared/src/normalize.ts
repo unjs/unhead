@@ -3,8 +3,8 @@ import { DupeableTags, TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from
 import { hashCode } from './hashCode'
 import { tagDedupeKey } from './tagDedupeKey'
 
-export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, options?: HeadEntryOptions): T | T[] {
-  const props = normaliseProps<T>(
+export function normalizeTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, options?: HeadEntryOptions): T | T[] {
+  const props = normalizeProps<T>(
     // explicitly check for an object
     typeof input === 'object' && typeof input !== 'function'
       ? { ...input }
@@ -54,7 +54,7 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
     : tag
 }
 
-export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
+export function normalizeStyleClassProps<T extends 'class' | 'style'>(key: T, v: Required<Required<Head>['htmlAttrs']['class']> | Required<Required<Head>['htmlAttrs']['style']>) {
   const sep = key === 'class' ? ' ' : ';'
   if (v && typeof v === 'object' && !Array.isArray(v)) {
     v = Object.entries(v)
@@ -68,13 +68,13 @@ export function normaliseStyleClassProps<T extends 'class' | 'style'>(key: T, v:
     .join(sep)
 }
 
-export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: boolean = false) {
+export function normalizeProps<T extends HeadTag>(props: T['props'], virtual: boolean = false) {
   for (const k in props) {
     // handle boolean props, see https://html.spec.whatwg.org/#boolean-attributes
     // class has special handling
     if (k === 'class' || k === 'style') {
       // @ts-expect-error untyped
-      props[k] = normaliseStyleClassProps(k, props[k])
+      props[k] = normalizeStyleClassProps(k, props[k])
       continue
     }
 
@@ -105,7 +105,7 @@ export function normaliseProps<T extends HeadTag>(props: T['props'], virtual: bo
 // support 1024 tag ids per entry (includes updates)
 export const TagEntityBits = 10
 
-export function normaliseEntryToTags(key: number, input: Head<any>, options: HeadEntryOptions): HeadTag[] {
+export function normalizeEntryToTags(key: number, input: Head<any>, options: HeadEntryOptions): HeadTag[] {
   const tags: (HeadTag | HeadTag[])[] = []
   for (const k in input) {
     if (!Object.prototype.hasOwnProperty.call(input, k)) {
@@ -118,17 +118,18 @@ export function normaliseEntryToTags(key: number, input: Head<any>, options: Hea
     if (Array.isArray(v)) {
       for (const props of v) {
         // @ts-expect-error untyped
-        tags.push(normaliseTag(k as keyof Head, props, options))
+        tags.push(normalizeTag(k as keyof Head, props, options))
       }
       continue
     }
     else if (typeof v === 'function' && k !== 'titleTemplate') {
       // resolve titles that may be functions
+      // @ts-expect-error untyped
       input[k] = v()
       continue
     }
     // @ts-expect-error untyped
-    tags.push(normaliseTag(k as keyof Head, v, options))
+    tags.push(normalizeTag(k as keyof Head, v, options))
   }
 
   return tags.flat().map((t, i) => {

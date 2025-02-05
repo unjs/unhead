@@ -10,7 +10,7 @@ import type {
   RuntimeMode,
   Unhead,
 } from '@unhead/schema'
-import { normaliseEntryToTags } from '@unhead/shared'
+import { normalizeEntryToTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
 
@@ -75,6 +75,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
             entries.set(_i, {
               _i,
               input,
+              // @ts-expect-error untyped
               options,
             })
             _._poll()
@@ -90,7 +91,8 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
       resolveCtx.tags = resolveCtx.entries.flatMap((e) => {
         // clone the entry to prevent mutation
         const transform = e.options?.transform || (e => e)
-        e._tags = e._tags || normaliseEntryToTags(e._i, transform({ ...e.input }), e.options)
+        // @ts-expect-error untyped
+        e._tags = e._tags || normalizeEntryToTags(e._i, transform({ ...e.input }), e.options)
         return e._tags.map(t => ({ ...t, props: { ...t.props } }))
       })
       await hooks.callHook('tags:beforeResolve', resolveCtx)
