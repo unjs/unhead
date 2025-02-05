@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, Script } from '@unhead/schema'
+import type { ActiveHeadEntry, DataKeys, HeadEntryOptions, SchemaAugmentations, Script, ScriptBase } from '@unhead/schema'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
@@ -6,7 +6,6 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptIns
 /**
  * Either a string source for the script or full script properties.
  */
-export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 type BaseScriptApi = Record<symbol | string, any>
 
@@ -17,6 +16,8 @@ export type AsVoidFunctions<T extends BaseScriptApi> = {
       T[key] extends Record<any, any> ? AsVoidFunctions<T[key]> :
         never
 }
+
+export type UseScriptInput = string | (Omit<ScriptBase & DataKeys & SchemaAugmentations['script'], 'src'> & { src: string })
 
 export type UseFunctionType<T, U> = T extends {
   use: infer V

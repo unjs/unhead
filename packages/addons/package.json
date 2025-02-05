@@ -22,21 +22,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs"
     },
     "./vite": {
       "types": "./dist/vite.d.ts",
-      "import": "./dist/vite.mjs",
-      "require": "./dist/vite.cjs"
+      "import": "./dist/vite.mjs"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
-      "import": "./dist/webpack.mjs",
-      "require": "./dist/webpack.cjs"
+      "import": "./dist/webpack.mjs"
     }
   },
-  "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "typesVersions": {
@@ -68,7 +64,7 @@
     "mlly": "^1.7.4",
     "ufo": "^1.5.4",
     "unplugin": "^2.1.2",
-    "unplugin-ast": "^0.13.1"
+    "unplugin-ast": "^0.14.0"
   },
   "devDependencies": {
     "@babel/types": "^7.26.7"

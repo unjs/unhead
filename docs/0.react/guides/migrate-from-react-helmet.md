@@ -110,10 +110,10 @@ There are some nuanced differences to be aware of:
 If you're using SSR, update your server code:
 
 ```tsx [src/entry-server.tsx]
+import { createHead, UnheadProvider } from '@unhead/react/server'
 import { StrictMode } from 'react'
 import { renderToString } from 'react-dom/server'
 import App from './App'
-import { createHead, UnheadProvider } from '@unhead/react/server'
 
 export function render(_url: string) {
   const head = createHead()
