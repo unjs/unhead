@@ -356,7 +356,9 @@ describe('vue e2e', () => {
   })
 
   it('title', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     // i.e App.vue
     ssrHead.push({

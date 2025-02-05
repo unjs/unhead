@@ -17,7 +17,9 @@ describe('vue e2e keys', () => {
     }
 
     // ssr render on the index page
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     ssrHead.push(IndexSchema)
 

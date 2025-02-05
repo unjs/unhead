@@ -123,5 +123,10 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
     ...(options?.plugins || []),
   ], ssr)
   head.hooks.callHook('init', head)
+  if (Array.isArray(options.init)) {
+    options.init
+      .filter(Boolean)
+      .forEach(e => head.push(e as T, { tagPriority: 'low' }))
+  }
   return head
 }

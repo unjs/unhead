@@ -7,7 +7,9 @@ import { useDom } from '../../../unhead/test/fixtures'
 
 describe('schema.org e2e no plugin', () => {
   it('basic hydration', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useSchemaOrg(ssrHead, [
       defineWebPage({
@@ -59,7 +61,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('hierarchy', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -134,7 +138,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('linking', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -184,7 +190,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('faq', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -253,7 +261,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('many registrations', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
     useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'One',

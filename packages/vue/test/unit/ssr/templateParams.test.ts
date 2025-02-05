@@ -146,7 +146,9 @@ describe('ssr vue templateParams', () => {
   })
 
   it('edge case', async () => {
-    const head = createHead()
+    const head = createHead({
+      disableDefaults: true,
+    })
     head.push({
       title: '%site.tagline',
       // DEV - My page title - My cool site
@@ -180,7 +182,9 @@ describe('ssr vue templateParams', () => {
   })
 
   it('entry opt-out', async () => {
-    const head = createHead()
+    const head = createHead({
+      disableDefaults: true,
+    })
     head.push({
       title: 'Hello %name',
       templateParams: { name: 'World' },

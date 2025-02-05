@@ -1,4 +1,4 @@
-import type { CreateHeadOptions } from '@unhead/schema'
+import type { CreateClientHeadOptions, CreateServerHeadOptions } from '@unhead/schema'
 import type { AngularUnhead } from './types/index'
 import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
@@ -11,7 +11,7 @@ export const headSymbol = 'usehead'
 
 export const UnheadInjectionToken = new InjectionToken<AngularUnhead>(headSymbol)
 
-export function provideServerHead(options: Omit<CreateHeadOptions, 'domDelayFn' | 'document'> = {}) {
+export function provideServerHead(options: CreateServerHeadOptions = {}) {
   const head = _createServerHead<AngularUnhead>({
     ...options,
     plugins: [
@@ -33,7 +33,7 @@ export function provideServerHead(options: Omit<CreateHeadOptions, 'domDelayFn' 
   ])
 }
 
-export function provideClientHead(options: Omit<CreateHeadOptions, 'domOptions' | 'document'> = {}) {
+export function provideClientHead(options: CreateClientHeadOptions = {}) {
   const head = _createClientHead<AngularUnhead>({
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(() => fn(), 0)),

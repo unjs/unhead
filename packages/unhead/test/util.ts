@@ -9,7 +9,10 @@ export function createClientHeadWithContext(options?: any) {
 }
 
 export function createServerHeadWithContext(options?: any) {
-  return createServerHead(options)
+  return createServerHead({
+    disableDefaults: true,
+    ...options,
+  })
 }
 
 // eslint-disable-next-line import/no-mutable-exports

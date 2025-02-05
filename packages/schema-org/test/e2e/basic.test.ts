@@ -8,6 +8,7 @@ import { useDom } from '../../../unhead/test/fixtures'
 describe('schema.org e2e', () => {
   it('basic hydration', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
@@ -73,6 +74,7 @@ describe('schema.org e2e', () => {
 
   it('hierarchy', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -146,6 +148,7 @@ describe('schema.org e2e', () => {
 
   it('linking', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -193,6 +196,7 @@ describe('schema.org e2e', () => {
 
   it('faq', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin({
           path: '/about',
@@ -259,6 +263,7 @@ describe('schema.org e2e', () => {
 
   it('canonical', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
@@ -301,6 +306,7 @@ describe('schema.org e2e', () => {
 
   it('empty', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],
@@ -317,6 +323,7 @@ describe('schema.org e2e', () => {
   })
   it('#441', async () => {
     const ssrHead = createServerHead({
+      disableDefaults: true,
       plugins: [
         SchemaOrgUnheadPlugin(),
       ],

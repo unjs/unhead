@@ -7,7 +7,12 @@ navigation:
 
 ## Introduction
 
-The goal of Unhead v2 was to remove deprecations and remove the implicit context implementation.
+While Unhead has always been framework agnostic, the majority of adoption was by the Vue ecosystem. 
+
+With the release of Unhead v2, we now have first-class support for other frameworks. However, this guide will focus on
+the changes that affect Vue and TypeScript users.
+
+The high-level of Unhead v2 was to remove deprecations and remove the implicit context implementation.
 
 ### Legacy Support
 
@@ -399,5 +404,37 @@ You can opt-out of Capo.js sorting by providing the option.
 ```ts
 createHead({
   disableCapoSorting: true,
+})
+```
+
+## Default SSR Tags
+
+🚦 Impact Level: Low
+
+When SSR Unhead will now insert important default tags for you:
+- `<meta charset="utf-8">`
+- `<meta name="viewport" content="width=device-width, initial-scale=1">`
+- `<html lang="en">`
+
+If you were previously relying on these being left empty, you may need to either disable them by using `disableDefaultTags` or insert tags
+to override them.
+
+```ts
+import { createHead } from '@unhead/vue/server'
+
+// disable when creating the head instance
+createHead({
+  disableDefaults: true,
+})
+```
+
+```ts
+import { useHead } from 'unhead'
+
+// override the defaults
+useHead({
+  htmlAttrs: {
+    lang: 'fr'
+  }
 })
 ```

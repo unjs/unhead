@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, MergeHead } from '@unhead/schema'
+import type { CreateServerHeadOptions, MergeHead } from '@unhead/schema'
 import type { ReactNode } from 'react'
 import type { MaybeComputedRef, ReactiveHead, ReactUnhead } from './types'
 import { createElement } from 'react'
@@ -8,7 +8,7 @@ import { ReactReactivityPlugin } from './ReactReactivityPlugin'
 
 export * from 'unhead/server'
 
-export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): ReactUnhead<T> {
+export function createHead<T extends MergeHead>(options: CreateServerHeadOptions = {}): ReactUnhead<T> {
   return _createHead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
     plugins: [

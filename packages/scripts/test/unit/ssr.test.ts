@@ -3,7 +3,9 @@ import { useScript } from '../../src/useScript'
 
 describe('ssr useScript', () => {
   it('default', async () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
 
     useScript(head, {
       src: 'https://cdn.example.com/script.js',
@@ -21,7 +23,9 @@ describe('ssr useScript', () => {
     `)
   })
   it('server', async () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
 
     useScript(head, {
       src: 'https://cdn.example.com/script.js',
@@ -41,7 +45,9 @@ describe('ssr useScript', () => {
     `)
   })
   it('await ', async () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
 
     // mock a promise, test that it isn't resolved in 1 second
     useScript<{ foo: 'bar' }>(head, {
@@ -62,7 +68,9 @@ describe('ssr useScript', () => {
     `)
   })
   it('google ', async () => {
-    const head = createServerHead()
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     const window: any = {}
     const gtag = useScript<{ dataLayer: any[] }>(head, {
       src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
