@@ -7,7 +7,7 @@ navigation:
 
 ## Introduction
 
-While Unhead has always been framework agnostic, the majority of adoption was by the Vue ecosystem. 
+While Unhead has always been framework agnostic, the majority of adoption was by the Vue ecosystem.
 
 With the release of Unhead v2, we now have first-class support for other frameworks. However, this guide will focus on
 the changes that affect Vue and TypeScript users.
