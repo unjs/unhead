@@ -2,7 +2,7 @@
 import { act, render } from '@testing-library/react'
 import { useUnhead } from '@unhead/react'
 import { createHead, UnheadProvider } from '@unhead/react/client'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { useScript } from '../../src/react/useScript'
 
@@ -32,12 +32,9 @@ function ActionToLoadScriptComponent() {
     head,
     trigger: shouldLoad,
   })
-  useEffect(() => {
-    script1.onLoaded(() => {
-      console.log('onLoaded called!')
-      setLoaded(true)
-    })
-  }, [])
+  script1.onLoaded(() => {
+    setLoaded(true)
+  })
 
   return (
     <div>
@@ -90,6 +87,10 @@ function TestComponent({
     </div>
   )
 }
+
+afterEach(() => {
+  document.head.innerHTML = ''
+})
 
 describe('react e2e scripts', () => {
   it('multiple active promise handles', async () => {
@@ -215,7 +216,6 @@ describe('react e2e scripts', () => {
 
   it('handles delayed script load', async () => {
     const head = createHead()
-
     const { getByTestId, getByText } = render(
       <UnheadProvider head={head}>
         <ActionToLoadScriptComponent />
@@ -234,6 +234,7 @@ describe('react e2e scripts', () => {
       script?.dispatchEvent(new Event('load'))
       await new Promise(resolve => setTimeout(resolve, 25))
     })
+    await new Promise(resolve => setTimeout(resolve, 25))
 
     // Script should now be in loaded state
     expect(getByTestId('status1').textContent).toBe('loaded')

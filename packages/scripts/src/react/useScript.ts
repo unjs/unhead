@@ -78,40 +78,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<string
     return () => setIsMounted(false)
   }, [])
 
-  // Process trigger based on options or mount state
-  const [trigger, setTrigger] = useState(() => {
-    if (typeof opts.trigger === 'undefined')
-      return false // Wait for mount
-    // @ts-expect-error untyped
-    if (typeof opts.trigger === 'object' && 'current' in opts.trigger) {
-      return opts.trigger.current
-    }
-    return opts.trigger
-  })
-
   // Keep status ref in sync
   useEffect(() => {
     statusRef.current = status
   }, [status])
-
-  // Handle external trigger updates
-  useEffect(() => {
-    if (typeof opts.trigger === 'undefined') {
-      // Use mounted state as trigger
-      setTrigger(isMounted)
-    }
-    // @ts-expect-error untyped
-    else if (typeof opts.trigger === 'object' && 'current' in opts.trigger) {
-      // Use ref value as trigger
-      if (opts.trigger.current) {
-        setTrigger(true)
-      }
-    }
-    else {
-      // Use direct trigger value
-      setTrigger(!!opts.trigger)
-    }
-  }, [opts.trigger, isMounted])
 
   // Main initialization effect
   useEffect(() => {
@@ -128,10 +98,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<string
         scriptRef.current._triggerAbortController.abort()
       }
     }
-  }, [head, input, trigger])
+  }, [])
 
   const registerCb = (key: 'loaded' | 'error', cb: any) => {
-    console.log('registerCb', key, cb)
     if (!script._cbs[key]) {
       script._mountCbs = script._mountCbs || []
       script._mountCbs.push(cb)
