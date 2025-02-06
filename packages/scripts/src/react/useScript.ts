@@ -72,7 +72,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<string
   const mountedRef = useRef(false)
 
   // Handle mount trigger
-  const [isMounted, setIsMounted] = useState(false)
+  const [setIsMounted] = useState(false)
   useEffect(() => {
     setIsMounted(true)
     return () => setIsMounted(false)
