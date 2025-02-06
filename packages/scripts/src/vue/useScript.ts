@@ -33,7 +33,7 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   head?: VueHeadClient<any>
 }
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = Promise<T> & VueScriptInstance<T>
+export type UseScriptContext<T extends Record<symbol | string, any>> = VueScriptInstance<T>
 
 function registerVueScopeHandlers<T extends Record<symbol | string, any> = Record<symbol | string, any>>(script: UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>, scope?: ComponentInternalInstance | null) {
   if (!scope) {
