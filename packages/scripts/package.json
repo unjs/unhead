@@ -28,10 +28,6 @@
     "./vue": {
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs"
-    },
-    "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.mjs"
     }
   },
   "main": "dist/index.mjs",
