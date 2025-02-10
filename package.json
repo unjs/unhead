@@ -11,6 +11,7 @@
     "url": "git+https://github.com/unjs/unhead.git"
   },
   "scripts": {
+    "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
@@ -25,6 +26,7 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
+    "rollup-plugin-analyzer": "^4.0.0",
     "@antfu/eslint-config": "^4.1.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
