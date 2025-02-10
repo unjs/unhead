@@ -156,11 +156,11 @@ describe('ssr e2e bench', () => {
       description: 'Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.',
       twitterCreator: '@harlan_zw',
       twitterSite: '@harlan_zw',
-    }, minimalPriority)
+    }, { ...minimalPriority, head })
     // inferred from path /about (example)
     useHead({
       title: 'About',
-    }, minimalPriority)
+    }, { ...minimalPriority, head })
     // OG Image
     const meta: Head['meta'] = [
       { property: 'og:image', content: 'https://harlanzw.com/__og-image__/og.png' },

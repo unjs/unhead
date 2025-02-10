@@ -11,6 +11,7 @@ export default defineBuildConfig({
     // 'src/full',
   ],
   outDir: 'dist/client',
+  failOnWarn: false,
   rollup: {
     // inlineDependencies: true,
     esbuild: {

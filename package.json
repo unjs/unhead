@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.0.0-alpha.9",
   "private": "true",
-  "packageManager": "pnpm@10.2.0",
+  "packageManager": "pnpm@10.2.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -29,15 +29,16 @@
     "rollup-plugin-analyzer": "^4.0.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.1.1",
+    "@antfu/eslint-config": "^4.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
     "bumpp": "^10.0.2",
     "devalue": "^5.1.1",
-    "eslint": "^9.19.0",
+    "eslint": "^9.20.0",
     "fs-extra": "^11.3.0",
     "jsdom": "^26.0.0",
+    "rollup-plugin-analyzer": "^4.0.0",
     "typescript": "5.7.3",
     "unbuild": "^3.3.1",
     "utility-types": "^3.11.0",
