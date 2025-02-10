@@ -1,8 +1,7 @@
-import type { CreateHeadOptions } from '@unhead/schema'
-import type { JSDOM } from 'jsdom'
+import type { CreateHeadOptions, Head, SSRHeadPayload } from '../src/types'
+import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from 'unhead/client'
 import { createHead as createServerHead } from 'unhead/server'
-import { useDom } from './fixtures'
 
 export function createClientHeadWithContext(options?: any) {
   return createClientHead(options)
@@ -17,6 +16,84 @@ export function createServerHeadWithContext(options?: any) {
 
 // eslint-disable-next-line import/no-mutable-exports
 export let activeDom: JSDOM | null = null
+
+export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
+  if (typeof window !== 'undefined') {
+    // reset window
+    const window = new JSDOM().window
+    // just apply the below to the current document
+    const attrsString = `${extra?.htmlAttrs || ''}${payload?.htmlAttrs || ''}`
+    // split into key => value
+    const attrsObj = attrsString.split(' ').reduce((acc, attr) => {
+      const [key, value] = attr.split('=')
+      acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
+    Object.entries(attrsObj).forEach(([key, value]) => {
+      if (key.length) {
+        window.document.documentElement.setAttribute(key, String(value).replaceAll('"', ''))
+      }
+    })
+    window.document.documentElement.innerHTML = `<head>
+${payload?.headTags || ''}
+</head>
+<body ${extra?.bodyAttrs || ''} ${payload?.bodyAttrs || ''}>
+${payload?.bodyTagsOpen || ''}
+<div>
+<h1>hello world</h1>
+</div>
+${payload?.bodyTags || ''}
+</body>
+`
+    return {
+      window,
+      serialize: () => window.document.documentElement.outerHTML,
+    } as any as JSDOM
+  }
+  return new JSDOM(
+    `<!DOCTYPE html>
+<html ${extra?.htmlAttrs || ''}${payload?.htmlAttrs || ''}>
+<head>
+${payload?.headTags || ''}
+</head>
+<body ${extra?.bodyAttrs || ''} ${payload?.bodyAttrs || ''}>
+${payload?.bodyTagsOpen || ''}
+<div>
+<h1>hello world</h1>
+</div>
+${payload?.bodyTags || ''}
+</body>
+</html>
+`,
+  )
+}
+
+export const basicSchema: Head = {
+  htmlAttrs: {
+    lang: 'en',
+    dir: 'ltr',
+  },
+  bodyAttrs: {
+    class: 'dark',
+  },
+  script: [
+    {
+      src: 'https://cdn.example.com/script.js',
+    },
+  ],
+  meta: [
+    {
+      charset: 'utf-8',
+    },
+  ],
+  link: [
+    {
+      rel: 'icon',
+      type: 'image/x-icon',
+      href: 'https://cdn.example.com/favicon.ico',
+    },
+  ],
+}
 
 export function useDOMHead(options: CreateHeadOptions = {}) {
   activeDom = useDom()

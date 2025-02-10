@@ -1,11 +1,14 @@
-import { renderSSRHead } from 'unhead/server'
+import { TemplateParamsPlugin } from 'unhead/plugins'
 
+import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
   it('basic', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
     head.push({
       htmlAttrs: {
         lang: '%locale',
@@ -49,7 +52,9 @@ describe('ssr templateParams', () => {
   })
 
   it('does not affect other content', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
     head.push({
       title: 'This|is|an|example||with||multiple||||pipes',
       script: [
@@ -70,7 +75,9 @@ describe('ssr templateParams', () => {
   })
 
   it('json', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
     head.push({
       title: 'Home & //<"With Encoding">\\',
       script: [
@@ -92,7 +99,11 @@ describe('ssr templateParams', () => {
   })
 
   it('ssr payload', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [
+        TemplateParamsPlugin,
+      ],
+    })
     head.push({
       title: 'test',
       titleTemplate: '%s %separator %siteName',
@@ -101,11 +112,39 @@ describe('ssr templateParams', () => {
         siteName: 'My Awesome Site',
       },
     }, { mode: 'server' })
+    head.push({
+      templateParams: {
+        foo: 'bar',
+      },
+    }, { mode: 'server' })
     const { headTags } = await renderSSRHead(head)
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>test | My Awesome Site</title>
-      <script id="unhead:payload" type="application/json">{"title":"test","titleTemplate":"%s %separator %siteName","templateParams":{"separator":"|","siteName":"My Awesome Site"}}</script>"
+      <script id="unhead:payload" type="application/json">{"title":"test","titleTemplate":"%s %separator %siteName","templateParams":{"siteName":"My Awesome Site","foo":"bar","pageTitle":"test"}}</script>"
     `)
+  })
+
+  it('function titleTemplate with templateParams', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [
+        TemplateParamsPlugin,
+      ],
+    })
+    head.push({
+      titleTemplate: () => '%s %separator %subPage% %separator %site.name',
+      title: 'test %foo',
+      templateParams: {
+        site: {
+          name: 'test',
+        },
+        subPage: 'subPage',
+        foo: 'foo',
+      },
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(
+      `"<title>test foo | subPage% | test</title>"`,
+    )
   })
 })

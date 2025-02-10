@@ -5,8 +5,7 @@ import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
+import { csrVueAppWithUnhead, ssrVueAppWithUnhead, useDom } from '../../util'
 
 describe('unhead vue e2e shorthands', () => {
   it('css', async () => {

@@ -59,7 +59,7 @@ describe('dedupe', () => {
   it('dedupes key', async () => {
     const head = createServerHeadWithContext()
     head.push({
-      meta: [
+      script: [
         {
           myCustomMeta: 'first',
           key: 'custom',
@@ -67,7 +67,7 @@ describe('dedupe', () => {
       ],
     })
     head.push({
-      meta: [
+      script: [
         {
           myCustomMeta: 'second',
           key: 'custom',
@@ -75,7 +75,7 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags.startsWith('<meta myCustomMeta="second"')).toBeTruthy()
+    expect(headTags.startsWith('<script myCustomMeta="second"')).toBeTruthy()
     expect(headTags.split('myCustomMeta').length === 2).toBeTruthy()
   })
 
@@ -210,7 +210,7 @@ describe('dedupe', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<meta name="description" content="test">
-      <link rel="icon" href="/favicon.ico" data-hid="e16a2dd">"
+      <link rel="icon" href="/favicon.ico" data-hid="icon">"
     `,
     )
   })
@@ -310,7 +310,6 @@ describe('dedupe', () => {
     head.push({
       meta: [
         {
-          key: 'description',
           name: 'description',
           content: 'my description',
         },
@@ -319,12 +318,12 @@ describe('dedupe', () => {
     head.push({
       meta: [
         {
-          key: 'description',
+          name: 'description',
         },
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(`"<meta name="description" content="my description">"`)
+    expect(headTags).toMatchInlineSnapshot(`""`)
   })
 
   it('null attr override', async () => {
@@ -332,8 +331,8 @@ describe('dedupe', () => {
     head.push({
       script: [
         {
-          src: 'test',
           key: 'my-script',
+          src: 'test',
           fetchpriority: 'high',
           crossorigin: 'anonymous',
           referrerpolicy: 'no-referrer-when-downgrade',
@@ -345,7 +344,8 @@ describe('dedupe', () => {
       script: [
         {
           key: 'my-script',
-          fetchpriority: undefined,
+          src: null,
+          fetchpriority: null,
           crossorigin: false,
           referrerpolicy: null,
           foo: 'bar',
@@ -355,7 +355,7 @@ describe('dedupe', () => {
     })
 
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="722c761">console.log('B')</script>"`)
+    expect(headTags).toMatchInlineSnapshot(`"<script data-hid="my-script" foo="bar">console.log('B')</script>"`)
   })
 
   it('duplicate viewport', async () => {

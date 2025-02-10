@@ -4,8 +4,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { useHeadSafe } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { basicSchema, useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead } from '../../util'
+import { basicSchema, csrVueAppWithUnhead, useDom } from '../../util'
 
 describe('vue dom useHeadSafe', () => {
   it('basic', async () => {
@@ -62,7 +61,7 @@ describe('vue dom useHeadSafe', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"><script data-foo="test"></script></head>
+      <meta charset="utf-8"><link data-bar="foo" href="https://cdn.example.com/style.css" rel="stylesheet"><style data-foo="bar">body { background: url("javascript:alert(1)") }</style><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"></head>
       <body class="dark" data-bar="foo"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })

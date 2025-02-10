@@ -1,3 +1,7 @@
-import type { Head, MergeHead } from '@unhead/schema'
-
-export type UseHeadInput<T extends MergeHead> = Head<T>
+export * from './head'
+export * from './hooks'
+export * from './plugins'
+export * from './safeSchema'
+export * from './schema'
+export * from './tags'
+export * from './util'

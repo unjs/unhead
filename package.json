@@ -11,6 +11,7 @@
     "url": "git+https://github.com/unjs/unhead.git"
   },
   "scripts": {
+    "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
@@ -24,12 +25,16 @@
     "lint:docs:fix": "pnpx markdownlint-cli ./docs --fix && pnpx case-police 'docs/**/*.md' *.md --fix",
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
+  "dependencies": {
+    "rollup-plugin-analyzer": "^4.0.0"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^4.1.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
     "bumpp": "^10.0.2",
+    "devalue": "^5.1.1",
     "eslint": "^9.19.0",
     "fs-extra": "^11.3.0",
     "jsdom": "^26.0.0",
@@ -42,9 +47,6 @@
   "resolutions": {
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
-    "@unhead/schema": "workspace:*",
-    "@unhead/schema-org": "workspace:*",
-    "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*"

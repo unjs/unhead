@@ -1,19 +1,18 @@
-import type { CreateServerHeadOptions, MergeHead } from '@unhead/schema'
-import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from '@unhead/vue'
-import { createHead as _createServerHead } from 'unhead/server'
+import type { VueHeadClient } from '@unhead/vue'
+import type { CreateServerHeadOptions, MergeHead } from 'unhead/types'
+import { createHead as _createHead } from 'unhead/server'
 import { vueInstall } from './install'
-import { VueReactivityPlugin } from './VueReactivityPlugin'
+import { VuePropResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
 export * from 'unhead/server'
 
 export function createHead<T extends MergeHead>(options: CreateServerHeadOptions = {}): VueHeadClient<T> {
-  const head = _createServerHead<MaybeComputedRef<ReactiveHead<T>>>({
-    ...options,
-    plugins: [
-      ...(options.plugins || []),
-      VueReactivityPlugin,
+  const head = _createHead({
+    propResolvers: [
+      VuePropResolver,
     ],
+    ...options,
   }) as VueHeadClient<T>
   head.install = vueInstall(head)
   return head

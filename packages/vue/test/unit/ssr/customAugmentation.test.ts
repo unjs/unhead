@@ -1,4 +1,4 @@
-import type { MergeHead } from '@unhead/schema'
+import type { MergeHead } from 'unhead/types'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'

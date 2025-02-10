@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import type {
   Base as _Base,
   Noscript as _Noscript,
@@ -22,8 +23,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
   Unhead,
-} from '@unhead/schema'
-import type { RefObject } from 'react'
+} from 'unhead/types'
 import type { MaybeComputedRef, ResolvableArray, ResolvableProperties } from './util'
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {

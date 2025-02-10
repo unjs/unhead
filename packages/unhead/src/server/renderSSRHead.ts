@@ -1,4 +1,4 @@
-import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '@unhead/schema'
+import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
 import { ssrRenderTags } from './util'
 
 export async function renderSSRHead<T extends Record<string, any>>(head: Unhead<T>, options?: RenderSSRHeadOptions) {

@@ -1,4 +1,4 @@
-import { composableNames } from '@unhead/shared'
+import { composableNames } from 'unhead/utils'
 
 export const hookImports = {
   '@unhead/vue': ['useUnhead', ...composableNames],

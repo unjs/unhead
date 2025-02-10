@@ -3,8 +3,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
+import { csrVueAppWithUnhead, ssrVueAppWithUnhead, useDom } from '../../util'
 
 describe('vue e2e charset', () => {
   it('ssr / csr hydration', async () => {

@@ -4,7 +4,7 @@ import { renderSSRHead } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
+import { useDom } from '../../util'
 
 describe('vue e2e keys', () => {
   it('ssr / csr hydration', async () => {
@@ -30,7 +30,7 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel="icon" href="/page-index.ico" data-hid="6b4a565">",
+        "headTags": "<link rel="icon" href="/page-index.ico" data-hid="main-icon">",
         "htmlAttrs": "",
       }
     `)
@@ -47,7 +47,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="icon" href="/page-index.ico" data-hid="6b4a565">
+      <link rel="icon" href="/page-index.ico" data-hid="main-icon">
       </head>
       <body>
 
@@ -67,13 +67,13 @@ describe('vue e2e keys', () => {
     expect(await csrHead.resolveTags()).toMatchInlineSnapshot(`
       [
         {
-          "_d": "link:main-icon",
-          "_e": 1,
-          "_h": "6b4a565",
-          "_p": 1024,
+          "_d": "link:key:main-icon",
+          "_h": "main-icon",
+          "_p": 2048,
+          "_w": 100,
           "key": "main-icon",
           "props": {
-            "data-hid": "6b4a565",
+            "data-hid": "main-icon",
             "href": "/page-about.ico",
             "rel": "icon",
           },
@@ -82,19 +82,13 @@ describe('vue e2e keys', () => {
       ]
     `)
 
-    expect(Object.values(csrHead._dom.elMap)[2]).toMatchInlineSnapshot(`
-      <link
-        data-hid="6b4a565"
-        href="/page-index.ico"
-        rel="icon"
-      />
-    `)
+    expect(Object.values(csrHead._dom.elMap)[2]).toMatchInlineSnapshot(`undefined`)
 
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="icon" href="/page-about.ico" data-hid="6b4a565">
+      <link rel="icon" href="/page-about.ico" data-hid="main-icon">
       </head>
       <body>
 
@@ -140,9 +134,9 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">",
+        "headTags": "<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="Sacramento">",
         "htmlAttrs": "",
       }
     `)
@@ -159,9 +153,9 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="Sacramento">
       </head>
       <body>
 
@@ -179,9 +173,9 @@ describe('vue e2e keys', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento" data-hid="5e41b59">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento" data-hid="Sacramento">
       </head>
       <body>
 

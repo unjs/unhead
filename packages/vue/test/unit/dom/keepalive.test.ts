@@ -47,28 +47,28 @@ describe('keepalive', () => {
     })
 
     const homeHeadSnapshot = `
-      [
-        {
-          "_d": "title",
-          "_e": 0,
-          "_p": 0,
-          "props": {},
-          "tag": "title",
-          "textContent": "home",
-        },
-      ]
+[
+  {
+    "_d": "title",
+    "_p": 1024,
+    "_w": 10,
+    "props": {},
+    "tag": "title",
+    "textContent": "home",
+  },
+]
     `
     const aboutHeadSnapshot = `
-      [
-        {
-          "_d": "title",
-          "_e": 1,
-          "_p": 1024,
-          "props": {},
-          "tag": "title",
-          "textContent": "about",
-        },
-      ]
+[
+  {
+    "_d": "title",
+    "_p": 2048,
+    "_w": 10,
+    "props": {},
+    "tag": "title",
+    "textContent": "about",
+  },
+]
     `
 
     /*

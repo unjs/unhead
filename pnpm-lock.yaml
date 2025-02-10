@@ -7,9 +7,7 @@ settings:
 overrides:
   '@unhead/addons': workspace:*
   '@unhead/dom': workspace:*
-  '@unhead/schema': workspace:*
   '@unhead/schema-org': workspace:*
-  '@unhead/shared': workspace:*
   '@unhead/ssr': workspace:*
   '@unhead/vue': workspace:*
   unhead: workspace:*
@@ -17,6 +15,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      rollup-plugin-analyzer:
+        specifier: ^4.0.0
+        version: 4.0.0
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^4.1.1
@@ -33,6 +35,9 @@ importers:
       bumpp:
         specifier: ^10.0.2
         version: 10.0.2(magicast@0.3.5)
+      devalue:
+        specifier: ^5.1.1
+        version: 5.1.1
       eslint:
         specifier: ^9.19.0
         version: 9.19.0(jiti@2.4.2)
@@ -258,13 +263,10 @@ importers:
     dependencies:
       '@unhead/dom':
         specifier: workspace:*
-        version: link:../../packages/dom
+        version: link:../../package-aliases/dom
       '@unhead/schema-org':
         specifier: workspace:*
         version: link:../../packages/schema-org
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -310,13 +312,10 @@ importers:
     dependencies:
       '@unhead/dom':
         specifier: workspace:*
-        version: link:../../packages/dom
+        version: link:../../package-aliases/dom
       '@unhead/schema-org':
         specifier: workspace:*
         version: link:../../packages/schema-org
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -355,17 +354,35 @@ importers:
         specifier: ^3.5.13
         version: 3.5.13(typescript@5.7.3)
 
+  package-aliases/dom:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
+
+  package-aliases/schema:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
+
+  package-aliases/shared:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
+
+  package-aliases/ssr:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
+
   packages/addons:
     dependencies:
       '@rollup/pluginutils':
         specifier: ^5.1.4
         version: 5.1.4(rollup@4.30.1)
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       estree-walker:
         specifier: ^3.0.3
         version: 3.0.3
@@ -400,9 +417,6 @@ importers:
       '@angular/core':
         specifier: ^19.1.4
         version: 19.1.4(rxjs@7.8.1)(zone.js@0.15.0)
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -410,20 +424,8 @@ importers:
         specifier: workspace:*
         version: link:../unhead
 
-  packages/dom:
-    dependencies:
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-
   packages/react:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -438,23 +440,8 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
 
-  packages/schema:
-    dependencies:
-      hookable:
-        specifier: ^5.5.3
-        version: 5.5.3
-      zhead:
-        specifier: ^2.2.4
-        version: 2.2.4
-
   packages/schema-org:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../vue
@@ -477,12 +464,6 @@ importers:
 
   packages/scripts:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../vue
@@ -490,45 +471,14 @@ importers:
         specifier: workspace:*
         version: link:../unhead
 
-  packages/shared:
-    dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      packrup:
-        specifier: ^0.1.2
-        version: 0.1.2
-
-  packages/ssr:
-    dependencies:
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-
   packages/unhead:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
-    devDependencies:
-      devalue:
-        specifier: ^5.1.1
-        version: 5.1.1
 
   packages/vue:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
@@ -5287,9 +5237,6 @@ packages:
   package-manager-detector@0.2.9:
     resolution: {integrity: sha512-+vYvA/Y31l8Zk8dwxHhL3JfTuHPm6tlxM2A3GeQyl7ovYnSp1+mzAxClxaOr0qO1TtPxbQxetI7v5XqKLJZk7Q==}
 
-  packrup@0.1.2:
-    resolution: {integrity: sha512-ZcKU7zrr5GlonoS9cxxrb5HVswGnyj6jQvwFBa6p5VFw7G71VAHcUKL5wyZSU/ECtPM/9gacWxy2KFQKt1gMNA==}
-
   pacote@20.0.0:
     resolution: {integrity: sha512-pRjC5UFwZCgx9kUFDVM9YEahv4guZ1nSLqwmWiLUnDbGsjs+U5w7z6Uc8HNR1a6x8qnu5y9xtGE6D1uAuYz+0A==}
     engines: {node: ^18.17.0 || >=20.5.0}
@@ -5917,6 +5864,10 @@ packages:
   rimraf@5.0.10:
     resolution: {integrity: sha512-l0OE8wL34P4nJH/H2ffoaniAokM2qSmrtXHmlpvYr5AVVX8msAyW0l8NVJFDxlSK4u3Uh/f41cQheDVdnYijwQ==}
     hasBin: true
+
+  rollup-plugin-analyzer@4.0.0:
+    resolution: {integrity: sha512-LL9GEt3bkXp6Wa19SNR5MWcvHNMvuTFYg+eYBZN2OIFhSWN+pEJUQXEKu5BsOeABob3x9PDaLKW7w5iOJnsESQ==}
+    engines: {node: '>=8.0.0'}
 
   rollup-plugin-dts@6.1.1:
     resolution: {integrity: sha512-aSHRcJ6KG2IHIioYlvAOcEq6U99sVtqDDKVhnwt70rW6tsz3tv5OSjEiWcgzfsHdLyGXZ/3b/7b/+Za3Y6r1XA==}
@@ -7017,9 +6968,6 @@ packages:
   yoctocolors-cjs@2.1.2:
     resolution: {integrity: sha512-cYVsTjKl8b+FrnidjibDWskAv7UKOfcwaVZdp/it9n1s9fU3IkgDbhdIRKCW4JDsAlECJY0ytoVPT3sK6kideA==}
     engines: {node: '>=18'}
-
-  zhead@2.2.4:
-    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
 
   zone.js@0.15.0:
     resolution: {integrity: sha512-9oxn0IIjbCZkJ67L+LkhYWRyAy7axphb3VgE2MBDlOqnmHMPWGYMxJxBYFueFq/JGY2GMwS0rU+UCLunEmy5UA==}
@@ -12406,8 +12354,6 @@ snapshots:
 
   package-manager-detector@0.2.9: {}
 
-  packrup@0.1.2: {}
-
   pacote@20.0.0:
     dependencies:
       '@npmcli/git': 6.0.1
@@ -13012,6 +12958,8 @@ snapshots:
   rimraf@5.0.10:
     dependencies:
       glob: 10.4.5
+
+  rollup-plugin-analyzer@4.0.0: {}
 
   rollup-plugin-dts@6.1.1(rollup@4.30.1)(typescript@5.7.3):
     dependencies:
@@ -14270,8 +14218,6 @@ snapshots:
   yocto-queue@1.1.1: {}
 
   yoctocolors-cjs@2.1.2: {}
-
-  zhead@2.2.4: {}
 
   zone.js@0.15.0: {}
 

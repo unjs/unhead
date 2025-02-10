@@ -1,7 +1,6 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
 import type { AngularUnhead, UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput } from './types/index'
 import { DestroyRef, effect, inject, signal } from '@angular/core'
-import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
 import { UnheadInjectionToken } from './install'
 import { resolveSignalHeadInput } from './utils'
 
@@ -54,10 +53,7 @@ export function useHeadSafe(
   options: UseHeadOptions = {},
 ): ActiveHeadEntry<any> {
   // @ts-expect-error runtime type
-  return useHead(input, {
-    ...options,
-    transform: whitelistSafeInput,
-  })
+  return useHead(input, Object.assign(options, { _safe: true }))
 }
 
 export function useSeoMeta(
@@ -70,15 +66,5 @@ export function useSeoMeta(
     titleTemplate,
     // @ts-expect-error runtime type
     _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
-      // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      // @ts-expect-error runtime type
-      return { ...t, meta }
-    },
-  })
+  }, options)
 }

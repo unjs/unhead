@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@unhead/dom": "workspace:*",
-    "@unhead/schema-org": "workspace:*",
-    "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "pinia": "^2.3.1",
     "unhead": "workspace:*",

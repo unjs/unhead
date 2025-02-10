@@ -1,8 +1,8 @@
 import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
-import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead, useSeoMeta, useServerHead } from '@unhead/vue'
+import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/vue/schema-org'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { bench, describe } from 'vitest'
 
@@ -127,13 +127,18 @@ describe('ssr e2e bench', () => {
     // Nuxt SEO
     const minimalPriority = {
       tagPriority: 101,
+      head,
     } as const
     // needs higher priority
     useHead({
       link: [{ rel: 'canonical', href: 'https://harlanzw.com/' }],
+    }, {
+      head,
     })
     useServerHead({
       htmlAttrs: { lang: 'en' },
+    }, {
+      head,
     })
     useHead({
       templateParams: { site: {
@@ -194,6 +199,7 @@ describe('ssr e2e bench', () => {
       script,
       meta,
     }, {
+      head,
       tagPriority: 35,
     })
     // Schema.org
@@ -217,7 +223,9 @@ describe('ssr e2e bench', () => {
           'https://twitter.com/harlan_zw',
         ],
       }),
-    ])
+    ], {
+      head,
+    })
     // entry
     useServerHead({
       script: [{
@@ -227,12 +235,16 @@ describe('ssr e2e bench', () => {
 
         ],
       }],
+    }, {
+      head,
     })
     // Robots
     useHead({
       meta: [
         { name: 'robots', content: 'index, follow' },
       ],
+    }, {
+      head,
     })
     // app.vue
     // (duplicated)
@@ -244,16 +256,22 @@ describe('ssr e2e bench', () => {
           'https://twitter.com/harlan_zw',
         ],
       }),
-    ])
+    ], {
+      head,
+    })
     // [...all].vue
     useSeoMeta({
       title: 'Home',
       description: 'Home page description',
+    }, {
+      head,
     })
     // index.md
     useSeoMeta({
       title: 'Home',
       description: 'Home page description',
+    }, {
+      head,
     })
 
     const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
@@ -283,5 +301,26 @@ ${htmlContext.bodyAppend.join('\n')}
 `
   }, {
     iterations: 5000,
+  })
+
+  bench('simple', async () => {
+    // 1. Add nuxt.config meta tags
+    const head = createServerHead()
+    // nuxt.config app.head
+    head.push({
+      title: 'Harlan Wilton',
+      templateParams: {
+        separator: '·',
+      },
+      script: [
+        {
+          'src': 'https://idea-lets-dance.harlanzw.com/script.js',
+          'data-spa': 'auto',
+          'data-site': 'VDJUVDNA',
+          'defer': true,
+        },
+      ],
+    })
+    await renderSSRHead(head)
   })
 })

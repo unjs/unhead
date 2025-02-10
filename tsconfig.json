@@ -11,20 +11,14 @@
     "paths": {
       "unhead": ["packages/unhead/src"],
       "unhead/*": ["packages/unhead/src/*"],
-      "@unhead/dom": ["packages/dom/src"],
-      "@unhead/ssr": ["packages/ssr/src"],
-      "@unhead/schema-org": ["packages/schema-org/src"],
-      "@unhead/schema-org/*": ["packages/schema-org/src/*"],
+      "@unhead/dom": ["package-aliases/dom/src"],
+      "@unhead/ssr": ["package-aliases/ssr/src"],
       "@unhead/vue": ["packages/vue/src"],
       "@unhead/vue/*": ["packages/vue/src/*"],
       "@unhead/scripts": ["packages/scripts/src"],
       "@unhead/scripts/*": ["packages/scripts/*"],
       "@unhead/addons": ["packages/addons/src"],
-      "@unhead/addons/*": ["packages/addons/*"],
-      "@unhead/schema": ["packages/schema/src"],
-      "@unhead/schema/*": ["packages/schema/*"],
-      "@unhead/shared": ["packages/shared/src"],
-      "@unhead/shared/*": ["packages/shared/*"]
+      "@unhead/addons/*": ["packages/addons/*"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],

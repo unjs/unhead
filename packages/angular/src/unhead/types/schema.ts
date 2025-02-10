@@ -24,7 +24,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
   Unhead,
-} from '@unhead/schema'
+} from 'unhead/types'
 import type { MaybeSignal, ResolvableArray, ResolvableProperties } from './util'
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {

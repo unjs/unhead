@@ -23,7 +23,7 @@ import type {
   SchemaAugmentations,
   ScriptBase,
   Unhead,
-} from '@unhead/schema'
+} from 'unhead/types'
 import type { Plugin, Ref } from 'vue'
 import type { MaybeComputedRef, ResolvableArray, ResolvableProperties } from './util'
 

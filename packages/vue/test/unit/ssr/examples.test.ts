@@ -2,8 +2,7 @@ import { renderSSRHead } from '@unhead/ssr'
 import { useHead, useSeoMeta } from '@unhead/vue'
 import { it } from 'vitest'
 import { ref } from 'vue'
-import { basicSchema } from '../../../../unhead/test/fixtures'
-import { ssrRenderHeadToString, ssrVueAppWithUnhead } from '../../util'
+import { basicSchema, ssrRenderHeadToString, ssrVueAppWithUnhead } from '../../util'
 
 describe('vue ssr examples', () => {
   it('basic ref', async () => {
@@ -114,7 +113,9 @@ describe('vue ssr examples', () => {
       const data = ref<null | { title: string, description: string }>(null)
 
       useSeoMeta({
-        title: () => data.value?.title || 'Page',
+        title: () => {
+          return data.value?.title || 'Page'
+        },
         titleTemplate: title => `${title} - My Site`,
         ogTitle: () => `${data.value?.title} - My Site`,
         description: () => data.value?.description,

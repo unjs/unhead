@@ -1,8 +1,9 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 
-export const DeprecationsPlugin = defineHeadPlugin({
+export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
+  key: 'deprecations',
   hooks: {
-    'tags:resolve': ({ tags }) => {
+    'entries:normalize': ({ tags }) => {
       // copy logic from above hook
       for (const tag of tags) {
         if (tag.props.children) {

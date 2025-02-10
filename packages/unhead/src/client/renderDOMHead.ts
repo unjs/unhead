@@ -5,8 +5,11 @@ import type {
   HeadTag,
   RenderDomHeadOptions,
   Unhead,
-} from '@unhead/schema'
-import { HasElementTags, hashTag, normalizeProps, tagDedupeKey } from '@unhead/shared'
+} from '../types'
+import { HasElementTags } from '../utils/const'
+import { hashTag } from '../utils/hashCode'
+import { normalizeProps } from '../utils/normalize'
+import { isMetaArrayDupeKey, tagDedupeKey } from '../utils/tagDedupeKey'
 
 /**
  * Render the head tags to the DOM.
@@ -27,49 +30,60 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
   // eslint-disable-next-line no-async-promise-executor
   head._domUpdatePromise = new Promise<void>(async (resolve) => {
+    const dupeKeyCounter = new Map<string, number>()
     const tags = (await head.resolveTags())
-      .map(tag => <DomRenderTagContext> {
-        tag,
-        id: HasElementTags.has(tag.tag) ? hashTag(tag) : tag.tag,
-        shouldRender: true,
+      .map((tag) => {
+        const count = dupeKeyCounter.get(tag._d) || 0
+        const res = {
+          tag,
+          id: (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag),
+          shouldRender: true,
+        }
+        if (tag._d && isMetaArrayDupeKey(tag._d)) {
+          dupeKeyCounter.set(tag._d, count + 1)
+        }
+        return res
       })
+
     let state = head._dom as DomState
     // let's hydrate - fill the elMap for fast lookups
     if (!state) {
       state = {
-        elMap: { htmlAttrs: dom.documentElement, bodyAttrs: dom.body },
+        elMap: new Map()
+          .set('htmlAttrs', dom.documentElement)
+          .set('bodyAttrs', dom.body),
       } as any as DomState
-
-      const takenDedupeKeys = new Set()
 
       for (const key of ['body', 'head']) {
         const children = dom[key as 'head' | 'body']?.children
-        const tags: HeadTag[] = []
+        // const tags: HeadTag[] = []
         for (const c of children) {
           const tag = c.tagName.toLowerCase() as HeadTag['tag']
           if (!HasElementTags.has(tag)) {
             continue
           }
-          const t: HeadTag = {
-            tag,
-            props: await normalizeProps(
-              c.getAttributeNames()
-                .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
-            ),
+          const next = normalizeProps({ tag, props: {} } as HeadTag, {
             innerHTML: c.innerHTML,
+            ...c.getAttributeNames()
+              .reduce((props, name) => {
+                // @ts-expect-error untyped
+                props[name] = c.getAttribute(name)
+                return props
+              }, {}) || {},
+          })
+          next.key = c.getAttribute('data-hid') || undefined
+          next._d = tagDedupeKey(next) || hashTag(next)
+          if (state.elMap.has(next._d)) {
+            let count = 1
+            let k = next._d
+            while (state.elMap.has(k)) {
+              k = `${next._d}:${count++}`
+            }
+            state.elMap.set(k, c)
           }
-          // we need to account for the fact that duplicate tags may exist as some are supported, increment the dedupe key
-          const dedupeKey = tagDedupeKey(t)
-          let d = dedupeKey
-          let i = 1
-          while (d && takenDedupeKeys.has(d))
-            d = `${dedupeKey}:${i++}`
-          if (d) {
-            t._d = d
-            takenDedupeKeys.add(d)
+          else {
+            state.elMap.set(next._d, c)
           }
-          tags.push(t)
-          state.elMap[c.getAttribute('data-hid') || hashTag(t)] = c
         }
       }
     }
@@ -86,7 +100,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext) {
       const isAttrTag = tag.tag.endsWith('Attrs')
-      state.elMap[id] = $el
+      state.elMap.set(id, $el)
       if (!isAttrTag) {
         if (tag.textContent && tag.textContent !== $el.textContent) {
           $el.textContent = tag.textContent
@@ -96,8 +110,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
         track(id, 'el', () => {
           // the element may have been removed by a duplicate tag or something out of our control
-          state.elMap[id]?.remove()
-          delete state.elMap[id]
+          $el?.remove()
+          state.elMap.delete(id)
         })
       }
       if (tag._eventHandlers) {
@@ -132,7 +146,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           }
           // if the user is providing an empty string, then it's removing the class
           // the side effect clean up should remove it
-          for (const c of value.split(' ')) {
+          for (const c of value as any as Set<string>) {
             // always clear side effects
             isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
             !$el.classList.contains(c) && $el.classList.add(c)
@@ -143,17 +157,15 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             continue
           }
           // style attributes have their own side effects to allow for merging
-          for (const c of value.split(';')) {
-            const propIndex = c.indexOf(':')
-            const k = c.substring(0, propIndex).trim()
-            const v = c.substring(propIndex + 1).trim()
+          for (const [k, v] of value as any as Map<string, string>) {
             track(id, `${ck}:${k}`, () => {
               ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
             })
             ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
           }
         }
-        else {
+        // @ts-expect-error untyped
+        else if (value !== false && value !== null) {
           // attribute values get set directly
           $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
           isAttrTag && track(id, ck, () => $el.removeAttribute(k))
@@ -178,7 +190,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         dom.title = tag.textContent as string
         continue
       }
-      ctx.$el = ctx.$el || state.elMap[id]
+      ctx.$el = ctx.$el || state.elMap.get(id)
       if (ctx.$el) {
         trackCtx(ctx)
       }

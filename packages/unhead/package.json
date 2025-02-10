@@ -44,6 +44,14 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "import": "./dist/legacy.mjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.mjs"
+    },
+    "./scripts": {
+      "types": "./dist/scripts.d.ts",
+      "import": "./dist/scripts.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -62,6 +70,12 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "utils": [
+        "dist/utils"
+      ],
+      "scripts": [
+        "dist/scripts"
       ]
     }
   },
@@ -70,18 +84,15 @@
     "dist",
     "legacy.d.ts",
     "plugins.d.ts",
-    "server.d.ts"
+    "scripts.d.ts",
+    "server.d.ts",
+    "utils.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
     "stub": "unbuild . --stub"
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3"
-  },
-  "devDependencies": {
-    "devalue": "^5.1.1"
   }
 }

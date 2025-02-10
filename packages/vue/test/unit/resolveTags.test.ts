@@ -21,10 +21,13 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 2048,
+          "_w": 100,
           "props": {
-            "class": "first-class second-class",
+            "class": Set {
+              "first-class",
+              "second-class",
+            },
           },
           "tag": "htmlAttrs",
         },
@@ -61,19 +64,25 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 2048,
+          "_w": 100,
           "props": {
-            "class": "layout-theme-dark home",
+            "class": Set {
+              "layout-theme-dark",
+              "home",
+            },
           },
           "tag": "htmlAttrs",
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_p": 1025,
+          "_w": 100,
           "props": {
-            "class": "test theme-dark",
+            "class": Set {
+              "test",
+              "theme-dark",
+            },
           },
           "tag": "bodyAttrs",
         },
@@ -96,10 +105,12 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 1,
-          "_p": 1024,
+          "_p": 2048,
+          "_w": 100,
           "props": {
-            "class": "second-class",
+            "class": Set {
+              "second-class",
+            },
           },
           "tag": "htmlAttrs",
           "tagDuplicateStrategy": "replace",
@@ -149,10 +160,13 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 5120,
+          "_w": 100,
           "props": {
-            "class": "someTrue someArrayClass",
+            "class": Set {
+              "someTrue",
+              "someArrayClass",
+            },
           },
           "tag": "htmlAttrs",
         },

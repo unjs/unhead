@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
-
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { useSeoMeta } from '@unhead/vue'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
+import { csrVueAppWithUnhead, ssrVueAppWithUnhead, useDom } from '../../util'
 
 describe('unhead vue e2e useSeoMeta', () => {
   it('duplicate articleTag', async () => {

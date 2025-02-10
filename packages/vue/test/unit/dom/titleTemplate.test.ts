@@ -3,8 +3,7 @@
 import { renderDOMHead } from '@unhead/dom'
 import { useHead } from '@unhead/vue'
 import { describe } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead } from '../../util'
+import { csrVueAppWithUnhead, useDom } from '../../util'
 
 describe('vue dom titleTemplate', () => {
   it('basic', async () => {

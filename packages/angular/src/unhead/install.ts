@@ -1,11 +1,10 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions } from '@unhead/schema'
+import type { CreateClientHeadOptions, CreateServerHeadOptions } from 'unhead/types'
 import type { AngularUnhead } from './types/index'
 import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
 import { createHead as _createClientHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { createHead as _createServerHead } from 'unhead/server'
 import { Unhead } from '../lib/unhead.service'
-import { ReactivityPlugin } from '../unhead/ReactivityPlugin'
 
 export const headSymbol = 'usehead'
 
@@ -16,7 +15,6 @@ export function provideServerHead(options: CreateServerHeadOptions = {}) {
     ...options,
     plugins: [
       ...(options.plugins || []),
-      ReactivityPlugin,
     ],
   })
   return makeEnvironmentProviders([
@@ -41,7 +39,6 @@ export function provideClientHead(options: CreateClientHeadOptions = {}) {
     ...options,
     plugins: [
       ...(options.plugins || []),
-      ReactivityPlugin,
     ],
   })
   return makeEnvironmentProviders([

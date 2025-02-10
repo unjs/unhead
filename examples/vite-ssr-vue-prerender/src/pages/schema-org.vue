@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { useHead } from 'unhead'
-import { defineWebPage, useSchemaOrg } from '@unhead/schema-org'
+import { useHead } from '@unhead/vue'
+import { defineWebPage, useSchemaOrg } from '@unhead/vue/schema-org'
 
 useHead({
   templateParams: {

@@ -1,16 +1,10 @@
 import { renderSSRHead } from 'unhead/server'
+import { AliasSortingPlugin } from '../../../src/plugins/aliasSorting'
 import { createServerHeadWithContext } from '../../util'
 
 describe('tag priority', () => {
-  it('basic int', async () => {
+  it('critical', async () => {
     const head = createServerHeadWithContext()
-    head.push({
-      script: [
-        {
-          src: '/not-important-script.js',
-        },
-      ],
-    })
     head.push({
       script: [
         {
@@ -19,12 +13,20 @@ describe('tag priority', () => {
         },
       ],
     })
+    head.push({
+      script: [
+        {
+          src: '/not-important-script.js',
+        },
+      ],
+    })
 
     expect(await head.resolveTags()).toMatchInlineSnapshot(`
       [
         {
-          "_e": 1,
+          "_d": undefined,
           "_p": 1024,
+          "_w": 42,
           "props": {
             "src": "/very-important-script.js",
           },
@@ -32,8 +34,9 @@ describe('tag priority', () => {
           "tagPriority": "critical",
         },
         {
-          "_e": 0,
-          "_p": 0,
+          "_d": undefined,
+          "_p": 2048,
+          "_w": 50,
           "props": {
             "src": "/not-important-script.js",
           },
@@ -172,7 +175,11 @@ describe('tag priority', () => {
   })
 
   it('before priority', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [
+        AliasSortingPlugin,
+      ],
+    })
     head.push({
       script: [
         {
@@ -193,13 +200,17 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src="/must-be-first-script.js"></script>
-      <script src="/not-important-script.js" data-hid="99144d0"></script>"
+      <script src="/not-important-script.js" data-hid="not-important"></script>"
     `,
     )
   })
 
   it('before and after priority', async () => {
-    const head = createServerHeadWithContext()
+    const head = createServerHeadWithContext({
+      plugins: [
+        AliasSortingPlugin,
+      ],
+    })
     head.push({
       script: [
         {
@@ -235,10 +246,10 @@ describe('tag priority', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<script src="/must-be-first-script.js" data-hid="1ce209d"></script>
+      "<script src="/must-be-first-script.js" data-hid="first-script"></script>
       <script src="/after-first-script.js"></script>
       <script src="/before-not-important.js"></script>
-      <script src="/not-important-script.js" data-hid="99144d0"></script>"
+      <script src="/not-important-script.js" data-hid="not-important"></script>"
     `,
     )
   })

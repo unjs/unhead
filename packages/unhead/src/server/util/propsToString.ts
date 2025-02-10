@@ -10,7 +10,16 @@ export function propsToString(props: Record<string, any>) {
       continue
     }
 
-    const value = props[key]
+    let value = props[key]
+
+    // class (set) and style (map)
+    if (key === 'class' || key === 'style') {
+      value = key === 'class'
+        ? Array.from(value).join(' ')
+        : Array.from(value as Map<string, string>)
+            .map(([k, v]) => `${k}:${v}`)
+            .join(';')
+    }
 
     if (value !== false && value !== null) {
       attrs += value === true ? ` ${key}` : ` ${key}="${encodeAttribute(value)}"`

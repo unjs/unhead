@@ -1,6 +1,5 @@
-import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from 'unhead/types'
 import type { UseHeadInput, UseSeoMetaInput } from './types'
-import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
 import { useContext, useEffect } from 'react'
 import { UnheadContext } from './context'
 
@@ -46,18 +45,5 @@ export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): 
     // we need to input the meta so the reactivity will be resolved
     // @ts-expect-error runtime type
     _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
-      // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      return {
-        // @ts-expect-error runtime type
-        ...t,
-        meta,
-      }
-    },
-  })
+  }, options)
 }

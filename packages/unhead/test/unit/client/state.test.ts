@@ -11,8 +11,8 @@ describe('state', () => {
 
     expect(head.entries).toMatchInlineSnapshot(`
       Map {
-        0 => {
-          "_i": 0,
+        1 => {
+          "_i": 1,
           "input": {
             "title": "hello",
           },

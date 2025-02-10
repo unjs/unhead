@@ -4,8 +4,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { computed, ref } from 'vue'
-import { useDom } from '../../../../unhead/test/fixtures'
-import { csrVueAppWithUnhead } from '../../util'
+import { csrVueAppWithUnhead, useDom } from '../../util'
 
 describe('vue dom classes', () => {
   it('empty class', async () => {

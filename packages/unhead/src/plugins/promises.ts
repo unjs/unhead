@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 
 async function resolvePromisesRecursively(root: any): Promise<any> {
   if (root instanceof Promise) {
@@ -24,7 +24,8 @@ async function resolvePromisesRecursively(root: any): Promise<any> {
   return root
 }
 
-export const PromisesPlugin = defineHeadPlugin({
+export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
+  key: 'promises',
   hooks: {
     'entries:resolve': async (ctx) => {
       for (const k in ctx.entries) {
