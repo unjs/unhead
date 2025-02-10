@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
-import { defineMovie, useSchemaOrg } from '../../util'
 import { injectSchemaOrg, useSetup } from '../../../../test/schema-org-utils'
+import { defineMovie, useSchemaOrg } from '../../util'
 
 describe('defineMovie', () => {
   it('can be defined', async () => {

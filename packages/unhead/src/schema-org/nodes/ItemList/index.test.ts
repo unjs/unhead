@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { defineItemList, defineListItem, defineMovie, useSchemaOrg } from '../../util'
 import { injectSchemaOrg, useSetup } from '../../../../test/schema-org-utils'
+import { defineItemList, defineListItem, defineMovie, useSchemaOrg } from '../../util'
 
 describe('defineItemList', () => {
   it('movie example', async () => {

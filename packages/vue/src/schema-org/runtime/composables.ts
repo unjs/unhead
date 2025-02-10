@@ -38,9 +38,8 @@ import type {
   WebSite,
 } from 'unhead/schema-org'
 import type { Arrayable } from '../../types'
-import { UnheadSchemaOrg } from 'unhead/schema-org'
+import { SchemaOrgPlugin } from 'unhead/schema-org/plugin'
 import { injectHead, useHead } from '../../composables'
-import {SchemaOrgPlugin} from "unhead/schema-org/plugin";
 
 function provideResolver<T>(input?: T, resolver?: string) {
   if (!input)

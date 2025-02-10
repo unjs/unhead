@@ -1,8 +1,8 @@
 import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
-import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/vue/schema-org'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead, useSeoMeta, useServerHead } from '@unhead/vue'
+import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/vue/schema-org'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { describe, it } from 'vitest'
 
