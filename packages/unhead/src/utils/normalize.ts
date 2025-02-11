@@ -99,14 +99,15 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>, propRes
       tag.props[key] = null
       return
     }
-    if (key === 'class' || key === 'style') {
-      // @ts-expect-error untyped
-      tag.props[key] = normalizeStyleClassProps(key as 'class' | 'style', value)
-      return
-    }
 
     if (typeof value === 'function' && !key.startsWith('on') && tag.tag !== 'titleTemplate') {
       value = value()
+    }
+
+    if (key === 'class' || key === 'style') {
+      // @ts-expect-error untyped
+      tag.props[key] = normalizeStyleClassProps(key as 'class' | 'style', value, propResolvers)
+      return
     }
 
     if (TagConfigKeys.has(key)) {

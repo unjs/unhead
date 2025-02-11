@@ -7,9 +7,8 @@ import type {
   Unhead,
 } from '../types'
 import { HasElementTags } from '../utils/const'
-import { hashTag } from '../utils/hashCode'
+import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
-import { isMetaArrayDupeKey, tagDedupeKey } from '../utils/tagDedupeKey'
 
 /**
  * Render the head tags to the DOM.
@@ -72,7 +71,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
               }, {}) || {},
           })
           next.key = c.getAttribute('data-hid') || undefined
-          next._d = tagDedupeKey(next) || hashTag(next)
+          next._d = dedupeKey(next) || hashTag(next)
           if (state.elMap.has(next._d)) {
             let count = 1
             let k = next._d

@@ -8,7 +8,7 @@ export function isMetaArrayDupeKey(v: string) {
   return MetaTagsArrayable.has(k)
 }
 
-export function tagDedupeKey<T extends HeadTag>(tag: T): string | undefined {
+export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   const { props, tag: name } = tag
   // must only be a single base so we always dedupe
   if (UniqueTags.has(name))
@@ -48,3 +48,5 @@ export function tagDedupeKey<T extends HeadTag>(tag: T): string | undefined {
     }
   }
 }
+
+export const hashTag = (tag: HeadTag) => tag._h || tag._d || `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join(',')}`

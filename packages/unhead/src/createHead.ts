@@ -12,8 +12,8 @@ import type {
 } from './types'
 import { createHooks } from 'hookable'
 import { isMetaArrayDupeKey, sortTags, tagWeight, UsesMergeStrategy, ValidHeadTags } from './utils'
+import { dedupeKey } from './utils/dedupe'
 import { normalizeEntryToTags } from './utils/normalize'
-import { tagDedupeKey } from './utils/tagDedupeKey'
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
@@ -102,7 +102,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
           e._tags = normalizeCtx.tags.map((t, i) => {
             t._w = tagWeight(head, t)
             t._p = (e._i << 10) + i
-            t._d = tagDedupeKey(t) // || hashTag(t)
+            t._d = dedupeKey(t) // || hashTag(t)
             return Object.assign(t, e.options)
           })
         }

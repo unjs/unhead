@@ -89,7 +89,18 @@ describe('keepalive', () => {
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_p": 2048,
+          "_w": 10,
+          "props": {},
+          "tag": "title",
+          "textContent": "about",
+        },
+      ]
+    `)
 
     // Step 4
     app.name = 'about'
