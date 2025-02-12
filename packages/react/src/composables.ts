@@ -1,7 +1,7 @@
 import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from 'unhead/types'
 import type { UseHeadInput, UseSeoMetaInput } from './types'
-import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
 import { useContext, useEffect } from 'react'
+import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
 import { UnheadContext } from './context'
 
 export function useUnhead() {

@@ -16,6 +16,8 @@ const newStats = {
   },
 }
 
+console.table(newStats)
+
 // Write the new stats to last.json
 fs.writeFileSync(
   path.resolve(__dirname, 'last.json'),

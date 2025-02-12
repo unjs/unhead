@@ -7,8 +7,8 @@ import type {
 } from '../types'
 import type { ResolverOptions } from '../utils'
 import type { SchemaOrgGraph } from './graph'
-import { hashCode } from 'unhead/utils'
 import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
+import { hashCode } from 'unhead/utils'
 import { loadResolver } from '../resolver'
 import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
 

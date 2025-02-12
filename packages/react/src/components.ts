@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import type { UseHeadInput } from 'unhead'
 import type { ActiveHeadEntry } from 'unhead/types'
-import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import React, { useEffect, useRef } from 'react'
+import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'
 
 interface HeadProps {
