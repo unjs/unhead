@@ -449,3 +449,15 @@ CommonJS exports have been removed in favor of ESM only.
 -const { createHead } = require('unhead/client')
 +import { createHead } from 'unhead/client'
 ```
+
+## Deprecated `@unhead/schema`
+
+🚦 Impact Level: Low
+
+The `@unhead/schema` package is now deprecated and will be removed in a future version. You should instead import
+the schema from `unhead` or `@unhead/vue`.
+
+```diff
+-import { HeadTag } from '@unhead/schema'
++import { HeadTag } from 'unhead/types'
+```
