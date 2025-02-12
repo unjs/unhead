@@ -44,7 +44,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
       for (const key of ['body', 'head']) {
         const children = dom[key as 'head' | 'body']?.children
-        const tags: HeadTag[] = []
         for (const c of children) {
           const tag = c.tagName.toLowerCase() as HeadTag['tag']
           if (!HasElementTags.has(tag)) {
@@ -52,7 +51,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           }
           const t: HeadTag = {
             tag,
-            props: await normaliseProps(
+            props: normaliseProps(
               c.getAttributeNames()
                 .reduce((props, name) => ({ ...props, [name]: c.getAttribute(name) }), {}),
             ),
@@ -68,7 +67,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             t._d = d
             takenDedupeKeys.add(d)
           }
-          tags.push(t)
           state.elMap[c.getAttribute('data-hid') || hashTag(t)] = c
         }
       }

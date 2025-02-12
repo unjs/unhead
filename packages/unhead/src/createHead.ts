@@ -9,9 +9,9 @@ import type {
   RuntimeMode,
   Unhead,
 } from './types'
-import { normaliseEntryTags } from './utils'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
+import { normaliseEntryTags } from './utils'
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
@@ -98,9 +98,9 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
       for (const entry of resolveCtx.entries) {
         // apply any custom transformers applied to the entry
         const resolved = entry.resolvedInput || entry.input
-        entry.resolvedInput = await (entry.transform ? entry.transform(resolved) : resolved) as T
+        entry.resolvedInput = (entry.transform ? entry.transform(resolved) : resolved) as T
         if (entry.resolvedInput) {
-          for (const tag of await normaliseEntryTags<T>(entry)) {
+          for (const tag of normaliseEntryTags<T>(entry)) {
             const tagCtx = { tag, entry, resolvedOptions: head.resolvedOptions }
             await hooks.callHook('tag:normalise', tagCtx)
             resolveCtx.tags.push(tagCtx.tag)
