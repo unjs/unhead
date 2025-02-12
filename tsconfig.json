@@ -11,8 +11,8 @@
     "paths": {
       "unhead": ["packages/unhead/src"],
       "unhead/*": ["packages/unhead/src/*"],
-      "@unhead/dom": ["packages/dom/src"],
-      "@unhead/ssr": ["packages/ssr/src"],
+      "@unhead/dom": ["packages-aliased/dom/src"],
+      "@unhead/ssr": ["packages-aliased/ssr/src"],
       "@unhead/schema-org": ["packages/schema-org/src"],
       "@unhead/schema-org/*": ["packages/schema-org/src/*"],
       "@unhead/vue": ["packages/vue/src"],
