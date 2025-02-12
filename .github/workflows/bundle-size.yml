@@ -42,4 +42,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           header: Bundle Size Analysis
-          message: ${{ steps.analyze.outputs.result }}
+          message: ${{ env.result }}
