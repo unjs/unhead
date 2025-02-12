@@ -35,11 +35,19 @@ jobs:
         run: |
           output=$(bun bench/bundle/analyze.ts)
           echo "$output"
-          echo "result=$output" >> $GITHUB_ENV
+          echo "result<<EOF" >> $GITHUB_ENV
+          echo "$output" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Post comment on PR
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: actions/github-script@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          header: Bundle Size Analysis
-          message: ${{ env.result }}
+          script: |
+            const result = process.env.result;
+            const { context, github } = require('@actions/github');
+            const issue_number = context.payload.pull_request.number;
+            await github.issues.createComment({
+              ...context.repo,
+              issue_number,
+              body: `## Bundle Size Analysis\n${result}`
+            });
