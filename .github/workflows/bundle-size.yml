@@ -38,7 +38,11 @@ jobs:
         run: |
           output=$(bun bench/bundle/analyze.ts)
           echo "$output"
-          echo "result=$output" >> $GITHUB_ENV
+          # Escape the output to handle special characters
+          output="${output//'%'/'%25'}"
+          output="${output//$'\n'/'%0A'}"
+          output="${output//$'\r'/'%0D'}"
+          echo "result=$output" >> $GITHUB_OUTPUT
 
       - name: Post comment on PR
         uses: marocchino/sticky-pull-request-comment@v2
@@ -46,5 +50,5 @@ jobs:
           header: Bundle Size Analysis
           message: |
             ```
-            ${{ env.TEST_RESULT }}
+            ${{ steps.analyze.outputs.result }}
             ```
