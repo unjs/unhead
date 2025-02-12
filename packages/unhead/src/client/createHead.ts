@@ -1,6 +1,6 @@
 import type { CreateClientHeadOptions, Head } from '../types'
-import { IsBrowser } from '../utils'
 import { createHeadCore } from '../createHead'
+import { IsBrowser } from '../utils'
 import { DomPlugin } from './plugins/domPlugin'
 import { ClientEventHandlerPlugin } from './plugins/eventHandlers'
 import { renderDOMHead } from './renderDOMHead'

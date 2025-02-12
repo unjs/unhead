@@ -5,15 +5,15 @@ import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
 import { pathToFileURL } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
+import { walk } from 'estree-walker'
+import MagicString from 'magic-string'
+import { findStaticImports, parseStaticImport } from 'mlly'
+import { parseQuery, parseURL } from 'ufo'
 import {
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
 } from 'unhead/utils'
-import { walk } from 'estree-walker'
-import MagicString from 'magic-string'
-import { findStaticImports, parseStaticImport } from 'mlly'
-import { parseQuery, parseURL } from 'ufo'
 import { createUnplugin } from 'unplugin'
 
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
