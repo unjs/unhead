@@ -1,4 +1,4 @@
-import { defineHeadPlugin, NetworkEvents } from '@unhead/shared'
+import { defineHeadPlugin, NetworkEvents } from '../../utils'
 
 const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
 

@@ -1,5 +1,5 @@
 import type { HeadTag } from '../../types'
-import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
+import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
 export function escapeHtml(str: string) {

@@ -13,7 +13,7 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
+import { hashCode, ScriptNetworkEvents } from 'unhead/utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {

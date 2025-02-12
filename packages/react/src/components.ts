@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { UseHeadInput } from 'unhead'
 import type { ActiveHeadEntry } from 'unhead/types'
-import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from '@unhead/shared'
+import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import React, { useEffect, useRef } from 'react'
 import { useUnhead } from './composables'
 

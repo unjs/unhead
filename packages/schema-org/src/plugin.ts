@@ -1,6 +1,6 @@
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
-import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
+import { defineHeadPlugin, processTemplateParams } from 'unhead/utils'
 import { defu } from 'defu'
 import {
   createSchemaOrgGraph,

@@ -6,7 +6,7 @@ import type {
   RenderDomHeadOptions,
   Unhead,
 } from '../types'
-import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
+import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '../utils'
 
 /**
  * Render the head tags to the DOM.

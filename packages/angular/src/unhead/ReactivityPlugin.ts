@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin } from 'unhead/utils'
 import { resolveSignalHeadInput } from './utils'
 
 export const ReactivityPlugin = defineHeadPlugin({

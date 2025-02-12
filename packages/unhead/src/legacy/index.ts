@@ -8,7 +8,7 @@ import type {
   Unhead,
   UseSeoMetaInput,
 } from '../types'
-import { composableNames, unpackMeta, whitelistSafeInput } from '@unhead/shared'
+import { composableNames, unpackMeta, whitelistSafeInput } from '../utils'
 import { createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { DomPlugin } from '../client/plugins/domPlugin'
 import { ClientEventHandlerPlugin } from '../client/plugins/eventHandlers'

@@ -63,8 +63,5 @@
     "unhead": {
       "optional": true
     }
-  },
-  "dependencies": {
-    "@unhead/shared": "workspace:*"
   }
 }

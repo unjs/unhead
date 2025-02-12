@@ -9,7 +9,7 @@ import type {
   RuntimeMode,
   Unhead,
 } from './types'
-import { normaliseEntryTags } from '@unhead/shared'
+import { normaliseEntryTags } from './utils'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
 

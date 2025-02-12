@@ -1,5 +1,5 @@
 import type { DomPluginOptions } from '../../types'
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin } from '../../utils'
 
 export function DomPlugin(options: DomPluginOptions) {
   return defineHeadPlugin((head) => {

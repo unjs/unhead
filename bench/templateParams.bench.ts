@@ -1,5 +1,5 @@
-import { processTemplateParams } from '@unhead/shared'
 import { bench, describe } from 'vitest'
+import { processTemplateParams } from '../src/templateParams'
 
 describe('processTemplateParams', () => {
   bench('basic', () => {

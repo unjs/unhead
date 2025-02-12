@@ -9,7 +9,7 @@ import type {
   UseSeoMetaInput,
   VueHeadClient,
 } from './types'
-import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
+import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
 import {
   getCurrentInstance,
   hasInjectionContext,
