@@ -28,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build project
-        run: pnpm build
+      - name: Run bundle size test
+        run: pnpm test:bundle-size
 
       - uses: oven-sh/setup-bun@v2
 
