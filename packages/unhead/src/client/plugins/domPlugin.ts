@@ -9,6 +9,7 @@ export function DomPlugin(options: DomPluginOptions) {
       head.push(JSON.parse(initialPayload))
     }
     return {
+      key: 'dom',
       mode: 'client',
       hooks: {
         'entries:updated': (head) => {

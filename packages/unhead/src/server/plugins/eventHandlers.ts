@@ -8,6 +8,7 @@ const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
  * When SSR we need to strip out these values. On CSR we
  */
 export const ServerEventHandlerPlugin = defineHeadPlugin({
+  key: 'server-event-handler',
   hooks: {
     'tags:resolve': (ctx) => {
       for (const tag of ctx.tags) {

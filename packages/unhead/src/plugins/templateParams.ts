@@ -10,6 +10,7 @@ const SupportedAttrs = {
 const contentAttrs = ['innerHTML', 'textContent']
 
 export const TemplateParamsPlugin = defineHeadPlugin(head => ({
+  key: 'template-params',
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx

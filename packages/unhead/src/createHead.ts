@@ -40,60 +40,54 @@ export function createHeadCore<T extends Record<string, any> = Head>(options: Cr
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(options.hooks || {})
   const ssr = !options.document
-
-  const updated = () => {
-    // eslint-disable-next-line ts/no-use-before-define
-    head.dirty = true
-    // eslint-disable-next-line ts/no-use-before-define
-    hooks.callHook('entries:updated', head)
-  }
-  let entryCount = 0
-  let entries: HeadEntry<T>[] = []
-  const plugins: HeadPlugin[] = []
+  const entries: Map<number, HeadEntry<T>> = new Map()
+  const plugins: Map<string, HeadPlugin> = new Map()
   const head: Unhead<T> = {
+    _entryCount: 1, // 0 is reserved for internal use
     plugins,
     dirty: false,
     resolvedOptions: options,
     hooks,
     ssr,
+    entries,
     headEntries() {
-      return entries
+      return [...entries.values()]
     },
     use(p: HeadPluginInput) {
       registerPlugins(head, [p], ssr)
     },
-    push(input, entryOptions) {
-      delete entryOptions?.head
-      const entry: HeadEntry<T> = {
-        _i: entryCount++,
-        input,
-        ...entryOptions as Partial<HeadEntry<T>>,
-      }
-      // bit hacky but safer
-      if (filterMode(entry.mode, ssr)) {
-        entries.push(entry)
-        updated()
-      }
-      return {
+    push(input, _options) {
+      const options = { ..._options } as Partial<HeadEntry<T>>
+      // @ts-expect-error untyped
+      delete options.head
+      const _i = head._entryCount++
+      const _: ActiveHeadEntry<T> = {
+        _poll() {
+          head.dirty = true
+          hooks.callHook('entries:updated', head)
+        },
         dispose() {
-          entries = entries.filter(e => e._i !== entry._i)
-          updated()
+          if (entries.delete(_i)) {
+            _._poll()
+          }
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
-          for (const e of entries) {
-            if (e._i === entry._i) {
-              // bit hacky syncing
-              e.input = entry.input = input
-              e.resolvedInput = undefined
-            }
+          if (filterMode(options.mode, ssr)) {
+            entries.set(_i, {
+              _i,
+              input,
+              ...options,
+            })
+            _._poll()
           }
-          updated()
         },
       }
+      _.patch(input)
+      return _
     },
     async resolveTags() {
-      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...entries] }
+      const resolveCtx: { tags: HeadTag[], entries: HeadEntry<T>[] } = { tags: [], entries: [...head.entries.values()] }
       await hooks.callHook('entries:resolve', resolveCtx)
       for (const entry of resolveCtx.entries) {
         // apply any custom transformers applied to the entry

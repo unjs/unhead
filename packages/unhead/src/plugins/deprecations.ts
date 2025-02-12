@@ -1,6 +1,7 @@
 import { defineHeadPlugin } from '../utils'
 
 export const DeprecationsPlugin = defineHeadPlugin({
+  key: 'deprecations',
   hooks: {
     'tag:normalise': ({ tag }) => {
       if (tag.props.children) {

@@ -4,6 +4,7 @@ import { defineHeadPlugin, HasElementTags, hashTag, tagWeight } from '../utils'
 const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
 export const DedupePlugin = defineHeadPlugin(head => ({
+  key: 'dedupe',
   hooks: {
     'tags:resolve': (ctx) => {
       // 1. Dedupe tags
