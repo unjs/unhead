@@ -7,7 +7,6 @@ settings:
 overrides:
   '@unhead/addons': workspace:*
   '@unhead/dom': workspace:*
-  '@unhead/schema-org': workspace:*
   '@unhead/ssr': workspace:*
   '@unhead/vue': workspace:*
   unhead: workspace:*
@@ -47,9 +46,6 @@ importers:
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
-      rollup-plugin-analyzer:
-        specifier: ^4.0.0
-        version: 4.0.0
       typescript:
         specifier: 5.7.3
         version: 5.7.3
@@ -267,9 +263,6 @@ importers:
       '@unhead/dom':
         specifier: workspace:*
         version: link:../../package-aliases/dom
-      '@unhead/schema-org':
-        specifier: workspace:*
-        version: link:../../packages/schema-org
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -316,9 +309,6 @@ importers:
       '@unhead/dom':
         specifier: workspace:*
         version: link:../../package-aliases/dom
-      '@unhead/schema-org':
-        specifier: workspace:*
-        version: link:../../packages/schema-org
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -442,37 +432,6 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
-
-  packages/schema-org:
-    dependencies:
-      '@unhead/vue':
-        specifier: workspace:*
-        version: link:../vue
-      defu:
-        specifier: ^6.1.4
-        version: 6.1.4
-      ohash:
-        specifier: ^1.1.4
-        version: 1.1.4
-      ufo:
-        specifier: ^1.5.4
-        version: 1.5.4
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-    devDependencies:
-      unplugin-vue-components:
-        specifier: ^28.0.0
-        version: 28.0.0(@babel/parser@7.26.7)(@nuxt/kit@3.15.4(magicast@0.3.5)(rollup@4.30.1))(rollup@4.30.1)(vue@3.5.13(typescript@5.7.3))
-
-  packages/scripts:
-    dependencies:
-      '@unhead/vue':
-        specifier: workspace:*
-        version: link:../vue
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
 
   packages/unhead:
     dependencies:
@@ -6586,19 +6545,6 @@ packages:
   unplugin-utils@0.2.0:
     resolution: {integrity: sha512-EOZMReV+C8W/VRmWvWYUk4cIZEbZLcgRKtkI/+iNQopnk9+LBpafku+8vXozOn4ju0oZBmz0KpqmV4eEzHhWgg==}
     engines: {node: '>=20.18.0'}
-
-  unplugin-vue-components@28.0.0:
-    resolution: {integrity: sha512-vYe0wSyqTVhyNFIad1iiGyQGhG++tDOMgohqenMDOAooMJP9vvzCdXTqCVx20A0rCQXFNjgoRbSeDAioLPH36Q==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@babel/parser': ^7.15.8
-      '@nuxt/kit': ^3.2.2
-      vue: 2 || 3
-    peerDependenciesMeta:
-      '@babel/parser':
-        optional: true
-      '@nuxt/kit':
-        optional: true
 
   unplugin@1.16.0:
     resolution: {integrity: sha512-5liCNPuJW8dqh3+DM6uNM2EI3MLLpCKp/KY+9pB5M2S2SR2qvvDHhKgBOaTWEbZTAws3CXfB0rKTIolWKL05VQ==}
@@ -13885,26 +13831,6 @@ snapshots:
     dependencies:
       pathe: 2.0.2
       picomatch: 4.0.2
-
-  unplugin-vue-components@28.0.0(@babel/parser@7.26.7)(@nuxt/kit@3.15.4(magicast@0.3.5)(rollup@4.30.1))(rollup@4.30.1)(vue@3.5.13(typescript@5.7.3)):
-    dependencies:
-      '@antfu/utils': 0.7.10
-      '@rollup/pluginutils': 5.1.4(rollup@4.30.1)
-      chokidar: 3.6.0
-      debug: 4.4.0
-      fast-glob: 3.3.3
-      local-pkg: 0.5.1
-      magic-string: 0.30.17
-      minimatch: 9.0.5
-      mlly: 1.7.4
-      unplugin: 2.1.2
-      vue: 3.5.13(typescript@5.7.3)
-    optionalDependencies:
-      '@babel/parser': 7.26.7
-      '@nuxt/kit': 3.15.4(magicast@0.3.5)(rollup@4.30.1)
-    transitivePeerDependencies:
-      - rollup
-      - supports-color
 
   unplugin@1.16.0:
     dependencies:

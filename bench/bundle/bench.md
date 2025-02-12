@@ -7,5 +7,5 @@ Unhead
 
 (Without hookable)
 
-- Client: 9.5kB - gzipped 4.3 kB
-- Server: 6.97kB - gzipped 3.2 kB
+- Client: 9.5kB - gzipped 4.5 kB
+- Server: 6.97kB - gzipped 3.3 kB
