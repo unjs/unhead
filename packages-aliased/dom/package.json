@@ -1,5 +1,5 @@
 {
-  "name": "@unhead/ssr",
+  "name": "@unhead/dom",
   "type": "module",
   "version": "2.0.0-alpha.9",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/ssr"
+    "directory": "packages/dom"
   },
   "publishConfig": {
     "access": "public",
@@ -32,8 +32,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild",
+    "stub": "unbuild --stub"
   },
   "peerDependencies": {
     "unhead": "workspace:*"
