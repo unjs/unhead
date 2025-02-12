@@ -1,0 +1,43 @@
+name: Bundle Size Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  analyze-bundle-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run bundle size test
+        run: pnpm test:bundle-size
+
+      - name: Run analyze script
+        id: analyze
+        run: |
+          output=$(bun bench/bundle/analyze.ts)
+          echo "$output"
+          echo "::set-output name=result::$output"
+
+      - name: Post comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          header: Bundle Size Analysis
+          message: ${{ steps.analyze.outputs.result }}

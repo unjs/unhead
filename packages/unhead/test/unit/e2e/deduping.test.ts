@@ -27,7 +27,7 @@ describe('unhead e2e deduping', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script data-hid="3104ae4">console.log('will log twice')</script>",
+        "headTags": "<script data-hid="test">console.log('will log twice')</script>",
         "htmlAttrs": "",
       }
     `)
@@ -48,7 +48,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('will log twice')</script>
+      <script data-hid="test">console.log('will log twice')</script>
       </head>
       <body>
 
@@ -141,7 +141,7 @@ describe('unhead e2e deduping', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script data-hid="3104ae4">console.log('server log')</script>",
+        "headTags": "<script data-hid="test">console.log('server log')</script>",
         "htmlAttrs": "",
       }
     `)
@@ -150,7 +150,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('server log')</script>
+      <script data-hid="test">console.log('server log')</script>
       </head>
       <body>
 
@@ -177,7 +177,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('client log')</script>
+      <script data-hid="test">console.log('client log')</script>
       </head>
       <body>
 

@@ -30,7 +30,7 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel="icon" href="/page-index.ico" data-hid="6b4a565">",
+        "headTags": "<link rel="icon" href="/page-index.ico" data-hid="main-icon">",
         "htmlAttrs": "",
       }
     `)
@@ -47,7 +47,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="icon" href="/page-index.ico" data-hid="6b4a565">
+      <link rel="icon" href="/page-index.ico" data-hid="main-icon">
       </head>
       <body>
 
@@ -69,11 +69,11 @@ describe('vue e2e keys', () => {
         {
           "_d": "link:main-icon",
           "_e": 1,
-          "_h": "6b4a565",
+          "_h": "main-icon",
           "_p": 1024,
           "key": "main-icon",
           "props": {
-            "data-hid": "6b4a565",
+            "data-hid": "main-icon",
             "href": "/page-about.ico",
             "rel": "icon",
           },
@@ -84,7 +84,7 @@ describe('vue e2e keys', () => {
 
     expect(Object.values(csrHead._dom.elMap)[2]).toMatchInlineSnapshot(`
       <link
-        data-hid="6b4a565"
+        data-hid="main-icon"
         href="/page-index.ico"
         rel="icon"
       />
@@ -94,7 +94,7 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="icon" href="/page-about.ico" data-hid="6b4a565">
+      <link rel="icon" href="/page-about.ico" data-hid="main-icon">
       </head>
       <body>
 
@@ -140,9 +140,9 @@ describe('vue e2e keys', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">",
+        "headTags": "<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="Sacramento">",
         "htmlAttrs": "",
       }
     `)
@@ -159,9 +159,9 @@ describe('vue e2e keys', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="5e41b59">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento" data-hid="Sacramento">
       </head>
       <body>
 
@@ -179,9 +179,9 @@ describe('vue e2e keys', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="f59c689">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon" data-hid="66d43fa">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento" data-hid="5e41b59">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="Allison">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Meddon&amp;text=Meddon" data-hid="Meddon">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sacramento&amp;text=Sacramento" data-hid="Sacramento">
       </head>
       <body>
 

@@ -39,7 +39,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="c5c65b0"></script>",
+        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="https://cdn.example.com/script.js"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -62,7 +62,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="c5c65b0"></script>",
+        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="https://cdn.example.com/script.js"></script>",
         "htmlAttrs": "",
       }
     `)
@@ -100,7 +100,7 @@ describe('ssr useScript', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="2e8fc9"></script>",
+        "headTags": "<script defer fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B" onload="this.dataset.onloadfired = true" onerror="this.dataset.onerrorfired = true" data-hid="https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B"></script>",
         "htmlAttrs": "",
       }
     `)

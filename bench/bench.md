@@ -16,28 +16,78 @@
 - SERVER Size: 10.2 kB (gzipped: 4.1 kB)
 
 ```
-✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3000ms
-name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
-· e2e      2,195.76  0.3875  1.5184  0.4554  0.4558  0.9170  0.9514  1.1057  ±0.62%     5000
-· simple  41,271.13  0.0223  0.2731  0.0242  0.0236  0.0448  0.0511  0.1337  ±0.39%    20636   fastest
+ ✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3067ms
+     name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · e2e      2,134.55  0.4019  1.4006  0.4685  0.4831  0.7774  0.8233  0.9579  ±0.46%     5000
+   · simple  38,325.44  0.0228  0.4301  0.0261  0.0249  0.0505  0.0560  0.1621  ±0.52%    19163   fastest
+   
+✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3100ms
+   name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
+ · e2e      2,105.37  0.3998  1.7183  0.4750  0.4886  0.9004  0.9598  1.1246  ±0.53%     5000
+ · simple  37,885.63  0.0225  0.2561  0.0264  0.0259  0.0520  0.0555  0.1342  ±0.40%    18943   fastest
+ 
+ ✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3158ms
+     name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · e2e      2,054.98  0.3990  1.1435  0.4866  0.5125  0.8812  0.9269  1.0605  ±0.53%     5000
+   · simple  37,126.87  0.0228  0.9798  0.0269  0.0264  0.0496  0.0582  0.1486  ±0.57%    18564   fastest 
+   
+ ✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3234ms
+     name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · e2e      1,991.87  0.4003  1.4117  0.5020  0.5321  0.8760  0.9741  1.0921  ±0.57%     5000
+   · simple  40,268.21  0.0226  0.2101  0.0248  0.0244  0.0408  0.0510  0.1299  ±0.37%    20135   fastest   
 
-✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 2909ms
-name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
-· e2e      2,287.15  0.3852  1.4304  0.4372  0.4338  0.8237  0.8742  1.0820  ±0.47%     5000
-· simple  41,559.27  0.0222  0.2242  0.0241  0.0237  0.0333  0.0439  0.1288  ±0.36%    20780   fastest
+ ✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3138ms
+     name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · e2e      2,070.56  0.3927  1.5478  0.4830  0.5251  0.8516  0.9581  0.9999  ±0.53%     5000
+   · simple  37,455.01  0.0229  0.2217  0.0267  0.0255  0.0479  0.0528  0.1618  ±0.47%    18728   fastest   
+```
 
-✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 2947ms
-name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
-· e2e      2,250.82  0.3912  1.4397  0.4443  0.4544  0.6659  0.7022  0.7710  ±0.36%     5000
-· simple  42,235.54  0.0217  0.2175  0.0237  0.0234  0.0323  0.0384  0.1221  ±0.34%    21119   fastest
+## ssr-perf.bench.ts
 
-✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 2915ms
-name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
-· e2e      2,282.19  0.3843  1.4047  0.4382  0.4483  0.6476  0.6873  0.7934  ±0.37%     5000
-· simple  40,613.21  0.0228  0.3312  0.0246  0.0244  0.0304  0.0325  0.1370  ±0.37%    20307   fastest
+-- after --
 
-✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 2914ms
-name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
-· e2e      2,282.16  0.3854  1.3827  0.4382  0.4456  0.6461  0.7164  0.8077  ±0.38%     5000
-· simple  41,367.21  0.0223 0.2369  0.0242  0.0236  0.0423  0.0480  0.1356  ±0.39%    20684   fastest
+```
+✓ bench/ssr-perf.bench.ts > ssr bench 8954ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  113.05  8.1113  15.1597  8.8454  8.9100  12.3025  13.8244  14.8498  ±0.46%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 8944ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  113.20  7.9871  17.4970  8.8337  8.9022  12.5053  12.9496  17.3206  ±0.56%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 8766ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  115.49  8.0093  15.2666  8.6591  8.6741  12.4337  12.8412  15.0107  ±0.53%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 8877ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  114.07  8.1292  17.7684  8.7666  8.6782  13.8655  15.0269  16.9608  ±0.69%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 8909ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  113.73  8.0236  16.8817  8.7926  8.7953  13.3301  15.0942  16.8089  ±0.62%     1000
+```
+
+--- before ---
+
+```
+✓ bench/ssr-perf.bench.ts > ssr bench 9815ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  103.09  8.9346  26.6410  9.7001  9.7547  13.2671  13.6113  14.7850  ±0.57%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 9992ms
+name         hz     min      max    mean      p75      p99     p995     p999     rme  samples
+· x50 ssr  101.23  8.7280  17.8255  9.8786  10.0013  16.2151  16.9746  17.6946  ±0.72%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 9487ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  106.64  8.5666  18.2041  9.3771  9.4008  12.7400  13.4962  17.1925  ±0.49%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 9413ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  107.47  8.6505  18.9421  9.3051  9.3052  12.9069  14.0262  15.9473  ±0.50%     1000
+
+✓ bench/ssr-perf.bench.ts > ssr bench 10102ms
+name         hz     min      max    mean     p75      p99     p995     p999     rme  samples
+· x50 ssr  100.22  9.0020  22.1970  9.9777  9.8022  18.8643  20.0461  21.6316  ±1.07%     1000
 ```

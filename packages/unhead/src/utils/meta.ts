@@ -1,5 +1,5 @@
 import type { TransformValueOptions } from 'packrup'
-import type { BaseMeta, Head, MetaFlatInput } from 'unhead/types'
+import type { BaseMeta, Head, MetaFlatInput } from '../types'
 import { packArray, unpackToArray, unpackToString } from 'packrup'
 
 interface PackingDefinition {

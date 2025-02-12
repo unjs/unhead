@@ -1,4 +1,4 @@
-import type { TemplateParams } from 'unhead/types'
+import type { TemplateParams } from '../types'
 
 const sepSub = '%separator'
 

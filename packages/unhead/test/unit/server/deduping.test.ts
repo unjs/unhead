@@ -210,7 +210,7 @@ describe('dedupe', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<meta name="description" content="test">
-      <link rel="icon" href="/favicon.ico" data-hid="e16a2dd">"
+      <link rel="icon" href="/favicon.ico" data-hid="icon">"
     `,
     )
   })
@@ -355,7 +355,7 @@ describe('dedupe', () => {
     })
 
     const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="722c761">console.log('B')</script>"`)
+    expect(headTags).toMatchInlineSnapshot(`"<script foo="bar" data-hid="my-script">console.log('B')</script>"`)
   })
 
   it('duplicate viewport', async () => {

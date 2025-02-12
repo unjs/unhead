@@ -1,5 +1,7 @@
-import type { HeadTag } from 'unhead/types'
+import type { HeadTag } from '../types'
 import { UniqueTags } from './constants'
+
+export const hashTag = (tag: HeadTag) => tag._h || tag._d || `${tag.tag}:${tag.textContent || tag.innerHTML || ''}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join(',')}`
 
 const allowedMetaProperties = ['name', 'property', 'http-equiv']
 

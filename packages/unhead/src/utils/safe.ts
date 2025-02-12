@@ -1,4 +1,4 @@
-import type { HeadSafe, MaybeArray } from 'unhead/types'
+import type { HeadSafe, MaybeArray } from '../types'
 
 const WhitelistAttributes = {
   htmlAttrs: ['id', 'class', 'lang', 'dir'],

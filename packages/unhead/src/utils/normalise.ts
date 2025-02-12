@@ -1,6 +1,5 @@
-import type { Head, HeadEntry, HeadTag } from 'unhead/types'
+import type { Head, HeadEntry, HeadTag } from '../types'
 import { DupeableTags, TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from './constants'
-import { hashCode } from './hashCode'
 import { tagDedupeKey } from './tagDedupeKey'
 
 export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTag['props'] | string, e: HeadEntry<T>, normalizedProps?: HeadTag['props']): T | T[] {
@@ -33,7 +32,7 @@ export function normaliseTag<T extends HeadTag>(tagName: T['tag'], input: HeadTa
   // only tags which can't dedupe themselves, ssr only
   if (tag.key && DupeableTags.has(tag.tag)) {
     // add a HTML key so the client-side can hydrate without causing duplicates
-    tag.props['data-hid'] = tag._h = hashCode(tag.key!)
+    tag.props['data-hid'] = tag._h = tag.key!
   }
   const generatedKey = tagDedupeKey(tag)
   if (generatedKey && !generatedKey.startsWith('meta:og:') && !generatedKey.startsWith('meta:twitter:')) {

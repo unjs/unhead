@@ -1,6 +1,5 @@
 export * from './constants'
 export * from './defineHeadPlugin'
-export * from './hashCode'
 export * from './meta'
 export * from './normalise'
 export * from './safe'

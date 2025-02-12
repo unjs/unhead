@@ -193,7 +193,7 @@ describe('tag priority', () => {
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src="/must-be-first-script.js"></script>
-      <script src="/not-important-script.js" data-hid="99144d0"></script>"
+      <script src="/not-important-script.js" data-hid="not-important"></script>"
     `,
     )
   })
@@ -235,10 +235,10 @@ describe('tag priority', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
-      "<script src="/must-be-first-script.js" data-hid="1ce209d"></script>
+      "<script src="/must-be-first-script.js" data-hid="first-script"></script>
       <script src="/after-first-script.js"></script>
       <script src="/before-not-important.js"></script>
-      <script src="/not-important-script.js" data-hid="99144d0"></script>"
+      <script src="/not-important-script.js" data-hid="not-important"></script>"
     `,
     )
   })

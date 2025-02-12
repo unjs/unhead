@@ -8,8 +8,7 @@ import type {
   Unhead,
   UseSeoMetaInput,
 } from '../types'
-import { composableNames, unpackMeta, whitelistSafeInput } from '../utils'
-import { createDebouncedFn, renderDOMHead } from 'unhead/client'
+import { createDebouncedFn, renderDOMHead } from '../client'
 import { DomPlugin } from '../client/plugins/domPlugin'
 import { ClientEventHandlerPlugin } from '../client/plugins/eventHandlers'
 import { createHeadCore } from '../createHead'
@@ -17,6 +16,7 @@ import { DeprecationsPlugin } from '../plugins/deprecations'
 import { PromisesPlugin } from '../plugins/promises'
 import { ServerEventHandlerPlugin } from '../server/plugins/eventHandlers'
 import { PayloadPlugin } from '../server/plugins/payload'
+import { composableNames, unpackMeta, whitelistSafeInput } from '../utils'
 
 export * from './useScript'
 

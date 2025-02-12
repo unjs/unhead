@@ -9,9 +9,9 @@ import type {
   RuntimeMode,
   Unhead,
 } from './types'
-import { normaliseEntryTags } from './utils'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
+import { normaliseEntryTags } from './utils'
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)

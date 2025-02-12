@@ -1,4 +1,4 @@
-import type { HeadTag, Unhead } from 'unhead/types'
+import type { HeadTag, Unhead } from '../types'
 
 export const TAG_WEIGHTS = {
   // tags

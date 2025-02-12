@@ -1,4 +1,4 @@
-import { defineHeadPlugin, hashCode, NetworkEvents } from '../../utils'
+import { defineHeadPlugin, NetworkEvents } from '../../utils'
 
 const ValidEventTags = new Set(['script', 'link', 'bodyAttrs'])
 
@@ -17,7 +17,7 @@ export const ServerEventHandlerPlugin = defineHeadPlugin({
 
         const props = tag.props
 
-        let hasEventHandlers = false
+        // let hasEventHandlers = false
         for (const key in props) {
           // on
           if (key[0] !== 'o' || key[1] !== 'n') {
@@ -37,13 +37,13 @@ export const ServerEventHandlerPlugin = defineHeadPlugin({
           // insert a inline script to set the status of onload and onerror
           if (NetworkEvents.has(key)) {
             props[key] = `this.dataset.${key}fired = true`
-            hasEventHandlers = true
+            // hasEventHandlers = true
           }
         }
 
-        if (hasEventHandlers && (tag.props.src || tag.props.href)) {
-          tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
-        }
+        // if (hasEventHandlers && (tag.props.src || tag.props.href)) {
+        //   tag.key = tag.key || hashCode(tag.props.src || tag.props.href)
+        // }
       }
     },
   },
