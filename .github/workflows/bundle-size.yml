@@ -38,14 +38,15 @@ jobs:
         run: |
           output=$(bun bench/bundle/analyze.ts)
           echo "$output"
-          # Escape the output to handle special characters
-          output="${output//'%'/'%25'}"
-          output="${output//$'\n'/'%0A'}"
-          output="${output//$'\r'/'%0D'}"
-          echo "result=$output" >> $GITHUB_OUTPUT
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Post comment on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: Bundle Size Analysis
-          message: ${{ steps.analyze.outputs.result }}
+          message: |
+            ### Bundle Size Analysis
+
+            ${{ steps.analyze.outputs.result }}
