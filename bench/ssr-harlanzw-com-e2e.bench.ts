@@ -1,10 +1,9 @@
 import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
-import { renderSSRHead } from '@unhead/ssr'
-import { useHead, useSeoMeta, useServerHead } from '@unhead/vue'
-import { createHead as createServerHead } from '@unhead/vue/server'
 import { bench, describe } from 'vitest'
+import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
   bench('e2e', async () => {
