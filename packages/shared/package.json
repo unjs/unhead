@@ -40,8 +40,10 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub"
   },
+  "peerDependencies": {
+    "unhead": "workspace:*"
+  },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
     "packrup": "^0.1.2"
   }
 }

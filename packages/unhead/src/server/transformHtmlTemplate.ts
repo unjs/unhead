@@ -1,4 +1,4 @@
-import type { RenderSSRHeadOptions, Unhead } from '@unhead/schema'
+import type { RenderSSRHeadOptions, Unhead } from '../types'
 import { renderSSRHead } from './renderSSRHead'
 import { extractUnheadInputFromHtml } from './util/extractUnheadInputFromHtml'
 

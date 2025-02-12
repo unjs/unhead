@@ -1,7 +1,7 @@
 import type {
   Head,
   Unhead,
-} from '@unhead/schema'
+} from 'unhead/types'
 import type {
   EventHandlerOptions,
   ScriptInstance,

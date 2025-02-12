@@ -1,4 +1,4 @@
-import type { HeadEntryOptions, Unhead } from '@unhead/schema'
+import type { HeadEntryOptions, Unhead } from 'unhead/types'
 import type {
   AggregateOffer,
   AggregateRating,

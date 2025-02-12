@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions } from '@unhead/schema'
+import type { CreateClientHeadOptions, CreateServerHeadOptions } from 'unhead/types'
 import type { AngularUnhead } from './types/index'
 import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'

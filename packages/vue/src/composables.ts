@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
 import type {
   Ref,
 } from 'vue'

@@ -1,5 +1,5 @@
-import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
+import type { CreateHeadOptions } from '../src/types'
 import { createHead as createClientHead } from 'unhead/client'
 import { createHead as createServerHead } from 'unhead/server'
 import { useDom } from './fixtures'

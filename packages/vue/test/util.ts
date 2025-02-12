@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
+import type { CreateHeadOptions } from 'unhead/types'
 import type { App, Component } from 'vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { VueHeadMixin } from '@unhead/vue'

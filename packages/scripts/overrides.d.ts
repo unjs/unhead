@@ -1,4 +1,4 @@
-declare module '@unhead/schema' {
+declare module 'unhead/types' {
   import type { ScriptInstance } from '@unhead/scripts'
 
   export interface HeadHooks {

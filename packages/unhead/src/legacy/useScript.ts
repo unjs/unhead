@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '@unhead/schema'
+import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '../types'
 import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
 import { getActiveHead } from './index'
 

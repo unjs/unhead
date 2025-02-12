@@ -1,10 +1,10 @@
+import type { ResolvableProperties, VueHeadClient } from '@unhead/vue'
 import type {
   DataKeys,
   HeadEntryOptions,
   SchemaAugmentations,
   ScriptBase,
-} from '@unhead/schema'
-import type { ResolvableProperties, VueHeadClient } from '@unhead/vue'
+} from 'unhead/types'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from '../types'
 import { injectHead } from '@unhead/vue'

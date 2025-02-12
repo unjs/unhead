@@ -1,5 +1,5 @@
+export type { SSRHeadPayload } from '../types'
 export { createHead } from './createHead'
 export { renderSSRHead } from './renderSSRHead'
 export { transformHtmlTemplate } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'
-export type { SSRHeadPayload } from '@unhead/schema'

@@ -1,4 +1,4 @@
-import type { Head, HeadEntry, HeadTag } from '@unhead/schema'
+import type { Head, HeadEntry, HeadTag } from 'unhead/types'
 import { DupeableTags, TagConfigKeys, TagsWithInnerContent, ValidHeadTags } from './constants'
 import { hashCode } from './hashCode'
 import { tagDedupeKey } from './tagDedupeKey'

@@ -1,5 +1,5 @@
 import type { Signal, WritableSignal } from '@angular/core'
-import type { Falsey } from '@unhead/schema'
+import type { Falsey } from 'unhead/types'
 
 export type MaybeSignal<T> = T | (() => T) | Signal<T> | WritableSignal<T>
 

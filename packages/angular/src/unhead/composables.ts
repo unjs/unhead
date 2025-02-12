@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
 import type { AngularUnhead, UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput } from './types/index'
 import { DestroyRef, effect, inject, signal } from '@angular/core'
 import { unpackMeta, whitelistSafeInput } from '@unhead/shared'

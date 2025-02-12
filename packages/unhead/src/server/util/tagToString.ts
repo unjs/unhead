@@ -1,4 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
+import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '@unhead/shared'
 import { propsToString } from './propsToString'
 

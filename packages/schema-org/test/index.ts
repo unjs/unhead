@@ -1,5 +1,5 @@
-import type { Unhead } from '@unhead/schema'
 import type { MetaInput } from '@unhead/schema-org'
+import type { Unhead } from 'unhead/types'
 import type { SchemaOrgNode } from '../src/types'
 import { SchemaOrgUnheadPlugin } from '@unhead/schema-org'
 import { createHead } from 'unhead/server'

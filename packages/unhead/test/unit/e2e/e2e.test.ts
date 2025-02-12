@@ -1,4 +1,4 @@
-import type { Head } from '@unhead/schema'
+import type { Head } from '../../../src/types'
 import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { renderSSRHead } from 'unhead/server'

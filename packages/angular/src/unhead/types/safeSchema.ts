@@ -1,4 +1,4 @@
-import type { SafeBodyAttr, SafeHtmlAttr, SafeLink, SafeMeta, SafeNoscript, SafeScript } from '@unhead/schema'
+import type { SafeBodyAttr, SafeHtmlAttr, SafeLink, SafeMeta, SafeNoscript, SafeScript } from 'unhead/types'
 import type { ReactiveHead } from './schema'
 import type { MaybeSignal, ResolvableArray } from './util'
 

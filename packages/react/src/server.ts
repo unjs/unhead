@@ -1,5 +1,5 @@
-import type { CreateServerHeadOptions, MergeHead } from '@unhead/schema'
 import type { ReactNode } from 'react'
+import type { CreateServerHeadOptions, MergeHead } from 'unhead/types'
 import type { MaybeComputedRef, ReactiveHead, ReactUnhead } from './types'
 import { createElement } from 'react'
 import { createHead as _createHead } from 'unhead/server'

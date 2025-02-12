@@ -7,7 +7,7 @@ import type {
   MergeHead,
   Unhead,
   UseSeoMetaInput,
-} from '@unhead/schema'
+} from '../types'
 import { composableNames, unpackMeta, whitelistSafeInput } from '@unhead/shared'
 import { createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { DomPlugin } from '../client/plugins/domPlugin'

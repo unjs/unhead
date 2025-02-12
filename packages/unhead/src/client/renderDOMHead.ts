@@ -5,7 +5,7 @@ import type {
   HeadTag,
   RenderDomHeadOptions,
   Unhead,
-} from '@unhead/schema'
+} from '../types'
 import { HasElementTags, hashTag, normaliseProps, tagDedupeKey } from '@unhead/shared'
 
 /**

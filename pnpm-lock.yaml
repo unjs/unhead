@@ -364,6 +364,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/unhead
 
+  packages-aliased/schema: {}
+
   packages-aliased/ssr:
     dependencies:
       unhead:
@@ -375,9 +377,6 @@ importers:
       '@rollup/pluginutils':
         specifier: ^5.1.4
         version: 5.1.4(rollup@4.30.1)
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -415,9 +414,6 @@ importers:
       '@angular/core':
         specifier: ^19.1.5
         version: 19.1.5(rxjs@7.8.1)(zone.js@0.15.0)
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -427,9 +423,6 @@ importers:
 
   packages/react:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -447,20 +440,8 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
 
-  packages/schema:
-    dependencies:
-      hookable:
-        specifier: ^5.5.3
-        version: 5.5.3
-      zhead:
-        specifier: ^2.2.4
-        version: 2.2.4
-
   packages/schema-org:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -486,9 +467,6 @@ importers:
 
   packages/scripts:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -501,18 +479,15 @@ importers:
 
   packages/shared:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       packrup:
         specifier: ^0.1.2
         version: 0.1.2
+      unhead:
+        specifier: workspace:*
+        version: link:../unhead
 
   packages/unhead:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -526,9 +501,6 @@ importers:
 
   packages/vue:
     dependencies:
-      '@unhead/schema':
-        specifier: workspace:*
-        version: link:../schema
       '@unhead/shared':
         specifier: workspace:*
         version: link:../shared
@@ -7080,9 +7052,6 @@ packages:
   yoctocolors-cjs@2.1.2:
     resolution: {integrity: sha512-cYVsTjKl8b+FrnidjibDWskAv7UKOfcwaVZdp/it9n1s9fU3IkgDbhdIRKCW4JDsAlECJY0ytoVPT3sK6kideA==}
     engines: {node: '>=18'}
-
-  zhead@2.2.4:
-    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
 
   zone.js@0.15.0:
     resolution: {integrity: sha512-9oxn0IIjbCZkJ67L+LkhYWRyAy7axphb3VgE2MBDlOqnmHMPWGYMxJxBYFueFq/JGY2GMwS0rU+UCLunEmy5UA==}
@@ -14410,8 +14379,6 @@ snapshots:
   yocto-queue@1.1.1: {}
 
   yoctocolors-cjs@2.1.2: {}
-
-  zhead@2.2.4: {}
 
   zone.js@0.15.0: {}
 

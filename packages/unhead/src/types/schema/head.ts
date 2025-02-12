@@ -1,6 +1,16 @@
-import type { Base as _Base, HtmlAttributes as _HtmlAttributes, Meta as _Meta, Noscript as _Noscript, Style as _Style, BaseBodyAttributes, BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, Merge, MergeHead, MetaFlatInput, ScriptBase, Stringable } from 'zhead'
-import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from './tags'
-import type { Falsey, MaybeFunction, Never, ResolvableValues } from './util'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from '../tags'
+import type { DefinedValueOrEmptyObject, Falsey, MaybeFunction, Merge, MergeHead, Never, ResolvableValues, Stringable } from '../util'
+import type { DataKeys } from './attributes/data'
+import type { HttpEventAttributes } from './attributes/event'
+import type { Base as _Base } from './base'
+import type { BaseBodyAttributes, BodyEvents } from './bodyAttributes'
+import type { HtmlAttributes as _HtmlAttributes } from './htmlAttributes'
+import type { LinkBase } from './link'
+import type { Meta as _Meta } from './meta'
+import type { MetaFlatInput } from './metaFlat'
+import type { Noscript as _Noscript } from './noscript'
+import type { ScriptBase } from './script'
+import type { Style as _Style } from './style'
 
 export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
@@ -12,7 +22,7 @@ export interface SchemaAugmentations extends MergeHead {
   htmlAttrs: UserAttributesConfig
   bodyAttrs: UserAttributesConfig
   link: UserTagConfigWithoutInnerContent
-  meta: UserTagConfigWithoutInnerContent
+  meta: TagPriority & { processTemplateParams?: false }
   style: TagUserProperties
   script: TagUserProperties
   noscript: TagUserProperties
@@ -79,7 +89,7 @@ export type Base<E extends EntryAugmentation = Record<string, any>> = Resolvable
 export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
 export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
 export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase & DataKeys & SchemaAugmentations['script'] > & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
 export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
 export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
 export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
@@ -184,5 +194,6 @@ export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations>
 }
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
+export type UseHeadInput<T extends MergeHead = MergeHead> = Head<T>
 
-export type { BodyEvents, DataKeys, DefinedValueOrEmptyObject, HttpEventAttributes, LinkBase, MergeHead, MetaFlatInput, ScriptBase, SpeculationRules } from 'zhead'
+export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlatInput, type ScriptBase }

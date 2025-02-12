@@ -6,7 +6,7 @@ import type {
   MergeHead,
   Unhead,
   UseSeoMetaInput,
-} from '@unhead/schema'
+} from './types'
 import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
 
 export type UseHeadInput<T extends MergeHead> = Head<T>
