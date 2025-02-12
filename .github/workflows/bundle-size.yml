@@ -35,7 +35,7 @@ jobs:
         run: |
           output=$(bun bench/bundle/analyze.ts)
           echo "$output"
-          echo "::set-output name=result::$output"
+          echo "result=$output" >> $GITHUB_ENV
 
       - name: Post comment on PR
         uses: marocchino/sticky-pull-request-comment@v2
