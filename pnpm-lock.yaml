@@ -33,6 +33,9 @@ importers:
       bumpp:
         specifier: ^10.0.3
         version: 10.0.3(magicast@0.3.5)
+      devalue:
+        specifier: ^5.1.1
+        version: 5.1.1
       eslint:
         specifier: ^9.20.1
         version: 9.20.1(jiti@2.4.2)
@@ -267,7 +270,7 @@ importers:
         version: link:../../packages/schema-org
       '@unhead/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../packages-aliased/shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -319,7 +322,7 @@ importers:
         version: link:../../packages/schema-org
       '@unhead/shared':
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../../packages-aliased/shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -366,6 +369,12 @@ importers:
 
   packages-aliased/schema: {}
 
+  packages-aliased/shared:
+    dependencies:
+      unhead:
+        specifier: workspace:*
+        version: link:../../packages/unhead
+
   packages-aliased/ssr:
     dependencies:
       unhead:
@@ -377,9 +386,6 @@ importers:
       '@rollup/pluginutils':
         specifier: ^5.1.4
         version: 5.1.4(rollup@4.30.1)
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       estree-walker:
         specifier: ^3.0.3
         version: 3.0.3
@@ -423,9 +429,6 @@ importers:
 
   packages/react:
     dependencies:
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -442,9 +445,6 @@ importers:
 
   packages/schema-org:
     dependencies:
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../vue
@@ -467,9 +467,6 @@ importers:
 
   packages/scripts:
     dependencies:
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@unhead/vue':
         specifier: workspace:*
         version: link:../vue
@@ -477,33 +474,17 @@ importers:
         specifier: workspace:*
         version: link:../unhead
 
-  packages/shared:
-    dependencies:
-      packrup:
-        specifier: ^0.1.2
-        version: 0.1.2
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
-
   packages/unhead:
     dependencies:
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
-    devDependencies:
-      devalue:
-        specifier: ^5.1.1
-        version: 5.1.1
+      packrup:
+        specifier: ^0.1.2
+        version: 0.1.2
 
   packages/vue:
     dependencies:
-      '@unhead/shared':
-        specifier: workspace:*
-        version: link:../shared
       hookable:
         specifier: ^5.5.3
         version: 5.5.3

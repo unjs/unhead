@@ -1,5 +1,5 @@
 import type { HeadTag } from '../types'
-import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
+import { defineHeadPlugin, resolveTitleTemplate } from '../utils'
 
 export const TitleTemplatePlugin = defineHeadPlugin({
   hooks: {

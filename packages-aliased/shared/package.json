@@ -37,13 +37,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild ",
+    "stub": "unbuild  --stub"
   },
   "peerDependencies": {
     "unhead": "workspace:*"
-  },
-  "dependencies": {
-    "packrup": "^0.1.2"
   }
 }

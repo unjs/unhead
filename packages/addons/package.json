@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",
-    "@unhead/shared": "workspace:*",
     "estree-walker": "^3.0.3",
     "magic-string": "^0.30.17",
     "mlly": "^1.7.4",

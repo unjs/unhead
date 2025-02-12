@@ -1,4 +1,4 @@
-import { defineHeadPlugin, SortModifiers, tagWeight } from '@unhead/shared'
+import { defineHeadPlugin, SortModifiers, tagWeight } from '../utils'
 
 export const SortPlugin = defineHeadPlugin(head => ({
   hooks: {

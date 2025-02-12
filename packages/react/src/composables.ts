@@ -1,6 +1,6 @@
 import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from 'unhead/types'
 import type { UseHeadInput, UseSeoMetaInput } from './types'
-import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
+import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
 import { useContext, useEffect } from 'react'
 import { UnheadContext } from './context'
 

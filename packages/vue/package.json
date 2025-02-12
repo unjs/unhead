@@ -88,7 +88,6 @@
     ]
   },
   "dependencies": {
-    "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
   }

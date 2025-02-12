@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '@unhead/shared'
+import { defineHeadPlugin } from '../utils'
 
 export const XSSPlugin = defineHeadPlugin({
   hooks: {

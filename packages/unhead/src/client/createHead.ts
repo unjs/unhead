@@ -1,5 +1,5 @@
 import type { CreateClientHeadOptions, Head } from '../types'
-import { IsBrowser } from '@unhead/shared'
+import { IsBrowser } from '../utils'
 import { createHeadCore } from '../createHead'
 import { DomPlugin } from './plugins/domPlugin'
 import { ClientEventHandlerPlugin } from './plugins/eventHandlers'

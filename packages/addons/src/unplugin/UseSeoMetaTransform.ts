@@ -9,7 +9,7 @@ import {
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
-} from '@unhead/shared'
+} from 'unhead/utils'
 import { walk } from 'estree-walker'
 import MagicString from 'magic-string'
 import { findStaticImports, parseStaticImport } from 'mlly'

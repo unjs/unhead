@@ -1,5 +1,5 @@
 import type { HeadTag, TemplateParams } from '../types'
-import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
+import { defineHeadPlugin, processTemplateParams } from '../utils'
 
 const SupportedAttrs = {
   meta: 'content',

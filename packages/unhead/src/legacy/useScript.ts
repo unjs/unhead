@@ -1,5 +1,5 @@
 import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '../types'
-import { hashCode, ScriptNetworkEvents } from '@unhead/shared'
+import { hashCode, ScriptNetworkEvents } from '../utils'
 import { getActiveHead } from './index'
 
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })

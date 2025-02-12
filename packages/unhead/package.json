@@ -45,6 +45,10 @@
       "types": "./dist/legacy.d.ts",
       "import": "./dist/legacy.mjs"
     },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.mjs"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "import": "./dist/types.mjs"
@@ -69,6 +73,9 @@
       ],
       "types": [
         "dist/types"
+      ],
+      "utils": [
+        "dist/utils"
       ]
     }
   },
@@ -78,17 +85,15 @@
     "legacy.d.ts",
     "plugins.d.ts",
     "server.d.ts",
-    "types.d.ts"
+    "types.d.ts",
+    "utils.d.ts"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild",
+    "stub": "unbuild --stub"
   },
   "dependencies": {
-    "@unhead/shared": "workspace:*",
-    "hookable": "^5.5.3"
-  },
-  "devDependencies": {
-    "devalue": "^5.1.1"
+    "hookable": "^5.5.3",
+    "packrup": "^0.1.2"
   }
 }

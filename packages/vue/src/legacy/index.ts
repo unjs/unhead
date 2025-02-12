@@ -9,9 +9,9 @@ import type {
   UseSeoMetaInput,
   VueHeadClient,
 } from '../types'
-import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from '@unhead/shared'
 import { createHeadCore } from 'unhead'
 import { DeprecationsPlugin, PromisesPlugin } from 'unhead/plugins'
+import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from 'unhead/utils'
 import {
   getCurrentInstance,
   inject,

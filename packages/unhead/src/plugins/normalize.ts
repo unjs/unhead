@@ -1,4 +1,4 @@
-import { defineHeadPlugin, normaliseEntryTags } from '@unhead/shared'
+import { defineHeadPlugin, normaliseEntryTags } from '../utils'
 
 export const NormalizePlugin = defineHeadPlugin(head => ({
   hooks: {
