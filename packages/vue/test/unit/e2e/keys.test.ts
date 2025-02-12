@@ -68,9 +68,9 @@ describe('vue e2e keys', () => {
       [
         {
           "_d": "link:main-icon",
-          "_e": 1,
+          "_e": 2,
           "_h": "6b4a565",
-          "_p": 1024,
+          "_p": 2048,
           "key": "main-icon",
           "props": {
             "data-hid": "6b4a565",

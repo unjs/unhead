@@ -23,8 +23,8 @@ describe('tag priority', () => {
     expect(await head.resolveTags()).toMatchInlineSnapshot(`
       [
         {
-          "_e": 1,
-          "_p": 1024,
+          "_e": 2,
+          "_p": 2048,
           "props": {
             "src": "/very-important-script.js",
           },
@@ -32,8 +32,8 @@ describe('tag priority', () => {
           "tagPriority": "critical",
         },
         {
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "src": "/not-important-script.js",
           },
