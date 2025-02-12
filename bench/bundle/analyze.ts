@@ -13,9 +13,9 @@ function calculatePercentageDiff(current: number, previous: number): string {
   return `${diff.toFixed(2)}%`
 }
 
-function generateMarkdownTable(data: { name: string, size: number, gzippedSize: number, sizeDiff: string, gzippedSizeDiff: string, sizeDiffBytes: string }[]): string {
+function generateMarkdownTable(data: { name: string, size: number, gzippedSize: number, sizeDiff: string, gzippedSizeDiff: string, sizeDiffBytes: string, gzipSizeDiffBytes: string }[]): string {
   const headers = ['File', 'Size', 'Gzipped Size', 'Size Diff', 'Gzipped Size Diff']
-  const rows = data.map(item => [item.name, `${formatSize(item.size)} (${item.size} B)`, `${formatSize(item.gzippedSize)} (${item.gzippedSize} B)`, `${item.sizeDiff} (${item.sizeDiffBytes} B)`, `${item.gzippedSizeDiff} ( (${item.gzipSizeDiffBytes} B))`])
+  const rows = data.map(item => [item.name, `${formatSize(item.size)} (${item.size} B)`, `${formatSize(item.gzippedSize)} (${item.gzippedSize} B)`, `${item.sizeDiff} (${item.sizeDiffBytes} B)`, `${item.gzippedSizeDiff} ( ${item.gzipSizeDiffBytes} B)`])
   const table = [
     `| ${headers.join(' | ')} |`,
     `| ${headers.map(() => '---').join(' | ')} |`,
