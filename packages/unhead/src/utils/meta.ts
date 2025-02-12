@@ -69,6 +69,7 @@ interface PackingDefinition {
 const p = (p: string) => ({ keyValue: p, metaKey: 'property' }) as PackingDefinition
 const k = (p: string) => ({ keyValue: p }) as PackingDefinition
 
+// @ts-expect-error untyped
 export const MetaPackingSchema = new Map<string, PackingDefinition>([
   ['appleItunesApp', {
     unpack: {
