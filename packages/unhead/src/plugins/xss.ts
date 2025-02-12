@@ -1,6 +1,7 @@
 import { defineHeadPlugin } from '../utils'
 
 export const XSSPlugin = defineHeadPlugin({
+  key: 'xss',
   hooks: {
     'tags:afterResolve': (ctx) => {
       for (const tag of ctx.tags) {

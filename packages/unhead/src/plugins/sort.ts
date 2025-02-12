@@ -1,6 +1,7 @@
 import { defineHeadPlugin, SortModifiers, tagWeight } from '../utils'
 
 export const SortPlugin = defineHeadPlugin(head => ({
+  key: 'sort',
   hooks: {
     'tags:resolve': (ctx) => {
       // 2a. Sort based on priority

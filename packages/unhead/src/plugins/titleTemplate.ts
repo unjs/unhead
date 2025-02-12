@@ -2,6 +2,7 @@ import type { HeadTag } from '../types'
 import { defineHeadPlugin, resolveTitleTemplate } from '../utils'
 
 export const TitleTemplatePlugin = defineHeadPlugin({
+  key: 'title-template',
   hooks: {
     'tags:resolve': (ctx) => {
       const { tags } = ctx

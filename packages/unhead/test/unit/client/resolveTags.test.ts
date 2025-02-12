@@ -20,16 +20,16 @@ describe('resolveTags', () => {
       [
         {
           "_d": "title",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {},
           "tag": "title",
           "textContent": "My title",
         },
         {
           "_d": "meta:name:description",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "content": "My description",
             "name": "description",
@@ -50,16 +50,16 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 0,
-          "_p": 3,
+          "_e": 1,
+          "_p": 1027,
           "props": {
             "charset": "utf-8",
           },
           "tag": "meta",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_e": 1,
+          "_p": 1026,
           "props": {
             "src": "https://cdn.example.com/script.js",
           },
@@ -67,8 +67,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -77,16 +77,16 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "class": "dark",
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 0,
-          "_p": 4,
+          "_e": 1,
+          "_p": 1028,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",
@@ -118,8 +118,8 @@ describe('resolveTags', () => {
     expect(tags).toMatchInlineSnapshot(`
       [
         {
-          "_e": 1,
-          "_p": 1024,
+          "_e": 2,
+          "_p": 2048,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -149,16 +149,16 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 0,
-          "_p": 3,
+          "_e": 1,
+          "_p": 1027,
           "props": {
             "charset": "utf-8",
           },
           "tag": "meta",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_e": 1,
+          "_p": 1026,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -166,8 +166,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -176,16 +176,16 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "class": "dark",
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 0,
-          "_p": 4,
+          "_e": 1,
+          "_p": 1028,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",
@@ -223,8 +223,8 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "class": "foo bar something-new",
           },
@@ -232,8 +232,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "class": "foo2 bar2 something-new2",
           },
@@ -268,8 +268,8 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "class": "foo bar",
           },
@@ -301,8 +301,8 @@ describe('resolveTags', () => {
       [
         {
           "_d": "meta:name:description",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {
             "content": "desc",
             "name": "description",
@@ -311,8 +311,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "meta:name:description:1",
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "content": "desc 2",
             "name": "description",

@@ -24,6 +24,7 @@ export interface InferSeoMetaPluginOptions {
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin({
+    key: 'seo-meta',
     hooks: {
       entries: {
         resolve({ entries }) {

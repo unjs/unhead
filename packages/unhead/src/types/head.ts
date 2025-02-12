@@ -56,7 +56,7 @@ export interface HeadEntry<Input> {
 
 export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'> & { mode?: RuntimeMode }
 
-export type HeadPluginInput = HeadPluginOptions & { key?: string } | ((head: Unhead) => HeadPluginOptions & { key?: string })
+export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })
 export type HeadPlugin = HeadPluginOptions & { key?: string }
 
 /**
@@ -75,6 +75,10 @@ export interface ActiveHeadEntry<Input> {
    * Will queue side effects for removal.
    */
   dispose: () => void
+  /**
+   * @internal
+   */
+  _poll: () => void
 }
 
 export interface CreateHeadOptions {
@@ -124,11 +128,16 @@ export interface Unhead<Input extends Record<string, any> = Head> {
   /**
    * Registered plugins.
    */
-  plugins: HeadPlugin[]
+  plugins: Map<string, HeadPlugin>
+  /**
+   * The active head entries.
+   * @deprecated Use `entries`
+   */
+  headEntries: () => HeadEntry<Input>[]
   /**
    * The active head entries.
    */
-  headEntries: () => HeadEntry<Input>[]
+  entries: Map<number, HeadEntry<Input>>
   /**
    * Create a new head entry.
    */
@@ -178,6 +187,10 @@ export interface Unhead<Input extends Record<string, any> = Head> {
    * @internal
    */
   _separator?: string
+  /**
+   * @internal
+   */
+  _entryCount: number
 }
 
 export interface DomState {

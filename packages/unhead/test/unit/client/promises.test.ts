@@ -21,23 +21,23 @@ describe('promises', () => {
       [
         {
           "_d": "title",
-          "_e": 0,
-          "_p": 0,
+          "_e": 1,
+          "_p": 1024,
           "props": {},
           "tag": "title",
           "textContent": "hello",
         },
         {
-          "_e": 0,
-          "_p": 1,
+          "_e": 1,
+          "_p": 1025,
           "props": {
             "src": "https://example.com/script.js",
           },
           "tag": "script",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_e": 1,
+          "_p": 1026,
           "innerHTML": "test",
           "props": {},
           "tag": "script",

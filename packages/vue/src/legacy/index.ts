@@ -30,7 +30,9 @@ import { resolveUnrefHeadInput } from '../utils'
 export * from './useScript'
 export { createHeadCore, resolveUnrefHeadInput }
 
-export const CapoPlugin = () => defineHeadPlugin({})
+export const CapoPlugin = () => defineHeadPlugin({
+  key: 'capo',
+})
 
 export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
   return createVueHead({

@@ -46,31 +46,6 @@ describe('keepalive', () => {
       },
     })
 
-    const homeHeadSnapshot = `
-      [
-        {
-          "_d": "title",
-          "_e": 0,
-          "_p": 0,
-          "props": {},
-          "tag": "title",
-          "textContent": "home",
-        },
-      ]
-    `
-    const aboutHeadSnapshot = `
-      [
-        {
-          "_d": "title",
-          "_e": 1,
-          "_p": 1024,
-          "props": {},
-          "tag": "title",
-          "textContent": "about",
-        },
-      ]
-    `
-
     /*
       Steps 1 and 2 are used to enable instances of each component,
       and steps 3 and 4 are used to check that the deactivated hooks in `useHead` are working properly.
@@ -79,21 +54,65 @@ describe('keepalive', () => {
     // Step 1
     const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 1,
+          "_p": 1024,
+          "props": {},
+          "tag": "title",
+          "textContent": "home",
+        },
+      ]
+    `)
 
     // Step 2
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 2,
+          "_p": 2048,
+          "props": {},
+          "tag": "title",
+          "textContent": "about",
+        },
+      ]
+    `)
 
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(homeHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 1,
+          "_p": 1024,
+          "props": {},
+          "tag": "title",
+          "textContent": "home",
+        },
+      ]
+    `)
 
     // Step 4
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(aboutHeadSnapshot)
+    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+      [
+        {
+          "_d": "title",
+          "_e": 2,
+          "_p": 2048,
+          "props": {},
+          "tag": "title",
+          "textContent": "about",
+        },
+      ]
+    `)
   })
 })

@@ -12,7 +12,7 @@ describe('state', () => {
     expect(head.headEntries()).toMatchInlineSnapshot(`
       [
         {
-          "_i": 0,
+          "_i": 1,
           "input": {
             "title": "hello",
           },

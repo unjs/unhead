@@ -30,8 +30,8 @@ describe('dom order', () => {
     expect(firstTagRendered).toMatchInlineSnapshot(`
       {
         "_d": "htmlAttrs",
-        "_e": 0,
-        "_p": 0,
+        "_e": 1,
+        "_p": 1024,
         "props": {
           "class": "no-js",
         },

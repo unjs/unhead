@@ -1,6 +1,7 @@
 import { defineHeadPlugin } from '../../utils'
 
 export const PayloadPlugin = defineHeadPlugin({
+  key: 'payload',
   hooks: {
     'tags:beforeResolve': (ctx) => {
       const payload: { titleTemplate?: string | ((s: string) => string), templateParams?: Record<string, string>, title?: string } = {}
