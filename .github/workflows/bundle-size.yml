@@ -48,7 +48,4 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: Bundle Size Analysis
-          message: |
-            ```
-            ${{ steps.analyze.outputs.result }}
-            ```
+          message: ${{ steps.analyze.outputs.result }}
