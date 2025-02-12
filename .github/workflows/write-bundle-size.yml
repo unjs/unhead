@@ -34,7 +34,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Update stats
-        run: bun bench/bundle/analyze.ts
+        run: bun bench/bundle/update.ts
 
       - name: Commit changes
         run: |
