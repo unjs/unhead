@@ -1,5 +1,5 @@
-import type { CreateClientHeadOptions, MergeHead } from '@unhead/schema'
 import type { ReactNode } from 'react'
+import type { CreateClientHeadOptions, MergeHead } from 'unhead/types'
 import type { MaybeComputedRef, ReactiveHead, ReactUnhead } from './types'
 import { createElement } from 'react'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'

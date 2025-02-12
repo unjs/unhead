@@ -21,8 +21,8 @@
       "@unhead/scripts/*": ["packages/scripts/*"],
       "@unhead/addons": ["packages/addons/src"],
       "@unhead/addons/*": ["packages/addons/*"],
-      "@unhead/schema": ["packages/schema/src"],
-      "@unhead/schema/*": ["packages/schema/*"],
+      "@unhead/schema": ["packages-aliased/schema/src"],
+      "@unhead/schema/*": ["packages-aliased/schema/*"],
       "@unhead/shared": ["packages/shared/src"],
       "@unhead/shared/*": ["packages/shared/*"]
     },

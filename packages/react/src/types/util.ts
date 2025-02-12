@@ -1,5 +1,5 @@
-import type { Falsey } from '@unhead/schema'
 import type { RefObject } from 'react'
+import type { Falsey } from 'unhead/types'
 
 export type MaybeComputedRef<T> = T | (() => T) | RefObject<T>
 

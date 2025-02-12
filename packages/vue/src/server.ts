@@ -1,5 +1,5 @@
-import type { CreateServerHeadOptions, MergeHead } from '@unhead/schema'
 import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from '@unhead/vue'
+import type { CreateServerHeadOptions, MergeHead } from 'unhead/types'
 import { createHead as _createServerHead } from 'unhead/server'
 import { vueInstall } from './install'
 import { VueReactivityPlugin } from './VueReactivityPlugin'

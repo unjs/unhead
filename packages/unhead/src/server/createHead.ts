@@ -1,4 +1,4 @@
-import type { CreateServerHeadOptions, Head } from '@unhead/schema'
+import type { CreateServerHeadOptions, Head } from '../types'
 import { createHeadCore } from '../createHead'
 import { ServerEventHandlerPlugin } from './plugins/eventHandlers'
 import { PayloadPlugin } from './plugins/payload'

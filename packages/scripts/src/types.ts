@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, DataKeys, HeadEntryOptions, SchemaAugmentations, Script, ScriptBase } from '@unhead/schema'
+import type { ActiveHeadEntry, DataKeys, HeadEntryOptions, SchemaAugmentations, Script, ScriptBase } from 'unhead/types'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 

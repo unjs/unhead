@@ -1,4 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
+import type { HeadTag } from '../../../src/types'
 import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { describe, it } from 'vitest'

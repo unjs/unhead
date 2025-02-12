@@ -1,4 +1,4 @@
-import type { DomPluginOptions } from '@unhead/schema'
+import type { DomPluginOptions } from '../../types'
 import { defineHeadPlugin } from '@unhead/shared'
 
 export function DomPlugin(options: DomPluginOptions) {

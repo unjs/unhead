@@ -1,4 +1,4 @@
-import type { HeadTag, TemplateParams } from '@unhead/schema'
+import type { HeadTag, TemplateParams } from '../types'
 import { defineHeadPlugin, processTemplateParams } from '@unhead/shared'
 
 const SupportedAttrs = {

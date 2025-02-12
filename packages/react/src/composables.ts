@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from '@unhead/schema'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from 'unhead/types'
 import type { UseHeadInput, UseSeoMetaInput } from './types'
 import { unpackMeta, whitelistSafeInput } from '@unhead/shared'
 import { useContext, useEffect } from 'react'

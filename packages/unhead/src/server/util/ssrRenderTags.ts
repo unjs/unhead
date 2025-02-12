@@ -1,4 +1,4 @@
-import type { HeadTag, RenderSSRHeadOptions } from '@unhead/schema'
+import type { HeadTag, RenderSSRHeadOptions } from '../../types'
 import { propsToString } from './propsToString'
 import { tagToString } from './tagToString'
 

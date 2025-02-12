@@ -1,4 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
+import type { HeadTag } from 'unhead/types'
 import { UniqueTags } from './constants'
 
 const allowedMetaProperties = ['name', 'property', 'http-equiv']

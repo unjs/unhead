@@ -1,4 +1,4 @@
-import type { Falsey } from '@unhead/schema'
+import type { Falsey } from 'unhead/types'
 import type { ComputedRef, Ref } from 'vue'
 
 export type MaybeComputedRef<T> = T | (() => T) | ComputedRef<T> | Ref<T>

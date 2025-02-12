@@ -69,7 +69,6 @@
     ]
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
     "@unhead/shared": "workspace:*",
     "unhead": "workspace:*"
   },

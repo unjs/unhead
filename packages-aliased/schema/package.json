@@ -39,9 +39,5 @@
   "scripts": {
     "build": "unbuild .",
     "stub": "unbuild . --stub"
-  },
-  "dependencies": {
-    "hookable": "^5.5.3",
-    "zhead": "^2.2.4"
   }
 }

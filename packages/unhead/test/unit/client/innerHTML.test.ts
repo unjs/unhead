@@ -1,4 +1,4 @@
-import type { SpeculationRules } from '@unhead/schema'
+import type { SpeculationRules } from '../../../src/types/schema/struct/speculationRules'
 import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
 import { useDelayedSerializedDom, useDOMHead } from '../../util'

@@ -1,4 +1,4 @@
-import type { HeadTag } from '@unhead/schema'
+import type { HeadTag } from '../types'
 import { defineHeadPlugin, resolveTitleTemplate } from '@unhead/shared'
 
 export const TitleTemplatePlugin = defineHeadPlugin({

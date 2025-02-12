@@ -8,7 +8,7 @@ import type {
   HeadTag,
   RuntimeMode,
   Unhead,
-} from '@unhead/schema'
+} from './types'
 import { normaliseEntryTags } from '@unhead/shared'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'

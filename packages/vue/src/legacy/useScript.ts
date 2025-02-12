@@ -1,11 +1,11 @@
+import type { ResolvableProperties, UseHeadOptions } from '@unhead/vue'
+import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/legacy'
 import type {
   DataKeys,
   HeadEntryOptions,
   SchemaAugmentations,
   ScriptBase,
-} from '@unhead/schema'
-import type { ResolvableProperties, UseHeadOptions } from '@unhead/vue'
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/legacy'
+} from 'unhead/types'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import { useScript as _useScript } from 'unhead/legacy'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'

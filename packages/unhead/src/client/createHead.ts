@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, Head } from '@unhead/schema'
+import type { CreateClientHeadOptions, Head } from '../types'
 import { IsBrowser } from '@unhead/shared'
 import { createHeadCore } from '../createHead'
 import { DomPlugin } from './plugins/domPlugin'
