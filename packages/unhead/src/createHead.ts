@@ -1,4 +1,5 @@
 import type {
+  ActiveHeadEntry,
   CreateHeadOptions,
   Head,
   HeadEntry,
@@ -9,24 +10,22 @@ import type {
   RuntimeMode,
   Unhead,
 } from './types'
-import { normaliseEntryTags } from './utils'
 import { createHooks } from 'hookable'
 import { DedupePlugin, SortPlugin, TemplateParamsPlugin, TitleTemplatePlugin, XSSPlugin } from './plugins'
+import { normaliseEntryTags } from './utils'
 
 function filterMode(mode: RuntimeMode | undefined, ssr: boolean) {
   return !mode || (mode === 'server' && ssr) || (mode === 'client' && !ssr)
 }
 
 function registerPlugins(head: Unhead<any>, plugins: HeadPluginInput[], ssr: boolean) {
-  plugins.forEach((p) => {
+  for (const p of plugins) {
     const plugin = (typeof p === 'function' ? p(head) : p)
-    if (!plugin.key || !head.plugins.some(existingPlugin => existingPlugin.key === plugin.key)) {
-      head.plugins.push(plugin)
-      if (filterMode(plugin.mode, ssr)) {
-        head.hooks.addHooks(plugin.hooks || {})
-      }
+    if (filterMode(plugin.mode, ssr) && !head.plugins.has(plugin.key)) {
+      head.plugins.set(plugin.key, plugin)
+      head.hooks.addHooks(plugin.hooks || {})
     }
-  })
+  }
 }
 
 /**
