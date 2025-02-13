@@ -1,18 +1,26 @@
 import type { HeadSafe, HeadTag } from '../types'
+import type { BodyAttributes } from '../types/schema/bodyAttributes'
+import type { HtmlAttributes } from '../types/schema/htmlAttributes'
+import type { Link } from '../types/schema/link'
+import type { Meta } from '../types/schema/meta'
+import type { Noscript } from '../types/schema/noscript'
+import type { Script } from '../types/schema/script'
+import type { Style } from '../types/schema/style'
 import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 
 const WhitelistAttributes = {
-  htmlAttrs: new Set(['id', 'class', 'lang', 'dir']),
-  bodyAttrs: new Set(['id', 'class']),
-  meta: new Set(['id', 'name', 'property', 'charset', 'content']),
-  noscript: new Set(['id', 'textContent']),
-  script: new Set(['id', 'type', 'textContent', 'type']),
-  link: new Set(['id', 'color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type']),
+  htmlAttrs: new Set(['class', 'style', 'lang', 'dir'] satisfies (keyof HtmlAttributes)[]),
+  bodyAttrs: new Set(['class', 'style'] satisfies (keyof BodyAttributes)[]),
+  meta: new Set(['name', 'property', 'charset', 'content', 'media'] satisfies (keyof Meta)[]),
+  noscript: new Set(['textContent'] satisfies (Partial<keyof Noscript> | 'textContent')[]),
+  style: new Set(['media', 'textContent', 'nonce', 'title', 'blocking'] satisfies (Partial<keyof Style> | 'textContent')[]),
+  script: new Set(['type', 'textContent', 'nonce', 'blocking'] satisfies (Partial<keyof Script> | 'textContent')[]),
+  link: new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'] satisfies (keyof Link)[]),
 } as const
 
 function acceptDataAttrs(value: Record<string, string>) {
   return Object.fromEntries(
-    Object.entries(value || {}).filter(([key]) => key.startsWith('data-')),
+    Object.entries(value || {}).filter(([key]) => key === 'id' || key.startsWith('data-')),
   )
 }
 
@@ -35,14 +43,14 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
         }
       })
       break
-    // case 'style':
-    //   next = acceptDataAttrs(prev)
-    //   WhitelistAttributes.style.forEach((key) => {
-    //     if (prev[key]) {
-    //       next[key] = prev[key]
-    //     }
-    //   })
-    //   break
+    case 'style':
+      next = acceptDataAttrs(prev)
+      WhitelistAttributes.style.forEach((key) => {
+        if (prev[key]) {
+          next[key] = prev[key]
+        }
+      })
+      break
     // meta is safe, except for http-equiv
     case 'meta':
       WhitelistAttributes.meta.forEach((key) => {
@@ -60,10 +68,6 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
         }
         // block bad rel types
         if (key === 'rel' && (val === 'canonical' || val === 'modulepreload' || val === 'prerender' || val === 'preload' || val === 'prefetch')) {
-          return
-        }
-        // block stylesheets
-        if (key === 'rel' && val === 'stylesheet') {
           return
         }
         if (key === 'href') {

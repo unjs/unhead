@@ -1,6 +1,7 @@
+import type { GlobalAttributes } from './attributes/global'
 import type { Blocking } from './struct/blocking'
 
-export interface Style extends Blocking {
+export interface Style extends Pick<GlobalAttributes, 'nonce' | 'id'>, Blocking {
   /**
    * This attribute defines which media the style should be applied to.
    * Its value is a media query, which defaults to all if the attribute is missing.
@@ -22,8 +23,4 @@ export interface Style extends Blocking {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style#attr-title
    */
   title?: string
-  /**
-   * This attribute defines the unique ID.
-   */
-  id?: string
 }

@@ -4,7 +4,7 @@ import type { GlobalAttributes } from './attributes/global'
 import type { ReferrerPolicy } from './shared'
 import type { Blocking } from './struct/blocking'
 
-export interface ScriptBase extends Pick<GlobalAttributes, 'nonce'>, Blocking {
+export interface ScriptBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Blocking {
   /**
    * For classic scripts, if the async attribute is present,
    * then the classic script will be fetched in parallel to parsing and evaluated as soon as it is available.
@@ -81,11 +81,6 @@ export interface ScriptBase extends Pick<GlobalAttributes, 'nonce'>, Blocking {
     'application/ld+json' |
     'speculationrules' |
     (string & Record<never, never>)
-  /**
-   * This attribute defines the unique ID.
-   */
-  id?: string
-
   /**
    * A custom element name
    *
