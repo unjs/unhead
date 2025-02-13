@@ -100,7 +100,6 @@ export type UseFunctionType<T, U> = T extends {
 
 const ScriptProxyTarget = Symbol('ScriptProxyTarget')
 function scriptProxy() {}
-scriptProxy[ScriptProxyTarget] = true
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -283,6 +282,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
+    // @ts-expect-error untyped
+    scriptProxy[ScriptProxyTarget] = true
     return new Proxy((!accessor ? instance : instance?.[accessor]) || scriptProxy, {
       get(_, k, r) {
         // @ts-expect-error untyped

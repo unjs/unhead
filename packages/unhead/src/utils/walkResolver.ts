@@ -1,26 +1,30 @@
-export function walkResolver(ref: any, resolve: (v: any, k?: string) => any = v => v, key?: string | undefined): any {
-  // allow promises to bubble through
-  if (ref instanceof Date || ref instanceof RegExp || ref instanceof URL || ref === null || typeof ref === 'string' || typeof ref === 'number' || typeof ref === 'boolean')
-    return ref
+import type { PropResolver } from 'unhead/types'
 
-  const v = resolve(typeof ref === 'function' ? ref() : ref, key)
+export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
+  // Combined primitive type check
+  const type = typeof val
+
+  let v: any
+  if (!resolve || !key) {
+    v = type === 'function' ? val() : val
+  }
+  else if (resolve && (key === 'titleTemplate' || (key[0] === 'o' && key[1] === 'n'))) {
+    v = resolve(key, val)
+  }
+  else if (resolve) {
+    v = type === 'function' ? resolve(key, val()) : resolve(key, val)
+  }
 
   if (Array.isArray(v)) {
     return v.map(r => walkResolver(r, resolve))
   }
-  if (typeof v === 'object') {
-    const result: Record<string, any> = {}
 
-    for (const key in v) {
-      if (!Object.hasOwn(v, key))
-        continue
-      // let upstream handle the function unfurl
-      result[key] = key === 'titleTemplate' || key.startsWith('on')
-        ? resolve(v[key], key)
-        : walkResolver(v[key], resolve, key)
+  if (v?.constructor === Object) {
+    const next: Record<string, any> = {}
+    for (const key of Object.keys(v)) {
+      next[key] = walkResolver(v[key], resolve, key)
     }
-
-    return result
+    return next
   }
 
   return v

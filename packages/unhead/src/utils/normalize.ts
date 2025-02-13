@@ -1,4 +1,4 @@
-import type { Head, HeadTag } from '../types'
+import type { Head, HeadTag, PropResolver } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { DupeableTags, TagConfigKeys } from './const'
 
@@ -127,7 +127,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     : tag
 }
 
-export function normalizeEntryToTags(input: Head<any>, propResolvers: any): HeadTag[] {
+export function normalizeEntryToTags(input: Head<any>, propResolvers: PropResolver[]): HeadTag[] {
   if (!input) {
     return []
   }
@@ -138,13 +138,15 @@ export function normalizeEntryToTags(input: Head<any>, propResolvers: any): Head
     // @ts-expect-error untyped
     return normalizeEntryToTags(input(), propResolvers)
   }
-  input = walkResolver(input, (val, k) => (propResolvers || [])
-    // @ts-expect-error untyped
-    .reduce((res, resolver) => {
-      const v = resolver(k, res, null)
-      return v !== undefined ? v : res
-    }, val))
-
+  input = walkResolver(input, (key, val) => {
+    let res = val
+    for (let i = 0; i < propResolvers.length; i++) {
+      const v = propResolvers[i](key, res)
+      if (v !== undefined)
+        res = v
+    }
+    return res
+  })
   Object.entries(input).forEach(([key, value]) => {
     if (value === undefined)
       return

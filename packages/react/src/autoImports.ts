@@ -1,5 +1,11 @@
-import { composableNames } from 'unhead/utils'
-
 export const hookImports = {
-  '@unhead/vue': ['useUnhead', ...composableNames],
+  '@unhead/vue': [
+    'useUnhead',
+    'useHead',
+    'useSeoMeta',
+    'useHeadSafe',
+    'useServerHead',
+    'useServerSeoMeta',
+    'useServerHeadSafe',
+  ],
 }

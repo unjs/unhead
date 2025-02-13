@@ -90,7 +90,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
       let hasFlatMeta = false
       for (const e of ctx.entries) {
         const normalizeCtx = {
-          tags: normalizeEntryToTags(e.input, resolvedOptions.propResolvers)
+          tags: normalizeEntryToTags(e.input, resolvedOptions.propResolvers || [])
             .map(t => Object.assign(t, e.options)),
           entry: e,
         }

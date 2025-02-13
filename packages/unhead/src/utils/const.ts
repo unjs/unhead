@@ -25,15 +25,6 @@ export const UniqueTags = new Set(['base', 'title', 'titleTemplate', 'bodyAttrs'
 
 export const TagConfigKeys = new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
 
-export const composableNames = [
-  'useHead',
-  'useSeoMeta',
-  'useHeadSafe',
-  'useServerHead',
-  'useServerSeoMeta',
-  'useServerHeadSafe',
-]
-
 export const ScriptNetworkEvents = new Set(['onload', 'onerror'])
 
 export const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])

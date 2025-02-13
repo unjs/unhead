@@ -40,7 +40,7 @@ const WEIGHT_MAP = {
   },
 } as const
 
-const isImportStyle = /@import/.test.bind(/@import/)
+const ImportStyleRe = /@import/
 const isTruthy = (val?: string | boolean) => val === '' || val === true
 
 export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T): number {
@@ -100,7 +100,7 @@ export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T): number 
 
   // Handle style tags
   else if (tag.tag === 'style') {
-    weight = tag.innerHTML && isImportStyle(tag.innerHTML)
+    weight = tag.innerHTML && ImportStyleRe.test(tag.innerHTML)
       ? weightMap.style.imported
       : weightMap.style.sync
   }

@@ -1,8 +1,5 @@
 import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
 import type {
-  Ref,
-} from 'vue'
-import type {
   UseHeadInput,
   UseHeadOptions,
   UseHeadSafeInput,
@@ -19,11 +16,10 @@ import {
   onBeforeUnmount,
   onDeactivated,
   ref,
-  unref,
-  watch,
   watchEffect,
 } from 'vue'
 import { headSymbol } from './install'
+import { VueResolver } from './resolver'
 
 export function injectHead() {
   if (hasInjectionContext()) {
@@ -45,15 +41,15 @@ export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: Us
 function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const deactivated = ref(false)
 
-  const resolvedInput: Ref<UseHeadInput<T>> = ref({})
+  let entry: ActiveHeadEntry<UseHeadInput<T>>
   watchEffect(() => {
-    resolvedInput.value = deactivated.value
-      ? {}
-      : walkResolver(input, v => unref(v))
-  })
-  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
-  watch(resolvedInput, (e) => {
-    entry.patch(e)
+    const i = deactivated.value ? {} : walkResolver(input, VueResolver)
+    if (entry) {
+      entry.patch(i)
+    }
+    else {
+      entry = head.push(i, options)
+    }
   })
 
   const vm = getCurrentInstance()
@@ -68,7 +64,7 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
       deactivated.value = false
     })
   }
-  return entry
+  return entry!
 }
 
 export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
