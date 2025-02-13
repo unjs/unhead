@@ -1,4 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
+import { TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
@@ -21,6 +22,10 @@ describe('ssr vue templateParams', () => {
         separator,
         siteName: () => 'My Awesome Site',
       },
+    }, {
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
 
     expect(headResult).toMatchInlineSnapshot(`
@@ -69,6 +74,10 @@ describe('ssr vue templateParams', () => {
           description: 'A Nuxt 3 playground',
         },
       },
+    }, {
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
 
     expect(headResult).toMatchInlineSnapshot(`
@@ -91,6 +100,10 @@ describe('ssr vue templateParams', () => {
       titleTemplate: '%s %separator %siteName',
       templateParams: {
       },
+    }, {
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
 
     expect(headResult).toMatchInlineSnapshot(`
@@ -111,6 +124,10 @@ describe('ssr vue templateParams', () => {
       templateParams: {
         separator: '/',
       },
+    }, {
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
 
     expect(headResult).toMatchInlineSnapshot(`
@@ -132,6 +149,10 @@ describe('ssr vue templateParams', () => {
         separator: '/',
         siteName: 'My Awesome Site',
       },
+    }, {
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
 
     expect(headResult).toMatchInlineSnapshot(`
@@ -148,6 +169,9 @@ describe('ssr vue templateParams', () => {
   it('edge case', async () => {
     const head = createHead({
       disableDefaults: true,
+      plugins: [
+        TemplateParamsPlugin,
+      ],
     })
     head.push({
       title: '%site.tagline',
