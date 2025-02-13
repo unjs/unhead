@@ -11,7 +11,6 @@ import type {
 } from './types'
 import { createHooks } from 'hookable'
 import { AliasSortingPlugin } from './plugins/aliasSorting'
-import { TemplateParamsPlugin } from './plugins/templateParams'
 import { isMetaArrayDupeKey, sortTags, tagWeight, UsesMergeStrategy, ValidHeadTags } from './utils'
 import { dedupeKey } from './utils/dedupe'
 import { normalizeEntryToTags } from './utils/normalize'
@@ -190,7 +189,6 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
     },
   }
   ;[
-    TemplateParamsPlugin,
     AliasSortingPlugin,
     ...resolvedOptions?.plugins || [],
   ].forEach(p => registerPlugin(head, p))
