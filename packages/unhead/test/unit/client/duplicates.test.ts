@@ -1,7 +1,6 @@
 import { renderDOMHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { useDOMHead } from '../../util'
+import { useDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
   it('basic', async () => {
@@ -27,7 +26,7 @@ describe('dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <meta name="description" content="desc"><meta name="description" content="desc 2"></head>
+      <meta name="description" content="desc 2"></head>
       <body>
 
       <div>
@@ -40,64 +39,6 @@ describe('dom', () => {
     `)
 
     entry.dispose()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      </head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-  })
-
-  it('empty dedupe', async () => {
-    const head = useDOMHead()
-
-    head.push({
-      meta: [
-        {
-          key: 'description',
-          name: 'description',
-          content: 'desc',
-        },
-      ],
-    })
-
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-
-      <meta name="description" content="desc"></head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-
-    head.push({
-      meta: [
-        {
-          key: 'name:description',
-        },
-      ],
-    })
 
     await renderDOMHead(head, { document: dom.window.document })
 

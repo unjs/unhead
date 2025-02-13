@@ -1,5 +1,5 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { InferSeoMetaPlugin } from 'unhead/plugins'
+import { InferSeoMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 
@@ -24,19 +24,13 @@ describe('inferSeoMetaPlugin', () => {
       ],
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<title>My Title</title>
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+      "<title>My Title</title>
       <meta name="description" content="My Description">
       <meta property="og:image" content="https://example.com/image.jpg">
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="My Title">
-      <meta property="og:description" content="My Description">
-      <meta name="twitter:card" content="summary_large_image">",
-        "htmlAttrs": "",
-      }
+      <meta property="og:description" content="My Description">"
     `)
   })
   it('conflicts', async () => {
@@ -49,7 +43,7 @@ describe('inferSeoMetaPlugin', () => {
       title: 'Title',
       meta: [
         {
-          name: 'og:description',
+          property: 'og:description',
           content: 'My OG description',
         },
         {
@@ -59,16 +53,11 @@ describe('inferSeoMetaPlugin', () => {
       ],
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<title>Title</title>
-      <meta name="og:description" content="My OG description">
-      <meta property="og:title" content="My OG title">",
-        "htmlAttrs": "",
-      }
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+      "<title>Title</title>
+      <meta property="og:description" content="My OG description">
+      <meta property="og:title" content="My OG title">
+      <meta name="twitter:card" content="summary_large_image">"
     `)
   })
   it('empty meta', async () => {
@@ -86,6 +75,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="Title">",
         "htmlAttrs": "",
       }
@@ -94,7 +84,10 @@ describe('inferSeoMetaPlugin', () => {
   it('template params', async () => {
     const head = createHead({
       disableDefaults: true,
-      plugins: [InferSeoMetaPlugin()],
+      plugins: [
+        InferSeoMetaPlugin(),
+        TemplateParamsPlugin,
+      ],
     })
     head.push({
       title: 'Title - %siteName',
@@ -109,6 +102,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="Title - My Site">",
         "htmlAttrs": "",
       }
@@ -133,6 +127,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="Title">",
         "htmlAttrs": "",
       }
@@ -149,7 +144,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
       }
     `)
@@ -169,7 +164,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "",
+        "headTags": "<meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
       }
     `)
@@ -184,6 +179,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="test">",
         "htmlAttrs": "",
       }
@@ -206,6 +202,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="Title - My Site">",
         "htmlAttrs": "",
       }
@@ -215,7 +212,10 @@ describe('inferSeoMetaPlugin', () => {
   it('null title / title template', async () => {
     const head = createHead({
       disableDefaults: true,
-      plugins: [InferSeoMetaPlugin()],
+      plugins: [
+        InferSeoMetaPlugin(),
+        TemplateParamsPlugin,
+      ],
     })
     head.push({
       title: null,
@@ -231,6 +231,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>My Site</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="My Site">",
         "htmlAttrs": "",
       }
@@ -240,7 +241,10 @@ describe('inferSeoMetaPlugin', () => {
   it('multiple title templates', async () => {
     const head = createHead({
       disableDefaults: true,
-      plugins: [InferSeoMetaPlugin()],
+      plugins: [
+        InferSeoMetaPlugin(),
+        TemplateParamsPlugin,
+      ],
     })
 
     head.push({
@@ -258,6 +262,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
+      <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" content="test">",
         "htmlAttrs": "",
       }

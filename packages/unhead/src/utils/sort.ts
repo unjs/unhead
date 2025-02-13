@@ -1,84 +1,109 @@
-import type { HeadTag, Unhead } from 'unhead/types'
+import type { HeadTag, Unhead } from '../types'
 
-export const TAG_WEIGHTS = {
-  // tags
+// @ts-expect-error untyped
+export const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
+
+const TAG_WEIGHTS = {
   base: -10,
   title: 10,
 } as const
 
-export const TAG_ALIASES = {
-  // relative scores to their default values
-  critical: -80,
-  high: -10,
-  low: 20,
+const TAG_ALIASES = {
+  critical: -8,
+  high: -1,
+  low: 2,
 } as const
 
-export const SortModifiers = [{ prefix: 'before:', offset: -1 }, { prefix: 'after:', offset: 1 }]
+const WEIGHT_MAP = {
+  meta: {
+    'content-security-policy': -30,
+    'charset': -20,
+    'viewport': -15,
+  },
+  link: {
+    'preconnect': 20,
+    'stylesheet': 60,
+    'preload': 70,
+    'modulepreload': 70,
+    'prefetch': 90,
+    'dns-prefetch': 90,
+    'prerender': 90,
+  },
+  script: {
+    async: 30,
+    defer: 80,
+    sync: 50,
+  },
+  style: {
+    imported: 40,
+    sync: 60,
+  },
+} as const
 
-const importRe = /@import/
+const isImportStyle = /@import/.test.bind(/@import/)
 const isTruthy = (val?: string | boolean) => val === '' || val === true
 
-export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T) {
-  const priority = tag.tagPriority
-  if (typeof priority === 'number')
-    return priority
-  const isScript = tag.tag === 'script'
-  const isLink = tag.tag === 'link'
-  const isStyle = tag.tag === 'style'
+export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T): number {
+  if (typeof tag.tagPriority === 'number')
+    return tag.tagPriority
+
   let weight = 100
-  if (tag.tag === 'meta') {
-    // CSP needs to be as it effects the loading of assets
-    if (tag.props['http-equiv'] === 'content-security-policy')
-      weight = -30
-    // charset must come early in case there's non-utf8 characters in the HTML document
-    else if (tag.props.charset)
-      weight = -20
-    else if (tag.props.name === 'viewport')
-      weight = -15
-  }
-  else if (isLink && tag.props.rel === 'preconnect') {
-    // preconnects should almost always come first
-    weight = 20
-  }
-  else if (tag.tag in TAG_WEIGHTS) {
+
+  const offset = TAG_ALIASES[tag.tagPriority as keyof typeof TAG_ALIASES] || 0
+  const weightMap = head.resolvedOptions.disableCapoSorting
+    ? {
+        link: {},
+        script: {},
+        style: {},
+      } as typeof WEIGHT_MAP
+    : WEIGHT_MAP
+
+  // Handle basic tag weights
+  if (tag.tag in TAG_WEIGHTS) {
     weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
   }
-  if (priority && priority in TAG_ALIASES) {
-    // @ts-expect-e+rror untyped
-    return weight + TAG_ALIASES[priority as keyof typeof TAG_ALIASES]
+  // Handle meta tags
+  else if (tag.tag === 'meta') {
+    const metaType = tag.props['http-equiv'] === 'content-security-policy'
+      ? 'content-security-policy'
+      : tag.props.charset
+        ? 'charset'
+        : tag.props.name === 'viewport'
+          ? 'viewport'
+          : null
+
+    if (metaType)
+      weight = WEIGHT_MAP.meta[metaType as keyof typeof WEIGHT_MAP.meta]
   }
-  if (tag.tagPosition && tag.tagPosition !== 'head') {
-    return weight
+
+  // Handle link tags
+  else if (tag.tag === 'link' && tag.props.rel) {
+    weight = weightMap.link[tag.props.rel as keyof typeof weightMap.link]
   }
-  if (!head.ssr || head.resolvedOptions.disableCapoSorting) {
-    return weight
+
+  // Handle script tags
+  else if (tag.tag === 'script') {
+    if (isTruthy(tag.props.async)) {
+      weight = weightMap.script.async
+    }
+    else if (tag.props.src
+      && !isTruthy(tag.props.defer)
+      && !isTruthy(tag.props.async)
+      && tag.props.type !== 'module'
+      && !tag.props.type?.endsWith('json')) {
+      weight = weightMap.script.sync
+    }
+    else if (isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) {
+      weight = weightMap.script.defer
+    }
   }
-  if (isScript && isTruthy(tag.props.async)) {
-    // ASYNC_SCRIPT
-    weight = 30
-    // SYNC_SCRIPT
+
+  // Handle style tags
+  else if (tag.tag === 'style') {
+    weight = tag.innerHTML && isImportStyle(tag.innerHTML)
+      ? weightMap.style.imported
+      : weightMap.style.sync
   }
-  else if (isStyle && tag.innerHTML && importRe.test(tag.innerHTML)) {
-    // IMPORTED_STYLES
-    weight = 40
-  }
-  else if (isScript && tag.props.src && !isTruthy(tag.props.defer) && !isTruthy(tag.props.async) && tag.props.type !== 'module' && !tag.props.type?.endsWith('json')) {
-    weight = 50
-  }
-  else if ((isLink && tag.props.rel === 'stylesheet') || tag.tag === 'style') {
-    // SYNC_STYLES
-    weight = 60
-  }
-  else if (isLink && (tag.props.rel === 'preload' || tag.props.rel === 'modulepreload')) {
-    // PRELOAD
-    weight = 70
-  }
-  else if (isScript && isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) {
-    // DEFER_SCRIPT
-    weight = 80
-  }
-  else if (isLink && (tag.props.rel === 'prefetch' || tag.props.rel === 'dns-prefetch' || tag.props.rel === 'prerender')) {
-    weight = 90
-  }
-  return weight
+
+  return (weight || 100) + offset
 }

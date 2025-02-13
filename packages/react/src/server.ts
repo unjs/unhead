@@ -4,16 +4,19 @@ import type { MaybeComputedRef, ReactiveHead, ReactUnhead } from './types'
 import { createElement } from 'react'
 import { createHead as _createHead } from 'unhead/server'
 import { UnheadContext } from './context'
-import { ReactReactivityPlugin } from './ReactReactivityPlugin'
 
-export * from 'unhead/server'
+export { extractUnheadInputFromHtml, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
 
-export function createHead<T extends MergeHead>(options: CreateServerHeadOptions = {}): ReactUnhead<T> {
+export function createHead<T extends MergeHead>(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): ReactUnhead<T> {
   return _createHead<MaybeComputedRef<ReactiveHead<T>>>({
     ...options,
-    plugins: [
-      ...(options.plugins || []),
-      ReactReactivityPlugin,
+    propResolvers: [
+      (_: string, r: any) => {
+        if (typeof r === 'object' && 'current' in r) {
+          return r.current
+        }
+        return r
+      },
     ],
   }) as ReactUnhead<T>
 }

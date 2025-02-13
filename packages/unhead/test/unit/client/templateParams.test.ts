@@ -1,11 +1,13 @@
 import { useHead } from 'unhead'
+import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext, useDelayedSerializedDom, useDOMHead } from '../../util'
+import { createClientHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
 describe('templateParams', () => {
   it('basic', async () => {
-    const head = useDOMHead()
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
 
     useHead(head, {
       templateParams: {
@@ -77,7 +79,9 @@ describe('templateParams', () => {
   })
 
   it('separator', async () => {
-    const head = useDOMHead()
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
 
     useHead(head, {
       templateParams: {
@@ -108,7 +112,9 @@ describe('templateParams', () => {
   })
 
   it('json', async () => {
-    const head = useDOMHead()
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
 
     useHead(head, {
       title: 'Home & //<"With Encoding">\\',
@@ -140,7 +146,9 @@ describe('templateParams', () => {
   })
 
   it('inheritance', async () => {
-    const head = useDOMHead()
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
 
     useHead(head, {
       templateParams: {
@@ -187,6 +195,7 @@ describe('templateParams', () => {
     })
     const head = createClientHeadWithContext({
       document: dom.window.document,
+      plugins: [TemplateParamsPlugin],
     })
     useHead(head, {
       title: 'test',

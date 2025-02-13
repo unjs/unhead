@@ -1,6 +1,6 @@
-import { useHead } from 'unhead'
-import { createHead, renderSSRHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
+import { useHead } from '../packages/unhead/src'
+import { createHead, renderSSRHead } from '../packages/unhead/src/server'
 
 describe('ssr bench', () => {
   bench('x50 ssr', async () => {
@@ -20,6 +20,15 @@ describe('ssr bench', () => {
       useHead(head, {
         // de-dupe keys
         title: `${page.title}-${i} | Nuxt`,
+        bodyAttrs: {
+          style: {
+            color: 'red',
+            background: 'blue',
+          },
+          class: {
+            dark: true,
+          },
+        },
         meta: [
           {
             name: 'description',

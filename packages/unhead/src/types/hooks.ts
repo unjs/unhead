@@ -34,14 +34,17 @@ export interface DomBeforeRenderCtx extends ShouldRenderContext {
 export interface ShouldRenderContext { shouldRender: boolean }
 export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
+interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
+
 export interface HeadHooks {
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
+  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => HookResult
   'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => HookResult
-  'tags:beforeResolve': (ctx: { tags: HeadTag[] }) => HookResult
-  'tags:resolve': (ctx: { tags: HeadTag[] }) => HookResult
-  'tags:afterResolve': (ctx: { tags: HeadTag[] }) => HookResult
+  'tags:beforeResolve': (ctx: TagResolveContext) => HookResult
+  'tags:resolve': (ctx: TagResolveContext) => HookResult
+  'tags:afterResolve': (ctx: TagResolveContext) => HookResult
 
   // client
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => HookResult

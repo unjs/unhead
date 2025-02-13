@@ -4,19 +4,22 @@ import type { MaybeComputedRef, ReactiveHead, ReactUnhead } from './types'
 import { createElement } from 'react'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { UnheadContext } from './context'
-import { ReactReactivityPlugin } from './ReactReactivityPlugin'
 
-export * from 'unhead/client'
+export { renderDOMHead } from 'unhead/client'
 
-export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): ReactUnhead<T> {
+export function createHead<T extends MergeHead>(options: Omit<CreateClientHeadOptions, 'propResolvers'> = {}): ReactUnhead<T> {
   const head = _createHead<MaybeComputedRef<ReactiveHead<T>>>({
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
     ...options,
-    plugins: [
-      ...(options.plugins || []),
-      ReactReactivityPlugin,
+    propResolvers: [
+      (_: string, r: any) => {
+        if (typeof r === 'object' && 'current' in r) {
+          return r.current
+        }
+        return r
+      },
     ],
   }) as ReactUnhead<T>
   return head

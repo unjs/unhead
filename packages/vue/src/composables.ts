@@ -9,7 +9,8 @@ import type {
   UseSeoMetaInput,
   VueHeadClient,
 } from './types'
-import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
+import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
+import { walkResolver } from 'unhead/utils'
 import {
   getCurrentInstance,
   hasInjectionContext,
@@ -18,11 +19,11 @@ import {
   onBeforeUnmount,
   onDeactivated,
   ref,
+  unref,
   watch,
   watchEffect,
 } from 'vue'
 import { headSymbol } from './install'
-import { resolveUnrefHeadInput } from './utils'
 
 export function injectHead() {
   if (hasInjectionContext()) {
@@ -48,7 +49,7 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   watchEffect(() => {
     resolvedInput.value = deactivated.value
       ? {}
-      : resolveUnrefHeadInput(input)
+      : walkResolver(input, v => unref(v))
   })
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
   watch(resolvedInput, (e) => {
@@ -71,33 +72,24 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
 }
 
 export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  const head = options.head || injectHead()
+  head.use(SafeInputPlugin)
+  options._safe = true
   // @ts-expect-error untyped
-  return useHead(input, { ...options, transform: whitelistSafeInput })
+  return useHead(input, options)
 }
 
-export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> {
+export function useSeoMeta(input: UseSeoMetaInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+  const head = options.head || injectHead()
+  head.use(FlatMetaPlugin)
   const { title, titleTemplate, ...meta } = input
   return useHead({
     title,
     titleTemplate,
     // @ts-expect-error runtime type
     _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
-      // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      return {
-        // @ts-expect-error runtime type
-        ...t,
-        meta,
-      }
-    },
-  })
+  }, options)
 }
-
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   return useHead<T>(input, { ...options, mode: 'server' })
 }

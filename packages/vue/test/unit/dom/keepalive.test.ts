@@ -58,8 +58,8 @@ describe('keepalive', () => {
       [
         {
           "_d": "title",
-          "_e": 1,
           "_p": 1024,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "home",
@@ -74,8 +74,8 @@ describe('keepalive', () => {
       [
         {
           "_d": "title",
-          "_e": 2,
           "_p": 2048,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "about",
@@ -90,8 +90,8 @@ describe('keepalive', () => {
       [
         {
           "_d": "title",
-          "_e": 1,
           "_p": 1024,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "home",
@@ -106,8 +106,8 @@ describe('keepalive', () => {
       [
         {
           "_d": "title",
-          "_e": 2,
           "_p": 2048,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "about",

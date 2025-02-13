@@ -117,6 +117,7 @@ describe('schema.org ssr ids', () => {
       }),
     ], {
       tagDuplicateStrategy: 'replace',
+      tagPosition: 'bodyOpen',
     })
 
     const tags = await ssrHead.resolveTags()

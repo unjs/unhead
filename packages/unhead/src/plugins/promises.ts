@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '../utils'
+import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 
 async function resolvePromisesRecursively(root: any): Promise<any> {
   if (root instanceof Promise) {
@@ -12,9 +12,8 @@ async function resolvePromisesRecursively(root: any): Promise<any> {
     const resolved: Record<string, string> = {}
 
     for (const k in root) {
-      if (!Object.prototype.hasOwnProperty.call(root, k)) {
+      if (!Object.hasOwn(root, k))
         continue
-      }
 
       resolved[k] = await resolvePromisesRecursively(root[k])
     }
@@ -24,7 +23,7 @@ async function resolvePromisesRecursively(root: any): Promise<any> {
   return root
 }
 
-export const PromisesPlugin = defineHeadPlugin({
+export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'promises',
   hooks: {
     'entries:resolve': async (ctx) => {

@@ -1,13 +1,19 @@
-import type { CreateServerHeadOptions, Head } from '../types'
+import type { CreateServerHeadOptions, Head, HeadTag } from '../types'
 import { createHeadCore } from '../createHead'
-import { ServerEventHandlerPlugin } from './plugins/eventHandlers'
-import { PayloadPlugin } from './plugins/payload'
 
 export function createHead<T extends Record<string, any> = Head>(options: CreateServerHeadOptions = {}) {
-  return createHeadCore<T>({
+  const unhead = createHeadCore<T>({
     ...options,
     // @ts-expect-error untyped
     document: false,
+    propResolvers: [
+      ...(options.propResolvers || []),
+      (k, v) => {
+        if (k && k.startsWith('on') && typeof v === 'function') {
+          return `this.dataset.${k}fired = true`
+        }
+      },
+    ],
     init: [
       options.disableDefaults
         ? undefined
@@ -27,10 +33,30 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
           },
       ...(options.init || []),
     ],
-    plugins: [
-      ...(options.plugins || []),
-      PayloadPlugin,
-      ServerEventHandlerPlugin,
-    ],
   })
+  unhead.use({
+    key: 'server',
+    hooks: {
+      'tags:resolve': function (ctx) {
+        const title = ctx.tagMap.get('title') as HeadTag | undefined
+        const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
+        const templateParams = ctx.tagMap.get('templateParams') as HeadTag | undefined
+        const payload = {
+          title: title?.mode === 'server' ? unhead._title : undefined,
+          titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
+          templateParams: templateParams?.mode === 'server' ? unhead._templateParams : undefined,
+        }
+        // filter non-values
+        if (Object.values(payload).some(Boolean)) {
+          // add tag for rendering
+          ctx.tags.push({
+            tag: 'script',
+            innerHTML: JSON.stringify(payload),
+            props: { id: 'unhead:payload', type: 'application/json' },
+          })
+        }
+      },
+    },
+  })
+  return unhead
 }

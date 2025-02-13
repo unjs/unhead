@@ -479,9 +479,6 @@ importers:
       hookable:
         specifier: ^5.5.3
         version: 5.5.3
-      packrup:
-        specifier: ^0.1.2
-        version: 0.1.2
 
   packages/vue:
     dependencies:
@@ -5291,9 +5288,6 @@ packages:
 
   package-manager-detector@0.2.9:
     resolution: {integrity: sha512-+vYvA/Y31l8Zk8dwxHhL3JfTuHPm6tlxM2A3GeQyl7ovYnSp1+mzAxClxaOr0qO1TtPxbQxetI7v5XqKLJZk7Q==}
-
-  packrup@0.1.2:
-    resolution: {integrity: sha512-ZcKU7zrr5GlonoS9cxxrb5HVswGnyj6jQvwFBa6p5VFw7G71VAHcUKL5wyZSU/ECtPM/9gacWxy2KFQKt1gMNA==}
 
   pacote@20.0.0:
     resolution: {integrity: sha512-pRjC5UFwZCgx9kUFDVM9YEahv4guZ1nSLqwmWiLUnDbGsjs+U5w7z6Uc8HNR1a6x8qnu5y9xtGE6D1uAuYz+0A==}
@@ -12485,8 +12479,6 @@ snapshots:
   package-json-from-dist@1.0.1: {}
 
   package-manager-detector@0.2.9: {}
-
-  packrup@0.1.2: {}
 
   pacote@20.0.0:
     dependencies:

@@ -12,10 +12,6 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
   const lineBreaks = !options?.omitLineBreaks ? '\n' : ''
 
   for (const tag of tags) {
-    // avoid rendering empty tags
-    if (Object.keys(tag.props).length === 0 && !tag.innerHTML && !tag.textContent) {
-      continue
-    }
     if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
       Object.assign(schema[tag.tag], tag.props)
       continue

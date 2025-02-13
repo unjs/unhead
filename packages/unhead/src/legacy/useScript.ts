@@ -1,12 +1,12 @@
 import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '../types'
-import { hashCode, ScriptNetworkEvents } from '../utils'
+import { ScriptNetworkEvents } from '../utils/const'
 import { getActiveHead } from './index'
 
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
-  return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+  return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
 }
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'

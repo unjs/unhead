@@ -1,7 +1,7 @@
 import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, MergeHead } from 'unhead/types'
 import type { UseHeadInput, UseSeoMetaInput } from './types'
 import { useContext, useEffect } from 'react'
-import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
+import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
 import { UnheadContext } from './context'
 
 export function useUnhead() {
@@ -34,30 +34,20 @@ export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: He
 }
 
 export function useHeadSafe(input: HeadSafe, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
+  const head = options.head || useUnhead()
+  head.use(SafeInputPlugin)
+  options._safe = true
   // @ts-expect-error untyped
-  return useHead(input, { ...options, transform: whitelistSafeInput })
+  return useHead(input, options)
 }
 
-export function useSeoMeta(input: UseSeoMetaInput, options?: HeadEntryOptions): ActiveHeadEntry<any> {
+export function useSeoMeta(input: UseSeoMetaInput, options: HeadEntryOptions = {}): ActiveHeadEntry<any> {
+  const head = options.head || useUnhead()
+  head.use(FlatMetaPlugin)
   const { title, titleTemplate, ...meta } = input
   return useHead({
     title,
     titleTemplate,
-    // we need to input the meta so the reactivity will be resolved
-    // @ts-expect-error runtime type
     _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
-      // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      return {
-        // @ts-expect-error runtime type
-        ...t,
-        meta,
-      }
-    },
-  })
+  }, options)
 }

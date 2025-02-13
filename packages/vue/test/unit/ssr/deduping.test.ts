@@ -24,7 +24,7 @@ describe('vue ssr deduping', () => {
       })
     })
 
-    expect(headResult.headTags).toMatchInlineSnapshot(`"<script data-hid="722c761">console.log('B')</script>"`)
+    expect(headResult.headTags).toMatchInlineSnapshot(`"<script src="test" data-hid="my-script">console.log('B')</script>"`)
   })
 
   it('null attr override', async () => {
@@ -54,6 +54,6 @@ describe('vue ssr deduping', () => {
       })
     })
 
-    expect(headResult.headTags).toMatchInlineSnapshot(`"<script data-hid="722c761">console.log('B')</script>"`)
+    expect(headResult.headTags).toMatchInlineSnapshot(`"<script src="test" fetchpriority="high" data-hid="my-script">console.log('B')</script>"`)
   })
 })

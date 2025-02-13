@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createHead } from 'unhead/client'
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { useScript } from '../../src/useScript'
 
 describe('useScript events', () => {

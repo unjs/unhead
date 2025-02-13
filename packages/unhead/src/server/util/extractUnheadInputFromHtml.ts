@@ -1,4 +1,4 @@
-import type { UseHeadInput } from 'unhead'
+import type { Head } from '../../types'
 
 const Attrs = /(\w+)(?:=["']([^"']*)["'])?/g
 const HtmlTag = /<html[^>]*>/
@@ -19,12 +19,12 @@ function extractAttributes(tag: string) {
     const sep = attr.indexOf('=')
     const key = sep > 0 ? attr.slice(0, sep) : attr
     const val = sep > 0 ? attr.slice(sep + 1).slice(1, -1) : true
-    return { ...acc, [key]: val, tagPriority: 'low' }
+    return { ...acc, [key]: val }
   }, {}) || {}
 }
 
 export function extractUnheadInputFromHtml(html: string) {
-  const input: UseHeadInput<any> = {}
+  const input: Head<any> = {}
   input.htmlAttrs = extractAttributes(html.match(HtmlTag)?.[0] || '')
   html = html.replace(HtmlTag, '<html>')
 
@@ -45,10 +45,7 @@ export function extractUnheadInputFromHtml(html: string) {
     .forEach((tag) => {
       html = html.replace(tag, '')
       const type = tag.match(/<([a-z-]+)/)?.[1] as 'script' | 'title'
-      const res = {
-        tagPriority: 'low',
-        ...extractAttributes(tag),
-      } as any
+      const res = extractAttributes(tag) as any
       const innerContent = tag.match(/>([\s\S]*)</)?.[1]
       if (innerContent) {
         res[type !== 'script' ? 'textContent' : 'innerHTML'] = innerContent

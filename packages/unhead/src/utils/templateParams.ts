@@ -1,6 +1,7 @@
-import type { TemplateParams } from 'unhead/types'
+import type { TemplateParams } from '../types'
 
-const sepSub = '%separator'
+const SepSub = '%separator'
+const SepSubRE = new RegExp(`${SepSub}(?:\\s*${SepSub})*`, 'g')
 
 // for each %<word> token replace it with the corresponding runtime config or an empty value
 function sub(p: TemplateParams, token: string, isJson = false) {
@@ -16,12 +17,14 @@ function sub(p: TemplateParams, token: string, isJson = false) {
   }
   else { val = p[token] as string | undefined }
   if (val !== undefined) {
-    return isJson ? (val || '').replace(/"/g, '\\"') : val || ''
+    return isJson
+      ? (val || '')
+          .replace(/</g, '\\u003C')
+          .replace(/"/g, '\\"')
+      : val || ''
   }
   return undefined
 }
-
-const sepSubRe = new RegExp(`${sepSub}(?:\\s*${sepSub})*`, 'g')
 
 export function processTemplateParams(s: string, p: TemplateParams, sep: string, isJson = false) {
   // return early
@@ -40,10 +43,10 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string,
     return s
   }
 
-  const hasSepSub = s.includes(sepSub)
+  const hasSepSub = s.includes(SepSub)
 
   s = s.replace(/%\w+(?:\.\w+)?/g, (token) => {
-    if (token === sepSub || !tokens.includes(token)) {
+    if (token === SepSub || !tokens.includes(token)) {
       return token
     }
 
@@ -57,12 +60,12 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string,
   // we need to remove separators if they're next to each other or if they're at the start or end of the string
   // for example: %separator %separator %title should return %title
   if (hasSepSub) {
-    if (s.endsWith(sepSub))
-      s = s.slice(0, -sepSub.length)
-    if (s.startsWith(sepSub))
-      s = s.slice(sepSub.length)
+    if (s.endsWith(SepSub))
+      s = s.slice(0, -SepSub.length)
+    if (s.startsWith(SepSub))
+      s = s.slice(SepSub.length)
     // make sure we don't have two separators next to each other
-    s = s.replace(sepSubRe, sep).trim()
+    s = s.replace(SepSubRE, sep).trim()
   }
   return s
 }

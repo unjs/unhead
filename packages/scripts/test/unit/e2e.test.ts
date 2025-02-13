@@ -1,9 +1,8 @@
-import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
-import { useHead } from 'unhead'
+import { renderDOMHead } from 'unhead/client'
+import { useHead } from 'unhead/composables'
+import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../unhead/test/fixtures'
-import { createClientHeadWithContext, createServerHeadWithContext } from '../../../unhead/test/util'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/useScript'
 
 describe('unhead e2e scripts', () => {

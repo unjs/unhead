@@ -1,3 +1,3 @@
-export * from './proxy'
-export * from './types'
-export * from './useScript'
+export type * from './types'
+export { useScript } from './useScript'
+export { createSpyProxy } from './utils'
