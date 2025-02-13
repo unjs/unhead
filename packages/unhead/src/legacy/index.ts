@@ -6,7 +6,6 @@ import type {
 import { createHeadCore } from '../createHead'
 import { DeprecationsPlugin } from '../plugins/deprecations'
 import { PromisesPlugin } from '../plugins/promises'
-import { composableNames } from '../utils/const'
 
 export * from '../index'
 export * from './useScript'
@@ -20,11 +19,19 @@ export function getActiveHead() {
 export const unheadComposablesImports = [
   {
     from: 'unhead',
-    imports: composableNames,
+    imports: [
+      'useHead',
+      'useHeadSafe',
+      'useSeoMeta',
+    ],
   },
 ]
 
-export { composableNames }
+export const composableNames = [
+  'useHead',
+  'useHeadSafe',
+  'useSeoMeta',
+]
 
 export function createServerHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   return activeHead.value = createHeadCore<T>({
