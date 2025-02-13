@@ -12,4 +12,9 @@ export default defineBuildConfig({
     { input: 'src/legacy/index', name: 'legacy' },
     { input: 'src/types/index', name: 'types' },
   ],
+  hooks: {
+    'rollup:options': (_, options) => {
+      options.experimentalLogSideEffects = true
+    },
+  },
 })

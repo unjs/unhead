@@ -1,12 +1,12 @@
 import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '../types'
-import { hashCode, ScriptNetworkEvents } from '../utils'
+import { ScriptNetworkEvents } from '../utils/const'
 import { getActiveHead } from './index'
 
 export type UseScriptInput = string | (Omit<Script, 'src'> & { src: string })
 export type UseScriptResolvedInput = Omit<Script, 'src'> & { src: string }
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
-  return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+  return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
 }
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
@@ -100,7 +100,6 @@ export type UseFunctionType<T, U> = T extends {
 
 const ScriptProxyTarget = Symbol('ScriptProxyTarget')
 function scriptProxy() {}
-scriptProxy[ScriptProxyTarget] = true
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -283,6 +282,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // support deprecated behavior
   script.$script = script
   const proxyChain = (instance: any, accessor?: string | symbol, accessors?: (string | symbol)[]) => {
+    // @ts-expect-error untyped
+    scriptProxy[ScriptProxyTarget] = true
     return new Proxy((!accessor ? instance : instance?.[accessor]) || scriptProxy, {
       get(_, k, r) {
         // @ts-expect-error untyped

@@ -18,22 +18,42 @@ export interface HeadEntry<Input> {
    * User provided input for the entry.
    */
   input: Input
-  /**
-   * Optional resolved input which will be used if set.
-   */
-  resolvedInput?: Input
-  /**
-   * The mode that the entry should be used in.
-   *
-   * @internal
-   */
-  mode?: RuntimeMode
-  /**
-   * Transformer function for the entry.
-   *
-   * @internal
-   */
-  transform?: (input: Input) => Input
+  options?: {
+    /**
+     * Transformer function for the entry.
+     *
+     * @internal
+     */
+    transform?: (input: Input) => Input
+    /**
+     * The mode that the entry should be used in.
+     *
+     * @internal
+     */
+    mode?: RuntimeMode
+    /**
+     * Default tag position.
+     *
+     * @internal
+     */
+    tagPosition?: TagPosition['tagPosition']
+    /**
+     * Default tag priority.
+     *
+     * @internal
+     */
+    tagPriority?: TagPriority['tagPriority']
+    /**
+     * Default tag duplicate strategy.
+     *
+     * @internal
+     */
+    tagDuplicateStrategy?: HeadTag['tagDuplicateStrategy']
+    /**
+     * @internal
+     */
+    _safe?: boolean
+  }
   /**
    * Head entry index
    *
@@ -41,23 +61,17 @@ export interface HeadEntry<Input> {
    */
   _i: number
   /**
-   * Default tag position.
+   * Resolved tags
    *
    * @internal
    */
-  tagPosition?: TagPosition['tagPosition']
-  /**
-   * Default tag priority.
-   *
-   * @internal
-   */
-  tagPriority?: TagPriority['tagPriority']
+  _tags?: HeadTag[]
 }
 
-export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'> & { mode?: RuntimeMode }
+export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'>
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })
-export type HeadPlugin = HeadPluginOptions & { key?: string }
+export type HeadPlugin = HeadPluginOptions & { key: string }
 
 /**
  * An active head entry provides an API to manipulate it.
@@ -81,6 +95,8 @@ export interface ActiveHeadEntry<Input> {
   _poll: () => void
 }
 
+export type PropResolver = (key: string, value: any, tag?: HeadTag) => any
+
 export interface CreateHeadOptions {
   document?: Document
   plugins?: HeadPluginInput[]
@@ -97,6 +113,10 @@ export interface CreateHeadOptions {
    * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
    */
   disableCapoSorting?: boolean
+  /**
+   * Prop resolvers for tags.
+   */
+  propResolvers?: PropResolver[]
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -120,8 +140,11 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   mode?: RuntimeMode
-  transform?: (input: unknown) => unknown
   head?: Unhead
+  /**
+   * @internal
+   */
+  _safe?: boolean
 }
 
 export interface Unhead<Input extends Record<string, any> = Head> {
@@ -130,14 +153,15 @@ export interface Unhead<Input extends Record<string, any> = Head> {
    */
   plugins: Map<string, HeadPlugin>
   /**
-   * The active head entries.
-   * @deprecated Use `entries`
-   */
-  headEntries: () => HeadEntry<Input>[]
-  /**
-   * The active head entries.
+   * The head entries.
    */
   entries: Map<number, HeadEntry<Input>>
+  /**
+   * The active head entries.
+   *
+   * @deprecated Use entries instead.
+   */
+  headEntries: () => HeadEntry<Input>[]
   /**
    * Create a new head entry.
    */
@@ -191,10 +215,18 @@ export interface Unhead<Input extends Record<string, any> = Head> {
    * @internal
    */
   _entryCount: number
+  /**
+   * @internal
+   */
+  _title?: string
+  /**
+   * @internal
+   */
+  _titleTemplate?: string
 }
 
 export interface DomState {
   pendingSideEffects: SideEffectsRecord
   sideEffects: SideEffectsRecord
-  elMap: Record<string, Element>
+  elMap: Map<string, Element | Element[]>
 }

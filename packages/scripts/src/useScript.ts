@@ -13,11 +13,11 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { hashCode, ScriptNetworkEvents } from 'unhead/utils'
+import { ScriptNetworkEvents } from 'unhead/utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
-  return input.key || hashCode(input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : ''))
+  return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
 }
 
 const PreconnectServerModes = ['preconnect', 'dns-prefetch']
@@ -161,7 +161,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         }
         // status should get updated from script events
         script.entry = head.push({
-          script: [{ ...defaults, ...input, key: `script.${id}` }],
+          script: [{ ...defaults, ...input }],
         }, options)
       }
       if (cb)

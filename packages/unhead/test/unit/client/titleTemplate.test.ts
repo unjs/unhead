@@ -1,6 +1,5 @@
 import { renderDOMHead } from 'unhead/client'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('titleTemplate', () => {
   it('string replace', async () => {

@@ -2,8 +2,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e json', () => {
   it('valid object json', async () => {

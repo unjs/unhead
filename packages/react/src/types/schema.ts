@@ -130,6 +130,10 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
    */
   bodyAttrs?: BodyAttributes<E['bodyAttrs']>
+  /**
+   * @internal
+   */
+  _flatMeta?: ResolvableProperties<MetaFlatInput>
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: ReactUnhead<any> }

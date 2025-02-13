@@ -1,9 +1,8 @@
 import { useHead, useSeoMeta } from 'unhead'
 import { renderSSRHead } from 'unhead/server'
-import { transformHtmlTemplate } from 'unhead/server/transformHtmlTemplate'
 import { describe, it } from 'vitest'
-import { basicSchema } from '../../fixtures'
-import { createServerHeadWithContext } from '../../util'
+import { transformHtmlTemplate } from '../../../src/server/transformHtmlTemplate'
+import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('ssr', () => {
   it('basic', async () => {
@@ -154,9 +153,9 @@ describe('ssr', () => {
       <meta property="og:locale:alternate" content="fr">
       <meta property="og:locale:alternate" content="zh">
       <meta property="og:image" content="https://example.com/image.png">
-      <meta property="og:image:alt" content="My amazing image">
       <meta property="og:image:width" content="800">
       <meta property="og:image:height" content="600">
+      <meta property="og:image:alt" content="My amazing image">
       <meta name="description" content="test">
       <meta name="twitter:card" content="summary_large_image">",
         "htmlAttrs": "",
@@ -289,9 +288,9 @@ describe('ssr', () => {
       <meta charset="utf-16">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
-      <link rel="stylesheet" href="style.css">
-      <script src="script.js" async type="module"></script></head>
-      <body style="background-color: blue; accent-color: red">
+      <script src="script.js" async type="module"></script>
+      <link rel="stylesheet" href="style.css"></head>
+      <body style="accent-color:red;background-color:blue">
       <div>hello</div>
       <script src="ssr.test.ts"></script>
       <script>

@@ -62,7 +62,7 @@ describe('vue dom useHeadSafe', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"><script data-foo="test"></script></head>
+      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"></head>
       <body class="dark" data-bar="foo"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })

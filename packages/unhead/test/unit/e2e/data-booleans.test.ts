@@ -2,8 +2,7 @@ import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e data true', () => {
   it('truthy', async () => {

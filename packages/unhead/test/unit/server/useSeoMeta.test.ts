@@ -4,6 +4,15 @@ import { describe, it } from 'vitest'
 import { createServerHeadWithContext } from '../../util'
 
 describe('useSeoMeta', () => {
+  it('charset', async () => {
+    const head = createServerHeadWithContext()
+
+    useSeoMeta(head, {
+      charset: 'utf-8',
+    })
+
+    expect((await renderSSRHead(head)).headTags).toContain('<meta charset="utf-8">')
+  })
   it('themeColor array', async () => {
     const head = createServerHeadWithContext()
 
@@ -64,21 +73,15 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<meta name="twitter:image" content="/twitter-image.png">
+    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+      "<meta name="twitter:image" content="/twitter-image.png">
       <meta name="twitter:image:alt" content="test">
       <meta name="twitter:image:width" content="100">
       <meta name="twitter:image:height" content="100">
       <meta name="twitter:image" content="/twitter-image2.png">
       <meta name="twitter:image:alt" content="test">
       <meta name="twitter:image:width" content="100">
-      <meta name="twitter:image:height" content="100">",
-        "htmlAttrs": "",
-      }
+      <meta name="twitter:image:height" content="100">"
     `)
   })
 
@@ -346,20 +349,20 @@ describe('useSeoMeta', () => {
       <meta property="book:tag" content="Apple">
       <meta property="book:tag" content="Steve Jobs">
       <meta property="og:audio" content="https://example.com">
+      <meta property="og:audio:secure:url" content="https://example.com">
       <meta property="og:audio:type" content="audio/mpeg">
-      <meta property="og:audio:secure_url" content="https://example.com">
       <meta property="og:image" content="https://example.com">
       <meta property="og:image:alt" content="First">
+      <meta property="og:image:height" content="1337">
+      <meta property="og:image:secure:url" content="https://example.com">
       <meta property="og:image:type" content="image/gif">
       <meta property="og:image:width" content="1337">
-      <meta property="og:image:height" content="1337">
-      <meta property="og:image:secure_url" content="https://example.com">
       <meta property="og:video" content="https://example.com">
       <meta property="og:video:alt" content="Alt">
+      <meta property="og:video:height" content="1337">
+      <meta property="og:video:secure:url" content="https://example.com">
       <meta property="og:video:type" content="application/x-shockwave-flash">
       <meta property="og:video:width" content="1337">
-      <meta property="og:video:height" content="1337">
-      <meta property="og:video:secure_url" content="https://example.com">
       <meta name="apple-itunes-app" content="app-id=id, app-argument=https://example.com">
       <meta name="apple-mobile-web-app-capable" content="yes">
       <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -503,31 +506,31 @@ describe('useSeoMeta', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta property="og:audio" content="https://example.com">
+      <meta property="og:audio:secure:url" content="https://example.com">
       <meta property="og:audio:type" content="audio/mpeg">
-      <meta property="og:audio:secure_url" content="https://example.com">
       <meta property="og:image" content="https://first.com">
       <meta property="og:image:alt" content="First">
+      <meta property="og:image:height" content="1337">
+      <meta property="og:image:secure:url" content="https://first.com">
       <meta property="og:image:type" content="image/gif">
       <meta property="og:image:width" content="1337">
-      <meta property="og:image:height" content="1337">
-      <meta property="og:image:secure_url" content="https://first.com">
       <meta property="og:image" content="https://second.com">
       <meta property="og:image:alt" content="Second">
+      <meta property="og:image:height" content="1337">
+      <meta property="og:image:secure:url" content="https://second.com">
       <meta property="og:image:type" content="image/gif">
       <meta property="og:image:width" content="1337">
-      <meta property="og:image:height" content="1337">
-      <meta property="og:image:secure_url" content="https://second.com">
       <meta property="og:video" content="https://example.com">
       <meta property="og:video:alt" content="Alt">
+      <meta property="og:video:height" content="1337">
+      <meta property="og:video:secure:url" content="https://example.com">
       <meta property="og:video:type" content="application/x-shockwave-flash">
       <meta property="og:video:width" content="1337">
-      <meta property="og:video:height" content="1337">
-      <meta property="og:video:secure_url" content="https://example.com">
       <meta name="twitter:image" content="https://example.com">
       <meta name="twitter:image:alt" content="Alt">
-      <meta name="twitter:image:type" content="image/gif">
       <meta name="twitter:image:width" content="1337">
-      <meta name="twitter:image:height" content="1337">",
+      <meta name="twitter:image:height" content="1337">
+      <meta name="twitter:image:type" content="image/gif">",
         "htmlAttrs": "",
       }
     `)
@@ -572,25 +575,25 @@ describe('useSeoMeta', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<meta property="og:audio" content="https://example.com">
-      <meta property="og:audio:type" content="audio/mpeg">
       <meta property="og:audio:secure_url" content="https://example.com">
+      <meta property="og:audio:type" content="audio/mpeg">
       <meta property="og:image" content="https://first.com">
+      <meta property="og:image:secure_url" content="https://first.com">
       <meta property="og:image:alt" content="First">
+      <meta property="og:image:height" content="1337">
       <meta property="og:image:type" content="image/gif">
       <meta property="og:image:width" content="1337">
-      <meta property="og:image:height" content="1337">
-      <meta property="og:image:secure_url" content="https://first.com">
       <meta property="og:video" content="https://example.com">
+      <meta property="og:video:secure_url" content="https://example.com">
       <meta property="og:video:alt" content="Alt">
+      <meta property="og:video:height" content="1337">
       <meta property="og:video:type" content="application/x-shockwave-flash">
       <meta property="og:video:width" content="1337">
-      <meta property="og:video:height" content="1337">
-      <meta property="og:video:secure_url" content="https://example.com">
       <meta name="twitter:image" content="https://example.com">
       <meta name="twitter:image:alt" content="Alt">
-      <meta name="twitter:image:type" content="image/gif">
       <meta name="twitter:image:width" content="1337">
-      <meta name="twitter:image:height" content="1337">",
+      <meta name="twitter:image:height" content="1337">
+      <meta name="twitter:image:type" content="image/gif">",
         "htmlAttrs": "",
       }
     `)

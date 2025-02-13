@@ -79,33 +79,25 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   innerHTML?: string
   textContent?: string
   /**
-   * Entry ID
    * @internal
    */
-  _e?: number
+  _w?: number
   /**
-   * Position
    * @internal
    */
   _p?: number
   /**
-   * Dedupe key
    * @internal
    */
   _d?: string
   /**
-   * Hash code used to represent the tag.
    * @internal
    */
   _h?: string
   /**
    * @internal
    */
-  _m?: RuntimeMode
-  /**
-   * @internal
-   */
-  _eventHandlers?: Record<string, ((e: Event) => Record<string, any> | void)>
+  mode?: RuntimeMode
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

@@ -72,7 +72,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         return
 
       // // useSeoMeta may be auto-imported or may not be
-      const packages = ['unhead', '@unhead/vue', 'unhead']
+      const packages = ['unhead', '@unhead/vue', '@unhead/react']
       const statements = findStaticImports(code).filter(i => packages.includes(i.specifier))
       const importNames: Record<string, string> = {}
       for (const i of statements.flatMap(i => parseStaticImport(i))) {
@@ -168,9 +168,13 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 return
               const propertyKey = property.key
               // store the AST object in meta
-              const key = resolveMetaKeyType(propertyKey.name)
+              let key = resolveMetaKeyType(propertyKey.name)
               const keyValue = resolveMetaKeyValue(propertyKey.name)
-              const valueKey = key === 'charset' ? 'charset' : 'content'
+              let valueKey = 'content'
+              if (keyValue === 'charset') {
+                valueKey = 'charset'
+                key = 'charset'
+              }
               let value = code.substring(property.value.start as number, property.value.end as number)
               if (property.value.type === 'ArrayExpression') {
                 // @todo add support for og:image arrays

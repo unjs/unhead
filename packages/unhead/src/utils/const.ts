@@ -11,8 +11,6 @@ export const HasElementTags = new Set([
 ])
 export const ValidHeadTags = new Set([
   'title',
-  'titleTemplate',
-  'templateParams',
   'base',
   'htmlAttrs',
   'bodyAttrs',
@@ -27,16 +25,17 @@ export const UniqueTags = new Set(['base', 'title', 'titleTemplate', 'bodyAttrs'
 
 export const TagConfigKeys = new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
 
-export const IsBrowser = typeof window !== 'undefined'
-
-export const composableNames = [
-  'useHead',
-  'useSeoMeta',
-  'useHeadSafe',
-  'useServerHead',
-  'useServerSeoMeta',
-  'useServerHeadSafe',
-]
-
-export const NetworkEvents = new Set(['onload', 'onerror', 'onabort', 'onprogress', 'onloadstart'])
 export const ScriptNetworkEvents = new Set(['onload', 'onerror'])
+
+export const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
+
+export const MetaTagsArrayable = new Set([
+  'theme-color',
+  'google-site-verification',
+  'og',
+  'article',
+  'book',
+  'profile',
+  'twitter',
+  'author',
+])

@@ -3,6 +3,11 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
+  hooks: {
+    'rollup:options': (_, options) => {
+      options.experimentalLogSideEffects = true
+    },
+  },
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/plugins/index', name: 'plugins' },

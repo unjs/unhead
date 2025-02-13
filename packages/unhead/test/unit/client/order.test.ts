@@ -2,8 +2,7 @@ import type { HeadTag } from '../../../src/types'
 import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('dom order', () => {
   it('renders in registered order', async () => {
@@ -30,10 +29,12 @@ describe('dom order', () => {
     expect(firstTagRendered).toMatchInlineSnapshot(`
       {
         "_d": "htmlAttrs",
-        "_e": 1,
         "_p": 1024,
+        "_w": 100,
         "props": {
-          "class": "no-js",
+          "class": Set {
+            "no-js",
+          },
         },
         "tag": "htmlAttrs",
       }

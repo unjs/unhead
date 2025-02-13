@@ -10,8 +10,9 @@ import type {
   VueHeadClient,
 } from '../types'
 import { createHeadCore } from 'unhead'
-import { DeprecationsPlugin, PromisesPlugin } from 'unhead/plugins'
-import { defineHeadPlugin, unpackMeta, whitelistSafeInput } from 'unhead/utils'
+import { DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin } from 'unhead/plugins'
+import { defineHeadPlugin } from 'unhead/utils'
+import { walkResolver } from 'unhead/utils/walkResolver'
 import {
   getCurrentInstance,
   inject,
@@ -19,6 +20,7 @@ import {
   onBeforeUnmount,
   onDeactivated,
   ref,
+  unref,
   watch,
   watchEffect,
 } from 'vue'
@@ -30,9 +32,11 @@ import { resolveUnrefHeadInput } from '../utils'
 export * from './useScript'
 export { createHeadCore, resolveUnrefHeadInput }
 
-export const CapoPlugin = () => defineHeadPlugin({
-  key: 'capo',
-})
+export function CapoPlugin() {
+  return defineHeadPlugin({
+    key: 'capo',
+  })
+}
 
 export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
   return createVueHead({
@@ -85,7 +89,7 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   watchEffect(() => {
     resolvedInput.value = deactivated.value
       ? {}
-      : resolveUnrefHeadInput(input)
+      : walkResolver(input, v => unref(v))
   })
   const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
   watch(resolvedInput, (e) => {
@@ -107,32 +111,28 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   return entry
 }
 
-export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadSafeInput> | void {
-  // @ts-expect-error untyped
-  return useHead(input, { ...options, transform: whitelistSafeInput })
+export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {
+  const head = options.head || injectHead()
+  if (head) {
+    head.use(SafeInputPlugin)
+    options._safe = true
+    // @ts-expect-error untyped
+    return useHead(input, options)
+  }
 }
 
 export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> | void {
-  const { title, titleTemplate, ...meta } = input
-  return useHead({
-    title,
-    titleTemplate,
-    // @ts-expect-error runtime type
-    _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
+  const head = options?.head || injectHead()
+  if (head) {
+    head.use(FlatMetaPlugin)
+    const { title, titleTemplate, ...meta } = input
+    return useHead({
+      title,
+      titleTemplate,
       // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      return {
-        // @ts-expect-error runtime type
-        ...t,
-        meta,
-      }
-    },
-  })
+      _flatMeta: meta,
+    }, options)
+  }
 }
 
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {

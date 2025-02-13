@@ -84,6 +84,7 @@ describe('ssr e2e bench', () => {
     // start the vue rendererer
     // Nuxt SEO experiments
     head.use({
+      key: 'nuxt-seo-experiments',
       hooks: {
         'tags:resolve': async ({ tags }) => {
           // iterate through tags that require absolute URLs and add the host base

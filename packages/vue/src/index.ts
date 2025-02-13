@@ -1,25 +1,17 @@
 import { createHeadCore } from 'unhead'
-import { resolveUnrefHeadInput } from './utils'
 
 // composables
-export * from './autoImports'
-
-export const CapoPlugin = () => ({})
+export { unheadVueComposablesImports } from './autoImports'
 
 // core
 export {
   createHeadCore,
 }
 
-// utils
-export {
-  resolveUnrefHeadInput,
-}
-
-export * from './composables'
+export { injectHead, useHead, useHeadSafe, useSeoMeta, useServerHead, useServerHeadSafe, useServerSeoMeta } from './composables'
 export {
   headSymbol,
 } from './install'
 // types
-export * from './types'
-export * from './VueHeadMixin'
+export type * from './types'
+export { VueHeadMixin } from './VueHeadMixin'

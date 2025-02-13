@@ -1,5 +1,4 @@
-import type { Head } from '../types'
-import { defineHeadPlugin, resolveTitleTemplate } from '../utils'
+import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 
 export interface InferSeoMetaPluginOptions {
   /**
@@ -7,13 +6,13 @@ export interface InferSeoMetaPluginOptions {
    *
    * @param title
    */
-  ogTitle?: ((title: string) => string)
+  ogTitle?: ((title?: string) => string)
   /**
    * Transform the og description.
    *
    * @param title
    */
-  ogDescription?: ((description: string) => string)
+  ogDescription?: ((description?: string) => string)
   /**
    * The twitter card to use.
    *
@@ -23,75 +22,49 @@ export interface InferSeoMetaPluginOptions {
 }
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
-  return defineHeadPlugin({
-    key: 'seo-meta',
-    hooks: {
-      entries: {
-        resolve({ entries }) {
-          // need to find the last titleTemplate entry
-          let titleTemplate = null
-          let lastWeight = 999
-          for (const entry of entries) {
-            const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
-            const input = entry[inputKey]
-            const weight = (typeof input.titleTemplate === 'object' ? input.titleTemplate?.tagPriority : false) || entry.tagPriority || 100
-            if (input.titleTemplate !== undefined && weight <= lastWeight) {
-              titleTemplate = input.titleTemplate
-              lastWeight = weight
+  return defineHeadPlugin((head) => {
+    head.push({
+      meta: [
+        {
+          name: 'twitter:card',
+          content: options.twitterCard || 'summary_large_image',
+          tagPriority: 'low',
+        },
+        {
+          property: 'og:title',
+          content: '%infer',
+          tagPriority: 'low',
+        },
+        {
+          property: 'og:description',
+          content: '%infer',
+          tagPriority: 'low',
+        },
+      ],
+    })
+    return {
+      key: 'infer-seo-meta',
+      hooks: {
+        'tags:beforeResolve': ({ tagMap }) => {
+          let title = head._title || ''
+          const titleTemplate = head._titleTemplate
+          // check if the current title is %infer
+          const ogTitle = tagMap.get('meta:og:title')
+          if (ogTitle?.props?.content === '%infer') {
+            if (titleTemplate) {
+              // @ts-expect-error broken types
+              title = typeof titleTemplate === 'function' ? titleTemplate(title) : titleTemplate.replace('%s', title)
             }
+            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
           }
 
-          for (const entry of entries) {
-            const inputKey = entry.resolvedInput ? 'resolvedInput' : 'input'
-            const input = entry[inputKey]
-            const resolvedMeta: Required<Head>['meta'] = input.meta || []
-            titleTemplate = resolveTitleTemplate(titleTemplate, input.title)
-            const title = input.title
-            const description = resolvedMeta.find(meta => meta.name === 'description')?.content
-
-            const hasOgTitle = resolvedMeta.some(meta => meta.property === 'og:title')
-            const hasOgImage = resolvedMeta.some(meta => meta.property === 'og:image')
-            const hasTwitterCard = resolvedMeta.some(meta => meta.name === 'twitter:card')
-            const hasOgDescription = resolvedMeta.some(meta => meta.property === 'og:description')
-
-            // ensure meta exists
-            entry[inputKey].meta = input.meta || []
-            // entry must contain a title or titleTemplate
-            if (!hasOgTitle && (input.titleTemplate || input.title)) {
-              let newOgTitle = options?.ogTitle || titleTemplate || input.title
-              if (typeof newOgTitle === 'function')
-                newOgTitle = newOgTitle(title)
-
-              if (newOgTitle) {
-                entry[inputKey].meta.push({
-                  property: 'og:title',
-                  // have the og:title be removed if we don't have a title
-                  content: String(newOgTitle),
-                })
-              }
-            }
-            if (description && !hasOgDescription) {
-              let newOgDescription = options?.ogDescription || description
-              if (typeof newOgDescription === 'function')
-                // @ts-expect-error untyped
-                newOgDescription = newOgDescription(title)
-
-              if (newOgDescription) {
-                entry[inputKey].meta.push({
-                  property: 'og:description',
-                  content: String(newOgDescription),
-                })
-              }
-            }
-            if (hasOgImage && !hasTwitterCard) {
-              entry[inputKey].meta.push({
-                name: 'twitter:card',
-                content: options?.twitterCard || 'summary_large_image',
-              })
-            }
+          const description = tagMap.get('meta:description')?.props?.content
+          const ogDescription = tagMap.get('meta:og:description')
+          if (ogDescription?.props?.content === '%infer') {
+            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
           }
         },
       },
-    },
+    }
   })
 }

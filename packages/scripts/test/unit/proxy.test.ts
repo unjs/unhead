@@ -1,8 +1,7 @@
-import type { AsVoidFunctions } from '../../src'
+import type { AsVoidFunctions } from '../../src/types'
 import { createHead } from 'unhead/server'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createForwardingProxy } from '../../src'
-import { createNoopedRecordingProxy, replayProxyRecordings } from '../../src/proxy'
+import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../src/proxy'
 import { useScript } from '../../src/useScript'
 import { createSpyProxy } from '../../src/utils'
 

@@ -8,9 +8,8 @@ import type {
 import type { ResolverOptions } from '../utils'
 import type { SchemaOrgGraph } from './graph'
 import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
-import { hashCode } from 'unhead/utils'
 import { loadResolver } from '../resolver'
-import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
+import { asArray, hashCode, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
 
 export function resolveMeta(meta: Partial<MetaInput>) {
   if (!meta.host && meta.canonicalHost)

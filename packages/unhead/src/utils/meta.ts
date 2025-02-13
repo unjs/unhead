@@ -1,273 +1,282 @@
 import type { BaseMeta, Head, MetaFlatInput } from '../types'
+import { MetaTagsArrayable } from './const'
 
-export interface TransformValueOptions {
-  entrySeparator?: string
-  keyValueSeparator?: string
-  resolve?: (ctx: { key: string, value: unknown }) => string | void
-}
+export const NAMESPACES = /* @__PURE__ */ {
+  META: new Set(['twitter']),
+  OG: new Set(['og', 'book', 'article', 'profile', 'fb']),
+  MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
+  HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
+} as const
 
-function unpackToString<T extends Record<keyof T, unknown>>(value: T, options: TransformValueOptions): string {
-  return Object.entries(value)
-    .map(([key, value]) => {
-      if (typeof value === 'object')
-        value = unpackToString(value as Record<keyof T, any>, options)
-      if (options.resolve) {
-        const resolved = options.resolve({ key, value })
-        if (typeof resolved !== 'undefined')
-          return resolved
-      }
-      return `${fixKeyCase(key)}${options.keyValueSeparator || ''}${String(value)}`
-    })
-    .filter(Boolean)
-    .join(options.entrySeparator || '')
-}
+const META_ALIASES = /* @__PURE__ */ {
+  articleExpirationTime: 'article:expiration_time',
+  articleModifiedTime: 'article:modified_time',
+  articlePublishedTime: 'article:published_time',
+  bookReleaseDate: 'book:release_date',
+  fbAppId: 'fb:app_id',
+  ogAudioSecureUrl: 'og:audio:secure_url',
+  ogAudioUrl: 'og:audio',
+  ogImageSecureUrl: 'og:image:secure_url',
+  ogImageUrl: 'og:image',
+  ogSiteName: 'og:site_name',
+  ogVideoSecureUrl: 'og:video:secure_url',
+  ogVideoUrl: 'og:video',
+  profileFirstName: 'profile:first_name',
+  profileLastName: 'profile:last_name',
+  profileUsername: 'profile:username',
+  msapplicationConfig: 'msapplication-Config',
+  msapplicationTileColor: 'msapplication-TileColor',
+  msapplicationTileImage: 'msapplication-TileImage',
+} as const
 
-interface Context { key: string, value: any }
-type ResolveFn = (ctx: Context) => string
-
-export interface UnpackArrayOptions {
-  key: string | ResolveFn
-  value: string | ResolveFn
-  resolveKeyData?: ResolveFn
-  resolveValueData?: ResolveFn
-}
-
-export function unpackToArray(input: Record<string, any>, options: UnpackArrayOptions): Record<string, any>[] {
-  const unpacked: any[] = []
-  const kFn = options.resolveKeyData || ((ctx: Context) => ctx.key)
-  const vFn = options.resolveValueData || ((ctx: Context) => ctx.value)
-
-  for (const [k, v] of Object.entries(input)) {
-    unpacked.push(...(Array.isArray(v) ? v : [v]).flatMap((i) => {
-      if (String(i) === 'false') {
-        return false
-      }
-      const ctx = { key: k, value: i }
-      const val = vFn(ctx)
-      // handle nested objects
-      if (typeof val === 'object')
-        return unpackToArray(val!, options)
-
-      if (Array.isArray(val))
-        return val
-
-      return {
-        [typeof options.key === 'function' ? options.key(ctx) : options.key]: kFn(ctx),
-        [typeof options.value === 'function' ? options.value(ctx) : options.value]: val,
-      }
-    }))
-  }
-  return unpacked.filter(Boolean)
-}
-
-interface PackingDefinition {
-  metaKey?: keyof BaseMeta
-  keyValue?: string
-  unpack?: TransformValueOptions
-}
-
-const p = (p: string) => ({ keyValue: p, metaKey: 'property' }) as PackingDefinition
-const k = (p: string) => ({ keyValue: p }) as PackingDefinition
-
-// @ts-expect-error untyped
-export const MetaPackingSchema = new Map<string, PackingDefinition>([
-  ['appleItunesApp', {
+export const MetaPackingSchema = /* @__PURE__ */ {
+  appleItunesApp: {
     unpack: {
       entrySeparator: ', ',
-      resolve({ key, value }) {
-        return `${fixKeyCase(key)}=${value}`
-      },
+      // @ts-expect-error untyped
+      resolve: ({ key, value }) => `${fixKeyCase(key)}=${value}`,
     },
-  }],
-  ['articleExpirationTime', p('article:expiration_time')],
-  ['articleModifiedTime', p('article:modified_time')],
-  ['articlePublishedTime', p('article:published_time')],
-  ['bookReleaseDate', p('book:release_date')],
-  ['charset', { metaKey: 'charset' }],
-  ['contentSecurityPolicy', {
-    unpack: {
-      entrySeparator: '; ',
-      resolve({ key, value }) {
-        return `${fixKeyCase(key)} ${value}`
-      },
-    },
-    metaKey: 'http-equiv',
-  }],
-  ['contentType', { metaKey: 'http-equiv' }],
-  ['defaultStyle', { metaKey: 'http-equiv' }],
-  ['fbAppId', p('fb:app_id')],
-  ['msapplicationConfig', k('msapplication-Config')],
-  ['msapplicationTileColor', k('msapplication-TileColor')],
-  ['msapplicationTileImage', k('msapplication-TileImage')],
-  ['ogAudioSecureUrl', p('og:audio:secure_url')],
-  ['ogAudioUrl', p('og:audio')],
-  ['ogImageSecureUrl', p('og:image:secure_url')],
-  ['ogImageUrl', p('og:image')],
-  ['ogSiteName', p('og:site_name')],
-  ['ogVideoSecureUrl', p('og:video:secure_url')],
-  ['ogVideoUrl', p('og:video')],
-  ['profileFirstName', p('profile:first_name')],
-  ['profileLastName', p('profile:last_name')],
-  ['profileUsername', p('profile:username')],
-  ['refresh', {
+  },
+  refresh: {
     metaKey: 'http-equiv',
     unpack: {
       entrySeparator: ';',
-      resolve({ key, value }) {
-        if (key === 'seconds')
-          return `${value}`
-      },
+      // @ts-expect-error untyped
+      resolve: ({ key, value }) => key === 'seconds' ? `${value}` : undefined,
     },
-  }],
-  ['robots', {
+  },
+  robots: {
     unpack: {
       entrySeparator: ', ',
-      resolve({ key, value }) {
-        if (!value) {
-          return false
-        }
-        if (typeof value === 'boolean')
-          return `${fixKeyCase(key)}`
-        return `${fixKeyCase(key)}:${value}`
-      },
+      // @ts-expect-error untyped
+      resolve: ({ key, value }) =>
+        typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`,
     },
-  }],
-  ['xUaCompatible', { metaKey: 'http-equiv' }],
-])
+  },
+  contentSecurityPolicy: {
+    metaKey: 'http-equiv',
+    unpack: {
+      entrySeparator: '; ',
+      // @ts-expect-error untyped
+      resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}`,
+    },
+  },
+  charset: {},
+} as const
 
-const openGraphNamespaces = new Set([
-  'og',
-  'book',
-  'article',
-  'profile',
-])
+function fixKeyCase(key: string): string {
+  const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  const prefixIndex = updated.indexOf('-')
+  return prefixIndex === -1
+    ? updated
+    : (
+        NAMESPACES.META.has(updated.slice(0, prefixIndex)) || NAMESPACES.OG.has(updated.slice(0, prefixIndex))
+          ? key.replace(/([A-Z])/g, ':$1').toLowerCase()
+          : updated
+      )
+}
+
+function sanitizeObject(input: Record<string, any>) {
+  return Object.fromEntries(Object.entries(input).filter(([k, v]) => String(v) !== 'false' && k))
+}
+
+function transformObject(obj: any): any {
+  return Array.isArray(obj)
+    ? obj.map(transformObject)
+    : !obj || typeof obj !== 'object'
+        ? obj
+        : Object.fromEntries(Object.entries(obj).map(([k, v]) => [fixKeyCase(k), transformObject(v)]))
+}
+
+// @ts-expect-error untyped
+function unpackToString(value: Record<string, any>, options: {
+  entrySeparator?: string
+  keyValueSeparator?: string
+  wrapValue?: string
+  resolve?: (ctx: { key: string, value: any }) => string | void
+} = {}) {
+  const { entrySeparator = '', keyValueSeparator = '', wrapValue, resolve } = options
+  // @ts-expect-error untyped
+  return Object.entries(value).map(([key, val]) => {
+    if (resolve) {
+      const resolved = resolve({ key, value: val })
+      if (resolved !== undefined)
+        return resolved
+    }
+
+    // @ts-expect-error untyped
+    const processedVal = typeof val === 'object'
+      ? unpackToString(val, options)
+      : typeof val === 'number'
+        ? val.toString()
+        : typeof val === 'string' && wrapValue
+          ? `${wrapValue}${val.replace(new RegExp(wrapValue, 'g'), `\\${wrapValue}`)}${wrapValue}`
+          : val
+
+    return `${key}${keyValueSeparator}${processedVal}`
+  }).join(entrySeparator)
+}
+
+function handleObjectEntry(key: string, value: Record<string, any>): BaseMeta[] {
+  const sanitizedValue = sanitizeObject(value)
+  const fixedKey = fixKeyCase(key)
+  const attr = resolveMetaKeyType(fixedKey)
+
+  if (!MetaTagsArrayable.has(fixedKey as keyof MetaFlatInput)) {
+    return [{ [attr]: fixedKey, ...sanitizedValue }] as BaseMeta[]
+  }
+
+  const input = Object.fromEntries(
+    Object.entries(sanitizedValue)
+      .map(([k, v]) => [`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`, v]),
+  )
+  return unpackMeta(input)
+    // @ts-expect-error untyped
+    .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as BaseMeta[]
+}
 
 export function resolveMetaKeyType(key: string): keyof BaseMeta {
-  const fKey = fixKeyCase(key)
-  const prefixIndex = fKey.indexOf(':')
-  if (openGraphNamespaces.has(fKey.substring(0, prefixIndex)))
-    return 'property'
-  return MetaPackingSchema.get(key)?.metaKey || 'name'
+  // @ts-expect-error untyped
+  if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || NAMESPACES.HTTP_EQUIV.has(key)) {
+    return 'http-equiv'
+  }
+
+  const fixed = fixKeyCase(key)
+  const colonIndex = fixed.indexOf(':')
+  return colonIndex === -1
+    ? 'name'
+    : NAMESPACES.OG.has(fixed.slice(0, colonIndex))
+      ? 'property'
+      : 'name'
 }
 
 export function resolveMetaKeyValue(key: string): string {
-  return MetaPackingSchema.get(key)?.keyValue || fixKeyCase(key)
-}
-
-const UPPERCASE_PATTERN = /([A-Z])/g
-
-function fixKeyCase(key: string) {
-  const updated = key.replace(UPPERCASE_PATTERN, '-$1').toLowerCase()
-  const prefixIndex = updated.indexOf('-')
-  const fKey = updated.substring(0, prefixIndex)
-  if (fKey === 'twitter' || openGraphNamespaces.has(fKey))
-    return key.replace(UPPERCASE_PATTERN, ':$1').toLowerCase()
-  return updated
+  // @ts-expect-error untyped
+  return META_ALIASES[key] || fixKeyCase(key)
 }
 
 export function resolvePackedMetaObjectValue(value: string, key: string): string {
-  const definition = MetaPackingSchema.get(key)
-  // refresh is weird...
   if (key === 'refresh')
     // @ts-expect-error untyped
     return `${value.seconds};url=${value.url}`
-  return unpackToString(
-    value,
-    {
-      keyValueSeparator: '=',
-      entrySeparator: ', ',
-      resolve({ value, key }) {
-        if (value === null)
-          return ''
-        if (typeof value === 'boolean')
-          return `${key}`
-      },
-      ...definition?.unpack,
-    },
-  )
+
+  return unpackToString(transformObject(value), {
+    keyValueSeparator: '=',
+    entrySeparator: ', ',
+    resolve: ({ value, key }) => value === null ? '' : (typeof value === 'boolean' ? key : undefined),
+    // @ts-expect-error untyped
+    ...MetaPackingSchema[key]?.unpack,
+  })
 }
 
-const ObjectArrayEntries = new Set(['og:image', 'og:video', 'og:audio', 'twitter:image'])
+export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
+  const extras: BaseMeta[] = []
+  const primitives: Record<string, any> = {}
 
-function handleObjectEntry(key: string, v: Record<string, any>) {
-  // filter out falsy values
-  const fKey = fixKeyCase(key)
-  const attr = resolveMetaKeyType(fKey)
-  if (ObjectArrayEntries.has(fKey as keyof MetaFlatInput)) {
-    const input: MetaFlatInput = {}
-    for (const k in v) {
-      if (!Object.prototype.hasOwnProperty.call(v, k)) {
+  for (const [key, value] of Object.entries(input)) {
+    if (Array.isArray(value)) {
+      if (key === 'themeColor') {
+        value.forEach((v) => {
+          if (typeof v === 'object' && v !== null) {
+            extras.push({ name: 'theme-color', ...v })
+          }
+        })
         continue
       }
 
-      // we need to prefix the keys with og:
-      if (String(v[k]) !== 'false') {
-        // @ts-expect-error untyped
-        input[`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`] = v[k]
-      }
-    }
-    return unpackMeta(input)
-      // sort by property name
-      // @ts-expect-error untyped
-      .sort((a, b) => (a[attr]?.length || 0) - (b[attr]?.length || 0)) as BaseMeta[]
-  }
-  return [{ [attr]: fKey, ...v }] as BaseMeta[]
-}
+      for (const v of value) {
+        if (typeof v === 'object' && v !== null) {
+          // @ts-expect-error untyped
+          const urlProps = []
+          // @ts-expect-error untyped
+          const otherProps = []
 
-/**
- * Converts a flat meta object into an array of meta entries.
- * @param input
- */
-export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
-  const extras: BaseMeta[] = []
-  // need to handle array input of the object
-  const primitives: Record<string, any> = {}
-  for (const key in input) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) {
-      continue
-    }
-
-    const value = input[key]
-
-    if (!Array.isArray(value)) {
-      if (typeof value === 'object' && value) {
-        if (ObjectArrayEntries.has(fixKeyCase(key) as keyof MetaFlatInput)) {
-          extras.push(...handleObjectEntry(key, value))
-          continue
+          for (const [propKey, propValue] of Object.entries(v)) {
+            const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
+            const meta = unpackMeta({ [metaKey]: propValue }) as BaseMeta[]
+            // @ts-expect-error untyped
+            ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
+          }
+          // @ts-expect-error untyped
+          extras.push(...urlProps, ...otherProps)
+        }
+        else {
+          extras.push(...(typeof v === 'string'
+            ? unpackMeta({ [key]: v }) as BaseMeta[]
+            : handleObjectEntry(key, v)))
         }
       }
-      primitives[key] = value
       continue
     }
-    for (const v of value) {
-      extras.push(...(typeof v === 'string' ? unpackMeta({ [key]: v }) as BaseMeta[] : handleObjectEntry(key, v)))
+
+    if (typeof value === 'object' && value) {
+      if (NAMESPACES.MEDIA.has(key)) {
+        const prefix = key.startsWith('twitter') ? 'twitter' : 'og'
+        const type = key.replace(/^(og|twitter)/, '').toLowerCase()
+        const metaKey = prefix === 'twitter' ? 'name' : 'property'
+
+        // @ts-expect-error untyped
+        if (value.url) {
+          extras.push({
+            [metaKey]: `${prefix}:${type}`,
+            // @ts-expect-error untyped
+            content: value.url,
+          })
+        }
+        // @ts-expect-error untyped
+        if (value.secureUrl) {
+          extras.push({
+            [metaKey]: `${prefix}:${type}:secure_url`,
+            // @ts-expect-error untyped
+            content: value.secureUrl,
+          })
+        }
+
+        for (const [propKey, propValue] of Object.entries(value)) {
+          if (propKey !== 'url' && propKey !== 'secureUrl') {
+            extras.push({
+              [metaKey]: `${prefix}:${type}:${propKey}`,
+              content: propValue,
+            })
+          }
+        }
+      }
+      else if (MetaTagsArrayable.has(fixKeyCase(key) as keyof MetaFlatInput)) {
+        extras.push(...handleObjectEntry(key, value))
+      }
+      else {
+        primitives[key] = sanitizeObject(value)
+      }
+    }
+    else {
+      primitives[key] = value
     }
   }
 
-  const meta = unpackToArray((primitives), {
-    key({ key }) {
-      return resolveMetaKeyType(key) as string
-    },
-    value({ key }) {
-      return key === 'charset' ? 'charset' : 'content'
-    },
-    resolveKeyData({ key }) {
-      return resolveMetaKeyValue(key)
-    },
-    resolveValueData({ value, key }) {
-      if (value === null)
-        return '_null'
+  const meta = Object.entries(primitives).map(([key, value]): BaseMeta => {
+    if (key === 'charset')
+      return { charset: value === null ? '_null' : value }
 
-      if (typeof value === 'object')
-        return resolvePackedMetaObjectValue(value, key)
+    const metaKey = resolveMetaKeyType(key)
+    const keyValue = resolveMetaKeyValue(key)
+    const processedValue = value === null
+      ? '_null'
+      : typeof value === 'object'
+        ? resolvePackedMetaObjectValue(value, key)
+        : typeof value === 'number'
+          ? value.toString()
+          : value
 
-      return typeof value === 'number' ? value.toString() : value
-    },
+    return metaKey === 'http-equiv'
+      ? { 'http-equiv': keyValue, 'content': processedValue }
+      : { [metaKey]: keyValue, content: processedValue }
   }) as BaseMeta[]
-  // remove keys with defined but empty content
-  return [...extras, ...meta].map((m) => {
-    if (m.content === '_null')
-      m.content = null
-    return m
-  }) as unknown as Required<Head>['meta']
+
+  return [...extras, ...meta].map(m =>
+    !('content' in m)
+      ? m
+      : m.content === '_null'
+        ? { ...m, content: null }
+        : m,
+  ) as Required<Head>['meta']
 }
