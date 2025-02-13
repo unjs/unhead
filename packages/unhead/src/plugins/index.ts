@@ -1,3 +1,4 @@
+export { CanonicalPlugin } from './canonical'
 export { DeprecationsPlugin } from './deprecations' // optional
 export { FlatMetaPlugin } from './flatMeta' // optional
 export { InferSeoMetaPlugin } from './inferSeoMetaPlugin' // optional
