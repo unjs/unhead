@@ -3,7 +3,7 @@ title: "Canonical Plugin"
 description: Fix relative URLs in your meta tags automatically
 ---
 
-# Canonical Plugin
+## Introduction
 
 [Google](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls) requires your canonical URLs to use absolute paths. [Facebook](https://developers.facebook.com/docs/sharing/webmasters/getting-started) and [Twitter](https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup) will ignore images without a full URL. This plugin fixes both problems automatically
 when you provide a relative path.
