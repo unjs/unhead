@@ -1,4 +1,5 @@
 import type { Stringable } from '../util'
+import type { GlobalAttributes } from './attributes/global'
 
 export type MetaNames =
   'apple-itunes-app' |
@@ -99,7 +100,7 @@ export type MetaProperties = 'article:author' |
   'profile:last_name' |
   'profile:username'
 
-export interface Meta {
+export interface Meta extends Pick<GlobalAttributes, 'id'> {
   /**
    * This attribute declares the document's character encoding.
    * If the attribute is present, its value must be an ASCII case-insensitive match for the string "utf-8",
@@ -142,10 +143,6 @@ export interface Meta {
    * Mainly used for og and twitter meta tags.
    */
   property?: MetaProperties | (string & Record<never, never>)
-  /**
-   * This attribute defines the unique ID.
-   */
-  id?: string
   /**
    * A valid media query list that can be included to set the media the `theme-color` metadata applies to.
    *

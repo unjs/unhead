@@ -34,7 +34,7 @@ export type LinkRelTypes = 'alternate' |
   'apple-touch-icon' |
   'apple-touch-startup-image'
 
-export interface LinkBase extends Pick<GlobalAttributes, 'nonce'>, Blocking {
+export interface LinkBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Blocking {
   /**
    * This attribute is only used when rel="preload" or rel="prefetch" has been set on the `<link>` element.
    * It specifies the type of content being loaded by the `<link>`, which is necessary for request matching,
@@ -251,10 +251,6 @@ export interface LinkBase extends Pick<GlobalAttributes, 'nonce'>, Blocking {
     'audio/3gpp' |
     'video/3gpp2' |
     'audio/3gpp2' | (string & Record<never, never>)
-  /**
-   * This attribute defines the unique ID.
-   */
-  id?: string
 }
 
 export type Link = LinkBase & HttpEventAttributes
