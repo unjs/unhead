@@ -1,4 +1,6 @@
-export interface Style {
+import type { Blocking } from './struct/blocking'
+
+export interface Style extends Blocking {
   /**
    * This attribute defines which media the style should be applied to.
    * Its value is a media query, which defaults to all if the attribute is missing.
