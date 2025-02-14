@@ -1,4 +1,4 @@
-# Deprecated: `@unhead/schema`
+# Deprecated: `@unhead/shared`
 
 Shared utils needed for Unhead. This is deprecated and only acts as alias of `unhead/utils`.
 
