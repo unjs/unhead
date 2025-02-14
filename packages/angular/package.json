@@ -1,6 +1,6 @@
 {
   "name": "ngx-unhead",
-  "version": "2.0.0-alpha.10",
+  "version": "2.0.0-alpha.11",
   "sideEffects": false,
   "peerDependencies": {
     "@angular/common": "^19.1.5",
