@@ -271,6 +271,22 @@ const unhead = createHead({
 })
 ```
 
+## Opt-in Template Params & Tag Alias Sorting
+
+🚦 Impact Level: High
+
+To reduce the bundle size and improve performance, we've moved the template params and tag alias sorting to optional plugins.
+
+If you'd like to continue using these, please opt-in to the plugins.
+
+```ts
+import { AliasSortingPlugin, TemplateParamsPlugin } from 'unhead/plugins'
+
+createHead({
+  plugins: [TemplateParamsPlugin, AliasSortingPlugin]
+})
+```
+
 ## Vue 2 Support
 
 🚦 Impact Level: Critical

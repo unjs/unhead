@@ -86,9 +86,9 @@
     "client.d.ts",
     "dist",
     "legacy.d.ts",
+    "plugins.d.ts",
     "server.d.ts",
     "types.d.ts",
-    "plugins.d.ts",
     "utils.d.ts"
   ],
   "scripts": {

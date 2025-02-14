@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
+    "test:vue-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-server-build.config.ts",
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",

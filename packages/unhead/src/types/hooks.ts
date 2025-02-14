@@ -13,6 +13,7 @@ export interface SSRHeadPayload {
 
 export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
+  resolvedTags?: HeadTag[]
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }

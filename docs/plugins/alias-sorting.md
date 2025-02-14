@@ -20,8 +20,8 @@ Aliases make tag ordering more intuitive and maintainable.
 Add the plugin to your Unhead configuration:
 
 ```ts
-import { AliasSortingPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead'
+import { AliasSortingPlugin } from 'unhead/plugins'
 
 const head = createHead({
   plugins: [
@@ -80,7 +80,7 @@ useHead({
       tagPriority: 'after:script:second'
     },
     {
-      key: 'second', 
+      key: 'second',
       src: '/b.js',
       tagPriority: 'after:script:first'
     },

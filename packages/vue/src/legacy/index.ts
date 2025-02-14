@@ -10,9 +10,6 @@ import type {
   VueHeadClient,
 } from '../types'
 import { createHeadCore } from 'unhead'
-import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { defineHeadPlugin } from 'unhead/utils'
-import { walkResolver } from 'unhead/utils/walkResolver'
 import {
   getCurrentInstance,
   inject,
@@ -26,8 +23,10 @@ import {
 } from 'vue'
 import { createHead as createVueHead } from '../client'
 import { headSymbol } from '../install'
+import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from '../plugins'
 import { VueResolver } from '../resolver'
 import { createHead as createVueServerHead } from '../server'
+import { defineHeadPlugin, walkResolver } from '../utils'
 
 export * from './useScript'
 export { createHeadCore }

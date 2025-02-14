@@ -13,7 +13,7 @@ export async function renderSSRHead<T extends Record<string, any>>(head: Unhead<
       bodyAttrs: '',
     }
   }
-  const ctx = { tags: await head.resolveTags() }
+  const ctx = { tags: options?.resolvedTags || await head.resolveTags() }
   await head.hooks.callHook('ssr:render', ctx)
   const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
   const renderCtx: SSRRenderContext = { tags: ctx.tags, html }

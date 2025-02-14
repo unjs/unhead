@@ -6,11 +6,9 @@ import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
   entries: [
-    'src/server/minimal',
-    // 'src/server/minimal',
-    // 'src/full',
+    'src/vue-server/minimal',
   ],
-  outDir: 'dist/server',
+  outDir: 'dist/vue-server',
   failOnWarn: false,
   rollup: {
     inlineDependencies: true,
@@ -21,6 +19,7 @@ export default defineBuildConfig({
   },
   externals: [
     'hookable',
+    'vue',
   ],
   declaration: false,
   hooks: {
@@ -33,13 +32,13 @@ export default defineBuildConfig({
     },
     'build:done': () => {
       // check gzip size of ./dist/minimal.mjs
-      const file = path.resolve(__dirname, 'dist/server/server/minimal.mjs')
+      const file = path.resolve(__dirname, 'dist/vue-server/vue-server/minimal.mjs')
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
       // show as kB size instead of bytes
       // round to 1 decimal place
-      console.log(`SERVER Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
+      console.log(`VUE SERVER Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },
 })
