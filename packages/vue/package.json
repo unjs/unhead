@@ -44,6 +44,14 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "import": "./dist/legacy.mjs"
+    },
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "import": "./dist/plugins.mjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -65,6 +73,12 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "plugins": [
+        "dist/plugins"
+      ],
+      "utils": [
+        "dist/utils"
       ]
     }
   },
@@ -73,7 +87,9 @@
     "dist",
     "legacy.d.ts",
     "server.d.ts",
-    "types.d.ts"
+    "types.d.ts",
+    "plugins.d.ts",
+    "utils.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",

@@ -26,11 +26,15 @@ import {
 } from 'vue'
 import { createHead as createVueHead } from '../client'
 import { headSymbol } from '../install'
+import { VueResolver } from '../resolver'
 import { createHead as createVueServerHead } from '../server'
-import { resolveUnrefHeadInput } from '../utils'
 
 export * from './useScript'
-export { createHeadCore, resolveUnrefHeadInput }
+export { createHeadCore }
+
+export function resolveUnrefHeadInput(input: any) {
+  return walkResolver(input, VueResolver)
+}
 
 export function CapoPlugin() {
   return defineHeadPlugin({

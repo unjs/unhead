@@ -11,6 +11,8 @@ export default defineBuildConfig({
     { input: 'src/client', name: 'client' },
     { input: 'src/legacy/index', name: 'legacy' },
     { input: 'src/types/index', name: 'types' },
+    { input: 'src/plugins', name: 'plugins' },
+    { input: 'src/utils', name: 'utils' },
   ],
   hooks: {
     'rollup:options': (_, options) => {

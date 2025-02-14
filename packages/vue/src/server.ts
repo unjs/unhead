@@ -5,7 +5,7 @@ import { vueInstall } from './install'
 import { VueResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
-export { extractUnheadInputFromHtml, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
+export { extractUnheadInputFromHtml, propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
 
 export function createHead<T extends MergeHead>(options: Omit<CreateServerHeadOptions, 'propsResolver'> = {}): VueHeadClient<T> {
   const head = _createServerHead<MaybeComputedRef<ReactiveHead<T>>>({
