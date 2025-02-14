@@ -10,9 +10,10 @@ import { createHead as createServerHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
 
-export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) {
+export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateHeadOptions) {
   const head = createClientHead({
     document: dom.window.document,
+    ...options,
   })
   const app = createApp({
     setup() {
@@ -63,9 +64,10 @@ export async function ssrRenderHeadToString(fn: () => void) {
   return renderSSRHead(head)
 }
 
-export async function ssrRenderOptionsHead(input: any) {
+export async function ssrRenderOptionsHead(input: any, options?: CreateHeadOptions) {
   const head = createServerHead({
     disableDefaults: true,
+    ...options,
   })
   const app = createSSRApp({
     head() {

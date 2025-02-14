@@ -1,6 +1,7 @@
 import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
+import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
 import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
@@ -10,7 +11,11 @@ describe('ssr e2e bench', () => {
     // we're going to replicate the logic needed to render the tags for a harlanzw.com page
 
     // 1. Add nuxt.config meta tags
-    const head = createServerHead()
+    const head = createServerHead({
+      plugins: [
+        TemplateParamsPlugin,
+      ],
+    })
     // nuxt.config app.head
     head.push({
       title: 'Harlan Wilton',
