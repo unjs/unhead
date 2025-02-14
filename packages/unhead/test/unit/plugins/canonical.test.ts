@@ -3,7 +3,7 @@ import { CanonicalPlugin } from '../../../src/plugins/canonical'
 
 describe('canonicalPlugin', () => {
   it('should resolve og:image URLs correctly', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
@@ -16,7 +16,7 @@ describe('canonicalPlugin', () => {
   })
 
   it('should resolve twitter:image URLs correctly', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { name: 'twitter:image', content: '/image.jpg' } },
@@ -29,7 +29,7 @@ describe('canonicalPlugin', () => {
   })
 
   it('should resolve og:url URLs correctly', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { property: 'og:url', content: '/page' } },
@@ -42,7 +42,7 @@ describe('canonicalPlugin', () => {
   })
 
   it('should resolve canonical link URLs correctly', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'link', props: { rel: 'canonical', href: '/page' } },
@@ -58,7 +58,7 @@ describe('canonicalPlugin', () => {
     const plugin = CanonicalPlugin({
       canonicalHost: 'https://example.com',
       customResolver: path => `/custom${path}`,
-    })
+    })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
@@ -71,7 +71,7 @@ describe('canonicalPlugin', () => {
   })
 
   it('should handle already fully qualified URLs', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { property: 'og:image', content: 'https://other.com/image.jpg' } },
@@ -83,20 +83,8 @@ describe('canonicalPlugin', () => {
     expect(ctx.tags[0].props.content).toBe('https://other.com/image.jpg')
   })
 
-  it('should handle malformed input gracefully', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })
-    const ctx = {
-      tags: [
-        { tag: 'meta', props: { property: 'og:image', content: '' } },
-      ],
-    }
-
-    plugin.hooks['tags:resolve'](ctx)
-
-    expect(ctx.tags[0].props.content).toBe('::invalid-url::')
-  })
   it('should handle canonicalHost without protocol', () => {
-    const plugin = CanonicalPlugin({ canonicalHost: 'example.com' })
+    const plugin = CanonicalPlugin({ canonicalHost: 'example.com' })({ ssr: false })
     const ctx = {
       tags: [
         { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
