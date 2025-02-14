@@ -10,7 +10,6 @@ import type {
   Unhead,
 } from './types'
 import { createHooks } from 'hookable'
-import { AliasSortingPlugin } from './plugins/aliasSorting'
 import { isMetaArrayDupeKey, sortTags, tagWeight, UsesMergeStrategy, ValidHeadTags } from './utils'
 import { dedupeKey } from './utils/dedupe'
 import { normalizeEntryToTags } from './utils/normalize'
@@ -188,10 +187,7 @@ export function createHeadCore<T extends Record<string, any> = Head>(resolvedOpt
       return finalTags
     },
   }
-  ;[
-    AliasSortingPlugin,
-    ...resolvedOptions?.plugins || [],
-  ].forEach(p => registerPlugin(head, p))
+  ;(resolvedOptions?.plugins || []).forEach(p => registerPlugin(head, p))
   head.hooks.callHook('init', head)
   resolvedOptions.init?.forEach(e => e && head.push(e as T))
   return head
