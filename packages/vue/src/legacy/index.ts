@@ -10,7 +10,7 @@ import type {
   VueHeadClient,
 } from '../types'
 import { createHeadCore } from 'unhead'
-import { DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin } from 'unhead/plugins'
+import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { defineHeadPlugin } from 'unhead/utils'
 import { walkResolver } from 'unhead/utils/walkResolver'
 import {
@@ -45,6 +45,8 @@ export function createHead<T extends MergeHead>(options: CreateClientHeadOptions
     plugins: [
       DeprecationsPlugin,
       PromisesPlugin,
+      TemplateParamsPlugin,
+      AliasSortingPlugin,
       ...(options.plugins || []),
     ],
   }) as VueHeadClient<T>
@@ -57,6 +59,8 @@ export function createServerHead<T extends MergeHead>(options: CreateClientHeadO
     plugins: [
       DeprecationsPlugin,
       PromisesPlugin,
+      TemplateParamsPlugin,
+      AliasSortingPlugin,
       ...(options.plugins || []),
     ],
   })

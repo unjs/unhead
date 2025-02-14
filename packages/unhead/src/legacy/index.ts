@@ -4,8 +4,7 @@ import type {
   Unhead,
 } from '../types'
 import { createHeadCore } from '../createHead'
-import { DeprecationsPlugin } from '../plugins/deprecations'
-import { PromisesPlugin } from '../plugins/promises'
+import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from '../plugins'
 
 export * from '../index'
 export * from './useScript'
@@ -43,6 +42,8 @@ export function createServerHead<T extends Record<string, any> = Head>(options: 
       ...(options.plugins || []),
       DeprecationsPlugin,
       PromisesPlugin,
+      TemplateParamsPlugin,
+      AliasSortingPlugin,
     ],
   })
 }
@@ -55,6 +56,8 @@ export function createHead<T extends Record<string, any> = Head>(options: Create
       ...(options.plugins || []),
       DeprecationsPlugin,
       PromisesPlugin,
+      TemplateParamsPlugin,
+      AliasSortingPlugin,
     ],
   })
 }
