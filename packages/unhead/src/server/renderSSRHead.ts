@@ -1,7 +1,7 @@
 import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
 import { ssrRenderTags } from './util'
 
-export async function renderSSRHead<T extends Record<string, any>>(head: Unhead<T>, options?: RenderSSRHeadOptions) {
+export async function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions) {
   const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
   await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
   if (!beforeRenderCtx.shouldRender) {

@@ -13,7 +13,7 @@ import { normalizeProps } from '../utils/normalize'
 /**
  * Render the head tags to the DOM.
  */
-export async function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}) {
+export async function renderDOMHead(head: Unhead<any>, options: RenderDomHeadOptions = {}) {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   if (!dom || !head.dirty)
     return
