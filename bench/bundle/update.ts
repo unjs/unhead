@@ -21,7 +21,7 @@ console.table(newStats)
 // Write the new stats to last.json
 fs.writeFileSync(
   path.resolve(__dirname, 'last.json'),
-  JSON.stringify(newStats, null, 2),
+  `${JSON.stringify(newStats, null, 2)}\n`,
   'utf8',
 )
 
