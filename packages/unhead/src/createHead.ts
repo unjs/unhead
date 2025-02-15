@@ -16,9 +16,11 @@ import { normalizeEntryToTags } from './utils/normalize'
 
 function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
-  const exists = head.plugins.get(plugin.key)
+  // key is required in types but we avoid breaking changes
+  const key = plugin.key || String(head.plugins.size + 1)
+  const exists = head.plugins.get(key)
   if (!exists) {
-    head.plugins.set(plugin.key, plugin)
+    head.plugins.set(key, plugin)
     head.hooks.addHooks(plugin.hooks || {})
   }
 }
