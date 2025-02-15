@@ -1,4 +1,4 @@
-import type { Arrayable, Booleanable } from '../util'
+import type { Arrayable, Booleanable, DeepResolvableProperties } from '../util'
 import type { ReferrerPolicy } from './shared'
 
 export interface MetaFlatArticle {
@@ -1031,8 +1031,5 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
   keywords: string
 }
 
-// make MetaFlat record entries also possibly be null
-type MetaFlatNullable = {
-  [K in keyof MetaFlat]: MetaFlat[K] | null
-}
-export type MetaFlatInput = Partial<MetaFlatNullable>
+export type MetaFlatInput = DeepResolvableProperties<Partial<MetaFlat>>
+export type ResolvedMetaFlat = Partial<MetaFlat>

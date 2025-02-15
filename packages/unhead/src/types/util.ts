@@ -20,10 +20,26 @@ export type Never<T> = {
   [P in keyof T]?: never
 }
 
-export type MaybeFunction<T> = T | (() => T)
-
 export type Falsey = false | null | undefined
 
-export type ResolvableValues<T> = {
-  [key in keyof T]?: MaybeFunction<T[key] | Falsey>
+export type ResolvableValue<T> = T | Falsey | (() => T | Falsey)
+
+export type ResolvableProperties<T> = {
+  [key in keyof T]?: ResolvableValue<T[key]>
+}
+
+export type ResolvableUnion<T> = T extends string | number | boolean
+  ? ResolvableValue<T>
+  : T extends object
+    ? DeepResolvableProperties<T>
+    : ResolvableValue<T>
+
+export type DeepResolvableProperties<T> = {
+  [K in keyof T]?: T[K] extends string | object
+    ? T[K] extends string
+      ? ResolvableUnion<T[K]>
+      : T[K] extends object
+        ? DeepResolvableProperties<T[K]>
+        : ResolvableUnion<T[K]>
+    : ResolvableUnion<T[K]>
 }

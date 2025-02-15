@@ -127,7 +127,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     : tag
 }
 
-export function normalizeEntryToTags(input: Head<any>, propResolvers: PropResolver[]): HeadTag[] {
+export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
   if (!input) {
     return []
   }
@@ -135,7 +135,6 @@ export function normalizeEntryToTags(input: Head<any>, propResolvers: PropResolv
   const tags: (HeadTag | HeadTag[])[] = []
 
   if (typeof input === 'function') {
-    // @ts-expect-error untyped
     return normalizeEntryToTags(input(), propResolvers)
   }
   input = walkResolver(input, (key, val) => {

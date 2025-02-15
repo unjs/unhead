@@ -1,5 +1,5 @@
 import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from '../tags'
-import type { DefinedValueOrEmptyObject, Falsey, MaybeFunction, Merge, MergeHead, Never, ResolvableValues, Stringable } from '../util'
+import type { DefinedValueOrEmptyObject, Falsey, Merge, MergeHead, Never, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { Base as _Base } from './base'
@@ -83,16 +83,16 @@ export type MaybeEventFnHandlers<T> = {
 
 type TitleTemplateResolver = string | ((title?: string) => string | null)
 
-export type Title = MaybeFunction<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
+export type Title = ResolvableValue<number | string | Falsey> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableValues<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
+export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
 
 export type ResolvedTitle = ({ textContent: string } & ResolvedSchemaAugmentations['title'])
 export type ResolvedTitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & ResolvedSchemaAugmentations['titleTemplate'])
@@ -132,7 +132,7 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
    */
-  base?: Base<E['base']>
+  base?: ResolvableValue<Base<E['base']>>
   /**
    * The `<link>` HTML element specifies relationships between the current document and an external resource.
    * This element is most commonly used to link to stylesheets, but is also used to establish site icons
@@ -140,45 +140,45 @@ export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUti
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
    */
-  link?: Link<E['link']>[]
+  link?: ResolvableValue<ResolvableValue<Link<E['link']>>[]>
   /**
    * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
    */
-  meta?: Meta<E['meta']>[]
+  meta?: ResolvableValue<ResolvableValue<Meta<E['meta']>>[]>
   /**
    * The `<style>` HTML element contains style information for a document, or part of a document.
    * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: (Style<E['style']> | string)[]
+  style?: ResolvableValue<ResolvableValue<(Style<E['style']> | string)>[]>
   /**
    * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: (Script<E['script']> | string)[]
+  script?: ResolvableValue<ResolvableValue<(Script<E['script']> | string)>[]>
   /**
    * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: (Noscript<E['noscript']> | string)[]
+  noscript?: ResolvableValue<ResolvableValue<(Noscript<E['noscript']> | string)>[]>
   /**
    * Attributes for the `<html>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html
    */
-  htmlAttrs?: HtmlAttributes<E['htmlAttrs']>
+  htmlAttrs?: ResolvableValue<HtmlAttributes<E['htmlAttrs']>>
   /**
    * Attributes for the `<body>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
    */
-  bodyAttrs?: BodyAttributes<E['bodyAttrs']>
+  bodyAttrs?: ResolvableValue<BodyAttributes<E['bodyAttrs']>>
 }
 
 export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations> extends HeadUtils {
@@ -186,9 +186,9 @@ export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations>
   base?: ResolvedBase<E['base']>
   link?: ResolvedLink<E['link']>[]
   meta?: ResolvedMeta<E['meta']>[]
-  style?: (ResolvedStyle<E['style']> | string)[]
-  script?: (ResolvedScript<E['script']> | string)[]
-  noscript?: (ResolvedNoscript<E['noscript']> | string)[]
+  style?: ResolvedStyle<E['style']>[]
+  script?: ResolvedScript<E['script']>[]
+  noscript?: ResolvedNoscript<E['noscript']>[]
   htmlAttrs?: ResolvedHtmlAttributes<E['htmlAttrs']>
   bodyAttrs?: ResolvedBodyAttributes<E['bodyAttrs']>
 }

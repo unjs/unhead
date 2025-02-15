@@ -1,4 +1,4 @@
-import type { MaybeComputedRef, ReactiveHead, VueHeadClient } from '@unhead/vue'
+import type { ReactiveHead, ResolvableValue, VueHeadClient } from '@unhead/vue'
 import type { CreateClientHeadOptions, MergeHead } from 'unhead/types'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { nextTick } from 'vue'
@@ -8,7 +8,7 @@ export { VueHeadMixin } from './VueHeadMixin'
 export { renderDOMHead } from 'unhead/client'
 
 export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
-  const head = _createHead<MaybeComputedRef<ReactiveHead<T>>>({
+  const head = _createHead<ResolvableValue<ReactiveHead<T>>>({
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), nextTick),
     },

@@ -19,7 +19,6 @@ import type {
   MaybeEventFnHandlers,
   MergeHead,
   MetaFlatInput,
-  ResolvableValues,
   SchemaAugmentations,
   ScriptBase,
   Unhead,
@@ -50,7 +49,7 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   style?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<string | boolean>>
 }
 
-export type Title = MaybeComputedRef<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
+export type Title = MaybeComputedRef<number | string | Falsey> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type TitleTemplate = _TitleTemplate | RefObject<_TitleTemplate> | ((title?: string) => _TitleTemplate)
 export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
 export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>

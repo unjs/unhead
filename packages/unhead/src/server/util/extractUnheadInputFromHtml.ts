@@ -1,4 +1,4 @@
-import type { Head } from '../../types'
+import type { ResolvedHead } from '../../types'
 
 const Attrs = /(\w+)(?:=["']([^"']*)["'])?/g
 const HtmlTag = /<html[^>]*>/
@@ -24,7 +24,7 @@ function extractAttributes(tag: string) {
 }
 
 export function extractUnheadInputFromHtml(html: string) {
-  const input: Head<any> = {}
+  const input: ResolvedHead<any> = {}
   input.htmlAttrs = extractAttributes(html.match(HtmlTag)?.[0] || '')
   html = html.replace(HtmlTag, '<html>')
 

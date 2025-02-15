@@ -1,7 +1,7 @@
 import type { CreateServerHeadOptions, Head, HeadTag } from '../types'
 import { createHeadCore } from '../createHead'
 
-export function createHead<T extends Record<string, any> = Head>(options: CreateServerHeadOptions = {}) {
+export function createHead<T = Head>(options: CreateServerHeadOptions = {}) {
   const unhead = createHeadCore<T>({
     ...options,
     // @ts-expect-error untyped

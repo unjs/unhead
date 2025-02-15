@@ -41,6 +41,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       delete data.children
       if (HasElementTags.has(type as string)) {
         input[type as 'meta'] = input[type as 'meta'] || []
+        // @ts-expect-error untyped
         input[type as 'meta']!.push(data)
       }
       else {

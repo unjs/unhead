@@ -1,4 +1,5 @@
 import type { BaseMeta, Head, MetaFlatInput } from '../types'
+import type { ResolvedMetaFlat } from '../types/schema/metaFlat'
 import { MetaTagsArrayable } from './const'
 
 export const NAMESPACES = /* @__PURE__ */ {
@@ -130,7 +131,8 @@ function handleObjectEntry(key: string, value: Record<string, any>): BaseMeta[] 
     Object.entries(sanitizedValue)
       .map(([k, v]) => [`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`, v]),
   )
-  return unpackMeta(input)
+  // @ts-expect-error untyped
+  return unpackMeta(input || {})
     // @ts-expect-error untyped
     .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as BaseMeta[]
 }
@@ -169,7 +171,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   })
 }
 
-export function unpackMeta<T extends MetaFlatInput>(input: T): Required<Head>['meta'] {
+export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Head>['meta'] {
   const extras: BaseMeta[] = []
   const primitives: Record<string, any> = {}
 

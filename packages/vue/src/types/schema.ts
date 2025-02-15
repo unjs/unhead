@@ -16,30 +16,29 @@ import type {
   LinkBase,
   MaybeArray,
   MaybeEventFnHandlers,
-  MaybeFunction,
   MergeHead,
   MetaFlatInput,
-  ResolvableValues,
   SchemaAugmentations,
   ScriptBase,
+  Stringable,
   Unhead,
 } from 'unhead/types'
 import type { CSSProperties, Plugin, Ref } from 'vue'
-import type { MaybeComputedRef, ResolvableArray, ResolvableProperties } from './util'
+import type { ResolvableArray, ResolvableProperties, ResolvableValue } from './util'
 
-export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
+export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<Falsey | Stringable> | Record<string, MaybeComputedRef<Falsey | Stringable>>>
+  class?: MaybeArray<ResolvableValue<Falsey | Stringable> | Record<string, ResolvableValue<Falsey | Stringable>>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  style?: MaybeArray<MaybeComputedRef<Falsey | Stringable> | ResolvableProperties<CSSProperties>>
+  style?: MaybeArray<ResolvableValue<Falsey | Stringable> | ResolvableProperties<CSSProperties>>
 }
 
 export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
@@ -48,16 +47,16 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<Falsey | Stringable>> | Record<string, MaybeComputedRef<Falsey | Stringable>>
+  class?: MaybeArray<ResolvableValue<Falsey | Stringable>> | Record<string, ResolvableValue<Falsey | Stringable>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  style?: MaybeArray<MaybeComputedRef<string>> | ResolvableProperties<CSSProperties>
+  style?: MaybeArray<ResolvableValue<string>> | ResolvableProperties<CSSProperties>
 }
 
-export type Title = MaybeFunction<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
+export type Title = ResolvableValue<Stringable | Falsey> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type TitleTemplate = _TitleTemplate | Ref<_TitleTemplate> | ((title?: string) => _TitleTemplate)
 export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
 export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
@@ -83,7 +82,10 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateParams?: ResolvableArray<{ separator?: '|' | '-' | '·' | string } & Record<string, null | string | ResolvableArray<Record<string, null | string>>>>
+  templateParams?: ResolvableProperties<
+    { separator?: '|' | '-' | '·' | string }
+    & Record<string, Stringable | Falsey | ResolvableProperties<Record<string, Stringable | Falsey>>>
+  >
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.
@@ -140,6 +142,6 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-export type UseHeadInput<T extends MergeHead = Record<string, any>> = MaybeComputedRef<ReactiveHead<T>>
+export type UseHeadInput<T extends MergeHead = Record<string, any>> = ResolvableValue<ReactiveHead<T>>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
-export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
+export type VueHeadClient<T extends MergeHead> = Unhead<ResolvableValue<ReactiveHead<T>>> & Plugin

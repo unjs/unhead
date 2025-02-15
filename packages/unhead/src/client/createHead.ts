@@ -2,7 +2,7 @@ import type { CreateClientHeadOptions, Head } from '../types'
 import { createHeadCore } from '../createHead'
 import { renderDOMHead } from './renderDOMHead'
 
-export function createHead<T extends Record<string, any> = Head>(options: CreateClientHeadOptions = {}) {
+export function createHead<T = Head>(options: CreateClientHeadOptions = {}) {
   // restore initial entry from payload (titleTemplate and templateParams)
   const head = createHeadCore<T>({
     document: (typeof window !== 'undefined' ? document : undefined),

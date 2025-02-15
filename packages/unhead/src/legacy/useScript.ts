@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, Head, HeadEntryOptions, Script } from '../types'
+import type { ActiveHeadEntry, HeadEntryOptions, ResolvedHead, Script } from '../types'
 import { ScriptNetworkEvents } from '../utils/const'
 import { getActiveHead } from './index'
 
@@ -197,7 +197,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
-        const defaults: Required<Head>['script'][0] = {
+        const defaults: Required<ResolvedHead>['script'][0] = {
           defer: true,
           fetchpriority: 'low',
         }

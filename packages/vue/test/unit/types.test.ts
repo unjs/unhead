@@ -1,6 +1,6 @@
 import { createHead } from '@unhead/vue/client'
 import { computed } from 'vue'
-import { useHead } from '../../src/composables'
+import { useHead, useHeadSafe } from '../../src/composables'
 
 describe('types', () => {
   it('types useHead', () => {
@@ -11,6 +11,9 @@ describe('types', () => {
         class: {
           foo: () => false,
           something: computed(() => true),
+        },
+        style: {
+          color: 'beige',
         },
       },
       base: { href: () => '/base' },
@@ -31,6 +34,10 @@ describe('types', () => {
       titleTemplate: (titleChunk) => {
         return titleChunk ? `${titleChunk} - Site Title` : 'Site Title'
       },
+      templateParams: {
+        separator: () => '|',
+        title: 'foo',
+      },
     }, {
       head,
     })
@@ -40,5 +47,50 @@ describe('types', () => {
     }), {
       head,
     })
+    useHead({
+      htmlAttrs: {
+        style: [
+          {
+            color: 'olive',
+          },
+          {
+            color: 'blue',
+          },
+        ],
+        class: [
+          {
+            foo: true,
+          },
+          {
+            bar: true,
+          },
+        ],
+      },
+      style: [
+        '/* Custom styles */',
+        'h1 { color: salmon; }',
+      ],
+    }, {
+      head,
+    })
+  })
+  it('types useHeadSafe', () => {
+    const head = createHead()
+    useHeadSafe({
+      script: [
+        {
+          type: 'application/json',
+          id: 'xss-script',
+          innerHTML: 'alert("xss")',
+        },
+      ],
+      meta: [
+        {
+          // @ts-expect-error not allowed
+          'http-equiv': 'refresh',
+          'content': '0;javascript:alert(1)',
+        },
+      ],
+    }, { head })
   })
 })

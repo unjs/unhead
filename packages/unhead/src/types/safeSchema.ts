@@ -1,32 +1,70 @@
 import type {
-  Meta as _Meta,
-  BodyAttr,
+  BaseMeta,
+  BodyAttributes,
   DataKeys,
   Head,
-  HtmlAttr,
-  Link,
+  HtmlAttributes,
+  LinkBase,
   Noscript,
-  Script,
+  SchemaAugmentations,
+  ScriptBase,
+  Style,
 } from './schema'
+import type { ResolvableProperties, ResolvableValue } from './util'
 
-export type SafeBodyAttr = Pick<BodyAttr, 'id' | 'class'> & DataKeys
-export type SafeHtmlAttr = Pick<HtmlAttr, 'id' | 'class' | 'lang' | 'dir'> & DataKeys
-export type SafeMeta = Pick<_Meta, 'id' | 'name' | 'property' | 'content' | 'charset'> & DataKeys
-export type SafeLink = Pick<Link, 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesizes' | 'imagesrcset' | 'integrity' | 'media'
-  | 'referrerpolicy' | 'sizes' | 'id'> & {
-    rel?: Omit<Link['rel'], 'modulepreload' | 'prerender' | 'preload' | 'prefetch'>
-    type?: 'audio/aac' | 'application/x-abiword' | 'application/x-freearc' | 'image/avif' | 'video/x-msvideo' | 'application/vnd.amazon.ebook' | 'application/octet-stream' | 'image/bmp' | 'application/x-bzip' | 'application/x-bzip2' | 'application/x-cdf' | 'application/x-csh' | 'text/csv' | 'application/msword' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' | 'application/vnd.ms-fontobject' | 'application/epub+zip' | 'application/gzip' | 'image/gif' | 'image/vnd.microsoft.icon' | 'text/calendar' | 'application/java-archive' | 'image/jpeg' | 'application/json' | 'application/ld+json' | 'audio/midi' | 'audio/x-midi' | 'audio/mpeg' | 'video/mp4' | 'video/mpeg' | 'application/vnd.apple.installer+xml' | 'application/vnd.oasis.opendocument.presentation' | 'application/vnd.oasis.opendocument.spreadsheet' | 'application/vnd.oasis.opendocument.text' | 'audio/ogg' | 'video/ogg' | 'application/ogg' | 'audio/opus' | 'font/otf' | 'image/png' | 'application/pdf' | 'application/x-httpd-php' | 'application/vnd.ms-powerpoint' | 'application/vnd.openxmlformats-officedocument.presentationml.presentation' | 'application/vnd.rar' | 'application/rtf' | 'application/x-sh' | 'image/svg+xml' | 'application/x-tar' | 'image/tiff' | 'video/mp2t' | 'font/ttf' | 'text/plain' | 'application/vnd.visio' | 'audio/wav' | 'audio/webm' | 'video/webm' | 'image/webp' | 'font/woff' | 'font/woff2' | 'application/xhtml+xml' | 'application/vnd.ms-excel' | 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' | 'text/xml' | 'application/atom+xml' | 'application/xml' | 'application/vnd.mozilla.xul+xml' | 'application/zip' | 'video/3gpp' | 'audio/3gpp' | 'video/3gpp2' | 'audio/3gpp2' | (string & Record<never, never>)
-  } & DataKeys
-export type SafeScript = Pick<Script, 'id' | 'textContent'> & { type: 'application/json' | 'application/ld+json' } & DataKeys
-export type SafeNoscript = Pick<Noscript, 'id' | 'textContent'> & DataKeys
-export type SafeStyle = Pick<Script, 'id' | 'textContent' | 'media'> & DataKeys
+export type SafeBodyAttr = ResolvableProperties<Pick<BodyAttributes, 'id' | 'class' | 'style'> & DataKeys & SchemaAugmentations['bodyAttrs']>
+export type SafeHtmlAttr = ResolvableProperties<Pick<HtmlAttributes, 'id' | 'class' | 'style' | 'lang' | 'dir'> & DataKeys & SchemaAugmentations['htmlAttrs']>
+export type SafeMeta = ResolvableProperties<Pick<BaseMeta, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
+export type SafeLink = ResolvableProperties<Pick<LinkBase, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
+export type SafeScript = ResolvableProperties<Pick<ScriptBase, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & { textContent?: string } & SchemaAugmentations['script']>
+export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id' | 'textContent'> & DataKeys & SchemaAugmentations['noscript']>
+export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'textContent' | 'nonce' | 'title' | 'blocking'> & DataKeys & SchemaAugmentations['style']>
 
 export interface HeadSafe extends Pick<Head, 'title' | 'titleTemplate' | 'templateParams'> {
-  meta?: SafeMeta[]
-  link?: SafeLink[]
-  style?: SafeStyle[]
-  noscript?: SafeNoscript[]
-  script?: SafeScript[]
-  htmlAttrs?: SafeHtmlAttr
-  bodyAttrs?: SafeBodyAttr
+  /**
+   * The `<link>` HTML element specifies relationships between the current document and an external resource.
+   * This element is most commonly used to link to stylesheets, but is also used to establish site icons
+   * (both "favicon" style icons and icons for the home screen and apps on mobile devices) among other things.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
+   */
+  link?: ResolvableValue<ResolvableValue<SafeLink[]>>
+  /**
+   * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
+   */
+  meta?: ResolvableValue<ResolvableValue<SafeMeta>[]>
+  /**
+   * The `<style>` HTML element contains style information for a document, or part of a document.
+   * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
+   */
+  style?: ResolvableValue<ResolvableValue<(SafeStyle | string)>[]>
+  /**
+   * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
+   */
+  script?: ResolvableValue<ResolvableValue<(SafeScript | string)>[]>
+  /**
+   * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
+   * or if scripting is currently turned off in the browser.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
+   */
+  noscript?: ResolvableValue<ResolvableValue<(SafeNoscript | string)>[]>
+  /**
+   * Attributes for the `<html>` HTML element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html
+   */
+  htmlAttrs?: ResolvableValue<SafeHtmlAttr>
+  /**
+   * Attributes for the `<body>` HTML element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
+   */
+  bodyAttrs?: ResolvableValue<SafeBodyAttr>
 }

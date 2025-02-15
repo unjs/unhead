@@ -1,10 +1,12 @@
 import type { Falsey } from 'unhead/types'
 import type { ComputedRef, Ref } from 'vue'
 
-export type MaybeComputedRef<T> = T | (() => T) | ComputedRef<T> | Ref<T>
+export type MaybeFalsey<T> = T | Falsey
 
-export type ResolvableArray<T> = MaybeComputedRef<MaybeComputedRef<T>[]>
+export type ResolvableValue<T> = MaybeFalsey<T> | (() => MaybeFalsey<T>) | ComputedRef<MaybeFalsey<T>> | Ref<MaybeFalsey<T>>
+
+export type ResolvableArray<T> = ResolvableValue<ResolvableValue<T>[]>
 
 export type ResolvableProperties<T> = {
-  [key in keyof T]?: MaybeComputedRef<T[key] | Falsey>
+  [key in keyof T]?: ResolvableValue<T[key]>
 }

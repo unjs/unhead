@@ -27,7 +27,7 @@ function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.
  */
-export function createHeadCore<T extends Record<string, any> = Head>(resolvedOptions: CreateHeadOptions = {}) {
+export function createHeadCore<T = Head>(resolvedOptions: CreateHeadOptions = {}) {
   // counter for keeping unique ids of head object entries
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(resolvedOptions.hooks || {})
