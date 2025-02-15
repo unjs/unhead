@@ -24,7 +24,7 @@ import type {
   ScriptBase,
   Unhead,
 } from 'unhead/types'
-import type { Plugin, Ref } from 'vue'
+import type { CSSProperties, Plugin, Ref } from 'vue'
 import type { MaybeComputedRef, ResolvableArray, ResolvableProperties } from './util'
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
@@ -33,7 +33,13 @@ export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+  class?: MaybeArray<MaybeComputedRef<Falsey | Stringable> | Record<string, MaybeComputedRef<Falsey | Stringable>>>
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  style?: MaybeArray<MaybeComputedRef<Falsey | Stringable> | ResolvableProperties<CSSProperties>>
 }
 
 export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
@@ -42,13 +48,13 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+  class?: MaybeArray<MaybeComputedRef<Falsey | Stringable>> | Record<string, MaybeComputedRef<Falsey | Stringable>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  style?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<string | boolean>>
+  style?: MaybeArray<MaybeComputedRef<string>> | ResolvableProperties<CSSProperties>
 }
 
 export type Title = MaybeFunction<number | string | Falsey> | ResolvableValues<({ textContent: string } & SchemaAugmentations['title'])>
