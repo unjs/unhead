@@ -73,7 +73,7 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "unplugin-vue-components": "^28.0.0"
+    "unplugin-vue-components": "^28.1.0"
   },
   "build": {
     "external": [
