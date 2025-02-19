@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises'
 import express from 'express'
-import { createHead, renderSSRHead } from "unhead/server"
-import { unheadCtx } from "unhead"
+import { transformHtmlTemplate } from "@unhead/svelte/server";
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
@@ -53,29 +52,13 @@ app.use('*all', async (req, res) => {
       render = (await import('./dist/server/entry-server.js')).render
     }
 
-    const unhead = createHead()
-    unhead.push({
-      htmlAttrs: { lang: 'en' },
-      bodyAttrs: { class: 'test' },
-      meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      ],
-      link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/vite.svg' },
-      ]
-    })
-    unheadCtx.set(unhead, true)
     const rendered = await render(url)
-    unheadCtx.unset()
-    const headTags = await renderSSRHead(unhead)
-
-    const html = template
-      .replace(`<!--app-head-->`, rendered.head ?? '' + '' + headTags.headTags)
-      .replace(`<!--app-html-->`, rendered.html ?? '')
-      .replace('<html>', `<html ${headTags.htmlAttrs}>`)
-      .replace('<body>', `<body ${headTags.bodyAttrs}>${headTags.bodyTagsOpen}`)
-      .replace('</body>', `${headTags.bodyTags}</body>`)
+    const html = await transformHtmlTemplate(
+      rendered.unhead,
+      template
+        .replace(`<!--app-head-->`, rendered.head ?? '')
+        .replace(`<!--app-html-->`, rendered.html ?? '')
+    )
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {

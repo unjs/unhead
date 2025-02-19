@@ -1,7 +1,7 @@
 import './app.css'
 import { hydrate } from 'svelte'
 import App from './App.svelte'
-import { createHead } from 'unhead/client'
+import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 
 const unhead = createHead()
 unhead.push({
@@ -9,7 +9,7 @@ unhead.push({
 })
 
 const map = new Map()
-map.set('unhead', unhead)
+map.set(UnheadContextKey, unhead)
 
 hydrate(App, {
   target: document.getElementById('app')!,

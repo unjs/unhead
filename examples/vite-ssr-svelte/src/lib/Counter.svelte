@@ -1,16 +1,16 @@
 <script lang="ts">
-import { useHead } from 'unhead'
+import { useHead } from '@unhead/svelte'
 
 let count: number = $state(0)
 const increment = () => {
   count += 1
 }
 
-useHead({
-  title: () => {
-    console.log('resolving')
-    return `${count} - Counter`
-  }
+const entry = useHead()
+$effect(() => {
+  entry.patch({
+    title: `${count} - Counter`
+  })
 })
 </script>
 
