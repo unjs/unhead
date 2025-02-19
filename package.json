@@ -27,7 +27,7 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.2.1",
+    "@antfu/eslint-config": "^4.3.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
@@ -40,7 +40,7 @@
     "typescript": "5.7.3",
     "unbuild": "^3.3.1",
     "utility-types": "^3.11.0",
-    "vitest": "^3.0.5",
+    "vitest": "^3.0.6",
     "vue": "^3.5.13"
   },
   "pnpm": {
