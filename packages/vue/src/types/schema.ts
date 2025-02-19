@@ -1,14 +1,44 @@
-import type { Base as _Base, Link as _Link, Meta as _Meta, Noscript as _Noscript, Script as _Script, Style as _Style, Title as _Title, TitleTemplate as _TitleTemplate, BaseBodyAttr, BaseHtmlAttr, BodyEvents, DataKeys, DefinedValueOrEmptyObject, EntryAugmentation, HeadEntryOptions, MaybeArray, MaybeEventFnHandlers, MergeHead, MetaFlatInput, SchemaAugmentations, Unhead } from '@unhead/schema'
-import type { Plugin, Ref } from 'vue'
-import type { MaybeComputedRef, MaybeComputedRefEntries, MaybeComputedRefEntriesOnly } from './util'
+import type {
+  Base as _Base,
+  Noscript as _Noscript,
+  Style as _Style,
+  TitleTemplate as _TitleTemplate,
+  BaseBodyAttr,
+  BaseHtmlAttr,
+  BaseMeta,
+  BodyEvents,
+  DataKeys,
+  DefinedValueOrEmptyObject,
+  EntryAugmentation,
+  Falsey,
+  HeadEntryOptions,
+  HttpEventAttributes,
+  LinkBase,
+  MaybeArray,
+  MaybeEventFnHandlers,
+  MergeHead,
+  MetaFlatInput,
+  SchemaAugmentations,
+  ScriptBase,
+  Stringable,
+  Unhead,
+} from 'unhead/types'
+import type { CSSProperties, Plugin, Ref } from 'vue'
+import type { ResolvableArray, ResolvableProperties, ResolvableValue } from './util'
 
-export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
+export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+  class?: MaybeArray<ResolvableValue<Falsey | Stringable> | Record<string, ResolvableValue<Falsey | Stringable>>>
+  /**
+   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   */
+  style?: MaybeArray<ResolvableValue<Falsey | Stringable> | ResolvableProperties<CSSProperties>>
 }
 
 export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
@@ -17,25 +47,25 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<boolean>>
+  class?: MaybeArray<ResolvableValue<Falsey | Stringable>> | Record<string, ResolvableValue<Falsey | Stringable>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  style?: MaybeArray<MaybeComputedRef<string>> | Record<string, MaybeComputedRef<string | boolean>>
+  style?: MaybeArray<ResolvableValue<string>> | ResolvableProperties<CSSProperties>
 }
 
-export type Title = MaybeComputedRef<_Title>
+export type Title = ResolvableValue<Stringable | Falsey> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type TitleTemplate = _TitleTemplate | Ref<_TitleTemplate> | ((title?: string) => _TitleTemplate)
-export type Base<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<_Base<E>>>
-export type Link<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Link<E>>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Meta<E>>
-export type Style<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Style<E>>
-export type Script<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Script<E>>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRefEntries<_Noscript<E>>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs'] & DefinedValueOrEmptyObject<E>>>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = MaybeComputedRef<MaybeComputedRefEntries<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs'] & DefinedValueOrEmptyObject<E>> & MaybeEventFnHandlers<BodyEvents>>
+export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
+export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
+export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
+export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
+export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
 
 export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**
@@ -52,7 +82,10 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateParams?: MaybeComputedRefEntries<{ separator?: '|' | '-' | '·' | string } & Record<string, null | string | MaybeComputedRefEntries<Record<string, null | string>>>>
+  templateParams?: ResolvableProperties<
+    { separator?: '|' | '-' | '·' | string }
+    & Record<string, Stringable | Falsey | ResolvableProperties<Record<string, Stringable | Falsey>>>
+  >
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.
@@ -67,33 +100,33 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
    */
-  link?: MaybeComputedRef<Link<E['link']>[]>
+  link?: ResolvableArray<Link<E['link']>>
   /**
    * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
    */
-  meta?: MaybeComputedRef<Meta<E['meta']>[]>
+  meta?: ResolvableArray<Meta<E['meta']>>
   /**
    * The `<style>` HTML element contains style information for a document, or part of a document.
    * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: MaybeComputedRef<(Style<E['style']> | string)[]>
+  style?: ResolvableArray<(Style<E['style']> | string)>
   /**
    * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: MaybeComputedRef<(Script<E['script']> | string)[]>
+  script?: ResolvableArray<(Script<E['script']> | string)>
   /**
    * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: MaybeComputedRef<(Noscript<E['noscript']> | string)[]>
+  noscript?: ResolvableArray<(Noscript<E['noscript']> | string)>
   /**
    * Attributes for the `<html>` HTML element.
    *
@@ -109,6 +142,6 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-export type UseHeadInput<T extends MergeHead = Record<string, any>> = MaybeComputedRef<ReactiveHead<T>>
-export type UseSeoMetaInput = MaybeComputedRefEntriesOnly<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
-export type VueHeadClient<T extends MergeHead> = Unhead<MaybeComputedRef<ReactiveHead<T>>> & Plugin
+export type UseHeadInput<T extends MergeHead = Record<string, any>> = ResolvableValue<ReactiveHead<T>>
+export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
+export type VueHeadClient<T extends MergeHead> = Unhead<ResolvableValue<ReactiveHead<T>>> & Plugin

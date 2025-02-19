@@ -1,29 +1,18 @@
-import { unheadCtx } from 'unhead'
-import { resolveUnrefHeadInput } from './utils'
-
-// create
-export {
-  unheadCtx,
-}
-
-// utils
-export {
-  resolveUnrefHeadInput,
-}
+import { createHeadCore } from 'unhead'
 
 // composables
-export * from './autoImports'
-export * from './composables/injectHead'
-export * from './composables/useHead'
+export { unheadVueComposablesImports } from './autoImports'
 
-export * from './composables/useHeadSafe'
-export * from './composables/useScript'
-export * from './composables/useSeoMeta'
-export * from './composables/useServerHead'
-export * from './composables/useServerHeadSafe'
-export * from './composables/useServerSeoMeta'
+// core
+export {
+  createHeadCore,
+}
+export { injectHead, useHead, useHeadSafe, useSeoMeta, useServerHead, useServerHeadSafe, useServerSeoMeta } from './composables'
+
+export {
+  headSymbol,
+} from './install'
 // types
-export * from './types'
-export * from './VueHeadMixin'
-
-export type { ActiveHeadEntry, Head, HeadEntryOptions, HeadTag, MergeHead, Unhead } from '@unhead/schema'
+export type * from './types'
+export { resolveUnrefHeadInput } from './utils'
+export { VueHeadMixin } from './VueHeadMixin'

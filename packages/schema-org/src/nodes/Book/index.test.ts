@@ -4,8 +4,8 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineBook', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineBook({
           url: 'http://example.com/work/the_catcher_in_the_rye',
           name: 'The Catcher in the Rye',
@@ -31,7 +31,7 @@ describe('defineBook', () => {
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

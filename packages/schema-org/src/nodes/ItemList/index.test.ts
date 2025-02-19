@@ -4,9 +4,9 @@ import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineItemList', () => {
   it('movie example', async () => {
-    await useSetup(async () => {
+    await useSetup(async (head) => {
       // see https://developers.google.com/search/docs/appearance/structured-data/movie#single
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineItemList({
           itemListElement: [
             {
@@ -39,7 +39,7 @@ describe('defineItemList', () => {
         }),
       ])
 
-      const nodes = await injectSchemaOrg()
+      const nodes = await injectSchemaOrg(head)
 
       expect(nodes).toMatchInlineSnapshot(`
         [

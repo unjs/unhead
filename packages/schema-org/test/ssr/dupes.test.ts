@@ -1,16 +1,15 @@
 import { defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
+import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { createHeadWithContext } from '../../../../test/util'
 
 describe('schema.org dupes', () => {
   it('basic websites', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead()
 
     ssrHead.use(UnheadSchemaOrg())
 
-    useHead({
+    useHead(ssrHead, {
       script: [
         {
           type: 'application/ld+json',
@@ -38,7 +37,7 @@ describe('schema.org dupes', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" id="schema-org-graph-2" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph" id="schema-org-graph-2">{
         "@context": "https://schema.org",
         "@graph": [
           {

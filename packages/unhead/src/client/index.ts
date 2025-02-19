@@ -1,4 +1,3 @@
-export * from './createHead'
-export * from './debounced'
-export * from './plugins/domPlugin'
-export * from './renderDOMHead'
+export { createHead } from './createHead'
+export { renderDOMHead } from './renderDOMHead'
+export { createDebouncedFn } from './util'

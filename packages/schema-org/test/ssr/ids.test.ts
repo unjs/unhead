@@ -1,13 +1,15 @@
 import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
+import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
-import { createHeadWithContext } from '../../../../test/util'
 
 describe('schema.org ssr ids', () => {
   it('adds host prefix to custom id without host', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           host: 'https://example.com',
@@ -15,7 +17,7 @@ describe('schema.org ssr ids', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@id': '#foo',
         'name': 'foo',
@@ -27,9 +29,11 @@ describe('schema.org ssr ids', () => {
     expect(id).toMatchInlineSnapshot(`"https://example.com/#/schema/web-page/#foo"`)
   })
   it('allows ids with custom domains', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           host: 'https://example.com',
@@ -37,7 +41,7 @@ describe('schema.org ssr ids', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@id': 'https://custom-domain.com/#foo',
         'name': 'foo',
@@ -49,9 +53,11 @@ describe('schema.org ssr ids', () => {
     expect(id).toMatchInlineSnapshot('"https://custom-domain.com/#foo"')
   })
   it('full relative paths', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           host: 'https://example.com',
@@ -59,7 +65,7 @@ describe('schema.org ssr ids', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         '@id': '/fr#website',
         'name': 'foo',
@@ -72,9 +78,11 @@ describe('schema.org ssr ids', () => {
   })
 
   it('full relative paths relations', async () => {
-    const ssrHead = createHeadWithContext()
+    const ssrHead = createHead({
+      disableDefaults: true,
+    })
 
-    useHead({
+    useHead(ssrHead, {
       templateParams: {
         schemaOrg: {
           host: 'https://example.com',
@@ -82,7 +90,7 @@ describe('schema.org ssr ids', () => {
       },
     })
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebSite({
         '@id': '/en#website',
         'name': 'foo',
@@ -94,13 +102,13 @@ describe('schema.org ssr ids', () => {
       defineWebPage(),
     ])
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'merge?',
       }),
     ])
 
-    useSchemaOrg([
+    useSchemaOrg(ssrHead, [
       defineWebPage({
         potentialAction: {
           '@type': 'ViewAction',
@@ -109,6 +117,7 @@ describe('schema.org ssr ids', () => {
       }),
     ], {
       tagDuplicateStrategy: 'replace',
+      tagPosition: 'bodyOpen',
     })
 
     const tags = await ssrHead.resolveTags()

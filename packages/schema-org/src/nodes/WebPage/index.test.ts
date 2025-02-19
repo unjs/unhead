@@ -10,8 +10,8 @@ const mockDate = new Date(Date.UTC(2021, 10, 10, 10, 10, 10, 0))
 
 describe('defineWebPage', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           name: 'test',
           datePublished: mockDate,
@@ -19,7 +19,7 @@ describe('defineWebPage', () => {
         }),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage).toMatchInlineSnapshot(`
         {
           "@id": "https://example.com/#webpage",
@@ -42,12 +42,12 @@ describe('defineWebPage', () => {
   })
 
   it('inherits attributes from useRoute()', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webPage?.name).toEqual('headline')
 
@@ -76,8 +76,8 @@ describe('defineWebPage', () => {
   })
 
   it('passes Date objects into iso string', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           name: 'test',
           datePublished: new Date(Date.UTC(2021, 10, 1, 0, 0, 0)),
@@ -85,7 +85,7 @@ describe('defineWebPage', () => {
         }),
       ])
 
-      const webPage = await findNode<WebPage>('#webpage')
+      const webPage = await findNode<WebPage>(head, '#webpage')
 
       expect(webPage?.datePublished).toEqual('2021-11-01T00:00:00.000Z')
       expect(webPage?.dateModified).toEqual('2022-02-01T00:00:00.000Z')
@@ -93,27 +93,27 @@ describe('defineWebPage', () => {
   })
 
   it('allows overriding the type', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           '@type': 'FAQPage',
           'name': 'FAQ',
         }),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webPage?.['@type']).toEqual(['WebPage', 'FAQPage'])
     })
   })
 
   it('adds read action to home page', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      const webpage = await findNode<WebPage>(PrimaryWebPageId)
+      const webpage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webpage).toMatchInlineSnapshot(`
         {
@@ -140,8 +140,8 @@ describe('defineWebPage', () => {
   })
 
   it('can add readAction', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           name: 'Webpage',
           potentialAction: defineReadAction({
@@ -152,7 +152,7 @@ describe('defineWebPage', () => {
         }),
       ])
 
-      const webpage = await findNode<WebPage>(PrimaryWebPageId)
+      const webpage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webpage).toMatchInlineSnapshot(`
           {
@@ -178,11 +178,11 @@ describe('defineWebPage', () => {
   })
 
   it('can infer @type from path', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
-      const webpage = await findNode<WebPage>(PrimaryWebPageId)
+      const webpage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webpage?.['@type']).toMatchInlineSnapshot(`
         [
@@ -196,54 +196,54 @@ describe('defineWebPage', () => {
   })
 
   it('has default @type WebPage', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.['@type']).toEqual('WebPage')
     })
   })
 
   it('supports augmentation with defaults', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({
           '@type': ['CollectionPage', 'SearchResultsPage'],
         }),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.['@type']).toEqual(['WebPage', 'CollectionPage', 'SearchResultsPage'])
     })
   })
 
   it('relation resolving works both ways', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)!
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)!
       expect(webPage.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
       expect(webPage.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
 
-      expect(await injectSchemaOrg()).toMatchInlineSnapshot(`
+      expect(await injectSchemaOrg(head)).toMatchInlineSnapshot(`
         [
           {
             "@id": "https://example.com/#webpage",
@@ -328,25 +328,25 @@ describe('defineWebPage', () => {
   })
 
   it('relation resolving works both ways #2', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage?.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
       expect(webPage?.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
@@ -354,25 +354,25 @@ describe('defineWebPage', () => {
   })
 
   it('relation resolving works both ways #3', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      const webPage = await findNode<WebPage>(PrimaryWebPageId)
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
       expect(webPage?.about).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
       expect(webPage?.isPartOf).toEqual(idReference(prefixId('https://example.com/', PrimaryWebSiteId)))
       expect(webPage?.primaryImageOfPage).toEqual(idReference(prefixId('https://example.com/', '#logo')))
@@ -380,18 +380,18 @@ describe('defineWebPage', () => {
   })
 
   it('duplicate entries resolve as single', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebPage({
           name: 'Harlan Wilton',
         }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -415,12 +415,12 @@ describe('defineWebPage', () => {
   })
 
   it('arbitrary resolves', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({ name: defineImage({ url: '/logo.png' }) }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [
@@ -449,12 +449,12 @@ describe('defineWebPage', () => {
   })
 
   it('arbitrary resolves trailing', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage({ image: defineImage({ url: '/logo.png' }) }),
       ])
 
-      const graphNodes = await injectSchemaOrg()
+      const graphNodes = await injectSchemaOrg(head)
 
       expect(graphNodes).toMatchInlineSnapshot(`
         [

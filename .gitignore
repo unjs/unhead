@@ -11,3 +11,9 @@ samples
 .env
 docs/.nuxt
 **/auto-imports.d.ts
+
+.data
+
+.angular
+
+.vite-inspect

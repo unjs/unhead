@@ -1,19 +1,12 @@
+import type { Falsey } from 'unhead/types'
 import type { ComputedRef, Ref } from 'vue'
 
-// copied from @vueuse/shared
-export type MaybeReadonlyRef<T> = ComputedRef<T>
-export type MaybeComputedRef<T> = T | MaybeReadonlyRef<T> | Ref<T>
-export type MaybeComputedRefOrFalsy<T> = T | MaybeReadonlyRef<T> | Ref<T>
+export type MaybeFalsey<T> = T | Falsey
 
-/**
- * @deprecated Use MaybeComputedRefOrFalsy
- */
-export type MaybeComputedRefOrPromise<T> = MaybeComputedRefOrFalsy<T>
+export type ResolvableValue<T> = MaybeFalsey<T> | (() => MaybeFalsey<T>) | ComputedRef<MaybeFalsey<T>> | Ref<MaybeFalsey<T>>
 
-export type MaybeComputedRefEntries<T> = MaybeComputedRef<T> | {
-  [key in keyof T]?: MaybeComputedRefOrFalsy<T[key]>
-}
+export type ResolvableArray<T> = ResolvableValue<ResolvableValue<T>[]>
 
-export type MaybeComputedRefEntriesOnly<T> = {
-  [key in keyof T]?: MaybeComputedRefOrFalsy<T[key]>
+export type ResolvableProperties<T> = {
+  [key in keyof T]?: ResolvableValue<T[key]>
 }

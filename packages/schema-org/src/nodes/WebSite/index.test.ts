@@ -7,14 +7,14 @@ import { PrimaryWebSiteId } from './index'
 
 describe('defineWebSite', () => {
   it('can be registered', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'test',
         }),
       ])
 
-      const client = await injectSchemaOrg()
+      const client = await injectSchemaOrg(head)
 
       expect(client).toMatchInlineSnapshot(`
         [
@@ -31,8 +31,8 @@ describe('defineWebSite', () => {
   })
 
   it('sets up publisher as identity', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         definePerson({
           name: 'Harlan Wilton',
           image: '/image/me.png',
@@ -42,16 +42,16 @@ describe('defineWebSite', () => {
         }),
       ])
 
-      const website = await findNode<WebSite>(PrimaryWebSiteId)
-      const identity = await findNode<WebSite>(IdentityId)
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
+      const identity = await findNode<WebSite>(head, IdentityId)
 
       expect(website?.publisher).toEqual(idReference(identity!))
     })
   })
 
   it('can set search action', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'test',
           potentialAction: [
@@ -62,7 +62,7 @@ describe('defineWebSite', () => {
         }),
       ])
 
-      const website = await findNode<WebSite>(PrimaryWebSiteId)
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
 
       expect(website?.potentialAction).toMatchInlineSnapshot(`
         [
@@ -87,8 +87,8 @@ describe('defineWebSite', () => {
   })
 
   it('can set search action - flat', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'test',
           potentialAction:
@@ -98,7 +98,7 @@ describe('defineWebSite', () => {
         }),
       ])
 
-      const website = await findNode<WebSite>(PrimaryWebSiteId)
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
 
       expect(website?.potentialAction).toMatchInlineSnapshot(`
         [
@@ -123,92 +123,92 @@ describe('defineWebSite', () => {
   })
 
   it('can handle multiple websites', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'test',
         }),
       ])
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'test 2',
         }),
       ])
 
-      const ctx = await injectSchemaOrg()
+      const ctx = await injectSchemaOrg(head)
       expect(ctx.length).toEqual(1)
       expect(ctx[0]['@id']).toBe('https://example.com/#website')
     })
   })
 
   it('relation resolving works both ways', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      const webSite = await findNode<WebSite>(PrimaryWebSiteId)
+      const webSite = await findNode<WebSite>(head, PrimaryWebSiteId)
       expect(webSite?.publisher).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
     })
   })
 
   it('relation resolving works both ways #2', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      const webSite = await findNode<WebSite>(PrimaryWebSiteId)
+      const webSite = await findNode<WebSite>(head, PrimaryWebSiteId)
       expect(webSite?.publisher).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
     })
   })
 
   it('relation resolving works both ways #3', async () => {
-    await useSetup(async () => {
-      useSchemaOrg([
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
         defineWebSite({
           name: 'Harlan Wilton',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineOrganization({
           name: 'Harlan Wilton',
           logo: '/logo.png',
         }),
       ])
 
-      useSchemaOrg([
+      useSchemaOrg(head, [
         defineWebPage(),
       ])
 
-      const webSite = await findNode<WebSite>(PrimaryWebSiteId)
+      const webSite = await findNode<WebSite>(head, PrimaryWebSiteId)
       expect(webSite?.publisher).toEqual(idReference(prefixId('https://example.com/', IdentityId)))
     })
   })

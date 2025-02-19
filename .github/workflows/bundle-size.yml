@@ -1,0 +1,52 @@
+name: Bundle Size Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  analyze-bundle-size:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.1.0
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run bundle size test
+        run: pnpm test:bundle-size
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Run analyze script
+        id: analyze
+        run: |
+          output=$(bun bench/bundle/analyze.ts)
+          echo "$output"
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: Bundle Size Analysis
+          message: |
+            ### Bundle Size Analysis
+
+            ${{ steps.analyze.outputs.result }}
