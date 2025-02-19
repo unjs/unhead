@@ -13,9 +13,6 @@ export function createHead<T extends MergeHead>(options: CreateClientHeadOptions
       render: createDebouncedFn(() => renderDOMHead(head), nextTick),
     },
     ...options,
-    plugins: [
-      ...(options.plugins || []),
-    ],
   }) as VueHeadClient<T>
   head.install = vueInstall(head)
   return head
