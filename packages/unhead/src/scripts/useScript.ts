@@ -55,6 +55,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
   const _uniqueCbs: Set<string> = new Set<string>()
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
+    // events will never run
+    if (head.ssr) {
+      return
+    }
     if (options?.key) {
       const key = `${options?.key}:${options.key}`
       if (_uniqueCbs.has(key)) {
