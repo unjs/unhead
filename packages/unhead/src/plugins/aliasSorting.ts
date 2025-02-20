@@ -1,8 +1,9 @@
-import { defineHeadPlugin, sortTags } from '../utils'
+import { sortTags } from '../utils'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 const formatKey = (k: string) => !k.includes(':key') ? k.split(':').join(':key:') : k
 
-export const AliasSortingPlugin = /* @__PURE__ */ defineHeadPlugin({
+export const AliasSortingPlugin = defineHeadPlugin({
   key: 'aliasSorting',
   hooks: {
     'tags:resolve': (ctx) => {

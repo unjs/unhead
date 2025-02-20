@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 export interface InferSeoMetaPluginOptions {
   /**

@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 async function resolvePromisesRecursively(root: any): Promise<any> {
   if (root instanceof Promise) {

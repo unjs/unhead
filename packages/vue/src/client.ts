@@ -1,5 +1,5 @@
-import type { ReactiveHead, ResolvableValue, VueHeadClient } from '@unhead/vue'
 import type { CreateClientHeadOptions, MergeHead } from 'unhead/types'
+import type { ReactiveHead, ResolvableValue, VueHeadClient } from './types'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { nextTick } from 'vue'
 import { vueInstall } from './install'

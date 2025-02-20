@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'deprecations',

@@ -1,4 +1,4 @@
-import type { HeadSafe, HeadTag } from '../types'
+import type { HeadSafe } from '../types/safeSchema'
 import type { BodyAttributes } from '../types/schema/bodyAttributes'
 import type { HtmlAttributes } from '../types/schema/htmlAttributes'
 import type { Link } from '../types/schema/link'
@@ -6,7 +6,8 @@ import type { Meta } from '../types/schema/meta'
 import type { Noscript } from '../types/schema/noscript'
 import type { Script } from '../types/schema/script'
 import type { Style } from '../types/schema/style'
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
+import type { HeadTag } from '../types/tags'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 const WhitelistAttributes = {
   htmlAttrs: new Set(['class', 'style', 'lang', 'dir'] satisfies (keyof HtmlAttributes)[]),

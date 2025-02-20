@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
 
-import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -10,20 +9,9 @@ export default defineConfig({
     __TEST__: true,
     __BROWSER__: true,
   },
-  resolve: {
-    alias: {
-      'unhead': resolve(__dirname, 'packages/unhead/src'),
-      '@unhead/shared': resolve(__dirname, 'packages/shared/src'),
-      '@unhead/schema': resolve(__dirname, 'packages-aliased/schema/src'),
-      '@unhead/ssr': resolve(__dirname, 'packages-aliased/ssr/src'),
-      '@unhead/addons': resolve(__dirname, 'packages/addons/src'),
-      '@unhead/dom': resolve(__dirname, 'packages-aliased/dom/src'),
-      '@unhead/vue': resolve(__dirname, 'packages/vue/src'),
-      '@unhead/schema-org': resolve(__dirname, 'packages/schema-org/src'),
-    },
-  },
   test: {
-    // include: ['test/**/*.test.ts'],
+    pool: 'threads',
+    workspace: ['packages/*'],
     globals: true,
     reporters: 'dot',
     isolate: true,
