@@ -121,4 +121,33 @@ describe('schema.org e2e', () => {
       </body></html>"
     `)
   })
+  it('empty', async () => {
+    const head = await ssrVueAppWithUnhead(() => {
+      const schema = useSchemaOrg()
+      schema.patch([
+        defineWebPage({
+          name: 'test',
+        }),
+      ])
+    })
+    const data = await renderSSRHead(head)
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "<script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "name": "test"
+          }
+        ]
+      }</script>",
+        "bodyTagsOpen": "",
+        "headTags": "",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

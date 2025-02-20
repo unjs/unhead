@@ -1,4 +1,5 @@
 import type { ResolvableProperties, UseHeadOptions } from '@unhead/vue'
+import type { ActiveHeadEntry } from 'unhead/types'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -39,6 +40,8 @@ import type {
 } from '../../'
 import type { Arrayable } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
+import { normalizeSchemaOrgInput,
+} from '../../'
 import { UnheadSchemaOrg } from '../../plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -158,19 +161,12 @@ export function defineBookEdition<T extends Record<string, any>>(input?: Resolva
 
 export type UseSchemaOrgInput = Arrayable<ResolvableProperties<Thing | Record<string, any>>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput, options?: UseHeadOptions) {
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
-  const head = options?.head || injectHead()
-  head.use(UnheadSchemaOrg())
-  return useHead<{ script: { nodes: UseSchemaOrgInput } }>({
-    script: [
-      {
-        type: 'application/ld+json',
-        key: 'schema-org-graph',
-        nodes: input,
-      },
-    ],
-  }, {
-    head,
-  })
+  const unhead = options.head || injectHead()
+  unhead.use(UnheadSchemaOrg())
+  const entry = useHead(normalizeSchemaOrgInput(input), options) as ActiveHeadEntry<UseSchemaOrgInput>
+  const corePatch = entry.patch
+  entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
+  return entry
 }

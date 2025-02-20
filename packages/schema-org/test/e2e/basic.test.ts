@@ -314,9 +314,9 @@ describe('schema.org e2e', () => {
     useSchemaOrg(ssrHead, ['test'])
     useSchemaOrg(ssrHead, [])
     // @ts-expect-error intentional
-    useSchemaOrg('')
+    useSchemaOrg(ssrHead, '')
     // @ts-expect-error intentional
-    useSchemaOrg('test')
+    useSchemaOrg(ssrHead, 'test')
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)

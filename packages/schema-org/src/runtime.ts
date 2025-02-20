@@ -1,4 +1,4 @@
-import type { HeadEntryOptions, Unhead } from 'unhead/types'
+import type {ActiveHeadEntry, HeadEntryOptions, Unhead} from 'unhead/types'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -37,7 +37,6 @@ import type {
   WebSite,
 } from './nodes'
 import type { Arrayable, Thing } from './types'
-import { useHead } from 'unhead'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: string) {
@@ -160,13 +159,8 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 
 export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
 
-export function useSchemaOrg(head: Unhead<any>, input: UseSchemaOrgInput, options?: HeadEntryOptions) {
-  // lazy initialise the plugin
-  if ((Array.isArray(input) && input.length === 0) || !input) {
-    return
-  }
-  head.use(UnheadSchemaOrg())
-  return useHead(head, {
+export function normalizeSchemaOrgInput(input: UseSchemaOrgInput) {
+  return {
     script: [
       {
         type: 'application/ld+json',
@@ -174,5 +168,13 @@ export function useSchemaOrg(head: Unhead<any>, input: UseSchemaOrgInput, option
         nodes: input,
       },
     ],
-  }, options)
+  }
+}
+
+export function useSchemaOrg(unhead: Unhead<any>, input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+  unhead.use(UnheadSchemaOrg())
+  const entry = unhead.push(normalizeSchemaOrgInput(input), options)
+  const corePatch = entry.patch
+  entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
+  return entry
 }
