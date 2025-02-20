@@ -71,8 +71,8 @@
     "ufo": "^1.5.4"
   },
   "devDependencies": {
-    "unhead": "workspace:*",
     "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
     "unplugin-vue-components": "^28.4.0"
   },
   "build": {
