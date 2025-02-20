@@ -1,8 +1,9 @@
-export const hookImports = {
+export const autoImports = {
   '@unhead/svelte': [
     'useUnhead',
     'useHead',
     'useSeoMeta',
     'useHeadSafe',
+    'useServerHead',
   ],
 }

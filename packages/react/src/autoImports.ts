@@ -1,11 +1,9 @@
 export const hookImports = {
-  '@unhead/vue': [
+  '@unhead/react': [
     'useUnhead',
     'useHead',
     'useSeoMeta',
     'useHeadSafe',
     'useServerHead',
-    'useServerSeoMeta',
-    'useServerHeadSafe',
   ],
 }
