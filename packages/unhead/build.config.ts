@@ -10,11 +10,11 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/legacy', name: 'legacy' },
     { input: 'src/plugins/index', name: 'plugins' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },
     { input: 'src/scripts/index', name: 'scripts' },
-    { input: 'src/legacy', name: 'legacy' },
     { input: 'src/types', name: 'types' },
     { input: 'src/utils', name: 'utils' },
   ],

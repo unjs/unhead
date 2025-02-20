@@ -97,8 +97,8 @@
     "utils.d.ts"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild",
+    "stub": "unbuild --stub"
   },
   "dependencies": {
     "hookable": "^5.5.3"
