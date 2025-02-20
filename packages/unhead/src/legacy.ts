@@ -2,11 +2,11 @@ import type {
   CreateHeadOptions,
   Head,
   Unhead,
-} from '../types'
-import { createHeadCore } from '../createHead'
-import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from '../plugins'
+} from './types'
+import { createHeadCore } from './createHead'
+import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from './plugins'
 
-export * from '../index'
+export * from './index'
 
 export const activeHead: { value: Unhead<any> | null } = { value: null }
 

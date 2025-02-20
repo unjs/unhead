@@ -8,7 +8,7 @@ import type {
   UseHeadSafeInput,
   UseSeoMetaInput,
   VueHeadClient,
-} from '../types'
+} from './types'
 import { createHeadCore } from 'unhead'
 import {
   getCurrentInstance,
@@ -21,12 +21,12 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import { createHead as createVueHead } from '../client'
-import { headSymbol } from '../install'
-import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from '../plugins'
-import { VueResolver } from '../resolver'
-import { createHead as createVueServerHead } from '../server'
-import { defineHeadPlugin, walkResolver } from '../utils'
+import { createHead as createVueHead } from './client'
+import { headSymbol } from './install'
+import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from './plugins'
+import { VueResolver } from './resolver'
+import { createHead as createVueServerHead } from './server'
+import { defineHeadPlugin, walkResolver } from './utils'
 
 export { createHeadCore }
 

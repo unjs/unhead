@@ -1,4 +1,4 @@
-import type { PropResolver } from 'unhead/types'
+import type { PropResolver } from '../types'
 
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
   // Combined primitive type check
