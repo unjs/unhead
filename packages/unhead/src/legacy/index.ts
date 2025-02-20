@@ -7,30 +7,12 @@ import { createHeadCore } from '../createHead'
 import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from '../plugins'
 
 export * from '../index'
-export * from './useScript'
 
 export const activeHead: { value: Unhead<any> | null } = { value: null }
 
 export function getActiveHead() {
   return activeHead?.value
 }
-
-export const unheadComposablesImports = [
-  {
-    from: 'unhead',
-    imports: [
-      'useHead',
-      'useHeadSafe',
-      'useSeoMeta',
-    ],
-  },
-]
-
-export const composableNames = [
-  'useHead',
-  'useHeadSafe',
-  'useSeoMeta',
-]
 
 export function createServerHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
   return activeHead.value = createHeadCore<T>({

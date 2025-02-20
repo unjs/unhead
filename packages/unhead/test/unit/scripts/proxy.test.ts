@@ -1,9 +1,9 @@
-import type { AsVoidFunctions } from '../../src/types'
+import type { AsVoidFunctions } from '../../../src/scripts/types'
 import { createHead } from 'unhead/server'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../src/proxy'
-import { useScript } from '../../src/useScript'
-import { createSpyProxy } from '../../src/utils'
+import { useScript } from '../../../src/composables'
+import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../../src/scripts/proxy'
+import { createSpyProxy } from '../../../src/scripts/utils'
 
 interface Api {
   _paq: any[]

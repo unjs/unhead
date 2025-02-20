@@ -52,6 +52,10 @@
     "./types": {
       "types": "./dist/types.d.ts",
       "import": "./dist/types.mjs"
+    },
+    "./scripts": {
+      "types": "./dist/scripts.d.ts",
+      "import": "./dist/scripts.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -76,6 +80,9 @@
       ],
       "utils": [
         "dist/utils"
+      ],
+      "scripts": [
+        "dist/scripts"
       ]
     }
   },
@@ -84,6 +91,7 @@
     "dist",
     "legacy.d.ts",
     "plugins.d.ts",
+    "scripts.d.ts",
     "server.d.ts",
     "types.d.ts",
     "utils.d.ts"

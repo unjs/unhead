@@ -1,6 +1,6 @@
 import { createHead as createServerHead } from 'unhead/server'
 import { describe, expectTypeOf, it } from 'vitest'
-import { useScript } from '../../src/useScript'
+import { useScript } from '../../../src/composables'
 
 describe('useScript', () => {
   it('types: inferred use()', async () => {

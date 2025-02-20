@@ -27,3 +27,5 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
     _flatMeta: meta,
   }, options)
 }
+
+export { useScript } from './scripts'

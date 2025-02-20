@@ -28,7 +28,6 @@ import { VueResolver } from '../resolver'
 import { createHead as createVueServerHead } from '../server'
 import { defineHeadPlugin, walkResolver } from '../utils'
 
-export * from './useScript'
 export { createHeadCore }
 
 export function resolveUnrefHeadInput(input: any) {
