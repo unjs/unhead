@@ -1,8 +1,8 @@
 import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
-import { useDom } from '../../../unhead/test/fixtures'
-import { useScript } from '../../src/vue/useScript'
+import { useDom } from '../../../unhead/test/util'
+import { useScript } from '../../src/scripts'
 
 describe('vue e2e scripts', () => {
   it('multiple active promise handles', async () => {

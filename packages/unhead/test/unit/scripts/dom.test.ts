@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
-import { useDelayedSerializedDom, useDOMHead } from '../../../unhead/test/util'
-import { useScript } from '../../src/useScript'
+import { useScript } from '../../../src/composables'
+import { useDelayedSerializedDom, useDOMHead } from '../../../test/util'
 
 describe('dom useScript', () => {
   it('basic', async () => {

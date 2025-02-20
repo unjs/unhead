@@ -2,8 +2,8 @@ import { renderDOMHead } from 'unhead/client'
 import { useHead } from 'unhead/composables'
 import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../../unhead/test/util'
-import { useScript } from '../../src/useScript'
+import { useScript } from '../../../src/composables'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../../test/util'
 
 describe('unhead e2e scripts', () => {
   it('does not duplicate innerHTML', async () => {

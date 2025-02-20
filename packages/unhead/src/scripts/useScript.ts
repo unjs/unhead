@@ -1,7 +1,7 @@
 import type {
   ResolvedHead,
   Unhead,
-} from 'unhead/types'
+} from '../types'
 import type {
   EventHandlerOptions,
   ScriptInstance,
@@ -13,7 +13,7 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { ScriptNetworkEvents } from 'unhead/utils'
+import { ScriptNetworkEvents } from '../utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 export function resolveScriptKey(input: UseScriptResolvedInput) {
