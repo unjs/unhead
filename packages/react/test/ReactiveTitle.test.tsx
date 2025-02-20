@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react'
-import { renderSSRHead } from '@unhead/ssr'
+import { renderSSRHead } from '@unhead/react/server'
 // @vitest-environment jsdom
 import React from 'react'
 import { describe, expect, it } from 'vitest'

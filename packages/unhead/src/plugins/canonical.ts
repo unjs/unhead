@@ -1,4 +1,4 @@
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 /**
  * CanonicalPlugin resolves paths in tags that require a canonical host to be set.

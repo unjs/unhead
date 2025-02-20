@@ -66,13 +66,12 @@
     }
   },
   "dependencies": {
-    "@unhead/vue": "workspace:*",
     "defu": "^6.1.4",
     "ohash": "^1.1.4",
-    "ufo": "^1.5.4",
-    "unhead": "workspace:*"
+    "ufo": "^1.5.4"
   },
   "devDependencies": {
+    "unhead": "workspace:*",
     "unplugin-vue-components": "^28.4.0"
   },
   "build": {

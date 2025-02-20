@@ -1,43 +1,48 @@
-import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseSeoMetaInput } from './types'
+import type {
+  ActiveHeadEntry,
+  Head,
+  HeadEntryOptions,
+  HeadSafe,
+  Unhead,
+  UseHeadInput,
+  UseScriptInput,
+  UseScriptOptions,
+  UseScriptReturn,
+  UseSeoMetaInput,
+} from 'unhead/types'
 import { getContext, onDestroy } from 'svelte'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContextKey } from './context'
-import { FlatMetaPlugin, SafeInputPlugin } from './plugins'
 
-export function useUnhead(): Unhead<any> {
-  const instance = getContext<Unhead<any>>(UnheadContextKey)
+export function useUnhead(): Unhead<Head> {
+  const instance = getContext<Unhead<Head>>(UnheadContextKey)
   if (!instance) {
     throw new Error('useUnhead() was called without provide context.')
   }
   return instance
 }
 
-export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
-  const head = options.head || useUnhead()
-  // @ts-expect-error untyped
-  const instance = head.push(input, options)
+function withSideEffects<T extends ActiveHeadEntry<any>>(instance: T): T {
   onDestroy(() => {
     instance.dispose()
   })
-  // @ts-expect-error untyped
   return instance
 }
 
-export function useHeadSafe(input: HeadSafe, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
-  const head = options.head || useUnhead()
-  head.use(SafeInputPlugin)
-  options._safe = true
+export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
   // @ts-expect-error untyped
-  return useHead(input, options)
+  return withSideEffects(baseHead(options.head || useUnhead(), input, options))
 }
 
-export function useSeoMeta(input: UseSeoMetaInput, options: HeadEntryOptions = {}): ActiveHeadEntry<any> {
-  const head = options.head || useUnhead()
-  head.use(FlatMetaPlugin)
-  const { title, titleTemplate, ...meta } = input
-  return useHead({
-    title,
-    titleTemplate,
-    // @ts-expect-error untyped
-    _flatMeta: meta,
-  }, options)
+export function useHeadSafe(input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
+  return withSideEffects(baseHeadSafe(options.head || useUnhead(), input, options))
+}
+
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
+  return withSideEffects(baseSeoMeta(options.head || useUnhead(), input, options))
+}
+
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(input: UseScriptInput, options: UseScriptOptions<T> = {}): UseScriptReturn<T> {
+  // script self-manages side effects
+  return baseUseScript(options.head || useUnhead(), input, options)
 }

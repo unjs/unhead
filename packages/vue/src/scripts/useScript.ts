@@ -1,4 +1,3 @@
-import type { ResolvableProperties, VueHeadClient } from '@unhead/vue'
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
@@ -7,9 +6,10 @@ import type {
   ScriptBase,
 } from 'unhead/types'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
-import { injectHead } from '@unhead/vue'
+import type { ResolvableProperties, VueHeadClient } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
+import { injectHead } from '../composables'
 
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>

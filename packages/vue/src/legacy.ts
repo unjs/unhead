@@ -23,10 +23,10 @@ import {
 } from 'vue'
 import { createHead as createVueHead } from './client'
 import { headSymbol } from './install'
-import { AliasSortingPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from './plugins'
+import { AliasSortingPlugin, defineHeadPlugin, DeprecationsPlugin, FlatMetaPlugin, PromisesPlugin, SafeInputPlugin, TemplateParamsPlugin } from './plugins'
 import { VueResolver } from './resolver'
 import { createHead as createVueServerHead } from './server'
-import { defineHeadPlugin, walkResolver } from './utils'
+import { walkResolver } from './utils'
 
 export { createHeadCore }
 

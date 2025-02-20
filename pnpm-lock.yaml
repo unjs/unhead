@@ -503,22 +503,13 @@ importers:
       ufo:
         specifier: ^1.5.4
         version: 1.5.4
+    devDependencies:
       unhead:
         specifier: workspace:*
         version: link:../unhead
-    devDependencies:
       unplugin-vue-components:
         specifier: ^28.4.0
         version: 28.4.0(@babel/parser@7.26.7)(@nuxt/kit@3.15.4(magicast@0.3.5))(vue@3.5.13(typescript@5.7.3))
-
-  packages/scripts:
-    dependencies:
-      '@unhead/vue':
-        specifier: workspace:*
-        version: link:../vue
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
 
   packages/svelte:
     dependencies:
@@ -526,6 +517,9 @@ importers:
         specifier: workspace:*
         version: link:../unhead
     devDependencies:
+      '@testing-library/svelte':
+        specifier: ^5.2.7
+        version: 5.2.7(svelte@5.20.2)(vite@6.1.1(@types/node@22.13.4)(jiti@2.4.2)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))(vitest@3.0.6(@types/debug@4.1.12)(@types/node@22.13.4)(jiti@2.4.2)(jsdom@26.0.0)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))
       svelte:
         specifier: ^5.20.2
         version: 5.20.2
@@ -2504,6 +2498,19 @@ packages:
       '@types/react':
         optional: true
       '@types/react-dom':
+        optional: true
+
+  '@testing-library/svelte@5.2.7':
+    resolution: {integrity: sha512-aGhUaFmEXEVost4QOsbHUUbHLwi7ZZRRxAHFDO2Cmr0BZD3/3+XvaYEPq70Rdw0NRNjdqZHdARBEcrCOkPuAqw==}
+    engines: {node: '>= 10'}
+    peerDependencies:
+      svelte: ^3 || ^4 || ^5 || ^5.0.0-next.0
+      vite: '*'
+      vitest: '*'
+    peerDependenciesMeta:
+      vite:
+        optional: true
+      vitest:
         optional: true
 
   '@trysound/sax@0.2.0':
@@ -9218,6 +9225,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.0.10
       '@types/react-dom': 19.0.4(@types/react@19.0.10)
+
+  '@testing-library/svelte@5.2.7(svelte@5.20.2)(vite@6.1.1(@types/node@22.13.4)(jiti@2.4.2)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))(vitest@3.0.6(@types/debug@4.1.12)(@types/node@22.13.4)(jiti@2.4.2)(jsdom@26.0.0)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))':
+    dependencies:
+      '@testing-library/dom': 10.4.0
+      svelte: 5.20.2
+    optionalDependencies:
+      vite: 6.1.1(@types/node@22.13.4)(jiti@2.4.2)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
+      vitest: 3.0.6(@types/debug@4.1.12)(@types/node@22.13.4)(jiti@2.4.2)(jsdom@26.0.0)(less@4.2.2)(sass@1.83.4)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
 
   '@trysound/sax@0.2.0': {}
 

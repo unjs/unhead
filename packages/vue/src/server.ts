@@ -1,5 +1,5 @@
-import type { ReactiveHead, ResolvableValue, VueHeadClient } from '@unhead/vue'
 import type { CreateServerHeadOptions, MergeHead } from 'unhead/types'
+import type { ReactiveHead, ResolvableValue, VueHeadClient } from './types'
 import { createHead as _createServerHead } from 'unhead/server'
 import { vueInstall } from './install'
 import { VueResolver } from './resolver'

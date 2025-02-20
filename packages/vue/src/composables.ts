@@ -33,7 +33,7 @@ export function injectHead() {
   throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
 }
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
+export function useHead<T extends MergeHead>(input: UseHeadInput<T> = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
   const head = options.head || injectHead()
   return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
 }
@@ -67,7 +67,7 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   return entry!
 }
 
-export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = options.head || injectHead()
   head.use(SafeInputPlugin)
   options._safe = true
@@ -75,7 +75,7 @@ export function useHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {
   return useHead(input, options)
 }
 
-export function useSeoMeta(input: UseSeoMetaInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   const head = options.head || injectHead()
   head.use(FlatMetaPlugin)
   const { title, titleTemplate, ...meta } = input
@@ -86,14 +86,14 @@ export function useSeoMeta(input: UseSeoMetaInput, options: UseHeadOptions = {})
     _flatMeta: meta,
   }, options)
 }
-export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useServerHead<T extends MergeHead>(input: UseHeadInput<T> = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   return useHead<T>(input, { ...options, mode: 'server' })
 }
 
-export function useServerHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useServerHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
   return useHeadSafe(input, { ...options, mode: 'server' })
 }
 
-export function useServerSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<UseSeoMetaInput> {
+export function useServerSeoMeta(input: UseSeoMetaInput = {}, options?: UseHeadOptions): ActiveHeadEntry<UseSeoMetaInput> {
   return useSeoMeta(input, { ...options, mode: 'server' })
 }

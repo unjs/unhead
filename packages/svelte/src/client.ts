@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, Unhead } from './types'
+import type { CreateClientHeadOptions, Unhead } from 'unhead/types'
 import { tick } from 'svelte'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 

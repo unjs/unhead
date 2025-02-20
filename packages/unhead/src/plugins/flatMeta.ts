@@ -1,6 +1,6 @@
 import type { HeadTag } from '../types'
-import { defineHeadPlugin } from '../utils/defineHeadPlugin'
 import { unpackMeta } from '../utils/meta'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'flatMeta',

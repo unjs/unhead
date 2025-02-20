@@ -1,5 +1,6 @@
-import type { HeadTag, TemplateParams } from '../types'
-import { defineHeadPlugin, processTemplateParams } from '../utils'
+import type { HeadTag, TemplateParams } from '../types/tags'
+import { processTemplateParams } from '../utils'
+import { defineHeadPlugin } from './defineHeadPlugin'
 
 const SupportedAttrs = {
   meta: 'content',

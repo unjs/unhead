@@ -1,5 +1,5 @@
+import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
-import { useHead } from 'unhead/composables'
 import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { useScript } from '../../../src/composables'

@@ -1,6 +1,5 @@
 export * from './const'
 export { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-export { defineHeadPlugin } from './defineHeadPlugin'
 export { resolveMetaKeyType, resolveMetaKeyValue, resolvePackedMetaObjectValue, unpackMeta } from './meta'
 export { normalizeEntryToTags, normalizeProps } from './normalize'
 export { sortTags, tagWeight } from './sort'
