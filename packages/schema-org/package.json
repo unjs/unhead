@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "defu": "^6.1.4",
-    "ohash": "^1.1.4",
+    "ohash": "^2.0.4",
     "ufo": "^1.5.4"
   },
   "devDependencies": {
