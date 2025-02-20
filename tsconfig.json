@@ -17,8 +17,6 @@
       "@unhead/schema-org/*": ["packages/schema-org/src/*"],
       "@unhead/vue": ["packages/vue/src"],
       "@unhead/vue/*": ["packages/vue/src/*"],
-      "@unhead/scripts": ["packages/scripts/src"],
-      "@unhead/scripts/*": ["packages/scripts/*"],
       "@unhead/addons": ["packages/addons/src"],
       "@unhead/addons/*": ["packages/addons/*"],
       "@unhead/schema": ["packages-aliased/schema/src"],

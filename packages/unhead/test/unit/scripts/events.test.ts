@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-
 import { createHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
-import { useScript } from '../../src/useScript'
+import { useScript } from '../../../src/composables'
 
 describe('useScript events', () => {
   it('simple', async () => {

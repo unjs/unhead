@@ -330,44 +330,9 @@ const unhead = createHead({
 
 **⚠️ Breaking Changes:**
 
-- `useScript()`{lang="ts"} composable is now exported from `@unhead/scripts`
 - Script instance is no longer augmented as a proxy and promise
 - `script.proxy`{lang="ts"} is rewritten for simpler, more stable behavior
 - `stub()`{lang="ts"} and runtime hook `script:instance-fn` are removed
-
-You will need to update any `useScript()`{lang="ts"} calls to be from `@unhead/scripts`.
-
-::TabComparison
-
-```diff [TypeScript]
--import { useScript } from 'unhead'
-+import { useScript } from '@unhead/scripts'
-```
-
-```diff [Vue]
--import { useScript } from '@unhead/vue'
-+import { useScript } from '@unhead/scripts/vue'
-```
-
-::
-
-**Legacy Subpath Export**
-
-For the underlying logic changes, you can opt-in the previous behavior by importing from the legacy subpath export.
-
-```ts
-import { useScript } from '@unhead/scripts/legacy'
-
-// same behavior as v1
-useScript()
-```
-
-```ts
-import { useScript } from '@unhead/scripts/vue-legacy'
-
-// same behavior as v1
-useScript()
-```
 
 **Replacing promise usage**
 
