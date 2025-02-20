@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import type { AsVoidFunctions } from '../../../src/scripts/types'
-import { createHead } from 'unhead/server'
+import { createHead } from 'unhead/client'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { useScript } from '../../../src/composables'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../../src/scripts/proxy'
