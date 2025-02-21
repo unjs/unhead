@@ -76,7 +76,7 @@ describe('defineProduct', () => {
                 "worstRating": 1,
               },
             },
-            "sku": "bpSgrvIY_XrvGLJX8LqfwzySoryXiPx1GGjkOrOYE38",
+            "sku": "3104ae4",
           },
           {
             "@id": "https://example.com/#/schema/image/f2d5ce5",
