@@ -7,9 +7,9 @@ import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Review } from '../Review'
 import type { WebPage } from '../WebPage'
-import { hash } from 'ohash'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
+  hashCode,
   IdentityId,
   idReference,
   setIfEmpty,
@@ -90,7 +90,7 @@ export const productResolver = defineSchemaOrgResolver<Product>({
   idPrefix: ['url', ProductId],
   resolve(node, ctx) {
     // provide a default sku
-    setIfEmpty(node, 'sku', hash(node.name))
+    setIfEmpty(node, 'sku', hashCode(node.name))
     node.aggregateOffer = resolveRelation(node.aggregateOffer, ctx, aggregateOfferResolver)
     node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
     node.offers = resolveRelation(node.offers, ctx, offerResolver)

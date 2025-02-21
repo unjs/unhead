@@ -188,6 +188,9 @@ importers:
 
   examples/vite-ssr-svelte:
     dependencies:
+      '@unhead/schema-org':
+        specifier: workspace:*
+        version: link:../../packages/schema-org
       '@unhead/svelte':
         specifier: workspace:*
         version: link:../../packages/svelte
@@ -495,8 +498,8 @@ importers:
         specifier: ^6.1.4
         version: 6.1.4
       ohash:
-        specifier: ^1.1.4
-        version: 1.1.4
+        specifier: ^2.0.4
+        version: 2.0.4
       ufo:
         specifier: ^1.5.4
         version: 1.5.4
@@ -5162,6 +5165,9 @@ packages:
 
   ohash@1.1.4:
     resolution: {integrity: sha512-FlDryZAahJmEF3VR3w1KogSEdWX3WhA5GPakFx4J81kEAiHyLMpdLLElS8n8dfNadMgAne/MywcvmogzscVt4g==}
+
+  ohash@2.0.4:
+    resolution: {integrity: sha512-ac+SFwzhdHb0hp48/dbR7Jta39qfbuj7t3hApd9uyHS8bisHTfVzSEvjOVgV0L3zG7VR2/7JjkSGimP75D+hOQ==}
 
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
@@ -12166,6 +12172,8 @@ snapshots:
   obuf@1.1.2: {}
 
   ohash@1.1.4: {}
+
+  ohash@2.0.4: {}
 
   on-finished@2.4.1:
     dependencies:
