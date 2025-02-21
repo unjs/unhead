@@ -19,7 +19,7 @@ Unhead wraps your document template, improving reactive SSR JavaScript framework
 
 - 🍣 All the good stuff: `useHead()`, `useSeoMeta()`, `useScript()`, `useHeadSafe()`, `useServerHead()`,
 - 🚀 Performant: Capo.js tag sorting, tiny (4.4kb gz), tree-shaken, etc.
-- 🤝 Supports Vue, Angular, React, Svelte
+- 🤝 Supports Vue, Angular, React, Solid.js and Svelte
 - Used by [Nuxt](https://nuxt.com/)
 
 ## Get Started
