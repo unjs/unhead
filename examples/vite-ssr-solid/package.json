@@ -14,7 +14,9 @@
     "compression": "^1.7.5",
     "express": "^5.0.1",
     "sirv": "^3.0.0",
-    "solid-js": "^1.9.3"
+    "solid-js": "^1.9.3",
+    "@unhead/schema-org": "workspace:*",
+    "@unhead/solid-js": "workspace:*"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

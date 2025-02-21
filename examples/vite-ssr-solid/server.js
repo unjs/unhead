@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import express from 'express'
 import { generateHydrationScript } from 'solid-js/web'
+import { transformHtmlTemplate } from '@unhead/solid-js/server'
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
@@ -54,11 +55,12 @@ app.use('*all', async (req, res) => {
 
     const rendered = await render(url)
 
-    const head = (rendered.head ?? '') + generateHydrationScript()
-
-    const html = template
-      .replace(`<!--app-head-->`, head)
+    const html = await transformHtmlTemplate(
+      rendered.unhead,
+      template
+      .replace(`<!--app-head-->`, generateHydrationScript())
       .replace(`<!--app-html-->`, rendered.html ?? '')
+    )
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html)
   } catch (e) {
