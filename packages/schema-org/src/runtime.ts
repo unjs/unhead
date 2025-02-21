@@ -1,4 +1,4 @@
-import type {ActiveHeadEntry, HeadEntryOptions, Unhead} from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, Unhead } from 'unhead/types'
 import type {
   AggregateOffer,
   AggregateRating,

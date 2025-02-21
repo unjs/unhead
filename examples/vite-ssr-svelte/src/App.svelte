@@ -1,6 +1,7 @@
 <script lang="ts">
   import svelteLogo from './assets/svelte.svg'
   import Counter from './lib/Counter.svelte'
+  import SchemaOrg from './lib/SchemaOrg.svelte'
 
   let counter = $state(true)
 </script>
@@ -23,6 +24,8 @@
   {/if}
 
   <button onclick={counter = false}>disable counter</button>
+
+  <SchemaOrg />
 
   <p>
     Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!

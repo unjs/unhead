@@ -15,7 +15,8 @@
     "compression": "^1.7.5",
     "express": "^5.0.1",
     "sirv": "^3.0.0",
-    "@unhead/svelte": "workspace:*"
+    "@unhead/svelte": "workspace:*",
+    "@unhead/schema-org": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.1",

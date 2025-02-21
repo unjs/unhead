@@ -1,6 +1,5 @@
 import type {
   ActiveHeadEntry,
-  Head,
   HeadEntryOptions,
   HeadSafe,
   Unhead,

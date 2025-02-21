@@ -33,6 +33,10 @@
     "./vue": {
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.mjs"
+    },
+    "./svelte": {
+      "types": "./dist/svelte.d.ts",
+      "import": "./dist/svelte.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -42,11 +46,15 @@
     "*": {
       "vue": [
         "dist/vue"
+      ],
+      "svelte": [
+        "dist/svelte"
       ]
     }
   },
   "files": [
     "dist",
+    "svelte.d.ts",
     "vue.d.ts"
   ],
   "scripts": {
@@ -57,10 +65,14 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/vue": "^1.11.18",
-    "unhead": "^1.11.18"
+    "@unhead/svelte": "^2",
+    "@unhead/vue": "^2",
+    "unhead": "^2"
   },
   "peerDependenciesMeta": {
+    "@unhead/svelte": {
+      "optional": true
+    },
     "@unhead/vue": {
       "optional": true
     }
@@ -71,13 +83,15 @@
     "ufo": "^1.5.4"
   },
   "devDependencies": {
+    "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
     "unplugin-vue-components": "^28.4.0"
   },
   "build": {
     "external": [
-      "vue"
+      "vue",
+      "svelte"
     ]
   }
 }
