@@ -20,6 +20,10 @@ export function useHeadSafe<T extends Unhead<any>>(unhead: T, input: HeadSafe = 
 export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaInput = {}, options?: HeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput> {
   unhead.use(FlatMetaPlugin)
   function normalize(input: UseSeoMetaInput) {
+    // @ts-expect-error untyped
+    if (input._flatMeta) {
+      return input
+    }
     const { title, titleTemplate, ...meta } = input || {}
     return {
       title,
@@ -28,8 +32,14 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
     }
   }
   const entry = unhead.push(normalize(input), options)
+  // just in case
   const corePatch = entry.patch
-  entry.patch = input => corePatch(normalize(input))
+  // @ts-expect-error runtime
+  if (!entry.__patched) {
+    entry.patch = input => corePatch(normalize(input))
+    // @ts-expect-error runtime
+    entry.__patched = true
+  }
   return entry
 }
 
