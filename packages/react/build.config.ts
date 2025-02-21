@@ -8,6 +8,7 @@ export default defineBuildConfig({
     { input: 'src/index', name: 'index' },
     { input: 'src/server', name: 'server' },
     { input: 'src/client', name: 'client' },
-    { input: 'src/types/index', name: 'types' },
+    { input: 'src/utils', name: 'utils' },
+    { input: 'src/plugins', name: 'plugins' },
   ],
 })

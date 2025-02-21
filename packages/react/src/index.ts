@@ -1,3 +1,3 @@
 export { hookImports } from './autoImports'
 export { Head } from './components'
-export { useHead, useHeadSafe, useSeoMeta, useUnhead } from './composables'
+export { useHead, useHeadSafe, useScript, useSeoMeta, useUnhead } from './composables'

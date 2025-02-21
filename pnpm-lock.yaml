@@ -137,7 +137,7 @@ importers:
         specifier: ~5.7.3
         version: 5.7.3
 
-  examples/template-ssr-react-ts:
+  examples/vite-ssr-react-ts:
     dependencies:
       compression:
         specifier: ^1.8.0
@@ -504,6 +504,9 @@ importers:
         specifier: ^1.5.4
         version: 1.5.4
     devDependencies:
+      '@unhead/react':
+        specifier: workspace:*
+        version: link:../react
       '@unhead/svelte':
         specifier: workspace:*
         version: link:../svelte

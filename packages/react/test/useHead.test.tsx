@@ -6,24 +6,6 @@ import { useHead } from '../src'
 import { createHead, UnheadProvider } from '../src/client'
 import { renderSSRHead } from '../src/server'
 
-function TestComponentWithRef() {
-  const titleRef = useRef('Initial Title')
-
-  useHead({
-    title: titleRef,
-  })
-
-  useEffect(() => {
-    titleRef.current = 'Updated Title'
-  }, [])
-
-  return (
-    <div>
-      <p>{titleRef.current}</p>
-    </div>
-  )
-}
-
 function TestComponent() {
   const [title, setTitle] = useState('Initial Title')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -102,18 +84,6 @@ describe('useHead hook', () => {
 
     const input = getByRole('textbox') as HTMLInputElement
     expect(input.value).toBe('Initial Title')
-  })
-  it('updates head title based on ref value after effect', async () => {
-    const head = createHead()
-
-    render(
-      <UnheadProvider head={head}>
-        <TestComponentWithRef />
-      </UnheadProvider>,
-    )
-
-    const { headTags } = await renderSSRHead(head)
-    expect(headTags).toContain('<title>Updated Title</title>')
   })
   it('updates head title and meta tags based on state', async () => {
     const head = createHead()

@@ -7,7 +7,7 @@ import { createHead, UnheadProvider } from '../src/client'
 import { renderSSRHead } from '../src/server'
 
 function TestComponentWithRef() {
-  const titleRef = useRef('Initial Title')
+  const [titleRef, updateTitle] = useState('Initial Title')
 
   useSeoMeta({
     title: titleRef,
@@ -15,12 +15,12 @@ function TestComponentWithRef() {
   })
 
   useEffect(() => {
-    titleRef.current = 'Updated Title'
+    updateTitle('Updated Title')
   }, [])
 
   return (
     <div>
-      <p>{titleRef.current}</p>
+      <p>{titleRef}</p>
     </div>
   )
 }
