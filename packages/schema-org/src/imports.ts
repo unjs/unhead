@@ -36,10 +36,3 @@ export const schemaAutoImports = [
   'defineWebSite',
   'useSchemaOrg',
 ]
-
-export const schemaOrgAutoImports = [
-  {
-    from: '@unhead/schema-org/svelte',
-    imports: schemaAutoImports,
-  },
-]

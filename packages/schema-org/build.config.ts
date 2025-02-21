@@ -5,8 +5,9 @@ export default defineBuildConfig({
   declaration: true,
   entries: [
     { input: 'src/index' },
-    { input: 'src/vue/index', name: 'vue' },
-    { input: 'src/svelte/index', name: 'svelte' },
+    { input: 'src/vue/index', name: 'vue' }, // ships components
+    { input: 'src/svelte', name: 'svelte' },
+    { input: 'src/react', name: 'react' },
   ],
   externals: [
     'vue',
@@ -14,6 +15,7 @@ export default defineBuildConfig({
     'unplugin-vue-components',
     'unhead',
     'vite',
+    'react',
     'svelte',
     'vue-router',
     '@unhead/vue',

@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, Unhead } from 'unhead/types'
+import type {ActiveHeadEntry, HeadEntryOptions, Unhead} from 'unhead/types'
 import type {
   AggregateOffer,
   AggregateRating,
@@ -159,7 +159,12 @@ export function defineBookEdition<T extends Record<string, any>>(input?: BookEdi
 
 export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
 
-export function normalizeSchemaOrgInput(input: UseSchemaOrgInput) {
+export function normalizeSchemaOrgInput<T extends UseSchemaOrgInput>(input: T): T {
+  // avoid over normalizing
+  // @ts-expect-error untyped
+  if (input.script) {
+    return input as T
+  }
   return {
     script: [
       {
@@ -168,7 +173,7 @@ export function normalizeSchemaOrgInput(input: UseSchemaOrgInput) {
         nodes: input,
       },
     ],
-  }
+  } as any as T
 }
 
 export function useSchemaOrg(unhead: Unhead<any>, input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {

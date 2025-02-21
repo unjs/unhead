@@ -1,40 +1,72 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
-import { Head, useHead } from '@unhead/react'
+import { useHead, useScript } from '@unhead/react'
+import { useSchemaOrg, defineWebPage, defineWebSite } from '@unhead/schema-org/react'
 
 function PageHead() {
   const [title, setTitle] = useState('Loading...')
 
   useEffect(() => {
     async function loadData() {
-      const data = await new Promise(resolve => setTimeout(() => resolve({ title: 'Vite + React + Unhead' }), 1000))
+      const data = await new Promise(resolve => setTimeout(() => resolve({ title: 'Loaded!' }), 1000))
       setTitle(data.title)
     }
     loadData()
   }, [])
 
-  useHead({
-    title
-  })
+  const headEntry = useHead()
+  useEffect(() => {
+    headEntry.patch({ title })
+  }, [title])
 
   return null
 }
 
 function App() {
   const [count, setCount] = useState(0)
-
+  const [jsConfetti, setJsConfetti] = useState(false)
+  //
   useHead({
     bodyAttrs: {
       style: 'background-color: salmon;',
     }
   })
 
+  useSchemaOrg([
+    defineWebSite({
+      url: 'https://example.com',
+      name: 'Example',
+    }),
+    defineWebPage({
+      title: 'Example page',
+      description: 'This is an example page.',
+    }),
+  ])
+
+  const headEntry = useHead()
+  useEffect(() => {
+    headEntry.patch({
+      title: `Count is ${count}`
+    })
+    if (count > 5) {
+      jsConfetti?.addConfetti({
+        emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'],
+      })
+    }
+  }, [count])
+
+  const { onLoaded } = useScript('https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js', {
+    use() {
+      return (window as any).JSConfetti
+    }
+  })
+  onLoaded((inst) => {
+    setJsConfetti(new inst())
+  })
+
   return (
     <>
-      <Head>
-        <title>Count is {count}</title>
-      </Head>
       <PageHead />
       <div>
         <a href="https://vite.dev" target="_blank">

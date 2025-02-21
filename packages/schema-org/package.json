@@ -37,6 +37,10 @@
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "import": "./dist/svelte.mjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -49,11 +53,15 @@
       ],
       "svelte": [
         "dist/svelte"
+      ],
+      "react": [
+        "dist/react"
       ]
     }
   },
   "files": [
     "dist",
+    "react.d.ts",
     "svelte.d.ts",
     "vue.d.ts"
   ],
@@ -65,11 +73,15 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
+    "@unhead/react": "^2",
     "@unhead/svelte": "^2",
     "@unhead/vue": "^2",
     "unhead": "^2"
   },
   "peerDependenciesMeta": {
+    "@unhead/react": {
+      "optional": true
+    },
     "@unhead/svelte": {
       "optional": true
     },
@@ -83,6 +95,7 @@
     "ufo": "^1.5.4"
   },
   "devDependencies": {
+    "@unhead/react": "workspace:*",
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
@@ -91,7 +104,8 @@
   "build": {
     "external": [
       "vue",
-      "svelte"
+      "svelte",
+      "react"
     ]
   }
 }
