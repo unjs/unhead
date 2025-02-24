@@ -1,8 +1,8 @@
-import type { CreateHeadOptions } from '@unhead/schema'
+import type { CreateClientHeadOptions, CreateServerHeadOptions } from 'unhead/types'
 import type { AngularUnhead } from './types/index'
 import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
-import { createHead as _createClientHead } from 'unhead/client'
+import { createHead as _createClientHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { createHead as _createServerHead } from 'unhead/server'
 import { Unhead } from '../lib/unhead.service'
 import { ReactivityPlugin } from '../unhead/ReactivityPlugin'
@@ -11,7 +11,7 @@ export const headSymbol = 'usehead'
 
 export const UnheadInjectionToken = new InjectionToken<AngularUnhead>(headSymbol)
 
-export function provideServerHead(options: Omit<CreateHeadOptions, 'domDelayFn' | 'document'> = {}) {
+export function provideServerHead(options: CreateServerHeadOptions = {}) {
   const head = _createServerHead<AngularUnhead>({
     ...options,
     plugins: [
@@ -33,10 +33,10 @@ export function provideServerHead(options: Omit<CreateHeadOptions, 'domDelayFn' 
   ])
 }
 
-export function provideClientHead(options: Omit<CreateHeadOptions, 'domOptions' | 'document'> = {}) {
+export function provideClientHead(options: CreateClientHeadOptions = {}) {
   const head = _createClientHead<AngularUnhead>({
     domOptions: {
-      delayFn: fn => setTimeout(() => fn(), 10),
+      render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(() => fn(), 0)),
     },
     ...options,
     plugins: [

@@ -1,10 +1,9 @@
 import type { Head } from '@unhead/schema'
 import { InferSeoMetaPlugin } from '@unhead/addons'
-import { definePerson, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
-import { createHead as createServerHead } from '@unhead/vue/server'
-import { unheadCtx, useHead, useSeoMeta, useServerHead } from 'unhead'
+import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { bench, describe } from 'vitest'
+import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
   bench('e2e', async () => {
@@ -12,7 +11,6 @@ describe('ssr e2e bench', () => {
 
     // 1. Add nuxt.config meta tags
     const head = createServerHead()
-    unheadCtx.set(head)
     // nuxt.config app.head
     head.push({
       title: 'Harlan Wilton',
@@ -86,6 +84,7 @@ describe('ssr e2e bench', () => {
     // start the vue rendererer
     // Nuxt SEO experiments
     head.use({
+      key: 'nuxt-seo-experiments',
       hooks: {
         'tags:resolve': async ({ tags }) => {
           // iterate through tags that require absolute URLs and add the host base
@@ -128,13 +127,18 @@ describe('ssr e2e bench', () => {
     // Nuxt SEO
     const minimalPriority = {
       tagPriority: 101,
+      head,
     } as const
     // needs higher priority
     useHead({
       link: [{ rel: 'canonical', href: 'https://harlanzw.com/' }],
+    }, {
+      head,
     })
     useServerHead({
       htmlAttrs: { lang: 'en' },
+    }, {
+      head,
     })
     useHead({
       templateParams: { site: {
@@ -152,11 +156,11 @@ describe('ssr e2e bench', () => {
       description: 'Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.',
       twitterCreator: '@harlan_zw',
       twitterSite: '@harlan_zw',
-    }, minimalPriority)
+    }, { ...minimalPriority, head })
     // inferred from path /about (example)
     useHead({
       title: 'About',
-    }, minimalPriority)
+    }, { ...minimalPriority, head })
     // OG Image
     const meta: Head['meta'] = [
       { property: 'og:image', content: 'https://harlanzw.com/__og-image__/og.png' },
@@ -195,6 +199,7 @@ describe('ssr e2e bench', () => {
       script,
       meta,
     }, {
+      head,
       tagPriority: 35,
     })
     // Schema.org
@@ -204,10 +209,6 @@ describe('ssr e2e bench', () => {
       inLanguage: 'en',
       path: '/path',
     } } })
-    head.use(UnheadSchemaOrg({
-      minify: true,
-      trailingSlash: false,
-    }))
     useSchemaOrg([
       defineWebSite({
         name: 'Harlan Wilton',
@@ -222,7 +223,9 @@ describe('ssr e2e bench', () => {
           'https://twitter.com/harlan_zw',
         ],
       }),
-    ])
+    ], {
+      head,
+    })
     // entry
     useServerHead({
       script: [{
@@ -232,12 +235,16 @@ describe('ssr e2e bench', () => {
 
         ],
       }],
+    }, {
+      head,
     })
     // Robots
     useHead({
       meta: [
         { name: 'robots', content: 'index, follow' },
       ],
+    }, {
+      head,
     })
     // app.vue
     // (duplicated)
@@ -249,16 +256,22 @@ describe('ssr e2e bench', () => {
           'https://twitter.com/harlan_zw',
         ],
       }),
-    ])
+    ], {
+      head,
+    })
     // [...all].vue
     useSeoMeta({
       title: 'Home',
       description: 'Home page description',
+    }, {
+      head,
     })
     // index.md
     useSeoMeta({
       title: 'Home',
       description: 'Home page description',
+    }, {
+      head,
     })
 
     const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
@@ -286,8 +299,28 @@ ${htmlContext.bodyPrepend.join('\n')}
 ${htmlContext.bodyAppend.join('\n')}
 </body>
 `
-    unheadCtx.unset()
   }, {
     iterations: 5000,
+  })
+
+  bench('simple', async () => {
+    // 1. Add nuxt.config meta tags
+    const head = createServerHead()
+    // nuxt.config app.head
+    head.push({
+      title: 'Harlan Wilton',
+      templateParams: {
+        separator: '·',
+      },
+      script: [
+        {
+          'src': 'https://idea-lets-dance.harlanzw.com/script.js',
+          'data-spa': 'auto',
+          'data-site': 'VDJUVDNA',
+          'defer': true,
+        },
+      ],
+    })
+    await renderSSRHead(head)
   })
 })

@@ -1,4 +1,4 @@
-import type { AngularUnhead, UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput} from '../unhead/types'
+import type { AngularUnhead, UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput } from '../unhead/types'
 import { DOCUMENT } from '@angular/common'
 // eslint-disable-next-line ts/consistent-type-imports
 import { Inject, Injectable, Injector, runInInjectionContext } from '@angular/core'

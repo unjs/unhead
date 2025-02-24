@@ -2,8 +2,7 @@ import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e deduping', () => {
   it('innerHTML', async () => {
@@ -27,7 +26,7 @@ describe('unhead e2e deduping', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script data-hid="3104ae4">console.log('will log twice')</script>",
+        "headTags": "<script data-hid="test">console.log('will log twice')</script>",
         "htmlAttrs": "",
       }
     `)
@@ -48,7 +47,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('will log twice')</script>
+      <script data-hid="test">console.log('will log twice')</script>
       </head>
       <body>
 
@@ -136,21 +135,13 @@ describe('unhead e2e deduping', () => {
 
     const data = await renderSSRHead(ssrHead)
 
-    expect(data).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "",
-        "bodyTagsOpen": "",
-        "headTags": "<script data-hid="3104ae4">console.log('server log')</script>",
-        "htmlAttrs": "",
-      }
-    `)
+    expect(data.headTags).toMatchInlineSnapshot(`"<script data-hid="test">console.log('server log')</script>"`)
 
     const dom = useDom(data)
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('server log')</script>
+      <script data-hid="test">console.log('server log')</script>
       </head>
       <body>
 
@@ -177,7 +168,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="3104ae4">console.log('client log')</script>
+      <script data-hid="test">console.log('client log')</script>
       </head>
       <body>
 

@@ -31,7 +31,7 @@ describe('schema.org e2e', () => {
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
-        "bodyTags": "<script type="application/ld+json" data-hid="3437552">{
+        "bodyTags": "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -83,7 +83,7 @@ describe('schema.org e2e', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type="application/ld+json" data-hid="3437552">{
+      <script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -119,6 +119,35 @@ describe('schema.org e2e', () => {
 
 
       </body></html>"
+    `)
+  })
+  it('empty', async () => {
+    const head = await ssrVueAppWithUnhead(() => {
+      const schema = useSchemaOrg()
+      schema.patch([
+        defineWebPage({
+          name: 'test',
+        }),
+      ])
+    })
+    const data = await renderSSRHead(head)
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "<script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#webpage",
+            "@type": "WebPage",
+            "name": "test"
+          }
+        ]
+      }</script>",
+        "bodyTagsOpen": "",
+        "headTags": "",
+        "htmlAttrs": "",
+      }
     `)
   })
 })

@@ -7,7 +7,9 @@ import { useDom } from '../../../unhead/test/fixtures'
 
 describe('schema.org e2e no plugin', () => {
   it('basic hydration', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useSchemaOrg(ssrHead, [
       defineWebPage({
@@ -17,7 +19,7 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -42,7 +44,7 @@ describe('schema.org e2e no plugin', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type="application/ld+json" data-hid="3437552">{
+      <script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -59,7 +61,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('hierarchy', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -84,7 +88,7 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -113,7 +117,7 @@ describe('schema.org e2e no plugin', () => {
       <div>
       <h1>hello world</h1>
       </div>
-      <script type="application/ld+json" data-hid="3437552">{
+      <script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -134,7 +138,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('linking', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -160,7 +166,7 @@ describe('schema.org e2e no plugin', () => {
 
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -184,7 +190,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('faq', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     useHead(ssrHead, {
       templateParams: {
@@ -210,7 +218,7 @@ describe('schema.org e2e no plugin', () => {
     ])
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {
@@ -253,7 +261,9 @@ describe('schema.org e2e no plugin', () => {
   })
 
   it('many registrations', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
     useSchemaOrg(ssrHead, [
       defineWebPage({
         name: 'One',
@@ -271,7 +281,7 @@ describe('schema.org e2e no plugin', () => {
     ])
     const data = await renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
-      "<script type="application/ld+json" data-hid="3437552">{
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
         "@graph": [
           {

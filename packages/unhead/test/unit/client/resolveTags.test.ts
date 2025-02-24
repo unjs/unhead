@@ -1,6 +1,5 @@
 import { describe, it } from 'vitest'
-import { basicSchema } from '../../fixtures'
-import { createClientHeadWithContext } from '../../util'
+import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
   it('docs example', async () => {
@@ -20,16 +19,16 @@ describe('resolveTags', () => {
       [
         {
           "_d": "title",
-          "_e": 0,
-          "_p": 0,
+          "_p": 1024,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "My title",
         },
         {
-          "_d": "meta:name:description",
-          "_e": 0,
-          "_p": 1,
+          "_d": "meta:description",
+          "_p": 1025,
+          "_w": 100,
           "props": {
             "content": "My description",
             "name": "description",
@@ -50,16 +49,17 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 0,
-          "_p": 3,
+          "_p": 1027,
+          "_w": -20,
           "props": {
             "charset": "utf-8",
           },
           "tag": "meta",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_d": undefined,
+          "_p": 1026,
+          "_w": 50,
           "props": {
             "src": "https://cdn.example.com/script.js",
           },
@@ -67,8 +67,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 1024,
+          "_w": 100,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -77,16 +77,19 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_p": 1025,
+          "_w": 100,
           "props": {
-            "class": "dark",
+            "class": Set {
+              "dark",
+            },
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 0,
-          "_p": 4,
+          "_d": undefined,
+          "_p": 1028,
+          "_w": 100,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",
@@ -118,8 +121,9 @@ describe('resolveTags', () => {
     expect(tags).toMatchInlineSnapshot(`
       [
         {
-          "_e": 1,
-          "_p": 1024,
+          "_d": undefined,
+          "_p": 2048,
+          "_w": 50,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -149,16 +153,17 @@ describe('resolveTags', () => {
       [
         {
           "_d": "charset",
-          "_e": 0,
-          "_p": 3,
+          "_p": 1027,
+          "_w": -20,
           "props": {
             "charset": "utf-8",
           },
           "tag": "meta",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_d": undefined,
+          "_p": 1026,
+          "_w": 50,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -166,8 +171,8 @@ describe('resolveTags', () => {
         },
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 1024,
+          "_w": 100,
           "props": {
             "dir": "ltr",
             "lang": "en",
@@ -176,16 +181,19 @@ describe('resolveTags', () => {
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_p": 1025,
+          "_w": 100,
           "props": {
-            "class": "dark",
+            "class": Set {
+              "dark",
+            },
           },
           "tag": "bodyAttrs",
         },
         {
-          "_e": 0,
-          "_p": 4,
+          "_d": undefined,
+          "_p": 1028,
+          "_w": 100,
           "props": {
             "href": "https://cdn.example.com/favicon.ico",
             "rel": "icon",
@@ -223,19 +231,27 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 2048,
+          "_w": 100,
           "props": {
-            "class": "foo bar something-new",
+            "class": Set {
+              "foo",
+              "bar",
+              "something-new",
+            },
           },
           "tag": "htmlAttrs",
         },
         {
           "_d": "bodyAttrs",
-          "_e": 0,
-          "_p": 1,
+          "_p": 2049,
+          "_w": 100,
           "props": {
-            "class": "foo2 bar2 something-new2",
+            "class": Set {
+              "foo2",
+              "bar2",
+              "something-new2",
+            },
           },
           "tag": "bodyAttrs",
         },
@@ -268,10 +284,13 @@ describe('resolveTags', () => {
       [
         {
           "_d": "htmlAttrs",
-          "_e": 0,
-          "_p": 0,
+          "_p": 2048,
+          "_w": 100,
           "props": {
-            "class": "foo bar",
+            "class": Set {
+              "foo",
+              "bar",
+            },
           },
           "tag": "htmlAttrs",
         },
@@ -300,19 +319,9 @@ describe('resolveTags', () => {
     expect(tags).toMatchInlineSnapshot(`
       [
         {
-          "_d": "meta:name:description",
-          "_e": 0,
-          "_p": 0,
-          "props": {
-            "content": "desc",
-            "name": "description",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": "meta:name:description:1",
-          "_e": 0,
-          "_p": 1,
+          "_d": "meta:description",
+          "_p": 1025,
+          "_w": 100,
           "props": {
             "content": "desc 2",
             "name": "description",

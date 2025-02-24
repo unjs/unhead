@@ -1,7 +1,6 @@
 import { useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
-import { basicSchema } from '../../fixtures'
-import { useDelayedSerializedDom, useDOMHead } from '../../util'
+import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
   it('basic', async () => {

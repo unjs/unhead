@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "2.0.0-alpha.7",
+  "version": "2.0.0-alpha.19",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -23,36 +23,38 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs"
     },
     "./components": {
       "types": "./dist/components.d.ts",
-      "import": "./dist/components.mjs",
-      "require": "./dist/components.cjs"
+      "import": "./dist/components.mjs"
     },
     "./server": {
       "types": "./dist/server.d.ts",
-      "import": "./dist/server.mjs",
-      "require": "./dist/server.cjs"
+      "import": "./dist/server.mjs"
     },
     "./client": {
       "types": "./dist/client.d.ts",
-      "import": "./dist/client.mjs",
-      "require": "./dist/client.cjs"
+      "import": "./dist/client.mjs"
     },
     "./types": {
       "types": "./dist/types.d.ts",
-      "import": "./dist/types.mjs",
-      "require": "./dist/types.cjs"
+      "import": "./dist/types.mjs"
     },
     "./legacy": {
       "types": "./dist/legacy.d.ts",
-      "import": "./dist/legacy.mjs",
-      "require": "./dist/legacy.cjs"
+      "import": "./dist/legacy.mjs"
+    },
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "import": "./dist/plugins.mjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.mjs"
     }
   },
-  "main": "dist/index.cjs",
+  "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "typesVersions": {
@@ -71,6 +73,12 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "plugins": [
+        "dist/plugins"
+      ],
+      "utils": [
+        "dist/utils"
       ]
     }
   },
@@ -78,8 +86,10 @@
     "client.d.ts",
     "dist",
     "legacy.d.ts",
+    "plugins.d.ts",
     "server.d.ts",
-    "types.d.ts"
+    "types.d.ts",
+    "utils.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
@@ -94,8 +104,6 @@
     ]
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
     "hookable": "^5.5.3",
     "unhead": "workspace:*"
   }

@@ -1,9 +1,9 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "2.0.0-alpha.7",
+  "version": "2.0.0-alpha.19",
   "private": "true",
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.4.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -11,6 +11,8 @@
     "url": "git+https://github.com/unjs/unhead.git"
   },
   "scripts": {
+    "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
+    "test:vue-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-server-build.config.ts",
     "build": "pnpm -r --filter=./packages/** run build",
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "vitest",
@@ -19,22 +21,37 @@
     "release": "pnpm build && pnpm bump && pnpm publish --tag latest -r --no-git-checks",
     "release:next": "pnpm build && pnpm bump && pnpm publish --tag next -r --no-git-checks",
     "lint": "eslint . --fix",
-    "benchmark": "vitest bench"
+    "benchmark": "vitest bench",
+    "lint:docs": "pnpx markdownlint-cli ./docs && pnpx case-police 'docs/**/*.md' *.md",
+    "lint:docs:fix": "pnpx markdownlint-cli ./docs --fix && pnpx case-police 'docs/**/*.md' *.md --fix",
+    "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.16.0",
+    "@antfu/eslint-config": "^4.3.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
-    "bumpp": "^9.11.1",
-    "eslint": "^9.19.0",
+    "bumpp": "^10.0.3",
+    "devalue": "^5.1.1",
+    "eslint": "^9.21.0",
     "fs-extra": "^11.3.0",
     "jsdom": "^26.0.0",
+    "rollup-plugin-analyzer": "^4.0.0",
     "typescript": "5.7.3",
     "unbuild": "^3.3.1",
     "utility-types": "^3.11.0",
-    "vitest": "^2.1.8",
+    "vitest": "^3.0.6",
     "vue": "^3.5.13"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "lmdb",
+      "msgpackr-extract"
+    ],
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   },
   "resolutions": {
     "@unhead/addons": "workspace:*",

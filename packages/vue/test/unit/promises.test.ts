@@ -1,6 +1,6 @@
 import { useHead } from '@unhead/vue'
-import { PromisesPlugin } from 'unhead/plugins/promises'
 import { describe, it } from 'vitest'
+import { PromisesPlugin } from '../../src/plugins'
 import { ssrVueAppWithUnhead } from '../util'
 
 describe('vue promises', () => {
@@ -23,23 +23,25 @@ describe('vue promises', () => {
       [
         {
           "_d": "title",
-          "_e": 0,
-          "_p": 0,
+          "_p": 1024,
+          "_w": 10,
           "props": {},
           "tag": "title",
           "textContent": "hello",
         },
         {
-          "_e": 0,
-          "_p": 1,
+          "_d": undefined,
+          "_p": 1025,
+          "_w": 50,
           "props": {
             "src": "https://example.com/script.js",
           },
           "tag": "script",
         },
         {
-          "_e": 0,
-          "_p": 2,
+          "_d": "script:content:test",
+          "_p": 1026,
+          "_w": 100,
           "innerHTML": "test",
           "props": {},
           "tag": "script",

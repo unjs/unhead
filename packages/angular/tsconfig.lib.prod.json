@@ -3,6 +3,6 @@
 {
   "extends": "./tsconfig.lib.json",
   "compilerOptions": {
-  },
+  }
 
 }

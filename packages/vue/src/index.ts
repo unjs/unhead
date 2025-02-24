@@ -1,8 +1,7 @@
 import { createHeadCore } from 'unhead'
-import { resolveUnrefHeadInput } from './utils'
 
 // composables
-export * from './autoImports'
+export { unheadVueComposablesImports } from './autoImports'
 
 export const CapoPlugin = () => ({})
 
@@ -10,16 +9,12 @@ export const CapoPlugin = () => ({})
 export {
   createHeadCore,
 }
+export { injectHead, useHead, useHeadSafe, useSeoMeta, useServerHead, useServerHeadSafe, useServerSeoMeta } from './composables'
 
-// utils
-export {
-  resolveUnrefHeadInput,
-}
-
-export * from './composables'
 export {
   headSymbol,
 } from './install'
 // types
-export * from './types'
-export * from './VueHeadMixin'
+export type * from './types'
+export { resolveUnrefHeadInput } from './utils'
+export { VueHeadMixin } from './VueHeadMixin'

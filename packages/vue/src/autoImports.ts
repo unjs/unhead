@@ -1,5 +1,3 @@
-import { composableNames } from '@unhead/shared'
-
 export const unheadVueComposablesImports = {
-  '@unhead/vue': ['injectHead', ...composableNames],
+  '@unhead/vue': ['injectHead', 'useHead', 'useSeoMeta', 'useHeadSafe', 'useServerHead', 'useServerSeoMeta', 'useServerHeadSafe'],
 }

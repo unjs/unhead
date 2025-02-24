@@ -1,10 +1,9 @@
-import type { Head } from '@unhead/schema'
+import type { Head } from '../../../src/types'
 import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
-import { useDom } from '../../fixtures'
-import { createClientHeadWithContext, createServerHeadWithContext } from '../../util'
+import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e', () => {
   it('basic hydration', async () => {
@@ -88,8 +87,7 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script type="application/json">{"val":"\\u003C/script>"}</script>
-      <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>",
+      <meta name="description" content="This is the home page">",
         "htmlAttrs": " lang="en"",
       }
     `)
@@ -134,7 +132,6 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script type="application/json">{"val":"\\u003C/script>"}</script>
       <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>
       </head>
       <body>
 
@@ -210,7 +207,7 @@ describe('unhead e2e', () => {
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">",
-        "htmlAttrs": " class="layout-default" style="color: red" lang="en"",
+        "htmlAttrs": " class="layout-default" style="color:red" lang="en"",
       }
     `)
 
@@ -222,6 +219,22 @@ describe('unhead e2e', () => {
       bodyTagsOpen: '',
     })
 
+    expect(dom.serialize().replaceAll('\n\n', '')).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color:red" lang="en"><head>
+      <meta charset="utf-8">
+      <title>My amazing site</title>
+      <script src="https://analytics.example.com/script.js" defer="" async=""></script>
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
+      <meta property="og:description" content="This is my amazing site">
+      <meta property="og:image" content="https://cdn.example.com/image.jpg">
+      <meta property="og:image" content="https://cdn.example.com/image2.jpg">
+      </head>
+      <body class="test"><div>
+      <h1>hello world</h1>
+      </div></body></html>"
+    `)
+
     const csrHead = createClientHeadWithContext()
     useHead(csrHead, schema)
 
@@ -231,10 +244,9 @@ describe('unhead e2e', () => {
 
     expect(html).toContain('<title>My amazing site</title>')
     expect(html).toContain('<meta charset="utf-8">')
-    expect(html).toContain('<html data-my-app="" class="layout-default" style="color: red" lang="en"')
-
+    expect(html).toContain('<html data-my-app="" class="layout-default" style="color:red" lang="en">')
     expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color: red" lang="en"><head>
+      "<!DOCTYPE html><html data-my-app="" class="layout-default" style="color:red" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>

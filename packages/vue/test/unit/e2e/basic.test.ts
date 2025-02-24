@@ -96,8 +96,7 @@ describe('vue e2e', () => {
       <meta property="og:locale" content="en_AU">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
-      <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>",
+      <meta name="description" content="This is the home page">",
         "htmlAttrs": " lang="en"",
       }
     `)
@@ -138,7 +137,6 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"title":"My amazing site"}</script>
       </head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
@@ -356,7 +354,9 @@ describe('vue e2e', () => {
   })
 
   it('title', async () => {
-    const ssrHead = createServerHead()
+    const ssrHead = createServerHead({
+      disableDefaults: true,
+    })
 
     // i.e App.vue
     ssrHead.push({
@@ -374,7 +374,7 @@ describe('vue e2e', () => {
 
     expect(data.headTags).toMatchInlineSnapshot(`
       "<title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>"
+      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>"
     `)
     expect(data).toMatchInlineSnapshot(`
       {
@@ -382,7 +382,7 @@ describe('vue e2e', () => {
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>",
+      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -391,7 +391,7 @@ describe('vue e2e', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" data-my-app="" class="layout-default" style=""><head>
       <title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"title":"Default title","titleTemplate":"%s | Company"}</script>
+      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>
       </head>
       <body>
 
@@ -419,6 +419,6 @@ describe('vue e2e', () => {
     home.dispose()
 
     await renderDOMHead(csrHead, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`"Default title | Company"`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home Page | Company"`)
   })
 })

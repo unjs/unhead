@@ -1,4 +1,5 @@
 import type { ComponentResolver } from 'unplugin-vue-components'
+import { schemaAutoImports } from '../imports'
 
 export interface SchemaOrgResolverOptions {
   /**
@@ -8,45 +9,6 @@ export interface SchemaOrgResolverOptions {
    */
   prefix?: string
 }
-
-export const schemaAutoImports = [
-  'defineAddress',
-  'defineAggregateOffer',
-  'defineAggregateRating',
-  'defineArticle',
-  'defineBook',
-  'defineBookEdition',
-  'defineBreadcrumb',
-  'defineComment',
-  'defineCourse',
-  'defineEvent',
-  'defineFoodEstablishment',
-  'defineHowTo',
-  'defineHowToStep',
-  'defineImage',
-  'defineItemList',
-  'defineJobPosting',
-  'defineListItem',
-  'defineLocalBusiness',
-  'defineMovie',
-  'defineOffer',
-  'defineOpeningHours',
-  'defineOrganization',
-  'definePerson',
-  'definePlace',
-  'defineProduct',
-  'defineQuestion',
-  'defineReadAction',
-  'defineRecipe',
-  'defineReview',
-  'defineSearchAction',
-  'defineSoftwareApp',
-  'defineVideo',
-  'defineVirtualLocation',
-  'defineWebPage',
-  'defineWebSite',
-  'useSchemaOrg',
-]
 
 export const schemaOrgAutoImports = [
   {

@@ -7,7 +7,6 @@ const rootDir = fileURLToPath(new URL('../../', import.meta.url))
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   alias: {
-    '@unhead/shared': `${rootDir}/packages/shared/src`,
     '@unhead/vue': `${rootDir}/packages/vue/src`,
     '@unhead/ssr': `${rootDir}/packages/ssr/src`,
     '@unhead/dom': `${rootDir}/packages/dom/src`,

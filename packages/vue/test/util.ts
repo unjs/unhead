@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { CreateHeadOptions } from '@unhead/schema'
 import type { JSDOM } from 'jsdom'
+import type { CreateHeadOptions } from 'unhead/types'
 import type { App, Component } from 'vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { VueHeadMixin } from '@unhead/vue'
@@ -10,9 +10,10 @@ import { createHead as createServerHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
 
-export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) {
+export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateHeadOptions) {
   const head = createClientHead({
     document: dom.window.document,
+    ...options,
   })
   const app = createApp({
     setup() {
@@ -32,7 +33,10 @@ export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>) 
 }
 
 export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, options?: CreateHeadOptions) {
-  const head = createServerHead(options)
+  const head = createServerHead({
+    disableDefaults: true,
+    ...options,
+  })
   const app = createSSRApp({
     async setup() {
       fn()
@@ -45,7 +49,9 @@ export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, option
 }
 
 export async function ssrRenderHeadToString(fn: () => void) {
-  const head = createServerHead()
+  const head = createServerHead({
+    disableDefaults: true,
+  })
   const app = createSSRApp({
     setup() {
       fn()
@@ -58,8 +64,11 @@ export async function ssrRenderHeadToString(fn: () => void) {
   return renderSSRHead(head)
 }
 
-export async function ssrRenderOptionsHead(input: any) {
-  const head = createServerHead()
+export async function ssrRenderOptionsHead(input: any, options?: CreateHeadOptions) {
+  const head = createServerHead({
+    disableDefaults: true,
+    ...options,
+  })
   const app = createSSRApp({
     head() {
       return input

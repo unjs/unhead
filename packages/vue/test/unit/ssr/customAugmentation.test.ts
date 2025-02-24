@@ -1,4 +1,4 @@
-import type { MergeHead } from '@unhead/schema'
+import type { MergeHead } from 'unhead/types'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
@@ -14,7 +14,9 @@ describe('vue ssr custom augmentation', () => {
       }
     }
 
-    const head = createHead<CustomHead>()
+    const head = createHead<CustomHead>({
+      disableDefaults: true,
+    })
     const app = createSSRApp({
       setup() {
         const title = ref('')

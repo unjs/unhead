@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "2.0.0-alpha.7",
+  "version": "2.0.0-alpha.19",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -28,27 +28,49 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs"
     },
     "./vue": {
       "types": "./dist/vue.d.ts",
-      "import": "./dist/vue.mjs",
-      "require": "./dist/vue.cjs"
+      "import": "./dist/vue.mjs"
+    },
+    "./svelte": {
+      "types": "./dist/svelte.d.ts",
+      "import": "./dist/svelte.mjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs"
+    },
+    "./solid-js": {
+      "types": "./dist/solid-js.d.ts",
+      "import": "./dist/solid-js.mjs"
     }
   },
-  "main": "dist/index.cjs",
+  "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "vue": [
         "dist/vue"
+      ],
+      "svelte": [
+        "dist/svelte"
+      ],
+      "react": [
+        "dist/react"
+      ],
+      "solid-js": [
+        "dist/solid-js"
       ]
     }
   },
   "files": [
     "dist",
+    "react.d.ts",
+    "solid-js.d.ts",
+    "svelte.d.ts",
     "vue.d.ts"
   ],
   "scripts": {
@@ -59,29 +81,45 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
   },
   "peerDependencies": {
-    "@unhead/vue": "^1.11.18",
-    "unhead": "^1.11.18"
+    "@unhead/react": "^2",
+    "@unhead/solid-js": "^2",
+    "@unhead/svelte": "^2",
+    "@unhead/vue": "^2",
+    "unhead": "^2"
   },
   "peerDependenciesMeta": {
+    "@unhead/react": {
+      "optional": true
+    },
+    "@unhead/solid-js": {
+      "optional": true
+    },
+    "@unhead/svelte": {
+      "optional": true
+    },
     "@unhead/vue": {
       "optional": true
     }
   },
   "dependencies": {
-    "@unhead/schema": "workspace:*",
-    "@unhead/shared": "workspace:*",
-    "@unhead/vue": "workspace:*",
     "defu": "^6.1.4",
-    "ohash": "^1.1.4",
-    "ufo": "^1.5.4",
-    "unhead": "workspace:*"
+    "ohash": "^2.0.4",
+    "ufo": "^1.5.4"
   },
   "devDependencies": {
-    "unplugin-vue-components": "^28.0.0"
+    "@unhead/react": "workspace:*",
+    "@unhead/solid-js": "workspace:*",
+    "@unhead/svelte": "workspace:*",
+    "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
+    "unplugin-vue-components": "^28.4.0"
   },
   "build": {
     "external": [
-      "vue"
+      "vue",
+      "svelte",
+      "react",
+      "solid-js"
     ]
   }
 }

@@ -1,7 +1,6 @@
 import { useHeadSafe } from 'unhead'
 import { describe, it } from 'vitest'
-import { basicSchema } from '../../fixtures'
-import { useDelayedSerializedDom, useDOMHead } from '../../util'
+import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom useHeadSafe', () => {
   it('basic', async () => {
@@ -25,7 +24,7 @@ describe('dom useHeadSafe', () => {
       ],
       style: [
         {
-          innerHTML: 'body { background: url("javascript:alert(1)") }',
+          textContent: 'body { background: url("javascript:alert(1)") }',
         },
       ],
       script: [
@@ -34,8 +33,11 @@ describe('dom useHeadSafe', () => {
           onload: 'alert(1)',
         },
         {
-          innerHTML: 'alert(1)',
           textContent: { value: 'alert(1)' },
+          type: 'application/json',
+        },
+        {
+          innerHTML: 'alert(1)',
         },
       ],
     })
@@ -43,7 +45,7 @@ describe('dom useHeadSafe', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><script>{"value":"alert(1)"}</script></head>
+      <meta charset="utf-8"><link href="https://cdn.example.com/style.css" rel="stylesheet"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><script type="application/json">{"value":"alert(1)"}</script></head>
       <body class="dark">
 
       <div>

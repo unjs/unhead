@@ -1,3 +1,4 @@
+import type { Signal } from '@angular/core'
 import type {
   Base as _Base,
   Noscript as _Noscript,
@@ -23,9 +24,8 @@ import type {
   SchemaAugmentations,
   ScriptBase,
   Unhead,
-} from '@unhead/schema'
+} from 'unhead/types'
 import type { MaybeSignal, ResolvableArray, ResolvableProperties } from './util'
-import type {Signal} from "@angular/core";
 
 export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class'> {
   /**
@@ -57,7 +57,7 @@ export type Base<E extends EntryAugmentation = Record<string, any>> = Resolvable
 export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
 export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
 export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script'] > & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
+export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
 export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
 export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
 export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>

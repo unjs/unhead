@@ -9,15 +9,16 @@ describe('state', () => {
       title: 'hello',
     })
 
-    expect(head.headEntries()).toMatchInlineSnapshot(`
-      [
-        {
-          "_i": 0,
+    expect(head.entries).toMatchInlineSnapshot(`
+      Map {
+        1 => {
+          "_i": 1,
           "input": {
             "title": "hello",
           },
+          "options": {},
         },
-      ]
+      }
     `)
   })
 })

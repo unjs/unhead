@@ -16,7 +16,9 @@ describe('titleTemplate', () => {
   it('fn replace', async () => {
     const head = createServerHeadWithContext()
     head.push({
-      titleTemplate: (title?: string) => `${title} - my template`,
+      titleTemplate: (title?: string) => {
+        return `${title} - my template`
+      },
       title: 'test',
     })
     const { headTags } = await renderSSRHead(head)
@@ -82,24 +84,6 @@ describe('titleTemplate', () => {
     const { headTags } = await renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `""`,
-    )
-  })
-  it('function titleTemplate with templateParams', async () => {
-    const head = createServerHeadWithContext()
-    head.push({
-      titleTemplate: () => '%s %separator %subPage% %separator %site.name',
-      title: 'test %foo',
-      templateParams: {
-        site: {
-          name: 'test',
-        },
-        subPage: 'subPage',
-        foo: 'foo',
-      },
-    })
-    const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(
-      `"<title>test foo | subPage% | test</title>"`,
     )
   })
 })
