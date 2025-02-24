@@ -11,16 +11,16 @@
     "preview": "cross-env NODE_ENV=production node server"
   },
   "dependencies": {
-    "compression": "^1.7.5",
-    "express": "^5.0.1",
-    "sirv": "^3.0.0",
-    "solid-js": "^1.9.3",
     "@unhead/schema-org": "workspace:*",
-    "@unhead/solid-js": "workspace:*"
+    "@unhead/solid-js": "workspace:*",
+    "compression": "^1.8.0",
+    "express": "^5.0.1",
+    "sirv": "^3.0.1",
+    "solid-js": "^1.9.5"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "vite": "^6.0.1",
-    "vite-plugin-solid": "^2.11.0"
+    "vite": "^6.1.1",
+    "vite-plugin-solid": "^2.11.2"
   }
 }

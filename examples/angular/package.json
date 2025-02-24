@@ -23,7 +23,7 @@
     "@angular/ssr": "^19.1.8",
     "@unhead/angular": "link:../../packages/angular/dist/ngx-unhead",
     "express": "^4.21.2",
-    "rxjs": "~7.8.1",
+    "rxjs": "~7.8.2",
     "tslib": "^2.8.1",
     "zone.js": "~0.15.0"
   },
@@ -33,7 +33,7 @@
     "@angular/cli": "^19.1.8",
     "@angular/compiler-cli": "^19.1.7",
     "@types/express": "^5.0.0",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.5",
     "ng-packagr": "^19.1.2",
     "typescript": "~5.7.3"
   }

@@ -33,7 +33,7 @@
     "acorn-loose": "^8.4.0",
     "bumpp": "^10.0.3",
     "devalue": "^5.1.1",
-    "eslint": "^9.20.1",
+    "eslint": "^9.21.0",
     "fs-extra": "^11.3.0",
     "jsdom": "^26.0.0",
     "rollup-plugin-analyzer": "^4.0.0",
