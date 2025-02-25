@@ -1,8 +1,8 @@
 import type { Unhead as UnheadSchema } from 'unhead/types'
 import { DOCUMENT } from '@angular/common'
-import { Inject, Injectable, Optional } from '@angular/core'
+import { Inject, Injectable } from '@angular/core'
 import { renderSSRHead } from 'unhead/server'
-import { UnheadInjectionToken } from '../unhead/install'
+import { UnheadInjectionToken } from './context'
 
 function attrToElement(element: HTMLElement, acc: string) {
   const [key, value] = acc.match(/([a-z0-9-]+)(?:="([^"]*)")?/i)?.slice(1, 3) || []

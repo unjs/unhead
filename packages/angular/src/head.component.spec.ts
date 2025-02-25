@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing'
 import { TestBed } from '@angular/core/testing'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import * as composables from '../unhead/composables'
+import * as composables from './composables'
 import { Head } from './head.component'
 
 describe('headComponent', () => {

@@ -2,7 +2,7 @@
  * Public API Surface of unhead
  */
 
-export * from './lib/head.component'
-export * from './lib/unhead.service'
-export * from './unhead/composables'
-export * from './unhead/install'
+export * from './head.component'
+export * from './unhead.service'
+export * from './composables'
+export * from './context'

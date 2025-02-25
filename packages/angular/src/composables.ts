@@ -2,7 +2,7 @@ import type { UseScriptInput, UseScriptOptions, UseScriptReturn } from 'unhead/s
 import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseSeoMetaInput } from 'unhead/types'
 import { DestroyRef, effect, inject } from '@angular/core'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
-import { UnheadInjectionToken } from './install'
+import { UnheadInjectionToken } from './context'
 
 export function useUnhead() {
   const instance = inject<Unhead>(UnheadInjectionToken)

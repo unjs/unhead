@@ -1,6 +1,6 @@
 import type { OnDestroy } from '@angular/core'
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
-import { useHead } from '../unhead/composables'
+import { useHead } from './composables'
 
 interface NodeProps {
   type: string | symbol

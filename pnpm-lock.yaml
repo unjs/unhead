@@ -503,6 +503,9 @@ importers:
       '@angular/core':
         specifier: ^19.1.5
         version: 19.1.7(rxjs@7.8.2)(zone.js@0.15.0)
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
       unhead:
         specifier: workspace:*
         version: link:../unhead

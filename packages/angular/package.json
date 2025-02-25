@@ -31,16 +31,31 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  ".": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/fesm2022/unhead-angular.mjs"
+  "typings": "index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./fesm2022/unhead-angular.mjs"
+    },
+    "./client": {
+      "types": "./client/index.d.ts",
+      "default": "./fesm2022/unhead-angular-client.mjs"
+    },
+    "./server": {
+      "types": "./server/index.d.ts",
+      "default": "./fesm2022/unhead-angular-server.mjs"
+    }
   },
   "peerDependencies": {
     "@angular/common": "^19.1.5",
     "@angular/core": "^19.1.5"
   },
   "dependencies": {
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular/platform-browser-dynamic": "^19.1.5",
