@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "1.11.16",
+  "version": "1.11.19",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -68,12 +68,12 @@
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
     "defu": "^6.1.4",
-    "ohash": "^2.0.5",
+    "ohash": "^1.1.4",
     "ufo": "^1.5.4",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "unplugin-vue-components": "^28.4.0"
+    "unplugin-vue-components": "^0.28.0"
   },
   "build": {
     "external": [
