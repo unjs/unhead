@@ -2,7 +2,6 @@
  * Public API Surface of unhead
  */
 
-export * from './composables'
-export * from './context'
-export * from './head.component'
-export * from './unhead.service'
+export { useHead, useHeadSafe, useScript, useSeoMeta, useUnhead } from './composables'
+export { headSymbol, UnheadInjectionToken } from './context'
+export { Head } from './head.component'

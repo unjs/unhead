@@ -1,6 +1,6 @@
 // counter.component.ts
-import {Component, effect, signal} from '@angular/core';
-import { Unhead, useHead } from '@unhead/angular'
+import {Component, signal} from '@angular/core';
+import { useHead } from '@unhead/angular'
 
 @Component({
   selector: 'app-counter',

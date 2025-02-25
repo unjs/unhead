@@ -9,7 +9,19 @@ const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(),
     provideServerRoutesConfig(serverRoutes),
-    provideServerHead(),
+    provideServerHead({
+      init: [
+        {
+          htmlAttrs: {
+            lang: 'en-AU',
+            ['data-foo']: true,
+            style: {
+              'font-size': '16px'
+            }
+          },
+        }
+      ]
+    }),
   ]
 };
 

@@ -14,22 +14,9 @@ export class AppComponent implements OnInit {
   constructor(
   ) {
     useHead({
-      htmlAttrs: {
-        lang: 'en',
-      },
-      meta: [
-        {
-          charset: 'utf-8'
-        },
-        {
-          name: 'viewport',
-          content: 'width=device-width, initial-scale=1'
-        }
-      ],
       title: 'Hello from Angular 123',
       bodyAttrs: {
         class: 'foo',
-        style: 'background-color: salmon'
       },
       style: [
         {
