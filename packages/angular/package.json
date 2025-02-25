@@ -60,7 +60,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "typings": "index.d.ts",
+  "typings": "./dist/index.d.ts",
   "peerDependencies": {
     "@angular/common": "^19.1.7",
     "@angular/core": "^19.1.7"
