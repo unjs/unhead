@@ -504,17 +504,17 @@ importers:
         specifier: ^19.1.7
         version: 19.1.7(rxjs@7.8.2)(zone.js@0.15.0)
       tslib:
-        specifier: ^2.3.0
+        specifier: ^2.8.1
         version: 2.8.1
       unhead:
         specifier: workspace:*
         version: link:../unhead
     devDependencies:
       '@angular/platform-browser-dynamic':
-        specifier: ^19.1.5
+        specifier: ^19.1.7
         version: 19.1.7(@angular/common@19.1.7(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0))(rxjs@7.8.2))(@angular/compiler@19.1.7(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0)))(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0))(@angular/platform-browser@19.1.7(@angular/animations@19.1.7(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0)))(@angular/common@19.1.7(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0))(rxjs@7.8.2))(@angular/core@19.1.7(rxjs@7.8.2)(zone.js@0.15.0)))
       '@vitest/coverage-istanbul':
-        specifier: ^1.2.1
+        specifier: ^1.6.1
         version: 1.6.1(vitest@3.0.7(@types/debug@4.1.12)(@types/node@22.13.5)(jiti@2.4.2)(jsdom@26.0.0)(less@4.2.2)(sass@1.85.0)(terser@5.37.0)(yaml@2.7.0))
       zone.js:
         specifier: ^0.15.0
@@ -12449,7 +12449,7 @@ snapshots:
       make-fetch-happen: 14.0.3
       nopt: 8.1.0
       proc-log: 5.0.0
-      semver: 7.6.3
+      semver: 7.7.1
       tar: 7.4.3
       which: 5.0.0
     transitivePeerDependencies:
