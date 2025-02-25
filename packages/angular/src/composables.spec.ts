@@ -3,8 +3,8 @@ import { DestroyRef } from '@angular/core'
 import { TestBed } from '@angular/core/testing'
 import * as unhead from 'unhead'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { UnheadInjectionToken } from './context'
 import { useHead, useHeadSafe, useScript, useSeoMeta, useUnhead } from './composables'
+import { UnheadInjectionToken } from './context'
 
 describe('composables', () => {
   let mockUnhead: any

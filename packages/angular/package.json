@@ -20,18 +20,6 @@
     "url": "https://github.com/unjs/unhead/issues"
   },
   "sideEffects": false,
-  "module": "dist/fesm2022/unhead-angular.mjs",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "ng build",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
-  },
-  "typings": "index.d.ts",
   "exports": {
     "./package.json": {
       "default": "./package.json"
@@ -49,13 +37,25 @@
       "default": "./fesm2022/unhead-angular-server.mjs"
     }
   },
+  "module": "dist/fesm2022/unhead-angular.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "ng build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "typings": "index.d.ts",
   "peerDependencies": {
     "@angular/common": "^19.1.5",
     "@angular/core": "^19.1.5"
   },
   "dependencies": {
-    "unhead": "workspace:*",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "unhead": "workspace:*"
   },
   "devDependencies": {
     "@angular/platform-browser-dynamic": "^19.1.5",
