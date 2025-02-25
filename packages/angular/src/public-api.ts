@@ -1,8 +1,8 @@
 /*
- * Public API Surface of ngx-unhead
+ * Public API Surface of unhead
  */
 
-export * from './lib/head.component'
-export * from './lib/unhead.service'
-export * from './unhead/composables'
-export * from './unhead/install'
+export * from './composables'
+export * from './context'
+export * from './head.component'
+export * from './unhead.service'

@@ -3,6 +3,8 @@ import { createHeadCore } from 'unhead'
 // composables
 export { unheadVueComposablesImports } from './autoImports'
 
+export const CapoPlugin = () => ({})
+
 // core
 export {
   createHeadCore,
