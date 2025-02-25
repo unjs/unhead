@@ -57,6 +57,7 @@
     "@unhead/addons": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
+    "@unhead/angular": "workspace:*",
     "@unhead/schema-org": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
