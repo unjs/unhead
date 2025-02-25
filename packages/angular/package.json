@@ -1,13 +1,50 @@
 {
-  "name": "ngx-unhead",
+  "name": "@unhead/angular",
+  "type": "module",
   "version": "2.0.0-alpha.19",
+  "description": "Full-stack <head> manager built for Angular.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/angular"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
   "sideEffects": false,
+  "module": "dist/fesm2022/unhead-angular.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "ng build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/fesm2022/unhead-angular.mjs"
+  },
   "peerDependencies": {
     "@angular/common": "^19.1.5",
     "@angular/core": "^19.1.5"
   },
   "dependencies": {
-    "tslib": "^2.8.1",
     "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "@angular/platform-browser-dynamic": "^19.1.5",
+    "@vitest/coverage-istanbul": "^1.2.1",
+    "zone.js": "^0.15.0"
   }
 }

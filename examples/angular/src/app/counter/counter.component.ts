@@ -1,6 +1,6 @@
 // counter.component.ts
-import { Component, signal } from '@angular/core';
-import { Unhead } from '@unhead/angular'
+import {Component, effect, signal} from '@angular/core';
+import { Unhead, useHead } from '@unhead/angular'
 
 @Component({
   selector: 'app-counter',
@@ -9,14 +9,15 @@ import { Unhead } from '@unhead/angular'
 })
 export class CounterComponent {
   counter = signal(0);
+  head = useHead()
 
-  constructor(private unhead: Unhead) {
-    this.unhead.useHead({
-      title: () => `Counter: ${this.counter()}`
-    });
+  constructor() {
   }
 
   incrementCounter() {
+    this.head.patch({
+      title: () => `Counter: ${this.counter()}`
+    })
     this.counter.update(value => value + 1);
     console.log('incrementing counter using setTitle ')
   }

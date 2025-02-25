@@ -1,45 +1,20 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
-import type { AngularUnhead, UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput } from './types/index'
-import { DestroyRef, effect, inject, signal } from '@angular/core'
-import { unpackMeta, whitelistSafeInput } from 'unhead/utils'
+import type { UseScriptInput, UseScriptOptions, UseScriptReturn } from 'unhead/scripts'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseSeoMetaInput } from 'unhead/types'
+import { DestroyRef, effect, inject } from '@angular/core'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadInjectionToken } from './install'
-import { resolveSignalHeadInput } from './utils'
 
-export function injectHead() {
-  const instance = inject<AngularUnhead>(UnheadInjectionToken)
+export function useUnhead() {
+  const instance = inject<Unhead>(UnheadInjectionToken)
   if (!instance) {
     throw new Error('useHead() was called without proper injection context.')
   }
   return instance
 }
 
-export function useHead<T extends MergeHead>(
-  input: UseHeadInput<T>,
-  options: UseHeadOptions = {},
-): ActiveHeadEntry<UseHeadInput<T>> {
-  const head = options.head || injectHead()
-  return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
-}
-
-function clientUseHead<T extends MergeHead>(
-  head: AngularUnhead,
-  input: UseHeadInput<T>,
-  options: HeadEntryOptions = {},
-): ActiveHeadEntry<UseHeadInput<T>> {
-  const deactivated = signal(false)
-  const resolvedInput = signal({})
-
-  effect(() => {
-    resolvedInput.set(
-      deactivated() ? {} : resolveSignalHeadInput(input),
-    )
-  })
-
-  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput(), options)
-
-  effect(() => {
-    entry.patch(resolvedInput())
-  })
+function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
+  const head = options.head || useUnhead()
+  const entry = fn(head, input, options)
 
   const destroyRef = inject(DestroyRef)
   destroyRef.onDestroy(() => {
@@ -49,36 +24,75 @@ function clientUseHead<T extends MergeHead>(
   return entry
 }
 
-export function useHeadSafe(
-  input: UseHeadSafeInput,
-  options: UseHeadOptions = {},
-): ActiveHeadEntry<any> {
-  // @ts-expect-error runtime type
-  return useHead(input, {
-    ...options,
-    transform: whitelistSafeInput,
-  })
+export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
+  return withSideEffects(input, options, baseHead)
 }
 
-export function useSeoMeta(
-  input: UseSeoMetaInput,
-  options?: UseHeadOptions,
-): ActiveHeadEntry<any> {
-  const { title, titleTemplate, ...meta } = input
-  return useHead({
-    title,
-    titleTemplate,
-    // @ts-expect-error runtime type
-    _flatMeta: meta,
-  }, {
-    ...options,
-    transform(t) {
-      // @ts-expect-error runtime type
-      const meta = unpackMeta({ ...t._flatMeta })
-      // @ts-expect-error runtime type
-      delete t._flatMeta
-      // @ts-expect-error runtime type
-      return { ...t, meta }
-    },
+export function useHeadSafe(input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
+  return withSideEffects<ActiveHeadEntry<HeadSafe>>(input, options, baseHeadSafe)
+}
+
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
+  return withSideEffects<ActiveHeadEntry<UseSeoMetaInput>>(input, options, baseSeoMeta)
+}
+
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
+  const options = _options || {} as UseScriptOptions<T>
+  const head = options?.head || useUnhead()
+  options.head = head
+
+  const mountCbs: (() => void)[] = []
+  const sideEffects: (() => void)[] = []
+  let isMounted = false
+
+  const destroyRef = inject(DestroyRef)
+
+  effect(() => {
+    isMounted = true
+    mountCbs.forEach(i => i())
   })
+
+  if (typeof options.trigger === 'undefined') {
+    options.trigger = (load) => {
+      if (isMounted) {
+        load()
+      }
+      else {
+        mountCbs.push(load)
+      }
+    }
+  }
+
+  // @ts-expect-error untyped
+  const script = baseUseScript(head, input as BaseUseScriptInput, options)
+
+  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+    let i: number | null
+    const destroy = () => {
+      // avoid removing the wrong callback
+      if (i) {
+        script._cbs[key]?.splice(i - 1, 1)
+        i = null
+      }
+    }
+    mountCbs.push(() => {
+      if (!script._cbs[key]) {
+        cb(script.instance)
+        return () => {}
+      }
+      i = script._cbs[key].push(cb)
+      sideEffects.push(destroy)
+      return destroy
+    })
+  }
+
+  destroyRef.onDestroy(() => {
+    isMounted = false
+    script._triggerAbortController?.abort()
+    sideEffects.forEach(i => i())
+  })
+  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
+  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  return script
 }

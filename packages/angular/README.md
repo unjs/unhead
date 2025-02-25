@@ -1,63 +1,171 @@
-# NgxUnhead
+# @unhead/angular
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.0.
+> Full-stack `<head>` management for Angular applications
 
-## Code scaffolding
+[![npm version][npm-version-src]][npm-version-href]
+[![npm downloads][npm-downloads-src]][npm-downloads-href]
+[![License][license-src]][license-href]
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Features
 
-```bash
-ng generate component component-name
-```
+- 🧩 Angular-optimized head management
+- 🔄 Reactive titles, meta tags, and other head elements
+- 🔍 SEO-friendly head control
+- 🖥️ Server-side rendering support
+- 💉 Angular dependency injection integration
+- 📦 Lightweight with zero dependencies (except for Angular & unhead)
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the library, run:
+## Installation
 
 ```bash
-ng build ngx-unhead
+# npm
+npm install @unhead/angular
+
+# yarn
+yarn add @unhead/angular
+
+# pnpm
+pnpm add @unhead/angular
 ```
 
-This command will compile your project, and the build artifacts will be placed in the `dist/` directory.
+## Usage
 
-### Publishing the Library
+### Setup
 
-Once the project is built, you can publish your library by following these steps:
+First, provide the Unhead service in your application:
 
-1. Navigate to the `dist` directory:
-   ```bash
-   cd dist/ngx-unhead
-   ```
+```typescript
+// app.config.ts
+import { ApplicationConfig } from '@angular/core'
+import { provideClientHead } from '@unhead/angular'
 
-2. Run the `npm publish` command to publish your library to the npm registry:
-   ```bash
-   npm publish
-   ```
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // ... other providers
+    provideClientHead(),
+  ]
+}
+```
 
-## Running unit tests
+For server-side rendering (Angular Universal):
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+```typescript
+// server.ts
+import { provideServerHead } from '@unhead/angular'
+
+// In your server module providers:
+providers: [
+  // ... other providers
+  provideServerHead(),
+]
+```
+
+### Basic Usage
+
+```typescript
+// app.component.ts
+import { Component } from '@angular/core'
+import { Unhead } from '@unhead/angular'
+
+@Component({
+  selector: 'app-root',
+  template: '<router-outlet></router-outlet>',
+})
+export class AppComponent {
+  constructor(private unhead: Unhead) {
+    // Set page title
+    this.unhead.useHead({
+      title: 'My Application',
+    })
+  }
+}
+```
+
+### Setting Meta Tags
+
+```typescript
+// home.component.ts
+import { Component, OnInit } from '@angular/core'
+import { Unhead } from '@unhead/angular'
+
+@Component({
+  selector: 'app-home',
+  template: '<h1>Home</h1>',
+})
+export class HomeComponent implements OnInit {
+  constructor(private unhead: Unhead) {}
+
+  ngOnInit() {
+    this.unhead.useSeoMeta({
+      title: 'Home Page',
+      description: 'Welcome to our website',
+      ogTitle: 'Welcome to Home Page',
+      ogDescription: 'Our fantastic home page',
+      ogImage: 'https://example.com/image.jpg',
+    })
+  }
+}
+```
+
+### Reactive Head Elements
+
+```typescript
+// profile.component.ts
+import { Component, signal } from '@angular/core'
+import { Unhead } from '@unhead/angular'
+
+@Component({
+  selector: 'app-profile',
+  template: `
+    <h1>{{ userName() }}'s Profile</h1>
+    <button (click)="updateName('New Name')">Update Name</button>
+  `,
+})
+export class ProfileComponent {
+  userName = signal('User')
+
+  constructor(private unhead: Unhead) {
+    this.unhead.useHead({
+      title: () => `${this.userName()} - Profile`, // Reactive title
+      meta: [
+        {
+          name: 'description',
+          content: () => `${this.userName()}'s profile page`, // Reactive description
+        },
+      ],
+    })
+  }
+
+  updateName(name: string) {
+    this.userName.set(name)
+    // Title and meta automatically update!
+  }
+}
+```
+
+## Development
 
 ```bash
-ng test
+# Install dependencies
+npm install
+
+# Generate build files
+npm run build
+
+# Run tests
+npm run test
 ```
 
-## Running end-to-end tests
+## License
 
-For end-to-end (e2e) testing, run:
+[MIT](./LICENSE)
 
-```bash
-ng e2e
-```
+<!-- Badges -->
+[npm-version-src]: https://img.shields.io/npm/v/@unhead/angular/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-version-href]: https://npmjs.com/package/@unhead/angular
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+[npm-downloads-src]: https://img.shields.io/npm/dm/@unhead/angular.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-downloads-href]: https://npmjs.com/package/@unhead/angular
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+[license-src]: https://img.shields.io/github/license/unjs/unhead.svg?style=flat&colorA=18181B&colorB=28CF8D
+[license-href]: https://github.com/unjs/unhead/blob/main/LICENSE

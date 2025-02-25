@@ -1,79 +1,48 @@
-import type { ReactiveHead } from '../unhead/types/index'
-// eslint-disable-next-line ts/consistent-type-imports
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core'
+import type { OnDestroy } from '@angular/core'
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
 import { useHead } from '../unhead/composables'
 
 interface NodeProps {
-  type: string
+  type: string | symbol
   props?: Record<string, any>
-  children?: any[]
-}
-
-function addNodeToHeadObj(node: NodeProps, obj: ReactiveHead) {
-  const nodeType = node.type
-  const type = nodeType === 'html'
-    ? 'htmlAttrs'
-    : nodeType === 'body'
-      ? 'bodyAttrs'
-      : nodeType as keyof ReactiveHead
-
-  if (typeof type !== 'string' || !(type in obj))
-    return
-
-  const props: Record<string, any> = node.props || {}
-  if (node.children) {
-    props.children = Array.isArray(node.children)
-      ? node.children[0]?.children
-      : node.children
-  }
-
-  if (Array.isArray(obj[type]))
-    (obj[type] as Record<string, any>[]).push(props)
-  else if (type === 'title')
-    obj.title = props.children
-  else
-    (obj[type] as Record<string, any>) = props
-}
-
-function nodesToHeadObj(nodes: NodeProps[]) {
-  const obj: ReactiveHead = {
-    title: undefined,
-    htmlAttrs: undefined,
-    bodyAttrs: undefined,
-    base: undefined,
-    meta: [],
-    link: [],
-    style: [],
-    script: [],
-    noscript: [],
-  }
-
-  for (const node of nodes) {
-    if (typeof node.type === 'symbol' && Array.isArray(node.children)) {
-      for (const childNode of node.children)
-        addNodeToHeadObj(childNode as NodeProps, obj)
-    }
-    else {
-      addNodeToHeadObj(node, obj)
-    }
-  }
-
-  return obj
+  children?: NodeProps[]
 }
 
 @Component({
-  selector: 'lib-ngx-unhead',
+  selector: 'unhead-head',
+  standalone: true,
   template: '<ng-content></ng-content>',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class Head implements OnDestroy {
   private headEntry = useHead({})
 
-  constructor(private cdr: ChangeDetectorRef) {
+  updateHead(nodes: NodeProps[]) {
+    const transformed = this.transformNodes(nodes)
+    this.headEntry.patch(transformed)
   }
 
-  updateHead(nodes: NodeProps[]) {
-    this.headEntry.patch(nodesToHeadObj(nodes))
-    this.cdr.detectChanges()
+  private transformNodes(nodes: NodeProps[]) {
+    const result: Record<string, any> = {}
+
+    const processNode = (node: NodeProps) => {
+      if (typeof node.type === 'symbol') {
+        node.children?.forEach(child => processNode(child as NodeProps))
+        return
+      }
+
+      const type = node.type as string
+      if (node.children?.length === 1) {
+        result[type] = node.children[0]
+      }
+      else if (Object.keys(node.props || {}).length) {
+        result[type] = result[type] || []
+        result[type].push(node.props)
+      }
+    }
+
+    nodes.forEach(processNode)
+    return result
   }
 
   ngOnDestroy() {

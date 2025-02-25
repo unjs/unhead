@@ -24,7 +24,6 @@
     "declaration": true,
     "esModuleInterop": true,
     "skipDefaultLibCheck": true,
-    "skipLibCheck": true,
-    "experimentalDecorators": true
+    "skipLibCheck": true
   }
 }

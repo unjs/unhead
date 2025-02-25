@@ -2,6 +2,7 @@
   "name": "angular",
   "version": "0.0.0",
   "scripts": {
+    "dev": "pnpm start",
     "ng": "ng",
     "start": "rm -rf .angular && ng serve",
     "build": "ng build",
@@ -21,7 +22,7 @@
     "@angular/platform-server": "^19.1.7",
     "@angular/router": "^19.1.7",
     "@angular/ssr": "^19.1.8",
-    "@unhead/angular": "link:../../packages/angular/dist/ngx-unhead",
+    "@unhead/angular": "workspace:*",
     "express": "^4.21.2",
     "rxjs": "~7.8.2",
     "tslib": "^2.8.1",

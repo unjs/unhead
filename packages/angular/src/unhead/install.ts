@@ -1,24 +1,16 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions } from 'unhead/types'
-import type { AngularUnhead } from './types/index'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, Unhead as UnheadSchema } from 'unhead/types'
 import { InjectionToken, makeEnvironmentProviders } from '@angular/core'
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server'
 import { createHead as _createClientHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { createHead as _createServerHead } from 'unhead/server'
 import { Unhead } from '../lib/unhead.service'
-import { ReactivityPlugin } from '../unhead/ReactivityPlugin'
 
 export const headSymbol = 'usehead'
 
-export const UnheadInjectionToken = new InjectionToken<AngularUnhead>(headSymbol)
+export const UnheadInjectionToken = new InjectionToken<UnheadSchema>(headSymbol)
 
 export function provideServerHead(options: CreateServerHeadOptions = {}) {
-  const head = _createServerHead<AngularUnhead>({
-    ...options,
-    plugins: [
-      ...(options.plugins || []),
-      ReactivityPlugin,
-    ],
-  })
+  const head = _createServerHead(options)
   return makeEnvironmentProviders([
     { provide: UnheadInjectionToken, useValue: head },
     Unhead,
@@ -34,15 +26,11 @@ export function provideServerHead(options: CreateServerHeadOptions = {}) {
 }
 
 export function provideClientHead(options: CreateClientHeadOptions = {}) {
-  const head = _createClientHead<AngularUnhead>({
+  const head = _createClientHead({
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(() => fn(), 0)),
     },
     ...options,
-    plugins: [
-      ...(options.plugins || []),
-      ReactivityPlugin,
-    ],
   })
   return makeEnvironmentProviders([
     { provide: UnheadInjectionToken, useValue: head },

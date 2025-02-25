@@ -1,5 +1,5 @@
 /*
- * Public API Surface of ngx-unhead
+ * Public API Surface of unhead
  */
 
 export * from './lib/head.component'
