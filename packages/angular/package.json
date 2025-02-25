@@ -25,22 +25,34 @@
       "default": "./package.json"
     },
     ".": {
-      "types": "./index.d.ts",
-      "default": "./fesm2022/unhead-angular.mjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/fesm2022/unhead-angular.mjs"
     },
     "./client": {
-      "types": "./client/index.d.ts",
-      "default": "./fesm2022/unhead-angular-client.mjs"
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/fesm2022/unhead-angular-client.mjs"
     },
     "./server": {
-      "types": "./server/index.d.ts",
-      "default": "./fesm2022/unhead-angular-server.mjs"
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/fesm2022/unhead-angular-server.mjs"
     }
   },
   "module": "dist/fesm2022/unhead-angular.mjs",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "server": [
+        "dist/server"
+      ],
+      "client": [
+        "dist/client"
+      ]
+    }
+  },
   "files": [
-    "dist"
+    "client.d.ts",
+    "dist",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "ng build",
