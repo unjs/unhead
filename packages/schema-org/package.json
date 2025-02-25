@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "2.0.0-alpha.19",
+  "version": "2.0.0-alpha.20",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
