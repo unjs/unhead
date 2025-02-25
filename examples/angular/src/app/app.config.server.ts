@@ -3,7 +3,7 @@ import { provideServerRendering } from '@angular/platform-server';
 import { provideServerRoutesConfig } from '@angular/ssr';
 import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
-import { provideServerHead } from '@unhead/angular'
+import { provideServerHead } from '@unhead/angular/server'
 
 const serverConfig: ApplicationConfig = {
   providers: [

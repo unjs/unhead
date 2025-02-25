@@ -1,16 +1,22 @@
 import type { CreateClientHeadOptions } from 'unhead/types'
-import { makeEnvironmentProviders } from '@angular/core'
+import { DOCUMENT } from '@angular/common'
+import { inject, makeEnvironmentProviders } from '@angular/core'
 import { UnheadInjectionToken } from '@unhead/angular'
 import { createHead as _createClientHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 
 export function provideClientHead(options: CreateClientHeadOptions = {}) {
-  const head = _createClientHead({
-    domOptions: {
-      render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(() => fn(), 0)),
+  return makeEnvironmentProviders([{
+    provide: UnheadInjectionToken,
+    useFactory: () => {
+      const document = inject(DOCUMENT)
+      const head = _createClientHead({
+        document,
+        domOptions: {
+          render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(() => fn(), 0)),
+        },
+        ...options,
+      })
+      return head
     },
-    ...options,
-  })
-  return makeEnvironmentProviders([
-    { provide: UnheadInjectionToken, useValue: head },
-  ])
+  }])
 }
