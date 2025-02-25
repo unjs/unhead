@@ -46,22 +46,34 @@ export type MaybeArray<T> = T | T[]
 export type BaseBodyAttr = BaseBodyAttributes
 export type BaseHtmlAttr = _HtmlAttributes
 
-export interface BodyAttr extends Omit<BaseBodyAttr, 'class'> {
+export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
   class?: MaybeArray<string> | Record<string, boolean>
+  /**
+   * The style attribute contains CSS styling declarations to be applied to the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
+   */
+  style?: MaybeArray<string> | Record<string, ResolvableValue<string>>
 }
 
-export interface HtmlAttr extends Omit<_HtmlAttributes, 'class'> {
+export interface HtmlAttr extends Omit<_HtmlAttributes, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
   class?: MaybeArray<string> | Record<string, boolean>
+  /**
+   * The style attribute contains CSS styling declarations to be applied to the element.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
+   */
+  style?: MaybeArray<string> | Record<string, ResolvableValue<string>>
 }
 
 export interface BaseMeta extends Omit<_Meta, 'content'> {
