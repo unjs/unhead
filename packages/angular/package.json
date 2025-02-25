@@ -59,7 +59,6 @@
   },
   "devDependencies": {
     "@angular/platform-browser-dynamic": "^19.1.7",
-    "@vitest/coverage-istanbul": "^1.6.1",
     "zone.js": "^0.15.0"
   }
 }
