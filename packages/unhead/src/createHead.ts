@@ -106,7 +106,7 @@ export function createHeadCore<T = ResolvableHead>(resolvedOptions: CreateHeadOp
       }
       let hasFlatMeta = false
       ctx.entries
-        .flatMap(e => e._tags || [])
+        .flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
         .sort(sortTags)
         .reduce((acc, next) => {
           const k = String(next._d || next._p)
