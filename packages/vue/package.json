@@ -94,10 +94,10 @@
     "dist",
     "legacy.d.ts",
     "plugins.d.ts",
+    "scripts.d.ts",
     "server.d.ts",
     "types.d.ts",
-    "utils.d.ts",
-    "scripts.d.ts"
+    "utils.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",
