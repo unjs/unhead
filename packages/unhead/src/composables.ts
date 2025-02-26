@@ -47,22 +47,24 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
  * @deprecated use `useHead` instead. Advanced use cases should tree shake using import.meta.* if statements.
  */
 export function useServerHead<T extends Unhead<any>>(unhead: T, input: Parameters<T['push']>[0] = {}, options: Omit<HeadEntryOptions, 'mode'> = {}): ReturnType<T['push']> {
-  ;(options as HeadEntryOptions).mode = 'server'
+  (options as HeadEntryOptions).mode = 'server'
   return unhead.push(input, options) as ReturnType<T['push']>
 }
 
 /**
  * @deprecated use `useHeadSafe` instead. Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerHeadSafe(input: HeadSafe = {}, options: UseHeadOptions = {}): ActiveHeadEntry<HeadSafe> {
-  return useHeadSafe(input, { ...options, mode: 'server' })
+export function useServerHeadSafe<T extends Unhead<any>>(unhead: T, input: HeadSafe = {}, options: Omit<HeadEntryOptions, 'mode'> = {}): ActiveHeadEntry<HeadSafe> {
+  (options as HeadEntryOptions).mode = 'server'
+  return useHeadSafe(unhead, input, { ...options, mode: 'server' })
 }
 
 /**
  * @deprecated use `useSeoMeta` instead. Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerSeoMeta(input: UseSeoMetaInput = {}, options?: UseHeadOptions): ActiveHeadEntry<UseSeoMetaInput> {
-  return useSeoMeta(input, { ...options, mode: 'server' })
+export function useServerSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaInput = {}, options?: Omit<HeadEntryOptions, 'mode'>): ActiveHeadEntry<UseSeoMetaInput> {
+  (options as HeadEntryOptions).mode = 'server'
+  return useSeoMeta(unhead, input, { ...options, mode: 'server' })
 }
 
 export { useScript } from './scripts'
