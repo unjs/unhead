@@ -1,4 +1,4 @@
-import type { Head, HeadTag, PropResolver } from '../types'
+import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { DupeableTags, TagConfigKeys } from './const'
 
@@ -150,7 +150,7 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     if (value === undefined)
       return
     for (const v of (Array.isArray(value) ? value : [value]))
-      tags.push(normalizeTag(key as keyof Head, v))
+      tags.push(normalizeTag(key as keyof ResolvableHead, v))
   })
   return tags.flat()
 }

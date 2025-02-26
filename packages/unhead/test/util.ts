@@ -1,4 +1,4 @@
-import type { CreateHeadOptions, Head, SSRHeadPayload } from '../src/types'
+import type { CreateHeadOptions, ResolvableHead, SSRHeadPayload } from '../src/types'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from 'unhead/client'
 import { createHead as createServerHead } from 'unhead/server'
@@ -68,7 +68,7 @@ ${payload?.bodyTags || ''}
   )
 }
 
-export const basicSchema: Head = {
+export const basicSchema: ResolvableHead = {
   htmlAttrs: {
     lang: 'en',
     dir: 'ltr',

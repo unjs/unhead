@@ -1,7 +1,7 @@
-import type { CreateServerHeadOptions, Head, HeadTag } from '../types'
+import type { CreateServerHeadOptions, HeadTag, ResolvableHead } from '../types'
 import { createHeadCore } from '../createHead'
 
-export function createHead<T = Head>(options: CreateServerHeadOptions = {}) {
+export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
   const unhead = createHeadCore<T>({
     ...options,
     // @ts-expect-error untyped
@@ -41,7 +41,7 @@ export function createHead<T = Head>(options: CreateServerHeadOptions = {}) {
         const title = ctx.tagMap.get('title') as HeadTag | undefined
         const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
         const templateParams = ctx.tagMap.get('templateParams') as HeadTag | undefined
-        const payload: Head = {
+        const payload: ResolvableHead = {
           title: title?.mode === 'server' ? unhead._title : undefined,
           titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
           templateParams: templateParams?.mode === 'server' ? unhead._templateParams : undefined,

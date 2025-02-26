@@ -1,6 +1,6 @@
 import type {
   CreateHeadOptions,
-  Head,
+  ResolvableHead,
   Unhead,
 } from './types'
 import { createHeadCore } from './createHead'
@@ -14,7 +14,7 @@ export function getActiveHead() {
   return activeHead?.value
 }
 
-export function createServerHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
   return activeHead.value = createHeadCore<T>({
     disableCapoSorting: true,
     ...options,
@@ -30,7 +30,7 @@ export function createServerHead<T extends Record<string, any> = Head>(options: 
   })
 }
 
-export function createHead<T extends Record<string, any> = Head>(options: CreateHeadOptions = {}) {
+export function createHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
   return activeHead.value = createHeadCore<T>({
     disableCapoSorting: true,
     ...options,

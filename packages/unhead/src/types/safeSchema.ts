@@ -2,10 +2,10 @@ import type {
   BaseMeta,
   BodyAttributes,
   DataKeys,
-  Head,
   HtmlAttributes,
   LinkBase,
   Noscript,
+  ResolvableHead,
   SchemaAugmentations,
   ScriptBase,
   Style,
@@ -20,7 +20,7 @@ export type SafeScript = ResolvableProperties<Pick<ScriptBase, 'id' | 'type' | '
 export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id' | 'textContent'> & DataKeys & SchemaAugmentations['noscript']>
 export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'textContent' | 'nonce' | 'title' | 'blocking'> & DataKeys & SchemaAugmentations['style']>
 
-export interface HeadSafe extends Pick<Head, 'title' | 'titleTemplate' | 'templateParams'> {
+export interface HeadSafe extends Pick<ResolvableHead, 'title' | 'titleTemplate' | 'templateParams'> {
   /**
    * The `<link>` HTML element specifies relationships between the current document and an external resource.
    * This element is most commonly used to link to stylesheets, but is also used to establish site icons

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { ActiveHeadEntry, Head as UseHeadInput } from 'unhead/types'
+import type { ActiveHeadEntry, ResolvableHead as UseHeadInput } from 'unhead/types'
 import React, { useEffect, useRef } from 'react'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'

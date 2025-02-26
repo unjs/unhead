@@ -1,4 +1,4 @@
-import type { BaseMeta, Head, MetaFlatInput } from '../types'
+import type { BaseMeta, MetaFlatInput, ResolvableHead } from '../types'
 import type { ResolvedMetaFlat } from '../types/schema/metaFlat'
 import { MetaTagsArrayable } from './const'
 
@@ -171,7 +171,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   })
 }
 
-export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Head>['meta'] {
+export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<ResolvableHead>['meta'] {
   const extras: BaseMeta[] = []
   const primitives: Record<string, any> = {}
 
@@ -280,5 +280,5 @@ export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Head>
       : m.content === '_null'
         ? { ...m, content: null }
         : m,
-  ) as Required<Head>['meta']
+  ) as Required<ResolvableHead>['meta']
 }

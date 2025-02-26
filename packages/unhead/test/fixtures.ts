@@ -1,5 +1,5 @@
 import type { SSRHeadPayload } from '@unhead/ssr'
-import type { Head } from '../src/types'
+import type { ResolvableHead } from '../src/types'
 import { JSDOM } from 'jsdom'
 
 export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
@@ -51,7 +51,7 @@ ${payload?.bodyTags || ''}
   )
 }
 
-export const basicSchema: Head = {
+export const basicSchema: ResolvableHead = {
   htmlAttrs: {
     lang: 'en',
     dir: 'ltr',

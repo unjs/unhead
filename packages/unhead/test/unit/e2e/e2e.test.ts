@@ -1,4 +1,4 @@
-import type { Head } from '../../../src/types'
+import type { ResolvableHead } from '../../../src/types'
 import { useHead } from 'unhead'
 import { renderDOMHead } from 'unhead/client'
 import { renderSSRHead } from 'unhead/server'
@@ -150,7 +150,7 @@ describe('unhead e2e', () => {
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = createClientHeadWithContext()
 
-    const schema = <Head> {
+    const schema = <ResolvableHead> {
       title: 'My amazing site',
       htmlAttrs: {
         class: 'layout-default',

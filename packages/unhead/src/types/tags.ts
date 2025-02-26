@@ -1,5 +1,5 @@
 import type { RuntimeMode } from './head'
-import type { Head } from './schema'
+import type { ResolvableHead } from './schema'
 import type { ResolvableProperties } from './util'
 
 export interface ResolvesDuplicates {
@@ -62,7 +62,7 @@ export interface TagPriority {
 
 export type TagUserProperties = ResolvableProperties<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
-export type TagKey = keyof Head
+export type TagKey = keyof ResolvableHead
 
 export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
 

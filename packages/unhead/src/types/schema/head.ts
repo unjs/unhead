@@ -130,7 +130,7 @@ export interface HeadUtils {
   templateParams?: TemplateParams
 }
 
-export interface Head<E extends MergeHead = SchemaAugmentations> extends HeadUtils {
+export interface ResolvableHead<E extends MergeHead = SchemaAugmentations> extends HeadUtils {
   /**
    * The `<title>` HTML element defines the document's title that is shown in a browser's title bar or a page's tab.
    * It only contains text; tags within the element are ignored.
@@ -205,7 +205,9 @@ export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations>
   bodyAttrs?: ResolvedBodyAttributes<E['bodyAttrs']>
 }
 
+export type Head = ResolvableHead & ResolvedHead
+
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
-export type UseHeadInput<T extends MergeHead = MergeHead> = Head<T>
+export type UseHeadInput<T extends MergeHead = MergeHead> = ResolvableHead<T>
 
 export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlatInput, type ScriptBase }

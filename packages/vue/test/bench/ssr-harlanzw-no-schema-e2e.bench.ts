@@ -1,4 +1,4 @@
-import type { Head } from 'unhead/types'
+import type { ResolvableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta, useServerHead } from '../../src'
@@ -101,7 +101,7 @@ describe('ssr e2e bench', () => {
       },
     })
     head.use(InferSeoMetaPlugin())
-    const input: Head = {
+    const input: ResolvableHead = {
       meta: [],
       templateParams: {
         site: {
@@ -161,7 +161,7 @@ describe('ssr e2e bench', () => {
       title: 'About',
     }, { ...minimalPriority, head })
     // OG Image
-    const meta: Head['meta'] = [
+    const meta: ResolvableHead['meta'] = [
       { property: 'og:image', content: 'https://harlanzw.com/__og-image__/og.png' },
       { property: 'og:image:type', content: `image/png` },
       { name: 'twitter:card', content: 'summary_large_image' },
@@ -175,7 +175,7 @@ describe('ssr e2e bench', () => {
       { property: 'og:image:alt', content: 'My Image' },
       { name: 'twitter:image:alt', content: 'My Image' },
     ]
-    const script: Head['script'] = [{
+    const script: ResolvableHead['script'] = [{
       id: 'nuxt-og-image-options',
       type: 'application/json',
       processTemplateParams: true,
