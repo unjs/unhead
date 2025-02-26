@@ -48,7 +48,7 @@ describe('unhead e2e useServerSeoMeta', () => {
         "headTags": "<title>title mainpage</title>
       <script>lorem ipsum generate more lorem ipsum</script>
       <meta name="description" content="description mainpage">
-      <script id="unhead:payload" type="application/json">{"title":"title mainpage","meta":[{"name":"description","content":"description mainpage"}]}</script>",
+      <script id="unhead:payload" type="application/json">{"title":"title mainpage"}</script>",
         "htmlAttrs": " lang="app.vue"",
       }
     `)
@@ -76,8 +76,8 @@ describe('unhead e2e useServerSeoMeta', () => {
       "<!DOCTYPE html><html lang="app.vue"><head>
       <title>title mainpage</title>
       <script>lorem ipsum generate more lorem ipsum</script>
-      <meta name="description" content="description mainpage">
-      <script id="unhead:payload" type="application/json">{"title":"title mainpage","meta":[{"name":"description","content":"description mainpage"}]}</script>
+      <meta name="description" content="Description from nuxt.config.ts">
+      <script id="unhead:payload" type="application/json">{"title":"title mainpage"}</script>
       </head>
       <body>
 

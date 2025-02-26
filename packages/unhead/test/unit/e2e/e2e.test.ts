@@ -87,8 +87,7 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script type="application/json">{"val":"\\u003C/script>"}</script>
-      <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"meta":[{"charset":"utf-8"},{"property":"og:title","content":"My amazing site"},{"property":"og:description","content":"This is my amazing site"},{"property":"og:image","content":"https://cdn.example.com/image.jpg"},{"property":"og:image","content":"https://cdn.example.com/image2.jpg"}]}</script>",
+      <meta name="description" content="This is the home page">",
         "htmlAttrs": " lang="en"",
       }
     `)
@@ -133,7 +132,6 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script type="application/json">{"val":"\\u003C/script>"}</script>
       <meta name="description" content="This is the home page">
-      <script id="unhead:payload" type="application/json">{"meta":[{"charset":"utf-8"},{"property":"og:title","content":"My amazing site"},{"property":"og:description","content":"This is my amazing site"},{"property":"og:image","content":"https://cdn.example.com/image.jpg"},{"property":"og:image","content":"https://cdn.example.com/image2.jpg"}]}</script>
       </head>
       <body>
 
