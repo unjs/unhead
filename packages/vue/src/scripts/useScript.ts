@@ -97,6 +97,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // sync the status, need to register before useScript
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
+    // @ts-expect-error untyped
     s._statusRef.value = s.status
   })
   // @ts-expect-error untyped

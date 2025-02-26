@@ -52,6 +52,10 @@
     "./utils": {
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.mjs"
+    },
+    "./scripts": {
+      "types": "./dist/scripts.d.ts",
+      "import": "./dist/scripts.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -79,6 +83,9 @@
       ],
       "utils": [
         "dist/utils"
+      ],
+      "scripts": [
+        "dist/scripts"
       ]
     }
   },
@@ -89,7 +96,8 @@
     "plugins.d.ts",
     "server.d.ts",
     "types.d.ts",
-    "utils.d.ts"
+    "utils.d.ts",
+    "scripts.d.ts"
   ],
   "scripts": {
     "build": "unbuild .",

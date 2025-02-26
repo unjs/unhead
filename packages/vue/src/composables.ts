@@ -107,3 +107,5 @@ export function useServerHeadSafe(input: UseHeadSafeInput = {}, options: UseHead
 export function useServerSeoMeta(input: UseSeoMetaInput = {}, options?: UseHeadOptions): ActiveHeadEntry<UseSeoMetaInput> {
   return useSeoMeta(input, { ...options, mode: 'server' })
 }
+
+export { useScript } from './scripts/useScript'

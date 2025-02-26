@@ -12,6 +12,7 @@ export default defineBuildConfig({
     { input: 'src/legacy', name: 'legacy' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/plugins', name: 'plugins' },
+    { input: 'src/scripts', name: 'scripts' },
     { input: 'src/utils', name: 'utils' },
   ],
   hooks: {
