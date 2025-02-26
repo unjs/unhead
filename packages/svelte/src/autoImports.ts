@@ -4,6 +4,5 @@ export const autoImports = {
     'useHead',
     'useSeoMeta',
     'useHeadSafe',
-    'useServerHead',
   ],
 }
