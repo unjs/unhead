@@ -66,6 +66,10 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _tags?: HeadTag[]
+  /**
+   * @internal Remove once promise plugin is removed
+   */
+  _promisesProcessed?: boolean
 }
 
 export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'>

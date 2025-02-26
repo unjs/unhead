@@ -1,35 +1,46 @@
 import { defineHeadPlugin } from './defineHeadPlugin'
 
-async function resolvePromisesRecursively(root: any): Promise<any> {
-  if (root instanceof Promise) {
-    return await root
+async function walkPromises(v: any): Promise<any> {
+  const type = typeof v
+  if (type === 'function') {
+    return v
   }
-  // could be a root primitive, array or object
-  if (Array.isArray(root)) {
-    return Promise.all(root.map(r => resolvePromisesRecursively(r)))
+  // Combined primitive type check
+  if (v instanceof Promise) {
+    return await v
   }
-  if (typeof root === 'object') {
-    const resolved: Record<string, string> = {}
 
-    for (const k in root) {
-      if (!Object.hasOwn(root, k))
-        continue
+  if (Array.isArray(v)) {
+    return await Promise.all(v.map(r => walkPromises(r)))
+  }
 
-      resolved[k] = await resolvePromisesRecursively(root[k])
+  if (v?.constructor === Object) {
+    const next: Record<string, any> = {}
+    for (const key of Object.keys(v)) {
+      next[key] = await walkPromises(v[key])
     }
-
-    return resolved
+    return next
   }
-  return root
+
+  return v
 }
 
 export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'promises',
   hooks: {
     'entries:resolve': async (ctx) => {
+      const promises = []
       for (const k in ctx.entries) {
-        ctx.entries[k].input = await resolvePromisesRecursively(ctx.entries[k].input)
+        if (!ctx.entries[k]._promisesProcessed) {
+          promises.push(
+            walkPromises(ctx.entries[k].input).then((val) => {
+              ctx.entries[k].input = val
+              ctx.entries[k]._promisesProcessed = true
+            }),
+          )
+        }
       }
+      await Promise.all(promises)
     },
   },
 })

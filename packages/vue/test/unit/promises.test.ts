@@ -1,4 +1,5 @@
 import { describe, it } from 'vitest'
+import { computed } from 'vue'
 import { useHead } from '../../src'
 import { PromisesPlugin } from '../../src/plugins'
 import { ssrVueAppWithUnhead } from '../util'
@@ -12,6 +13,7 @@ describe('vue promises', () => {
           { src: new Promise(resolve => resolve('https://example.com/script.js')) },
           {
             innerHTML: new Promise<string>(resolve => setTimeout(() => resolve('test'), 250)),
+            foo: computed(() => 'test'),
           },
         ],
       })
@@ -43,7 +45,9 @@ describe('vue promises', () => {
           "_p": 1026,
           "_w": 100,
           "innerHTML": "test",
-          "props": {},
+          "props": {
+            "foo": "test",
+          },
           "tag": "script",
         },
       ]
