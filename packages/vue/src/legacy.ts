@@ -141,14 +141,23 @@ export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): Ac
   }
 }
 
+/**
+ * @deprecated use `useHead` instead. Advanced use cases should tree shake using import.meta.* if statements.
+ */
 export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {
   return useHead(input, { ...options, mode: 'server' })
 }
 
+/**
+ * @deprecated use `useHeadSafe` instead. Advanced use cases should tree shake using import.meta.* if statements.
+ */
 export function useServerHeadSafe(input: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {
   return useHeadSafe(input, { ...options, mode: 'server' })
 }
 
+/**
+ * @deprecated use `useSeoMeta` instead. Advanced use cases should tree shake using import.meta.* if statements.
+ */
 export function useServerSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): ActiveHeadEntry<any> | void {
   return useSeoMeta(input, { ...options, mode: 'server' })
 }

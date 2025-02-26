@@ -139,6 +139,9 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
+  /**
+   * @deprecated Tree shaking should now be handled using import.meta.* if statements.
+   */
   mode?: RuntimeMode
   head?: Unhead
   /**

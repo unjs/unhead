@@ -4,6 +4,5 @@ export const hookImports = {
     'useHead',
     'useSeoMeta',
     'useHeadSafe',
-    'useServerHead',
   ],
 }
