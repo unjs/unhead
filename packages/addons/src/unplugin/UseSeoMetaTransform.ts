@@ -17,8 +17,14 @@ import {
 import { createUnplugin } from 'unplugin'
 
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
+  /**
+   * Whether to transform imports of `useSeoMeta` and `useServerSeoMeta` to `useHead` and `useServerHead`.
+   */
   imports?: boolean
-  importSpecifiers?: string[]
+  /**
+   * Extra import paths to consider where `useSeoMeta()` may be imported from.
+   */
+  importPaths?: string[]
 }
 
 /**
@@ -43,7 +49,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
     if (s === 'unhead' || s.startsWith('@unhead')) {
       return true
     }
-    return [...(options.importSpecifiers || [])].includes(s)
+    return [...(options.importPaths || [])].includes(s)
   }
 
   return {

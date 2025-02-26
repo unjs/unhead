@@ -718,7 +718,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       ' description: condition && "Conditional Description"',
       '})',
     ], 'some-id.js', {
-      importSpecifiers: ['#imports'],
+      importPaths: ['#imports'],
     })
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
