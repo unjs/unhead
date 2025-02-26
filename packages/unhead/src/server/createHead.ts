@@ -41,7 +41,7 @@ export function createHead<T = Head>(options: CreateServerHeadOptions = {}) {
         const title = ctx.tagMap.get('title') as HeadTag | undefined
         const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
         const templateParams = ctx.tagMap.get('templateParams') as HeadTag | undefined
-        const payload = {
+        const payload: Head = {
           title: title?.mode === 'server' ? unhead._title : undefined,
           titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
           templateParams: templateParams?.mode === 'server' ? unhead._templateParams : undefined,
