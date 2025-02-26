@@ -37,10 +37,8 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
     return {
       key: 'schema-org',
       hooks: {
-        'entries:resolve': () => {
-          graph = createSchemaOrgGraph()
-        },
         'entries:normalize': async ({ tags }) => {
+          graph = graph || createSchemaOrgGraph()
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk

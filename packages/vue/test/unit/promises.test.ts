@@ -1,5 +1,5 @@
-import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
+import { useHead } from '../../src'
 import { PromisesPlugin } from '../../src/plugins'
 import { ssrVueAppWithUnhead } from '../util'
 

@@ -27,6 +27,14 @@ describe('ssr', () => {
         "htmlAttrs": " lang="de"",
       }
     `)
+
+    head.push({
+      ...basicSchema,
+      htmlAttrs: {
+        lang: 'de',
+      },
+    })
+    await renderSSRHead(head)
   })
 
   it('number title', async () => {

@@ -4,7 +4,7 @@ import { extractUnheadInputFromHtml } from './util/extractUnheadInputFromHtml'
 
 export async function transformHtmlTemplate(head: Unhead<any>, html: string, options?: RenderSSRHeadOptions) {
   const { html: parsedHtml, input } = extractUnheadInputFromHtml(html)
-  head.entries.set(0, { _i: 0, input, options: {} })
+  head.push(input, { _index: 0 })
   const headHtml = await renderSSRHead(head, options)
   return parsedHtml
     .replace('<html>', `<html${headHtml.htmlAttrs}>`)
