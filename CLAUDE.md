@@ -13,7 +13,7 @@
 ## Code Style
 - **Imports**: Use named imports/exports, keep sorted
 - **Types**: Strict TypeScript, explicit return types
-- **Naming**: 
+- **Naming**:
   - camelCase for variables/functions
   - PascalCase for classes/interfaces
   - use- prefix for composables
