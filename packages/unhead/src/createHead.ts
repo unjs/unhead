@@ -37,6 +37,7 @@ export function createHeadCore<T = Head>(resolvedOptions: CreateHeadOptions = {}
 
   const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: Map<string, HeadPlugin> = new Map()
+  const normalizeQueue: number[] = []
   const head: Unhead<T> = {
     _entryCount: 1, // 0 is reserved for internal use
     plugins,
@@ -53,25 +54,24 @@ export function createHeadCore<T = Head>(resolvedOptions: CreateHeadOptions = {}
       const options = { ..._options } as Required<HeadEntry<any>>['options']
       // @ts-expect-error untyped
       delete options.head
-      const _i = head._entryCount++
+      const _i = _options._index ?? head._entryCount++
+      const inst = { _i, input, options }
       const _: ActiveHeadEntry<T> = {
-        _poll() {
+        _poll(rm = false) {
           head.dirty = true
+          !rm && normalizeQueue.push(_i)
           hooks.callHook('entries:updated', head)
         },
         dispose() {
           if (entries.delete(_i)) {
-            _._poll()
+            _._poll(true)
           }
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
           if (!options.mode || (options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr)) {
-            entries.set(_i, {
-              _i,
-              input,
-              options,
-            })
+            inst.input = input
+            entries.set(_i, inst)
             _._poll()
           }
         },
@@ -86,23 +86,27 @@ export function createHeadCore<T = Head>(resolvedOptions: CreateHeadOptions = {}
         entries: [...head.entries.values()],
       }
       await hooks.callHook('entries:resolve', ctx)
-      const allTags = []
-      let hasFlatMeta = false
-      for (const e of ctx.entries) {
-        const normalizeCtx = {
-          tags: normalizeEntryToTags(e.input, resolvedOptions.propResolvers || [])
-            .map(t => Object.assign(t, e.options)),
-          entry: e,
+      while (normalizeQueue.length) {
+        const i = normalizeQueue.shift()!
+        const e = entries.get(i)
+        if (e) {
+          const normalizeCtx = {
+            tags: normalizeEntryToTags(e.input, resolvedOptions.propResolvers || [])
+              .map(t => Object.assign(t, e.options)),
+            entry: e,
+          }
+          await hooks.callHook('entries:normalize', normalizeCtx)
+          e._tags = normalizeCtx.tags.map((t, i) => {
+            t._w = tagWeight(head, t)
+            t._p = (e._i << 10) + i
+            t._d = dedupeKey(t)
+            return t
+          })
         }
-        await hooks.callHook('entries:normalize', normalizeCtx)
-        allTags.push(...normalizeCtx.tags.map((t, i) => {
-          t._w = tagWeight(head, t)
-          t._p = (e._i << 10) + i
-          t._d = dedupeKey(t)
-          return t
-        }))
       }
-      allTags
+      let hasFlatMeta = false
+      ctx.entries
+        .flatMap(e => e._tags || [])
         .sort(sortTags)
         .reduce((acc, next) => {
           const k = String(next._d || next._p)

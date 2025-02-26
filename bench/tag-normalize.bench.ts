@@ -1,5 +1,4 @@
 import { normaliseEntryTags } from 'unhead/utils'
-import { normalizeEntryTags } from 'unhead/utils/normalize'
 import { bench, describe } from 'vitest'
 
 describe('tag normalize', () => {

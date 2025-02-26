@@ -92,7 +92,7 @@ export interface ActiveHeadEntry<Input> {
   /**
    * @internal
    */
-  _poll: () => void
+  _poll: (rm?: boolean) => void
 }
 
 export type PropResolver = (key: string, value: any, tag?: HeadTag) => any
@@ -145,6 +145,10 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
    * @internal
    */
   _safe?: boolean
+  /**
+   * @internal
+   */
+  _index?: number
 }
 
 export interface Unhead<Input = Head> {
