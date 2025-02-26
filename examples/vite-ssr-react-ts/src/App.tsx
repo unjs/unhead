@@ -1,7 +1,7 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
-import { useHead, useScript } from '@unhead/react'
+import { useHead, useScript, useSeoMeta } from '@unhead/react'
 import { useSchemaOrg, defineWebPage, defineWebSite } from '@unhead/schema-org/react'
 
 function PageHead() {
@@ -31,6 +31,12 @@ function App() {
     bodyAttrs: {
       style: 'background-color: salmon;',
     }
+  })
+
+  const name = "World"
+  useSeoMeta({
+    title: `Hello  - ${name}`,
+    description: `Welcome to ${name}`,
   })
 
   useSchemaOrg([

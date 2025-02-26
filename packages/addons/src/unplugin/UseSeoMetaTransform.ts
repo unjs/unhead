@@ -18,6 +18,7 @@ import { createUnplugin } from 'unplugin'
 
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
   imports?: boolean
+  importSpecifiers?: string[]
 }
 
 /**
@@ -37,6 +38,14 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
  */
 export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
   options.imports = options.imports || true
+
+  function isValidPackage(s: string) {
+    if (s === 'unhead' || s.startsWith('@unhead')) {
+      return true
+    }
+    return [...(options.importSpecifiers || [])].includes(s)
+  }
+
   return {
     name: 'unhead:use-seo-meta-transform',
     enforce: 'post',
@@ -72,8 +81,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         return
 
       // // useSeoMeta may be auto-imported or may not be
-      const packages = ['unhead', '@unhead/vue', '@unhead/react']
-      const statements = findStaticImports(code).filter(i => packages.includes(i.specifier))
+      const statements = findStaticImports(code).filter(i => isValidPackage(i.specifier))
       const importNames: Record<string, string> = {}
       for (const i of statements.flatMap(i => parseStaticImport(i))) {
         if (i.namedImports) {
@@ -87,25 +95,37 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
 
       const ast = this.parse(code)
       const s = new MagicString(code)
-      const extraImports = new Set()
+      let replacementPayload: ((f: boolean) => [number, number, string]) | undefined
+      let replaceCount = 0
+      let totalCount = 0
       walk(ast as Node, {
         enter(_node) {
-          if (options.imports && _node.type === 'ImportDeclaration' && packages.includes(_node.source.value as string)) {
+          if (options.imports && _node.type === 'ImportDeclaration' && isValidPackage(_node.source.value as string)) {
             const node = _node as unknown as ImportDeclaration
-            // make sure we are using seo meta
-            if (
-              // @ts-expect-error untyped
-              !node.specifiers.some(s => s.type === 'ImportSpecifier' && ['useSeoMeta', 'useServerSeoMeta'].includes(s.imported?.name))
+            const hasSeoMeta = node.specifiers.some(s =>
+              s.type === 'ImportSpecifier'
+              && ['useSeoMeta', 'useServerSeoMeta'].includes((s.imported as any).name),
             )
+
+            if (!hasSeoMeta) {
               return
+            }
 
-            const imports = Object.values(importNames)
-            // add useHead and useServerHead if they are not already imported
-            if (!imports.includes('useHead'))
-              extraImports.add(`import { useHead } from '${node.source.value}'`)
-
-            if (!imports.includes('useServerHead') && imports.includes('useServerSeoMeta'))
-              extraImports.add(`import { useServerHead } from '${node.source.value}'`)
+            // Count how many specifiers we're removing
+            const toImport = new Set()
+            node.specifiers.forEach((spec) => {
+              if (spec.type === 'ImportSpecifier'
+                && ['useSeoMeta', 'useServerSeoMeta'].includes((spec.imported as any).name)) {
+                toImport.add((spec.imported as any).name.includes('Server') ? 'useServerHead' : 'useHead')
+              }
+              else {
+                toImport.add((spec.imported as any).name)
+              }
+            })
+            if (toImport.size) {
+              // need to modify current node imports
+              replacementPayload = (useSeoMeta = false) => [node.specifiers[0].start, node.specifiers[node.specifiers.length - 1].end, [...toImport, useSeoMeta ? 'useSeoMeta' : false].filter(Boolean).join(', ')]
+            }
           }
           else if (
             _node.type === 'CallExpression'
@@ -115,6 +135,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               useServerSeoMeta: 'useServerSeoMeta',
               ...importNames,
             }).includes(_node.callee.name)) {
+            replaceCount++
             const node = _node as SimpleCallExpression
 
             const calleeName = importNames[(node.callee as any).name] || (node.callee as any).name
@@ -150,6 +171,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 output.push('});')
               output.push('useServerHead({')
             }
+
             if (meta.length)
               output.push('  meta: [')
 
@@ -177,8 +199,28 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               }
               let value = code.substring(property.value.start as number, property.value.end as number)
               if (property.value.type === 'ArrayExpression') {
-                // @todo add support for og:image arrays
-                output = false
+                if (output === false)
+                  return
+
+                const elements = property.value.elements
+                if (!elements.length)
+                  return
+
+                // For each array element
+                const metaTags = elements.map((element) => {
+                  // If not an object, handle as a simple value
+                  if (element.type !== 'ObjectExpression')
+                    return `    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`
+
+                  // Transform object properties to meta tags
+                  return element.properties.map((p: any) => {
+                    const propKey = p.key.name
+                    const propValue = code.substring(p.value.start, p.value.end)
+                    return `    { ${key}: '${keyValue}:${propKey}', ${valueKey}: ${propValue} },`
+                  }).join('\n')
+                })
+
+                output.push(metaTags.join('\n'))
                 return
               }
               // value may be an object, in which case we need to stringify it, this may be a problem if the object is reactive
@@ -218,14 +260,18 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               s.overwrite(node.start, node.end, output.join('\n'))
             }
           }
+          else if (_node.type === 'Identifier'
+            && ['useSeoMeta', 'useServerSeoMeta'].includes(_node.name)) {
+            totalCount++
+          }
         },
       })
 
       if (s.hasChanged()) {
-        // only if we swapped out useSeoMeta
-        const prependImports = [...extraImports]
-        if (prependImports.length)
-          s.prepend(`${prependImports.join('\n')}\n`)
+        if (replacementPayload) {
+          // only if we swapped out useSeoMeta
+          s.overwrite(...replacementPayload(replaceCount + 3 === totalCount))
+        }
 
         return {
           code: s.toString(),

@@ -2,8 +2,8 @@ import { parse } from 'acorn-loose'
 import { describe, expect, it } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 
-async function transform(code: string | string[], id = 'some-id.js') {
-  const plugin = UseSeoMetaTransform.vite() as any
+async function transform(code: string | string[], id = 'some-id.js', opts: any = {}) {
+  const plugin = UseSeoMetaTransform.vite(opts) as any
   const res = await plugin.transform.call(
     { parse: (code: string) => parse(code, { ecmaVersion: 2022, sourceType: 'module', allowImportExportEverywhere: true, allowAwaitOutsideFunction: true }) },
     Array.isArray(code) ? code.join('\n') : code,
@@ -46,9 +46,8 @@ describe('useSeoMetaTransform', () => {
       'useSeoMeta({ title: \'Hello 2\', description: \'World 2\'  })',
     ])
     expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from 'unhead'
-      import { something } from 'other-module'
-      import { useSeoMeta } from 'unhead'
+      "import { something } from 'other-module'
+      import { useHead } from 'unhead'
       useHead({
         title: 'Hello',
         meta: [
@@ -73,7 +72,6 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
-      import { useSeoMeta } from 'unhead'
       import { ref } from 'vue'
       const someValue = { value: 'test' }
       useHead({
@@ -101,7 +99,6 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from '@unhead/vue'
-      import { useSeoMeta } from '@unhead/vue'
       useHead({
         meta: [
           { charset: 'utf-8' },
@@ -126,7 +123,6 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
-      import { useSeoMeta } from 'unhead'
       useHead({
         meta: [
           { charset: 'utf-8' },
@@ -147,9 +143,31 @@ describe('useSeoMetaTransform', () => {
               alt: 'My amazing image',
             },
           ],
+          twitterImage: [
+            {
+              url: 'https://example.com/image.png',
+              width: 800,
+              height: 600,
+              alt: 'My amazing image',
+            },
+          ],
       })`,
     ])
-    expect(code).toMatchInlineSnapshot('undefined')
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        meta: [
+          { property: 'og:image:url', content: 'https://example.com/image.png' },
+          { property: 'og:image:width', content: 800 },
+          { property: 'og:image:height', content: 600 },
+          { property: 'og:image:alt', content: 'My amazing image' },
+          { name: 'twitter:image:url', content: 'https://example.com/image.png' },
+          { name: 'twitter:image:width', content: 800 },
+          { name: 'twitter:image:height', content: 600 },
+          { name: 'twitter:image:alt', content: 'My amazing image' },
+        ]
+      })"
+    `)
   })
 
   it('respects how users import library', async () => {
@@ -160,7 +178,6 @@ describe('useSeoMetaTransform', () => {
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
-      import { useSeoMeta as usm } from 'unhead'
       useHead({
         title: 'Hello',
         meta: [
@@ -179,7 +196,6 @@ describe('useSeoMetaTransform', () => {
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
-      import { useSeoMeta as usm, useHead } from 'unhead'
       useHead({ title: 'test', })
       useHead({
         meta: [
@@ -197,7 +213,6 @@ describe('useSeoMetaTransform', () => {
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
-      import { useSeoMeta } from 'unhead'
       useHead({
         meta: [
           { name: 'description', content: 'World' },
@@ -213,9 +228,7 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from 'unhead'
-      import { useServerHead } from 'unhead'
-      import { useServerSeoMeta } from 'unhead'
+      "import { useServerHead } from 'unhead'
       useServerHead({
         meta: [
           { name: 'description', content: 'World' },
@@ -231,9 +244,7 @@ describe('useSeoMetaTransform', () => {
     ])
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from 'unhead'
-      import { useServerHead } from 'unhead'
-      import { useServerSeoMeta, useServerHead, useHead, SomethingRandom } from 'unhead'
+      "import { useServerHead, useHead, SomethingRandom } from 'unhead'
       useHead({
         title: 'Hello',
       });
@@ -541,10 +552,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
 
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from '@unhead/vue'
-
+      "
       import { defineComponent as _defineComponent } from "vue";
-      import { useHead, useSeoMeta } from "@unhead/vue";
+      import { useHead } from "@unhead/vue";
 
       const _sfc_main = /* @__PURE__ */ _defineComponent({
         __name: "app",
@@ -580,10 +590,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
 
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
-      "import { useHead } from '@unhead/vue'
-
+      "
       import { defineComponent as _defineComponent } from "vue";
-      import { useSeoMeta as SEOMETA } from "@unhead/vue";
+      import { useHead } from "@unhead/vue";
 
       const _sfc_main = /* @__PURE__ */ _defineComponent({
         __name: "app",
@@ -595,6 +604,132 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           return __returned__;
         }
       });"
+    `)
+  })
+
+  it('handles empty meta objects', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({})',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+      })"
+    `)
+  })
+
+  it('handles complex meta properties', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({',
+      ' ogTitle: "My Page",',
+      ' ogDescription: "My Description",',
+      ' ogImage: "https://example.com/image.jpg",',
+      ' twitterCard: "summary_large_image"',
+      '})',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        meta: [
+          { property: 'og:title', content: "My Page" },
+          { property: 'og:description', content: "My Description" },
+          { property: 'og:image', content: "https://example.com/image.jpg" },
+          { name: 'twitter:card', content: "summary_large_image" },
+        ]
+      })"
+    `)
+  })
+
+  it('handles template literals', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const name = "World"',
+      'useSeoMeta({',
+      ' title: `Hello ${name}`,',
+      ' description: `Welcome to ${name}`',
+      '})'
+      + 'console.log(useSeoMeta)',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useSeoMeta } from 'unhead'
+      const name = "World"
+      useHead({
+        title: \`Hello \${name}\`,
+        meta: [
+          { name: 'description', content: \`Welcome to \${name}\` },
+        ]
+      })console.log(useSeoMeta)"
+    `)
+  })
+
+  it('handles multiple imports and transformations', async () => {
+    const code = await transform([
+      'import { useSeoMeta, useServerSeoMeta } from \'unhead\'',
+      'useSeoMeta({ title: "Client" })',
+      'useServerSeoMeta({ description: "Server" })',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useServerHead } from 'unhead'
+      useHead({
+        title: "Client",
+      })
+      useServerHead({
+        meta: [
+          { name: 'description', content: "Server" },
+        ]
+      })"
+    `)
+  })
+
+  it('handles conditional meta values', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const condition = true',
+      'useSeoMeta({',
+      ' title: condition ? "True Title" : "False Title",',
+      ' description: condition && "Conditional Description"',
+      '})',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      const condition = true
+      useHead({
+        title: condition ? "True Title" : "False Title",
+        meta: [
+          { name: 'description', content: condition && "Conditional Description" },
+        ]
+      })"
+    `)
+  })
+
+  it('handles #import', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'#imports\'',
+      'const condition = true',
+      'useSeoMeta({',
+      ' title: condition ? "True Title" : "False Title",',
+      ' description: condition && "Conditional Description"',
+      '})',
+    ], 'some-id.js', {
+      importSpecifiers: ['#imports'],
+    })
+    expect(code).toBeDefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from '#imports'
+      const condition = true
+      useHead({
+        title: condition ? "True Title" : "False Title",
+        meta: [
+          { name: 'description', content: condition && "Conditional Description" },
+        ]
+      })"
     `)
   })
 })
