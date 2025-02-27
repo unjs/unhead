@@ -1,7 +1,7 @@
 import type { HeadTag } from '../../../src/types'
-import { useHead } from 'unhead'
-import { renderDOMHead } from 'unhead/client'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
+import { renderDOMHead } from '../../../src/client'
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('dom order', () => {

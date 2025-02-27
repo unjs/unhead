@@ -29,7 +29,6 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(instance: T): T {
 }
 
 export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
-  // @ts-expect-error untyped
   return withSideEffects(baseHead(options.head || useUnhead(), input, options))
 }
 

@@ -9,7 +9,7 @@ function PageHead() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await new Promise(resolve => setTimeout(() => resolve({ title: 'Loaded!' }), 1000))
+      const data = await new Promise<{ title: string }>(resolve => setTimeout(() => resolve({ title: 'Loaded!' }), 1000))
       setTitle(data.title)
     }
     loadData()
@@ -25,7 +25,7 @@ function PageHead() {
 
 function App() {
   const [count, setCount] = useState(0)
-  const [jsConfetti, setJsConfetti] = useState(false)
+  const [jsConfetti, setJsConfetti] = useState<{ addConfetti: (opt: any) => void } | null>(null)
   //
   useHead({
     bodyAttrs: {

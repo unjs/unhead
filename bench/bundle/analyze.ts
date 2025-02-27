@@ -50,4 +50,6 @@ const data = [
   },
 ]
 
+// @ts-expect-error untyped
+// eslint-disable-next-line no-console
 console.log(generateMarkdownTable(data))

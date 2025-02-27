@@ -7,7 +7,7 @@ describe('dom useScript', () => {
     const head = useDOMHead()
 
     let calledFn
-    const instance = useScript(head, {
+    const instance = useScript<{ test: (s: string) => void }>(head, {
       src: 'https://cdn.example.com/script.js',
     }, {
       use() {

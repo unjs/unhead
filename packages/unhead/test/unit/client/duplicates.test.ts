@@ -1,5 +1,5 @@
-import { renderDOMHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
+import { renderDOMHead } from '../../../src/client'
 import { useDom, useDOMHead } from '../../util'
 
 describe('dom', () => {

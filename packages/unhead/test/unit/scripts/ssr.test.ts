@@ -1,6 +1,6 @@
-import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useScript } from '../../../src/composables'
+import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 
 describe('ssr useScript', () => {
   it('default', async () => {

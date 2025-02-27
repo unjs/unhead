@@ -1,4 +1,4 @@
-import { renderDOMHead } from 'unhead/client'
+import { renderDOMHead } from '../../../src/client'
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('titleTemplate', () => {

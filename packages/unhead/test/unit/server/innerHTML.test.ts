@@ -1,5 +1,6 @@
-import { renderSSRHead } from 'unhead/server'
+import type { ResolvableHead } from '../../../src/types'
 import { describe, it } from 'vitest'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr innerHTML', () => {
@@ -93,7 +94,7 @@ describe('ssr innerHTML', () => {
         // @ts-expect-error untyped
         once: true,
       }],
-    })
+    } satisfies ResolvableHead)
 
     const ctx = await renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`

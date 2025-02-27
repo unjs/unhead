@@ -649,7 +649,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       'import { useSeoMeta } from \'unhead\'',
       'const name = "World"',
       'useSeoMeta({',
+      // eslint-disable-next-line no-template-curly-in-string
       ' title: `Hello ${name}`,',
+      // eslint-disable-next-line no-template-curly-in-string
       ' description: `Welcome to ${name}`',
       '})'
       + 'console.log(useSeoMeta)',

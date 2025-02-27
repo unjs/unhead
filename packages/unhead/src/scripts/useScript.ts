@@ -1,4 +1,5 @@
 import type {
+  HttpEventAttributes,
   SerializableHead,
   Unhead,
 } from '../types'
@@ -16,7 +17,7 @@ import type {
 import { ScriptNetworkEvents } from '../utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
-export function resolveScriptKey(input: UseScriptResolvedInput) {
+export function resolveScriptKey(input: UseScriptResolvedInput): string {
   return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
 }
 
@@ -45,8 +46,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   ScriptNetworkEvents
     .forEach((fn) => {
-      const _fn = typeof input[fn] === 'function' ? input[fn].bind(options.eventContext) : null
-      input[fn] = (e: Event) => {
+      const k = fn as keyof HttpEventAttributes
+      const _fn = typeof input[k] === 'function' ? input[k].bind(options.eventContext) : null
+      input[k] = (e: Event) => {
         syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
         _fn?.(e)
       }

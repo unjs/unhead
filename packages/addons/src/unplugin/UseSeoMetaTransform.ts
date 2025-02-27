@@ -125,11 +125,13 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 toImport.add((spec.imported as any).name.includes('Server') ? 'useServerHead' : 'useHead')
               }
               else {
+                // @ts-expect-error untyped
                 toImport.add((spec.imported as any).name)
               }
             })
             if (toImport.size) {
               // need to modify current node imports
+              // @ts-expect-error untyped
               replacementPayload = (useSeoMeta = false) => [node.specifiers[0].start, node.specifiers[node.specifiers.length - 1].end, [...toImport, useSeoMeta ? 'useSeoMeta' : false].filter(Boolean).join(', ')]
             }
           }
@@ -205,6 +207,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               }
               let value = code.substring(property.value.start as number, property.value.end as number)
               if (property.value.type === 'ArrayExpression') {
+                // @ts-expect-error untyped
                 if (output === false)
                   return
 
@@ -215,7 +218,9 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 // For each array element
                 const metaTags = elements.map((element) => {
                   // If not an object, handle as a simple value
+                  // @ts-expect-error untyped
                   if (element.type !== 'ObjectExpression')
+                    // @ts-expect-error untyped
                     return `    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`
 
                   // Transform object properties to meta tags

@@ -1,5 +1,5 @@
-import { propsToString } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
+import { propsToString } from '../../../src/server'
 
 describe('propsToString', () => {
   it('prepends a space only when there are props', async () => {

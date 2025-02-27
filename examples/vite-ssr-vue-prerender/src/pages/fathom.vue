@@ -15,14 +15,16 @@ export interface FathomAnalyticsApi {
   trackEvent: (eventName: string, value: { _value: number }) => void
 }
 
-const { trackPageview, blockTrackingForMe, siteId } = useScript<FathomAnalyticsApi>({
+const {  proxy } = useScript<FathomAnalyticsApi>({
   src: 'https://cdn.usefathom.com/script.js',
   ['data-site']: 'KGILBQDV',
 }, {
   use() {
+    // @ts-expect-error untyped
     return window.fathom
   },
 })
+const { trackPageview, blockTrackingForMe, siteId } = proxy
 
 blockTrackingForMe()
 trackPageview({
@@ -30,7 +32,7 @@ trackPageview({
   referrer: '',
 })
 onMounted(async () => {
-  console.log(siteId, await siteId())
+  console.log(siteId)
 })
 </script>
 <template>

@@ -1,5 +1,5 @@
-import { renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('normalise', () => {

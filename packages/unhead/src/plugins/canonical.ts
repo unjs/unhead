@@ -1,4 +1,9 @@
-import { defineHeadPlugin } from './defineHeadPlugin'
+import type { HeadPluginOptions, Unhead } from '../types'
+
+export interface CanonicalPluginOptions {
+  canonicalHost?: string
+  customResolver?: (url: string) => string
+}
 
 /**
  * CanonicalPlugin resolves paths in tags that require a canonical host to be set.
@@ -17,8 +22,8 @@ import { defineHeadPlugin } from './defineHeadPlugin'
  * // to:
  * // <meta property="og:image" content="https://example.com/image.jpg">
  */
-export function CanonicalPlugin(options: { canonicalHost?: string, customResolver?: (url: string) => string }) {
-  return defineHeadPlugin((head) => {
+export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead) => HeadPluginOptions & { key: string }) {
+  return (head) => {
     function resolvePath(path: string) {
       if (options?.customResolver) {
         return options.customResolver(path)
@@ -59,5 +64,5 @@ export function CanonicalPlugin(options: { canonicalHost?: string, customResolve
         },
       },
     }
-  })
+  }
 }

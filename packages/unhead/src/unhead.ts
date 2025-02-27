@@ -2,6 +2,7 @@ import type {
   ActiveHeadEntry,
   CreateHeadOptions,
   HeadEntry,
+  HeadEntryOptions,
   HeadHooks,
   HeadPlugin,
   HeadPluginInput,
@@ -57,13 +58,12 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
       return [...entries.values()]
     },
     use: (p: HeadPluginInput) => registerPlugin(head, p),
-    push(input, _options = {}) {
-      const options = { ..._options } as Required<HeadEntry<any>>['options']
-      // @ts-expect-error untyped
+    push<R = T>(input: R, _options?: HeadEntryOptions | undefined) {
+      const options = { ..._options || {} } as HeadEntryOptions
       delete options.head
-      const _i = _options._index ?? head._entryCount++
+      const _i = options._index ?? head._entryCount++
       const inst = { _i, input, options }
-      const _: ActiveHeadEntry<T> = {
+      const _: ActiveHeadEntry<R> = {
         _poll(rm = false) {
           head.dirty = true
           !rm && normalizeQueue.push(_i)
@@ -78,6 +78,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         patch(input) {
           if (!options.mode || (options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr)) {
             inst.input = input
+            // @ts-expect-error type juggling
             entries.set(_i, inst)
             _._poll()
           }

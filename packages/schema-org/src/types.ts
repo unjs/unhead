@@ -36,8 +36,8 @@ export interface MetaInput {
   inLanguage?: string
   title?: string
   description?: string
-  datePublished?: Date | string
-  dateModified?: Date | string
+  datePublished?: string
+  dateModified?: string
   /**
    * @deprecated use tagPosition
    */
@@ -58,10 +58,6 @@ export interface MetaInput {
    * @deprecated use `url` or `path`
    */
   canonicalUrl?: string
-  /**
-   * @deprecated use root keys.
-   */
-  meta?: MetaInput
 }
 
 export interface UserConfig extends MetaInput {}

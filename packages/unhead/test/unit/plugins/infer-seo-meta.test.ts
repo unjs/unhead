@@ -1,7 +1,7 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { InferSeoMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { InferSeoMetaPlugin, TemplateParamsPlugin } from '../../../src/plugins'
+import { createHead } from '../../../src/server'
 
 describe('inferSeoMetaPlugin', () => {
   it('simple', async () => {

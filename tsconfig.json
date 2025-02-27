@@ -13,6 +13,9 @@
       "unhead/plugins": ["packages/unhead/src/plugins/index"],
       "unhead/utils": ["packages/unhead/src/utils/index"],
       "unhead/types": ["packages/unhead/src/types/index"],
+      "@unhead/ssr": ["packages/unhead/src/server/index"],
+      "@unhead/vue": ["packages/vue/src/index"],
+      "@unhead/dom": ["packages/unhead/src/client/index"],
       "@unhead/svelte/types": ["packages/svelte/src/types"]
     },
     "resolveJsonModule": true,

@@ -1,5 +1,5 @@
 export { unheadVueComposablesImports } from './autoImports'
-export { injectHead, useHead, useHeadSafe, useSeoMeta, useServerHead, useServerHeadSafe, useServerSeoMeta } from './composables'
+export { injectHead, useHead, useHeadSafe, useScript, useSeoMeta, useServerHead, useServerHeadSafe, useServerSeoMeta } from './composables'
 export { headSymbol } from './install'
 export type * from './types'
 export { resolveUnrefHeadInput } from './utils'

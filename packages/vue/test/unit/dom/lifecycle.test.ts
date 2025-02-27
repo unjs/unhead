@@ -100,7 +100,7 @@ describe('vue dom', () => {
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
-    entry.dispose()
+    entry!.dispose()
 
     expect(head.headEntries()).toMatchInlineSnapshot('[]')
 

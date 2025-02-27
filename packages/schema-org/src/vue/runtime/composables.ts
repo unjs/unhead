@@ -165,7 +165,6 @@ export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOpti
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())
-  // @ts-expect-error untyped
   const entry = useHead(normalizeSchemaOrgInput(input), options) as ActiveHeadEntry<UseSchemaOrgInput>
   const corePatch = entry.patch
   entry.patch = input => corePatch(normalizeSchemaOrgInput(input))

@@ -1,4 +1,3 @@
-import type { MergeHead } from 'unhead/types'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
@@ -7,14 +6,16 @@ import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {
-    interface CustomHead extends MergeHead {
-      link: {
+    interface CustomHead {
+      title: string
+      link: ({
+        ['data-test']: any
         href: 'link-one' | 'link/two' | 'link/number/three'
         CUSTOM_FIELD: 10
-      }
+      })[]
     }
 
-    const head = createHead<CustomHead>({
+    const head = createHead({
       disableDefaults: true,
     })
     const app = createSSRApp({

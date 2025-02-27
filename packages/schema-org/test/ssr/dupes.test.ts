@@ -27,6 +27,7 @@ describe('schema.org dupes', () => {
           key: 'schema-org-graph',
           id: 'schema-org-graph-2',
           nodes: [
+            // @ts-expect-error broken
             defineWebSite({
               '@type': 'AboutPage',
             }),

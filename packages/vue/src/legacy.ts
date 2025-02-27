@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, MergeHead } from 'unhead/types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions } from 'unhead/types'
 import type {
   Ref,
 } from 'vue'
@@ -40,7 +40,7 @@ export function CapoPlugin() {
   })
 }
 
-export function createHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
+export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   return createVueHead({
     disableCapoSorting: true,
     ...options,
@@ -51,10 +51,10 @@ export function createHead<T extends MergeHead>(options: CreateClientHeadOptions
       AliasSortingPlugin,
       ...(options.plugins || []),
     ],
-  }) as VueHeadClient<T>
+  }) as VueHeadClient
 }
 
-export function createServerHead<T extends MergeHead>(options: CreateClientHeadOptions = {}): VueHeadClient<T> {
+export function createServerHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   return createVueServerHead({
     disableCapoSorting: true,
     ...options,
@@ -81,23 +81,23 @@ export function injectHead() {
   return inject<VueHeadClient<any>>(headSymbol)
 }
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
+export function useHead(input: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput> | void {
   const head = options.head || injectHead()
   if (head) {
     return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
   }
 }
 
-function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> | void {
+function clientUseHead(head: VueHeadClient, input: UseHeadInput, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> | void {
   const deactivated = ref(false)
 
-  const resolvedInput: Ref<UseHeadInput<T>> = ref({})
+  const resolvedInput: Ref<UseHeadInput> = ref({})
   watchEffect(() => {
     resolvedInput.value = deactivated.value
       ? {}
       : walkResolver(input, v => unref(v))
   })
-  const entry: ActiveHeadEntry<UseHeadInput<T>> = head.push(resolvedInput.value, options)
+  const entry: ActiveHeadEntry<UseHeadInput> = head.push(resolvedInput.value, options)
   watch(resolvedInput, (e) => {
     entry.patch(e)
   })
@@ -144,7 +144,7 @@ export function useSeoMeta(input: UseSeoMetaInput, options?: UseHeadOptions): Ac
 /**
  * @deprecated use `useHead` instead. Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerHead<T extends MergeHead>(input: UseHeadInput<T>, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {
+export function useServerHead(input: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<any> | void {
   return useHead(input, { ...options, mode: 'server' })
 }
 

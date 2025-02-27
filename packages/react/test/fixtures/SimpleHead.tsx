@@ -6,12 +6,12 @@ export function SimpleHead() {
     <>
       <Head>
         <title data-tagPriority="high">Default Title</title>
-        <meta name="description" content="Default Description" tagPriority="low" />
-        <link rel="stylesheet" href="default-styles.css" tagPosition="head" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" tagPriority="critical" />
+        <meta name="description" content="Default Description" />
+        <link rel="stylesheet" href="default-styles.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
         <link rel="icon" href="favicon.ico" />
-        <link rel="preload" href="https://example.com/font.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+        <link rel="preload" href="https://example.com/font.woff2" as="font" type="font/woff2" />
         <link rel="dns-prefetch" href="//example.com" />
         <link rel="prefetch" href="https://example.com/next-page" />
         <link rel="prerender" href="https://example.com/next-page" />
@@ -31,7 +31,7 @@ export function SimpleHead() {
       </Head>
       ,
       <Head>
-        <title tagPriority="low">Default Title 2</title>
+        <title>Default Title 2</title>
       </Head>
     </>
   )

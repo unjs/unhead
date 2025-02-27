@@ -1,5 +1,5 @@
-import { createDebouncedFn } from 'unhead/client'
 import { describe, expect, it, vi } from 'vitest'
+import { createDebouncedFn } from '../../../src/client'
 
 describe('createDebouncedFn', () => {
   it('should debounce the function calls', async () => {

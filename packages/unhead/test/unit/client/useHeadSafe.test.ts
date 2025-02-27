@@ -1,5 +1,5 @@
-import { useHeadSafe } from 'unhead'
 import { describe, it } from 'vitest'
+import { useHeadSafe } from '../../../src'
 import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom useHeadSafe', () => {
@@ -10,6 +10,7 @@ describe('dom useHeadSafe', () => {
 
     useHeadSafe(head, {
       bodyAttrs: {
+        // @ts-expect-error intentional ts error
         onresize: 'alert(1)',
       },
       link: [
@@ -29,6 +30,7 @@ describe('dom useHeadSafe', () => {
       ],
       script: [
         {
+          // @ts-expect-error intentional ts error
           src: 'https://cdn.example.com/script.js',
           onload: 'alert(1)',
         },

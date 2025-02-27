@@ -1,6 +1,6 @@
-import { useHead } from 'unhead'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr event handlers', () => {

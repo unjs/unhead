@@ -26,7 +26,7 @@ function sub(p: TemplateParams, token: string, isJson = false) {
   return undefined
 }
 
-export function processTemplateParams(s: string, p: TemplateParams, sep: string, isJson = false) {
+export function processTemplateParams(s: string, p: TemplateParams, sep?: string, isJson = false) {
   // return early
   if (typeof s !== 'string' || !s.includes('%'))
     return s
@@ -65,7 +65,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep: string,
     if (s.startsWith(SepSub))
       s = s.slice(SepSub.length)
     // make sure we don't have two separators next to each other
-    s = s.replace(SepSubRE, sep).trim()
+    s = s.replace(SepSubRE, sep || '').trim()
   }
   return s
 }

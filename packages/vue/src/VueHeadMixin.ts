@@ -14,7 +14,6 @@ export const VueHeadMixin = {
     source = typeof options.head === 'function'
       ? () => options.head.call(instance.proxy)
       : options.head
-    // @ts-expect-error vue 2
     source && useHead(source)
   },
 }

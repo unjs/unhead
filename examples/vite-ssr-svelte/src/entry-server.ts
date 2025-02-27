@@ -2,7 +2,7 @@ import { render as _render } from 'svelte/server'
 import App from './App.svelte'
 import { createHead, UnheadContextKey } from '@unhead/svelte/server'
 
-export function render(_url: string) {
+export function render(_url: string): { render: ReturnType<typeof _render>, unhead: any } {
   const unhead = createHead()
   const context = new Map()
   context.set(UnheadContextKey, unhead)

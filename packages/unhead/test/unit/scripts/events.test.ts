@@ -1,6 +1,6 @@
-// @vitest-environment jsdom
-import { createHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
+// @vitest-environment jsdom
+import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
 
 describe('useScript events', () => {
