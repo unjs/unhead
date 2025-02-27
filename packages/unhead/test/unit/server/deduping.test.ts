@@ -1,7 +1,7 @@
-import { useHead } from 'unhead'
-import { DeprecationsPlugin } from 'unhead/plugins'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
+import { DeprecationsPlugin } from '../../../src/plugins'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('dedupe', () => {

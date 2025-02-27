@@ -76,6 +76,7 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
       watchEffect(() => {
         if (!slots.default)
           return
+        // @ts-expect-error untyped
         entry.patch(vnodesToHeadObj(slots.default()))
       })
       return null

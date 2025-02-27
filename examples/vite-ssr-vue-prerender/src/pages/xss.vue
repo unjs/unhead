@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useHead } from 'unhead'
+import { useHead, useServerHead } from '@unhead/vue'
 
 useHead({
   script: [

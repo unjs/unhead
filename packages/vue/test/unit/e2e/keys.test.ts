@@ -82,6 +82,7 @@ describe('vue e2e keys', () => {
       ]
     `)
 
+    // @ts-expect-error untyped
     expect([...csrHead._dom?.elMap.values()][2]).toMatchInlineSnapshot(`
       <link
         data-hid="main-icon"

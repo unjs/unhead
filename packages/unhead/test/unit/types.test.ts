@@ -9,9 +9,11 @@ describe('types', () => {
       htmlAttrs: {
         lang: () => false,
       },
-      base: { href: '/base' },
+      // @ts-expect-error expected
+      base: { href: '/base', uuuu: '' },
       link: () => [],
       meta: [
+        // @ts-expect-error expected
         { key: 'key', name: 'description', content: 'some description ' },
         () => ({ key: 'key', name: 'description', content: 'some description ' }),
       ],
@@ -59,7 +61,7 @@ describe('types', () => {
   })
   it('types SerializableHead', () => {
     const head = createHead()
-    const input: SerializableHead = {
+    const input = {
       title: 'Hello',
       meta: [
         { name: 'description', content: 'Static content' },
@@ -73,6 +75,8 @@ describe('types', () => {
       ],
       // Validate HTML attributes
       htmlAttrs: {
+        // @ts-expect-error testing validation
+        foo: 'bla',
         lang: 'en',
         class: 'dark',
       },
@@ -80,7 +84,9 @@ describe('types', () => {
       bodyAttrs: {
         class: 'bg-gray-100',
       },
-    }
+      wefwefe: 'wefef',
+      broken: 'foo',
+    } satisfies SerializableHead
     useHead(head, input)
   })
 })

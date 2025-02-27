@@ -42,7 +42,6 @@ describe('vue dom useHeadSafe', () => {
             'data-foo': 'bar',
           },
         ],
-        // @ts-expect-error intentionally invalid
         script: () => [
           {
             src: 'https://cdn.example.com/script.js',

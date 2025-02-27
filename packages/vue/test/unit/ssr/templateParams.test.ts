@@ -1,8 +1,7 @@
-import { renderSSRHead } from '@unhead/ssr'
-import { TemplateParamsPlugin } from 'unhead/plugins'
-import { createHead } from 'unhead/server'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
+import { TemplateParamsPlugin } from '../../../src/plugins'
+import { createHead, renderSSRHead } from '../../../src/server'
 import { ssrRenderOptionsHead } from '../../util'
 
 describe('ssr vue templateParams', () => {

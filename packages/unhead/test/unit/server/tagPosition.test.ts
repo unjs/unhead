@@ -1,5 +1,5 @@
-import { DeprecationsPlugin } from 'unhead/plugins'
-import { renderSSRHead } from 'unhead/server'
+import { DeprecationsPlugin } from '../../../src/plugins'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('tagPosition', () => {

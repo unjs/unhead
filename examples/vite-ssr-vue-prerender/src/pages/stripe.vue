@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { useScript } from '@unhead/vue'
+import { useScript, useHead } from '@unhead/vue'
 
-const { elements, status } = useScript<{ elements: (() => void) }>({
+const { status } = useScript<{ elements: (() => void) }>({
   src: 'https://js.stripe.com/v3/',
 }, {
+  // @ts-expect-error untyped
   use: () => window.Stripe?.('pk_test_TYooMQauvdEDq54NiTphI7jx'),
   trigger: typeof window !== 'undefined' ? window.requestIdleCallback : 'manual'
 })

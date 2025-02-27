@@ -1,4 +1,4 @@
-import { renderSSRHead } from 'unhead/server'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('titleTemplate', () => {

@@ -1,7 +1,7 @@
-import type { LinkBase } from 'unhead/types'
-import { createHead as createServerHead } from 'unhead/server'
+import type { LinkBase } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useScript } from '../../../src/composables'
+import { createHead as createServerHead } from '../../../src/server'
 
 describe('warmup', () => {
   it('server', () => {
@@ -13,6 +13,7 @@ describe('warmup', () => {
       trigger: 'server',
     })
     const entry = head.headEntries()[0]!.input
+    // @ts-expect-error untyped
     expect(entry.script[0].src).toBe('https://cdn.example.com/script.js')
     expect(entry.link).toBeUndefined()
   })
@@ -24,6 +25,7 @@ describe('warmup', () => {
       head,
       trigger: 'client',
     })
+    // @ts-expect-error untyped
     const link = head.headEntries()[0]!.input!.link![0] as LinkBase
     expect(link.href).toEqual('https://cdn.example.com/script.js')
     expect(link.rel).toEqual('preload')
@@ -36,6 +38,7 @@ describe('warmup', () => {
       head,
       trigger: 'client',
     })
+    // @ts-expect-error untyped
     const link = head.headEntries()[0]!.input!.link![0] as LinkBase
     expect(link.href).toEqual('/script.js')
     expect(link.rel).toEqual('preload')
@@ -49,6 +52,7 @@ describe('warmup', () => {
       trigger: 'client',
       warmupStrategy: 'dns-prefetch',
     })
+    // @ts-expect-error untyped
     const link = head.headEntries()[0]!.input!.link![0] as LinkBase
     expect(link.href).toEqual('https://cdn.example.com')
     expect(link.rel).toEqual('dns-prefetch')

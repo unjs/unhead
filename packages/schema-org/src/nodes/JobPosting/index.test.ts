@@ -13,6 +13,7 @@ describe('defineJobPosting', () => {
             name: 'Organization inc',
 
           },
+          // @ts-expect-error untyped
           jobLocation: {
             address: 'Some postalcode',
             latitude: 50.1,

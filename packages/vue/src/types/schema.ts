@@ -8,15 +8,11 @@ import type {
   BaseMeta,
   BodyEvents,
   DataKeys,
-  DefinedValueOrEmptyObject,
-  EntryAugmentation,
-  Falsey,
   HeadEntryOptions,
   HttpEventAttributes,
   LinkBase,
   MaybeArray,
   MaybeEventFnHandlers,
-  MergeHead,
   MetaFlatInput,
   SchemaAugmentations,
   ScriptBase,
@@ -32,13 +28,13 @@ export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<ResolvableValue<Falsey | Stringable> | Record<string, ResolvableValue<Falsey | Stringable>>>
+  class?: MaybeArray<ResolvableValue<Stringable> | Record<string, ResolvableValue<Stringable>>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  style?: MaybeArray<ResolvableValue<Falsey | Stringable> | ResolvableProperties<CSSProperties>>
+  style?: MaybeArray<ResolvableValue<Stringable> | ResolvableProperties<CSSProperties>>
 }
 
 export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
@@ -47,7 +43,7 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<ResolvableValue<Falsey | Stringable>> | Record<string, ResolvableValue<Falsey | Stringable>>
+  class?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -56,18 +52,18 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   style?: MaybeArray<ResolvableValue<string>> | ResolvableProperties<CSSProperties>
 }
 
-export type Title = ResolvableValue<Stringable | Falsey> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
+export type Title = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type TitleTemplate = _TitleTemplate | Ref<_TitleTemplate> | ((title?: string) => _TitleTemplate)
-export type Base<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Base & SchemaAugmentations['base']> & DefinedValueOrEmptyObject<E>
-export type Link<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
-export type Meta<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']> & DefinedValueOrEmptyObject<E>
-export type Style<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']> & DefinedValueOrEmptyObject<E>
-export type Script<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> & DefinedValueOrEmptyObject<E>
-export type Noscript<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']> & DefinedValueOrEmptyObject<E>
-export type HtmlAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']> & DefinedValueOrEmptyObject<E>
-export type BodyAttributes<E extends EntryAugmentation = Record<string, any>> = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents> & DefinedValueOrEmptyObject<E>
+export type Base = ResolvableProperties<_Base & SchemaAugmentations['base']>
+export type Link = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type Meta = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']>
+export type Style = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']>
+export type Script = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type Noscript = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']>
+export type HtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
+export type BodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
 
-export interface ReactiveHead<E extends MergeHead = MergeHead> {
+export interface ReactiveHead {
   /**
    * The `<title>` HTML element defines the document's title that is shown in a browser's title bar or a page's tab.
    * It only contains text; tags within the element are ignored.
@@ -84,7 +80,7 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    */
   templateParams?: ResolvableProperties<
     { separator?: '|' | '-' | '·' | string }
-    & Record<string, Stringable | Falsey | ResolvableProperties<Record<string, Stringable | Falsey>>>
+    & Record<string, Stringable | ResolvableProperties<Record<string, Stringable>>>
   >
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
@@ -92,7 +88,7 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
    */
-  base?: Base<E['base']>
+  base?: Base
   /**
    * The `<link>` HTML element specifies relationships between the current document and an external resource.
    * This element is most commonly used to link to stylesheets, but is also used to establish site icons
@@ -100,48 +96,48 @@ export interface ReactiveHead<E extends MergeHead = MergeHead> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
    */
-  link?: ResolvableArray<Link<E['link']>>
+  link?: ResolvableArray<Link>
   /**
    * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
    */
-  meta?: ResolvableArray<Meta<E['meta']>>
+  meta?: ResolvableArray<Meta>
   /**
    * The `<style>` HTML element contains style information for a document, or part of a document.
    * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: ResolvableArray<(Style<E['style']> | string)>
+  style?: ResolvableArray<(Style | string)>
   /**
    * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: ResolvableArray<(Script<E['script']> | string)>
+  script?: ResolvableArray<(Script | string)>
   /**
    * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: ResolvableArray<(Noscript<E['noscript']> | string)>
+  noscript?: ResolvableArray<(Noscript | string)>
   /**
    * Attributes for the `<html>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html
    */
-  htmlAttrs?: HtmlAttributes<E['htmlAttrs']>
+  htmlAttrs?: HtmlAttributes
   /**
    * Attributes for the `<body>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
    */
-  bodyAttrs?: BodyAttributes<E['bodyAttrs']>
+  bodyAttrs?: BodyAttributes
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-export type UseHeadInput<T extends MergeHead = Record<string, any>> = ResolvableValue<ReactiveHead<T>>
+export type UseHeadInput = ResolvableValue<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
-export type VueHeadClient<T extends MergeHead> = Unhead<ResolvableValue<ReactiveHead<T>>> & Plugin
+export type VueHeadClient<I = UseHeadInput> = Unhead<I> & Plugin

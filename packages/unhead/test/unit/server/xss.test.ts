@@ -1,6 +1,6 @@
 import { stringify } from 'devalue'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('xss', () => {

@@ -53,6 +53,7 @@ describe('headComponent', () => {
         },
       ]
 
+      // @ts-expect-error untyped
       component.updateHead(mockNodes)
 
       const patchArg = mockHeadEntry.patch.mock.calls[0][0]
@@ -83,8 +84,9 @@ describe('headComponent', () => {
             },
           ],
         },
-      ] as NodeProps[]
+      ]
 
+      // @ts-expect-error untyped
       component.updateHead(mockNodes)
 
       const patchArg = mockHeadEntry.patch.mock.calls[0][0]

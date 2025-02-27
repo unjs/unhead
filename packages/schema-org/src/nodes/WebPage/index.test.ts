@@ -417,6 +417,7 @@ describe('defineWebPage', () => {
   it('arbitrary resolves', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
+        // @ts-expect-error untyped
         defineWebPage({ name: defineImage({ url: '/logo.png' }) }),
       ])
 

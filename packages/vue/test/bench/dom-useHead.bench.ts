@@ -1,8 +1,9 @@
 import { renderDOMHead } from '@unhead/dom'
-import { createHead, useHead } from '@unhead/vue'
+import { useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { bench, describe } from 'vitest'
 import { createApp, ref } from 'vue'
-import { useDom } from '../../unhead/test/fixtures'
+import { useDom } from '../../../unhead/test/fixtures'
 
 describe('dom-useHead', () => {
   bench('x50', async () => {

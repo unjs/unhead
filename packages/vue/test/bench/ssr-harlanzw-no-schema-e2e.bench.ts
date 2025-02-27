@@ -1,4 +1,4 @@
-import type { ResolvableHead } from 'unhead/types'
+import type { ResolvableHead, SerializableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta, useServerHead } from '../../src'
@@ -101,7 +101,7 @@ describe('ssr e2e bench', () => {
       },
     })
     head.use(InferSeoMetaPlugin())
-    const input: ResolvableHead = {
+    const input: SerializableHead = {
       meta: [],
       templateParams: {
         site: {
@@ -144,7 +144,7 @@ describe('ssr e2e bench', () => {
         name: 'Harlan Wilton',
         url: 'https://harlanzw.com',
         description: 'Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.',
-      }, siteName: 'Harlan Wilton' || '' },
+      }, siteName: 'Harlan Wilton' },
       titleTemplate: '%s %separator %siteName',
     }, minimalPriority)
     useSeoMeta({
@@ -251,8 +251,8 @@ describe('ssr e2e bench', () => {
       bodyPrepend: normalizeChunks([bodyTagsOpen]),
       bodyAppend: [bodyTags],
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const html = `
+
+    expect(`
 <!DOCTYPE html>
 <html${htmlContext.htmlAttrs.join(' ')}>
 <head>
@@ -262,7 +262,7 @@ ${htmlContext.head.join('\n')}
 ${htmlContext.bodyPrepend.join('\n')}
 ${htmlContext.bodyAppend.join('\n')}
 </body>
-`
+`).toBeDefined()
   }, {
     iterations: 5000,
   })

@@ -1,5 +1,5 @@
-import { renderSSRHead } from 'unhead/server'
 import { AliasSortingPlugin } from '../../../src/plugins/aliasSorting'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('tag priority', () => {

@@ -1,5 +1,5 @@
-import { useHead } from 'unhead'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
 import { createClientHeadWithContext } from '../../util'
 
 describe('state', () => {

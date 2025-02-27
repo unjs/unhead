@@ -11,22 +11,21 @@ const jsConfetti = useScript<JSConfettiApi>({
 }, {
   trigger: 'client',
   use() {
+    // @ts-expect-error untyped
     if (typeof window.JSConfetti !== 'undefined')
+      // @ts-expect-error untyped
      return new window.JSConfetti()
   },
 })
 
-jsConfetti.catch(err => {
+jsConfetti.onError(err => {
   console.log('oops we had an error')
 })
 
-jsConfetti.$script.then(() => console.log('JSConfetti loaded'))
-console.log('top level proxy addConfetti', jsConfetti,  typeof jsConfetti.addConfetti, jsConfetti.addConfetti)
-jsConfetti.addConfetti({ emojis: ['L', 'O', 'A', 'D', 'E', 'D'] })
-
+jsConfetti.onLoaded(() => console.log('JSConfetti loaded'))
+jsConfetti.proxy.addConfetti({ emojis: ['L', 'O', 'A', 'D', 'E', 'D'] })
 function doConfetti() {
-  console.log('pre doConfetti', jsConfetti, typeof jsConfetti.addConfetti, jsConfetti.addConfetti)
-  jsConfetti.addConfetti({ emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'] })
+  jsConfetti.proxy.addConfetti({ emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'] })
 }
 const status = jsConfetti.status
 console.log(status)

@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, MergeHead } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, Unhead } from 'unhead/types'
 import type {
   UseHeadInput,
   UseHeadOptions,
@@ -24,7 +24,7 @@ import { VueResolver } from './resolver'
 export function injectHead() {
   if (hasInjectionContext()) {
     // fallback to vue context
-    const instance = inject<VueHeadClient<MergeHead>>(headSymbol)
+    const instance = inject<VueHeadClient>(headSymbol)
     if (!instance) {
       throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
     }
@@ -33,15 +33,15 @@ export function injectHead() {
   throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
 }
 
-export function useHead<T extends MergeHead>(input: UseHeadInput<T> = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
-  const head = options.head || injectHead()
-  return head.ssr ? head.push(input, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
+export function useHead<I = UseHeadInput>(input?: I, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
+  const head = (options.head || injectHead()) as Unhead<I>
+  return head.ssr ? head.push<I>(input || {} as I, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
 }
 
-function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHeadInput<T>, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput<T>> {
+function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   const deactivated = ref(false)
 
-  let entry: ActiveHeadEntry<UseHeadInput<T>>
+  let entry: ActiveHeadEntry<I>
   watchEffect(() => {
     const i = deactivated.value ? {} : walkResolver(input, VueResolver)
     if (entry) {
@@ -67,44 +67,42 @@ function clientUseHead<T extends MergeHead>(head: VueHeadClient<T>, input: UseHe
   return entry!
 }
 
-export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadSafeInput> {
   const head = options.head || injectHead()
   head.use(SafeInputPlugin)
   options._safe = true
-  // @ts-expect-error untyped
-  return useHead(input, options)
+  return useHead<UseHeadSafeInput>(input, options)
 }
 
-export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
   const head = options.head || injectHead()
   head.use(FlatMetaPlugin)
   const { title, titleTemplate, ...meta } = input
   return useHead({
     title,
     titleTemplate,
-    // @ts-expect-error runtime type
     _flatMeta: meta,
-  }, options)
+  } as UseSeoMetaInput, options)
 }
 
 /**
  * @deprecated use `useHead` instead.Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerHead<T extends MergeHead>(input: UseHeadInput<T> = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
-  return useHead<T>(input, { ...options, mode: 'server' })
+export function useServerHead<I = UseHeadInput>(input?: I, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
+  return useHead<I>(input, { ...options, mode: 'server' })
 }
 
 /**
  * @deprecated use `useHeadSafe` instead.Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<any> {
+export function useServerHeadSafe(input?: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadSafeInput> {
   return useHeadSafe(input, { ...options, mode: 'server' })
 }
 
 /**
  * @deprecated use `useSeoMeta` instead.Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerSeoMeta(input: UseSeoMetaInput = {}, options?: UseHeadOptions): ActiveHeadEntry<UseSeoMetaInput> {
+export function useServerSeoMeta(input?: UseSeoMetaInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
   return useSeoMeta(input, { ...options, mode: 'server' })
 }
 

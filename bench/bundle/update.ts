@@ -16,6 +16,7 @@ const newStats = {
   },
 }
 
+// eslint-disable-next-line no-console
 console.table(newStats)
 
 // Write the new stats to last.json
@@ -25,4 +26,5 @@ fs.writeFileSync(
   'utf8',
 )
 
+// eslint-disable-next-line no-console
 console.log('Updated last.json with new bundle stats')

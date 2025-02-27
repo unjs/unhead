@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { AsVoidFunctions } from '../../../src/scripts/types'
-import { createHead } from 'unhead/client'
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../../src/scripts/proxy'
 import { createSpyProxy } from '../../../src/scripts/utils'
@@ -44,6 +44,7 @@ describe('proxy chain', () => {
       },
     }
     // did load
+    // @ts-expect-error untyped
     script.instance = {
       _paq: w._paq,
       say: w.say,
@@ -53,6 +54,7 @@ describe('proxy chain', () => {
     const consoleMock = vi.spyOn(console, 'log').mockImplementation((...args) => {
       log('mocked', ...args)
     })
+    // @ts-expect-error untyped
     replayProxyRecordings(script.instance, stack)
     // @ts-expect-error untyped
     script.proxy = createForwardingProxy(script.instance)

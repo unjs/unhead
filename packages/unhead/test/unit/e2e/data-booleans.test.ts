@@ -1,7 +1,7 @@
-import { useHead } from 'unhead'
-import { renderDOMHead } from 'unhead/client'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
+import { renderDOMHead } from '../../../src/client'
+import { renderSSRHead } from '../../../src/server'
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e data true', () => {

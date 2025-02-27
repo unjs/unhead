@@ -96,7 +96,9 @@ describe('defineArticle', () => {
       title: 'Article headline',
       description: 'my article description',
       image: '/image.png',
+      // @ts-expect-error untyped
       datePublished: mockDate,
+      // @ts-expect-error untyped
       dateModified: mockDate,
     })
   })

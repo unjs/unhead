@@ -23,7 +23,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   }, [])
 
   useEffect(() => {
-    const input: UseHeadInput<any> = {
+    const input: UseHeadInput = {
       titleTemplate,
     }
     const elements = React.Children.toArray(children).filter(React.isValidElement)

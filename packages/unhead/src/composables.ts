@@ -3,20 +3,18 @@ import type {
   HeadEntryOptions,
   HeadSafe,
   ResolvableHead,
-  SerializableHead,
   Unhead,
   UseSeoMetaInput,
 } from './types'
 import { FlatMetaPlugin } from './plugins/flatMeta'
 import { SafeInputPlugin } from './plugins/safe'
 
-export function useHead<T extends Unhead<any>>(unhead: T, input: ResolvableHead | SerializableHead = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<ResolvableHead | SerializableHead> {
-  return unhead.push(input, options) as ActiveHeadEntry<ResolvableHead | SerializableHead>
+export function useHead<T extends Unhead<any>, I = ResolvableHead>(unhead: T, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+  return unhead.push<I>((input || {} as I), options) as ActiveHeadEntry<I>
 }
 
 export function useHeadSafe<T extends Unhead<any>>(unhead: T, input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
   unhead.use(SafeInputPlugin)
-  // @ts-expect-error untyped
   return useHead(unhead, input, Object.assign(options, { _safe: true })) as ActiveHeadEntry<HeadSafe>
 }
 

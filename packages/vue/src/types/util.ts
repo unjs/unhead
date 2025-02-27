@@ -1,9 +1,9 @@
-import type { Falsey } from 'unhead/types'
 import type { ComputedRef, Ref } from 'vue'
 
-export type MaybeFalsey<T> = T | Falsey
+type Falsy = false | null | undefined
+export type MaybeFalsy<T> = T | Falsy
 
-export type ResolvableValue<T> = MaybeFalsey<T> | (() => MaybeFalsey<T>) | ComputedRef<MaybeFalsey<T>> | Ref<MaybeFalsey<T>>
+export type ResolvableValue<T> = MaybeFalsy<T> | (() => MaybeFalsy<T>) | ComputedRef<MaybeFalsy<T>> | Ref<MaybeFalsy<T>>
 
 export type ResolvableArray<T> = ResolvableValue<ResolvableValue<T>[]>
 

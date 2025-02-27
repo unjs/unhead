@@ -1,7 +1,7 @@
-import { TemplateParamsPlugin } from 'unhead/plugins'
-
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+
+import { TemplateParamsPlugin } from '../../../src/plugins'
+import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {

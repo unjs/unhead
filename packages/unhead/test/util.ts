@@ -1,16 +1,16 @@
-import type { CreateHeadOptions, ResolvableHead, SSRHeadPayload } from '../src/types'
+import type { CreateHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
 import { JSDOM } from 'jsdom'
-import { createHead as createClientHead } from 'unhead/client'
-import { createHead as createServerHead } from 'unhead/server'
+import { createHead as createClientHead } from '../src/client'
+import { createHead as createServerHead } from '../src/server'
 
-export function createClientHeadWithContext(options?: any) {
-  return createClientHead(options)
+export function createClientHeadWithContext(resolvedOptions: CreateHeadOptions = {}) {
+  return createClientHead(resolvedOptions)
 }
 
-export function createServerHeadWithContext(options?: any) {
+export function createServerHeadWithContext(resolvedOptions: CreateHeadOptions = {}): Unhead<ResolvableHead> {
   return createServerHead({
     disableDefaults: true,
-    ...options,
+    ...resolvedOptions,
   })
 }
 
@@ -68,7 +68,7 @@ ${payload?.bodyTags || ''}
   )
 }
 
-export const basicSchema: ResolvableHead = {
+export const basicSchema: SerializableHead = {
   htmlAttrs: {
     lang: 'en',
     dir: 'ltr',

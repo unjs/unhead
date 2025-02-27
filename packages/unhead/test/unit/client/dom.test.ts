@@ -1,5 +1,5 @@
-import { useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
+import { useHead } from '../../../src'
 import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom', () => {

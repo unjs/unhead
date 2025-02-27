@@ -1,5 +1,5 @@
-import type { MetaInput, SchemaOrgNode } from 'unhead/schema-org'
 import type { Unhead } from 'unhead/types'
+import type { MetaInput, SchemaOrgNode } from '../../schema-org/src/types'
 import { createHead } from 'unhead/server'
 
 export async function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
@@ -20,6 +20,7 @@ export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<
     init: [
       {
         templateParams: {
+          // @ts-expect-error untyped
           schemaOrg: {
             currency: 'AUD',
             host: 'https://example.com/',

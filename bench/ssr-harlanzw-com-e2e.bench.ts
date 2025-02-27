@@ -1,4 +1,4 @@
-import type { Head } from '@unhead/schema'
+import type { Head } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { bench, describe } from 'vitest'
@@ -145,7 +145,7 @@ describe('ssr e2e bench', () => {
         name: 'Harlan Wilton',
         url: 'https://harlanzw.com',
         description: 'Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.',
-      }, siteName: 'Harlan Wilton' || '' },
+      }, siteName: 'Harlan Wilton' },
       titleTemplate: '%s %separator %siteName',
     }, minimalPriority)
     useSeoMeta({
@@ -287,7 +287,7 @@ describe('ssr e2e bench', () => {
       bodyPrepend: normalizeChunks([bodyTagsOpen]),
       bodyAppend: [bodyTags],
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
+
     const html = `
 <!DOCTYPE html>
 <html${htmlContext.htmlAttrs.join(' ')}>
@@ -299,6 +299,7 @@ ${htmlContext.bodyPrepend.join('\n')}
 ${htmlContext.bodyAppend.join('\n')}
 </body>
 `
+    expect(html).toBeDefined()
   }, {
     iterations: 5000,
   })

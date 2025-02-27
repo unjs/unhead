@@ -5,6 +5,7 @@ export function setupCounter(element: HTMLButtonElement) {
   const setCounter = (count: number) => {
     counter = count
     element.innerHTML = `count is ${counter}`
+    // @ts-expect-error untyped
     useHead(window.__UNHEAD__, {
       title: () => counter ? `count is ${counter}` : null,
     })

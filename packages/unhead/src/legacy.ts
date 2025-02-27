@@ -1,7 +1,6 @@
 import type {
   CreateHeadOptions,
   ResolvableHead,
-  SerializableHead,
   Unhead,
 } from './types'
 import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from './plugins'
@@ -15,7 +14,7 @@ export function getActiveHead() {
   return activeHead?.value
 }
 
-export function createServerHead<T extends Record<string, any> = ResolvableHead | SerializableHead>(options: CreateHeadOptions = {}) {
+export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
   return activeHead.value = createUnhead<T>({
     disableCapoSorting: true,
     ...options,
@@ -31,7 +30,7 @@ export function createServerHead<T extends Record<string, any> = ResolvableHead 
   })
 }
 
-export function createHead<T extends Record<string, any> = ResolvableHead | SerializableHead>(options: CreateHeadOptions = {}) {
+export function createHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
   return activeHead.value = createUnhead<T>({
     disableCapoSorting: true,
     ...options,

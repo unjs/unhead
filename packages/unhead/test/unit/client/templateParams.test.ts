@@ -1,6 +1,6 @@
-import { useHead } from 'unhead'
-import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
+import { useHead } from '../../../src'
+import { TemplateParamsPlugin } from '../../../src/plugins'
 import { createClientHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
 describe('templateParams', () => {

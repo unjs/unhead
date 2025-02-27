@@ -1,6 +1,6 @@
-import { useHeadSafe } from 'unhead'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { useHeadSafe } from '../../../src'
+import { renderSSRHead } from '../../../src/server'
 import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('dom useHeadSafe', () => {

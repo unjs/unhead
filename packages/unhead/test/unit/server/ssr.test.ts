@@ -1,6 +1,6 @@
-import { useHead, useSeoMeta } from 'unhead'
-import { renderSSRHead } from 'unhead/server'
 import { describe, it } from 'vitest'
+import { useHead, useSeoMeta } from '../../../src'
+import { renderSSRHead } from '../../../src/server'
 import { transformHtmlTemplate } from '../../../src/server/transformHtmlTemplate'
 import { basicSchema, createServerHeadWithContext } from '../../util'
 

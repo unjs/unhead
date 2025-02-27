@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useScript } from '@unhead/vue'
+import { useScript, useHead } from '@unhead/vue'
 
 declare global {
   interface Window {
@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-const gtag = useScript({
+const { proxy: gtag, status, onLoaded } = useScript({
   src: 'https://www.googletagmanager.com/gtm.js?id=GTM-MNJD4B',
 }, {
   beforeInit() {
@@ -23,22 +23,19 @@ const gtag = useScript({
   },
   trigger: typeof window !== 'undefined' ? window.requestIdleCallback : 'manual'
 })
-const { $script } = gtag
-const { dataLayer } = gtag.proxy
-
-const status = gtag.status
+const { dataLayer } = gtag
 
 dataLayer.push({
   event: 'page_view',
   page_path: '/stripe',
 })
 
-gtag.then((res) => {
+onLoaded((res) => {
   console.log('ready!', res)
 })
 
 useHead({
-  title: $script.status,
+  title: status,
 })
 </script>
 

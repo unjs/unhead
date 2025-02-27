@@ -1,14 +1,12 @@
 // @vitest-environment jsdom
-
 import type { JSDOM } from 'jsdom'
 import type { CreateHeadOptions } from 'unhead/types'
 import type { App, Component } from 'vue'
-import { renderSSRHead } from '@unhead/ssr'
-import { VueHeadMixin } from '@unhead/vue'
-import { createHead as createClientHead } from '@unhead/vue/client'
-import { createHead as createServerHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
+import { VueHeadMixin } from '../src'
+import { createHead as createClientHead } from '../src/client'
+import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
 export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateHeadOptions) {
   const head = createClientHead({

@@ -1,4 +1,4 @@
-import type { Head } from '@unhead/schema'
+import type { Head } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { TemplateParamsPlugin } from 'unhead/plugins'
@@ -150,7 +150,7 @@ describe('ssr e2e bench', () => {
         name: 'Harlan Wilton',
         url: 'https://harlanzw.com',
         description: 'Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.',
-      }, siteName: 'Harlan Wilton' || '' },
+      }, siteName: 'Harlan Wilton' },
       titleTemplate: '%s %separator %siteName',
     }, minimalPriority)
     useSeoMeta({
