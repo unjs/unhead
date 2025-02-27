@@ -1,8 +1,8 @@
-import type { CreateServerHeadOptions, HeadTag, ResolvableHead } from '../types'
-import { createHeadCore } from '../createHead'
+import type { CreateServerHeadOptions, HeadTag, ResolvableHead, SerializableHead } from '../types'
+import { createUnhead } from '../unhead'
 
-export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
-  const unhead = createHeadCore<T>({
+export function createHead<T = ResolvableHead | SerializableHead>(options: CreateServerHeadOptions = {}) {
+  const unhead = createUnhead<T>({
     ...options,
     // @ts-expect-error untyped
     document: false,

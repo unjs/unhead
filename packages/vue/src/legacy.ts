@@ -9,7 +9,7 @@ import type {
   UseSeoMetaInput,
   VueHeadClient,
 } from './types'
-import { createHeadCore } from 'unhead'
+import { createUnhead } from 'unhead'
 import {
   getCurrentInstance,
   inject,
@@ -28,7 +28,7 @@ import { VueResolver } from './resolver'
 import { createHead as createVueServerHead } from './server'
 import { walkResolver } from './utils'
 
-export { createHeadCore }
+export const createHeadCore = createUnhead
 
 export function resolveUnrefHeadInput(input: any) {
   return walkResolver(input, VueResolver)

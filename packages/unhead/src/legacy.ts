@@ -1,10 +1,11 @@
 import type {
   CreateHeadOptions,
   ResolvableHead,
+  SerializableHead,
   Unhead,
 } from './types'
-import { createHeadCore } from './createHead'
 import { AliasSortingPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin } from './plugins'
+import { createUnhead } from './unhead'
 
 export * from './index'
 
@@ -14,8 +15,8 @@ export function getActiveHead() {
   return activeHead?.value
 }
 
-export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
-  return activeHead.value = createHeadCore<T>({
+export function createServerHead<T extends Record<string, any> = ResolvableHead | SerializableHead>(options: CreateHeadOptions = {}) {
+  return activeHead.value = createUnhead<T>({
     disableCapoSorting: true,
     ...options,
     // @ts-expect-error untyped
@@ -30,8 +31,8 @@ export function createServerHead<T extends Record<string, any> = ResolvableHead>
   })
 }
 
-export function createHead<T extends Record<string, any> = ResolvableHead>(options: CreateHeadOptions = {}) {
-  return activeHead.value = createHeadCore<T>({
+export function createHead<T extends Record<string, any> = ResolvableHead | SerializableHead>(options: CreateHeadOptions = {}) {
+  return activeHead.value = createUnhead<T>({
     disableCapoSorting: true,
     ...options,
     plugins: [
@@ -44,4 +45,4 @@ export function createHead<T extends Record<string, any> = ResolvableHead>(optio
   })
 }
 
-export { createHeadCore }
+export const createHeadCore = createUnhead

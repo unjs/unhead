@@ -1,10 +1,10 @@
-import type { CreateClientHeadOptions, ResolvableHead } from '../types'
-import { createHeadCore } from '../createHead'
+import type { CreateClientHeadOptions, ResolvableHead, SerializableHead } from '../types'
+import { createUnhead } from '../unhead'
 import { renderDOMHead } from './renderDOMHead'
 
-export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}) {
+export function createHead<T = ResolvableHead | SerializableHead>(options: CreateClientHeadOptions = {}) {
   // restore initial entry from payload (titleTemplate and templateParams)
-  const head = createHeadCore<T>({
+  const head = createUnhead<T>({
     document: (typeof window !== 'undefined' ? document : undefined),
     ...options,
   })
