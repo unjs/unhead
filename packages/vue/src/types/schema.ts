@@ -138,6 +138,7 @@ export interface ReactiveHead {
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-export type UseHeadInput = ResolvableValue<ReactiveHead>
+// eslint-disable-next-line unused-imports/no-unused-vars
+export type UseHeadInput<Deprecated = never> = ResolvableValue<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<I = UseHeadInput> = Unhead<I> & Plugin

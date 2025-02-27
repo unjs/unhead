@@ -1,5 +1,4 @@
-import type { BaseMeta, MetaFlatInput, ResolvableHead } from '../types'
-import type { ResolvedMetaFlat } from '../types/schema/metaFlat'
+import type { BaseMeta, MetaFlat, ResolvableHead } from '../types'
 import { MetaTagsArrayable } from './const'
 
 export const NAMESPACES = /* @__PURE__ */ {
@@ -123,7 +122,7 @@ function handleObjectEntry(key: string, value: Record<string, any>): BaseMeta[] 
   const fixedKey = fixKeyCase(key)
   const attr = resolveMetaKeyType(fixedKey)
 
-  if (!MetaTagsArrayable.has(fixedKey as keyof MetaFlatInput)) {
+  if (!MetaTagsArrayable.has(fixedKey as keyof MetaFlat)) {
     return [{ [attr]: fixedKey, ...sanitizedValue }] as BaseMeta[]
   }
 
@@ -171,7 +170,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   })
 }
 
-export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<ResolvableHead>['meta'] {
+export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHead>['meta'] {
   const extras: BaseMeta[] = []
   const primitives: Record<string, any> = {}
 
@@ -195,6 +194,7 @@ export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Resol
 
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
+            // @ts-expect-error untyped
             const meta = unpackMeta({ [metaKey]: propValue }) as BaseMeta[]
             // @ts-expect-error untyped
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
@@ -204,6 +204,7 @@ export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Resol
         }
         else {
           extras.push(...(typeof v === 'string'
+            // @ts-expect-error untyped
             ? unpackMeta({ [key]: v }) as BaseMeta[]
             : handleObjectEntry(key, v)))
         }
@@ -217,19 +218,15 @@ export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Resol
         const type = key.replace(/^(og|twitter)/, '').toLowerCase()
         const metaKey = prefix === 'twitter' ? 'name' : 'property'
 
-        // @ts-expect-error untyped
         if (value.url) {
           extras.push({
             [metaKey]: `${prefix}:${type}`,
-            // @ts-expect-error untyped
             content: value.url,
           })
         }
-        // @ts-expect-error untyped
         if (value.secureUrl) {
           extras.push({
             [metaKey]: `${prefix}:${type}:secure_url`,
-            // @ts-expect-error untyped
             content: value.secureUrl,
           })
         }
@@ -238,12 +235,13 @@ export function unpackMeta<T extends ResolvedMetaFlat>(input: T): Required<Resol
           if (propKey !== 'url' && propKey !== 'secureUrl') {
             extras.push({
               [metaKey]: `${prefix}:${type}:${propKey}`,
+              // @ts-expect-error untyped
               content: propValue,
             })
           }
         }
       }
-      else if (MetaTagsArrayable.has(fixKeyCase(key) as keyof MetaFlatInput)) {
+      else if (MetaTagsArrayable.has(fixKeyCase(key) as keyof MetaFlat)) {
         extras.push(...handleObjectEntry(key, value))
       }
       else {

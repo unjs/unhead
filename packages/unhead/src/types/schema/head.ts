@@ -1,5 +1,5 @@
 import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from '../tags'
-import type { Never, ResolvableProperties, ResolvableValue, Stringable } from '../util'
+import type { DeepResolvableProperties, Never, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { Base as _Base } from './base'
@@ -7,7 +7,7 @@ import type { BaseBodyAttributes, BodyEvents } from './bodyAttributes'
 import type { HtmlAttributes as _HtmlAttributes } from './htmlAttributes'
 import type { LinkBase } from './link'
 import type { Meta as _Meta } from './meta'
-import type { MetaFlatInput } from './metaFlat'
+import type { MetaFlat } from './metaFlat'
 import type { Noscript as _Noscript } from './noscript'
 import type { ScriptBase } from './script'
 import type { SpeculationRules } from './struct/speculationRules'
@@ -16,6 +16,18 @@ import type { Style as _Style } from './style'
 export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
 export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
 
+interface DeprecatedResolvesDuplicates extends ResolvesDuplicates {
+  /**
+   * @deprecated You should avoid using keys to dedupe meta as they are automatically deduped.
+   * If you need to change the meta tag rendered use tagPriority.
+   */
+  key?: string
+  /**
+   * @deprecated Remove
+   */
+  tagDuplicateStrategy?: 'replace' | 'merge'
+}
+
 export interface SchemaAugmentations {
   title: TagPriority
   titleTemplate: TagPriority
@@ -23,7 +35,7 @@ export interface SchemaAugmentations {
   htmlAttrs: UserAttributesConfig
   bodyAttrs: UserAttributesConfig
   link: UserTagConfigWithoutInnerContent
-  meta: TagPriority & { processTemplateParams?: false }
+  meta: TagPriority & { processTemplateParams?: false } & DeprecatedResolvesDuplicates
   style: TagUserProperties
   script: TagUserProperties
   noscript: TagUserProperties
@@ -238,7 +250,10 @@ export interface SerializableHead {
 export type Head = SerializableHead
 export type ResolvedHead = SerializableHead
 
-export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
+export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: Title, titleTemplate?: TitleTemplate }
+
 export type UseHeadInput = ResolvableHead | SerializableHead
 
-export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlatInput, type ScriptBase, type SpeculationRules }
+type MetaFlatInput = MetaFlat
+
+export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlat, type MetaFlatInput, type ScriptBase, type SpeculationRules }
