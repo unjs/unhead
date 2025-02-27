@@ -1,7 +1,7 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
 import type { DomPluginOptions } from './plugins'
-import type { ResolvableHead } from './schema'
+import type { ResolvableHead, SerializableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
 /**
@@ -110,7 +110,7 @@ export interface CreateHeadOptions {
    *
    * Any tags here are added with low priority.
    */
-  init?: (ResolvableHead<any> | undefined)[]
+  init?: (ResolvableHead<any> | SerializableHead<any> | undefined)[]
   /**
    * Disable the Capo.js tag sorting algorithm.
    *
@@ -158,7 +158,7 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export interface Unhead<Input = ResolvableHead> {
+export interface Unhead<Input = ResolvableHead | SerializableHead> {
   /**
    * Registered plugins.
    */

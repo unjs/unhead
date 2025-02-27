@@ -52,13 +52,13 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<string> | Record<string, boolean>
+  class?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<boolean>>
   /**
    * The style attribute contains CSS styling declarations to be applied to the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
    */
-  style?: MaybeArray<string> | Record<string, ResolvableValue<string>>
+  style?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
 }
 
 export interface HtmlAttr extends Omit<_HtmlAttributes, 'class' | 'style'> {
@@ -67,13 +67,13 @@ export interface HtmlAttr extends Omit<_HtmlAttributes, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<string> | Record<string, boolean>
+  class?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<boolean>>
   /**
    * The style attribute contains CSS styling declarations to be applied to the element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
    */
-  style?: MaybeArray<string> | Record<string, ResolvableValue<string>>
+  style?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
 }
 
 export interface BaseMeta extends Omit<_Meta, 'content'> {
@@ -193,7 +193,7 @@ export interface ResolvableHead<E extends MergeHead = SchemaAugmentations> exten
   bodyAttrs?: ResolvableValue<BodyAttributes<E['bodyAttrs']>>
 }
 
-export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations> extends HeadUtils {
+export interface NormalizedHead<E extends MergeHead = ResolvedSchemaAugmentations> extends HeadUtils {
   title?: ResolvedTitle
   base?: ResolvedBase<E['base']>
   link?: ResolvedLink<E['link']>[]
@@ -205,9 +205,34 @@ export interface ResolvedHead<E extends MergeHead = ResolvedSchemaAugmentations>
   bodyAttrs?: ResolvedBodyAttributes<E['bodyAttrs']>
 }
 
-export type Head = ResolvableHead & ResolvedHead
+type AsSerializable<S extends keyof ResolvedSchemaAugmentations> = ResolvedSchemaAugmentations[S] & DataKeys
+
+export interface SerializableHead<E extends MergeHead = ResolvedSchemaAugmentations> {
+  /**
+   * Generate the title from a template.
+   *
+   * Should include a `%s` placeholder for the title, for example `%s - My Site`.
+   */
+  titleTemplate?: string
+  /**
+   * Variables used to substitute in the title and meta content.
+   */
+  templateParams?: Record<string, Record<string, string | boolean | number> | string | boolean | number>
+  title?: string | ({ textContent: string } & ResolvedSchemaAugmentations['title'])
+  base?: Partial<Merge<ResolvedSchemaAugmentations['base'], _Base>> & DefinedValueOrEmptyObject<E['base']>
+  link?: (LinkBase & AsSerializable<'link'> & HttpEventAttributes)[]
+  meta?: (_Meta & AsSerializable<'meta'>)[]
+  style?: (_Style & AsSerializable<'style'>)[]
+  script?: (ScriptBase & AsSerializable<'script'> & HttpEventAttributes)[]
+  noscript?: (_Noscript & AsSerializable<'noscript'>)[]
+  htmlAttrs?: _HtmlAttributes & AsSerializable<'htmlAttrs'>
+  bodyAttrs?: BaseBodyAttr & AsSerializable<'bodyAttrs'> & BodyEvents
+}
+
+export type Head = SerializableHead
+export type ResolvedHead = SerializableHead
 
 export type UseSeoMetaInput = MetaFlatInput & { title?: Title, titleTemplate?: TitleTemplate }
-export type UseHeadInput<T extends MergeHead = MergeHead> = ResolvableHead<T>
+export type UseHeadInput<T extends MergeHead = MergeHead> = ResolvableHead<T> | SerializableHead<T>
 
 export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlatInput, type ScriptBase }

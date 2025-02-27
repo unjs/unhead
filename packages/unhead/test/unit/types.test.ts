@@ -1,3 +1,4 @@
+import type { SerializableHead } from '../../src/types'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { createHead } from '../../src/server'
 
@@ -55,5 +56,31 @@ describe('types', () => {
         index: () => true,
       },
     })
+  })
+  it('types SerializableHead', () => {
+    const head = createHead()
+    const input: SerializableHead = {
+      title: 'Hello',
+      meta: [
+        { name: 'description', content: 'Static content' },
+        { property: 'og:image', content: 'https://example.com/1.jpg' },
+      ],
+      script: [
+        { src: 'https://example.com/script.js' },
+      ],
+      link: [
+        { rel: 'stylesheet', href: 'style1.css' },
+      ],
+      // Validate HTML attributes
+      htmlAttrs: {
+        lang: 'en',
+        class: 'dark',
+      },
+      // Validate body attributes
+      bodyAttrs: {
+        class: 'bg-gray-100',
+      },
+    }
+    useHead(head, input)
   })
 })

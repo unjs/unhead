@@ -1,4 +1,3 @@
-import type { ResolvedHead } from 'unhead/types'
 import { walkResolver } from 'unhead/utils'
 import { VueResolver } from './resolver'
 
@@ -7,7 +6,7 @@ export * from 'unhead/utils'
 /**
  * @deprecated Use head.resolveTags() instead
  */
-export function resolveUnrefHeadInput(input: any): ResolvedHead {
+export function resolveUnrefHeadInput<T extends Record<string, any>>(input: T): T {
   return walkResolver(input, VueResolver)
 }
 
