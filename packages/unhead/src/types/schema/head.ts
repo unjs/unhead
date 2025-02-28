@@ -206,3 +206,8 @@ export type UseHeadInput = ResolvableHead | SerializableHead
 type MetaFlatInput = MetaFlat
 
 export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlat, type MetaFlatInput, type ScriptBase, type SpeculationRules }
+
+/**
+ * @deprecated No longer used
+ */
+export type MergeHead = Record<string, any>
