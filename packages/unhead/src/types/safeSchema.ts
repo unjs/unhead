@@ -1,24 +1,24 @@
 import type {
-  BaseMeta,
-  BodyAttributes,
   DataKeys,
-  HtmlAttributes,
-  LinkBase,
+  LinkWithoutEvents,
   Noscript,
   ResolvableHead,
   SchemaAugmentations,
-  ScriptBase,
+  ScriptWithoutEvents,
   Style,
+  UnheadBodyAttributesWithoutEvents,
+  UnheadHtmlAttributes,
+  UnheadMeta,
 } from './schema'
 import type { ResolvableProperties, ResolvableValue } from './util'
 
-export type SafeBodyAttr = ResolvableProperties<Pick<BodyAttributes, 'id' | 'class' | 'style'> & DataKeys & SchemaAugmentations['bodyAttrs']>
-export type SafeHtmlAttr = ResolvableProperties<Pick<HtmlAttributes, 'id' | 'class' | 'style' | 'lang' | 'dir'> & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type SafeMeta = ResolvableProperties<Pick<BaseMeta, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
-export type SafeLink = ResolvableProperties<Pick<LinkBase, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
-export type SafeScript = ResolvableProperties<Pick<ScriptBase, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & SchemaAugmentations['script']>
-export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id' | 'textContent'> & DataKeys & SchemaAugmentations['noscript']>
-export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'textContent' | 'nonce' | 'title' | 'blocking'> & DataKeys & SchemaAugmentations['style']>
+export type SafeBodyAttr = ResolvableProperties<Pick<UnheadBodyAttributesWithoutEvents, 'id' | 'class' | 'style'> & DataKeys & SchemaAugmentations['bodyAttrs']>
+export type SafeHtmlAttr = ResolvableProperties<Pick<UnheadHtmlAttributes, 'id' | 'class' | 'style' | 'lang' | 'dir'> & DataKeys & SchemaAugmentations['htmlAttrs']>
+export type SafeMeta = ResolvableProperties<Pick<UnheadMeta, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
+export type SafeLink = ResolvableProperties<Pick<LinkWithoutEvents, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
+export type SafeScript = ResolvableProperties<Pick<ScriptWithoutEvents, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & SchemaAugmentations['script']>
+export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id'> & DataKeys & Omit<SchemaAugmentations['noscript'], 'innerHTML'>>
+export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'nonce' | 'title' | 'blocking'> & DataKeys & Omit<SchemaAugmentations['style'], 'innerHTML'>>
 
 export interface HeadSafe extends Pick<ResolvableHead, 'title' | 'titleTemplate' | 'templateParams'> {
   /**

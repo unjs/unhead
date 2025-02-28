@@ -1,4 +1,4 @@
-import type { BaseMeta, MetaFlat, ResolvableHead } from '../types'
+import type { MetaFlat, ResolvableHead, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
 
 export const NAMESPACES = /* @__PURE__ */ {
@@ -117,13 +117,13 @@ function unpackToString(value: Record<string, any>, options: {
   }).join(entrySeparator)
 }
 
-function handleObjectEntry(key: string, value: Record<string, any>): BaseMeta[] {
+function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[] {
   const sanitizedValue = sanitizeObject(value)
   const fixedKey = fixKeyCase(key)
   const attr = resolveMetaKeyType(fixedKey)
 
   if (!MetaTagsArrayable.has(fixedKey as keyof MetaFlat)) {
-    return [{ [attr]: fixedKey, ...sanitizedValue }] as BaseMeta[]
+    return [{ [attr]: fixedKey, ...sanitizedValue }] as UnheadMeta[]
   }
 
   const input = Object.fromEntries(
@@ -133,10 +133,10 @@ function handleObjectEntry(key: string, value: Record<string, any>): BaseMeta[] 
   // @ts-expect-error untyped
   return unpackMeta(input || {})
     // @ts-expect-error untyped
-    .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as BaseMeta[]
+    .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as UnheadMeta[]
 }
 
-export function resolveMetaKeyType(key: string): keyof BaseMeta {
+export function resolveMetaKeyType(key: string): keyof UnheadMeta {
   // @ts-expect-error untyped
   if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || NAMESPACES.HTTP_EQUIV.has(key)) {
     return 'http-equiv'
@@ -171,7 +171,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
 }
 
 export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHead>['meta'] {
-  const extras: BaseMeta[] = []
+  const extras: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
   for (const [key, value] of Object.entries(input)) {
@@ -195,7 +195,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
             // @ts-expect-error untyped
-            const meta = unpackMeta({ [metaKey]: propValue }) as BaseMeta[]
+            const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
             // @ts-expect-error untyped
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
           }
@@ -205,7 +205,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
         else {
           extras.push(...(typeof v === 'string'
             // @ts-expect-error untyped
-            ? unpackMeta({ [key]: v }) as BaseMeta[]
+            ? unpackMeta({ [key]: v }) as UnheadMeta[]
             : handleObjectEntry(key, v)))
         }
       }
@@ -253,7 +253,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
     }
   }
 
-  const meta = Object.entries(primitives).map(([key, value]): BaseMeta => {
+  const meta = Object.entries(primitives).map(([key, value]): UnheadMeta => {
     if (key === 'charset')
       return { charset: value === null ? '_null' : value }
 
@@ -270,7 +270,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
     return metaKey === 'http-equiv'
       ? { 'http-equiv': keyValue, 'content': processedValue }
       : { [metaKey]: keyValue, content: processedValue }
-  }) as BaseMeta[]
+  }) as UnheadMeta[]
 
   return [...extras, ...meta].map(m =>
     !('content' in m)

@@ -5,7 +5,7 @@ import type {
   HttpEventAttributes,
   MaybeEventFnHandlers,
   SchemaAugmentations,
-  ScriptBase,
+  ScriptWithoutEvents,
 } from '../types'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
@@ -14,7 +14,7 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptIns
 /**
  * Either a string source for the script or full script properties.
  */
-export type UseScriptResolvedInput = Omit<ScriptBase, 'src'> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
+export type UseScriptResolvedInput = Omit<ScriptWithoutEvents, 'src'> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
 
 type BaseScriptApi = Record<symbol | string, any>
 

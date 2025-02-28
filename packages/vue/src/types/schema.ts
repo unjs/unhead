@@ -1,28 +1,28 @@
 import type {
-  Base as _Base,
-  Noscript as _Noscript,
-  Style as _Style,
-  TitleTemplate as _TitleTemplate,
-  BaseBodyAttr,
-  BaseHtmlAttr,
-  BaseMeta,
+  ResolvableTitleTemplate as _ResolvableTitleTemplate,
+  Base,
+  BodyAttributesWithoutEvents,
   BodyEvents,
   DataKeys,
   HeadEntryOptions,
+  HtmlAttributes,
   HttpEventAttributes,
-  LinkBase,
+  LinkWithoutEvents,
   MaybeArray,
   MaybeEventFnHandlers,
   MetaFlatInput,
+  Noscript,
   SchemaAugmentations,
-  ScriptBase,
+  ScriptWithoutEvents,
   Stringable,
+  Style,
   Unhead,
+  UnheadMeta,
 } from 'unhead/types'
 import type { CSSProperties, Plugin, Ref } from 'vue'
 import type { ResolvableArray, ResolvableProperties, ResolvableValue } from './util'
 
-export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class' | 'style'> {
+export interface HtmlAttr extends Omit<HtmlAttributes, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -37,7 +37,7 @@ export interface HtmlAttr extends Omit<BaseHtmlAttr, 'class' | 'style'> {
   style?: MaybeArray<ResolvableValue<Stringable> | ResolvableProperties<CSSProperties>>
 }
 
-export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
+export interface BodyAttr extends Omit<BodyAttributesWithoutEvents, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -52,16 +52,16 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   style?: MaybeArray<ResolvableValue<string>> | ResolvableProperties<CSSProperties>
 }
 
-export type Title = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
-export type TitleTemplate = _TitleTemplate | Ref<_TitleTemplate> | ((title?: string) => _TitleTemplate)
-export type Base = ResolvableProperties<_Base & SchemaAugmentations['base']>
-export type Link = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type Meta = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']>
-export type Style = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']>
-export type Script = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type Noscript = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']>
-export type HtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type BodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
+export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
+export type ResolvableTitleTemplate = _ResolvableTitleTemplate | Ref<string>
+export type ResolvableBase = ResolvableProperties<Base & SchemaAugmentations['base']>
+export type ResolvableLink = ResolvableProperties<LinkWithoutEvents & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type ResolvableMeta = ResolvableProperties<UnheadMeta & DataKeys & SchemaAugmentations['meta']>
+export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']>
+export type ResolvableScript = ResolvableProperties<ScriptWithoutEvents & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']>
+export type ResolvableHtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
+export type ResolvableBodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
 
 export interface ReactiveHead {
   /**
@@ -70,11 +70,11 @@ export interface ReactiveHead {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title
    */
-  title?: Title
+  title?: ResolvableTitle
   /**
    * Generate the title from a template.
    */
-  titleTemplate?: TitleTemplate
+  titleTemplate?: ResolvableTitleTemplate
   /**
    * Variables used to substitute in the title and meta content.
    */
@@ -88,7 +88,7 @@ export interface ReactiveHead {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
    */
-  base?: Base
+  base?: ResolvableBase
   /**
    * The `<link>` HTML element specifies relationships between the current document and an external resource.
    * This element is most commonly used to link to stylesheets, but is also used to establish site icons
@@ -96,45 +96,45 @@ export interface ReactiveHead {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
    */
-  link?: ResolvableArray<Link>
+  link?: ResolvableArray<ResolvableLink>
   /**
    * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
    */
-  meta?: ResolvableArray<Meta>
+  meta?: ResolvableArray<ResolvableMeta>
   /**
    * The `<style>` HTML element contains style information for a document, or part of a document.
    * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: ResolvableArray<(Style | string)>
+  style?: ResolvableArray<(ResolvableStyle | string)>
   /**
    * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: ResolvableArray<(Script | string)>
+  script?: ResolvableArray<(ResolvableScript | string)>
   /**
    * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: ResolvableArray<(Noscript | string)>
+  noscript?: ResolvableArray<(ResolvableNoscript | string)>
   /**
    * Attributes for the `<html>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html
    */
-  htmlAttrs?: HtmlAttributes
+  htmlAttrs?: ResolvableHtmlAttributes
   /**
    * Attributes for the `<body>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
    */
-  bodyAttrs?: BodyAttributes
+  bodyAttrs?: ResolvableBodyAttributes
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }

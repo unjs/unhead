@@ -63,6 +63,7 @@ describe('vue dom useHeadSafe', () => {
         ],
         style: [
           {
+            // @ts-expect-error not allowed
             'innerHTML': 'body { background: url("javascript:alert(1)") }',
             'data-foo': 'bar',
           },

@@ -1,4 +1,4 @@
-import type { SerializableHead } from '../../src/'
+import type { SerializableResolvedHead } from '../../src/'
 import { createHead } from '@unhead/vue/client'
 import { computed } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
@@ -99,7 +99,7 @@ describe('types', () => {
   })
   it('types SerializableHead', () => {
     const head = createHead()
-    const input: SerializableHead = {
+    const input: SerializableResolvedHead = {
       title: 'Hello',
       meta: [
         { name: 'description', content: 'Static content' },

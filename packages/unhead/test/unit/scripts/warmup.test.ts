@@ -1,4 +1,4 @@
-import type { LinkBase } from '../../../src/types'
+import type { LinkWithoutEvents } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useScript } from '../../../src/composables'
 import { createHead as createServerHead } from '../../../src/server'
@@ -26,7 +26,7 @@ describe('warmup', () => {
       trigger: 'client',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkBase
+    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('https://cdn.example.com/script.js')
     expect(link.rel).toEqual('preload')
   })
@@ -39,7 +39,7 @@ describe('warmup', () => {
       trigger: 'client',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkBase
+    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('/script.js')
     expect(link.rel).toEqual('preload')
   })
@@ -53,7 +53,7 @@ describe('warmup', () => {
       warmupStrategy: 'dns-prefetch',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkBase
+    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('https://cdn.example.com')
     expect(link.rel).toEqual('dns-prefetch')
   })

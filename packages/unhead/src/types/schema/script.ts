@@ -4,7 +4,7 @@ import type { GlobalAttributes } from './attributes/global'
 import type { ReferrerPolicy } from './shared'
 import type { Blocking } from './struct/blocking'
 
-export interface ScriptBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Blocking {
+export interface ScriptWithoutEvents extends Pick<GlobalAttributes, 'nonce' | 'id'>, Blocking {
   /**
    * For classic scripts, if the async attribute is present,
    * then the classic script will be fetched in parallel to parsing and evaluated as soon as it is available.
@@ -91,4 +91,4 @@ export interface ScriptBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Bloc
   ['custom-element']?: 'amp-story' | 'amp-carousel' | 'amp-ad' | (string & Record<never, never>)
 }
 
-export type Script = ScriptBase & HttpEventAttributes
+export type Script = ScriptWithoutEvents & HttpEventAttributes

@@ -1,17 +1,16 @@
-import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from '../tags'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority } from '../tags'
 import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
-import type { Base as _Base } from './base'
-import type { BaseBodyAttributes, BodyEvents } from './bodyAttributes'
-import type { HtmlAttributes as _HtmlAttributes } from './htmlAttributes'
-import type { LinkBase } from './link'
-import type { Meta as _Meta } from './meta'
+import type { Base } from './base'
+import type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
+import type { HtmlAttributes } from './htmlAttributes'
+import type { LinkWithoutEvents } from './link'
+import type { Meta } from './meta'
 import type { MetaFlat } from './metaFlat'
-import type { Noscript as _Noscript } from './noscript'
-import type { ScriptBase } from './script'
-import type { SpeculationRules } from './struct/speculationRules'
-import type { Style as _Style } from './style'
+import type { Noscript } from './noscript'
+import type { ScriptWithoutEvents } from './script'
+import type { Style } from './style'
 
 interface DeprecatedResolvesDuplicates {
   /**
@@ -40,10 +39,7 @@ export interface SchemaAugmentations {
 
 export type MaybeArray<T> = T | T[]
 
-export type BaseBodyAttr = BaseBodyAttributes
-export type BaseHtmlAttr = _HtmlAttributes
-
-export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
+export interface UnheadBodyAttributesWithoutEvents extends Omit<BodyAttributesWithoutEvents, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -58,7 +54,7 @@ export interface BodyAttr extends Omit<BaseBodyAttr, 'class' | 'style'> {
   style?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
 }
 
-export interface HtmlAttr extends Omit<_HtmlAttributes, 'class' | 'style'> {
+export interface UnheadHtmlAttributes extends Omit<HtmlAttributes, 'class' | 'style'> {
   /**
    * The class global attribute is a space-separated list of the case-sensitive classes of the element.
    *
@@ -73,7 +69,7 @@ export interface HtmlAttr extends Omit<_HtmlAttributes, 'class' | 'style'> {
   style?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
 }
 
-export interface BaseMeta extends Omit<_Meta, 'content'> {
+export interface UnheadMeta extends Omit<Meta, 'content'> {
   /**
    * This attribute contains the value for the http-equiv, name or property attribute, depending on which is used.
    *
@@ -88,18 +84,17 @@ export type MaybeEventFnHandlers<T> = {
   [key in keyof T]?: T[key] | ((e: Event) => void)
 }
 
-type TitleTemplateResolver = string | ((title?: string) => string | null)
-
-export type Title = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
-export type TitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & SchemaAugmentations['titleTemplate'])
-export type Base = ResolvableProperties<_Base & SchemaAugmentations['base']>
-export type Link = ResolvableProperties<LinkBase & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type Meta = ResolvableProperties<BaseMeta & DataKeys & SchemaAugmentations['meta']>
-export type Style = ResolvableProperties<_Style & DataKeys & SchemaAugmentations['style']>
-export type Script = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type Noscript = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']>
-export type HtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type BodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
+export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
+export type ResolvableTitleTemplate = string | ((title?: string) => string | null) | null | ({ textContent: string | ((title?: string) => string | null) } & SchemaAugmentations['titleTemplate'])
+export type ResolvableBase = ResolvableProperties<Base & SchemaAugmentations['base']>
+export type ResolvableLink = ResolvableProperties<LinkWithoutEvents & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type ResolvableMeta = ResolvableProperties<UnheadMeta & DataKeys & SchemaAugmentations['meta']>
+export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string
+export type ResolvableScript = ResolvableProperties<ScriptWithoutEvents & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> | string
+export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
+export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
+export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
+export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
 
 export interface ResolvableHead {
   /**
@@ -108,14 +103,14 @@ export interface ResolvableHead {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title
    */
-  title?: Title
+  title?: ResolvableTitle
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
    */
-  base?: ResolvableValue<Base>
+  base?: ResolvableValue<ResolvableBase>
   /**
    * The `<link>` HTML element specifies relationships between the current document and an external resource.
    * This element is most commonly used to link to stylesheets, but is also used to establish site icons
@@ -123,91 +118,103 @@ export interface ResolvableHead {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-as
    */
-  link?: ResolvableValue<ResolvableValue<Link>[]>
+  link?: ResolvableValue<ResolvableValue<ResolvableLink>[]>
   /**
    * The `<meta>` element represents metadata that cannot be expressed in other HTML elements, like `<link>` or `<script>`.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
    */
-  meta?: ResolvableValue<ResolvableValue<Meta>[]>
+  meta?: ResolvableValue<ResolvableValue<ResolvableMeta>[]>
   /**
    * The `<style>` HTML element contains style information for a document, or part of a document.
    * It contains CSS, which is applied to the contents of the document containing the `<style>` element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style
    */
-  style?: ResolvableValue<ResolvableValue<(Style | string)>[]>
+  style?: ResolvableValue<ResolvableValue<(ResolvableStyle)>[]>
   /**
    * The `<script>` HTML element is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script
    */
-  script?: ResolvableValue<ResolvableValue<(Script | string)>[]>
+  script?: ResolvableValue<ResolvableValue<(ResolvableScript)>[]>
   /**
    * The `<noscript>` HTML element defines a section of HTML to be inserted if a script type on the page is unsupported
    * or if scripting is currently turned off in the browser.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript
    */
-  noscript?: ResolvableValue<ResolvableValue<(Noscript | string)>[]>
+  noscript?: ResolvableValue<ResolvableValue<(ResolvableNoscript)>[]>
   /**
    * Attributes for the `<html>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html
    */
-  htmlAttrs?: ResolvableValue<HtmlAttributes>
+  htmlAttrs?: ResolvableValue<ResolvableHtmlAttributes>
   /**
    * Attributes for the `<body>` HTML element.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body
    */
-  bodyAttrs?: ResolvableValue<BodyAttributes>
+  bodyAttrs?: ResolvableValue<ResolvableBodyAttributes>
   /**
    * Generate the title from a template.
    *
    * Should include a `%s` placeholder for the title, for example `%s - My Site`.
    */
-  titleTemplate?: TitleTemplate
+  titleTemplate?: ResolvableTitleTemplate
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateParams?: TemplateParams
+  templateParams?: ResolvableTemplateParams
 }
 
-export interface SerializableHead {
-  /**
-   * Generate the title from a template.
-   *
-   * Should include a `%s` placeholder for the title, for example `%s - My Site`.
-   */
-  titleTemplate?: string
-  /**
-   * Variables used to substitute in the title and meta content.
-   */
-  templateParams?: TemplateParams
-  title?: string | ({ textContent: string } & SchemaAugmentations['title'])
-  base?: _Base & SchemaAugmentations['base'] & DataKeys
-  link?: (LinkBase & SchemaAugmentations['link'] & DataKeys & HttpEventAttributes)[]
-  meta?: (_Meta & SchemaAugmentations['meta'] & DataKeys)[]
-  style?: (_Style & SchemaAugmentations['style'] & DataKeys)[]
-  script?: (ScriptBase & SchemaAugmentations['script'] & DataKeys & HttpEventAttributes)[]
-  noscript?: (_Noscript & SchemaAugmentations['noscript'] & DataKeys)[]
-  htmlAttrs?: _HtmlAttributes & SchemaAugmentations['htmlAttrs'] & DataKeys
-  bodyAttrs?: BaseBodyAttr & SchemaAugmentations['bodyAttrs'] & DataKeys & BodyEvents
+export interface SerializableResolvedHead {
+  title?: string
+  base?: Base & DataKeys & SchemaAugmentations['base']
+  templateParams?: Record<string, any>
+  link?: (LinkWithoutEvents & DataKeys & HttpEventAttributes & SchemaAugmentations['link'])[]
+  meta?: (Meta & DataKeys & SchemaAugmentations['meta'])[]
+  style?: (Style & DataKeys & SchemaAugmentations['style'])[]
+  script?: (ScriptWithoutEvents & DataKeys & HttpEventAttributes & SchemaAugmentations['script'])[]
+  noscript?: (Noscript & DataKeys & SchemaAugmentations['noscript'])[]
+  htmlAttrs?: HtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']
+  bodyAttrs?: BodyAttributesWithoutEvents & DataKeys & BodyEvents & SchemaAugmentations['bodyAttrs']
 }
 
-export type Head = SerializableHead
-export type ResolvedHead = SerializableHead
+/**
+ * @deprecated Use SerializableResolvedHead
+ */
+export type Head = SerializableResolvedHead
+/**
+ * @deprecated Use SerializableResolvedHead
+ */
+export type ResolvedHead = SerializableResolvedHead
 
-export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: Title, titleTemplate?: TitleTemplate }
+export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: ResolvableTitle, titleTemplate?: ResolvableTitleTemplate }
 
-export type UseHeadInput = ResolvableHead | SerializableHead
+export type UseHeadInput = ResolvableHead | SerializableResolvedHead
 
 type MetaFlatInput = MetaFlat
 
-export { type BodyEvents, type DataKeys, type HttpEventAttributes, type LinkBase, type MetaFlat, type MetaFlatInput, type ScriptBase, type SpeculationRules }
+export { type MetaFlatInput }
 
 /**
  * @deprecated No longer used
  */
 export type MergeHead = Record<string, any>
+
+export type { AriaAttributes } from './attributes/aria'
+export type { DataKeys } from './attributes/data'
+export type { HttpEventAttributes } from './attributes/event'
+export type { GlobalAttributes } from './attributes/global'
+export type { Base } from './base'
+export type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
+export type { HtmlAttributes } from './htmlAttributes'
+export type { LinkWithoutEvents } from './link'
+export type { Meta } from './meta'
+export type { MetaFlat } from './metaFlat'
+export type { Noscript } from './noscript'
+export type { ScriptWithoutEvents } from './script'
+export type { SpeculationRules } from './struct/speculationRules'
+export type { Style } from './style'

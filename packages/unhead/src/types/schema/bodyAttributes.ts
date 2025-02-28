@@ -63,7 +63,7 @@ export interface BodyEvents {
   onunload?: string
 }
 
-export interface BaseBodyAttributes extends Pick<GlobalAttributes, 'class' | 'style' | 'id'> {
+export interface BodyAttributesWithoutEvents extends Pick<GlobalAttributes, 'class' | 'style' | 'id'> {
 }
 
-export type BodyAttributes = BaseBodyAttributes & BodyEvents
+export type BodyAttributes = BodyAttributesWithoutEvents & BodyEvents

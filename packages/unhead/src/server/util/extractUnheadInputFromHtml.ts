@@ -1,4 +1,4 @@
-import type { SerializableHead } from '../../types'
+import type { SerializableResolvedHead } from '../../types'
 
 const Attrs = /(\w+)(?:=["']([^"']*)["'])?/g
 const HtmlTag = /<html[^>]*>/
@@ -9,22 +9,22 @@ const ClosingTags = /<(title|script|style)[^>]*>[\s\S]*?<\/\1>/g
 // eslint-disable-next-line regexp/no-misleading-capturing-group
 const NewLines = /(\n\s*)+/g
 
-function extractAttributes<K extends 'htmlAttrs' | 'bodyAttrs' | 'meta'>(tag: string): SerializableHead[K] {
+function extractAttributes<K extends 'htmlAttrs' | 'bodyAttrs' | 'meta'>(tag: string): SerializableResolvedHead[K] {
   // inner should be between the < and > (non greedy), split on ' ' and after index 0
   const inner = tag.match(/<([^>]*)>/)?.[1].split(' ').slice(1).join(' ')
   if (!inner)
-    return {} as SerializableHead[K]
+    return {} as SerializableResolvedHead[K]
   const attrs = inner.match(Attrs)
   return (attrs?.reduce((acc, attr) => {
     const sep = attr.indexOf('=')
     const key = sep > 0 ? attr.slice(0, sep) : attr
     const val = sep > 0 ? attr.slice(sep + 1).slice(1, -1) : true
     return { ...acc, [key]: val }
-  }, {}) || {}) as SerializableHead[K]
+  }, {}) || {}) as SerializableResolvedHead[K]
 }
 
 export function extractUnheadInputFromHtml(html: string) {
-  const input = {} as SerializableHead
+  const input = {} as SerializableResolvedHead
   input.htmlAttrs = extractAttributes<'htmlAttrs'>(html.match(HtmlTag)?.[0] || '')
   html = html.replace(HtmlTag, '<html>')
 
