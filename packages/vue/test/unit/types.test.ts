@@ -123,7 +123,7 @@ describe('types', () => {
     }
     useHead(input, { head })
   })
-  it('types tmp', () => {
+  it('types nuxt core', () => {
     const payloadURL = 'test'
     const link: RawInput<'link'> = process.env.NUXT_JSON_PAYLOADS
       ? { rel: 'preload', as: 'fetch', crossorigin: 'anonymous', href: payloadURL }

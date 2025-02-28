@@ -171,6 +171,7 @@ export interface ResolvableHead {
 
 export interface SerializableHead {
   title?: string
+  titleTemplate?: string
   base?: Base & DataKeys & SchemaAugmentations['base']
   templateParams?: Record<string, any>
   link?: (LinkWithoutEvents & DataKeys & HttpEventAttributes & SchemaAugmentations['link'])[]
