@@ -58,12 +58,12 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
       return [...entries.values()]
     },
     use: (p: HeadPluginInput) => registerPlugin(head, p),
-    push<R = T>(input: R, _options?: HeadEntryOptions | undefined) {
+    push(input: T, _options?: HeadEntryOptions | undefined) {
       const options = { ..._options || {} } as HeadEntryOptions
       delete options.head
       const _i = options._index ?? head._entryCount++
       const inst = { _i, input, options }
-      const _: ActiveHeadEntry<R> = {
+      const _: ActiveHeadEntry<T> = {
         _poll(rm = false) {
           head.dirty = true
           !rm && normalizeQueue.push(_i)
@@ -78,7 +78,6 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         patch(input) {
           if (!options.mode || (options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr)) {
             inst.input = input
-            // @ts-expect-error type juggling
             entries.set(_i, inst)
             _._poll()
           }

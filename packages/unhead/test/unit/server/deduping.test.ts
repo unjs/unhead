@@ -61,6 +61,7 @@ describe('dedupe', () => {
     head.push({
       script: [
         {
+          // @ts-expect-error untyped
           myCustomMeta: 'first',
           key: 'custom',
         },
@@ -69,6 +70,7 @@ describe('dedupe', () => {
     head.push({
       script: [
         {
+          // @ts-expect-error untyped
           myCustomMeta: 'second',
           key: 'custom',
         },
@@ -222,6 +224,7 @@ describe('dedupe', () => {
     head.push({
       meta: [
         {
+          // @ts-expect-error untyped
           'unknown-key': 'description',
           'vmid': 'desc-1',
           'content': 'test',
@@ -231,6 +234,7 @@ describe('dedupe', () => {
     head.push({
       meta: [
         {
+          // @ts-expect-error untyped
           'unknown-key': 'description',
           'vmid': 'desc-2',
           'content': 'test 2',
@@ -348,6 +352,7 @@ describe('dedupe', () => {
           fetchpriority: null,
           crossorigin: false,
           referrerpolicy: null,
+          // @ts-expect-error untyped
           foo: 'bar',
           innerHTML: 'console.log(\'B\')',
         },

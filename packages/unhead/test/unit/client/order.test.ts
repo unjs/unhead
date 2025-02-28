@@ -19,7 +19,7 @@ describe('dom order', () => {
       htmlAttrs: {
         class: 'no-js',
       },
-      script: [{ children: 'document.documentElement.classList.remove("no-js")' }],
+      script: [{ innerHTML: 'document.documentElement.classList.remove("no-js")' }],
     })
 
     const dom = useDom()

@@ -1,18 +1,43 @@
 // @vitest-environment jsdom
 
-import { renderDOMHead } from '@unhead/dom'
-import { useHeadSafe } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
-import { basicSchema, useDom } from '../../../../unhead/test/fixtures'
+import { useDom } from '../../../../unhead/test/fixtures'
+import { useHeadSafe } from '../../../src'
+import { renderDOMHead } from '../../../src/client'
 import { csrVueAppWithUnhead } from '../../util'
 
 describe('vue dom useHeadSafe', () => {
   it('basic', async () => {
     const dom = useDom()
     const head = csrVueAppWithUnhead(dom, () => {
-      // @ts-expect-error intentionally invalid
-      useHeadSafe(basicSchema)
+      useHeadSafe({
+        htmlAttrs: {
+          lang: 'en',
+          dir: 'ltr',
+        },
+        bodyAttrs: {
+          class: 'dark',
+        },
+        script: [
+          {
+            // @ts-expect-error intentionally invalid
+            src: 'https://cdn.example.com/script.js',
+          },
+        ],
+        meta: [
+          {
+            charset: 'utf-8',
+          },
+        ],
+        link: [
+          {
+            rel: 'icon',
+            type: 'image/x-icon',
+            href: 'https://cdn.example.com/favicon.ico',
+          },
+        ],
+      })
 
       useHeadSafe({
         bodyAttrs: {

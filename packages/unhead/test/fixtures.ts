@@ -51,7 +51,7 @@ ${payload?.bodyTags || ''}
   )
 }
 
-export const basicSchema: ResolvableHead = {
+export const basicSchema = {
   htmlAttrs: {
     lang: 'en',
     dir: 'ltr',
@@ -76,4 +76,4 @@ export const basicSchema: ResolvableHead = {
       href: 'https://cdn.example.com/favicon.ico',
     },
   ],
-}
+} satisfies ResolvableHead

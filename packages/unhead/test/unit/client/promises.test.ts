@@ -8,8 +8,10 @@ describe('promises', () => {
       plugins: [PromisesPlugin],
     })
     head.push({
+      // @ts-expect-error untyped
       title: new Promise(resolve => resolve('hello')),
       script: [
+        // @ts-expect-error untyped
         { src: new Promise(resolve => resolve('https://example.com/script.js')) },
         {
           innerHTML: new Promise<string>(resolve => setTimeout(() => resolve('test'), 250)),

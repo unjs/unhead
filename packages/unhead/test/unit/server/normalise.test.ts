@@ -9,6 +9,7 @@ describe('normalise', () => {
     head.push({
       link: [
         {
+          // @ts-expect-error untyped
           'array': ['a', 1],
           'big-int': BigInt(1),
           'big': 100n,

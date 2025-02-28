@@ -61,6 +61,7 @@ describe('ssr', () => {
 
     head.push({
       title: {
+        // @ts-expect-error untyped
         foo: 'bar',
       },
     })

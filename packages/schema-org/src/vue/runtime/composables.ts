@@ -1,4 +1,4 @@
-import type { ResolvableProperties, UseHeadOptions } from '@unhead/vue'
+import type { ResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type {
   AggregateOffer,
@@ -165,7 +165,7 @@ export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOpti
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())
-  const entry = useHead(normalizeSchemaOrgInput(input), options) as ActiveHeadEntry<UseSchemaOrgInput>
+  const entry = useHead(normalizeSchemaOrgInput(input) as UseHeadInput, options) as ActiveHeadEntry<UseSchemaOrgInput>
   const corePatch = entry.patch
   entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
   return entry

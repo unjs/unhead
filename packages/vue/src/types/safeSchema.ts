@@ -5,10 +5,14 @@ import type {
   HtmlAttributes,
   LinkBase,
   Noscript,
+  ProcessesTemplateParams,
   ResolvableHead,
+  ResolvesDuplicates,
   SchemaAugmentations,
   ScriptBase,
   Style,
+  TagPosition,
+  TagPriority,
 } from 'unhead/types'
 import type { ResolvableProperties, ResolvableValue } from './util'
 
@@ -16,7 +20,7 @@ export type SafeBodyAttr = ResolvableProperties<Pick<BodyAttributes, 'id' | 'cla
 export type SafeHtmlAttr = ResolvableProperties<Pick<HtmlAttributes, 'id' | 'class' | 'style' | 'lang' | 'dir'> & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type SafeMeta = ResolvableProperties<Pick<BaseMeta, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
 export type SafeLink = ResolvableProperties<Pick<LinkBase, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
-export type SafeScript = ResolvableProperties<Pick<ScriptBase, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & { textContent?: string } & SchemaAugmentations['script']>
+export type SafeScript = ResolvableProperties<Pick<ScriptBase, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & { textContent?: string } & TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams>
 export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id' | 'textContent'> & DataKeys & SchemaAugmentations['noscript']>
 export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'textContent' | 'nonce' | 'title' | 'blocking'> & DataKeys & SchemaAugmentations['style']>
 

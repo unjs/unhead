@@ -32,6 +32,7 @@ describe('tagPosition', () => {
       script: [
         {
           src: '/my-important-script.js',
+          // @ts-expect-error untyped
           body: true,
         },
       ],

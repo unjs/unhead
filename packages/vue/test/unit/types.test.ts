@@ -22,7 +22,6 @@ describe('types', () => {
       base: { href: () => '/base' },
       link: () => [],
       meta: [
-        // @ts-expect-error key should throw a type error
         { key: 'key', name: 'description', content: 'some description ' },
         () => ({ key: 'key', name: 'description', content: 'some description ' }),
       ],
@@ -85,6 +84,7 @@ describe('types', () => {
         {
           type: 'application/json',
           id: 'xss-script',
+          // @ts-expect-error not allowed
           innerHTML: 'alert("xss")',
         },
       ],

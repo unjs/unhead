@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 
 import { setTimeout } from 'node:timers/promises'
-import { renderDOMHead } from '@unhead/dom'
-import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { basicSchema, useDom } from '../../../../unhead/test/fixtures'
+import { useHead } from '../../../src'
+import { renderDOMHead } from '../../../src/client'
 import { csrVueAppWithUnhead } from '../../util'
 
 describe('vue dom', () => {

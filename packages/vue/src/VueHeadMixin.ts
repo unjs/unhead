@@ -1,9 +1,10 @@
+import type { UseHeadInput } from './types'
 import { getCurrentInstance } from 'vue'
 import { useHead } from './composables'
 
 export const VueHeadMixin = {
   created() {
-    let source = false
+    let source: UseHeadInput | false = false
     const instance = getCurrentInstance()
     if (!instance)
       return
@@ -11,9 +12,9 @@ export const VueHeadMixin = {
     if (!options || !('head' in options))
       return
 
-    source = typeof options.head === 'function'
+    source = (typeof options.head === 'function'
       ? () => options.head.call(instance.proxy)
-      : options.head
+      : options.head) as UseHeadInput | false
     source && useHead(source)
   },
 }

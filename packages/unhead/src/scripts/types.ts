@@ -4,7 +4,7 @@ import type {
   HeadEntryOptions,
   HttpEventAttributes,
   MaybeEventFnHandlers,
-  ResolvedSchemaAugmentations,
+  SchemaAugmentations,
   ScriptBase,
 } from '../types'
 
@@ -14,7 +14,7 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptIns
 /**
  * Either a string source for the script or full script properties.
  */
-export type UseScriptResolvedInput = Omit<ScriptBase, 'src'> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & ResolvedSchemaAugmentations['script']
+export type UseScriptResolvedInput = Omit<ScriptBase, 'src'> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
 
 type BaseScriptApi = Record<symbol | string, any>
 

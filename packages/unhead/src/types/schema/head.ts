@@ -1,5 +1,5 @@
-import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TagUserProperties, TemplateParams } from '../tags'
-import type { DeepResolvableProperties, Never, ResolvableProperties, ResolvableValue, Stringable } from '../util'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from '../tags'
+import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { Base as _Base } from './base'
@@ -13,10 +13,7 @@ import type { ScriptBase } from './script'
 import type { SpeculationRules } from './struct/speculationRules'
 import type { Style as _Style } from './style'
 
-export type UserTagConfigWithoutInnerContent = TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false } // only allow opt-out
-export type UserAttributesConfig = ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
-
-interface DeprecatedResolvesDuplicates extends ResolvesDuplicates {
+interface DeprecatedResolvesDuplicates {
   /**
    * @deprecated You should avoid using keys to dedupe meta as they are automatically deduped.
    * If you need to change the meta tag rendered use tagPriority.
@@ -31,24 +28,11 @@ interface DeprecatedResolvesDuplicates extends ResolvesDuplicates {
 export interface SchemaAugmentations {
   title: TagPriority
   titleTemplate: TagPriority
-  base: UserAttributesConfig
-  htmlAttrs: UserAttributesConfig
-  bodyAttrs: UserAttributesConfig
-  link: UserTagConfigWithoutInnerContent
-  meta: TagPriority & { processTemplateParams?: false } & DeprecatedResolvesDuplicates
-  style: TagUserProperties
-  script: TagUserProperties
-  noscript: TagUserProperties
-}
-
-export interface ResolvedSchemaAugmentations {
-  title: TagPriority
-  titleTemplate: TagPriority
-  base: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
-  htmlAttrs: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
-  bodyAttrs: ResolvesDuplicates & TagPriority & Never<InnerContent & TagPosition>
-  link: TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false }
-  meta: TagPriority & TagPosition & ResolvesDuplicates & Never<InnerContent> & { processTemplateParams?: false }
+  base: ResolvesDuplicates & TagPriority
+  htmlAttrs: ResolvesDuplicates & TagPriority
+  bodyAttrs: ResolvesDuplicates & TagPriority
+  link: TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams
+  meta: TagPriority & DeprecatedResolvesDuplicates & ProcessesTemplateParams
   style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
@@ -116,17 +100,6 @@ export type Script = ResolvableProperties<ScriptBase & DataKeys & SchemaAugmenta
 export type Noscript = ResolvableProperties<_Noscript & DataKeys & SchemaAugmentations['noscript']>
 export type HtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type BodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
-
-export type ResolvedTitle = ({ textContent: string } & ResolvedSchemaAugmentations['title'])
-export type ResolvedTitleTemplate = TitleTemplateResolver | null | ({ textContent: TitleTemplateResolver } & ResolvedSchemaAugmentations['titleTemplate'])
-export type ResolvedBase = _Base & ResolvedSchemaAugmentations['base']
-export type ResolvedLink = LinkBase & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & ResolvedSchemaAugmentations['link']
-export type ResolvedMeta = BaseMeta & DataKeys & SchemaAugmentations['meta']
-export type ResolvedStyle = _Style & DataKeys & ResolvedSchemaAugmentations['style']
-export type ResolvedScript = ScriptBase & MaybeEventFnHandlers<HttpEventAttributes> & DataKeys & ResolvedSchemaAugmentations['script']
-export type ResolvedNoscript = _Noscript & DataKeys & ResolvedSchemaAugmentations['noscript']
-export type ResolvedHtmlAttributes = HtmlAttr & DataKeys & ResolvedSchemaAugmentations['htmlAttrs']
-export type ResolvedBodyAttributes = BodyAttr & MaybeEventFnHandlers<BodyEvents> & DataKeys & ResolvedSchemaAugmentations['bodyAttrs']
 
 export interface ResolvableHead {
   /**
@@ -201,30 +174,6 @@ export interface ResolvableHead {
   templateParams?: TemplateParams
 }
 
-export interface NormalizedHead {
-  title?: ResolvedTitle
-  base?: ResolvedBase
-  link?: ResolvedLink[]
-  meta?: ResolvedMeta[]
-  style?: ResolvedStyle[]
-  script?: ResolvedScript[]
-  noscript?: ResolvedNoscript[]
-  htmlAttrs?: ResolvedHtmlAttributes
-  bodyAttrs?: ResolvedBodyAttributes
-  /**
-   * Generate the title from a template.
-   *
-   * Should include a `%s` placeholder for the title, for example `%s - My Site`.
-   */
-  titleTemplate?: TitleTemplate
-  /**
-   * Variables used to substitute in the title and meta content.
-   */
-  templateParams?: TemplateParams
-}
-
-type AsSerializable<S extends keyof ResolvedSchemaAugmentations> = ResolvedSchemaAugmentations[S] & DataKeys
-
 export interface SerializableHead {
   /**
    * Generate the title from a template.
@@ -236,15 +185,15 @@ export interface SerializableHead {
    * Variables used to substitute in the title and meta content.
    */
   templateParams?: TemplateParams
-  title?: string | ({ textContent: string } & ResolvedSchemaAugmentations['title'])
-  base?: _Base & ResolvedSchemaAugmentations['base']
-  link?: (LinkBase & AsSerializable<'link'> & HttpEventAttributes)[]
-  meta?: (_Meta & AsSerializable<'meta'>)[]
-  style?: (_Style & AsSerializable<'style'>)[]
-  script?: (ScriptBase & AsSerializable<'script'> & HttpEventAttributes)[]
-  noscript?: (_Noscript & AsSerializable<'noscript'>)[]
-  htmlAttrs?: _HtmlAttributes & AsSerializable<'htmlAttrs'>
-  bodyAttrs?: BaseBodyAttr & AsSerializable<'bodyAttrs'> & BodyEvents
+  title?: string | ({ textContent: string } & SchemaAugmentations['title'])
+  base?: _Base & SchemaAugmentations['base'] & DataKeys
+  link?: (LinkBase & SchemaAugmentations['link'] & DataKeys & HttpEventAttributes)[]
+  meta?: (_Meta & SchemaAugmentations['meta'] & DataKeys)[]
+  style?: (_Style & SchemaAugmentations['style'] & DataKeys)[]
+  script?: (ScriptBase & SchemaAugmentations['script'] & DataKeys & HttpEventAttributes)[]
+  noscript?: (_Noscript & SchemaAugmentations['noscript'] & DataKeys)[]
+  htmlAttrs?: _HtmlAttributes & SchemaAugmentations['htmlAttrs'] & DataKeys
+  bodyAttrs?: BaseBodyAttr & SchemaAugmentations['bodyAttrs'] & DataKeys & BodyEvents
 }
 
 export type Head = SerializableHead

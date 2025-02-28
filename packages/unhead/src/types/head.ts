@@ -170,7 +170,7 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * Create a new head entry.
    */
-  push: <R = Input>(entry: R, options?: HeadEntryOptions) => ActiveHeadEntry<R>
+  push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
   /**
    * Resolve tags from head entries.
    */

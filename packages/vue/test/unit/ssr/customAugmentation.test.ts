@@ -1,12 +1,13 @@
+import type { SerializableHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
-import { useHead } from '@unhead/vue'
+import { injectHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {
-    interface CustomHead {
+    interface CustomHead extends SerializableHead {
       title: string
       link: ({
         ['data-test']: any
@@ -21,16 +22,18 @@ describe('vue ssr custom augmentation', () => {
     const app = createSSRApp({
       setup() {
         const title = ref('')
-        useHead<CustomHead>({
-          title: title.value,
+        const head = injectHead()
+        const f = {
+          title: 'foo',
           link: [
             {
               'data-test': () => 'test',
-              'href': 'link-one',
+              'href': 'link/two',
               'CUSTOM_FIELD': 10,
             },
           ],
-        })
+        } satisfies CustomHead
+        head.push(f)
         title.value = 'hello'
         return () => '<div>hi</div>'
       },
@@ -40,7 +43,10 @@ describe('vue ssr custom augmentation', () => {
 
     const headResult = await renderSSRHead(head)
     expect(headResult.headTags).toMatchInlineSnapshot(
-      `"<link data-test="test" href="link-one" CUSTOM_FIELD="10">"`,
+      `
+      "<title>foo</title>
+      <link data-test="test" href="link/two" CUSTOM_FIELD="10">"
+    `,
     )
   })
 })

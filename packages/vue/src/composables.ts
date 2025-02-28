@@ -33,9 +33,9 @@ export function injectHead() {
   throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
 }
 
-export function useHead<I = UseHeadInput>(input?: I, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
+export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
   const head = (options.head || injectHead()) as Unhead<I>
-  return head.ssr ? head.push<I>(input || {} as I, options as HeadEntryOptions) : clientUseHead(head, input, options as HeadEntryOptions)
+  return head.ssr ? head.push((input || {}) as I, options as HeadEntryOptions) : clientUseHead(head, input as I, options as HeadEntryOptions)
 }
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
@@ -71,7 +71,7 @@ export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOption
   const head = options.head || injectHead()
   head.use(SafeInputPlugin)
   options._safe = true
-  return useHead<UseHeadSafeInput>(input, options)
+  return useHead<UseHeadSafeInput>(input as UseHeadInput, options)
 }
 
 export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
@@ -88,8 +88,8 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions 
 /**
  * @deprecated use `useHead` instead.Advanced use cases should tree shake using import.meta.* if statements.
  */
-export function useServerHead<I = UseHeadInput>(input?: I, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
-  return useHead<I>(input, { ...options, mode: 'server' })
+export function useServerHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
+  return useHead<I>(input as UseHeadInput, { ...options, mode: 'server' })
 }
 
 /**

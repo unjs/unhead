@@ -7,13 +7,17 @@ describe('types', () => {
     const unhead = createHead()
     useHead(unhead, {
       htmlAttrs: {
+        // @ts-expect-error expected
+        foo: 'bla',
         lang: () => false,
       },
-      // @ts-expect-error expected
-      base: { href: '/base', uuuu: '' },
+      base: {
+        href: '/base',
+        // @ts-expect-error expected
+        uuuu: '',
+      },
       link: () => [],
       meta: [
-        // @ts-expect-error expected
         { key: 'key', name: 'description', content: 'some description ' },
         () => ({ key: 'key', name: 'description', content: 'some description ' }),
       ],

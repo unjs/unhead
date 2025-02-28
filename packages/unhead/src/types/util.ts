@@ -8,7 +8,7 @@ export type Never<T> = {
 
 type Falsy = false | null | undefined
 
-export type ResolvableValue<T> = T | Falsy | (() => T | Falsy)
+export type ResolvableValue<T> = T | Falsy | (() => (T | Falsy))
 
 export type ResolvableProperties<T> = {
   [key in keyof T]?: ResolvableValue<T[key]>

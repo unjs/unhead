@@ -8,11 +8,14 @@ describe('vue promises', () => {
   it('basic', async () => {
     const head = await ssrVueAppWithUnhead(() => {
       useHead({
+        // @ts-expect-error untyped
         title: new Promise(resolve => resolve('hello')),
         script: [
+          // @ts-expect-error untyped
           { src: new Promise(resolve => resolve('https://example.com/script.js')) },
           {
             innerHTML: new Promise<string>(resolve => setTimeout(() => resolve('test'), 250)),
+            // @ts-expect-error untyped
             foo: computed(() => 'test'),
           },
         ],

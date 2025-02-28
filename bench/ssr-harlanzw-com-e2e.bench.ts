@@ -231,9 +231,8 @@ describe('ssr e2e bench', () => {
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
-        nodes: [
-
-        ],
+        // @ts-expect-error untyped
+        nodes: [],
       }],
     }, {
       head,
