@@ -169,7 +169,7 @@ export interface ResolvableHead {
   templateParams?: ResolvableTemplateParams
 }
 
-export interface SerializableResolvedHead {
+export interface SerializableHead {
   title?: string
   base?: Base & DataKeys & SchemaAugmentations['base']
   templateParams?: Record<string, any>
@@ -182,18 +182,20 @@ export interface SerializableResolvedHead {
   bodyAttrs?: BodyAttributesWithoutEvents & DataKeys & BodyEvents & SchemaAugmentations['bodyAttrs']
 }
 
+export type RawInput<K extends keyof SerializableHead> = Required<SerializableHead>[K] extends Array<infer T> ? T : Required<SerializableHead>[K]
+
 /**
  * @deprecated Use SerializableResolvedHead
  */
-export type Head = SerializableResolvedHead
+export type Head = SerializableHead
 /**
  * @deprecated Use SerializableResolvedHead
  */
-export type ResolvedHead = SerializableResolvedHead
+export type ResolvedHead = SerializableHead
 
 export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: ResolvableTitle, titleTemplate?: ResolvableTitleTemplate }
 
-export type UseHeadInput = ResolvableHead | SerializableResolvedHead
+export type UseHeadInput = ResolvableHead | SerializableHead
 
 type MetaFlatInput = MetaFlat
 
@@ -208,13 +210,8 @@ export type { AriaAttributes } from './attributes/aria'
 export type { DataKeys } from './attributes/data'
 export type { HttpEventAttributes } from './attributes/event'
 export type { GlobalAttributes } from './attributes/global'
-export type { Base } from './base'
 export type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
-export type { HtmlAttributes } from './htmlAttributes'
 export type { LinkWithoutEvents } from './link'
-export type { Meta } from './meta'
 export type { MetaFlat } from './metaFlat'
-export type { Noscript } from './noscript'
 export type { ScriptWithoutEvents } from './script'
 export type { SpeculationRules } from './struct/speculationRules'
-export type { Style } from './style'

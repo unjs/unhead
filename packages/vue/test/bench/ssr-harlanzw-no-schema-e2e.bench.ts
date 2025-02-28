@@ -1,4 +1,4 @@
-import type { ResolvableHead, SerializableResolvedHead } from 'unhead/types'
+import type { ResolvableHead, SerializableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta, useServerHead } from '../../src'
@@ -101,7 +101,7 @@ describe('ssr e2e bench', () => {
       },
     })
     head.use(InferSeoMetaPlugin())
-    const input: SerializableResolvedHead = {
+    const input: SerializableHead = {
       meta: [],
       templateParams: {
         site: {

@@ -1,4 +1,4 @@
-import type { SerializableResolvedHead } from '@unhead/vue'
+import type { SerializableHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { injectHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
@@ -7,7 +7,7 @@ import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {
-    interface CustomHead extends SerializableResolvedHead {
+    interface CustomHead extends SerializableHead {
       title: string
       link: ({
         ['data-test']: any

@@ -1,22 +1,16 @@
 import type { HeadSafe } from '../types/safeSchema'
-import type { BodyAttributes } from '../types/schema/bodyAttributes'
-import type { HtmlAttributes } from '../types/schema/htmlAttributes'
-import type { Link } from '../types/schema/link'
-import type { Meta } from '../types/schema/meta'
-import type { Noscript } from '../types/schema/noscript'
-import type { Script } from '../types/schema/script'
-import type { Style } from '../types/schema/style'
+import type { RawInput } from '../types/schema'
 import type { HeadTag } from '../types/tags'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const WhitelistAttributes = {
-  htmlAttrs: new Set(['class', 'style', 'lang', 'dir'] satisfies (keyof HtmlAttributes)[]),
-  bodyAttrs: new Set(['class', 'style'] satisfies (keyof BodyAttributes)[]),
-  meta: new Set(['name', 'property', 'charset', 'content', 'media'] satisfies (keyof Meta)[]),
-  noscript: new Set(['textContent'] satisfies (Partial<keyof Noscript> | 'textContent')[]),
-  style: new Set(['media', 'textContent', 'nonce', 'title', 'blocking'] satisfies (Partial<keyof Style> | 'textContent')[]),
-  script: new Set(['type', 'textContent', 'nonce', 'blocking'] satisfies (Partial<keyof Script> | 'textContent')[]),
-  link: new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'] satisfies (keyof Link)[]),
+  htmlAttrs: new Set(['class', 'style', 'lang', 'dir'] satisfies (keyof RawInput<'htmlAttrs'>)[]),
+  bodyAttrs: new Set(['class', 'style'] satisfies (keyof RawInput<'bodyAttrs'>)[]),
+  meta: new Set(['name', 'property', 'charset', 'content', 'media'] satisfies (keyof RawInput<'meta'>)[]),
+  noscript: new Set(['textContent'] satisfies (Partial<keyof RawInput<'noscript'>> | 'textContent')[]),
+  style: new Set(['media', 'textContent', 'nonce', 'title', 'blocking'] satisfies (Partial<keyof RawInput<'style'>> | 'textContent')[]),
+  script: new Set(['type', 'textContent', 'nonce', 'blocking'] satisfies (Partial<keyof RawInput<'script'>> | 'textContent')[]),
+  link: new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'] satisfies (keyof RawInput<'link'>)[]),
 } as const
 
 function acceptDataAttrs(value: Record<string, string>) {

@@ -1,4 +1,4 @@
-import type { SerializableResolvedHead } from '../../src/types'
+import type { SerializableHead } from '../../src/types'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { createHead } from '../../src/server'
 
@@ -90,7 +90,7 @@ describe('types', () => {
       },
       wefwefe: 'wefef',
       broken: 'foo',
-    } satisfies SerializableResolvedHead
+    } satisfies SerializableHead
     useHead(head, input)
   })
 })

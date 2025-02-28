@@ -1,6 +1,6 @@
 import type {
   HttpEventAttributes,
-  SerializableResolvedHead,
+  RawInput,
   Unhead,
 } from '../types'
 import type {
@@ -138,7 +138,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         const $url = new URL(src)
         href = `${$url.protocol}//${$url.host}`
       }
-      const link: Required<SerializableResolvedHead>['link'][0] = {
+      const link: RawInput<'link'> = {
         href,
         rel,
         crossorigin: input.crossorigin || isCrossOrigin ? 'anonymous' : undefined,
@@ -156,7 +156,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
-        const defaults: Required<SerializableResolvedHead>['script'][0] = {
+        const defaults: RawInput<'script'> = {
           defer: true,
           fetchpriority: 'low',
         }

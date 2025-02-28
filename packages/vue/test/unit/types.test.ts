@@ -1,4 +1,4 @@
-import type { SerializableResolvedHead } from '../../src/'
+import type { RawInput, SerializableHead } from '../../src/'
 import { createHead } from '@unhead/vue/client'
 import { computed } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
@@ -99,7 +99,7 @@ describe('types', () => {
   })
   it('types SerializableHead', () => {
     const head = createHead()
-    const input: SerializableResolvedHead = {
+    const input: SerializableHead = {
       title: 'Hello',
       meta: [
         { name: 'description', content: 'Static content' },
@@ -122,5 +122,20 @@ describe('types', () => {
       },
     }
     useHead(input, { head })
+  })
+  it('types tmp', () => {
+    const payloadURL = 'test'
+    const link: RawInput<'link'> = process.env.NUXT_JSON_PAYLOADS
+      ? { rel: 'preload', as: 'fetch', crossorigin: 'anonymous', href: payloadURL }
+      : { rel: 'modulepreload', crossorigin: '', href: payloadURL }
+    const script: RawInput<'script'>[] = [
+      { src: payloadURL, type: 'module' },
+      { innerHTML: 'foo' },
+    ]
+    const head = createHead()
+    head.push({
+      link: [link],
+      script,
+    })
   })
 })
