@@ -68,4 +68,4 @@ export function useServerSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeo
   return useSeoMeta(unhead, input, { ...options, mode: 'server' })
 }
 
-export { useScript } from './scripts'
+export { resolveScriptKey, useScript } from './scripts'

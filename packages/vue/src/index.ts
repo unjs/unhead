@@ -9,5 +9,5 @@ export { VueHeadMixin } from './VueHeadMixin'
 /**
  * @deprecated Use createUnhead
  */
-const createCoreHead = createUnhead
-export { createCoreHead, createUnhead }
+const createHeadCore = createUnhead
+export { createHeadCore, createUnhead }
