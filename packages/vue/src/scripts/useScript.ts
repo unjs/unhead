@@ -11,6 +11,8 @@ import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../composables'
 
+export type * from 'unhead/scripts'
+
 export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
 }
