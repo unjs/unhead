@@ -103,7 +103,7 @@
   },
   "dependencies": {
     "defu": "^6.1.4",
-    "ohash": "^2.0.4",
+    "ohash": "^2.0.10",
     "ufo": "^1.5.4"
   },
   "devDependencies": {
@@ -112,7 +112,7 @@
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^28.4.0"
+    "unplugin-vue-components": "^28.4.1"
   },
   "build": {
     "external": [
