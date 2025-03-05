@@ -28,8 +28,8 @@ export interface PostalAddressSimple extends Thing {
   postOfficeBoxNumber?: string
 }
 
-interface PostalAddressStrict extends PostalAddressSimple {}
-interface PostalAddressName extends Partial<PostalAddressSimple> {}
+export interface PostalAddressStrict extends PostalAddressSimple {}
+export interface PostalAddressName extends Partial<PostalAddressSimple> {}
 
 export type PostalAddress = PostalAddressStrict | PostalAddressName
 
