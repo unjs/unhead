@@ -24,24 +24,24 @@ describe('defineQuestion', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/frequently-asked-questions/#webpage",
+            "@id": "https://example.com/frequently-asked-questions#webpage",
             "@type": [
               "WebPage",
               "FAQPage",
             ],
             "mainEntity": [
               {
-                "@id": "https://example.com/frequently-asked-questions/#/schema/question/1dbbae0",
+                "@id": "https://example.com/frequently-asked-questions#/schema/question/1dbbae0",
               },
               {
-                "@id": "https://example.com/frequently-asked-questions/#/schema/question/39eca17",
+                "@id": "https://example.com/frequently-asked-questions#/schema/question/39eca17",
               },
             ],
             "name": "FAQ",
             "url": "https://example.com/frequently-asked-questions",
           },
           {
-            "@id": "https://example.com/frequently-asked-questions/#/schema/question/1dbbae0",
+            "@id": "https://example.com/frequently-asked-questions#/schema/question/1dbbae0",
             "@type": "Question",
             "acceptedAnswer": {
               "@type": "Answer",
@@ -51,7 +51,7 @@ describe('defineQuestion', () => {
             "name": "How long is a piece of string?",
           },
           {
-            "@id": "https://example.com/frequently-asked-questions/#/schema/question/39eca17",
+            "@id": "https://example.com/frequently-asked-questions#/schema/question/39eca17",
             "@type": "Question",
             "acceptedAnswer": {
               "@type": "Answer",
