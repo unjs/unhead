@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     pool: 'threads',
-    workspace: ['packages/*'],
+    workspace: ['packages/*', 'test/'],
     globals: true,
     reporters: 'dot',
     isolate: true,

@@ -1,0 +1,7 @@
+.:
+  DefaultCriticalTags: object
+  InferSeoMetaPlugin: function
+./vite:
+  default: function
+./webpack:
+  default: function

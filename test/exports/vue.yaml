@@ -1,0 +1,83 @@
+.:
+  createHeadCore: function
+  createUnhead: function
+  headSymbol: string
+  injectHead: function
+  resolveUnrefHeadInput: function
+  unheadVueComposablesImports: object
+  useHead: function
+  useHeadSafe: function
+  useScript: function
+  useSeoMeta: function
+  useServerHead: function
+  useServerHeadSafe: function
+  useServerSeoMeta: function
+  VueHeadMixin: object
+./client:
+  createHead: function
+  renderDOMHead: function
+  VueHeadMixin: object
+./components:
+  Head: object
+./legacy:
+  CapoPlugin: function
+  createHead: function
+  createHeadCore: function
+  createServerHead: function
+  injectHead: function
+  resolveUnrefHeadInput: function
+  setHeadInjectionHandler: function
+  useHead: function
+  useHeadSafe: function
+  useSeoMeta: function
+  useServerHead: function
+  useServerHeadSafe: function
+  useServerSeoMeta: function
+./plugins:
+  AliasSortingPlugin: object
+  CanonicalPlugin: function
+  defineHeadPlugin: function
+  DeprecationsPlugin: object
+  FlatMetaPlugin: object
+  InferSeoMetaPlugin: function
+  PromisesPlugin: object
+  SafeInputPlugin: object
+  TemplateParamsPlugin: function
+./scripts:
+  createSpyProxy: function
+  resolveScriptKey: function
+  useScript: function
+./server:
+  createHead: function
+  extractUnheadInputFromHtml: function
+  propsToString: function
+  renderSSRHead: function
+  transformHtmlTemplate: function
+  VueHeadMixin: object
+./types: {}
+./utils:
+  dedupeKey: function
+  DupeableTags: object
+  HasElementTags: object
+  hashTag: function
+  isMetaArrayDupeKey: function
+  MetaTagsArrayable: object
+  normalizeEntryToTags: function
+  normalizeProps: function
+  processTemplateParams: function
+  resolveMetaKeyType: function
+  resolveMetaKeyValue: function
+  resolvePackedMetaObjectValue: function
+  resolveUnrefHeadInput: function
+  ScriptNetworkEvents: object
+  SelfClosingTags: object
+  sortTags: function
+  TagConfigKeys: object
+  TagsWithInnerContent: object
+  tagWeight: function
+  UniqueTags: object
+  unpackMeta: function
+  UsesMergeStrategy: object
+  ValidHeadTags: object
+  VueResolver: function
+  walkResolver: function
