@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defineEvent, defineOrganization, useSchemaOrg } from '../../'
+import { defineEvent, defineOrganization, definePlace, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineEvent', () => {
@@ -255,6 +255,47 @@ describe('defineEvent', () => {
             "@type": "Organization",
             "name": "Kira and Morrison Music",
             "url": "https://kiraandmorrisonmusic.com",
+          },
+        ]
+      `)
+    }, {
+      currency: 'USD',
+    })
+  })
+
+  it('handles short address', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'The Adventures of Kira and Morrison',
+          location: [
+            definePlace({
+              name: 'Snickerpark Stadium',
+              address: {
+                name: 'test',
+              },
+            }),
+          ],
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+
+      expect(graphNodes).toMatchInlineSnapshot(`
+        [
+          {
+            "@id": "https://example.com/#event",
+            "@type": "Event",
+            "inLanguage": "en-AU",
+            "location": {
+              "@type": "Place",
+              "address": {
+                "@type": "PostalAddress",
+                "name": "test",
+              },
+              "name": "Snickerpark Stadium",
+            },
+            "name": "The Adventures of Kira and Morrison",
           },
         ]
       `)

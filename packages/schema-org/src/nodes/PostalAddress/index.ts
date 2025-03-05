@@ -28,7 +28,10 @@ export interface PostalAddressSimple extends Thing {
   postOfficeBoxNumber?: string
 }
 
-export interface PostalAddress extends PostalAddressSimple {}
+interface PostalAddressStrict extends PostalAddressSimple {}
+interface PostalAddressName extends Partial<PostalAddressSimple> {}
+
+export type PostalAddress = PostalAddressStrict | PostalAddressName
 
 export const addressResolver = defineSchemaOrgResolver<PostalAddress>({
   defaults: {
