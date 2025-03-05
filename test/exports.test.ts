@@ -1,3 +1,4 @@
+// @ts-expect-error untyped
 import yaml from 'js-yaml'
 import { x } from 'tinyexec'
 import { describe, expect, it } from 'vitest'
