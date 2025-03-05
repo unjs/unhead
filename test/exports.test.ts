@@ -17,6 +17,7 @@ describe('exports-snapshot', async () => {
         importMode: 'package',
         cwd: pkg.path,
       })
+      // @ts-expect-error untyped
       await expect(yaml.dump(manifest.exports, { sortKeys: (a, b) => a.localeCompare(b) }))
         .toMatchFileSnapshot(`./exports/${pkg.name.split('/').pop()}.yaml`)
     })
