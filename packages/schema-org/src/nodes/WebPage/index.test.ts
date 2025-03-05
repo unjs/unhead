@@ -52,22 +52,22 @@ describe('defineWebPage', () => {
       expect(webPage?.name).toEqual('headline')
 
       expect(webPage).toMatchInlineSnapshot(`
-          {
-            "@id": "https://example.com/test/#webpage",
-            "@type": "WebPage",
-            "description": "description",
-            "name": "headline",
-            "potentialAction": [
-              {
-                "@type": "ReadAction",
-                "target": [
-                  "https://example.com/test",
-                ],
-              },
-            ],
-            "url": "https://example.com/test",
-          }
-        `)
+        {
+          "@id": "https://example.com/test#webpage",
+          "@type": "WebPage",
+          "description": "description",
+          "name": "headline",
+          "potentialAction": [
+            {
+              "@type": "ReadAction",
+              "target": [
+                "https://example.com/test",
+              ],
+            },
+          ],
+          "url": "https://example.com/test",
+        }
+      `)
     }, {
       path: '/test',
       title: 'headline',
@@ -155,23 +155,23 @@ describe('defineWebPage', () => {
       const webpage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webpage).toMatchInlineSnapshot(`
-          {
-            "@id": "https://example.com/our-pages/about-us/#webpage",
-            "@type": [
-              "WebPage",
-              "AboutPage",
+        {
+          "@id": "https://example.com/our-pages/about-us#webpage",
+          "@type": [
+            "WebPage",
+            "AboutPage",
+          ],
+          "name": "Webpage",
+          "potentialAction": {
+            "@type": "ReadAction",
+            "target": [
+              "https://example.com/our-pages/about-us",
+              "test",
             ],
-            "name": "Webpage",
-            "potentialAction": {
-              "@type": "ReadAction",
-              "target": [
-                "https://example.com/our-pages/about-us",
-                "test",
-              ],
-            },
-            "url": "https://example.com/our-pages/about-us",
-          }
-        `)
+          },
+          "url": "https://example.com/our-pages/about-us",
+        }
+      `)
     }, {
       path: '/our-pages/about-us',
     })

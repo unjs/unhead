@@ -70,7 +70,7 @@ describe('defineArticle', () => {
       expect(client).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/test/#article",
+            "@id": "https://example.com/test#article",
             "@type": "Article",
             "dateModified": "2021-11-10T10:10:10.000Z",
             "datePublished": "2021-11-10T10:10:10.000Z",
@@ -436,7 +436,7 @@ describe('defineArticle', () => {
 
       expect(client[2]).toMatchInlineSnapshot(`
         {
-          "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#article",
+          "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal#article",
           "@type": "Article",
           "articleSection": [
             "Organic pecans, activated pecans, single source, Australian organic pecans",
@@ -453,7 +453,7 @@ describe('defineArticle', () => {
           },
           "inLanguage": "en-US",
           "isPartOf": {
-            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage",
+            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal#webpage",
           },
           "keywords": [
             "certified organic pecans",
@@ -463,7 +463,7 @@ describe('defineArticle', () => {
             "Pecan tree",
           ],
           "mainEntityOfPage": {
-            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal/#webpage",
+            "@id": "https://kootingalpecancompany.com/pecan-tree-kootingal#webpage",
           },
           "publisher": {
             "@id": "https://kootingalpecancompany.com/#identity",
