@@ -54,6 +54,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     // let's hydrate - fill the elMap for fast lookups
     if (!state) {
       state = {
+        title: dom.title,
         elMap: new Map()
           .set('htmlAttrs', dom.documentElement)
           .set('bodyAttrs', dom.body),
@@ -197,6 +198,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       // 1. render tags which don't create a new element
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
+        track('title', '', () => dom.title = state.title)
         continue
       }
       ctx.$el = ctx.$el || state.elMap.get(id)

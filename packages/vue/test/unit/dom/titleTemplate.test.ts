@@ -7,6 +7,23 @@ import { useDom } from '../../../../unhead/test/fixtures'
 import { csrVueAppWithUnhead } from '../../util'
 
 describe('vue dom titleTemplate', () => {
+  it('fn replace', async () => {
+    const dom = useDom()
+    const head = csrVueAppWithUnhead(dom, () => {}, {
+      init: [
+        {
+          titleTemplate: () => 'Test',
+        },
+      ],
+    })
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.title).toMatchInlineSnapshot(
+      `"Test"`,
+    )
+  })
+
   it('basic', async () => {
     const dom = useDom()
     const head = csrVueAppWithUnhead(dom, () => {
@@ -24,5 +41,30 @@ describe('vue dom titleTemplate', () => {
       <title>test | template</title></head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
+  })
+
+  it('remove', async () => {
+    const dom = useDom()
+    let entry
+    const head = csrVueAppWithUnhead(dom, () => {
+      entry = useHead({
+        title: 'test',
+      })
+    }, {
+    })
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.title).toMatchInlineSnapshot(
+      `"test"`,
+    )
+
+    entry!.dispose()
+
+    await renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.title).toMatchInlineSnapshot(
+      `""`,
+    )
   })
 })

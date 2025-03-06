@@ -419,6 +419,6 @@ describe('vue e2e', () => {
     home.dispose()
 
     await renderDOMHead(csrHead, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home Page | Company"`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"| Company"`)
   })
 })

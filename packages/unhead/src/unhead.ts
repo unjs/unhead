@@ -146,17 +146,29 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         }, ctx.tagMap)
 
       const title = ctx.tagMap.get('title')
-      const titleTemplate = ctx.tagMap.get('titleTemplate')?.textContent
+      const titleTemplate = ctx.tagMap.get('titleTemplate')
       head._title = title?.textContent
-      head._titleTemplate = typeof titleTemplate === 'string' ? titleTemplate : undefined
 
-      if (titleTemplate && title) {
-        // @ts-expect-error todo
-        let newTitle = typeof titleTemplate === 'function' ? titleTemplate(title.textContent) : titleTemplate
-        if (typeof newTitle === 'string' && !head.plugins.has('template-params')) {
-          newTitle = newTitle.replace('%s', title.textContent || '')
+      if (titleTemplate) {
+        const titleTemplateFn = titleTemplate?.textContent
+        head._titleTemplate = typeof titleTemplateFn === 'string' ? titleTemplateFn : undefined
+        if (titleTemplateFn) {
+          // @ts-expect-error todo
+          let newTitle = (typeof titleTemplateFn === 'function' ? titleTemplateFn(title?.textContent) : titleTemplateFn)
+          if (typeof newTitle === 'string' && !head.plugins.has('template-params')) {
+            newTitle = newTitle.replace('%s', title?.textContent || '')
+          }
+          if (title) {
+            newTitle === null
+              ? ctx.tagMap.delete('title')
+              : ctx.tagMap.set('title', { ...title, textContent: newTitle })
+          }
+          else {
+            // convert title template to a title
+            titleTemplate.tag = 'title'
+            titleTemplate.textContent = newTitle
+          }
         }
-        newTitle === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: newTitle })
       }
       // merge _tags into one map
       ctx.tags = Array.from(ctx.tagMap!.values())
