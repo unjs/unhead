@@ -25,20 +25,20 @@
       "default": "./package.json"
     },
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/fesm2022/unhead-angular.mjs"
     },
     "./client": {
-      "types": "./dist/client/index.d.mts",
+      "types": "./dist/client/index.d.ts",
       "default": "./dist/fesm2022/unhead-angular-client.mjs"
     },
     "./server": {
-      "types": "./dist/server/index.d.mts",
+      "types": "./dist/server/index.d.ts",
       "default": "./dist/fesm2022/unhead-angular-server.mjs"
     }
   },
   "module": "dist/fesm2022/unhead-angular.mjs",
-  "types": "dist/index.d.mts",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "server": [
