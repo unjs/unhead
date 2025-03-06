@@ -58,7 +58,8 @@
     "build": "ng build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:attw": "true"
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {

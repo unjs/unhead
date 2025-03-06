@@ -21,21 +21,21 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
     "./vite": {
-      "types": "./dist/vite.d.mts",
+      "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
     },
     "./webpack": {
-      "types": "./dist/webpack.d.mts",
+      "types": "./dist/webpack.d.ts",
       "default": "./dist/webpack.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "vite": [
@@ -47,11 +47,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "*.d.ts"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "test:attw": "attw --pack"
   },
   "peerDependencies": {
     "unhead": "workspace:*"

@@ -17,29 +17,29 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
     "./server": {
-      "types": "./dist/server.d.mts",
+      "types": "./dist/server.d.ts",
       "default": "./dist/server.mjs"
     },
     "./client": {
-      "types": "./dist/client.d.mts",
+      "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
     "./utils": {
-      "types": "./dist/utils.d.mts",
+      "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
     },
     "./plugins": {
-      "types": "./dist/plugins.d.mts",
+      "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "server": [
@@ -57,13 +57,14 @@
     }
   },
   "files": [
-    "*.d.mts",
+    "*.d.ts",
     "dist"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub",
-    "export:sizes": "npx export-size . -r"
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "export:sizes": "npx export-size . -r",
+    "test:attw": "attw --pack"
   },
   "peerDependencies": {
     "react": ">=19"

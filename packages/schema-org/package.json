@@ -27,29 +27,29 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
     "./vue": {
-      "types": "./dist/vue.d.mts",
+      "types": "./dist/vue.d.ts",
       "default": "./dist/vue.mjs"
     },
     "./svelte": {
-      "types": "./dist/svelte.d.mts",
+      "types": "./dist/svelte.d.ts",
       "default": "./dist/svelte.mjs"
     },
     "./react": {
-      "types": "./dist/react.d.mts",
+      "types": "./dist/react.d.ts",
       "default": "./dist/react.mjs"
     },
     "./solid-js": {
-      "types": "./dist/solid-js.d.mts",
+      "types": "./dist/solid-js.d.ts",
       "default": "./dist/solid-js.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "vue": [
@@ -67,15 +67,14 @@
     }
   },
   "files": [
-    "*.d.mts",
+    "*.d.ts",
     "dist"
   ],
   "scripts": {
     "build": "unbuild .",
     "stub": "unbuild . --stub",
-    "test": "vitest",
-    "release": "bumpp package.json --commit --push --tag",
-    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix"
+    "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
+    "test:attw": "attw --pack"
   },
   "peerDependencies": {
     "@unhead/react": "^2",

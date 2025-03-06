@@ -22,11 +22,13 @@
     "release:next": "pnpm build && pnpm bump && pnpm publish --tag next -r --no-git-checks",
     "lint": "eslint . --fix",
     "benchmark": "vitest bench",
+    "test:attw": "pnpm --filter './packages/**' test:attw",
     "lint:docs": "pnpx markdownlint-cli ./docs && pnpx case-police 'docs/**/*.md' *.md",
     "lint:docs:fix": "pnpx markdownlint-cli ./docs --fix && pnpx case-police 'docs/**/*.md' *.md --fix",
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.17.4",
     "@antfu/eslint-config": "^4.5.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",

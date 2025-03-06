@@ -22,45 +22,45 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
     "./components": {
-      "types": "./dist/components.d.mts",
+      "types": "./dist/components.d.ts",
       "default": "./dist/components.mjs"
     },
     "./server": {
-      "types": "./dist/server.d.mts",
+      "types": "./dist/server.d.ts",
       "default": "./dist/server.mjs"
     },
     "./client": {
-      "types": "./dist/client.d.mts",
+      "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
     "./types": {
-      "types": "./dist/types.d.mts",
+      "types": "./dist/types.d.ts",
       "default": "./dist/types.mjs"
     },
     "./legacy": {
-      "types": "./dist/legacy.d.mts",
+      "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
     },
     "./plugins": {
-      "types": "./dist/plugins.d.mts",
+      "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
     "./utils": {
-      "types": "./dist/utils.d.mts",
+      "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
     },
     "./scripts": {
-      "types": "./dist/scripts.d.mts",
+      "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
+  "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
       "components": [
@@ -90,12 +90,13 @@
     }
   },
   "files": [
-    "*.d.mts",
+    "*.d.ts",
     "dist"
   ],
   "scripts": {
-    "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "test:attw": "attw --pack"
   },
   "peerDependencies": {
     "vue": ">=3.5.13"
