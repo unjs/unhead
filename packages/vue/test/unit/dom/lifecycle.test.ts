@@ -94,7 +94,7 @@ describe('vue dom', () => {
     await renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html lang="en" dir="ltr" class="post-update"><head>
+      "<html lang="en" dir="ltr"><head>
 
       <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
@@ -106,7 +106,7 @@ describe('vue dom', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="post-update"><head>
+      "<html><head>
 
       </head>
       <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
@@ -123,7 +123,7 @@ describe('vue dom', () => {
 
     await setTimeout(500)
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="post-update" lang="en" dir="ltr"><head>
+      "<html lang="en" dir="ltr"><head>
 
       <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
@@ -147,7 +147,7 @@ describe('vue dom', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="post-update" lang="de" dir="rtl"><head>
+      "<html lang="de" dir="rtl"><head>
 
       </head>
       <body class="test"><div id="app" data-v-app=""><div>hello world</div></div><script>console.log('hello')</script></body></html>"
@@ -157,7 +157,7 @@ describe('vue dom', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="post-update"><head>
+      "<html><head>
 
       </head>
       <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"

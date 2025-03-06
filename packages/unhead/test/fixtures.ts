@@ -4,6 +4,10 @@ import { JSDOM } from 'jsdom'
 
 export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
   if (typeof window !== 'undefined') {
+    // reset all window.document.documentElement attributes
+    window.document.documentElement.getAttributeNames().forEach(name => {
+      window.document.documentElement.removeAttribute(name)
+    })
     // just apply the below to the current document
     const attrsString = `${extra?.htmlAttrs || ''}${payload?.htmlAttrs || ''}`
     // split into key => value
