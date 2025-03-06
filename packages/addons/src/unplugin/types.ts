@@ -1,5 +1,5 @@
-import type { TreeshakeServerComposablesOptions } from '@unhead/addons/src/unplugin/TreeshakeServerComposables'
-import type { UseSeoMetaTransformOptions } from '@unhead/addons/src/unplugin/UseSeoMetaTransform'
+import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
+import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 
 export interface BaseTransformerTypes {
   sourcemap?: boolean

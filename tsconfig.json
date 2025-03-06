@@ -3,11 +3,11 @@
     "target": "esnext",
     "jsx": "preserve",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "moduleDetection": "force",
     "experimentalDecorators": true,
     "baseUrl": ".",
     "rootDir": ".",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "preserve",
     "paths": {
       "unhead": ["packages/unhead/src/index"],
       "unhead/plugins": ["packages/unhead/src/plugins/index"],
