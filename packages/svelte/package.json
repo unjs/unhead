@@ -60,7 +60,7 @@
     "export:sizes": "npx export-size . -r"
   },
   "peerDependencies": {
-    "svelte": ">=5.20.4"
+    "svelte": ">=5.22.5"
   },
   "build": {
     "external": [
@@ -72,6 +72,6 @@
   },
   "devDependencies": {
     "@testing-library/svelte": "^5.2.7",
-    "svelte": "^5.22.0"
+    "svelte": "^5.22.5"
   }
 }
