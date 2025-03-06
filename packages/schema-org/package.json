@@ -27,29 +27,29 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./vue": {
-      "types": "./dist/vue.d.ts",
-      "import": "./dist/vue.mjs"
+      "types": "./dist/vue.d.mts",
+      "default": "./dist/vue.mjs"
     },
     "./svelte": {
-      "types": "./dist/svelte.d.ts",
-      "import": "./dist/svelte.mjs"
+      "types": "./dist/svelte.d.mts",
+      "default": "./dist/svelte.mjs"
     },
     "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.mjs"
+      "types": "./dist/react.d.mts",
+      "default": "./dist/react.mjs"
     },
     "./solid-js": {
-      "types": "./dist/solid-js.d.ts",
-      "import": "./dist/solid-js.mjs"
+      "types": "./dist/solid-js.d.mts",
+      "default": "./dist/solid-js.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "types": "dist/index.d.mts",
   "typesVersions": {
     "*": {
       "vue": [
@@ -67,11 +67,8 @@
     }
   },
   "files": [
-    "dist",
-    "react.d.ts",
-    "solid-js.d.ts",
-    "svelte.d.ts",
-    "vue.d.ts"
+    "*.d.mts",
+    "dist"
   ],
   "scripts": {
     "build": "unbuild .",

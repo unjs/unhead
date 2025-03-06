@@ -27,7 +27,7 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.4.0",
+    "@antfu/eslint-config": "^4.5.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
@@ -57,7 +57,6 @@
     ]
   },
   "resolutions": {
-    "typescript": "5.7.3",
     "@unhead/addons": "workspace:*",
     "@unhead/angular": "workspace:*",
     "@unhead/dom": "workspace:*",
@@ -66,6 +65,7 @@
     "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
+    "typescript": "5.7.3",
     "unhead": "workspace:*"
   }
 }

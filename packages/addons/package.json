@@ -21,28 +21,28 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./vite": {
-      "types": "./dist/vite.d.ts",
-      "import": "./dist/vite.mjs"
+      "types": "./dist/vite.d.mts",
+      "default": "./dist/vite.mjs"
     },
     "./webpack": {
-      "types": "./dist/webpack.d.ts",
-      "import": "./dist/webpack.mjs"
+      "types": "./dist/webpack.d.mts",
+      "default": "./dist/webpack.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "types": "dist/index.d.mts",
   "typesVersions": {
     "*": {
       "vite": [
-        "dist/vite.d.ts"
+        "dist/vite"
       ],
       "webpack": [
-        "dist/webpack.d.ts"
+        "dist/webpack"
       ]
     }
   },

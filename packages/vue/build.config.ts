@@ -1,9 +1,8 @@
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  clean: true,
-  declaration: true,
   externals: ['vue'],
+  declaration: true,
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/components', name: 'components' },
