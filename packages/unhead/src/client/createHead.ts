@@ -19,7 +19,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
       },
     ],
     init: [
-      JSON.parse(initialPayload || '{}'),
+      initialPayload ? JSON.parse(initialPayload) : false,
       ...(options.init || []),
     ],
   })

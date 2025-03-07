@@ -102,7 +102,7 @@ describe('vue dom', () => {
 
     entry!.dispose()
 
-    expect(head.headEntries()).toMatchInlineSnapshot('[]')
+    expect(head.headEntries()).toMatchInlineSnapshot(`[]`)
 
     await renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`

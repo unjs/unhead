@@ -104,7 +104,7 @@ export interface CreateHeadOptions {
    *
    * Any tags here are added with low priority.
    */
-  init?: (ResolvableHead | undefined)[]
+  init?: (ResolvableHead | undefined | false)[]
   /**
    * Disable the Capo.js tag sorting algorithm.
    *
