@@ -1,8 +1,11 @@
 import { createHead } from '@unhead/vue/client'
+import { renderSSRHead } from '@unhead/vue/server'
+
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
+import { createHeadCore } from '../../src'
 
 describe('vue e2e scripts', () => {
   it('multiple active promise handles', async () => {
@@ -112,5 +115,51 @@ describe('vue e2e scripts', () => {
     // both should be loaded
     expect(status.value).toEqual('loading')
     expect(status2.value).toEqual('loading')
+  })
+
+  it('respects useScript privacy controls - #293', async () => {
+    const head = createHeadCore()
+    const script = useScript({
+      src: 'https://s.kk-resources.com/leadtag.js',
+      async: true,
+      crossorigin: false,
+    }, {
+      head,
+    })
+    const ssr = await renderSSRHead(head)
+    expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
+      [
+        "<link",
+        "as="script"",
+        "fetchpriority="low"",
+        "href="https://s.kk-resources.com/leadtag.js"",
+        "referrerpolicy="no-referrer"",
+        "rel="preload"",
+      ]
+    `)
+    script.remove()
+  })
+  it('respects useScript privacy controls', async () => {
+    const head = createHeadCore()
+    const script = useScript({
+      src: 'https://s.kk-resources.com/leadtag.js',
+      crossorigin: 'use-credentials',
+      referrerpolicy: 'no-referrer-when-downgrade',
+    }, {
+      head,
+    })
+    const ssr = await renderSSRHead(head)
+    expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
+      [
+        "<link",
+        "as="script"",
+        "crossorigin="use-credentials"",
+        "fetchpriority="low"",
+        "href="https://s.kk-resources.com/leadtag.js"",
+        "referrerpolicy="no-referrer-when-downgrade"",
+        "rel="preload"",
+      ]
+    `)
+    script.remove()
   })
 })
