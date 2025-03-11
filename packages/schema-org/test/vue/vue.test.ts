@@ -182,6 +182,7 @@ describe('schema.org e2e', () => {
       init: [
         {
           templateParams: {
+            // @ts-expect-error untyped
             schemaOrg: computed(() => {
               return {
                 inLanguage: ref('foo'),
