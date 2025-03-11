@@ -47,16 +47,13 @@
     }
   },
   "files": [
-    "dist",
-    "*.d.ts"
+    "*.d.ts",
+    "dist"
   ],
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
     "test:attw": "attw --pack"
-  },
-  "peerDependencies": {
-    "unhead": "workspace:*"
   },
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",
