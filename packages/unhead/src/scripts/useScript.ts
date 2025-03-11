@@ -145,7 +145,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         href,
         rel,
         crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (isCrossOrigin ? 'anonymous' : undefined),
-        referrerpolicy:  typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (isCrossOrigin ? 'no-referrer' : undefined),
+        referrerpolicy: typeof input.referrerpolicy !== 'undefined' ? input.referrerpolicy : (isCrossOrigin ? 'no-referrer' : undefined),
         fetchpriority: typeof input.fetchpriority !== 'undefined' ? input.fetchpriority : 'low',
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
