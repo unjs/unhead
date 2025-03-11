@@ -112,7 +112,6 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
 
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
-
   if (tag.key && DupeableTags.has(tag.tag)) {
     tag.props['data-hid'] = tag._h = tag.key
   }
@@ -131,22 +130,21 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
   if (!input) {
     return []
   }
+  if (typeof input === 'function') {
+    input = input()
+  }
+  const resolvers = (key?: string, val?: any) => {
+    for (let i = 0; i < propResolvers.length; i++) {
+      val = propResolvers[i](key, val)
+    }
+    return val
+  }
+  input = resolvers(undefined, input)
 
   const tags: (HeadTag | HeadTag[])[] = []
 
-  if (typeof input === 'function') {
-    return normalizeEntryToTags(input(), propResolvers)
-  }
-  input = walkResolver(input, (key, val) => {
-    let res = val
-    for (let i = 0; i < propResolvers.length; i++) {
-      const v = propResolvers[i](key, res)
-      if (v !== undefined)
-        res = v
-    }
-    return res
-  })
-  Object.entries(input).forEach(([key, value]) => {
+  input = walkResolver(input, resolvers)
+  Object.entries(input || {}).forEach(([key, value]) => {
     if (value === undefined)
       return
     for (const v of (Array.isArray(value) ? value : [value]))

@@ -25,5 +25,12 @@ export default defineBuildConfig({
     'unplugin-vue-components',
     'vue',
     '@vue/runtime-core',
+    '@unhead/react',
+    '@unhead/solid-js',
+    '@unhead/svelte',
+    '@unhead/vue',
+    'unhead',
+    'unhead/utils',
+    'unhead/plugins',
   ],
 })

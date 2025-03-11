@@ -12,6 +12,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
         if (k && k.startsWith('on') && typeof v === 'function') {
           return `this.dataset.${k}fired = true`
         }
+        return v
       },
     ],
     init: [

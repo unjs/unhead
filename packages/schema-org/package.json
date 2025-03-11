@@ -76,27 +76,6 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
     "test:attw": "attw --pack"
   },
-  "peerDependencies": {
-    "@unhead/react": "^2",
-    "@unhead/solid-js": "^2",
-    "@unhead/svelte": "^2",
-    "@unhead/vue": "^2",
-    "unhead": "^2"
-  },
-  "peerDependenciesMeta": {
-    "@unhead/react": {
-      "optional": true
-    },
-    "@unhead/solid-js": {
-      "optional": true
-    },
-    "@unhead/svelte": {
-      "optional": true
-    },
-    "@unhead/vue": {
-      "optional": true
-    }
-  },
   "dependencies": {
     "defu": "^6.1.4",
     "ohash": "^2.0.10",

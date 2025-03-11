@@ -147,4 +147,26 @@ describe('vue ssr examples', () => {
       }
     `)
   })
+  it('https://github.com/vite-pwa/vite-plugin-pwa/discussions/832', async () => {
+    const head = await ssrVueAppWithUnhead(() => {
+      useHead(ref({
+        link: [
+          {
+            rel: 'manifest',
+            href: '/manifest.webmanifest',
+          },
+        ],
+      }))
+    })
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<link rel="manifest" href="/manifest.webmanifest">",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })
