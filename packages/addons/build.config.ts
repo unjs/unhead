@@ -14,5 +14,7 @@ export default defineBuildConfig({
     'rollup',
     'unhead',
     'unplugin',
+    'unhead/plugins',
+    'unhead/utils'
   ],
 })
