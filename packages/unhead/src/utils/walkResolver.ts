@@ -9,7 +9,11 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
       val = val()
     }
   }
-  const v = resolve?.(key, val) || val
+  let v: any
+  if (resolve) {
+    v = resolve(key, val)
+  }
+
   if (Array.isArray(v)) {
     return v.map(r => walkResolver(r, resolve))
   }
