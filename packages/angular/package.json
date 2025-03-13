@@ -1,7 +1,7 @@
 {
   "name": "@unhead/angular",
   "type": "module",
-  "version": "2.0.0-rc.10",
+  "version": "2.0.0-rc.11",
   "description": "Full-stack <head> manager built for Angular.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
