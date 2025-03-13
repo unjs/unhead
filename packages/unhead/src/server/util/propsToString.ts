@@ -12,7 +12,7 @@ export function propsToString(props: Record<string, any>) {
     let value = props[key]
 
     // class (set) and style (map)
-    if (key === 'class' || key === 'style') {
+    if ((key === 'class' || key === 'style') && typeof value !== 'string') {
       value = key === 'class'
         ? Array.from(value).join(' ')
         : Array.from(value as Map<string, string>)

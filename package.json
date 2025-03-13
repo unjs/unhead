@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "2.0.0-rc.8",
+  "version": "2.0.0-rc.10",
   "private": "true",
   "packageManager": "pnpm@10.5.2",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -28,8 +28,8 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "0.17.4",
     "@antfu/eslint-config": "^4.5.1",
+    "@arethetypeswrong/cli": "0.17.4",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",

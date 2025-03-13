@@ -1,9 +1,11 @@
-import { defineArticle, defineWebPage, useSchemaOrg } from '@unhead/schema-org/vue'
+import { defineArticle, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { useHead } from '@unhead/vue'
 import { createHead as createClientHead, renderDOMHead } from '@unhead/vue/client'
 import { renderSSRHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
+import { computed, ref } from 'vue'
 import { useDom } from '../../../unhead/test/fixtures'
+import { createHead as createServerHead } from '../../../vue/src/server'
 import { ssrVueAppWithUnhead } from '../../../vue/test/util'
 
 describe('schema.org e2e', () => {
@@ -148,6 +150,74 @@ describe('schema.org e2e', () => {
         "headTags": "",
         "htmlAttrs": "",
       }
+    `)
+  })
+  it('ref simple', async () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
+    useSchemaOrg([
+      defineWebSite(ref({
+        name: 'Test',
+      })),
+    ], { head })
+
+    const data = await renderSSRHead(head)
+    expect(data.bodyTags).toMatchInlineSnapshot(`
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#/schema//d006e97",
+            "name": "Test"
+          }
+        ]
+      }</script>"
+    `)
+  })
+
+  it('refs', async () => {
+    const head = createServerHead({
+      disableDefaults: true,
+      init: [
+        {
+          templateParams: {
+            // @ts-expect-error untyped
+            schemaOrg: computed(() => {
+              return {
+                inLanguage: ref('foo'),
+              }
+            }),
+          },
+        },
+      ],
+    })
+    useSchemaOrg([
+      defineWebPage(computed(() => ({
+        name: ref('test'),
+        foo: computed(() => 'bar'),
+      }))),
+      defineWebSite(ref({
+        name: 'Test',
+      })),
+    ], { head })
+
+    const data = await renderSSRHead(head)
+    expect(data.bodyTags).toMatchInlineSnapshot(`
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#/schema//6b94a87",
+            "foo": "bar",
+            "name": "test"
+          },
+          {
+            "@id": "#/schema//d006e97",
+            "name": "Test"
+          }
+        ]
+      }</script>"
     `)
   })
 })

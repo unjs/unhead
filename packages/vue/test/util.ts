@@ -30,14 +30,14 @@ export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, 
   return head
 }
 
-export async function ssrVueAppWithUnhead(fn: () => void | Promise<void>, options?: CreateHeadOptions) {
+export async function ssrVueAppWithUnhead(fn: (head: ReturnType<typeof createServerHead>) => void | Promise<void>, options?: CreateHeadOptions) {
   const head = createServerHead({
     disableDefaults: true,
     ...options,
   })
   const app = createSSRApp({
     async setup() {
-      fn()
+      fn(head)
       return () => '<div>hi</div>'
     },
   })

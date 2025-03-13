@@ -4,8 +4,8 @@ import { renderSSRHead } from '@unhead/vue/server'
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
-import { useScript } from '../../src/scripts/useScript'
 import { createHeadCore } from '../../src'
+import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
   it('multiple active promise handles', async () => {

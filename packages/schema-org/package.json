@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "2.0.0-rc.8",
+  "version": "2.0.0-rc.10",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -75,27 +75,6 @@
     "stub": "unbuild . --stub",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
     "test:attw": "attw --pack"
-  },
-  "peerDependencies": {
-    "@unhead/react": "^2",
-    "@unhead/solid-js": "^2",
-    "@unhead/svelte": "^2",
-    "@unhead/vue": "^2",
-    "unhead": "^2"
-  },
-  "peerDependenciesMeta": {
-    "@unhead/react": {
-      "optional": true
-    },
-    "@unhead/solid-js": {
-      "optional": true
-    },
-    "@unhead/svelte": {
-      "optional": true
-    },
-    "@unhead/vue": {
-      "optional": true
-    }
   },
   "dependencies": {
     "defu": "^6.1.4",

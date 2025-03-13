@@ -4,15 +4,14 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
   // Combined primitive type check
   const type = typeof val
 
+  if (type === 'function') {
+    if (!key || (key !== 'titleTemplate' && !(key[0] === 'o' && key[1] === 'n'))) {
+      val = val()
+    }
+  }
   let v: any
-  if (!resolve || !key) {
-    v = type === 'function' ? val() : val
-  }
-  else if (resolve && (key === 'titleTemplate' || (key[0] === 'o' && key[1] === 'n'))) {
+  if (resolve) {
     v = resolve(key, val)
-  }
-  else if (resolve) {
-    v = type === 'function' ? resolve(key, val()) : resolve(key, val)
   }
 
   if (Array.isArray(v)) {

@@ -93,7 +93,7 @@ export interface ActiveHeadEntry<Input> {
   _poll: (rm?: boolean) => void
 }
 
-export type PropResolver = (key: string, value: any, tag?: HeadTag) => any
+export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
 
 export interface CreateHeadOptions {
   document?: Document

@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "2.0.0-rc.8",
+  "version": "2.0.0-rc.10",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -47,16 +47,13 @@
     }
   },
   "files": [
-    "dist",
-    "*.d.ts"
+    "*.d.ts",
+    "dist"
   ],
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
     "test:attw": "attw --pack"
-  },
-  "peerDependencies": {
-    "unhead": "workspace:*"
   },
   "dependencies": {
     "@rollup/pluginutils": "^5.1.4",

@@ -8,7 +8,12 @@ describe('propsToString', () => {
     })).toStrictEqual(' a="b"')
     expect(propsToString({})).toStrictEqual('')
   })
-
+  it ('class / style strings', () => {
+    expect(propsToString({
+      class: 'a b',
+      style: 'color: red; font-size: 12px',
+    })).toStrictEqual(' class="a b" style="color: red; font-size: 12px"')
+  })
   it('stringifies all properties correctly', async () => {
     expect(propsToString({
       'array': ['a', 1],
