@@ -15,6 +15,6 @@ export default defineBuildConfig({
     'unhead',
     'unplugin',
     'unhead/plugins',
-    'unhead/utils'
+    'unhead/utils',
   ],
 })
