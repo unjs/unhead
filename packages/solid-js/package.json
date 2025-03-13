@@ -1,7 +1,7 @@
 {
   "name": "@unhead/solid-js",
   "type": "module",
-  "version": "2.0.0-rc.11",
+  "version": "2.0.0-rc.12",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
