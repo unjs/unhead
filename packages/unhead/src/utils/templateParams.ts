@@ -19,6 +19,7 @@ function sub(p: TemplateParams, token: string, isJson = false) {
   if (val !== undefined) {
     return isJson
       ? (val || '')
+          .replace(/\\/g, '\\\\')
           .replace(/</g, '\\u003C')
           .replace(/"/g, '\\"')
       : val || ''
