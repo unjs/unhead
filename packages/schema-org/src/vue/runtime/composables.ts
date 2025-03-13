@@ -1,4 +1,4 @@
-import type { ResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
+import type { DeepResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
 import type { ActiveHeadEntry } from 'unhead/types'
 import type {
   AggregateOffer,
@@ -53,113 +53,113 @@ function provideResolver<T>(input?: T, resolver?: string) {
   return input
 }
 
-export function defineAddress<T extends Record<string, any>>(input?: ResolvableProperties<PostalAddress & T>) {
+export function defineAddress<T extends Record<string, any>>(input?: DeepResolvableProperties<PostalAddress & T>) {
   return provideResolver(input, 'address')
 }
-export function defineAggregateOffer<T extends Record<string, any>>(input?: ResolvableProperties<AggregateOffer & T>) {
+export function defineAggregateOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateOffer & T>) {
   return provideResolver(input, 'aggregateOffer')
 }
-export function defineAggregateRating<T extends Record<string, any>>(input?: ResolvableProperties<AggregateRating & T>) {
+export function defineAggregateRating<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateRating & T>) {
   return provideResolver(input, 'aggregateRating')
 }
-export function defineArticle<T extends Record<string, any>>(input?: ResolvableProperties<Article & T>) {
+export function defineArticle<T extends Record<string, any>>(input?: DeepResolvableProperties<Article & T>) {
   return provideResolver(input, 'article')
 }
-export function defineBreadcrumb<T extends Record<string, any>>(input?: ResolvableProperties<BreadcrumbList & T>) {
+export function defineBreadcrumb<T extends Record<string, any>>(input?: DeepResolvableProperties<BreadcrumbList & T>) {
   return provideResolver(input, 'breadcrumb')
 }
-export function defineComment<T extends Record<string, any>>(input?: ResolvableProperties<Comment & T>) {
+export function defineComment<T extends Record<string, any>>(input?: DeepResolvableProperties<Comment & T>) {
   return provideResolver(input, 'comment')
 }
-export function defineEvent<T extends Record<string, any>>(input?: ResolvableProperties<Event & T>) {
+export function defineEvent<T extends Record<string, any>>(input?: DeepResolvableProperties<Event & T>) {
   return provideResolver(input, 'event')
 }
-export function defineFoodEstablishment<T extends Record<string, any>>(input?: ResolvableProperties<FoodEstablishment & T>) {
+export function defineFoodEstablishment<T extends Record<string, any>>(input?: DeepResolvableProperties<FoodEstablishment & T>) {
   return provideResolver(input, 'foodEstablishment')
 }
-export function defineVirtualLocation<T extends Record<string, any>>(input?: ResolvableProperties<VirtualLocation & T>) {
+export function defineVirtualLocation<T extends Record<string, any>>(input?: DeepResolvableProperties<VirtualLocation & T>) {
   return provideResolver(input, 'virtualLocation')
 }
-export function definePlace<T extends Record<string, any>>(input?: ResolvableProperties<Place & T>) {
+export function definePlace<T extends Record<string, any>>(input?: DeepResolvableProperties<Place & T>) {
   return provideResolver(input, 'place')
 }
-export function defineHowTo<T extends Record<string, any>>(input?: ResolvableProperties<HowTo & T>) {
+export function defineHowTo<T extends Record<string, any>>(input?: DeepResolvableProperties<HowTo & T>) {
   return provideResolver(input, 'howTo')
 }
-export function defineHowToStep<T extends Record<string, any>>(input?: ResolvableProperties<HowToStep & T>) {
+export function defineHowToStep<T extends Record<string, any>>(input?: DeepResolvableProperties<HowToStep & T>) {
   return provideResolver(input, 'howToStep')
 }
-export function defineImage<T extends Record<string, any>>(input?: ResolvableProperties<ImageObject & T>) {
+export function defineImage<T extends Record<string, any>>(input?: DeepResolvableProperties<ImageObject & T>) {
   return provideResolver(input, 'image')
 }
-export function defineJobPosting<T extends Record<string, any>>(input?: ResolvableProperties<JobPosting & T>) {
+export function defineJobPosting<T extends Record<string, any>>(input?: DeepResolvableProperties<JobPosting & T>) {
   return provideResolver(input, 'jobPosting')
 }
-export function defineLocalBusiness<T extends Record<string, any>>(input?: ResolvableProperties<LocalBusiness & T>) {
+export function defineLocalBusiness<T extends Record<string, any>>(input?: DeepResolvableProperties<LocalBusiness & T>) {
   return provideResolver(input, 'localBusiness')
 }
-export function defineOffer<T extends Record<string, any>>(input?: ResolvableProperties<Offer & T>) {
+export function defineOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<Offer & T>) {
   return provideResolver(input, 'offer')
 }
-export function defineOpeningHours<T extends Record<string, any>>(input?: ResolvableProperties<OpeningHoursSpecification & T>) {
+export function defineOpeningHours<T extends Record<string, any>>(input?: DeepResolvableProperties<OpeningHoursSpecification & T>) {
   return provideResolver(input, 'openingHours')
 }
-export function defineOrganization<T extends Record<string, any>>(input?: ResolvableProperties<Organization & T>) {
+export function defineOrganization<T extends Record<string, any>>(input?: DeepResolvableProperties<Organization & T>) {
   return provideResolver(input, 'organization')
 }
-export function definePerson<T extends Record<string, any>>(input?: ResolvableProperties<Person & T>) {
+export function definePerson<T extends Record<string, any>>(input?: DeepResolvableProperties<Person & T>) {
   return provideResolver(input, 'person')
 }
-export function defineProduct<T extends Record<string, any>>(input?: ResolvableProperties<Product & T>) {
+export function defineProduct<T extends Record<string, any>>(input?: DeepResolvableProperties<Product & T>) {
   return provideResolver(input, 'product')
 }
-export function defineQuestion<T extends Record<string, any>>(input?: ResolvableProperties<Question & T>) {
+export function defineQuestion<T extends Record<string, any>>(input?: DeepResolvableProperties<Question & T>) {
   return provideResolver(input, 'question')
 }
-export function defineRecipe<T extends Record<string, any>>(input?: ResolvableProperties<Recipe & T>) {
+export function defineRecipe<T extends Record<string, any>>(input?: DeepResolvableProperties<Recipe & T>) {
   return provideResolver(input, 'recipe')
 }
-export function defineReview<T extends Record<string, any>>(input?: ResolvableProperties<Review & T>) {
+export function defineReview<T extends Record<string, any>>(input?: DeepResolvableProperties<Review & T>) {
   return provideResolver(input, 'review')
 }
-export function defineVideo<T extends Record<string, any>>(input?: ResolvableProperties<VideoObject & T>) {
+export function defineVideo<T extends Record<string, any>>(input?: DeepResolvableProperties<VideoObject & T>) {
   return provideResolver(input, 'video')
 }
-export function defineWebPage<T extends Record<string, any>>(input?: ResolvableProperties<WebPage & T>) {
+export function defineWebPage<T extends Record<string, any>>(input?: DeepResolvableProperties<WebPage & T>) {
   return provideResolver(input, 'webPage')
 }
-export function defineWebSite<T extends Record<string, any>>(input?: ResolvableProperties<WebSite & T>) {
+export function defineWebSite<T extends Record<string, any>>(input?: DeepResolvableProperties<WebSite & T>) {
   return provideResolver(input, 'webSite')
 }
-export function defineBook<T extends Record<string, any>>(input?: ResolvableProperties<Book & T>) {
+export function defineBook<T extends Record<string, any>>(input?: DeepResolvableProperties<Book & T>) {
   return provideResolver(input, 'book')
 }
-export function defineCourse<T extends Record<string, any>>(input?: ResolvableProperties<Course & T>) {
+export function defineCourse<T extends Record<string, any>>(input?: DeepResolvableProperties<Course & T>) {
   return provideResolver(input, 'course')
 }
-export function defineItemList<T extends Record<string, any>>(input?: ResolvableProperties<ItemList & T>) {
+export function defineItemList<T extends Record<string, any>>(input?: DeepResolvableProperties<ItemList & T>) {
   return provideResolver(input, 'itemList')
 }
-export function defineListItem<T extends Record<string, any>>(input?: ResolvableProperties<ListItem & T>) {
+export function defineListItem<T extends Record<string, any>>(input?: DeepResolvableProperties<ListItem & T>) {
   return provideResolver(input, 'listItem')
 }
-export function defineMovie<T extends Record<string, any>>(input?: ResolvableProperties<Movie & T>) {
+export function defineMovie<T extends Record<string, any>>(input?: DeepResolvableProperties<Movie & T>) {
   return provideResolver(input, 'movie')
 }
-export function defineSearchAction<T extends Record<string, any>>(input?: ResolvableProperties<SearchAction & T>) {
+export function defineSearchAction<T extends Record<string, any>>(input?: DeepResolvableProperties<SearchAction & T>) {
   return provideResolver(input, 'searchAction')
 }
-export function defineReadAction<T extends Record<string, any>>(input?: ResolvableProperties<ReadAction & T>) {
+export function defineReadAction<T extends Record<string, any>>(input?: DeepResolvableProperties<ReadAction & T>) {
   return provideResolver(input, 'readAction')
 }
-export function defineSoftwareApp<T extends Record<string, any>>(input?: ResolvableProperties<SoftwareApp & T>) {
+export function defineSoftwareApp<T extends Record<string, any>>(input?: DeepResolvableProperties<SoftwareApp & T>) {
   return provideResolver(input, 'softwareApp')
 }
-export function defineBookEdition<T extends Record<string, any>>(input?: ResolvableProperties<BookEdition & T>) {
+export function defineBookEdition<T extends Record<string, any>>(input?: DeepResolvableProperties<BookEdition & T>) {
   return provideResolver(input, 'bookEdition')
 }
 
-export type UseSchemaOrgInput = Arrayable<ResolvableProperties<Thing | Record<string, any>>>
+export type UseSchemaOrgInput = Arrayable<DeepResolvableProperties<Thing | Record<string, any>>>
 
 export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
