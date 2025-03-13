@@ -303,7 +303,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * @see https://developers.google.com/search/docs/crawling-indexing/special-tags
    */
-  google:
+  google?:
   /**
    * When users search for your site, Google Search results sometimes display a search box specific to your site,
    * along with other direct links to your site. This tag tells Google not to show the sitelinks search box.
@@ -318,7 +318,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * @see https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag
    */
-  googlebot:
+  googlebot?:
   /**
    * When Google recognizes that the contents of a page aren't in the language that the user likely wants to read,
    * Google may provide a translated title link and snippet in search results.
