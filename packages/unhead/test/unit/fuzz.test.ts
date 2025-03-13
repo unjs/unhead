@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { fc, it } from '@fast-check/vitest'
 import { renderSSRHead } from '@unhead/ssr'
 import { useHead } from '../../src/composables'
