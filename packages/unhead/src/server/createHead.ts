@@ -34,17 +34,22 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       ...(options.init || []),
     ],
   })
+  unhead._ssrPayload = {}
   unhead.use({
     key: 'server',
     hooks: {
       'tags:resolve': function (ctx) {
         const title = ctx.tagMap.get('title') as HeadTag | undefined
         const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
-        const templateParams = ctx.tagMap.get('templateParams') as HeadTag | undefined
-        const payload: ResolvableHead = {
+        let payload: ResolvableHead = {
           title: title?.mode === 'server' ? unhead._title : undefined,
           titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
-          templateParams: templateParams?.mode === 'server' ? unhead._templateParams : undefined,
+        }
+        if (Object.keys(unhead._ssrPayload || {}).length > 0) {
+          payload = {
+            ...unhead._ssrPayload,
+            ...payload,
+          }
         }
         // filter non-values
         if (Object.values(payload).some(Boolean)) {

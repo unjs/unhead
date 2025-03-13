@@ -228,6 +228,10 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _titleTemplate?: string
+  /**
+   * @internal
+   */
+  _ssrPayload?: ResolvableHead
 }
 
 export interface DomState {
