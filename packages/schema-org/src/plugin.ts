@@ -7,6 +7,7 @@ import {
   createSchemaOrgGraph,
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
+import { loadResolver } from './resolver'
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
@@ -42,7 +43,6 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
-              const { loadResolver } = await import('./resolver')
               const nodes = await tag.props.nodes
               for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
                 // malformed input
