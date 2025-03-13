@@ -194,7 +194,6 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
 
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
-            // @ts-expect-error untyped
             const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
             // @ts-expect-error untyped
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
@@ -204,7 +203,6 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
         }
         else {
           extras.push(...(typeof v === 'string'
-            // @ts-expect-error untyped
             ? unpackMeta({ [key]: v }) as UnheadMeta[]
             : handleObjectEntry(key, v)))
         }
