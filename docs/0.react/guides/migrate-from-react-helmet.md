@@ -55,7 +55,7 @@ Remove React Helmet and install Unhead:
 
 ```bash
 npm remove react-helmet
-npm install @unhead/react@next
+npm install @unhead/react
 ```
 
 ### 2. Add the Provider
