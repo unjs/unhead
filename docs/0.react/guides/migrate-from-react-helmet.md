@@ -9,7 +9,7 @@ navigation:
 
 [React Helmet](https://github.com/nfl/react-helmet) was the go-to solution for managing `<head>` tags in React applications for years. However, its last major release was in 2020 and the project is now in maintenance mode.
 
-Outside regular maintenance [Unhead](https://unhead.unjs.io) offers a modern alternative with:
+Outside regular maintenance [Unhead](/) offers a modern alternative with:
 - Full TypeScript safety
 - DOM event handlers
 - Advanced DOM patching algorithm built for reactive frameworks

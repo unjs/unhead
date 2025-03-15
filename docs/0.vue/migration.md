@@ -1,13 +1,13 @@
 ---
-title: Migrate to Unhead v2
-description: Learn about how to migrate to Unhead v2 from v1
+title: Migrate Your Vue App To Unhead v2
+description: See the breaking changes for Vue Unhead v2 and how to migrate.
 navigation:
   title: Upgrade Guide
 ---
 
 ## Introduction
 
-While Unhead has always been framework agnostic, the majority of adoption was by the Vue ecosystem.
+While Unhead has always been framework-agnostic, the most adoption was by the Vue ecosystem.
 
 With the release of Unhead v2, we now have first-class support for other frameworks. However, this guide will focus on
 the changes that affect Vue and TypeScript users.
