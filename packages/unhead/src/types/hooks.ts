@@ -39,6 +39,9 @@ export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
 
 export interface HeadHooks {
+  /**
+   * @deprecated use Unhead options to setup instead
+   */
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
