@@ -9,7 +9,6 @@
 ## Useful Links
 
 - [Schema.org WebPage](https://schema.org/WebPage)
-- [Schema Inheritance](/guide/getting-started/how-it-works#schema-inheritance)
 
 ## Required properties
 

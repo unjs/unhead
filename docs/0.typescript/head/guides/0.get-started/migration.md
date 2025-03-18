@@ -29,10 +29,6 @@ This will be removed in a future minor version, so you should lock your dependen
 
 🚦 Impact Level: Critical
 
-::tip
-Nuxt should not be effected by this change.
-::
-
 **⚠️ Breaking Changes:**
 
 - `createServerHead()`{lang="ts"} and `createHead()`{lang="ts"} exports from `unhead` are removed
@@ -65,10 +61,6 @@ createHead()
 ## Removed Implicit Context
 
 🚦 Impact Level: Critical
-
-::tip
-Nuxt should not be effected by this change.
-::
 
 **⚠️ Breaking Changes:**
 
