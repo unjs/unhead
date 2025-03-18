@@ -4,8 +4,6 @@
 
   Describes an `Breadcrumb` on a `WebPage`.
 
-- **Component**: `SchemaOrgBreadcrumb` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [BreadcrumbList - Schema.org](https://schema.org/BreadcrumbList)

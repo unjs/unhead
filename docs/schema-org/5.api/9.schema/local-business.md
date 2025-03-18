@@ -4,8 +4,6 @@
 
   Describes a business which allows public visitation. Typically used to represent the business 'behind' the website, or on a page about a specific business.
 
-- **Component**: `SchemaOrgLocalBusiness` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [LocalBusiness - Schema.org](https://schema.org/LocalBusiness)
@@ -97,7 +95,7 @@ defineLocalBusiness({
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `logo` will be resolved from a string into an ImageObject and added to `image`
 

@@ -4,8 +4,6 @@
 
   Describes an individual video (usually in the context of an embedded media object).
 
-- **Component**: `SchemaOrgVideo` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [VideoObject - Schema.org](https://schema.org/VideoObject)
@@ -50,7 +48,7 @@
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `width` and `height` must be provided for either to be included
 

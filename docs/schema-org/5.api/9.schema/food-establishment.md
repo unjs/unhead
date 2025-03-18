@@ -4,8 +4,6 @@
 
   Describes a food-related business.
 
-- **Component**: `SchemaOrgFoodEstablishment` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [FoodEstablishment - Schema.org](https://schema.org/FoodEstablishment)
@@ -78,7 +76,7 @@ defineFoodEstablishment({
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `logo` will be resolved from a string into an ImageObject and added to `image`
 

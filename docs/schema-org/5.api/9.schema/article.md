@@ -4,8 +4,6 @@
 
   Describes an `Article` on a `WebPage`.
 
-- **Component**: `SchemaOrgArticle` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Article - Schema.org](https://schema.org/Article)
@@ -78,7 +76,7 @@
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `headline` will be cut to a maximum length of 110 without breaking words.
 

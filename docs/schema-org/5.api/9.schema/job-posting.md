@@ -4,8 +4,6 @@
 
   Describes an `Product` on a `WebPage`.
 
-- **Component**: `SchemaOrgJobPosting` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [JobPosting - Schema.org](https://schema.org/JobPosting)
@@ -72,7 +70,7 @@
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `datePosted` - Date
 - `hiringOrganization` - Organization

@@ -4,8 +4,6 @@
 
   Describes an individual question. Most commonly used for creating an FAQ type page.
 
-- **Component**: `SchemaOrgQuestion` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org Question](https://schema.org/Question)
@@ -40,7 +38,7 @@ defineQuestion({
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - will convert a string answer to an [Answer](https://schema.org/Answer) object.
 - `@id` is resolved using a hash of the question name if not provided

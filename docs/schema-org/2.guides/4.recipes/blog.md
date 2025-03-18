@@ -16,8 +16,7 @@ by helping Google optimise how your site is shown.
 
 ## Marking up an Article
 
-The [defineArticle](/schema-org/schema/article) function and [SchemaOrgArticle](/schema-org/getting-started/vue-components) component are provided
-to create Article Schema whilst handling relations for you.
+The [defineArticle](/schema-org/schema/article) function is provided to create Article Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 

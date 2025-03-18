@@ -4,8 +4,6 @@
 
   Describes an individual person. Most commonly used to identify the author of a piece of content (such as an Article or Comment).
 
-- **Component**: `SchemaOrgPerson` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org Person](https://schema.org/Person)
@@ -46,7 +44,7 @@ definePerson({
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - resolves relative string urls of `image`
 - omitting the `@id` attribute, will automatically set up the person to be the identity of the WebSite and author

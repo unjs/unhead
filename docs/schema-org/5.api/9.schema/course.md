@@ -4,8 +4,6 @@
 
   Describes a Course.
 
-- **Component**: `SchemaOrgCourse` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org Course](https://schema.org/Course)

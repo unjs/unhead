@@ -4,8 +4,6 @@
 
   Describes a HowTo guide, which contains a series of steps.
 
-- **Component**: `SchemaOrgHowTo` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [HowTo - Schema.org](https://schema.org/HowTo)

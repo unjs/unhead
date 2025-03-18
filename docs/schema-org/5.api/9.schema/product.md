@@ -4,8 +4,6 @@
 
   Describes an `Product` on a `WebPage`.
 
-- **Component**: `SchemaOrgProduct` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Product - Schema.org](https://schema.org/Product)
@@ -41,7 +39,7 @@
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `image`'s are resolved to absolute
 

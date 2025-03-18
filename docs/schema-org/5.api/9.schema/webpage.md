@@ -6,8 +6,6 @@
 
   Acts as a connector from a page's content to the parent WebSite (and in turn, to the Organization).
 
-- **Component**: `SchemaOrgWebPage` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org WebPage](https://schema.org/WebPage)

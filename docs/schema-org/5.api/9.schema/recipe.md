@@ -4,8 +4,6 @@
 
   Describes a Recipe, which contains a series of instructions, ingredients, and optional fields.
 
-- **Component**: `SchemaOrgRecipe` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org Recipe](https://schema.org/Recipe)
@@ -47,7 +45,7 @@
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `datePublished` can be resolved from Date objects
 

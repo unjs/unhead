@@ -4,8 +4,6 @@
 
   Describes a SoftwareApp.
 
-- **Component**: `SchemaOrgSoftwareApp` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org SoftwareApp](https://schema.org/SoftwareApp)

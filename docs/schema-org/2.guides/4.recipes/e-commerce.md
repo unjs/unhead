@@ -14,8 +14,7 @@ title: eCommerce
 
 ## Marking up a Product
 
-The [defineProduct](/schema-org/schema/product) function and [SchemaOrgProduct](/schema-org/getting-started/vue-components) component are provided
-to create Product Schema whilst handling relations for you.
+[defineProduct](/schema-org/schema/product) create Product Schemas whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 

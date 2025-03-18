@@ -4,8 +4,6 @@
 
 Describes an individual image (usually in the context of an embedded media object).
 
-- **Component**: `SchemaOrgImage` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [ImageObject - Schema.org](https://schema.org/ImageObject)
@@ -26,7 +24,7 @@ Describes an individual image (usually in the context of an embedded media objec
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - `width` and `height` must be provided for either to be included
 

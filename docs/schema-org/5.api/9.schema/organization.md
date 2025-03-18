@@ -4,8 +4,6 @@
 
   Describes an organization (a company, business or institution). Most commonly used to identify the publisher of a WebSite.
 
-- **Component**: `SchemaOrgOrganization` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Organization - Schema.org](https://schema.org/Organization)
@@ -53,7 +51,7 @@ defineOrganization({
 
 ## Resolves
 
-See [Global Resolves](/guide/getting-started/how-it-works#global-resolves) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
 
 - address as `PostalAddress` object
 

@@ -4,8 +4,6 @@
 
   Describes an Event.
 
-- **Component**: `SchemaOrgEvent` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [Schema.org Event](https://schema.org/Event)

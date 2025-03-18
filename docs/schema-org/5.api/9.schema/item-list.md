@@ -4,8 +4,6 @@
 
 A list of items of any sort. Mainly used for breadcrumbs and carousels.
 
-- **Component**: `SchemaOrgItemList` _(see [how components work](/schema-org/getting-started/vue-components))_
-
 ## Useful Links
 
 - [ItemList - Schema.org](https://schema.org/ItemList)
