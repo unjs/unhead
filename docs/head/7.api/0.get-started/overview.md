@@ -17,33 +17,33 @@ title: Overview
 
 ### Initialization Hooks
 
-- [init](/api/hooks/01.init) - Called when the head instance is initialized
+- [init](/docs/head/api/hooks/init) - **Deprecated** Called when the head instance is initialized
 
 ### Entry Hooks
 
-- [entries:updated](/api/hooks/02.entries-updated) - Called when entries have been updated
-- [entries:resolve](/api/hooks/03.entries-resolve) - Called when entries need to be resolved to tags
-- [entries:normalize](/api/hooks/04.entries-normalize) - Called when an entry is being normalized to tags
+- [entries:updated](/docs/head/api/hooks/entries-updated) - Called when entries have been updated
+- [entries:resolve](/docs/head/api/hooks/entries-resolve) - Called when entries need to be resolved to tags
+- [entries:normalize](/docs/head/api/hooks/entries-normalize) - Called when an entry is being normalized to tags
 
 ### Tag Resolve Hooks
 
-- [tag:normalise](/api/hooks/05.tag-normalise) - Called when a tag is being normalized
-- [tags:beforeResolve](/api/hooks/06.tags-beforeResolve) - Called before tags are resolved for rendering
-- [tags:resolve](/api/hooks/07.tags-resolve) - Called when tags are being resolved for rendering
-- [tags:afterResolve](/api/hooks/08.tags-afterResolve) - Called after tags have been resolved
+- [tag:normalise](/docs/head/api/hooks/tag-normalise) - Called when a tag is being normalized
+- [tags:beforeResolve](/docs/head/api/hooks/tags-beforeResolve) - Called before tags are resolved for rendering
+- [tags:resolve](/docs/head/api/hooks/tags-resolve) - Called when tags are being resolved for rendering
+- [tags:afterResolve](/docs/head/api/hooks/tags-afterResolve) - Called after tags have been resolved
 
 ### DOM Rendering Hooks
 
-- [dom:beforeRender](/api/hooks/09.dom-beforeRender) - Called before rendering to the DOM
-- [dom:renderTag](/api/hooks/10.dom-renderTag) - Called when a tag is being rendered to the DOM
-- [dom:rendered](/api/hooks/11.dom-rendered) - Called after tags have been rendered to the DOM
+- [dom:beforeRender](/docs/head/api/hooks/dom-beforeRender) - Called before rendering to the DOM
+- [dom:renderTag](/docs/head/api/hooks/dom-renderTag) - Called when a tag is being rendered to the DOM
+- [dom:rendered](/docs/head/api/hooks/dom-rendered) - Called after tags have been rendered to the DOM
 
 ### SSR Hooks
 
-- [ssr:beforeRender](/api/hooks/12.ssr-beforeRender) - Called before server-side rendering
-- [ssr:render](/api/hooks/13.ssr-render) - Called during server-side rendering
-- [ssr:rendered](/api/hooks/14.ssr-rendered) - Called after server-side rendering
+- [ssr:beforeRender](/docs/head/api/hooks/ssr-beforeRender) - Called before server-side rendering
+- [ssr:render](/docs/head/api/hooks/ssr-render) - Called during server-side rendering
+- [ssr:rendered](/docs/head/api/hooks/ssr-rendered) - Called after server-side rendering
 
 ### Script Hooks
 
-- [script:updated](/api/hooks/15.script-updated) - Called when a script instance is updated
+- [script:updated](/docs/head/api/hooks/script-updated) - Called when a script instance is updated

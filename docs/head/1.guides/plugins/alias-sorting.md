@@ -194,8 +194,3 @@ useHead({
 ::note
 During hydration (SSR or page switches), tags may not reorder to avoid content flashing. The plugin respects this behavior.
 ::
-
-## Related Resources
-
-- [Tag Priorities](/guides/8.dom-event-handling) - For numeric priority options
-- [useScript Composable](/api/use-script) - For script tag loading control

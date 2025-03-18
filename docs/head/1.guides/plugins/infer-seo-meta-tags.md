@@ -108,8 +108,3 @@ InferSeoMetaPlugin({
 })
 ```
 ::
-
-## Related Resources
-
-- [useSeoMeta Composable](/api/use-seo-meta) - For manually setting SEO meta tags
-- [Canonical Plugin](/plugins/canonical) - For handling absolute URLs in meta tags

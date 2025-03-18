@@ -115,8 +115,3 @@ CanonicalPlugin({
 })
 ```
 ::
-
-## Related Resources
-
-- [useSeoMeta Composable](/api/use-seo-meta) - For setting SEO meta tags
-- [Infer SEO Meta Plugin](/plugins/infer-seo-meta-tags) - For auto-generating SEO tags
