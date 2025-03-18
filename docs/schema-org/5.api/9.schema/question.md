@@ -45,7 +45,7 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-lev
 
 ## Relation Transforms
 
-[WebPage](/schema-org/schema/webpage)
+[WebPage](/docs/schema-org/api/schema/webpage)
 
 - Each question will append an entry on to `mainEntity`
 

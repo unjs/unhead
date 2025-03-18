@@ -8,13 +8,13 @@ title: eCommerce
 
 ## Useful Links
 
-- [defineProduct](/schema-org/schema/product)
+- [defineProduct](/docs/schema-org/api/schema/product)
 - [Product | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
 - [Product | Yoast](https://developer.yoast.com/features/schema/pieces/product)
 
 ## Marking up a Product
 
-[defineProduct](/schema-org/schema/product) create Product Schemas whilst handling relations for you.
+[defineProduct](/docs/schema-org/api/schema/product) create Product Schemas whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 

@@ -16,7 +16,7 @@ by helping Google optimise how your site is shown.
 
 ## Marking up an Article
 
-The [defineArticle](/schema-org/schema/article) function is provided to create Article Schema whilst handling relations for you.
+The [defineArticle](/docs/schema-org/api/schema/article) function is provided to create Article Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 
@@ -72,7 +72,7 @@ useSchemaOrg([
 
 ::
 
-See the [Article Types](/schema-org/schema/article#sub-types) for the list of available types.
+See the [Article Types](/docs/schema-org/api/schema/article#sub-types) for the list of available types.
 
 ## Providing an author
 

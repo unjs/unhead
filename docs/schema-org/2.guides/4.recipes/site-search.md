@@ -46,7 +46,7 @@ useSchemaOrg([
 
 ## Define your Search Results Page
 
-Using your [WebPage](/schema-org/schema/webpage) Schema, you can define the page as a search results page.
+Using your [WebPage](/docs/schema-org/api/schema/webpage) Schema, you can define the page as a search results page.
 
 ::code-group
 

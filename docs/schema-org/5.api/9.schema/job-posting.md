@@ -19,7 +19,7 @@
 
   The full description of the job in HTML format.
 
-- **hiringOrganization** [Organization](/schema-org/schema/organization)
+- **hiringOrganization** [Organization](/docs/schema-org/api/schema/organization)
 
   The organization offering the job position.
 

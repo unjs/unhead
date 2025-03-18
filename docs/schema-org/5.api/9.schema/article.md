@@ -30,7 +30,7 @@
   If the author of the article is not your identity (see [Choosing an identity](/schema-org/recipes/identity)) you will need to provide authors
   manually.
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
+  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/docs/schema-org/api/schema/person).
 
 ## Recommended Properties
 
@@ -66,7 +66,7 @@
 
 ## Relation Transforms
 
-[WebPage](/schema-org/schema/webpage)
+[WebPage](/docs/schema-org/api/schema/webpage)
 
 - sets default `potentialAction` to `ReadAction`
 - sets default `dateModified` to articles `dateModified`

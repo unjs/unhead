@@ -20,7 +20,7 @@
 
 - **author** `Person`
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/schema-org/schema/person).
+  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/docs/schema-org/api/schema/person).
 
 ## Defaults
 

@@ -11,7 +11,7 @@ Creating breadcrumbs on your site is a great way to help your users understand y
 
 ## Marking up Breadcrumbs
 
-[defineBreadcrumb](/schema-org/schema/breadcrumb) creates Breadcrumb Schema whilst handling relations for you.
+[defineBreadcrumb](/docs/schema-org/api/schema/breadcrumb) creates Breadcrumb Schema whilst handling relations for you.
 
 Imagine we want to generate the following markup with the appropriate Schema.
 
