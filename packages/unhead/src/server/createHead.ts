@@ -1,6 +1,7 @@
 import type { CreateServerHeadOptions, HeadTag, ResolvableHead } from '../types'
 import { createUnhead } from '../unhead'
 
+/* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
   const unhead = createUnhead<T>({
     ...options,
