@@ -121,7 +121,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         })
       }
       for (const k in tag.props) {
-        if (!Object.hasOwn(tag.props, k))
+        if (!Object.prototype.hasOwnProperty.call(tag.props, k))
           continue
         const value = tag.props[k]
         if (k.startsWith('on') && typeof value === 'function') {
