@@ -9,12 +9,16 @@ navigation:
 
 [React Helmet](https://github.com/nfl/react-helmet) was the go-to solution for managing `<head>` tags in React applications for years. However, its last major release was in 2020 and the project is now in maintenance mode.
 
-Outside regular maintenance [Unhead](/) offers a modern alternative with:
+Outside of regular maintenance [Unhead](/) offers a modern alternative with:
 - Full TypeScript safety
 - DOM event handlers
 - Advanced DOM patching algorithm built for reactive frameworks
 - Ecosystem of extras: `useSchemaOrg()`{lang="ts"}, `useScript()`{lang="ts"}, and more
 - Intelligent tag sorting for improved performance
+
+As well as a improved bundle size:
+- REACT HELMET Size: 26.6 kB (gzipped: 9.2 kB)
+- UNHEAD Size: 10.7 kB (gzipped: 4.5 kB)
 
 ## Comparison
 
