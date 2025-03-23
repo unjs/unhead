@@ -16,9 +16,9 @@ See the full [introduction to Unhead](https://unhead.unjs.io/docs/typescript/hea
 </table>
 </p>
 
-## News: Unhead v2 🎉
+### Unhead v2 🎉
 
-Unhead v2 stable is now available! Check out the [v2 release notes](https://unhead.unjs.io/v2).
+The latest major is now stable! Check out the [v2 release notes](https://unhead.unjs.io/v2).
 
 ## Highlights
 
