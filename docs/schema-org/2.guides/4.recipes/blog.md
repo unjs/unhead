@@ -20,9 +20,9 @@ The [defineArticle](/docs/schema-org/api/schema/article) function is provided to
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 
-::code-group
+```ts
+import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineArticle({
     // name and description can usually be inferred
@@ -33,27 +33,15 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Vue Components]
-<template>
-  <SchemaOrgArticle
-    image="/photos/16x9/photo.jpg"
-    :date-published="new Date(2020, 1, 1)"
-    :date-modified="new Date(2020, 1, 1)"
-  />
-</template>
-```
-
-::
-
 ## Specifying the Article Type
 
 Providing a type of Article can help clarify what kind of content the page is about.
 
 The most common types are: `BlogPosting` and `NewsArticle`.
 
-::code-group
+```ts
+import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineArticle({
     '@type': 'BlogPosting',
@@ -61,16 +49,6 @@ useSchemaOrg([
   })
 ])
 ```
-
-```vue [Vue Components]
-<template>
-  <SchemaOrgArticle
-    type="BlogPosting"
-  />
-</template>
-```
-
-::
 
 See the [Article Types](/docs/schema-org/api/schema/article#sub-types) for the list of available types.
 
@@ -81,9 +59,9 @@ config the author or authors.
 
 When defining a Person when an Article is present, it will automatically associate them as the author.
 
-::code-group
+```ts
+import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineArticle({
     headline: 'My Article',
@@ -101,18 +79,6 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Vue Components]
-<template>
-  <SchemaOrgArticle
-    headline="My Article"
-  />
-  <SchemaOrgPerson name="John doe" url="https://johndoe.com" />
-  <SchemaOrgPerson name="Jane doe" url="https://janedoe.com" />
-</template>
-```
-
-::
-
 ## Markup Blog Archive Pages
 
 Assuming you have the `WebPage` and `WebSite` schema loaded in from a parent layout component,
@@ -120,22 +86,12 @@ you can augment the `WebPage` type to better indicate the purpose of the page.
 
 See [CollectionPage](https://schema.org/CollectionPage) for more information.
 
-::code-group
+```ts
+import { defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebPage({
     '@type': 'CollectionPage'
   }),
 ])
 ```
-
-```vue [Vue Components]
-<template>
-  <SchemaOrgWebPage
-    type="CollectionPage"
-  />
-</template>
-```
-
-::

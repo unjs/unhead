@@ -1,5 +1,6 @@
 ---
 title: Site Search
+description: Learn how to implement Schema.org markup for site search functionality.
 ---
 
 If your site offers a search function, you may like to define markup to help Google understand it.
@@ -20,9 +21,9 @@ This represents a query a user would be searching for.
 
 This markup should go in your root Schema definition.
 
-::code-group
+```ts
+import { defineSearchAction, defineWebSite, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebSite({
     potentialAction: [
@@ -34,34 +35,16 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Vue Components]
-<template>
-  <SchemaOrgWebSite
-    :potential-action="[defineSearchAction({ target: '/search?q={search_term_string}' })]"
-  />
-</template>
-```
-
-::
-
 ## Define your Search Results Page
 
 Using your [WebPage](/docs/schema-org/api/schema/webpage) Schema, you can define the page as a search results page.
 
-::code-group
+```ts
+import { defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebPage({
     '@type': ['CollectionPage', 'SearchResultsPage'],
   })
 ])
 ```
-
-```vue [Vue Components]
-<template>
-  <SchemaOrgWebPage :type="['CollectionPage', 'SearchResultsPage']" />
-</template>
-```
-
-::

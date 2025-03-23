@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: Learn how to implement Schema.org FAQ markup to improve your search appearance.
 ---
 
 Creating a FAQ page on your site is a great way to help your users understand your website.
@@ -23,9 +24,9 @@ Tips:
 
 - The answer may contain HTML content such as links and lists.
 
-::code-group
+```ts
+import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```ts [useSchemaOrg]
 useSchemaOrg([
   defineWebPage({
     '@type': 'FAQPage',
@@ -41,42 +42,59 @@ useSchemaOrg([
 ])
 ```
 
-```vue [Component API - Props]
-<template>
-  <SchemaOrgWebPage type="FAQPage" />
-  <SchemaOrgQuestion
-    name="How long is a piece of string?"
-    accepted-answer="The length of a piece of string is the number of characters in the string."
-  />
-  <SchemaOrgQuestion
-    name="How big is a giraffe?"
-    accepted-answer="A giraffe is 12 feet tall"
-  />
-</template>
-```
+## HTML Structured Content
 
-```vue [Component API - Scoped Slots]
-<template>
-  <SchemaOrgQuestion>
-    <template #name>
-      What is quantum mechanics?
-    </template>
-    <template #acceptedAnswer>
+For the best user experience, it's good to structure your FAQ content in a way that matches your schema markup:
+
+```html
+<div>
+  <h1>Frequently Asked Questions</h1>
+
+  <div>
+    <h2>How long is a piece of string?</h2>
+    <div>The length of a piece of string is the number of characters in the string.</div>
+  </div>
+
+  <div>
+    <h2>How big is a giraffe?</h2>
+    <div>A giraffe is 12 feet tall</div>
+  </div>
+
+  <div>
+    <h2>What is quantum mechanics?</h2>
+    <div>
       <p>Quantum mechanics is the study of the nature of matter.</p>
       <p>It is the study of the nature of the interaction between particles and the nature of the universe.</p>
       <p>Particles are the smallest particles in the universe.</p>
       <p>The universe is made up of particles.</p>
       <p>Particles are made up of matter.</p>
       <p>Matter is made up of energy.</p>
-      <p>Energy is made up of heat.</p>
-      <p>Heat is made up of light.</p>
-      <p>Light is made up of sound.</p>
-      <p>Sound is made up of colour.</p>
-      <p>Colour is made up of light.</p>
-      <p>Light is made up of light.</p>
-    </template>
-  </SchemaOrgQuestion>
-</template>
+    </div>
+  </div>
+</div>
 ```
 
-::
+## Rich HTML Content in Answers
+
+You can include HTML content in your answers to provide a richer experience:
+
+```ts
+import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
+
+useSchemaOrg([
+  defineWebPage({
+    '@type': 'FAQPage',
+  }),
+  defineQuestion({
+    name: 'What is quantum mechanics?',
+    acceptedAnswer: `
+      <p>Quantum mechanics is the study of the nature of matter.</p>
+      <p>It is the study of the nature of the interaction between particles and the nature of the universe.</p>
+      <p>Particles are the smallest particles in the universe.</p>
+      <p>The universe is made up of particles.</p>
+      <p>Particles are made up of matter.</p>
+      <p>Matter is made up of energy.</p>
+    `,
+  }),
+])
+```

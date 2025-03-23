@@ -1,5 +1,7 @@
 ---
-title: Breadcrumbs
+title: Schema.org Breadcrumbs
+navigation:
+  title: Breadcrumbs
 ---
 
 Creating breadcrumbs on your site is a great way to help your users understand your website hierarchy.
@@ -17,10 +19,9 @@ Imagine we want to generate the following markup with the appropriate Schema.
 
 Note: Google recommends that the markup for the breadcrumbs should exist on the page matching the Schema.org entry.
 
-::code-group
+```ts
+import { defineBreadcrumb, useSchemaOrg } from '@unhead/schema-org/@framework'
 
-```vue [useSchemaOrg]
-<script setup lang="ts">
 const breadcrumbs = [
   // item is the url and will be resolved to the absolute url
   { name: 'Home', item: '/' },
@@ -28,56 +29,31 @@ const breadcrumbs = [
   // item is not required for the last list element
   { name: 'How do breadcrumbs work' },
 ]
+
 useSchemaOrg([
   defineBreadcrumb({
     itemListElement: breadcrumbs
   }),
 ])
-</script>
-
-<template>
-  <ul>
-    <template v-for="(item, key) in breadcrumbs" :key="key">
-      <li>
-        <template v-if="item.item">
-          <a :href="item.item">{{ item.name }}</a>
-          <span>/</span>
-        </template>
-        <span v-else>{{ item.name }}</span>
-      </li>
-    </template>
-  </ul>
-</template>
 ```
 
-```vue [Vue Components]
-<script setup>
-const breadcrumb = [
-  { item: '/', name: 'Home' },
-  { item: '/guide/recipes', name: 'Recipes' },
-  { name: 'Breadcrumbs' }
-]
-</script>
+Here's an example of how you might structure your breadcrumbs in HTML:
 
-<template>
-  <SchemaOrgBreadcrumb
-    as="ul"
-    :item-list-element="breadcrumb"
-  >
-    <template v-for="(item, key) in breadcrumb" :key="key">
-      <li>
-        <template v-if="item.item">
-          <a :href="item.item">{{ item.name }}</a>
-          <span>/</span>
-        </template>
-        <span v-else>{{ item.name }}</span>
-      </li>
-    </template>
-  </SchemaOrgBreadcrumb>
-</template>
+```html
+<ul>
+  <li>
+    <a href="/">Home</a>
+    <span>/</span>
+  </li>
+  <li>
+    <a href="/blog">Articles</a>
+    <span>/</span>
+  </li>
+  <li>
+    <span>How do breadcrumbs work</span>
+  </li>
+</ul>
 ```
-
-::
 
 ## Adding Multiple Breadcrumbs
 
@@ -85,8 +61,9 @@ There may be some cases where you'd like multiple breadcrumbs to be displayed.
 
 For these cases you can provide an `@id` and it will avoid overwriting the primary breadcrumb.
 
-```vue
-<script setup lang="ts">
+```ts
+import { defineBreadcrumb, useSchemaOrg } from '@unhead/schema-org/@framework'
+
 useSchemaOrg([
   // primary breadcrumb
   defineBreadcrumb({
@@ -108,5 +85,4 @@ useSchemaOrg([
     ]
   }),
 ])
-</script>
 ```
