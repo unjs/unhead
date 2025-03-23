@@ -105,6 +105,7 @@ describe('xss', () => {
 
     head.push({
       htmlAttrs: {
+        // @ts-expect-error untyped
         'onload': 'alert(1)',
         'data-attr': '"><script>alert(1)</script>',
       },
@@ -119,6 +120,7 @@ describe('xss', () => {
 
     head.push({
       meta: [
+        // @ts-expect-error untyped
         { name: 'description', innerHTML: '<script>alert(1)</script>' },
       ],
     })
@@ -215,6 +217,7 @@ describe('xss', () => {
 
     head.push({
       meta: [
+        // @ts-expect-error untyped
         { 'name': 'description', 'data-x': 'valid', '</meta><script>alert(1)</script>': 'invalid' },
       ],
     })
