@@ -3,7 +3,8 @@
 [![npm version](https://img.shields.io/npm/v/unhead?color=yellow)](https://npmjs.com/package/unhead)
 [![npm downloads](https://img.shields.io/npm/dm/unhead?color=yellow)](https://npm.chart.dev/unhead)
 
-Unhead wraps your document template, improving reactive SSR JavaScript framework SEO and performance.
+Unhead is a document head and template manager, improving reactive SSR JavaScript framework developer experience, SEO and performance.
+See the full [introduction to unhead](https://unhead.unjs.io/docs/typescript/head/guides/get-started/intro-to-unhead).
 
 <p align="center">
 <table>
@@ -14,6 +15,10 @@ Unhead wraps your document template, improving reactive SSR JavaScript framework
 </tbody>
 </table>
 </p>
+
+## News: Unhead v2 🎉
+
+Unhead v2 stable is now available! Check out the [v2 release notes](https://unhead.unjs.io/v2).
 
 ## Highlights
 
