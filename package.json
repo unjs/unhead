@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.0.0-rc.13",
   "private": "true",
-  "packageManager": "pnpm@10.6.3",
+  "packageManager": "pnpm@10.6.5",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -29,15 +29,15 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.10.1",
+    "@antfu/eslint-config": "^4.11.0",
     "@arethetypeswrong/cli": "0.17.4",
-    "@fast-check/vitest": "^0.1.6",
+    "@fast-check/vitest": "^0.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
     "bumpp": "^10.1.0",
     "devalue": "^5.1.1",
-    "eslint": "^9.22.0",
+    "eslint": "^9.23.0",
     "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.0.0",
@@ -45,7 +45,7 @@
     "typescript": "5.8.2",
     "unbuild": "^3.5.0",
     "utility-types": "^3.11.0",
-    "vitest": "^3.0.8",
+    "vitest": "^3.0.9",
     "vitest-package-exports": "^0.1.1",
     "vue": "^3.5.13",
     "vue-tsc": "^2.2.8"

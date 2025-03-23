@@ -17,17 +17,17 @@
     "express": "^5.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.3.0",
+    "react-router-dom": "^7.4.0",
     "sirv": "^3.0.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.13.10",
-    "@types/react": "^19.0.10",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.11",
+    "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "typescript": "~5.8.2",
-    "vite": "^6.2.1"
+    "vite": "^6.2.2"
   }
 }
