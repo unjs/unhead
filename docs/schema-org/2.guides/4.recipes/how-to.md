@@ -9,13 +9,13 @@ Creating How-To content is an excellent way to provide valuable instructions to 
 
 ## Useful Links
 
-- [defineHowTo](/docs/schema-org/api/schema/howto)
+- [defineHowTo](/docs/schema-org/api/schema/how-to)
 - [HowTo | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/how-to)
 - [HowTo Schema | Yoast](https://developer.yoast.com/features/schema/pieces/howto)
 
 ## Marking up a How-To Guide
 
-The [defineHowTo](/docs/schema-org/api/schema/howto) function creates HowTo Schema whilst handling relations for you.
+The [defineHowTo](/docs/schema-org/api/schema/how-to) function creates HowTo Schema whilst handling relations for you.
 
 Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
 

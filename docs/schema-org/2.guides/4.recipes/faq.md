@@ -10,7 +10,7 @@ your faq pages search appearance.
 
 ## Useful Links
 
-- [defineQuestion](/docs/schema-org/api/schema/question.md)
+- [defineQuestion](/docs/schema-org/api/schema/question)
 - [FAQ Page | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/faqpage)
 - [Question Schema | Yoast](https://developer.yoast.com/features/schema/pieces/question)
 

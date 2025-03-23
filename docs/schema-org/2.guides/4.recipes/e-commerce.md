@@ -195,7 +195,7 @@ useSchemaOrg([
 
 ## Setting up a Store's Identity
 
-For eCommerce sites, it's important to establish your brand's identity. This can be done using [Organization](/docs/schema-org/api/schema/organization) or [LocalBusiness](/docs/schema-org/api/schema/localbusiness) depending on whether your store has a physical location.
+For eCommerce sites, it's important to establish your brand's identity. This can be done using [Organization](/docs/schema-org/api/schema/organization) or [LocalBusiness](/docs/schema-org/api/schema/local-business) depending on whether your store has a physical location.
 
 See the [Identity](/schema-org/recipes/identity) guide for more details.
 

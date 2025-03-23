@@ -28,7 +28,7 @@ title: Overview
 ### Tag Resolve Hooks
 
 - [tag:normalise](/docs/head/api/hooks/tag-normalise) - Called when a tag is being normalized
-- [tags:beforeResolve](/docs/head/api/hooks/tags-beforeresolve) - Called before tags are resolved for rendering
+- [tags:beforeResolve](/docs/head/api/hooks/tags-before-resolve) - Called before tags are resolved for rendering
 - [tags:resolve](/docs/head/api/hooks/tags-resolve) - Called when tags are being resolved for rendering
 - [tags:afterResolve](/docs/head/api/hooks/tags-after-resolve) - Called after tags have been resolved
 
