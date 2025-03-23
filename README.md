@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/unhead?color=yellow)](https://npm.chart.dev/unhead)
 
 Unhead is a document head and template manager, improving reactive SSR JavaScript framework developer experience, SEO and performance.
-See the full [introduction to unhead](https://unhead.unjs.io/docs/typescript/head/guides/get-started/intro-to-unhead).
+See the full [introduction to Unhead](https://unhead.unjs.io/docs/typescript/head/guides/get-started/intro-to-unhead).
 
 <p align="center">
 <table>
