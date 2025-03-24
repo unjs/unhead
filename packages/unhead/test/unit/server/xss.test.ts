@@ -1,7 +1,7 @@
 import { stringify } from 'devalue'
 import { describe, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
-import {createServerHeadWithContext} from '../../util'
+import { createServerHeadWithContext } from '../../util'
 
 describe('xss', () => {
   it('basic', async () => {

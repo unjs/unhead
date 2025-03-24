@@ -66,7 +66,7 @@ useHead({
   // Title injection
   title: '</title><script>alert("title XSS")</script>',
   titleTemplate: '%s - <script>alert("template")</script>',
-  
+
   // Meta tag vectors
   meta: [
     // SVG-based XSS
@@ -76,7 +76,7 @@ useHead({
     // Unicode escape sequence
     { name: 'author', content: '\\u003Cscript\\u003Ealert("unicode")\\u003C/script\\u003E' },
     // Character encoding attack
-    { 'http-equiv': 'content-type', content: 'text/html; charset=UTF-7; X-XSS-Protection: "0";' },
+    { 'http-equiv': 'content-type', 'content': 'text/html; charset=UTF-7; X-XSS-Protection: "0";' },
     // Case variation bypass
     { name: 'viewport', content: '<ScRiPt>alert("case")</ScRiPt>' },
     // Emoji obfuscation
@@ -84,12 +84,12 @@ useHead({
     // innerHTML attempt (shouldn't work)
     { name: 'generator', innerHTML: '<script>alert("meta-inner")</script>' }
   ],
-  
+
   // Link attacks
   link: [
     // Javascript protocol
     { rel: 'stylesheet', href: 'javascript:alert("js-protocol")' },
-    // Data URI 
+    // Data URI
     { rel: 'icon', href: 'data:text/html;base64,PHNjcmlwdD5hbGVydCgieHNzIik8L3NjcmlwdD4=' },
     // Protocol switching
     { rel: 'dns-prefetch', href: '//evil.com/xss.js' },
@@ -98,7 +98,7 @@ useHead({
     // Other protocol
     { rel: 'prefetch', href: 'vbscript:alert("vbscript")' }
   ],
-  
+
   // Script attacks
   script: [
     // Template literal with closing script
@@ -119,7 +119,7 @@ useHead({
     // JSON with devalue (should be properly escaped)
     { type: 'application/json', innerHTML: JSON.stringify({ payload: '</script><script>alert("json")</script>' }) }
   ],
-  
+
   // Style attacks
   style: [
     // CSS expression
@@ -127,18 +127,18 @@ useHead({
     // CSS url injection
     { innerHTML: `body { background: url('javascript:alert("css-url")') }` }
   ],
-  
+
   // HTML attributes
   htmlAttrs: {
     'onload': 'alert("html-event")',
     'data-attr': '"><script>alert("html-attr")</script>'
   },
-  
+
   // Body attributes
   bodyAttrs: {
     'data-custom': `x" onmouseover="alert('body-attr')" data-x="`
   },
-  
+
   // Base attack
   base: { href: 'javascript:alert("base")' }
 })
