@@ -93,7 +93,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
 
     if (strValue === 'true' || strValue === '') {
       // @ts-expect-error untyped
-      tag.props[key] = isDataKey ? 'true' : true
+      tag.props[key] = isDataKey ? strValue : true
     }
     else if (!value && isDataKey && strValue === 'false') {
       tag.props[key] = 'false'

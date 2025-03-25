@@ -16,6 +16,7 @@ describe('unhead e2e data true', () => {
           'name': 'foo',
           'data-foo': 'true',
           'data-bar': 'false',
+          'data-empty-string': '',
           'data-bar-false': false,
           'data-foo-true': true,
           'content': 'true',
@@ -32,7 +33,7 @@ describe('unhead e2e data true', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="foo" data-foo="true" data-bar="false" data-bar-false="false" data-foo-true="true" content>",
+        "headTags": "<meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content>",
         "htmlAttrs": "",
       }
     `)
@@ -46,6 +47,7 @@ describe('unhead e2e data true', () => {
           'name': 'foo',
           'data-foo': 'true',
           'content': 'true',
+          'data-empty-string': '',
         },
       ],
     })
@@ -54,7 +56,7 @@ describe('unhead e2e data true', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta name="foo" data-foo="true" data-bar="false" data-bar-false="false" data-foo-true="true" content="">
+      <meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content="">
       </head>
       <body>
 

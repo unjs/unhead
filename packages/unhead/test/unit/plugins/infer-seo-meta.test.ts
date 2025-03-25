@@ -29,8 +29,8 @@ describe('inferSeoMetaPlugin', () => {
       <meta name="description" content="My Description">
       <meta property="og:image" content="https://example.com/image.jpg">
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="My Title">
-      <meta property="og:description" data-infer="true" content="My Description">"
+      <meta property="og:title" data-infer="" content="My Title">
+      <meta property="og:description" data-infer="" content="My Description">"
     `)
   })
   it('conflicts', async () => {
@@ -76,7 +76,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="Title">",
+      <meta property="og:title" data-infer="" content="Title">",
         "htmlAttrs": "",
       }
     `)
@@ -103,7 +103,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="Title - My Site">",
+      <meta property="og:title" data-infer="" content="Title - My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -128,7 +128,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="Title">",
+      <meta property="og:title" data-infer="" content="Title">",
         "htmlAttrs": "",
       }
     `)
@@ -180,7 +180,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="test">",
+      <meta property="og:title" data-infer="" content="test">",
         "htmlAttrs": "",
       }
     `)
@@ -203,7 +203,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>Title - My Site</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="Title - My Site">",
+      <meta property="og:title" data-infer="" content="Title - My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -232,7 +232,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>My Site</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="My Site">",
+      <meta property="og:title" data-infer="" content="My Site">",
         "htmlAttrs": "",
       }
     `)
@@ -263,7 +263,7 @@ describe('inferSeoMetaPlugin', () => {
         "bodyTagsOpen": "",
         "headTags": "<title>test</title>
       <meta name="twitter:card" content="summary_large_image">
-      <meta property="og:title" data-infer="true" content="test">",
+      <meta property="og:title" data-infer="" content="test">",
         "htmlAttrs": "",
       }
     `)
