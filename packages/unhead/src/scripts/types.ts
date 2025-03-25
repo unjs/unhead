@@ -18,12 +18,42 @@ export type UseScriptResolvedInput = Omit<ScriptWithoutEvents, 'src'> & { src: s
 
 type BaseScriptApi = Record<symbol | string, any>
 
-type PreserveOverloads<T> = T
+type HasDiscriminatedParameters<T> =
+  T extends {
+    (first: infer A, ...rest1: any[]): any
+    (first: infer B, ...rest2: any[]): any
+  }
+    ? A extends B
+      ? B extends A
+        ? false // Same first parameter type
+        : true // Different first parameter types
+      : true // Different first parameter types
+    : false // Not a function with overloads
+
+// Alternative: Check for different parameter count
+type HasDifferentParameterCounts<T> =
+  T extends { (...args: infer A): any } & { (...args: infer B): any }
+    ? A['length'] extends B['length']
+      ? B['length'] extends A['length']
+        ? false // Same parameter count
+        : true // Different parameter counts
+      : true // Different parameter counts
+    : false // Not a function with overloads
+
+// Combined detection that works better for most cases
+type IsOverloadedFunction<T> =
+  HasDiscriminatedParameters<T> extends true
+    ? true
+    : HasDifferentParameterCounts<T> extends true
+      ? true
+      : false
+
 export type AsVoidFunctions<T extends BaseScriptApi> = {
   [K in keyof T]: T[K] extends any[]
     ? T[K]
-    : T[K] extends (...args: any[]) => any
-      ? PreserveOverloads<T[K]>
+    : T[K] extends (...args: infer A) => any
+      // we can't modify overloaded functions, so we need to check if the function is overloaded
+      ? IsOverloadedFunction<T[K]> extends true ? T[K] : (...args: A) => void
       : T[K] extends Record<any, any>
         ? AsVoidFunctions<T[K]>
         : never;

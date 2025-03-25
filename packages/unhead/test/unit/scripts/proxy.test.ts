@@ -17,6 +17,18 @@ interface Api {
   }
 }
 
+export interface GTag {
+  (fn: 'js', opt: Date): void
+  (fn: 'config' | 'get', opt: string): void
+  (fn: 'event', opt: string, opt2?: Record<string, any>): void
+  (fn: 'set', opt: Record<string, string>): void
+  (fn: 'consent', opt: 'default' | 'update', opt2: Record<string, string | number>): void
+}
+
+interface GoogleAnalytics {
+  gtag: GTag
+}
+
 describe('proxy chain', () => {
   it('augments types', () => {
     const proxy = createNoopedRecordingProxy<Api>()
@@ -155,5 +167,10 @@ describe('types: AsVoidFunctions', () => {
     type Result = AsVoidFunctions<Api>
     expectTypeOf<Result['foo']['bar']['fn']>().toBeFunction()
     expectTypeOf<Result['foo']['bar']['fn']>().returns.toBeVoid()
+  })
+
+  it('gtag types', () => {
+    const gtag = {} as AsVoidFunctions<GoogleAnalytics>['gtag']
+    expectTypeOf<typeof gtag>().toBeFunction()
   })
 })
