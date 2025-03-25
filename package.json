@@ -17,7 +17,7 @@
     "stub": "pnpm -r --parallel --filter=./packages/** run stub",
     "test": "pnpm lint && vue-tsc --noEmit && vitest",
     "test:memory": "vitest --expose-gc  run memory",
-    "bump": "bumpp package.json packages/*/package.json --commit --push --tag",
+    "bump": "bumpp package.json packages-aliased/*/package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build && pnpm bump && pnpm publish --tag latest -r --no-git-checks",
     "release:next": "pnpm build && pnpm bump && pnpm publish --tag next -r --no-git-checks",
     "lint": "eslint . --fix",
