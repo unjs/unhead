@@ -170,6 +170,7 @@ describe('types: AsVoidFunctions', () => {
   })
 
   it('gtag types', () => {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const gtag = {} as AsVoidFunctions<GoogleAnalytics>['gtag']
     expectTypeOf<typeof gtag>().toBeFunction()
   })
