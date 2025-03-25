@@ -18,12 +18,15 @@ export type UseScriptResolvedInput = Omit<ScriptWithoutEvents, 'src'> & { src: s
 
 type BaseScriptApi = Record<symbol | string, any>
 
+type PreserveOverloads<T> = T
 export type AsVoidFunctions<T extends BaseScriptApi> = {
-  [key in keyof T]:
-  T[key] extends any[] ? T[key] :
-    T[key] extends (...args: infer A) => any ? (...args: A) => void :
-      T[key] extends Record<any, any> ? AsVoidFunctions<T[key]> :
-        never
+  [K in keyof T]: T[K] extends any[]
+    ? T[K]
+    : T[K] extends (...args: any[]) => any
+      ? PreserveOverloads<T[K]>
+      : T[K] extends Record<any, any>
+        ? AsVoidFunctions<T[K]>
+        : never;
 }
 
 export type UseScriptInput = string | UseScriptResolvedInput
