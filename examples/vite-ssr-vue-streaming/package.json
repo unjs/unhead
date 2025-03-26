@@ -21,8 +21,8 @@
     "@unhead/vue": "workspace:*",
     "pinia": "^3.0.1",
     "unhead": "workspace:*",
-    "unplugin-auto-import": "^19.1.1",
-    "vite": "^6.2.2",
+    "unplugin-auto-import": "^19.1.2",
+    "vite": "^6.2.3",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {

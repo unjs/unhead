@@ -65,6 +65,6 @@
     "unplugin-ast": "^0.14.4"
   },
   "devDependencies": {
-    "@babel/types": "^7.26.10"
+    "@babel/types": "^7.27.0"
   }
 }

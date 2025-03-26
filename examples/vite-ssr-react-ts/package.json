@@ -22,12 +22,12 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
-    "@types/node": "^22.13.11",
+    "@types/node": "^22.13.13",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "typescript": "~5.8.2",
-    "vite": "^6.2.2"
+    "vite": "^6.2.3"
   }
 }
