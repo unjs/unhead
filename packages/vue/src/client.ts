@@ -17,3 +17,8 @@ export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient
   head.install = vueInstall(head)
   return head
 }
+
+export type {
+  CreateClientHeadOptions,
+  VueHeadClient,
+}

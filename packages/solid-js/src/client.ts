@@ -14,3 +14,8 @@ export function createHead(options: CreateClientHeadOptions = {}): Unhead {
   })
   return head
 }
+
+export type {
+  CreateClientHeadOptions,
+  Unhead,
+}

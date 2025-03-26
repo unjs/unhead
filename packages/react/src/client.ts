@@ -19,3 +19,8 @@ export function createHead(options: CreateClientHeadOptions = {}): Unhead {
 export function UnheadProvider({ children, head }: { children: ReactNode, head?: ReturnType<typeof createHead> }) {
   return createElement(UnheadContext.Provider, { value: head || createHead() }, children)
 }
+
+export type {
+  CreateClientHeadOptions,
+  Unhead,
+}

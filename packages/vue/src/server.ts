@@ -15,3 +15,8 @@ export function createHead(options: Omit<CreateServerHeadOptions, 'propsResolver
   head.install = vueInstall(head)
   return head
 }
+
+export type {
+  CreateServerHeadOptions,
+  VueHeadClient,
+}
