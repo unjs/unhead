@@ -15,14 +15,14 @@
     "@unhead/schema-org": "workspace:*",
     "compression": "^1.8.0",
     "express": "^5.0.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.4.1",
     "sirv": "^3.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.13.14",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
