@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ActiveHeadEntry, ResolvableHead as UseHeadInput } from 'unhead/types'
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'
 
@@ -8,6 +8,8 @@ interface HeadProps {
   children: ReactNode
   titleTemplate?: string
 }
+
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof navigator !== 'undefined'
 
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   const headRef = useRef<ActiveHeadEntry<any> | null>(null)
@@ -22,7 +24,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
     }
   }, [])
 
-  useEffect(() => {
+  const applyHeadChanges = useCallback(() => {
     const input: UseHeadInput = {
       titleTemplate,
     }
@@ -57,6 +59,12 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       headRef.current.patch(input)
     }
   }, [children, titleTemplate])
+
+  useEffect(applyHeadChanges, [applyHeadChanges])
+
+  // in ssr, apply changes immediately
+  if (!isBrowser)
+    applyHeadChanges()
 
   return null
 }
