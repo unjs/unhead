@@ -9,22 +9,10 @@ interface HeadProps {
   titleTemplate?: string
 }
 
-const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof navigator !== 'undefined'
-
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
-  const headRef = useRef<ActiveHeadEntry<any> | null>(null)
   const head = useUnhead()
 
-  useEffect(() => {
-    return () => {
-      if (headRef.current?.dispose()) {
-        headRef.current.dispose()
-      }
-      headRef.current = null
-    }
-  }, [])
-
-  const applyHeadChanges = useCallback(() => {
+  const getHeadChanges = useCallback(() => {
     const input: UseHeadInput = {
       titleTemplate,
     }
@@ -51,20 +39,25 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
         input[type] = data
       }
     })
-
-    if (!headRef.current) {
-      headRef.current = head.push(input)
-    }
-    else {
-      headRef.current.patch(input)
-    }
+    return input
   }, [children, titleTemplate])
 
-  useEffect(applyHeadChanges, [applyHeadChanges])
+  const headRef = useRef<ActiveHeadEntry<any> | null>(
+    head.push(getHeadChanges()),
+  )
 
-  // in ssr, apply changes immediately
-  if (!isBrowser)
-    applyHeadChanges()
+  useEffect(() => {
+    return () => {
+      if (headRef.current?.dispose) {
+        headRef.current.dispose()
+      }
+      headRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    headRef.current?.patch(getHeadChanges())
+  }, [getHeadChanges])
 
   return null
 }
