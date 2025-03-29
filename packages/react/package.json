@@ -67,7 +67,7 @@
     "test:attw": "attw --pack"
   },
   "peerDependencies": {
-    "react": ">=19"
+    "react": ">=18"
   },
   "build": {
     "external": [
