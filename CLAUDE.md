@@ -5,7 +5,7 @@
 - `pnpm stub` - Create package stubs
 - `pnpm test` - Run all tests
 - `pnpm test <pattern>` - Run tests matching pattern
-- `pnpm vitest -t "test name"` - Run a specific test
+- `pnpm vitest --run -t "test name"` - Run a specific test
 - `pnpm lint` - Lint and fix code
 - `pnpm benchmark` - Run benchmarks
 - `pnpm lint:docs` - Lint documentation
