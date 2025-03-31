@@ -2,97 +2,12 @@ import { basename } from 'node:path'
 import { createApp } from './main'
 import { createHead, VueHeadMixin } from "@unhead/vue/server"
 import { renderToWebStream } from 'vue/server-renderer'
-import { Writable } from 'node:stream'
-
-class CustomWritable extends Writable {
-  constructor(options = {}) {
-    super(options)
-    this.chunks = []
-    this.queue = [] // Initialize the queue
-    this.controller = null
-    this.resolve = null
-    this.isClosed = false // Flag to indicate if the stream is closed
-  }
-
-  _write(chunk, encoding, callback) {
-    console.log('CustomWritable _write called', Buffer.from(chunk).toString('utf-8'))
-    this.chunks.push(chunk)
-    if (this.controller && this.controller.desiredSize > 0) {
-      this.controller.enqueue(chunk)
-    }
-    this.queue.push(chunk)
-    if (this.resolve) {
-      this.resolve()
-      this.resolve = null
-    }
-    callback()
-  }
-
-  _final(callback) {
-    this.isClosed = true
-    if (this.resolve) {
-      this.resolve({ value: undefined, done: true })
-    }
-    callback()
-  }
-
-  getContent() {
-    return Buffer.concat(this.chunks).toString('utf-8')
-  }
-
-  setController(controller) {
-    this.controller = controller
-  }
-
-  [Symbol.asyncIterator]() {
-    return {
-      next: () => {
-        if (this.queue.length > 0) {
-          return Promise.resolve({ value: this.queue.shift(), done: false })
-        }
-        return Promise.resolve({ value: '', done: true })
-        // if (this.isClosed) {
-        //   return Promise.resolve({ value: '', done: true })
-        // }
-        // return new Promise((resolve) => {
-        //   this.resolve = () => resolve({ value: this.queue.shift(), done: false })
-        // })
-      }
-    }
-  }
-}
 
 export function render(url) {
   const { app } = createApp()
   const head = createHead()
   app.use(head)
   app.mixin(VueHeadMixin)
-  head.push({
-    htmlAttrs: {
-      class: 'layout-default',
-    },
-    bodyAttrs: {
-      style: 'overflow: hidden;',
-    },
-  })
-
-  const customWritable = new CustomWritable()
-
-  head.hooks.hook('entries:updated', async () => {
-    console.log('entries:updated hook triggered')
-    if (customWritable.controller) {
-      console.log('controller state:', customWritable.controller.desiredSize)
-      if (customWritable.controller.desiredSize > 0) {
-        console.log('enqueueing head tags update')
-        const tags = JSON.stringify(await head.resolveTags())
-        customWritable.controller.enqueue(`<script>window.__HEAD_TAGS__ = ${tags}</script>`)
-      } else {
-        console.log('controller has no desired size')
-      }
-    } else {
-      console.log('controller is not defined')
-    }
-  })
 
   // passing SSR context object which will be available via useSSRContext()
   // @vitejs/plugin-vue injects code into a component's setup() that registers
@@ -101,28 +16,7 @@ export function render(url) {
   const ctx = {}
   const vueStream = renderToWebStream(app, ctx)
 
-  vueStream.pipeTo(new WritableStream({
-    start(controller) {
-      console.log('WritableStream started')
-      customWritable.setController(controller)
-    },
-    write(chunk) {
-      console.log('WritableStream write called', Buffer.from(chunk).toString('utf-8'))
-      customWritable.write(chunk)
-    },
-    close() {
-      console.log('WritableStream close called')
-      customWritable.end()
-    }
-  })).then(() => {
-    console.log('Stream has ended')
-    customWritable.end()
-  }).catch((err) => {
-    console.error('Stream error:', err)
-    customWritable.destroy(err)
-  })
-
-  return { stream: customWritable }
+  return { vueStream, head }
 }
 
 function renderPreloadLinks(modules, manifest) {
