@@ -12,7 +12,13 @@ useHead({
   bodyAttrs: {
     style: 'overflow: hidden;',
   },
-  title: 'hello world'
+  title: 'hello world',
+  script: [
+    {
+      tagPosition: 'bodyClose',
+      innerHTML: 'console.log("Hello world")',
+    }
+  ]
 })
 </script>
 

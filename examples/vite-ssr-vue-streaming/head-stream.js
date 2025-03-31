@@ -40,6 +40,7 @@ export async function headStream(res, vueStream, htmlStart, htmlEnd, head) {
     await writeFirstChunk()
   }
 
-  res.write(htmlEnd)
+  const headHtml = await renderSSRHead(head)
+  res.write((htmlEnd.replace('</body>', `${headHtml.bodyTags}</body>`)))
   res.end()
 }
