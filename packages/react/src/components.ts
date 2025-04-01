@@ -11,7 +11,6 @@ interface HeadProps {
 
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   const head = useUnhead()
-  const headRef = useRef<ActiveHeadEntry<UseHeadInput> | null>(null)
 
   // Process children only when they change
   const processedElements = useMemo(() =>
@@ -43,12 +42,14 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       if (HasElementTags.has(tagName)) {
         const key = tagName as keyof UseHeadInput
         if (!Array.isArray(input[key])) {
+          // @ts-expect-error untyped
           input[key] = []
         }
         (input[key] as any[])!.push(data)
       }
       else {
         // For singleton tags (title, base, etc.)
+        // @ts-expect-error untyped
         input[tagName as keyof UseHeadInput] = data
       }
     }
@@ -56,14 +57,9 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
     return input
   }, [processedElements, titleTemplate])
 
-  const headChanges = useMemo(() => getHeadChanges(), [getHeadChanges])
-
-  if (!headRef.current) {
-    headRef.current = head.push(headChanges)
-  }
-  else {
-    headRef.current.patch(headChanges)
-  }
+  const headRef = useRef<ActiveHeadEntry<any> | null>(
+    head.push(getHeadChanges()),
+  )
 
   useEffect(() => {
     return () => {
@@ -73,6 +69,10 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       headRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    headRef.current?.patch(getHeadChanges())
+  }, [getHeadChanges])
 
   return null
 }
