@@ -68,6 +68,7 @@ describe('simpleHead component in ssr', () => {
       <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
       <link rel="icon" href="favicon.ico">
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://www.example.com"}</script>
-      <script type="module" src="https://example.com/module.js"></script>"`)
+      <script type="module" src="https://example.com/module.js"></script>"
+    `)
   })
 })
