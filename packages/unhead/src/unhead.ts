@@ -153,7 +153,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
 
       if (titleTemplate) {
         const titleTemplateFn = titleTemplate?.textContent
-        head._titleTemplate = typeof titleTemplateFn === 'string' ? titleTemplateFn : undefined
+        head._titleTemplate = titleTemplateFn
         if (titleTemplateFn) {
           // @ts-expect-error todo
           let newTitle = (typeof titleTemplateFn === 'function' ? titleTemplateFn(title?.textContent) : titleTemplateFn)
