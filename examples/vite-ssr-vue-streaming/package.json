@@ -22,14 +22,14 @@
     "pinia": "^3.0.1",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^19.1.2",
-    "vite": "^6.2.3",
+    "vite": "^6.2.5",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.8.0",
-    "express": "^4.21.2",
+    "express": "^5.1.0",
     "serve-static": "^2.2.0",
     "vue": "^3.5.13"
   }

@@ -12,14 +12,14 @@
   },
   "dependencies": {
     "compression": "^1.8.0",
-    "express": "^5.0.1",
+    "express": "^5.1.0",
     "sirv": "^3.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
-    "@types/node": "^22.13.14",
+    "@types/node": "^22.14.0",
     "cross-env": "^7.0.3",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "typescript": "~5.8.3",
+    "vite": "^6.2.5"
   }
 }
