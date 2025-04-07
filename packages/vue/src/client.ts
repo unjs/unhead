@@ -9,7 +9,7 @@ export { renderDOMHead } from 'unhead/client'
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   const head = _createHead({
     domOptions: {
-      render: createDebouncedFn(() => renderDOMHead(head), setTimeout),
+      render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
     ...options,
   }) as VueHeadClient
