@@ -527,6 +527,9 @@ importers:
       ufo:
         specifier: ^1.6.1
         version: 1.6.1
+      unhead:
+        specifier: workspace:*
+        version: link:../unhead
     devDependencies:
       '@unhead/react':
         specifier: workspace:*
@@ -540,9 +543,6 @@ importers:
       '@unhead/vue':
         specifier: workspace:*
         version: link:../vue
-      unhead:
-        specifier: workspace:*
-        version: link:../unhead
       unplugin-vue-components:
         specifier: ^28.5.0
         version: 28.5.0(@babel/parser@7.27.0)(vue@3.5.13(typescript@5.8.3))

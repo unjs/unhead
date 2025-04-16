@@ -79,7 +79,28 @@
   "dependencies": {
     "defu": "^6.1.4",
     "ohash": "^2.0.11",
-    "ufo": "^1.6.1"
+    "ufo": "^1.6.1",
+    "unhead": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/vue": {
+      "optional": true
+    },
+    "@unhead/react": {
+      "optional": true
+    },
+    "@unhead/solid-js": {
+      "optional": true
+    },
+    "@unhead/svelte": {
+      "optional": true
+    }
+  },
+  "peerDependencies": {
+    "@unhead/vue": "workspace:*",
+    "@unhead/react": "workspace:*",
+    "@unhead/solid-js": "workspace:*",
+    "@unhead/svelte": "workspace:*"
   },
   "devDependencies": {
     "@unhead/react": "workspace:*",
