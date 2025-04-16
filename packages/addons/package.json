@@ -60,9 +60,9 @@
     "estree-walker": "^3.0.3",
     "magic-string": "^0.30.17",
     "mlly": "^1.7.4",
-    "ufo": "^1.5.4",
-    "unplugin": "^2.2.2",
-    "unplugin-ast": "^0.14.4"
+    "ufo": "^1.6.1",
+    "unplugin": "^2.3.2",
+    "unplugin-ast": "^0.14.6"
   },
   "devDependencies": {
     "@babel/types": "^7.27.0"

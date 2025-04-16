@@ -79,7 +79,7 @@
   "dependencies": {
     "defu": "^6.1.4",
     "ohash": "^2.0.11",
-    "ufo": "^1.5.4"
+    "ufo": "^1.6.1"
   },
   "devDependencies": {
     "@unhead/react": "workspace:*",
@@ -87,7 +87,7 @@
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^28.4.1"
+    "unplugin-vue-components": "^28.5.0"
   },
   "build": {
     "external": [

@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.0.5",
   "private": "true",
-  "packageManager": "pnpm@10.7.1",
+  "packageManager": "pnpm@10.8.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "repository": {
@@ -29,9 +29,9 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.11.0",
-    "@arethetypeswrong/cli": "0.17.4",
-    "@fast-check/vitest": "^0.2.0",
+    "@antfu/eslint-config": "^4.12.0",
+    "@arethetypeswrong/cli": "^0.17.4",
+    "@fast-check/vitest": "^0.2.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
     "acorn-loose": "^8.4.0",
@@ -40,9 +40,9 @@
     "eslint": "^9.24.0",
     "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0",
-    "jsdom": "^26.0.0",
+    "jsdom": "^26.1.0",
     "rollup-plugin-analyzer": "^4.0.0",
-    "typescript": "5.8.2",
+    "typescript": "^5.8.3",
     "unbuild": "^3.5.0",
     "utility-types": "^3.11.0",
     "vitest": "^3.1.1",
@@ -69,7 +69,7 @@
     "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "typescript": "5.8.2",
+    "typescript": "5.8.3",
     "unhead": "workspace:*"
   }
 }

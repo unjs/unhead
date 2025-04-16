@@ -16,10 +16,10 @@
     "@unhead/schema-org": "workspace:*",
     "@unhead/shared": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "pinia": "^3.0.1",
+    "pinia": "^3.0.2",
     "unhead": "workspace:*",
     "unplugin-auto-import": "^19.1.2",
-    "vite": "^6.2.5",
+    "vite": "^6.3.0",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
