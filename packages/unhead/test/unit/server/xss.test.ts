@@ -351,4 +351,19 @@ describe('xss', () => {
       <link rel="stylesheet" href="vbscript:alert(1)">"
     `)
   })
+  it('style tag', async () => {
+    // body {color: red;}</style><script>alert('XSS')</script><style>
+    const head = createServerHeadWithContext()
+    head.push({
+      style: [
+        { innerHTML: 'body {color: red;}</style><script>alert(\'XSS\')</script><style>' },
+        { innerHTML: '} </style><script>alert("XSS Attack Successful")</script><style>{</style>' },
+      ],
+    })
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toMatchInlineSnapshot(`
+      "<style>body {color: red;}<\\/style><script>alert('XSS')</script><style></style>
+      <style>} <\\/style><script>alert("XSS Attack Successful")</script><style>{<\\/style></style>"
+    `)
+  })
 })

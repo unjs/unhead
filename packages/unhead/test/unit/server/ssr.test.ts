@@ -1,3 +1,4 @@
+import { createHead } from '@unhead/dom'
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../../../src'
 import { renderSSRHead } from '../../../src/server'
@@ -355,5 +356,25 @@ describe('ssr', () => {
     expect(processedHtml).toContain('<link rel="preconnect" href="//example.com">')
     expect(processedHtml).toContain('<link rel="prefetch" href="another-script.js">')
     expect(processedHtml).toContain('<script src="another-script.js"></script>')
+  })
+  it('#541', async () => {
+    const input = `
+    <head>
+        <style>
+            html { background: url(/foo.png); }
+            img::before { content: "foo"; }
+        </style>
+    </head>
+`
+    const processedHtml = await transformHtmlTemplate(createHead(), input)
+    expect(processedHtml).toMatchInlineSnapshot(`
+      "
+      <head>
+      <style>
+                  html { background: url(/foo.png); }
+                  img::before { content: "foo"; }
+              </style></head>
+      "
+    `)
   })
 })
