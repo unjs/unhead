@@ -232,6 +232,10 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _ssrPayload?: ResolvableHead
+  /**
+   * @internal
+   */
+  _rootStreamedTags?: Record<string, HeadTag>
 }
 
 export interface DomState {
