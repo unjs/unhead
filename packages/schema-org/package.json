@@ -76,16 +76,13 @@
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
     "test:attw": "attw --pack"
   },
-  "dependencies": {
-    "defu": "^6.1.4",
-    "ohash": "^2.0.11",
-    "ufo": "^1.6.1",
-    "unhead": "workspace:*"
+  "peerDependencies": {
+    "@unhead/react": "workspace:*",
+    "@unhead/solid-js": "workspace:*",
+    "@unhead/svelte": "workspace:*",
+    "@unhead/vue": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@unhead/vue": {
-      "optional": true
-    },
     "@unhead/react": {
       "optional": true
     },
@@ -94,13 +91,16 @@
     },
     "@unhead/svelte": {
       "optional": true
+    },
+    "@unhead/vue": {
+      "optional": true
     }
   },
-  "peerDependencies": {
-    "@unhead/vue": "workspace:*",
-    "@unhead/react": "workspace:*",
-    "@unhead/solid-js": "workspace:*",
-    "@unhead/svelte": "workspace:*"
+  "dependencies": {
+    "defu": "^6.1.4",
+    "ohash": "^2.0.11",
+    "ufo": "^1.6.1",
+    "unhead": "workspace:*"
   },
   "devDependencies": {
     "@unhead/react": "workspace:*",

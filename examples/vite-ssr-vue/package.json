@@ -17,16 +17,16 @@
     "express": "^5.1.0",
     "rollup-plugin-visualizer": "^5.14.0",
     "sirv": "^3.0.1",
-    "vite-bundle-analyzer": "^0.18.1",
+    "vite-bundle-analyzer": "^0.20.1",
     "vue": "^3.5.13"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.15.3",
     "@vitejs/plugin-vue": "^5.2.3",
     "cross-env": "^7.0.3",
     "typescript": "~5.8.3",
-    "vite": "^6.3.0",
-    "vue-tsc": "^2.2.8"
+    "vite": "^6.3.4",
+    "vue-tsc": "^2.2.10"
   }
 }

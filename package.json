@@ -3,10 +3,10 @@
   "type": "module",
   "version": "2.0.8",
   "private": "true",
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@10.10.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
-  "homepage": "https://unhead.unjs.io",
   "license": "MIT",
+  "homepage": "https://unhead.unjs.io",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git"
@@ -36,10 +36,10 @@
     "@fast-check/vitest": "^0.2.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
-    "acorn-loose": "^8.4.0",
+    "acorn-loose": "^8.5.0",
     "bumpp": "^10.1.0",
     "devalue": "^5.1.1",
-    "eslint": "^9.24.0",
+    "eslint": "^9.26.0",
     "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.1.0",
@@ -47,10 +47,10 @@
     "typescript": "^5.8.3",
     "unbuild": "^3.5.0",
     "utility-types": "^3.11.0",
-    "vitest": "^3.1.1",
+    "vitest": "^3.1.2",
     "vitest-package-exports": "^0.1.1",
     "vue": "^3.5.13",
-    "vue-tsc": "^2.2.8"
+    "vue-tsc": "^2.2.10"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [
