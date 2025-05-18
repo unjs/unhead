@@ -24,19 +24,21 @@ export interface CanonicalPluginOptions {
  */
 export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead) => HeadPluginOptions & { key: string }) {
   return (head) => {
+    let host = options.canonicalHost || (!head.ssr ? (window.location.origin) : '')
+    // handle https if not provided
+    if (!host.startsWith('http') && !host.startsWith('//')) {
+      host = `https://${host}`
+    }
+    // have error thrown if canonicalHost is not a valid URL
+    host = new URL(host).origin
+
     function resolvePath(path: string) {
       if (options?.customResolver) {
         return options.customResolver(path)
       }
-      let host = options.canonicalHost || (!head.ssr ? (window.location.origin) : '')
-      // handle https if not provided
-      if (!host.startsWith('http') && !host.startsWith('//')) {
-        host = `https://${host}`
-      }
-      // have error thrown if canonicalHost is not a valid URL
-      host = new URL(host).origin
       if (path.startsWith('http') || path.startsWith('//'))
         return path
+
       try {
         return new URL(path, host).toString()
       }
