@@ -61,8 +61,8 @@
     "magic-string": "^0.30.17",
     "mlly": "^1.7.4",
     "ufo": "^1.6.1",
-    "unplugin": "^2.3.2",
-    "unplugin-ast": "^0.14.6"
+    "unplugin": "^2.3.4",
+    "unplugin-ast": "^0.15.0"
   },
   "devDependencies": {
     "@babel/types": "^7.27.1"
