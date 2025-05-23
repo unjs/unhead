@@ -17,12 +17,12 @@
     "express": "^5.1.0",
     "rollup-plugin-visualizer": "^5.14.0",
     "sirv": "^3.0.1",
-    "vite-bundle-analyzer": "^0.20.2",
+    "vite-bundle-analyzer": "^0.21.0",
     "vue": "^3.5.14"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",
-    "@types/node": "^22.15.18",
+    "@types/node": "^22.15.21",
     "@vitejs/plugin-vue": "^5.2.4",
     "cross-env": "^7.0.3",
     "typescript": "~5.8.3",

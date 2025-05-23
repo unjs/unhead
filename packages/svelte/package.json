@@ -72,7 +72,7 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/svelte": "^5.2.7",
-    "svelte": "^5.30.2"
+    "@testing-library/svelte": "^5.2.8",
+    "svelte": "^5.33.1"
   }
 }
