@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "Full-stack <head> manager built for any framework.",
   "author": {
     "name": "Harlan Wilton",
