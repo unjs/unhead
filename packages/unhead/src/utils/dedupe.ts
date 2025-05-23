@@ -4,7 +4,10 @@ import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 const allowedMetaProperties = ['name', 'property', 'http-equiv']
 
 export function isMetaArrayDupeKey(v: string) {
-  const k = v.split(':')[1]
+  const pos = v.indexOf(':')
+  if (pos === -1)
+    return false
+  const k = v.slice(pos)
   return MetaTagsArrayable.has(k)
 }
 

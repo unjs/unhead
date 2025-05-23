@@ -136,7 +136,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
                 : p === 'class' ? new Set([...(prev.props.class || new Set()), ...v]) : v)
             acc.set(k, { ...next, props: newProps })
           }
-          else if ((next._p! >> 10) === (prev._p! >> 10) && isMetaArrayDupeKey(next._d!)) {
+          else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
             acc.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
             hasFlatMeta = true
           }
