@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { headStream } from "./head-stream.js";
+import { streamAppWithUnhead } from "unhead/server";
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -83,11 +83,16 @@ export async function createServer(
 
       const { vueStream, head } = render(url)
 
-
       const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
       //
-      res.status(200).set({ 'Content-Type': 'text/html' })
-      await headStream(res, vueStream, htmlStart, htmlEnd, head)
+      res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
+
+      const unheadStream = streamAppWithUnhead(vueStream, htmlStart, htmlEnd, head)
+      for await (const chunk of unheadStream) {
+        if (res.closed) break
+        res.write(chunk)
+      }
+      res.end()
     }
     catch (e) {
       vite && vite.ssrFixStacktrace(e)
