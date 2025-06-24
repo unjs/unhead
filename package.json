@@ -36,7 +36,7 @@
     "@fast-check/vitest": "^0.2.1",
     "@types/fs-extra": "^11.0.4",
     "@types/jsdom": "^21.1.7",
-    "acorn-loose": "^8.5.1",
+    "acorn-loose": "^8.4.0",
     "bumpp": "^10.2.0",
     "devalue": "^5.1.1",
     "eslint": "^9.29.0",
@@ -73,6 +73,7 @@
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
     "typescript": "5.8.3",
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "acorn": "8.14.1"
   }
 }
