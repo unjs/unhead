@@ -1,7 +1,5 @@
-/// <reference types="vitest" />
 /// <reference types="vitest/globals" />
-
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   define: {
@@ -11,7 +9,7 @@ export default defineConfig({
   },
   test: {
     pool: 'threads',
-    workspace: ['packages/*', 'test/'],
+    projects: ['packages/*', 'test/'],
     globals: true,
     reporters: 'dot',
     isolate: true,
