@@ -9,16 +9,16 @@ import {
 import { localBusinessResolver } from '../LocalBusiness'
 import { ratingResolver } from '../Rating'
 
-type ValidFoodEstablishmentSubTypes = 'Bakery' |
-  'BarOrPub' |
-  'Brewery' |
-  'Dentist' |
-  'CafeOrCoffeeShop' |
-  'Distillery' |
-  'FastFoodRestaurant' |
-  'IceCreamShop' |
-  'Restaurant' |
-  'Winery'
+type ValidFoodEstablishmentSubTypes = 'Bakery'
+  | 'BarOrPub'
+  | 'Brewery'
+  | 'Dentist'
+  | 'CafeOrCoffeeShop'
+  | 'Distillery'
+  | 'FastFoodRestaurant'
+  | 'IceCreamShop'
+  | 'Restaurant'
+  | 'Winery'
 
 export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes

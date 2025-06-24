@@ -82,6 +82,6 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/user-event": "14.6.1",
     "solid-js": "^1.9.7",
-    "vite-plugin-solid": "^2.11.6"
+    "vite-plugin-solid": "^2.11.7"
   }
 }

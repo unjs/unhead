@@ -11,22 +11,22 @@ import {
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { offerShippingDetailsResolver } from '../OfferShippingDetails'
 
-type ItemAvailability =
-  'BackOrder' |
-  'Discontinued' |
-  'InStock' |
-  'InStoreOnly' |
-  'LimitedAvailability' |
-  'OnlineOnly' |
-  'OutOfStock' |
-  'PreOrder' |
-  'PreSale' |
-  'SoldOut'
+type ItemAvailability
+  = 'BackOrder'
+    | 'Discontinued'
+    | 'InStock'
+    | 'InStoreOnly'
+    | 'LimitedAvailability'
+    | 'OnlineOnly'
+    | 'OutOfStock'
+    | 'PreOrder'
+    | 'PreSale'
+    | 'SoldOut'
 
-type OfferItemCondition =
-  'NewCondition' |
-  'RefurbishedCondition' |
-  'UsedCondition'
+type OfferItemCondition
+  = 'NewCondition'
+    | 'RefurbishedCondition'
+    | 'UsedCondition'
 
 export interface OfferSimple extends Thing {
   '@type'?: 'Offer'

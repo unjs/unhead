@@ -104,12 +104,12 @@ export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
   },
 })
 
-type EmploymentType =
-  'FULL_TIME'
-  | 'PART_TIME'
-  | 'CONTRACTOR'
-  | 'TEMPORARY'
-  | 'INTERN'
-  | 'VOLUNTEER'
-  | 'PER_DIEM'
-  | 'OTHER'
+type EmploymentType
+  = 'FULL_TIME'
+    | 'PART_TIME'
+    | 'CONTRACTOR'
+    | 'TEMPORARY'
+    | 'INTERN'
+    | 'VOLUNTEER'
+    | 'PER_DIEM'
+    | 'OTHER'

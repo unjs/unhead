@@ -87,16 +87,16 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-lev
 ## Types
 
 ```ts
-type ValidFoodEstablishmentSubTypes = 'Bakery' |
-  'BarOrPub' |
-  'Brewery' |
-  'Dentist' |
-  'CafeOrCoffeeShop' |
-  'Distillery' |
-  'FastFoodRestaurant' |
-  'IceCreamShop' |
-  'Restaurant' |
-  'Winery'
+type ValidFoodEstablishmentSubTypes = 'Bakery'
+  | 'BarOrPub'
+  | 'Brewery'
+  | 'Dentist'
+  | 'CafeOrCoffeeShop'
+  | 'Distillery'
+  | 'FastFoodRestaurant'
+  | 'IceCreamShop'
+  | 'Restaurant'
+  | 'Winery'
 
 export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes

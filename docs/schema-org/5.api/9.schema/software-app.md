@@ -34,29 +34,29 @@ defineSoftwareApp({
 ## Types
 
 ```ts
-type ApplicationCategory =
-  'GameApplication' |
-  'SocialNetworkingApplication' |
-  'TravelApplication' |
-  'ShoppingApplication' |
-  'SportsApplication' |
-  'LifestyleApplication' |
-  'BusinessApplication' |
-  'DesignApplication' |
-  'DeveloperApplication' |
-  'DriverApplication' |
-  'EducationalApplication' |
-  'HealthApplication' |
-  'FinanceApplication' |
-  'SecurityApplication' |
-  'BrowserApplication' |
-  'CommunicationApplication' |
-  'DesktopEnhancementApplication' |
-  'EntertainmentApplication' |
-  'MultimediaApplication' |
-  'HomeApplication' |
-  'UtilitiesApplication' |
-  'ReferenceApplication'
+type ApplicationCategory
+  = 'GameApplication'
+    | 'SocialNetworkingApplication'
+    | 'TravelApplication'
+    | 'ShoppingApplication'
+    | 'SportsApplication'
+    | 'LifestyleApplication'
+    | 'BusinessApplication'
+    | 'DesignApplication'
+    | 'DeveloperApplication'
+    | 'DriverApplication'
+    | 'EducationalApplication'
+    | 'HealthApplication'
+    | 'FinanceApplication'
+    | 'SecurityApplication'
+    | 'BrowserApplication'
+    | 'CommunicationApplication'
+    | 'DesktopEnhancementApplication'
+    | 'EntertainmentApplication'
+    | 'MultimediaApplication'
+    | 'HomeApplication'
+    | 'UtilitiesApplication'
+    | 'ReferenceApplication'
 
 export interface SoftwareAppSimple extends Thing {
   '@type'?: Arrayable<'SoftwareApplication' | 'MobileApplication' | 'VideoGame' | 'WebApplication'>

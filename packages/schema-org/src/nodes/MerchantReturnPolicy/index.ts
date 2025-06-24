@@ -4,10 +4,10 @@ import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 
-type MerchantReturnEnumeration =
-  'MerchantReturnFiniteReturnWindow'
-  | 'MerchantReturnNotPermitted'
-  | 'MerchantReturnUnlimitedWindow'
+type MerchantReturnEnumeration
+  = 'MerchantReturnFiniteReturnWindow'
+    | 'MerchantReturnNotPermitted'
+    | 'MerchantReturnUnlimitedWindow'
 
 type ReturnFeesEnumeration = 'FreeReturn' | 'ReturnFeesCustomerResponsibility' | 'ReturnShippingFees'
 

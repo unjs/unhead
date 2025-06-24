@@ -16,8 +16,8 @@
     "sirv": "^3.0.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.2",
-    "@types/node": "^22.15.21",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.3",
     "cross-env": "^7.0.3",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
