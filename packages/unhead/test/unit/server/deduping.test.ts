@@ -31,6 +31,23 @@ describe('dedupe', () => {
     `)
   })
 
+  it ('arrays two', async () => {
+    const head = createServerHeadWithContext()
+
+    // same entry duplicates should not be de-duped
+    useHead(head, {
+      meta: [
+        {
+          name: 'custom-meta',
+          content: ['First custom meta tag', 'Second custom meta tag'],
+        },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="custom-meta" content="Second custom meta tag">"`)
+  })
+
   it('desc', async () => {
     const head = createServerHeadWithContext()
     head.push({
@@ -406,6 +423,30 @@ describe('dedupe', () => {
       "<meta charset="utf-1">
       <meta name="viewport" content="width=device-width, initial-scale=2">
       <meta name="description" content="test 2">"
+    `)
+  })
+
+  it('meta tags with unique keys should not be deduplicated', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      meta: [
+        {
+          name: 'custom-meta',
+          content: 'First custom meta tag',
+          key: 'custom-meta-1',
+        },
+        {
+          name: 'custom-meta',
+          content: 'Second custom meta tag',
+          key: 'custom-meta-2',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<meta name="custom-meta" content="First custom meta tag">
+      <meta name="custom-meta" content="Second custom meta tag">"
     `)
   })
 })
