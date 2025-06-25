@@ -63,8 +63,8 @@
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
-    "@angular/common": "^19.2.4",
-    "@angular/core": "^19.2.4"
+    "@angular/common": "^20.0.5",
+    "@angular/core": "^20.0.5"
   },
   "dependencies": {
     "tslib": "^2.8.1",
