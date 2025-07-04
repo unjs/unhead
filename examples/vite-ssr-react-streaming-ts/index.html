@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--app-head-->
+  </head>
+  <body>
+    <div id="root"><!--app-html--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+    <script>
+      // Simple script to demonstrate that the page is interactive
+      // even before all components have been streamed
+      document.addEventListener('DOMContentLoaded', () => {
+        // Add timestamp to show when the page became interactive
+        const footer = document.createElement('footer');
+        footer.style.marginTop = '2rem';
+        footer.style.padding = '1rem';
+        footer.style.borderTop = '1px solid #eee';
+        footer.style.color = '#666';
+        footer.innerHTML = `<p>Page became interactive at: ${new Date().toLocaleTimeString()}</p>
+                          <p>Note: Slow components continue to stream in even after this message appears.</p>`;
+        document.body.appendChild(footer);
+      });
+    </script>
+  </body>
+</html>
