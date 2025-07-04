@@ -176,6 +176,10 @@ export interface Unhead<Input = ResolvableHead> {
    */
   resolveTags: () => Promise<HeadTag[]>
   /**
+   * Invalidate all entries and re-queue them for normalization.
+   */
+  invalidate: () => void
+  /**
    * Exposed hooks for easier extension.
    */
   hooks: Hookable<HeadHooks>

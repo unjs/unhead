@@ -47,7 +47,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
 
   const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: Map<string, HeadPlugin> = new Map()
-  const normalizeQueue: number[] = []
+  const normalizeQueue = new Set<number>()
   const head: Unhead<T> = {
     _entryCount: 1, // 0 is reserved for internal use
     plugins,
@@ -68,12 +68,13 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
       const _: ActiveHeadEntry<T> = {
         _poll(rm = false) {
           head.dirty = true
-          !rm && normalizeQueue.push(_i)
+          !rm && normalizeQueue.add(_i)
           hooks.callHook('entries:updated', head)
         },
         dispose() {
           if (entries.delete(_i)) {
-            _._poll(true)
+            // Re-queue remaining entries for normalization after disposal
+            head.invalidate()
           }
         },
         // a patch is the same as creating a new entry, just a nice DX
@@ -95,8 +96,9 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         entries: [...head.entries.values()],
       }
       await hooks.callHook('entries:resolve', ctx)
-      while (normalizeQueue.length) {
-        const i = normalizeQueue.shift()!
+      while (normalizeQueue.size) {
+        const i = normalizeQueue.values().next().value!
+        normalizeQueue.delete(i)
         const e = entries.get(i)
         if (e) {
           const normalizeCtx = {
@@ -212,6 +214,14 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         finalTags.push(t)
       }
       return finalTags
+    },
+    invalidate() {
+      // Re-queue all current entries for normalization
+      for (const entry of entries.values()) {
+        normalizeQueue.add(entry._i)
+      }
+      head.dirty = true
+      hooks.callHook('entries:updated', head)
     },
   }
   ;(resolvedOptions?.plugins || []).forEach(p => registerPlugin(head, p))

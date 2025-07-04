@@ -9,7 +9,7 @@ import type {
   UseScriptReturn,
   UseSeoMetaInput,
 } from 'unhead/types'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContext } from './context'
 
@@ -24,17 +24,30 @@ export function useUnhead(): Unhead {
 
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
-  const [entry] = useState<T>(() => fn(unhead, input, options))
+  const entryRef = useRef<T | null>(null)
+
+  // Create entry only once, even in Strict Mode
+  if (!entryRef.current) {
+    entryRef.current = fn(unhead, input, options)
+  }
+
+  const entry = entryRef.current
+
+  // Patch entry when input changes
   useEffect(() => {
-    entry.patch(input)
-  }, [input])
+    entry?.patch(input)
+  }, [input, entry])
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // unmount
-      entry.dispose()
+      entry?.dispose()
+      // Clear ref so new entry is created on remount
+      entryRef.current = null
     }
-  }, [])
-  return entry
+  }, [entry])
+
+  return entry as T
 }
 
 export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
