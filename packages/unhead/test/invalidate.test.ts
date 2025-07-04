@@ -43,7 +43,7 @@ describe('invalidate Function', () => {
       init: [{ title: 'Init Title' }],
     })
 
-    const entry = head.push({ title: 'Test Entry' })
+    head.push({ title: 'Test Entry' })
 
     // Call invalidate multiple times
     head.invalidate()
