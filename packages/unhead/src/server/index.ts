@@ -1,5 +1,7 @@
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
 export { createHead } from './createHead'
 export { renderSSRHead } from './renderSSRHead'
+// Experimental streaming support
+export { renderSSRStreamComponents, streamAppWithUnhead } from './streamAppWithUnhead'
 export { transformHtmlTemplate } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'

@@ -37,8 +37,8 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
       // open graph props can have multiple tags with the same property
       if (props[n] !== undefined) {
         const propValue = props[n]
-        const isStructured = propValue.includes(':')
-        const isStandardSingle = StandardSingleMetaTags.has(propValue)
+        const isStructured = propValue && typeof propValue === 'string' && propValue.includes(':')
+        const isStandardSingle = propValue && StandardSingleMetaTags.has(propValue)
         const shouldAlwaysDedupe = isStructured || isStandardSingle
         const keyPart = (!shouldAlwaysDedupe && tag.key) ? `:key:${tag.key}` : ''
         return `${name}:${propValue}${keyPart}`
