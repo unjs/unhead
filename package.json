@@ -72,8 +72,6 @@
     "@unhead/shared": "workspace:*",
     "@unhead/ssr": "workspace:*",
     "@unhead/vue": "workspace:*",
-    "acorn": "8.14.1",
-    "typescript": "5.8.3",
     "unhead": "workspace:*"
   }
 }

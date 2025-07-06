@@ -13,9 +13,7 @@ overrides:
   '@unhead/shared': workspace:*
   '@unhead/ssr': workspace:*
   '@unhead/vue': workspace:*
-  typescript: 5.8.3
   unhead: workspace:*
-  acorn: 8.14.1
 
 importers:
 
@@ -61,7 +59,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       typescript:
-        specifier: 5.8.3
+        specifier: ^5.8.3
         version: 5.8.3
       unbuild:
         specifier: ^3.5.0
@@ -152,7 +150,7 @@ importers:
         specifier: ^20.0.1
         version: 20.0.1(@angular/compiler-cli@20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3))(tslib@2.8.1)(typescript@5.8.3)
       typescript:
-        specifier: 5.8.3
+        specifier: ~5.8.3
         version: 5.8.3
 
   examples/vite-ssr-react-ts:
@@ -201,7 +199,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       typescript:
-        specifier: 5.8.3
+        specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.2
@@ -250,7 +248,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: 5.8.3
+        specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.2
@@ -278,7 +276,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       typescript:
-        specifier: 5.8.3
+        specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.2
@@ -321,7 +319,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       typescript:
-        specifier: 5.8.3
+        specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.2
@@ -637,7 +635,7 @@ packages:
       ng-packagr: ^20.0.0
       protractor: ^7.0.0
       tailwindcss: ^2.0.0 || ^3.0.0 || ^4.0.0
-      typescript: 5.8.3
+      typescript: '>=5.8 <5.9'
     peerDependenciesMeta:
       '@angular/core':
         optional: true
@@ -713,7 +711,7 @@ packages:
       postcss: ^8.4.0
       tailwindcss: ^2.0.0 || ^3.0.0 || ^4.0.0
       tslib: ^2.3.0
-      typescript: 5.8.3
+      typescript: '>=5.8 <5.9'
       vitest: ^3.1.1
     peerDependenciesMeta:
       '@angular/core':
@@ -766,7 +764,7 @@ packages:
     hasBin: true
     peerDependencies:
       '@angular/compiler': 20.0.6
-      typescript: 5.8.3
+      typescript: '>=5.8 <5.9'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -2310,7 +2308,7 @@ packages:
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
       '@angular/compiler-cli': ^20.0.0
-      typescript: 5.8.3
+      typescript: '>=5.8 <5.9'
       webpack: ^5.54.0
 
   '@nodelib/fs.scandir@2.1.5':
@@ -2768,7 +2766,7 @@ packages:
   '@sveltejs/acorn-typescript@1.0.5':
     resolution: {integrity: sha512-IwQk4yfwLdibDlrXVE04jTZYlLnwsTT2PIOQQGNLWfjavGifnk1JD1LcZjZaBTRcxZu2FfPfNLOE04DSu9lqtQ==}
     peerDependencies:
-      acorn: 8.14.1
+      acorn: ^8.9.0
 
   '@sveltejs/vite-plugin-svelte-inspector@4.0.1':
     resolution: {integrity: sha512-J/Nmb2Q2y7mck2hyCX4ckVHcR5tu2J+MtBEQqpDrrgELZ2uvraQcK/ioCV61AqkdXFgriksOKIceDcQmqnGhVw==}
@@ -2982,26 +2980,26 @@ packages:
     peerDependencies:
       '@typescript-eslint/parser': ^8.35.1
       eslint: ^8.57.0 || ^9.0.0
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/parser@8.35.1':
     resolution: {integrity: sha512-3MyiDfrfLeK06bi/g9DqJxP5pV74LNv4rFTyvGDmT3x2p1yp1lOd+qYZfiRPIOf/oON+WRZR5wxxuF85qOar+w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/project-service@8.35.0':
     resolution: {integrity: sha512-41xatqRwWZuhUMF/aZm2fcUsOFKNcG28xqRSS6ZVr9BVJtGExosLAm5A1OxTjRMagx8nJqva+P5zNIGt8RIgbQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/project-service@8.35.1':
     resolution: {integrity: sha512-VYxn/5LOpVxADAuP3NrnxxHYfzVtQzLKeldIhDhzC8UHaiQvYlXvKuVho1qLduFbJjjy5U5bkGwa3rUGUb1Q6Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/scope-manager@8.35.0':
     resolution: {integrity: sha512-+AgL5+mcoLxl1vGjwNfiWq5fLDZM1TmTPYs2UkyHfFhgERxBbqHlNjRzhThJqz+ktBqTChRYY6zwbMwy0591AA==}
@@ -3015,20 +3013,20 @@ packages:
     resolution: {integrity: sha512-04k/7247kZzFraweuEirmvUj+W3bJLI9fX6fbo1Qm2YykuBvEhRTPl8tcxlYO8kZZW+HIXfkZNoasVb8EV4jpA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/tsconfig-utils@8.35.1':
     resolution: {integrity: sha512-K5/U9VmT9dTHoNowWZpz+/TObS3xqC5h0xAIjXPw+MNcKV9qg6eSatEnmeAwkjHijhACH0/N7bkhKvbt1+DXWQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/type-utils@8.35.1':
     resolution: {integrity: sha512-HOrUBlfVRz5W2LIKpXzZoy6VTZzMu2n8q9C2V/cFngIC5U1nStJgv0tMV4sZPzdf4wQm9/ToWUFPMN9Vq9VJQQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/types@8.35.0':
     resolution: {integrity: sha512-0mYH3emanku0vHw2aRLNGqe7EXh9WHEhi7kZzscrMDf6IIRUQ5Jk4wp1QrledE/36KtdZrVfKnE32eZCf/vaVQ==}
@@ -3042,27 +3040,27 @@ packages:
     resolution: {integrity: sha512-F+BhnaBemgu1Qf8oHrxyw14wq6vbL8xwWKKMwTMwYIRmFFY/1n/9T/jpbobZL8vp7QyEUcC6xGrnAO4ua8Kp7w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/typescript-estree@8.35.1':
     resolution: {integrity: sha512-Vvpuvj4tBxIka7cPs6Y1uvM7gJgdF5Uu9F+mBJBPY4MhvjrjWGK4H0lVgLJd/8PWZ23FTqsaJaLEkBCFUk8Y9g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/utils@8.35.0':
     resolution: {integrity: sha512-nqoMu7WWM7ki5tPgLVsmPM8CkqtoPUG6xXGeefM5t4x3XumOEKMoUZPdi+7F+/EotukN4R9OWdmDxN80fqoZeg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/utils@8.35.1':
     resolution: {integrity: sha512-lhnwatFmOFcazAsUm3ZnZFpXSxiwoa1Lj50HphnDe1Et01NF4+hrdXONSUHIcbVu2eFb1bAf+5yjXkGVkXBKAQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
-      typescript: 5.8.3
+      typescript: '>=4.8.4 <5.9.0'
 
   '@typescript-eslint/visitor-keys@8.35.0':
     resolution: {integrity: sha512-zTh2+1Y8ZpmeQaQVIc/ZZxsx8UzgKJyNg1PTvjzC7WMhPSVS8bfDX34k1SrwOf016qd5RU3az2UxUNue3IfQ5g==}
@@ -3102,7 +3100,7 @@ packages:
     resolution: {integrity: sha512-EOg8d0jn3BAiKnR55WkFxmxfWA3nmzrbIIuOXyTe6A72duryNgyU+bdBEauA97Aab3ho9kLmAwgPX63Ckj4QEg==}
     peerDependencies:
       eslint: '>= 8.57.0'
-      typescript: 5.8.3
+      typescript: '>= 5.0.0'
       vitest: '*'
     peerDependenciesMeta:
       typescript:
@@ -3206,7 +3204,7 @@ packages:
   '@vue/language-core@3.0.1':
     resolution: {integrity: sha512-sq+/Mc1IqIexWEQ+Q2XPiDb5SxSvY5JPqHnMOl/PlF5BekslzduX8dglSkpC17VeiAQB6dpS+4aiwNLJRduCNw==}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '*'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -3300,7 +3298,7 @@ packages:
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
-      acorn: 8.14.1
+      acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
 
   acorn-loose@8.5.2:
     resolution: {integrity: sha512-PPvV6g8UGMGgjrMu+n/f9E/tCSkNQ2Y97eFvuVdJfG11+xdIeDcLyNdC8SHcrHbRqkfwLASdplyR6B6sKM1U4A==}
@@ -3308,6 +3306,11 @@ packages:
 
   acorn@8.14.1:
     resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+
+  acorn@8.15.0:
+    resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -3805,7 +3808,7 @@ packages:
     resolution: {integrity: sha512-itvL5h8RETACmOTFc4UfIyB2RfEHi71Ax6E/PivVxq9NseKbOWpeyHEOIbmAw1rs8Ak0VursQNww7lf7YtUwzg==}
     engines: {node: '>=14'}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.9.5'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -4196,7 +4199,7 @@ packages:
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: '>=9.0.0'
-      typescript: 5.8.3
+      typescript: '>=4.5'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -5423,7 +5426,7 @@ packages:
     hasBin: true
     peerDependencies:
       sass: ^1.85.0
-      typescript: 5.8.3
+      typescript: '>=5.7.3'
       vue: ^3.5.13
       vue-sfc-transformer: ^0.1.1
       vue-tsc: ^1.8.27 || ^2.0.21
@@ -5521,7 +5524,7 @@ packages:
       '@angular/compiler-cli': ^20.0.0 || ^20.1.0-next.0
       tailwindcss: ^2.0.0 || ^3.0.0 || ^4.0.0
       tslib: ^2.3.0
-      typescript: 5.8.3
+      typescript: '>=5.8 <5.9'
     peerDependenciesMeta:
       tailwindcss:
         optional: true
@@ -5783,7 +5786,7 @@ packages:
   pinia@3.0.3:
     resolution: {integrity: sha512-ttXO/InUULUXkMHpTdp9Fj4hLpD/2AoJdmAbAeW2yu1iy1k+pkFekQXw5VpC0/5p51IOR/jDaDRfRWRnMMsGOA==}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.4.4'
       vue: ^2.7.0 || ^3.5.11
     peerDependenciesMeta:
       typescript:
@@ -6249,7 +6252,7 @@ packages:
     engines: {node: '>=16'}
     peerDependencies:
       rollup: ^3.29.4 || ^4
-      typescript: 5.8.3
+      typescript: ^4.5 || ^5.0
 
   rollup-plugin-visualizer@6.0.3:
     resolution: {integrity: sha512-ZU41GwrkDcCpVoffviuM9Clwjy5fcUxlz0oMoTXTYsK+tcIFzbdacnrr2n8TXcHxbGKKXtOdjxM2HUS4HjkwIw==}
@@ -6648,7 +6651,7 @@ packages:
     hasBin: true
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
-      typescript: 5.8.3
+      typescript: '>=5.0.0'
 
   svelte@5.35.2:
     resolution: {integrity: sha512-uW/rRXYrhZ7Dh4UQNZ0t+oVGL1dEM+95GavCO8afAk1IY2cPq9BcZv9C3um5aLIya2y8lIeLPxLII9ASGg9Dzw==}
@@ -6793,12 +6796,12 @@ packages:
     resolution: {integrity: sha512-CUgTZL1irw8u29bzrOD/nH85jqyc74D6SshFgujOIA7osm2Rz7dYH77agkx7H4FBNxDq7Cjf+IjaX/8zwFW+ZQ==}
     engines: {node: '>=18.12'}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.8.4'
 
   ts-declaration-location@1.0.7:
     resolution: {integrity: sha512-EDyGAwH1gO0Ausm9gV6T2nUvBgXT5kGoCMJPllOaooZ+4VvJiKBdZE7wK18N1deEowhcUptS+5GXZK8U/fvpwA==}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=4.0.0'
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -6826,6 +6829,11 @@ packages:
   typed-assert@1.0.9:
     resolution: {integrity: sha512-KNNZtayBCtmnNmbo5mG47p1XsCyrx6iVqomjcZnec/1Y5GGARaxPs6r49RnSPeUP3YjNYiU9sQHAtY4BBvnZwg==}
 
+  typescript@5.6.1-rc:
+    resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -6838,7 +6846,7 @@ packages:
     resolution: {integrity: sha512-DPFttsiADnHRb/K+yJ9r9jdn6JyXlsmdT0S12VFC14DFSJD+cxBnHq+v0INmqqPVPxOoUjvJFYUVIb02rWnVeA==}
     hasBin: true
     peerDependencies:
-      typescript: 5.8.3
+      typescript: ^5.7.3
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -7147,12 +7155,12 @@ packages:
     resolution: {integrity: sha512-UvMLQD0hAGL1g/NfEQelnSVB4H5gtf/gz2lJKjMMwWNOUmSNyWkejwJagAxEbSjtV5CPPJYslOtoSuqJ63mhdg==}
     hasBin: true
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '>=5.0.0'
 
   vue@3.5.17:
     resolution: {integrity: sha512-LbHV3xPN9BeljML+Xctq4lbz2lVHCR6DtbpTf5XIO6gugpXUN49j2QQPcMj086r9+AkJ0FfUT8xjulKKBkkr9g==}
     peerDependencies:
-      typescript: 5.8.3
+      typescript: '*'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -7406,7 +7414,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2000.5(chokidar@4.0.3)
-      '@angular-devkit/build-webpack': 0.2000.5(chokidar@4.0.3)(webpack-dev-server@5.2.1(webpack@5.99.8))(webpack@5.99.8(esbuild@0.25.5))
+      '@angular-devkit/build-webpack': 0.2000.5(chokidar@4.0.3)(webpack-dev-server@5.2.1(webpack@5.99.8))(webpack@5.99.8)
       '@angular-devkit/core': 20.0.5(chokidar@4.0.3)
       '@angular/build': 20.0.5(3667641c00bc93cd42146f159187fa57)
       '@angular/compiler-cli': 20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3)
@@ -7420,13 +7428,13 @@ snapshots:
       '@babel/preset-env': 7.27.2(@babel/core@7.27.1)
       '@babel/runtime': 7.27.1
       '@discoveryjs/json-ext': 0.6.3
-      '@ngtools/webpack': 20.0.5(@angular/compiler-cli@20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3))(typescript@5.8.3)(webpack@5.99.8(esbuild@0.25.5))
+      '@ngtools/webpack': 20.0.5(@angular/compiler-cli@20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3))(typescript@5.8.3)(webpack@5.99.8)
       ansi-colors: 4.1.3
       autoprefixer: 10.4.21(postcss@8.5.3)
-      babel-loader: 10.0.0(@babel/core@7.27.1)(webpack@5.99.8(esbuild@0.25.5))
+      babel-loader: 10.0.0(@babel/core@7.27.1)(webpack@5.99.8)
       browserslist: 4.24.5
-      copy-webpack-plugin: 13.0.0(webpack@5.99.8(esbuild@0.25.5))
-      css-loader: 7.1.2(webpack@5.99.8(esbuild@0.25.5))
+      copy-webpack-plugin: 13.0.0(webpack@5.99.8)
+      css-loader: 7.1.2(webpack@5.99.8)
       esbuild-wasm: 0.25.5
       fast-glob: 3.3.3
       http-proxy-middleware: 3.0.5
@@ -7434,22 +7442,22 @@ snapshots:
       jsonc-parser: 3.3.1
       karma-source-map-support: 1.4.0
       less: 4.3.0
-      less-loader: 12.3.0(less@4.3.0)(webpack@5.99.8(esbuild@0.25.5))
-      license-webpack-plugin: 4.0.2(webpack@5.99.8(esbuild@0.25.5))
+      less-loader: 12.3.0(less@4.3.0)(webpack@5.99.8)
+      license-webpack-plugin: 4.0.2(webpack@5.99.8)
       loader-utils: 3.3.1
-      mini-css-extract-plugin: 2.9.2(webpack@5.99.8(esbuild@0.25.5))
+      mini-css-extract-plugin: 2.9.2(webpack@5.99.8)
       open: 10.1.2
       ora: 8.2.0
       picomatch: 4.0.2
       piscina: 5.1.1
       postcss: 8.5.3
-      postcss-loader: 8.1.1(postcss@8.5.3)(typescript@5.8.3)(webpack@5.99.8(esbuild@0.25.5))
+      postcss-loader: 8.1.1(postcss@8.5.3)(typescript@5.8.3)(webpack@5.99.8)
       resolve-url-loader: 5.0.0
       rxjs: 7.8.2
       sass: 1.88.0
-      sass-loader: 16.0.5(sass@1.88.0)(webpack@5.99.8(esbuild@0.25.5))
+      sass-loader: 16.0.5(sass@1.88.0)(webpack@5.99.8)
       semver: 7.7.2
-      source-map-loader: 5.0.0(webpack@5.99.8(esbuild@0.25.5))
+      source-map-loader: 5.0.0(webpack@5.99.8)
       source-map-support: 0.5.21
       terser: 5.39.1
       tree-kill: 1.2.2
@@ -7459,7 +7467,7 @@ snapshots:
       webpack-dev-middleware: 7.4.2(webpack@5.99.8)
       webpack-dev-server: 5.2.1(webpack@5.99.8)
       webpack-merge: 6.0.1
-      webpack-subresource-integrity: 5.1.0(webpack@5.99.8(esbuild@0.25.5))
+      webpack-subresource-integrity: 5.1.0(webpack@5.99.8)
     optionalDependencies:
       '@angular/core': 20.0.6(@angular/compiler@20.0.6)(rxjs@7.8.2)(zone.js@0.15.1)
       '@angular/platform-browser': 20.0.6(@angular/animations@20.0.6(@angular/common@20.0.6(@angular/core@20.0.6(@angular/compiler@20.0.6)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.0.6(@angular/compiler@20.0.6)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.0.6(@angular/core@20.0.6(@angular/compiler@20.0.6)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.0.6(@angular/compiler@20.0.6)(rxjs@7.8.2)(zone.js@0.15.1))
@@ -7490,7 +7498,7 @@ snapshots:
       - webpack-cli
       - yaml
 
-  '@angular-devkit/build-webpack@0.2000.5(chokidar@4.0.3)(webpack-dev-server@5.2.1(webpack@5.99.8))(webpack@5.99.8(esbuild@0.25.5))':
+  '@angular-devkit/build-webpack@0.2000.5(chokidar@4.0.3)(webpack-dev-server@5.2.1(webpack@5.99.8))(webpack@5.99.8)':
     dependencies:
       '@angular-devkit/architect': 0.2000.5(chokidar@4.0.3)
       rxjs: 7.8.2
@@ -7793,7 +7801,7 @@ snapshots:
       fflate: 0.8.2
       lru-cache: 11.1.0
       semver: 7.7.2
-      typescript: 5.8.3
+      typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
   '@asamuzakjp/css-color@3.2.0':
@@ -9246,7 +9254,7 @@ snapshots:
       '@napi-rs/nice-win32-x64-msvc': 1.0.1
     optional: true
 
-  '@ngtools/webpack@20.0.5(@angular/compiler-cli@20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3))(typescript@5.8.3)(webpack@5.99.8(esbuild@0.25.5))':
+  '@ngtools/webpack@20.0.5(@angular/compiler-cli@20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3))(typescript@5.8.3)(webpack@5.99.8)':
     dependencies:
       '@angular/compiler-cli': 20.0.6(@angular/compiler@20.0.6)(typescript@5.8.3)
       typescript: 5.8.3
@@ -10378,11 +10386,17 @@ snapshots:
     dependencies:
       acorn: 8.14.1
 
+  acorn-jsx@5.3.2(acorn@8.15.0):
+    dependencies:
+      acorn: 8.15.0
+
   acorn-loose@8.5.2:
     dependencies:
-      acorn: 8.14.1
+      acorn: 8.15.0
 
   acorn@8.14.1: {}
+
+  acorn@8.15.0: {}
 
   adjust-sourcemap-loader@4.0.0:
     dependencies:
@@ -10486,7 +10500,7 @@ snapshots:
 
   axobject-query@4.1.0: {}
 
-  babel-loader@10.0.0(@babel/core@7.27.1)(webpack@5.99.8(esbuild@0.25.5)):
+  babel-loader@10.0.0(@babel/core@7.27.1)(webpack@5.99.8):
     dependencies:
       '@babel/core': 7.27.1
       find-up: 5.0.0
@@ -10889,7 +10903,7 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
-  copy-webpack-plugin@13.0.0(webpack@5.99.8(esbuild@0.25.5)):
+  copy-webpack-plugin@13.0.0(webpack@5.99.8):
     dependencies:
       glob-parent: 6.0.2
       normalize-path: 3.0.0
@@ -10927,7 +10941,7 @@ snapshots:
     dependencies:
       postcss: 8.5.3
 
-  css-loader@7.1.2(webpack@5.99.8(esbuild@0.25.5)):
+  css-loader@7.1.2(webpack@5.99.8):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.6)
       postcss: 8.5.6
@@ -11505,8 +11519,8 @@ snapshots:
 
   espree@10.4.0:
     dependencies:
-      acorn: 8.14.1
-      acorn-jsx: 5.3.2(acorn@8.14.1)
+      acorn: 8.15.0
+      acorn-jsx: 5.3.2(acorn@8.15.0)
       eslint-visitor-keys: 4.2.1
 
   espree@9.6.1:
@@ -12209,7 +12223,7 @@ snapshots:
       picocolors: 1.1.1
       shell-quote: 1.8.2
 
-  less-loader@12.3.0(less@4.3.0)(webpack@5.99.8(esbuild@0.25.5)):
+  less-loader@12.3.0(less@4.3.0)(webpack@5.99.8):
     dependencies:
       less: 4.3.0
     optionalDependencies:
@@ -12234,7 +12248,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  license-webpack-plugin@4.0.2(webpack@5.99.8(esbuild@0.25.5)):
+  license-webpack-plugin@4.0.2(webpack@5.99.8):
     dependencies:
       webpack-sources: 3.2.3
     optionalDependencies:
@@ -12741,7 +12755,7 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  mini-css-extract-plugin@2.9.2(webpack@5.99.8(esbuild@0.25.5)):
+  mini-css-extract-plugin@2.9.2(webpack@5.99.8):
     dependencies:
       schema-utils: 4.3.2
       tapable: 2.2.2
@@ -13279,7 +13293,7 @@ snapshots:
     dependencies:
       postcss: 8.5.3
 
-  postcss-loader@8.1.1(postcss@8.5.3)(typescript@5.8.3)(webpack@5.99.8(esbuild@0.25.5)):
+  postcss-loader@8.1.1(postcss@8.5.3)(typescript@5.8.3)(webpack@5.99.8):
     dependencies:
       cosmiconfig: 9.0.0(typescript@5.8.3)
       jiti: 1.21.7
@@ -13750,7 +13764,7 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  sass-loader@16.0.5(sass@1.88.0)(webpack@5.99.8(esbuild@0.25.5)):
+  sass-loader@16.0.5(sass@1.88.0)(webpack@5.99.8):
     dependencies:
       neo-async: 2.6.2
     optionalDependencies:
@@ -14006,7 +14020,7 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
-  source-map-loader@5.0.0(webpack@5.99.8(esbuild@0.25.5)):
+  source-map-loader@5.0.0(webpack@5.99.8):
     dependencies:
       iconv-lite: 0.6.3
       source-map-js: 1.2.1
@@ -14344,6 +14358,8 @@ snapshots:
       mime-types: 3.0.1
 
   typed-assert@1.0.9: {}
+
+  typescript@5.6.1-rc: {}
 
   typescript@5.8.3: {}
 
@@ -14862,7 +14878,7 @@ snapshots:
 
   webpack-sources@3.2.3: {}
 
-  webpack-subresource-integrity@5.1.0(webpack@5.99.8(esbuild@0.25.5)):
+  webpack-subresource-integrity@5.1.0(webpack@5.99.8):
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.99.8(esbuild@0.25.5)
