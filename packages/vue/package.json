@@ -99,7 +99,7 @@
     "test:attw": "attw --pack"
   },
   "peerDependencies": {
-    "vue": ">=3.5.13"
+    "vue": ">=3.5.18"
   },
   "build": {
     "external": [

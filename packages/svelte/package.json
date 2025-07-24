@@ -61,7 +61,7 @@
     "test:attw": "attw --pack"
   },
   "peerDependencies": {
-    "svelte": ">=5.23.0"
+    "svelte": ">=5.36.16"
   },
   "build": {
     "external": [

@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.0.12",
   "private": "true",
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.13.1",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "homepage": "https://unhead.unjs.io",
@@ -31,7 +31,7 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.16.2",
+    "@antfu/eslint-config": "^4.19.0",
     "@arethetypeswrong/cli": "^0.18.2",
     "@fast-check/vitest": "^0.2.1",
     "@types/fs-extra": "^11.0.4",
@@ -39,7 +39,7 @@
     "acorn-loose": "^8.5.2",
     "bumpp": "^10.2.0",
     "devalue": "^5.1.1",
-    "eslint": "^9.30.1",
+    "eslint": "^9.31.0",
     "fs-extra": "^11.3.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.1.0",
