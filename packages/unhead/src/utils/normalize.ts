@@ -52,6 +52,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   if (!input) {
     return tag
   }
+  if (tag.tag === 'templateParams') {
+    tag.props = input
+    return tag
+  }
 
   Object.entries(input).forEach(([key, value]) => {
     // if the value is a primitive, return early
