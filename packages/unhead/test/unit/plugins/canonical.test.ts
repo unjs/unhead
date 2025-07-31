@@ -3,6 +3,27 @@ import { describe, expect, it } from 'vitest'
 import { CanonicalPlugin } from '../../../src/plugins/canonical'
 
 describe('canonicalPlugin', () => {
+  it('doesnt modify non url props', () => {
+    const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+    const ctx = {
+      tags: [
+        { tag: 'meta', props: { property: 'og:image', content: '/image.jpg' } },
+        { tag: 'meta', props: { property: 'og:image:width', content: '1200' } },
+        { tag: 'meta', props: { property: 'og:image:height', content: '630' } },
+        { tag: 'meta', props: { property: 'og:image:alt', content: 'An image' } },
+      ],
+    }
+
+    // @ts-expect-error untyped
+    plugin.hooks['tags:resolve'](ctx)
+
+    expect(ctx.tags[0].props.content).toBe('https://example.com/image.jpg')
+    expect(ctx.tags[1].props.content).toBe('1200')
+    expect(ctx.tags[2].props.content).toBe('630')
+    expect(ctx.tags[3].props.content).toBe('An image')
+  })
+
+
   it('should resolve og:image URLs correctly', () => {
     const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
     const ctx = {

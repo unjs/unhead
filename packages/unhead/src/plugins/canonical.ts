@@ -62,7 +62,8 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
       hooks: {
         'tags:resolve': (ctx) => {
           for (const tag of ctx.tags) {
-            if (tag.tag === 'meta' && META_TRANSFORMABLE_URL.includes(tag.props?.property)) {
+            // allow interchangable use of property and name for DX
+            if (tag.tag === 'meta' && (META_TRANSFORMABLE_URL.includes(tag.props?.property) || META_TRANSFORMABLE_URL.includes(tag.props?.name))) {
               tag.props.content = resolvePath(tag.props.content)
             }
             else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
