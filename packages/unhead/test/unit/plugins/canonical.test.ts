@@ -23,7 +23,6 @@ describe('canonicalPlugin', () => {
     expect(ctx.tags[3].props.content).toBe('An image')
   })
 
-
   it('should resolve og:image URLs correctly', () => {
     const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
     const ctx = {

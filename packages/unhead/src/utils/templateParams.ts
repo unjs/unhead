@@ -62,8 +62,8 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
   if (hasSepSub) {
     s = s.split(SepSub)
       .map(part => part.trim())
-      .filter(Boolean)
-      .join(` ${sep || ''} `)
+      .filter(part => part !== '')
+      .join(sep ? ` ${sep} ` : ' ')
   }
   return s
 }
