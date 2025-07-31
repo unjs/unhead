@@ -11,15 +11,15 @@
     "preview": "cross-env NODE_ENV=production node server"
   },
   "dependencies": {
-    "compression": "^1.8.0",
+    "compression": "^1.8.1",
     "express": "^5.1.0",
     "sirv": "^3.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/node": "^24.0.10",
-    "cross-env": "^7.0.3",
+    "@types/node": "^24.1.0",
+    "cross-env": "^10.0.0",
     "typescript": "~5.8.3",
-    "vite": "^7.0.2"
+    "vite": "^7.0.6"
   }
 }

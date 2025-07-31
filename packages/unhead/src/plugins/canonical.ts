@@ -6,15 +6,15 @@ export interface CanonicalPluginOptions {
 }
 
 const META_TRANSFORMABLE_URL = [
-  "og:url",
-  "og:image",
-  "og:image:secure_url",
-  "twitter:image",
-  "twitter:image:src",
-  "og:video",
-  "og:video:secure_url",
-  "og:see_also",
-];
+  'og:url',
+  'og:image',
+  'og:image:secure_url',
+  'twitter:image',
+  'twitter:image:src',
+  'og:video',
+  'og:video:secure_url',
+  'og:see_also',
+]
 
 /**
  * CanonicalPlugin resolves paths in tags that require a canonical host to be set.
