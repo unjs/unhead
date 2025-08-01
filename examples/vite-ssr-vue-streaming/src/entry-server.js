@@ -1,9 +1,9 @@
 import { basename } from 'node:path'
 import { createApp } from './main'
 import { createHead, VueHeadMixin } from "@unhead/vue/server"
-import { renderToWebStream } from 'vue/server-renderer'
+import { renderToWebStream, renderToString } from 'vue/server-renderer'
 
-export function render(url) {
+export function render(url, ssrContext = {}, renderFn = renderToWebStream) {
   const { app } = createApp()
   const head = createHead()
   app.use(head)
@@ -13,10 +13,21 @@ export function render(url) {
   // @vitejs/plugin-vue injects code into a component's setup() that registers
   // itself on ctx.modules. After the render, ctx.modules would contain all the
   // components that have been instantiated during this render call.
-  const ctx = {}
-  const vueStream = renderToWebStream(app, ctx)
-
-  return { vueStream, head }
+  const ctx = { ...ssrContext }
+  
+  // Support both streaming and string rendering
+  if (renderFn === renderToString) {
+    // For bots: return promise of complete HTML
+    return {
+      appHtml: renderFn(app, ctx),
+      head,
+      ctx
+    }
+  } else {
+    // For users: return stream
+    const vueStream = renderFn(app, ctx)
+    return { vueStream, head, ctx }
+  }
 }
 
 function renderPreloadLinks(modules, manifest) {

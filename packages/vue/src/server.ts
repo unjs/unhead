@@ -6,6 +6,8 @@ import { VueResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
 export { extractUnheadInputFromHtml, propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
+// Experimental streaming support
+export { renderSSRStreamComponents, streamAppWithUnhead } from 'unhead/server'
 
 export function createHead(options: Omit<CreateServerHeadOptions, 'propsResolver'> = {}): VueHeadClient {
   const head = _createServerHead({
