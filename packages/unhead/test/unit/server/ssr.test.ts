@@ -132,6 +132,31 @@ describe('ssr', () => {
   `)
   })
 
+  it('multiword attributes in html template', async () => {
+    const head = createServerHeadWithContext()
+
+    expect(await transformHtmlTemplate(head, `
+      <html>
+      <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      </head>
+      <body>
+      <!--app-html-->
+      </body>
+      </html>
+      `)).toMatchInlineSnapshot(`
+        "
+        <html>
+        <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"></head>
+        <body>
+        <!--app-html-->
+        </body>
+        </html>
+        "
+      `)
+  })
+
   it('useSeoMeta', async () => {
     const head = createServerHeadWithContext()
 
