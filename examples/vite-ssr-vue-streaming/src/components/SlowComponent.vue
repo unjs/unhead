@@ -1,21 +1,44 @@
 <script setup>
 import { ref } from 'vue'
+import HeadStream from './HeadStream.vue'
+import SlowComponentTwo from './SlowComponentTwo.vue'
 
 const message = ref('')
 
 // Simulate slow component load
-await new Promise(resolve => setTimeout(resolve, 5000))
-message.value = 'Component loaded after 1 second delay!'
+await new Promise(resolve => setTimeout(resolve, 3000))
+message.value = 'Component loaded after 3 second delay!'
+
+useServerHead({
+  title: 'S1',
+  style: [
+    '.slow-component { color: red; }',
+  ],
+  link: [
+    {
+      key: 'preload',
+      rel: 'stylesheet',
+      href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta1/css/all.min.css',
+    },
+  ],
+  meta: [
+    {
+      name: 'description',
+      content: 'This is a slow component',
+    },
+  ]
+})
 </script>
 
 <template>
   <div class="slow-component">
-    <h2>{{ message }}</h2>
-    <p>This component took 5 second to load</p>
+    <p>Slow component one</p>
+    <HeadStream />
+    <SlowComponentTwo />
   </div>
 </template>
 
-<style scoped>
+<style>
 .slow-component {
   padding: 2rem;
   margin: 1rem 0;
