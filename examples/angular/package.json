@@ -36,6 +36,6 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.0",
     "ng-packagr": "^20.1.0",
-    "typescript": "~5.9.2"
+    "typescript": "5.8.3"
   }
 }
