@@ -44,7 +44,7 @@
     "js-yaml": "^4.1.0",
     "jsdom": "^26.1.0",
     "rollup-plugin-analyzer": "^4.0.0",
-    "typescript": "5.8.3",
+    "typescript": "5.9.2",
     "unbuild": "^3.6.0",
     "utility-types": "^3.11.0",
     "vitest": "^3.2.4",
