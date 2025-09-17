@@ -72,7 +72,7 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@angular/platform-browser-dynamic": "^20.1.4",
+    "@angular/platform-browser-dynamic": "^20.3.0",
     "zone.js": "^0.15.1"
   }
 }

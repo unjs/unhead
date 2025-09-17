@@ -57,15 +57,15 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@rollup/pluginutils": "^5.2.0",
+    "@rollup/pluginutils": "^5.3.0",
     "estree-walker": "^3.0.3",
-    "magic-string": "^0.30.17",
-    "mlly": "^1.7.4",
+    "magic-string": "^0.30.19",
+    "mlly": "^1.8.0",
     "ufo": "^1.6.1",
-    "unplugin": "^2.3.5",
-    "unplugin-ast": "^0.15.1"
+    "unplugin": "^2.3.10",
+    "unplugin-ast": "^0.15.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.28.2"
+    "@babel/types": "^7.28.4"
   }
 }

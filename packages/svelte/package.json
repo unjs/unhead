@@ -74,6 +74,6 @@
   },
   "devDependencies": {
     "@testing-library/svelte": "^5.2.8",
-    "svelte": "^5.38.0"
+    "svelte": "^5.38.10"
   }
 }
