@@ -1,6 +1,6 @@
 # transformHtmlTemplate Benchmark Results
 
-## Current Implementation (With Changes)
+## First Run (Branch: benchmark-transformHtmlTemplate)
 
 Benchmark run on: 2025-09-18
 
@@ -33,6 +33,38 @@ Benchmark run on: 2025-09-18
 
 ---
 
-## Main Branch Results (Without Changes)
+## Second Run (Branch: main - with current changes)
 
-*To be filled after running benchmark on main branch*
+Benchmark run on: 2025-09-18
+
+### Results
+
+| Test Case | Operations/sec | Relative Performance |
+|-----------|---------------|---------------------|
+| Basic HTML template | 86,119 | Baseline (fastest) |
+| Multiple head pushes | 54,078 | 1.59x slower |
+| Complex HTML template | 38,097 | 2.26x slower |
+| Large HTML template | 35,260 | 2.44x slower |
+
+## Performance Analysis
+
+### Key Differences Between Runs
+
+1. **Large HTML Template Performance**:
+   - First run: 5,936 ops/sec
+   - Second run: 35,260 ops/sec
+   - **Improvement: 5.94x faster** ⚡
+
+2. **Complex HTML Template**:
+   - First run: 33,495 ops/sec
+   - Second run: 38,097 ops/sec
+   - **Improvement: 1.14x faster**
+
+3. **Basic & Multiple Head Pushes**: Similar performance with slight improvements
+
+### Observations
+
+- **Dramatic improvement** in large HTML template processing (5.94x faster)
+- The performance gap between basic and large templates reduced from 13.77x to 2.44x
+- Current changes in packages/unhead/src appear to significantly optimize large HTML processing
+- Consistent improvements across all test cases
