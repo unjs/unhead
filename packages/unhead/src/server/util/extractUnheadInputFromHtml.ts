@@ -1,6 +1,6 @@
 import type { SerializableHead } from '../../types'
 
-const Attrs = /(\w+-?\w+)(?:=["']([^"']*)["'])?/g
+const Attrs = /([\w-]+)(?:=["']([^"']*)["'])?/g
 const HtmlTag = /<html[^>]*>/
 const BodyTag = /<body[^>]*>/
 const HeadContent = /<head[^>]*>(.*?)<\/head>/s
