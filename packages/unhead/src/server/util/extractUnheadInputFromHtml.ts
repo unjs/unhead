@@ -1,65 +1,152 @@
+import type { ElementNode, Node, TransformerSync } from 'ultrahtml'
 import type { SerializableHead } from '../../types'
+import { ELEMENT_NODE, TEXT_NODE, transformSync, walkSync } from 'ultrahtml'
 
-const Attrs = /([\w-]+)(?:=["']([^"']*)["'])?/g
-const HtmlTag = /<html[^>]*>/
-const BodyTag = /<body[^>]*>/
-const HeadContent = /<head[^>]*>(.*?)<\/head>/s
-const SelfClosingTags = /<(meta|link|base)[^>]*>/g
-const ClosingTags = /<(title|script|style)[^>]*>[\s\S]*?<\/\1>/g
-// eslint-disable-next-line regexp/no-misleading-capturing-group
-const NewLines = /(\n\s*)+/g
-
-function extractAttributes<K extends 'htmlAttrs' | 'bodyAttrs' | 'meta'>(tag: string): SerializableHead[K] {
-  // inner should be between the < and > (non greedy), split on ' ' and after index 0
-  const inner = tag.match(/<([^>]*)>/)?.[1].split(' ').slice(1).join(' ')
-  if (!inner)
-    return {} as SerializableHead[K]
-  const attrs = inner.match(Attrs)
-  return (attrs?.reduce((acc, attr) => {
-    const sep = attr.indexOf('=')
-    const key = sep > 0 ? attr.slice(0, sep) : attr
-    const val = sep > 0 ? attr.slice(sep + 1).slice(1, -1) : true
-    return { ...acc, [key]: val }
-  }, {}) || {}) as SerializableHead[K]
+export interface PreparedHtmlTemplate {
+  html: string
+  input: SerializableHead
 }
 
-export function extractUnheadInputFromHtml(html: string) {
-  const input = {} as SerializableHead
-  input.htmlAttrs = extractAttributes<'htmlAttrs'>(html.match(HtmlTag)?.[0] || '')
-  html = html.replace(HtmlTag, '<html>')
+function extractAttributesFromNode(node: ElementNode): Record<string, any> {
+  if (!node.attributes)
+    return {}
 
-  input.bodyAttrs = extractAttributes<'bodyAttrs'>(html.match(BodyTag)?.[0] || '')
-  html = html.replace(BodyTag, '<body>')
+  const attrs: Record<string, any> = {}
+  for (const [key, value] of Object.entries(node.attributes)) {
+    attrs[key] = value === '' ? true : value
+  }
+  return attrs
+}
 
-  const innerHead = html.match(HeadContent)?.[1] || ''
-  innerHead.match(SelfClosingTags)?.forEach((s) => {
-    html = html.replace(s, '')
-    const tag = s.split(' ')[0].slice(1) as 'meta'
-    input[tag] = input[tag] || []
-    // @ts-expect-error untyped
-    input[tag].push(extractAttributes<'meta'>(s))
-  })
+function createHeadElementExtractor(extractedData: SerializableHead): TransformerSync {
+  return (node: Node): Node => {
+    const operations: Array<() => void> = []
 
-  innerHead.match(ClosingTags)
-    ?.map(tag => tag.trim())
-    .filter(Boolean)
-    .forEach((tag) => {
-      html = html.replace(tag, '')
-      const type = tag.match(/<([a-z-]+)/)?.[1] as 'script' | 'title'
-      const res = extractAttributes(tag) as any
-      const innerContent = tag.match(/>([\s\S]*)</)?.[1]
-      if (innerContent) {
-        res[type !== 'script' ? 'textContent' : 'innerHTML'] = innerContent
+    // Walk through all nodes and collect operations
+    walkSync(node, (currentNode, parent) => {
+      if (currentNode.type !== ELEMENT_NODE)
+        return
+
+      const element = currentNode as ElementNode
+
+      // Handle HTML and BODY attribute extraction (keep the element but strip attributes)
+      if (element.name === 'html' && Object.keys(element.attributes).length > 0) {
+        extractedData.htmlAttrs = extractAttributesFromNode(element)
+        operations.push(() => {
+          element.attributes = {}
+        })
       }
-      if (type === 'title') {
-        input.title = res
+
+      if (element.name === 'body' && Object.keys(element.attributes).length > 0) {
+        extractedData.bodyAttrs = extractAttributesFromNode(element)
+        operations.push(() => {
+          element.attributes = {}
+        })
       }
-      else {
-        input[type] = input[type] || []
-        input[type].push(res)
+
+      // Skip if we're not in the head section or if we don't have a parent
+      if (!parent || !isInHead(element, parent))
+        return
+
+      // Extract and remove head elements
+      switch (element.name) {
+        case 'title':
+          if (!extractedData.title) {
+            const textContent = element.children
+              ?.find(child => child.type === TEXT_NODE)
+              ?.value || ''
+            extractedData.title = textContent
+          }
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
+
+        case 'meta':
+          if (!extractedData.meta)
+            extractedData.meta = []
+          extractedData.meta.push(extractAttributesFromNode(element))
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
+
+        case 'link':
+          if (!extractedData.link)
+            extractedData.link = []
+          extractedData.link.push(extractAttributesFromNode(element))
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
+
+        case 'script': {
+          if (!extractedData.script)
+            extractedData.script = []
+          const innerHTML = element.children
+            ?.find(child => child.type === TEXT_NODE)
+            ?.value || ''
+          extractedData.script.push({
+            ...extractAttributesFromNode(element),
+            innerHTML,
+          })
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
+        }
+
+        case 'style': {
+          if (!extractedData.style)
+            extractedData.style = []
+          const textContent = element.children
+            ?.find(child => child.type === TEXT_NODE)
+            ?.value || ''
+          extractedData.style.push({
+            ...extractAttributesFromNode(element),
+            textContent,
+          })
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
+        }
+
+        case 'base':
+          if (!extractedData.base) {
+            extractedData.base = extractAttributesFromNode(element)
+          }
+          operations.push(() => removeNodeFromParent(element, parent))
+          break
       }
     })
 
-  html = html.replace(NewLines, '\n')
-  return { html, input }
+    // Apply all operations in reverse order to avoid index issues
+    for (let i = operations.length - 1; i >= 0; i--) {
+      operations[i]()
+    }
+
+    return node
+  }
+}
+
+function isInHead(_element: ElementNode, parent: Node): boolean {
+  let current: Node | undefined = parent
+  while (current) {
+    if (current.type === ELEMENT_NODE && (current as ElementNode).name === 'head') {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+function removeNodeFromParent(node: Node, parent: Node): void {
+  if ('children' in parent && Array.isArray(parent.children)) {
+    const index = parent.children.indexOf(node)
+    if (index !== -1) {
+      parent.children.splice(index, 1)
+    }
+  }
+}
+
+export function extractUnheadInputFromHtml(html: string): PreparedHtmlTemplate {
+  const input = {} as SerializableHead
+
+  // Use transformSync with our custom transformer - completely regex-free approach
+  const processedHtml = transformSync(html, [
+    createHeadElementExtractor(input),
+  ])
+
+  return { html: processedHtml, input }
 }
