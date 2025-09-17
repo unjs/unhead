@@ -38,6 +38,7 @@
   ],
   "scripts": {
     "build": "unbuild .",
-    "stub": "unbuild . --stub"
+    "stub": "unbuild . --stub",
+    "prepack": "pnpm run build"
   }
 }

@@ -53,7 +53,8 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
     "@rollup/pluginutils": "^5.2.0",

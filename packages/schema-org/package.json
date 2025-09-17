@@ -74,7 +74,8 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
     "@unhead/react": "workspace:*",

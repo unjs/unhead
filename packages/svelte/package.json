@@ -58,7 +58,8 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub",
     "export:sizes": "npx export-size . -r",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
     "svelte": ">=5.36.16"

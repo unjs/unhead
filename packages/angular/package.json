@@ -59,7 +59,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:attw": "true"
+    "test:attw": "true",
+    "prepack": "pnpm run build"
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
