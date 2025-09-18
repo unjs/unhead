@@ -97,7 +97,6 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "^5.5.3",
-    "ultrahtml": "^1.6.0"
+    "hookable": "^5.5.3"
   }
 }

@@ -149,7 +149,8 @@ describe('ssr', () => {
               <html>
               <head>
               <meta http-equiv="X-UA-Compatible" content="IE=edge"></head>
-              <body><!--app-html-->
+              <body>
+              <!--app-html-->
               </body>
               </html>
               "
@@ -273,7 +274,8 @@ describe('ssr', () => {
     expect(await transformHtmlTemplate(head, html)).toMatchInlineSnapshot(`
       "<!doctype html>
           <html lang="en">
-          <head><!--app-head-->
+          <head>
+          <!--app-head-->
           <meta charset="utf-16">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
@@ -318,7 +320,7 @@ describe('ssr', () => {
       "
             <html lang="en">
               <head>
-                <meta charset="utf-16">
+              <meta charset="utf-16">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
       <script src="script.js" async type="module"></script>
@@ -393,7 +395,7 @@ describe('ssr', () => {
     expect(processedHtml).toMatchInlineSnapshot(`
       "
           <head>
-              <style>
+          <style>
                   html { background: url(/foo.png); }
                   img::before { content: "foo"; }
               </style></head>

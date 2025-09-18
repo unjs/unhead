@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs'
 import { createHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
-import { transformHtmlTemplate } from '../../src/server/transformHtmlTemplate'
+import {
+  transformHtmlTemplate,
+  transformHtmlTemplateRaw,
+} from '../../src/server/transformHtmlTemplate'
 
 describe('transformHtmlTemplate', () => {
   const basicHtml = `<!DOCTYPE html>
@@ -13,28 +17,7 @@ describe('transformHtmlTemplate', () => {
 </body>
 </html>`
 
-  const complexHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complex Template</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script src="/script.js"></script>
-</head>
-<body class="page">
-  <header>
-    <nav>Navigation</nav>
-  </header>
-  <main>
-    <h1>Main Content</h1>
-    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
-  </main>
-  <footer>
-    <p>Footer content</p>
-  </footer>
-</body>
-</html>`
+  const complexHtml = readFileSync(new URL('../fixtures/Markdown.html', import.meta.url), 'utf-8')
 
   bench('basic html template', async () => {
     const head = createHead()
@@ -42,8 +25,8 @@ describe('transformHtmlTemplate', () => {
       title: 'Benchmarked Page',
       meta: [
         { name: 'description', content: 'A benchmark test page' },
-        { property: 'og:title', content: 'Benchmarked Page' }
-      ]
+        { property: 'og:title', content: 'Benchmarked Page' },
+      ],
     })
     await transformHtmlTemplate(head, basicHtml)
   }, {
@@ -61,17 +44,43 @@ describe('transformHtmlTemplate', () => {
         { property: 'og:title', content: 'Complex Benchmarked Page' },
         { property: 'og:description', content: 'Testing performance with complex HTML' },
         { property: 'og:image', content: 'https://example.com/image.jpg' },
-        { name: 'twitter:card', content: 'summary_large_image' }
+        { name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
         { rel: 'canonical', href: 'https://example.com/complex' },
-        { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' }
+        { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
       ],
       script: [
-        { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' }
-      ]
+        { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
+      ],
     })
     await transformHtmlTemplate(head, complexHtml)
+  }, {
+    iterations: 1000,
+    time: 1000,
+  })
+
+  bench('complex html template raw', async () => {
+    const head = createHead()
+    head.push({
+      title: 'Complex Benchmarked Page',
+      meta: [
+        { name: 'description', content: 'A complex benchmark test page with lots of content' },
+        { name: 'keywords', content: 'benchmark, test, performance, html' },
+        { property: 'og:title', content: 'Complex Benchmarked Page' },
+        { property: 'og:description', content: 'Testing performance with complex HTML' },
+        { property: 'og:image', content: 'https://example.com/image.jpg' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+      ],
+      link: [
+        { rel: 'canonical', href: 'https://example.com/complex' },
+        { rel: 'alternate', hreflang: 'en', href: 'https://example.com/en/complex' },
+      ],
+      script: [
+        { type: 'application/ld+json', innerHTML: '{"@type": "WebPage", "name": "Complex Page"}' },
+      ],
+    })
+    await transformHtmlTemplateRaw(head, complexHtml)
   }, {
     iterations: 1000,
     time: 1000,
@@ -96,8 +105,7 @@ describe('transformHtmlTemplate', () => {
   bench('large html template', async () => {
     // Generate a larger HTML template
     const largeContent = Array.from({ length: 100 }, (_, i) =>
-      `<section><h2>Section ${i}</h2><p>Content for section ${i} with some text...</p></section>`
-    ).join('\n    ')
+      `<section><h2>Section ${i}</h2><p>Content for section ${i} with some text...</p></section>`).join('\n    ')
 
     const largeHtml = `<!DOCTYPE html>
 <html>
@@ -118,8 +126,8 @@ describe('transformHtmlTemplate', () => {
       title: 'Large Page Benchmark',
       meta: [
         { name: 'description', content: 'Testing with large HTML content' },
-        { property: 'og:title', content: 'Large Page' }
-      ]
+        { property: 'og:title', content: 'Large Page' },
+      ],
     })
 
     await transformHtmlTemplate(head, largeHtml)
