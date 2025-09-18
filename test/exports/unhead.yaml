@@ -41,12 +41,9 @@
   resolveScriptKey: function
   useScript: function
 ./server:
-  applyHeadToHtml: function
   createHead: function
   escapeHtml: function
   extractUnheadInputFromHtml: function
-  parseHtmlForIndexes: function
-  parseHtmlForUnheadExtraction: function
   propsToString: function
   renderSSRHead: function
   ssrRenderTags: function

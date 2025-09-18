@@ -2,5 +2,5 @@ export type { CreateServerHeadOptions, HtmlExtractorFunction, SSRHeadPayload, Un
 export { createHead } from './createHead'
 export { renderSSRHead } from './renderSSRHead'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
-export { applyHeadToHtml, escapeHtml, extractUnheadInputFromHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction, propsToString, ssrRenderTags, tagToString } from './util'
+export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'
 export type { PreparedHtmlTemplate, PreparedHtmlTemplateWithIndexes } from './util'
