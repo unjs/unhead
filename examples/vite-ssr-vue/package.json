@@ -22,11 +22,11 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/node": "^24.5.1",
+    "@types/node": "^24.5.2",
     "@vitejs/plugin-vue": "^6.0.1",
     "cross-env": "^10.0.0",
     "typescript": "5.8.3",
-    "vite": "^7.0.7",
+    "vite": "^7.1.6",
     "vue-tsc": "^3.0.7"
   }
 }
