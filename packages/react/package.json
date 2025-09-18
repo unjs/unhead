@@ -2,6 +2,7 @@
   "name": "@unhead/react",
   "type": "module",
   "version": "2.0.16",
+  "description": "Full-stack <head> manager built for React.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",

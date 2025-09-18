@@ -2,6 +2,7 @@
   "name": "@unhead/addons",
   "type": "module",
   "version": "2.0.16",
+  "description": "Unhead addons for build tools and bundlers.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
