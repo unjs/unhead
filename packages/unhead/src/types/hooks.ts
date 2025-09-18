@@ -1,11 +1,8 @@
 import type { ScriptInstance } from '../scripts'
 import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
-import type { SerializableHead } from './schema'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
-
-export type HtmlExtractorFunction = (html: string) => { html: string, input: SerializableHead }
 
 export interface SSRHeadPayload {
   headTags: string

@@ -574,11 +574,64 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
 
 /**
  * Find the closing tag for a given tag name
+ * For script and style tags, this handles quotes to avoid matching closing tags inside string literals
  */
 function findClosingTag(html: string, startPos: number, tagName: string): number {
+  const tagId = TagIdMap[tagName as keyof typeof TagIdMap]
+  const isScriptOrStyle = tagId === TAG_SCRIPT || tagId === TAG_STYLE
+
+  if (!isScriptOrStyle) {
+    // Simple search for non-script/style tags
+    const closingTag = `</${tagName}`
+    const index = html.indexOf(closingTag, startPos)
+    return index === -1 ? -1 : index
+  }
+
+  // Quote-aware search for script and style tags
   const closingTag = `</${tagName}`
-  const index = html.indexOf(closingTag, startPos)
-  return index === -1 ? -1 : index
+  let pos = startPos
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let inBacktick = false
+  let lastCharWasBackslash = false
+
+  while (pos < html.length) {
+    const currentCharCode = html.charCodeAt(pos)
+
+    // Handle quote state transitions (only if not escaped)
+    if (!lastCharWasBackslash) {
+      if (currentCharCode === APOS_CHAR && !inDoubleQuote && !inBacktick) {
+        inSingleQuote = !inSingleQuote
+      }
+      else if (currentCharCode === QUOTE_CHAR && !inSingleQuote && !inBacktick) {
+        inDoubleQuote = !inDoubleQuote
+      }
+      else if (currentCharCode === 96 && !inSingleQuote && !inDoubleQuote) { // backtick
+        inBacktick = !inBacktick
+      }
+    }
+
+    // Track escape character state
+    lastCharWasBackslash = currentCharCode === BACKSLASH_CHAR && !lastCharWasBackslash
+
+    // Check for closing tag only when not inside quotes
+    const inQuotes = inSingleQuote || inDoubleQuote || inBacktick
+    if (!inQuotes && html.startsWith(closingTag, pos)) {
+      // Verify it's a complete tag (followed by whitespace or >)
+      const afterTagPos = pos + closingTag.length
+      if (afterTagPos >= html.length) {
+        return pos
+      }
+      const nextChar = html.charCodeAt(afterTagPos)
+      if (nextChar === GT_CHAR || isWhitespace(nextChar)) {
+        return pos
+      }
+    }
+
+    pos++
+  }
+
+  return -1
 }
 
 /**
