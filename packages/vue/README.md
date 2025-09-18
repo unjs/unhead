@@ -34,10 +34,10 @@ pnpm add @unhead/vue
 #### Client-side (SPA)
 
 ```ts
+import { createHead } from '@unhead/vue/client'
 // main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
-import { createHead } from '@unhead/vue/client'
 
 const app = createApp(App)
 const head = createHead()
@@ -49,10 +49,10 @@ app.mount('#app')
 #### Server-side (SSR)
 
 ```ts
+import { createHead } from '@unhead/vue/server'
 // entry-server.ts
 import { renderToString } from 'vue/server-renderer'
 import { createApp } from './main'
-import { createHead } from '@unhead/vue/server'
 
 export async function render(url: string) {
   const { app } = createApp()
@@ -65,9 +65,9 @@ export async function render(url: string) {
 ```
 
 ```ts
+import { createHead } from '@unhead/vue/client'
 // entry-client.ts (for hydration)
 import { createApp } from './main'
-import { createHead } from '@unhead/vue/client'
 
 const { app } = createApp()
 const head = createHead()
@@ -125,8 +125,8 @@ useSeoMeta({
 ```vue
 <!-- Profile.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useHead } from '@unhead/vue'
+import { ref } from 'vue'
 
 const userName = ref('User')
 
@@ -149,7 +149,9 @@ function updateName() {
 
 <template>
   <h1>{{ userName }}'s Profile</h1>
-  <button @click="updateName">Update Name</button>
+  <button @click="updateName">
+    Update Name
+  </button>
 </template>
 ```
 

@@ -31,9 +31,9 @@ pnpm add @unhead/addons
 ### Vite Plugin
 
 ```ts
+import UnheadVite from '@unhead/addons/vite'
 // vite.config.ts
 import { defineConfig } from 'vite'
-import UnheadVite from '@unhead/addons/vite'
 
 export default defineConfig({
   plugins: [
@@ -80,6 +80,7 @@ Automatically removes server-only Unhead composables from client bundles:
 ```ts
 // Before (in client bundle):
 import { useServerHead } from '@unhead/vue'
+
 useServerHead({ /* ... */ })
 
 // After (removed from client bundle):

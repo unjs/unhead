@@ -34,11 +34,11 @@ pnpm add @unhead/solid-js
 #### Client-side (SPA)
 
 ```jsx
+import { UnheadContext } from '@unhead/solid-js'
+import { createHead } from '@unhead/solid-js/client'
 // main.jsx
 import { render } from 'solid-js/web'
 import App from './App'
-import { createHead } from '@unhead/solid-js/client'
-import { UnheadContext } from '@unhead/solid-js'
 
 const head = createHead({ /* config */ })
 
@@ -52,11 +52,11 @@ render(() => (
 #### Server-side (SSR)
 
 ```jsx
+import { UnheadContext } from '@unhead/solid-js'
+import { createHead } from '@unhead/solid-js/server'
 // entry-server.jsx
 import { renderToString } from 'solid-js/web'
 import App from './App'
-import { createHead } from '@unhead/solid-js/server'
-import { UnheadContext } from '@unhead/solid-js'
 
 export function render(url) {
   const head = createHead()
@@ -70,11 +70,11 @@ export function render(url) {
 ```
 
 ```jsx
+import { UnheadContext } from '@unhead/solid-js'
+import { createHead } from '@unhead/solid-js/client'
 // entry-client.jsx (for hydration)
 import { hydrate } from 'solid-js/web'
 import App from './App'
-import { createHead } from '@unhead/solid-js/client'
-import { UnheadContext } from '@unhead/solid-js'
 
 const head = createHead({ /* config */ })
 
@@ -132,9 +132,9 @@ export default About
 ### Reactive Head Elements
 
 ```jsx
-// Profile.jsx
-import { createSignal, createEffect } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
+// Profile.jsx
+import { createEffect, createSignal } from 'solid-js'
 
 function Profile() {
   const [userName, setUserName] = createSignal('User')
@@ -152,7 +152,10 @@ function Profile() {
 
   return (
     <div>
-      <h1>{userName()}'s Profile</h1>
+      <h1>
+        {userName()}
+        's Profile
+      </h1>
       <button onClick={() => setUserName('New Name')}>
         Update Name
       </button>

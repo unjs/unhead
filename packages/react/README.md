@@ -35,11 +35,11 @@ pnpm add @unhead/react
 #### Client-side (SPA)
 
 ```jsx
+import { createHead, UnheadProvider } from '@unhead/react/client'
 // main.jsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { UnheadProvider, createHead } from '@unhead/react/client'
 
 const head = createHead({ /* config */ })
 
@@ -55,11 +55,11 @@ createRoot(document.getElementById('root')).render(
 #### Server-side (SSR)
 
 ```jsx
+import { createHead, UnheadProvider } from '@unhead/react/server'
 // entry-server.jsx
 import { StrictMode } from 'react'
 import { renderToString } from 'react-dom/server'
 import App from './App'
-import { createHead, UnheadProvider } from '@unhead/react/server'
 
 export function render(url) {
   const head = createHead()
@@ -75,11 +75,11 @@ export function render(url) {
 ```
 
 ```jsx
+import { createHead, UnheadProvider } from '@unhead/react/client'
 // entry-client.jsx (for hydration)
 import { StrictMode } from 'react'
 import { hydrateRoot } from 'react-dom/client'
 import App from './App'
-import { UnheadProvider, createHead } from '@unhead/react/client'
 
 const head = createHead({ /* config */ })
 
@@ -140,9 +140,9 @@ export default About
 ### Reactive Head Elements
 
 ```jsx
-// Profile.jsx
-import { useState, useEffect } from 'react'
 import { useHead } from '@unhead/react'
+// Profile.jsx
+import { useEffect, useState } from 'react'
 
 function Profile() {
   const [userName, setUserName] = useState('User')
@@ -164,7 +164,10 @@ function Profile() {
 
   return (
     <div>
-      <h1>{userName}'s Profile</h1>
+      <h1>
+        {userName}
+        's Profile
+      </h1>
       <button onClick={() => setUserName('New Name')}>
         Update Name
       </button>

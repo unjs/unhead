@@ -34,7 +34,7 @@ pnpm add @unhead/schema-org
 
 ```vue
 <script setup>
-import { useSchemaOrg, defineWebPage, defineWebSite } from '@unhead/schema-org/vue'
+import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 
 useSchemaOrg([
   defineWebSite({
@@ -52,7 +52,7 @@ useSchemaOrg([
 ### React
 
 ```jsx
-import { useSchemaOrg, defineWebPage, defineWebSite } from '@unhead/schema-org/react'
+import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/react'
 
 function About() {
   useSchemaOrg([
@@ -73,7 +73,7 @@ function About() {
 ### Framework Agnostic
 
 ```ts
-import { useSchemaOrg, defineWebPage } from '@unhead/schema-org'
+import { defineWebPage, useSchemaOrg } from '@unhead/schema-org'
 
 // Provide your unhead instance
 useSchemaOrg([

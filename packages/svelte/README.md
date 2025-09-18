@@ -34,11 +34,11 @@ pnpm add @unhead/svelte
 #### Client-side (SPA)
 
 ```ts
-// main.ts
-import './app.css'
+import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 import { mount } from 'svelte'
 import App from './App.svelte'
-import { createHead, UnheadContextKey } from '@unhead/svelte/client'
+// main.ts
+import './app.css'
 
 const unhead = createHead()
 const context = new Map()
@@ -46,17 +46,17 @@ context.set(UnheadContextKey, unhead)
 
 mount(App, {
   target: document.getElementById('app')!,
-  context: context
+  context
 })
 ```
 
 #### Server-side (SSR)
 
 ```ts
+import { createHead, UnheadContextKey } from '@unhead/svelte/server'
 // entry-server.ts
 import { render as _render } from 'svelte/server'
 import App from './App.svelte'
-import { createHead, UnheadContextKey } from '@unhead/svelte/server'
 
 export function render(url: string) {
   const unhead = createHead()
@@ -71,11 +71,11 @@ export function render(url: string) {
 ```
 
 ```ts
-// entry-client.ts (for hydration)
-import './app.css'
+import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 import { hydrate } from 'svelte'
 import App from './App.svelte'
-import { createHead, UnheadContextKey } from '@unhead/svelte/client'
+// entry-client.ts (for hydration)
+import './app.css'
 
 const unhead = createHead()
 const context = new Map()
@@ -83,7 +83,7 @@ context.set(UnheadContextKey, unhead)
 
 hydrate(App, {
   target: document.getElementById('app')!,
-  context: context
+  context
 })
 ```
 
