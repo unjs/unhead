@@ -49,6 +49,7 @@
   ssrRenderTags: function
   tagToString: function
   transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
 ./types: {}
 ./utils:
   dedupeKey: function
