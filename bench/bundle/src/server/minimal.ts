@@ -19,8 +19,7 @@ async function doHead() {
     ],
   })
 
-  const ssr = await renderSSRHead(head)
-  console.log(ssr)
+  return await renderSSRHead(head)
 }
 
 doHead()
