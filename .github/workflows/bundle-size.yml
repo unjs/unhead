@@ -52,7 +52,7 @@ jobs:
       - name: Run analyze script
         id: analyze
         run: |
-          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.js /tmp/base-vue-server.mjs)
+          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.mjs /tmp/base-vue-server.mjs)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT
