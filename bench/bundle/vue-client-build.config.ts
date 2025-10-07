@@ -36,7 +36,15 @@ export default defineBuildConfig({
     },
     'build:done': () => {
       // check gzip size of ./dist/minimal.js
-      const file = path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js')
+      // Try both possible output paths (unbuild behavior changed)
+      const possiblePaths = [
+        path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js'),
+        path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.js'),
+      ]
+      const file = possiblePaths.find(p => fs.existsSync(p))
+      if (!file) {
+        throw new Error(`Could not find vue-client bundle in any of: ${possiblePaths.join(', ')}`)
+      }
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
