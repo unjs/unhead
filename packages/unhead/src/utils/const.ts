@@ -1,7 +1,7 @@
-export const SelfClosingTags = new Set(['meta', 'link', 'base'])
-export const DupeableTags = new Set(['link', 'style', 'script', 'noscript'])
-export const TagsWithInnerContent = new Set(['title', 'titleTemplate', 'script', 'style', 'noscript'])
-export const HasElementTags = new Set([
+export const SelfClosingTags = /* @__PURE__ */ new Set(['meta', 'link', 'base'])
+export const DupeableTags = /* @__PURE__ */ new Set(['link', 'style', 'script', 'noscript'])
+export const TagsWithInnerContent = /* @__PURE__ */ new Set(['title', 'titleTemplate', 'script', 'style', 'noscript'])
+export const HasElementTags = /* @__PURE__ */ new Set([
   'base',
   'meta',
   'link',
@@ -9,7 +9,7 @@ export const HasElementTags = new Set([
   'script',
   'noscript',
 ])
-export const ValidHeadTags = new Set([
+export const ValidHeadTags = /* @__PURE__ */ new Set([
   'title',
   'base',
   'htmlAttrs',
@@ -21,15 +21,15 @@ export const ValidHeadTags = new Set([
   'noscript',
 ])
 
-export const UniqueTags = new Set(['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams'])
+export const UniqueTags = /* @__PURE__ */ new Set(['base', 'title', 'titleTemplate', 'bodyAttrs', 'htmlAttrs', 'templateParams'])
 
-export const TagConfigKeys = new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
+export const TagConfigKeys = /* @__PURE__ */ new Set(['key', 'tagPosition', 'tagPriority', 'tagDuplicateStrategy', 'innerHTML', 'textContent', 'processTemplateParams'])
 
-export const ScriptNetworkEvents = new Set(['onload', 'onerror'])
+export const ScriptNetworkEvents = /* @__PURE__ */ new Set(['onload', 'onerror'])
 
-export const UsesMergeStrategy = new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
+export const UsesMergeStrategy = /* @__PURE__ */ new Set(['templateParams', 'htmlAttrs', 'bodyAttrs'])
 
-export const MetaTagsArrayable = new Set([
+export const MetaTagsArrayable = /* @__PURE__ */ new Set([
   'theme-color',
   'google-site-verification',
   'og',

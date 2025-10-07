@@ -1,4 +1,4 @@
-import type { SerializableHead } from '../../types'
+import type { SerializableHead } from '../types'
 import {
   TAG_BASE,
   TAG_BODY,
@@ -22,13 +22,6 @@ const APOS_CHAR = 39 // '\''
 const EXCLAMATION_CHAR = 33 // '!'
 const BACKSLASH_CHAR = 92 // '\'
 const DASH_CHAR = 45 // '-'
-const SPACE_CHAR = 32 // ' '
-const TAB_CHAR = 9 // '\t'
-const NEWLINE_CHAR = 10 // '\n'
-const CARRIAGE_RETURN_CHAR = 13 // '\r'
-
-// Pre-allocate arrays and objects to reduce allocations
-const EMPTY_ATTRIBUTES: Record<string, string> = Object.freeze({})
 
 export interface PreparedHtmlTemplate {
   html: string
@@ -52,10 +45,10 @@ export interface PreparedHtmlTemplateWithIndexes {
  * Fast whitespace check using direct character code comparison
  */
 function isWhitespace(charCode: number): boolean {
-  return charCode === SPACE_CHAR
-    || charCode === TAB_CHAR
-    || charCode === NEWLINE_CHAR
-    || charCode === CARRIAGE_RETURN_CHAR
+  return charCode === 32 // SPACE_CHAR
+    || charCode === 9 // TAB_CHAR
+    || charCode === 10 // NEWLINE_CHAR
+    || charCode === 13 // CARRIAGE_RETURN_CHAR
 }
 
 /**
@@ -122,9 +115,10 @@ function processCommentOrDoctype(htmlChunk: string, position: number): {
 /**
  * Parse HTML attributes string into key-value object
  */
+/* @__PURE__ */
 export function parseAttributes(attrStr: string): Record<string, string> {
   if (!attrStr)
-    return EMPTY_ATTRIBUTES
+    return {}
 
   const result: Record<string, string> = {}
   const len = attrStr.length
@@ -232,6 +226,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
  * Parse HTML to find tag indexes without extracting head elements
  * Used for transformHtmlTemplateRaw where we don't want to extract existing head content
  */
+/* @__PURE__ */
 export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndexes {
   const indexes = {
     htmlTagStart: html.indexOf('<html'),
@@ -261,6 +256,7 @@ export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndex
   return { html, input: {}, indexes }
 }
 
+/* @__PURE__ */
 export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplateWithIndexes {
   const input = {} as SerializableHead
   const htmlParts: string[] = []
@@ -649,6 +645,7 @@ function findTagEnd(html: string, closingTagStart: number, tagName: string): num
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
  */
+/* @__PURE__ */
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },

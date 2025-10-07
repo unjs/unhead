@@ -17,5 +17,6 @@ export default defineBuildConfig({
     { input: 'src/scripts/index', name: 'scripts' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins/index', name: 'plugins' },
+    { input: 'src/parser/index', name: 'parser' },
   ],
 })

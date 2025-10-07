@@ -2,6 +2,7 @@ import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
+/* @__PURE__ */
 export function escapeHtml(str: string) {
   return str.replace(/[&<>"'/]/g, (char) => {
     switch (char) {
@@ -23,6 +24,7 @@ export function escapeHtml(str: string) {
   })
 }
 
+/* @__PURE__ */
 export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
