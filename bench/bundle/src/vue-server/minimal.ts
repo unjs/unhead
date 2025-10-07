@@ -1,7 +1,6 @@
 import { useHead } from '@unhead/vue'
 import { createHead, renderSSRHead } from '@unhead/vue/server'
 
-
 async function doHead() {
 // Full usage with all core features
   const head = createHead()

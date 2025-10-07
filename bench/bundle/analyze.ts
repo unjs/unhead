@@ -1,6 +1,6 @@
 import fs from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import zlib from 'node:zlib'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -80,6 +80,7 @@ function generateMarkdownTable(data: BundleData[]): string {
 }
 
 // Support both CI (with args) and local usage (with last.json)
+// eslint-disable-next-line node/prefer-global/process
 const args = process.argv.slice(2)
 
 const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minimal.mjs'))
