@@ -1,7 +1,9 @@
+/* @__PURE__ */
 function encodeAttribute(value: string) {
   return String(value).replace(/"/g, '&quot;')
 }
 
+/* @__PURE__ */
 export function propsToString(props: Record<string, any>) {
   let attrs = ''
 

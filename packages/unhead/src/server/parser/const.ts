@@ -10,7 +10,7 @@ export const TAG_LINK = 54
 export const TAG_BASE = 56
 
 // Map string tag names to numeric constants
-export const TagIdMap = {
+export const TagIdMap = /* @__PURE__ */ {
   html: TAG_HTML,
   head: TAG_HEAD,
   title: TAG_TITLE,

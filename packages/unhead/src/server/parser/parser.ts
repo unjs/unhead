@@ -28,7 +28,7 @@ const NEWLINE_CHAR = 10 // '\n'
 const CARRIAGE_RETURN_CHAR = 13 // '\r'
 
 // Pre-allocate arrays and objects to reduce allocations
-const EMPTY_ATTRIBUTES: Record<string, string> = Object.freeze({})
+const EMPTY_ATTRIBUTES: Record<string, string> = /* @__PURE__ */ Object.freeze({})
 
 export interface PreparedHtmlTemplate {
   html: string
@@ -122,6 +122,7 @@ function processCommentOrDoctype(htmlChunk: string, position: number): {
 /**
  * Parse HTML attributes string into key-value object
  */
+/* @__PURE__ */
 export function parseAttributes(attrStr: string): Record<string, string> {
   if (!attrStr)
     return EMPTY_ATTRIBUTES
@@ -232,6 +233,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
  * Parse HTML to find tag indexes without extracting head elements
  * Used for transformHtmlTemplateRaw where we don't want to extract existing head content
  */
+/* @__PURE__ */
 export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndexes {
   const indexes = {
     htmlTagStart: html.indexOf('<html'),
@@ -261,6 +263,7 @@ export function parseHtmlForIndexes(html: string): PreparedHtmlTemplateWithIndex
   return { html, input: {}, indexes }
 }
 
+/* @__PURE__ */
 export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplateWithIndexes {
   const input = {} as SerializableHead
   const htmlParts: string[] = []
@@ -649,6 +652,7 @@ function findTagEnd(html: string, closingTagStart: number, tagName: string): num
  * Optimized HTML construction function that uses indexes instead of string.replace()
  * This avoids searching through the entire HTML
  */
+/* @__PURE__ */
 export function applyHeadToHtml(
   template: PreparedHtmlTemplateWithIndexes,
   headHtml: { htmlAttrs: string, headTags: string, bodyAttrs: string, bodyTagsOpen?: string, bodyTags: string },
