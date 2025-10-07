@@ -36,10 +36,11 @@ export default defineBuildConfig({
     },
     'build:done': () => {
       // check gzip size of ./dist/minimal.js
-      // Try both possible output paths (unbuild behavior changed)
+      // Try both possible output paths and extensions (unbuild behavior changed)
       const possiblePaths = [
         path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js'),
         path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.js'),
+        path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.mjs'),
       ]
       const file = possiblePaths.find(p => fs.existsSync(p))
       if (!file) {
