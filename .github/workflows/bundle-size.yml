@@ -14,6 +14,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4.1.0
@@ -25,21 +27,31 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: Build base branch bundles
+        run: |
+          git checkout ${{ github.base_ref }}
+          pnpm install
+          pnpm build
+          pnpm test:bundle-size
+          cp bench/bundle/dist/client/client/minimal.mjs /tmp/base-client.mjs
+          cp bench/bundle/dist/server/server/minimal.mjs /tmp/base-server.mjs
+          git checkout -
 
       - name: Install dependencies
         run: pnpm build
 
-      - name: Run bundle size test
-        run: pnpm test:bundle-size
+      - name: Build PR bundles
+        run: |
+          pnpm install
+          pnpm build
+          pnpm test:bundle-size
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Run analyze script
         id: analyze
         run: |
-          output=$(bun bench/bundle/analyze.ts)
+          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT

@@ -1,21 +1,48 @@
 import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import zlib from 'node:zlib'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function formatSize(size: number): string {
   return `${Math.round(size / 102.4) / 10} kB`
 }
 
-function calculatePercentageDiff(current: number, previous: number): string {
-  if (previous === 0)
-    return 'N/A'
-  const diff = ((current - previous) / previous) * 100
-  return `${diff.toFixed(2)}%`
+function formatDiff(diffBytes: number, diffPercent: number): string {
+  if (diffBytes === 0)
+    return '0 B (0%)'
+
+  const sign = diffBytes > 0 ? '+' : ''
+  const emoji = diffBytes > 0 ? '🔴' : '🟢'
+  const percent = diffPercent.toFixed(2)
+
+  return `${emoji} ${sign}${formatSize(Math.abs(diffBytes))} (${sign}${percent}%)`
 }
 
-function generateMarkdownTable(data: { name: string, size: number, gzippedSize: number, sizeDiff: string, gzippedSizeDiff: string, sizeDiffBytes: string, gzipSizeDiffBytes: string }[]): string {
-  const headers = ['File', 'Size', 'Gzipped Size', 'Size Diff', 'Gzipped Size Diff']
-  const rows = data.map(item => [item.name, `${formatSize(item.size)} (${item.size} B)`, `${formatSize(item.gzippedSize)} (${item.gzippedSize} B)`, `${item.sizeDiff} (${item.sizeDiffBytes} B)`, `${item.gzippedSizeDiff} ( ${item.gzipSizeDiffBytes} B)`])
+function generateMarkdownTable(data: Array<{
+  name: string
+  size: number
+  gzippedSize: number
+  baseSize: number
+  baseGzippedSize: number
+}>): string {
+  const headers = ['Bundle', 'Size', 'Gzipped', 'Size Change', 'Gzipped Change']
+  const rows = data.map((item) => {
+    const sizeDiffBytes = item.size - item.baseSize
+    const sizeDiffPercent = item.baseSize > 0 ? ((sizeDiffBytes / item.baseSize) * 100) : 0
+    const gzDiffBytes = item.gzippedSize - item.baseGzippedSize
+    const gzDiffPercent = item.baseGzippedSize > 0 ? ((gzDiffBytes / item.baseGzippedSize) * 100) : 0
+
+    return [
+      `**${item.name}**`,
+      `${formatSize(item.size)}`,
+      `${formatSize(item.gzippedSize)}`,
+      formatDiff(sizeDiffBytes, sizeDiffPercent),
+      formatDiff(gzDiffBytes, gzDiffPercent),
+    ]
+  })
+
   const table = [
     `| ${headers.join(' | ')} |`,
     `| ${headers.map(() => '---').join(' | ')} |`,
@@ -24,31 +51,64 @@ function generateMarkdownTable(data: { name: string, size: number, gzippedSize: 
   return table.join('\n')
 }
 
+// Support both CI (with args) and local usage (with last.json)
+const args = process.argv.slice(2)
+
 const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minimal.mjs'))
 const server = fs.readFileSync(path.resolve(__dirname, 'dist/server/server/minimal.mjs'))
 
-const lastStats = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'last.json'), 'utf8'))
+let data: Array<{
+  name: string
+  size: number
+  gzippedSize: number
+  baseSize: number
+  baseGzippedSize: number
+}>
 
-const data = [
-  {
-    name: 'Client',
-    size: client.length,
-    gzippedSize: zlib.gzipSync(client).length,
-    sizeDiff: calculatePercentageDiff(client.length, lastStats.client.size),
-    sizeDiffBytes: client.length - lastStats.client.size,
-    gzippedSizeDiff: calculatePercentageDiff(zlib.gzipSync(client).length, lastStats.client.gz),
-    gzipSizeDiffBytes: zlib.gzipSync(client).length - lastStats.client.gz,
-  },
-  {
-    name: 'Server',
-    size: server.length,
-    gzippedSize: zlib.gzipSync(server).length,
-    sizeDiffBytes: server.length - lastStats.server.size,
-    sizeDiff: calculatePercentageDiff(server.length, lastStats.server.size),
-    gzipSizeDiffBytes: zlib.gzipSync(server).length - lastStats.server.gz,
-    gzippedSizeDiff: calculatePercentageDiff(zlib.gzipSync(server).length, lastStats.server.gz),
-  },
-]
+if (args.length >= 2) {
+  // CI mode: use provided base bundle paths
+  const baseClient = fs.readFileSync(args[0])
+  const baseServer = fs.readFileSync(args[1])
+
+  data = [
+    {
+      name: 'Client',
+      size: client.length,
+      gzippedSize: zlib.gzipSync(client).length,
+      baseSize: baseClient.length,
+      baseGzippedSize: zlib.gzipSync(baseClient).length,
+    },
+    {
+      name: 'Server',
+      size: server.length,
+      gzippedSize: zlib.gzipSync(server).length,
+      baseSize: baseServer.length,
+      baseGzippedSize: zlib.gzipSync(baseServer).length,
+    },
+  ]
+}
+else {
+  // Local mode: use last.json for comparison
+  console.warn('⚠️  Running in local mode - using last.json for comparison\n')
+  const lastStats = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'last.json'), 'utf8'))
+
+  data = [
+    {
+      name: 'Client',
+      size: client.length,
+      gzippedSize: zlib.gzipSync(client).length,
+      baseSize: lastStats.client.size,
+      baseGzippedSize: lastStats.client.gz,
+    },
+    {
+      name: 'Server',
+      size: server.length,
+      gzippedSize: zlib.gzipSync(server).length,
+      baseSize: lastStats.server.size,
+      baseGzippedSize: lastStats.server.gz,
+    },
+  ]
+}
 
 // @ts-expect-error untyped
 // eslint-disable-next-line no-console
