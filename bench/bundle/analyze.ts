@@ -32,7 +32,7 @@ interface BundleData {
 }
 
 function generateMarkdownTable(data: BundleData[]): string {
-  const headers = ['Bundle', 'Size', 'Change', 'Gzipped', 'Change']
+  const headers = ['Bundle', 'Size', 'Gzipped']
   const rows = data.map((item) => {
     const sizeDiffBytes = item.size - item.baseSize
     const sizeDiffPercent = item.baseSize > 0 ? ((sizeDiffBytes / item.baseSize) * 100) : 0
@@ -43,12 +43,22 @@ function generateMarkdownTable(data: BundleData[]): string {
     item.sizeDiffPercent = sizeDiffPercent
     item.gzDiffPercent = gzDiffPercent
 
+    // Format size column with change
+    const sizeChange = formatDiff(sizeDiffBytes)
+    const sizeCell = sizeChange
+      ? `${formatSize(item.baseSize)} → ${formatSize(item.size)} ${sizeChange}`
+      : `${formatSize(item.size)}`
+
+    // Format gzipped column with change
+    const gzChange = formatDiff(gzDiffBytes)
+    const gzCell = gzChange
+      ? `${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)} ${gzChange}`
+      : `${formatSize(item.gzippedSize)}`
+
     return [
       `**${item.name}**`,
-      `${formatSize(item.baseSize)} → ${formatSize(item.size)}`,
-      formatDiff(sizeDiffBytes),
-      `${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)}`,
-      formatDiff(gzDiffBytes),
+      sizeCell,
+      gzCell,
     ]
   })
 
@@ -57,24 +67,6 @@ function generateMarkdownTable(data: BundleData[]): string {
     `| ${headers.map(() => '---').join(' | ')} |`,
     ...rows.map(row => `| ${row.join(' | ')} |`),
   ]
-
-  // Add summary with percentages
-  const summaryLines = data.map((item) => {
-    const parts = []
-    if (item.sizeDiffPercent) {
-      const sign = item.sizeDiffPercent > 0 ? '+' : ''
-      parts.push(`Size: ${sign}${item.sizeDiffPercent.toFixed(2)}%`)
-    }
-    if (item.gzDiffPercent) {
-      const sign = item.gzDiffPercent > 0 ? '+' : ''
-      parts.push(`Gzipped: ${sign}${item.gzDiffPercent.toFixed(2)}%`)
-    }
-    return parts.length > 0 ? `- **${item.name}**: ${parts.join(', ')}` : null
-  }).filter(Boolean)
-
-  if (summaryLines.length > 0) {
-    return `${table.join('\n')}\n\n${summaryLines.join('\n')}`
-  }
 
   return table.join('\n')
 }
