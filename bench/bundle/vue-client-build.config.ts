@@ -17,8 +17,8 @@ export default defineBuildConfig({
       minify: true,
     },
     output: {
-      chunkFileNames: '_unhead/[name].js',
-      entryFileNames: '_unhead/[name].js',
+      chunkFileNames: 'vue-client/[name].js',
+      entryFileNames: 'vue-client/[name].js',
     },
   },
   externals: [
@@ -36,7 +36,7 @@ export default defineBuildConfig({
     },
     'build:done': () => {
       // check gzip size of ./dist/minimal.js
-      const file = path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js')
+      const file = path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.js')
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
