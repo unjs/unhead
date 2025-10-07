@@ -18,10 +18,6 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
-    output: {
-      chunkFileNames: 'server/[name].mjs',
-      entryFileNames: 'server/[name].mjs',
-    },
   },
   externals: [
     'hookable',
