@@ -4,6 +4,8 @@ import zlib from 'node:zlib'
 
 const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minimal.mjs'))
 const server = fs.readFileSync(path.resolve(__dirname, 'dist/server/server/minimal.mjs'))
+const vueClient = fs.readFileSync(path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js'))
+const vueServer = fs.readFileSync(path.resolve(__dirname, 'dist/vue-server/vue-server/minimal.mjs'))
 
 const newStats = {
   client: {
@@ -13,6 +15,14 @@ const newStats = {
   server: {
     size: server.length,
     gz: zlib.gzipSync(server).length,
+  },
+  vueClient: {
+    size: vueClient.length,
+    gz: zlib.gzipSync(vueClient).length,
+  },
+  vueServer: {
+    size: vueServer.length,
+    gz: zlib.gzipSync(vueServer).length,
   },
 }
 
