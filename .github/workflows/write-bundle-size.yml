@@ -28,8 +28,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build packages
+        run: pnpm build
+
       - name: Run bundle size test
         run: pnpm test:bundle-size
+
+      - name: Run Vue bundle size test
+        run: pnpm test:vue-bundle-size
 
       - uses: oven-sh/setup-bun@v2
 
