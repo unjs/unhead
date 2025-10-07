@@ -9,37 +9,46 @@ function formatSize(size: number): string {
   return `${Math.round(size / 102.4) / 10} kB`
 }
 
-function formatDiff(diffBytes: number, diffPercent: number): string {
-  if (diffBytes === 0)
-    return '0 B (0%)'
+function formatDiff(diffBytes: number): string {
+  // Round to see if it's effectively zero
+  const roundedKB = Math.round(Math.abs(diffBytes) / 102.4) / 10
+  if (roundedKB === 0)
+    return ''
 
   const sign = diffBytes > 0 ? '+' : ''
   const emoji = diffBytes > 0 ? '🔴' : '🟢'
-  const percent = diffPercent.toFixed(2)
 
-  return `${emoji} ${sign}${formatSize(Math.abs(diffBytes))} (${sign}${percent}%)`
+  return `${emoji} ${sign}${formatSize(Math.abs(diffBytes))}`
 }
 
-function generateMarkdownTable(data: Array<{
+interface BundleData {
   name: string
   size: number
   gzippedSize: number
   baseSize: number
   baseGzippedSize: number
-}>): string {
-  const headers = ['Bundle', 'Size', 'Gzipped', 'Size Change', 'Gzipped Change']
+  sizeDiffPercent?: number
+  gzDiffPercent?: number
+}
+
+function generateMarkdownTable(data: BundleData[]): string {
+  const headers = ['Bundle', 'Size', 'Change', 'Gzipped', 'Change']
   const rows = data.map((item) => {
     const sizeDiffBytes = item.size - item.baseSize
     const sizeDiffPercent = item.baseSize > 0 ? ((sizeDiffBytes / item.baseSize) * 100) : 0
     const gzDiffBytes = item.gzippedSize - item.baseGzippedSize
     const gzDiffPercent = item.baseGzippedSize > 0 ? ((gzDiffBytes / item.baseGzippedSize) * 100) : 0
 
+    // Store percentages for summary
+    item.sizeDiffPercent = sizeDiffPercent
+    item.gzDiffPercent = gzDiffPercent
+
     return [
       `**${item.name}**`,
-      `${formatSize(item.size)}`,
-      `${formatSize(item.gzippedSize)}`,
-      formatDiff(sizeDiffBytes, sizeDiffPercent),
-      formatDiff(gzDiffBytes, gzDiffPercent),
+      `${formatSize(item.baseSize)} → ${formatSize(item.size)}`,
+      formatDiff(sizeDiffBytes),
+      `${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)}`,
+      formatDiff(gzDiffBytes),
     ]
   })
 
@@ -48,6 +57,25 @@ function generateMarkdownTable(data: Array<{
     `| ${headers.map(() => '---').join(' | ')} |`,
     ...rows.map(row => `| ${row.join(' | ')} |`),
   ]
+
+  // Add summary with percentages
+  const summaryLines = data.map((item) => {
+    const parts = []
+    if (item.sizeDiffPercent !== 0) {
+      const sign = item.sizeDiffPercent > 0 ? '+' : ''
+      parts.push(`Size: ${sign}${item.sizeDiffPercent.toFixed(2)}%`)
+    }
+    if (item.gzDiffPercent !== 0) {
+      const sign = item.gzDiffPercent > 0 ? '+' : ''
+      parts.push(`Gzipped: ${sign}${item.gzDiffPercent.toFixed(2)}%`)
+    }
+    return parts.length > 0 ? `- **${item.name}**: ${parts.join(', ')}` : null
+  }).filter(Boolean)
+
+  if (summaryLines.length > 0) {
+    return `${table.join('\n')}\n\n${summaryLines.join('\n')}`
+  }
+
   return table.join('\n')
 }
 
@@ -56,6 +84,8 @@ const args = process.argv.slice(2)
 
 const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minimal.mjs'))
 const server = fs.readFileSync(path.resolve(__dirname, 'dist/server/server/minimal.mjs'))
+const vueClient = fs.readFileSync(path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js'))
+const vueServer = fs.readFileSync(path.resolve(__dirname, 'dist/vue-server/vue-server/minimal.mjs'))
 
 let data: Array<{
   name: string
@@ -65,25 +95,41 @@ let data: Array<{
   baseGzippedSize: number
 }>
 
-if (args.length >= 2) {
+if (args.length >= 4) {
   // CI mode: use provided base bundle paths
   const baseClient = fs.readFileSync(args[0])
   const baseServer = fs.readFileSync(args[1])
+  const baseVueClient = fs.readFileSync(args[2])
+  const baseVueServer = fs.readFileSync(args[3])
 
   data = [
     {
-      name: 'Client',
+      name: 'Client (Minimal)',
       size: client.length,
       gzippedSize: zlib.gzipSync(client).length,
       baseSize: baseClient.length,
       baseGzippedSize: zlib.gzipSync(baseClient).length,
     },
     {
-      name: 'Server',
+      name: 'Server (Minimal)',
       size: server.length,
       gzippedSize: zlib.gzipSync(server).length,
       baseSize: baseServer.length,
       baseGzippedSize: zlib.gzipSync(baseServer).length,
+    },
+    {
+      name: 'Vue Client (Minimal)',
+      size: vueClient.length,
+      gzippedSize: zlib.gzipSync(vueClient).length,
+      baseSize: baseVueClient.length,
+      baseGzippedSize: zlib.gzipSync(baseVueClient).length,
+    },
+    {
+      name: 'Vue Server (Minimal)',
+      size: vueServer.length,
+      gzippedSize: zlib.gzipSync(vueServer).length,
+      baseSize: baseVueServer.length,
+      baseGzippedSize: zlib.gzipSync(baseVueServer).length,
     },
   ]
 }
@@ -94,18 +140,32 @@ else {
 
   data = [
     {
-      name: 'Client',
+      name: 'Client (Minimal)',
       size: client.length,
       gzippedSize: zlib.gzipSync(client).length,
       baseSize: lastStats.client.size,
       baseGzippedSize: lastStats.client.gz,
     },
     {
-      name: 'Server',
+      name: 'Server (Minimal)',
       size: server.length,
       gzippedSize: zlib.gzipSync(server).length,
       baseSize: lastStats.server.size,
       baseGzippedSize: lastStats.server.gz,
+    },
+    {
+      name: 'Vue Client (Minimal)',
+      size: vueClient.length,
+      gzippedSize: zlib.gzipSync(vueClient).length,
+      baseSize: lastStats.vueClient.size,
+      baseGzippedSize: lastStats.vueClient.gz,
+    },
+    {
+      name: 'Vue Server (Minimal)',
+      size: vueServer.length,
+      gzippedSize: zlib.gzipSync(vueServer).length,
+      baseSize: lastStats.vueServer.size,
+      baseGzippedSize: lastStats.vueServer.gz,
     },
   ]
 }

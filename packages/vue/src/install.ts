@@ -3,6 +3,7 @@ import type { VueHeadClient } from './types'
 
 export const headSymbol = 'usehead'
 
+/* @__NO_SIDE_EFFECTS__ */
 export function vueInstall(head: VueHeadClient<any>) {
   const plugin = <Plugin> {
     install(app) {

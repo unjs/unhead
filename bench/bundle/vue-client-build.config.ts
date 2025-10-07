@@ -35,8 +35,8 @@ export default defineBuildConfig({
       }))
     },
     'build:done': () => {
-      // check gzip size of ./dist/minimal.mjs
-      const file = path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.mjs')
+      // check gzip size of ./dist/minimal.js
+      const file = path.resolve(__dirname, 'dist/vue-client/_unhead/vue-client/minimal.js')
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length

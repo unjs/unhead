@@ -6,6 +6,7 @@ import { vueInstall } from './install'
 export { VueHeadMixin } from './VueHeadMixin'
 export { renderDOMHead } from 'unhead/client'
 
+/* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   const head = _createHead({
     domOptions: {

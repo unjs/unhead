@@ -1,10 +1,18 @@
 {
   "client": {
-    "size": 11308,
-    "gz": 4706
+    "size": 11314,
+    "gz": 4712
   },
   "server": {
-    "size": 10183,
-    "gz": 4241
+    "size": 10162,
+    "gz": 4191
+  },
+  "vueClient": {
+    "size": 12374,
+    "gz": 5153
+  },
+  "vueServer": {
+    "size": 11112,
+    "gz": 4584
   }
 }

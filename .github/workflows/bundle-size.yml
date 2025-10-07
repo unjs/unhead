@@ -33,8 +33,11 @@ jobs:
           pnpm install
           pnpm build
           pnpm test:bundle-size
+          pnpm test:vue-bundle-size
           cp bench/bundle/dist/client/client/minimal.mjs /tmp/base-client.mjs
           cp bench/bundle/dist/server/server/minimal.mjs /tmp/base-server.mjs
+          cp bench/bundle/dist/vue-client/_unhead/vue-client/minimal.js /tmp/base-vue-client.js
+          cp bench/bundle/dist/vue-server/vue-server/minimal.mjs /tmp/base-vue-server.mjs
           git checkout -
 
       - name: Build PR bundles
@@ -42,13 +45,14 @@ jobs:
           pnpm install
           pnpm build
           pnpm test:bundle-size
+          pnpm test:vue-bundle-size
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Run analyze script
         id: analyze
         run: |
-          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs)
+          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.js /tmp/base-vue-server.mjs)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT

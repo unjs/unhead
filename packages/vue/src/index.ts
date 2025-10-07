@@ -10,5 +10,5 @@ export { VueHeadMixin } from './VueHeadMixin'
 /**
  * @deprecated Use createUnhead
  */
-const createHeadCore = createUnhead
+const createHeadCore = /* @__PURE__ */ createUnhead
 export { createHeadCore, createUnhead }
