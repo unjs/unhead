@@ -26,6 +26,21 @@
   useServerHead: function
   useServerHeadSafe: function
   useServerSeoMeta: function
+./parser:
+  applyHeadToHtml: function
+  parseAttributes: function
+  parseHtmlForIndexes: function
+  parseHtmlForUnheadExtraction: function
+  TAG_BASE: number
+  TAG_BODY: number
+  TAG_HEAD: number
+  TAG_HTML: number
+  TAG_LINK: number
+  TAG_META: number
+  TAG_SCRIPT: number
+  TAG_STYLE: number
+  TAG_TITLE: number
+  TagIdMap: object
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
