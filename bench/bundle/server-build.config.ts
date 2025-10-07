@@ -18,10 +18,6 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
-    output: {
-      chunkFileNames: 'server/[name].mjs',
-      entryFileNames: 'server/[name].mjs',
-    },
   },
   externals: [
     'hookable',
@@ -29,6 +25,7 @@ export default defineBuildConfig({
   declaration: false,
   hooks: {
     'rollup:options': (ctx, config) => {
+      config.experimentalLogSideEffects = true
       config.plugins.push(visualizer({
         emitFile: true,
         filename: 'stats.html',

@@ -16,10 +16,6 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
-    output: {
-      chunkFileNames: 'vue-server/[name].mjs',
-      entryFileNames: 'vue-server/[name].mjs',
-    },
   },
   externals: [
     'hookable',
