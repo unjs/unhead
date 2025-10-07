@@ -56,6 +56,10 @@
     "./scripts": {
       "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.ts",
+      "default": "./dist/parser.mjs"
     }
   },
   "main": "dist/index.mjs",

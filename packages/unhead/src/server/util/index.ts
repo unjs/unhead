@@ -1,5 +1,3 @@
-export { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser/parser'
-export type { PreparedHtmlTemplate, PreparedHtmlTemplateWithIndexes } from '../parser/parser'
 export { extractUnheadInputFromHtml } from './extractUnheadInputFromHtml'
 export { propsToString } from './propsToString'
 export { ssrRenderTags } from './ssrRenderTags'
