@@ -1,4 +1,4 @@
-import type { SerializableHead } from '../../types'
+import type { SerializableHead } from '../types'
 import {
   TAG_BASE,
   TAG_BODY,
@@ -22,13 +22,6 @@ const APOS_CHAR = 39 // '\''
 const EXCLAMATION_CHAR = 33 // '!'
 const BACKSLASH_CHAR = 92 // '\'
 const DASH_CHAR = 45 // '-'
-const SPACE_CHAR = 32 // ' '
-const TAB_CHAR = 9 // '\t'
-const NEWLINE_CHAR = 10 // '\n'
-const CARRIAGE_RETURN_CHAR = 13 // '\r'
-
-// Pre-allocate arrays and objects to reduce allocations
-const EMPTY_ATTRIBUTES: Record<string, string> = /* @__PURE__ */ Object.freeze({})
 
 export interface PreparedHtmlTemplate {
   html: string
@@ -52,10 +45,10 @@ export interface PreparedHtmlTemplateWithIndexes {
  * Fast whitespace check using direct character code comparison
  */
 function isWhitespace(charCode: number): boolean {
-  return charCode === SPACE_CHAR
-    || charCode === TAB_CHAR
-    || charCode === NEWLINE_CHAR
-    || charCode === CARRIAGE_RETURN_CHAR
+  return charCode === 32 // SPACE_CHAR
+    || charCode === 9 // TAB_CHAR
+    || charCode === 10 // NEWLINE_CHAR
+    || charCode === 13 // CARRIAGE_RETURN_CHAR
 }
 
 /**
@@ -125,7 +118,7 @@ function processCommentOrDoctype(htmlChunk: string, position: number): {
 /* @__PURE__ */
 export function parseAttributes(attrStr: string): Record<string, string> {
   if (!attrStr)
-    return EMPTY_ATTRIBUTES
+    return {}
 
   const result: Record<string, string> = {}
   const len = attrStr.length

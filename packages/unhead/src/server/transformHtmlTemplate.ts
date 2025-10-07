@@ -1,6 +1,6 @@
 import type { RenderSSRHeadOptions, Unhead } from '../types'
+import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 import { renderSSRHead } from './renderSSRHead'
-import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from './util'
 
 /**
  * Transform an HTML template string by extracting any head tags and attributes from it, pushing them to Unhead,
