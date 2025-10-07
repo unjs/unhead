@@ -61,11 +61,11 @@ function generateMarkdownTable(data: BundleData[]): string {
   // Add summary with percentages
   const summaryLines = data.map((item) => {
     const parts = []
-    if (item.sizeDiffPercent !== 0) {
+    if (item.sizeDiffPercent) {
       const sign = item.sizeDiffPercent > 0 ? '+' : ''
       parts.push(`Size: ${sign}${item.sizeDiffPercent.toFixed(2)}%`)
     }
-    if (item.gzDiffPercent !== 0) {
+    if (item.gzDiffPercent) {
       const sign = item.gzDiffPercent > 0 ? '+' : ''
       parts.push(`Gzipped: ${sign}${item.gzDiffPercent.toFixed(2)}%`)
     }

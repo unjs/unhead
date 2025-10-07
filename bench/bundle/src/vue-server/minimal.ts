@@ -5,6 +5,7 @@ async function doHead() {
 // Full usage with all core features
   const head = createHead()
 
+  // @ts-expect-error untyped
   useHead(head, {
     title: 'Test',
     titleTemplate: '%s | Site',
