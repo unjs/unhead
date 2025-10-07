@@ -29,7 +29,7 @@ jobs:
         run: pnpm install
 
       - name: Install dependencies
-        run: pnpm stub
+        run: pnpm build
 
       - name: Run bundle size test
         run: pnpm test:bundle-size
