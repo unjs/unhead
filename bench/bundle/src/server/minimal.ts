@@ -1,5 +1,5 @@
-import { useHead } from '../../../../packages/unhead/src'
-import { createHead } from '../../../../packages/unhead/src/server'
+import { useHead } from 'unhead'
+import { createHead } from 'unhead/server'
 
 // Full usage with all core features
 const head = createHead()
