@@ -480,10 +480,10 @@ importers:
   packages/angular:
     dependencies:
       '@angular/common':
-        specifier: ^19.2.14
+        specifier: ^19.2.15
         version: 19.2.15(@angular/core@19.2.15(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
       '@angular/core':
-        specifier: ^19.2.14
+        specifier: ^19.2.15
         version: 19.2.15(rxjs@7.8.2)(zone.js@0.15.1)
       tslib:
         specifier: ^2.8.1
