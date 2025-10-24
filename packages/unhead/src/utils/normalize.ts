@@ -94,10 +94,11 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
 
     const strValue = String(value)
     const isDataKey = key.startsWith('data-')
+    const isMetaContentKey = tag.tag === 'meta' && key === 'content'
 
     if (strValue === 'true' || strValue === '') {
       // @ts-expect-error untyped
-      tag.props[key] = isDataKey ? strValue : true
+      tag.props[key] = (isDataKey || isMetaContentKey) ? strValue : true
     }
     else if (!value && isDataKey && strValue === 'false') {
       tag.props[key] = 'false'
