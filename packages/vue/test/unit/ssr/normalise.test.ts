@@ -56,4 +56,31 @@ describe('normalise', () => {
       ]
     `)
   })
+
+  it('leaves string values untouched in meta content attribute', async () => {
+    const head = createHead({
+      disableDefaults: true,
+    })
+
+    head.push({
+      meta: [
+        {
+          name: 'test-meta',
+          content: 'true',
+          'other-bool': 'true',
+        },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="test-meta" other-bool content="true" />",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })
