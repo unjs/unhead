@@ -37,7 +37,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8048
 
       - name: Typecheck
-        run: pnpm typecheck && pnpm test:attw
+        run: npx vue-tsc && pnpm test:attw
         env:
           NODE_OPTIONS: --max-old-space-size=8048
 
