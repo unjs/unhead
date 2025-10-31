@@ -18,7 +18,7 @@ describe('capo', () => {
     head.push({
       script: [{
         innerHTML: 'console.log("inline script")',
-      }]
+      }],
     })
     head.push({
       style: [
