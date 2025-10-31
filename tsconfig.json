@@ -16,7 +16,10 @@
       "@unhead/ssr": ["packages/unhead/src/server/index"],
       "@unhead/vue": ["packages/vue/src/index"],
       "@unhead/dom": ["packages/unhead/src/client/index"],
-      "@unhead/svelte/types": ["packages/svelte/src/types"]
+      "@unhead/svelte/types": ["packages/svelte/src/types"],
+      "@unhead/angular": ["packages/angular/src/public-api"],
+      "@unhead/angular/client": ["packages/angular/client/src/public_api"],
+      "@unhead/angular/server": ["packages/angular/server/src/public_api"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],

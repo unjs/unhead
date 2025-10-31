@@ -12,7 +12,7 @@
         "./dist/ngx-unhead"
       ],
       "@unhead/angular": [
-        "./"
+        "./src/public-api.ts"
       ]
     },
     "strict": true,

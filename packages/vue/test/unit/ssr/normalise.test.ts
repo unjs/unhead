@@ -1,5 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/server'
+import { ResolvableMeta } from 'unhead/types'
 import { describe, expect, it } from 'vitest'
 
 describe('normalise', () => {
@@ -68,7 +69,7 @@ describe('normalise', () => {
           'name': 'test-meta',
           'content': 'true',
           'other-bool': 'true',
-        },
+        } as ResolvableMeta,
       ],
     })
 

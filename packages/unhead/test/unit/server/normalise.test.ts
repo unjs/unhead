@@ -52,7 +52,7 @@ describe('normalise', () => {
           'name': 'test-meta',
           'content': 'true',
           'other-bool': 'true',
-        },
+        } as any,
       ],
     })
 
