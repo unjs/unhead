@@ -14,7 +14,7 @@ describe('capo', () => {
       script: [{
         src: 'async-script.js',
         type: 'module',
-      }]
+      }],
     })
     head.push({
       script: [{
