@@ -31,7 +31,7 @@
     "twoslash:verify": "nuxt-content-twoslash verify --content-dir docs"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^5.4.1",
+    "@antfu/eslint-config": "^6.0.0",
     "@arethetypeswrong/cli": "^0.18.2",
     "@fast-check/vitest": "^0.2.2",
     "@types/fs-extra": "^11.0.4",
