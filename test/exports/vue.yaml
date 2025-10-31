@@ -54,7 +54,8 @@
   renderSSRHead: function
   transformHtmlTemplate: function
   VueHeadMixin: object
-./types: {}
+./types:
+  default: object
 ./utils:
   dedupeKey: function
   DupeableTags: object

@@ -56,7 +56,8 @@
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
-./types: {}
+./types:
+  default: object
 ./utils:
   dedupeKey: function
   DupeableTags: object
