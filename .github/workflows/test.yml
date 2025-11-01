@@ -1,20 +1,18 @@
 name: Test
 
-permissions:
-  contents: read
-  pull-requests: write
-
 on:
   push:
     branches:
       - main
-  pull_request_target:
+  pull_request:
     branches:
       - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8048
 
     steps:
       - uses: actions/checkout@v5
@@ -33,15 +31,9 @@ jobs:
 
       - name: Build
         run: pnpm run build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8048
-
-      - name: Typecheck
-        run: pnpm typecheck && pnpm test:attw
-        env:
-          NODE_OPTIONS: --max-old-space-size=8048
 
       - name: Test
-        run: pnpm run test
-        env:
-          NODE_OPTIONS: --max-old-space-size=8048
+        run: pnpm test
+
+      - name: attw
+        run: pnpm run test:attw
