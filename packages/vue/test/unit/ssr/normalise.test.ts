@@ -65,10 +65,10 @@ describe('normalise', () => {
     head.push({
       meta: [
         {
-          name: 'test-meta',
-          content: 'true',
+          'name': 'test-meta',
+          'content': 'true',
           'other-bool': 'true',
-        },
+        } as any,
       ],
     })
 
@@ -78,7 +78,7 @@ describe('normalise', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="test-meta" other-bool content="true" />",
+        "headTags": "<meta name="test-meta" content="true" other-bool>",
         "htmlAttrs": "",
       }
     `)

@@ -95,7 +95,7 @@ export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T): number 
       && !tag.props.type?.endsWith('json'))) {
       weight = weightMap.script.sync
     }
-    else if (isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) {
+    else if ((isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) || tag.props.type === 'module') {
       weight = weightMap.script.defer
     }
   }
