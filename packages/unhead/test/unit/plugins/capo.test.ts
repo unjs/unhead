@@ -12,6 +12,12 @@ describe('capo', () => {
     })
     head.push({
       script: [{
+        src: 'async-script.js',
+        type: 'module',
+      }],
+    })
+    head.push({
+      script: [{
         src: 'sync-script.js',
       }],
     })
@@ -125,17 +131,20 @@ describe('capo', () => {
     // DEFER SCRIPT
     expect(resolvedTags[10].tag).toEqual('script')
     expect(resolvedTags[10].props.defer).toEqual(true)
+    // MODULE SCRIPT
+    expect(resolvedTags[11].tag).toEqual('script')
+    expect(resolvedTags[11].props.type).toEqual('module')
     // DNS-PREFETCH
-    expect(resolvedTags[11].tag).toEqual('link')
-    expect(resolvedTags[11].props.rel).toEqual('dns-prefetch')
-    // PREFETCH
     expect(resolvedTags[12].tag).toEqual('link')
-    expect(resolvedTags[12].props.rel).toEqual('prefetch')
-    // PRERENDER
+    expect(resolvedTags[12].props.rel).toEqual('dns-prefetch')
+    // PREFETCH
     expect(resolvedTags[13].tag).toEqual('link')
-    expect(resolvedTags[13].props.rel).toEqual('prerender')
+    expect(resolvedTags[13].props.rel).toEqual('prefetch')
+    // PRERENDER
+    expect(resolvedTags[14].tag).toEqual('link')
+    expect(resolvedTags[14].props.rel).toEqual('prerender')
     // META
-    expect(resolvedTags[14].tag).toEqual('meta')
-    expect(resolvedTags[14].props.name).toEqual('description')
+    expect(resolvedTags[15].tag).toEqual('meta')
+    expect(resolvedTags[15].props.name).toEqual('description')
   })
 })
