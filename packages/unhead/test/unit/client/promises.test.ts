@@ -41,7 +41,7 @@ describe('promises', () => {
         {
           "_d": "script:content:test",
           "_p": 1026,
-          "_w": 100,
+          "_w": 50,
           "innerHTML": "test",
           "props": {},
           "tag": "script",
