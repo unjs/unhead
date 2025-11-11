@@ -130,18 +130,26 @@ export function resolveAsGraphKey(key?: Id | string) {
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) {
+    if (!Object.hasOwn(obj, k))
       continue
-    }
 
-    if (obj[k] && typeof obj[k] === 'object') {
-      // avoid walking vue reactivity
-      if (obj[k].__v_isReadonly || obj[k].__v_isRef)
-        continue
-      stripEmptyProperties(obj[k])
+    const value = obj[k]
+
+    // Skip Vue reactivity objects
+    if (value?.__v_isReadonly || value?.__v_isRef)
+      continue
+
+    // Recursively clean nested objects/arrays
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      stripEmptyProperties(value)
+      // Remove if object is now empty after cleaning
+      if (Object.keys(value).length === 0)
+        delete obj[k]
     }
-    if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
+    // Remove empty values
+    else if (value === '' || value == null) {
       delete obj[k]
+    }
   }
 
   return obj
