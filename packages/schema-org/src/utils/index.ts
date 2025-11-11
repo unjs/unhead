@@ -14,7 +14,9 @@ export function idReference<T extends Thing>(node: T | string) {
 export function resolvableDateToDate(val: Date | string) {
   try {
     const date = val instanceof Date ? val : new Date(Date.parse(val))
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${date.getFullYear()}-${month}-${day}`
   }
   // not too fussed if it can't be resolved, this is on the user to validate
   catch {}
