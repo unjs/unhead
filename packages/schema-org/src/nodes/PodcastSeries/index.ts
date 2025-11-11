@@ -11,7 +11,6 @@ import type { Person } from '../Person'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
 import { aggregateRatingResolver } from '../AggregateRating'
-import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 
 export interface PodcastSeriesSimple extends Thing {

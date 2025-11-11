@@ -20,15 +20,15 @@ import { offerResolver } from '../Offer'
 import { reviewResolver } from '../Review'
 import { PrimaryWebPageId } from '../WebPage'
 
-type ValidServiceSubTypes =
-  | 'Service'
-  | 'BroadcastService'
-  | 'CableOrSatelliteService'
-  | 'FinancialService'
-  | 'FoodService'
-  | 'GovernmentService'
-  | 'TaxiService'
-  | 'Telecom'
+type ValidServiceSubTypes
+  = | 'Service'
+    | 'BroadcastService'
+    | 'CableOrSatelliteService'
+    | 'FinancialService'
+    | 'FoodService'
+    | 'GovernmentService'
+    | 'TaxiService'
+    | 'Telecom'
 
 /**
  * ServiceChannel defines how a service can be accessed.
@@ -41,19 +41,19 @@ export interface ServiceChannel {
   /**
    * The URL where the service is available.
    */
-  serviceUrl?: string
+  'serviceUrl'?: string
   /**
    * The phone number to access the service.
    */
-  servicePhone?: string
+  'servicePhone'?: string
   /**
    * The physical location where the service is available.
    */
-  serviceLocation?: string
+  'serviceLocation'?: string
   /**
    * The languages supported by the service.
    */
-  availableLanguage?: string | string[]
+  'availableLanguage'?: string | string[]
 }
 
 /**
@@ -67,79 +67,79 @@ export interface ServiceSimple extends Thing {
   /**
    * The name of the service.
    */
-  name: string
+  'name': string
   /**
    * A description of the service.
    */
-  description?: string
+  'description'?: string
   /**
    * The type of service being offered, e.g. veterans' benefits, emergency relief, etc.
    */
-  serviceType?: string
+  'serviceType'?: string
   /**
    * A reference to the Person or Organization that provides the service.
    */
-  provider?: NodeRelation<Person | Organization>
+  'provider'?: NodeRelation<Person | Organization>
   /**
    * The geographic area where the service is provided.
    * Can be a text description or a Place object.
    */
-  areaServed?: string | unknown
+  'areaServed'?: string | unknown
   /**
    * A means of accessing the service (e.g. a phone bank, a web site, a location, etc.).
    */
-  availableChannel?: ServiceChannel | ServiceChannel[]
+  'availableChannel'?: ServiceChannel | ServiceChannel[]
   /**
    * An intended audience, i.e. a group for whom the service was created.
    */
-  audience?: unknown
+  'audience'?: unknown
   /**
    * A category for the item. Greater signs or slashes can be used to informally indicate a category hierarchy.
    */
-  category?: string | string[]
+  'category'?: string | string[]
   /**
    * Indicates an OfferCatalog listing for this Service.
    */
-  hasOfferCatalog?: unknown
+  'hasOfferCatalog'?: unknown
   /**
    * An offer to provide this service—for example, an offer to perform a service for a price, or without charge.
    * Can be a single Offer, AggregateOffer, or an array of offers.
    */
-  offers?: NodeRelations<Offer | AggregateOffer>
+  'offers'?: NodeRelations<Offer | AggregateOffer>
   /**
    * The overall rating, based on a collection of reviews or ratings, of the service.
    */
-  aggregateRating?: NodeRelation<AggregateRating>
+  'aggregateRating'?: NodeRelation<AggregateRating>
   /**
    * A review of the service.
    */
-  review?: NodeRelations<Review>
+  'review'?: NodeRelations<Review>
   /**
    * An image of the service.
    * - Must be at least 696 pixels wide.
    * - Must be of the following formats+file extensions: .jpg, .png, .gif, or .webp.
    */
-  image?: NodeRelations<ImageObject | string>
+  'image'?: NodeRelations<ImageObject | string>
   /**
    * A logo associated with the service.
    */
-  logo?: NodeRelations<ImageObject | string>
+  'logo'?: NodeRelations<ImageObject | string>
   /**
    * URL of the service.
    */
-  url?: string
+  'url'?: string
   /**
    * Human-readable terms of service documentation.
    */
-  termsOfService?: string
+  'termsOfService'?: string
   /**
    * A slogan or motto associated with the service.
    */
-  slogan?: string
+  'slogan'?: string
   /**
    * The brand associated with the service.
    */
-  brand?: NodeRelation<Organization>
+  'brand'?: NodeRelation<Organization>
 }
 
 export interface Service extends ServiceSimple {}

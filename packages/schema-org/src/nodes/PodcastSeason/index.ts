@@ -64,7 +64,7 @@ export const podcastSeasonResolver = defineSchemaOrgResolver<PodcastSeason>({
   defaults: {
     '@type': 'PodcastSeason',
   },
-  resolve(node, ctx) {
+  resolve(node, _ctx) {
     if (node.datePublished)
       node.datePublished = resolvableDateToIso(node.datePublished)
     if (node.startDate)

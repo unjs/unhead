@@ -1,5 +1,4 @@
 import type {
-  NodeRelation,
   NodeRelations,
   ResolvableDate,
   Thing,

@@ -21,15 +21,15 @@ export interface DataDownload extends Thing {
   /**
    * The direct download URL for the dataset file.
    */
-  contentUrl?: string
+  'contentUrl'?: string
   /**
    * The file format of the distribution (e.g., "CSV", "JSON", "XML", "application/json").
    */
-  encodingFormat?: string
+  'encodingFormat'?: string
   /**
    * The size of the file in bytes or human-readable format (e.g., "1.5 MB").
    */
-  contentSize?: string
+  'contentSize'?: string
 }
 
 /**
@@ -40,11 +40,11 @@ export interface DataCatalog extends Thing {
   /**
    * The name of the data catalog.
    */
-  name?: string
+  'name'?: string
   /**
    * The URL of the data catalog.
    */
-  url?: string
+  'url'?: string
 }
 
 export interface DatasetSimple extends Thing {
@@ -53,36 +53,36 @@ export interface DatasetSimple extends Thing {
    * The name of the dataset.
    * This is a required field for valid Dataset structured data.
    */
-  name: string
+  'name': string
   /**
    * A short summary describing the dataset.
    * This is a required field for valid Dataset structured data.
    */
-  description: string
+  'description': string
   /**
    * The location of a page describing the dataset.
    */
-  url?: string
+  'url'?: string
   /**
    * Keywords or tags used to describe the dataset.
    * Multiple entries in a keywords list are delimited by commas.
    */
-  keywords?: Arrayable<string>
+  'keywords'?: Arrayable<string>
   /**
    * The creator or author of this dataset.
    * Can be a Person or Organization, or a reference by ID.
    */
-  creator?: NodeRelations<Identity>
+  'creator'?: NodeRelations<Identity>
   /**
    * Identifies academic articles that are recommended by the data provider.
    * Can be the article text, URL, or DOI.
    */
-  citation?: Arrayable<string>
+  'citation'?: Arrayable<string>
   /**
    * A license document that applies to this content, typically indicated by URL.
    * Can also be the license text.
    */
-  license?: string
+  'license'?: string
   /**
    * The time period that the dataset covers, in ISO 8601 format.
    * Examples:
@@ -90,49 +90,49 @@ export interface DatasetSimple extends Thing {
    * - Time period: "2007-03-01T13:00:00Z/2008-05-11T15:30:00Z"
    * - Open-ended: "2007-03-01T13:00:00Z/.."
    */
-  temporalCoverage?: string
+  'temporalCoverage'?: string
   /**
    * The geographic area covered by the dataset.
    * Can be a place name, coordinates, or a shape.
    */
-  spatialCoverage?: Arrayable<string | Thing>
+  'spatialCoverage'?: Arrayable<string | Thing>
   /**
    * A download location for the dataset or a DataDownload object with distribution information.
    */
-  distribution?: NodeRelations<DataDownload>
+  'distribution'?: NodeRelations<DataDownload>
   /**
    * The variables that are measured in the dataset.
    * Can be text descriptions or PropertyValue objects.
    */
-  variableMeasured?: Arrayable<string | Thing>
+  'variableMeasured'?: Arrayable<string | Thing>
   /**
    * A data catalog which contains this dataset.
    */
-  includedInDataCatalog?: NodeRelation<DataCatalog>
+  'includedInDataCatalog'?: NodeRelation<DataCatalog>
   /**
    * Indicates whether the dataset is accessible for free.
    */
-  isAccessibleForFree?: boolean
+  'isAccessibleForFree'?: boolean
   /**
    * The date on which the dataset was published, in ISO 8601 format.
    */
-  datePublished?: ResolvableDate
+  'datePublished'?: ResolvableDate
   /**
    * The date on which the dataset was most recently modified, in ISO 8601 format.
    */
-  dateModified?: ResolvableDate
+  'dateModified'?: ResolvableDate
   /**
    * The version number or identifier for this dataset.
    */
-  version?: string
+  'version'?: string
   /**
    * A link to the license document or terms of use.
    */
-  sameAs?: Arrayable<string>
+  'sameAs'?: Arrayable<string>
   /**
    * An identifier for the dataset, such as a DOI.
    */
-  identifier?: Arrayable<string>
+  'identifier'?: Arrayable<string>
 }
 
 export interface Dataset extends DatasetSimple {}

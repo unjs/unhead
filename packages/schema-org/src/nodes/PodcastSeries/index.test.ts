@@ -3,7 +3,7 @@ import { useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 import { podcastSeriesResolver } from './index'
 
-const definePodcastSeries = (input: any) => {
+function definePodcastSeries(input: any) {
   return {
     ...input,
     _resolver: podcastSeriesResolver,
