@@ -37,78 +37,45 @@ import {
   webSiteResolver,
 } from './nodes'
 
+// Tree-shakeable resolver registry - const object mapping allows dead code elimination
+const resolverRegistry: Record<string, SchemaOrgNodeDefinition<any>> = {
+  address: addressResolver,
+  aggregateOffer: aggregateOfferResolver,
+  aggregateRating: aggregateRatingResolver,
+  article: articleResolver,
+  breadcrumb: breadcrumbResolver,
+  comment: commentResolver,
+  event: eventResolver,
+  foodEstablishment: foodEstablishmentResolver,
+  virtualLocation: virtualLocationResolver,
+  place: placeResolver,
+  howTo: howToResolver,
+  howToStep: howToStepResolver,
+  image: imageResolver,
+  localBusiness: localBusinessResolver,
+  offer: offerResolver,
+  openingHours: openingHoursResolver,
+  organization: organizationResolver,
+  person: personResolver,
+  product: productResolver,
+  question: questionResolver,
+  recipe: recipeResolver,
+  review: reviewResolver,
+  video: videoResolver,
+  webPage: webPageResolver,
+  webSite: webSiteResolver,
+  book: bookResolver,
+  course: courseResolver,
+  itemList: itemListResolver,
+  jobPosting: jobPostingResolver,
+  listItem: listItemResolver,
+  movie: movieResolver,
+  searchAction: searchActionResolver,
+  readAction: readActionResolver,
+  softwareApp: softwareAppResolver,
+  bookEdition: bookEditionResolver,
+}
+
 export function loadResolver(resolver: string): SchemaOrgNodeDefinition<any> | null {
-  switch (resolver) {
-    case 'address':
-      return addressResolver
-    case 'aggregateOffer':
-      return aggregateOfferResolver
-    case 'aggregateRating':
-      return aggregateRatingResolver
-    case 'article':
-      return articleResolver
-    case 'breadcrumb':
-      return breadcrumbResolver
-    case 'comment':
-      return commentResolver
-    case 'event':
-      return eventResolver
-    case 'foodEstablishment':
-      return foodEstablishmentResolver
-    case 'virtualLocation':
-      return virtualLocationResolver
-    case 'place':
-      return placeResolver
-    case 'howTo':
-      return howToResolver
-    case 'howToStep':
-      return howToStepResolver
-    case 'image':
-      return imageResolver
-    case 'localBusiness':
-      return localBusinessResolver
-    case 'offer':
-      return offerResolver
-    case 'openingHours':
-      return openingHoursResolver
-    case 'organization':
-      return organizationResolver
-    case 'person':
-      return personResolver
-    case 'product':
-      return productResolver
-    case 'question':
-      return questionResolver
-    case 'recipe':
-      return recipeResolver
-    case 'review':
-      return reviewResolver
-    case 'video':
-      return videoResolver
-    case 'webPage':
-      return webPageResolver
-    case 'webSite':
-      return webSiteResolver
-    case 'book':
-      return bookResolver
-    case 'course':
-      return courseResolver
-    case 'itemList':
-      return itemListResolver
-    case 'jobPosting':
-      return jobPostingResolver
-    case 'listItem':
-      return listItemResolver
-    case 'movie':
-      return movieResolver
-    case 'searchAction':
-      return searchActionResolver
-    case 'readAction':
-      return readActionResolver
-    case 'softwareApp':
-      return softwareAppResolver
-    case 'bookEdition':
-      return bookEditionResolver
-  }
-  return null
+  return resolverRegistry[resolver] || null
 }
