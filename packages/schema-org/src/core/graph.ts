@@ -19,6 +19,22 @@ const baseRelationNodes = [
   'workTranslation',
 ] as const
 
+// Helper to index a node by multiple key types for fast lookups
+function indexNode(index: Map<Id, SchemaOrgNode>, node: SchemaOrgNode) {
+  if (!node['@id'])
+    return
+
+  const nodeId = node['@id'] as string
+  // Fragment-based key (#identity)
+  const fragmentKey = resolveAsGraphKey(nodeId) as Id
+  index.set(fragmentKey, node)
+  // Full URL key
+  index.set(nodeId as Id, node)
+  // Domain-based key for path lookups
+  const domainKey = nodeId.replace(/(https?:)?\/\//, '').split('/')[0]
+  index.set(domainKey as Id, node)
+}
+
 // Inline deduplication helpers
 function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   return array.reduce((acc, value, index, array) => {
@@ -85,20 +101,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       asArray(input).forEach((node) => {
         const registeredNode = node as SchemaOrgNode
         ctx.nodes.push(registeredNode)
-        // Also update nodeIndex if it's been initialized and node has an @id
-        if (ctx.nodeIndex.size > 0 && registeredNode['@id']) {
-          const nodeId = registeredNode['@id'] as string
-          // Fragment-based key (#identity)
-          const fragmentKey = resolveAsGraphKey(nodeId) as Id
-          ctx.nodeIndex.set(fragmentKey, registeredNode)
-          // Full URL key
-          ctx.nodeIndex.set(nodeId as Id, registeredNode)
-          // Domain-based key for path lookups
-          const domainKey = nodeId
-            .replace(/(https?:)?\/\//, '')
-            .split('/')[0]
-          ctx.nodeIndex.set(domainKey as Id, registeredNode)
-        }
+        // Update nodeIndex if it's been initialized
+        if (ctx.nodeIndex.size > 0)
+          indexNode(ctx.nodeIndex, registeredNode)
       })
     },
     resolveGraph(meta: MetaInput) {
@@ -127,23 +132,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       ctx.nodes = Object.values(dedupedNodes)
 
       // Build nodeIndex Map for O(1) lookups before resolveRootNode calls
-      // Index nodes by multiple key types for different resolver strategies
       ctx.nodeIndex = new Map()
-      for (const node of ctx.nodes) {
-        if (node['@id']) {
-          const nodeId = node['@id'] as string
-          // Fragment-based key (#identity)
-          const fragmentKey = resolveAsGraphKey(nodeId) as Id
-          ctx.nodeIndex.set(fragmentKey, node)
-          // Full URL key
-          ctx.nodeIndex.set(nodeId as Id, node)
-          // Domain-based key for path lookups
-          const domainKey = nodeId
-            .replace(/(https?:)?\/\//, '')
-            .split('/')[0]
-          ctx.nodeIndex.set(domainKey as Id, node)
-        }
-      }
+      for (const node of ctx.nodes)
+        indexNode(ctx.nodeIndex, node)
 
       // Second pass: resolve relations and root nodes (now O(n) with nodeIndex)
       ctx.nodes.forEach((node) => {
@@ -163,30 +154,34 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
         delete node._resolver
       })
 
-      // Final normalization pass: sort keys and dedupe again
+      // Final normalization pass: sort keys (primitives first, then relations) and dedupe again
       const normalizedNodes: Record<Id, SchemaOrgNode> = {}
       for (const key of ctx.nodes.keys()) {
         const n = ctx.nodes[key]
         const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
-        const groupedKeys = groupBy(Object.keys(n), (key) => {
-          const val = n[key]
-          if (key[0] === '_')
-            return 'ignored'
-          if (Array.isArray(val) || typeof val === 'object')
-            return 'relations'
-          return 'primitives'
-        })
 
-        const keys = [
-          ...(groupedKeys.primitives || []).sort(),
-          ...(groupedKeys.relations || []).sort(),
-        ]
-        let newNode = {} as SchemaOrgNode
-        for (const key of keys)
+        // Sort keys: primitives first (alphabetically), then relations (alphabetically), ignore _ prefixed
+        const sortedKeys = Object.keys(n)
+          .filter(k => k[0] !== '_')
+          .sort((a, b) => {
+            const aIsRelation = Array.isArray(n[a]) || typeof n[a] === 'object'
+            const bIsRelation = Array.isArray(n[b]) || typeof n[b] === 'object'
+            // Both same type: alphabetical order
+            if (aIsRelation === bIsRelation)
+              return a.localeCompare(b)
+            // Primitives before relations
+            return aIsRelation ? 1 : -1
+          })
+
+        // Build normalized node with sorted keys
+        const newNode = {} as SchemaOrgNode
+        for (const key of sortedKeys)
           newNode[key] = n[key]
-        if (normalizedNodes[nodeKey])
-          newNode = merge(newNode, normalizedNodes[nodeKey]) as SchemaOrgNode
-        normalizedNodes[nodeKey] = newNode
+
+        // Merge if duplicate
+        normalizedNodes[nodeKey] = normalizedNodes[nodeKey]
+          ? merge(newNode, normalizedNodes[nodeKey]) as SchemaOrgNode
+          : newNode
       }
 
       return Object.values(normalizedNodes)
