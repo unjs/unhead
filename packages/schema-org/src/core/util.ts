@@ -71,7 +71,7 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
     const n = nodes[key]
     const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
     if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace')
-      dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
+      dedupedNodes[nodeKey] = merge(dedupedNodes[nodeKey], nodes[key]) as SchemaOrgNode
     else
       dedupedNodes[nodeKey] = nodes[key]
   }
@@ -103,7 +103,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
     for (const key of keys)
       newNode[key] = n[key]
     if (dedupedNodes[nodeKey])
-      newNode = merge(newNode, dedupedNodes[nodeKey]) as SchemaOrgNode
+      newNode = merge(dedupedNodes[nodeKey], newNode) as SchemaOrgNode
     dedupedNodes[nodeKey] = newNode
   }
   return Object.values(dedupedNodes)
