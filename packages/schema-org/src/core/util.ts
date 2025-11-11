@@ -1,7 +1,5 @@
 import type { Id, SchemaOrgNode } from '../types'
-import { createDefu } from 'defu'
-import { hash } from 'ohash'
-import { resolveAsGraphKey } from '../utils'
+import { hashCode, resolveAsGraphKey } from '../utils'
 
 function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   return array.reduce((acc, value, index, array) => {
@@ -18,27 +16,55 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
   return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
-const merge = createDefu((object, key, value) => {
-  // dedupe merge arrays
-  if (Array.isArray(object[key])) {
-    if (Array.isArray(value)) {
-      // unique set
-      // make a record with hash'es as keys for [...object[key], ...value]
-      const map = {} as Record<string, any>
-      for (const item of [...object[key], ...value])
-        map[hash(item)] = item
-      // @ts-expect-error untyped
-      object[key] = Object.values(map)
-      if (key === 'itemListElement') {
-        // @ts-expect-error untyped
-        object[key] = [...uniqueBy(object[key], item => item.position)]
-      }
-      return true
+function merge(target: any, ...sources: any[]): any {
+  for (const source of sources) {
+    if (source === null || source === undefined) {
+      continue
     }
-    object[key] = merge(object[key], Array.isArray(value) ? value : [value])
-    return true
+
+    for (const key in source) {
+      if (!Object.prototype.hasOwnProperty.call(source, key)) {
+        continue
+      }
+
+      const value = source[key]
+
+      // Skip undefined values
+      if (value === undefined) {
+        continue
+      }
+
+      // Handle array merging with deduplication
+      if (Array.isArray(target[key])) {
+        if (Array.isArray(value)) {
+          // unique set - make a record with hash'es as keys for [...target[key], ...value]
+          const map = {} as Record<string, any>
+          for (const item of [...target[key], ...value])
+            map[hashCode(JSON.stringify(item))] = item
+          // @ts-expect-error untyped
+          target[key] = Object.values(map)
+          if (key === 'itemListElement') {
+            // @ts-expect-error untyped
+            target[key] = [...uniqueBy(target[key], item => item.position)]
+          }
+        }
+        else {
+          target[key] = merge(target[key], Array.isArray(value) ? value : [value])
+        }
+      }
+      // Handle nested object merging
+      else if (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key]) && typeof value === 'object' && !Array.isArray(value)) {
+        target[key] = merge({ ...target[key] }, value)
+      }
+      // Default: use source value
+      else {
+        target[key] = value
+      }
+    }
   }
-})
+
+  return target
+}
 
 /**
  * Dedupe, flatten and a collection of nodes. Will also sort node keys and remove meta keys.
@@ -49,7 +75,7 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
   const dedupedNodes: Record<Id, SchemaOrgNode> = {}
   for (const key of nodes.keys()) {
     const n = nodes[key]
-    const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+    const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
     if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace')
       dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
     else
@@ -65,7 +91,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
   const dedupedNodes: Record<Id, SchemaOrgNode> = {}
   for (const key of sortedNodeKeys) {
     const n = nodes[key]
-    const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+    const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
     const groupedKeys = groupBy(Object.keys(n), (key) => {
       const val = n[key]
       if (key[0] === '_')

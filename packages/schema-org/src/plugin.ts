@@ -1,6 +1,5 @@
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
-import { defu } from 'defu'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { processTemplateParams } from 'unhead/utils'
 import {
@@ -8,6 +7,26 @@ import {
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
+
+// Simple merge utility that recursively merges objects
+function mergeObjects(target: any, source: any): any {
+  const result = { ...target }
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+      continue
+    }
+    if (source[key] === undefined) {
+      continue
+    }
+    if (result[key] && typeof result[key] === 'object' && !Array.isArray(result[key]) && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = mergeObjects(result[key], source[key])
+    }
+    else if (result[key] === undefined) {
+      result[key] = source[key]
+    }
+  }
+  return result
+}
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
@@ -130,7 +149,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeKey].props = defu(ctx.tags[firstNodeKey].props, tag.props)
+              ctx.tags[firstNodeKey].props = mergeObjects(ctx.tags[firstNodeKey].props, tag.props)
               delete ctx.tags[firstNodeKey].props.nodes
               // @ts-expect-error untyped
               ctx.tags[k] = false
