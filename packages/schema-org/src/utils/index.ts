@@ -137,9 +137,8 @@ export function stripEmptyProperties(obj: any) {
     if (obj[k] && typeof obj[k] === 'object') {
       // avoid walking vue reactivity
       if (obj[k].__v_isReadonly || obj[k].__v_isRef)
-        return
+        continue
       stripEmptyProperties(obj[k])
-      return
     }
     if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
       delete obj[k]
