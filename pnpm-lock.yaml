@@ -153,6 +153,58 @@ importers:
         specifier: 5.8.3
         version: 5.8.3
 
+  examples/vite-ssr-react-streaming:
+    dependencies:
+      '@unhead/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@unhead/schema-org':
+        specifier: workspace:*
+        version: link:../../packages/schema-org
+      compression:
+        specifier: ^1.8.1
+        version: 1.8.1
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.0)
+      react-router-dom:
+        specifier: ^7.9.3
+        version: 7.9.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      sirv:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.3
+        version: 5.0.3
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.7.0
+      '@types/react':
+        specifier: ^19.2.2
+        version: 19.2.2
+      '@types/react-dom':
+        specifier: ^19.2.1
+        version: 19.2.1(@types/react@19.2.2)
+      '@vitejs/plugin-react':
+        specifier: ^5.0.4
+        version: 5.0.4(vite@7.1.9(@types/node@24.7.0)(jiti@2.6.1)(less@4.4.2)(sass@1.93.2)(terser@5.43.1)(yaml@2.8.1))
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      typescript:
+        specifier: 5.8.3
+        version: 5.8.3
+      vite:
+        specifier: ^7.1.9
+        version: 7.1.9(@types/node@24.7.0)(jiti@2.6.1)(less@4.4.2)(sass@1.93.2)(terser@5.43.1)(yaml@2.8.1)
+
   examples/vite-ssr-react-ts:
     dependencies:
       '@unhead/react':
