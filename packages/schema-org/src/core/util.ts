@@ -16,50 +16,44 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
   return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
-function merge(target: any, ...sources: any[]): any {
-  for (const source of sources) {
-    if (source === null || source === undefined) {
+function merge(target: any, source: any): any {
+  if (!source)
+    return target
+
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key))
       continue
-    }
 
-    for (const key in source) {
-      if (!Object.prototype.hasOwnProperty.call(source, key)) {
-        continue
-      }
+    const value = source[key]
+    if (value === undefined)
+      continue
 
-      const value = source[key]
-
-      // Skip undefined values
-      if (value === undefined) {
-        continue
-      }
-
-      // Handle array merging with deduplication
-      if (Array.isArray(target[key])) {
-        if (Array.isArray(value)) {
-          // unique set - make a record with hash'es as keys for [...target[key], ...value]
-          const map = {} as Record<string, any>
-          for (const item of [...target[key], ...value])
-            map[hashCode(JSON.stringify(item))] = item
+    // Handle array merging with deduplication
+    if (Array.isArray(target[key])) {
+      if (Array.isArray(value)) {
+        // Dedupe arrays using hash keys
+        const map = {} as Record<string, any>
+        for (const item of [...target[key], ...value])
+          map[hashCode(JSON.stringify(item))] = item
+        // @ts-expect-error untyped
+        target[key] = Object.values(map)
+        if (key === 'itemListElement') {
           // @ts-expect-error untyped
-          target[key] = Object.values(map)
-          if (key === 'itemListElement') {
-            // @ts-expect-error untyped
-            target[key] = [...uniqueBy(target[key], item => item.position)]
-          }
-        }
-        else {
-          target[key] = merge(target[key], Array.isArray(value) ? value : [value])
+          target[key] = [...uniqueBy(target[key], item => item.position)]
         }
       }
-      // Handle nested object merging
-      else if (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key]) && typeof value === 'object' && !Array.isArray(value)) {
-        target[key] = merge({ ...target[key] }, value)
-      }
-      // Default: use source value
       else {
-        target[key] = value
+        // Merge non-array into array by wrapping in array
+        target[key] = merge(target[key], [value])
       }
+    }
+    // Handle nested object merging
+    else if (target[key] && typeof target[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
+      target[key] = merge({ ...target[key] }, value)
+    }
+    // Default: use source value
+    else {
+      target[key] = value
     }
   }
 

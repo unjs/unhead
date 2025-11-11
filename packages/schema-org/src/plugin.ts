@@ -12,18 +12,19 @@ import { loadResolver } from './resolver'
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined)
       continue
-    }
-    if (source[key] === undefined) {
-      continue
-    }
-    if (result[key] && typeof result[key] === 'object' && !Array.isArray(result[key]) && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+
+    const isNestedObject = result[key]
+      && typeof result[key] === 'object'
+      && typeof source[key] === 'object'
+      && !Array.isArray(result[key])
+      && !Array.isArray(source[key])
+
+    if (isNestedObject)
       result[key] = mergeObjects(result[key], source[key])
-    }
-    else if (result[key] === undefined) {
+    else if (!result[key])
       result[key] = source[key]
-    }
   }
   return result
 }
