@@ -1,5 +1,6 @@
+import type { Readable } from 'node:stream'
 import type { Unhead } from 'unhead'
-import { Readable } from 'node:stream'
+import { Buffer } from 'node:buffer'
 import { renderSSRHead } from 'unhead'
 
 export interface RenderReactStreamOptions {

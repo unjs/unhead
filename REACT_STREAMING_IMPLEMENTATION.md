@@ -44,12 +44,12 @@ New utility function `renderReactStream` that:
 
 ```ts
 export interface RenderReactStreamOptions {
-  res: any                      // Express/Node response object
-  reactStream: Readable         // From renderToPipeableStream
-  htmlStart: string             // HTML before app placeholder
-  htmlEnd: string               // HTML after app placeholder
-  head: Unhead                  // Unhead instance
-  flushTimeout?: number         // Buffer timeout (default: 3ms)
+  res: any // Express/Node response object
+  reactStream: Readable // From renderToPipeableStream
+  htmlStart: string // HTML before app placeholder
+  htmlEnd: string // HTML after app placeholder
+  head: Unhead // Unhead instance
+  flushTimeout?: number // Buffer timeout (default: 3ms)
 }
 
 export async function renderReactStream(options: RenderReactStreamOptions): Promise<void>
@@ -69,8 +69,8 @@ New example demonstrating streaming SSR:
 
 **src/entry-server.tsx**:
 ```tsx
-import { renderToPipeableStream } from 'react-dom/server'
 import { PassThrough } from 'node:stream'
+import { renderToPipeableStream } from 'react-dom/server'
 
 export function render(_url: string) {
   const head = createHead()
