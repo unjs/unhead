@@ -48,6 +48,7 @@
   defineWebSite: function
   eventResolver: object
   foodEstablishmentResolver: object
+  groupBy: function
   HowToId: string
   howToResolver: object
   howToStepDirectionResolver: object
@@ -57,6 +58,7 @@
   jobPostingResolver: object
   listItemResolver: object
   localBusinessResolver: object
+  merge: function
   movieResolver: object
   normaliseNodes: function
   normalizeSchemaOrgInput: function
@@ -88,6 +90,7 @@
   searchActionResolver: object
   softwareAppResolver: object
   UnheadSchemaOrg: function
+  uniqueBy: function
   useSchemaOrg: function
   videoResolver: object
   virtualLocationResolver: object
