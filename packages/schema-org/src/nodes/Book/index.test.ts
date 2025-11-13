@@ -49,7 +49,7 @@ describe('defineBook', () => {
               "@type": "Book",
               "bookEdition": "Mass Market Paperback",
               "bookFormat": "https://schema.org/Paperback",
-              "datePublished": "1991-4-1",
+              "datePublished": "1991-05-01",
               "identifier": {
                 "@type": "PropertyValue",
                 "propertyID": "OCLC_NUMBER",

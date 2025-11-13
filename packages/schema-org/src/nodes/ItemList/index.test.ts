@@ -44,7 +44,7 @@ describe('defineItemList', () => {
       expect(nodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/item-list/177890f",
+            "@id": "https://example.com/#/schema/item-list/64b8849",
             "@type": "ItemList",
             "itemListElement": [
               {
@@ -57,7 +57,7 @@ describe('defineItemList', () => {
                     "ratingCount": 1000,
                     "ratingValue": 4.5,
                   },
-                  "dateCreated": "2018-8-5",
+                  "dateCreated": "2018-09-05",
                   "director": {
                     "@type": "Person",
                     "name": "Bradley Cooper",
