@@ -35,12 +35,9 @@ function merge(target: any, source: any): any {
         const map = {} as Record<string, any>
         for (const item of [...target[key], ...value])
           map[hashCode(JSON.stringify(item))] = item
-        // @ts-expect-error untyped
         target[key] = Object.values(map)
-        if (key === 'itemListElement') {
-          // @ts-expect-error untyped
+        if (key === 'itemListElement')
           target[key] = [...uniqueBy(target[key], item => item.position)]
-        }
       }
       else {
         // Merge non-array into array by wrapping in array
