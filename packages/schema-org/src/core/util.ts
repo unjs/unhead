@@ -37,7 +37,7 @@ function merge(target: any, source: any): any {
           map[hashCode(JSON.stringify(item))] = item
         target[key] = Object.values(map)
         if (key === 'itemListElement')
-          target[key] = [...uniqueBy(target[key], item => item.position)]
+          target[key] = [...uniqueBy(target[key], (item: any) => item.position)]
       }
       else {
         // Merge non-array into array by wrapping in array
