@@ -44,7 +44,7 @@ describe('defineItemList', () => {
       expect(nodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/item-list/177890f",
+            "@id": "https://example.com/#/schema/item-list/64b8849",
             "@type": "ItemList",
             "itemListElement": [
               {
