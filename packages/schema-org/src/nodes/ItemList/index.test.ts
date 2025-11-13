@@ -57,7 +57,7 @@ describe('defineItemList', () => {
                     "ratingCount": 1000,
                     "ratingValue": 4.5,
                   },
-                  "dateCreated": "2018-8-5",
+                  "dateCreated": "2018-09-05",
                   "director": {
                     "@type": "Person",
                     "name": "Bradley Cooper",

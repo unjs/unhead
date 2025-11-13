@@ -38,7 +38,7 @@ describe('defineMovie', () => {
               "ratingCount": 88211,
               "ratingValue": 96,
             },
-            "dateCreated": "2018-1-16",
+            "dateCreated": "2018-02-16",
             "director": {
               "@type": "Person",
               "name": "Ryan Coogle",
