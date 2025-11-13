@@ -1,7 +1,5 @@
 import type { Id, SchemaOrgNode } from '../types'
-import { createDefu } from 'defu'
-import { hash } from 'ohash'
-import { resolveAsGraphKey } from '../utils'
+import { hashCode, resolveAsGraphKey } from '../utils'
 
 function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   return array.reduce((acc, value, index, array) => {
@@ -18,27 +16,46 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
   return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
-const merge = createDefu((object, key, value) => {
-  // dedupe merge arrays
-  if (Array.isArray(object[key])) {
-    if (Array.isArray(value)) {
-      // unique set
-      // make a record with hash'es as keys for [...object[key], ...value]
-      const map = {} as Record<string, any>
-      for (const item of [...object[key], ...value])
-        map[hash(item)] = item
-      // @ts-expect-error untyped
-      object[key] = Object.values(map)
-      if (key === 'itemListElement') {
-        // @ts-expect-error untyped
-        object[key] = [...uniqueBy(object[key], item => item.position)]
+function merge(target: any, source: any): any {
+  if (!source)
+    return target
+
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key))
+      continue
+
+    const value = source[key]
+    if (value === undefined)
+      continue
+
+    // Handle array merging with deduplication
+    if (Array.isArray(target[key])) {
+      if (Array.isArray(value)) {
+        // Dedupe arrays using hash keys
+        const map = {} as Record<string, any>
+        for (const item of [...target[key], ...value])
+          map[hashCode(JSON.stringify(item))] = item
+        target[key] = Object.values(map)
+        if (key === 'itemListElement')
+          target[key] = [...uniqueBy(target[key], (item: any) => item.position)]
       }
-      return true
+      else {
+        // Merge non-array into array by wrapping in array
+        target[key] = merge(target[key], [value])
+      }
     }
-    object[key] = merge(object[key], Array.isArray(value) ? value : [value])
-    return true
+    // Handle nested object merging
+    else if (target[key] && typeof target[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
+      target[key] = merge({ ...target[key] }, value)
+    }
+    // Default: use source value
+    else {
+      target[key] = value
+    }
   }
-})
+
+  return target
+}
 
 /**
  * Dedupe, flatten and a collection of nodes. Will also sort node keys and remove meta keys.
@@ -49,9 +66,9 @@ export function dedupeNodes(nodes: SchemaOrgNode[]) {
   const dedupedNodes: Record<Id, SchemaOrgNode> = {}
   for (const key of nodes.keys()) {
     const n = nodes[key]
-    const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+    const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
     if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace')
-      dedupedNodes[nodeKey] = merge(nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
+      dedupedNodes[nodeKey] = merge(dedupedNodes[nodeKey], nodes[key]) as SchemaOrgNode
     else
       dedupedNodes[nodeKey] = nodes[key]
   }
@@ -65,7 +82,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
   const dedupedNodes: Record<Id, SchemaOrgNode> = {}
   for (const key of sortedNodeKeys) {
     const n = nodes[key]
-    const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+    const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
     const groupedKeys = groupBy(Object.keys(n), (key) => {
       const val = n[key]
       if (key[0] === '_')
@@ -83,7 +100,7 @@ export function normaliseNodes(nodes: SchemaOrgNode[]) {
     for (const key of keys)
       newNode[key] = n[key]
     if (dedupedNodes[nodeKey])
-      newNode = merge(newNode, dedupedNodes[nodeKey]) as SchemaOrgNode
+      newNode = merge(dedupedNodes[nodeKey], newNode) as SchemaOrgNode
     dedupedNodes[nodeKey] = newNode
   }
   return Object.values(dedupedNodes)
