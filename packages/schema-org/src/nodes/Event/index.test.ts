@@ -81,10 +81,10 @@ describe('defineEvent', () => {
           {
             "@id": "https://example.com/#event",
             "@type": "Event",
-            "endDate": "2021-10-10",
+            "endDate": "2021-11-10",
             "inLanguage": "en-AU",
             "name": "test",
-            "startDate": "2021-10-10",
+            "startDate": "2021-11-10",
           },
         ]
       `)
