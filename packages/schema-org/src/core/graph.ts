@@ -1,8 +1,6 @@
 import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
-import { createDefu } from 'defu'
-import { hash } from 'ohash'
 import { imageResolver } from '../nodes'
-import { asArray, resolveAsGraphKey } from '../utils'
+import { asArray, hashCode, resolveAsGraphKey } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 
 export interface SchemaOrgGraph {
@@ -50,24 +48,46 @@ function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]
   return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
-const merge = createDefu((object, key, value) => {
-  if (Array.isArray(object[key])) {
-    if (Array.isArray(value)) {
-      const map = {} as Record<string, any>
-      for (const item of [...object[key], ...value])
-        map[hash(item)] = item
-      // @ts-expect-error untyped
-      object[key] = Object.values(map)
-      if (key === 'itemListElement') {
-        // @ts-expect-error untyped
-        object[key] = [...uniqueBy(object[key], item => item.position)]
+function merge(target: any, source: any): any {
+  if (!source)
+    return target
+
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key))
+      continue
+
+    const value = source[key]
+    if (value === undefined)
+      continue
+
+    // Handle array merging with deduplication
+    if (Array.isArray(target[key])) {
+      if (Array.isArray(value)) {
+        // Dedupe arrays using hash keys
+        const map = {} as Record<string, any>
+        for (const item of [...target[key], ...value])
+          map[hashCode(JSON.stringify(item))] = item
+        target[key] = Object.values(map)
+        if (key === 'itemListElement')
+          target[key] = [...uniqueBy(target[key], (item: any) => item.position)]
       }
-      return true
+      else {
+        // Merge non-array into array by wrapping in array
+        target[key] = merge(target[key], [value])
+      }
     }
-    object[key] = merge(object[key], Array.isArray(value) ? value : [value])
-    return true
+    // Handle nested object merging
+    else if (target[key] && typeof target[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
+      target[key] = merge({ ...target[key] }, value)
+    }
+    // Default: use source value
+    else {
+      target[key] = value
+    }
   }
-})
+
+  return target
+}
 
 export function createSchemaOrgGraph(): SchemaOrgGraph {
   const ctx: SchemaOrgGraph = {
@@ -121,9 +141,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       const dedupedNodes: Record<Id, SchemaOrgNode> = {}
       for (const key of ctx.nodes.keys()) {
         const n = ctx.nodes[key]
-        const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+        const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
         if (dedupedNodes[nodeKey] && n._dedupeStrategy !== 'replace') {
-          dedupedNodes[nodeKey] = merge(ctx.nodes[key], dedupedNodes[nodeKey]) as SchemaOrgNode
+          dedupedNodes[nodeKey] = merge(dedupedNodes[nodeKey], ctx.nodes[key]) as SchemaOrgNode
         }
         else {
           dedupedNodes[nodeKey] = ctx.nodes[key]
@@ -158,7 +178,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       const normalizedNodes: Record<Id, SchemaOrgNode> = {}
       for (const key of ctx.nodes.keys()) {
         const n = ctx.nodes[key]
-        const nodeKey = resolveAsGraphKey(n['@id'] || hash(n)) as Id
+        const nodeKey = resolveAsGraphKey(n['@id'] || hashCode(JSON.stringify(n))) as Id
 
         // Sort keys: primitives first (alphabetically), then relations (alphabetically), ignore _ prefixed
         const sortedKeys = Object.keys(n)
@@ -180,7 +200,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
         // Merge if duplicate
         normalizedNodes[nodeKey] = normalizedNodes[nodeKey]
-          ? merge(newNode, normalizedNodes[nodeKey]) as SchemaOrgNode
+          ? merge(normalizedNodes[nodeKey], newNode) as SchemaOrgNode
           : newNode
       }
 
