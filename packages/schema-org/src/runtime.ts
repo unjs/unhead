@@ -8,6 +8,7 @@ import type {
   BreadcrumbList,
   Comment,
   Course,
+  Dataset,
   Event,
   FoodEstablishment,
   HowTo,
@@ -18,11 +19,18 @@ import type {
   ListItem,
   LocalBusiness,
   Movie,
+  MusicAlbum,
+  MusicGroup,
+  MusicPlaylist,
+  MusicRecording,
   Offer,
   OpeningHoursSpecification,
   Organization,
   Person,
   Place,
+  PodcastEpisode,
+  PodcastSeason,
+  PodcastSeries,
   PostalAddress,
   Product,
   Question,
@@ -30,7 +38,11 @@ import type {
   Recipe,
   Review,
   SearchAction,
+  Service,
   SoftwareApp,
+  TVEpisode,
+  TVSeason,
+  TVSeries,
   VideoObject,
   VirtualLocation,
   WebPage,
@@ -146,6 +158,42 @@ export function defineSearchAction<T extends Record<string, any>>(input?: Search
 }
 export function defineReadAction<T extends Record<string, any>>(input?: ReadAction & T) {
   return provideResolver(input, 'readAction')
+}
+export function defineDataset<T extends Record<string, any>>(input?: Dataset & T) {
+  return provideResolver(input, 'dataset')
+}
+export function defineMusicRecording<T extends Record<string, any>>(input?: MusicRecording & T) {
+  return provideResolver(input, 'musicRecording')
+}
+export function defineMusicAlbum<T extends Record<string, any>>(input?: MusicAlbum & T) {
+  return provideResolver(input, 'musicAlbum')
+}
+export function defineMusicGroup<T extends Record<string, any>>(input?: MusicGroup & T) {
+  return provideResolver(input, 'musicGroup')
+}
+export function defineMusicPlaylist<T extends Record<string, any>>(input?: MusicPlaylist & T) {
+  return provideResolver(input, 'musicPlaylist')
+}
+export function definePodcastSeries<T extends Record<string, any>>(input?: PodcastSeries & T) {
+  return provideResolver(input, 'podcastSeries')
+}
+export function definePodcastEpisode<T extends Record<string, any>>(input?: PodcastEpisode & T) {
+  return provideResolver(input, 'podcastEpisode')
+}
+export function definePodcastSeason<T extends Record<string, any>>(input?: PodcastSeason & T) {
+  return provideResolver(input, 'podcastSeason')
+}
+export function defineTVSeries<T extends Record<string, any>>(input?: TVSeries & T) {
+  return provideResolver(input, 'tvSeries')
+}
+export function defineTVSeason<T extends Record<string, any>>(input?: TVSeason & T) {
+  return provideResolver(input, 'tvSeason')
+}
+export function defineTVEpisode<T extends Record<string, any>>(input?: TVEpisode & T) {
+  return provideResolver(input, 'tvEpisode')
+}
+export function defineService<T extends Record<string, any>>(input?: Service & T) {
+  return provideResolver(input, 'service')
 }
 
 /* simple-only */

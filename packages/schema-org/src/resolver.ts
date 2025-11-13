@@ -9,6 +9,7 @@ import {
   breadcrumbResolver,
   commentResolver,
   courseResolver,
+  datasetResolver,
   eventResolver,
   foodEstablishmentResolver,
   howToResolver,
@@ -19,18 +20,29 @@ import {
   listItemResolver,
   localBusinessResolver,
   movieResolver,
+  musicAlbumResolver,
+  musicGroupResolver,
+  musicPlaylistResolver,
+  musicRecordingResolver,
   offerResolver,
   openingHoursResolver,
   organizationResolver,
   personResolver,
   placeResolver,
+  podcastEpisodeResolver,
+  podcastSeasonResolver,
+  podcastSeriesResolver,
   productResolver,
   questionResolver,
   readActionResolver,
   recipeResolver,
   reviewResolver,
   searchActionResolver,
+  serviceResolver,
   softwareAppResolver,
+  tvEpisodeResolver,
+  tvSeasonResolver,
+  tvSeriesResolver,
   videoResolver,
   virtualLocationResolver,
   webPageResolver,
@@ -109,6 +121,30 @@ export function loadResolver(resolver: string): SchemaOrgNodeDefinition<any> | n
       return softwareAppResolver
     case 'bookEdition':
       return bookEditionResolver
+    case 'dataset':
+      return datasetResolver
+    case 'musicRecording':
+      return musicRecordingResolver
+    case 'musicAlbum':
+      return musicAlbumResolver
+    case 'musicGroup':
+      return musicGroupResolver
+    case 'musicPlaylist':
+      return musicPlaylistResolver
+    case 'podcastSeries':
+      return podcastSeriesResolver
+    case 'podcastEpisode':
+      return podcastEpisodeResolver
+    case 'podcastSeason':
+      return podcastSeasonResolver
+    case 'tvSeries':
+      return tvSeriesResolver
+    case 'tvSeason':
+      return tvSeasonResolver
+    case 'tvEpisode':
+      return tvEpisodeResolver
+    case 'service':
+      return serviceResolver
   }
   return null
 }
