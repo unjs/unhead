@@ -2,6 +2,7 @@ import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } fro
 import { imageResolver } from '../nodes'
 import { asArray, hashCode, resolveAsGraphKey } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
+import { merge, uniqueBy } from './util'
 
 export interface SchemaOrgGraph {
   nodes: SchemaOrgNode[]
@@ -31,62 +32,6 @@ function indexNode(index: Map<Id, SchemaOrgNode>, node: SchemaOrgNode) {
   // Domain-based key for path lookups
   const domainKey = nodeId.replace(/(https?:)?\/\//, '').split('/')[0]
   index.set(domainKey as Id, node)
-}
-
-// Inline deduplication helpers
-function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
-  return array.reduce((acc, value, index, array) => {
-    const key = predicate(value, index, array)
-    if (!acc[key])
-      acc[key] = []
-    acc[key].push(value)
-    return acc
-  }, {} as { [key: string]: T[] })
-}
-
-function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
-  return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
-}
-
-function merge(target: any, source: any): any {
-  if (!source)
-    return target
-
-  for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key))
-      continue
-
-    const value = source[key]
-    if (value === undefined)
-      continue
-
-    // Handle array merging with deduplication
-    if (Array.isArray(target[key])) {
-      if (Array.isArray(value)) {
-        // Dedupe arrays using hash keys
-        const map = {} as Record<string, any>
-        for (const item of [...target[key], ...value])
-          map[hashCode(JSON.stringify(item))] = item
-        target[key] = Object.values(map)
-        if (key === 'itemListElement')
-          target[key] = [...uniqueBy(target[key], (item: any) => item.position)]
-      }
-      else {
-        // Merge non-array into array by wrapping in array
-        target[key] = merge(target[key], [value])
-      }
-    }
-    // Handle nested object merging
-    else if (target[key] && typeof target[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
-      target[key] = merge({ ...target[key] }, value)
-    }
-    // Default: use source value
-    else {
-      target[key] = value
-    }
-  }
-
-  return target
 }
 
 export function createSchemaOrgGraph(): SchemaOrgGraph {

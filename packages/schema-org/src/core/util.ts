@@ -1,7 +1,7 @@
 import type { Id, SchemaOrgNode } from '../types'
 import { hashCode, resolveAsGraphKey } from '../utils'
 
-function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
+export function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   return array.reduce((acc, value, index, array) => {
     const key = predicate(value, index, array)
     if (!acc[key])
@@ -11,12 +11,12 @@ function groupBy<T>(array: T[], predicate: (value: T, index: number, array: T[])
   }, {} as { [key: string]: T[] })
 }
 
-function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
+export function uniqueBy<T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) {
   // get last item
   return Object.values(groupBy(array, predicate)).map(a => a[a.length - 1])
 }
 
-function merge(target: any, source: any): any {
+export function merge(target: any, source: any): any {
   if (!source)
     return target
 
