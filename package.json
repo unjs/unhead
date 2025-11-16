@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.0.19",
   "private": "true",
-  "packageManager": "pnpm@10.18.1",
+  "packageManager": "pnpm@10.22.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "homepage": "https://unhead.unjs.io",
@@ -38,7 +38,7 @@
     "@types/jsdom": "^27.0.0",
     "acorn-loose": "^8.5.2",
     "bumpp": "^10.3.1",
-    "devalue": "^5.3.2",
+    "devalue": "^5.5.0",
     "eslint": "^9.37.0",
     "fs-extra": "^11.3.2",
     "js-yaml": "^4.1.0",
@@ -50,7 +50,7 @@
     "vitest": "^3.2.4",
     "vitest-package-exports": "^0.1.1",
     "vue": "^3.5.22",
-    "vue-tsc": "^3.0.9"
+    "vue-tsc": "^3.1.1"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [
