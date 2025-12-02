@@ -15,7 +15,7 @@ jobs:
       NODE_OPTIONS: --max-old-space-size=8048
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4.1.0
