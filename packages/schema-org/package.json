@@ -107,7 +107,7 @@
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^29.1.0"
+    "unplugin-vue-components": "^30.0.0"
   },
   "build": {
     "external": [
