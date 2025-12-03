@@ -21,7 +21,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Set node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
         with:
           node-version: latest
           cache: pnpm
