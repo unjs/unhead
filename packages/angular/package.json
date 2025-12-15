@@ -64,7 +64,7 @@
   },
   "typings": "./dist/index.d.ts",
   "peerDependencies": {
-    "@angular/common": "^19.2.14",
+    "@angular/common": "^20.3.14",
     "@angular/core": "^19.2.14"
   },
   "dependencies": {
