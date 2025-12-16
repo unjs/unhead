@@ -22,12 +22,28 @@ export interface CommentSimple extends Thing {
    * A reference by ID to the Person who wrote the comment.
    */
   author: NodeRelation<Person>
+  /**
+   * The date and time the comment was created.
+   */
+  dateCreated?: string
+  /**
+   * The date and time the comment was last modified.
+   */
+  dateModified?: string
+  /**
+   * The number of upvotes the comment has received.
+   */
+  upvoteCount?: number
+  /**
+   * The number of downvotes the comment has received.
+   */
+  downvoteCount?: number
 }
 
 export interface Comment extends CommentSimple {}
 
 /**
- * Describes a review. Usually in the context of an Article or a WebPage.
+ * Describes a comment. Usually in the context of an Article or a WebPage.
  */
 export const commentResolver = defineSchemaOrgResolver<Comment>({
   defaults: {

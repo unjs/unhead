@@ -71,7 +71,6 @@
 - sets default `potentialAction` to `ReadAction`
 - sets default `dateModified` to articles `dateModified`
 - sets default `datePublished` to articles `datePublished`
-- sets default `author` to articles `author`
 - sets default `primaryImageOfPage` to articles first image
 
 ## Resolves
@@ -142,7 +141,7 @@ defineArticle({
 ## Types
 
 ```ts
-type ValidArticleSubTypes = 'Article' | 'AdvertiserContentArticle' | 'NewsArticle' | 'Report' | 'SatiricalArticle' | 'ScholarlyArticle' | 'SocialMediaPosting' | 'TechArticle'
+type ValidArticleSubTypes = 'Article' | 'BlogPosting' | 'AdvertiserContentArticle' | 'NewsArticle' | 'Report' | 'SatiricalArticle' | 'ScholarlyArticle' | 'SocialMediaPosting' | 'TechArticle'
 
 export interface ArticleSimple extends Thing {
   ['@type']?: Arrayable<ValidArticleSubTypes>
@@ -227,5 +226,13 @@ export interface ArticleSimple extends Thing {
    * A reference-by-ID to the Organization or Person who holds the copyright.
    */
   copyrightHolder?: NodeRelations<Identity>
+  /**
+   * The body text of the article.
+   */
+  articleBody?: string
+  /**
+   * The subject matter of the article.
+   */
+  about?: string
 }
 ```

@@ -89,6 +89,18 @@ export interface EventSimple extends Thing {
    * The start date and time of the item (in ISO 8601 date format).
    */
   startDate?: ResolvableDate
+  /**
+   * The duration of the item (movie, audio recording, event, etc.) in ISO 8601 date format.
+   */
+  duration?: string
+  /**
+   * Indicates whether an event is accessible for free.
+   */
+  isAccessibleForFree?: boolean
+  /**
+   * The total number of individuals that may attend an event or venue.
+   */
+  maximumAttendeeCapacity?: number
 }
 
 export interface Event extends EventSimple {}
@@ -96,7 +108,7 @@ export interface Event extends EventSimple {}
 export const PrimaryEventId = '#event'
 
 /**
- * Describes an Article on a WebPage.
+ * Describes an Event.
  */
 export const eventResolver = defineSchemaOrgResolver<Event>({
   defaults: {

@@ -30,6 +30,14 @@ export interface WebSiteSimple extends Thing {
    */
   description?: string
   /**
+   * The date the website was first published.
+   */
+  datePublished?: string
+  /**
+   * The date the website was last modified.
+   */
+  dateModified?: string
+  /**
    * A reference-by-ID to the Organization which publishes the WebSite
    * (or an array of Organization and Person in the case that the website represents an individual).
    */
