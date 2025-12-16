@@ -1,4 +1,4 @@
-import type { Arrayable, Identity, NodeRelations, Thing } from '../../types'
+import type { Arrayable, Identity, NodeRelations, ResolvableDate, Thing } from '../../types'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { WebPage } from '../WebPage'
@@ -7,6 +7,7 @@ import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
+  resolvableDateToIso,
   resolveAsGraphKey,
   setIfEmpty,
 } from '../../utils'
@@ -32,11 +33,11 @@ export interface WebSiteSimple extends Thing {
   /**
    * The date the website was first published.
    */
-  datePublished?: string
+  datePublished?: ResolvableDate
   /**
    * The date the website was last modified.
    */
-  dateModified?: string
+  dateModified?: ResolvableDate
   /**
    * A reference-by-ID to the Organization which publishes the WebSite
    * (or an array of Organization and Person in the case that the website represents an individual).
@@ -72,6 +73,8 @@ export const webSiteResolver = defineSchemaOrgResolver<WebSite>({
       array: true,
     })
     node.publisher = resolveRelation(node.publisher, ctx)
+    node.dateModified = resolvableDateToIso(node.dateModified)
+    node.datePublished = resolvableDateToIso(node.datePublished)
     return node
   },
   resolveRootNode(node, { find }) {

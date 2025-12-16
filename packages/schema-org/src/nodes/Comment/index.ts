@@ -1,9 +1,10 @@
-import type { IdReference, NodeRelation, Thing } from '../../types'
+import type { IdReference, NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { Article } from '../Article'
 import type { Person } from '../Person'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
+  resolvableDateToIso,
   setIfEmpty,
 } from '../../utils'
 import { PrimaryArticleId } from '../Article'
@@ -25,11 +26,11 @@ export interface CommentSimple extends Thing {
   /**
    * The date and time the comment was created.
    */
-  dateCreated?: string
+  dateCreated?: ResolvableDate
   /**
    * The date and time the comment was last modified.
    */
-  dateModified?: string
+  dateModified?: ResolvableDate
   /**
    * The number of upvotes the comment has received.
    */
@@ -54,6 +55,8 @@ export const commentResolver = defineSchemaOrgResolver<Comment>({
     node.author = resolveRelation(node.author, ctx, personResolver, {
       root: true,
     })
+    node.dateCreated = resolvableDateToIso(node.dateCreated)
+    node.dateModified = resolvableDateToIso(node.dateModified)
     return node
   },
   resolveRootNode(node, { find }) {
