@@ -1,4 +1,5 @@
 import type {
+  Arrayable,
   NodeRelation,
   NodeRelations,
   ResolvableDate,
@@ -74,6 +75,14 @@ export interface PodcastSeriesSimple extends Thing {
    * Annotation for the average review score assigned to the podcast.
    */
   aggregateRating?: NodeRelation<AggregateRating>
+  /**
+   * The language code for the podcast content; e.g., en-GB.
+   */
+  inLanguage?: string
+  /**
+   * Keywords or tags used to describe the podcast.
+   */
+  keywords?: Arrayable<string>
 }
 
 export interface PodcastSeries extends PodcastSeriesSimple {}

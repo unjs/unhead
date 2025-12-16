@@ -92,5 +92,7 @@ export interface PodcastSeriesSimple extends Thing {
   startDate?: ResolvableDate
   endDate?: ResolvableDate
   aggregateRating?: NodeRelation<AggregateRating>
+  inLanguage?: string
+  keywords?: Arrayable<string>
 }
 ```

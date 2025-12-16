@@ -77,5 +77,9 @@ export interface PodcastSeasonSimple extends Thing {
   endDate?: ResolvableDate
   image?: NodeRelations<string | ImageObject>
   url?: string
+  actor?: NodeRelations<Person | string>
+  director?: NodeRelations<Person | string>
+  productionCompany?: NodeRelation<Organization | string>
+  aggregateRating?: NodeRelation<AggregateRating>
 }
 ```

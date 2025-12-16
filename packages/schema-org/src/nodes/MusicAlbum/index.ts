@@ -1,13 +1,18 @@
 import type {
+  NodeRelation,
   NodeRelations,
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
+import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso, resolveWithBase } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
 import { personResolver } from '../Person'
+import { reviewResolver } from '../Review'
 
 /**
  * A collection of music tracks in album form.
@@ -60,6 +65,14 @@ export interface MusicAlbumSimple extends Thing {
    * A URL to a page about the music album.
    */
   url?: string
+  /**
+   * Annotation for the average review score assigned to the music album.
+   */
+  aggregateRating?: NodeRelation<AggregateRating>
+  /**
+   * A nested Review of the music album.
+   */
+  review?: NodeRelations<Review>
 }
 
 export interface MusicAlbum extends MusicAlbumSimple {}
@@ -80,6 +93,8 @@ export const musicAlbumResolver = defineSchemaOrgResolver<MusicAlbum>({
       node.url = resolveWithBase(ctx.meta.host, node.url)
 
     node.byArtist = resolveRelation(node.byArtist, ctx, personResolver)
+    node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
+    node.review = resolveRelation(node.review, ctx, reviewResolver)
 
     return node
   },

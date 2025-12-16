@@ -81,6 +81,14 @@ export interface TVEpisodeSimple extends Thing {
    * A nested Review of the episode.
    */
   review?: NodeRelations<Review>
+  /**
+   * Official rating of the content (e.g., "MPAA PG-13", "TV-MA").
+   */
+  contentRating?: string
+  /**
+   * The composer of the episode's musical score.
+   */
+  musicBy?: NodeRelations<Person | string>
 }
 
 export interface TVEpisode extends TVEpisodeSimple {}
@@ -95,6 +103,7 @@ export const tvEpisodeResolver = defineSchemaOrgResolver<TVEpisode>({
   resolve(node, ctx) {
     node.actor = resolveRelation(node.actor, ctx, personResolver)
     node.director = resolveRelation(node.director, ctx, personResolver)
+    node.musicBy = resolveRelation(node.musicBy, ctx, personResolver)
     node.video = resolveRelation(node.video, ctx, videoResolver)
     node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
     node.review = resolveRelation(node.review, ctx, reviewResolver)

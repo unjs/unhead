@@ -1,5 +1,4 @@
 import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
-import type { AggregateOffer } from '../AggregateOffer'
 import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Offer } from '../Offer'
@@ -14,7 +13,6 @@ import {
   resolveDefaultType,
   setIfEmpty,
 } from '../../utils'
-import { aggregateOfferResolver } from '../AggregateOffer'
 import { aggregateRatingResolver } from '../AggregateRating'
 import { offerResolver } from '../Offer'
 import { reviewResolver } from '../Review'
@@ -103,9 +101,8 @@ export interface ServiceSimple extends Thing {
   'hasOfferCatalog'?: unknown
   /**
    * An offer to provide this service—for example, an offer to perform a service for a price, or without charge.
-   * Can be a single Offer, AggregateOffer, or an array of offers.
    */
-  'offers'?: NodeRelations<Offer | AggregateOffer>
+  'offers'?: NodeRelations<Offer>
   /**
    * The overall rating, based on a collection of reviews or ratings, of the service.
    */
@@ -166,11 +163,6 @@ export const serviceResolver = defineSchemaOrgResolver<Service>({
     node.offers = resolveRelation(node.offers, ctx, offerResolver)
     node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
     node.review = resolveRelation(node.review, ctx, reviewResolver)
-
-    // If offers includes AggregateOffer, resolve it
-    if (node.offers) {
-      node.offers = resolveRelation(node.offers, ctx, aggregateOfferResolver)
-    }
 
     return node
   },

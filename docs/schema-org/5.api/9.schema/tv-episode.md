@@ -94,7 +94,7 @@ defineTVEpisode({
 export interface TVEpisodeSimple extends Thing {
   name: string
   description?: string
-  episodeNumber?: number
+  episodeNumber?: number | string
   partOfSeason?: NodeRelation<any>
   partOfSeries?: NodeRelation<any>
   actor?: NodeRelations<Person | string>
@@ -102,11 +102,13 @@ export interface TVEpisodeSimple extends Thing {
   datePublished?: ResolvableDate
   uploadDate?: ResolvableDate
   duration?: string
-  video?: NodeRelations<VideoObject | string>
+  video?: NodeRelation<VideoObject | string>
   image?: NodeRelations<string | ImageObject>
   thumbnailUrl?: string
   url?: string
   aggregateRating?: NodeRelation<AggregateRating>
   review?: NodeRelations<Review>
+  contentRating?: string
+  musicBy?: NodeRelations<Person | string>
 }
 ```

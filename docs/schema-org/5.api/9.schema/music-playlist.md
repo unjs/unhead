@@ -73,10 +73,11 @@ export interface MusicPlaylistSimple extends Thing {
   description?: string
   url?: string
   numTracks?: number
-  track?: NodeRelations<MusicRecording>
-  creator?: NodeRelations<Person | MusicGroup | string>
+  track?: NodeRelations<string>
+  creator?: NodeRelation<Person | string>
   datePublished?: ResolvableDate
   dateModified?: ResolvableDate
   image?: NodeRelations<string | ImageObject>
+  aggregateRating?: NodeRelation<AggregateRating>
 }
 ```

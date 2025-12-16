@@ -8,11 +8,13 @@ import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
+import type { VideoObject } from '../Video'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
 import { aggregateRatingResolver } from '../AggregateRating'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
+import { videoResolver } from '../Video'
 
 export interface TVSeriesSimple extends Thing {
   /**
@@ -83,6 +85,18 @@ export interface TVSeriesSimple extends Thing {
    * Annotation for the average review score assigned to the TV series.
    */
   aggregateRating?: NodeRelation<AggregateRating>
+  /**
+   * The country of origin for the TV series.
+   */
+  countryOfOrigin?: string
+  /**
+   * A trailer or preview video for the TV series.
+   */
+  trailer?: NodeRelation<VideoObject | string>
+  /**
+   * Official rating of the content (e.g., "MPAA PG-13", "TV-MA").
+   */
+  contentRating?: string
 }
 
 export interface TVSeries extends TVSeriesSimple {}
@@ -100,6 +114,7 @@ export const tvSeriesResolver = defineSchemaOrgResolver<TVSeries>({
     node.creator = resolveRelation(node.creator, ctx, personResolver)
     node.productionCompany = resolveRelation(node.productionCompany, ctx, organizationResolver)
     node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
+    node.trailer = resolveRelation(node.trailer, ctx, videoResolver)
 
     if (node.datePublished)
       node.datePublished = resolvableDateToIso(node.datePublished)

@@ -100,36 +100,36 @@ defineDataset({
 ```ts
 export interface DataDownload extends Thing {
   '@type'?: 'DataDownload'
-  contentUrl?: string
-  encodingFormat?: string
-  contentSize?: string
+  'contentUrl'?: string
+  'encodingFormat'?: string
+  'contentSize'?: string
 }
 
 export interface DataCatalog extends Thing {
   '@type'?: 'DataCatalog'
-  name?: string
-  url?: string
+  'name'?: string
+  'url'?: string
 }
 
 export interface DatasetSimple extends Thing {
   '@type'?: Arrayable<'Dataset'>
-  name: string
-  description: string
-  url?: string
-  keywords?: string[]
-  creator?: NodeRelations<Identity>
-  citation?: string | string[]
-  license?: string
-  temporalCoverage?: string
-  spatialCoverage?: string
-  distribution?: NodeRelations<DataDownload>
-  variableMeasured?: string | string[]
-  includedInDataCatalog?: NodeRelation<DataCatalog>
-  isAccessibleForFree?: boolean
-  datePublished?: ResolvableDate
-  dateModified?: ResolvableDate
-  version?: string | number
-  sameAs?: string[]
-  identifier?: string | string[]
+  'name': string
+  'description': string
+  'url'?: string
+  'keywords'?: string[]
+  'creator'?: NodeRelations<Identity>
+  'citation'?: string | string[]
+  'license'?: string
+  'temporalCoverage'?: string
+  'spatialCoverage'?: string
+  'distribution'?: NodeRelations<DataDownload>
+  'variableMeasured'?: string | string[]
+  'includedInDataCatalog'?: NodeRelation<DataCatalog>
+  'isAccessibleForFree'?: boolean
+  'datePublished'?: ResolvableDate
+  'dateModified'?: ResolvableDate
+  'version'?: string | number
+  'sameAs'?: string[]
+  'identifier'?: string | string[]
 }
 ```

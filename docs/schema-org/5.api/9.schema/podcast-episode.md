@@ -87,11 +87,11 @@ export interface PodcastEpisodeSimple extends Thing {
   name: string
   description?: string
   url?: string
-  episodeNumber?: number
+  episodeNumber?: number | string
   partOfSeries?: NodeRelation<any>
   partOfSeason?: NodeRelation<any>
   author?: NodeRelations<Person | Organization | string>
-  audio?: string
+  audio?: NodeRelation<any | string>
   duration?: string
   image?: NodeRelations<string | ImageObject>
   thumbnailUrl?: string
@@ -101,5 +101,6 @@ export interface PodcastEpisodeSimple extends Thing {
   inLanguage?: string
   aggregateRating?: NodeRelation<AggregateRating>
   review?: NodeRelations<Review>
+  keywords?: Arrayable<string>
 }
 ```

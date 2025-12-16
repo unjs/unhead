@@ -80,12 +80,14 @@ export interface MusicAlbumSimple extends Thing {
   description?: string
   url?: string
   byArtist?: NodeRelations<Person | MusicGroup | string>
-  track?: NodeRelations<MusicRecording>
+  track?: NodeRelations<string>
   albumProductionType?: string
   albumReleaseType?: string
   datePublished?: ResolvableDate
   genre?: string | string[]
   numTracks?: number
   image?: NodeRelations<string | ImageObject>
+  aggregateRating?: NodeRelation<AggregateRating>
+  review?: NodeRelations<Review>
 }
 ```

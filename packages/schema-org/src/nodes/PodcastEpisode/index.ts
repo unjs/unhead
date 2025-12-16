@@ -1,4 +1,5 @@
 import type {
+  Arrayable,
   NodeRelation,
   NodeRelations,
   ResolvableDate,
@@ -6,6 +7,7 @@ import type {
 } from '../../types'
 import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
+import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
@@ -38,7 +40,7 @@ export interface PodcastEpisodeSimple extends Thing {
   /**
    * The creator/host of the episode.
    */
-  author?: NodeRelations<Person | string>
+  author?: NodeRelations<Person | Organization | string>
   /**
    * The date the episode was published.
    */
@@ -83,6 +85,10 @@ export interface PodcastEpisodeSimple extends Thing {
    * The language code for the episode content; e.g., en-GB.
    */
   inLanguage?: string
+  /**
+   * Keywords or tags used to describe the episode.
+   */
+  keywords?: Arrayable<string>
 }
 
 export interface PodcastEpisode extends PodcastEpisodeSimple {}

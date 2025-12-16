@@ -28,7 +28,7 @@
 
   Geographic area where the service is provided (e.g., "United States", "San Francisco", "Global").
 
-- **offers** `NodeRelations<Offer | AggregateOffer>`
+- **offers** `NodeRelations<Offer>`
 
   Pricing information for the service. Resolves to [Offer](/schema-org/api/schema/offer).
 
@@ -85,70 +85,71 @@ defineService({
 
 ```ts
 defineService({
-  name: 'Professional Consulting Services',
+  'name': 'Professional Consulting Services',
   '@type': 'FinancialService',
-  serviceType: 'Financial Consulting',
-  description: 'Expert financial advisory and consulting for businesses',
-  url: 'https://example.com/services/consulting',
-  provider: {
+  'serviceType': 'Financial Consulting',
+  'description': 'Expert financial advisory and consulting for businesses',
+  'url': 'https://example.com/services/consulting',
+  'provider': {
     name: 'Expert Consultants LLC',
     url: 'https://example.com',
   },
-  areaServed: ['United States', 'Canada', 'United Kingdom'],
-  category: 'Consulting',
-  image: 'https://example.com/services/consulting-hero.jpg',
-  offers: {
+  'areaServed': ['United States', 'Canada', 'United Kingdom'],
+  'category': 'Consulting',
+  'image': 'https://example.com/services/consulting-hero.jpg',
+  'offers': {
     price: 250,
     priceCurrency: 'USD',
     description: 'Hourly consulting rate',
   },
-  aggregateRating: {
+  'aggregateRating': {
     ratingValue: 4.8,
     ratingCount: 120,
   },
-  review: [
+  'review': [
     {
       author: 'Jane Smith',
       reviewRating: 5,
       reviewBody: 'Excellent service, highly recommended!',
     },
   ],
-  termsOfService: 'https://example.com/terms',
-  slogan: 'Your success is our mission',
+  'termsOfService': 'https://example.com/terms',
+  'slogan': 'Your success is our mission',
 })
 ```
 
 ## Types
 
 ```ts
-export interface ServiceChannel extends Thing {
-  serviceUrl?: string
-  servicePhone?: string
-  serviceLocation?: string
-  availableLanguage?: string[]
+export interface ServiceChannel {
+  '@type'?: 'ServiceChannel'
+  'serviceUrl'?: string
+  'servicePhone'?: string
+  'serviceLocation'?: string
+  'availableLanguage'?: string | string[]
 }
 
 type ValidServiceSubTypes = 'Service' | 'BroadcastService' | 'CableOrSatelliteService' | 'FinancialService' | 'FoodService' | 'GovernmentService' | 'TaxiService' | 'Telecom'
 
 export interface ServiceSimple extends Thing {
   '@type'?: Arrayable<ValidServiceSubTypes>
-  name: string
-  description?: string
-  serviceType?: string
-  provider?: NodeRelations<Identity>
-  areaServed?: string | string[]
-  availableChannel?: NodeRelations<ServiceChannel>
-  audience?: string
-  category?: string | string[]
-  hasOfferCatalog?: string
-  offers?: NodeRelations<Offer | AggregateOffer>
-  aggregateRating?: NodeRelation<AggregateRating>
-  review?: NodeRelations<Review>
-  image?: NodeRelations<string | ImageObject>
-  logo?: NodeRelations<string | ImageObject>
-  url?: string
-  termsOfService?: string
-  slogan?: string
-  brand?: NodeRelations<Brand>
+  'name': string
+  'description'?: string
+  'serviceType'?: string
+  'provider'?: NodeRelation<Person | Organization>
+  'areaServed'?: string | unknown
+  'availableChannel'?: ServiceChannel | ServiceChannel[]
+  'audience'?: unknown
+  'category'?: string | string[]
+  'hasOfferCatalog'?: unknown
+  'offers'?: NodeRelations<Offer>
+  'aggregateRating'?: NodeRelation<AggregateRating>
+  'review'?: NodeRelations<Review>
+  'image'?: NodeRelations<string | ImageObject>
+  'logo'?: NodeRelations<string | ImageObject>
+  'url'?: string
+  'termsOfService'?: string
+  'slogan'?: string
+  'brand'?: NodeRelation<Organization>
 }
 ```

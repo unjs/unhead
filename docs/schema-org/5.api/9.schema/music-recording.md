@@ -80,16 +80,17 @@ defineMusicRecording({
 export interface MusicRecordingSimple extends Thing {
   name: string
   description?: string
-  url: string
+  url?: string
   audio?: string
   byArtist?: NodeRelations<Person | MusicGroup | string>
   inAlbum?: NodeRelation<MusicAlbum>
-  inPlaylist?: NodeRelation<MusicPlaylist>
+  inPlaylist?: NodeRelations<string>
   duration?: string
   isrcCode?: string
-  recordingOf?: NodeRelation<any>
+  recordingOf?: NodeRelation<string>
   datePublished?: ResolvableDate
   genre?: string | string[]
   image?: NodeRelations<string | ImageObject>
+  aggregateRating?: NodeRelation<AggregateRating>
 }
 ```

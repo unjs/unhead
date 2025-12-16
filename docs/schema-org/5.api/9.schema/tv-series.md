@@ -97,13 +97,16 @@ export interface TVSeriesSimple extends Thing {
   creator?: NodeRelations<Person | Organization | string>
   numberOfSeasons?: number
   numberOfEpisodes?: number
-  containsSeason?: NodeRelations<TVSeason>
-  episode?: NodeRelations<TVEpisode>
+  containsSeason?: NodeRelations<any>
+  episode?: NodeRelations<any>
   genre?: string | string[]
   datePublished?: ResolvableDate
   startDate?: ResolvableDate
   endDate?: ResolvableDate
-  productionCompany?: NodeRelation<Organization>
+  productionCompany?: NodeRelation<Organization | string>
   aggregateRating?: NodeRelation<AggregateRating>
+  countryOfOrigin?: string
+  trailer?: NodeRelation<VideoObject | string>
+  contentRating?: string
 }
 ```

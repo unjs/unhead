@@ -4,10 +4,12 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
+import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso, resolveWithBase } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
 import { personResolver } from '../Person'
 
 /**
@@ -67,6 +69,10 @@ export interface MusicRecordingSimple extends Thing {
    * An image representing the music recording (typically album art).
    */
   image?: NodeRelations<ImageObject | string>
+  /**
+   * Annotation for the average review score assigned to the music recording.
+   */
+  aggregateRating?: NodeRelation<AggregateRating>
 }
 
 export interface MusicRecording extends MusicRecordingSimple {}
@@ -90,6 +96,7 @@ export const musicRecordingResolver = defineSchemaOrgResolver<MusicRecording>({
       node.audio = resolveWithBase(ctx.meta.host, node.audio)
 
     node.byArtist = resolveRelation(node.byArtist, ctx, personResolver)
+    node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
 
     return node
   },

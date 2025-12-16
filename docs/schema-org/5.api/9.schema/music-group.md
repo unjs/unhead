@@ -83,9 +83,9 @@ export interface MusicGroupSimple extends Thing {
   member?: NodeRelations<Person | string>
   foundingDate?: ResolvableDate
   dissolutionDate?: ResolvableDate
-  album?: NodeRelations<MusicAlbum>
-  track?: NodeRelations<MusicRecording>
+  album?: NodeRelations<string>
+  track?: NodeRelations<string>
   image?: NodeRelations<string | ImageObject>
-  sameAs?: string[]
+  sameAs?: Arrayable<string>
 }
 ```
