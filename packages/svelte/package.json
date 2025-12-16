@@ -74,6 +74,7 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "catalog:",
     "@testing-library/svelte": "catalog:",
     "svelte": "catalog:"
   }

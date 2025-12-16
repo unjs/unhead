@@ -57,6 +57,9 @@
     "test:attw": "attw --pack",
     "prepack": "pnpm run build"
   },
+  "peerDependencies": {
+    "unhead": "workspace:*"
+  },
   "dependencies": {
     "@rollup/pluginutils": "catalog:",
     "estree-walker": "catalog:",
@@ -67,6 +70,10 @@
     "unplugin-ast": "catalog:"
   },
   "devDependencies": {
-    "@babel/types": "catalog:"
+    "@babel/types": "catalog:",
+    "@types/estree": "catalog:",
+    "rollup": "catalog:",
+    "unhead": "workspace:*",
+    "vite": "catalog:"
   }
 }

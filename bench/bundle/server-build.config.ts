@@ -7,8 +7,6 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   entries: [
     'src/server/minimal',
-    // 'src/server/minimal',
-    // 'src/full',
   ],
   outDir: 'dist/server',
   failOnWarn: false,
@@ -25,7 +23,6 @@ export default defineBuildConfig({
   declaration: false,
   hooks: {
     'rollup:options': (ctx, config) => {
-      config.experimentalLogSideEffects = true
       config.plugins.push(visualizer({
         emitFile: true,
         filename: 'stats.html',
