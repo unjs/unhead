@@ -108,6 +108,14 @@ export interface ArticleSimple extends Thing {
    * A reference-by-ID to the Organization or Person who holds the copyright.
    */
   copyrightHolder?: NodeRelations<Identity>
+  /**
+   * The body text of the article.
+   */
+  articleBody?: string
+  /**
+   * The subject matter of the article.
+   */
+  about?: string
 }
 
 export interface Article extends ArticleSimple {}

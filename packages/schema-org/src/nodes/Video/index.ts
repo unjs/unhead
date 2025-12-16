@@ -71,6 +71,14 @@ export interface VideoSimple extends Thing {
    * A URL pointing to a player for the video.
    */
   embedUrl?: string
+  /**
+   * The encoding format of the video.
+   */
+  encodingFormat?: string
+  /**
+   * A transcript of the video.
+   */
+  transcript?: string
 }
 
 export interface VideoObject extends VideoSimple {}

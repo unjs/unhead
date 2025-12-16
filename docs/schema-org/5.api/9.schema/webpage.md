@@ -10,7 +10,7 @@
 
 - [Schema.org WebPage](https://schema.org/WebPage)
 
-## Required properties
+## Recommended properties
 
 - **name** `string`
 
@@ -164,6 +164,14 @@ export interface WebPageSimple extends Thing {
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
   speakable?: unknown
+  /**
+   * The time at which the page was last reviewed, in ISO 8601 format.
+   */
+  lastReviewed?: string
+  /**
+   * An array of keywords describing the page.
+   */
+  keywords?: string[]
   /**
    * Potential actions for this web page.
    *

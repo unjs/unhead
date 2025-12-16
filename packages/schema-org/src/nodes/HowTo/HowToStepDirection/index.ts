@@ -9,7 +9,7 @@ export interface HowToDirection extends Thing {
 }
 
 /**
- * Describes a HowTo guide, which contains a series of steps.
+ * Describes the text of a direction or tip for a step in a HowTo guide.
  */
 export const howToStepDirectionResolver = defineSchemaOrgResolver<HowToDirection>({
   cast(node) {

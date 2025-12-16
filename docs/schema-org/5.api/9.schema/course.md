@@ -30,9 +30,7 @@ defineCourse({
 
 ```ts
 /**
- * Any offered product or service.
- * For example: a pair of shoes; a concert ticket; the rental of a car;
- * a haircut; or an episode of a TV show streamed online.
+ * A course or class offered by an educational institution.
  */
 export interface CourseSimple extends Thing {
   /**
@@ -44,7 +42,19 @@ export interface CourseSimple extends Thing {
    */
   description?: string
   /**
-   *  A reference to an Organization piece, representing brand associated with the Product.
+   * The course code or identifier.
+   */
+  courseCode?: string
+  /**
+   * The educational level of the course.
+   */
+  educationalLevel?: string
+  /**
+   * The duration of the course.
+   */
+  timeRequired?: string
+  /**
+   * A reference to an Organization piece, representing the organization offering the course.
    */
   provider?: NodeRelation<Organization>
 }

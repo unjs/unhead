@@ -50,6 +50,14 @@ export interface RecipeSimple extends Thing {
    */
   prepTime?: string
   /**
+   * The total time required to prepare and cook the recipe in ISO 8601 format.
+   */
+  totalTime?: string
+  /**
+   * The cooking method used to prepare the recipe.
+   */
+  cookingMethod?: string
+  /**
    * A NutritionInformation node, with a calories property which defines a calorie count as a string (e.g., "270 calories").
    */
   nutrition?: NutritionInformation

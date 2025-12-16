@@ -91,6 +91,14 @@ export interface WebPageSimple extends Thing {
    */
   speakable?: unknown
   /**
+   * The time at which the page was last reviewed, in ISO 8601 format.
+   */
+  lastReviewed?: string
+  /**
+   * An array of keywords describing the page.
+   */
+  keywords?: string[]
+  /**
    * Potential actions for this web page.
    *
    * Note it's on by default for most page types.
