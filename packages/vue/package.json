@@ -108,10 +108,10 @@
     ]
   },
   "dependencies": {
-    "hookable": "^5.5.3",
+    "hookable": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "vue": "^3.5.22"
+    "vue": "catalog:"
   }
 }

@@ -1,3 +1,7 @@
+catalogMode: prefer
+
+shellEmulator: true
+trustPolicy: no-downgrade
 packages:
   - packages/*
   - packages-aliased/*
@@ -5,3 +9,62 @@ packages:
   - '!examples/vue-2'
   - examples/*
   - docs
+catalog:
+  '@angular/cli': ^21.0.3
+  '@angular/common': ^21.0.5
+  '@angular/compiler': ^21.0.5
+  '@angular/compiler-cli': ^21.0.5
+  '@angular/core': ^21.0.5
+  '@angular/platform-browser': ^21.0.5
+  '@angular/platform-server': ^21.0.5
+  '@angular-devkit/build-angular': ^21.0.3
+  '@angular/platform-browser-dynamic': ^21.0.5
+  '@antfu/eslint-config': ^6.7.1
+  '@arethetypeswrong/cli': ^0.18.2
+  '@babel/types': ^7.28.5
+  '@fast-check/vitest': ^0.2.4
+  '@rollup/pluginutils': ^5.3.0
+  '@solidjs/testing-library': ^0.8.10
+  '@testing-library/jest-dom': ^6.9.1
+  '@testing-library/react': ^16.3.1
+  '@testing-library/svelte': ^5.2.9
+  '@testing-library/user-event': 14.6.1
+  '@types/fs-extra': ^11.0.4
+  '@types/jsdom': ^27.0.0
+  acorn-loose: ^8.5.2
+  bumpp: ^10.3.2
+  devalue: ^5.6.1
+  eslint: ^9.39.2
+  estree-walker: ^3.0.3
+  fs-extra: ^11.3.2
+  hookable: ^5.5.3
+  js-yaml: ^4.1.1
+  jsdom: ^27.3.0
+  magic-string: ^0.30.21
+  mlly: ^1.8.0
+  react: ^19.2.3
+  react-dom: ^19.2.3
+  rollup-plugin-analyzer: ^4.0.0
+  solid-js: ^1.9.10
+  svelte: ^5.46.0
+  tslib: ^2.8.1
+  typescript: 5.9.3
+  ufo: ^1.6.1
+  unbuild: ^3.6.1
+  unplugin: ^2.3.11
+  unplugin-ast: ^0.15.4
+  unplugin-vue-components: ^30.0.0
+  utility-types: ^3.11.0
+  vite-plugin-solid: ^2.11.10
+  vitest: ^4.0.16
+  vitest-package-exports: ^0.1.1
+  vue: ^3.5.25
+  vue-tsc: ^3.1.8
+  zone.js: ^0.16.0
+ignoredBuiltDependencies:
+  - lmdb
+  - msgpackr-extract
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - unrs-resolver

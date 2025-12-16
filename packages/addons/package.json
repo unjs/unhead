@@ -58,15 +58,15 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@rollup/pluginutils": "^5.3.0",
-    "estree-walker": "^3.0.3",
-    "magic-string": "^0.30.19",
-    "mlly": "^1.8.0",
-    "ufo": "^1.6.1",
-    "unplugin": "^2.3.10",
-    "unplugin-ast": "^0.15.3"
+    "@rollup/pluginutils": "catalog:",
+    "estree-walker": "catalog:",
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
+    "ufo": "catalog:",
+    "unplugin": "catalog:",
+    "unplugin-ast": "catalog:"
   },
   "devDependencies": {
-    "@babel/types": "^7.28.4"
+    "@babel/types": "catalog:"
   }
 }
