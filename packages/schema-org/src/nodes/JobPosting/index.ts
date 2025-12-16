@@ -73,22 +73,18 @@ export interface JobPostingSimple extends Thing {
    * Indicates whether the URL that's associated with this job posting enables direct application for the job.
    */
   directApply?: boolean
-
   /**
    * Description of benefits associated with the job.
    */
   jobBenefits?: string
-
   /**
    * Educational credentials or qualifications required for the job.
    */
   educationRequirements?: string
-
   /**
    * Description of the level of experience required for the job.
    */
   experienceRequirements?: string
-
   /**
    * Skills, abilities, or knowledge needed for the job.
    */

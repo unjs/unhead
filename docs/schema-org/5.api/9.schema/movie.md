@@ -82,6 +82,6 @@ export interface MovieSimple extends Thing {
   /**
    * The production company of the movie.
    */
-  productionCompany?: string
+  productionCompany?: NodeRelation<Organization>
 }
 ```
