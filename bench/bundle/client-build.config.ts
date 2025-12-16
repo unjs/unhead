@@ -7,8 +7,6 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   entries: [
     'src/client/minimal',
-    // 'src/server/minimal',
-    // 'src/full',
   ],
   outDir: 'dist/client',
   failOnWarn: false,

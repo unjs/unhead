@@ -112,6 +112,7 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
+    "@vue/server-renderer": "catalog:",
     "vue": "catalog:"
   }
 }

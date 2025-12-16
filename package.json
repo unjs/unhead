@@ -44,6 +44,8 @@
     "js-yaml": "catalog:",
     "jsdom": "catalog:",
     "rollup-plugin-analyzer": "catalog:",
+    "rollup-plugin-visualizer": "catalog:",
+    "tinyexec": "catalog:",
     "typescript": "catalog:",
     "unbuild": "catalog:",
     "utility-types": "catalog:",
