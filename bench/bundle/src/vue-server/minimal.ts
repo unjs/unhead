@@ -5,8 +5,7 @@ async function doHead() {
 // Full usage with all core features
   const head = createHead()
 
-  // @ts-expect-error untyped
-  useHead(head, {
+  useHead({
     title: 'Test',
     titleTemplate: '%s | Site',
     meta: [
@@ -18,7 +17,7 @@ async function doHead() {
     script: [
       { src: '/test.js', defer: true },
     ],
-  })
+  }, { head })
 
   return await renderSSRHead(head)
 }

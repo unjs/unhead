@@ -81,6 +81,8 @@
   },
   "devDependencies": {
     "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   }
