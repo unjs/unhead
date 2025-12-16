@@ -80,8 +80,8 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@testing-library/react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }
