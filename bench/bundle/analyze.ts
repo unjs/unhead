@@ -79,6 +79,9 @@ const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minim
 const server = fs.readFileSync(path.resolve(__dirname, 'dist/server/server/minimal.mjs'))
 const vueClient = fs.readFileSync(path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.mjs'))
 const vueServer = fs.readFileSync(path.resolve(__dirname, 'dist/vue-server/vue-server/minimal.mjs'))
+const schemaOrg = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
+  ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
+  : null
 
 let data: Array<{
   name: string
@@ -160,6 +163,15 @@ else {
       baseSize: lastStats.vueServer.size,
       baseGzippedSize: lastStats.vueServer.gz,
     },
+    ...(schemaOrg && lastStats.schemaOrg
+      ? [{
+          name: 'Schema.org (Minimal)',
+          size: schemaOrg.length,
+          gzippedSize: zlib.gzipSync(schemaOrg).length,
+          baseSize: lastStats.schemaOrg.size,
+          baseGzippedSize: lastStats.schemaOrg.gz,
+        }]
+      : []),
   ]
 }
 

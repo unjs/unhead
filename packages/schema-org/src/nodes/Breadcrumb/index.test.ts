@@ -120,9 +120,15 @@ describe('defineBreadcrumb', async () => {
             "itemListElement": [
               {
                 "@type": "ListItem",
-                "item": "https://example.com/blog/bar",
+                "item": "https://example.com/blog/foo",
                 "name": "Some other link",
                 "position": 1,
+              },
+              {
+                "@type": "ListItem",
+                "item": "https://example.com/blog/bar",
+                "name": "Some other link",
+                "position": 2,
               },
             ],
           },

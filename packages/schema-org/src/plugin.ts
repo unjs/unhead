@@ -8,6 +8,38 @@ import {
 import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
 
+// Recursively collect all resolver strings from nested objects and preload them
+async function preloadNestedResolvers(obj: any): Promise<void> {
+  if (!obj || typeof obj !== 'object')
+    return
+
+  const promises: Promise<void>[] = []
+
+  if (typeof obj._resolver === 'string') {
+    const resolverName = obj._resolver
+    promises.push(loadResolver(resolverName).then((loaded) => {
+      if (loaded)
+        obj._resolver = loaded
+    }))
+  }
+
+  for (const key in obj) {
+    const val = obj[key]
+    if (val && typeof val === 'object') {
+      if (Array.isArray(val)) {
+        for (const item of val) {
+          promises.push(preloadNestedResolvers(item))
+        }
+      }
+      else {
+        promises.push(preloadNestedResolvers(val))
+      }
+    }
+  }
+
+  await Promise.all(promises)
+}
+
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
@@ -69,10 +101,11 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 if (typeof node !== 'object' || Object.keys(node).length === 0) {
                   continue
                 }
+                // Preload all nested resolvers (mutates _resolver strings to loaded objects)
+                await preloadNestedResolvers(node)
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
-                  _resolver: loadResolver(await node._resolver),
                 }
                 graph.push(newNode)
               }

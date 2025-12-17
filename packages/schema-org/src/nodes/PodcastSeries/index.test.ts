@@ -19,7 +19,7 @@ describe('definePodcastSeries', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/podcast-series/6a51620",
+            "@id": "https://example.com/#/schema/podcast-series/1",
             "@type": "PodcastSeries",
             "description": "A podcast about interesting topics",
             "name": "The Example Podcast",

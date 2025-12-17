@@ -40,6 +40,7 @@ import type {
 } from '../../'
 import type { Arrayable } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
+import { isRef } from 'vue'
 import { normalizeSchemaOrgInput,
 } from '../../'
 import { UnheadSchemaOrg } from '../../plugin'
@@ -47,9 +48,10 @@ import { UnheadSchemaOrg } from '../../plugin'
 function provideResolver<T>(input?: T, resolver?: string) {
   if (!input)
     input = {} as T
-  // avoid unreferring by wrapping it in a function
-  // @ts-expect-error untyped
-  input._resolver = resolver
+  // If input is a ref, set _resolver on the underlying value
+  // so it survives Vue's reactivity unwrapping
+  const target = isRef(input) ? input.value : input
+  ;(target as Record<string, any>)._resolver = resolver
   return input
 }
 

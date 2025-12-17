@@ -168,7 +168,8 @@ describe('schema.org e2e', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "#/schema//d006e97",
+            "@id": "#website",
+            "@type": "WebSite",
             "name": "Test"
           }
         ]
@@ -208,12 +209,18 @@ describe('schema.org e2e', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "#/schema//6b94a87",
+            "@id": "#webpage",
+            "@type": "WebPage",
             "foo": "bar",
-            "name": "test"
+            "name": "test",
+            "isPartOf": {
+              "@id": "#website"
+            }
           },
           {
-            "@id": "#/schema//d006e97",
+            "@id": "#website",
+            "@type": "WebSite",
+            "inLanguage": "foo",
             "name": "Test"
           }
         ]

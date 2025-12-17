@@ -21,7 +21,7 @@ describe('defineMusicGroup', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/music-group/3fd83b6",
+            "@id": "https://example.com/#/schema/music-group/1",
             "@type": "MusicGroup",
             "genre": "Rock",
             "member": [

@@ -10,7 +10,6 @@
   courseResolver: object
   createSchemaOrgGraph: function
   datasetResolver: object
-  dedupeNodes: function
   defineAddress: function
   defineAggregateOffer: function
   defineAggregateRating: function
@@ -70,12 +69,12 @@
   jobPostingResolver: object
   listItemResolver: object
   localBusinessResolver: object
+  merge: function
   movieResolver: object
   musicAlbumResolver: object
   musicGroupResolver: object
   musicPlaylistResolver: object
   musicRecordingResolver: object
-  normaliseNodes: function
   normalizeSchemaOrgInput: function
   offerResolver: object
   openingHoursResolver: object

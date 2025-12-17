@@ -17,7 +17,7 @@ describe('defineAggregateOffer', () => {
       expect(tag).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/aggregate-offer/f73a422",
+            "@id": "https://example.com/#/schema/aggregate-offer/1",
             "@type": "AggregateOffer",
             "highPrice": 200,
             "lowPrice": 100,
@@ -52,7 +52,7 @@ describe('defineAggregateOffer', () => {
       expect(tag).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/aggregate-offer/577424c",
+            "@id": "https://example.com/#/schema/aggregate-offer/1",
             "@type": "AggregateOffer",
             "highPrice": 200,
             "lowPrice": 100,
