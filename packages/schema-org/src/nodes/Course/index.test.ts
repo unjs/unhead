@@ -21,16 +21,16 @@ describe('defineCourse', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/course/2c0273",
+            "@id": "https://example.com/#/schema/course/1",
             "@type": "Course",
             "description": "Introductory CS course laying out the basics.",
             "name": "Introduction to Computer Science and Programming",
             "provider": {
-              "@id": "https://example.com/#/schema/organization/4db941",
+              "@id": "https://example.com/#/schema/organization/1",
             },
           },
           {
-            "@id": "https://example.com/#/schema/organization/4db941",
+            "@id": "https://example.com/#/schema/organization/1",
             "@type": "Organization",
             "name": "University of Technology - Eureka",
             "sameAs": "http://www.ut-eureka.edu",

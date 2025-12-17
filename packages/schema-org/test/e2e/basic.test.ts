@@ -237,15 +237,15 @@ describe('schema.org e2e', () => {
             ],
             "mainEntity": [
               {
-                "@id": "https://example.com/about#/schema/question/ab1c398"
+                "@id": "https://example.com/about#/schema/question/1"
               },
               {
-                "@id": "https://example.com/about#/schema/question/6396da9"
+                "@id": "https://example.com/about#/schema/question/2"
               }
             ]
           },
           {
-            "@id": "https://example.com/about#/schema/question/ab1c398",
+            "@id": "https://example.com/about#/schema/question/1",
             "@type": "Question",
             "name": "What is your return policy?",
             "acceptedAnswer": {
@@ -254,7 +254,7 @@ describe('schema.org e2e', () => {
             }
           },
           {
-            "@id": "https://example.com/about#/schema/question/6396da9",
+            "@id": "https://example.com/about#/schema/question/2",
             "@type": "Question",
             "name": "What is something else?",
             "acceptedAnswer": {
@@ -352,7 +352,7 @@ describe('schema.org e2e', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "#/schema/image-gallery/6e5ff96",
+            "@id": "#/schema/image-gallery/1",
             "@type": "ImageGallery",
             "name": "Gallery",
             "image": [

@@ -22,6 +22,7 @@
       "@unhead/vue/server": ["packages/vue/src/server"],
       "@unhead/addons": ["packages/addons/src/index"],
       "@unhead/addons/vite": ["packages/addons/src/vite"],
+      "@unhead/schema-org": ["packages/schema-org/src/index"],
       "@unhead/schema-org/vue": ["packages/schema-org/src/vue/index"],
       "@unhead/svelte/types": ["packages/svelte/src/types"],
       "@unhead/angular": ["packages/angular/src/index"],

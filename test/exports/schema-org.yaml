@@ -9,7 +9,6 @@
   commentResolver: object
   courseResolver: object
   createSchemaOrgGraph: function
-  dedupeNodes: function
   defineAddress: function
   defineAggregateOffer: function
   defineAggregateRating: function
@@ -48,7 +47,6 @@
   defineWebSite: function
   eventResolver: object
   foodEstablishmentResolver: object
-  groupBy: function
   HowToId: string
   howToResolver: object
   howToStepDirectionResolver: object
@@ -60,7 +58,6 @@
   localBusinessResolver: object
   merge: function
   movieResolver: object
-  normaliseNodes: function
   normalizeSchemaOrgInput: function
   offerResolver: object
   openingHoursResolver: object
@@ -90,7 +87,6 @@
   searchActionResolver: object
   softwareAppResolver: object
   UnheadSchemaOrg: function
-  uniqueBy: function
   useSchemaOrg: function
   videoResolver: object
   virtualLocationResolver: object
