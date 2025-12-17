@@ -1,9 +1,10 @@
 import { createApp } from './main'
-import { VueHeadMixin, createHead } from "@unhead/vue/client";
+import { VueHeadMixin, createStreamableHead } from "@unhead/vue/client";
 
 const { app, router } = createApp()
 
-const head = createHead()
+// Use createStreamableHead to consume streaming queue
+const head = createStreamableHead()
 app.use(head)
 app.mixin(VueHeadMixin)
 

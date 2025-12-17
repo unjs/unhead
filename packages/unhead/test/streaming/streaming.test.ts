@@ -1,34 +1,27 @@
 import { describe, expect, it } from 'vitest'
-import { renderSSRStreamComponents, streamAppWithUnhead } from '../../src/server'
-import { createServerHeadWithContext } from '../util'
+import {
+  renderSSRHeadClosing,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+  streamAppWithUnhead,
+} from '../../src/server'
+import { createServerHeadWithContext, createStreamableServerHead } from '../util'
 
 describe('streaming SSR', () => {
-  describe('renderSSRStreamComponents', () => {
-    it('processes initial template chunk with head tags', async () => {
+  describe('renderSSRHeadShell', () => {
+    it('renders initial head tags into shell', async () => {
       const head = createServerHeadWithContext()
       head.push({
         title: 'Test Page',
         meta: [{ name: 'description', content: 'Test description' }],
       })
 
-      const html = '<html><head></head><body>'
-      const result = await renderSSRStreamComponents(head, html)
+      const template = '<!DOCTYPE html><html><head></head><body>'
+      const result = await renderSSRHeadShell(head, template)
 
       expect(result).toContain('<title>Test Page</title>')
       expect(result).toContain('<meta name="description" content="Test description">')
-      expect(result).toContain('__unheadNormalizeAttrs')
-    })
-
-    it('injects empty title tag if none provided', async () => {
-      const head = createServerHeadWithContext()
-      head.push({
-        meta: [{ name: 'viewport', content: 'width=device-width' }],
-      })
-
-      const html = '<html><head></head><body>'
-      const result = await renderSSRStreamComponents(head, html)
-
-      expect(result).toContain('<title></title>')
+      expect(result).toContain('window.__unhead__')
     })
 
     it('applies html and body attrs', async () => {
@@ -38,110 +31,83 @@ describe('streaming SSR', () => {
         bodyAttrs: { class: 'dark' },
       })
 
-      const html = '<html><head></head><body>'
-      const result = await renderSSRStreamComponents(head, html)
+      const template = '<html><head></head><body>'
+      const result = await renderSSRHeadShell(head, template)
 
       expect(result).toContain('lang="en"')
       expect(result).toContain('dir="ltr"')
       expect(result).toContain('class="dark"')
     })
 
-    it('processes app chunk with stream marker', async () => {
+    it('initializes _streamedHashes set', async () => {
       const head = createServerHeadWithContext()
-      head._rootStreamedTags = {}
+      head.push({ title: 'Test' })
 
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      expect(head._streamedHashes).toBeInstanceOf(Set)
+      expect(head._streamedHashes!.size).toBeGreaterThan(0)
+    })
+  })
+
+  describe('renderSSRHeadSuspenseChunk', () => {
+    it('returns empty string when no new tags', async () => {
+      const head = createServerHeadWithContext()
+      head.push({ title: 'Test' })
+
+      // Initialize streaming state
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      // No new tags added
+      const result = await renderSSRHeadSuspenseChunk(head)
+      expect(result).toBe('')
+    })
+
+    it('returns push script for new tags', async () => {
+      const head = createServerHeadWithContext()
+      head.push({ title: 'Initial' })
+
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      // Add new tags (simulating async component)
       head.push({
         title: 'Updated Title',
-        style: ['.new-style { color: red; }'],
+        meta: [{ name: 'description', content: 'New description' }],
       })
 
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
+      const result = await renderSSRHeadSuspenseChunk(head)
 
-      expect(result).toContain('document.title = "Updated Title"')
-      expect(result).toContain('.new-style { color: red; }')
+      expect(result).toContain('window.__unhead__.push')
+      expect(result).toContain('Updated Title')
+      expect(result).toContain('New description')
     })
 
-    it('handles key-based deduplication correctly', async () => {
+    it('only includes new tags not previously streamed', async () => {
       const head = createServerHeadWithContext()
-      head._rootStreamedTags = {
-        'link:key:preload': { tag: 'link', props: { key: 'preload', rel: 'stylesheet', href: 'old.css', 'data-hid': 'preload' }, _d: 'link:key:preload' },
-      }
+      head.push({ title: 'Initial', meta: [{ name: 'robots', content: 'index' }] })
 
-      head.push({
-        link: [{ key: 'preload', rel: 'stylesheet', href: 'new.css' }],
-      })
+      await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
+      // Add only new meta, title unchanged
+      head.push({ meta: [{ name: 'author', content: 'Test' }] })
 
-      expect(result).toContain('querySelector(\'[data-hid="preload"]\')')
-      expect(result).toContain('remove()')
+      const result = await renderSSRHeadSuspenseChunk(head)
+
+      expect(result).toContain('author')
+      expect(result).not.toContain('robots') // Already streamed
     })
+  })
 
-    it('escapes special characters in data-hid for selector', async () => {
+  describe('renderSSRHeadClosing', () => {
+    it('returns body tags', async () => {
       const head = createServerHeadWithContext()
-      head._rootStreamedTags = {
-        'link:key:my"key': { tag: 'link', props: { key: 'my"key', rel: 'stylesheet', href: 'old.css', 'data-hid': 'my"key' }, _d: 'link:key:my"key' },
-      }
-
       head.push({
-        link: [{ key: 'my"key', rel: 'stylesheet', href: 'new.css' }],
+        script: [{ src: 'analytics.js', tagPosition: 'bodyClose' }],
       })
 
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
+      const result = await renderSSRHeadClosing(head)
 
-      // Should escape the quote
-      expect(result).toContain('[data-hid="my\\"key"]')
-    })
-
-    it('handles backslash in data-hid', async () => {
-      const head = createServerHeadWithContext()
-      head._rootStreamedTags = {
-        'link:key:my\\key': { tag: 'link', props: { key: 'my\\key', rel: 'stylesheet', href: 'old.css', 'data-hid': 'my\\key' }, _d: 'link:key:my\\key' },
-      }
-
-      head.push({
-        link: [{ key: 'my\\key', rel: 'stylesheet', href: 'new.css' }],
-      })
-
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
-
-      // Should escape the backslash
-      expect(result).toContain('[data-hid="my\\\\key"]')
-    })
-
-    it('handles body position tags correctly', async () => {
-      const head = createServerHeadWithContext()
-      head._rootStreamedTags = {}
-
-      head.push({
-        script: [{ src: 'test.js', tagPosition: 'bodyClose' }],
-      })
-
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
-
-      expect(result).toContain("document.body.insertAdjacentHTML('beforeend'")
-    })
-
-    it('updates bodyAttrs with style during streaming', async () => {
-      const head = createServerHeadWithContext()
-      head._rootStreamedTags = {}
-
-      head.push({
-        bodyAttrs: {
-          style: { 'background-color': 'red' },
-        },
-      })
-
-      const html = '<div data-unhead-stream><!--[unhead-stream]--></div>'
-      const result = await renderSSRStreamComponents(head, html)
-
-      expect(result).toContain('__unheadNormalizeAttrs(document.body')
-      expect(result).toContain('background-color')
+      expect(result).toContain('<script src="analytics.js"></script>')
     })
   })
 
@@ -152,64 +118,68 @@ describe('streaming SSR', () => {
       }
     }
 
-    it('streams basic app with head injection', async () => {
+    it('streams app with head injection', async () => {
       const head = createServerHeadWithContext()
       head.push({
         title: 'Streamed Page',
         meta: [{ name: 'description', content: 'A streamed page' }],
       })
 
-      const htmlStart = '<!DOCTYPE html><html><head></head><body>'
-      const htmlEnd = '</body></html>'
+      const template = '<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>'
       const appChunks = ['<div>Hello</div>', '<div>World</div>']
 
       const chunks: string[] = []
-      for await (const chunk of streamAppWithUnhead(mockAppStream(appChunks), htmlStart, htmlEnd, head)) {
+      for await (const chunk of streamAppWithUnhead(mockAppStream(appChunks), template, head)) {
         chunks.push(chunk)
       }
 
       const fullHtml = chunks.join('')
       expect(fullHtml).toContain('<title>Streamed Page</title>')
+      expect(fullHtml).toContain('window.__unhead__')
       expect(fullHtml).toContain('<div>Hello</div>')
       expect(fullHtml).toContain('<div>World</div>')
       expect(fullHtml).toContain('</body></html>')
     })
 
-    it('processes chunks with stream markers', async () => {
+    it('processes suspense markers', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Initial' })
 
-      const htmlStart = '<!DOCTYPE html><html><head></head><body>'
-      const htmlEnd = '</body></html>'
-      const appChunks = [
-        '<div>First</div>',
-        '<script data-unhead-stream><!--[unhead-stream]--></script>',
-      ]
+      const template = '<html><head></head><body><!--app-html--></body></html>'
+
+      // Simulate: first chunk, then async component resolves with marker
+      async function* appWithSuspense(): AsyncGenerator<string> {
+        yield '<div>App Shell</div>'
+        // Simulate async component adding head
+        head.push({ title: 'Async Title', meta: [{ name: 'async', content: 'true' }] })
+        yield '<div><script><!--[unhead-ssr]--></script></div>'
+      }
 
       const chunks: string[] = []
-      for await (const chunk of streamAppWithUnhead(mockAppStream(appChunks), htmlStart, htmlEnd, head)) {
+      for await (const chunk of streamAppWithUnhead(appWithSuspense(), template, head)) {
         chunks.push(chunk)
       }
 
-      // First chunk should have initial head
-      expect(chunks[0]).toContain('<title>Initial</title>')
-      // Later chunk should have the stream marker processed
-      expect(chunks.some(c => c.includes('(function()'))).toBe(true)
+      const fullHtml = chunks.join('')
+      // Should have initial title in head
+      expect(fullHtml).toContain('<title>Initial</title>')
+      // Should have push script for async updates
+      expect(fullHtml).toContain('window.__unhead__.push')
+      expect(fullHtml).toContain('Async Title')
     })
 
     it('handles Uint8Array chunks', async () => {
       const head = createServerHeadWithContext()
       head.push({ title: 'Binary Test' })
 
-      const htmlStart = '<html><head></head><body>'
-      const htmlEnd = '</body></html>'
+      const template = '<html><head></head><body><!--app-html--></body></html>'
 
       async function* binaryStream(): AsyncGenerator<Uint8Array> {
         yield new TextEncoder().encode('<div>Binary Content</div>')
       }
 
       const chunks: string[] = []
-      for await (const chunk of streamAppWithUnhead(binaryStream(), htmlStart, htmlEnd, head)) {
+      for await (const chunk of streamAppWithUnhead(binaryStream(), template, head)) {
         chunks.push(chunk)
       }
 
@@ -217,41 +187,89 @@ describe('streaming SSR', () => {
       expect(fullHtml).toContain('<title>Binary Test</title>')
       expect(fullHtml).toContain('<div>Binary Content</div>')
     })
+  })
 
-    it('appends body tags at the end', async () => {
+  describe('tagsToSerializableHead', () => {
+    it('serializes new link tags', async () => {
       const head = createServerHeadWithContext()
-      head.push({
-        script: [{ src: 'analytics.js', tagPosition: 'bodyClose' }],
-      })
 
-      const htmlStart = '<html><head></head><body>'
-      const htmlEnd = '</body></html>'
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+      head.push({ link: [{ rel: 'stylesheet', href: 'new.css' }] })
 
-      const chunks: string[] = []
-      for await (const chunk of streamAppWithUnhead(mockAppStream(['<div>App</div>']), htmlStart, htmlEnd, head)) {
-        chunks.push(chunk)
-      }
-
-      const lastChunk = chunks[chunks.length - 1]
-      expect(lastChunk).toContain('<script src="analytics.js"></script>')
-      expect(lastChunk).toContain('</body>')
+      const result = await renderSSRHeadSuspenseChunk(head)
+      expect(result).toContain('link')
+      expect(result).toContain('new.css')
     })
 
-    it('passes through non-marker chunks unchanged', async () => {
+    it('serializes new script tags', async () => {
       const head = createServerHeadWithContext()
 
-      const htmlStart = '<html><head></head><body>'
-      const htmlEnd = '</body></html>'
-      const appChunks = ['<div>First</div>', '<div>Second</div>', '<div>Third</div>']
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+      head.push({ script: [{ src: 'analytics.js' }] })
 
-      const chunks: string[] = []
-      for await (const chunk of streamAppWithUnhead(mockAppStream(appChunks), htmlStart, htmlEnd, head)) {
-        chunks.push(chunk)
-      }
+      const result = await renderSSRHeadSuspenseChunk(head)
+      expect(result).toContain('script')
+      expect(result).toContain('analytics.js')
+    })
+  })
 
-      // Non-first, non-marker chunks should pass through as-is
-      expect(chunks[1]).toBe('<div>Second</div>')
-      expect(chunks[2]).toBe('<div>Third</div>')
+  describe('custom stream key', () => {
+    it('uses custom key in bootstrap script', async () => {
+      const head = createServerHeadWithContext({ experimentalStreamKey: '__myhead__' })
+      head.push({ title: 'Test' })
+
+      const result = await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      expect(result).toContain('window.__myhead__')
+      expect(result).not.toContain('window.__unhead__')
+    })
+
+    it('uses custom key in suspense chunk', async () => {
+      const head = createServerHeadWithContext({ experimentalStreamKey: '__custom__' })
+
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+      head.push({ title: 'New Title' })
+
+      const result = await renderSSRHeadSuspenseChunk(head)
+
+      expect(result).toContain('window.__custom__.push')
+    })
+
+    it('supports multiple providers with different keys', async () => {
+      const head1 = createServerHeadWithContext({ experimentalStreamKey: '__provider1__' })
+      const head2 = createServerHeadWithContext({ experimentalStreamKey: '__provider2__' })
+
+      head1.push({ title: 'Provider 1' })
+      head2.push({ title: 'Provider 2' })
+
+      const shell1 = await renderSSRHeadShell(head1, '<html><head></head><body>')
+      const shell2 = await renderSSRHeadShell(head2, '<html><head></head><body>')
+
+      expect(shell1).toContain('window.__provider1__')
+      expect(shell2).toContain('window.__provider2__')
+    })
+  })
+
+  describe('createStreamableHead', () => {
+    it('creates head with _streamedHashes initialized', () => {
+      const head = createStreamableServerHead()
+      expect(head._streamedHashes).toBeInstanceOf(Set)
+    })
+
+    it('uses default stream key', async () => {
+      const head = createStreamableServerHead()
+      head.push({ title: 'Test' })
+
+      const result = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(result).toContain('window.__unhead__')
+    })
+
+    it('uses custom stream key', async () => {
+      const head = createStreamableServerHead({ streamKey: '__custom__' })
+      head.push({ title: 'Test' })
+
+      const result = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(result).toContain('window.__custom__')
     })
   })
 })

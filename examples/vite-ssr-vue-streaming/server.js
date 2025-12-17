@@ -83,12 +83,10 @@ export async function createServer(
 
       const { vueStream, head } = render(url)
 
-      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
-      //
       res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
-      const unheadStream = streamAppWithUnhead(vueStream, htmlStart, htmlEnd, head)
-      for await (const chunk of unheadStream) {
+      // streamAppWithUnhead handles shell, suspense chunks, and closing
+      for await (const chunk of streamAppWithUnhead(vueStream, template, head)) {
         if (res.closed) break
         res.write(chunk)
       }

@@ -1,4 +1,4 @@
-import type { CreateServerHeadOptions, HeadTag, ResolvableHead } from '../types'
+import type { CreateServerHeadOptions, CreateStreamableServerHeadOptions, HeadTag, ResolvableHead } from '../types'
 import { createUnhead } from '../unhead'
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -66,4 +66,19 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     },
   })
   return unhead
+}
+
+/**
+ * Creates a head instance configured for streaming SSR.
+ * Use with renderSSRHeadShell, renderSSRHeadSuspenseChunk, and renderSSRHeadClosing.
+ */
+/* @__NO_SIDE_EFFECTS__ */
+export function createStreamableHead<T = ResolvableHead>(options: CreateStreamableServerHeadOptions = {}) {
+  const { streamKey, ...rest } = options
+  const head = createHead<T>({
+    ...rest,
+    experimentalStreamKey: streamKey,
+  })
+  head._streamedHashes = new Set()
+  return head
 }

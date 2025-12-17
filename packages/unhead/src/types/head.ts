@@ -115,6 +115,13 @@ export interface CreateHeadOptions {
    * Prop resolvers for tags.
    */
   propResolvers?: PropResolver[]
+  /**
+   * @experimental
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  experimentalStreamKey?: string
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -127,6 +134,24 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
    * - <meta name="viewport" content="width=device-width, initial-scale=1">
    */
   disableDefaults?: boolean
+}
+
+export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  streamKey?: string
+}
+
+export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Must match the server's streamKey.
+   * @default '__unhead__'
+   */
+  streamKey?: string
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
@@ -238,8 +263,14 @@ export interface Unhead<Input = ResolvableHead> {
   _ssrPayload?: ResolvableHead
   /**
    * @internal
+   * @deprecated Use _streamedHashes instead
    */
   _rootStreamedTags?: Record<string, HeadTag>
+  /**
+   * @internal
+   * Tracks hashes of tags that have been streamed
+   */
+  _streamedHashes?: Set<string>
 }
 
 export interface DomState {
