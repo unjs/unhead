@@ -1,7 +1,6 @@
 import type {
   Arrayable,
   Identity,
-  NodeRelation,
   NodeRelations,
   OptionalSchemaOrgPrefix,
   ResolvableDate,
@@ -23,13 +22,13 @@ export interface BookSimple extends Thing {
    */
   name: string
   /**
-   * A description of the course. Display limit of 60 characters.
+   * A description of the book. Display limit of 60 characters.
    */
   description?: string
   /**
-   *  A reference to an Organization piece, representing brand associated with the Product.
+   *  A reference to an Identity piece, representing author associated with the Book.
    */
-  author?: NodeRelation<Identity>
+  author?: NodeRelations<Identity>
   /**
    * The URL on your website where the book is introduced or described.
    */
@@ -38,6 +37,14 @@ export interface BookSimple extends Thing {
    * The URL of a reference page that identifies the work. For example, a Wikipedia, Wikidata, VIAF, or Library of Congress page for the book.
    */
   sameAs?: Arrayable<string>
+  /**
+   * The number of pages in the book.
+   */
+  numberOfPages?: number
+  /**
+   * The illustrator(s) of the book.
+   */
+  illustrator?: NodeRelations<Identity>
   /**
    * The edition(s) of the work.
    */

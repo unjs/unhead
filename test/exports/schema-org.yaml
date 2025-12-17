@@ -9,6 +9,8 @@
   commentResolver: object
   courseResolver: object
   createSchemaOrgGraph: function
+  datasetResolver: object
+  dedupeNodes: function
   defineAddress: function
   defineAggregateOffer: function
   defineAggregateRating: function
@@ -18,6 +20,7 @@
   defineBreadcrumb: function
   defineComment: function
   defineCourse: function
+  defineDataset: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -28,11 +31,18 @@
   defineListItem: function
   defineLocalBusiness: function
   defineMovie: function
+  defineMusicAlbum: function
+  defineMusicGroup: function
+  defineMusicPlaylist: function
+  defineMusicRecording: function
   defineOffer: function
   defineOpeningHours: function
   defineOrganization: function
   definePerson: function
   definePlace: function
+  definePodcastEpisode: function
+  definePodcastSeason: function
+  definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
   defineReadAction: function
@@ -40,7 +50,11 @@
   defineReview: function
   defineSchemaOrgResolver: function
   defineSearchAction: function
+  defineService: function
   defineSoftwareApp: function
+  defineTVEpisode: function
+  defineTVSeason: function
+  defineTVSeries: function
   defineVideo: function
   defineVirtualLocation: function
   defineWebPage: function
@@ -58,6 +72,11 @@
   localBusinessResolver: object
   merge: function
   movieResolver: object
+  musicAlbumResolver: object
+  musicGroupResolver: object
+  musicPlaylistResolver: object
+  musicRecordingResolver: object
+  normaliseNodes: function
   normalizeSchemaOrgInput: function
   offerResolver: object
   openingHoursResolver: object
@@ -65,9 +84,13 @@
   personResolver: object
   placeResolver: object
   PluginSchemaOrg: function
+  podcastEpisodeResolver: object
+  podcastSeasonResolver: object
+  podcastSeriesResolver: object
   PrimaryArticleId: string
   PrimaryBookId: string
   PrimaryBreadcrumbId: string
+  PrimaryDatasetId: string
   PrimaryEventId: string
   PrimaryWebPageId: string
   PrimaryWebSiteId: string
@@ -85,7 +108,12 @@
   reviewResolver: object
   SchemaOrgUnheadPlugin: function
   searchActionResolver: object
+  ServiceId: string
+  serviceResolver: object
   softwareAppResolver: object
+  tvEpisodeResolver: object
+  tvSeasonResolver: object
+  tvSeriesResolver: object
   UnheadSchemaOrg: function
   useSchemaOrg: function
   videoResolver: object
@@ -98,6 +126,7 @@
   defineBreadcrumb: function
   defineComment: function
   defineCourse: function
+  defineDataset: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -106,13 +135,24 @@
   defineJobPosting: function
   defineLocalBusiness: function
   defineMovie: function
+  defineMusicAlbum: function
+  defineMusicGroup: function
+  defineMusicPlaylist: function
+  defineMusicRecording: function
   defineOrganization: function
   definePerson: function
+  definePodcastEpisode: function
+  definePodcastSeason: function
+  definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
   defineRecipe: function
   defineReview: function
+  defineService: function
   defineSoftwareApp: function
+  defineTVEpisode: function
+  defineTVSeason: function
+  defineTVSeries: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function
@@ -124,6 +164,7 @@
   defineBreadcrumb: function
   defineComment: function
   defineCourse: function
+  defineDataset: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -132,13 +173,24 @@
   defineJobPosting: function
   defineLocalBusiness: function
   defineMovie: function
+  defineMusicAlbum: function
+  defineMusicGroup: function
+  defineMusicPlaylist: function
+  defineMusicRecording: function
   defineOrganization: function
   definePerson: function
+  definePodcastEpisode: function
+  definePodcastSeason: function
+  definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
   defineRecipe: function
   defineReview: function
+  defineService: function
   defineSoftwareApp: function
+  defineTVEpisode: function
+  defineTVSeason: function
+  defineTVSeries: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function
@@ -150,6 +202,7 @@
   defineBreadcrumb: function
   defineComment: function
   defineCourse: function
+  defineDataset: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -158,13 +211,24 @@
   defineJobPosting: function
   defineLocalBusiness: function
   defineMovie: function
+  defineMusicAlbum: function
+  defineMusicGroup: function
+  defineMusicPlaylist: function
+  defineMusicRecording: function
   defineOrganization: function
   definePerson: function
+  definePodcastEpisode: function
+  definePodcastSeason: function
+  definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
   defineRecipe: function
   defineReview: function
+  defineService: function
   defineSoftwareApp: function
+  defineTVEpisode: function
+  defineTVSeason: function
+  defineTVSeries: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function

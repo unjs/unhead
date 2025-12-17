@@ -110,7 +110,7 @@ export interface ProductSimple extends Thing {
    */
   brand?: NodeRelation<Organization>
   /**
-   * A reference to an Organization piece which represents the WebSite.
+   * A reference to an Organization piece which represents the seller/merchant.
    */
   seller?: NodeRelation<Organization>
   /**
@@ -125,6 +125,18 @@ export interface ProductSimple extends Thing {
    * A merchant-specific identifier for the Product.
    */
   sku?: string
+  /**
+   * The Global Trade Item Number (GTIN) of the product.
+   */
+  gtin?: string
+  /**
+   * The Manufacturer Part Number (MPN) of the product.
+   */
+  mpn?: string
+  /**
+   * The condition of the product (e.g., New, Used, Refurbished).
+   */
+  itemCondition?: string
   /**
    * An AggregateRating object.
    */

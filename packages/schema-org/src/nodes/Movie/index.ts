@@ -6,12 +6,14 @@ import type {
 } from '../../types'
 import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
+import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Review } from '../Review'
 import type { VideoObject } from '../Video'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToDate } from '../../utils'
 import { aggregateRatingResolver } from '../AggregateRating'
+import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 import { reviewResolver } from '../Review'
 import { videoResolver } from '../Video'
@@ -38,7 +40,7 @@ export interface MovieSimple extends Thing {
    */
   director?: NodeRelations<Person | string>
   /**
-   * The director of the movie.
+   * The actor of the movie.
    */
   actor?: NodeRelations<Person | string>
   /**
@@ -49,6 +51,22 @@ export interface MovieSimple extends Thing {
    * The trailer of a movie or TV/radio series, season, episode, etc.
    */
   trailer?: NodeRelations<string | VideoObject>
+  /**
+   * The duration of the movie.
+   */
+  duration?: string
+  /**
+   * The genre of the movie.
+   */
+  genre?: string
+  /**
+   * The content rating of the movie.
+   */
+  contentRating?: string
+  /**
+   * The production company of the movie.
+   */
+  productionCompany?: NodeRelation<Organization>
 }
 
 export interface Movie extends MovieSimple {}
@@ -63,6 +81,7 @@ export const movieResolver = defineSchemaOrgResolver<Movie>({
     node.director = resolveRelation(node.director, ctx, personResolver)
     node.actor = resolveRelation(node.actor, ctx, personResolver)
     node.trailer = resolveRelation(node.trailer, ctx, videoResolver)
+    node.productionCompany = resolveRelation(node.productionCompany, ctx, organizationResolver)
     if (node.dateCreated)
       node.dateCreated = resolvableDateToDate(node.dateCreated)
     return node

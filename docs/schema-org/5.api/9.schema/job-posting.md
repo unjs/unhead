@@ -2,7 +2,7 @@
 
 - **Type**: `defineJobPosting(input: JobPosting)`{lang="ts"}
 
-  Describes an `Product` on a `WebPage`.
+  Describes a `JobPosting` on a `WebPage`.
 
 ## Useful Links
 

@@ -56,6 +56,18 @@ export interface HowToSimple extends Thing {
    * Mark steps of the video with hasPart.
    */
   video?: NodeRelations<VideoObject | string>
+  /**
+   * The time required to prepare for the how-to, in ISO 8601 duration format.
+   */
+  prepTime?: string
+  /**
+   * The time it takes to perform the how-to, in ISO 8601 duration format.
+   */
+  performTime?: string
+  /**
+   * The quantity that results from performing the how-to.
+   */
+  yield?: string
 }
 
 export interface HowTo extends HowToSimple {}

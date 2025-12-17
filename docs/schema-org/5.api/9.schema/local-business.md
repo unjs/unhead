@@ -27,6 +27,10 @@
 
   The specification for when the business is open.
 
+- **paymentAccepted** `string`
+
+  The methods of payment accepted by the business.
+
 ### Minimal Example
 
 ```ts
@@ -55,7 +59,7 @@ defineLocalBusiness({
 
 ## Defaults
 
-- **@type**: `LocalBusiness`
+- **@type**: `['Organization', 'LocalBusiness']`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}`
 - **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
@@ -173,6 +177,10 @@ export interface LocalBusinessSimple extends Organization {
    * The currency accepted.
    */
   'currenciesAccepted'?: string
+  /**
+   * The methods of payment accepted by the business.
+   */
+  'paymentAccepted'?: string
   /**
    * The operating hours of the business.
    */

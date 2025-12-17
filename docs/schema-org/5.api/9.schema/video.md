@@ -77,7 +77,11 @@ export interface VideoSimple extends Thing {
   /**
    * A reference-by-ID to an imageObject.
    */
-  thumbnailUrl?: NodeRelation<ImageObject>
+  thumbnail?: NodeRelation<ImageObject>
+  /**
+   * A URL pointing to the video thumbnail image file. Follow the [thumbnail image guidelines](https://developers.google.com/search/docs/appearance/video#provide-a-high-quality-thumbnail).
+   */
+  thumbnailUrl?: Arrayable<string>
   /**
    * The date the video was published, in ISO 8601 format (e.g., 2020-01-20).
    */
@@ -123,5 +127,13 @@ export interface VideoSimple extends Thing {
    * A URL pointing to a player for the video.
    */
   embedUrl?: string
+  /**
+   * The encoding format of the video.
+   */
+  encodingFormat?: string
+  /**
+   * A transcript of the video.
+   */
+  transcript?: string
 }
 ```

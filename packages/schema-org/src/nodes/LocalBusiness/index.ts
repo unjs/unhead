@@ -80,6 +80,10 @@ export interface LocalBusinessSimple extends Organization {
    */
   'currenciesAccepted'?: string
   /**
+   * The methods of payment accepted by the business.
+   */
+  'paymentAccepted'?: string
+  /**
    * The operating hours of the business.
    */
   'openingHoursSpecification'?: NodeRelations<OpeningHoursSpecification>
