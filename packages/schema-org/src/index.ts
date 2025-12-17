@@ -43,4 +43,4 @@ export {
   useSchemaOrg,
 } from './runtime'
 export type { UseSchemaOrgInput } from './runtime'
-export type { Arrayable, Id, IdReference, Identity, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'
+export type { Arrayable, Id, Identity, IdReference, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'
