@@ -56,7 +56,7 @@ describe('schema.org ssr xss', () => {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@id": "https://example.com/#/schema/question/f9e80aa",
+            "@id": "https://example.com/#/schema/question/1",
             "@type": "Question",
             "inLanguage": "en-AU",
             "name": "What is the \\u003Ci>meaning of life\\u003C/i>?",

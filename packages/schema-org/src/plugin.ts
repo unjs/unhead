@@ -1,6 +1,5 @@
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
-import { defu } from 'defu'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { processTemplateParams } from 'unhead/utils'
 import {
@@ -8,6 +7,59 @@ import {
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
+
+// Recursively collect all resolver strings from nested objects and preload them
+async function preloadNestedResolvers(obj: any): Promise<void> {
+  if (!obj || typeof obj !== 'object')
+    return
+
+  const promises: Promise<void>[] = []
+
+  if (typeof obj._resolver === 'string') {
+    const resolverName = obj._resolver
+    promises.push(loadResolver(resolverName).then((loaded) => {
+      if (loaded)
+        obj._resolver = loaded
+    }))
+  }
+
+  for (const key in obj) {
+    const val = obj[key]
+    if (val && typeof val === 'object') {
+      if (Array.isArray(val)) {
+        for (const item of val) {
+          promises.push(preloadNestedResolvers(item))
+        }
+      }
+      else {
+        promises.push(preloadNestedResolvers(val))
+      }
+    }
+  }
+
+  await Promise.all(promises)
+}
+
+// Simple merge utility that recursively merges objects
+function mergeObjects(target: any, source: any): any {
+  const result = { ...target }
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined)
+      continue
+
+    const isNestedObject = result[key]
+      && typeof result[key] === 'object'
+      && typeof source[key] === 'object'
+      && !Array.isArray(result[key])
+      && !Array.isArray(source[key])
+
+    if (isNestedObject)
+      result[key] = mergeObjects(result[key], source[key])
+    else if (!result[key])
+      result[key] = source[key]
+  }
+  return result
+}
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
@@ -49,10 +101,11 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 if (typeof node !== 'object' || Object.keys(node).length === 0) {
                   continue
                 }
+                // Preload all nested resolvers (mutates _resolver strings to loaded objects)
+                await preloadNestedResolvers(node)
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
-                  _resolver: loadResolver(await node._resolver),
                 }
                 graph.push(newNode)
               }
@@ -130,7 +183,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeKey].props = defu(ctx.tags[firstNodeKey].props, tag.props)
+              ctx.tags[firstNodeKey].props = mergeObjects(ctx.tags[firstNodeKey].props, tag.props)
               delete ctx.tags[firstNodeKey].props.nodes
               // @ts-expect-error untyped
               ctx.tags[k] = false

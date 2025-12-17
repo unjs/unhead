@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
   "description": "Full-stack <head> manager built for any framework.",
   "author": {
     "name": "Harlan Wilton",
@@ -56,6 +56,10 @@
     "./scripts": {
       "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.ts",
+      "default": "./dist/parser.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -93,9 +97,10 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "^5.5.3"
+    "hookable": "catalog:"
   }
 }

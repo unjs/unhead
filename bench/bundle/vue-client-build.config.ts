@@ -16,10 +16,6 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
-    output: {
-      chunkFileNames: '_unhead/[name].js',
-      entryFileNames: '_unhead/[name].js',
-    },
   },
   externals: [
     'hookable',
@@ -35,7 +31,8 @@ export default defineBuildConfig({
       }))
     },
     'build:done': () => {
-      // check gzip size of ./dist/minimal.mjs
+      // check gzip size of ./dist/minimal.js
+      // Try both possible output paths and extensions (unbuild behavior changed)
       const file = path.resolve(__dirname, 'dist/vue-client/vue-client/minimal.mjs')
       const contents = fs.readFileSync(file)
       const size = contents.length

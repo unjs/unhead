@@ -220,4 +220,30 @@ describe('templateParams', () => {
       </body></html>"
     `)
   })
+
+  it('edge case #561', async () => {
+    const dom = useDom({
+      headTags: '<title>Vite</title>',
+    })
+    const head = createClientHeadWithContext({
+      document: dom.window.document,
+      plugins: [TemplateParamsPlugin],
+    })
+    // The test should ensure that:
+    // 1. The existing title "Vite" is captured as %s
+    // 2. Empty string companyName stays empty (not converted to true)
+    // 3. The separator adjacent to empty values should be removed
+    useHead(head, {
+      titleTemplate: `%s %separator %companyName %separator %siteTitle`,
+      templateParams: {
+        companyName: '',
+        siteTitle: 'Site title',
+      },
+    })
+    const html = await new Promise<string>((resolve) => {
+      setTimeout(() => resolve(dom!.serialize()), 250)
+    })
+
+    expect(html).toContain('<title>Site title</title>')
+  })
 })

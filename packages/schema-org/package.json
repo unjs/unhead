@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -74,7 +74,8 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
     "@unhead/react": "workspace:*",
@@ -97,9 +98,7 @@
     }
   },
   "dependencies": {
-    "defu": "^6.1.4",
-    "ohash": "^2.0.11",
-    "ufo": "^1.6.1",
+    "ufo": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
@@ -108,7 +107,7 @@
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^28.8.0"
+    "unplugin-vue-components": "catalog:"
   },
   "build": {
     "external": [

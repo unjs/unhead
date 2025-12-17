@@ -42,4 +42,29 @@ describe('normalise', () => {
       }
     `)
   })
+
+  it('leaves string values untouched in meta content attribute', async () => {
+    const head = createServerHeadWithContext()
+
+    head.push({
+      meta: [
+        {
+          'name': 'test-meta',
+          'content': 'true',
+          'other-bool': 'true',
+        } as any,
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="test-meta" content="true" other-bool>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

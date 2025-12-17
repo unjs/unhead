@@ -1,5 +1,5 @@
-import { useHead } from '../../../../packages/vue/src'
-import { createHead } from '../../../../packages/vue/src/client'
+import { useHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 
 // Full usage with all core features
 const head = createHead()

@@ -28,15 +28,12 @@ describe('dom order', () => {
 
     expect(firstTagRendered).toMatchInlineSnapshot(`
       {
-        "_d": "htmlAttrs",
-        "_p": 1024,
-        "_w": 100,
-        "props": {
-          "class": Set {
-            "no-js",
-          },
-        },
-        "tag": "htmlAttrs",
+        "_d": "script:content:document.documentElement.classList.remove("no-js")",
+        "_p": 1025,
+        "_w": 50,
+        "innerHTML": "document.documentElement.classList.remove("no-js")",
+        "props": {},
+        "tag": "script",
       }
     `)
   })

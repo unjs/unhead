@@ -25,7 +25,7 @@ describe('defineRecipe', () => {
             "@id": "https://example.com/#recipe",
             "@type": "Recipe",
             "image": {
-              "@id": "https://example.com/#/schema/image/4fa13fa",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "name": "Peanut Butter Cookies",
             "recipeIngredient": [
@@ -44,7 +44,7 @@ describe('defineRecipe', () => {
             ],
           },
           {
-            "@id": "https://example.com/#/schema/image/4fa13fa",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/photos/1x1/photo.jpg",
             "inLanguage": "en-AU",

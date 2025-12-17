@@ -1,7 +1,8 @@
 {
   "name": "@unhead/solid-js",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
+  "description": "Full-stack <head> manager built for SolidJS.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -64,7 +65,8 @@
     "build": "unbuild",
     "stub": "unbuild --stub",
     "test": "vitest",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
     "solid-js": ">=19"
@@ -78,10 +80,10 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@solidjs/testing-library": "^0.8.10",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/user-event": "14.6.1",
-    "solid-js": "^1.9.7",
-    "vite-plugin-solid": "^2.11.7"
+    "@solidjs/testing-library": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/user-event": "catalog:",
+    "solid-js": "catalog:",
+    "vite-plugin-solid": "catalog:"
   }
 }

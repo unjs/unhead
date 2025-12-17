@@ -1,7 +1,6 @@
 import type { TemplateParams } from '../types'
 
 const SepSub = '%separator'
-const SepSubRE = new RegExp(`${SepSub}(?:\\s*${SepSub})*`, 'g')
 
 // for each %<word> token replace it with the corresponding runtime config or an empty value
 function sub(p: TemplateParams, token: string, isJson = false) {
@@ -61,12 +60,10 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
   // we need to remove separators if they're next to each other or if they're at the start or end of the string
   // for example: %separator %separator %title should return %title
   if (hasSepSub) {
-    if (s.endsWith(SepSub))
-      s = s.slice(0, -SepSub.length)
-    if (s.startsWith(SepSub))
-      s = s.slice(SepSub.length)
-    // make sure we don't have two separators next to each other
-    s = s.replace(SepSubRE, sep || '').trim()
+    s = s.split(SepSub)
+      .map(part => part.trim())
+      .filter(part => part !== '')
+      .join(sep ? ` ${sep} ` : ' ')
   }
   return s
 }

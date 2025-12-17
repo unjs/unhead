@@ -22,7 +22,6 @@
 - **@id**: `${canonicalHost}#website`
 - **url**: `canonicalHost`
 - **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
-- **isPartOf**: WebSite reference
 - **publisher**: Identity reference
 
 ## Example
@@ -52,6 +51,14 @@ export interface WebSiteSimple extends Thing {
    * A description of the website (e.g., the site's tagline).
    */
   description?: string
+  /**
+   * The date the website was first published.
+   */
+  datePublished?: string
+  /**
+   * The date the website was last modified.
+   */
+  dateModified?: string
   /**
    * A reference-by-ID to the Organization which publishes the WebSite
    * (or an array of Organization and Person in the case that the website represents an individual).

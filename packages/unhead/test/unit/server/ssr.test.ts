@@ -132,6 +132,31 @@ describe('ssr', () => {
   `)
   })
 
+  it('multiword attributes in html template', async () => {
+    const head = createServerHeadWithContext()
+
+    expect(await transformHtmlTemplate(head, `
+      <html>
+      <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      </head>
+      <body>
+      <!--app-html-->
+      </body>
+      </html>
+      `)).toMatchInlineSnapshot(`
+        "
+              <html>
+              <head>
+              <meta http-equiv="X-UA-Compatible" content="IE=edge"></head>
+              <body>
+              <!--app-html-->
+              </body>
+              </html>
+              "
+      `)
+  })
+
   it('useSeoMeta', async () => {
     const head = createServerHeadWithContext()
 
@@ -248,18 +273,18 @@ describe('ssr', () => {
     })
     expect(await transformHtmlTemplate(head, html)).toMatchInlineSnapshot(`
       "<!doctype html>
-      <html lang="en">
-      <head>
-      <!--app-head-->
-      <meta charset="utf-16">
+          <html lang="en">
+          <head>
+          <!--app-head-->
+          <meta charset="utf-16">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
       <link rel="icon" type="image/svg+xml" href="/vite.svg"></head>
-      <body>
-      <div id="app"><!--app-html--></div>
-      <script type="module" src="/src/entry-client.ts"></script>
-      </body>
-      </html>"
+          <body>
+          <div id="app"><!--app-html--></div>
+            <script type="module" src="/src/entry-client.ts"></script>
+            </body>
+            </html>"
     `)
   })
   it('random template', async () => {
@@ -293,22 +318,22 @@ describe('ssr', () => {
     })
     expect(await transformHtmlTemplate(head, html)).toMatchInlineSnapshot(`
       "
-      <html lang="en">
-      <head>
-      <meta charset="utf-16">
+            <html lang="en">
+              <head>
+              <meta charset="utf-16">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>new title</title>
       <script src="script.js" async type="module"></script>
       <link rel="stylesheet" href="style.css"></head>
-      <body style="accent-color:red;background-color:blue">
-      <div>hello</div>
-      <script src="ssr.test.ts"></script>
-      <script>
-      console.log('hello')
+              <body style="accent-color:red;background-color:blue">
+                <div>hello</div>
+                <script src="ssr.test.ts"></script>
+                <script>
+                console.log('hello')
       </script>
-      </body>
-      </html>
-      "
+              </body>
+            </html>
+          "
     `)
   })
   it('random template #2', async () => {
@@ -369,8 +394,8 @@ describe('ssr', () => {
     const processedHtml = await transformHtmlTemplate(createHead(), input)
     expect(processedHtml).toMatchInlineSnapshot(`
       "
-      <head>
-      <style>
+          <head>
+          <style>
                   html { background: url(/foo.png); }
                   img::before { content: "foo"; }
               </style></head>

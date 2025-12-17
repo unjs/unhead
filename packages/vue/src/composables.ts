@@ -21,6 +21,7 @@ import {
 import { headSymbol } from './install'
 import { VueResolver } from './resolver'
 
+/* @__NO_SIDE_EFFECTS__ */
 export function injectHead() {
   if (hasInjectionContext()) {
     // fallback to vue context

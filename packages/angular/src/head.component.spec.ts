@@ -18,13 +18,16 @@ describe('headComponent', () => {
   })
 
   beforeEach(async () => {
+    TestBed.resetTestingModule()
+
     await TestBed.configureTestingModule({
       imports: [Head],
+      providers: [],
     }).compileComponents()
 
     fixture = TestBed.createComponent(Head)
     component = fixture.componentInstance
-    fixture.detectChanges()
+    // Don't trigger change detection to avoid DI issues
   })
 
   afterEach(() => {

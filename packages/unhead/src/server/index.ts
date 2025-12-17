@@ -8,5 +8,5 @@ export {
   renderSSRHeadSuspenseChunk,
   streamAppWithUnhead,
 } from './streamAppWithUnhead'
-export { transformHtmlTemplate } from './transformHtmlTemplate'
+export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'

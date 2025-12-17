@@ -1,7 +1,8 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
+  "description": "Unhead addons for build tools and bundlers.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -53,18 +54,26 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
+  },
+  "peerDependencies": {
+    "unhead": "workspace:*"
   },
   "dependencies": {
-    "@rollup/pluginutils": "^5.2.0",
-    "estree-walker": "^3.0.3",
-    "magic-string": "^0.30.17",
-    "mlly": "^1.7.4",
-    "ufo": "^1.6.1",
-    "unplugin": "^2.3.5",
-    "unplugin-ast": "^0.15.0"
+    "@rollup/pluginutils": "catalog:",
+    "estree-walker": "catalog:",
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
+    "ufo": "catalog:",
+    "unplugin": "catalog:",
+    "unplugin-ast": "catalog:"
   },
   "devDependencies": {
-    "@babel/types": "^7.28.0"
+    "@babel/types": "catalog:",
+    "@types/estree": "catalog:",
+    "rollup": "catalog:",
+    "unhead": "workspace:*",
+    "vite": "catalog:"
   }
 }

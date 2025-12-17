@@ -1,7 +1,8 @@
 {
   "name": "@unhead/svelte",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
+  "description": "Full-stack <head> manager built for Svelte.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -58,10 +59,11 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub",
     "export:sizes": "npx export-size . -r",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "svelte": ">=5.23.0"
+    "svelte": ">=5.38.0"
   },
   "build": {
     "external": [
@@ -72,7 +74,8 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/svelte": "^5.2.8",
-    "svelte": "^5.35.2"
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@testing-library/svelte": "catalog:",
+    "svelte": "catalog:"
   }
 }

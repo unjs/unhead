@@ -14,6 +14,7 @@ export {
   streamAppWithUnhead,
 } from 'unhead/server'
 
+/* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: Omit<CreateServerHeadOptions, 'propsResolver'> = {}): VueHeadClient {
   const head = _createServerHead({
     ...options,

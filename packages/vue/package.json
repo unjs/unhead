@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -96,10 +96,11 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "vue": ">=3.5.13"
+    "vue": ">=3.5.18"
   },
   "build": {
     "external": [
@@ -107,10 +108,11 @@
     ]
   },
   "dependencies": {
-    "hookable": "^5.5.3",
+    "hookable": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "vue": "^3.5.17"
+    "@vue/server-renderer": "catalog:",
+    "vue": "catalog:"
   }
 }

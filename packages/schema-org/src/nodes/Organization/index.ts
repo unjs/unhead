@@ -51,6 +51,18 @@ export interface OrganizationSimple extends Thing {
    * A reference-by-ID to an PostalAddress piece.
    */
   address?: NodeRelations<PostalAddress>
+  /**
+   * The telephone number of the organization.
+   */
+  telephone?: string
+  /**
+   * The email address of the organization.
+   */
+  email?: string
+  /**
+   * The date the organization was founded.
+   */
+  foundingDate?: string
 }
 
 export interface Organization extends OrganizationSimple {}

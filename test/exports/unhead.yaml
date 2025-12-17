@@ -26,6 +26,12 @@
   useServerHead: function
   useServerHeadSafe: function
   useServerSeoMeta: function
+./parser:
+  applyHeadToHtml: function
+  parseAttributes: function
+  parseHtmlForIndexes: function
+  parseHtmlForUnheadExtraction: function
+  TagIdMap: object
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
@@ -49,6 +55,7 @@
   ssrRenderTags: function
   tagToString: function
   transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
 ./types: {}
 ./utils:
   dedupeKey: function

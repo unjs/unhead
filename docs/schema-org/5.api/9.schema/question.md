@@ -69,6 +69,14 @@ export interface QuestionSimple extends Thing {
    */
   inLanguage?: string
   /**
+   * The number of answers provided for this question.
+   */
+  answerCount?: number
+  /**
+   * The date and time the question was created.
+   */
+  dateCreated?: string
+  /**
    * Alias for `name`
    */
   question?: string

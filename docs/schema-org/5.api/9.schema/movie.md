@@ -54,10 +54,34 @@ export interface MovieSimple extends Thing {
   /**
    * The director of the movie.
    */
-  director?: NodeRelation<Person | string>
+  director?: NodeRelations<Person | string>
+  /**
+   * The actor of the movie.
+   */
+  actor?: NodeRelations<Person | string>
   /**
    * A nested Review of the movie.
    */
   review?: NodeRelations<Review>
+  /**
+   * The trailer of a movie or TV/radio series, season, episode, etc.
+   */
+  trailer?: NodeRelations<string | VideoObject>
+  /**
+   * The duration of the movie.
+   */
+  duration?: string
+  /**
+   * The genre of the movie.
+   */
+  genre?: string
+  /**
+   * The content rating of the movie.
+   */
+  contentRating?: string
+  /**
+   * The production company of the movie.
+   */
+  productionCompany?: NodeRelation<Organization>
 }
 ```

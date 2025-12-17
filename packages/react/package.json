@@ -1,7 +1,8 @@
 {
   "name": "@unhead/react",
   "type": "module",
-  "version": "2.0.11",
+  "version": "2.0.19",
+  "description": "Full-stack <head> manager built for React.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -64,10 +65,11 @@
     "build": "unbuild",
     "stub": "unbuild --stub",
     "export:sizes": "npx export-size . -r",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18.3.1"
   },
   "build": {
     "external": [
@@ -78,8 +80,10 @@
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }

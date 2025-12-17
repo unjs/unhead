@@ -31,6 +31,10 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
    */
   'hasMenu'?: string
   /**
+   * Methods of payment accepted.
+   */
+  'paymentAccepted'?: string
+  /**
    * The cuisine of the restaurant.
    */
   'servesCuisine'?: string
