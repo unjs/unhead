@@ -19,7 +19,7 @@ describe('defineTVSeries', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/tvseries/4c75784",
+            "@id": "https://example.com/#/schema/tvseries/1",
             "@type": "TVSeries",
             "genre": [
               "Crime",

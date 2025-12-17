@@ -20,7 +20,7 @@ describe('defineMusicPlaylist', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/music-playlist/c9e0b25",
+            "@id": "https://example.com/#/schema/music-playlist/1",
             "@type": "MusicPlaylist",
             "creator": {
               "@type": "Person",

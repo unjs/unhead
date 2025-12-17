@@ -19,7 +19,7 @@ describe('defineMusicRecording', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/music-recording/6d0238",
+            "@id": "https://example.com/#/schema/music-recording/1",
             "@type": "MusicRecording",
             "byArtist": {
               "@type": "Person",

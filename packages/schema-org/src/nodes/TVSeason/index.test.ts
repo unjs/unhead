@@ -17,7 +17,7 @@ describe('defineTVSeason', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/tvseason/d5e7237",
+            "@id": "https://example.com/#/schema/tvseason/1",
             "@type": "TVSeason",
             "numberOfEpisodes": 13,
             "seasonNumber": 2,

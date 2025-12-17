@@ -19,7 +19,7 @@ describe('defineMusicAlbum', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/music-album/c7deba0",
+            "@id": "https://example.com/#/schema/music-album/1",
             "@type": "MusicAlbum",
             "albumProductionType": "StudioAlbum",
             "byArtist": {

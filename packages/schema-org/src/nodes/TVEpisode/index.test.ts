@@ -18,7 +18,7 @@ describe('defineTVEpisode', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/tvepisode/17ded41",
+            "@id": "https://example.com/#/schema/tvepisode/1",
             "@type": "TVEpisode",
             "duration": "PT58M",
             "episodeNumber": 1,
