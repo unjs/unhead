@@ -25,7 +25,7 @@ useServerHead({
   meta: [
     {
       name: 'description',
-      content: 'This is a slow component two',
+      content: 'This is slow component three',
     },
   ]
 })

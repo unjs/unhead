@@ -2,6 +2,19 @@ import type { HeadTag, SSRHeadPayload, Unhead } from '../types'
 import { renderSSRHead } from './renderSSRHead'
 import { ssrRenderTags } from './util/ssrRenderTags'
 
+function normalizeAttrProps(props: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = { ...props }
+  result.style = Array.from(props.style || [])
+  if (!result.style.length) {
+    delete result.style
+  }
+  result.class = Array.from(props.class || [])
+  if (!result.class.length) {
+    delete result.class
+  }
+  return result
+}
+
 /**
  * @experimental This API is experimental and may change in future versions
  *
@@ -80,25 +93,13 @@ export async function renderSSRStreamComponents(head: Unhead, html: string): Pro
     const htmlAttrTag: HeadTag | undefined = tags.find(tag => tag.tag === 'htmlAttrs')
     const bodyAttrTag: HeadTag | undefined = tags.find(tag => tag.tag === 'bodyAttrs')
 
-    function normalizeAttrProps(props: Record<string, any>): Record<string, any> {
-      props.style = Array.from(props.style || [])
-      if (!props.style.length) {
-        delete props.style
-      }
-      props.class = Array.from(props.class || [])
-      if (!props.class.length) {
-        delete props.class
-      }
-      return props
-    }
-
     const { bodyTags, headTags, bodyTagsOpen } = ssrRenderTags(inlineTags)
     const inlineTagHtml: string = [
       titleTag ? `  document.title = ${JSON.stringify(titleTag.textContent)}` : false,
       dedupeTags.size ? [...dedupeTags.values()].map((t) => {
-        // Properly escape the data-hid value to prevent XSS
-        const escapedHid = JSON.stringify(t.props['data-hid'])
-        return `  document.${t.tagPosition?.startsWith('body') ? 'body' : 'head'}.querySelector('[data-hid=' + ${escapedHid} + ']')?.remove();`
+        // Escape for use in CSS attribute selector within JS string
+        const hidValue = String(t.props['data-hid']).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+        return `  document.${t.tagPosition?.startsWith('body') ? 'body' : 'head'}.querySelector('[data-hid="${hidValue}"]')?.remove();`
       }) : false,
       headTags ? `  document.head.insertAdjacentHTML('beforeend', ${JSON.stringify(headTags)})` : false,
       bodyTags ? `  document.body.insertAdjacentHTML('beforeend', ${JSON.stringify(bodyTags)})` : false,
@@ -148,33 +149,25 @@ export async function* streamAppWithUnhead(
   htmlEnd: string,
   head: Unhead<any>,
 ): AsyncGenerator<string> {
-  // Track state
   let firstChunk = true
-  // let hasStarted = false
 
-  // Process and yield chunks
   for await (const chunk of appStream) {
     const chunkStr = typeof chunk === 'string' ? chunk : new TextDecoder().decode(chunk)
 
     if (firstChunk) {
       firstChunk = false
-      // hasStarted = true
-      // Process the first chunk with head tags
       const processedContent = await renderSSRStreamComponents(head, `${htmlStart}${chunkStr}`)
       yield processedContent
     }
     else if (chunkStr.includes('data-unhead-stream')) {
-      // Process chunks with unhead-stream markers
       const processedChunk = await renderSSRStreamComponents(head, chunkStr)
       yield processedChunk
     }
     else {
-      // Pass through other chunks unchanged
       yield chunkStr
     }
   }
 
-  // Add the final HTML
   const headHtml = await renderSSRHead(head)
   yield htmlEnd.replace('</body>', `${headHtml.bodyTags}</body>`)
 }

@@ -5,7 +5,6 @@ export default {
     return () => {
       return h('script', {
         ['data-unhead-stream']: true,
-        'v-once': true,
         innerHTML: '<!--[unhead-stream]-->',
       })
     }

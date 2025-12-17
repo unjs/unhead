@@ -12,8 +12,6 @@
     "build:server:noExternal": "vite build --config vite.config.noexternal.js --ssr src/entry-server.js --outDir dist/server",
     "generate": "vite build --ssrManifest --outDir dist/static && npm run build:server && node prerender --experimental-json-modules ",
     "serve": "NODE_ENV=production node server",
-    "serve:bot-detection": "NODE_ENV=production node server-with-bot-detection",
-    "dev:bot-detection": "node server-with-bot-detection",
     "debug": "node --inspect-brk server"
   },
   "dependencies": {
