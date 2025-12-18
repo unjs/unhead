@@ -390,7 +390,7 @@ describe('streaming SSR - error handling', () => {
 
       // Push with problematic but valid data
       head.push({ meta: [{ name: '', content: '' }] })
-      const _chunk1 = await renderSSRHeadSuspenseChunk(head)
+      await renderSSRHeadSuspenseChunk(head)
 
       // Continue with valid data
       head.push({ title: 'Still Working' })

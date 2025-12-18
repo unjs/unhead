@@ -1,10 +1,13 @@
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineProject } from 'vitest/config'
 
-// Note: svelte() and svelteTesting() plugins removed to fix magic-string resolution
-// The vite-plugin.test.ts doesn't need svelte processing
 export default defineProject({
+  plugins: [svelte()],
+  resolve: {
+    conditions: ['browser'],
+  },
   test: {
     globals: true,
   },

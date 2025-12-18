@@ -99,3 +99,6 @@
   ValidHeadTags: object
   VueResolver: function
   walkResolver: function
+./vite-plugin:
+  default: function
+  unheadVuePlugin: function

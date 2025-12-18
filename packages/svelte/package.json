@@ -61,6 +61,12 @@
       "client": [
         "dist/client"
       ],
+      "stream/server": [
+        "dist/stream/server"
+      ],
+      "stream/client": [
+        "dist/stream/client"
+      ],
       "plugins": [
         "dist/plugins"
       ],

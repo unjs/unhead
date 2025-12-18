@@ -99,3 +99,5 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./vite-plugin:
+  createUnheadPlugin: function

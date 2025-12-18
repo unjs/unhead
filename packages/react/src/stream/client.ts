@@ -28,7 +28,7 @@ export function HeadStream(): ReactNode {
 }
 
 export function UnheadProvider({ children, head }: { children: ReactNode, head?: Unhead }) {
-  return createElement(UnheadContext.Provider, { value: head }, children)
+  return createElement(UnheadContext.Provider, { value: head ?? null }, children)
 }
 
 export type {

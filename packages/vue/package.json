@@ -84,6 +84,12 @@
       "client": [
         "dist/client"
       ],
+      "stream/server": [
+        "dist/stream/server"
+      ],
+      "stream/client": [
+        "dist/stream/client"
+      ],
       "types": [
         "dist/types"
       ],
@@ -98,6 +104,9 @@
       ],
       "scripts": [
         "dist/scripts"
+      ],
+      "vite-plugin": [
+        "dist/vite-plugin"
       ]
     }
   },
