@@ -30,6 +30,7 @@ export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient
   return head
 }
 
+/* @__NO_SIDE_EFFECTS__ */
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): VueHeadClient {
   const { streamKey, ...rest } = options
   const head = _createHead({
