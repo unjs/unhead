@@ -54,7 +54,7 @@ function transform(ctx: UnheadPluginContext): boolean {
     s.appendLeft(pos, '<HeadStream />')
 
   const importPath = `@unhead/vue/${isSSR ? 'server' : 'client'}`
-  const scriptMatch = code.match(/<script[^>]*>/)
+  const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
     return true
 

@@ -57,7 +57,7 @@ function transform(ctx: UnheadPluginContext): boolean {
     s.appendLeft(pos, '{@html HeadStream()}')
 
   const importPath = `@unhead/svelte/${isSSR ? 'server' : 'client'}`
-  const scriptMatch = code.match(/<script[^>]*>/)
+  const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
     return true
 
