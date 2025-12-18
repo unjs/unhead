@@ -263,11 +263,6 @@ export interface Unhead<Input = ResolvableHead> {
   _ssrPayload?: ResolvableHead
   /**
    * @internal
-   * @deprecated Use _streamedHashes instead
-   */
-  _rootStreamedTags?: Record<string, HeadTag>
-  /**
-   * @internal
    */
   _streamedHashes?: Set<string>
 }

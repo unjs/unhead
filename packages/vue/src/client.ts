@@ -1,7 +1,7 @@
 import type { CreateClientHeadOptions, CreateStreamableClientHeadOptions } from 'unhead/types'
 import type { VueHeadClient } from './types'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
-import { defineComponent, nextTick } from 'vue'
+import { defineComponent } from 'vue'
 import { vueInstall } from './install'
 import { VueResolver } from './resolver'
 
@@ -22,7 +22,7 @@ export const HeadStream = defineComponent({
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   const head = _createHead({
     domOptions: {
-      render: createDebouncedFn(() => renderDOMHead(head), nextTick),
+      render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
     ...options,
   }) as VueHeadClient
@@ -37,7 +37,7 @@ export function createStreamableHead(options: CreateStreamableClientHeadOptions 
     experimentalStreamKey: streamKey,
     propResolvers: [VueResolver],
     domOptions: {
-      render: createDebouncedFn(() => renderDOMHead(head), nextTick),
+      render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
   }) as VueHeadClient
   head.install = vueInstall(head)
