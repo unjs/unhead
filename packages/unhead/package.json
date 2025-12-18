@@ -41,6 +41,14 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
@@ -60,6 +68,10 @@
     "./parser": {
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
+    },
+    "./vite-plugin": {
+      "types": "./dist/vite-plugin.d.ts",
+      "default": "./dist/vite-plugin.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -101,6 +113,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "catalog:"
+    "hookable": "catalog:",
+    "magic-string": "catalog:"
   }
 }

@@ -1,13 +1,4 @@
 <script lang="ts">
-import { h } from 'vue'
-
-/**
- * Renders a marker that triggers head updates during streaming SSR.
- * Place this after async components that call useHead/useServerHead.
- */
-export default {
-  setup() {
-    return () => h('script', { innerHTML: '<!--[unhead-ssr]-->' })
-  }
-}
+// Re-export HeadStream from @unhead/vue/server
+export { HeadStream as default } from '@unhead/vue/server'
 </script>

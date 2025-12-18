@@ -1,4 +1,7 @@
 import type { HeadTag, SerializableHead, Unhead } from '../types'
+import { tagWeight } from '../utils'
+import { dedupeKey } from '../utils/dedupe'
+import { normalizeEntryToTags } from '../utils/normalize'
 import { renderSSRHead } from './renderSSRHead'
 
 // Default key for window attachment
@@ -90,7 +93,61 @@ export async function renderSSRHeadSuspenseChunk(head: Unhead<any>): Promise<str
   }
 
   const currentTags = await head.resolveTags()
+  return buildHeadChunk(head, currentTags)
+}
+
+/**
+ * @experimental
+ *
+ * Synchronous version of renderSSRHeadSuspenseChunk for use in React components.
+ * Normalizes entries inline without hook calls, so some plugin transformations may be skipped.
+ *
+ * This is useful for React's HeadStream component which needs to output the
+ * push code directly during render (no stream transformation needed).
+ *
+ * @param head - The Unhead instance (must have called renderSSRHeadShell first)
+ * @returns Script content to push new head entries, or empty string if no updates
+ */
+export function renderSSRHeadSuspenseChunkSync(head: Unhead<any>): string {
+  if (!head._streamedHashes) {
+    head._streamedHashes = new Set()
+  }
+
+  // Build tags synchronously from current entries
+  // For entries with _tags already set (normalized), use those
+  // For new entries, do inline normalization (skips hooks)
+  const currentTags: HeadTag[] = []
+  for (const entry of head.headEntries()) {
+    if (entry._tags) {
+      currentTags.push(...entry._tags)
+    }
+    else if (entry.input) {
+      // Inline normalization for new entries - this skips hooks but works for basic cases
+      const tags = normalizeEntryToTags(entry.input, head.resolvedOptions.propResolvers || [])
+      for (let i = 0; i < tags.length; i++) {
+        const t = tags[i]
+        Object.assign(t, entry.options)
+        t._w = tagWeight(head, t)
+        t._p = (entry._i << 10) + i
+        t._d = dedupeKey(t)
+        currentTags.push(t)
+      }
+      // Cache for future calls
+      entry._tags = tags
+    }
+  }
+
+  return buildHeadChunk(head, currentTags)
+}
+
+/**
+ * Shared logic for building head chunk from tags
+ */
+function buildHeadChunk(head: Unhead<any>, currentTags: HeadTag[]): string {
   const newTags = currentTags.filter((tag) => {
+    // Exclude body-positioned tags - they go in renderSSRHeadClosing
+    if (tag.tagPosition === 'bodyClose' || tag.tagPosition === 'bodyOpen')
+      return false
     const hash = hashTag(tag)
     if (head._streamedHashes!.has(hash))
       return false
@@ -103,7 +160,17 @@ export async function renderSSRHeadSuspenseChunk(head: Unhead<any>): Promise<str
 
   const streamKey = getStreamKey(head)
   const serializedHead = tagsToSerializableHead(newTags)
-  return `window.${streamKey}.push(${JSON.stringify(serializedHead)})`
+  return `window.${streamKey}.push(${safeJsonStringify(serializedHead)})`
+}
+
+/**
+ * Safe JSON stringify that escapes characters that could break script context
+ */
+function safeJsonStringify(obj: any): string {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
 }
 
 /**
@@ -180,8 +247,33 @@ function serializeAttrs(props: Record<string, any>): Record<string, any> {
  * Create a hash for a tag to detect duplicates/changes
  */
 function hashTag(tag: HeadTag): string {
-  return `${tag.tag}:${tag._d || ''}:${tag.textContent || ''}:${JSON.stringify(tag.props)}`
+  return `${tag.tag}:${tag._d || ''}:${tag.textContent || ''}:${serializePropsForHash(tag.props)}`
 }
+
+/**
+ * Serialize props for hashing, handling Set and Map values
+ */
+function serializePropsForHash(props: Record<string, any>): string {
+  const serialized: Record<string, any> = {}
+  for (const [key, value] of Object.entries(props)) {
+    if (value instanceof Set) {
+      serialized[key] = [...value].sort().join(' ')
+    }
+    else if (value instanceof Map) {
+      serialized[key] = Object.fromEntries(value)
+    }
+    else {
+      serialized[key] = value
+    }
+  }
+  return JSON.stringify(serialized)
+}
+
+/**
+ * Marker that HeadStream components output inside a script tag.
+ * This gets replaced with the actual head update JS code during streaming.
+ */
+export const STREAM_MARKER = '/*__UNHEAD_SSR__*/'
 
 /**
  * @experimental
@@ -189,14 +281,14 @@ function hashTag(tag: HeadTag): string {
  * Convenience wrapper that streams an app with automatic head management.
  * Uses renderSSRHeadShell, renderSSRHeadSuspenseChunk, and renderSSRHeadClosing internally.
  *
- * Looks for `<!--[unhead-ssr]-->` markers in chunks to inject head updates.
+ * Looks for STREAM_MARKER markers in chunks to inject head updates.
  *
  * @param appStream - The async iterable stream of app chunks
  * @param template - HTML template containing <html>, </head>, <body>, and <!--app-html--> placeholder
  * @param head - The Unhead instance for this request
  * @yields Processed HTML chunks with head updates applied
  */
-export async function* streamAppWithUnhead(
+export async function* streamWithHead(
   appStream: AsyncIterable<Uint8Array | string>,
   template: string,
   head: Unhead<any>,
@@ -214,9 +306,10 @@ export async function* streamAppWithUnhead(
       firstChunk = false
       yield shell + chunkStr
     }
-    else if (chunkStr.includes('<!--[unhead-ssr]-->')) {
+    else if (chunkStr.includes(STREAM_MARKER)) {
       const headUpdate = await renderSSRHeadSuspenseChunk(head)
-      yield chunkStr.replace('<!--[unhead-ssr]-->', headUpdate ? `<script>${headUpdate}</script>` : '')
+      // Replace all markers - the marker is inside a <script> tag, so we just replace with the JS code
+      yield chunkStr.replaceAll(STREAM_MARKER, headUpdate || '')
     }
     else {
       yield chunkStr

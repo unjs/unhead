@@ -8,6 +8,8 @@
   useUnhead: function
 ./client:
   createHead: function
+  createStreamableHead: function
+  HeadStream: function
   renderDOMHead: function
   UnheadProvider: function
 ./plugins:
@@ -22,9 +24,29 @@
   TemplateParamsPlugin: function
 ./server:
   createHead: function
+  createStreamableHead: function
   extractUnheadInputFromHtml: function
+  HeadStream: function
   renderSSRHead: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  streamWithHead: function
+  SuspenseWithHead: function
   transformHtmlTemplate: function
+  UnheadProvider: function
+./stream/client:
+  createStreamableHead: function
+  HeadStream: function
+  UnheadProvider: function
+./stream/server:
+  createStreamableHead: function
+  HeadStream: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  streamWithHead: function
+  SuspenseWithHead: function
   UnheadProvider: function
 ./utils:
   dedupeKey: function
@@ -50,3 +72,6 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./vite-plugin:
+  default: function
+  unheadReactPlugin: function

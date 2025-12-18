@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { streamAppWithUnhead } from "@unhead/vue/server";
+import { streamWithHead } from "@unhead/vue/server";
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -64,7 +64,7 @@ export async function createServer(
     )
   }
 
-  app.use('*', async (req, res) => {
+  app.use(async (req, res) => {
     try {
       const url = req.originalUrl.replace('/test/', '/')
 
@@ -85,8 +85,8 @@ export async function createServer(
 
       res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
-      // streamAppWithUnhead handles shell, suspense chunks, and closing
-      for await (const chunk of streamAppWithUnhead(vueStream, template, head)) {
+      // streamWithHead handles shell, suspense chunks, and closing
+      for await (const chunk of streamWithHead(vueStream, template, head)) {
         if (res.closed) break
         res.write(chunk)
       }

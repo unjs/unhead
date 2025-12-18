@@ -11,6 +11,7 @@
 ./client:
   createDebouncedFn: function
   createHead: function
+  createStreamableHead: function
   renderDOMHead: function
 ./legacy:
   activeHead: object
@@ -48,14 +49,31 @@
   useScript: function
 ./server:
   createHead: function
+  createStreamableHead: function
   escapeHtml: function
   extractUnheadInputFromHtml: function
   propsToString: function
   renderSSRHead: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  renderSSRHeadSuspenseChunkSync: function
   ssrRenderTags: function
+  STREAM_MARKER: string
+  streamWithHead: function
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
+./stream/client:
+  createStreamableHead: function
+./stream/server:
+  createStreamableHead: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  renderSSRHeadSuspenseChunkSync: function
+  STREAM_MARKER: string
+  streamWithHead: function
 ./types: {}
 ./utils:
   dedupeKey: function

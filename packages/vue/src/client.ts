@@ -1,12 +1,22 @@
 import type { CreateClientHeadOptions, CreateStreamableClientHeadOptions } from 'unhead/types'
 import type { VueHeadClient } from './types'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
-import { nextTick } from 'vue'
+import { defineComponent, nextTick } from 'vue'
 import { vueInstall } from './install'
 import { VueResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
 export { renderDOMHead } from 'unhead/client'
+
+/**
+ * Client-side HeadStream - renders nothing since head updates are applied via window.__unhead__
+ */
+export const HeadStream = defineComponent({
+  name: 'HeadStream',
+  setup() {
+    return () => null
+  },
+})
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {

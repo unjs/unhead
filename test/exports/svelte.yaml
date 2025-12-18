@@ -8,6 +8,8 @@
   useUnhead: function
 ./client:
   createHead: function
+  createStreamableHead: function
+  HeadStream: function
   renderDOMHead: function
   UnheadContextKey: symbol
 ./plugins:
@@ -22,9 +24,27 @@
   TemplateParamsPlugin: function
 ./server:
   createHead: function
+  createStreamableHead: function
   extractUnheadInputFromHtml: function
+  HeadStream: function
   renderSSRHead: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  streamWithHead: function
   transformHtmlTemplate: function
+  UnheadContextKey: symbol
+./stream/client:
+  createStreamableHead: function
+  HeadStream: function
+  UnheadContextKey: symbol
+./stream/server:
+  createStreamableHead: function
+  HeadStream: function
+  renderSSRHeadClosing: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  streamWithHead: function
   UnheadContextKey: symbol
 ./utils:
   dedupeKey: function
@@ -50,3 +70,6 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./vite-plugin:
+  default: function
+  unheadSveltePlugin: function

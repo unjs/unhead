@@ -268,7 +268,6 @@ export interface Unhead<Input = ResolvableHead> {
   _rootStreamedTags?: Record<string, HeadTag>
   /**
    * @internal
-   * Tracks hashes of tags that have been streamed
    */
   _streamedHashes?: Set<string>
 }

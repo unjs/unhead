@@ -12,7 +12,8 @@
     "build:server:noExternal": "vite build --config vite.config.noexternal.js --ssr src/entry-server.js --outDir dist/server",
     "generate": "vite build --ssrManifest --outDir dist/static && npm run build:server && node prerender --experimental-json-modules ",
     "serve": "NODE_ENV=production node server",
-    "debug": "node --inspect-brk server"
+    "debug": "node --inspect-brk server",
+    "test": "playwright test"
   },
   "dependencies": {
     "@unhead/dom": "workspace:*",
@@ -26,6 +27,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@vitejs/plugin-vue": "latest",
     "@vitejs/plugin-vue-jsx": "latest",
     "compression": "^1.8.1",

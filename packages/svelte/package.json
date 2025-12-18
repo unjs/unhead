@@ -29,6 +29,14 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
@@ -36,6 +44,10 @@
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
+    },
+    "./vite-plugin": {
+      "types": "./dist/vite-plugin.d.ts",
+      "default": "./dist/vite-plugin.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -48,6 +60,15 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "plugins": [
+        "dist/plugins"
+      ],
+      "utils": [
+        "dist/utils"
+      ],
+      "vite-plugin": [
+        "dist/vite-plugin"
       ]
     }
   },
@@ -71,6 +92,8 @@
     ]
   },
   "dependencies": {
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {

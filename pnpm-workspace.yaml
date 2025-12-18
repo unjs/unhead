@@ -52,6 +52,7 @@ catalog:
   jsdom: ^27.3.0
   magic-string: ^0.30.21
   mlly: ^1.8.0
+  oxc-parser: ^0.103.0
   react: ^19.2.3
   react-dom: ^19.2.3
   rollup: ^4.53.5

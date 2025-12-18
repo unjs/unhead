@@ -6,7 +6,9 @@ export {
   renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-  streamAppWithUnhead,
+  renderSSRHeadSuspenseChunkSync,
+  STREAM_MARKER,
+  streamWithHead,
 } from './streamAppWithUnhead'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'

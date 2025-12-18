@@ -1,6 +1,6 @@
 import type { CreateHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
 import { JSDOM } from 'jsdom'
-import { createHead as createClientHead, createStreamableHead as createClientStreamableHead } from '../src/client'
+import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead, createStreamableHead as createServerStreamableHead } from '../src/server'
 
 export function createClientHeadWithContext(resolvedOptions: CreateHeadOptions = {}) {

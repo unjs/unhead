@@ -34,14 +34,15 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   })
 
   // Consume streaming queue if present
-  if (typeof window !== 'undefined') {
-    const streamQueue = (window as any)[streamKey] as UnheadStreamQueue | undefined
+  const win = options.document?.defaultView || (typeof window !== 'undefined' ? window : undefined)
+  if (win) {
+    const streamQueue = (win as any)[streamKey] as UnheadStreamQueue | undefined
     if (streamQueue) {
       const queue = streamQueue._q || []
       // Process queued entries from streaming
       queue.forEach(entry => head.push(entry as T))
       // Replace queue with direct push to head instance
-      ;(window as any)[streamKey] = {
+      ;(win as any)[streamKey] = {
         _q: [],
         push: (entry: SerializableHead) => head.push(entry as T),
       }
