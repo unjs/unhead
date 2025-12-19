@@ -85,8 +85,13 @@ export async function createServer(
 
       res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
+      // Client script path for early head processing
+      const clientScript = isProd
+        ? '/test/assets/head-client.js' // TODO: resolve from manifest
+        : '/test/src/head-client.ts'
+
       // streamWithHead handles shell, suspense chunks, and closing
-      for await (const chunk of streamWithHead(vueStream, template, head)) {
+      for await (const chunk of streamWithHead(vueStream, template, head, { clientScript, debug: true })) {
         if (res.closed) break
         res.write(chunk)
       }

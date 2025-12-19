@@ -1,12 +1,16 @@
 import { hydrateRoot } from 'react-dom/client'
-import { createStreamableHead, UnheadProvider } from '@unhead/react/client'
+import { BrowserRouter } from 'react-router-dom'
+import { UnheadProvider } from '@unhead/react/client'
 import App from './App'
 
-const head = createStreamableHead()
+// Reuse head instance created by head-client.ts (loaded early in <head>)
+const head = (window as any).__unheadInstance__
 
 hydrateRoot(
   document.getElementById('app')!,
   <UnheadProvider head={head}>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </UnheadProvider>
 )

@@ -189,4 +189,63 @@ describe('streaming client hydration', () => {
       expect(descriptions[0].getAttribute('content')).toBe('Updated')
     })
   })
+
+  describe('style tag updates with key', () => {
+    it('updates style innerHTML when pushing styles with same key', async () => {
+      const { window, document } = setupStreamingDom([])
+
+      createStreamableHead({ document })
+      await waitForDomUpdate()
+
+      // First push - creates style element
+      window.__unhead__.push({
+        style: [{ key: 'progress', innerHTML: '.progress{width:10%}' }],
+      })
+      await waitForDomUpdate()
+
+      let styles = document.querySelectorAll('style')
+      expect(styles.length).toBe(1)
+      expect(styles[0].innerHTML).toBe('.progress{width:10%}')
+
+      // Second push with same key - should update, not create new
+      window.__unhead__.push({
+        style: [{ key: 'progress', innerHTML: '.progress{width:50%}' }],
+      })
+      await waitForDomUpdate()
+
+      styles = document.querySelectorAll('style')
+      expect(styles.length).toBe(1)
+      expect(styles[0].innerHTML).toBe('.progress{width:50%}')
+
+      // Third push with same key
+      window.__unhead__.push({
+        style: [{ key: 'progress', innerHTML: '.progress{width:100%}' }],
+      })
+      await waitForDomUpdate()
+
+      styles = document.querySelectorAll('style')
+      expect(styles.length).toBe(1)
+      expect(styles[0].innerHTML).toBe('.progress{width:100%}')
+    })
+
+    it('creates separate styles for different keys', async () => {
+      const { window, document } = setupStreamingDom([])
+
+      createStreamableHead({ document })
+      await waitForDomUpdate()
+
+      window.__unhead__.push({
+        style: [{ key: 'one', innerHTML: '.one{color:red}' }],
+      })
+      await waitForDomUpdate()
+
+      window.__unhead__.push({
+        style: [{ key: 'two', innerHTML: '.two{color:blue}' }],
+      })
+      await waitForDomUpdate()
+
+      const styles = document.querySelectorAll('style')
+      expect(styles.length).toBe(2)
+    })
+  })
 })

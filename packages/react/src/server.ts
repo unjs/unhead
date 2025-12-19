@@ -13,6 +13,7 @@ export {
   renderSSRHeadSuspenseChunk,
   streamWithHead,
 } from 'unhead/stream/server'
+export type { RenderSSRHeadShellOptions, StreamWithHeadOptions } from 'unhead/stream/server'
 
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
   return _createStreamableHead(options)
@@ -32,11 +33,13 @@ export function UnheadProvider({ children, value }: { children?: ReactNode, valu
  */
 export function HeadStream(): ReactNode {
   const head = useContext(UnheadContext)
+  console.log('[HeadStream] rendering, head exists:', !!head)
   if (!head)
     return null
 
   // Try to get head updates synchronously first
   const update = renderSSRHeadSuspenseChunkSync(head)
+  console.log('[HeadStream] update:', update ? update.substring(0, 100) : 'none')
 
   // If we got updates, output them directly (no middleware needed)
   if (update)
@@ -44,6 +47,28 @@ export function HeadStream(): ReactNode {
 
   // Fall back to marker for middleware-based replacement
   return createElement('script', { dangerouslySetInnerHTML: { __html: STREAM_MARKER } })
+}
+
+/**
+ * Streaming script component - outputs inline script with current head state.
+ * Use this in components that call useHead() to stream head updates immediately.
+ * The Vite plugin with streaming: true auto-injects this.
+ */
+export function HeadStreamScript(): ReactNode {
+  const head = useContext(UnheadContext)
+  if (!head)
+    return null
+
+  // Get any new head entries since last stream
+  const update = renderSSRHeadSuspenseChunkSync(head)
+
+  if (!update)
+    return null
+
+  // Output script that will execute as it streams
+  return createElement('script', {
+    dangerouslySetInnerHTML: { __html: update },
+  })
 }
 
 /**

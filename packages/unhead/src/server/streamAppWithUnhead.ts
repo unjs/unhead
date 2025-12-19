@@ -11,8 +11,25 @@ function getStreamKey(head: Unhead<any>): string {
   return head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
 }
 
-function createBootstrapScript(key: string): string {
-  return `<script>window.${key}={_q:[],push(e){this._q.push(e)}}</script>`
+function createBootstrapScript(key: string, debug = false): string {
+  if (debug) {
+    return `<script>window.${key}={_q:[],push(e){console.log('['+Date.now()+'] [unhead:stream] push',e);this._q.push(e);if(window.__headLog){var d=e.title?'title: '+e.title.slice(0,20):e.meta?'meta: '+(e.meta[0].name||e.meta[0].property||'other'):e.script?'script: ld+json':'update';window.__headLog(d)}}};console.log('['+Date.now()+'] [unhead:stream] bootstrap ready')</script>`
+  }
+  return `<script>window.${key}={_q:[],push(e){this._q.push(e);if(window.__headLog){var d=e.title?'title: '+e.title.slice(0,20):e.meta?'meta: '+(e.meta[0].name||e.meta[0].property||'other'):e.script?'script: ld+json':'update';window.__headLog(d)}}}</script>`
+}
+
+export interface RenderSSRHeadShellOptions {
+  /**
+   * URL to the unhead client script to load async in head.
+   * This enables immediate processing of streamed head updates.
+   * In dev: '/src/head-client.ts'
+   * In prod: '/assets/head-client-[hash].js'
+   */
+  clientScript?: string
+  /**
+   * Enable debug logging in browser console
+   */
+  debug?: boolean
 }
 
 /**
@@ -23,6 +40,7 @@ function createBootstrapScript(key: string): string {
  *
  * @param head - The Unhead instance
  * @param template - HTML template string containing <html>, <head>, </head>, <body>
+ * @param options - Optional settings for client script injection
  * @returns Rendered shell with head tags and streaming bootstrap injected
  *
  * @example
@@ -32,11 +50,11 @@ function createBootstrapScript(key: string): string {
  *   <html>
  *   <head></head>
  *   <body>
- * `)
+ * `, { clientScript: '/src/head-client.ts' })
  * res.write(shell)
  * ```
  */
-export async function renderSSRHeadShell(head: Unhead<any>, template: string): Promise<string> {
+export async function renderSSRHeadShell(head: Unhead<any>, template: string, options: RenderSSRHeadShellOptions = {}): Promise<string> {
   // Initialize streaming state
   head._streamedHashes = new Set()
 
@@ -51,9 +69,18 @@ export async function renderSSRHeadShell(head: Unhead<any>, template: string): P
 
   let html = template
 
-  // Inject head tags and bootstrap before </head>
+  // Inject bootstrap script at START of <head> so it's available immediately
+  // Also inject client script if provided (async module to process updates during streaming)
+  const clientScriptTag = options.clientScript
+    ? `<script type="module" async src="${options.clientScript}"></script>`
+    : ''
+  if (html.includes('<head>')) {
+    html = html.replace('<head>', `<head>${createBootstrapScript(streamKey, options.debug)}${clientScriptTag}`)
+  }
+
+  // Inject head tags before </head>
   if (html.includes('</head>')) {
-    html = html.replace('</head>', `${ssr.headTags}${createBootstrapScript(streamKey)}</head>`)
+    html = html.replace('</head>', `${ssr.headTags}</head>`)
   }
 
   // Apply html attrs
@@ -113,11 +140,13 @@ export function renderSSRHeadSuspenseChunkSync(head: Unhead<any>): string {
     head._streamedHashes = new Set()
   }
 
+  const entries = head.headEntries()
+
   // Build tags synchronously from current entries
   // For entries with _tags already set (normalized), use those
   // For new entries, do inline normalization (skips hooks)
   const currentTags: HeadTag[] = []
-  for (const entry of head.headEntries()) {
+  for (const entry of entries) {
     if (entry._tags) {
       currentTags.push(...entry._tags)
     }
@@ -146,8 +175,9 @@ export function renderSSRHeadSuspenseChunkSync(head: Unhead<any>): string {
 function buildHeadChunk(head: Unhead<any>, currentTags: HeadTag[]): string {
   const newTags = currentTags.filter((tag) => {
     // Exclude body-positioned tags - they go in renderSSRHeadClosing
-    if (tag.tagPosition === 'bodyClose' || tag.tagPosition === 'bodyOpen')
+    if (tag.tagPosition === 'bodyClose' || tag.tagPosition === 'bodyOpen') {
       return false
+    }
     const hash = hashTag(tag)
     if (head._streamedHashes!.has(hash))
       return false
@@ -209,6 +239,8 @@ function tagsToSerializableHead(tags: HeadTag[]): SerializableHead {
     else {
       const tagArray = (head as any)[tag.tag] = (head as any)[tag.tag] || []
       const serialized: Record<string, any> = { ...tag.props }
+      if (tag.key)
+        serialized.key = tag.key
       if (tag.innerHTML)
         serialized.innerHTML = tag.innerHTML
       if (tag.textContent)
@@ -247,7 +279,7 @@ function serializeAttrs(props: Record<string, any>): Record<string, any> {
  * Create a hash for a tag to detect duplicates/changes
  */
 function hashTag(tag: HeadTag): string {
-  return `${tag.tag}:${tag._d || ''}:${tag.textContent || ''}:${serializePropsForHash(tag.props)}`
+  return `${tag.tag}:${tag._d || ''}:${tag.textContent || ''}:${tag.innerHTML || ''}:${serializePropsForHash(tag.props)}`
 }
 
 /**
@@ -275,6 +307,8 @@ function serializePropsForHash(props: Record<string, any>): string {
  */
 export const STREAM_MARKER = '/*__UNHEAD_SSR__*/'
 
+export interface StreamWithHeadOptions extends RenderSSRHeadShellOptions {}
+
 /**
  * @experimental
  *
@@ -286,18 +320,20 @@ export const STREAM_MARKER = '/*__UNHEAD_SSR__*/'
  * @param appStream - The async iterable stream of app chunks
  * @param template - HTML template containing <html>, </head>, <body>, and <!--app-html--> placeholder
  * @param head - The Unhead instance for this request
+ * @param options - Optional settings for client script injection
  * @yields Processed HTML chunks with head updates applied
  */
 export async function* streamWithHead(
   appStream: AsyncIterable<Uint8Array | string>,
   template: string,
   head: Unhead<any>,
+  options: StreamWithHeadOptions = {},
 ): AsyncGenerator<string> {
   const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
   let firstChunk = true
 
   // Render shell with initial head
-  const shell = await renderSSRHeadShell(head, htmlStart)
+  const shell = await renderSSRHeadShell(head, htmlStart, options)
 
   for await (const chunk of appStream) {
     const chunkStr = typeof chunk === 'string' ? chunk : new TextDecoder().decode(chunk)

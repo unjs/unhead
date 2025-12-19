@@ -21,7 +21,6 @@
       /* Loaded components - pop in with animation */
       .slow-component { padding: 20px; border-radius: 8px; margin: 10px 0; animation: slideIn 0.3s ease-out; background: #2a1a1a !important; border-left: 4px solid #f00 !important; border: none !important; }
       .slow-component-two { background: #2a2a1a !important; border-left: 4px solid #fa0 !important; }
-      .slow-component-three { background: #1a2a1a !important; border-left: 4px solid #0f0 !important; }
 
       @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
@@ -32,14 +31,14 @@
       .head-entry.new { color: #0f0; animation: flash 0.5s; }
       @keyframes flash { from { background: #0f03; } to { background: transparent; } }
 
-      /* Vue logo */
+      /* Svelte logo */
       .logo { height: 6em; padding: 1.5em; }
-      .logo:hover { filter: drop-shadow(0 0 2em #42b883aa); }
+      .logo:hover { filter: drop-shadow(0 0 2em #ff3e00aa); }
     </style>
   </head>
   <body>
-    <div id="stream-log"><h3>⏱️ Stream Timeline</h3><div id="log-entries"></div></div>
-    <div id="head-updates"><h3>🔄 Head Updates</h3><div id="head-entries"></div></div>
+    <div id="stream-log"><h3>Stream Timeline</h3><div id="log-entries"></div></div>
+    <div id="head-updates"><h3>Head Updates</h3><div id="head-entries"></div></div>
     <div id="app"><!--app-html--></div>
     <script>
       // Track streaming chunks
@@ -59,12 +58,11 @@
           m.addedNodes.forEach(node => {
             if (node.nodeType === 1) {
               const check = (el) => {
-                if (el.classList?.contains('slow-component-three') && !seen.has('three')) { seen.add('three'); log('SlowComponentThree loaded', '#0f0'); }
-                else if (el.classList?.contains('slow-component-two') && !seen.has('two')) { seen.add('two'); log('SlowComponentTwo loaded', '#fa0'); }
+                if (el.classList?.contains('slow-component-two') && !seen.has('two')) { seen.add('two'); log('SlowComponentTwo loaded', '#fa0'); }
                 else if (el.classList?.contains('slow-component') && !seen.has('one')) { seen.add('one'); log('SlowComponent loaded', '#f00'); }
               };
               check(node);
-              node.querySelectorAll?.('.slow-component, .slow-component-two, .slow-component-three').forEach(check);
+              node.querySelectorAll?.('.slow-component, .slow-component-two').forEach(check);
             }
           });
         });
@@ -95,6 +93,6 @@
       });
       headObserver.observe(document.head, { childList: true, subtree: true });
     </script>
-    <script type="module" src="/src/entry-client.js"></script>
+    <script type="module" src="/src/entry-client.ts"></script>
   </body>
 </html>

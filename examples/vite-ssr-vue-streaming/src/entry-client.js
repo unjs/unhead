@@ -3,8 +3,9 @@ import { VueHeadMixin, createStreamableHead } from "@unhead/vue/client";
 
 const { app, router } = createApp()
 
-// Use createStreamableHead to consume streaming queue
-const head = createStreamableHead()
+// Reuse head instance created by head-client.ts (loaded early in <head>)
+// Falls back to creating new one if head-client didn't load
+const head = (window).__unheadInstance__ || createStreamableHead()
 app.use(head)
 app.mixin(VueHeadMixin)
 

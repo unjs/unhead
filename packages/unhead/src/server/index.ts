@@ -10,5 +10,6 @@ export {
   STREAM_MARKER,
   streamWithHead,
 } from './streamAppWithUnhead'
+export type { RenderSSRHeadShellOptions, StreamWithHeadOptions } from './streamAppWithUnhead'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'

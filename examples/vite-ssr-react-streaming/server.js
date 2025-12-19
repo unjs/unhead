@@ -70,7 +70,7 @@ export async function createServer(
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const { pipe, head, onReady } = render()
+      const { pipe, head, onReady } = render(url)
 
       // Split template at app placeholder
       const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
@@ -81,7 +81,11 @@ export async function createServer(
       res.status(200).set({ 'Content-Type': 'text/html' })
 
       // Render shell with initial head tags
-      const shell = await renderSSRHeadShell(head, htmlStart)
+      // Include head-client script to process streaming updates immediately
+      const clientScript = isProd
+        ? '/assets/head-client.js' // TODO: resolve from manifest
+        : '/src/head-client.ts'
+      const shell = await renderSSRHeadShell(head, htmlStart, { clientScript, debug: true })
       res.write(shell)
 
       // Stream React content

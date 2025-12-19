@@ -11,6 +11,7 @@ export {
   renderSSRHeadSuspenseChunk,
   streamWithHead,
 } from 'unhead/stream/server'
+export type { RenderSSRHeadShellOptions, StreamWithHeadOptions } from 'unhead/stream/server'
 
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
   return _createStreamableHead(options)

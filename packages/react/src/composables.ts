@@ -25,24 +25,47 @@ export function useUnhead(): Unhead {
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
   const entryRef = useRef<T | null>(null)
+  const isStreamEntryRef = useRef(false)
 
   // Create entry only once, even in Strict Mode
   if (!entryRef.current) {
-    entryRef.current = fn(unhead, input, options)
+    // During hydration, adopt streaming entry if available (content-based matching)
+    const streamEntries = (unhead as any)._streamEntries as Array<T & { _streamKey?: string }> | undefined
+
+    if (streamEntries?.length) {
+      const inputKey = JSON.stringify(input)
+      // Find entry matching our input (either unadopted or already adopted by same input)
+      const matchingEntry = streamEntries.find(e => !e._streamKey || e._streamKey === inputKey)
+
+      if (matchingEntry) {
+        matchingEntry._streamKey = inputKey
+        entryRef.current = matchingEntry
+        isStreamEntryRef.current = true
+      }
+      else {
+        // No match found - hydration is complete, clear stream entries to prevent stale references
+        ;(unhead as any)._streamEntries = undefined
+        entryRef.current = fn(unhead, input, options)
+      }
+    }
+    else {
+      entryRef.current = fn(unhead, input, options)
+    }
   }
 
   const entry = entryRef.current
 
-  // Patch entry when input changes
+  // Patch entry when input changes - skip for stream entries (already applied during SSR)
   useEffect(() => {
-    entry?.patch(input)
+    if (!isStreamEntryRef.current) {
+      entry?.patch(input)
+    }
   }, [input, entry])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       entry?.dispose()
-      // Clear ref so new entry is created on remount
       entryRef.current = null
     }
   }, [entry])

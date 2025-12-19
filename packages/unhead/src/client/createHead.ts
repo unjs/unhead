@@ -39,12 +39,22 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     const streamQueue = (win as any)[streamKey] as UnheadStreamQueue | undefined
     if (streamQueue) {
       const queue = streamQueue._q || []
-      // Process queued entries from streaming
-      queue.forEach(entry => head.push(entry as T))
-      // Replace queue with direct push to head instance
+      // Process queued entries from streaming and track them for hydration adoption
+      const streamEntries: ReturnType<typeof head.push>[] = []
+      queue.forEach((entry) => {
+        streamEntries.push(head.push(entry as T))
+      })
+      // Store streaming entries for React hydration to adopt (with index tracker)
+      head._streamEntries = streamEntries
+      head._streamIndex = { value: 0 }
+      // Replace queue with direct push to head instance - also track live pushes for hydration
       ;(win as any)[streamKey] = {
         _q: [],
-        push: (entry: SerializableHead) => head.push(entry as T),
+        push: (entry: SerializableHead) => {
+          const activeEntry = head.push(entry as T)
+          // Track live push entries for hydration adoption too
+          head._streamEntries?.push(activeEntry)
+        },
       }
     }
   }

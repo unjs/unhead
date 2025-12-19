@@ -7,4 +7,5 @@ export {
   STREAM_MARKER,
   streamWithHead,
 } from '../server/streamAppWithUnhead'
+export type { RenderSSRHeadShellOptions, StreamWithHeadOptions } from '../server/streamAppWithUnhead'
 export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'

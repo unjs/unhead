@@ -5,8 +5,8 @@ import { unheadReactPlugin } from '@unhead/react/vite-plugin'
 export default defineConfig({
   plugins: [
     react(),
-    // Automatically transforms Suspense → SuspenseWithHead in files using useHead
-    unheadReactPlugin(),
+    // Streaming mode: transforms useHead() calls to output inline scripts during SSR streaming
+    unheadReactPlugin({ streaming: true }),
   ],
   build: {
     minify: false,
