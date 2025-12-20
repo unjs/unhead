@@ -25,52 +25,20 @@ export function useUnhead(): Unhead {
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
   const entryRef = useRef<T | null>(null)
-  const isStreamEntryRef = useRef(false)
 
   // Create entry only once, even in Strict Mode
   if (!entryRef.current) {
     // During hydration, adopt streaming entry if available
     // Check _hydrationComplete flag to avoid adopting stale entries after navigation
-    const streamEntries = (unhead as any)._hydrationComplete
-      ? undefined
-      : (unhead as any)._streamEntries as Array<T & { _streamKey?: string }> | undefined
-
-    if (streamEntries?.length) {
-      const inputKey = JSON.stringify(input)
-      // Find entry matching our input (either unadopted or already adopted by same input)
-      const matchingEntry = streamEntries.find(e => !e._streamKey || e._streamKey === inputKey)
-
-      if (matchingEntry) {
-        matchingEntry._streamKey = inputKey
-        entryRef.current = matchingEntry
-        isStreamEntryRef.current = true
-      }
-      else {
-        // No match found - hydration is complete, mark and create fresh
-        ;(unhead as any)._hydrationComplete = true
-        entryRef.current = fn(unhead, input, options)
-      }
-    }
-    else {
-      entryRef.current = fn(unhead, input, options)
-    }
+    entryRef.current = fn(unhead, input, options)
   }
 
   const entry = entryRef.current
 
   // Patch entry when input changes - skip for stream entries (already applied during SSR)
   useEffect(() => {
-    if (!isStreamEntryRef.current) {
-      entry?.patch(input)
-    }
+    entry?.patch(input)
   }, [input, entry])
-
-  // Mark hydration complete after first effect runs - prevents stale stream entry adoption on navigation
-  useEffect(() => {
-    if (isStreamEntryRef.current && !(unhead as any)._hydrationComplete) {
-      ;(unhead as any)._hydrationComplete = true
-    }
-  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
