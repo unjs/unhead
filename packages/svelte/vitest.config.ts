@@ -4,7 +4,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineProject } from 'vitest/config'
 
 export default defineProject({
-  plugins: [svelte()],
+  plugins: [svelte() as any],
   resolve: {
     conditions: ['browser'],
   },

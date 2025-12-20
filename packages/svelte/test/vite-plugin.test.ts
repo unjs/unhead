@@ -54,7 +54,7 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/client\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/stream/client\'')
     })
 
     it('adds HeadStreamScript import from server for SSR builds', () => {
@@ -67,14 +67,14 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/server\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/stream/server\'')
     })
 
     it('adds HeadStreamScript to existing server import for SSR builds', () => {
       const code = `
         <script>
           import { useHead } from '@unhead/svelte'
-          import { createStreamableHead } from '@unhead/svelte/server'
+          import { createStreamableHead } from '@unhead/svelte/stream/server'
           useHead({ title: 'Test' })
         </script>
         <div>Hello</div>

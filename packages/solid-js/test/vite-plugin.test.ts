@@ -54,7 +54,7 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/client\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/stream/client\'')
     })
 
     it('adds HeadStreamScript import from server for SSR builds', () => {
@@ -67,13 +67,13 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/server\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/stream/server\'')
     })
 
     it('adds HeadStreamScript to existing server import for SSR builds', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'
-        import { createStreamableHead } from '@unhead/solid-js/server'
+        import { createStreamableHead } from '@unhead/solid-js/stream/server'
         export function App() {
           useHead({ title: 'Test' })
           return <div>Hello</div>

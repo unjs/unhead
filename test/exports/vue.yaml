@@ -15,8 +15,6 @@
   VueHeadMixin: object
 ./client:
   createHead: function
-  createStreamableHead: function
-  HeadStreamScript: object
   renderDOMHead: function
   VueHeadMixin: object
 ./components:
@@ -51,15 +49,9 @@
   useScript: function
 ./server:
   createHead: function
-  createStreamableHead: function
   extractUnheadInputFromHtml: function
-  HeadStreamScript: object
   propsToString: function
   renderSSRHead: function
-  renderSSRHeadClosing: function
-  renderSSRHeadShell: function
-  renderSSRHeadSuspenseChunk: function
-  streamWithHead: function
   transformHtmlTemplate: function
   VueHeadMixin: object
 ./stream/client:

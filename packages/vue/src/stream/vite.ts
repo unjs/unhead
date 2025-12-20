@@ -18,7 +18,7 @@ function transform(ctx: StreamingPluginContext): boolean {
   s.appendRight(templateStart, '<HeadStreamScript />')
 
   // Add import for HeadStreamScript
-  const importPath = `@unhead/vue/${isSSR ? 'server' : 'client'}`
+  const importPath = `@unhead/vue/stream/${isSSR ? 'server' : 'client'}`
   const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
     return true

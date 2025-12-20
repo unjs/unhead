@@ -7,7 +7,7 @@ import {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
-} from '../src/server'
+} from '../src/stream/server'
 
 describe('svelte streaming SSR', () => {
   describe('createStreamableHead', () => {

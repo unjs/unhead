@@ -5,7 +5,7 @@ import { UnheadContext } from './context'
 
 export { createHead, extractUnheadInputFromHtml, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
-export function UnheadProvider({ children, value }: { children?: ReactNode, value: Unhead }) {
+export function UnheadProvider({ children, value }: { children: ReactNode, value: Unhead }) {
   return createElement(UnheadContext.Provider, { value }, children)
 }
 

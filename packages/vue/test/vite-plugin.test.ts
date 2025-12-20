@@ -59,7 +59,7 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/client\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/stream/client\'')
     })
 
     it('adds HeadStreamScript import from server for SSR builds', () => {
@@ -74,13 +74,13 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/server\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/stream/server\'')
     })
 
     it('adds HeadStreamScript to existing server import for SSR builds', () => {
       const code = `
         <script setup>
-          import { useHead } from '@unhead/vue/server'
+          import { useHead } from '@unhead/vue/stream/server'
           useHead({ title: 'Test' })
         </script>
         <template>

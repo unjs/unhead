@@ -7,7 +7,7 @@ import {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
-} from '../src/server'
+} from '../src/stream/server'
 
 // Helper to create a mock async stream
 async function* mockStream(chunks: string[]): AsyncGenerator<string> {

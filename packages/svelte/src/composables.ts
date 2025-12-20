@@ -21,56 +21,23 @@ export function useUnhead(): Unhead {
   return instance
 }
 
-function withSideEffects<T extends ActiveHeadEntry<any>>(head: Unhead, input: any, entry: T): T {
+function withSideEffects<T extends ActiveHeadEntry<any>>(instance: T): T {
   onDestroy(() => {
-    entry.dispose()
+    instance.dispose()
   })
-
-  // Mark hydration complete after first component mounts
-  if ((head as any)._streamEntries?.length && !(head as any)._hydrationComplete) {
-    ;(head as any)._hydrationComplete = true
-  }
-
-  return entry
-}
-
-function adoptOrCreate<T extends ActiveHeadEntry<any>>(
-  head: Unhead,
-  input: any,
-  options: HeadEntryOptions,
-  createFn: (head: Unhead, input: any, options: HeadEntryOptions) => T,
-): T {
-  // During hydration, adopt streaming entry if available
-  const streamEntries = (head as any)._hydrationComplete
-    ? undefined
-    : (head as any)._streamEntries as Array<T & { _streamKey?: string }> | undefined
-
-  if (streamEntries?.length) {
-    const inputKey = JSON.stringify(input)
-    const matchingEntry = streamEntries.find(e => !e._streamKey || e._streamKey === inputKey)
-
-    if (matchingEntry) {
-      matchingEntry._streamKey = inputKey
-      return withSideEffects(head, input, matchingEntry)
-    }
-  }
-
-  return withSideEffects(head, input, createFn(head, input, options))
+  return instance
 }
 
 export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
-  const head = options.head || useUnhead()
-  return adoptOrCreate(head, input, options, baseHead)
+  return withSideEffects(baseHead(options.head || useUnhead(), input, options))
 }
 
 export function useHeadSafe(input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
-  const head = options.head || useUnhead()
-  return adoptOrCreate(head, input, options, baseHeadSafe)
+  return withSideEffects(baseHeadSafe(options.head || useUnhead(), input, options))
 }
 
 export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
-  const head = options.head || useUnhead()
-  return adoptOrCreate(head, input, options, baseSeoMeta)
+  return withSideEffects(baseSeoMeta(options.head || useUnhead(), input, options))
 }
 
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {

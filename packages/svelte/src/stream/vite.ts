@@ -18,7 +18,7 @@ function transform(ctx: StreamingPluginContext): boolean {
   s.appendRight(templateStart, '\n{@html HeadStreamScript()}')
 
   // Add import for HeadStreamScript
-  const importPath = `@unhead/svelte/${isSSR ? 'server' : 'client'}`
+  const importPath = `@unhead/svelte/stream/${isSSR ? 'server' : 'client'}`
   const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
     return true

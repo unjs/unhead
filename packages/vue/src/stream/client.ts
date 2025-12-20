@@ -1,8 +1,19 @@
 import type { CreateStreamableClientHeadOptions } from 'unhead/types'
 import type { VueHeadClient } from '../types'
 import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
+import { defineComponent } from 'vue'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
+
+/**
+ * Client-side HeadStreamScript - renders nothing (script already executed during SSR streaming)
+ */
+export const HeadStreamScript = defineComponent({
+  name: 'HeadStreamScript',
+  setup() {
+    return () => null
+  },
+})
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): VueHeadClient {

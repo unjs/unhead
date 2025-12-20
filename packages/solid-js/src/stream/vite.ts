@@ -60,7 +60,7 @@ function transform(ctx: StreamingPluginContext): boolean {
     s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStreamScript />${jsxCode}</>`)
   }
 
-  const importPath = `@unhead/solid-js/${isSSR ? 'server' : 'client'}`
+  const importPath = `@unhead/solid-js/stream/${isSSR ? 'server' : 'client'}`
   const imports = findStaticImports(code)
   const existing = imports.find(i => i.specifier === importPath)
 

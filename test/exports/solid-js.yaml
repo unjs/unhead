@@ -7,8 +7,6 @@
   useUnhead: function
 ./client:
   createHead: function
-  createStreamableHead: function
-  HeadStreamScript: function
   renderDOMHead: function
   UnheadContext: object
 ./plugins:
@@ -23,21 +21,17 @@
   TemplateParamsPlugin: function
 ./server:
   createHead: function
-  createStreamableHead: function
   extractUnheadInputFromHtml: function
-  HeadStreamScript: function
   renderSSRHead: function
-  renderSSRHeadClosing: function
-  renderSSRHeadShell: function
-  renderSSRHeadSuspenseChunk: function
-  streamWithHead: function
   transformHtmlTemplate: function
   UnheadContext: object
 ./stream/client:
   createStreamableHead: function
+  HeadStreamScript: function
   UnheadContext: object
 ./stream/server:
   createStreamableHead: function
+  HeadStreamScript: function
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function

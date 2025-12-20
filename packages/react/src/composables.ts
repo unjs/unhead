@@ -28,14 +28,12 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
 
   // Create entry only once, even in Strict Mode
   if (!entryRef.current) {
-    // During hydration, adopt streaming entry if available
-    // Check _hydrationComplete flag to avoid adopting stale entries after navigation
     entryRef.current = fn(unhead, input, options)
   }
 
   const entry = entryRef.current
 
-  // Patch entry when input changes - skip for stream entries (already applied during SSR)
+  // Patch entry when input changes
   useEffect(() => {
     entry?.patch(input)
   }, [input, entry])
@@ -44,6 +42,7 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
   useEffect(() => {
     return () => {
       entry?.dispose()
+      // Clear ref so new entry is created on remount
       entryRef.current = null
     }
   }, [entry])

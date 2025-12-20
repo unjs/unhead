@@ -41,33 +41,12 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   const deactivated = ref(false)
-  let isStreamEntry = false
 
   let entry: ActiveHeadEntry<I>
-
-  // During hydration, adopt streaming entry if available
-  const streamEntries = (head as any)._hydrationComplete
-    ? undefined
-    : (head as any)._streamEntries as Array<ActiveHeadEntry<I> & { _streamKey?: string }> | undefined
-
-  if (streamEntries?.length) {
-    const inputKey = JSON.stringify(input)
-    const matchingEntry = streamEntries.find(e => !e._streamKey || e._streamKey === inputKey)
-
-    if (matchingEntry) {
-      matchingEntry._streamKey = inputKey
-      entry = matchingEntry
-      isStreamEntry = true
-    }
-  }
-
   watchEffect(() => {
     const i = deactivated.value ? {} : walkResolver(input, VueResolver)
     if (entry) {
-      // Skip patching stream entries - already applied during SSR
-      if (!isStreamEntry) {
-        entry.patch(i)
-      }
+      entry.patch(i)
     }
     else {
       entry = head.push(i, options)
@@ -76,11 +55,6 @@ function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: He
 
   const vm = getCurrentInstance()
   if (vm) {
-    // Mark hydration complete after first mount
-    if (isStreamEntry && !(head as any)._hydrationComplete) {
-      ;(head as any)._hydrationComplete = true
-    }
-
     onBeforeUnmount(() => {
       entry.dispose()
     })

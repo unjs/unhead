@@ -7,7 +7,7 @@ import {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
-} from '../src/server'
+} from '../src/stream/server'
 
 describe('vue streaming SSR', () => {
   describe('createStreamableHead', () => {

@@ -3,6 +3,13 @@ import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
 
 export { UnheadContext } from '../context'
 
+/**
+ * Client-side HeadStreamScript - returns null (script already executed during SSR streaming)
+ */
+export function HeadStreamScript(): null {
+  return null
+}
+
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): Unhead {
   const { streamKey = '__unhead__', ...rest } = options
   const existing = (window as any)[streamKey]?._head
