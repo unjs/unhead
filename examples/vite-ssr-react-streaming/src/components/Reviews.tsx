@@ -8,6 +8,7 @@ const cache = new Map<string, Promise<{ reviews: Review[]; avgRating: number }>>
 export default function Reviews() {
   const cacheKey = 'reviews'
   if (!cache.has(cacheKey)) {
+    const delay = typeof window === 'undefined' ? 2250 : 0
     cache.set(cacheKey, new Promise(resolve =>
       setTimeout(() => resolve({
         avgRating: 4.6,
@@ -16,7 +17,7 @@ export default function Reviews() {
           { author: 'Bob K.', rating: 4, text: 'Good product, works as expected. Would recommend.', date: '1 week ago' },
           { author: 'Carol S.', rating: 5, text: 'Best purchase I\'ve made this year. Absolutely love it!', date: '2 weeks ago' },
         ]
-      }), 2250)
+      }), delay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

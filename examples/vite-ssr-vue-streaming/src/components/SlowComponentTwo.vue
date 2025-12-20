@@ -1,19 +1,16 @@
 <script setup>
-import { ref } from 'vue'
-import HeadStream from './HeadStream.vue'
 import SlowComponentThree from './SlowComponentThree.vue'
 
 // Simulate slow component load
 await new Promise(resolve => setTimeout(resolve, 3000))
 
-useServerHead({
+useHead({
   title: 'S2',
   style: [
     '.slow-component-two { color: orange; }',
   ],
   bodyAttrs: {
     style: {
-      // feint orange color
       ['background-color']: 'rgba(255, 165, 0, 0.2)',
     }
   },
@@ -36,7 +33,6 @@ useServerHead({
 <template>
   <div class="slow-component slow-component-two">
     <p>Slow component two</p>
-    <HeadStream />
     <SlowComponentThree />
   </div>
 </template>

@@ -3,6 +3,6 @@ export type {
   CreateStreamableClientHeadOptions,
   Unhead,
 } from '../types'
-export { createHead, createStreamableHead } from './createHead'
+export { createHead } from './createHead'
 export { renderDOMHead } from './renderDOMHead'
 export { createDebouncedFn } from './util'

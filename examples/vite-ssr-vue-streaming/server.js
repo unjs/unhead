@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { streamWithHead } from "@unhead/vue/server";
+import { streamWithHead } from "@unhead/vue/stream/server";
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -85,13 +85,9 @@ export async function createServer(
 
       res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
-      // Client script path for early head processing
-      const clientScript = isProd
-        ? '/test/assets/head-client.js' // TODO: resolve from manifest
-        : '/test/src/head-client.ts'
-
       // streamWithHead handles shell, suspense chunks, and closing
-      for await (const chunk of streamWithHead(vueStream, template, head, { clientScript, debug: true })) {
+      // Bootstrap + client script injected via Vite plugin's transformIndexHtml
+      for await (const chunk of streamWithHead(vueStream, template, head)) {
         if (res.closed) break
         res.write(chunk)
       }

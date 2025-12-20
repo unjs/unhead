@@ -8,7 +8,7 @@
 ./client:
   createHead: function
   createStreamableHead: function
-  HeadStream: function
+  HeadStreamScript: function
   renderDOMHead: function
   UnheadContext: object
 ./plugins:
@@ -25,7 +25,7 @@
   createHead: function
   createStreamableHead: function
   extractUnheadInputFromHtml: function
-  HeadStream: function
+  HeadStreamScript: function
   renderSSRHead: function
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
@@ -35,16 +35,17 @@
   UnheadContext: object
 ./stream/client:
   createStreamableHead: function
-  HeadStream: function
   UnheadContext: object
 ./stream/server:
   createStreamableHead: function
-  HeadStream: function
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   streamWithHead: function
   UnheadContext: object
+./stream/vite:
+  default: function
+  unheadSolidPlugin: function
 ./utils:
   dedupeKey: function
   DupeableTags: object
@@ -69,6 +70,3 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
-./vite-plugin:
-  default: function
-  unheadSolidPlugin: function

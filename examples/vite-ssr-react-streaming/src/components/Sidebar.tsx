@@ -6,10 +6,11 @@ const cache = new Map<string, Promise<{ categories: string[] }>>()
 export default function Sidebar() {
   const cacheKey = 'sidebar'
   if (!cache.has(cacheKey)) {
+    const delay = typeof window === 'undefined' ? 625 : 0
     cache.set(cacheKey, new Promise(resolve =>
       setTimeout(() => resolve({
         categories: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys']
-      }), 625)
+      }), delay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

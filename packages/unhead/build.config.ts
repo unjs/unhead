@@ -20,6 +20,6 @@ export default defineBuildConfig({
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins/index', name: 'plugins' },
     { input: 'src/parser/index', name: 'parser' },
-    { input: 'src/vite-plugin', name: 'vite-plugin' },
+    { input: 'src/stream/vite', name: 'stream/vite' },
   ],
 })

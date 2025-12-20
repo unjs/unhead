@@ -849,6 +849,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
+      vite:
+        specifier: 'catalog:'
+        version: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
 
   packages/schema-org:
     dependencies:
@@ -902,9 +905,12 @@ importers:
       solid-js:
         specifier: 'catalog:'
         version: 1.9.10
+      vite:
+        specifier: 'catalog:'
+        version: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
       vite-plugin-solid:
         specifier: 'catalog:'
-        version: 2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+        version: 2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
 
   packages/svelte:
     dependencies:
@@ -920,13 +926,16 @@ importers:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
-        version: 6.2.1(svelte@5.46.0)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+        version: 6.2.1(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
       '@testing-library/svelte':
         specifier: 'catalog:'
-        version: 5.2.9(svelte@5.46.0)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+        version: 5.2.9(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
       svelte:
         specifier: 'catalog:'
         version: 5.46.0
+      vite:
+        specifier: 'catalog:'
+        version: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
 
   packages/unhead:
     dependencies:
@@ -936,6 +945,9 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 0.30.21
+      vite:
+        specifier: 'catalog:'
+        version: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
 
   packages/vue:
     dependencies:
@@ -955,6 +967,9 @@ importers:
       '@vue/server-renderer':
         specifier: 'catalog:'
         version: 3.5.25(vue@3.5.25(typescript@5.9.3))
+      vite:
+        specifier: 'catalog:'
+        version: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
       vue:
         specifier: 'catalog:'
         version: 3.5.25(typescript@5.9.3)
@@ -10817,6 +10832,15 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
+  '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)))(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))':
+    dependencies:
+      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+      debug: 4.4.3
+      svelte: 5.46.0
+      vite: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - supports-color
+
   '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)))(svelte@5.46.0)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))':
     dependencies:
       '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.46.0)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
@@ -10832,6 +10856,18 @@ snapshots:
       debug: 4.4.3
       svelte: 5.46.0
       vite: 7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))':
+    dependencies:
+      '@sveltejs/vite-plugin-svelte-inspector': 5.0.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)))(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+      debug: 4.4.3
+      deepmerge: 4.3.1
+      magic-string: 0.30.21
+      svelte: 5.46.0
+      vite: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
+      vitefu: 1.1.1(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
     transitivePeerDependencies:
       - supports-color
 
@@ -10889,12 +10925,12 @@ snapshots:
       '@types/react': 19.2.7
       '@types/react-dom': 19.2.3(@types/react@19.2.7)
 
-  '@testing-library/svelte@5.2.9(svelte@5.46.0)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))':
+  '@testing-library/svelte@5.2.9(svelte@5.46.0)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))':
     dependencies:
       '@testing-library/dom': 10.4.1
       svelte: 5.46.0
     optionalDependencies:
-      vite: 7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
+      vite: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
       vitest: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
 
   '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)':
@@ -15773,7 +15809,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-solid@2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)):
+  vite-plugin-solid@2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)):
     dependencies:
       '@babel/core': 7.28.5
       '@types/babel__core': 7.20.5
@@ -15781,8 +15817,8 @@ snapshots:
       merge-anything: 5.1.7
       solid-js: 1.9.10
       solid-refresh: 0.6.3(solid-js@1.9.10)
-      vite: 7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
-      vitefu: 1.1.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
+      vite: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
+      vitefu: 1.1.1(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2))
     optionalDependencies:
       '@testing-library/jest-dom': 6.9.1
     transitivePeerDependencies:
@@ -15890,6 +15926,10 @@ snapshots:
       sass: 1.97.0
       terser: 5.44.0
       yaml: 2.8.2
+
+  vitefu@1.1.1(vite@7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)):
+    optionalDependencies:
+      vite: 7.2.2(@types/node@25.0.3)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)
 
   vitefu@1.1.1(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(less@4.5.1)(sass@1.97.0)(terser@5.44.0)(yaml@2.8.2)):
     optionalDependencies:

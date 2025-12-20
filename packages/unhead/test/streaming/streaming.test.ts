@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
 import {
   renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   STREAM_MARKER,
   streamWithHead,
-} from '../../src/server'
+} from 'unhead'
+import { describe, expect, it } from 'vitest'
 import { createServerHeadWithContext, createStreamableServerHead } from '../util'
 
 describe('streaming SSR', () => {

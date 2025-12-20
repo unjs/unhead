@@ -6,8 +6,9 @@ const cache = new Map<string, Promise<{ user: string; cartCount: number }>>()
 export default function Header() {
   const cacheKey = 'header'
   if (!cache.has(cacheKey)) {
+    const delay = typeof window === 'undefined' ? 250 : 0
     cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({ user: 'John Doe', cartCount: 3 }), 250)
+      setTimeout(() => resolve({ user: 'John Doe', cartCount: 3 }), delay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

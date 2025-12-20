@@ -15,10 +15,17 @@ export function createHead(options: CreateClientHeadOptions = {}): Unhead {
 }
 
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): Unhead {
-  const { streamKey, ...rest } = options
+  const { streamKey = '__unhead__', ...rest } = options
+  const existing = (window as any)[streamKey]?._head
+
+  // Adopt existing core instance created by virtual module
+  if (existing) {
+    return existing
+  }
+
+  // Fallback: create fresh instance (non-streaming case)
   const head = _createHead({
     ...rest,
-    experimentalStreamKey: streamKey,
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => tick().then(fn)),
     },
@@ -29,10 +36,10 @@ export function createStreamableHead(options: CreateStreamableClientHeadOptions 
 export { renderDOMHead } from 'unhead/client'
 
 /**
- * Client-side HeadStream - returns empty string since head updates are applied via window.__unhead__
- * This exists for hydration compatibility with server-rendered script markers
+ * Client-side HeadStreamScript - returns empty string (script already executed during SSR streaming)
+ * Must match server's HeadStreamScript for hydration
  */
-export function HeadStream(): string {
+export function HeadStreamScript(): string {
   return ''
 }
 

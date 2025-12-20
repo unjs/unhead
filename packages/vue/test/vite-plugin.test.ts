@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
-import { unheadVuePlugin } from '../src/vite-plugin'
+import { describe, expect, it } from 'vitest'
+import { unheadVuePlugin } from '../src/stream/vite'
 
 describe('unheadVuePlugin', () => {
-  const plugin = unheadVuePlugin()
+  const plugin = unheadVuePlugin() as any
 
   describe('basic configuration', () => {
     it('has correct name', () => {
-      expect(plugin.name).toBe('unhead-vue')
+      expect(plugin.name).toBe('unhead:vue')
     })
 
     it('enforces pre order', () => {
@@ -16,11 +16,23 @@ describe('unheadVuePlugin', () => {
 
   describe('transform', () => {
     it('skips non-vue files', () => {
-      const result = plugin.transform!('<Suspense></Suspense>', 'file.ts')
+      const result = plugin.transform!('useHead({})', 'file.ts')
       expect(result).toBeNull()
     })
 
-    it('skips files without <Suspense>', () => {
+    it('skips files without useHead', () => {
+      const code = `
+        <script setup>
+        </script>
+        <template>
+          <div>Hello</div>
+        </template>
+      `
+      const result = plugin.transform!(code, 'component.vue')
+      expect(result).toBeNull()
+    })
+
+    it('injects HeadStreamScript in template for components with useHead', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
@@ -31,203 +43,68 @@ describe('unheadVuePlugin', () => {
         </template>
       `
       const result = plugin.transform!(code, 'component.vue')
-      expect(result).toBeNull()
-    })
-
-    it('skips files without useHead when onlyWithUseHead is true', () => {
-      const code = `
-        <script setup>
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      const result = plugin.transform!(code, 'component.vue')
-      expect(result).toBeNull()
-    })
-
-    it('transforms files without useHead when onlyWithUseHead is false', () => {
-      const pluginNoCheck = unheadVuePlugin({ onlyWithUseHead: false })
-      const code = `
-        <script setup>
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      const result = pluginNoCheck.transform!(code, 'component.vue')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStream /></Suspense>')
+      expect(result!.code).toContain('<HeadStreamScript />')
     })
 
-    it('skips files already using HeadStream', () => {
-      const code = `
-        <script setup>
-          import { useHead, HeadStream } from '@unhead/vue/server'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-            <HeadStream />
-          </Suspense>
-        </template>
-      `
-      const result = plugin.transform!(code, 'component.vue')
-      expect(result).toBeNull()
-    })
-
-    it('injects HeadStream before </Suspense>', () => {
+    it('adds HeadStreamScript import from client for non-SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
           useHead({ title: 'Test' })
         </script>
         <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      const result = plugin.transform!(code, 'component.vue')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStream /></Suspense>')
-    })
-
-    it('adds HeadStream import from client for non-SSR builds', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
+          <div>Hello</div>
         </template>
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/client\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/client\'')
     })
 
-    it('adds HeadStream import from server for SSR builds', () => {
+    it('adds HeadStreamScript import from server for SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
           useHead({ title: 'Test' })
         </script>
         <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
+          <div>Hello</div>
         </template>
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/server\'')
+      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/server\'')
     })
 
-    it('adds HeadStream to existing server import for SSR builds', () => {
+    it('adds HeadStreamScript to existing server import for SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue/server'
           useHead({ title: 'Test' })
         </script>
         <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
+          <div>Hello</div>
         </template>
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('useHead, HeadStream')
+      expect(result!.code).toContain('useHead, HeadStreamScript')
     })
 
-    it('handles multiple <Suspense> components', () => {
+    it('transforms files with useSeoMeta', () => {
       const code = `
         <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
+          import { useSeoMeta } from '@unhead/vue'
+          useSeoMeta({ title: 'Test' })
         </script>
         <template>
-          <div>
-            <Suspense>
-              <Component1 />
-            </Suspense>
-            <Suspense>
-              <Component2 />
-            </Suspense>
-          </div>
+          <div>Hello</div>
         </template>
       `
       const result = plugin.transform!(code, 'component.vue')
       expect(result).not.toBeNull()
-      const headStreamCount = (result!.code.match(/<HeadStream \/>/g) || []).length
-      expect(headStreamCount).toBe(2)
-    })
-
-    it('handles nested <Suspense> components', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <div>
-              <Suspense>
-                <InnerComponent />
-              </Suspense>
-            </div>
-          </Suspense>
-        </template>
-      `
-      const result = plugin.transform!(code, 'component.vue')
-      expect(result).not.toBeNull()
-      const headStreamCount = (result!.code.match(/<HeadStream \/>/g) || []).length
-      expect(headStreamCount).toBe(2)
-    })
-
-    it('respects exclude option', () => {
-      const pluginWithExclude = unheadVuePlugin({ exclude: /excluded\.vue$/ })
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      const result = pluginWithExclude.transform!(code, 'excluded.vue')
-      expect(result).toBeNull()
-    })
-
-    it('respects custom include option', () => {
-      const pluginCustomInclude = unheadVuePlugin({ include: /custom\.vue$/ })
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      // Should not transform regular .vue files
-      expect(pluginCustomInclude.transform!(code, 'component.vue')).toBeNull()
-      // Should transform custom.vue
-      expect(pluginCustomInclude.transform!(code, 'custom.vue')).not.toBeNull()
+      expect(result!.code).toContain('<HeadStreamScript />')
     })
 
     it('generates source map', () => {
@@ -237,57 +114,12 @@ describe('unheadVuePlugin', () => {
           useHead({ title: 'Test' })
         </script>
         <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
+          <div>Hello</div>
         </template>
       `
       const result = plugin.transform!(code, 'component.vue')
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
-    })
-
-    it('logs to console when debug is true', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const debugPlugin = unheadVuePlugin({ debug: true })
-
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      debugPlugin.transform!(code, 'component.vue')
-
-      expect(consoleSpy).toHaveBeenCalledWith('[unhead-vue] Transformed component.vue')
-
-      consoleSpy.mockRestore()
-    })
-
-    it('does not log when debug is false', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <Suspense>
-            <AsyncComponent />
-          </Suspense>
-        </template>
-      `
-      plugin.transform!(code, 'component.vue')
-
-      expect(consoleSpy).not.toHaveBeenCalled()
-
-      consoleSpy.mockRestore()
     })
   })
 })

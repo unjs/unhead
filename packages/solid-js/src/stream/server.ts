@@ -1,8 +1,5 @@
-import type { JSX } from 'solid-js'
 import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
-import { useContext } from 'solid-js'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
-import { UnheadContext } from '../context'
+import { createStreamableHead as _createStreamableHead } from 'unhead/stream/server'
 
 export { UnheadContext } from '../context'
 
@@ -15,27 +12,6 @@ export {
 
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
   return _createStreamableHead(options)
-}
-
-function useHeadStreamScript(): string {
-  const head = useContext(UnheadContext)
-  if (!head)
-    return ''
-
-  const update = renderSSRHeadSuspenseChunkSync(head)
-  return update || STREAM_MARKER
-}
-
-/**
- * Streaming head component for Solid.
- * Place inside Suspense boundaries after async components that use useHead.
- */
-export function HeadStream(): JSX.Element | null {
-  const content = useHeadStreamScript()
-  if (!content)
-    return null
-
-  return { t: `<script>${content}</script>` } as unknown as JSX.Element
 }
 
 export type {

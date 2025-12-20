@@ -8,12 +8,13 @@ const statsCache = new Map<string, Promise<{ customers: number; products: number
 function TeamSection() {
   const key = 'team'
   if (!teamCache.has(key)) {
+    const delay = typeof window === 'undefined' ? 500 : 0
     teamCache.set(key, new Promise(resolve =>
       setTimeout(() => resolve([
         { name: 'Alice Chen', role: 'CEO & Founder' },
         { name: 'Bob Smith', role: 'CTO' },
         { name: 'Carol Davis', role: 'Head of Design' },
-      ]), 500)
+      ]), delay)
     ))
     teamCache.get(key)!.finally(() => setTimeout(() => teamCache.delete(key), 100))
   }
@@ -47,8 +48,9 @@ function TeamSection() {
 function StatsSection() {
   const key = 'stats'
   if (!statsCache.has(key)) {
+    const delay = typeof window === 'undefined' ? 1000 : 0
     statsCache.set(key, new Promise(resolve =>
-      setTimeout(() => resolve({ customers: 100000, products: 5000, countries: 50 }), 1000)
+      setTimeout(() => resolve({ customers: 100000, products: 5000, countries: 50 }), delay)
     ))
     statsCache.get(key)!.finally(() => setTimeout(() => statsCache.delete(key), 100))
   }

@@ -15,7 +15,7 @@ export default defineBuildConfig({
     { input: 'src/plugins', name: 'plugins' },
     { input: 'src/scripts', name: 'scripts' },
     { input: 'src/utils', name: 'utils' },
-    { input: 'src/vite-plugin', name: 'vite-plugin' },
+    { input: 'src/stream/vite', name: 'stream/vite' },
   ],
   hooks: {
     'rollup:options': (_, options) => {

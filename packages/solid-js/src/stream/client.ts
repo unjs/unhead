@@ -1,26 +1,25 @@
 import type { CreateStreamableClientHeadOptions, Unhead } from 'unhead/types'
-import { createDebouncedFn, renderDOMHead } from 'unhead/client'
-import { createStreamableHead as _createStreamableHead } from 'unhead/stream/client'
+import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
 
 export { UnheadContext } from '../context'
 
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): Unhead {
-  const { streamKey, ...rest } = options
-  const head = _createStreamableHead({
+  const { streamKey = '__unhead__', ...rest } = options
+  const existing = (window as any)[streamKey]?._head
+
+  // Adopt existing core instance created by virtual module
+  if (existing) {
+    return existing
+  }
+
+  // Fallback: create fresh instance (non-streaming case)
+  const head = createHead({
     ...rest,
-    streamKey,
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
   })
   return head
-}
-
-/**
- * Client-side HeadStream - returns null since head updates are applied via window.__unhead__
- */
-export function HeadStream(): null {
-  return null
 }
 
 export type {

@@ -6,8 +6,9 @@ const cache = new Map<string, Promise<{ subscribers: number; discount: number }>
 export default function Newsletter() {
   const cacheKey = 'newsletter'
   if (!cache.has(cacheKey)) {
+    const delay = typeof window === 'undefined' ? 2625 : 0
     cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({ subscribers: 50000, discount: 10 }), 2625)
+      setTimeout(() => resolve({ subscribers: 50000, discount: 10 }), delay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

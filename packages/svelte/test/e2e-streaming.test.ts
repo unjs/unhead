@@ -1,4 +1,4 @@
-import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/server'
+import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {

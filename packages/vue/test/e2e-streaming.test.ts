@@ -25,7 +25,7 @@ async function collectStream(stream: AsyncGenerator<string>): Promise<string[]> 
   return results
 }
 
-describe('solid-js streaming SSR e2e', () => {
+describe('vue streaming SSR e2e', () => {
   describe('full streaming workflow', () => {
     it('streams initial head tags in shell', async () => {
       const head = createStreamableHead()
@@ -74,7 +74,7 @@ describe('solid-js streaming SSR e2e', () => {
 
       // Close
       const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<div>Content</div>` + `<script>${chunk}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<div>Content</div><script>${chunk}</script>${closing}${htmlEnd}`
 
       expect(fullHtml).toContain('<!DOCTYPE html>')
       expect(fullHtml).toContain('</html>')
@@ -105,7 +105,7 @@ describe('solid-js streaming SSR e2e', () => {
       expect(chunk2).toContain('Second Component')
 
       const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<script>${chunk1}</script>` + `<script>${chunk2}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<script>${chunk1}</script><script>${chunk2}</script>${closing}${htmlEnd}`
 
       expect(fullHtml).toContain('First Component')
       expect(fullHtml).toContain('Second Component')
@@ -152,7 +152,7 @@ describe('solid-js streaming SSR e2e', () => {
       const innerChunk = await renderSSRHeadSuspenseChunk(head)
 
       const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<script>${outerChunk}</script>` + `<script>${innerChunk}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<script>${outerChunk}</script><script>${innerChunk}</script>${closing}${htmlEnd}`
 
       expect(fullHtml).toContain('outer-data')
       expect(fullHtml).toContain('inner-data')
@@ -232,7 +232,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
   })
 
-  describe('sync rendering', () => {
+  describe('sync rendering for HeadStreamScript', () => {
     it('renderSSRHeadSuspenseChunkSync returns update synchronously', () => {
       const head = createStreamableHead()
 
@@ -270,7 +270,7 @@ describe('solid-js streaming SSR e2e', () => {
 
   describe('custom stream key', () => {
     it('uses custom window key', async () => {
-      const head = createStreamableHead({ streamKey: '__solid_head__' })
+      const head = createStreamableHead({ streamKey: '__vue_head__' })
 
       head.push({ title: 'Custom Key Test' })
 
@@ -279,8 +279,88 @@ describe('solid-js streaming SSR e2e', () => {
 
       const shell = await renderSSRHeadShell(head, htmlStart)
 
-      expect(shell).toContain('window.__solid_head__')
+      expect(shell).toContain('window.__vue_head__')
       expect(shell).not.toContain('window.__unhead__=')
+    })
+  })
+
+  describe('nuxt/vue integration patterns', () => {
+    it('handles typical Vue SSR streaming pattern', async () => {
+      const head = createStreamableHead()
+
+      // App.vue sets base head
+      head.push({
+        htmlAttrs: { lang: 'en' },
+        meta: [{ charset: 'utf-8' }],
+      })
+
+      // Page component sets page-specific head
+      head.push({
+        title: 'Page Title',
+        meta: [{ name: 'description', content: 'Page description' }],
+      })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+
+      // Should have both layout and page head
+      expect(shell).toContain('lang="en"')
+      expect(shell).toContain('charset')
+      expect(shell).toContain('Page Title')
+      expect(shell).toContain('Page description')
+
+      // Simulate async setup resolving with data
+      head.push({
+        title: 'Data Loaded - Page Title',
+        meta: [{ property: 'og:title', content: 'Data Loaded' }],
+      })
+
+      const chunk = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toContain('Data Loaded')
+
+      const closing = await renderSSRHeadClosing(head)
+      const fullHtml = `${shell}<script>${chunk}</script>${closing}${htmlEnd}`
+
+      expect(fullHtml).toContain('window.__unhead__')
+    })
+
+    it('handles defineAsyncComponent data with streaming', async () => {
+      const head = createStreamableHead()
+
+      // Initial state from component setup
+      head.push({ title: 'Loading product...' })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+      expect(shell).toContain('Loading product...')
+
+      // Async data arrives (like from useFetch or useAsyncData)
+      const productData = {
+        name: 'Awesome Product',
+        description: 'A really awesome product',
+        image: 'https://example.com/product.jpg',
+      }
+
+      head.push({
+        title: productData.name,
+        meta: [
+          { name: 'description', content: productData.description },
+          { property: 'og:image', content: productData.image },
+        ],
+      })
+
+      const chunk = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toContain('Awesome Product')
+      expect(chunk).toContain('A really awesome product')
+
+      const closing = await renderSSRHeadClosing(head)
+      const fullHtml = `${shell}<script>${chunk}</script>${closing}${htmlEnd}`
+
+      expect(fullHtml).toContain('og:image')
     })
   })
 
@@ -325,8 +405,8 @@ describe('solid-js streaming SSR e2e', () => {
       const head = createStreamableHead()
 
       head.push({
-        title: '日本語タイトル',
-        meta: [{ name: 'description', content: 'Descripción en español' }],
+        title: 'Titulo en espanol',
+        meta: [{ name: 'description', content: 'Descripcion en espanol' }],
       })
 
       const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
@@ -334,8 +414,104 @@ describe('solid-js streaming SSR e2e', () => {
 
       const shell = await renderSSRHeadShell(head, htmlStart)
 
-      expect(shell).toContain('日本語タイトル')
-      expect(shell).toContain('Descripción en español')
+      expect(shell).toContain('Titulo en espanol')
+      expect(shell).toContain('Descripcion en espanol')
+    })
+
+    it('handles special characters in attributes', async () => {
+      const head = createStreamableHead()
+
+      head.push({
+        meta: [
+          { name: 'description', content: 'Quote: "Hello" & <World>' },
+        ],
+      })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+
+      // Should properly escape HTML entities
+      expect(shell).toContain('description')
+      expect(shell).not.toContain('&<World>')
+    })
+  })
+
+  describe('head tag deduplication during streaming', () => {
+    it('deduplicates title tags across stream chunks', async () => {
+      const head = createStreamableHead()
+
+      head.push({ title: 'First Title' })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+      expect(shell).toContain('<title>First Title</title>')
+
+      // Push updated title
+      head.push({ title: 'Second Title' })
+      const chunk1 = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk1).toContain('Second Title')
+
+      // Push another title update
+      head.push({ title: 'Third Title' })
+      const chunk2 = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk2).toContain('Third Title')
+
+      // Final HTML should have streaming mechanism
+      const fullHtml = `${shell}<script>${chunk1}</script><script>${chunk2}</script>${await renderSSRHeadClosing(head)}${htmlEnd}`
+      expect(fullHtml).toContain('window.__unhead__.push')
+    })
+
+    it('deduplicates meta tags by name', async () => {
+      const head = createStreamableHead()
+
+      head.push({
+        meta: [{ name: 'description', content: 'Initial' }],
+      })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+      expect(shell).toContain('Initial')
+
+      // Push updated description - should replace, not duplicate
+      head.push({
+        meta: [{ name: 'description', content: 'Updated' }],
+      })
+      const chunk = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toContain('Updated')
+    })
+  })
+
+  describe('streaming with link preload', () => {
+    it('streams link preload tags with async chunks', async () => {
+      const head = createStreamableHead()
+
+      head.push({
+        link: [
+          { rel: 'stylesheet', href: '/styles/main.css' },
+        ],
+      })
+
+      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
+      const [htmlStart] = template.split('<!--app-html-->')
+
+      const shell = await renderSSRHeadShell(head, htmlStart)
+      expect(shell).toContain('/styles/main.css')
+
+      // Async component adds its own stylesheet
+      head.push({
+        link: [
+          { rel: 'stylesheet', href: '/styles/component.css' },
+        ],
+      })
+
+      const chunk = await renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toContain('/styles/component.css')
     })
   })
 })

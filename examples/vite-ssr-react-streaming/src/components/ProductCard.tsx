@@ -17,8 +17,9 @@ const products: Record<number, Product> = {
 export default function ProductCard({ id, delay }: { id: number; delay: number }) {
   const cacheKey = `product-${id}`
   if (!cache.has(cacheKey)) {
+    const actualDelay = typeof window === 'undefined' ? delay : 0
     cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve(products[id]), delay)
+      setTimeout(() => resolve(products[id]), actualDelay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

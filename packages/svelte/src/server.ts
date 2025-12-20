@@ -1,6 +1,6 @@
 import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
 import { getContext } from 'svelte'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
+import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
 import { UnheadContextKey } from './context'
 
 export { UnheadContextKey } from './context'
@@ -20,28 +20,29 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
 }
 
 /**
- * Streaming head component for Svelte.
+ * Streaming script function for Svelte.
  * Returns HTML string to be rendered with {@html}.
+ * The Vite plugin with streaming: true auto-injects this.
  *
  * @example
  * ```svelte
- * {#await loadData()}
- *   <p>Loading...</p>
- * {:then data}
- *   <MyComponent {data} />
- *   {@html HeadStream()}
- * {/await}
+ * <script>
+ *   import { HeadStreamScript } from '@unhead/svelte/server'
+ *   useHead({ title: 'My Page' })
+ * </script>
+ * {@html HeadStreamScript()}
  * ```
  */
-export function HeadStream(): string {
+export function HeadStreamScript(): string {
   const head = getContext<Unhead | null>(UnheadContextKey)
   if (!head)
     return ''
 
   const update = renderSSRHeadSuspenseChunkSync(head)
-  const content = update || STREAM_MARKER
+  if (!update)
+    return ''
 
-  return `<script>${content}</script>`
+  return `<script>${update}</script>`
 }
 
 export type {

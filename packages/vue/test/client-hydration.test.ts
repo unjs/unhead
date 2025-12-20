@@ -1,7 +1,6 @@
 import { JSDOM } from 'jsdom'
-import { createStreamableHead } from 'unhead'
-
 import { describe, expect, it } from 'vitest'
+import { createStreamableHead } from '../src/stream/client'
 
 function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') {
   const dom = new JSDOM(`<!DOCTYPE html>
@@ -27,7 +26,7 @@ function waitForDomUpdate() {
   return new Promise(resolve => setTimeout(resolve, 50))
 }
 
-describe('streaming client hydration', () => {
+describe('vue streaming client hydration', () => {
   describe('queue consumption', () => {
     it('processes queued entries on creation', async () => {
       const { document } = setupStreamingDom([
@@ -191,6 +190,14 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('vue install method', () => {
+    it('has install method for Vue app.use()', async () => {
+      const { document } = setupStreamingDom([])
+      const head = createStreamableHead({ document })
+      expect(typeof head.install).toBe('function')
+    })
+  })
+
   describe('style tag updates with key', () => {
     it('updates style innerHTML when pushing styles with same key', async () => {
       const { window, document } = setupStreamingDom([])
@@ -247,6 +254,69 @@ describe('streaming client hydration', () => {
 
       const styles = document.querySelectorAll('style')
       expect(styles.length).toBe(2)
+    })
+  })
+
+  describe('streaming hydration replay', () => {
+    it('replays head tags streamed during SSR', async () => {
+      // Simulate what SSR sends - multiple push calls via streamed scripts
+      const { document } = setupStreamingDom([
+        // Initial shell head
+        { title: 'Shell Title', htmlAttrs: { lang: 'en' } },
+        // First async component
+        { title: 'Async 1', meta: [{ property: 'og:title', content: 'Async 1' }] },
+        // Second async component
+        { title: 'Async 2', meta: [{ property: 'og:description', content: 'Async 2 desc' }] },
+      ])
+
+      createStreamableHead({ document })
+      await waitForDomUpdate()
+
+      // Final title should be the last one
+      expect(document.title).toBe('Async 2')
+
+      // HTML attrs from first entry should be applied
+      expect(document.documentElement.getAttribute('lang')).toBe('en')
+
+      // Meta tags should be present
+      expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Async 1')
+      expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe('Async 2 desc')
+    })
+
+    it('handles late-arriving streamed entries after hydration', async () => {
+      const { window, document } = setupStreamingDom([
+        { title: 'Initial' },
+      ])
+
+      createStreamableHead({ document })
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Initial')
+
+      // Simulate more streaming content arriving after hydration started
+      window.__unhead__.push({ title: 'Late Entry 1' })
+      await waitForDomUpdate()
+      expect(document.title).toBe('Late Entry 1')
+
+      window.__unhead__.push({ title: 'Late Entry 2' })
+      await waitForDomUpdate()
+      expect(document.title).toBe('Late Entry 2')
+    })
+  })
+
+  describe('streaming with Vue refs', () => {
+    it('handles reactive values in streamed entries', async () => {
+      const { document } = setupStreamingDom([
+        // Simulating what Vue might serialize
+        { title: 'Reactive Title' },
+        { meta: [{ name: 'reactive', content: 'value' }] },
+      ])
+
+      createStreamableHead({ document })
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Reactive Title')
+      expect(document.querySelector('meta[name="reactive"]')?.getAttribute('content')).toBe('value')
     })
   })
 })

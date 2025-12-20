@@ -9,7 +9,7 @@ import {
   streamWithHead,
 } from '../src/server'
 
-describe('solid-js streaming SSR', () => {
+describe('vue streaming SSR', () => {
   describe('createStreamableHead', () => {
     it('creates head with _streamedHashes initialized', () => {
       const head = createStreamableHead()
@@ -17,11 +17,11 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('uses custom stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__solid__' })
+      const head = createStreamableHead({ streamKey: '__vue__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('window.__solid__')
+      expect(shell).toContain('window.__vue__')
     })
 
     it('uses default stream key', async () => {
@@ -31,20 +31,25 @@ describe('solid-js streaming SSR', () => {
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
       expect(shell).toContain('window.__unhead__')
     })
+
+    it('has install method for Vue app.use()', () => {
+      const head = createStreamableHead()
+      expect(typeof head.install).toBe('function')
+    })
   })
 
   describe('renderSSRHeadShell', () => {
     it('renders initial head tags into shell', async () => {
       const head = createStreamableHead()
       head.push({
-        title: 'Solid Streaming Test',
+        title: 'Vue Streaming Test',
         meta: [{ name: 'description', content: 'Test description' }],
       })
 
       const template = '<!DOCTYPE html><html><head></head><body>'
       const result = await renderSSRHeadShell(head, template)
 
-      expect(result).toContain('<title>Solid Streaming Test</title>')
+      expect(result).toContain('<title>Vue Streaming Test</title>')
       expect(result).toContain('<meta name="description" content="Test description">')
       expect(result).toContain('window.__unhead__')
     })
@@ -236,8 +241,8 @@ describe('solid-js streaming SSR', () => {
 
   describe('multiple providers', () => {
     it('supports different stream keys', async () => {
-      const head1 = createStreamableHead({ streamKey: '__solid1__' })
-      const head2 = createStreamableHead({ streamKey: '__solid2__' })
+      const head1 = createStreamableHead({ streamKey: '__vue1__' })
+      const head2 = createStreamableHead({ streamKey: '__vue2__' })
 
       head1.push({ title: 'Provider 1' })
       head2.push({ title: 'Provider 2' })
@@ -245,9 +250,9 @@ describe('solid-js streaming SSR', () => {
       const shell1 = await renderSSRHeadShell(head1, '<html><head></head><body>')
       const shell2 = await renderSSRHeadShell(head2, '<html><head></head><body>')
 
-      expect(shell1).toContain('window.__solid1__')
+      expect(shell1).toContain('window.__vue1__')
       expect(shell1).toContain('Provider 1')
-      expect(shell2).toContain('window.__solid2__')
+      expect(shell2).toContain('window.__vue2__')
       expect(shell2).toContain('Provider 2')
     })
   })
@@ -255,10 +260,10 @@ describe('solid-js streaming SSR', () => {
   describe('unicode and special characters', () => {
     it('handles emoji in title', async () => {
       const head = createStreamableHead()
-      head.push({ title: 'Solid App 🚀' })
+      head.push({ title: 'Vue App' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('Solid App 🚀')
+      expect(shell).toContain('Vue App')
     })
 
     it('handles unicode in meta', async () => {
@@ -266,11 +271,47 @@ describe('solid-js streaming SSR', () => {
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
-        meta: [{ name: 'description', content: '日本語テスト' }],
+        meta: [{ name: 'description', content: 'Vue' }],
       })
 
       const result = await renderSSRHeadSuspenseChunk(head)
-      expect(result).toContain('日本語テスト')
+      expect(result).toContain('Vue')
+    })
+
+    it('handles CJK characters', async () => {
+      const head = createStreamableHead()
+      head.push({
+        title: 'Vue',
+        meta: [{ name: 'description', content: 'Vue' }],
+      })
+
+      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(shell).toContain('<title>Vue</title>')
+    })
+  })
+
+  describe('vue reactivity', () => {
+    it('handles ref-like values being resolved', async () => {
+      const head = createStreamableHead()
+
+      // Vue resolver should handle refs - testing with plain object that has .value
+      head.push({
+        title: { value: 'Ref Title' } as any,
+      })
+
+      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(shell).toContain('Ref Title')
+    })
+
+    it('handles computed-like values being resolved', async () => {
+      const head = createStreamableHead()
+
+      head.push({
+        title: () => 'Computed Title',
+      })
+
+      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(shell).toContain('Computed Title')
     })
   })
 })

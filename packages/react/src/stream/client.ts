@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react'
 import type { CreateStreamableClientHeadOptions, Unhead } from 'unhead/types'
 import { createElement } from 'react'
-import { createDebouncedFn, renderDOMHead } from 'unhead/client'
-import { createStreamableHead as _createStreamableHead } from 'unhead/stream/client'
-import { UnheadContext } from '../context'
+import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
 
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): Unhead {
-  const { streamKey, ...rest } = options
-  const head = _createStreamableHead({
+  const { streamKey = '__unhead__', ...rest } = options
+  const existing = (window as any)[streamKey]?._head
+
+  // Adopt existing core instance created by virtual module
+  if (existing) {
+    return existing
+  }
+
+  // Fallback: create fresh instance (non-streaming case)
+  const head = createHead({
     ...rest,
-    streamKey,
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),
     },
@@ -27,9 +32,10 @@ export function HeadStream(): ReactNode {
   })
 }
 
-export function UnheadProvider({ children, head }: { children: ReactNode, head?: Unhead }) {
-  return createElement(UnheadContext.Provider, { value: head ?? null }, children)
-}
+// Alias for streaming mode vite transform
+export { HeadStream as HeadStreamScript }
+
+export * from '../client'
 
 export type {
   CreateStreamableClientHeadOptions,

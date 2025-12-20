@@ -12,6 +12,6 @@ export default defineBuildConfig({
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins', name: 'plugins' },
-    { input: 'src/vite-plugin', name: 'vite-plugin' },
+    { input: 'src/stream/vite', name: 'stream/vite' },
   ],
 })

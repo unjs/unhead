@@ -16,7 +16,7 @@
 ./client:
   createHead: function
   createStreamableHead: function
-  HeadStream: object
+  HeadStreamScript: object
   renderDOMHead: function
   VueHeadMixin: object
 ./components:
@@ -53,7 +53,7 @@
   createHead: function
   createStreamableHead: function
   extractUnheadInputFromHtml: function
-  HeadStream: object
+  HeadStreamScript: object
   propsToString: function
   renderSSRHead: function
   renderSSRHeadClosing: function
@@ -63,15 +63,27 @@
   transformHtmlTemplate: function
   VueHeadMixin: object
 ./stream/client:
+  createHead: function
   createStreamableHead: function
-  HeadStream: object
+  HeadStreamScript: object
+  renderDOMHead: function
+  VueHeadMixin: object
 ./stream/server:
+  createHead: function
   createStreamableHead: function
-  HeadStream: object
+  extractUnheadInputFromHtml: function
+  HeadStreamScript: object
+  propsToString: function
+  renderSSRHead: function
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   streamWithHead: function
+  transformHtmlTemplate: function
+  VueHeadMixin: object
+./stream/vite:
+  default: function
+  unheadVuePlugin: function
 ./types: {}
 ./utils:
   dedupeKey: function
@@ -99,6 +111,3 @@
   ValidHeadTags: object
   VueResolver: function
   walkResolver: function
-./vite-plugin:
-  default: function
-  unheadVuePlugin: function

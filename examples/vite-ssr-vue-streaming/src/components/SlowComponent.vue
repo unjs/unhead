@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import HeadStream from './HeadStream.vue'
 import SlowComponentTwo from './SlowComponentTwo.vue'
 
 const message = ref('')
@@ -9,7 +8,7 @@ const message = ref('')
 await new Promise(resolve => setTimeout(resolve, 3000))
 message.value = 'Component loaded after 3 second delay!'
 
-useServerHead({
+useHead({
   title: 'S1',
   style: [
     '.slow-component { color: red; }',
@@ -33,7 +32,6 @@ useServerHead({
 <template>
   <div class="slow-component">
     <p>Slow component one</p>
-    <HeadStream />
     <SlowComponentTwo />
   </div>
 </template>

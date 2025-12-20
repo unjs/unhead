@@ -4,12 +4,7 @@ import { createElement, Suspense, useContext } from 'react'
 import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
-export {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from 'unhead/stream/server'
+export * from '../server'
 
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
   return _createStreamableHead(options)
@@ -36,6 +31,9 @@ export function HeadStream(): ReactNode {
   return createElement('script', { dangerouslySetInnerHTML: { __html: STREAM_MARKER } })
 }
 
+// Alias for streaming mode vite transform
+export { HeadStream as HeadStreamScript }
+
 /**
  * Drop-in replacement for React's Suspense that automatically includes HeadStream.
  */
@@ -47,6 +45,13 @@ export function SuspenseWithHead({ children, ...props }: SuspenseProps): ReactNo
     createElement(HeadStream),
   )
 }
+
+export {
+  renderSSRHeadClosing,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+  streamWithHead,
+} from 'unhead/stream/server'
 
 export type {
   CreateStreamableServerHeadOptions,

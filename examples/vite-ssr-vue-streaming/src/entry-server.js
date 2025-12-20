@@ -1,5 +1,5 @@
 import { createApp } from './main'
-import { createHead, createStreamableHead, VueHeadMixin } from "@unhead/vue/server"
+import { createHead, createStreamableHead, VueHeadMixin } from "@unhead/vue/stream/server"
 import { renderToWebStream, renderToString } from 'vue/server-renderer'
 
 export function render(url, ssrContext = {}, renderFn = renderToWebStream) {

@@ -6,12 +6,13 @@ const cache = new Map<string, Promise<{ title: string; subtitle: string; discoun
 export default function HeroBanner() {
   const cacheKey = 'hero'
   if (!cache.has(cacheKey)) {
+    const delay = typeof window === 'undefined' ? 1000 : 0
     cache.set(cacheKey, new Promise(resolve =>
       setTimeout(() => resolve({
         title: 'Winter Sale',
         subtitle: 'Up to 50% off selected items',
         discount: 50
-      }), 1000)
+      }), delay)
     ))
     cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
   }

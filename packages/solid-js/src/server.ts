@@ -1,7 +1,7 @@
 import type { JSX } from 'solid-js'
 import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
+import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
 import { UnheadContext } from './context'
 
 export { UnheadContext } from './context'
@@ -20,34 +20,22 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
   return _createStreamableHead(options)
 }
 
-function useHeadStreamScript(): string {
+/**
+ * Streaming script component - outputs inline script with current head state.
+ * Use this in components that call useHead() to stream head updates immediately.
+ * The Vite plugin with streaming: true auto-injects this.
+ */
+export function HeadStreamScript(): JSX.Element | null {
   const head = useContext(UnheadContext)
   if (!head)
-    return ''
+    return null
 
   const update = renderSSRHeadSuspenseChunkSync(head)
-  return update || STREAM_MARKER
-}
-
-/**
- * Streaming head component for Solid.
- * Place inside Suspense boundaries after async components that use useHead.
- *
- * @example
- * ```tsx
- * <Suspense fallback={<Loading />}>
- *   <AsyncPage />
- *   <HeadStream />
- * </Suspense>
- * ```
- */
-export function HeadStream(): JSX.Element | null {
-  const content = useHeadStreamScript()
-  if (!content)
+  if (!update)
     return null
 
   // Use solid's escape hatch for raw HTML
-  return { t: `<script>${content}</script>` } as unknown as JSX.Element
+  return { t: `<script>${update}</script>` } as unknown as JSX.Element
 }
 
 export type {

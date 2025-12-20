@@ -9,10 +9,11 @@ export { VueHeadMixin } from './VueHeadMixin'
 export { renderDOMHead } from 'unhead/client'
 
 /**
- * Client-side HeadStream - renders nothing since head updates are applied via window.__unhead__
+ * Client-side HeadStreamScript - renders nothing (script already executed during SSR streaming)
+ * Must match server's HeadStreamScript for hydration
  */
-export const HeadStream = defineComponent({
-  name: 'HeadStream',
+export const HeadStreamScript = defineComponent({
+  name: 'HeadStreamScript',
   setup() {
     return () => null
   },
@@ -32,10 +33,20 @@ export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): VueHeadClient {
-  const { streamKey, ...rest } = options
+  const { streamKey = '__unhead__', ...rest } = options
+  const existing = (window as any)[streamKey]?._head
+
+  // Adopt existing core instance created by virtual module
+  if (existing) {
+    existing.resolvedOptions.propResolvers = [VueResolver, ...(existing.resolvedOptions.propResolvers || [])]
+    const vueHead = existing as VueHeadClient
+    vueHead.install = vueInstall(vueHead)
+    return vueHead
+  }
+
+  // Fallback: create fresh instance (non-streaming or SSG case)
   const head = _createHead({
     ...rest,
-    experimentalStreamKey: streamKey,
     propResolvers: [VueResolver],
     domOptions: {
       render: createDebouncedFn(() => renderDOMHead(head), fn => setTimeout(fn, 0)),

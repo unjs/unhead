@@ -1,10 +1,5 @@
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, STREAM_MARKER, streamWithHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
-import {
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  STREAM_MARKER,
-  streamWithHead,
-} from '../../src/server'
 import { createStreamableServerHead } from '../util'
 
 describe('streaming SSR - nested Suspense boundaries', () => {

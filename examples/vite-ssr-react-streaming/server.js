@@ -6,7 +6,7 @@ import express from 'express'
 import {
   renderSSRHeadShell,
   renderSSRHeadClosing,
-} from '@unhead/react/server'
+} from '@unhead/react/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -81,11 +81,8 @@ export async function createServer(
       res.status(200).set({ 'Content-Type': 'text/html' })
 
       // Render shell with initial head tags
-      // Include head-client script to process streaming updates immediately
-      const clientScript = isProd
-        ? '/assets/head-client.js' // TODO: resolve from manifest
-        : '/src/head-client.ts'
-      const shell = await renderSSRHeadShell(head, htmlStart, { clientScript, debug: true })
+      // Client script is injected via Vite plugin's transformIndexHtml
+      const shell = await renderSSRHeadShell(head, htmlStart, { debug: true })
       res.write(shell)
 
       // Stream React content

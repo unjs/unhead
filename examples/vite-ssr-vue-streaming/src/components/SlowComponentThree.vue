@@ -1,11 +1,8 @@
 <script setup>
-import { ref } from 'vue'
-import HeadStream from './HeadStream.vue'
-
 // Simulate slow component load
 await new Promise(resolve => setTimeout(resolve, 3000))
 
-useServerHead({
+useHead({
   title: 'S3',
   style: [
     '.slow-component-three { color: green; }',
@@ -34,6 +31,5 @@ useServerHead({
 <template>
   <div class="slow-component slow-component-three">
     <p>Slow component three</p>
-    <HeadStream />
   </div>
 </template>

@@ -29,8 +29,11 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
 
   // Create entry only once, even in Strict Mode
   if (!entryRef.current) {
-    // During hydration, adopt streaming entry if available (content-based matching)
-    const streamEntries = (unhead as any)._streamEntries as Array<T & { _streamKey?: string }> | undefined
+    // During hydration, adopt streaming entry if available
+    // Check _hydrationComplete flag to avoid adopting stale entries after navigation
+    const streamEntries = (unhead as any)._hydrationComplete
+      ? undefined
+      : (unhead as any)._streamEntries as Array<T & { _streamKey?: string }> | undefined
 
     if (streamEntries?.length) {
       const inputKey = JSON.stringify(input)
@@ -43,8 +46,8 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
         isStreamEntryRef.current = true
       }
       else {
-        // No match found - hydration is complete, clear stream entries to prevent stale references
-        ;(unhead as any)._streamEntries = undefined
+        // No match found - hydration is complete, mark and create fresh
+        ;(unhead as any)._hydrationComplete = true
         entryRef.current = fn(unhead, input, options)
       }
     }
@@ -61,6 +64,13 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
       entry?.patch(input)
     }
   }, [input, entry])
+
+  // Mark hydration complete after first effect runs - prevents stale stream entry adoption on navigation
+  useEffect(() => {
+    if (isStreamEntryRef.current && !(unhead as any)._hydrationComplete) {
+      ;(unhead as any)._hydrationComplete = true
+    }
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {

@@ -1,16 +1,10 @@
 import type { CreateStreamableServerHeadOptions } from 'unhead/types'
 import type { VueHeadClient } from '../types'
-import { createStreamableHead as _createStreamableHead, STREAM_MARKER } from 'unhead/stream/server'
-import { defineComponent, h } from 'vue'
+import { createStreamableHead as _createStreamableHead } from 'unhead/stream/server'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
-export {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from 'unhead/stream/server'
+export * from '../server'
 
 export function createStreamableHead(options: Omit<CreateStreamableServerHeadOptions, 'propsResolver'> = {}): VueHeadClient {
   const head = _createStreamableHead({
@@ -21,19 +15,14 @@ export function createStreamableHead(options: Omit<CreateStreamableServerHeadOpt
   return head
 }
 
-/**
- * Streaming head component for Vue.
- * Renders a marker that triggers head updates during streaming SSR.
- * Place this after async components that call useHead/useServerHead.
- */
-export const HeadStream = defineComponent({
-  name: 'HeadStream',
-  setup() {
-    return () => h('script', null, STREAM_MARKER)
-  },
-})
-
 export type {
   CreateStreamableServerHeadOptions,
   VueHeadClient,
 }
+
+export {
+  renderSSRHeadClosing,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+  streamWithHead,
+} from 'unhead/stream/server'

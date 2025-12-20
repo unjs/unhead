@@ -68,12 +68,8 @@ export async function createServer(
 
     res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
-    // Client script path for early head processing
-    const clientScript = isProd
-      ? '/assets/head-client.js' // TODO: resolve from manifest
-      : '/src/head-client.ts'
-
-    for await (const chunk of streamWithHead(svelteStream, template, head, { clientScript, debug: true })) {
+    // Client script is injected via Vite plugin's transformIndexHtml
+    for await (const chunk of streamWithHead(svelteStream, template, head, { debug: true })) {
       if (res.closed) break
       res.write(chunk)
     }

@@ -69,9 +69,9 @@
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
     },
-    "./vite-plugin": {
-      "types": "./dist/vite-plugin.d.ts",
-      "default": "./dist/vite-plugin.mjs"
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -109,8 +109,8 @@
       "parser": [
         "dist/parser.d.ts"
       ],
-      "vite-plugin": [
-        "dist/vite-plugin.d.ts"
+      "stream/vite": [
+        "dist/stream/vite.d.ts"
       ]
     }
   },
@@ -151,6 +151,7 @@
   },
   "dependencies": {
     "hookable": "catalog:",
-    "magic-string": "catalog:"
+    "magic-string": "catalog:",
+    "vite": "catalog:"
   }
 }

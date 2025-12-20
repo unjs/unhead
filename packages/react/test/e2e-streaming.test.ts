@@ -1,11 +1,10 @@
 import { PassThrough } from 'node:stream'
 import { createElement, Suspense, use, useContext } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
+import { renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunkSync } from 'unhead'
 import {
   createStreamableHead,
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunkSync,
+
 } from 'unhead/server'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'

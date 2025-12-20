@@ -1,13 +1,9 @@
+import { renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
 /**
  * Tests for features that may be broken or have edge cases with streaming SSR.
  * These test specific behaviors that could fail when tags are added progressively.
  */
 import { describe, expect, it } from 'vitest'
-import {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-} from '../../src/server'
 import { createStreamableServerHead } from '../util'
 
 describe('streaming SSR - potentially broken features', () => {

@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderSSRHeadSuspenseChunkSync } from 'unhead'
 import { describe, it } from 'vitest'
 import {
   renderSSRHead,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  renderSSRHeadSuspenseChunkSync,
+
 } from '../../src/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../util'
 
