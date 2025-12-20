@@ -1,5 +1,5 @@
 export type { CreateServerHeadOptions, CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
-export { createHead, createStreamableHead } from './createHead'
+export { createHead } from './createHead'
 export { renderSSRHead } from './renderSSRHead'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
 export { escapeHtml, extractUnheadInputFromHtml, propsToString, ssrRenderTags, tagToString } from './util'

@@ -3,11 +3,7 @@ import { PassThrough } from 'node:stream'
 // @vitest-environment node
 import React, { Suspense, use } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
-import { renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
-import {
-  createStreamableHead,
-
-} from 'unhead/server'
+import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../src/stream/server'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
 import { UnheadProvider } from '../src/server'

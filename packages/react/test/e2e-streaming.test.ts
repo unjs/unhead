@@ -1,15 +1,12 @@
 import { PassThrough } from 'node:stream'
 import { createElement, Suspense, use, useContext } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
-import { renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunkSync } from 'unhead'
-import {
-  createStreamableHead,
-
-} from 'unhead/server'
+import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
 import { UnheadContext } from '../src/context'
+import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell } from '../src/stream/server'
 
 // Manual SuspenseWithHead for testing (same as in server.ts but avoids import issues)
 function SuspenseWithHead({ children, ...props }: React.ComponentProps<typeof Suspense>) {
