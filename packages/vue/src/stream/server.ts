@@ -12,8 +12,8 @@ export * from '../server'
  * Streaming script component - outputs inline script with current head state.
  * The Vite plugin with streaming: true auto-injects this.
  */
-export const HeadStreamScript = defineComponent({
-  name: 'HeadStreamScript',
+export const HeadStream = defineComponent({
+  name: 'HeadStream',
   setup() {
     const head = injectHead()
     return () => {

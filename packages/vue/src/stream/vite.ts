@@ -14,10 +14,10 @@ function transform(ctx: StreamingPluginContext): boolean {
 
   const templateStart = templateMatch.index! + templateMatch[0].length
 
-  // Inject HeadStreamScript at the start of template content
-  s.appendRight(templateStart, '<HeadStreamScript />')
+  // Inject HeadStream at the start of template content
+  s.appendRight(templateStart, '<HeadStream />')
 
-  // Add import for HeadStreamScript
+  // Add import for HeadStream
   const importPath = `@unhead/vue/stream/${isSSR ? 'server' : 'client'}`
   const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
@@ -28,14 +28,14 @@ function transform(ctx: StreamingPluginContext): boolean {
   const existing = imports.find(i => i.specifier === importPath)
 
   if (existing) {
-    if (!existing.imports?.includes('HeadStreamScript')) {
+    if (!existing.imports?.includes('HeadStream')) {
       const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
-      const newImports = inner ? `${inner}, HeadStreamScript` : 'HeadStreamScript'
+      const newImports = inner ? `${inner}, HeadStream` : 'HeadStream'
       s.overwrite(existing.start, existing.end, `import { ${newImports} } from '${importPath}'\n`)
     }
   }
   else {
-    s.appendRight(scriptEnd, `\nimport { HeadStreamScript } from '${importPath}'`)
+    s.appendRight(scriptEnd, `\nimport { HeadStream } from '${importPath}'`)
   }
 
   return true

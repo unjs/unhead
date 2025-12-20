@@ -6,10 +6,10 @@ import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
 /**
- * Client-side HeadStreamScript - renders nothing (script already executed during SSR streaming)
+ * Client-side HeadStream - renders nothing (script already executed during SSR streaming)
  */
-export const HeadStreamScript = defineComponent({
-  name: 'HeadStreamScript',
+export const HeadStream = defineComponent({
+  name: 'HeadStream',
   setup() {
     return () => null
   },

@@ -32,9 +32,6 @@ export function HeadStream(): ReactNode {
   })
 }
 
-// Alias for streaming mode vite transform
-export { HeadStream as HeadStreamScript }
-
 export * from '../client'
 
 export type {

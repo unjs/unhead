@@ -57,11 +57,11 @@ function transform(ctx: StreamingPluginContext): boolean {
   if (returns.length === 0)
     return false
 
-  // Wrap JSX returns with HeadStreamScript (reverse order to maintain positions)
+  // Wrap JSX returns with HeadStream (reverse order to maintain positions)
   returns.sort((a, b) => b.jsxStart - a.jsxStart)
   for (const ret of returns) {
     const jsxCode = code.slice(ret.jsxStart, ret.jsxEnd)
-    s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStreamScript />${jsxCode}</>`)
+    s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStream />${jsxCode}</>`)
   }
 
   // Add import
@@ -70,17 +70,17 @@ function transform(ctx: StreamingPluginContext): boolean {
   const existing = imports.find(i => i.specifier === importPath)
 
   if (existing) {
-    if (!existing.imports?.includes('HeadStreamScript')) {
+    if (!existing.imports?.includes('HeadStream')) {
       const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
-      s.overwrite(existing.start, existing.end, `import { ${inner ? `${inner}, ` : ''}HeadStreamScript } from '${importPath}'\n`)
+      s.overwrite(existing.start, existing.end, `import { ${inner ? `${inner}, ` : ''}HeadStream } from '${importPath}'\n`)
     }
   }
   else {
     const last = imports[imports.length - 1]
     if (last)
-      s.appendLeft(last.end, `import { HeadStreamScript } from '${importPath}'\n`)
+      s.appendLeft(last.end, `import { HeadStream } from '${importPath}'\n`)
     else
-      s.prepend(`import { HeadStreamScript } from '${importPath}'\n`)
+      s.prepend(`import { HeadStream } from '${importPath}'\n`)
   }
 
   return true

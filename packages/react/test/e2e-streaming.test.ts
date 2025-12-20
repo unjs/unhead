@@ -8,15 +8,6 @@ import { useHead } from '../src/composables'
 import { UnheadContext } from '../src/context'
 import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell } from '../src/stream/server'
 
-// Manual SuspenseWithHead for testing (same as in server.ts but avoids import issues)
-function SuspenseWithHead({ children, ...props }: React.ComponentProps<typeof Suspense>) {
-  return createElement(
-    Suspense,
-    props,
-    children,
-    createElement(HeadStream),
-  )
-}
 
 // Manual HeadStream for testing
 function HeadStream() {
@@ -55,7 +46,7 @@ function createResolvablePromise<T>() {
 }
 
 describe('react streaming SSR e2e', () => {
-  describe('suspenseWithHead integration', () => {
+  describe('suspense with HeadStream integration', () => {
     it('streams initial head tags in shell (pushed before render)', async () => {
       const head = createStreamableHead()
 
@@ -78,7 +69,7 @@ describe('react streaming SSR e2e', () => {
       expect(shell).toContain('window.__unhead__')
     })
 
-    it('suspenseWithHead streams head updates inline with async content', async () => {
+    it('suspense with HeadStream streams head updates inline with async content', async () => {
       const head = createStreamableHead()
       const { promise: dataPromise, resolve: resolveData } = createResolvablePromise<{ title: string }>()
 
@@ -89,12 +80,13 @@ describe('react streaming SSR e2e', () => {
         return createElement('div', null, `Loaded: ${data.title}`)
       }
 
-      // App with SuspenseWithHead - head calls happen during React render
+      // App with Suspense and HeadStream - head calls happen during React render
       function App() {
         return createElement(
-          SuspenseWithHead,
+          Suspense,
           { fallback: createElement('div', null, 'Loading...') },
           createElement(AsyncComponent),
+          createElement(HeadStream),
         )
       }
 
@@ -165,14 +157,16 @@ describe('react streaming SSR e2e', () => {
           'div',
           null,
           createElement(
-            SuspenseWithHead,
+            Suspense,
             { fallback: createElement('div', null, 'Loading 1...') },
             createElement(AsyncComponent1),
+            createElement(HeadStream),
           ),
           createElement(
-            SuspenseWithHead,
+            Suspense,
             { fallback: createElement('div', null, 'Loading 2...') },
             createElement(AsyncComponent2),
+            createElement(HeadStream),
           ),
         )
       }
@@ -255,18 +249,20 @@ describe('react streaming SSR e2e', () => {
           null,
           `Outer: ${data}`,
           createElement(
-            SuspenseWithHead,
+            Suspense,
             { fallback: createElement('div', null, 'Inner loading...') },
             createElement(InnerAsync),
+            createElement(HeadStream),
           ),
         )
       }
 
       function App() {
         return createElement(
-          SuspenseWithHead,
+          Suspense,
           { fallback: createElement('div', null, 'Outer loading...') },
           createElement(OuterAsync),
+          createElement(HeadStream),
         )
       }
 
@@ -302,7 +298,7 @@ describe('react streaming SSR e2e', () => {
   })
 
   describe('zero-config streaming', () => {
-    it('works without any middleware when using SuspenseWithHead', async () => {
+    it('works without any middleware when using Suspense with HeadStream', async () => {
       const head = createStreamableHead()
       const { promise: dataPromise, resolve: resolveData } = createResolvablePromise<string>()
 
@@ -312,12 +308,13 @@ describe('react streaming SSR e2e', () => {
         return createElement('h1', null, title)
       }
 
-      // This simulates what the Vite plugin does - transforms Suspense to SuspenseWithHead
+      // This simulates what the Vite plugin does - adds HeadStream to Suspense
       function App() {
         return createElement(
-          SuspenseWithHead,
+          Suspense,
           { fallback: createElement('div', null, 'Loading...') },
           createElement(AsyncPage),
+          createElement(HeadStream),
         )
       }
 

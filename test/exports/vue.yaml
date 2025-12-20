@@ -57,14 +57,14 @@
 ./stream/client:
   createHead: function
   createStreamableHead: function
-  HeadStreamScript: object
+  HeadStream: object
   renderDOMHead: function
   VueHeadMixin: object
 ./stream/server:
   createHead: function
   createStreamableHead: function
   extractUnheadInputFromHtml: function
-  HeadStreamScript: object
+  HeadStream: object
   propsToString: function
   renderSSRHead: function
   renderSSRHeadClosing: function

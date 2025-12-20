@@ -30,7 +30,6 @@
   createHead: function
   createStreamableHead: function
   HeadStream: function
-  HeadStreamScript: function
   renderDOMHead: function
   UnheadProvider: function
 ./stream/server:
@@ -38,13 +37,11 @@
   createStreamableHead: function
   extractUnheadInputFromHtml: function
   HeadStream: function
-  HeadStreamScript: function
   renderSSRHead: function
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   streamWithHead: function
-  SuspenseWithHead: function
   transformHtmlTemplate: function
   UnheadProvider: function
 ./stream/vite:
