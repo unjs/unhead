@@ -23,12 +23,3 @@ export function HeadStream() {
 
   return ssr(scriptTemplate, update)
 }
-
-export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
-  return _createStreamableHead(options)
-}
-
-export type {
-  CreateStreamableServerHeadOptions,
-  Unhead,
-} from 'unhead/types'

@@ -32,7 +32,7 @@ describe('unheadVuePlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('injects HeadStreamScript in template for components with useHead', () => {
+    it('injects HeadStream in template for components with useHead', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
@@ -44,10 +44,10 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStreamScript />')
+      expect(result!.code).toContain('<HeadStream />')
     })
 
-    it('adds HeadStreamScript import from client for non-SSR builds', () => {
+    it('adds HeadStream import from client for non-SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
@@ -59,10 +59,10 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/stream/client\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/client\'')
     })
 
-    it('adds HeadStreamScript import from server for SSR builds', () => {
+    it('adds HeadStream import from server for SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue'
@@ -74,10 +74,10 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/vue/stream/server\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/server\'')
     })
 
-    it('adds HeadStreamScript to existing server import for SSR builds', () => {
+    it('adds HeadStream to existing server import for SSR builds', () => {
       const code = `
         <script setup>
           import { useHead } from '@unhead/vue/stream/server'
@@ -89,7 +89,7 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('useHead, HeadStreamScript')
+      expect(result!.code).toContain('useHead, HeadStream')
     })
 
     it('transforms files with useSeoMeta', () => {
@@ -104,7 +104,7 @@ describe('unheadVuePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.vue')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStreamScript />')
+      expect(result!.code).toContain('<HeadStream />')
     })
 
     it('generates source map', () => {

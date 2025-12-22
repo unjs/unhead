@@ -104,6 +104,7 @@ export async function renderSSRHeadSuspenseChunk(head: Unhead<any>): Promise<str
   }
 
   const currentTags = await head.resolveTags()
+  console.log('ssr chunk', currentTags)
   return buildHeadChunk(head, currentTags)
 }
 
@@ -225,12 +226,6 @@ function tagsToSerializableHead(tags: HeadTag[]): SerializableHead {
 
   return head
 }
-
-/**
- * Marker that HeadStream components output inside a script tag.
- * This gets replaced with the actual head update JS code during streaming.
- */
-export const STREAM_MARKER = '/*__UNHEAD_SSR__*/'
 
 /**
  * @experimental

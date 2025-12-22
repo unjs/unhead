@@ -1,4 +1,4 @@
-import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead'
+import { renderSSRHeadSuspenseChunkSync } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
@@ -147,13 +147,6 @@ describe('vue streaming SSR', () => {
 
       const result = await renderSSRHeadClosing(head)
       expect(result).toContain('<script src="analytics.js"></script>')
-    })
-  })
-
-  describe('sTREAM_MARKER', () => {
-    it('exports STREAM_MARKER constant', () => {
-      expect(STREAM_MARKER).toBeDefined()
-      expect(typeof STREAM_MARKER).toBe('string')
     })
   })
 

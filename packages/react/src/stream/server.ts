@@ -9,12 +9,15 @@ import { UnheadContext } from '../context'
  */
 export function HeadStream(): ReactNode {
   const head = useContext(UnheadContext)
-  if (!head)
-    return null
+  if (!head) {
+    throw new Error('HeadStream not found')
+  }
 
   const update = renderSSRHeadSuspenseChunkSync(head)
-  if (!update)
-    return null
+  if (!update) {
+    // render div with text - no head
+    return createElement('script', { dangerouslySetInnerHTML: { __html: `<!-- no content: ${head.entries.size}-->` } })
+  }
 
   return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
 }

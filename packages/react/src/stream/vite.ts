@@ -1,13 +1,71 @@
-import type { StreamingPluginContext, VitePlugin } from 'unhead/stream/vite'
+import MagicString from 'magic-string'
 import { findStaticImports } from 'mlly'
 import { parseSync, Visitor } from 'oxc-parser'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
-export type { VitePlugin }
-
-function transform(ctx: StreamingPluginContext): boolean {
-  const { code, id, isSSR, s } = ctx
-
+/**
+ * Transforms React/JSX code to inject HeadStream components for streaming SSR support.
+ *
+ * @param code - The source code to transform
+ * @param id - The file path/id being transformed
+ * @param isSSR - Whether the code is being transformed for SSR
+ * @param s - MagicString instance for code manipulation
+ * @returns `true` if transformations were applied, `false` otherwise
+ *
+ * @example
+ * ```tsx
+ * // Input code:
+ * import { useHead } from '@unhead/react'
+ *
+ * export function MyComponent() {
+ *   useHead({
+ *     title: 'My Page'
+ *   })
+ *   return <div>Hello World</div>
+ * }
+ *
+ * // Transformed output (SSR):
+ * import { useHead } from '@unhead/react'
+ * import { HeadStream } from '@unhead/react/stream/server'
+ *
+ * export function MyComponent() {
+ *   useHead({
+ *     title: 'My Page'
+ *   })
+ *   return <><HeadStream /><div>Hello World</div></>
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Input code with arrow function:
+ * const Page = () => {
+ *   useSeoMeta({
+ *     description: 'Page description'
+ *   })
+ *   return (
+ *     <main>
+ *       <h1>Title</h1>
+ *     </main>
+ *   )
+ * }
+ *
+ * // Transformed output (client):
+ * import { HeadStream } from '@unhead/react/stream/client'
+ *
+ * const Page = () => {
+ *   useSeoMeta({
+ *     description: 'Page description'
+ *   })
+ *   return (
+ *     <><HeadStream /><main>
+ *       <h1>Title</h1>
+ *     </main></>
+ *   )
+ * }
+ * ```
+ */
+function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
   const lang = id.endsWith('.tsx') ? 'tsx' : id.endsWith('.jsx') ? 'jsx' : 'tsx'
   const result = parseSync(id, code, { lang })
 
@@ -88,13 +146,42 @@ function transform(ctx: StreamingPluginContext): boolean {
 
 /**
  * Vite plugin for React streaming SSR support.
+ * Automatically injects HeadStream components into React components that use useHead hooks.
+ *
+ * @returns Vite plugin configuration object with:
+ *   - `name`: Plugin identifier
+ *   - `enforce`: Plugin execution order ('pre')
+ *   - `transform`: Transform hook for processing JSX/TSX files
+ *
+ * @example
+ * ```ts
+ * // vite.config.ts
+ * import { unheadReactPlugin } from '@unhead/react/stream/vite'
+ *
+ * export default {
+ *   plugins: [
+ *     unheadReactPlugin()
+ *   ]
+ * }
+ * ```
  */
-export function unheadReactPlugin(): VitePlugin {
+export function unheadReactPlugin() {
   return createStreamingPlugin({
-    name: 'unhead:react',
     framework: '@unhead/react',
-    include: /\.[jt]sx$/,
-    transform,
+    transform(code, id, opts) {
+      // Only process jsx/tsx files
+      if (!/\.[jt]sx$/.test(id))
+        return null
+
+      const s = new MagicString(code)
+      if (!transform(code, id, opts?.ssr ?? false, s))
+        return null
+
+      return {
+        code: s.toString(),
+        map: s.generateMap({ includeContent: true, source: id }),
+      }
+    },
   })
 }
 

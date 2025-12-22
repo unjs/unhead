@@ -233,7 +233,7 @@ describe('vue streaming SSR e2e', () => {
     })
   })
 
-  describe('sync rendering for HeadStreamScript', () => {
+  describe('sync rendering for HeadStream', () => {
     it('renderSSRHeadSuspenseChunkSync returns update synchronously', () => {
       const head = createStreamableHead()
 

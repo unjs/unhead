@@ -1012,5 +1012,4 @@ describe('streaming SSR', () => {
       expect(shell).toContain('window.__アプリ__')
     })
   })
-
 })

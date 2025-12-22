@@ -20,7 +20,7 @@ describe('unheadReactPlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('skips files without useHead', () => {
+    it('skips files without Suspense', () => {
       const code = `
         export function App() {
           return <div>Hello</div>
@@ -30,107 +30,125 @@ describe('unheadReactPlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('wraps JSX return with HeadStreamScript fragment', () => {
+    it('adds HeadStream inside Suspense boundaries', () => {
       const code = `
-        import { useHead } from '@unhead/react'
+        import { Suspense } from 'react'
         export function App() {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
-      expect(result!.code).toContain('</>')
-    })
-
-    it('adds HeadStreamScript import from client for non-SSR builds', () => {
-      const code = `
-        import { useHead } from '@unhead/react'
-        export function App() {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: false })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/react/stream/client\'')
-    })
-
-    it('adds HeadStreamScript import from server for SSR builds', () => {
-      const code = `
-        import { useHead } from '@unhead/react'
-        export function App() {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/react/stream/server\'')
-    })
-
-    it('adds HeadStreamScript to existing server import for SSR builds', () => {
-      const code = `
-        import { useHead } from '@unhead/react'
-        import { createStreamableHead } from '@unhead/react/stream/server'
-        export function App() {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('createStreamableHead, HeadStreamScript')
-    })
-
-    it('transforms files with useSeoMeta', () => {
-      const code = `
-        import { useSeoMeta } from '@unhead/react'
-        export function App() {
-          useSeoMeta({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
-    })
-
-    it('handles arrow function with implicit return', () => {
-      const code = `
-        import { useHead } from '@unhead/react'
-        const App = () => {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
-        }
-      `
-      const result = plugin.transform!(code, 'app.tsx')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
-    })
-
-    it('handles parenthesized JSX return', () => {
-      const code = `
-        import { useHead } from '@unhead/react'
-        export function App() {
-          useHead({ title: 'Test' })
           return (
-            <div>Hello</div>
+            <Suspense fallback={<div>Loading...</div>}>
+              <AsyncComponent />
+            </Suspense>
           )
         }
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
+      expect(result!.code).toContain('<HeadStream />')
+    })
+
+    it('adds HeadStream import from client for non-SSR builds', () => {
+      const code = `
+        import { Suspense } from 'react'
+        export function App() {
+          return <Suspense fallback={<div>Loading...</div>}>
+            <AsyncComponent />
+          </Suspense>
+        }
+      `
+      const result = plugin.transform!(code, 'app.tsx', { ssr: false })
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/react/stream/client\'')
+    })
+
+    it('adds HeadStream import from server for SSR builds', () => {
+      const code = `
+        import { Suspense } from 'react'
+        export function App() {
+          return <Suspense fallback={<div>Loading...</div>}>
+            <AsyncComponent />
+          </Suspense>
+        }
+      `
+      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/react/stream/server\'')
+    })
+
+    it('adds HeadStream to existing server import for SSR builds', () => {
+      const code = `
+        import { Suspense } from 'react'
+        import { createStreamableHead } from '@unhead/react/stream/server'
+        export function App() {
+          return <Suspense fallback={<div>Loading...</div>}>
+            <AsyncComponent />
+          </Suspense>
+        }
+      `
+      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('createStreamableHead, HeadStream')
+    })
+
+    it('handles multiple Suspense boundaries', () => {
+      const code = `
+        import { Suspense } from 'react'
+        export function App() {
+          return (
+            <div>
+              <Suspense fallback={<div>Loading 1...</div>}>
+                <Component1 />
+              </Suspense>
+              <Suspense fallback={<div>Loading 2...</div>}>
+                <Component2 />
+              </Suspense>
+            </div>
+          )
+        }
+      `
+      const result = plugin.transform!(code, 'app.tsx')
+      expect(result).not.toBeNull()
+      expect(result!.code.match(/<HeadStream \/>/g)?.length).toBe(2)
+    })
+
+    it('handles nested Suspense boundaries', () => {
+      const code = `
+        import { Suspense } from 'react'
+        const App = () => (
+          <Suspense fallback={<div>Loading outer...</div>}>
+            <div>
+              <Suspense fallback={<div>Loading inner...</div>}>
+                <AsyncComponent />
+              </Suspense>
+            </div>
+          </Suspense>
+        )
+      `
+      const result = plugin.transform!(code, 'app.tsx')
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('<HeadStream />')
+    })
+
+    it('skips non-Suspense JSX elements', () => {
+      const code = `
+        export function App() {
+          return (
+            <div>
+              <span>Hello</span>
+            </div>
+          )
+        }
+      `
+      const result = plugin.transform!(code, 'app.tsx')
+      expect(result).toBeNull()
     })
 
     it('generates source map', () => {
       const code = `
-        import { useHead } from '@unhead/react'
+        import { Suspense } from 'react'
         export function App() {
-          useHead({ title: 'Test' })
-          return <div>Hello</div>
+          return <Suspense fallback={<div>Loading...</div>}>
+            <AsyncComponent />
+          </Suspense>
         }
       `
       const result = plugin.transform!(code, 'app.tsx')
