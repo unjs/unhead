@@ -3,10 +3,10 @@ import { PassThrough } from 'node:stream'
 // @vitest-environment node
 import React, { Suspense, use } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
-import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../src/stream/server'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
 import { UnheadProvider } from '../src/server'
+import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../src/stream/server'
 
 // Helper to collect stream output
 function collectStream(stream: NodeJS.ReadableStream): Promise<string> {

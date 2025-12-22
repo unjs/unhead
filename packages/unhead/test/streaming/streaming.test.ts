@@ -2,7 +2,6 @@ import {
   renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-  STREAM_MARKER,
   streamWithHead,
 } from 'unhead'
 import { describe, expect, it } from 'vitest'
@@ -140,36 +139,6 @@ describe('streaming SSR', () => {
       expect(fullHtml).toContain('<div>Hello</div>')
       expect(fullHtml).toContain('<div>World</div>')
       expect(fullHtml).toContain('</body></html>')
-    })
-
-    it('processes suspense markers', async () => {
-      const head = createServerHeadWithContext()
-      head.push({ title: 'Initial' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      // Simulate: first chunk, then async component resolves with marker
-      async function* appWithSuspense(): AsyncGenerator<string> {
-        yield '<div>App Shell</div>'
-        // Simulate async component adding head
-        head.push({ title: 'Async Title', meta: [{ name: 'async', content: 'true' }] })
-        // HeadStream outputs a script with the marker inside
-        yield `<div><script>${STREAM_MARKER}</script></div>`
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(appWithSuspense(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const fullHtml = chunks.join('')
-      // Should have initial title in head
-      expect(fullHtml).toContain('<title>Initial</title>')
-      // Should have push script for async updates - marker replaced with JS code inside script tag
-      expect(fullHtml).toContain('window.__unhead__.push')
-      expect(fullHtml).toContain('Async Title')
-      // The script tag should be valid (no nested scripts)
-      expect(fullHtml).not.toContain('<script><script>')
     })
 
     it('handles Uint8Array chunks', async () => {
@@ -583,56 +552,53 @@ describe('streaming SSR', () => {
       expect(html).toContain('</body></html>')
     })
 
-    it('handles multiple suspense markers in one chunk', async () => {
+    it('handles multiple head updates without markers', async () => {
       const head = createStreamableServerHead()
       head.push({ title: 'Initial' })
 
       const template = '<html><head></head><body><!--app-html--></body></html>'
 
-      async function* multiMarkerStream(): AsyncGenerator<string> {
+      async function* multiUpdateStream(): AsyncGenerator<string> {
         yield '<div>Start</div>'
         head.push({ meta: [{ name: 'first', content: '1' }] })
         head.push({ meta: [{ name: 'second', content: '2' }] })
-        // Multiple HeadStream components in one chunk
-        yield `<script>${STREAM_MARKER}</script><script>${STREAM_MARKER}</script>`
+        // No markers needed since streamWithHead no longer processes them
+        yield '<div>Content</div>'
       }
 
       const chunks: string[] = []
-      for await (const chunk of streamWithHead(multiMarkerStream(), template, head)) {
+      for await (const chunk of streamWithHead(multiUpdateStream(), template, head)) {
         chunks.push(chunk)
       }
 
       const html = chunks.join('')
-      // Both metas should be in the push (all markers replaced)
-      expect(html).toContain('first')
-      expect(html).toContain('second')
-      // No leftover markers
-      expect(html).not.toContain(STREAM_MARKER)
+      // Should contain head updates
+      expect(html).toContain('<div>Content</div>')
+      expect(html).toContain('window.__unhead__')
     })
 
-    it('handles marker with no new tags', async () => {
+    it('handles streams without head updates', async () => {
       const head = createStreamableServerHead()
       head.push({ title: 'Static' })
 
       const template = '<html><head></head><body><!--app-html--></body></html>'
 
-      async function* noNewTagsStream(): AsyncGenerator<string> {
+      async function* noUpdatesStream(): AsyncGenerator<string> {
         yield '<div>Content</div>'
-        // No new head tags added - HeadStream outputs script with marker
-        yield `<script>${STREAM_MARKER}</script>`
+        // No new head tags added - no special handling needed
+        yield '<script>/* some app script */</script>'
       }
 
       const chunks: string[] = []
-      for await (const chunk of streamWithHead(noNewTagsStream(), template, head)) {
+      for await (const chunk of streamWithHead(noUpdatesStream(), template, head)) {
         chunks.push(chunk)
       }
 
       const html = chunks.join('')
-      // Marker should be replaced with empty string (empty script tag)
-      expect(html).not.toContain(STREAM_MARKER)
-      expect(html).not.toContain('window.__unhead__.push') // No push needed
-      // Should have empty script tag
-      expect(html).toContain('<script></script>')
+      // Should contain app content
+      expect(html).toContain('<div>Content</div>')
+      expect(html).toContain('/* some app script */')
+      expect(html).toContain('window.__unhead__')
     })
 
     it('handles mixed binary and string chunks', async () => {
@@ -1047,114 +1013,4 @@ describe('streaming SSR', () => {
     })
   })
 
-  describe('edge cases - realistic streaming scenarios', () => {
-    it('handles realistic e-commerce product page stream', async () => {
-      const head = createStreamableServerHead()
-
-      // Initial page head
-      head.push({
-        title: 'Loading...',
-        meta: [
-          { name: 'robots', content: 'index,follow' },
-          { charset: 'utf-8' },
-        ],
-        htmlAttrs: { lang: 'en' },
-      })
-
-      const template = '<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>'
-
-      async function* productPageStream(): AsyncGenerator<string> {
-        yield '<div class="app-shell"><nav>Navigation</nav>'
-
-        // Product data loads
-        head.push({
-          title: 'iPhone 15 Pro - $999',
-          meta: [
-            { name: 'description', content: 'Buy iPhone 15 Pro. Starting at $999.' },
-            { property: 'og:title', content: 'iPhone 15 Pro' },
-            { property: 'og:price:amount', content: '999' },
-          ],
-        })
-        yield `<main><h1>iPhone 15 Pro</h1><script>${STREAM_MARKER}</script>`
-
-        // Reviews load
-        head.push({
-          meta: [
-            { name: 'rating', content: '4.8' },
-            { name: 'review-count', content: '2847' },
-          ],
-        })
-        yield `<section class="reviews"><script>${STREAM_MARKER}</script></section>`
-
-        yield '</main></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(productPageStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      expect(html).toContain('iPhone 15 Pro - $999')
-      expect(html).toContain('og:title')
-      expect(html).toContain('4.8')
-      expect(html).toContain('2847')
-    })
-
-    it('handles blog post with async author info', async () => {
-      const head = createStreamableServerHead()
-
-      head.push({
-        title: 'Loading article...',
-        meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
-      })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* blogStream(): AsyncGenerator<string> {
-        yield '<article>'
-
-        // Article content loads
-        head.push({
-          title: 'Understanding React Server Components',
-          meta: [
-            { name: 'description', content: 'A deep dive into RSC architecture.' },
-            { property: 'og:type', content: 'article' },
-            { property: 'article:published_time', content: '2024-01-15T10:00:00Z' },
-          ],
-          link: [
-            { rel: 'canonical', href: 'https://blog.example.com/rsc-deep-dive' },
-          ],
-        })
-        yield `<h1>Understanding React Server Components</h1><p>Content...</p><script>${STREAM_MARKER}</script>`
-
-        // Author info loads async
-        head.push({
-          meta: [
-            { property: 'article:author', content: 'Jane Developer' },
-          ],
-          script: [{
-            type: 'application/ld+json',
-            innerHTML: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Article',
-              'author': { '@type': 'Person', 'name': 'Jane Developer' },
-            }),
-          }],
-        })
-        yield `<footer>By Jane Developer</footer><script>${STREAM_MARKER}</script></article>`
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(blogStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      expect(html).toContain('Understanding React Server Components')
-      expect(html).toContain('canonical')
-      expect(html).toContain('Jane Developer')
-      expect(html).toContain('schema.org')
-    })
-  })
 })

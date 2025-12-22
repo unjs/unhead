@@ -1,4 +1,4 @@
-import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead'
+import { renderSSRHeadSuspenseChunkSync } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
@@ -169,7 +169,7 @@ describe('solid-js streaming SSR e2e', () => {
 
       const appChunks = [
         '<div>Shell Content</div>',
-        `<div>Async Content</div><script>${STREAM_MARKER}</script>`,
+        `<div>Async Content</div>`,
       ]
 
       // Add head update before second chunk
@@ -187,17 +187,17 @@ describe('solid-js streaming SSR e2e', () => {
       expect(fullHtml).toContain('window.__unhead__')
     })
 
-    it('replaces STREAM_MARKER with head updates', async () => {
+    it('handles head updates without markers', async () => {
       const head = createStreamableHead()
 
-      head.push({ title: 'Marker Test' })
+      head.push({ title: 'Update Test' })
 
       const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
 
       // First chunk triggers shell
       const chunk1 = '<div>Initial</div>'
-      // Second chunk has marker
-      const chunk2 = `<div>Loaded</div><script>${STREAM_MARKER}</script>`
+      // Second chunk has regular content
+      const chunk2 = `<div>Loaded</div><script>/* solid script */</script>`
 
       const outputChunks = await collectStream(
         streamWithHead(mockStream([chunk1, chunk2]), template, head),
@@ -208,8 +208,9 @@ describe('solid-js streaming SSR e2e', () => {
 
       const fullHtml = outputChunks.join('')
 
-      // STREAM_MARKER should be replaced (or empty if no new tags)
-      expect(fullHtml).not.toContain('__UNHEAD_SSR__')
+      // Should contain the content
+      expect(fullHtml).toContain('/* solid script */')
+      expect(fullHtml).toContain('<div>Loaded</div>')
     })
 
     it('appends body close tags', async () => {

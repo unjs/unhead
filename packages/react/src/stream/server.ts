@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { createElement, useContext } from 'react'
-import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
 /**
@@ -13,11 +13,10 @@ export function HeadStream(): ReactNode {
     return null
 
   const update = renderSSRHeadSuspenseChunkSync(head)
+  if (!update)
+    return null
 
-  if (update)
-    return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
-
-  return createElement('script', { dangerouslySetInnerHTML: { __html: STREAM_MARKER } })
+  return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
 }
 
 export * from '../server'

@@ -8,7 +8,6 @@ import { useHead } from '../src/composables'
 import { UnheadContext } from '../src/context'
 import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell } from '../src/stream/server'
 
-
 // Manual HeadStream for testing
 function HeadStream() {
   const head = useContext(UnheadContext)

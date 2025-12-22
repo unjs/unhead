@@ -276,9 +276,7 @@ function hashTag(tag: HeadTag): string {
  * @experimental
  *
  * Convenience wrapper that streams an app with automatic head management.
- * Uses renderSSRHeadShell, renderSSRHeadSuspenseChunk, and renderSSRHeadClosing internally.
- *
- * Looks for STREAM_MARKER markers in chunks to inject head updates.
+ * Uses renderSSRHeadShell and renderSSRHeadClosing internally.
  *
  * Requires the Vite plugin with `streaming: true` to inject the bootstrap
  * script and streaming client via `transformIndexHtml`.
@@ -305,11 +303,6 @@ export async function* streamWithHead(
     if (firstChunk) {
       firstChunk = false
       yield shell + chunkStr
-    }
-    else if (chunkStr.includes(STREAM_MARKER)) {
-      const headUpdate = await renderSSRHeadSuspenseChunk(head)
-      // Replace all markers - the marker is inside a <script> tag, so we just replace with the JS code
-      yield chunkStr.replaceAll(STREAM_MARKER, headUpdate || '')
     }
     else {
       yield chunkStr

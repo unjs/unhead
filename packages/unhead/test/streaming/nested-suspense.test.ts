@@ -1,120 +1,8 @@
-import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, STREAM_MARKER, streamWithHead } from 'unhead'
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, streamWithHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
 import { createStreamableServerHead } from '../util'
 
 describe('streaming SSR - nested Suspense boundaries', () => {
-  describe('basic nested Suspense', () => {
-    it('handles single level nesting with sequential resolution', async () => {
-      const head = createStreamableServerHead()
-      head.push({ title: 'Root' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* nestedSuspenseStream(): AsyncGenerator<string> {
-        yield '<div class="root">'
-
-        // Outer Suspense resolves
-        head.push({ title: 'Outer Component', meta: [{ name: 'level', content: 'outer' }] })
-        yield `<div class="outer"><script>${STREAM_MARKER}</script>`
-
-        // Inner Suspense resolves
-        head.push({ title: 'Inner Component', meta: [{ name: 'level', content: 'inner' }] })
-        yield `<div class="inner"><script>${STREAM_MARKER}</script></div>`
-
-        yield '</div></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(nestedSuspenseStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      // Final title should be "Inner Component"
-      expect(html).toContain('Inner Component')
-      // Both levels should have their meta tags streamed
-      expect(html).toContain('"level"')
-      expect(html).toContain('outer')
-      expect(html).toContain('inner')
-    })
-
-    it('handles deeply nested Suspense (3 levels)', async () => {
-      const head = createStreamableServerHead()
-      head.push({ title: 'App' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* deeplyNestedStream(): AsyncGenerator<string> {
-        yield '<div class="app">'
-
-        // Level 1
-        head.push({ title: 'Level 1', meta: [{ name: 'depth', content: '1' }] })
-        yield `<div class="level-1"><script>${STREAM_MARKER}</script>`
-
-        // Level 2
-        head.push({ title: 'Level 2', meta: [{ name: 'depth', content: '2' }] })
-        yield `<div class="level-2"><script>${STREAM_MARKER}</script>`
-
-        // Level 3
-        head.push({ title: 'Level 3', meta: [{ name: 'depth', content: '3' }] })
-        yield `<div class="level-3"><script>${STREAM_MARKER}</script></div>`
-
-        yield '</div></div></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(deeplyNestedStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      expect(html).toContain('Level 3')
-      expect(html).toContain('"depth"')
-      // All depths should be present
-      expect(html).toMatch(/"content":"1"/)
-      expect(html).toMatch(/"content":"2"/)
-      expect(html).toMatch(/"content":"3"/)
-    })
-
-    it('handles sibling Suspense within nested Suspense', async () => {
-      const head = createStreamableServerHead()
-      head.push({ title: 'Container' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* siblingNestedStream(): AsyncGenerator<string> {
-        yield '<div class="container">'
-
-        // Parent Suspense
-        head.push({ meta: [{ name: 'section', content: 'parent' }] })
-        yield `<div class="parent"><script>${STREAM_MARKER}</script>`
-
-        // First sibling
-        head.push({ title: 'Sibling A', meta: [{ name: 'sibling', content: 'a' }] })
-        yield `<div class="sibling-a"><script>${STREAM_MARKER}</script></div>`
-
-        // Second sibling
-        head.push({ title: 'Sibling B', meta: [{ name: 'sibling', content: 'b' }] })
-        yield `<div class="sibling-b"><script>${STREAM_MARKER}</script></div>`
-
-        yield '</div></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(siblingNestedStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      // Last sibling's title wins
-      expect(html).toContain('Sibling B')
-      // Both siblings' meta should be present
-      expect(html).toContain('"sibling"')
-      expect(html).toMatch(/"content":"a"/)
-      expect(html).toMatch(/"content":"b"/)
-    })
-  })
-
   describe('nested Suspense deduplication', () => {
     it('deduplicates same tags across nested boundaries', async () => {
       const head = createStreamableServerHead()
@@ -127,11 +15,11 @@ describe('streaming SSR - nested Suspense boundaries', () => {
 
         // Outer pushes same robots meta
         head.push({ meta: [{ name: 'robots', content: 'index' }] })
-        yield `<div class="outer"><script>${STREAM_MARKER}</script>`
+        yield `<div class="outer">Outer content`
 
         // Inner pushes same robots meta
         head.push({ meta: [{ name: 'robots', content: 'index' }] })
-        yield `<div class="inner"><script>${STREAM_MARKER}</script></div>`
+        yield `<div class="inner">Inner content</div>`
 
         yield '</div></div>'
       }
@@ -196,37 +84,6 @@ describe('streaming SSR - nested Suspense boundaries', () => {
   })
 
   describe('nested Suspense with htmlAttrs/bodyAttrs', () => {
-    it('merges htmlAttrs across nested boundaries', async () => {
-      const head = createStreamableServerHead()
-      head.push({ htmlAttrs: { lang: 'en' } })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* attrsStream(): AsyncGenerator<string> {
-        yield '<div>'
-
-        // Outer adds class
-        head.push({ htmlAttrs: { class: 'dark' } })
-        yield `<div class="outer"><script>${STREAM_MARKER}</script>`
-
-        // Inner adds data attr
-        head.push({ htmlAttrs: { 'data-page': 'nested' } })
-        yield `<div class="inner"><script>${STREAM_MARKER}</script></div>`
-
-        yield '</div></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(attrsStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      expect(html).toContain('lang="en"')
-      expect(html).toContain('dark')
-      expect(html).toContain('data-page')
-    })
-
     it('handles bodyAttrs updates from nested boundaries', async () => {
       const head = createStreamableServerHead()
       head.push({ bodyAttrs: { class: 'loading' } })
@@ -245,47 +102,6 @@ describe('streaming SSR - nested Suspense boundaries', () => {
       expect(chunk2).toContain('overflow')
     })
   })
-
-  describe('nested Suspense interleaving', () => {
-    it('handles interleaved push and marker across nesting levels', async () => {
-      const head = createStreamableServerHead()
-      // Initial push before stream starts
-      head.push({ title: 'Initial' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* interleavedStream(): AsyncGenerator<string> {
-        yield '<div class="app">'
-
-        // Multiple pushes before marker
-        head.push({ title: 'First' })
-        head.push({ meta: [{ name: 'm1', content: '1' }] })
-        yield `<div class="first"><script>${STREAM_MARKER}</script>`
-
-        // Single push
-        head.push({ meta: [{ name: 'm2', content: '2' }] })
-        yield `<div class="second"><script>${STREAM_MARKER}</script>`
-
-        // Push, then nested structure
-        head.push({ title: 'Inner' })
-        yield `<div class="inner"><script>${STREAM_MARKER}</script></div>`
-
-        yield '</div></div></div>'
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(interleavedStream(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const html = chunks.join('')
-      expect(html).toContain('Inner')
-      expect(html).toContain('m1')
-      expect(html).toContain('m2')
-      // No leftover markers
-      expect(html).not.toContain(STREAM_MARKER)
-    })
-  })
 })
 
 describe('streaming SSR - error handling', () => {
@@ -299,7 +115,7 @@ describe('streaming SSR - error handling', () => {
       async function* errorStream(): AsyncGenerator<string> {
         yield '<div>Content before error</div>'
         head.push({ title: 'About to error' })
-        yield `<script>${STREAM_MARKER}</script>`
+        yield `<script>/* error recovery test */</script>`
         throw new Error('Stream error!')
       }
 

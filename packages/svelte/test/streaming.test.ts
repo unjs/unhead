@@ -181,30 +181,6 @@ describe('svelte streaming SSR', () => {
       expect(fullHtml).toContain('<div>World</div>')
       expect(fullHtml).toContain('</body></html>')
     })
-
-    it('processes suspense markers', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Initial' })
-
-      const template = '<html><head></head><body><!--app-html--></body></html>'
-
-      async function* appWithSuspense(): AsyncGenerator<string> {
-        yield '<div>App Shell</div>'
-        head.push({ title: 'Async Title', meta: [{ name: 'async', content: 'true' }] })
-        yield `<div><script>${STREAM_MARKER}</script></div>`
-      }
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(appWithSuspense(), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const fullHtml = chunks.join('')
-      expect(fullHtml).toContain('<title>Initial</title>')
-      expect(fullHtml).toContain('window.__unhead__.push')
-      expect(fullHtml).toContain('Async Title')
-      expect(fullHtml).not.toContain(STREAM_MARKER)
-    })
   })
 
   describe('xSS prevention', () => {
