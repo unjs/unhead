@@ -3,7 +3,7 @@ import { fireEvent, render } from '@testing-library/react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src'
-import { createHead, UnheadProvider } from '../src/client'
+import { createHead, renderDOMHead, UnheadProvider } from '../src/client'
 import { renderSSRHead } from '../src/server'
 
 function TestComponent() {
@@ -120,5 +120,111 @@ describe('useHead hook', () => {
 
     const descriptionInput = getAllByRole('textbox')[1] as HTMLInputElement
     expect(descriptionInput.value).toBe('Initial Description')
+  })
+
+  it('properly toggles classes on html element', async () => {
+    function TestClassToggleComponent() {
+      const [dark, setDark] = useState(false)
+
+      useHead({
+        htmlAttrs: {
+          class: {
+            dark: () => dark,
+          },
+        },
+      })
+
+      return (
+        <div>
+          <button onClick={() => setDark(!dark)}>Toggle Dark Mode</button>
+          <span>{dark ? 'dark' : 'light'}</span>
+        </div>
+      )
+    }
+
+    const head = createHead()
+    const { getByRole, getByText } = render(
+      <UnheadProvider head={head}>
+        <TestClassToggleComponent />
+      </UnheadProvider>,
+    )
+
+    const button = getByRole('button')
+    const htmlElement = document.documentElement
+
+    // Trigger initial DOM rendering
+    await renderDOMHead(head)
+
+    // Initially should not have dark class
+    expect(htmlElement.classList.contains('dark')).toBe(false)
+    expect(getByText('light')).toBeTruthy()
+
+    // Toggle to dark mode
+    fireEvent.click(button)
+    await renderDOMHead(head)
+    expect(htmlElement.classList.contains('dark')).toBe(true)
+    expect(getByText('dark')).toBeTruthy()
+
+    // Toggle back to light mode
+    fireEvent.click(button)
+    await renderDOMHead(head)
+    expect(htmlElement.classList.contains('dark')).toBe(false)
+    expect(getByText('light')).toBeTruthy()
+
+    // Toggle again to dark mode
+    fireEvent.click(button)
+    await renderDOMHead(head)
+    expect(htmlElement.classList.contains('dark')).toBe(true)
+    expect(getByText('dark')).toBeTruthy()
+  })
+
+  it('handles initial dark class correctly', async () => {
+    function TestInitialDarkComponent() {
+      const [dark, setDark] = useState(true)
+
+      useHead({
+        htmlAttrs: {
+          class: {
+            dark: () => dark,
+          },
+        },
+      })
+
+      return (
+        <div>
+          <button onClick={() => setDark(!dark)}>Toggle Dark Mode</button>
+          <span>{dark ? 'dark' : 'light'}</span>
+        </div>
+      )
+    }
+
+    const head = createHead()
+    const { getByRole, getByText } = render(
+      <UnheadProvider head={head}>
+        <TestInitialDarkComponent />
+      </UnheadProvider>,
+    )
+
+    const button = getByRole('button')
+    const htmlElement = document.documentElement
+
+    // Trigger initial DOM rendering
+    await renderDOMHead(head)
+
+    // Initially should have dark class
+    expect(htmlElement.classList.contains('dark')).toBe(true)
+    expect(getByText('dark')).toBeTruthy()
+
+    // Toggle to light mode
+    fireEvent.click(button)
+    await renderDOMHead(head)
+    expect(htmlElement.classList.contains('dark')).toBe(false)
+    expect(getByText('light')).toBeTruthy()
+
+    // Toggle back to dark mode
+    fireEvent.click(button)
+    await renderDOMHead(head)
+    expect(htmlElement.classList.contains('dark')).toBe(true)
+    expect(getByText('dark')).toBeTruthy()
   })
 })

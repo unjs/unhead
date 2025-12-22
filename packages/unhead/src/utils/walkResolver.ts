@@ -9,10 +9,9 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
       val = val()
     }
   }
-  let v: any
-  if (resolve) {
-    v = resolve(key, val)
-  }
+
+  // Apply resolver if provided, otherwise use the value as-is
+  const v = resolve ? resolve(key, val) : val
 
   if (Array.isArray(v)) {
     return v.map(r => walkResolver(r, resolve))
@@ -20,8 +19,8 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
 
   if (v?.constructor === Object) {
     const next: Record<string, any> = {}
-    for (const key of Object.keys(v)) {
-      next[key] = walkResolver(v[key], resolve, key)
+    for (const k of Object.keys(v)) {
+      next[k] = walkResolver(v[k], resolve, k)
     }
     return next
   }
