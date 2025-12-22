@@ -199,7 +199,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         }
         // final XSS
         if (tag === 'script' && innerHTML) {
-          if (props.type?.endsWith('json')) {
+          if (String(props.type).endsWith('json')) {
             const v = typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)
             // ensure </script> tags get encoded, this is only for JSON, it will break HTML if used
             t.innerHTML = v.replace(/</g, '\\u003C')
