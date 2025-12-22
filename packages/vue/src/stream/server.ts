@@ -34,14 +34,5 @@ export function createStreamableHead(options: Omit<CreateStreamableServerHeadOpt
   return head
 }
 
-export type {
-  CreateStreamableServerHeadOptions,
-  VueHeadClient,
-}
-
-export {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from 'unhead/stream/server'
+export * from 'unhead/stream/server'
+export type { VueHeadClient }

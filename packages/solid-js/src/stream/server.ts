@@ -1,17 +1,10 @@
-import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
-
-export {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from 'unhead/stream/server'
+export * from 'unhead/stream/server'
 
 const scriptTemplate = ['<script>', '</script>'] as TemplateStringsArray & string[]
 
@@ -19,7 +12,7 @@ const scriptTemplate = ['<script>', '</script>'] as TemplateStringsArray & strin
  * Streaming script component - outputs inline script with current head state.
  * The Vite plugin with streaming: true auto-injects this.
  */
-export function HeadStreamScript() {
+export function HeadStream() {
   const head = useContext(UnheadContext)
   if (!head)
     return null

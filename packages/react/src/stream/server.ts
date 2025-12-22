@@ -1,14 +1,7 @@
 import type { ReactNode } from 'react'
-import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
 import { createElement, useContext } from 'react'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
-
-export * from '../server'
-
-export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): Unhead {
-  return _createStreamableHead(options)
-}
 
 /**
  * Streaming head component for React.
@@ -27,14 +20,5 @@ export function HeadStream(): ReactNode {
   return createElement('script', { dangerouslySetInnerHTML: { __html: STREAM_MARKER } })
 }
 
-export {
-  renderSSRHeadClosing,
-  renderSSRHeadShell,
-  renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from 'unhead/stream/server'
-
-export type {
-  CreateStreamableServerHeadOptions,
-  Unhead,
-} from 'unhead/types'
+export * from '../server'
+export * from 'unhead/stream/server'
