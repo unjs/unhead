@@ -105,7 +105,7 @@ describe('capo', () => {
       }],
     })
 
-    const resolvedTags = await head.resolveTags()
+    const resolvedTags = head.resolveTags()
     // VIEWPORT
     expect(resolvedTags[0].tag).toEqual('meta')
     expect(resolvedTags[0].props.name).toEqual('viewport')

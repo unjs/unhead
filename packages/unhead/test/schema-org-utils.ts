@@ -4,7 +4,7 @@ import { createHead } from 'unhead/server'
 
 export async function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag
-  const tags = (await unhead.resolveTags())
+  const tags = unhead.resolveTags()
   const schemaOrg = tags.find(tag => tag.key === 'schema-org-graph')!.innerHTML
   return JSON.parse(<string> schemaOrg)['@graph']
 }

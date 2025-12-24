@@ -12,7 +12,7 @@ describe('invalidate Function', () => {
     head.push({ title: 'Entry 2' })
 
     // Resolve tags initially
-    let tags = await head.resolveTags()
+    let tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Entry 2')
 
     // Get references to entries to examine their state
@@ -29,7 +29,7 @@ describe('invalidate Function', () => {
     head.invalidate()
 
     // Resolve tags - all entries should be re-normalized
-    tags = await head.resolveTags()
+    tags = head.resolveTags()
 
     // Should show Entry 2 (highest priority) and all entries should have their _tags restored
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Entry 2')
@@ -52,7 +52,7 @@ describe('invalidate Function', () => {
 
     // Even with multiple invalidate calls, each entry should only be processed once
     // (this tests the Set deduplication behavior)
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Test Entry')
   })
 
@@ -64,19 +64,19 @@ describe('invalidate Function', () => {
     const entry = head.push({ title: 'Component Title' })
 
     // Resolve initially
-    let tags = await head.resolveTags()
+    let tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Component Title')
 
     // Dispose entry (this internally calls invalidate)
     entry.dispose()
 
     // Should restore init values
-    tags = await head.resolveTags()
+    tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
 
     // Manual invalidate should still work
     head.invalidate()
-    tags = await head.resolveTags()
+    tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
   })
 })

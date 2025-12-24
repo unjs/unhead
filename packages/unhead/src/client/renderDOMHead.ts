@@ -32,22 +32,21 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const dupeKeyCounter = new Map<string, number>()
     // allow state to be hydrated while we generate the tags
     const resolveTagPromise = new Promise<DomRenderTagContext[]>((resolve) => {
-      head.resolveTags().then((tags) => {
-        resolve(
-          tags.map((tag) => {
-            const count = dupeKeyCounter.get(tag._d!) || 0
-            const res = {
-              tag,
-              id: (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag),
-              shouldRender: true,
-            }
-            if (tag._d && isMetaArrayDupeKey(tag._d)) {
-              dupeKeyCounter.set(tag._d, count + 1)
-            }
-            return res
-          }) as DomRenderTagContext[],
-        )
-      })
+      const tags = head.resolveTags()
+      resolve(
+        tags.map((tag) => {
+          const count = dupeKeyCounter.get(tag._d!) || 0
+          const res = {
+            tag,
+            id: (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag),
+            shouldRender: true,
+          }
+          if (tag._d && isMetaArrayDupeKey(tag._d)) {
+            dupeKeyCounter.set(tag._d, count + 1)
+          }
+          return res
+        }) as DomRenderTagContext[],
+      )
     })
 
     let state = head._dom as DomState

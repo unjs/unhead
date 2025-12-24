@@ -126,6 +126,6 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
+    expect(head.resolveTags()).toMatchInlineSnapshot('[]')
   })
 })

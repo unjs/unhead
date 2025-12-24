@@ -6,39 +6,6 @@ import {
   createSchemaOrgGraph,
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
-import { loadResolver } from './resolver'
-
-// Recursively collect all resolver strings from nested objects and preload them
-async function preloadNestedResolvers(obj: any): Promise<void> {
-  if (!obj || typeof obj !== 'object')
-    return
-
-  const promises: Promise<void>[] = []
-
-  if (typeof obj._resolver === 'string') {
-    const resolverName = obj._resolver
-    promises.push(loadResolver(resolverName).then((loaded) => {
-      if (loaded)
-        obj._resolver = loaded
-    }))
-  }
-
-  for (const key in obj) {
-    const val = obj[key]
-    if (val && typeof val === 'object') {
-      if (Array.isArray(val)) {
-        for (const item of val) {
-          promises.push(preloadNestedResolvers(item))
-        }
-      }
-      else {
-        promises.push(preloadNestedResolvers(val))
-      }
-    }
-  }
-
-  await Promise.all(promises)
-}
 
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
@@ -90,23 +57,33 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
     return {
       key: 'schema-org',
       hooks: {
-        'entries:normalize': async ({ tags }) => {
-          graph = graph || createSchemaOrgGraph()
+        'entries:normalize': ({ tags }) => {
+          graph = graph || createSchemaOrgGraph(head)
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
-              const nodes = await tag.props.nodes
+              const nodes = tag.props.nodes
               for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-                // malformed input
-                if (typeof node !== 'object' || Object.keys(node).length === 0) {
+                // malformed input - skip null/undefined but allow empty objects
+                if (typeof node !== 'object' || node === null) {
                   continue
                 }
-                // Preload all nested resolvers (mutates _resolver strings to loaded objects)
-                await preloadNestedResolvers(node)
+
+                // Check for preserved resolver from Vue normalization
+                const resolver = node._resolver
+
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
                 }
+                // Remove the preserved resolver marker
+                delete newNode.__preserved_resolver
+
+                // Attach the resolver if it exists
+                if (resolver) {
+                  newNode._resolver = resolver
+                }
+                // Push node (it already has _resolver if it came from a defineXXX function)
                 graph.push(newNode)
               }
               tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
@@ -151,7 +128,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
+              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta }, head)
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}

@@ -38,127 +38,164 @@ import type {
   WebPage,
   WebSite,
 } from '../../'
-import type { Arrayable } from '../../types'
+import type { Arrayable, SchemaOrgNodeDefinition } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { isRef } from 'vue'
 import { normalizeSchemaOrgInput,
 } from '../../'
+import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
+import { aggregateRatingResolver } from '../../nodes/AggregateRating'
+import { articleResolver } from '../../nodes/Article'
+import { bookEditionResolver, bookResolver } from '../../nodes/Book'
+import { breadcrumbResolver } from '../../nodes/Breadcrumb'
+import { commentResolver } from '../../nodes/Comment'
+import { courseResolver } from '../../nodes/Course'
+import { eventResolver } from '../../nodes/Event'
+import { foodEstablishmentResolver } from '../../nodes/FoodEstablishment'
+import { howToResolver } from '../../nodes/HowTo'
+import { howToStepResolver } from '../../nodes/HowTo/HowToStep'
+import { imageResolver } from '../../nodes/Image'
+import { itemListResolver } from '../../nodes/ItemList'
+import { jobPostingResolver } from '../../nodes/JobPosting'
+import { listItemResolver } from '../../nodes/ListItem'
+import { localBusinessResolver } from '../../nodes/LocalBusiness'
+import { movieResolver } from '../../nodes/Movie'
+import { offerResolver } from '../../nodes/Offer'
+import { openingHoursResolver } from '../../nodes/OpeningHours'
+import { organizationResolver } from '../../nodes/Organization'
+import { personResolver } from '../../nodes/Person'
+import { placeResolver } from '../../nodes/Place'
+import { addressResolver } from '../../nodes/PostalAddress'
+import { productResolver } from '../../nodes/Product'
+import { questionResolver } from '../../nodes/Question'
+import { recipeResolver } from '../../nodes/Recipe'
+import { reviewResolver } from '../../nodes/Review'
+import { softwareAppResolver } from '../../nodes/SoftwareApp'
+import { videoResolver } from '../../nodes/Video'
+import { virtualLocationResolver } from '../../nodes/VirtualLocation'
+import { webPageResolver } from '../../nodes/WebPage'
+import { readActionResolver } from '../../nodes/WebPage/ReadAction'
+import { webSiteResolver } from '../../nodes/WebSite'
+import { searchActionResolver } from '../../nodes/WebSite/SearchAction'
 import { UnheadSchemaOrg } from '../../plugin'
 
-function provideResolver<T>(input?: T, resolver?: string) {
+function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>): any {
   if (!input)
     input = {} as T
-  // If input is a ref, set _resolver on the underlying value
-  // so it survives Vue's reactivity unwrapping
-  const target = isRef(input) ? input.value : input
-  ;(target as Record<string, any>)._resolver = resolver
-  return input
+  // Check if input is a Vue ref
+  if (input && typeof input === 'object' && '__v_isRef' in input) {
+    // For Vue refs, attach the resolver directly to the ref object
+    // We can't spread refs, so just mutate it
+    (input as any)._resolver = resolver
+    return input
+  }
+  // For plain objects, spread and attach resolver
+  return { ...input, _resolver: resolver } as T & { _resolver?: SchemaOrgNodeDefinition<any> }
 }
 
 export function defineAddress<T extends Record<string, any>>(input?: DeepResolvableProperties<PostalAddress & T>) {
-  return provideResolver(input, 'address')
+  return provideResolver(input, addressResolver)
 }
 export function defineAggregateOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateOffer & T>) {
-  return provideResolver(input, 'aggregateOffer')
+  return provideResolver(input, aggregateOfferResolver)
 }
 export function defineAggregateRating<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateRating & T>) {
-  return provideResolver(input, 'aggregateRating')
+  return provideResolver(input, aggregateRatingResolver)
 }
 export function defineArticle<T extends Record<string, any>>(input?: DeepResolvableProperties<Article & T>) {
-  return provideResolver(input, 'article')
+  return provideResolver(input, articleResolver)
 }
 export function defineBreadcrumb<T extends Record<string, any>>(input?: DeepResolvableProperties<BreadcrumbList & T>) {
-  return provideResolver(input, 'breadcrumb')
+  return provideResolver(input, breadcrumbResolver)
 }
 export function defineComment<T extends Record<string, any>>(input?: DeepResolvableProperties<Comment & T>) {
-  return provideResolver(input, 'comment')
+  return provideResolver(input, commentResolver)
 }
 export function defineEvent<T extends Record<string, any>>(input?: DeepResolvableProperties<Event & T>) {
-  return provideResolver(input, 'event')
+  return provideResolver(input, eventResolver)
 }
 export function defineFoodEstablishment<T extends Record<string, any>>(input?: DeepResolvableProperties<FoodEstablishment & T>) {
-  return provideResolver(input, 'foodEstablishment')
+  return provideResolver(input, foodEstablishmentResolver)
 }
 export function defineVirtualLocation<T extends Record<string, any>>(input?: DeepResolvableProperties<VirtualLocation & T>) {
-  return provideResolver(input, 'virtualLocation')
+  return provideResolver(input, virtualLocationResolver)
 }
 export function definePlace<T extends Record<string, any>>(input?: DeepResolvableProperties<Place & T>) {
-  return provideResolver(input, 'place')
+  return provideResolver(input, placeResolver)
 }
 export function defineHowTo<T extends Record<string, any>>(input?: DeepResolvableProperties<HowTo & T>) {
-  return provideResolver(input, 'howTo')
+  return provideResolver(input, howToResolver)
 }
 export function defineHowToStep<T extends Record<string, any>>(input?: DeepResolvableProperties<HowToStep & T>) {
-  return provideResolver(input, 'howToStep')
+  return provideResolver(input, howToStepResolver)
 }
 export function defineImage<T extends Record<string, any>>(input?: DeepResolvableProperties<ImageObject & T>) {
-  return provideResolver(input, 'image')
+  return provideResolver(input, imageResolver)
 }
 export function defineJobPosting<T extends Record<string, any>>(input?: DeepResolvableProperties<JobPosting & T>) {
-  return provideResolver(input, 'jobPosting')
+  return provideResolver(input, jobPostingResolver)
 }
 export function defineLocalBusiness<T extends Record<string, any>>(input?: DeepResolvableProperties<LocalBusiness & T>) {
-  return provideResolver(input, 'localBusiness')
+  return provideResolver(input, localBusinessResolver)
 }
 export function defineOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<Offer & T>) {
-  return provideResolver(input, 'offer')
+  return provideResolver(input, offerResolver)
 }
 export function defineOpeningHours<T extends Record<string, any>>(input?: DeepResolvableProperties<OpeningHoursSpecification & T>) {
-  return provideResolver(input, 'openingHours')
+  return provideResolver(input, openingHoursResolver)
 }
 export function defineOrganization<T extends Record<string, any>>(input?: DeepResolvableProperties<Organization & T>) {
-  return provideResolver(input, 'organization')
+  return provideResolver(input, organizationResolver)
 }
 export function definePerson<T extends Record<string, any>>(input?: DeepResolvableProperties<Person & T>) {
-  return provideResolver(input, 'person')
+  return provideResolver(input, personResolver)
 }
 export function defineProduct<T extends Record<string, any>>(input?: DeepResolvableProperties<Product & T>) {
-  return provideResolver(input, 'product')
+  return provideResolver(input, productResolver)
 }
 export function defineQuestion<T extends Record<string, any>>(input?: DeepResolvableProperties<Question & T>) {
-  return provideResolver(input, 'question')
+  return provideResolver(input, questionResolver)
 }
 export function defineRecipe<T extends Record<string, any>>(input?: DeepResolvableProperties<Recipe & T>) {
-  return provideResolver(input, 'recipe')
+  return provideResolver(input, recipeResolver)
 }
 export function defineReview<T extends Record<string, any>>(input?: DeepResolvableProperties<Review & T>) {
-  return provideResolver(input, 'review')
+  return provideResolver(input, reviewResolver)
 }
 export function defineVideo<T extends Record<string, any>>(input?: DeepResolvableProperties<VideoObject & T>) {
-  return provideResolver(input, 'video')
+  return provideResolver(input, videoResolver)
 }
 export function defineWebPage<T extends Record<string, any>>(input?: DeepResolvableProperties<WebPage & T>) {
-  return provideResolver(input, 'webPage')
+  return provideResolver(input, webPageResolver)
 }
 export function defineWebSite<T extends Record<string, any>>(input?: DeepResolvableProperties<WebSite & T>) {
-  return provideResolver(input, 'webSite')
+  return provideResolver(input, webSiteResolver)
 }
 export function defineBook<T extends Record<string, any>>(input?: DeepResolvableProperties<Book & T>) {
-  return provideResolver(input, 'book')
+  return provideResolver(input, bookResolver)
 }
 export function defineCourse<T extends Record<string, any>>(input?: DeepResolvableProperties<Course & T>) {
-  return provideResolver(input, 'course')
+  return provideResolver(input, courseResolver)
 }
 export function defineItemList<T extends Record<string, any>>(input?: DeepResolvableProperties<ItemList & T>) {
-  return provideResolver(input, 'itemList')
+  return provideResolver(input, itemListResolver)
 }
 export function defineListItem<T extends Record<string, any>>(input?: DeepResolvableProperties<ListItem & T>) {
-  return provideResolver(input, 'listItem')
+  return provideResolver(input, listItemResolver)
 }
 export function defineMovie<T extends Record<string, any>>(input?: DeepResolvableProperties<Movie & T>) {
-  return provideResolver(input, 'movie')
+  return provideResolver(input, movieResolver)
 }
 export function defineSearchAction<T extends Record<string, any>>(input?: DeepResolvableProperties<SearchAction & T>) {
-  return provideResolver(input, 'searchAction')
+  return provideResolver(input, searchActionResolver)
 }
 export function defineReadAction<T extends Record<string, any>>(input?: DeepResolvableProperties<ReadAction & T>) {
-  return provideResolver(input, 'readAction')
+  return provideResolver(input, readActionResolver)
 }
 export function defineSoftwareApp<T extends Record<string, any>>(input?: DeepResolvableProperties<SoftwareApp & T>) {
-  return provideResolver(input, 'softwareApp')
+  return provideResolver(input, softwareAppResolver)
 }
 export function defineBookEdition<T extends Record<string, any>>(input?: DeepResolvableProperties<BookEdition & T>) {
-  return provideResolver(input, 'bookEdition')
+  return provideResolver(input, bookEditionResolver)
 }
 
 export type UseSchemaOrgInput = Arrayable<DeepResolvableProperties<Thing | Record<string, any>>>

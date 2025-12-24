@@ -21,7 +21,7 @@ describe('tag priority', () => {
       ],
     })
 
-    expect(await head.resolveTags()).toMatchInlineSnapshot(`
+    expect(head.resolveTags()).toMatchInlineSnapshot(`
       [
         {
           "_d": undefined,
