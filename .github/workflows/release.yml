@@ -11,8 +11,8 @@ on:
 
 jobs:
   release:
-    # Skip pre-release tags (e.g., v3.0.0-beta.1)
-    if: ${{ !contains(github.ref_name, '-') }}
+    # Skip pre-release tags from main branch
+    if: ${{ !contains(github.ref_name, '-') || github.event.base_ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -32,11 +32,22 @@ jobs:
       - name: Force Set pnpm Registry
         run: pnpm config set registry https://registry.npmjs.org
 
-      - run: npx changelogithub
+      - name: Changelog
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: npx changelogithub
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       - name: Install Dependencies
         run: pnpm i
 
-      - run: pnpm publish -r --access public --no-git-checks
+      - name: Build
+        run: pnpm build
+
+      - name: Publish Stable
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: pnpm publish -r --access public --no-git-checks
+
+      - name: Publish Next
+        if: ${{ contains(github.ref_name, '-') }}
+        run: pnpm publish -r --access public --no-git-checks --tag next
