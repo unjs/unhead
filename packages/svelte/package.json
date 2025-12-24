@@ -1,7 +1,7 @@
 {
   "name": "@unhead/svelte",
   "type": "module",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0-beta.2",
   "description": "Full-stack <head> manager built for Svelte.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
