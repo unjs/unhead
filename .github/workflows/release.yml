@@ -11,6 +11,8 @@ on:
 
 jobs:
   release:
+    # Skip pre-release tags (e.g., v3.0.0-beta.1)
+    if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
