@@ -1,7 +1,7 @@
 {
   "name": "@unhead/react",
   "type": "module",
-  "version": "2.1.0",
+  "version": "3.0.0-beta.1",
   "description": "Full-stack <head> manager built for React.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
