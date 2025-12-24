@@ -1,5 +1,6 @@
 import { AliasSortingPlugin } from '../../../src/plugins/aliasSorting'
 import { renderSSRHead } from '../../../src/server'
+import { resolveTags } from '../../../src/utils/resolve'
 import { createServerHeadWithContext } from '../../util'
 
 describe('tag priority', () => {
@@ -21,7 +22,7 @@ describe('tag priority', () => {
       ],
     })
 
-    expect(head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(head)).toMatchInlineSnapshot(`
       [
         {
           "_d": undefined,

@@ -172,10 +172,6 @@ export interface Unhead<Input = ResolvableHead> {
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
   /**
-   * Resolve tags from head entries synchronously.
-   */
-  resolveTags: () => HeadTag[]
-  /**
    * Invalidate all entries and re-queue them for normalization.
    */
   invalidate: () => void
@@ -224,6 +220,10 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _entryCount: number
+  /**
+   * @internal
+   */
+  _normalizeQueue: Set<number>
   /**
    * @internal
    */

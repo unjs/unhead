@@ -9,6 +9,7 @@ import type {
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
+import { resolveTags } from '../utils/resolve'
 
 /**
  * Render the head tags to the DOM.
@@ -32,7 +33,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const dupeKeyCounter = new Map<string, number>()
     // allow state to be hydrated while we generate the tags
     const resolveTagPromise = new Promise<DomRenderTagContext[]>((resolve) => {
-      const tags = head.resolveTags()
+      const tags = resolveTags(head)
       resolve(
         tags.map((tag) => {
           const count = dupeKeyCounter.get(tag._d!) || 0

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createUnhead } from '../src'
+import { resolveTags } from '../src/utils/resolve'
 
 describe('invalidate Function', () => {
   it('should re-queue all entries for normalization', async () => {
@@ -12,7 +13,7 @@ describe('invalidate Function', () => {
     head.push({ title: 'Entry 2' })
 
     // Resolve tags initially
-    let tags = head.resolveTags()
+    let tags = resolveTags(head)
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Entry 2')
 
     // Get references to entries to examine their state
@@ -29,7 +30,7 @@ describe('invalidate Function', () => {
     head.invalidate()
 
     // Resolve tags - all entries should be re-normalized
-    tags = head.resolveTags()
+    tags = resolveTags(head)
 
     // Should show Entry 2 (highest priority) and all entries should have their _tags restored
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Entry 2')
@@ -52,7 +53,7 @@ describe('invalidate Function', () => {
 
     // Even with multiple invalidate calls, each entry should only be processed once
     // (this tests the Set deduplication behavior)
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Test Entry')
   })
 
@@ -64,19 +65,19 @@ describe('invalidate Function', () => {
     const entry = head.push({ title: 'Component Title' })
 
     // Resolve initially
-    let tags = head.resolveTags()
+    let tags = resolveTags(head)
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Component Title')
 
     // Dispose entry (this internally calls invalidate)
     entry.dispose()
 
     // Should restore init values
-    tags = head.resolveTags()
+    tags = resolveTags(head)
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
 
     // Manual invalidate should still work
     head.invalidate()
-    tags = head.resolveTags()
+    tags = resolveTags(head)
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
   })
 })

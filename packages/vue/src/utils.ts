@@ -4,7 +4,7 @@ import { VueResolver } from './resolver'
 export * from 'unhead/utils'
 
 /**
- * @deprecated Use head.resolveTags() instead
+ * @deprecated Use resolveTags(head) from unhead/utils instead
  */
 /* @__NO_SIDE_EFFECTS__ */
 export function resolveUnrefHeadInput<T extends Record<string, any>>(input: T): T {

@@ -2,6 +2,7 @@
 
 import { injectHead, useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
+import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
 import { mount } from '../../util'
@@ -54,7 +55,7 @@ describe('keepalive', () => {
     // Step 1
     const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    expect(app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -70,7 +71,7 @@ describe('keepalive', () => {
     // Step 2
     app.name = 'about'
     await nextTick()
-    expect(app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -86,7 +87,7 @@ describe('keepalive', () => {
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -102,7 +103,7 @@ describe('keepalive', () => {
     // Step 4
     app.name = 'about'
     await nextTick()
-    expect(app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
