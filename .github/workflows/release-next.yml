@@ -1,4 +1,4 @@
-name: Release
+name: Release Next
 
 permissions:
   contents: write
@@ -7,12 +7,12 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-*'
 
 jobs:
   release:
-    # Skip pre-release tags (e.g., v3.0.0-beta.1)
-    if: ${{ !contains(github.ref_name, '-') }}
+    # Only run on pre-release tags not from main
+    if: ${{ github.event.base_ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -32,11 +32,13 @@ jobs:
       - name: Force Set pnpm Registry
         run: pnpm config set registry https://registry.npmjs.org
 
-      - run: npx changelogithub
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
       - name: Install Dependencies
         run: pnpm i
 
-      - run: pnpm publish -r --access public --no-git-checks
+      - name: Build
+        run: pnpm build
+
+      - name: Publish
+        run: pnpm publish -r --access public --no-git-checks --tag next
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
