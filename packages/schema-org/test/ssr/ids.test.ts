@@ -1,6 +1,7 @@
 import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
 
 describe('schema.org ssr ids', () => {
@@ -24,7 +25,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = ssrHead.resolveTags()
+    const tags = resolveTags(ssrHead)
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot(`"https://example.com#/schema/web-page/#foo"`)
   })
@@ -48,7 +49,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = ssrHead.resolveTags()
+    const tags = resolveTags(ssrHead)
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot('"https://custom-domain.com/#foo"')
   })
@@ -72,7 +73,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = ssrHead.resolveTags()
+    const tags = resolveTags(ssrHead)
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot(`"https://example.com/fr#website"`)
   })
@@ -120,7 +121,7 @@ describe('schema.org ssr ids', () => {
       tagPosition: 'bodyOpen',
     })
 
-    const tags = ssrHead.resolveTags()
+    const tags = resolveTags(ssrHead)
     const graph = JSON.parse(tags[0]!.innerHTML!)?.['@graph']
     expect(graph).toMatchInlineSnapshot(`
       [

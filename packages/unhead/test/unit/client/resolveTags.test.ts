@@ -1,4 +1,5 @@
 import { describe, it } from 'vitest'
+import { resolveTags } from '../../../src/utils/resolve'
 import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
@@ -15,7 +16,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    expect(head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -43,7 +44,7 @@ describe('resolveTags', () => {
 
     head.push(basicSchema)
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -116,7 +117,7 @@ describe('resolveTags', () => {
 
     await firstEntry.dispose()
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(1)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -147,7 +148,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -226,7 +227,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -279,7 +280,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -314,7 +315,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
 
     expect(tags).toMatchInlineSnapshot(`
       [

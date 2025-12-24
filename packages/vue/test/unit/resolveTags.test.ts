@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { useHead } from '@unhead/vue'
+import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { ssrVueAppWithUnhead } from '../util'
@@ -16,7 +17,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -59,7 +60,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -100,7 +101,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -155,7 +156,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
