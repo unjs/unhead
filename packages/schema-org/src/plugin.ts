@@ -69,19 +69,9 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                   continue
                 }
 
-                // Check for preserved resolver from Vue normalization
-                const resolver = node._resolver
-
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
-                }
-                // Remove the preserved resolver marker
-                delete newNode.__preserved_resolver
-
-                // Attach the resolver if it exists
-                if (resolver) {
-                  newNode._resolver = resolver
                 }
                 // Push node (it already has _resolver if it came from a defineXXX function)
                 graph.push(newNode)

@@ -1,8 +1,8 @@
 import type { PropResolver } from '../types'
 
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
-  // Skip _resolver and __preserved_resolver (used by schema-org to attach resolver functions)
-  if (key === '_resolver' || key === '__preserved_resolver') {
+  // Skip _resolver (used by schema-org to attach resolver functions)
+  if (key === '_resolver') {
     return val
   }
 

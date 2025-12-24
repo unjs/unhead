@@ -40,6 +40,7 @@ import type {
 } from '../../'
 import type { Arrayable, SchemaOrgNodeDefinition } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
+import { toValue } from 'vue'
 import { normalizeSchemaOrgInput,
 } from '../../'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
@@ -83,9 +84,11 @@ function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>):
     input = {} as T
   // Check if input is a Vue ref
   if (input && typeof input === 'object' && '__v_isRef' in input) {
-    // For Vue refs, attach the resolver directly to the ref object
-    // We can't spread refs, so just mutate it
-    (input as any)._resolver = resolver
+    // Attach resolver to the inner value so it survives toValue() unwrapping
+    const inner = toValue(input)
+    if (inner && typeof inner === 'object') {
+      inner._resolver = resolver
+    }
     return input
   }
   // For plain objects, spread and attach resolver
