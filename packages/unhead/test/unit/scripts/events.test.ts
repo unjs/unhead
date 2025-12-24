@@ -14,7 +14,7 @@ describe('useScript events', () => {
         resolve(true)
       })
       // Trigger the hook to simulate the script being loaded
-      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } })
+      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
     })).toBeTruthy()
   })
   it('dedupe', async () => {
@@ -39,7 +39,7 @@ describe('useScript events', () => {
         resolve()
       })
       // Trigger the hook to simulate the script being loaded
-      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } })
+      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
     })
     expect(calls).toMatchInlineSnapshot(`
       [

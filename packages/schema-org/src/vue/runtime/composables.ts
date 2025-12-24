@@ -87,7 +87,7 @@ function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>):
     // Attach resolver to the inner value so it survives toValue() unwrapping
     const inner = toValue(input)
     if (inner && typeof inner === 'object') {
-      inner._resolver = resolver
+      (inner as any)._resolver = resolver
     }
     return input
   }

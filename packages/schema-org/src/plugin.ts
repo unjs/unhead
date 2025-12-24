@@ -58,7 +58,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
       key: 'schema-org',
       hooks: {
         'entries:normalize': ({ tags }) => {
-          graph = graph || createSchemaOrgGraph(head)
+          graph = graph || createSchemaOrgGraph()
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
@@ -118,7 +118,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta }, head)
+              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
