@@ -30,26 +30,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
   // eslint-disable-next-line no-async-promise-executor
   head._domUpdatePromise = new Promise<void>(async (resolve) => {
-    const dupeKeyCounter = new Map<string, number>()
-    // allow state to be hydrated while we generate the tags
-    const resolveTagPromise = new Promise<DomRenderTagContext[]>((resolve) => {
-      const tags = resolveTags(head)
-      resolve(
-        tags.map((tag) => {
-          const count = dupeKeyCounter.get(tag._d!) || 0
-          const res = {
-            tag,
-            id: (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag),
-            shouldRender: true,
-          }
-          if (tag._d && isMetaArrayDupeKey(tag._d)) {
-            dupeKeyCounter.set(tag._d, count + 1)
-          }
-          return res
-        }) as DomRenderTagContext[],
-      )
-    })
-
     let state = head._dom as DomState
     // let's hydrate - fill the elMap for fast lookups
     if (!state) {
@@ -189,24 +169,30 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       head: undefined,
     } as const
 
-    const tags = await resolveTagPromise
-    // first render all tags which we can match quickly
-    for (const ctx of tags) {
-      const { tag, shouldRender, id } = ctx
-      if (!shouldRender)
-        continue
-      // 1. render tags which don't create a new element
+    // resolve and process tags in single pass
+    const rawTags = resolveTags(head)
+    const tags: DomRenderTagContext[] = []
+    const dupeKeyCounter = new Map<string, number>()
+    for (const tag of rawTags) {
+      const count = dupeKeyCounter.get(tag._d!) || 0
+      const id = (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag)
+      const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
+      if (tag._d && isMetaArrayDupeKey(tag._d)) {
+        dupeKeyCounter.set(tag._d, count + 1)
+      }
+      tags.push(ctx)
+
+      // process immediately
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
         track('title', '', () => dom.title = state.title)
         continue
       }
-      ctx.$el = ctx.$el || state.elMap.get(id)
+      ctx.$el = state.elMap.get(id)
       if (ctx.$el) {
         trackCtx(ctx)
       }
       else if (HasElementTags.has(tag.tag)) {
-        // tag does not exist, we need to render it (if it's an element tag)
         pending.push(ctx)
       }
     }

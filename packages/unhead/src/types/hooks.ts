@@ -21,7 +21,7 @@ export interface RenderSSRHeadOptions {
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 export interface DomRenderTagContext {
   id: string
-  $el: Element
+  $el?: Element | Element[]
   shouldRender: boolean
   tag: HeadTag
   entry?: HeadEntry<any>
