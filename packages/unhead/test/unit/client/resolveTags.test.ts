@@ -15,7 +15,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    expect(await head.resolveTags()).toMatchInlineSnapshot(`
+    expect(head.resolveTags()).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -43,7 +43,7 @@ describe('resolveTags', () => {
 
     head.push(basicSchema)
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -116,7 +116,7 @@ describe('resolveTags', () => {
 
     await firstEntry.dispose()
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags.length).toBe(1)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -147,7 +147,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
@@ -226,7 +226,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -279,7 +279,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -314,7 +314,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
 
     expect(tags).toMatchInlineSnapshot(`
       [

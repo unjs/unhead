@@ -14,7 +14,7 @@ export async function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOp
       bodyAttrs: '',
     }
   }
-  const ctx = { tags: options?.resolvedTags || await head.resolveTags() }
+  const ctx = { tags: options?.resolvedTags || head.resolveTags() }
   await head.hooks.callHook('ssr:render', ctx)
   const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
   const renderCtx: SSRRenderContext = { tags: ctx.tags, html }

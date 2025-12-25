@@ -172,9 +172,9 @@ export interface Unhead<Input = ResolvableHead> {
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
   /**
-   * Resolve tags from head entries.
+   * Resolve tags from head entries synchronously.
    */
-  resolveTags: () => Promise<HeadTag[]>
+  resolveTags: () => HeadTag[]
   /**
    * Invalidate all entries and re-queue them for normalization.
    */

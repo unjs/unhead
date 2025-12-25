@@ -64,7 +64,7 @@ describe('vue e2e keys', () => {
 
     csrHead.push(AboutSchema)
 
-    expect(await csrHead.resolveTags()).toMatchInlineSnapshot(`
+    expect(csrHead.resolveTags()).toMatchInlineSnapshot(`
       [
         {
           "_d": "link:key:main-icon",

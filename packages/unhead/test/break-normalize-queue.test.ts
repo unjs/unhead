@@ -9,7 +9,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     })
 
     // Step 1: Initial state - init values should be normalized
-    let tags = await head.resolveTags()
+    let tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
 
     // Step 2: Component mounts - React creates entry via push()
@@ -25,7 +25,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     })
 
     // Step 4: Resolve tags - component values should be active
-    tags = await head.resolveTags()
+    tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Component Title')
 
     // Step 5: Component unmounts - React calls dispose()
@@ -36,7 +36,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     // Step 6: The bug manifests here
     // Without the fix, init entries won't be in normalizeQueue
     // so they won't be normalized and their _tags might be stale
-    tags = await head.resolveTags()
+    tags = head.resolveTags()
 
     // This should pass but may fail with the original buggy code
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
@@ -52,7 +52,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     const initEntry = Array.from(head.entries.values())[0]
 
     // First resolution - init entry gets normalized
-    await head.resolveTags()
+    head.resolveTags()
     const originalTags = initEntry._tags
     expect(originalTags).toBeDefined()
     expect(originalTags?.[0]?.textContent).toBe('Init Title')
@@ -61,7 +61,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     const componentEntry = head.push({ title: 'Component Title' })
 
     // Resolve - both entries get normalized
-    await head.resolveTags()
+    head.resolveTags()
 
     // Dispose component entry
     componentEntry.dispose()
@@ -75,7 +75,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // Force a scenario where init entry needs re-normalization
     // by modifying its input directly (simulating what might happen in complex scenarios)
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
 
     // If the bug exists, this might fail because init entry didn't get normalized
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
@@ -90,7 +90,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // Step 1: Add component entry and resolve
     const componentEntry = head.push({ title: 'Component Title' })
-    await head.resolveTags() // This processes and clears the normalize queue
+    head.resolveTags() // This processes and clears the normalize queue
 
     // Step 2: Manually trigger a state that requires re-normalization
     // In a real scenario, this might happen due to plugins or other factors
@@ -104,7 +104,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // Step 4: The bug - if dispose() doesn't add remaining entries to normalizeQueue,
     // the init entry won't be normalized because its _tags is undefined
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
 
     // This should work but might fail if normalize queue bug exists
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
@@ -119,20 +119,20 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // First mount
     const entry1 = head.push({ title: 'Component Title 1' })
-    await head.resolveTags()
+    head.resolveTags()
 
     // First unmount (Strict Mode)
     entry1.dispose()
 
     // Second mount (Strict Mode remount)
     const entry2 = head.push({ title: 'Component Title 2' })
-    await head.resolveTags()
+    head.resolveTags()
 
     // Second unmount (actual unmount)
     entry2.dispose()
 
     // Multiple disposals might expose the normalize queue bug
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Init Title')
   })
 })

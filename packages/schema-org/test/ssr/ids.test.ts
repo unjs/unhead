@@ -24,7 +24,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = await ssrHead.resolveTags()
+    const tags = ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot(`"https://example.com#/schema/web-page/#foo"`)
   })
@@ -48,7 +48,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = await ssrHead.resolveTags()
+    const tags = ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot('"https://custom-domain.com/#foo"')
   })
@@ -72,7 +72,7 @@ describe('schema.org ssr ids', () => {
       }),
     ])
 
-    const tags = await ssrHead.resolveTags()
+    const tags = ssrHead.resolveTags()
     const id = JSON.parse(tags[0].innerHTML!)['@graph'][0]['@id']
     expect(id).toMatchInlineSnapshot(`"https://example.com/fr#website"`)
   })
@@ -120,7 +120,7 @@ describe('schema.org ssr ids', () => {
       tagPosition: 'bodyOpen',
     })
 
-    const tags = await ssrHead.resolveTags()
+    const tags = ssrHead.resolveTags()
     const graph = JSON.parse(tags[0]!.innerHTML!)?.['@graph']
     expect(graph).toMatchInlineSnapshot(`
       [

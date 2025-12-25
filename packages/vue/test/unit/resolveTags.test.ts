@@ -16,7 +16,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -59,7 +59,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -100,7 +100,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -155,7 +155,7 @@ describe('resolveTags', () => {
       })
     })
 
-    const tags = await head.resolveTags()
+    const tags = head.resolveTags()
     expect(tags).toMatchInlineSnapshot(`
       [
         {

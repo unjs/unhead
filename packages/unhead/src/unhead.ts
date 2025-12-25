@@ -89,13 +89,14 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
       _.patch(input)
       return _
     },
-    async resolveTags() {
+    resolveTags() {
       const ctx: { tagMap: Map<string, HeadTag>, tags: HeadTag[], entries: HeadEntry<T>[] } = {
         tagMap: new Map(),
         tags: [],
         entries: [...head.entries.values()],
       }
-      await hooks.callHook('entries:resolve', ctx)
+      // Call hooks synchronously
+      hooks.callHook('entries:resolve', ctx)
       while (normalizeQueue.size) {
         const i = normalizeQueue.values().next().value!
         normalizeQueue.delete(i)
@@ -106,7 +107,7 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
               .map(t => Object.assign(t, e.options)),
             entry: e,
           }
-          await hooks.callHook('entries:normalize', normalizeCtx)
+          hooks.callHook('entries:normalize', normalizeCtx)
           e._tags = normalizeCtx.tags.map((t, i) => {
             t._w = tagWeight(head, t)
             t._p = (e._i << 10) + i
@@ -180,10 +181,10 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         ctx.tags = ctx.tags.flat().sort(sortTags)
       }
 
-      await hooks.callHook('tags:beforeResolve', ctx)
-      await hooks.callHook('tags:resolve', ctx)
+      hooks.callHook('tags:beforeResolve', ctx)
+      hooks.callHook('tags:resolve', ctx)
       // post-processing mainly for XSS prevention
-      await hooks.callHook('tags:afterResolve', ctx)
+      hooks.callHook('tags:afterResolve', ctx)
       const finalTags: HeadTag[] = []
       for (const t of ctx.tags) {
         const { innerHTML, tag, props } = t
@@ -213,6 +214,10 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         }
         finalTags.push(t)
       }
+      // TODO deprecated
+      Object.assign(finalTags, {
+        then: () => finalTags,
+      })
       return finalTags
     },
     invalidate() {
