@@ -3,6 +3,7 @@ import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
+export type SyncHookResult = void
 
 export interface SSRHeadPayload {
   headTags: string
@@ -44,12 +45,12 @@ export interface HeadHooks {
    */
   'init': (ctx: Unhead<any>) => HookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
-  'entries:resolve': (ctx: EntryResolveCtx<any>) => HookResult
-  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => HookResult
-  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => HookResult
-  'tags:beforeResolve': (ctx: TagResolveContext) => HookResult
-  'tags:resolve': (ctx: TagResolveContext) => HookResult
-  'tags:afterResolve': (ctx: TagResolveContext) => HookResult
+  'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
+  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
+  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
+  'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
+  'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
+  'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
 
   // client
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => HookResult

@@ -1,4 +1,5 @@
 import { describe, it } from 'vitest'
+import { resolveTags } from '../../../src/utils/resolve'
 import { createClientHeadWithContext } from '../../util'
 
 describe('capo', () => {
@@ -105,7 +106,7 @@ describe('capo', () => {
       }],
     })
 
-    const resolvedTags = await head.resolveTags()
+    const resolvedTags = resolveTags(head)
     // VIEWPORT
     expect(resolvedTags[0].tag).toEqual('meta')
     expect(resolvedTags[0].props.name).toEqual('viewport')

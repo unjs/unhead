@@ -3,6 +3,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
+import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../unhead/test/fixtures'
 
@@ -64,7 +65,7 @@ describe('vue e2e keys', () => {
 
     csrHead.push(AboutSchema)
 
-    expect(await csrHead.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(csrHead)).toMatchInlineSnapshot(`
       [
         {
           "_d": "link:key:main-icon",

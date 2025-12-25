@@ -58,7 +58,7 @@ describe('unhead e2e useServerSeoMeta', () => {
     const csrHead = createClientHeadWithContext({
       document: dom.window.document,
     })
-    useHead(ssrHead, {
+    useHead(csrHead, {
       htmlAttrs: { lang: 'nuxt.config' },
     }, {
       tagPriority: 'low',
@@ -73,7 +73,7 @@ describe('unhead e2e useServerSeoMeta', () => {
     await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html lang="app.vue"><head>
+      "<!DOCTYPE html><html lang="nuxt.config"><head>
       <title>title mainpage</title>
       <script>lorem ipsum generate more lorem ipsum</script>
       <meta name="description" content="Description from nuxt.config.ts">

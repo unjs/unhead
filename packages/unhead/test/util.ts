@@ -104,15 +104,26 @@ export const basicSchema: SerializableHead = {
 }
 
 export function useDOMHead(options: CreateHeadOptions = {}) {
-  activeDom = useDom()
-  return createClientHeadWithContext({
-    document: activeDom.window.document,
-    ...options,
-  })
+  // If no document is provided, create a fresh DOM for this test
+  if (!options.document) {
+    activeDom = useDom()
+    options.document = activeDom.window.document
+  }
+  return createClientHeadWithContext(options)
 }
 
 export function useDelayedSerializedDom() {
   return new Promise<string>((resolve) => {
     setTimeout(() => resolve(activeDom!.serialize()), 250)
   })
+}
+
+// Helper to get the current active DOM for tests that need it
+export function getActiveDom() {
+  return activeDom
+}
+
+// Helper to reset the active DOM between tests
+export function resetActiveDom() {
+  activeDom = null
 }
