@@ -11,6 +11,17 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
+// Lookup table: avoids toLowerCase() allocation and combines HasElementTags check for DOM hydration
+const TagElementLookup: Record<string, HeadTag['tag']> = {
+  BASE: 'base',
+  META: 'meta',
+  LINK: 'link',
+  STYLE: 'style',
+  SCRIPT: 'script',
+  NOSCRIPT: 'noscript',
+}
+const HeadBodyKeys = ['body', 'head'] as const
+
 /**
  * Render the head tags to the DOM.
  */
@@ -40,22 +51,23 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
           .set('bodyAttrs', dom.body),
       } as any as DomState
 
-      for (const key of ['body', 'head']) {
-        const children = dom[key as 'head' | 'body']?.children
-        for (const c of children) {
-          const tag = c.tagName.toLowerCase() as HeadTag['tag']
-          if (!HasElementTags.has(tag)) {
+      for (const key of HeadBodyKeys) {
+        const children = dom[key]?.children
+        // Use index-based loop for HTMLCollection (faster than for...of)
+        for (let i = 0; i < children.length; i++) {
+          const c = children[i]
+          // Lookup avoids toLowerCase() allocation and combines HasElementTags check
+          const tag = TagElementLookup[c.tagName]
+          if (!tag) {
             continue
           }
-          const next = normalizeProps({ tag, props: {} } as HeadTag, {
-            innerHTML: c.innerHTML,
-            ...c.getAttributeNames()
-              .reduce((props, name) => {
-                // @ts-expect-error untyped
-                props[name] = c.getAttribute(name)
-                return props
-              }, {}) || {},
-          })
+          // Build props object directly from attributes NamedNodeMap (avoids array allocation from getAttributeNames)
+          const props: Record<string, any> = { innerHTML: c.innerHTML }
+          const attrs = c.attributes
+          for (let j = 0; j < attrs.length; j++) {
+            props[attrs[j].name] = attrs[j].value
+          }
+          const next = normalizeProps({ tag, props: {} } as HeadTag, props)
           next.key = c.getAttribute('data-hid') || undefined
           next._d = dedupeKey(next) || hashTag(next)
           if (state.elMap.has(next._d)) {
@@ -74,7 +86,8 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     // presume all side effects are stale, we mark them as not stale if they're re-introduced
-    state.pendingSideEffects = { ...state.sideEffects }
+    // Reference swap avoids O(n) object copy - pendingSideEffects takes ownership of old object
+    state.pendingSideEffects = state.sideEffects || {}
     state.sideEffects = {}
 
     function track(id: string, scope: string, fn: () => void) {
@@ -137,10 +150,11 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
-        // @ts-expect-error untyped
         else if (value !== false && value !== null) {
-          // attribute values get set directly
-          $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
+          // attribute values get set directly - compute string once, avoid String() when already string
+          // @ts-expect-error value can be boolean for attributes like disabled, async
+          const attrValue: string = value === true ? '' : (typeof value === 'string' ? value : String(value))
+          $el.getAttribute(k) !== attrValue && $el.setAttribute(k, attrValue)
           isAttrTag && track(id, ck, () => $el.removeAttribute(k))
         }
       }
