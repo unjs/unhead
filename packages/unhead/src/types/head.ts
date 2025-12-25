@@ -242,5 +242,5 @@ export interface DomState {
   title: string
   pendingSideEffects: SideEffectsRecord
   sideEffects: SideEffectsRecord
-  elMap: Map<string, Element | Element[]>
+  elMap: Map<string, Element>
 }
