@@ -9,6 +9,7 @@ import type {
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
+import { resolveTags } from '../utils/resolve'
 
 /**
  * Render the head tags to the DOM.
@@ -29,26 +30,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
   }
   // eslint-disable-next-line no-async-promise-executor
   head._domUpdatePromise = new Promise<void>(async (resolve) => {
-    const dupeKeyCounter = new Map<string, number>()
-    // allow state to be hydrated while we generate the tags
-    const resolveTagPromise = new Promise<DomRenderTagContext[]>((resolve) => {
-      const tags = head.resolveTags()
-      resolve(
-        tags.map((tag) => {
-          const count = dupeKeyCounter.get(tag._d!) || 0
-          const res = {
-            tag,
-            id: (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag),
-            shouldRender: true,
-          }
-          if (tag._d && isMetaArrayDupeKey(tag._d)) {
-            dupeKeyCounter.set(tag._d, count + 1)
-          }
-          return res
-        }) as DomRenderTagContext[],
-      )
-    })
-
     let state = head._dom as DomState
     // let's hydrate - fill the elMap for fast lookups
     if (!state) {
@@ -61,7 +42,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
       for (const key of ['body', 'head']) {
         const children = dom[key as 'head' | 'body']?.children
-        // const tags: HeadTag[] = []
         for (const c of children) {
           const tag = c.tagName.toLowerCase() as HeadTag['tag']
           if (!HasElementTags.has(tag)) {
@@ -120,8 +100,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         })
       }
       for (const k in tag.props) {
-        if (!Object.prototype.hasOwnProperty.call(tag.props, k))
-          continue
         const value = tag.props[k]
         if (k.startsWith('on') && typeof value === 'function') {
           const dataset = ($el as HTMLScriptElement | undefined)?.dataset
@@ -147,29 +125,16 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
 
         const ck = `attr:${k}`
-        // class attributes have their own side effects to allow for merging
-        if (k === 'class') {
-          if (!value) {
-            continue
-          }
-          // if the user is providing an empty string, then it's removing the class
-          // the side effect clean up should remove it
+        if (k === 'class' && value) {
           for (const c of value as any as Set<string>) {
-            // always clear side effects
             isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
             !$el.classList.contains(c) && $el.classList.add(c)
           }
         }
-        else if (k === 'style') {
-          if (!value) {
-            continue
-          }
-          // style attributes have their own side effects to allow for merging
-          for (const [k, v] of value as any as Map<string, string>) {
-            track(id, `${ck}:${k}`, () => {
-              ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
-            })
-            ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
+        else if (k === 'style' && value) {
+          for (const [sk, sv] of value as any as Map<string, string>) {
+            track(id, `${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk))
+            ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         // @ts-expect-error untyped
@@ -182,30 +147,32 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     const pending: DomRenderTagContext[] = []
-    const frag: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
-      bodyClose: undefined,
-      bodyOpen: undefined,
-      head: undefined,
-    } as const
+    const frag: Partial<Record<string, DocumentFragment>> = {}
 
-    const tags = await resolveTagPromise
-    // first render all tags which we can match quickly
-    for (const ctx of tags) {
-      const { tag, shouldRender, id } = ctx
-      if (!shouldRender)
-        continue
-      // 1. render tags which don't create a new element
+    // resolve and process tags in single pass
+    const rawTags = resolveTags(head)
+    const tags: DomRenderTagContext[] = []
+    const dupeKeyCounter = new Map<string, number>()
+    for (const tag of rawTags) {
+      const count = dupeKeyCounter.get(tag._d!) || 0
+      const id = (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag)
+      const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
+      if (tag._d && isMetaArrayDupeKey(tag._d)) {
+        dupeKeyCounter.set(tag._d, count + 1)
+      }
+      tags.push(ctx)
+
+      // process immediately
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
         track('title', '', () => dom.title = state.title)
         continue
       }
-      ctx.$el = ctx.$el || state.elMap.get(id)
+      ctx.$el = state.elMap.get(id)
       if (ctx.$el) {
         trackCtx(ctx)
       }
       else if (HasElementTags.has(tag.tag)) {
-        // tag does not exist, we need to render it (if it's an element tag)
         pending.push(ctx)
       }
     }
@@ -215,8 +182,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       const pos = ctx.tag.tagPosition || 'head'
       ctx.$el = dom.createElement(ctx.tag.tag)
       trackCtx(ctx)
-      frag[pos] = frag[pos] || dom.createDocumentFragment()
-      frag[pos]!.appendChild(ctx.$el)
+      ;(frag[pos] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     // TODO remove
     for (const ctx of tags)

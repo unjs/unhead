@@ -1,4 +1,5 @@
 import type { RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
+import { resolveTags } from '../utils/resolve'
 import { ssrRenderTags } from './util'
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -14,7 +15,7 @@ export async function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOp
       bodyAttrs: '',
     }
   }
-  const ctx = { tags: options?.resolvedTags || head.resolveTags() }
+  const ctx = { tags: options?.resolvedTags || resolveTags(head) }
   await head.hooks.callHook('ssr:render', ctx)
   const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
   const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
