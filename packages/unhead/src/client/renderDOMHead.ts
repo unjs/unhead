@@ -42,7 +42,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
 
       for (const key of ['body', 'head']) {
         const children = dom[key as 'head' | 'body']?.children
-        // const tags: HeadTag[] = []
         for (const c of children) {
           const tag = c.tagName.toLowerCase() as HeadTag['tag']
           if (!HasElementTags.has(tag)) {
@@ -101,8 +100,6 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         })
       }
       for (const k in tag.props) {
-        if (!Object.prototype.hasOwnProperty.call(tag.props, k))
-          continue
         const value = tag.props[k]
         if (k.startsWith('on') && typeof value === 'function') {
           const dataset = ($el as HTMLScriptElement | undefined)?.dataset
@@ -128,29 +125,16 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         }
 
         const ck = `attr:${k}`
-        // class attributes have their own side effects to allow for merging
-        if (k === 'class') {
-          if (!value) {
-            continue
-          }
-          // if the user is providing an empty string, then it's removing the class
-          // the side effect clean up should remove it
+        if (k === 'class' && value) {
           for (const c of value as any as Set<string>) {
-            // always clear side effects
             isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
             !$el.classList.contains(c) && $el.classList.add(c)
           }
         }
-        else if (k === 'style') {
-          if (!value) {
-            continue
-          }
-          // style attributes have their own side effects to allow for merging
-          for (const [k, v] of value as any as Map<string, string>) {
-            track(id, `${ck}:${k}`, () => {
-              ($el as any as ElementCSSInlineStyle).style.removeProperty(k)
-            })
-            ;($el as any as ElementCSSInlineStyle).style.setProperty(k, v)
+        else if (k === 'style' && value) {
+          for (const [sk, sv] of value as any as Map<string, string>) {
+            track(id, `${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk))
+            ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         // @ts-expect-error untyped
@@ -163,11 +147,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     }
 
     const pending: DomRenderTagContext[] = []
-    const frag: Record<Required<HeadTag>['tagPosition'], undefined | DocumentFragment> = {
-      bodyClose: undefined,
-      bodyOpen: undefined,
-      head: undefined,
-    } as const
+    const frag: Partial<Record<string, DocumentFragment>> = {}
 
     // resolve and process tags in single pass
     const rawTags = resolveTags(head)
@@ -202,8 +182,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       const pos = ctx.tag.tagPosition || 'head'
       ctx.$el = dom.createElement(ctx.tag.tag)
       trackCtx(ctx)
-      frag[pos] = frag[pos] || dom.createDocumentFragment()
-      frag[pos]!.appendChild(ctx.$el)
+      ;(frag[pos] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     // TODO remove
     for (const ctx of tags)
