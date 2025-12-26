@@ -3,10 +3,11 @@ import type { Unhead } from 'unhead/types'
 import type { SchemaOrgNode } from '../src/types'
 import { UnheadSchemaOrg } from '@unhead/schema-org'
 import { createHead } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
 
 export function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag
-  const schemaOrg = unhead.resolveTags().find(tag => tag.key === 'schema-org-graph')!.innerHTML
+  const schemaOrg = resolveTags(unhead).find(tag => tag.key === 'schema-org-graph')!.innerHTML
   return JSON.parse(<string> schemaOrg)['@graph']
 }
 

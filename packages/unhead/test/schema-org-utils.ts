@@ -1,10 +1,11 @@
 import type { Unhead } from 'unhead/types'
 import type { MetaInput, SchemaOrgNode } from '../../schema-org/src/types'
 import { createHead } from 'unhead/server'
+import { resolveTags } from '../src/utils/resolve'
 
 export async function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag
-  const tags = unhead.resolveTags()
+  const tags = resolveTags(unhead)
   const schemaOrg = tags.find(tag => tag.key === 'schema-org-graph')!.innerHTML
   return JSON.parse(<string> schemaOrg)['@graph']
 }
