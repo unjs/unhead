@@ -1,4 +1,4 @@
-import { renderSSRHeadSuspenseChunkSync, STREAM_MARKER } from 'unhead'
+import { renderSSRHeadSuspenseChunk, STREAM_MARKER } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
@@ -109,7 +109,7 @@ describe('svelte streaming SSR', () => {
     })
   })
 
-  describe('renderSSRHeadSuspenseChunkSync', () => {
+  describe('renderSSRHeadSuspenseChunk', () => {
     it('returns push script for new tags synchronously', async () => {
       const head = createStreamableHead()
       head.push({ title: 'Initial' })
@@ -118,7 +118,7 @@ describe('svelte streaming SSR', () => {
 
       head.push({ title: 'Updated' })
 
-      const result = renderSSRHeadSuspenseChunkSync(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toContain('Updated')
     })
 
@@ -128,7 +128,7 @@ describe('svelte streaming SSR', () => {
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      const result = renderSSRHeadSuspenseChunkSync(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
     })
   })

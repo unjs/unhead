@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderSSRHeadSuspenseChunkSync } from 'unhead'
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderSSRHeadSuspenseChunk } from 'unhead'
 import { describe, it } from 'vitest'
 import {
   renderSSRHead,
@@ -37,7 +37,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
   }
 
   describe('head tag resolution overhead', () => {
-    it('compares renderSSRHeadSuspenseChunkSync vs renderSSRHeadSuspenseChunk', async () => {
+    it('compares renderSSRHeadSuspenseChunk vs renderSSRHeadSuspenseChunk', async () => {
       const results: { name: string, avg: number, min: number, max: number, p95: number }[] = []
 
       // Setup: create head with initial tags, render shell, add new tags
@@ -68,9 +68,9 @@ describeBenchmark('streaming SSR benchmarks', () => {
       }))
 
       // Benchmark sync version
-      results.push(await runBenchmark('renderSSRHeadSuspenseChunkSync', async () => {
+      results.push(await runBenchmark('renderSSRHeadSuspenseChunk', async () => {
         const head = await setupHead()
-        renderSSRHeadSuspenseChunkSync(head)
+        renderSSRHeadSuspenseChunk(head)
       }))
 
       // Benchmark baseline renderSSRHead

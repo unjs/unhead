@@ -1,6 +1,6 @@
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
-import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
@@ -17,7 +17,7 @@ export function HeadStream() {
   if (!head)
     return null
 
-  const update = renderSSRHeadSuspenseChunkSync(head)
+  const update = renderSSRHeadSuspenseChunk(head)
   if (!update)
     return null
 

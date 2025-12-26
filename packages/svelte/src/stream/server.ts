@@ -1,6 +1,6 @@
 import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
 import { getContext } from 'svelte'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { UnheadContextKey } from '../context'
 
 export { UnheadContextKey } from '../context'
@@ -22,7 +22,7 @@ export function HeadStreamScript(): string {
   if (!head)
     return ''
 
-  const update = renderSSRHeadSuspenseChunkSync(head)
+  const update = renderSSRHeadSuspenseChunk(head)
   if (!update)
     return ''
 

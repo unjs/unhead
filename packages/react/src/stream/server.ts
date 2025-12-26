@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { createElement, useContext } from 'react'
-import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
 /**
@@ -13,7 +13,7 @@ export function HeadStream(): ReactNode {
     throw new Error('HeadStream not found')
   }
 
-  const update = renderSSRHeadSuspenseChunkSync(head)
+  const update = renderSSRHeadSuspenseChunk(head)
   if (!update) {
     // render div with text - no head
     return createElement('script', { dangerouslySetInnerHTML: { __html: `<!-- no content: ${head.entries.size}-->` } })

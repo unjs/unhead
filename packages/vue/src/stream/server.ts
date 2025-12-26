@@ -1,6 +1,6 @@
 import type { CreateStreamableServerHeadOptions } from 'unhead/types'
 import type { VueHeadClient } from '../types'
-import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { createStreamableHead as _createStreamableHead, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { defineComponent, h } from 'vue'
 import { injectHead } from '../composables'
 import { vueInstall } from '../install'
@@ -17,7 +17,7 @@ export const HeadStream = defineComponent({
   setup() {
     const head = injectHead()
     return () => {
-      const update = renderSSRHeadSuspenseChunkSync(head)
+      const update = renderSSRHeadSuspenseChunk(head)
       if (!update)
         return null
       return h('script', { innerHTML: update })

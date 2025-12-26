@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream'
 import { createElement, Suspense, use, useContext } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
-import { renderSSRHeadSuspenseChunkSync } from 'unhead/stream/server'
+import { renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
@@ -14,7 +14,7 @@ function HeadStream() {
   if (!head)
     return null
 
-  const update = renderSSRHeadSuspenseChunkSync(head)
+  const update = renderSSRHeadSuspenseChunk(head)
   if (update)
     return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
 

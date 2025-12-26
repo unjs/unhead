@@ -1,4 +1,4 @@
-import { renderSSRHeadSuspenseChunkSync } from 'unhead'
+import { renderSSRHeadSuspenseChunk } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
@@ -234,7 +234,7 @@ describe('vue streaming SSR e2e', () => {
   })
 
   describe('sync rendering for HeadStream', () => {
-    it('renderSSRHeadSuspenseChunkSync returns update synchronously', () => {
+    it('renderSSRHeadSuspenseChunk returns update synchronously', () => {
       const head = createStreamableHead()
 
       head.push({ title: 'Initial' })
@@ -247,7 +247,7 @@ describe('vue streaming SSR e2e', () => {
       // Add new head entry
       head.push({ title: 'Updated' })
 
-      const syncResult = renderSSRHeadSuspenseChunkSync(head)
+      const syncResult = renderSSRHeadSuspenseChunk(head)
 
       expect(syncResult).toContain('Updated')
     })

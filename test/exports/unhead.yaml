@@ -5,7 +5,7 @@
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunkSync: function
+  renderSSRHeadSuspenseChunk: function
   STREAM_MARKER: string
   streamWithHead: function
   useHead: function
@@ -30,7 +30,7 @@
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunkSync: function
+  renderSSRHeadSuspenseChunk: function
   STREAM_MARKER: string
   streamWithHead: function
   useHead: function
@@ -87,7 +87,7 @@
   renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunkSync: function
+  renderSSRHeadSuspenseChunk: function
   serializePropsForHash: function
   ssrRenderTags: function
   STREAM_MARKER: string
