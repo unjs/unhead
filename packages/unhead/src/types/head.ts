@@ -181,6 +181,10 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
+  _domUpdatePromise?: Promise<void>
+  /**
+   * @internal
+   */
   dirty: boolean
   /**
    * @internal

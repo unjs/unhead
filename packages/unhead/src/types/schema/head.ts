@@ -19,7 +19,7 @@ export interface SchemaAugmentations {
   htmlAttrs: ResolvesDuplicates & TagPriority
   bodyAttrs: ResolvesDuplicates & TagPriority
   link: TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams
-  meta: TagPriority & ProcessesTemplateParams
+  meta: TagPriority & ResolvesDuplicates & ProcessesTemplateParams
   style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams

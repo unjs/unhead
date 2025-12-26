@@ -4,7 +4,7 @@ import { renderDOMHead } from '../../../src/client'
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('dom order', () => {
-  it('renders in registered order', () => {
+  it('renders in registered order', async () => {
     const dom = useDom()
     const head = createClientHeadWithContext({
       document: dom.window.document,
@@ -17,7 +17,7 @@ describe('dom order', () => {
       script: [{ innerHTML: 'document.documentElement.classList.remove("no-js")' }],
     })
 
-    renderDOMHead(head, { document: dom.window.document })
+    await renderDOMHead(head, { document: dom.window.document })
 
     // Check that the script was rendered
     const scripts = dom.window.document.head.querySelectorAll('script')

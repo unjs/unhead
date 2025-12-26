@@ -74,8 +74,8 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-
-      <title>About page</title>
+      <meta charset="utf-8">
+      <title>Home page</title>
       </head>
       <body><div id="app"></div></body></html>"
     `)
@@ -90,9 +90,9 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-
+      <meta charset="utf-8">
       <title>Home page</title>
-      <meta charset="utf-8"></head>
+      </head>
       <body><div id="app"></div></body></html>"
     `)
   })

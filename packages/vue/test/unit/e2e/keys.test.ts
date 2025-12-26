@@ -44,7 +44,7 @@ describe('vue e2e keys', () => {
 
     const index = csrHead.push(IndexSchema)
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -92,7 +92,7 @@ describe('vue e2e keys', () => {
       />
     `)
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -157,7 +157,7 @@ describe('vue e2e keys', () => {
 
     const entry = csrHead.push(schema(false))
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -178,7 +178,7 @@ describe('vue e2e keys', () => {
 
     entry.patch(schema(true))
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Allison&amp;text=Allison" data-hid="Allison">

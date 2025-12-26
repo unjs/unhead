@@ -10,7 +10,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg(),
       ],
     })
@@ -77,9 +76,9 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg({
           path: '/about',
+          host: '',
         }),
       ],
     })
@@ -152,7 +151,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
@@ -201,7 +199,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
@@ -212,12 +209,10 @@ describe('schema.org e2e', () => {
       defineWebPage({
         '@type': 'FAQPage',
       }),
-      // @ts-expect-error untyped
       defineQuestion({
         question: 'What is your return policy?',
         answer: 'Most unopened items in new condition and returned within 90 days will receive a refund or exchange.',
       }),
-      // @ts-expect-error untyped
       defineQuestion({
         question: 'What is something else?',
         answer: 'Something else',
@@ -271,7 +266,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg(),
       ],
     })
@@ -315,7 +309,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg(),
       ],
     })
@@ -333,7 +326,6 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
         UnheadSchemaOrg(),
       ],
     })

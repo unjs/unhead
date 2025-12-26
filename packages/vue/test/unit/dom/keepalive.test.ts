@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { Unhead } from 'unhead/types'
 import { injectHead, useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
 import { resolveTags } from 'unhead/utils'
@@ -55,7 +56,7 @@ describe('keepalive', () => {
     // Step 1
     const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -71,7 +72,7 @@ describe('keepalive', () => {
     // Step 2
     app.name = 'about'
     await nextTick()
-    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -87,7 +88,7 @@ describe('keepalive', () => {
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
@@ -103,7 +104,7 @@ describe('keepalive', () => {
     // Step 4
     app.name = 'about'
     await nextTick()
-    expect(resolveTags(app.head)).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",

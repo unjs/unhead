@@ -116,7 +116,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang="en"><head>
@@ -236,7 +236,7 @@ describe('unhead e2e', () => {
     const csrHead = createClientHeadWithContext()
     useHead(csrHead, schema)
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     let html = dom.serialize().replaceAll('\n\n', '')
 
@@ -283,7 +283,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -315,7 +315,7 @@ describe('unhead e2e', () => {
 
     homePageEntry.dispose()
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -365,7 +365,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -387,7 +387,7 @@ describe('unhead e2e', () => {
 
     aboutPage.dispose()
 
-    renderDOMHead(csrHead, { document: dom.window.document })
+    await renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 

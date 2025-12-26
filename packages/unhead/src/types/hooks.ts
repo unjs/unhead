@@ -20,8 +20,15 @@ export interface RenderSSRHeadOptions {
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 
-export interface DomBeforeRenderCtx extends ShouldRenderContext {}
+export interface DomBeforeRenderCtx extends ShouldRenderContext { tags: HeadTag[] }
 export interface ShouldRenderContext { shouldRender: boolean }
+
+export interface DomRenderTagContext {
+  tag: HeadTag
+  id: string
+  $el?: Element
+  shouldRender: boolean
+}
 export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
 interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
@@ -37,6 +44,8 @@ export interface HeadHooks {
 
   // client
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => SyncHookResult
+  'dom:renderTag': (ctx: DomRenderTagContext, document: Document, track: (id: string, scope: string, fn: () => void) => void) => HookResult
+  'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
 
   // server
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult

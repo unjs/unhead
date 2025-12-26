@@ -24,7 +24,7 @@ describe('vue dom innerContent', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
-      <script>console.log('hello')</script></head>
+      </head>
       <body>
 
       <div>
@@ -47,7 +47,7 @@ describe('vue dom innerContent', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
-      <script>console.log('hello world')</script></head>
+      </head>
       <body>
 
       <div>

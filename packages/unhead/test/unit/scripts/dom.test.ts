@@ -20,7 +20,11 @@ describe('dom useScript', () => {
       },
     })
 
-    expect((await useDelayedSerializedDom()).split('\n').filter(l => l.startsWith('<link'))).toMatchInlineSnapshot(`[]`)
+    expect((await useDelayedSerializedDom()).split('\n').filter(l => l.startsWith('<link'))).toMatchInlineSnapshot(`
+      [
+        "<link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"><script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-onload="" data-onerror=""></script></head>",
+      ]
+    `)
 
     instance.proxy.test('hello-world')
     expect(calledFn).toBe('test')
@@ -48,11 +52,7 @@ describe('dom useScript', () => {
     })
 
     let dom = await useDelayedSerializedDom()
-    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
-      [
-        "<script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-onload="" data-onerror=""></script><link href="https://cdn.example.com/script.js" rel="preload" crossorigin="anonymous" referrerpolicy="no-referrer" fetchpriority="low" as="script"></head>",
-      ]
-    `)
+    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`[]`)
     instance.remove()
     // wait
     await new Promise(r => setTimeout(r, 100))

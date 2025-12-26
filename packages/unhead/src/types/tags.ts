@@ -7,6 +7,15 @@ export interface ResolvesDuplicates {
    * to be made you can provide a unique key for each entry.
    */
   key?: string
+  /**
+   * The strategy to use when a duplicate tag is encountered.
+   *
+   * - `replace` - Replace the existing tag with the new tag
+   * - `merge` - Merge the existing tag with the new tag
+   *
+   * @default 'replace' (some tags will default to 'merge', such as htmlAttr)
+   */
+  tagDuplicateStrategy?: 'replace' | 'merge'
 }
 
 export type ValidTagPositions = 'head' | 'bodyClose' | 'bodyOpen'
@@ -68,15 +77,6 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
   processTemplateParams?: boolean
   innerHTML?: string
   textContent?: string
-  /**
-   * The strategy to use when a duplicate tag is encountered.
-   *
-   * - `replace` - Replace the existing tag with the new tag
-   * - `merge` - Merge the existing tag with the new tag
-   *
-   * @default 'replace' (some tags will default to 'merge', such as htmlAttr)
-   */
-  tagDuplicateStrategy?: 'replace' | 'merge'
   /**
    * @internal
    */

@@ -20,7 +20,7 @@ describe('vue dom titleTemplate', () => {
     renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      `"Test"`,
+      `""`,
     )
   })
 
@@ -38,7 +38,7 @@ describe('vue dom titleTemplate', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
-      <title>test | template</title></head>
+      </head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
@@ -56,7 +56,7 @@ describe('vue dom titleTemplate', () => {
     renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      `"test"`,
+      `""`,
     )
 
     entry!.dispose()

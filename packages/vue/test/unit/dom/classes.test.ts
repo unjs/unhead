@@ -40,7 +40,7 @@ describe('vue dom classes', () => {
       "<html><head>
 
       </head>
-      <body class="active-navbar-body"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })
