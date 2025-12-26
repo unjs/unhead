@@ -34,7 +34,6 @@
 ./stream/server:
   createHead: function
   createStreamableHead: function
-  extractUnheadInputFromHtml: function
   HeadStream: function
   renderSSRHead: function
   renderSSRHeadShell: function

@@ -42,7 +42,6 @@
 ./stream/server:
   createHead: function
   createStreamableHead: function
-  extractUnheadInputFromHtml: function
   HeadStream: object
   propsToString: function
   renderSSRHead: function
@@ -70,7 +69,6 @@
   resolvePackedMetaObjectValue: function
   resolveTags: function
   resolveTitleTemplate: function
-  resolveUnrefHeadInput: function
   sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
