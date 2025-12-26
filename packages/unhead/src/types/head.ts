@@ -261,20 +261,6 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _ssrPayload?: ResolvableHead
-  /**
-   * @internal
-   */
-  _streamedHashes?: Set<string>
-  /**
-   * @internal
-   * Streaming entries for hydration adoption (client-side only)
-   */
-  _streamEntries?: ActiveHeadEntry<Input>[]
-  /**
-   * @internal
-   * Index tracker for stream entry adoption
-   */
-  _streamIndex?: { value: number }
 }
 
 export interface DomState {
