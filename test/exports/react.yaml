@@ -36,17 +36,12 @@
 ./stream/server:
   createHead: function
   createStreamableHead: function
-  escapeHtml: function
   extractUnheadInputFromHtml: function
   HeadStream: function
-  propsToString: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  ssrRenderTags: function
-  tagToString: function
   transformHtmlTemplate: function
-  transformHtmlTemplateRaw: function
   UnheadProvider: function
 ./stream/vite:
   default: function

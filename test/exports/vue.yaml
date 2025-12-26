@@ -64,17 +64,13 @@
 ./stream/server:
   createHead: function
   createStreamableHead: function
-  escapeHtml: function
   extractUnheadInputFromHtml: function
   HeadStream: object
   propsToString: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  ssrRenderTags: function
-  tagToString: function
   transformHtmlTemplate: function
-  transformHtmlTemplateRaw: function
   VueHeadMixin: object
 ./stream/vite:
   default: function
