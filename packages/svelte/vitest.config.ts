@@ -5,6 +5,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineProject } from 'vitest/config'
 
 export default defineProject({
+  // @ts-expect-error vite version mismatch between svelte plugin and vitest
   plugins: [svelte({ compilerOptions: { generate: 'client' } as any })],
   resolve: {
     conditions: ['browser'],
