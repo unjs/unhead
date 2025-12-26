@@ -5,9 +5,9 @@ import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
 export { UnheadContextKey } from '../context'
 
 /**
- * Client-side HeadStreamScript - returns empty string (script already executed during SSR streaming)
+ * Client-side HeadStream - returns empty string (script already executed during SSR streaming)
  */
-export function HeadStreamScript(): string {
+export function HeadStream(): string {
   return ''
 }
 

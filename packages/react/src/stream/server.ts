@@ -10,16 +10,15 @@ import { UnheadContext } from '../context'
 export function HeadStream(): ReactNode {
   const head = useContext(UnheadContext)
   if (!head) {
-    throw new Error('HeadStream not found')
+    throw new Error('HeadStream: head context not found')
   }
 
   const update = renderSSRHeadSuspenseChunk(head)
-  if (!update) {
-    // render div with text - no head
-    return createElement('script', { dangerouslySetInnerHTML: { __html: `<!-- no content: ${head.entries.size}-->` } })
-  }
-
-  return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
+  // Always render script element for hydration consistency with client
+  return createElement('script', {
+    suppressHydrationWarning: true,
+    dangerouslySetInnerHTML: update ? { __html: update } : undefined,
+  })
 }
 
 // Re-export everything from the base server module

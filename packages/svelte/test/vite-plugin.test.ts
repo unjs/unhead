@@ -31,7 +31,7 @@ describe('unheadSveltePlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('injects HeadStreamScript after script tag', () => {
+    it('injects HeadStream after script tag', () => {
       const code = `
         <script>
           import { useHead } from '@unhead/svelte'
@@ -41,10 +41,10 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('{@html HeadStreamScript()}')
+      expect(result!.code).toContain('{@html HeadStream()}')
     })
 
-    it('adds HeadStreamScript import from client for non-SSR builds', () => {
+    it('adds HeadStream import from client for non-SSR builds', () => {
       const code = `
         <script>
           import { useHead } from '@unhead/svelte'
@@ -54,10 +54,10 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/stream/client\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/svelte/stream/client\'')
     })
 
-    it('adds HeadStreamScript import from server for SSR builds', () => {
+    it('adds HeadStream import from server for SSR builds', () => {
       const code = `
         <script>
           import { useHead } from '@unhead/svelte'
@@ -67,10 +67,10 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/svelte/stream/server\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/svelte/stream/server\'')
     })
 
-    it('adds HeadStreamScript to existing server import for SSR builds', () => {
+    it('adds HeadStream to existing server import for SSR builds', () => {
       const code = `
         <script>
           import { useHead } from '@unhead/svelte'
@@ -81,7 +81,7 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('createStreamableHead, HeadStreamScript')
+      expect(result!.code).toContain('createStreamableHead, HeadStream')
     })
 
     it('transforms files with useSeoMeta', () => {
@@ -94,7 +94,7 @@ describe('unheadSveltePlugin', () => {
       `
       const result = plugin.transform!(code, 'component.svelte')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('{@html HeadStreamScript()}')
+      expect(result!.code).toContain('{@html HeadStream()}')
     })
 
     it('generates source map', () => {

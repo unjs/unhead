@@ -15,7 +15,7 @@ export {
  * Returns HTML string to be rendered with {@html}.
  * The Vite plugin with streaming: true auto-injects this.
  */
-export function HeadStreamScript(): string {
+export function HeadStream(): string {
   const head = getContext<Unhead | null>(UnheadContextKey)
   if (!head)
     return ''

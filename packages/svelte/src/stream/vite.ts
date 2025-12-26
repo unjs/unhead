@@ -3,7 +3,7 @@ import { findStaticImports } from 'mlly'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
- * Transforms Svelte code to inject HeadStreamScript for streaming SSR support.
+ * Transforms Svelte code to inject HeadStream for streaming SSR support.
  *
  * @param code - The source code to transform
  * @param id - The file path/id being transformed
@@ -27,14 +27,14 @@ import { createStreamingPlugin } from 'unhead/stream/vite'
  * // Transformed output:
  * <script>
  * import { useHead } from '@unhead/svelte'
- * import { HeadStreamScript } from '@unhead/svelte/stream/server' // or /client
+ * import { HeadStream } from '@unhead/svelte/stream/server' // or /client
  *
  * useHead({
  *   title: 'My Page'
  * })
  * </script>
  *
- * {@html HeadStreamScript()}
+ * {@html HeadStream()}
  * <h1>Hello World</h1>
  * ```
  */
@@ -50,10 +50,10 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 
   const templateStart = scriptCloseMatch.index! + scriptCloseMatch[0].length
 
-  // Inject {@html HeadStreamScript()} after the script tag
-  s.appendRight(templateStart, '\n{@html HeadStreamScript()}')
+  // Inject {@html HeadStream()} after the script tag
+  s.appendRight(templateStart, '\n{@html HeadStream()}')
 
-  // Add import for HeadStreamScript
+  // Add import for HeadStream
   const importPath = `@unhead/svelte/stream/${isSSR ? 'server' : 'client'}`
   const scriptMatch = code.match(/<script[^>]*>/i)
   if (!scriptMatch)
@@ -64,14 +64,14 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   const existing = imports.find(i => i.specifier === importPath)
 
   if (existing) {
-    if (!existing.imports?.includes('HeadStreamScript')) {
+    if (!existing.imports?.includes('HeadStream')) {
       const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
-      const newImports = inner ? `${inner}, HeadStreamScript` : 'HeadStreamScript'
+      const newImports = inner ? `${inner}, HeadStream` : 'HeadStream'
       s.overwrite(existing.start, existing.end, `import { ${newImports} } from '${importPath}'\n`)
     }
   }
   else {
-    s.appendRight(scriptEnd, `\nimport { HeadStreamScript } from '${importPath}'`)
+    s.appendRight(scriptEnd, `\nimport { HeadStream } from '${importPath}'`)
   }
 
   return true
@@ -79,7 +79,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 
 /**
  * Vite plugin for Svelte streaming SSR support.
- * Automatically injects HeadStreamScript into Svelte components.
+ * Automatically injects HeadStream into Svelte components.
  *
  * @returns Vite plugin configuration object with:
  *   - `name`: Plugin identifier
