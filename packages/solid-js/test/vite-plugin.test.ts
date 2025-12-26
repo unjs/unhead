@@ -30,7 +30,7 @@ describe('unheadSolidPlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('wraps JSX return with HeadStreamScript fragment', () => {
+    it('wraps JSX return with HeadStream fragment', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'
         export function App() {
@@ -40,11 +40,11 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
+      expect(result!.code).toContain('<><HeadStream />')
       expect(result!.code).toContain('</>')
     })
 
-    it('adds HeadStreamScript import from client for non-SSR builds', () => {
+    it('adds HeadStream import from client for non-SSR builds', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'
         export function App() {
@@ -54,10 +54,10 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: false })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/stream/client\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/solid-js/stream/client\'')
     })
 
-    it('adds HeadStreamScript import from server for SSR builds', () => {
+    it('adds HeadStream import from server for SSR builds', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'
         export function App() {
@@ -67,10 +67,10 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStreamScript } from \'@unhead/solid-js/stream/server\'')
+      expect(result!.code).toContain('import { HeadStream } from \'@unhead/solid-js/stream/server\'')
     })
 
-    it('adds HeadStreamScript to existing server import for SSR builds', () => {
+    it('adds HeadStream to existing server import for SSR builds', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'
         import { createStreamableHead } from '@unhead/solid-js/stream/server'
@@ -81,7 +81,7 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('createStreamableHead, HeadStreamScript')
+      expect(result!.code).toContain('createStreamableHead, HeadStream')
     })
 
     it('transforms files with useSeoMeta', () => {
@@ -94,7 +94,7 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
+      expect(result!.code).toContain('<><HeadStream />')
     })
 
     it('handles arrow function with implicit return', () => {
@@ -107,7 +107,7 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
+      expect(result!.code).toContain('<><HeadStream />')
     })
 
     it('handles parenthesized JSX return', () => {
@@ -122,7 +122,7 @@ describe('unheadSolidPlugin', () => {
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code).toContain('<><HeadStreamScript />')
+      expect(result!.code).toContain('<><HeadStream />')
     })
 
     it('generates source map', () => {

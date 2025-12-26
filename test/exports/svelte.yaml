@@ -28,11 +28,11 @@
   UnheadContextKey: symbol
 ./stream/client:
   createStreamableHead: function
-  HeadStreamScript: function
+  HeadStream: function
   UnheadContextKey: symbol
 ./stream/server:
   createStreamableHead: function
-  HeadStreamScript: function
+  HeadStream: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContextKey: symbol

@@ -4,7 +4,7 @@ import { parseSync, Visitor } from 'oxc-parser'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
- * Transforms Solid.js JSX code to inject HeadStreamScript components for streaming SSR support.
+ * Transforms Solid.js JSX code to inject HeadStream components for streaming SSR support.
  *
  * @param code - The source code to transform
  * @param id - The file path/id being transformed
@@ -26,13 +26,13 @@ import { createStreamingPlugin } from 'unhead/stream/vite'
  *
  * // Transformed output (SSR):
  * import { useHead } from '@unhead/solid-js'
- * import { HeadStreamScript } from '@unhead/solid-js/stream/server'
+ * import { HeadStream } from '@unhead/solid-js/stream/server'
  *
  * export function MyComponent() {
  *   useHead({
  *     title: 'My Page'
  *   })
- *   return <><HeadStreamScript /><div>Hello World</div></>
+ *   return <><HeadStream /><div>Hello World</div></>
  * }
  * ```
  */
@@ -86,11 +86,11 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   if (returns.length === 0)
     return false
 
-  // Wrap JSX returns with HeadStreamScript (reverse order to maintain positions)
+  // Wrap JSX returns with HeadStream (reverse order to maintain positions)
   returns.sort((a, b) => b.jsxStart - a.jsxStart)
   for (const ret of returns) {
     const jsxCode = code.slice(ret.jsxStart, ret.jsxEnd)
-    s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStreamScript />${jsxCode}</>`)
+    s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStream />${jsxCode}</>`)
   }
 
   // Add import
@@ -99,17 +99,17 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   const existing = imports.find(i => i.specifier === importPath)
 
   if (existing) {
-    if (!existing.imports?.includes('HeadStreamScript')) {
+    if (!existing.imports?.includes('HeadStream')) {
       const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
-      s.overwrite(existing.start, existing.end, `import { ${inner ? `${inner}, ` : ''}HeadStreamScript } from '${importPath}'\n`)
+      s.overwrite(existing.start, existing.end, `import { ${inner ? `${inner}, ` : ''}HeadStream } from '${importPath}'\n`)
     }
   }
   else {
     const last = imports[imports.length - 1]
     if (last)
-      s.appendLeft(last.end, `import { HeadStreamScript } from '${importPath}'\n`)
+      s.appendLeft(last.end, `import { HeadStream } from '${importPath}'\n`)
     else
-      s.prepend(`import { HeadStreamScript } from '${importPath}'\n`)
+      s.prepend(`import { HeadStream } from '${importPath}'\n`)
   }
 
   return true
@@ -117,7 +117,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 
 /**
  * Vite plugin for Solid.js streaming SSR support.
- * Automatically injects HeadStreamScript components into Solid components that use useHead hooks.
+ * Automatically injects HeadStream components into Solid components that use useHead hooks.
  *
  * @returns Vite plugin configuration object with:
  *   - `name`: Plugin identifier
