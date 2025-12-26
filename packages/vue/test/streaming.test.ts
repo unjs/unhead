@@ -1,20 +1,16 @@
-import { renderSSRHeadSuspenseChunk } from 'unhead'
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
+import { createSSRApp, defineComponent, h } from 'vue'
+import { renderToString } from 'vue/server-renderer'
 import {
   createStreamableHead,
+  HeadStream,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-  streamWithHead,
 } from '../src/stream/server'
 
 describe('vue streaming SSR', () => {
   describe('createStreamableHead', () => {
-    it('creates head with _streamedHashes initialized', () => {
-      const head = createStreamableHead()
-      expect(head._streamedHashes).toBeInstanceOf(Set)
-    })
-
     it('uses custom stream key', async () => {
       const head = createStreamableHead({ streamKey: '__vue__' })
       head.push({ title: 'Test' })
@@ -67,6 +63,17 @@ describe('vue streaming SSR', () => {
       expect(result).toContain('dir="ltr"')
       expect(result).toContain('class="dark"')
     })
+
+    it('clears entries after rendering shell', async () => {
+      const head = createStreamableHead()
+      head.push({ title: 'Test' })
+
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      // Entries should be cleared
+      const chunk = renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toBe('')
+    })
   })
 
   describe('renderSSRHeadSuspenseChunk', () => {
@@ -76,7 +83,7 @@ describe('vue streaming SSR', () => {
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
     })
 
@@ -91,85 +98,106 @@ describe('vue streaming SSR', () => {
         meta: [{ name: 'description', content: 'New description' }],
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
 
       expect(result).toContain('window.__unhead__.push')
       expect(result).toContain('Updated Title')
       expect(result).toContain('New description')
     })
 
-    it('only includes new tags not previously streamed', async () => {
+    it('clears entries after rendering chunk', async () => {
       const head = createStreamableHead()
-      head.push({ title: 'Initial', meta: [{ name: 'robots', content: 'index' }] })
-
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      head.push({ meta: [{ name: 'author', content: 'Test' }] })
+      head.push({ title: 'First Update' })
+      renderSSRHeadSuspenseChunk(head)
 
-      const result = await renderSSRHeadSuspenseChunk(head)
-
-      expect(result).toContain('author')
-      expect(result).not.toContain('robots')
-    })
-  })
-
-  describe('renderSSRHeadSuspenseChunk', () => {
-    it('returns push script for new tags synchronously', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Initial' })
-
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-
-      head.push({ title: 'Updated' })
-
-      const result = renderSSRHeadSuspenseChunk(head)
-      expect(result).toContain('Updated')
-    })
-
-    it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Test' })
-
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-
+      // Second call should return empty
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
     })
+
+    it('uses custom stream key in push call', async () => {
+      const head = createStreamableHead({ streamKey: '__custom__' })
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      head.push({ title: 'Test' })
+      const result = renderSSRHeadSuspenseChunk(head)
+
+      expect(result).toContain('window.__custom__.push')
+    })
   })
 
-  describe('streamWithHead', () => {
-    async function* mockAppStream(chunks: string[]): AsyncGenerator<string> {
-      for (const chunk of chunks) {
-        yield chunk
-      }
-    }
-
-    it('streams app with head injection', async () => {
+  describe('headStream component', () => {
+    it('renders script tag with head updates via Vue SSR', async () => {
       const head = createStreamableHead()
-      head.push({
-        title: 'Streamed Page',
-        meta: [{ name: 'description', content: 'A streamed page' }],
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      head.push({ title: 'Streamed Title' })
+
+      // Create a minimal app that provides head and renders HeadStream
+      const App = defineComponent({
+        setup() {
+          return () => h(HeadStream)
+        },
       })
 
-      const template = '<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>'
-      const appChunks = ['<div>Hello</div>', '<div>World</div>']
+      const app = createSSRApp(App)
+      app.provide('usehead', head)
 
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(mockAppStream(appChunks), template, head)) {
-        chunks.push(chunk)
-      }
+      const html = await renderToString(app)
 
-      const fullHtml = chunks.join('')
-      expect(fullHtml).toContain('<title>Streamed Page</title>')
-      expect(fullHtml).toContain('window.__unhead__')
-      expect(fullHtml).toContain('<div>Hello</div>')
-      expect(fullHtml).toContain('<div>World</div>')
-      expect(fullHtml).toContain('</body></html>')
+      expect(html).toContain('<script>')
+      expect(html).toContain('window.__unhead__.push')
+      expect(html).toContain('Streamed Title')
+      expect(html).toContain('</script>')
+    })
+
+    it('renders null when no updates', async () => {
+      const head = createStreamableHead()
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      // No new entries pushed
+
+      const App = defineComponent({
+        setup() {
+          return () => h(HeadStream)
+        },
+      })
+
+      const app = createSSRApp(App)
+      app.provide('usehead', head)
+
+      const html = await renderToString(app)
+
+      expect(html).toBe('<!---->') // Vue SSR comment for null render
+    })
+
+    it('properly escapes script content to prevent XSS', async () => {
+      const head = createStreamableHead()
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      head.push({ title: '</script><script>alert("xss")</script>' })
+
+      const App = defineComponent({
+        setup() {
+          return () => h(HeadStream)
+        },
+      })
+
+      const app = createSSRApp(App)
+      app.provide('usehead', head)
+
+      const html = await renderToString(app)
+
+      // Should not contain unescaped closing script tag
+      expect(html).not.toContain('</script><script>')
+      expect(html).toContain('\\u003c') // Escaped <
     })
   })
 
   describe('xSS prevention', () => {
-    it('escapes script tags in content', async () => {
+    it('escapes script tags in title', async () => {
       const head = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -177,12 +205,12 @@ describe('vue streaming SSR', () => {
         title: '<script>alert("xss")</script>',
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).not.toContain('<script>alert')
       expect(result).toContain('\\u003c')
     })
 
-    it('escapes closing script tags', async () => {
+    it('escapes closing script tags in innerHTML', async () => {
       const head = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -190,67 +218,15 @@ describe('vue streaming SSR', () => {
         script: [{ innerHTML: '</script><script>evil()</script>' }],
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).not.toContain('</script><script>')
     })
   })
 
-  describe('multiple providers', () => {
-    it('supports different stream keys', async () => {
-      const head1 = createStreamableHead({ streamKey: '__vue1__' })
-      const head2 = createStreamableHead({ streamKey: '__vue2__' })
-
-      head1.push({ title: 'Provider 1' })
-      head2.push({ title: 'Provider 2' })
-
-      const shell1 = await renderSSRHeadShell(head1, '<html><head></head><body>')
-      const shell2 = await renderSSRHeadShell(head2, '<html><head></head><body>')
-
-      expect(shell1).toContain('window.__vue1__')
-      expect(shell1).toContain('Provider 1')
-      expect(shell2).toContain('window.__vue2__')
-      expect(shell2).toContain('Provider 2')
-    })
-  })
-
-  describe('unicode and special characters', () => {
-    it('handles emoji in title', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Vue App' })
-
-      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('Vue App')
-    })
-
-    it('handles unicode in meta', async () => {
-      const head = createStreamableHead()
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-
-      head.push({
-        meta: [{ name: 'description', content: 'Vue' }],
-      })
-
-      const result = await renderSSRHeadSuspenseChunk(head)
-      expect(result).toContain('Vue')
-    })
-
-    it('handles CJK characters', async () => {
-      const head = createStreamableHead()
-      head.push({
-        title: 'Vue',
-        meta: [{ name: 'description', content: 'Vue' }],
-      })
-
-      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('<title>Vue</title>')
-    })
-  })
-
-  describe('vue reactivity', () => {
-    it('handles ref-like values being resolved', async () => {
+  describe('vue reactivity resolution', () => {
+    it('resolves ref-like values', async () => {
       const head = createStreamableHead()
 
-      // Vue resolver should handle refs - testing with plain object that has .value
       head.push({
         title: { value: 'Ref Title' } as any,
       })
@@ -259,7 +235,7 @@ describe('vue streaming SSR', () => {
       expect(shell).toContain('Ref Title')
     })
 
-    it('handles computed-like values being resolved', async () => {
+    it('resolves function values', async () => {
       const head = createStreamableHead()
 
       head.push({
@@ -268,6 +244,28 @@ describe('vue streaming SSR', () => {
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
       expect(shell).toContain('Computed Title')
+    })
+  })
+
+  describe('unicode and special characters', () => {
+    it('handles emoji in title', async () => {
+      const head = createStreamableHead()
+      head.push({ title: 'Hello World 🌍' })
+
+      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(shell).toContain('Hello World 🌍')
+    })
+
+    it('handles CJK characters', async () => {
+      const head = createStreamableHead()
+      head.push({
+        title: '你好世界',
+        meta: [{ name: 'description', content: 'こんにちは' }],
+      })
+
+      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
+      expect(shell).toContain('你好世界')
+      expect(shell).toContain('こんにちは')
     })
   })
 })

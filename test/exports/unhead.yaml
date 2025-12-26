@@ -4,9 +4,7 @@
   createUnhead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunk: function
   STREAM_MARKER: string
-  streamWithHead: function
   useHead: function
   useHeadSafe: function
   useScript: function
@@ -28,9 +26,7 @@
   getActiveHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunk: function
   STREAM_MARKER: string
-  streamWithHead: function
   useHead: function
   useHeadSafe: function
   useScript: function
@@ -84,11 +80,9 @@
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  renderSSRHeadSuspenseChunk: function
   serializePropsForHash: function
   ssrRenderTags: function
   STREAM_MARKER: string
-  streamWithHead: function
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function

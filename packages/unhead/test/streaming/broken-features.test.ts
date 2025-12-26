@@ -1,15 +1,18 @@
-import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
+import {
+  createStreamableHead,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+} from 'unhead/stream/server'
 /**
  * Tests for features that may be broken or have edge cases with streaming SSR.
  * These test specific behaviors that could fail when tags are added progressively.
  */
 import { describe, expect, it } from 'vitest'
-import { createStreamableServerHead } from '../util'
 
 describe('streaming SSR - potentially broken features', () => {
   describe('tag deduplication across stream boundaries', () => {
     it('dedupes meta by name across shell and chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ meta: [{ name: 'description', content: 'Initial description' }] })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -24,7 +27,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('dedupes meta by key across shell and chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ meta: [{ key: 'og:title', property: 'og:title', content: 'Initial' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -36,7 +39,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('dedupes link canonical - only one should exist', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ link: [{ rel: 'canonical', href: 'https://example.com/page1' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -50,7 +53,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('dedupes script by key', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ script: [{ key: 'analytics', src: 'analytics-v1.js' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -64,20 +67,20 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('titleTemplate across stream boundaries', () => {
     it('applies titleTemplate set in shell to title in chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ titleTemplate: '%s | My Site' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'Products' })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
-      // Title should have template applied
-      expect(chunk).toContain('Products | My Site')
+      const chunk = renderSSRHeadSuspenseChunk(head)
+      // Raw input is sent to client for resolution
+      expect(chunk).toContain('Products')
     })
 
     it('handles titleTemplate change mid-stream', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ titleTemplate: '%s | Site A', title: 'Home' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -86,12 +89,14 @@ describe('streaming SSR - potentially broken features', () => {
       // Change template and title
       head.push({ titleTemplate: '%s - Site B', title: 'About' })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
-      expect(chunk).toContain('About - Site B')
+      const chunk = renderSSRHeadSuspenseChunk(head)
+      // Raw input is sent to client for resolution
+      expect(chunk).toContain('About')
+      expect(chunk).toContain('titleTemplate')
     })
 
     it('handles titleTemplate with null title', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ titleTemplate: '%s | My Site' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -106,7 +111,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('htmlAttrs/bodyAttrs merging', () => {
     it('merges class attrs from multiple pushes', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ htmlAttrs: { class: 'theme-light' } })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -120,7 +125,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('handles lang attr changes', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ htmlAttrs: { lang: 'en' } })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -133,7 +138,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('merges bodyAttrs from multiple sources', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ bodyAttrs: { class: 'app' } })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -147,7 +152,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('tagPosition behavior', () => {
     it('bodyOpen scripts appear at right position', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -162,7 +167,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('entry disposal mid-stream', () => {
     it('disposed entry tags do not appear in subsequent chunks', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       const entry = head.push({ meta: [{ name: 'temp', content: 'temporary' }] })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -181,7 +186,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('disposed entry does not affect deduplication', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       const entry = head.push({ meta: [{ name: 'description', content: 'v1' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -198,7 +203,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('entry patching mid-stream', () => {
     it('patched entry appears in chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       const entry = head.push({ title: 'Original' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -211,7 +216,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('patched meta content appears in chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       const entry = head.push({ meta: [{ name: 'description', content: 'Initial' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -225,7 +230,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('tag priority/ordering', () => {
     it('high priority tags appear before low priority in shell', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ meta: [{ name: 'low', content: 'low', tagPriority: 'low' }] })
       head.push({ meta: [{ name: 'high', content: 'high', tagPriority: 'high' }] })
 
@@ -239,7 +244,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('critical priority in chunk maintains order', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ meta: [{ charset: 'utf-8' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -257,7 +262,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('script innerHTML handling', () => {
     it('jSON-LD script innerHTML preserved across stream', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -272,21 +277,22 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
+      const chunk = renderSSRHeadSuspenseChunk(head)
       expect(chunk).toContain('schema.org')
       expect(chunk).toContain('Product')
 
       // Verify JSON is valid in the output by parsing the push argument
       const match = chunk.match(/\.push\((.+)\)$/)
       if (match) {
-        const headObj = JSON.parse(match[1])
-        expect(headObj.script[0].innerHTML).toBeDefined()
-        expect(() => JSON.parse(headObj.script[0].innerHTML)).not.toThrow()
+        const entries = JSON.parse(match[1])
+        // Entries is an array of head inputs
+        expect(entries[0].script[0].innerHTML).toBeDefined()
+        expect(() => JSON.parse(entries[0].script[0].innerHTML)).not.toThrow()
       }
     })
 
     it('inline script with variables preserved', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -304,7 +310,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('style tags', () => {
     it('style textContent preserved in chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -320,7 +326,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('multiple style tags from different components', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ style: [{ textContent: '.initial { margin: 0; }' }] })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -335,7 +341,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('noscript tags', () => {
     it('noscript content preserved', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -353,7 +359,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('base tag handling', () => {
     it('base tag in shell respected', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ base: { href: 'https://example.com/' } })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -362,7 +368,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('base tag update in chunk', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ base: { href: 'https://example.com/' } })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -376,7 +382,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('duplicate prevention edge cases', () => {
     it('same tag pushed twice in same chunk only appears once', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -393,7 +399,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('handles rapid push/dispose cycles', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -415,7 +421,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('empty/falsy value handling', () => {
     it('empty string title handled correctly', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -428,7 +434,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('undefined meta content handled', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -442,7 +448,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('null values in attrs handled', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -458,7 +464,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('special characters in values', () => {
     it('quotes in meta content escaped', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -472,7 +478,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('backslashes in content escaped', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -485,7 +491,7 @@ describe('streaming SSR - potentially broken features', () => {
     })
 
     it('newlines in innerHTML handled', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -506,7 +512,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('client hydration concerns', () => {
     it('serialized data can be parsed by client', async () => {
-      const head = createStreamableServerHead()
+      const head = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -520,7 +526,7 @@ describe('streaming SSR - potentially broken features', () => {
         script: [{ type: 'application/ld+json', innerHTML: '{"@type":"WebPage"}' }],
       })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
+      const chunk = renderSSRHeadSuspenseChunk(head)
 
       // Extract and parse the JSON
       const match = chunk.match(/push\((.+)\)$/)
@@ -533,9 +539,10 @@ describe('streaming SSR - potentially broken features', () => {
 
       expect(() => JSON.parse(jsonStr)).not.toThrow()
 
-      const parsed = JSON.parse(jsonStr)
-      expect(parsed.title).toBe('Test Page')
-      expect(parsed.meta).toHaveLength(2)
+      // Result is an array of head inputs
+      const entries = JSON.parse(jsonStr)
+      expect(entries[0].title).toBe('Test Page')
+      expect(entries[0].meta).toHaveLength(2)
     })
   })
 })

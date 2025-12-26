@@ -1,20 +1,13 @@
-import { renderSSRHeadSuspenseChunk, STREAM_MARKER } from 'unhead'
-// @vitest-environment node
-import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-  streamWithHead,
-} from '../src/stream/server'
+} from 'unhead/stream/server'
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
 
 describe('svelte streaming SSR', () => {
   describe('createStreamableHead', () => {
-    it('creates head with _streamedHashes initialized', () => {
-      const head = createStreamableHead()
-      expect(head._streamedHashes).toBeInstanceOf(Set)
-    })
-
     it('uses custom stream key', async () => {
       const head = createStreamableHead({ streamKey: '__svelte__' })
       head.push({ title: 'Test' })
@@ -62,6 +55,16 @@ describe('svelte streaming SSR', () => {
       expect(result).toContain('dir="ltr"')
       expect(result).toContain('class="dark"')
     })
+
+    it('clears entries after rendering shell', async () => {
+      const head = createStreamableHead()
+      head.push({ title: 'Test' })
+
+      await renderSSRHeadShell(head, '<html><head></head><body>')
+
+      const chunk = renderSSRHeadSuspenseChunk(head)
+      expect(chunk).toBe('')
+    })
   })
 
   describe('renderSSRHeadSuspenseChunk', () => {
@@ -71,7 +74,7 @@ describe('svelte streaming SSR', () => {
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
     })
 
@@ -86,87 +89,22 @@ describe('svelte streaming SSR', () => {
         meta: [{ name: 'description', content: 'New description' }],
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
 
       expect(result).toContain('window.__unhead__.push')
       expect(result).toContain('Updated Title')
       expect(result).toContain('New description')
     })
 
-    it('only includes new tags not previously streamed', async () => {
+    it('clears entries after rendering chunk', async () => {
       const head = createStreamableHead()
-      head.push({ title: 'Initial', meta: [{ name: 'robots', content: 'index' }] })
-
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
-      head.push({ meta: [{ name: 'author', content: 'Test' }] })
-
-      const result = await renderSSRHeadSuspenseChunk(head)
-
-      expect(result).toContain('author')
-      expect(result).not.toContain('robots')
-    })
-  })
-
-  describe('renderSSRHeadSuspenseChunk', () => {
-    it('returns push script for new tags synchronously', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Initial' })
-
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-
-      head.push({ title: 'Updated' })
-
-      const result = renderSSRHeadSuspenseChunk(head)
-      expect(result).toContain('Updated')
-    })
-
-    it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
-      head.push({ title: 'Test' })
-
-      await renderSSRHeadShell(head, '<html><head></head><body>')
+      head.push({ title: 'First' })
+      renderSSRHeadSuspenseChunk(head)
 
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
-    })
-  })
-
-  describe('sTREAM_MARKER', () => {
-    it('exports STREAM_MARKER constant', () => {
-      expect(STREAM_MARKER).toBeDefined()
-      expect(typeof STREAM_MARKER).toBe('string')
-    })
-  })
-
-  describe('streamWithHead', () => {
-    async function* mockAppStream(chunks: string[]): AsyncGenerator<string> {
-      for (const chunk of chunks) {
-        yield chunk
-      }
-    }
-
-    it('streams app with head injection', async () => {
-      const head = createStreamableHead()
-      head.push({
-        title: 'Streamed Page',
-        meta: [{ name: 'description', content: 'A streamed page' }],
-      })
-
-      const template = '<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>'
-      const appChunks = ['<div>Hello</div>', '<div>World</div>']
-
-      const chunks: string[] = []
-      for await (const chunk of streamWithHead(mockAppStream(appChunks), template, head)) {
-        chunks.push(chunk)
-      }
-
-      const fullHtml = chunks.join('')
-      expect(fullHtml).toContain('<title>Streamed Page</title>')
-      expect(fullHtml).toContain('window.__unhead__')
-      expect(fullHtml).toContain('<div>Hello</div>')
-      expect(fullHtml).toContain('<div>World</div>')
-      expect(fullHtml).toContain('</body></html>')
     })
   })
 
@@ -179,7 +117,7 @@ describe('svelte streaming SSR', () => {
         title: '<script>alert("xss")</script>',
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).not.toContain('<script>alert')
       expect(result).toContain('\\u003c')
     })
@@ -192,7 +130,7 @@ describe('svelte streaming SSR', () => {
         script: [{ innerHTML: '</script><script>evil()</script>' }],
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).not.toContain('</script><script>')
     })
   })
@@ -232,7 +170,7 @@ describe('svelte streaming SSR', () => {
         meta: [{ name: 'description', content: '日本語テスト' }],
       })
 
-      const result = await renderSSRHeadSuspenseChunk(head)
+      const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toContain('日本語テスト')
     })
   })

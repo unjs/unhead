@@ -8,6 +8,9 @@ export default defineProject({
   plugins: [svelte() as any],
   resolve: {
     alias: {
+      'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
+      'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
+      'unhead/stream/vite': resolve(__dirname, '../unhead/src/stream/vite.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),

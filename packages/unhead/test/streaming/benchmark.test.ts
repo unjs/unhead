@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderSSRHeadSuspenseChunk } from 'unhead'
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
 import { describe, it } from 'vitest'
 import {
   renderSSRHead,

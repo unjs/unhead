@@ -1,6 +1,5 @@
 import { JSDOM } from 'jsdom'
-import { createStreamableHead } from 'unhead'
-
+import { createStreamableHead } from 'unhead/stream/client'
 import { describe, expect, it } from 'vitest'
 
 function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') {
