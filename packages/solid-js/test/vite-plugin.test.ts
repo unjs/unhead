@@ -6,7 +6,7 @@ describe('unheadSolidPlugin', () => {
 
   describe('basic configuration', () => {
     it('has correct name', () => {
-      expect(plugin.name).toBe('unhead:solid')
+      expect(plugin.name).toBe('@unhead/solid-js:streaming')
     })
 
     it('enforces pre order', () => {

@@ -20,9 +20,10 @@ function collectStream(stream: NodeJS.ReadableStream): Promise<string> {
 
 describe('react streaming SSR', () => {
   describe('createStreamableHead', () => {
-    it('creates head with _streamedHashes initialized', () => {
+    it('creates streamable head instance', () => {
       const head = createStreamableHead()
-      expect(head._streamedHashes).toBeInstanceOf(Set)
+      // Streamable head uses entries Map to track pending head updates
+      expect(head.entries).toBeInstanceOf(Map)
     })
 
     it('uses custom stream key', async () => {

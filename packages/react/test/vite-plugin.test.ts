@@ -6,7 +6,7 @@ describe('unheadReactPlugin', () => {
 
   describe('basic configuration', () => {
     it('has correct name', () => {
-      expect(plugin.name).toBe('unhead:react')
+      expect(plugin.name).toBe('@unhead/react:streaming')
     })
 
     it('enforces pre order', () => {
@@ -30,14 +30,13 @@ describe('unheadReactPlugin', () => {
       expect(result).toBeNull()
     })
 
-    it('adds HeadStream inside Suspense boundaries', () => {
+    it('adds HeadStream to components with useHead', () => {
       const code = `
-        import { Suspense } from 'react'
+        import { useHead } from '@unhead/react'
         export function App() {
+          useHead({ title: 'Test' })
           return (
-            <Suspense fallback={<div>Loading...</div>}>
-              <AsyncComponent />
-            </Suspense>
+            <div>Content</div>
           )
         }
       `
@@ -48,11 +47,10 @@ describe('unheadReactPlugin', () => {
 
     it('adds HeadStream import from client for non-SSR builds', () => {
       const code = `
-        import { Suspense } from 'react'
+        import { useHead } from '@unhead/react'
         export function App() {
-          return <Suspense fallback={<div>Loading...</div>}>
-            <AsyncComponent />
-          </Suspense>
+          useHead({ title: 'Test' })
+          return <div>Content</div>
         }
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: false })
@@ -62,11 +60,10 @@ describe('unheadReactPlugin', () => {
 
     it('adds HeadStream import from server for SSR builds', () => {
       const code = `
-        import { Suspense } from 'react'
+        import { useHead } from '@unhead/react'
         export function App() {
-          return <Suspense fallback={<div>Loading...</div>}>
-            <AsyncComponent />
-          </Suspense>
+          useHead({ title: 'Test' })
+          return <div>Content</div>
         }
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: true })
@@ -76,12 +73,11 @@ describe('unheadReactPlugin', () => {
 
     it('adds HeadStream to existing server import for SSR builds', () => {
       const code = `
-        import { Suspense } from 'react'
+        import { useHead } from '@unhead/react'
         import { createStreamableHead } from '@unhead/react/stream/server'
         export function App() {
-          return <Suspense fallback={<div>Loading...</div>}>
-            <AsyncComponent />
-          </Suspense>
+          useHead({ title: 'Test' })
+          return <div>Content</div>
         }
       `
       const result = plugin.transform!(code, 'app.tsx', { ssr: true })
@@ -89,20 +85,16 @@ describe('unheadReactPlugin', () => {
       expect(result!.code).toContain('createStreamableHead, HeadStream')
     })
 
-    it('handles multiple Suspense boundaries', () => {
+    it('handles multiple components with useHead', () => {
       const code = `
-        import { Suspense } from 'react'
-        export function App() {
-          return (
-            <div>
-              <Suspense fallback={<div>Loading 1...</div>}>
-                <Component1 />
-              </Suspense>
-              <Suspense fallback={<div>Loading 2...</div>}>
-                <Component2 />
-              </Suspense>
-            </div>
-          )
+        import { useHead } from '@unhead/react'
+        function Component1() {
+          useHead({ title: 'Page 1' })
+          return <div>Page 1</div>
+        }
+        function Component2() {
+          useHead({ title: 'Page 2' })
+          return <div>Page 2</div>
         }
       `
       const result = plugin.transform!(code, 'app.tsx')
@@ -110,18 +102,13 @@ describe('unheadReactPlugin', () => {
       expect(result!.code.match(/<HeadStream \/>/g)?.length).toBe(2)
     })
 
-    it('handles nested Suspense boundaries', () => {
+    it('handles arrow function components with useHead', () => {
       const code = `
-        import { Suspense } from 'react'
-        const App = () => (
-          <Suspense fallback={<div>Loading outer...</div>}>
-            <div>
-              <Suspense fallback={<div>Loading inner...</div>}>
-                <AsyncComponent />
-              </Suspense>
-            </div>
-          </Suspense>
-        )
+        import { useHead } from '@unhead/react'
+        const App = () => {
+          useHead({ title: 'Arrow Component' })
+          return <div>Content</div>
+        }
       `
       const result = plugin.transform!(code, 'app.tsx')
       expect(result).not.toBeNull()
@@ -144,11 +131,10 @@ describe('unheadReactPlugin', () => {
 
     it('generates source map', () => {
       const code = `
-        import { Suspense } from 'react'
+        import { useHead } from '@unhead/react'
         export function App() {
-          return <Suspense fallback={<div>Loading...</div>}>
-            <AsyncComponent />
-          </Suspense>
+          useHead({ title: 'Test' })
+          return <div>Content</div>
         }
       `
       const result = plugin.transform!(code, 'app.tsx')

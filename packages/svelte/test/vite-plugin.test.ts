@@ -6,7 +6,7 @@ describe('unheadSveltePlugin', () => {
 
   describe('basic configuration', () => {
     it('has correct name', () => {
-      expect(plugin.name).toBe('unhead:svelte')
+      expect(plugin.name).toBe('@unhead/svelte:streaming')
     })
 
     it('enforces pre order', () => {

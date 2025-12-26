@@ -39,6 +39,10 @@ import { createStreamingPlugin } from 'unhead/stream/vite'
  * ```
  */
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
+  // Only transform files that use head composables
+  if (!code.includes('useHead') && !code.includes('useSeoMeta') && !code.includes('useHeadSafe'))
+    return false
+
   // Find the end of the script tag to inject after it (in the template)
   const scriptCloseMatch = code.match(/<\/script>/)
   if (!scriptCloseMatch)

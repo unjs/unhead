@@ -6,7 +6,7 @@ describe('unheadVuePlugin', () => {
 
   describe('basic configuration', () => {
     it('has correct name', () => {
-      expect(plugin.name).toBe('unhead:vue')
+      expect(plugin.name).toBe('@unhead/vue:streaming')
     })
 
     it('enforces pre order', () => {
