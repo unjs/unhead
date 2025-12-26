@@ -10,7 +10,6 @@ export default defineBuildConfig({
     { input: 'src/client', name: 'client' },
     { input: 'src/stream/server', name: 'stream/server' },
     { input: 'src/stream/client', name: 'stream/client' },
-    { input: 'src/legacy', name: 'legacy' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/plugins', name: 'plugins' },
     { input: 'src/scripts', name: 'scripts' },

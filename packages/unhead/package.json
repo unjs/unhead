@@ -49,10 +49,6 @@
       "types": "./dist/stream/client.d.ts",
       "default": "./dist/stream/client.mjs"
     },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
-    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
@@ -93,9 +89,6 @@
       ],
       "stream/client": [
         "dist/stream/client.d.ts"
-      ],
-      "legacy": [
-        "dist/legacy.d.ts"
       ],
       "utils": [
         "dist/utils.d.ts"
