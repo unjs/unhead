@@ -50,5 +50,3 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
 
   return head
 }
-
-export type { CreateStreamableClientHeadOptions, Unhead } from '../types'

@@ -22,5 +22,12 @@ export function HeadStream(): ReactNode {
   return createElement('script', { dangerouslySetInnerHTML: { __html: update } })
 }
 
+// Re-export everything from the base server module
 export * from '../server'
-export * from 'unhead/stream/server'
+// Export streaming-specific items only (not the re-exports from unhead/server)
+export {
+  createStreamableHead,
+  type CreateStreamableServerHeadOptions,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+} from 'unhead/stream/server'

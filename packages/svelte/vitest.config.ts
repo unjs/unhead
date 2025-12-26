@@ -5,7 +5,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineProject } from 'vitest/config'
 
 export default defineProject({
-  plugins: [svelte({ compilerOptions: { generate: 'client' } }) as any],
+  plugins: [svelte({ compilerOptions: { generate: 'client' } as any })],
   resolve: {
     conditions: ['browser'],
     alias: {
@@ -25,8 +25,5 @@ export default defineProject({
   },
   test: {
     globals: true,
-    environmentMatchGlobs: [
-      ['**/test/dom/**', 'jsdom'],
-    ],
   },
 })

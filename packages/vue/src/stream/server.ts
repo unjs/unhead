@@ -6,6 +6,7 @@ import { injectHead } from '../composables'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
+// Re-export everything from the base server module
 export * from '../server'
 
 /**
@@ -34,5 +35,10 @@ export function createStreamableHead(options: Omit<CreateStreamableServerHeadOpt
   return head
 }
 
-export * from 'unhead/stream/server'
+// Export streaming-specific items only (not the re-exports from unhead/server)
+export {
+  type CreateStreamableServerHeadOptions,
+  renderSSRHeadShell,
+  renderSSRHeadSuspenseChunk,
+} from 'unhead/stream/server'
 export type { VueHeadClient }

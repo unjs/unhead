@@ -6,18 +6,17 @@ const RESOLVED_ID = `\0${VIRTUAL_CLIENT_ID}`
 export interface StreamingPluginOptions {
   /** Framework package e.g. '@unhead/vue' */
   framework: string
-  /** Plugin name */
-  name: string
+  /** Plugin name (optional, defaults to `${framework}:streaming`) */
+  name?: string
   /** Transform function - return true if transformed */
   transform: Plugin['transform']
 }
 
 export function createStreamingPlugin(options: StreamingPluginOptions): Plugin {
-  const { framework } = options
-  // Default to checking for head calls if no custom check provided
+  const { framework, name } = options
 
   return {
-    name: `${framework}:streaming`,
+    name: name ?? `${framework}:streaming`,
     enforce: 'pre',
 
     resolveId: id => (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`) ? RESOLVED_ID : undefined,

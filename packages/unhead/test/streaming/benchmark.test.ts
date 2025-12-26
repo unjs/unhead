@@ -1,10 +1,7 @@
 /* eslint-disable no-console */
-import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
 import { describe, it } from 'vitest'
-import {
-  renderSSRHead,
-
-} from '../../src/server'
+import { renderSSRHead } from '../../src/server'
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../util'
 
 // Run with: pnpm test:benchmark

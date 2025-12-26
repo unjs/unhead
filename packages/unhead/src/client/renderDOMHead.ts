@@ -168,8 +168,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
         track('title', '', () => dom.title = state.title)
         continue
       }
-      ctx.$el = state.elMap.get(id)
-      if (ctx.$el) {
+      const existingEl = state.elMap.get(id)
+      if (existingEl) {
+        ctx.$el = existingEl
         trackCtx(ctx)
       }
       else if (HasElementTags.has(tag.tag)) {

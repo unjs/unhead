@@ -8,5 +8,12 @@ export function HeadStream(): ReactNode {
   return createElement('script', { suppressHydrationWarning: true, dangerouslySetInnerHTML: { __html: '<!-- no content-->' } })
 }
 
+// Re-export everything from the base client module
 export * from '../client'
-export * from 'unhead/stream/client'
+// Export streaming-specific items only (not the re-exports from unhead/client)
+export {
+  type CreateStreamableClientHeadOptions,
+  createStreamableHead,
+  DEFAULT_STREAM_KEY,
+  type UnheadStreamQueue,
+} from 'unhead/stream/client'

@@ -24,6 +24,12 @@ export function createStreamableHead(options: Parameters<typeof _createStreamabl
   return head
 }
 
+// Re-export everything from the base client module
 export * from '../client'
-export * from 'unhead/stream/client'
+// Export streaming-specific items only (not the re-exports from unhead/client)
+export {
+  type CreateStreamableClientHeadOptions,
+  DEFAULT_STREAM_KEY,
+  type UnheadStreamQueue,
+} from 'unhead/stream/client'
 export type { VueHeadClient }
