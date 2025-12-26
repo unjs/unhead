@@ -57,20 +57,24 @@
 ./stream/client:
   createHead: function
   createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
   HeadStream: object
   renderDOMHead: function
   VueHeadMixin: object
 ./stream/server:
   createHead: function
   createStreamableHead: function
+  escapeHtml: function
   extractUnheadInputFromHtml: function
   HeadStream: object
   propsToString: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  streamWithHead: function
+  ssrRenderTags: function
+  tagToString: function
   transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
   VueHeadMixin: object
 ./stream/vite:
   default: function
@@ -78,6 +82,7 @@
 ./types: {}
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -89,7 +94,10 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
   resolveUnrefHeadInput: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function

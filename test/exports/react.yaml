@@ -29,25 +29,31 @@
 ./stream/client:
   createHead: function
   createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
   HeadStream: function
   renderDOMHead: function
   UnheadProvider: function
 ./stream/server:
   createHead: function
   createStreamableHead: function
+  escapeHtml: function
   extractUnheadInputFromHtml: function
   HeadStream: function
+  propsToString: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  streamWithHead: function
+  ssrRenderTags: function
+  tagToString: function
   transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
   UnheadProvider: function
 ./stream/vite:
   default: function
   unheadReactPlugin: function
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -59,6 +65,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function

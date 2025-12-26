@@ -1,10 +1,6 @@
 .:
   createHeadCore: function
-  createStreamableHead: function
   createUnhead: function
-  renderSSRHeadShell: function
-  renderSSRHeadSuspenseChunk: function
-  STREAM_MARKER: string
   useHead: function
   useHeadSafe: function
   useScript: function
@@ -21,12 +17,8 @@
   createHead: function
   createHeadCore: function
   createServerHead: function
-  createStreamableHead: function
   createUnhead: function
   getActiveHead: function
-  renderSSRHeadShell: function
-  renderSSRHeadSuspenseChunk: function
-  STREAM_MARKER: string
   useHead: function
   useHeadSafe: function
   useScript: function
@@ -56,7 +48,6 @@
   useScript: function
 ./server:
   createHead: function
-  createStreamableHead: function
   escapeHtml: function
   extractUnheadInputFromHtml: function
   propsToString: function
@@ -80,9 +71,7 @@
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  serializePropsForHash: function
   ssrRenderTags: function
-  STREAM_MARKER: string
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
@@ -92,6 +81,7 @@
 ./types: {}
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -103,6 +93,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function

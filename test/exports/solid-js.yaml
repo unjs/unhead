@@ -26,21 +26,34 @@
   transformHtmlTemplate: function
   UnheadContext: object
 ./stream/client:
+  createDebouncedFn: function
+  createHead: function
   createStreamableHead: function
-  HeadStreamScript: function
+  DEFAULT_STREAM_KEY: string
+  HeadStream: function
+  renderDOMHead: function
   UnheadContext: object
 ./stream/server:
+  createHead: function
   createStreamableHead: function
-  HeadStreamScript: function
+  escapeHtml: function
+  extractUnheadInputFromHtml: function
+  HeadStream: function
+  propsToString: function
+  renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  streamWithHead: function
+  ssrRenderTags: function
+  tagToString: function
+  transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
   UnheadContext: object
 ./stream/vite:
   default: function
   unheadSolidPlugin: function
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -52,6 +65,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function
