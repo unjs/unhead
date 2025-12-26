@@ -38,26 +38,6 @@ export interface MetaInput {
   description?: string
   datePublished?: string
   dateModified?: string
-  /**
-   * @deprecated use tagPosition
-   */
-  position?: 'body' | 'head'
-  /**
-   * @deprecated use `language`
-   */
-  defaultLanguage?: string
-  /**
-   * @deprecated use `currency`
-   */
-  defaultCurrency?: string
-  /**
-   * @deprecated use `host`
-   */
-  canonicalHost?: string
-  /**
-   * @deprecated use `url` or `path`
-   */
-  canonicalUrl?: string
 }
 
 export interface UserConfig extends MetaInput {}

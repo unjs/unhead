@@ -1,6 +1,5 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
-import { DeprecationsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
@@ -230,39 +229,6 @@ describe('dedupe', () => {
       `
       "<meta name="description" content="test">
       <link rel="icon" href="/favicon.ico" data-hid="icon">"
-    `,
-    )
-  })
-
-  it('dedupes legacy', async () => {
-    const head = createServerHeadWithContext({
-      plugins: [DeprecationsPlugin],
-    })
-    head.push({
-      meta: [
-        {
-          // @ts-expect-error untyped
-          'unknown-key': 'description',
-          'vmid': 'desc-1',
-          'content': 'test',
-        },
-      ],
-    })
-    head.push({
-      meta: [
-        {
-          // @ts-expect-error untyped
-          'unknown-key': 'description',
-          'vmid': 'desc-2',
-          'content': 'test 2',
-        },
-      ],
-    })
-    const { headTags } = await renderSSRHead(head)
-    expect(headTags).toMatchInlineSnapshot(
-      `
-      "<meta unknown-key="description" content="test">
-      <meta unknown-key="description" content="test 2">"
     `,
     )
   })

@@ -83,7 +83,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       delete state.pendingSideEffects[k]
     }
 
-    function trackCtx({ id, $el, tag }: DomRenderTagContext) {
+    function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       const isAttrTag = tag.tag.endsWith('Attrs')
       state.elMap.set(id, $el)
       if (!isAttrTag) {
@@ -137,10 +137,9 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
             ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
-        // @ts-expect-error untyped
-        else if (value !== false && value !== null) {
+        else if ((value as unknown) !== false && value !== null) {
           // attribute values get set directly
-          $el.getAttribute(k) !== value && $el.setAttribute(k, (value as string | boolean) === true ? '' : String(value))
+          $el.getAttribute(k) !== value && $el.setAttribute(k, (value as unknown) === true ? '' : String(value))
           isAttrTag && track(id, ck, () => $el.removeAttribute(k))
         }
       }
@@ -170,7 +169,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       }
       ctx.$el = state.elMap.get(id)
       if (ctx.$el) {
-        trackCtx(ctx)
+        trackCtx(ctx as DomRenderTagContext & { $el: Element })
       }
       else if (HasElementTags.has(tag.tag)) {
         pending.push(ctx)
@@ -181,7 +180,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
       // finally, we are free to make new elements
       const pos = ctx.tag.tagPosition || 'head'
       ctx.$el = dom.createElement(ctx.tag.tag)
-      trackCtx(ctx)
+      trackCtx(ctx as DomRenderTagContext & { $el: Element })
       ;(frag[pos] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     // TODO remove

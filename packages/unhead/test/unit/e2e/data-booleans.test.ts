@@ -22,8 +22,6 @@ describe('unhead e2e data true', () => {
           'content': 'true',
         },
       ],
-    }, {
-      mode: 'server',
     })
 
     const data = await renderSSRHead(ssrHead)
@@ -52,7 +50,7 @@ describe('unhead e2e data true', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

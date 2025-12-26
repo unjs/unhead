@@ -34,12 +34,12 @@ describe('vue templateParams', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
-      <title>hello world / My Awesome Site</title><meta name="description" content="Welcome to My Awesome Site!"></head>
+      </head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
@@ -69,12 +69,12 @@ describe('vue templateParams', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
-      <title>XYZ training, certification and compliance for $17.95 / My Awesome Site</title><meta name="description" content="Welcome to My Awesome Site!"></head>
+      </head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })

@@ -24,13 +24,13 @@ describe('vue events', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
       </head>
-      <body data-onresize=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })

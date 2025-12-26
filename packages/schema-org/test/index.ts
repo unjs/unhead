@@ -1,7 +1,7 @@
 import type { MetaInput } from '@unhead/schema-org'
 import type { Unhead } from 'unhead/types'
 import type { SchemaOrgNode } from '../src/types'
-import { SchemaOrgUnheadPlugin } from '@unhead/schema-org'
+import { UnheadSchemaOrg } from '@unhead/schema-org'
 import { createHead } from 'unhead/server'
 import { resolveTags } from 'unhead/utils'
 
@@ -20,7 +20,7 @@ export function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<MetaIn
   const head = createHead({
     disableDefaults: true,
     plugins: [
-      SchemaOrgUnheadPlugin({
+      UnheadSchemaOrg({
         currency: 'AUD',
         host: 'https://example.com/',
         inLanguage: 'en-AU',

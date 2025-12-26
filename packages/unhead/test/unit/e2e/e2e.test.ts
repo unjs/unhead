@@ -47,8 +47,6 @@ describe('unhead e2e', () => {
           charset: 'utf-8',
         },
       ],
-    }, {
-      mode: 'server',
     })
 
     // i.e pages/index.vue

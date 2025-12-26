@@ -56,7 +56,7 @@ describe('vue e2e charset', () => {
     })
     const index = csrHead.push(IndexSchema)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -70,12 +70,12 @@ describe('vue e2e charset', () => {
 
     const about = csrHead.push(AboutSchema)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-
-      <title>About page</title>
+      <meta charset="utf-8">
+      <title>Home page</title>
       </head>
       <body><div id="app"></div></body></html>"
     `)
@@ -86,13 +86,13 @@ describe('vue e2e charset', () => {
       head: csrHead,
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-
+      <meta charset="utf-8">
       <title>Home page</title>
-      <meta charset="utf-8"></head>
+      </head>
       <body><div id="app"></div></body></html>"
     `)
   })

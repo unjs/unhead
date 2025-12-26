@@ -33,22 +33,7 @@ export interface PluginSchemaOrgOptions {
   trailingSlash?: boolean
 }
 
-export function UnheadSchemaOrg(options?: PluginSchemaOrgOptions) {
-  return SchemaOrgUnheadPlugin({} as MetaInput, () => ({}), options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
-  const fallback = () => ({} as Partial<MetaInput>)
-  return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
+export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta

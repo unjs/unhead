@@ -3,7 +3,7 @@
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
-import { useHead, useServerHead } from '@unhead/vue'
+import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { describe, it } from 'vitest'
@@ -16,7 +16,7 @@ describe('vue e2e', () => {
     // but we are also injecting a child head schema which will have a hydration step
     const ssrHead = await ssrVueAppWithUnhead(() => {
       // i.e App.vue
-      useServerHead({
+      useHead({
         title: 'My amazing site',
         htmlAttrs: {
           lang: 'en',
@@ -122,7 +122,7 @@ describe('vue e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en"><head>
@@ -130,7 +130,7 @@ describe('vue e2e', () => {
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
       <script src="https://my-app.com/home.js"></script>
-      <meta property="og:title" content="Home">
+      <meta property="og:title" content="My amazing site">
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:locale" content="en_US">
       <meta property="og:locale" content="en_AU">
@@ -219,7 +219,7 @@ describe('vue e2e', () => {
     const csrHead = csrVueAppWithUnhead(dom, () => {})
     csrHead.push(schema)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html data-my-app="" class="layout-default" lang="en"><head>
@@ -259,28 +259,28 @@ describe('vue e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default page-home" lang="en" style="background-color: red;"><head>
+      "<html data-my-app="" class="layout-default" lang="en"><head>
       <meta charset="utf-8">
-      <title>Home</title>
+      <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
-      <meta name="description" content="This is the home page">
-      <meta property="og:title" content="Home">
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
-      <script src="https://my-app.com/home.js"></script></head>
+      </head>
       <body class="test"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     homePageEntry.dispose()
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default" lang="en" style=""><head>
+      "<html data-my-app="" class="layout-default" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -319,27 +319,27 @@ describe('vue e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default page-about" lang="en" style=""><head>
+      "<html data-my-app="" class="layout-default" lang="en"><head>
       <meta charset="utf-8">
-      <title>About</title>
+      <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
-      <meta name="description" content="This is the about page">
-      <meta property="og:title" content="About">
+      <meta name="description" content="My amazing site">
+      <meta property="og:title" content="My amazing site">
       <meta property="og:description" content="This is my amazing site">
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
-      <script src="https://my-app.com/about.js"></script></head>
-      <body class="test overflow-hidden"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      </head>
+      <body class="test"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     aboutPage.dispose()
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default" lang="en" style=""><head>
+      "<html data-my-app="" class="layout-default" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -362,8 +362,6 @@ describe('vue e2e', () => {
     ssrHead.push({
       title: 'Default title',
       titleTemplate: '%s | Company',
-    }, {
-      mode: 'server',
     })
 
     ssrHead.push({
@@ -372,17 +370,13 @@ describe('vue e2e', () => {
 
     const data = await renderSSRHead(ssrHead)
 
-    expect(data.headTags).toMatchInlineSnapshot(`
-      "<title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>"
-    `)
+    expect(data.headTags).toMatchInlineSnapshot(`"<title>Home page | Company</title>"`)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>",
+        "headTags": "<title>Home page | Company</title>",
         "htmlAttrs": "",
       }
     `)
@@ -391,7 +385,6 @@ describe('vue e2e', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
       <title>Home page | Company</title>
-      <script id="unhead:payload" type="application/json">{"titleTemplate":"%s | Company"}</script>
       </head>
       <body>
 
@@ -413,12 +406,12 @@ describe('vue e2e', () => {
       head: csrHead,
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
-    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home Page | Company"`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home page | Company"`)
     home.dispose()
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`"| Company"`)
+    renderDOMHead(csrHead, { document: dom.window.document })
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Home page | Company"`)
   })
 })

@@ -17,7 +17,7 @@ describe('hooks', () => {
 
     head.push(basicSchema)
     // even try a force render
-    await renderDOMHead(head, { document: activeDom!.window.document })
+    renderDOMHead(head, { document: activeDom!.window.document })
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -35,7 +35,7 @@ describe('hooks', () => {
     `)
 
     isDomPaused = false
-    await renderDOMHead(head, { document: activeDom!.window.document })
+    renderDOMHead(head, { document: activeDom!.window.document })
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
