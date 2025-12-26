@@ -14,7 +14,6 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
-  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   PromisesPlugin: object
@@ -22,7 +21,6 @@
   TemplateParamsPlugin: function
 ./server:
   createHead: function
-  extractUnheadInputFromHtml: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadProvider: function

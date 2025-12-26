@@ -11,7 +11,6 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/types/index', name: 'types' },
-    { input: 'src/legacy', name: 'legacy' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },
     { input: 'src/stream/server', name: 'stream/server' },

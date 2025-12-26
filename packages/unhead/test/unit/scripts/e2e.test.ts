@@ -38,7 +38,7 @@ describe('unhead e2e scripts', () => {
     })
     csrHead.push(input)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

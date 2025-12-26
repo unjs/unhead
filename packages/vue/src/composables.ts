@@ -86,25 +86,4 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions 
   } as UseSeoMetaInput, options)
 }
 
-/**
- * @deprecated use `useHead` instead.Advanced use cases should tree shake using import.meta.* if statements.
- */
-export function useServerHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
-  return useHead<I>(input as UseHeadInput, { ...options, mode: 'server' })
-}
-
-/**
- * @deprecated use `useHeadSafe` instead.Advanced use cases should tree shake using import.meta.* if statements.
- */
-export function useServerHeadSafe(input?: UseHeadSafeInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadSafeInput> {
-  return useHeadSafe(input, { ...options, mode: 'server' })
-}
-
-/**
- * @deprecated use `useSeoMeta` instead.Advanced use cases should tree shake using import.meta.* if statements.
- */
-export function useServerSeoMeta(input?: UseSeoMetaInput, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
-  return useSeoMeta(input, { ...options, mode: 'server' })
-}
-
 export { useScript } from './scripts/useScript'

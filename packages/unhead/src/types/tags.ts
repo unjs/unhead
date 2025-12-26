@@ -1,4 +1,3 @@
-import type { RuntimeMode } from './head'
 import type { ResolvableHead } from './schema'
 import type { ResolvableProperties } from './util'
 
@@ -94,10 +93,6 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   _h?: string
-  /**
-   * @internal
-   */
-  mode?: RuntimeMode
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

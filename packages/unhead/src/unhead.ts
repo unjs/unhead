@@ -23,14 +23,6 @@ function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
 }
 
 /**
- * @deprecated use `createUnhead` instead
- */
-/* @__NO_SIDE_EFFECTS__ */
-export function createHeadCore<T = ResolvableHead>(resolvedOptions: CreateHeadOptions = {}) {
-  return createUnhead<T>(resolvedOptions)
-}
-
-/**
  * Creates a core instance of unhead. Does not provide a global ctx for composables to work
  * and does not register DOM plugins.
  */
@@ -53,9 +45,6 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
     hooks,
     ssr,
     entries,
-    headEntries() {
-      return [...entries.values()]
-    },
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions | undefined) {
       const options = { ..._options || {} } as HeadEntryOptions
@@ -76,11 +65,9 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         },
         // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
-          if (!options.mode || (options.mode === 'server' && ssr) || (options.mode === 'client' && !ssr)) {
-            inst.input = input
-            entries.set(_i, inst)
-            _._poll()
-          }
+          inst.input = input
+          entries.set(_i, inst)
+          _._poll()
         },
       }
       _.patch(input)
@@ -96,7 +83,6 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
     },
   }
   ;(resolvedOptions?.plugins || []).forEach(p => registerPlugin(head, p))
-  head.hooks.callHook('init', head)
   resolvedOptions.init?.forEach(e => e && head.push(e as T))
   return head
 }

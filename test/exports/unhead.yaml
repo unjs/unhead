@@ -1,31 +1,13 @@
 .:
-  createHeadCore: function
   createUnhead: function
   useHead: function
   useHeadSafe: function
   useScript: function
   useSeoMeta: function
-  useServerHead: function
-  useServerHeadSafe: function
-  useServerSeoMeta: function
 ./client:
   createDebouncedFn: function
   createHead: function
   renderDOMHead: function
-./legacy:
-  activeHead: object
-  createHead: function
-  createHeadCore: function
-  createServerHead: function
-  createUnhead: function
-  getActiveHead: function
-  useHead: function
-  useHeadSafe: function
-  useScript: function
-  useSeoMeta: function
-  useServerHead: function
-  useServerHeadSafe: function
-  useServerSeoMeta: function
 ./parser:
   applyHeadToHtml: function
   parseAttributes: function
@@ -36,7 +18,6 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
-  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   PromisesPlugin: object
@@ -44,12 +25,10 @@
   TemplateParamsPlugin: function
 ./scripts:
   createSpyProxy: function
-  resolveScriptKey: function
   useScript: function
 ./server:
   createHead: function
   escapeHtml: function
-  extractUnheadInputFromHtml: function
   propsToString: function
   renderSSRHead: function
   ssrRenderTags: function

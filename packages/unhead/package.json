@@ -125,9 +125,6 @@
       "client": [
         "dist/client"
       ],
-      "legacy": [
-        "dist/legacy"
-      ],
       "types": [
         "dist/types"
       ],

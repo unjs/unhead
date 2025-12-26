@@ -49,10 +49,6 @@
       "types": "./dist/types.d.ts",
       "default": "./dist/types.mjs"
     },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
-    },
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
@@ -92,9 +88,6 @@
       ],
       "types": [
         "dist/types"
-      ],
-      "legacy": [
-        "dist/legacy"
       ],
       "plugins": [
         "dist/plugins"

@@ -18,11 +18,11 @@ export interface QuestionSimple extends Thing {
   /**
    * The text content of the question.
    */
-  name: string
+  name?: string
   /**
    * An answer object, with a text property which contains the answer to the question.
    */
-  acceptedAnswer: NodeRelation<Answer | string>
+  acceptedAnswer?: NodeRelation<Answer | string>
   /**
    * The language code for the question; e.g., en-GB.
    */

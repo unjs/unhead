@@ -75,7 +75,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 

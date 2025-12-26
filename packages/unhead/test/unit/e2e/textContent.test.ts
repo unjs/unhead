@@ -41,7 +41,7 @@ describe('unhead e2e textContent', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
