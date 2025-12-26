@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { headStream } from "./head-stream.js";
+import { streamWithHead } from "@unhead/vue/stream/server";
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -64,7 +64,7 @@ export async function createServer(
     )
   }
 
-  app.use('*', async (req, res) => {
+  app.use(async (req, res) => {
     try {
       const url = req.originalUrl.replace('/test/', '/')
 
@@ -83,11 +83,15 @@ export async function createServer(
 
       const { vueStream, head } = render(url)
 
+      res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
 
-      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
-      //
-      res.status(200).set({ 'Content-Type': 'text/html' })
-      await headStream(res, vueStream, htmlStart, htmlEnd, head)
+      // streamWithHead handles shell, suspense chunks, and closing
+      // Bootstrap + client script injected via Vite plugin's transformIndexHtml
+      for await (const chunk of streamWithHead(vueStream, template, head)) {
+        if (res.closed) break
+        res.write(chunk)
+      }
+      res.end()
     }
     catch (e) {
       vite && vite.ssrFixStacktrace(e)

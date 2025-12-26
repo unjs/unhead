@@ -3,7 +3,7 @@ import vuePlugin from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import { unheadVueComposablesImports } from '@unhead/vue'
-import UnheadPlugin from '@unhead/addons/vite'
+import { unheadVuePlugin } from '@unhead/vue/stream/vite'
 
 const virtualFile = '@virtual-file'
 const virtualId = `\0${virtualFile}`
@@ -25,7 +25,7 @@ export default defineConfig(({ command, ssrBuild }) => ({
         unheadVueComposablesImports,
       ],
     }),
-    UnheadPlugin(),
+    unheadVuePlugin({ streaming: true }),
     vuePlugin(),
     vueJsx(),
     {

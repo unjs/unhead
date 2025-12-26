@@ -1,9 +1,100 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+      * { box-sizing: border-box; }
+      body { font-family: system-ui, sans-serif; padding: 20px; background: #111; color: #eee; transition: background-color 0.5s; }
+      h1 { color: #fff; }
+
+      /* Streaming timeline */
+      #stream-log { position: fixed; top: 10px; right: 10px; background: #222; padding: 10px; border-radius: 8px; font-size: 12px; font-family: monospace; max-width: 250px; z-index: 1000; }
+      #stream-log h3 { margin: 0 0 8px; color: #0f0; font-size: 14px; }
+      .log-entry { padding: 4px 0; border-bottom: 1px solid #333; }
+      .log-entry:last-child { border: none; }
+      .log-time { color: #888; }
+
+      /* Loading skeleton */
+      .loading { padding: 20px; border-radius: 8px; margin: 10px 0; animation: pulse 1s infinite; font-weight: bold; background: linear-gradient(90deg, #1a3a1a, #2a5a2a); border-left: 4px solid #0f0; }
+
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+      /* Loaded components - pop in with animation */
+      .slow-component { padding: 20px; border-radius: 8px; margin: 10px 0; animation: slideIn 0.3s ease-out; background: #2a1a1a !important; border-left: 4px solid #f00 !important; border: none !important; }
+      .slow-component-two { background: #2a2a1a !important; border-left: 4px solid #fa0 !important; }
+      .slow-component-three { background: #1a2a1a !important; border-left: 4px solid #0f0 !important; }
+
+      @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+      /* Head updates indicator */
+      #head-updates { position: fixed; bottom: 10px; right: 10px; background: #222; padding: 10px; border-radius: 8px; font-size: 11px; font-family: monospace; max-width: 300px; max-height: 200px; overflow-y: auto; }
+      #head-updates h3 { margin: 0 0 8px; color: #0ff; }
+      .head-entry { color: #888; padding: 2px 0; }
+      .head-entry.new { color: #0f0; animation: flash 0.5s; }
+      @keyframes flash { from { background: #0f03; } to { background: transparent; } }
+
+      /* Vue logo */
+      .logo { height: 6em; padding: 1.5em; }
+      .logo:hover { filter: drop-shadow(0 0 2em #42b883aa); }
+    </style>
   </head>
   <body>
+    <div id="stream-log"><h3>⏱️ Stream Timeline</h3><div id="log-entries"></div></div>
+    <div id="head-updates"><h3>🔄 Head Updates</h3><div id="head-entries"></div></div>
     <div id="app"><!--app-html--></div>
+    <script>
+      // Track streaming chunks
+      const start = Date.now();
+      const log = (msg, color = '#0f0') => {
+        const el = document.createElement('div');
+        el.className = 'log-entry';
+        el.innerHTML = `<span class="log-time">${((Date.now() - start) / 1000).toFixed(2)}s</span> <span style="color:${color}">${msg}</span>`;
+        document.getElementById('log-entries')?.appendChild(el);
+      };
+      log('Initial HTML received', '#fff');
+
+      // Watch for DOM changes (streaming content)
+      const seen = new Set();
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+          m.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+              const check = (el) => {
+                if (el.classList?.contains('slow-component-three') && !seen.has('three')) { seen.add('three'); log('SlowComponentThree loaded', '#0f0'); }
+                else if (el.classList?.contains('slow-component-two') && !seen.has('two')) { seen.add('two'); log('SlowComponentTwo loaded', '#fa0'); }
+                else if (el.classList?.contains('slow-component') && !seen.has('one')) { seen.add('one'); log('SlowComponent loaded', '#f00'); }
+              };
+              check(node);
+              node.querySelectorAll?.('.slow-component, .slow-component-two, .slow-component-three').forEach(check);
+            }
+          });
+        });
+      });
+      observer.observe(document.getElementById('app'), { childList: true, subtree: true });
+
+      // Watch head changes
+      const headObserver = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+          m.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+              const tag = node.tagName?.toLowerCase();
+              const desc = tag === 'title' ? `title: ${node.textContent}`
+                : tag === 'meta' ? `meta: ${node.getAttribute('name') || node.getAttribute('property')}`
+                : tag === 'link' ? `link: ${node.getAttribute('rel')} ${node.getAttribute('href')?.split('/').pop() || ''}`
+                : tag === 'script' ? `script: ${node.id || 'inline'}`
+                : tag === 'style' ? `style: inline`
+                : `${tag}`;
+              const el = document.createElement('div');
+              el.className = 'head-entry new';
+              const timestamp = ((Date.now() - start) / 1000).toFixed(2);
+              el.innerHTML = `<span class="log-time">${timestamp}s</span> ${desc}`;
+              document.getElementById('head-entries')?.appendChild(el);
+              setTimeout(() => el.classList.remove('new'), 500);
+            }
+          });
+        });
+      });
+      headObserver.observe(document.head, { childList: true, subtree: true });
+    </script>
     <script type="module" src="/src/entry-client.js"></script>
   </body>
 </html>

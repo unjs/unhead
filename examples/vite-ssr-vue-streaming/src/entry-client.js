@@ -1,9 +1,11 @@
 import { createApp } from './main'
-import { VueHeadMixin, createHead } from "@unhead/vue/client";
+import { VueHeadMixin, createStreamableHead } from "@unhead/vue/stream/client"
 
 const { app, router } = createApp()
 
-const head = createHead()
+// Reuse head instance created by virtual:@unhead/streaming-client (loaded early in <head>)
+// Falls back to creating new one if virtual module didn't load
+const head = window.__unheadInstance__ || createStreamableHead()
 app.use(head)
 app.mixin(VueHeadMixin)
 
