@@ -38,6 +38,7 @@
 ./types: {}
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -49,6 +50,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function
