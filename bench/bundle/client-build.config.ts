@@ -4,6 +4,8 @@ import zlib from 'node:zlib'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineBuildConfig } from 'unbuild'
 
+const packagesDir = path.resolve(__dirname, '../../packages')
+
 export default defineBuildConfig({
   entries: [
     'src/client/minimal',
@@ -15,6 +17,12 @@ export default defineBuildConfig({
     esbuild: {
       treeShaking: true,
       minify: true,
+    },
+    alias: {
+      entries: [
+        { find: 'unhead/client', replacement: path.join(packagesDir, 'unhead/dist/client.mjs') },
+        { find: 'unhead', replacement: path.join(packagesDir, 'unhead/dist/index.mjs') },
+      ],
     },
   },
   externals: [
