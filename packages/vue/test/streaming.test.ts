@@ -3,7 +3,6 @@ import { renderSSRHeadSuspenseChunk } from 'unhead'
 import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
-  renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
@@ -135,18 +134,6 @@ describe('vue streaming SSR', () => {
 
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toBe('')
-    })
-  })
-
-  describe('renderSSRHeadClosing', () => {
-    it('returns body tags', async () => {
-      const head = createStreamableHead()
-      head.push({
-        script: [{ src: 'analytics.js', tagPosition: 'bodyClose' }],
-      })
-
-      const result = await renderSSRHeadClosing(head)
-      expect(result).toContain('<script src="analytics.js"></script>')
     })
   })
 

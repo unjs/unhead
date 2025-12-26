@@ -33,7 +33,6 @@
 ./stream/server:
   createStreamableHead: function
   HeadStreamScript: function
-  renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   streamWithHead: function

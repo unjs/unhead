@@ -67,7 +67,6 @@
   HeadStream: object
   propsToString: function
   renderSSRHead: function
-  renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   streamWithHead: function

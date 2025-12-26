@@ -6,7 +6,7 @@ import { renderToPipeableStream } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
 import { UnheadProvider } from '../src/server'
-import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../src/stream/server'
+import { createStreamableHead, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../src/stream/server'
 
 // Helper to collect stream output
 function collectStream(stream: NodeJS.ReadableStream): Promise<string> {
@@ -93,18 +93,6 @@ describe('react streaming SSR', () => {
       expect(result).toContain('window.__unhead__.push')
       expect(result).toContain('Updated Title')
       expect(result).toContain('New description')
-    })
-  })
-
-  describe('renderSSRHeadClosing', () => {
-    it('returns body tags', async () => {
-      const head = createStreamableHead()
-      head.push({
-        script: [{ src: 'analytics.js', tagPosition: 'bodyClose' }],
-      })
-
-      const result = await renderSSRHeadClosing(head)
-      expect(result).toContain('<script src="analytics.js"></script>')
     })
   })
 

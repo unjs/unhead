@@ -6,7 +6,7 @@ import { renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../src/composables'
 import { UnheadContext } from '../src/context'
-import { createStreamableHead, renderSSRHeadClosing, renderSSRHeadShell } from '../src/stream/server'
+import { createStreamableHead, renderSSRHeadShell } from '../src/stream/server'
 
 // Manual HeadStream for testing
 function HeadStream() {
@@ -117,8 +117,6 @@ describe('react streaming SSR e2e', () => {
       const streamedContent = await streamToString(passThrough)
       fullHtml += streamedContent
 
-      // Add closing
-      fullHtml += await renderSSRHeadClosing(head)
       fullHtml += htmlEnd
 
       // Verify the full output contains the head update mechanism
@@ -193,7 +191,7 @@ describe('react streaming SSR e2e', () => {
       resolve2('Second Component Description')
 
       const streamedContent = await streamToString(passThrough)
-      const fullHtml = shell + streamedContent + (await renderSSRHeadClosing(head)) + htmlEnd
+      const fullHtml = shell + streamedContent + htmlEnd
 
       // Both component contents should be in the output
       expect(fullHtml).toContain('First Component Title')
@@ -288,7 +286,7 @@ describe('react streaming SSR e2e', () => {
       resolveInner('inner-data')
 
       const streamedContent = await streamToString(passThrough)
-      const fullHtml = shell + streamedContent + (await renderSSRHeadClosing(head)) + htmlEnd
+      const fullHtml = shell + streamedContent + htmlEnd
 
       // Both data should be in the output
       expect(fullHtml).toContain('outer-data')
@@ -339,7 +337,6 @@ describe('react streaming SSR e2e', () => {
 
       const streamedContent = await streamToString(passThrough)
       fullHtml += streamedContent
-      fullHtml += await renderSSRHeadClosing(head)
       fullHtml += htmlEnd
 
       // Verify the full HTML contains everything needed

@@ -3,7 +3,6 @@ import { renderSSRHeadSuspenseChunk } from 'unhead'
 import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
-  renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
@@ -72,9 +71,7 @@ describe('solid-js streaming SSR e2e', () => {
       expect(chunk).toContain('Loaded Title')
       expect(chunk).toContain('window.__unhead__.push')
 
-      // Close
-      const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<div>Content</div>` + `<script>${chunk}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<div>Content</div>` + `<script>${chunk}</script>${htmlEnd}`
 
       expect(fullHtml).toContain('<!DOCTYPE html>')
       expect(fullHtml).toContain('</html>')
@@ -104,8 +101,7 @@ describe('solid-js streaming SSR e2e', () => {
       const chunk2 = await renderSSRHeadSuspenseChunk(head)
       expect(chunk2).toContain('Second Component')
 
-      const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<script>${chunk1}</script>` + `<script>${chunk2}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<script>${chunk1}</script>` + `<script>${chunk2}</script>${htmlEnd}`
 
       expect(fullHtml).toContain('First Component')
       expect(fullHtml).toContain('Second Component')
@@ -151,8 +147,7 @@ describe('solid-js streaming SSR e2e', () => {
       })
       const innerChunk = await renderSSRHeadSuspenseChunk(head)
 
-      const closing = await renderSSRHeadClosing(head)
-      const fullHtml = `${shell}<script>${outerChunk}</script>` + `<script>${innerChunk}</script>${closing}${htmlEnd}`
+      const fullHtml = `${shell}<script>${outerChunk}</script>` + `<script>${innerChunk}</script>${htmlEnd}`
 
       expect(fullHtml).toContain('outer-data')
       expect(fullHtml).toContain('inner-data')
@@ -282,30 +277,6 @@ describe('solid-js streaming SSR e2e', () => {
 
       expect(shell).toContain('window.__solid_head__')
       expect(shell).not.toContain('window.__unhead__=')
-    })
-  })
-
-  describe('body-positioned tags', () => {
-    it('includes bodyClose scripts in closing', async () => {
-      const head = createStreamableHead()
-
-      head.push({
-        script: [
-          { src: 'app.js' },
-          { src: 'analytics.js', tagPosition: 'bodyClose' },
-        ],
-      })
-
-      const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
-      const [htmlStart] = template.split('<!--app-html-->')
-
-      const shell = await renderSSRHeadShell(head, htmlStart)
-      const closing = await renderSSRHeadClosing(head)
-
-      // Head script should be in shell
-      expect(shell).toContain('app.js')
-      // Body script should be in closing
-      expect(closing).toContain('analytics.js')
     })
   })
 

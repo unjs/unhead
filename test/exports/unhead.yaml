@@ -2,7 +2,6 @@
   createHeadCore: function
   createStreamableHead: function
   createUnhead: function
-  renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   renderSSRHeadSuspenseChunk: function
@@ -27,7 +26,6 @@
   createStreamableHead: function
   createUnhead: function
   getActiveHead: function
-  renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   renderSSRHeadSuspenseChunk: function
@@ -84,7 +82,6 @@
   extractUnheadInputFromHtml: function
   propsToString: function
   renderSSRHead: function
-  renderSSRHeadClosing: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   renderSSRHeadSuspenseChunk: function

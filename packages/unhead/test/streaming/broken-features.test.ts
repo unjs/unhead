@@ -1,4 +1,4 @@
-import { renderSSRHeadClosing, renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
+import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from 'unhead'
 /**
  * Tests for features that may be broken or have edge cases with streaming SSR.
  * These test specific behaviors that could fail when tags are added progressively.
@@ -146,24 +146,6 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('tagPosition behavior', () => {
-    it('bodyClose scripts only appear in closing', async () => {
-      const head = createStreamableServerHead()
-      head.push({ script: [{ src: 'head-script.js' }] })
-
-      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('head-script.js')
-
-      // Add bodyClose script mid-stream
-      head.push({ script: [{ src: 'body-script.js', tagPosition: 'bodyClose' }] })
-
-      const chunk = await renderSSRHeadSuspenseChunk(head)
-      // bodyClose script should NOT be in chunk
-      expect(chunk).not.toContain('body-script.js')
-
-      const closing = await renderSSRHeadClosing(head)
-      expect(closing).toContain('body-script.js')
-    })
-
     it('bodyOpen scripts appear at right position', async () => {
       const head = createStreamableServerHead()
 

@@ -6,10 +6,8 @@ import { UnheadContextKey } from '../context'
 export { UnheadContextKey } from '../context'
 
 export {
-  renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-  streamWithHead,
 } from 'unhead/stream/server'
 
 /**

@@ -1,5 +1,4 @@
 import {
-  renderSSRHeadClosing,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   streamWithHead,
@@ -95,19 +94,6 @@ describe('streaming SSR', () => {
 
       expect(result).toContain('author')
       expect(result).not.toContain('robots') // Already streamed
-    })
-  })
-
-  describe('renderSSRHeadClosing', () => {
-    it('returns body tags', async () => {
-      const head = createServerHeadWithContext()
-      head.push({
-        script: [{ src: 'analytics.js', tagPosition: 'bodyClose' }],
-      })
-
-      const result = await renderSSRHeadClosing(head)
-
-      expect(result).toContain('<script src="analytics.js"></script>')
     })
   })
 
@@ -802,16 +788,6 @@ describe('streaming SSR', () => {
       expect(result).toContain('Test')
     })
 
-    it('handles calling closing without shell', async () => {
-      const head = createStreamableServerHead()
-      head.push({
-        script: [{ src: 'app.js', tagPosition: 'bodyClose' }],
-      })
-
-      // Should still work
-      const result = await renderSSRHeadClosing(head)
-      expect(result).toContain('app.js')
-    })
   })
 
   describe('edge cases - advanced XSS prevention', () => {

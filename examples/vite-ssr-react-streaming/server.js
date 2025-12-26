@@ -3,10 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import {
-  renderSSRHeadShell,
-  renderSSRHeadClosing,
-} from '@unhead/react/stream/server'
+import { renderSSRHeadShell } from '@unhead/react/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -90,9 +87,7 @@ export async function createServer(
       const passthrough = new PassThrough()
 
       passthrough.on('data', chunk => res.write(chunk))
-      passthrough.on('end', async () => {
-        const closing = await renderSSRHeadClosing(head)
-        res.write(closing)
+      passthrough.on('end', () => {
         res.write(htmlEnd)
         res.end()
       })
