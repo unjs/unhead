@@ -17,10 +17,7 @@ import type {
 import { ScriptNetworkEvents } from '../utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
-/**
- * @deprecated compute key manually
- */
-export function resolveScriptKey(input: UseScriptResolvedInput): string {
+function resolveScriptKey(input: UseScriptResolvedInput): string {
   return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
 }
 

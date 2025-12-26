@@ -82,7 +82,7 @@ describe('vue dom useHeadSafe', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>

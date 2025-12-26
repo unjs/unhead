@@ -153,7 +153,7 @@ describe('useHead hook', () => {
     const htmlElement = document.documentElement
 
     // Trigger initial DOM rendering
-    await renderDOMHead(head)
+    renderDOMHead(head)
 
     // Initially should not have dark class
     expect(htmlElement.classList.contains('dark')).toBe(false)
@@ -161,19 +161,19 @@ describe('useHead hook', () => {
 
     // Toggle to dark mode
     fireEvent.click(button)
-    await renderDOMHead(head)
+    renderDOMHead(head)
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
 
     // Toggle back to light mode
     fireEvent.click(button)
-    await renderDOMHead(head)
+    renderDOMHead(head)
     expect(htmlElement.classList.contains('dark')).toBe(false)
     expect(getByText('light')).toBeTruthy()
 
     // Toggle again to dark mode
     fireEvent.click(button)
-    await renderDOMHead(head)
+    renderDOMHead(head)
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
   })
@@ -209,7 +209,7 @@ describe('useHead hook', () => {
     const htmlElement = document.documentElement
 
     // Trigger initial DOM rendering
-    await renderDOMHead(head)
+    renderDOMHead(head)
 
     // Initially should have dark class
     expect(htmlElement.classList.contains('dark')).toBe(true)
@@ -217,13 +217,13 @@ describe('useHead hook', () => {
 
     // Toggle to light mode
     fireEvent.click(button)
-    await renderDOMHead(head)
+    renderDOMHead(head)
     expect(htmlElement.classList.contains('dark')).toBe(false)
     expect(getByText('light')).toBeTruthy()
 
     // Toggle back to dark mode
     fireEvent.click(button)
-    await renderDOMHead(head)
+    renderDOMHead(head)
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
   })

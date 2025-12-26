@@ -12,18 +12,6 @@ import type { Noscript } from './noscript'
 import type { ScriptWithoutEvents } from './script'
 import type { Style } from './style'
 
-interface DeprecatedResolvesDuplicates {
-  /**
-   * @deprecated You should avoid using keys to dedupe meta as they are automatically deduped.
-   * If you need to change the meta tag rendered use tagPriority.
-   */
-  key?: string
-  /**
-   * @deprecated Remove
-   */
-  tagDuplicateStrategy?: 'replace' | 'merge'
-}
-
 export interface SchemaAugmentations {
   title: TagPriority
   titleTemplate: TagPriority
@@ -31,7 +19,7 @@ export interface SchemaAugmentations {
   htmlAttrs: ResolvesDuplicates & TagPriority
   bodyAttrs: ResolvesDuplicates & TagPriority
   link: TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams
-  meta: TagPriority & DeprecatedResolvesDuplicates & ProcessesTemplateParams
+  meta: TagPriority & ProcessesTemplateParams
   style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
@@ -185,27 +173,9 @@ export interface SerializableHead {
 
 export type RawInput<K extends keyof SerializableHead> = Required<SerializableHead>[K] extends Array<infer T> ? T : Required<SerializableHead>[K]
 
-/**
- * @deprecated Use SerializableResolvedHead
- */
-export type Head = SerializableHead
-/**
- * @deprecated Use SerializableResolvedHead
- */
-export type ResolvedHead = SerializableHead
-
 export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: ResolvableTitle, titleTemplate?: ResolvableTitleTemplate }
 
 export type UseHeadInput = ResolvableHead | SerializableHead
-
-type MetaFlatInput = MetaFlat
-
-export { type MetaFlatInput }
-
-/**
- * @deprecated No longer used
- */
-export type MergeHead = Record<string, any>
 
 export type { AriaAttributes } from './attributes/aria'
 export type { DataKeys } from './attributes/data'

@@ -1,7 +1,7 @@
 export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './core'
 export type { SchemaOrgGraph } from './core'
 export * from './nodes'
-export { PluginSchemaOrg, SchemaOrgUnheadPlugin, UnheadSchemaOrg } from './plugin'
+export { UnheadSchemaOrg } from './plugin'
 export type { PluginSchemaOrgOptions } from './plugin'
 export {
   defineAddress,

@@ -1,4 +1,4 @@
-import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, SchemaOrgUnheadPlugin, useSchemaOrg } from '@unhead/schema-org'
+import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
 import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
@@ -11,7 +11,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 
@@ -46,7 +46,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -78,7 +78,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
         }),
       ],
@@ -118,7 +118,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -153,7 +153,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
         }),
@@ -202,7 +202,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
         }),
@@ -272,7 +272,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 
@@ -316,7 +316,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
     useSchemaOrg(ssrHead, ['test'])
@@ -334,7 +334,7 @@ describe('schema.org e2e', () => {
       disableDefaults: true,
       plugins: [
         // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 

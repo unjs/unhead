@@ -43,7 +43,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -101,7 +101,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -164,7 +164,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -220,7 +220,7 @@ describe('unhead e2e deduping', () => {
     const csrHead = createClientHeadWithContext()
     csrHead.push(input)
     csrHead.push(input)
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

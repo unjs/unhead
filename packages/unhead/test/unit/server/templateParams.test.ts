@@ -5,28 +5,6 @@ import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
-  it('payload merging', async () => {
-    const head = createServerHeadWithContext({
-      plugins: [TemplateParamsPlugin],
-    })
-    head.push({
-      templateParams: {
-        foo: 'bar',
-      },
-    }, {
-      mode: 'server',
-    })
-    head.push({
-      templateParams: {
-        separator: 'x',
-      },
-    })
-    const { headTags, htmlAttrs } = await renderSSRHead(head)
-
-    expect(htmlAttrs).toMatchInlineSnapshot(`""`)
-    expect(headTags).toMatchInlineSnapshot(`"<script id="unhead:payload" type="application/json">{"templateParams":{"foo":"bar"}}</script>"`)
-  })
-
   it('basic', async () => {
     const head = createServerHeadWithContext({
       plugins: [TemplateParamsPlugin],
@@ -117,33 +95,6 @@ describe('ssr templateParams', () => {
     expect(headTags).toMatchInlineSnapshot(`
       "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\</title>
       <script type="application/json">{"title":"Home & //\\u003C\\"With Encoding\\">\\\\"}</script>"
-    `)
-  })
-
-  it('ssr payload', async () => {
-    const head = createServerHeadWithContext({
-      plugins: [
-        TemplateParamsPlugin,
-      ],
-    })
-    head.push({
-      title: 'test',
-      titleTemplate: '%s %separator %siteName',
-      templateParams: {
-        separator: '|',
-        siteName: 'My Awesome Site',
-      },
-    }, { mode: 'server' })
-    head.push({
-      templateParams: {
-        foo: 'bar',
-      },
-    }, { mode: 'server' })
-    const { headTags } = await renderSSRHead(head)
-
-    expect(headTags).toMatchInlineSnapshot(`
-      "<title>test | My Awesome Site</title>
-      <script id="unhead:payload" type="application/json">{"templateParams":{"separator":"|","siteName":"My Awesome Site","foo":"bar"},"title":"test","titleTemplate":"%s %separator %siteName"}</script>"
     `)
   })
 

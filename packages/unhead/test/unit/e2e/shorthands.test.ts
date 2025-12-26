@@ -37,7 +37,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -92,7 +92,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -143,7 +143,7 @@ describe('unhead e2e shorthands', () => {
     const csrHead = createClientHeadWithContext()
     csrHead.push(input)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -193,7 +193,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

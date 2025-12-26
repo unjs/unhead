@@ -22,13 +22,13 @@ describe('vue dom styles', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual(null)
     isNavActive.value = true
 
     // wait 100ms
     await new Promise(resolve => setTimeout(resolve, 100))
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual('background-color: red;')
   })
   it('url style', async () => {
@@ -42,7 +42,7 @@ describe('vue dom styles', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual('--cover-image: url(\'https://example-url-to-image.com\');')
   })
   it('array style', async () => {
@@ -59,7 +59,7 @@ describe('vue dom styles', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.body.getAttribute('style')).toEqual(`background-color: red; color: white;`)
   })
@@ -77,14 +77,14 @@ describe('vue dom styles', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual('color: white;')
 
     isNavActive.value = true
 
     // wait 100ms
     await new Promise(resolve => setTimeout(resolve, 100))
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.body.getAttribute('style')).toEqual('color: white; background-color: red;')
   })
 })

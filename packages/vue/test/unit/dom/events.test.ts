@@ -24,7 +24,7 @@ describe('vue events', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>

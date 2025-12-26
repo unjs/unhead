@@ -23,7 +23,7 @@ describe('vue dom', () => {
       })
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
 
@@ -51,7 +51,7 @@ describe('vue dom', () => {
       })
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
@@ -73,7 +73,7 @@ describe('vue dom', () => {
       },
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
@@ -91,7 +91,7 @@ describe('vue dom', () => {
       entry = useHead(basicSchema)
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
@@ -102,9 +102,9 @@ describe('vue dom', () => {
 
     entry!.dispose()
 
-    expect(head.headEntries()).toMatchInlineSnapshot(`[]`)
+    expect([...head.entries.values()]).toMatchInlineSnapshot(`[]`)
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
@@ -119,7 +119,7 @@ describe('vue dom', () => {
 
     const entry = head.push(basicSchema)
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     await setTimeout(500)
     expect(dom.serialize()).toMatchInlineSnapshot(`
@@ -145,7 +145,7 @@ describe('vue dom', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="de" dir="rtl"><head>
 
@@ -155,7 +155,7 @@ describe('vue dom', () => {
 
     entry.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 

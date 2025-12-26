@@ -47,8 +47,6 @@ describe('unhead e2e', () => {
           charset: 'utf-8',
         },
       ],
-    }, {
-      mode: 'server',
     })
 
     // i.e pages/index.vue
@@ -118,7 +116,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang="en"><head>
@@ -238,7 +236,7 @@ describe('unhead e2e', () => {
     const csrHead = createClientHeadWithContext()
     useHead(csrHead, schema)
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     let html = dom.serialize().replaceAll('\n\n', '')
 
@@ -285,7 +283,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -317,7 +315,7 @@ describe('unhead e2e', () => {
 
     homePageEntry.dispose()
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -367,7 +365,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 
@@ -389,7 +387,7 @@ describe('unhead e2e', () => {
 
     aboutPage.dispose()
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     html = dom.serialize().replaceAll('\n\n', '')
 

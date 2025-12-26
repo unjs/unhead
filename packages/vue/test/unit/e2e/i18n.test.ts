@@ -111,7 +111,7 @@ describe('vue i18n', () => {
       ],
     }, { head: csrHead })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).includes('i18n-og-alt-ja-JP')
 
@@ -198,7 +198,7 @@ describe('vue i18n', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).includes('i18n-og-alt-ja-JP')
   })

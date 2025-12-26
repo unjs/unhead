@@ -14,17 +14,6 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
     hooks: {
-      'entries:normalize': (ctx) => {
-        const params = ctx.tags.filter(t => t.tag === 'templateParams' && t.mode === 'server')?.[0]?.props || {}
-        if (Object.keys(params).length) {
-          head._ssrPayload = {
-            templateParams: {
-              ...head._ssrPayload?.templateParams || {},
-              ...params,
-            },
-          }
-        }
-      },
       'tags:resolve': ({ tagMap, tags }) => {
         // we always process params so we can substitute the title
         const params = (tagMap.get('templateParams')?.props || {}) as TemplateParams

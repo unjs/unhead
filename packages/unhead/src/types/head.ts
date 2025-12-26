@@ -11,20 +11,12 @@ import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition,
  */
 export type SideEffectsRecord = Record<string, () => void>
 
-export type RuntimeMode = 'server' | 'client'
-
 export interface HeadEntry<Input> {
   /**
    * User provided input for the entry.
    */
   input: Input
   options?: {
-    /**
-     * The mode that the entry should be used in.
-     *
-     * @internal
-     */
-    mode?: RuntimeMode
     /**
      * Default tag position.
      *
@@ -137,10 +129,6 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
-  /**
-   * @deprecated Tree shaking should now be handled using import.meta.* if statements.
-   */
-  mode?: RuntimeMode
   head?: Unhead
   /**
    * @internal
@@ -161,12 +149,6 @@ export interface Unhead<Input = ResolvableHead> {
    * The head entries.
    */
   entries: Map<number, HeadEntry<Input>>
-  /**
-   * The active head entries.
-   *
-   * @deprecated Use entries instead.
-   */
-  headEntries: () => HeadEntry<Input>[]
   /**
    * Create a new head entry.
    */
@@ -200,10 +182,6 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _dom?: DomState
-  /**
-   * @internal
-   */
-  _domUpdatePromise?: Promise<void>
   /**
    * @internal
    */
