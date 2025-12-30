@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:6173/test/',
+    baseURL: 'http://localhost:6173',
   },
   webServer: {
     command: 'node server.js',

@@ -6,12 +6,15 @@ async function* svelteToStream(rendered: ReturnType<typeof _render>): AsyncGener
   yield rendered.html
 }
 
-export function render(_url: string) {
+export function render(url: string) {
   const head = createStreamableHead()
   const context = new Map()
   context.set(UnheadContextKey, head)
 
-  const rendered = _render(App, { context })
+  const rendered = _render(App, {
+    props: { url },
+    context,
+  })
 
   return {
     svelteStream: svelteToStream(rendered),

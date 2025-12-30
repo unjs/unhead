@@ -1,8 +1,9 @@
+// @ts-check
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { streamWithHead } from '@unhead/svelte/stream/server'
+import { renderSSRHeadShell } from '@unhead/svelte/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -20,6 +21,7 @@ export async function createServer(
 
   const app = express()
 
+  /** @type {import('vite').ViteDevServer} */
   let vite
   if (!isProd) {
     vite = await (
@@ -50,37 +52,55 @@ export async function createServer(
     )
   }
 
-  app.use(async (req, res) => {
-    const url = req.originalUrl
+  app.use('/{*path}', async (req, res) => {
+    try {
+      const url = req.originalUrl
 
-    let template, render
-    if (!isProd) {
-      template = fs.readFileSync(resolve('index.html'), 'utf-8')
-      template = await vite.transformIndexHtml(url, template)
-      render = (await vite.ssrLoadModule('/src/entry-server.ts')).render
+      let template, render
+      if (!isProd) {
+        template = fs.readFileSync(resolve('index.html'), 'utf-8')
+        template = await vite.transformIndexHtml(url, template)
+        render = (await vite.ssrLoadModule('/src/entry-server.ts')).render
+      }
+      else {
+        template = indexProd
+        render = (await import('./dist/server/entry-server.js')).render
+      }
+
+      const { svelteStream, head } = render(url)
+
+      // Split template at app placeholder
+      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+
+      res.status(200).set({ 'Content-Type': 'text/html' })
+
+      // Render shell with initial head tags
+      const shell = await renderSSRHeadShell(head, htmlStart)
+      res.write(shell)
+
+      // Stream Svelte content
+      for await (const chunk of svelteStream) {
+        if (res.closed) break
+        res.write(chunk)
+      }
+
+      res.write(htmlEnd)
+      res.end()
     }
-    else {
-      template = indexProd
-      render = (await import('./dist/server/entry-server.js')).render
+    catch (e) {
+      vite && vite.ssrFixStacktrace(e)
+      console.log(e.stack)
+      res.status(500).end('Internal Server Error')
     }
-
-    const { svelteStream, head } = render(url)
-
-    res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
-
-    // Client script is injected via Vite plugin's transformIndexHtml
-    for await (const chunk of streamWithHead(svelteStream, template, head, { debug: true })) {
-      if (res.closed) break
-      res.write(chunk)
-    }
-    res.end()
   })
 
   return { app, vite }
 }
 
 if (!isTest) {
-  createServer().then(({ app }) => app.listen(5175, () => {
-    console.log('http://localhost:5175')
-  }))
+  createServer().then(({ app }) =>
+    app.listen(5175, () => {
+      console.log('http://localhost:5175')
+    })
+  )
 }

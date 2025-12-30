@@ -1,4 +1,3 @@
-import './app.css'
 import { hydrate } from 'svelte'
 import App from './App.svelte'
 import { createStreamableHead, UnheadContextKey } from '@unhead/svelte/stream/client'
@@ -11,5 +10,6 @@ context.set(UnheadContextKey, head)
 
 hydrate(App, {
   target: document.getElementById('app')!,
+  props: { url: window.location.pathname },
   context,
 })
