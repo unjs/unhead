@@ -56,7 +56,7 @@ catalog:
   react-dom: ^19.2.3
   rollup: ^4.53.5
   rollup-plugin-analyzer: ^4.0.0
-  rollup-plugin-visualizer: ^5.14.0
+  rollup-plugin-visualizer: ^6.0.5
   solid-js: ^1.9.10
   svelte: ^5.46.0
   tinyexec: ^1.0.2
