@@ -1,10 +1,12 @@
 import type { CreateServerHeadOptions, ResolvableHead } from '../types'
 import { createUnhead } from '../unhead'
+import { capoTagWeight } from './sort'
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
   const unhead = createUnhead<T>({
     ...options,
+    _tagWeight: capoTagWeight,
     // @ts-expect-error untyped
     document: false,
     propResolvers: [
