@@ -9,7 +9,7 @@ import {
 describe('vue streaming SSR integration', () => {
   describe('full streaming workflow', () => {
     it('streams initial head tags in shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: 'Initial Title',
@@ -28,7 +28,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('streams head updates with suspense chunks', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Loading...' })
 
@@ -57,7 +57,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('handles multiple suspense boundaries', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Multi-Suspense Test' })
 
@@ -87,7 +87,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('handles nested suspense with head updates', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Nested Test', htmlAttrs: { lang: 'en' } })
 
@@ -119,7 +119,7 @@ describe('vue streaming SSR integration', () => {
 
   describe('custom stream key', () => {
     it('uses custom window key throughout workflow', async () => {
-      const head = createStreamableHead({ streamKey: '__vue_head__' })
+      const { head } = createStreamableHead({ streamKey: '__vue_head__' })
 
       head.push({ title: 'Custom Key Test' })
 
@@ -140,7 +140,7 @@ describe('vue streaming SSR integration', () => {
 
   describe('vue SSR patterns', () => {
     it('handles typical Vue SSR streaming pattern', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       // App.vue sets base head
       head.push({
@@ -180,7 +180,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('handles async data fetching pattern', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       // Initial state from component setup
       head.push({ title: 'Loading product...' })
@@ -218,7 +218,7 @@ describe('vue streaming SSR integration', () => {
 
   describe('edge cases', () => {
     it('handles empty head gracefully', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
       const [htmlStart] = template.split('<!--app-html-->')
@@ -230,7 +230,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('handles special characters in attributes', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         meta: [
@@ -249,7 +249,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('escapes XSS attempts in shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: '</script><script>alert("xss")</script>',
@@ -267,7 +267,7 @@ describe('vue streaming SSR integration', () => {
 
   describe('streaming deduplication', () => {
     it('streams multiple title updates correctly', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'First Title' })
 
@@ -292,7 +292,7 @@ describe('vue streaming SSR integration', () => {
     })
 
     it('streams link tags added by async components', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         link: [{ rel: 'stylesheet', href: '/styles/main.css' }],

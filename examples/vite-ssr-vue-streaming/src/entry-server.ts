@@ -1,20 +1,20 @@
-import { createApp } from './main'
-import { createStreamableHead, VueHeadMixin } from '@unhead/vue/stream/server'
 import { renderToWebStream } from 'vue/server-renderer'
+import { createStreamableHead, VueHeadMixin } from '@unhead/vue/stream/server'
+import { createApp } from './main'
 
-export function render(url: string) {
+export async function render(url: string, template: string) {
   const { app, router } = createApp()
+  const { head, wrapStream } = createStreamableHead()
 
-  // Use createStreamableHead for streaming SSR
-  const head = createStreamableHead()
   app.use(head)
   app.mixin(VueHeadMixin)
-
-  // Push the URL to router
   router.push(url)
 
-  // Create Vue's web stream
+  // Create stream first - Vue starts rendering synchronously
   const vueStream = renderToWebStream(app)
 
-  return { vueStream, head, router }
+  // Wait for router - by now Vue's sync render has pushed head entries
+  await router.isReady()
+
+  return wrapStream(vueStream, template)
 }

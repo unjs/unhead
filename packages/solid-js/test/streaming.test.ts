@@ -1,15 +1,15 @@
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-} from 'unhead/stream/server'
-// @vitest-environment node
-import { describe, expect, it } from 'vitest'
+} from '../src/stream/server'
 
 describe('solid-js streaming SSR', () => {
   describe('createStreamableHead', () => {
     it('uses custom stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__solid__' })
+      const { head } = createStreamableHead({ streamKey: '__solid__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -17,7 +17,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('uses default stream key', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -27,7 +27,7 @@ describe('solid-js streaming SSR', () => {
 
   describe('renderSSRHeadShell', () => {
     it('renders initial head tags into shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         title: 'Solid Streaming Test',
         meta: [{ name: 'description', content: 'Test description' }],
@@ -42,7 +42,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('applies html and body attrs', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         htmlAttrs: { lang: 'en', dir: 'ltr' },
         bodyAttrs: { class: 'dark' },
@@ -57,7 +57,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('clears entries after rendering shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -69,7 +69,7 @@ describe('solid-js streaming SSR', () => {
 
   describe('renderSSRHeadSuspenseChunk', () => {
     it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -79,7 +79,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('returns push script for new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -97,7 +97,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('clears entries after rendering chunk', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'First' })
@@ -110,7 +110,7 @@ describe('solid-js streaming SSR', () => {
 
   describe('xSS prevention', () => {
     it('escapes script tags in content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -123,7 +123,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('escapes closing script tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -137,8 +137,8 @@ describe('solid-js streaming SSR', () => {
 
   describe('multiple providers', () => {
     it('supports different stream keys', async () => {
-      const head1 = createStreamableHead({ streamKey: '__solid1__' })
-      const head2 = createStreamableHead({ streamKey: '__solid2__' })
+      const { head: head1 } = createStreamableHead({ streamKey: '__solid1__' })
+      const { head: head2 } = createStreamableHead({ streamKey: '__solid2__' })
 
       head1.push({ title: 'Provider 1' })
       head2.push({ title: 'Provider 2' })
@@ -155,7 +155,7 @@ describe('solid-js streaming SSR', () => {
 
   describe('unicode and special characters', () => {
     it('handles emoji in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Solid App 🚀' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -163,7 +163,7 @@ describe('solid-js streaming SSR', () => {
     })
 
     it('handles unicode in meta', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({

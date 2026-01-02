@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 describe('streaming SSR - nested Suspense boundaries', () => {
   describe('nested Suspense ordering', () => {
     it('streams only unique tags from nested boundaries', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -28,7 +28,7 @@ describe('streaming SSR - nested Suspense boundaries', () => {
 
   describe('nested Suspense with keys', () => {
     it('updates links with same key across nested boundaries', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         link: [{ key: 'font', rel: 'stylesheet', href: 'font-v1.css' }],
       })
@@ -54,7 +54,7 @@ describe('streaming SSR - nested Suspense boundaries', () => {
 
   describe('nested Suspense with htmlAttrs/bodyAttrs', () => {
     it('handles bodyAttrs updates from nested boundaries', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ bodyAttrs: { class: 'loading' } })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -76,7 +76,7 @@ describe('streaming SSR - nested Suspense boundaries', () => {
 describe('streaming SSR - error handling', () => {
   describe('head state preservation', () => {
     it('head state is preserved after multiple chunks', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -91,7 +91,7 @@ describe('streaming SSR - error handling', () => {
 
   describe('recovery scenarios', () => {
     it('continues streaming after push with empty data', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Valid' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -108,7 +108,7 @@ describe('streaming SSR - error handling', () => {
     })
 
     it('handles rapid dispose and push during streaming', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const entry = head.push({ title: 'Temporary' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')

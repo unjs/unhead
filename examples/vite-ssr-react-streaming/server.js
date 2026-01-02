@@ -3,7 +3,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { renderSSRHeadShell } from '@unhead/react/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -67,32 +66,10 @@ export async function createServer(
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const { pipe, head, onReady } = render(url)
-
-      // Split template at app placeholder
-      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
-
-      // Wait for shell to be ready
-      await onReady
+      const { pipe } = render(url, template)
 
       res.status(200).set({ 'Content-Type': 'text/html' })
-
-      // Render shell with initial head tags
-      // Client script is injected via Vite plugin's transformIndexHtml
-      const shell = await renderSSRHeadShell(head, htmlStart, { debug: true })
-      res.write(shell)
-
-      // Stream React content
-      const { PassThrough } = await import('node:stream')
-      const passthrough = new PassThrough()
-
-      passthrough.on('data', chunk => res.write(chunk))
-      passthrough.on('end', () => {
-        res.write(htmlEnd)
-        res.end()
-      })
-
-      pipe(passthrough)
+      pipe(res)
     }
     catch (e) {
       vite && vite.ssrFixStacktrace(e)

@@ -12,7 +12,7 @@ import {
 describe('vue streaming SSR', () => {
   describe('createStreamableHead', () => {
     it('uses custom stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__vue__' })
+      const { head } = createStreamableHead({ streamKey: '__vue__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -20,7 +20,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('uses default stream key', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -28,14 +28,14 @@ describe('vue streaming SSR', () => {
     })
 
     it('has install method for Vue app.use()', () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       expect(typeof head.install).toBe('function')
     })
   })
 
   describe('renderSSRHeadShell', () => {
     it('renders initial head tags into shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         title: 'Vue Streaming Test',
         meta: [{ name: 'description', content: 'Test description' }],
@@ -50,7 +50,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('applies html and body attrs', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         htmlAttrs: { lang: 'en', dir: 'ltr' },
         bodyAttrs: { class: 'dark' },
@@ -65,7 +65,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('clears entries after rendering shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -78,7 +78,7 @@ describe('vue streaming SSR', () => {
 
   describe('renderSSRHeadSuspenseChunk', () => {
     it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -88,7 +88,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('returns push script for new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -106,7 +106,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('clears entries after rendering chunk', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'First Update' })
@@ -118,7 +118,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('uses custom stream key in push call', async () => {
-      const head = createStreamableHead({ streamKey: '__custom__' })
+      const { head } = createStreamableHead({ streamKey: '__custom__' })
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'Test' })
@@ -130,7 +130,7 @@ describe('vue streaming SSR', () => {
 
   describe('headStream component', () => {
     it('renders script tag with head updates via Vue SSR', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'Streamed Title' })
@@ -154,7 +154,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('renders null when no updates', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       // No new entries pushed
@@ -174,7 +174,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('properly escapes script content to prevent XSS', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: '</script><script>alert("xss")</script>' })
@@ -198,7 +198,7 @@ describe('vue streaming SSR', () => {
 
   describe('xSS prevention', () => {
     it('escapes script tags in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -211,7 +211,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('escapes closing script tags in innerHTML', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -225,7 +225,7 @@ describe('vue streaming SSR', () => {
 
   describe('vue reactivity resolution', () => {
     it('resolves ref-like values', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: { value: 'Ref Title' } as any,
@@ -236,7 +236,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('resolves function values', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: () => 'Computed Title',
@@ -249,7 +249,7 @@ describe('vue streaming SSR', () => {
 
   describe('unicode and special characters', () => {
     it('handles emoji in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Hello World 🌍' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -257,7 +257,7 @@ describe('vue streaming SSR', () => {
     })
 
     it('handles CJK characters', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         title: '你好世界',
         meta: [{ name: 'description', content: 'こんにちは' }],

@@ -21,13 +21,13 @@ function collectStream(stream: NodeJS.ReadableStream): Promise<string> {
 describe('react streaming SSR', () => {
   describe('createStreamableHead', () => {
     it('creates streamable head instance', () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       // Streamable head uses entries Map to track pending head updates
       expect(head.entries).toBeInstanceOf(Map)
     })
 
     it('uses custom stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__custom__' })
+      const { head } = createStreamableHead({ streamKey: '__custom__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -37,7 +37,7 @@ describe('react streaming SSR', () => {
 
   describe('renderSSRHeadShell', () => {
     it('renders initial head tags into shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         title: 'React Streaming Test',
         meta: [{ name: 'description', content: 'Test description' }],
@@ -52,7 +52,7 @@ describe('react streaming SSR', () => {
     })
 
     it('applies html and body attrs', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         htmlAttrs: { lang: 'en', dir: 'ltr' },
         bodyAttrs: { class: 'dark' },
@@ -69,7 +69,7 @@ describe('react streaming SSR', () => {
 
   describe('renderSSRHeadSuspenseChunk', () => {
     it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -79,7 +79,7 @@ describe('react streaming SSR', () => {
     })
 
     it('returns push script for new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -99,7 +99,7 @@ describe('react streaming SSR', () => {
 
   describe('react component integration', () => {
     it('renders component with useHead', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       function TestComponent() {
         useHead({
@@ -125,7 +125,7 @@ describe('react streaming SSR', () => {
     })
 
     it('handles Suspense with async component', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       // Simulate async data
       let resolveData: (value: { title: string }) => void
@@ -183,7 +183,7 @@ describe('react streaming SSR', () => {
 
   describe('xSS prevention', () => {
     it('escapes script tags in content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -196,7 +196,7 @@ describe('react streaming SSR', () => {
     })
 
     it('escapes closing script tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -210,8 +210,8 @@ describe('react streaming SSR', () => {
 
   describe('multiple providers', () => {
     it('supports different stream keys', async () => {
-      const head1 = createStreamableHead({ streamKey: '__react1__' })
-      const head2 = createStreamableHead({ streamKey: '__react2__' })
+      const { head: head1 } = createStreamableHead({ streamKey: '__react1__' })
+      const { head: head2 } = createStreamableHead({ streamKey: '__react2__' })
 
       head1.push({ title: 'Provider 1' })
       head2.push({ title: 'Provider 2' })
@@ -228,7 +228,7 @@ describe('react streaming SSR', () => {
 
   describe('unicode and special characters', () => {
     it('handles emoji in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'React App' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -236,7 +236,7 @@ describe('react streaming SSR', () => {
     })
 
     it('handles unicode in meta', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({

@@ -47,7 +47,7 @@ function createResolvablePromise<T>() {
 describe('react streaming SSR e2e', () => {
   describe('suspense with HeadStream integration', () => {
     it('streams initial head tags in shell (pushed before render)', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       // Push head tags BEFORE React render (simulating pre-render setup)
       head.push({
@@ -69,7 +69,7 @@ describe('react streaming SSR e2e', () => {
     })
 
     it('suspense with HeadStream streams head updates inline with async content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const { promise: dataPromise, resolve: resolveData } = createResolvablePromise<{ title: string }>()
 
       // Async component that uses useHead after data loads
@@ -128,7 +128,7 @@ describe('react streaming SSR e2e', () => {
     })
 
     it('handles multiple async components with useHead', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const { promise: promise1, resolve: resolve1 } = createResolvablePromise<string>()
       const { promise: promise2, resolve: resolve2 } = createResolvablePromise<string>()
 
@@ -201,7 +201,7 @@ describe('react streaming SSR e2e', () => {
     })
 
     it('escapes XSS in head content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       // Test that XSS is escaped when pushing directly
       head.push({
@@ -221,7 +221,7 @@ describe('react streaming SSR e2e', () => {
     })
 
     it('handles nested Suspense with head updates', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const { promise: outerPromise, resolve: resolveOuter } = createResolvablePromise<string>()
       const { promise: innerPromise, resolve: resolveInner } = createResolvablePromise<string>()
 
@@ -296,7 +296,7 @@ describe('react streaming SSR e2e', () => {
 
   describe('zero-config streaming', () => {
     it('works without any middleware when using Suspense with HeadStream', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const { promise: dataPromise, resolve: resolveData } = createResolvablePromise<string>()
 
       function AsyncPage() {

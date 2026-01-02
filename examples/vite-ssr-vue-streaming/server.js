@@ -3,7 +3,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { renderSSRHeadShell } from '@unhead/vue/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -67,37 +66,18 @@ export async function createServer(
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const { vueStream, head, router } = render(url)
-
-      // Wait for router to be ready
-      await router.isReady()
-
-      // Split template at app placeholder
-      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+      const stream = await render(url, template)
 
       res.status(200).set({ 'Content-Type': 'text/html' })
 
-      // Render shell with initial head tags
-      const shell = await renderSSRHeadShell(head, htmlStart)
-      res.write(shell)
-
-      // Stream Vue content
-      const reader = vueStream.getReader()
-      const decoder = new TextDecoder()
-
-      let chunkCount = 0
-      const startTime = Date.now()
+      // Stream the wrapped response
+      const reader = stream.getReader()
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
-        chunkCount++
-        const chunk = decoder.decode(value, { stream: true })
-        console.log(`[${Date.now() - startTime}ms] Chunk ${chunkCount}: ${chunk.length} bytes`)
-        res.write(chunk)
+        if (done)
+          break
+        res.write(value)
       }
-      console.log(`[${Date.now() - startTime}ms] Total chunks: ${chunkCount}`)
-
-      res.write(htmlEnd)
       res.end()
     }
     catch (e) {

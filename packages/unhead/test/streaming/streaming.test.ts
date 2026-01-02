@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 describe('streaming SSR', () => {
   describe('renderSSRHeadShell', () => {
     it('renders initial head tags into shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         title: 'Test Page',
         meta: [{ name: 'description', content: 'Test description' }],
@@ -23,7 +23,7 @@ describe('streaming SSR', () => {
     })
 
     it('applies html and body attrs', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         htmlAttrs: { lang: 'en', dir: 'ltr' },
         bodyAttrs: { class: 'dark' },
@@ -38,7 +38,7 @@ describe('streaming SSR', () => {
     })
 
     it('clears entries after rendering', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -51,7 +51,7 @@ describe('streaming SSR', () => {
 
   describe('renderSSRHeadSuspenseChunk', () => {
     it('returns empty string when no new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -61,7 +61,7 @@ describe('streaming SSR', () => {
     })
 
     it('returns push script for new tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Initial' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -79,7 +79,7 @@ describe('streaming SSR', () => {
     })
 
     it('clears entries after rendering chunk', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: 'First' })
@@ -93,7 +93,7 @@ describe('streaming SSR', () => {
 
   describe('custom stream key', () => {
     it('uses custom key in bootstrap script', async () => {
-      const head = createStreamableHead({ streamKey: '__myhead__' })
+      const { head } = createStreamableHead({ streamKey: '__myhead__' })
       head.push({ title: 'Test' })
 
       const result = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -103,7 +103,7 @@ describe('streaming SSR', () => {
     })
 
     it('uses custom key in suspense chunk', async () => {
-      const head = createStreamableHead({ streamKey: '__custom__' })
+      const { head } = createStreamableHead({ streamKey: '__custom__' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
       head.push({ title: 'New Title' })
@@ -114,8 +114,8 @@ describe('streaming SSR', () => {
     })
 
     it('supports multiple providers with different keys', async () => {
-      const head1 = createStreamableHead({ streamKey: '__provider1__' })
-      const head2 = createStreamableHead({ streamKey: '__provider2__' })
+      const { head: head1 } = createStreamableHead({ streamKey: '__provider1__' })
+      const { head: head2 } = createStreamableHead({ streamKey: '__provider2__' })
 
       head1.push({ title: 'Provider 1' })
       head2.push({ title: 'Provider 2' })
@@ -130,7 +130,7 @@ describe('streaming SSR', () => {
 
   describe('createStreamableHead', () => {
     it('uses default stream key', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       const result = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -138,7 +138,7 @@ describe('streaming SSR', () => {
     })
 
     it('uses custom stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__custom__' })
+      const { head } = createStreamableHead({ streamKey: '__custom__' })
       head.push({ title: 'Test' })
 
       const result = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -148,7 +148,7 @@ describe('streaming SSR', () => {
 
   describe('xSS prevention', () => {
     it('escapes script injection in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ title: '<script>alert("xss")</script>' })
@@ -159,7 +159,7 @@ describe('streaming SSR', () => {
     })
 
     it('escapes closing script tags', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -171,7 +171,7 @@ describe('streaming SSR', () => {
     })
 
     it('escapes meta content injection', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -185,7 +185,7 @@ describe('streaming SSR', () => {
 
   describe('unicode and special characters', () => {
     it('handles emoji in title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: '🚀 Rocket Launch 🎉' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -193,7 +193,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles unicode in meta', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -205,7 +205,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles newlines and tabs in content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -220,7 +220,7 @@ describe('streaming SSR', () => {
 
   describe('empty and edge values', () => {
     it('handles empty title', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: '' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -228,7 +228,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles push with empty object', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({})
@@ -239,7 +239,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles no tags pushed', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
 
       expect(shell).toContain('window.__unhead__')
@@ -249,7 +249,7 @@ describe('streaming SSR', () => {
 
   describe('rapid pushes', () => {
     it('handles many rapid consecutive pushes', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       for (let i = 0; i < 100; i++) {
@@ -262,7 +262,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles interleaved push and chunk calls', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({ meta: [{ name: 'first', content: '1' }] })
@@ -284,7 +284,7 @@ describe('streaming SSR', () => {
 
   describe('complex tag structures', () => {
     it('handles script with all properties', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -306,7 +306,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles link with preload hints', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -324,7 +324,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles style with textContent', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -339,7 +339,7 @@ describe('streaming SSR', () => {
 
   describe('template variations', () => {
     it('handles template without doctype', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Test' })
 
       const result = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -347,7 +347,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles template with existing head content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({ title: 'Dynamic' })
 
       const template = '<html><head><meta charset="utf-8"></head><body>'
@@ -358,7 +358,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles template with attributes on html/body', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       head.push({
         htmlAttrs: { 'data-theme': 'dark' },
         bodyAttrs: { 'data-page': 'home' },
@@ -374,8 +374,8 @@ describe('streaming SSR', () => {
 
   describe('concurrent streams', () => {
     it('handles multiple independent head instances', async () => {
-      const head1 = createStreamableHead({ streamKey: '__stream1__' })
-      const head2 = createStreamableHead({ streamKey: '__stream2__' })
+      const { head: head1 } = createStreamableHead({ streamKey: '__stream1__' })
+      const { head: head2 } = createStreamableHead({ streamKey: '__stream2__' })
 
       head1.push({ title: 'Stream 1' })
       head2.push({ title: 'Stream 2' })
@@ -405,7 +405,7 @@ describe('streaming SSR', () => {
 
   describe('disposed entries', () => {
     it('handles entry patched after shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       const entry = head.push({ title: 'Original' })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -419,7 +419,7 @@ describe('streaming SSR', () => {
 
   describe('special JSON values', () => {
     it('handles undefined-like strings', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -431,7 +431,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles null-like strings', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -443,7 +443,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles numeric strings', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -455,7 +455,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles boolean-like strings', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -469,7 +469,7 @@ describe('streaming SSR', () => {
 
   describe('stream key edge cases', () => {
     it('handles stream key with special characters', async () => {
-      const head = createStreamableHead({ streamKey: '__my_app_123__' })
+      const { head } = createStreamableHead({ streamKey: '__my_app_123__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -477,7 +477,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles unicode in stream key', async () => {
-      const head = createStreamableHead({ streamKey: '__アプリ__' })
+      const { head } = createStreamableHead({ streamKey: '__アプリ__' })
       head.push({ title: 'Test' })
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -487,7 +487,7 @@ describe('streaming SSR', () => {
 
   describe('boundary conditions', () => {
     it('handles maximum safe integer in attrs', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       head.push({
@@ -499,7 +499,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles array with many elements', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       const metas = Array.from({ length: 50 }, (_, i) => ({
@@ -515,7 +515,7 @@ describe('streaming SSR', () => {
     })
 
     it('handles extremely long single value', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
       const longValue = 'a'.repeat(100000)

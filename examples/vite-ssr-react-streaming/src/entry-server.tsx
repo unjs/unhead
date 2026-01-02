@@ -1,14 +1,10 @@
 import { renderToPipeableStream } from 'react-dom/server'
-import type { Writable } from 'node:stream'
 import { StaticRouter } from 'react-router-dom/server'
 import { createStreamableHead, UnheadProvider } from '@unhead/react/stream/server'
 import App from './App'
 
-export function render(url: string) {
-  const head = createStreamableHead()
-
-  let resolveOnReady: () => void
-  const onReady = new Promise<void>(r => resolveOnReady = r)
+export function render(url: string, template: string) {
+  const { head, onShellReady, wrap } = createStreamableHead()
 
   const { pipe, abort } = renderToPipeableStream(
     <UnheadProvider value={head}>
@@ -16,17 +12,11 @@ export function render(url: string) {
         <App />
       </StaticRouter>
     </UnheadProvider>,
-    {
-      onShellReady() {
-        resolveOnReady()
-      },
-    },
+    { onShellReady },
   )
 
   return {
-    head,
-    onReady,
     abort,
-    pipe: (writable: Writable) => pipe(writable),
+    pipe: wrap(pipe, template),
   }
 }

@@ -16,10 +16,11 @@ export function createServerHeadWithContext(resolvedOptions: CreateHeadOptions =
 }
 
 export function createStreamableServerHead(options: { streamKey?: string } = {}) {
-  return createServerStreamableHead({
+  const { head } = createServerStreamableHead({
     disableDefaults: true,
     ...options,
   })
+  return head
 }
 
 // eslint-disable-next-line import/no-mutable-exports

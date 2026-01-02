@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 describe('solid-js streaming SSR e2e', () => {
   describe('full streaming workflow', () => {
     it('streams initial head tags in shell', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: 'Initial Title',
@@ -28,7 +28,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
 
     it('streams head updates with suspense chunks', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Loading...' })
 
@@ -55,7 +55,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
 
     it('handles multiple suspense boundaries', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Multi-Suspense Test' })
 
@@ -85,7 +85,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
 
     it('escapes XSS in head content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: '</script><script>alert("xss")</script>',
@@ -101,7 +101,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
 
     it('handles nested suspense with head updates', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({ title: 'Nested Test', htmlAttrs: { lang: 'en' } })
 
@@ -133,7 +133,7 @@ describe('solid-js streaming SSR e2e', () => {
 
   describe('custom stream key', () => {
     it('uses custom window key', async () => {
-      const head = createStreamableHead({ streamKey: '__solid_head__' })
+      const { head } = createStreamableHead({ streamKey: '__solid_head__' })
 
       head.push({ title: 'Custom Key Test' })
 
@@ -149,7 +149,7 @@ describe('solid-js streaming SSR e2e', () => {
 
   describe('error handling', () => {
     it('handles empty head gracefully', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       const template = `<!DOCTYPE html><html><head></head><body><!--app-html--></body></html>`
       const [htmlStart] = template.split('<!--app-html-->')
@@ -161,7 +161,7 @@ describe('solid-js streaming SSR e2e', () => {
     })
 
     it('handles unicode content', async () => {
-      const head = createStreamableHead()
+      const { head } = createStreamableHead()
 
       head.push({
         title: '日本語タイトル',
