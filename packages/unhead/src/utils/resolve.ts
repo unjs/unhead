@@ -11,6 +11,10 @@ export interface ResolveTagsContext {
   tags: HeadTag[]
 }
 
+export interface ResolveTagsOptions {
+  tagWeight?: (tag: HeadTag) => number
+}
+
 /**
  * Deduplicate tags into a tagMap using merge strategies.
  * Returns whether flat meta arrays were encountered.
@@ -117,8 +121,8 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
 /**
  * Resolve tags from a head instance.
  */
-export function resolveTags(head: Unhead<any>): HeadTag[] {
-  const weightFn = head.resolvedOptions._tagWeight ?? (() => 100)
+export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+  const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? (() => 100)
   const ctx: ResolveTagsContext = {
     tagMap: new Map(),
     tags: [],

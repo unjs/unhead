@@ -125,7 +125,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
@@ -149,7 +149,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
@@ -159,7 +159,7 @@ describe('vue dom', () => {
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })

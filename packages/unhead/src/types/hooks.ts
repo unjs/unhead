@@ -16,6 +16,7 @@ export interface SSRHeadPayload {
 export interface RenderSSRHeadOptions {
   omitLineBreaks?: boolean
   resolvedTags?: HeadTag[]
+  tagWeight?: (tag: HeadTag) => number
 }
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }

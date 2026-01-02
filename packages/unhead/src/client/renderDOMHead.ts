@@ -149,7 +149,7 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     const frag: Partial<Record<string, DocumentFragment>> = {}
 
     // resolve and process tags in single pass
-    const rawTags = resolveTags(head)
+    const rawTags = resolveTags(head, options.tagWeight ? { tagWeight: options.tagWeight } : undefined)
     const tags: DomRenderTagContext[] = []
     const dupeKeyCounter = new Map<string, number>()
     for (const tag of rawTags) {
