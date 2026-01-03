@@ -1,8 +1,8 @@
+import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { GlobalAttributes } from './attributes/global'
 import type { ReferrerPolicy } from './shared'
 import type { Blocking } from './struct/blocking'
-import type { DataKeys } from './attributes/data'
 
 // ============================================================================
 // Link Type Narrowing
@@ -177,12 +177,12 @@ export interface PreloadOtherLink extends PreloadLinkBase {
 /**
  * Combined preload union
  */
-export type PreloadLink =
-  | PreloadImageLink
-  | PreloadFontLink
-  | PreloadScriptLink
-  | PreloadStyleLink
-  | PreloadOtherLink
+export type PreloadLink
+  = | PreloadImageLink
+    | PreloadFontLink
+    | PreloadScriptLink
+    | PreloadStyleLink
+    | PreloadOtherLink
 
 // ============================================================================
 // Modulepreload Link
@@ -508,26 +508,26 @@ export interface GenericLink extends LinkBase {
  * Discriminated union of all link types.
  * Order matters for TypeScript narrowing - specific types before generic.
  */
-export type Link =
-  | StylesheetLink
-  | PreloadLink
-  | ModulepreloadLink
-  | PrefetchLink
-  | IconLink
-  | ManifestLink
-  | CanonicalLink
-  | DnsPrefetchLink
-  | PreconnectLink
-  | PrerenderLink
-  | AlternateLink
-  | AuthorLink
-  | LicenseLink
-  | HelpLink
-  | SearchLink
-  | PrevLink
-  | NextLink
-  | PingbackLink
-  | GenericLink
+export type Link
+  = | StylesheetLink
+    | PreloadLink
+    | ModulepreloadLink
+    | PrefetchLink
+    | IconLink
+    | ManifestLink
+    | CanonicalLink
+    | DnsPrefetchLink
+    | PreconnectLink
+    | PrerenderLink
+    | AlternateLink
+    | AuthorLink
+    | LicenseLink
+    | HelpLink
+    | SearchLink
+    | PrevLink
+    | NextLink
+    | PingbackLink
+    | GenericLink
 
 // ============================================================================
 // Legacy Exports (for backwards compatibility during migration)

@@ -1,7 +1,7 @@
 import type { Booleanable } from '../util'
+import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { GlobalAttributes } from './attributes/global'
-import type { DataKeys } from './attributes/data'
 import type { ReferrerPolicy } from './shared'
 import type { Blocking } from './struct/blocking'
 import type { SpeculationRules } from './struct/speculationRules'
@@ -364,16 +364,16 @@ export interface GenericScript extends ScriptBase {
  * Discriminated union of all script types.
  * Order matters for TypeScript narrowing - specific types before generic.
  */
-export type Script =
-  | ExternalScript
-  | ModuleScript
-  | InlineScript
-  | InlineModuleScript
-  | JsonLdScript
-  | SpeculationRulesScript
-  | ImportMapScript
-  | ApplicationJsonScript
-  | GenericScript
+export type Script
+  = | ExternalScript
+    | ModuleScript
+    | InlineScript
+    | InlineModuleScript
+    | JsonLdScript
+    | SpeculationRulesScript
+    | ImportMapScript
+    | ApplicationJsonScript
+    | GenericScript
 
 // ============================================================================
 // Legacy Exports (for backwards compatibility during migration)

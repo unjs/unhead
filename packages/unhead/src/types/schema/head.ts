@@ -1,69 +1,69 @@
 import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority } from '../tags'
 import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
+import type { DataKeys } from './attributes/data'
 import type { Base } from './base'
 import type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
 import type { HtmlAttributes } from './htmlAttributes'
 import type {
-  Link,
-  GenericLink,
-  LinkHttpEvents,
-  // Narrowed link types for re-export
-  StylesheetLink,
-  PreloadLink,
-  PreloadImageLink,
-  PreloadFontLink,
-  PreloadScriptLink,
-  PreloadStyleLink,
-  PreloadOtherLink,
-  ModulepreloadLink,
-  PrefetchLink,
-  IconLink,
-  ManifestLink,
-  CanonicalLink,
-  DnsPrefetchLink,
-  PreconnectLink,
-  PrerenderLink,
   AlternateLink,
   AuthorLink,
-  LicenseLink,
+  CanonicalLink,
+  DnsPrefetchLink,
+  GenericLink,
   HelpLink,
-  SearchLink,
-  PrevLink,
+  IconLink,
+  LicenseLink,
+  Link,
+  LinkBase,
+  LinkHttpEvents,
+  ManifestLink,
+  ModulepreloadLink,
   NextLink,
   PingbackLink,
-  LinkBase,
+  PreconnectLink,
+  PrefetchLink,
+  PreloadFontLink,
+  PreloadImageLink,
+  PreloadLink,
   PreloadLinkBase,
+  PreloadOtherLink,
+  PreloadScriptLink,
+  PreloadStyleLink,
+  PrerenderLink,
+  PrevLink,
+  SearchLink,
+  // Narrowed link types for re-export
+  StylesheetLink,
 } from './link'
 import type {
-  Meta,
-  NameMeta,
-  PropertyMeta,
-  HttpEquivMeta,
   CharsetMeta,
+  HttpEquivMeta,
+  Meta,
   MetaBase,
   MetaNames,
   MetaProperties,
+  NameMeta,
+  PropertyMeta,
 } from './meta'
 import type { MetaFlat } from './metaFlat'
 import type { Noscript } from './noscript'
 import type {
-  Script,
-  GenericScript,
-  ScriptHttpEvents,
+  ApplicationJsonScript,
   // Narrowed script types for re-export
   ExternalScript,
-  ModuleScript,
-  InlineScript,
-  InlineModuleScript,
-  JsonLdScript,
-  SpeculationRulesScript,
-  ImportMapScript,
-  ApplicationJsonScript,
-  ScriptBase,
+  GenericScript,
   ImportMapConfig,
+  ImportMapScript,
+  InlineModuleScript,
+  InlineScript,
+  JsonLdScript,
+  ModuleScript,
+  Script,
+  ScriptBase,
+  ScriptHttpEvents,
+  SpeculationRulesScript,
 } from './script'
 import type { Style } from './style'
-import type { DataKeys } from './attributes/data'
 
 export interface SchemaAugmentations {
   title: TagPriority
@@ -113,11 +113,11 @@ export interface UnheadHtmlAttributes extends Omit<HtmlAttributes, 'class' | 'st
 /**
  * Unhead meta with support for array content values
  */
-export type UnheadMeta =
-  | (Omit<NameMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
-  | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
-  | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
-  | CharsetMeta
+export type UnheadMeta
+  = | (Omit<NameMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | CharsetMeta
 
 export type MaybeEventFnHandlers<T> = {
   [key in keyof T]?: T[key] | ((e: Event) => void)
@@ -243,72 +243,72 @@ export type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
 
 // Link types (narrowed)
 export type {
+  AlternateLink,
+  AuthorLink,
+  CanonicalLink,
+  DnsPrefetchLink,
+  GenericLink,
+  HelpLink,
+  IconLink,
+  LicenseLink,
   Link,
   LinkBase,
   LinkHttpEvents,
-  StylesheetLink,
-  PreloadLink,
-  PreloadLinkBase,
-  PreloadImageLink,
-  PreloadFontLink,
-  PreloadScriptLink,
-  PreloadStyleLink,
-  PreloadOtherLink,
-  ModulepreloadLink,
-  PrefetchLink,
-  IconLink,
   ManifestLink,
-  CanonicalLink,
-  DnsPrefetchLink,
-  PreconnectLink,
-  PrerenderLink,
-  AlternateLink,
-  AuthorLink,
-  LicenseLink,
-  HelpLink,
-  SearchLink,
-  PrevLink,
+  ModulepreloadLink,
   NextLink,
   PingbackLink,
-  GenericLink,
+  PreconnectLink,
+  PrefetchLink,
+  PreloadFontLink,
+  PreloadImageLink,
+  PreloadLink,
+  PreloadLinkBase,
+  PreloadOtherLink,
+  PreloadScriptLink,
+  PreloadStyleLink,
+  PrerenderLink,
+  PrevLink,
+  SearchLink,
+  StylesheetLink,
 }
 
 // Script types (narrowed)
 export type {
+  ApplicationJsonScript,
+  ExternalScript,
+  GenericScript,
+  ImportMapConfig,
+  ImportMapScript,
+  InlineModuleScript,
+  InlineScript,
+  JsonLdScript,
+  ModuleScript,
   Script,
   ScriptBase,
   ScriptHttpEvents,
-  ExternalScript,
-  ModuleScript,
-  InlineScript,
-  InlineModuleScript,
-  JsonLdScript,
   SpeculationRulesScript,
-  ImportMapScript,
-  ImportMapConfig,
-  ApplicationJsonScript,
-  GenericScript,
 }
 
 // Meta types (narrowed)
 export type {
+  CharsetMeta,
+  HttpEquivMeta,
   Meta,
   MetaBase,
   MetaNames,
   MetaProperties,
   NameMeta,
   PropertyMeta,
-  HttpEquivMeta,
-  CharsetMeta,
 }
-
-// Other types
-export type { MetaFlat } from './metaFlat'
-export type { SpeculationRules } from './struct/speculationRules'
 
 // Legacy exports for backwards compatibility
 export type { GenericLink as LinkWithoutEvents } from './link'
+// Other types
+export type { MetaFlat } from './metaFlat'
+
 export type { GenericScript as ScriptWithoutEvents } from './script'
+export type { SpeculationRules } from './struct/speculationRules'
 
 // ============================================================================
 // Utility Types for Internal Use
@@ -321,9 +321,9 @@ export type { GenericScript as ScriptWithoutEvents } from './script'
  * @internal
  */
 export interface MetaGeneric extends MetaBase {
-  name?: MetaNames | (string & Record<never, never>)
-  property?: MetaProperties | (string & Record<never, never>)
+  'name'?: MetaNames | (string & Record<never, never>)
+  'property'?: MetaProperties | (string & Record<never, never>)
   'http-equiv'?: 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | (string & Record<never, never>)
-  charset?: 'utf-8' | (string & Record<never, never>)
-  content?: Stringable
+  'charset'?: 'utf-8' | (string & Record<never, never>)
+  'content'?: Stringable
 }
