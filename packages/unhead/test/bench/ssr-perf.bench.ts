@@ -59,7 +59,7 @@ describe('ssr bench', () => {
       await renderSSRHead(head)
     }
   }, {
-    iterations: 100,
+    iterations: 1000,
     time: 1000,
   })
 })
