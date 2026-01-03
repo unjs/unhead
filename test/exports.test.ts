@@ -14,7 +14,7 @@ describe('exports-snapshot', async () => {
       continue
     it(`${pkg.name}`, async () => {
       const manifest = await getPackageExportsManifest({
-        importMode: 'package',
+        importMode: 'dist',
         cwd: pkg.path,
       })
       // @ts-expect-error untyped
