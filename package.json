@@ -12,7 +12,7 @@
     "url": "git+https://github.com/unjs/unhead.git"
   },
   "scripts": {
-    "bundle-size:sync": "pnpm run test:bundle-size && pnpm run test:vue-bundle-size && bun bench/bundle/analyze.ts && bun bench/bundle/update.ts",
+    "bundle-size:sync": "pnpm run build && pnpm run test:bundle-size && pnpm run test:vue-bundle-size && bun bench/bundle/analyze.ts && bun bench/bundle/update.ts",
     "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
     "test:vue-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-server-build.config.ts",
     "build": "pnpm -r --filter='./packages/**' run build",

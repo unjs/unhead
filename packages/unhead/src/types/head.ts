@@ -98,15 +98,13 @@ export interface CreateHeadOptions {
    */
   init?: (ResolvableHead | undefined | false)[]
   /**
-   * Disable the Capo.js tag sorting algorithm.
-   *
-   * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
-   */
-  disableCapoSorting?: boolean
-  /**
    * Prop resolvers for tags.
    */
   propResolvers?: PropResolver[]
+  /**
+   * @internal
+   */
+  _tagWeight?: (tag: HeadTag) => number
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {

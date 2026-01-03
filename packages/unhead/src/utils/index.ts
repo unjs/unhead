@@ -4,6 +4,5 @@ export { resolveMetaKeyType, resolveMetaKeyValue, resolvePackedMetaObjectValue, 
 export { normalizeEntryToTags, normalizeProps } from './normalize'
 export { dedupeTags, resolveTags, resolveTitleTemplate, sanitizeTags } from './resolve'
 export type { ResolveTagsContext } from './resolve'
-export { sortTags, tagWeight } from './sort'
 export { processTemplateParams } from './templateParams'
 export { walkResolver } from './walkResolver'

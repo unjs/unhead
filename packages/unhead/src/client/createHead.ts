@@ -1,6 +1,13 @@
-import type { CreateClientHeadOptions, ResolvableHead } from '../types'
+import type { CreateClientHeadOptions, HeadTag, ResolvableHead } from '../types'
 import { createUnhead } from '../unhead'
+import { TagPriorityAliases } from '../utils/const'
 import { renderDOMHead } from './renderDOMHead'
+
+function tagWeight(tag: HeadTag) {
+  return typeof tag.tagPriority === 'number'
+    ? tag.tagPriority
+    : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
+}
 
 export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}) {
   const render = options.domOptions?.render || renderDOMHead
@@ -9,6 +16,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   // restore initial entry from payload (titleTemplate and templateParams)
   return createUnhead<T>({
     ...options,
+    _tagWeight: tagWeight,
     plugins: [
       ...(options.plugins || []),
       {
