@@ -2,6 +2,7 @@ import type { CreateHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayloa
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead } from '../src/server'
+import { createStreamableHead as createServerStreamableHead } from '../src/stream/server'
 
 export function createClientHeadWithContext(resolvedOptions: CreateHeadOptions = {}) {
   return createClientHead(resolvedOptions)
@@ -12,6 +13,14 @@ export function createServerHeadWithContext(resolvedOptions: CreateHeadOptions =
     disableDefaults: true,
     ...resolvedOptions,
   })
+}
+
+export function createStreamableServerHead(options: { streamKey?: string } = {}) {
+  const { head } = createServerStreamableHead({
+    disableDefaults: true,
+    ...options,
+  })
+  return head
 }
 
 // eslint-disable-next-line import/no-mutable-exports

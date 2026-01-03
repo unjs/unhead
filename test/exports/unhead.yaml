@@ -36,6 +36,27 @@
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
+./stream/client:
+  createDebouncedFn: function
+  createHead: function
+  createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
+  renderDOMHead: function
+./stream/server:
+  createHead: function
+  createStreamableHead: function
+  escapeHtml: function
+  propsToString: function
+  renderSSRHead: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  ssrRenderTags: function
+  tagToString: function
+  transformHtmlTemplate: function
+  transformHtmlTemplateRaw: function
+./stream/vite:
+  createStreamingPlugin: function
+  VIRTUAL_CLIENT_ID: string
 ./types: {}
 ./utils:
   dedupeKey: function

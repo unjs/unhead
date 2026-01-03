@@ -20,6 +20,7 @@
     "stub": "pnpm -r --parallel --filter='./packages/**' run stub",
     "test": "pnpm lint && vue-tsc --noEmit && vitest",
     "test:memory": "vitest --expose-gc  run memory",
+    "test:benchmark": "RUN_BENCHMARKS=1 vitest run packages/unhead/test/streaming/benchmark.test.ts",
     "bump": "bumpp package.json packages-aliased/*/package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build && pnpm build:aliases && pnpm bump",
     "release:next": "pnpm build && pnpm bump",

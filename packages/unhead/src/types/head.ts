@@ -102,6 +102,13 @@ export interface CreateHeadOptions {
    */
   propResolvers?: PropResolver[]
   /**
+   * @experimental
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  experimentalStreamKey?: string
+  /**
    * @internal
    */
   _tagWeight?: (tag: HeadTag) => number
@@ -117,6 +124,24 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
    * - <meta name="viewport" content="width=device-width, initial-scale=1">
    */
   disableDefaults?: boolean
+}
+
+export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  streamKey?: string
+}
+
+export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Must match the server's streamKey.
+   * @default '__unhead__'
+   */
+  streamKey?: string
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
@@ -216,6 +241,10 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _ssrPayload?: ResolvableHead
+  /**
+   * @internal
+   */
+  _rootStreamedTags?: Record<string, HeadTag>
 }
 
 export interface DomState {
