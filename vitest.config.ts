@@ -9,7 +9,7 @@ export default defineConfig({
   },
   test: {
     pool: 'threads',
-    projects: ['packages/*', 'test/'],
+    projects: ['packages/*', 'test/', 'bench/'],
     globals: true,
     reporters: 'dot',
     isolate: true,
