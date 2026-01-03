@@ -16,15 +16,27 @@
 
   The name of the business.
 
+## Recommended Properties
+
 - **logo** `SingleImageInput`
 
   Logo image url, can be relative to your site root.
 
-## Recommended Properties
-
 - **sameAs**  `string[]`
 
   An array of URLs that also belong to the Organization
+
+- **telephone** `string`
+
+  The telephone number of the organization.
+
+- **email** `string`
+
+  The email address of the organization.
+
+- **foundingDate** `string`
+
+  The date the organization was founded.
 
 ## Examples
 
@@ -126,5 +138,17 @@ export interface Organization extends Thing {
    * A reference-by-ID to an PostalAddress piece.
    */
   address?: NodeRelations<PostalAddress>
+  /**
+   * The telephone number of the organization.
+   */
+  telephone?: string
+  /**
+   * The email address of the organization.
+   */
+  email?: string
+  /**
+   * The date the organization was founded.
+   */
+  foundingDate?: string
 }
 ```

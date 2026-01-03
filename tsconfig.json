@@ -10,13 +10,27 @@
     "module": "preserve",
     "paths": {
       "unhead": ["packages/unhead/src/index"],
+      "unhead/client": ["packages/unhead/src/client/index"],
+      "unhead/server": ["packages/unhead/src/server/index"],
       "unhead/plugins": ["packages/unhead/src/plugins/index"],
       "unhead/utils": ["packages/unhead/src/utils/index"],
       "unhead/types": ["packages/unhead/src/types/index"],
+      "unhead/stream/client": ["packages/unhead/src/stream/client"],
+      "unhead/stream/server": ["packages/unhead/src/stream/server"],
+      "unhead/stream/vite": ["packages/unhead/src/stream/vite"],
       "@unhead/ssr": ["packages/unhead/src/server/index"],
-      "@unhead/vue": ["packages/vue/src/index"],
       "@unhead/dom": ["packages/unhead/src/client/index"],
-      "@unhead/svelte/types": ["packages/svelte/src/types"]
+      "@unhead/vue": ["packages/vue/src/index"],
+      "@unhead/vue/client": ["packages/vue/src/client"],
+      "@unhead/vue/server": ["packages/vue/src/server"],
+      "@unhead/addons": ["packages/addons/src/index"],
+      "@unhead/addons/vite": ["packages/addons/src/vite"],
+      "@unhead/schema-org": ["packages/schema-org/src/index"],
+      "@unhead/schema-org/vue": ["packages/schema-org/src/vue/index"],
+      "@unhead/svelte/types": ["packages/svelte/src/types"],
+      "@unhead/angular": ["packages/angular/src/index"],
+      "@unhead/angular/client": ["packages/angular/client/src/index"],
+      "@unhead/angular/server": ["packages/angular/server/src/index"]
     },
     "resolveJsonModule": true,
     "types": ["vitest/globals"],
@@ -28,5 +42,11 @@
     "esModuleInterop": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "examples",
+    "bench",
+    "packages/angular",
+    "packages/addons"
+  ]
 }

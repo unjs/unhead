@@ -308,11 +308,11 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    * When users search for your site, Google Search results sometimes display a search box specific to your site,
    * along with other direct links to your site. This tag tells Google not to show the sitelinks search box.
    */
-    'nositelinkssearchbox' |
+    'nositelinkssearchbox'
   /**
    * Prevents various Google text-to-speech services from reading aloud web pages using text-to-speech (TTS).
    */
-    'nopagereadaloud'
+    | 'nopagereadaloud'
   /**
    * Control how Google indexing works specifically for the googlebot crawler.
    *
@@ -375,11 +375,11 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * @see https://ogp.me/#metadata
    */
-  ogType?: 'website' | 'article' | 'book' | 'profile' |
+  ogType?: 'website' | 'article' | 'book' | 'profile'
   // Namespace URI https://ogp.me/ns/music#
-    'music.song' | 'music.album' | 'music.playlist' | 'music.radio_status' |
+    | 'music.song' | 'music.album' | 'music.playlist' | 'music.radio_status'
   // Namespace URI https://ogp.me/ns/video#
-    'video.movie' | 'video.episode' | 'video.tv_show' | 'video.other'
+    | 'video.movie' | 'video.episode' | 'video.tv_show' | 'video.other'
 
   /**
    * The locale of the resource. Defaults to en_US.
@@ -1022,20 +1022,4 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
     seconds?: number | string
     url?: string
   }
-  // deprecated meta
-  /**
-   * A comma-separated list of keywords - relevant to the page (Legacy tag used to tell search engines what the page is about).
-   * @deprecated the "keywords" metatag is no longer used.
-   * @see https://web.dev/learn/html/metadata/#keywords
-   */
-  keywords?: string
 }
-
-/**
- * @deprecated Use MetaFlat
- */
-export type MetaFlatInput = MetaFlat
-/**
- * @deprecated Use MetaFlat
- */
-export type ResolvedMetaFlat = MetaFlat

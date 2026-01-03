@@ -3,9 +3,20 @@ import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
 const allowedMetaProperties = ['name', 'property', 'http-equiv']
 
+// Standard single-value meta tags that should always deduplicate
+// Tags not included here can be duped by using content: ['one', 'two']
+const StandardSingleMetaTags = new Set([
+  'viewport',
+  'description',
+  'keywords',
+  'robots',
+])
+
 export function isMetaArrayDupeKey(v: string) {
-  const k = v.split(':')[1]
-  return MetaTagsArrayable.has(k)
+  const parts = v.split(':')
+  if (!parts.length)
+    return false
+  return MetaTagsArrayable.has(parts[1])
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
@@ -25,9 +36,12 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     for (const n of allowedMetaProperties) {
       // open graph props can have multiple tags with the same property
       if (props[n] !== undefined) {
-        // const val = isMetaArrayDupeKey(props[n]) ? `:${props.content}` : ''
-        // for example: meta-name-description
-        return `${name}:${props[n]}`
+        const propValue = props[n]
+        const isStructured = propValue && typeof propValue === 'string' && propValue.includes(':')
+        const isStandardSingle = propValue && StandardSingleMetaTags.has(propValue)
+        const shouldAlwaysDedupe = isStructured || isStandardSingle
+        const keyPart = (!shouldAlwaysDedupe && tag.key) ? `:key:${tag.key}` : ''
+        return `${name}:${propValue}${keyPart}`
       }
     }
   }

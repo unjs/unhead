@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "2.0.2",
+  "version": "3.0.0-beta.4",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -37,13 +37,17 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./dist/types.mjs"
-    },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
     },
     "./plugins": {
       "types": "./dist/plugins.d.ts",
@@ -56,6 +60,10 @@
     "./scripts": {
       "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
+    },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -72,11 +80,14 @@
       "client": [
         "dist/client"
       ],
+      "stream/server": [
+        "dist/stream/server"
+      ],
+      "stream/client": [
+        "dist/stream/client"
+      ],
       "types": [
         "dist/types"
-      ],
-      "legacy": [
-        "dist/legacy"
       ],
       "plugins": [
         "dist/plugins"
@@ -86,6 +97,9 @@
       ],
       "scripts": [
         "dist/scripts"
+      ],
+      "stream/vite": [
+        "dist/stream/vite"
       ]
     }
   },
@@ -96,10 +110,17 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "vue": ">=3.5.13"
+    "vite": ">=6",
+    "vue": ">=3.5.18"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "build": {
     "external": [
@@ -107,10 +128,14 @@
     ]
   },
   "dependencies": {
-    "hookable": "^5.5.3",
+    "hookable": "catalog:",
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "vue": "^3.5.13"
+    "@vue/server-renderer": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:"
   }
 }

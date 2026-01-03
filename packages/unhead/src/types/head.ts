@@ -11,20 +11,12 @@ import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition,
  */
 export type SideEffectsRecord = Record<string, () => void>
 
-export type RuntimeMode = 'server' | 'client'
-
 export interface HeadEntry<Input> {
   /**
    * User provided input for the entry.
    */
   input: Input
   options?: {
-    /**
-     * The mode that the entry should be used in.
-     *
-     * @internal
-     */
-    mode?: RuntimeMode
     /**
      * Default tag position.
      *
@@ -115,6 +107,13 @@ export interface CreateHeadOptions {
    * Prop resolvers for tags.
    */
   propResolvers?: PropResolver[]
+  /**
+   * @experimental
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  experimentalStreamKey?: string
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -129,6 +128,24 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
   disableDefaults?: boolean
 }
 
+export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Allows multiple Unhead instances on the same page.
+   * @default '__unhead__'
+   */
+  streamKey?: string
+}
+
+export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'experimentalStreamKey'> {
+  /**
+   * Key used for window attachment during streaming SSR.
+   * Must match the server's streamKey.
+   * @default '__unhead__'
+   */
+  streamKey?: string
+}
+
 export interface CreateClientHeadOptions extends CreateHeadOptions {
   /**
    * Options to pass to the DomPlugin.
@@ -137,10 +154,6 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
-  /**
-   * @deprecated Tree shaking should now be handled using import.meta.* if statements.
-   */
-  mode?: RuntimeMode
   head?: Unhead
   /**
    * @internal
@@ -162,19 +175,13 @@ export interface Unhead<Input = ResolvableHead> {
    */
   entries: Map<number, HeadEntry<Input>>
   /**
-   * The active head entries.
-   *
-   * @deprecated Use entries instead.
-   */
-  headEntries: () => HeadEntry<Input>[]
-  /**
    * Create a new head entry.
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
   /**
-   * Resolve tags from head entries.
+   * Invalidate all entries and re-queue them for normalization.
    */
-  resolveTags: () => Promise<HeadTag[]>
+  invalidate: () => void
   /**
    * Exposed hooks for easier extension.
    */
@@ -223,6 +230,10 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
+  _normalizeQueue: Set<number>
+  /**
+   * @internal
+   */
   _title?: string
   /**
    * @internal
@@ -242,5 +253,5 @@ export interface DomState {
   title: string
   pendingSideEffects: SideEffectsRecord
   sideEffects: SideEffectsRecord
-  elMap: Map<string, Element | Element[]>
+  elMap: Map<string, Element>
 }

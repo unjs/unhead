@@ -51,7 +51,7 @@ describe('defineProduct', () => {
               "reviewCount": 20,
             },
             "image": {
-              "@id": "https://example.com/#/schema/image/f2d5ce5",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "name": "test",
             "offers": {
@@ -76,10 +76,9 @@ describe('defineProduct', () => {
                 "worstRating": 1,
               },
             },
-            "sku": "3104ae4",
           },
           {
-            "@id": "https://example.com/#/schema/image/f2d5ce5",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/product.png",
             "inLanguage": "en-AU",

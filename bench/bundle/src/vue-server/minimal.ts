@@ -1,21 +1,25 @@
 import { useHead } from '@unhead/vue'
-import { createHead } from '@unhead/vue/server'
+import { createHead, renderSSRHead } from '@unhead/vue/server'
 
+async function doHead() {
 // Full usage with all core features
-const head = createHead()
+  const head = createHead()
 
-useHead({
-  title: 'Test',
-  titleTemplate: '%s | Site',
-  meta: [
-    { name: 'description', content: 'Test' },
-  ],
-  link: [
-    { rel: 'icon', href: '/favicon.ico' },
-  ],
-  script: [
-    { src: '/test.js', defer: true },
-  ],
-}, {
-  head,
-})
+  useHead({
+    title: 'Test',
+    titleTemplate: '%s | Site',
+    meta: [
+      { name: 'description', content: 'Test' },
+    ],
+    link: [
+      { rel: 'icon', href: '/favicon.ico' },
+    ],
+    script: [
+      { src: '/test.js', defer: true },
+    ],
+  }, { head })
+
+  return await renderSSRHead(head)
+}
+
+doHead()

@@ -1,14 +1,14 @@
 import type { Arrayable, ResolvableDate, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
 
-type DayOfWeek = 'Friday' |
-  'Monday' |
-  'PublicHolidays' |
-  'Saturday' |
-  'Sunday' |
-  'Thursday' |
-  'Tuesday' |
-  'Wednesday'
+type DayOfWeek = 'Friday'
+  | 'Monday'
+  | 'PublicHolidays'
+  | 'Saturday'
+  | 'Sunday'
+  | 'Thursday'
+  | 'Tuesday'
+  | 'Wednesday'
 
 type Time = `${number}${number}:${number}${number}`
 

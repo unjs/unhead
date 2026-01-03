@@ -1,17 +1,12 @@
 .:
-  createHeadCore: function
   createUnhead: function
   headSymbol: string
   injectHead: function
-  resolveUnrefHeadInput: function
   unheadVueComposablesImports: object
   useHead: function
   useHeadSafe: function
   useScript: function
   useSeoMeta: function
-  useServerHead: function
-  useServerHeadSafe: function
-  useServerSeoMeta: function
   VueHeadMixin: object
 ./client:
   createHead: function
@@ -19,25 +14,10 @@
   VueHeadMixin: object
 ./components:
   Head: object
-./legacy:
-  CapoPlugin: function
-  createHead: function
-  createHeadCore: function
-  createServerHead: function
-  injectHead: function
-  resolveUnrefHeadInput: function
-  setHeadInjectionHandler: function
-  useHead: function
-  useHeadSafe: function
-  useSeoMeta: function
-  useServerHead: function
-  useServerHeadSafe: function
-  useServerSeoMeta: function
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
-  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   PromisesPlugin: object
@@ -45,18 +25,37 @@
   TemplateParamsPlugin: function
 ./scripts:
   createSpyProxy: function
-  resolveScriptKey: function
   useScript: function
 ./server:
   createHead: function
-  extractUnheadInputFromHtml: function
   propsToString: function
   renderSSRHead: function
   transformHtmlTemplate: function
   VueHeadMixin: object
+./stream/client:
+  createHead: function
+  createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
+  HeadStream: object
+  renderDOMHead: function
+  VueHeadMixin: object
+./stream/server:
+  createHead: function
+  createStreamableHead: function
+  HeadStream: object
+  propsToString: function
+  renderSSRHead: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  transformHtmlTemplate: function
+  VueHeadMixin: object
+./stream/vite:
+  default: function
+  unheadVuePlugin: function
 ./types: {}
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -68,7 +67,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
-  resolveUnrefHeadInput: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function

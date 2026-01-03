@@ -34,7 +34,7 @@ describe('schema.org e2e no plugin', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -107,7 +107,7 @@ describe('schema.org e2e no plugin', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -230,15 +230,15 @@ describe('schema.org e2e no plugin', () => {
             ],
             "mainEntity": [
               {
-                "@id": "https://example.com/about#/schema/question/ab1c398"
+                "@id": "https://example.com/about#/schema/question/1"
               },
               {
-                "@id": "https://example.com/about#/schema/question/6396da9"
+                "@id": "https://example.com/about#/schema/question/2"
               }
             ]
           },
           {
-            "@id": "https://example.com/about#/schema/question/ab1c398",
+            "@id": "https://example.com/about#/schema/question/1",
             "@type": "Question",
             "name": "What is your return policy?",
             "acceptedAnswer": {
@@ -247,7 +247,7 @@ describe('schema.org e2e no plugin', () => {
             }
           },
           {
-            "@id": "https://example.com/about#/schema/question/6396da9",
+            "@id": "https://example.com/about#/schema/question/2",
             "@type": "Question",
             "name": "What is something else?",
             "acceptedAnswer": {

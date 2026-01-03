@@ -42,4 +42,65 @@ describe('normalise', () => {
       }
     `)
   })
+
+  it('leaves string values untouched in meta content attribute', async () => {
+    const head = createServerHeadWithContext()
+
+    head.push({
+      meta: [
+        {
+          'name': 'test-meta',
+          'content': 'true',
+          'other-bool': 'true',
+        } as any,
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<meta name="test-meta" content="true" other-bool>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
+
+  it('handles script type attribute edge cases without throwing errors', async () => {
+    const head = createServerHeadWithContext()
+
+    // Test that even with edge cases for type attribute, no errors are thrown
+    head.push({
+      script: [
+        {
+          type: '', // empty string - preserved as string for script type
+          innerHTML: 'console.log("empty type")',
+        },
+        {
+          type: 'true', // string 'true' - preserved as string for script type
+          innerHTML: 'console.log("true type")',
+        },
+        {
+          type: 'application/json',
+          innerHTML: '{"test": "json"}',
+        },
+      ],
+    })
+
+    // Should render without throwing TypeError with String() coercion in endsWith checks
+    const ctx = await renderSSRHead(head)
+    expect(ctx).toMatchInlineSnapshot(`
+      {
+        "bodyAttrs": "",
+        "bodyTags": "",
+        "bodyTagsOpen": "",
+        "headTags": "<script type>console.log("empty type")</script>
+      <script type>console.log("true type")</script>
+      <script type="application/json">{"test": "json"}</script>",
+        "htmlAttrs": "",
+      }
+    `)
+  })
 })

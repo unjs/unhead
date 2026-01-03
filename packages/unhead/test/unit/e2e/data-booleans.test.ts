@@ -22,8 +22,6 @@ describe('unhead e2e data true', () => {
           'content': 'true',
         },
       ],
-    }, {
-      mode: 'server',
     })
 
     const data = await renderSSRHead(ssrHead)
@@ -33,7 +31,7 @@ describe('unhead e2e data true', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content>",
+        "headTags": "<meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content="true">",
         "htmlAttrs": "",
       }
     `)
@@ -52,11 +50,11 @@ describe('unhead e2e data true', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content="">
+      <meta name="foo" data-foo="true" data-bar="false" data-empty-string="" data-bar-false="false" data-foo-true="true" content="true">
       </head>
       <body>
 

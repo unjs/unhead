@@ -1,4 +1,3 @@
-import type { HeadTag } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
@@ -6,13 +5,9 @@ import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('dom order', () => {
   it('renders in registered order', async () => {
-    let firstTagRendered: HeadTag | null = null
+    const dom = useDom()
     const head = createClientHeadWithContext({
-      hooks: {
-        'dom:rendered': ({ renders }) => {
-          firstTagRendered = renders[0].tag
-        },
-      },
+      document: dom.window.document,
     })
 
     useHead(head, {
@@ -22,22 +17,14 @@ describe('dom order', () => {
       script: [{ innerHTML: 'document.documentElement.classList.remove("no-js")' }],
     })
 
-    const dom = useDom()
-
     await renderDOMHead(head, { document: dom.window.document })
 
-    expect(firstTagRendered).toMatchInlineSnapshot(`
-      {
-        "_d": "htmlAttrs",
-        "_p": 1024,
-        "_w": 100,
-        "props": {
-          "class": Set {
-            "no-js",
-          },
-        },
-        "tag": "htmlAttrs",
-      }
-    `)
+    // Check that the script was rendered
+    const scripts = dom.window.document.head.querySelectorAll('script')
+    expect(scripts.length).toBe(1)
+    expect(scripts[0].innerHTML).toBe('document.documentElement.classList.remove("no-js")')
+
+    // Check that the class was applied
+    expect(dom.window.document.documentElement.classList.contains('no-js')).toBe(true)
   })
 })

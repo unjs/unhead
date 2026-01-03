@@ -9,16 +9,16 @@ import {
 import { localBusinessResolver } from '../LocalBusiness'
 import { ratingResolver } from '../Rating'
 
-type ValidFoodEstablishmentSubTypes = 'Bakery' |
-  'BarOrPub' |
-  'Brewery' |
-  'Dentist' |
-  'CafeOrCoffeeShop' |
-  'Distillery' |
-  'FastFoodRestaurant' |
-  'IceCreamShop' |
-  'Restaurant' |
-  'Winery'
+type ValidFoodEstablishmentSubTypes = 'Bakery'
+  | 'BarOrPub'
+  | 'Brewery'
+  | 'Dentist'
+  | 'CafeOrCoffeeShop'
+  | 'Distillery'
+  | 'FastFoodRestaurant'
+  | 'IceCreamShop'
+  | 'Restaurant'
+  | 'Winery'
 
 export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes
@@ -30,6 +30,10 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
    * URL of the menu.
    */
   'hasMenu'?: string
+  /**
+   * Methods of payment accepted.
+   */
+  'paymentAccepted'?: string
   /**
    * The cuisine of the restaurant.
    */

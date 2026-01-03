@@ -22,13 +22,13 @@ describe('definePerson', () => {
             "@id": "https://example.com/#identity",
             "@type": "Person",
             "image": {
-              "@id": "https://example.com/#/schema/image/d11938c",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "name": "test",
             "url": "https://example.com/",
           },
           {
-            "@id": "https://example.com/#/schema/image/d11938c",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/logo.png",
             "inLanguage": "en-AU",

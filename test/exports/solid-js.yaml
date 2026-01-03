@@ -13,7 +13,6 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
-  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   PromisesPlugin: object
@@ -21,12 +20,31 @@
   TemplateParamsPlugin: function
 ./server:
   createHead: function
-  extractUnheadInputFromHtml: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadContext: object
+./stream/client:
+  createDebouncedFn: function
+  createHead: function
+  createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
+  HeadStream: function
+  renderDOMHead: function
+  UnheadContext: object
+./stream/server:
+  createHead: function
+  createStreamableHead: function
+  HeadStream: function
+  renderSSRHead: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  UnheadContext: object
+./stream/vite:
+  default: function
+  unheadSolidPlugin: function
 ./utils:
   dedupeKey: function
+  dedupeTags: function
   DupeableTags: object
   HasElementTags: object
   hashTag: function
@@ -38,6 +56,9 @@
   resolveMetaKeyType: function
   resolveMetaKeyValue: function
   resolvePackedMetaObjectValue: function
+  resolveTags: function
+  resolveTitleTemplate: function
+  sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
   sortTags: function

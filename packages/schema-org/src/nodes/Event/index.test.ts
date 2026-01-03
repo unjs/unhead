@@ -48,11 +48,11 @@ describe('defineEvent', () => {
             "inLanguage": "en-AU",
             "name": "test",
             "organizer": {
-              "@id": "https://example.com/#/schema/organization/d3d4507",
+              "@id": "https://example.com/#/schema/organization/1",
             },
           },
           {
-            "@id": "https://example.com/#/schema/organization/d3d4507",
+            "@id": "https://example.com/#/schema/organization/1",
             "@type": [
               "Organization",
               "PerformingGroup",
@@ -81,10 +81,10 @@ describe('defineEvent', () => {
           {
             "@id": "https://example.com/#event",
             "@type": "Event",
-            "endDate": "2021-10-10",
+            "endDate": "2021-11-10",
             "inLanguage": "en-AU",
             "name": "test",
-            "startDate": "2021-10-10",
+            "startDate": "2021-11-10",
           },
         ]
       `)
@@ -238,20 +238,20 @@ describe('defineEvent', () => {
               "validFrom": "2024-06-21T12:00:00.000Z",
             },
             "organizer": {
-              "@id": "https://example.com/#/schema/organization/ff95f9d",
+              "@id": "https://example.com/#/schema/organization/1",
             },
             "performer": {
-              "@id": "https://example.com/#/schema/performing-group/1a358dc",
+              "@id": "https://example.com/#/schema/performing-group/1",
             },
             "startDate": "2025-07-21T19:00-05:00",
           },
           {
-            "@id": "https://example.com/#/schema/performing-group/1a358dc",
+            "@id": "https://example.com/#/schema/performing-group/1",
             "@type": "PerformingGroup",
             "name": "Kira and Morrison",
           },
           {
-            "@id": "https://example.com/#/schema/organization/ff95f9d",
+            "@id": "https://example.com/#/schema/organization/1",
             "@type": "Organization",
             "name": "Kira and Morrison Music",
             "url": "https://kiraandmorrisonmusic.com",

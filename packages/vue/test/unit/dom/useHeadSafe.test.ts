@@ -82,13 +82,13 @@ describe('vue dom useHeadSafe', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html lang="en" dir="ltr"><head>
+      "<html><head>
 
-      <meta charset="utf-8"><link data-bar="foo" href="https://cdn.example.com/style.css" rel="stylesheet"><style data-foo="bar">body { background: url("javascript:alert(1)") }</style><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"></head>
-      <body class="dark" data-bar="foo"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      </head>
+      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })

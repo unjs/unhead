@@ -34,29 +34,29 @@ defineSoftwareApp({
 ## Types
 
 ```ts
-type ApplicationCategory =
-  'GameApplication' |
-  'SocialNetworkingApplication' |
-  'TravelApplication' |
-  'ShoppingApplication' |
-  'SportsApplication' |
-  'LifestyleApplication' |
-  'BusinessApplication' |
-  'DesignApplication' |
-  'DeveloperApplication' |
-  'DriverApplication' |
-  'EducationalApplication' |
-  'HealthApplication' |
-  'FinanceApplication' |
-  'SecurityApplication' |
-  'BrowserApplication' |
-  'CommunicationApplication' |
-  'DesktopEnhancementApplication' |
-  'EntertainmentApplication' |
-  'MultimediaApplication' |
-  'HomeApplication' |
-  'UtilitiesApplication' |
-  'ReferenceApplication'
+type ApplicationCategory
+  = 'GameApplication'
+    | 'SocialNetworkingApplication'
+    | 'TravelApplication'
+    | 'ShoppingApplication'
+    | 'SportsApplication'
+    | 'LifestyleApplication'
+    | 'BusinessApplication'
+    | 'DesignApplication'
+    | 'DeveloperApplication'
+    | 'DriverApplication'
+    | 'EducationalApplication'
+    | 'HealthApplication'
+    | 'FinanceApplication'
+    | 'SecurityApplication'
+    | 'BrowserApplication'
+    | 'CommunicationApplication'
+    | 'DesktopEnhancementApplication'
+    | 'EntertainmentApplication'
+    | 'MultimediaApplication'
+    | 'HomeApplication'
+    | 'UtilitiesApplication'
+    | 'ReferenceApplication'
 
 export interface SoftwareAppSimple extends Thing {
   '@type'?: Arrayable<'SoftwareApplication' | 'MobileApplication' | 'VideoGame' | 'WebApplication'>
@@ -86,5 +86,21 @@ export interface SoftwareAppSimple extends Thing {
    * The operating system(s) required to use the app (for example, Windows 7, OSX 10.6, Android 1.6)
    */
   'operatingSystem'?: string
+  /**
+   * A description of the app.
+   */
+  'description'?: string
+  /**
+   * URL to download the app.
+   */
+  'downloadUrl'?: string
+  /**
+   * The version of the app.
+   */
+  'softwareVersion'?: string
+  /**
+   * A list of features offered by the app.
+   */
+  'featureList'?: string[]
 }
 ```

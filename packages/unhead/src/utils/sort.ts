@@ -80,20 +80,22 @@ export function tagWeight<T extends HeadTag>(head: Unhead<any>, tag: T): number 
   else if (tag.tag === 'link' && tag.props.rel) {
     weight = weightMap.link[tag.props.rel as keyof typeof weightMap.link]
   }
-
   // Handle script tags
   else if (tag.tag === 'script') {
+    const type = String(tag.props.type)
     if (isTruthy(tag.props.async)) {
       weight = weightMap.script.async
     }
-    else if (tag.props.src
+    else if ((tag.props.src
       && !isTruthy(tag.props.defer)
       && !isTruthy(tag.props.async)
-      && tag.props.type !== 'module'
-      && !tag.props.type?.endsWith('json')) {
+      && type !== 'module'
+      && !type.endsWith('json'))
+    || (tag.innerHTML
+      && !type.endsWith('json'))) {
       weight = weightMap.script.sync
     }
-    else if (isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) {
+    else if ((isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) || type === 'module') {
       weight = weightMap.script.defer
     }
   }

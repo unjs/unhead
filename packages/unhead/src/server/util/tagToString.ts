@@ -2,6 +2,7 @@ import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
+/* @__PURE__ */
 export function escapeHtml(str: string) {
   return str.replace(/[&<>"'/]/g, (char) => {
     switch (char) {
@@ -23,6 +24,7 @@ export function escapeHtml(str: string) {
   })
 }
 
+/* @__PURE__ */
 export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
@@ -31,9 +33,7 @@ export function tagToString<T extends HeadTag>(tag: T) {
     return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
 
   // dangerously using innerHTML, we don't encode this
-  let content = String(tag.innerHTML || '')
-  if (tag.textContent)
-    // content needs to be encoded to avoid XSS, only for title
-    content = escapeHtml(String(tag.textContent))
+  let content = String(tag.textContent || tag.innerHTML || '')
+  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
   return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

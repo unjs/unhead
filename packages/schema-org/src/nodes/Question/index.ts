@@ -1,4 +1,4 @@
-import type { NodeRelation, Thing } from '../../types'
+import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { WebPage } from '../WebPage'
 import type { Answer } from './Answer'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
@@ -6,6 +6,7 @@ import {
   asArray,
   dedupeMerge,
   idReference,
+  resolvableDateToIso,
 } from '../../utils'
 import { PrimaryWebPageId } from '../WebPage'
 import { answerResolver } from './Answer'
@@ -17,15 +18,23 @@ export interface QuestionSimple extends Thing {
   /**
    * The text content of the question.
    */
-  name: string
+  name?: string
   /**
    * An answer object, with a text property which contains the answer to the question.
    */
-  acceptedAnswer: NodeRelation<Answer | string>
+  acceptedAnswer?: NodeRelation<Answer | string>
   /**
    * The language code for the question; e.g., en-GB.
    */
   inLanguage?: string
+  /**
+   * The number of answers provided for this question.
+   */
+  answerCount?: number
+  /**
+   * The date and time the question was created.
+   */
+  dateCreated?: ResolvableDate
   /**
    * Alias for `name`
    */
@@ -59,6 +68,7 @@ export const questionResolver = defineSchemaOrgResolver<Question>({
     }
     // resolve string answer to Answer
     question.acceptedAnswer = resolveRelation(question.acceptedAnswer, ctx, answerResolver)
+    question.dateCreated = resolvableDateToIso(question.dateCreated)
     return question
   },
   resolveRootNode(question, { find }) {

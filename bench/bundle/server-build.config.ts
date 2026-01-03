@@ -4,11 +4,11 @@ import zlib from 'node:zlib'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineBuildConfig } from 'unbuild'
 
+const packagesDir = path.resolve(__dirname, '../../packages')
+
 export default defineBuildConfig({
   entries: [
     'src/server/minimal',
-    // 'src/server/minimal',
-    // 'src/full',
   ],
   outDir: 'dist/server',
   failOnWarn: false,
@@ -18,6 +18,12 @@ export default defineBuildConfig({
       treeShaking: true,
       minify: true,
     },
+    alias: {
+      entries: [
+        { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
+        { find: 'unhead', replacement: path.join(packagesDir, 'unhead/dist/index.mjs') },
+      ],
+    },
   },
   externals: [
     'hookable',
@@ -25,7 +31,6 @@ export default defineBuildConfig({
   declaration: false,
   hooks: {
     'rollup:options': (ctx, config) => {
-      config.experimentalLogSideEffects = true
       config.plugins.push(visualizer({
         emitFile: true,
         filename: 'stats.html',

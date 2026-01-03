@@ -9,12 +9,14 @@ function normalizeStyleClassProps(
   const store = key === 'style' ? new Map() : new Set()
 
   function processValue(rawValue: string) {
-    const value = rawValue.trim()
+    if (rawValue == null || rawValue === undefined)
+      return
+    const value = String(rawValue).trim()
     if (!value)
       return
 
     if (key === 'style') {
-      const [k, ...v] = value.split(':').map(s => s.trim())
+      const [k, ...v] = value.split(':').map(s => s ? s.trim() : '')
       if (k && v.length)
         // @ts-expect-error untyped
         store.set(k, v.join(':'))
@@ -38,7 +40,7 @@ function normalizeStyleClassProps(
       if (v && v !== 'false') {
         key === 'style'
           // @ts-expect-error untyped
-          ? store.set(k.trim(), v)
+          ? store.set(String(k).trim(), String(v))
           : processValue(k)
       }
     })
@@ -50,6 +52,10 @@ function normalizeStyleClassProps(
 export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
   tag.props = tag.props || {}
   if (!input) {
+    return tag
+  }
+  if (tag.tag === 'templateParams') {
+    tag.props = input
     return tag
   }
 
@@ -90,10 +96,11 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
 
     const strValue = String(value)
     const isDataKey = key.startsWith('data-')
+    const isMetaContentKey = tag.tag === 'meta' && key === 'content'
 
     if (strValue === 'true' || strValue === '') {
       // @ts-expect-error untyped
-      tag.props[key] = isDataKey ? strValue : true
+      tag.props[key] = (isDataKey || isMetaContentKey) ? strValue : true
     }
     else if (!value && isDataKey && strValue === 'false') {
       tag.props[key] = 'false'

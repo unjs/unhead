@@ -35,6 +35,18 @@ export interface ImageSimple extends Thing {
    * - Only needed when providing a caption.
    */
   inLanguage?: string
+  /**
+   * The name of the image.
+   */
+  name?: string
+  /**
+   * A description of the image.
+   */
+  description?: string
+  /**
+   * The file format or media type of the image (e.g., image/jpeg).
+   */
+  encodingFormat?: string
 }
 
 export interface ImageObject extends ImageSimple {}

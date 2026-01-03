@@ -189,7 +189,10 @@ describe('inferSeoMetaPlugin', () => {
   it('handles title template', async () => {
     const head = createHead({
       disableDefaults: true,
-      plugins: [InferSeoMetaPlugin()],
+      plugins: [
+        InferSeoMetaPlugin(),
+        TemplateParamsPlugin,
+      ],
     })
     head.push({
       title: 'Title',
@@ -266,6 +269,66 @@ describe('inferSeoMetaPlugin', () => {
       <meta property="og:title" data-infer="" content="test">",
         "htmlAttrs": "",
       }
+    `)
+  })
+  it('infers og:title from function titleTemplate with default value', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    // Simulate the app.vue setup with a function titleTemplate
+    head.push({
+      title: null,
+      titleTemplate: (titleChunk) => {
+        return titleChunk ? `${titleChunk} - Website` : 'Welcome to Website'
+      },
+      meta: [
+        {
+          name: 'description',
+          content: 'Description.',
+        },
+        {
+          name: 'theme-color',
+          content: '#007ed4',
+        },
+      ],
+    })
+
+    const result = await renderSSRHead(head)
+
+    expect(result.headTags).toContain('<title>Welcome to Website</title>')
+    expect(result.headTags).toContain('<meta property="og:title" data-infer="" content="Welcome to Website">')
+    expect(result.headTags).toContain('<meta name="description" content="Description.">')
+    expect(result.headTags).toContain('<meta name="theme-color" content="#007ed4">')
+  })
+  it('template params Nuxt SEO #416', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [
+        InferSeoMetaPlugin(),
+        TemplateParamsPlugin,
+      ],
+    })
+    head.push({
+      titleTemplate: '%siteName %separator %s',
+      templateParams: {
+        separator: '–',
+        siteName: 'Nuxt SEO',
+      },
+    })
+
+    // Simulate the app.vue setup with a function titleTemplate
+    head.push({
+      title: 'Hello World',
+    })
+
+    const result = await renderSSRHead(head)
+
+    expect(result.headTags).toMatchInlineSnapshot(`
+      "<title>Nuxt SEO – Hello World</title>
+      <meta name="twitter:card" content="summary_large_image">
+      <meta property="og:title" data-infer="" content="Nuxt SEO – Hello World">"
     `)
   })
 })

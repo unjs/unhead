@@ -48,7 +48,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html class="a bunch of different classes"><head>
@@ -83,8 +83,6 @@ describe('e2e double-space-class-list', () => {
           ' baz ': false,
         },
       },
-    }, {
-      mode: 'server',
     })
 
     const data = await renderSSRHead(ssrHead)
@@ -116,7 +114,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html class="a bunch of different classes"><head>

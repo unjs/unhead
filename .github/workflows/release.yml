@@ -2,16 +2,20 @@ name: Release
 
 permissions:
   contents: write
+  id-token: write
 
 on:
   push:
     tags:
       - 'v*'
+
 jobs:
   release:
+    # Skip pre-release tags from main branch
+    if: ${{ !contains(github.ref_name, '-') || github.event.base_ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
           fetch-depth: 0
 
@@ -19,10 +23,31 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Set node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22.x
+          node-version: latest
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
 
-      - run: npx changelogithub
+      - name: Force Set pnpm Registry
+        run: pnpm config set registry https://registry.npmjs.org
+
+      - name: Changelog
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: npx changelogithub
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Install Dependencies
+        run: pnpm i
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish Stable
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: pnpm publish -r --access public --no-git-checks
+
+      - name: Publish Next
+        if: ${{ contains(github.ref_name, '-') }}
+        run: pnpm publish -r --access public --no-git-checks --tag next

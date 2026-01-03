@@ -2,6 +2,7 @@ import type { HeadTag, RenderSSRHeadOptions } from '../../types'
 import { propsToString } from './propsToString'
 import { tagToString } from './tagToString'
 
+/* @__PURE__ */
 export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRHeadOptions) {
   const schema: {
     tags: Record<'head' | 'bodyClose' | 'bodyOpen', string>

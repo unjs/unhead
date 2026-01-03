@@ -30,7 +30,7 @@ describe('defineMovie', () => {
       expect(graphNodes).toMatchInlineSnapshot(`
         [
           {
-            "@id": "https://example.com/#/schema/movie/514c83d",
+            "@id": "https://example.com/#/schema/movie/1",
             "@type": "Movie",
             "aggregateRating": {
               "@type": "AggregateRating",
@@ -38,13 +38,13 @@ describe('defineMovie', () => {
               "ratingCount": 88211,
               "ratingValue": 96,
             },
-            "dateCreated": "2018-1-16",
+            "dateCreated": "2018-02-16",
             "director": {
               "@type": "Person",
               "name": "Ryan Coogle",
             },
             "image": {
-              "@id": "https://example.com/#/schema/image/ea39998",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "name": "Black Panther",
             "review": {
@@ -64,7 +64,7 @@ describe('defineMovie', () => {
             "url": "https://example.com/2019-best-picture-noms#black-panther",
           },
           {
-            "@id": "https://example.com/#/schema/image/ea39998",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/photos/6x9/photo.jpg",
             "inLanguage": "en-AU",

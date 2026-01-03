@@ -20,6 +20,14 @@
 
 ## Recommended Properties
 
+- **acceptsReservations** `string | boolean`
+
+  Indicates whether a FoodEstablishment accepts reservations.
+
+- **hasMenu** `string`
+
+  URL of the menu.
+
 - **openingHoursSpecification**  `OpeningHoursInput[]` - [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
 
   The specification for when the business is open.
@@ -87,16 +95,16 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-lev
 ## Types
 
 ```ts
-type ValidFoodEstablishmentSubTypes = 'Bakery' |
-  'BarOrPub' |
-  'Brewery' |
-  'Dentist' |
-  'CafeOrCoffeeShop' |
-  'Distillery' |
-  'FastFoodRestaurant' |
-  'IceCreamShop' |
-  'Restaurant' |
-  'Winery'
+type ValidFoodEstablishmentSubTypes = 'Bakery'
+  | 'BarOrPub'
+  | 'Brewery'
+  | 'Dentist'
+  | 'CafeOrCoffeeShop'
+  | 'Distillery'
+  | 'FastFoodRestaurant'
+  | 'IceCreamShop'
+  | 'Restaurant'
+  | 'Winery'
 
 export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   '@type'?: ['Organization', 'LocalBusiness', 'FoodEstablishment'] | ['Organization', 'LocalBusiness', 'FoodEstablishment', ValidFoodEstablishmentSubTypes] | ValidFoodEstablishmentSubTypes
@@ -108,6 +116,10 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
    * URL of the menu.
    */
   'hasMenu'?: string
+  /**
+   * Methods of payment accepted.
+   */
+  'paymentAccepted'?: string
   /**
    * The cuisine of the restaurant.
    */

@@ -14,7 +14,9 @@ export function idReference<T extends Thing>(node: T | string) {
 export function resolvableDateToDate(val: Date | string) {
   try {
     const date = val instanceof Date ? val : new Date(Date.parse(val))
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${date.getFullYear()}-${month}-${day}`
   }
   // not too fussed if it can't be resolved, this is on the user to validate
   catch {}
@@ -105,11 +107,17 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
   const val = node['@type']
   if (val === defaultType)
     return
-  const types = new Set<string>([
-    ...asArray(defaultType),
-    ...asArray(val),
-  ])
-  node['@type'] = types.size === 1 ? val : [...types.values()]
+  // Fast path: both are single strings
+  if (typeof val === 'string' && typeof defaultType === 'string') {
+    if (val !== defaultType)
+      node['@type'] = [defaultType, val]
+    return
+  }
+  // General case: dedupe with Set
+  const types = new Set<string>(asArray(defaultType))
+  for (const t of asArray(val))
+    types.add(t)
+  node['@type'] = types.size === 1 ? val : [...types]
 }
 
 export function resolveWithBase(base: string, urlOrPath: string) {
@@ -130,30 +138,19 @@ export function resolveAsGraphKey(key?: Id | string) {
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) {
+    if (!Object.hasOwn(obj, k))
       continue
-    }
 
-    if (obj[k] && typeof obj[k] === 'object') {
-      // avoid walking vue reactivity
-      if (obj[k].__v_isReadonly || obj[k].__v_isRef)
-        return
-      stripEmptyProperties(obj[k])
-      return
-    }
-    if (obj[k] === '' || obj[k] === null || obj[k] === undefined)
+    const v = obj[k]
+    if (v === '' || v === null || v === undefined) {
       delete obj[k]
+    }
+    else if (typeof v === 'object' && v !== null) {
+      // avoid walking vue reactivity
+      if (v.__v_isReadonly || v.__v_isRef)
+        continue
+      stripEmptyProperties(v)
+    }
   }
-
   return obj
-}
-
-export function hashCode(s: string) {
-  let h = 9
-  for (let i = 0; i < s.length;)
-    h = Math.imul(h ^ s.charCodeAt(i++), 9 ** 9)
-  return ((h ^ h >>> 9) + 0x10000)
-    .toString(16)
-    .substring(1, 8)
-    .toLowerCase()
 }

@@ -18,8 +18,8 @@ export type UseScriptResolvedInput = Omit<ScriptWithoutEvents, 'src'> & { src: s
 
 type BaseScriptApi = Record<symbol | string, any>
 
-type HasDiscriminatedParameters<T> =
-  T extends {
+type HasDiscriminatedParameters<T>
+  = T extends {
     (first: infer A, ...rest1: any[]): any
     (first: infer B, ...rest2: any[]): any
   }
@@ -31,8 +31,8 @@ type HasDiscriminatedParameters<T> =
     : false // Not a function with overloads
 
 // Alternative: Check for different parameter count
-type HasDifferentParameterCounts<T> =
-  T extends { (...args: infer A): any } & { (...args: infer B): any }
+type HasDifferentParameterCounts<T>
+  = T extends { (...args: infer A): any } & { (...args: infer B): any }
     ? A['length'] extends B['length']
       ? B['length'] extends A['length']
         ? false // Same parameter count
@@ -41,8 +41,8 @@ type HasDifferentParameterCounts<T> =
     : false // Not a function with overloads
 
 // Combined detection that works better for most cases
-type IsOverloadedFunction<T> =
-  HasDiscriminatedParameters<T> extends true
+type IsOverloadedFunction<T>
+  = HasDiscriminatedParameters<T> extends true
     ? true
     : HasDifferentParameterCounts<T> extends true
       ? true
@@ -116,9 +116,9 @@ export interface EventHandlerOptions {
   key?: string
 }
 
-export type RecordingEntry =
-  | { type: 'get', key: string | symbol, args?: any[], value?: any }
-  | { type: 'apply', key: string | symbol, args: any[] }
+export type RecordingEntry
+  = | { type: 'get', key: string | symbol, args?: any[], value?: any }
+    | { type: 'apply', key: string | symbol, args: any[] }
 
 export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**

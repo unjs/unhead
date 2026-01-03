@@ -1,35 +1,39 @@
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
-import { defu } from 'defu'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
-import { loadResolver } from './resolver'
+
+// Simple merge utility that recursively merges objects
+function mergeObjects(target: any, source: any): any {
+  const result = { ...target }
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined)
+      continue
+
+    const isNestedObject = result[key]
+      && typeof result[key] === 'object'
+      && typeof source[key] === 'object'
+      && !Array.isArray(result[key])
+      && !Array.isArray(source[key])
+
+    if (isNestedObject)
+      result[key] = mergeObjects(result[key], source[key])
+    else if (!result[key])
+      result[key] = source[key]
+  }
+  return result
+}
 
 export interface PluginSchemaOrgOptions {
   minify?: boolean
   trailingSlash?: boolean
 }
 
-export function UnheadSchemaOrg(options?: PluginSchemaOrgOptions) {
-  return SchemaOrgUnheadPlugin({} as MetaInput, () => ({}), options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
-  const fallback = () => ({} as Partial<MetaInput>)
-  return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
+export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
@@ -38,22 +42,23 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
     return {
       key: 'schema-org',
       hooks: {
-        'entries:normalize': async ({ tags }) => {
+        'entries:normalize': ({ tags }) => {
           graph = graph || createSchemaOrgGraph()
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
-              const nodes = await tag.props.nodes
+              const nodes = tag.props.nodes
               for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-                // malformed input
-                if (typeof node !== 'object' || Object.keys(node).length === 0) {
+                // malformed input - skip null/undefined but allow empty objects
+                if (typeof node !== 'object' || node === null) {
                   continue
                 }
+
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
-                  _resolver: loadResolver(await node._resolver),
                 }
+                // Push node (it already has _resolver if it came from a defineXXX function)
                 graph.push(newNode)
               }
               tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
@@ -98,7 +103,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
+              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
@@ -130,7 +135,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeKey].props = defu(ctx.tags[firstNodeKey].props, tag.props)
+              ctx.tags[firstNodeKey].props = mergeObjects(ctx.tags[firstNodeKey].props, tag.props)
               delete ctx.tags[firstNodeKey].props.nodes
               // @ts-expect-error untyped
               ctx.tags[k] = false

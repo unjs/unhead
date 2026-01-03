@@ -10,36 +10,36 @@ import { openingHoursResolver } from '../OpeningHours'
 import { organizationResolver } from '../Organization'
 import { addressResolver } from '../PostalAddress'
 
-type ValidLocalBusinessSubTypes = 'AnimalShelter' |
-  'ArchiveOrganization' |
-  'AutomotiveBusiness' |
-  'ChildCare' |
-  'Dentist' |
-  'DryCleaningOrLaundry' |
-  'EmergencyService' |
-  'EmploymentAgency' |
-  'EntertainmentBusiness' |
-  'FinancialService' |
-  'FoodEstablishment' |
-  'GovernmentOffice' |
-  'HealthAndBeautyBusiness' |
-  'HomeAndConstructionBusiness' |
-  'InternetCafe' |
-  'LegalService' |
-  'Library' |
-  'LodgingBusiness' |
-  'MedicalBusiness' |
-  'ProfessionalService' |
-  'RadioStation' |
-  'RealEstateAgent' |
-  'RecyclingCenter' |
-  'SelfStorage' |
-  'ShoppingCenter' |
-  'SportsActivityLocation' |
-  'Store' |
-  'TelevisionStation' |
-  'TouristInformationCenter' |
-  'TravelAgency'
+type ValidLocalBusinessSubTypes = 'AnimalShelter'
+  | 'ArchiveOrganization'
+  | 'AutomotiveBusiness'
+  | 'ChildCare'
+  | 'Dentist'
+  | 'DryCleaningOrLaundry'
+  | 'EmergencyService'
+  | 'EmploymentAgency'
+  | 'EntertainmentBusiness'
+  | 'FinancialService'
+  | 'FoodEstablishment'
+  | 'GovernmentOffice'
+  | 'HealthAndBeautyBusiness'
+  | 'HomeAndConstructionBusiness'
+  | 'InternetCafe'
+  | 'LegalService'
+  | 'Library'
+  | 'LodgingBusiness'
+  | 'MedicalBusiness'
+  | 'ProfessionalService'
+  | 'RadioStation'
+  | 'RealEstateAgent'
+  | 'RecyclingCenter'
+  | 'SelfStorage'
+  | 'ShoppingCenter'
+  | 'SportsActivityLocation'
+  | 'Store'
+  | 'TelevisionStation'
+  | 'TouristInformationCenter'
+  | 'TravelAgency'
 
 export interface LocalBusinessSimple extends Organization {
   '@type'?: ['Organization', 'LocalBusiness'] | ['Organization', 'LocalBusiness', ValidLocalBusinessSubTypes] | ValidLocalBusinessSubTypes
@@ -79,6 +79,10 @@ export interface LocalBusinessSimple extends Organization {
    * The currency accepted.
    */
   'currenciesAccepted'?: string
+  /**
+   * The methods of payment accepted by the business.
+   */
+  'paymentAccepted'?: string
   /**
    * The operating hours of the business.
    */

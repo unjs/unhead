@@ -1,5 +1,5 @@
-import { cleanup, render } from '@testing-library/svelte'
 // @vitest-environment jsdom
+import { cleanup, render } from '@testing-library/svelte'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createHead, UnheadContextKey } from '../../src/client'
 import Counter from '../fixtures/Counter.svelte'

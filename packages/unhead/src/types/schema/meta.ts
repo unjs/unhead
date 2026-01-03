@@ -1,104 +1,104 @@
 import type { Stringable } from '../util'
 import type { GlobalAttributes } from './attributes/global'
 
-export type MetaNames =
-  'apple-itunes-app' |
-  'apple-mobile-web-app-capable' |
-  'apple-mobile-web-app-status-bar-style' |
-  'apple-mobile-web-app-title' |
-  'application-name' |
-  'author' |
-  'charset' |
-  'color-scheme' |
-  'content-security-policy' |
-  'content-type' |
-  'creator' |
-  'default-style' |
-  'description' |
-  'fb:app_id' |
-  'format-detection' |
-  'generator' |
-  'google-site-verification' |
-  'google' |
-  'googlebot' |
-  'keywords' |
-  'mobile-web-app-capable' |
-  'msapplication-Config' |
-  'msapplication-TileColor' |
-  'msapplication-TileImage' |
-  'publisher' |
-  'rating' |
-  'referrer' |
-  'refresh' |
-  'robots' |
-  'theme-color' |
-  'twitter:app:id:googleplay' |
-  'twitter:app:id:ipad' |
-  'twitter:app:id:iphone' |
-  'twitter:app:name:googleplay' |
-  'twitter:app:name:ipad' |
-  'twitter:app:name:iphone' |
-  'twitter:app:url:googleplay' |
-  'twitter:app:url:ipad' |
-  'twitter:app:url:iphone' |
-  'twitter:card' |
-  'twitter:creator:id' |
-  'twitter:creator' |
-  'twitter:data:1' |
-  'twitter:data:2' |
-  'twitter:description' |
-  'twitter:image:alt' |
-  'twitter:image' |
-  'twitter:label:1' |
-  'twitter:label:2' |
-  'twitter:player:height' |
-  'twitter:player:stream' |
-  'twitter:player:width' |
-  'twitter:player' |
-  'twitter:site:id' |
-  'twitter:site' |
-  'twitter:title' |
-  'viewport' |
-  'x-ua-compatible'
+export type MetaNames
+  = 'apple-itunes-app'
+    | 'apple-mobile-web-app-capable'
+    | 'apple-mobile-web-app-status-bar-style'
+    | 'apple-mobile-web-app-title'
+    | 'application-name'
+    | 'author'
+    | 'charset'
+    | 'color-scheme'
+    | 'content-security-policy'
+    | 'content-type'
+    | 'creator'
+    | 'default-style'
+    | 'description'
+    | 'fb:app_id'
+    | 'format-detection'
+    | 'generator'
+    | 'google-site-verification'
+    | 'google'
+    | 'googlebot'
+    | 'keywords'
+    | 'mobile-web-app-capable'
+    | 'msapplication-Config'
+    | 'msapplication-TileColor'
+    | 'msapplication-TileImage'
+    | 'publisher'
+    | 'rating'
+    | 'referrer'
+    | 'refresh'
+    | 'robots'
+    | 'theme-color'
+    | 'twitter:app:id:googleplay'
+    | 'twitter:app:id:ipad'
+    | 'twitter:app:id:iphone'
+    | 'twitter:app:name:googleplay'
+    | 'twitter:app:name:ipad'
+    | 'twitter:app:name:iphone'
+    | 'twitter:app:url:googleplay'
+    | 'twitter:app:url:ipad'
+    | 'twitter:app:url:iphone'
+    | 'twitter:card'
+    | 'twitter:creator:id'
+    | 'twitter:creator'
+    | 'twitter:data:1'
+    | 'twitter:data:2'
+    | 'twitter:description'
+    | 'twitter:image:alt'
+    | 'twitter:image'
+    | 'twitter:label:1'
+    | 'twitter:label:2'
+    | 'twitter:player:height'
+    | 'twitter:player:stream'
+    | 'twitter:player:width'
+    | 'twitter:player'
+    | 'twitter:site:id'
+    | 'twitter:site'
+    | 'twitter:title'
+    | 'viewport'
+    | 'x-ua-compatible'
 
-export type MetaProperties = 'article:author' |
-  'article:expiration_time' |
-  'article:modified_time' |
-  'article:published_time' |
-  'article:section' |
-  'article:tag' |
-  'book:author' |
-  'book:isbn' |
-  'book:release_data' |
-  'book:tag' |
-  'fb:app:id' |
-  'og:audio:secure_url' |
-  'og:audio:type' |
-  'og:audio:url' |
-  'og:description' |
-  'og:determiner' |
-  'og:image:height' |
-  'og:image:secure_url' |
-  'og:image:type' |
-  'og:image:url' |
-  'og:image:width' |
-  'og:image' |
-  'og:locale:alternate' |
-  'og:locale' |
-  'og:site:name' |
-  'og:title' |
-  'og:type' |
-  'og:url' |
-  'og:video:height' |
-  'og:video:secure_url' |
-  'og:video:type' |
-  'og:video:url' |
-  'og:video:width' |
-  'og:video' |
-  'profile:first_name' |
-  'profile:gender' |
-  'profile:last_name' |
-  'profile:username'
+export type MetaProperties = 'article:author'
+  | 'article:expiration_time'
+  | 'article:modified_time'
+  | 'article:published_time'
+  | 'article:section'
+  | 'article:tag'
+  | 'book:author'
+  | 'book:isbn'
+  | 'book:release_data'
+  | 'book:tag'
+  | 'fb:app:id'
+  | 'og:audio:secure_url'
+  | 'og:audio:type'
+  | 'og:audio:url'
+  | 'og:description'
+  | 'og:determiner'
+  | 'og:image:height'
+  | 'og:image:secure_url'
+  | 'og:image:type'
+  | 'og:image:url'
+  | 'og:image:width'
+  | 'og:image'
+  | 'og:locale:alternate'
+  | 'og:locale'
+  | 'og:site:name'
+  | 'og:title'
+  | 'og:type'
+  | 'og:url'
+  | 'og:video:height'
+  | 'og:video:secure_url'
+  | 'og:video:type'
+  | 'og:video:url'
+  | 'og:video:width'
+  | 'og:video'
+  | 'profile:first_name'
+  | 'profile:gender'
+  | 'profile:last_name'
+  | 'profile:username'
 
 export interface Meta extends Pick<GlobalAttributes, 'id'> {
   /**
@@ -123,13 +123,13 @@ export interface Meta extends Pick<GlobalAttributes, 'id'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-http-equiv
    */
-  ['http-equiv']?: 'content-security-policy' |
-    'content-type' |
-    'default-style' |
-    'x-ua-compatible' |
-    'refresh' |
-    'accept-ch' |
-    (string & Record<never, never>)
+  ['http-equiv']?: 'content-security-policy'
+    | 'content-type'
+    | 'default-style'
+    | 'x-ua-compatible'
+    | 'refresh'
+    | 'accept-ch'
+    | (string & Record<never, never>)
   /**
    * The name and content attributes can be used together to provide document metadata in terms of name-value pairs,
    * with the name attribute giving the metadata name, and the content attribute giving the value.

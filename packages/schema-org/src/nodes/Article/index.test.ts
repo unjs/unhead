@@ -32,13 +32,13 @@ describe('defineArticle', () => {
             "description": "test",
             "headline": "test",
             "image": {
-              "@id": "https://example.com/#/schema/image/10ff64c",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "inLanguage": "en-AU",
             "thumbnailUrl": "https://example.com/my-image.png",
           },
           {
-            "@id": "https://example.com/#/schema/image/10ff64c",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/my-image.png",
             "inLanguage": "en-AU",
@@ -62,7 +62,7 @@ describe('defineArticle', () => {
       expect(article?.description).toEqual('my article description')
       expect(article?.image).toMatchInlineSnapshot(`
         {
-          "@id": "https://example.com/#/schema/image/4f5963e",
+          "@id": "https://example.com/#/schema/image/1",
         }
       `)
       //
@@ -77,13 +77,13 @@ describe('defineArticle', () => {
             "description": "my article description",
             "headline": "Article headline",
             "image": {
-              "@id": "https://example.com/#/schema/image/4f5963e",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "inLanguage": "en-AU",
             "thumbnailUrl": "https://example.com/image.png",
           },
           {
-            "@id": "https://example.com/#/schema/image/4f5963e",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/image.png",
             "inLanguage": "en-AU",
@@ -236,14 +236,14 @@ describe('defineArticle', () => {
           "@id": "https://example.com/#article",
           "@type": "Article",
           "author": {
-            "@id": "https://example.com/#/schema/person/605fa9",
+            "@id": "https://example.com/#/schema/person/1",
           },
           "dateModified": "2021-11-10T10:10:10.000Z",
           "datePublished": "2021-11-10T10:10:10.000Z",
           "description": "test",
           "headline": "test",
           "image": {
-            "@id": "https://example.com/#/schema/image/10ff64c",
+            "@id": "https://example.com/#/schema/image/1",
           },
           "inLanguage": "en-AU",
           "isPartOf": {
@@ -261,12 +261,12 @@ describe('defineArticle', () => {
 
       const id = client[2].author['@id']
 
-      expect(id).toEqual('https://example.com/#/schema/person/605fa9')
+      expect(id).toEqual('https://example.com/#/schema/person/1')
 
       const person = client[3]
       expect(person).toMatchInlineSnapshot(`
         {
-          "@id": "https://example.com/#/schema/person/605fa9",
+          "@id": "https://example.com/#/schema/person/1",
           "@type": "Person",
           "name": "Harlan Wilton",
           "url": "https://harlanzw.com",
@@ -334,10 +334,10 @@ describe('defineArticle', () => {
             "@type": "Article",
             "author": [
               {
-                "@id": "https://example.com/#/schema/person/77f3c81",
+                "@id": "https://example.com/#/schema/person/1",
               },
               {
-                "@id": "https://example.com/#/schema/person/249c409",
+                "@id": "https://example.com/#/schema/person/2",
               },
             ],
             "dateModified": "2021-11-10T10:10:10.000Z",
@@ -345,7 +345,7 @@ describe('defineArticle', () => {
             "description": "test",
             "headline": "test",
             "image": {
-              "@id": "https://example.com/#/schema/image/10ff64c",
+              "@id": "https://example.com/#/schema/image/1",
             },
             "inLanguage": "en-AU",
             "isPartOf": {
@@ -360,13 +360,13 @@ describe('defineArticle', () => {
             "thumbnailUrl": "https://example.com/my-image.png",
           },
           {
-            "@id": "https://example.com/#/schema/person/77f3c81",
+            "@id": "https://example.com/#/schema/person/1",
             "@type": "Person",
             "name": "John doe",
             "url": "https://harlanzw.com",
           },
           {
-            "@id": "https://example.com/#/schema/person/249c409",
+            "@id": "https://example.com/#/schema/person/2",
             "@type": "Person",
             "name": "Jane doe",
             "url": "https://harlanzw.com",
@@ -387,7 +387,7 @@ describe('defineArticle', () => {
             "url": "https://example.com/",
           },
           {
-            "@id": "https://example.com/#/schema/image/10ff64c",
+            "@id": "https://example.com/#/schema/image/1",
             "@type": "ImageObject",
             "contentUrl": "https://example.com/my-image.png",
             "inLanguage": "en-AU",
@@ -449,7 +449,7 @@ describe('defineArticle', () => {
           "datePublished": "2022-04-06T08:00:51+00:00",
           "headline": "The pecan tree &#8220;Carya illinoinensis&#8221;",
           "image": {
-            "@id": "https://kootingalpecancompany.com/#/schema/image/ea5d710",
+            "@id": "https://kootingalpecancompany.com/#/schema/image/1",
           },
           "inLanguage": "en-US",
           "isPartOf": {

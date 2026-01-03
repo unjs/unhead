@@ -1,5 +1,58 @@
-export * from './core'
+export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './core'
+export type { SchemaOrgGraph } from './core'
 export * from './nodes'
-export * from './plugin'
-export * from './runtime'
-export * from './types'
+export { UnheadSchemaOrg } from './plugin'
+export type { PluginSchemaOrgOptions } from './plugin'
+export {
+  defineAddress,
+  defineAggregateOffer,
+  defineAggregateRating,
+  defineArticle,
+  defineBook,
+  defineBookEdition,
+  defineBreadcrumb,
+  defineComment,
+  defineCourse,
+  defineDataset,
+  defineEvent,
+  defineFoodEstablishment,
+  defineHowTo,
+  defineHowToStep,
+  defineImage,
+  defineItemList,
+  defineJobPosting,
+  defineListItem,
+  defineLocalBusiness,
+  defineMovie,
+  defineMusicAlbum,
+  defineMusicGroup,
+  defineMusicPlaylist,
+  defineMusicRecording,
+  defineOffer,
+  defineOpeningHours,
+  defineOrganization,
+  definePerson,
+  definePlace,
+  definePodcastEpisode,
+  definePodcastSeason,
+  definePodcastSeries,
+  defineProduct,
+  defineQuestion,
+  defineReadAction,
+  defineRecipe,
+  defineReview,
+  defineSearchAction,
+  defineService,
+  defineSoftwareApp,
+  defineTVEpisode,
+  defineTVSeason,
+  defineTVSeries,
+  defineVideo,
+  defineVirtualLocation,
+  defineWebPage,
+  defineWebSite,
+  normalizeSchemaOrgInput,
+  useSchemaOrg,
+} from './runtime'
+export type { UseSchemaOrgInput } from './runtime'
+export type { Arrayable, Id, Identity, IdReference, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'

@@ -8,26 +8,19 @@ import type {
 import type { ResolverOptions } from '../utils'
 import type { SchemaOrgGraph } from './graph'
 import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
-import { loadResolver } from '../resolver'
-import { asArray, hashCode, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
+import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
+
+function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
+  ctx.nodeIdCounters[alias] = (ctx.nodeIdCounters[alias] || 0) + 1
+  return ctx.nodeIdCounters[alias].toString()
+}
 
 export function resolveMeta(meta: Partial<MetaInput>) {
-  if (!meta.host && meta.canonicalHost)
-    meta.host = meta.canonicalHost
-  if (!meta.tagPosition && meta.position)
-    meta.tagPosition = meta.position
-  if (!meta.currency && meta.defaultCurrency)
-    meta.currency = meta.defaultCurrency
-  if (!meta.inLanguage && meta.defaultLanguage)
-    meta.inLanguage = meta.defaultLanguage
   if (!meta.path)
     meta.path = '/'
 
   if (!meta.host && typeof document !== 'undefined')
     meta.host = document.location.host
-
-  if (!meta.url && meta.canonicalUrl)
-    meta.url = meta.canonicalUrl
 
   if (meta.path !== '/') {
     if (meta.trailingSlash && !hasTrailingSlash(meta.path))
@@ -59,23 +52,23 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
 
   // handle defaults
   if (resolver?.defaults) {
-    // handle defaults
-    let defaults = resolver.defaults || {}
+    let defaults = resolver.defaults
     if (typeof defaults === 'function')
       defaults = defaults(ctx)
-    node = {
-      ...defaults,
-      ...node,
-    }
+    node = { ...defaults, ...node }
   }
 
   // handle meta inherits
-  resolver?.inheritMeta?.forEach((entry) => {
-    if (typeof entry === 'string')
-      setIfEmpty(node, entry, ctx.meta[entry])
-    else
-      setIfEmpty(node, entry.key, ctx.meta[entry.meta])
-  })
+  const inheritMeta = resolver?.inheritMeta
+  if (inheritMeta) {
+    for (let i = 0; i < inheritMeta.length; i++) {
+      const entry = inheritMeta[i]
+      if (typeof entry === 'string')
+        setIfEmpty(node, entry, ctx.meta[entry])
+      else
+        setIfEmpty(node, entry.key, ctx.meta[entry.meta])
+    }
+  }
 
   // handle resolve
   if (resolver?.resolve)
@@ -85,14 +78,15 @@ export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resol
   for (const k in node) {
     const v = node[k]
     if (Array.isArray(v)) {
-      v.forEach((v: any, k2: number) => {
-        if (typeof v === 'object' && v?._resolver) {
-          node[k][k2] = resolveRelation(v, ctx, v._resolver)
-        }
-      })
+      for (let i = 0; i < v.length; i++) {
+        const item = v[i]
+        if (typeof item === 'object' && item?._resolver)
+          node[k][i] = resolveRelation(item, ctx, item._resolver)
+      }
     }
-    if (typeof v === 'object' && v?._resolver)
+    else if (typeof v === 'object' && v?._resolver) {
       node[k] = resolveRelation(v, ctx, v._resolver)
+    }
   }
   stripEmptyProperties(node)
   return node
@@ -116,27 +110,15 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
     node['@id'] = prefixId(ctx.meta[prefix], node['@id'])
     return node
   }
-  // transform 'host' to https://host.com/#schema/webpage/gj5g59gg
+  // transform 'host' to https://host.com/#schema/webpage/1
   let alias = resolver?.alias
   if (!alias) {
     const type = asArray(node['@type'])?.[0] || ''
     // kebab case type
     alias = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   }
-  const hashNodeData: Record<string, any> = {}
-  for (const key in node) {
-    if (key[0] === '_') {
-      continue
-    }
 
-    if (!Object.prototype.hasOwnProperty.call(node, key)) {
-      continue
-    }
-
-    hashNodeData[key] = node[key]
-  }
-
-  node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || hashCode(JSON.stringify(hashNodeData))}`)
+  node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)
   return node
 }
 
@@ -144,28 +126,36 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fall
   if (!input)
     return input
 
-  const ids = asArray(input).map((a) => {
-    const keys = Object.keys(a).length
+  const items = asArray(input)
+  const ids = []
+
+  for (let i = 0; i < items.length; i++) {
+    const a = items[i]
+    // Count keys without creating array
+    let keyCount = 0
+    for (const _ in a) keyCount++
+
     // filter out id references
-    if ((keys === 1 && a['@id']) || (keys === 2 && a['@id'] && a['@type'])) {
-      return resolveNodeId({
-        // we drop @type
+    if ((keyCount === 1 && a['@id']) || (keyCount === 2 && a['@id'] && a['@type'])) {
+      ids.push(resolveNodeId({
         '@id': ctx.find(a['@id'])?.['@id'] || a['@id'],
-      }, ctx)
+      }, ctx))
+      continue
     }
 
     let resolver = fallbackResolver
     // remove resolver if the user is using define functions nested
-    if (a._resolver) {
+    // Note: string resolvers should already be loaded by plugin's preloadNestedResolvers
+    if (a._resolver && typeof a._resolver !== 'string') {
       resolver = a._resolver
-      if (typeof resolver === 'string')
-        resolver = loadResolver(resolver)!
       delete a._resolver
     }
 
     // no resolver, resolve as is
-    if (!resolver)
-      return a
+    if (!resolver) {
+      ids.push(a)
+      continue
+    }
 
     let node = resolveNode(a, ctx, resolver)
     if (options.afterResolve)
@@ -179,15 +169,13 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fall
       if (resolver.resolveRootNode)
         resolver.resolveRootNode(node, ctx)
       ctx.push(node)
-      return idReference(node['@id'])
+      ids.push(idReference(node['@id']))
+      continue
     }
 
-    return node
-  })
+    ids.push(node)
+  }
 
   // avoid arrays for single entries
-  if (!options.array && ids.length === 1)
-    return ids[0]
-
-  return ids
+  return (!options.array && ids.length === 1) ? ids[0] : ids
 }

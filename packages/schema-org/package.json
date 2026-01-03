@@ -1,7 +1,7 @@
 {
   "name": "@unhead/schema-org",
   "type": "module",
-  "version": "2.0.2",
+  "version": "3.0.0-beta.4",
   "description": "Unhead Schema.org for Simple and Automated Google Rich Results",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -74,12 +74,32 @@
     "build": "unbuild .",
     "stub": "unbuild . --stub",
     "lint": "eslint \"{src,test}/**/*.{ts,vue,json,yml}\" --fix",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
+  },
+  "peerDependencies": {
+    "@unhead/react": "workspace:*",
+    "@unhead/solid-js": "workspace:*",
+    "@unhead/svelte": "workspace:*",
+    "@unhead/vue": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@unhead/react": {
+      "optional": true
+    },
+    "@unhead/solid-js": {
+      "optional": true
+    },
+    "@unhead/svelte": {
+      "optional": true
+    },
+    "@unhead/vue": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "defu": "^6.1.4",
-    "ohash": "^2.0.11",
-    "ufo": "^1.5.4"
+    "ufo": "catalog:",
+    "unhead": "workspace:*"
   },
   "devDependencies": {
     "@unhead/react": "workspace:*",
@@ -87,7 +107,7 @@
     "@unhead/svelte": "workspace:*",
     "@unhead/vue": "workspace:*",
     "unhead": "workspace:*",
-    "unplugin-vue-components": "^28.4.1"
+    "unplugin-vue-components": "catalog:"
   },
   "build": {
     "external": [

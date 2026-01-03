@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "2.0.2",
+  "version": "3.0.0-beta.4",
   "description": "Full-stack <head> manager built for any framework.",
   "author": {
     "name": "Harlan Wilton",
@@ -41,9 +41,13 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",
@@ -56,11 +60,53 @@
     "./scripts": {
       "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.ts",
+      "default": "./dist/parser.mjs"
+    },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "plugins": [
+        "dist/plugins.d.ts"
+      ],
+      "server": [
+        "dist/server.d.ts"
+      ],
+      "client": [
+        "dist/client.d.ts"
+      ],
+      "stream/server": [
+        "dist/stream/server.d.ts"
+      ],
+      "stream/client": [
+        "dist/stream/client.d.ts"
+      ],
+      "utils": [
+        "dist/utils.d.ts"
+      ],
+      "types": [
+        "dist/types.d.ts"
+      ],
+      "scripts": [
+        "dist/scripts.d.ts"
+      ],
+      "parser": [
+        "dist/parser.d.ts"
+      ],
+      "stream/vite": [
+        "dist/stream/vite.d.ts"
+      ]
+    }
+  },
   "optionalPlugins": {
     "*": {
       "plugins": [
@@ -71,9 +117,6 @@
       ],
       "client": [
         "dist/client"
-      ],
-      "legacy": [
-        "dist/legacy"
       ],
       "types": [
         "dist/types"
@@ -93,9 +136,12 @@
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "test:attw": "attw --pack"
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "^5.5.3"
+    "hookable": "catalog:",
+    "magic-string": "catalog:",
+    "vite": "catalog:"
   }
 }
