@@ -312,63 +312,7 @@ ${htmlContext.bodyAppend.join('\n')}
       </head>
       <body>
 
-      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph">{
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@id": "https://harlanzw.com#website",
-            "@type": "WebSite",
-            "description": "Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.",
-            "inLanguage": "en",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com",
-            "publisher": {
-              "@id": "https://harlanzw.com#identity"
-            }
-          },
-          {
-            "@id": "https://harlanzw.com/path#webpage",
-            "@type": "WebPage",
-            "description": "Home page description",
-            "name": "Home",
-            "url": "https://harlanzw.com/path",
-            "about": {
-              "@id": "https://harlanzw.com#identity"
-            },
-            "isPartOf": {
-              "@id": "https://harlanzw.com#website"
-            },
-            "potentialAction": [
-              {
-                "@type": "ReadAction",
-                "target": [
-                  "https://harlanzw.com/path"
-                ]
-              }
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com#identity",
-            "@type": "Person",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com/",
-            "image": {
-              "@id": "https://harlanzw.com#/schema/image/1"
-            },
-            "sameAs": [
-              "https://twitter.com/harlan_zw",
-              "https://twitter.com/harlan_zw"
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com#/schema/image/1",
-            "@type": "ImageObject",
-            "contentUrl": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton",
-            "inLanguage": "en",
-            "url": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton"
-          }
-        ]
-      }</script>
+      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph"></script>
       </body>
       "
     `)
