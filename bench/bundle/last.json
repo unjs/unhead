@@ -1,19 +1,19 @@
 {
   "client": {
-    "size": 10267,
-    "gz": 4251
+    "size": 10326,
+    "gz": 4269
   },
   "server": {
-    "size": 10183,
-    "gz": 4146
+    "size": 10213,
+    "gz": 4156
   },
   "vueClient": {
-    "size": 11321,
-    "gz": 4672
+    "size": 11380,
+    "gz": 4697
   },
   "vueServer": {
-    "size": 11134,
-    "gz": 4533
+    "size": 11164,
+    "gz": 4549
   },
   "schemaOrg": {
     "size": 34915,
