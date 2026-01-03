@@ -1,5 +1,7 @@
-import type { MetaFlat, ResolvableHead, UnheadMeta } from '../types'
+import type { MetaFlat, MetaGeneric, ResolvableHead, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
+
+type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
 export const NAMESPACES = /* @__PURE__ */ {
   META: new Set(['twitter']),
@@ -8,7 +10,7 @@ export const NAMESPACES = /* @__PURE__ */ {
   HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
 } as const
 
-const META_ALIASES = /* @__PURE__ */ {
+const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
   articleExpirationTime: 'article:expiration_time',
   articleModifiedTime: 'article:modified_time',
   articlePublishedTime: 'article:published_time',
@@ -27,13 +29,24 @@ const META_ALIASES = /* @__PURE__ */ {
   msapplicationConfig: 'msapplication-Config',
   msapplicationTileColor: 'msapplication-TileColor',
   msapplicationTileImage: 'msapplication-TileImage',
-} as const
+}
 
-export const MetaPackingSchema = /* @__PURE__ */ {
+interface UnpackOptions {
+  entrySeparator?: string
+  keyValueSeparator?: string
+  wrapValue?: string
+  resolve?: (ctx: { key: string, value: any }) => string | void
+}
+
+interface MetaPackingEntry {
+  metaKey?: string
+  unpack?: UnpackOptions
+}
+
+export const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
   appleItunesApp: {
     unpack: {
       entrySeparator: ', ',
-      // @ts-expect-error untyped
       resolve: ({ key, value }) => `${fixKeyCase(key)}=${value}`,
     },
   },
@@ -41,14 +54,12 @@ export const MetaPackingSchema = /* @__PURE__ */ {
     metaKey: 'http-equiv',
     unpack: {
       entrySeparator: ';',
-      // @ts-expect-error untyped
       resolve: ({ key, value }) => key === 'seconds' ? `${value}` : undefined,
     },
   },
   robots: {
     unpack: {
       entrySeparator: ', ',
-      // @ts-expect-error untyped
       resolve: ({ key, value }) =>
         typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`,
     },
@@ -57,12 +68,11 @@ export const MetaPackingSchema = /* @__PURE__ */ {
     metaKey: 'http-equiv',
     unpack: {
       entrySeparator: '; ',
-      // @ts-expect-error untyped
       resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}`,
     },
   },
   charset: {},
-} as const
+}
 
 function fixKeyCase(key: string): string {
   const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
@@ -88,15 +98,8 @@ function transformObject(obj: any): any {
         : Object.fromEntries(Object.entries(obj).map(([k, v]) => [fixKeyCase(k), transformObject(v)]))
 }
 
-// @ts-expect-error untyped
-function unpackToString(value: Record<string, any>, options: {
-  entrySeparator?: string
-  keyValueSeparator?: string
-  wrapValue?: string
-  resolve?: (ctx: { key: string, value: any }) => string | void
-} = {}) {
+function unpackToString(value: Record<string, any>, options: UnpackOptions = {}): string {
   const { entrySeparator = '', keyValueSeparator = '', wrapValue, resolve } = options
-  // @ts-expect-error untyped
   return Object.entries(value).map(([key, val]) => {
     if (resolve) {
       const resolved = resolve({ key, value: val })
@@ -104,7 +107,6 @@ function unpackToString(value: Record<string, any>, options: {
         return resolved
     }
 
-    // @ts-expect-error untyped
     const processedVal = typeof val === 'object'
       ? unpackToString(val, options)
       : typeof val === 'number'
@@ -130,14 +132,11 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
     Object.entries(sanitizedValue)
       .map(([k, v]) => [`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`, v]),
   )
-  // @ts-expect-error untyped
-  return unpackMeta(input || {})
-    // @ts-expect-error untyped
-    .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as UnheadMeta[]
+  return (unpackMeta(input || {}) as UnheadMeta[])
+    .sort((a: any, b: any) => ((a[attr]?.length || 0) - (b[attr]?.length || 0)))
 }
 
-export function resolveMetaKeyType(key: string): keyof UnheadMeta {
-  // @ts-expect-error untyped
+export function resolveMetaKeyType(key: string): MetaKeyType {
   if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || NAMESPACES.HTTP_EQUIV.has(key)) {
     return 'http-equiv'
   }
@@ -152,20 +151,17 @@ export function resolveMetaKeyType(key: string): keyof UnheadMeta {
 }
 
 export function resolveMetaKeyValue(key: string): string {
-  // @ts-expect-error untyped
   return META_ALIASES[key] || fixKeyCase(key)
 }
 
-export function resolvePackedMetaObjectValue(value: string, key: string): string {
+export function resolvePackedMetaObjectValue(value: any, key: string): string {
   if (key === 'refresh')
-    // @ts-expect-error untyped
     return `${value.seconds};url=${value.url}`
 
   return unpackToString(transformObject(value), {
     keyValueSeparator: '=',
     entrySeparator: ', ',
     resolve: ({ value, key }) => value === null ? '' : (typeof value === 'boolean' ? key : undefined),
-    // @ts-expect-error untyped
     ...MetaPackingSchema[key]?.unpack,
   })
 }
@@ -187,18 +183,14 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
 
       for (const v of value) {
         if (typeof v === 'object' && v !== null) {
-          // @ts-expect-error untyped
-          const urlProps = []
-          // @ts-expect-error untyped
-          const otherProps = []
+          const urlProps: UnheadMeta[] = []
+          const otherProps: UnheadMeta[] = []
 
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
             const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
-            // @ts-expect-error untyped
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
           }
-          // @ts-expect-error untyped
           extras.push(...urlProps, ...otherProps)
         }
         else {
@@ -220,22 +212,21 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
           extras.push({
             [metaKey]: `${prefix}:${type}`,
             content: value.url,
-          })
+          } as MetaGeneric as UnheadMeta)
         }
         if (value.secureUrl) {
           extras.push({
             [metaKey]: `${prefix}:${type}:secure_url`,
             content: value.secureUrl,
-          })
+          } as MetaGeneric as UnheadMeta)
         }
 
         for (const [propKey, propValue] of Object.entries(value)) {
           if (propKey !== 'url' && propKey !== 'secureUrl') {
             extras.push({
               [metaKey]: `${prefix}:${type}:${propKey}`,
-              // @ts-expect-error untyped
               content: propValue,
-            })
+            } as MetaGeneric as UnheadMeta)
           }
         }
       }
@@ -265,10 +256,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
           ? value.toString()
           : value
 
-    return metaKey === 'http-equiv'
+    return (metaKey === 'http-equiv'
       ? { 'http-equiv': keyValue, 'content': processedValue }
-      : { [metaKey]: keyValue, content: processedValue }
-  }) as UnheadMeta[]
+      : { [metaKey]: keyValue, content: processedValue }) as MetaGeneric as UnheadMeta
+  })
 
   return [...extras, ...meta].map(m =>
     !('content' in m)

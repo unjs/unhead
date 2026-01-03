@@ -55,7 +55,7 @@ describe('ssr e2e bench', () => {
     head.push({
       script: [
         // 4. payloads
-        { innerHTML: { id: '__NUXT_DATA__', data: { initial: { bar: 'foo' }, payload: { foo: 'bar' } } } },
+        { innerHTML: { id: '__NUXT_DATA__', data: { initial: { bar: 'foo' }, payload: { foo: 'bar' } } } } as any,
       ],
     }, {
       tagPosition: 'bodyClose',
@@ -120,7 +120,7 @@ describe('ssr e2e bench', () => {
         content: '%site.description',
       },
     )
-    head.push(input, { tagPriority: 150 })
+    head.push(input as any, { tagPriority: 150 })
     // Nuxt SEO
     const minimalPriority = {
       tagPriority: 101,
@@ -173,7 +173,7 @@ describe('ssr e2e bench', () => {
       { property: 'og:image:alt', content: 'My Image' },
       { name: 'twitter:image:alt', content: 'My Image' },
     ]
-    const script: ResolvableHead['script'] = [{
+    const script = [{
       id: 'nuxt-og-image-options',
       type: 'application/json',
       processTemplateParams: true,
@@ -191,7 +191,7 @@ describe('ssr e2e bench', () => {
       },
       // we want this to be last in our head
       tagPosition: 'bodyClose',
-    }]
+    }] as any
     useHead({
       script,
       meta,
