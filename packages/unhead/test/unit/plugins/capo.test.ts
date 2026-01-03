@@ -1,10 +1,10 @@
 import { describe, it } from 'vitest'
 import { resolveTags } from '../../../src/utils/resolve'
-import { createClientHeadWithContext } from '../../util'
+import { createServerHeadWithContext } from '../../util'
 
 describe('capo', () => {
   it('basic', async () => {
-    const head = createClientHeadWithContext()
+    const head = createServerHeadWithContext()
     head.push({
       script: [{
         defer: true,

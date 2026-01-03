@@ -2,11 +2,17 @@ import type { HeadTag, Unhead } from '../types'
 import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, isMetaArrayDupeKey } from './dedupe'
 import { normalizeEntryToTags } from './normalize'
-import { sortTags, tagWeight } from './sort'
+
+// @ts-expect-error untyped
+const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
   tags: HeadTag[]
+}
+
+export interface ResolveTagsOptions {
+  tagWeight?: (tag: HeadTag) => number
 }
 
 /**
@@ -115,7 +121,8 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
 /**
  * Resolve tags from a head instance.
  */
-export function resolveTags(head: Unhead<any>): HeadTag[] {
+export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+  const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? (() => 100)
   const ctx: ResolveTagsContext = {
     tagMap: new Map(),
     tags: [],
@@ -135,7 +142,7 @@ export function resolveTags(head: Unhead<any>): HeadTag[] {
       }
       head.hooks.callHook('entries:normalize', normalizeCtx)
       e._tags = normalizeCtx.tags.map((t, i) => {
-        t._w = tagWeight(head, t)
+        t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)
         return t

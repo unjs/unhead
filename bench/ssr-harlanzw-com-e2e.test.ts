@@ -3,7 +3,7 @@ import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
-import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { useHead, useSeoMeta } from '../packages/vue/src'
 import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
@@ -140,7 +140,7 @@ describe('ssr e2e bench', () => {
     }, {
       head,
     })
-    useServerHead({
+    useHead({
       htmlAttrs: { lang: 'en' },
     }, {
       head,
@@ -200,7 +200,7 @@ describe('ssr e2e bench', () => {
       // we want this to be last in our head
       tagPosition: 'bodyClose',
     }]
-    useServerHead({
+    useHead({
       script,
       meta,
     }, {
@@ -232,7 +232,7 @@ describe('ssr e2e bench', () => {
       head,
     })
     // entry
-    useServerHead({
+    useHead({
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
@@ -308,66 +308,11 @@ ${htmlContext.bodyAppend.join('\n')}
       <!DOCTYPE html>
       <html lang="en">
       <head>
-      <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Home · Harlan Wilton</title><meta property="og:image" content="https://harlanzw.com/__og-image__/og.png"><meta property="og:image:type" content="image/png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://harlanzw.com/__og-image__/og.png"><meta name="twitter:image:src" content="https://harlanzw.com/__og-image__/og.png"><meta property="og:image:width" content="1200"><meta name="twitter:image:width" content="1200"><meta property="og:image:height" content="600"><meta name="twitter:image:height" content="600"><meta property="og:image:alt" content="My Image"><meta name="twitter:image:alt" content="My Image"><link rel="stylesheet" href="/page.css"><link rel="stylesheet" href="/page2.css"><link rel="stylesheet" href="/page3.css"><link rel="stylesheet" href="/page4.css"><link rel="stylesheet" href="/page5.css"><link rel="preload" as="fetch" href="/payload.json"><link rel="preload" as="script" href="/_nuxt/runtime.js"><link rel="preload" as="script" href="/_nuxt/vendors.js"><link rel="preload" as="script" href="/_nuxt/app.js"><script src="https://idea-lets-dance.harlanzw.com/script.js" data-spa="auto" data-site="VDJUVDNA" defer></script><link rel="canonical" href="https://harlanzw.com/"><meta name="robots" content="index, follow"><meta name="description" content="Home page description"><meta property="og:type" content="website"><meta property="og:url" content="https://harlanzw.com"><meta property="og:locale" content="en"><meta property="og:site_name" content="Harlan Wilton"><meta name="twitter:creator" content="@harlan_zw"><meta name="twitter:site" content="@harlan_zw"><meta property="og:title" content="Home · Harlan Wilton"><meta property="og:description" content="Home page description">
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Home · Harlan Wilton</title><meta property="og:image" content="https://harlanzw.com/__og-image__/og.png"><meta property="og:image:type" content="image/png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://harlanzw.com/__og-image__/og.png"><meta name="twitter:image:src" content="https://harlanzw.com/__og-image__/og.png"><meta property="og:image:width" content="1200"><meta name="twitter:image:width" content="1200"><meta property="og:image:height" content="600"><meta name="twitter:image:height" content="600"><meta property="og:image:alt" content="My Image"><meta name="twitter:image:alt" content="My Image"><link rel="stylesheet" href="/page.css"><link rel="stylesheet" href="/page2.css"><link rel="stylesheet" href="/page3.css"><link rel="stylesheet" href="/page4.css"><link rel="stylesheet" href="/page5.css"><link rel="preload" as="fetch" href="/payload.json"><link rel="preload" as="script" href="/_nuxt/runtime.js"><link rel="preload" as="script" href="/_nuxt/vendors.js"><link rel="preload" as="script" href="/_nuxt/app.js"><script src="https://idea-lets-dance.harlanzw.com/script.js" data-spa="auto" data-site="VDJUVDNA" defer></script><link rel="canonical" href="https://harlanzw.com/"><meta name="robots" content="index, follow"><meta name="description" content="Home page description"><meta property="og:type" content="website"><meta property="og:url" content="https://harlanzw.com"><meta property="og:locale" content="en"><meta property="og:site_name" content="Harlan Wilton"><meta name="twitter:creator" content="@harlan_zw"><meta name="twitter:site" content="@harlan_zw"><meta property="og:title" data-infer="" content="Home · Harlan Wilton"><meta property="og:description" data-infer="" content="Home page description">
       </head>
       <body>
 
-      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="module" src="/module.js" crossorigin></script><script type="application/ld+json" data-hid="schema-org-graph">{
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@id": "https://harlanzw.com/#website",
-            "@type": "WebSite",
-            "description": "Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.",
-            "inLanguage": "en",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com",
-            "publisher": {
-              "@id": "https://harlanzw.com/#identity"
-            }
-          },
-          {
-            "@id": "https://harlanzw.com/path/#webpage",
-            "@type": "WebPage",
-            "description": "Home page description",
-            "name": "Home",
-            "url": "https://harlanzw.com/path",
-            "about": {
-              "@id": "https://harlanzw.com/#identity"
-            },
-            "isPartOf": {
-              "@id": "https://harlanzw.com/#website"
-            },
-            "potentialAction": [
-              {
-                "@type": "ReadAction",
-                "target": [
-                  "https://harlanzw.com/path"
-                ]
-              }
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com/#identity",
-            "@type": "Person",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com/",
-            "image": {
-              "@id": "https://harlanzw.com/#/schema/image/4e99416"
-            },
-            "sameAs": [
-              "https://twitter.com/harlan_zw"
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com/#/schema/image/4e99416",
-            "@type": "ImageObject",
-            "contentUrl": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton",
-            "inLanguage": "en",
-            "url": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton"
-          }
-        ]
-      }</script>
+      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph"></script>
       </body>
       "
     `)

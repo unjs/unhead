@@ -62,10 +62,9 @@
   sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
-  sortTags: function
   TagConfigKeys: object
+  TagPriorityAliases: object
   TagsWithInnerContent: object
-  tagWeight: function
   UniqueTags: object
   unpackMeta: function
   UsesMergeStrategy: object

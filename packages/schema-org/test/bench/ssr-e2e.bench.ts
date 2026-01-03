@@ -30,9 +30,8 @@ describe('schema-org SSR e2e', () => {
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
-        // @ts-expect-error untyped
         nodes: [],
-      }],
+      } as any],
     })
 
     // Add nodes
@@ -76,9 +75,8 @@ describe('schema-org SSR e2e', () => {
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
-        // @ts-expect-error untyped
         nodes: [],
-      }],
+      } as any],
     })
 
     head.push(normalizeSchemaOrgInput([

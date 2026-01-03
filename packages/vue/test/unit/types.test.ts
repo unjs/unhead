@@ -121,7 +121,7 @@ describe('types', () => {
         class: 'bg-gray-100',
       },
     }
-    useHead(input, { head })
+    useHead(input as any, { head })
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'
@@ -134,8 +134,8 @@ describe('types', () => {
     ]
     const head = createHead()
     head.push({
-      link: [link],
-      script,
+      link: [link] as any,
+      script: script as any,
     })
   })
 })
