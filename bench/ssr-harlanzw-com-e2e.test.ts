@@ -3,7 +3,7 @@ import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
-import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { useHead, useSeoMeta } from '../packages/vue/src'
 import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
@@ -140,7 +140,7 @@ describe('ssr e2e bench', () => {
     }, {
       head,
     })
-    useServerHead({
+    useHead({
       htmlAttrs: { lang: 'en' },
     }, {
       head,
@@ -200,7 +200,7 @@ describe('ssr e2e bench', () => {
       // we want this to be last in our head
       tagPosition: 'bodyClose',
     }]
-    useServerHead({
+    useHead({
       script,
       meta,
     }, {
@@ -232,7 +232,7 @@ describe('ssr e2e bench', () => {
       head,
     })
     // entry
-    useServerHead({
+    useHead({
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
