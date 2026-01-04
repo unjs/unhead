@@ -2,6 +2,7 @@ import type {
   DomBeforeRenderCtx,
   DomRenderTagContext,
   DomState,
+  HeadRenderer,
   HeadTag,
   RenderDomHeadOptions,
   Unhead,
@@ -11,10 +12,20 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
+/* @__NO_SIDE_EFFECTS__ */
+export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
+  return (head: Unhead<any>) => _renderDOMHead(head, options)
+}
+
 /**
  * Render the head tags to the DOM.
+ * @deprecated Use `head.render()` instead.
  */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+  return _renderDOMHead(head, options)
+}
+
+function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   if (!dom || !head.dirty)
     return false

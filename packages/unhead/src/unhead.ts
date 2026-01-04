@@ -6,14 +6,14 @@ import type {
   HeadHooks,
   HeadPlugin,
   HeadPluginInput,
+  HeadRenderer,
   ResolvableHead,
   Unhead,
 } from './types'
 import { createHooks } from 'hookable'
 
-function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
+export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
-  // key is required in types but we avoid breaking changes
   const key = plugin.key || String(head.plugins.size + 1)
   const exists = head.plugins.get(key)
   if (!exists) {
@@ -27,59 +27,38 @@ function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
  * and does not register DOM plugins.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOptions = {}) {
-  // counter for keeping unique ids of head object entries
+export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRenderer<R>, resolvedOptions: CreateHeadOptions = {}): Unhead<T, R> {
   const hooks = createHooks<HeadHooks>()
   hooks.addHooks(resolvedOptions.hooks || {})
   const ssr = !resolvedOptions.document
 
   const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: Map<string, HeadPlugin> = new Map()
-  const _normalizeQueue = new Set<number>()
-  const head: Unhead<T> = {
+  const head: Unhead<T, R> = {
     _entryCount: 1, // 0 is reserved for internal use
-    _normalizeQueue,
     plugins,
-    dirty: false,
     resolvedOptions,
     hooks,
     ssr,
     entries,
+    render: () => renderer(head),
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions | undefined) {
       const options = { ..._options || {} } as HeadEntryOptions
       delete options.head
       const _i = options._index ?? head._entryCount++
-      const inst = { _i, input, options }
-      const _: ActiveHeadEntry<T> = {
-        _poll(rm = false) {
-          head.dirty = true
-          !rm && _normalizeQueue.add(_i)
-          hooks.callHook('entries:updated', head)
-        },
+      const entry = { _i, input, options }
+      entries.set(_i, entry)
+      const active: ActiveHeadEntry<T> = {
+        _i,
         dispose() {
-          if (entries.delete(_i)) {
-            // Re-queue remaining entries for normalization after disposal
-            head.invalidate()
-          }
+          entries.delete(_i)
         },
-        // a patch is the same as creating a new entry, just a nice DX
         patch(input) {
-          inst.input = input
-          entries.set(_i, inst)
-          _._poll()
+          entry.input = input
         },
       }
-      _.patch(input)
-      return _
-    },
-    invalidate() {
-      // Re-queue all current entries for normalization
-      for (const entry of entries.values()) {
-        _normalizeQueue.add(entry._i)
-      }
-      head.dirty = true
-      hooks.callHook('entries:updated', head)
+      return active
     },
   }
   ;(resolvedOptions?.plugins || []).forEach(p => registerPlugin(head, p))

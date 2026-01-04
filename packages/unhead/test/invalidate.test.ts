@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createUnhead } from '../src'
+import { createHead } from '../src/client'
 import { resolveTags } from '../src/utils/resolve'
 
 describe('invalidate Function', () => {
   it('should re-queue all entries for normalization', async () => {
-    const head = createUnhead({
+    const head = createHead({
       init: [{ title: 'Init Title' }],
     })
 
@@ -40,7 +40,7 @@ describe('invalidate Function', () => {
   })
 
   it('should work with Set-based normalize queue without duplicates', async () => {
-    const head = createUnhead({
+    const head = createHead({
       init: [{ title: 'Init Title' }],
     })
 
@@ -58,7 +58,7 @@ describe('invalidate Function', () => {
   })
 
   it('should be useful after dispose operations', async () => {
-    const head = createUnhead({
+    const head = createHead({
       init: [{ title: 'Init Title' }],
     })
 

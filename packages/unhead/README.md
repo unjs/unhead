@@ -54,7 +54,7 @@ useHead({
 ### Server-Side Rendering
 
 ```ts
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 
 const head = createHead()
 
@@ -65,23 +65,36 @@ useHead({
 }, { head })
 
 // Render head tags
-const { headTags, bodyTags } = renderSSRHead(head)
+const { headTags, bodyTags } = head.render()
 ```
 
-### Client-Side Hydration
+### Client-Side Rendering
 
 ```ts
-import { createHead, renderDOMHead } from 'unhead/client'
+import { createHead } from 'unhead/client'
 
+// Create head instance (auto-renders on changes)
 const head = createHead()
-
-// Enable DOM rendering
-renderDOMHead(head)
 
 // Add reactive head entries
 useHead({
   title: 'Client App'
 }, { head })
+```
+
+### Custom Renderers
+
+```ts
+import { createServerRenderer, createUnhead } from 'unhead/server'
+
+// Create a custom renderer with options
+const renderer = createServerRenderer({ omitLineBreaks: true })
+
+// Pass renderer to createUnhead
+const head = createUnhead(renderer, { /* options */ })
+
+// Render using head.render()
+const html = head.render()
 ```
 
 ## Framework Integrations
