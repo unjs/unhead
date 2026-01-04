@@ -34,7 +34,7 @@ export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
 interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
 
-export interface HeadHooks {
+export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
   'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
@@ -42,16 +42,21 @@ export interface HeadHooks {
   'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
+  'script:updated': (ctx: { script: ScriptInstance<any> }) => void | Promise<void>
+}
 
-  // client
+export interface DOMHeadHooks {
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => SyncHookResult
   'dom:renderTag': (ctx: DomRenderTagContext, document: Document, track: (id: string, scope: string, fn: () => void) => void) => HookResult
   'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
+}
 
-  // server
+export interface SSRHeadHooks {
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
-
-  'script:updated': (ctx: { script: ScriptInstance<any> }) => void | Promise<void>
 }
+
+export type ClientHeadHooks = CoreHeadHooks & DOMHeadHooks
+export type ServerHeadHooks = CoreHeadHooks & SSRHeadHooks
+export type HeadHooks = CoreHeadHooks & DOMHeadHooks & SSRHeadHooks

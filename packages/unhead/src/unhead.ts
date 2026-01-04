@@ -1,24 +1,30 @@
 import type {
   ActiveHeadEntry,
+  CoreHeadHooks,
   CreateHeadOptions,
   HeadEntry,
   HeadEntryOptions,
-  HeadHooks,
   HeadPlugin,
   HeadPluginInput,
   HeadRenderer,
   ResolvableHead,
   Unhead,
 } from './types'
-import { createHooks } from 'hookable'
+import { HookableCore } from 'hookable'
 
-export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
+function addHooks<T extends Record<string, any>>(hooks: HookableCore<T>, configHooks: Partial<T>) {
+  for (const key in configHooks) {
+    hooks.hook(key as any, configHooks[key] as any)
+  }
+}
+
+export function registerPlugin(head: Unhead<any, any, any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
   const key = plugin.key || String(head.plugins.size + 1)
   const exists = head.plugins.get(key)
   if (!exists) {
     head.plugins.set(key, plugin)
-    head.hooks.addHooks(plugin.hooks || {})
+    addHooks(head.hooks, plugin.hooks || {})
   }
 }
 
@@ -27,14 +33,14 @@ export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
  * and does not register DOM plugins.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRenderer<R>, resolvedOptions: CreateHeadOptions = {}): Unhead<T, R> {
-  const hooks = createHooks<HeadHooks>()
-  hooks.addHooks(resolvedOptions.hooks || {})
+export function createUnhead<T = ResolvableHead, R = unknown, H extends CoreHeadHooks = CoreHeadHooks>(renderer: HeadRenderer<R, H>, resolvedOptions: CreateHeadOptions<H> = {}): Unhead<T, R, H> {
+  const hooks = new HookableCore<H>()
+  addHooks(hooks, resolvedOptions.hooks || {})
   const ssr = !resolvedOptions.document
 
   const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: Map<string, HeadPlugin> = new Map()
-  const head: Unhead<T, R> = {
+  const head: Unhead<T, R, H> = {
     _entryCount: 1, // 0 is reserved for internal use
     plugins,
     resolvedOptions,
