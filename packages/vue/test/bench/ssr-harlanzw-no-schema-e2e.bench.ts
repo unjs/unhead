@@ -234,7 +234,7 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
       omitLineBreaks: true,
     })
     function normalizeChunks(chunks: (string | undefined)[]) {
@@ -281,6 +281,6 @@ ${htmlContext.bodyAppend.join('\n')}
         },
       ],
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
 })

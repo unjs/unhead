@@ -36,7 +36,7 @@ describe('vue e2e charset', () => {
       useHead(IndexSchema)
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

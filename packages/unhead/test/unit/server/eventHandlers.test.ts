@@ -18,7 +18,7 @@ describe('ssr event handlers', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

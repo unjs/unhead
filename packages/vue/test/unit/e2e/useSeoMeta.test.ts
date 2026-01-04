@@ -14,7 +14,7 @@ describe('unhead vue e2e useSeoMeta', () => {
         articleTag: ['foo', 'bar'],
       })
     })
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

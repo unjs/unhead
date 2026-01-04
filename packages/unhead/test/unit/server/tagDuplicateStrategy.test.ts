@@ -17,7 +17,7 @@ describe('tagDuplicateStrategy', () => {
       },
     })
 
-    const { htmlAttrs } = await renderSSRHead(head)
+    const { htmlAttrs } = renderSSRHead(head)
     expect(htmlAttrs).toMatchInlineSnapshot(
       `" data-layout="base" data-page="page""`,
     )
@@ -39,7 +39,7 @@ describe('tagDuplicateStrategy', () => {
       },
     })
 
-    const { htmlAttrs } = await renderSSRHead(head)
+    const { htmlAttrs } = renderSSRHead(head)
     expect(htmlAttrs).toMatchInlineSnapshot(
       `" class="html-doc my-specific-page" style="color:red;background:green""`,
     )

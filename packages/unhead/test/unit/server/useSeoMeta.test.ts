@@ -11,7 +11,7 @@ describe('useSeoMeta', () => {
       charset: 'utf-8',
     })
 
-    expect((await renderSSRHead(head)).headTags).toContain('<meta charset="utf-8">')
+    expect((renderSSRHead(head)).headTags).toContain('<meta charset="utf-8">')
   })
   it('themeColor array', async () => {
     const head = createServerHeadWithContext()
@@ -23,7 +23,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -42,7 +42,7 @@ describe('useSeoMeta', () => {
       themeColor: 'cyan',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -73,7 +73,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
       "<meta name="twitter:image" content="/twitter-image.png">
       <meta name="twitter:image:alt" content="test">
       <meta name="twitter:image:width" content="100">
@@ -92,7 +92,7 @@ describe('useSeoMeta', () => {
       description: 'test',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -106,7 +106,7 @@ describe('useSeoMeta', () => {
       description: null,
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -122,7 +122,7 @@ describe('useSeoMeta', () => {
     useSeoMeta(head, {
       robots: 'noindex, nofollow',
     })
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -143,7 +143,7 @@ describe('useSeoMeta', () => {
         maxSnippet: -1,
       },
     })
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -331,7 +331,7 @@ describe('useSeoMeta', () => {
       xUaCompatible: 'IE=edge',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -500,7 +500,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -569,7 +569,7 @@ describe('useSeoMeta', () => {
       },
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",

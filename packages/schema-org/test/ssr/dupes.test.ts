@@ -36,7 +36,7 @@ describe('schema.org dupes', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph" id="schema-org-graph-2">{
         "@context": "https://schema.org",

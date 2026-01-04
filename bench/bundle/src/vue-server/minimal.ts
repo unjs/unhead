@@ -19,7 +19,7 @@ async function doHead() {
     ],
   }, { head })
 
-  return await renderSSRHead(head)
+  return renderSSRHead(head)
 }
 
 doHead()

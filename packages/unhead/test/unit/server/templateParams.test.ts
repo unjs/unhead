@@ -40,7 +40,7 @@ describe('ssr templateParams', () => {
         siteName: 'My Awesome Site',
       },
     })
-    const { headTags, htmlAttrs } = await renderSSRHead(head)
+    const { headTags, htmlAttrs } = renderSSRHead(head)
 
     expect(htmlAttrs).toMatchInlineSnapshot(`" lang="en""`)
     expect(headTags).toMatchInlineSnapshot(`
@@ -66,7 +66,7 @@ describe('ssr templateParams', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>This|is|an|example||with||multiple||||pipes</title>
@@ -90,7 +90,7 @@ describe('ssr templateParams', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\</title>
@@ -115,7 +115,7 @@ describe('ssr templateParams', () => {
         foo: 'foo',
       },
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test foo | subPage% | test</title>"`,
     )

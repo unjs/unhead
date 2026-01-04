@@ -9,7 +9,7 @@ describe('dom useHeadSafe', () => {
 
     useHeadSafe(head, basicSchema)
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": " class="dark"",
@@ -41,7 +41,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -65,7 +65,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -88,7 +88,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -19,7 +19,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -76,7 +76,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -133,7 +133,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data.headTags).toMatchInlineSnapshot(`"<script data-hid="test">console.log('server log')</script>"`)
 
@@ -204,7 +204,7 @@ describe('unhead e2e deduping', () => {
     const ssrHead = createClientHeadWithContext()
     ssrHead.push(input)
     ssrHead.push(input)
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
