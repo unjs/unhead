@@ -1,5 +1,5 @@
-import type { Hookable, NestedHooks } from 'hookable'
-import type { HeadHooks } from './hooks'
+import type { HookableCore } from 'hookable'
+import type { ClientHeadHooks, CoreHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -91,10 +91,10 @@ export interface ActiveHeadEntry<Input> {
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
 
-export interface CreateHeadOptions {
+export interface CreateHeadOptions<Hooks extends CoreHeadHooks = HeadHooks> {
   document?: Document
   plugins?: HeadPluginInput[]
-  hooks?: NestedHooks<HeadHooks>
+  hooks?: Partial<Hooks>
   /**
    * Initial head input that should be added.
    *
@@ -111,7 +111,7 @@ export interface CreateHeadOptions {
   _tagWeight?: (tag: HeadTag) => number
 }
 
-export interface CreateServerHeadOptions extends CreateHeadOptions {
+export interface CreateServerHeadOptions extends CreateHeadOptions<ServerHeadHooks> {
   /**
    * Should default important tags be skipped.
    *
@@ -123,7 +123,7 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
   disableDefaults?: boolean
 }
 
-export interface CreateClientHeadOptions extends CreateHeadOptions {
+export interface CreateClientHeadOptions extends CreateHeadOptions<ClientHeadHooks> {
   /**
    * Custom render function for DOM updates.
    */
@@ -142,9 +142,9 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export type HeadRenderer<T = unknown> = (head: Unhead<any>) => T
+export type HeadRenderer<T = unknown, H extends CoreHeadHooks = CoreHeadHooks> = (head: Unhead<any, any, H>) => T
 
-export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
+export interface Unhead<Input = ResolvableHead, RenderResult = unknown, Hooks extends CoreHeadHooks = HeadHooks> {
   /**
    * Render the head tags using the configured renderer.
    */
@@ -164,7 +164,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * Exposed hooks for easier extension.
    */
-  hooks: Hookable<HeadHooks>
+  hooks: HookableCore<Hooks>
   /**
    * Resolved options
    */
