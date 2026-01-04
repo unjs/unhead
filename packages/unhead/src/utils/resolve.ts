@@ -131,10 +131,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
 
   head.hooks.callHook('entries:resolve', { entries, ...ctx })
 
-  // Normalize queued entries
+  // Normalize dirty entries (all for server, only dirty for client)
   for (const e of entries) {
-    if (head._normalizeQueue?.has(e._i)) {
-      head._normalizeQueue.delete(e._i)
+    if (e._dirty || !e._tags) {
+      e._dirty = false
       const normalizeCtx = {
         tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
           .map(t => Object.assign(t, e.options)),
