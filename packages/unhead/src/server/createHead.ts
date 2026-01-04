@@ -1,10 +1,11 @@
-import type { CreateServerHeadOptions, ResolvableHead } from '../types'
+import type { CreateServerHeadOptions, ResolvableHead, SSRHeadPayload } from '../types'
 import { createUnhead } from '../unhead'
+import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
-  const unhead = createUnhead<T>({
+  const unhead = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight: capoTagWeight }), {
     ...options,
     _tagWeight: capoTagWeight,
     // @ts-expect-error untyped
@@ -47,9 +48,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
         if (Object.keys(unhead._ssrPayload || {}).length > 0) {
           payload = { ...unhead._ssrPayload }
         }
-        // filter non-values
         if (Object.values(payload).some(Boolean)) {
-          // add tag for rendering
           ctx.tags.push({
             tag: 'script',
             innerHTML: JSON.stringify(payload),

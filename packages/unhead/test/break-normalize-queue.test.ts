@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { createUnhead } from '../src'
 import { resolveTags } from '../src/utils/resolve'
 
+function noop() {}
+
 describe('break Normalize Queue - Replicate Bug', () => {
   it('replicates the bug by following React pattern exactly', async () => {
     // First, let me revert the fix to test the original buggy behavior
-    const head = createUnhead({
+    const head = createUnhead(noop, {
       init: [{ title: 'Init Title', meta: [{ name: 'description', content: 'Init description' }] }],
     })
 
@@ -45,7 +47,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
   })
 
   it('breaks the normalize queue by examining internal state', async () => {
-    const head = createUnhead({
+    const head = createUnhead(noop, {
       init: [{ title: 'Init Title' }],
     })
 
@@ -83,7 +85,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
   })
 
   it('exposes the bug through normalize queue manipulation', async () => {
-    const head = createUnhead({
+    const head = createUnhead(noop, {
       init: [{ title: 'Init Title' }],
     })
 
@@ -112,7 +114,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
   })
 
   it('replicates React strict mode double disposal pattern', async () => {
-    const head = createUnhead({
+    const head = createUnhead(noop, {
       init: [{ title: 'Init Title' }],
     })
 

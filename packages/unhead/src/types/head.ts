@@ -1,6 +1,5 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { DomPluginOptions } from './plugins'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -53,6 +52,11 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
+   * Entry needs re-normalization (client-only)
+   * @internal
+   */
+  _dirty?: boolean
+  /**
    * @internal
    */
   _promisesProcessed?: boolean
@@ -82,7 +86,7 @@ export interface ActiveHeadEntry<Input> {
   /**
    * @internal
    */
-  _poll: (rm?: boolean) => void
+  _i: number
 }
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
@@ -121,9 +125,9 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
   /**
-   * Options to pass to the DomPlugin.
+   * Custom render function for DOM updates.
    */
-  domOptions?: DomPluginOptions
+  render?: (head: Unhead<any>) => boolean | void
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
@@ -138,7 +142,13 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export interface Unhead<Input = ResolvableHead> {
+export type HeadRenderer<T = unknown> = (head: Unhead<any>) => T
+
+export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
+  /**
+   * Render the head tags using the configured renderer.
+   */
+  render: () => RenderResult
   /**
    * Registered plugins.
    */
@@ -151,10 +161,6 @@ export interface Unhead<Input = ResolvableHead> {
    * Create a new head entry.
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
-  /**
-   * Invalidate all entries and re-queue them for normalization.
-   */
-  invalidate: () => void
   /**
    * Exposed hooks for easier extension.
    */
@@ -171,6 +177,20 @@ export interface Unhead<Input = ResolvableHead> {
    * Is it a server-side render context.
    */
   ssr: boolean
+  /**
+   * @internal
+   */
+  _entryCount: number
+  // client-specific (optional)
+  /**
+   * @internal
+   */
+  dirty?: boolean
+  /**
+   * Invalidate all entries and re-queue them for normalization.
+   * @internal
+   */
+  invalidate?: () => void
   // dom specific runtime state
   /**
    * @internal
@@ -183,10 +203,6 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
-  dirty: boolean
-  /**
-   * @internal
-   */
   _scripts?: Record<string, any>
   /**
    * @internal
@@ -196,14 +212,6 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _separator?: string
-  /**
-   * @internal
-   */
-  _entryCount: number
-  /**
-   * @internal
-   */
-  _normalizeQueue: Set<number>
   /**
    * @internal
    */
