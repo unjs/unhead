@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 
+import type { Unhead } from 'unhead/types'
 import { injectHead, useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
+import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
 import { mount } from '../../util'
@@ -54,12 +56,12 @@ describe('keepalive', () => {
     // Step 1
     const app = mount(Provider, () => ({ head: createHead() }))
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
           "_p": 1024,
-          "_w": 10,
+          "_w": 100,
           "props": {},
           "tag": "title",
           "textContent": "home",
@@ -70,12 +72,12 @@ describe('keepalive', () => {
     // Step 2
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
           "_p": 2048,
-          "_w": 10,
+          "_w": 100,
           "props": {},
           "tag": "title",
           "textContent": "about",
@@ -86,12 +88,12 @@ describe('keepalive', () => {
     // Step 3
     app.name = 'home'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
           "_p": 1024,
-          "_w": 10,
+          "_w": 100,
           "props": {},
           "tag": "title",
           "textContent": "home",
@@ -102,12 +104,12 @@ describe('keepalive', () => {
     // Step 4
     app.name = 'about'
     await nextTick()
-    expect(await app.head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(app.head as Unhead<any>)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
           "_p": 2048,
-          "_w": 10,
+          "_w": 100,
           "props": {},
           "tag": "title",
           "textContent": "about",

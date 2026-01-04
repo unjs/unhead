@@ -22,7 +22,7 @@ describe('vue dom classes', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
@@ -35,7 +35,7 @@ describe('vue dom classes', () => {
 
     // wait 100ms
     await new Promise(resolve => setTimeout(resolve, 100))
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 

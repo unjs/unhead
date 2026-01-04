@@ -12,7 +12,7 @@ describe('ssr useScript', () => {
       src: 'https://cdn.example.com/script.js',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -34,7 +34,7 @@ describe('ssr useScript', () => {
       trigger: 'server',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -57,7 +57,7 @@ describe('ssr useScript', () => {
       trigger: 'server',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -95,7 +95,7 @@ describe('ssr useScript', () => {
       event: 'page.load',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

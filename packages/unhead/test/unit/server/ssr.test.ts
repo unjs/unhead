@@ -16,7 +16,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": " class="dark"",
@@ -35,7 +35,7 @@ describe('ssr', () => {
         lang: 'de',
       },
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
 
   it('number title', async () => {
@@ -45,7 +45,7 @@ describe('ssr', () => {
       title: 12345,
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -67,7 +67,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -92,7 +92,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
 
     expect(ctx).toMatchInlineSnapshot(`
       {
@@ -119,7 +119,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head, { omitLineBreaks: true })
+    const ctx = renderSSRHead(head, { omitLineBreaks: true })
 
     expect(ctx).toMatchInlineSnapshot(`
     {
@@ -177,7 +177,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -209,7 +209,7 @@ describe('ssr', () => {
       twitterCard: 'summary_large_image',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -238,7 +238,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

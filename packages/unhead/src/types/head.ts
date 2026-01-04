@@ -1,6 +1,5 @@
 import type { Hookable, NestedHooks } from 'hookable'
 import type { HeadHooks } from './hooks'
-import type { DomPluginOptions } from './plugins'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -11,20 +10,12 @@ import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition,
  */
 export type SideEffectsRecord = Record<string, () => void>
 
-export type RuntimeMode = 'server' | 'client'
-
 export interface HeadEntry<Input> {
   /**
    * User provided input for the entry.
    */
   input: Input
   options?: {
-    /**
-     * The mode that the entry should be used in.
-     *
-     * @internal
-     */
-    mode?: RuntimeMode
     /**
      * Default tag position.
      *
@@ -61,6 +52,11 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
+   * Entry needs re-normalization (client-only)
+   * @internal
+   */
+  _dirty?: boolean
+  /**
    * @internal
    */
   _promisesProcessed?: boolean
@@ -90,7 +86,7 @@ export interface ActiveHeadEntry<Input> {
   /**
    * @internal
    */
-  _poll: (rm?: boolean) => void
+  _i: number
 }
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
@@ -106,15 +102,13 @@ export interface CreateHeadOptions {
    */
   init?: (ResolvableHead | undefined | false)[]
   /**
-   * Disable the Capo.js tag sorting algorithm.
-   *
-   * This is added to make the v1 -> v2 migration easier allowing users to opt-out of the new sorting algorithm.
-   */
-  disableCapoSorting?: boolean
-  /**
    * Prop resolvers for tags.
    */
   propResolvers?: PropResolver[]
+  /**
+   * @internal
+   */
+  _tagWeight?: (tag: HeadTag) => number
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
@@ -131,16 +125,12 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
   /**
-   * Options to pass to the DomPlugin.
+   * Custom render function for DOM updates.
    */
-  domOptions?: DomPluginOptions
+  render?: (head: Unhead<any>) => boolean | void
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
-  /**
-   * @deprecated Tree shaking should now be handled using import.meta.* if statements.
-   */
-  mode?: RuntimeMode
   head?: Unhead
   /**
    * @internal
@@ -152,7 +142,13 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export interface Unhead<Input = ResolvableHead> {
+export type HeadRenderer<T = unknown> = (head: Unhead<any>) => T
+
+export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
+  /**
+   * Render the head tags using the configured renderer.
+   */
+  render: () => RenderResult
   /**
    * Registered plugins.
    */
@@ -162,23 +158,9 @@ export interface Unhead<Input = ResolvableHead> {
    */
   entries: Map<number, HeadEntry<Input>>
   /**
-   * The active head entries.
-   *
-   * @deprecated Use entries instead.
-   */
-  headEntries: () => HeadEntry<Input>[]
-  /**
    * Create a new head entry.
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
-  /**
-   * Resolve tags from head entries.
-   */
-  resolveTags: () => Promise<HeadTag[]>
-  /**
-   * Invalidate all entries and re-queue them for normalization.
-   */
-  invalidate: () => void
   /**
    * Exposed hooks for easier extension.
    */
@@ -195,6 +177,20 @@ export interface Unhead<Input = ResolvableHead> {
    * Is it a server-side render context.
    */
   ssr: boolean
+  /**
+   * @internal
+   */
+  _entryCount: number
+  // client-specific (optional)
+  /**
+   * @internal
+   */
+  dirty?: boolean
+  /**
+   * Invalidate all entries and re-queue them for normalization.
+   * @internal
+   */
+  invalidate?: () => void
   // dom specific runtime state
   /**
    * @internal
@@ -203,11 +199,7 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
-  _domUpdatePromise?: Promise<void>
-  /**
-   * @internal
-   */
-  dirty: boolean
+  _domUpdating?: boolean
   /**
    * @internal
    */
@@ -220,10 +212,6 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _separator?: string
-  /**
-   * @internal
-   */
-  _entryCount: number
   /**
    * @internal
    */
@@ -242,5 +230,5 @@ export interface DomState {
   title: string
   pendingSideEffects: SideEffectsRecord
   sideEffects: SideEffectsRecord
-  elMap: Map<string, Element | Element[]>
+  elMap: Map<string, Element>
 }

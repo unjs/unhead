@@ -10,7 +10,7 @@ import type {
   LinkWithoutEvents,
   MaybeArray,
   MaybeEventFnHandlers,
-  MetaFlatInput,
+  MetaFlat,
   Noscript,
   SchemaAugmentations,
   ScriptWithoutEvents,
@@ -140,5 +140,5 @@ export interface ReactiveHead {
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
 // eslint-disable-next-line unused-imports/no-unused-vars
 export type UseHeadInput<Deprecated = never> = ResolvableValue<ReactiveHead>
-export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
+export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<I = UseHeadInput> = Unhead<I> & Plugin

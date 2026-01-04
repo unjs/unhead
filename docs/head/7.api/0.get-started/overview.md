@@ -15,10 +15,6 @@ title: Overview
 
 ## Hooks
 
-### Initialization Hooks
-
-- [init](/docs/head/api/hooks/init) - **Deprecated** Called when the head instance is initialized
-
 ### Entry Hooks
 
 - [entries:updated](/docs/head/api/hooks/entries-updated) - Called when entries have been updated
@@ -34,9 +30,7 @@ title: Overview
 
 ### DOM Rendering Hooks
 
-- [dom:beforeRender](/docs/head/api/hooks/dom-before-render) - Called before rendering to the DOM
-- [dom:renderTag](/docs/head/api/hooks/dom-render-tag) - Called when a tag is being rendered to the DOM
-- [dom:rendered](/docs/head/api/hooks/dom-rendered) - Called after tags have been rendered to the DOM
+- [dom:beforeRender](/docs/head/api/hooks/dom-before-render) - Called before rendering to the DOM (synchronous)
 
 ### SSR Hooks
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderDOMHead } from '../../../src/client'
-import { useDom, useDOMHead } from '../../util'
+import { getActiveDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
   it('basic', async () => {
@@ -19,9 +18,9 @@ describe('dom', () => {
       ],
     })
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
+    // Wait for the head to render (it auto-renders on entries:updated)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    const dom = getActiveDom()!
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -40,7 +39,8 @@ describe('dom', () => {
 
     entry.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    // Wait for the head to re-render after dispose
+    await new Promise(resolve => setTimeout(resolve, 10))
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

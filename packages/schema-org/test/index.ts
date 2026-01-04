@@ -1,25 +1,26 @@
 import type { MetaInput } from '@unhead/schema-org'
 import type { Unhead } from 'unhead/types'
 import type { SchemaOrgNode } from '../src/types'
-import { SchemaOrgUnheadPlugin } from '@unhead/schema-org'
+import { UnheadSchemaOrg } from '@unhead/schema-org'
 import { createHead } from 'unhead/server'
+import { resolveTags } from 'unhead/utils'
 
-export async function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
+export function injectSchemaOrg(unhead: Unhead<any>): Promise<SchemaOrgNode[]> {
   // filter for schema.org tag
-  const schemaOrg = (await unhead.resolveTags()).find(tag => tag.key === 'schema-org-graph')!.innerHTML
+  const schemaOrg = resolveTags(unhead).find(tag => tag.key === 'schema-org-graph')!.innerHTML
   return JSON.parse(<string> schemaOrg)['@graph']
 }
 
-export async function findNode<T>(unhead: Unhead<any>, id: string) {
-  const nodes = await injectSchemaOrg(unhead)
+export function findNode<T>(unhead: Unhead<any>, id: string) {
+  const nodes = injectSchemaOrg(unhead)
   // @ts-expect-error untyped
   return nodes.find(node => node['@id'] === id || node['@id'].endsWith(id)) as T
 }
-export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<MetaInput> = {}) {
+export function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<MetaInput> = {}) {
   const head = createHead({
     disableDefaults: true,
     plugins: [
-      SchemaOrgUnheadPlugin({
+      UnheadSchemaOrg({
         currency: 'AUD',
         host: 'https://example.com/',
         inLanguage: 'en-AU',
@@ -32,6 +33,6 @@ export async function useSetup(fn: (unhead: Unhead<any>) => void, meta: Partial<
       }),
     ],
   })
-  await fn(head)
+  fn(head)
   return head
 }

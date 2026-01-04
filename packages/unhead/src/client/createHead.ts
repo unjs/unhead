@@ -1,26 +1,93 @@
-import type { CreateClientHeadOptions, ResolvableHead } from '../types'
-import { createUnhead } from '../unhead'
-import { renderDOMHead } from './renderDOMHead'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
+import { createUnhead, registerPlugin } from '../unhead'
+import { TagPriorityAliases } from '../utils/const'
+import { createDomRenderer } from './renderDOMHead'
 
-export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}) {
-  const render = options.domOptions?.render || renderDOMHead
+function tagWeight(tag: HeadTag) {
+  return typeof tag.tagPriority === 'number'
+    ? tag.tagPriority
+    : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
+}
+
+export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
+  dirty: boolean
+  invalidate: () => void
+}
+
+export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}): ClientUnhead<T> {
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
+  const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
   const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-  // restore initial entry from payload (titleTemplate and templateParams)
-  return createUnhead<T>({
+
+  const core = createUnhead<T, boolean>(renderer, {
     ...options,
-    plugins: [
-      ...(options.plugins || []),
-      {
-        key: 'client',
-        hooks: {
-          'entries:updated': render,
-        },
-      },
-    ],
-    init: [
-      initialPayload ? JSON.parse(initialPayload) : false,
-      ...(options.init || []),
-    ],
+    _tagWeight: tagWeight,
+    plugins: [], // register on wrapped head instead
+    init: [], // push on wrapped head instead
   })
+
+  let dirty = false
+
+  const head: ClientUnhead<T> = {
+    ...core,
+    get dirty() { return dirty },
+    set dirty(v) { dirty = v },
+    render() {
+      return renderer(head)
+    },
+    invalidate() {
+      for (const entry of core.entries.values()) {
+        entry._dirty = true
+      }
+      dirty = true
+      core.hooks.callHook('entries:updated', head)
+    },
+    push(input: T, _options?: HeadEntryOptions) {
+      const active = core.push(input, _options)
+      const entry = core.entries.get(active._i)!
+      entry._dirty = true
+      dirty = true
+      core.hooks.callHook('entries:updated', head)
+
+      const corePatch = active.patch
+      const coreDispose = active.dispose
+
+      const clientActive: ActiveHeadEntry<T> = {
+        _i: active._i,
+        patch(input) {
+          corePatch(input)
+          entry._dirty = true
+          dirty = true
+          core.hooks.callHook('entries:updated', head)
+        },
+        dispose() {
+          if (core.entries.has(active._i)) {
+            coreDispose()
+            head.invalidate()
+          }
+        },
+      }
+      return clientActive
+    },
+  }
+
+  // register plugins on wrapped head
+  ;(options.plugins || []).forEach(p => registerPlugin(head, p))
+
+  // auto-render on entries:updated
+  registerPlugin(head, {
+    key: 'client',
+    hooks: {
+      'entries:updated': () => { head.render() },
+    },
+  })
+
+  // push init entries
+  const initEntries = [
+    initialPayload ? JSON.parse(initialPayload) : false,
+    ...(options.init || []),
+  ]
+  initEntries.forEach(e => e && head.push(e as T))
+
+  return head
 }

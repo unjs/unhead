@@ -1,10 +1,13 @@
-import type { CreateServerHeadOptions, HeadTag, ResolvableHead } from '../types'
+import type { CreateServerHeadOptions, ResolvableHead, SSRHeadPayload } from '../types'
 import { createUnhead } from '../unhead'
+import { createServerRenderer } from './renderSSRHead'
+import { capoTagWeight } from './sort'
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}) {
-  const unhead = createUnhead<T>({
+  const unhead = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight: capoTagWeight }), {
     ...options,
+    _tagWeight: capoTagWeight,
     // @ts-expect-error untyped
     document: false,
     propResolvers: [
@@ -41,21 +44,11 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     key: 'server',
     hooks: {
       'tags:resolve': function (ctx) {
-        const title = ctx.tagMap.get('title') as HeadTag | undefined
-        const titleTemplate = ctx.tagMap.get('titleTemplate') as HeadTag | undefined
-        let payload: ResolvableHead = {
-          title: title?.mode === 'server' ? unhead._title : undefined,
-          titleTemplate: titleTemplate?.mode === 'server' ? unhead._titleTemplate : undefined,
-        }
+        let payload: ResolvableHead = {}
         if (Object.keys(unhead._ssrPayload || {}).length > 0) {
-          payload = {
-            ...unhead._ssrPayload,
-            ...payload,
-          }
+          payload = { ...unhead._ssrPayload }
         }
-        // filter non-values
         if (Object.values(payload).some(Boolean)) {
-          // add tag for rendering
           ctx.tags.push({
             tag: 'script',
             innerHTML: JSON.stringify(payload),

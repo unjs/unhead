@@ -23,7 +23,7 @@ describe('use seo meta', () => {
         head,
       })
     }
-    await renderSSRHead(head)
+    renderSSRHead(head)
   }, {
     iterations: 1000,
     time: 1000,

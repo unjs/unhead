@@ -16,22 +16,11 @@ function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
 }
 
 export function resolveMeta(meta: Partial<MetaInput>) {
-  if (!meta.host && meta.canonicalHost)
-    meta.host = meta.canonicalHost
-  if (!meta.tagPosition && meta.position)
-    meta.tagPosition = meta.position
-  if (!meta.currency && meta.defaultCurrency)
-    meta.currency = meta.defaultCurrency
-  if (!meta.inLanguage && meta.defaultLanguage)
-    meta.inLanguage = meta.defaultLanguage
   if (!meta.path)
     meta.path = '/'
 
   if (!meta.host && typeof document !== 'undefined')
     meta.host = document.location.host
-
-  if (!meta.url && meta.canonicalUrl)
-    meta.url = meta.canonicalUrl
 
   if (meta.path !== '/') {
     if (meta.trailingSlash && !hasTrailingSlash(meta.path))

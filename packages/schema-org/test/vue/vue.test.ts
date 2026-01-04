@@ -29,7 +29,7 @@ describe('schema.org e2e', () => {
       ])
     })
 
-    const data = await renderSSRHead(head)
+    const data = renderSSRHead(head)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -75,7 +75,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -132,7 +132,7 @@ describe('schema.org e2e', () => {
         }),
       ])
     })
-    const data = await renderSSRHead(head)
+    const data = renderSSRHead(head)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -162,7 +162,7 @@ describe('schema.org e2e', () => {
       })),
     ], { head })
 
-    const data = await renderSSRHead(head)
+    const data = renderSSRHead(head)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -203,7 +203,7 @@ describe('schema.org e2e', () => {
       })),
     ], { head })
 
-    const data = await renderSSRHead(head)
+    const data = renderSSRHead(head)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

@@ -16,7 +16,7 @@ describe('simpleHead component in ssr', () => {
       </UnheadProvider>,
     )
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
       "<meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>

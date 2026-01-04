@@ -14,7 +14,6 @@ describe('schema.org dupes', () => {
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
-          // @ts-expect-error untyped
           nodes: [
             defineWebSite({
               url: '/',
@@ -22,23 +21,22 @@ describe('schema.org dupes', () => {
               name: 'hello',
             }),
           ],
-        },
+        } as any,
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
           id: 'schema-org-graph-2',
-          // @ts-expect-error untyped
           nodes: [
             // @ts-expect-error broken
             defineWebSite({
               '@type': 'AboutPage',
             }),
           ],
-        },
+        } as any,
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph" id="schema-org-graph-2">{
         "@context": "https://schema.org",

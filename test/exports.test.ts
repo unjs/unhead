@@ -6,15 +6,15 @@ import { getPackageExportsManifest } from 'vitest-package-exports'
 
 describe('exports-snapshot', async () => {
   const packages: { name: string, path: string, private?: boolean }[] = JSON.parse(
-    await x('pnpm', ['ls', '--only-projects', '-r', '--json']).then(r => r.stdout),
+    await x('pnpm', ['ls', '-r', '--json', '--depth', '-1']).then(r => r.stdout),
   )
 
   for (const pkg of packages) {
-    if (pkg.private || pkg.path.includes('packages-aliased/') || pkg.path.includes('/angular'))
+    if (pkg.private || pkg.path.includes('packages-aliased') || pkg.path.includes('angular'))
       continue
     it(`${pkg.name}`, async () => {
       const manifest = await getPackageExportsManifest({
-        importMode: 'package',
+        importMode: 'dist',
         cwd: pkg.path,
       })
       // @ts-expect-error untyped

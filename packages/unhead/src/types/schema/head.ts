@@ -1,28 +1,69 @@
 import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority } from '../tags'
 import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
-import type { HttpEventAttributes } from './attributes/event'
 import type { Base } from './base'
 import type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
 import type { HtmlAttributes } from './htmlAttributes'
-import type { LinkWithoutEvents } from './link'
-import type { Meta } from './meta'
+import type {
+  AlternateLink,
+  AuthorLink,
+  CanonicalLink,
+  DnsPrefetchLink,
+  GenericLink,
+  HelpLink,
+  IconLink,
+  LicenseLink,
+  Link,
+  LinkBase,
+  LinkHttpEvents,
+  ManifestLink,
+  ModulepreloadLink,
+  NextLink,
+  PingbackLink,
+  PreconnectLink,
+  PrefetchLink,
+  PreloadFontLink,
+  PreloadImageLink,
+  PreloadLink,
+  PreloadLinkBase,
+  PreloadOtherLink,
+  PreloadScriptLink,
+  PreloadStyleLink,
+  PrerenderLink,
+  PrevLink,
+  SearchLink,
+  // Narrowed link types for re-export
+  StylesheetLink,
+} from './link'
+import type {
+  CharsetMeta,
+  HttpEquivMeta,
+  Meta,
+  MetaBase,
+  MetaNames,
+  MetaProperties,
+  NameMeta,
+  PropertyMeta,
+} from './meta'
 import type { MetaFlat } from './metaFlat'
 import type { Noscript } from './noscript'
-import type { ScriptWithoutEvents } from './script'
+import type {
+  ApplicationJsonScript,
+  // Narrowed script types for re-export
+  ExternalScript,
+  GenericScript,
+  ImportMapConfig,
+  ImportMapScript,
+  InlineModuleScript,
+  InlineScript,
+  JsonLdScript,
+  ModuleScript,
+  Script,
+  ScriptBase,
+  ScriptHttpEvents,
+  SpeculationRulesScript,
+} from './script'
 import type { Style } from './style'
-
-interface DeprecatedResolvesDuplicates {
-  /**
-   * @deprecated You should avoid using keys to dedupe meta as they are automatically deduped.
-   * If you need to change the meta tag rendered use tagPriority.
-   */
-  key?: string
-  /**
-   * @deprecated Remove
-   */
-  tagDuplicateStrategy?: 'replace' | 'merge'
-}
 
 export interface SchemaAugmentations {
   title: TagPriority
@@ -31,7 +72,7 @@ export interface SchemaAugmentations {
   htmlAttrs: ResolvesDuplicates & TagPriority
   bodyAttrs: ResolvesDuplicates & TagPriority
   link: TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams
-  meta: TagPriority & DeprecatedResolvesDuplicates & ProcessesTemplateParams
+  meta: TagPriority & ResolvesDuplicates & ProcessesTemplateParams
   style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
@@ -69,16 +110,14 @@ export interface UnheadHtmlAttributes extends Omit<HtmlAttributes, 'class' | 'st
   style?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
 }
 
-export interface UnheadMeta extends Omit<Meta, 'content'> {
-  /**
-   * This attribute contains the value for the http-equiv, name or property attribute, depending on which is used.
-   *
-   * You can provide an array of values to create multiple tags sharing the same name, property or http-equiv.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-content
-   */
-  content?: MaybeArray<Stringable> | null
-}
+/**
+ * Unhead meta with support for array content values
+ */
+export type UnheadMeta
+  = | (Omit<NameMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+    | CharsetMeta
 
 export type MaybeEventFnHandlers<T> = {
   [key in keyof T]?: T[key] | ((e: Event) => void)
@@ -87,10 +126,10 @@ export type MaybeEventFnHandlers<T> = {
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = string | ((title?: string) => string | null) | null | ({ textContent: string | ((title?: string) => string | null) } & SchemaAugmentations['titleTemplate'])
 export type ResolvableBase = ResolvableProperties<Base & SchemaAugmentations['base']>
-export type ResolvableLink = ResolvableProperties<LinkWithoutEvents & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type ResolvableMeta = ResolvableProperties<UnheadMeta & DataKeys & SchemaAugmentations['meta']>
+export type ResolvableLink = ResolvableProperties<Link & SchemaAugmentations['link']> & MaybeEventFnHandlers<LinkHttpEvents>
+export type ResolvableMeta = ResolvableProperties<UnheadMeta & SchemaAugmentations['meta']>
 export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string
-export type ResolvableScript = ResolvableProperties<ScriptWithoutEvents & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes> | string
+export type ResolvableScript = ResolvableProperties<Script & SchemaAugmentations['script']> & MaybeEventFnHandlers<ScriptHttpEvents> | string
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
@@ -174,10 +213,10 @@ export interface SerializableHead {
   titleTemplate?: string
   base?: Base & DataKeys & SchemaAugmentations['base']
   templateParams?: Record<string, any>
-  link?: (LinkWithoutEvents & DataKeys & HttpEventAttributes & SchemaAugmentations['link'])[]
-  meta?: (Meta & DataKeys & SchemaAugmentations['meta'])[]
+  link?: (Link & SchemaAugmentations['link'])[]
+  meta?: (Meta & SchemaAugmentations['meta'])[]
   style?: (Style & DataKeys & SchemaAugmentations['style'])[]
-  script?: (ScriptWithoutEvents & DataKeys & HttpEventAttributes & SchemaAugmentations['script'])[]
+  script?: (Script & SchemaAugmentations['script'])[]
   noscript?: (Noscript & DataKeys & SchemaAugmentations['noscript'])[]
   htmlAttrs?: HtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']
   bodyAttrs?: BodyAttributesWithoutEvents & DataKeys & BodyEvents & SchemaAugmentations['bodyAttrs']
@@ -185,34 +224,106 @@ export interface SerializableHead {
 
 export type RawInput<K extends keyof SerializableHead> = Required<SerializableHead>[K] extends Array<infer T> ? T : Required<SerializableHead>[K]
 
-/**
- * @deprecated Use SerializableResolvedHead
- */
-export type Head = SerializableHead
-/**
- * @deprecated Use SerializableResolvedHead
- */
-export type ResolvedHead = SerializableHead
-
 export type UseSeoMetaInput = DeepResolvableProperties<MetaFlat> & { title?: ResolvableTitle, titleTemplate?: ResolvableTitleTemplate }
 
 export type UseHeadInput = ResolvableHead | SerializableHead
 
-type MetaFlatInput = MetaFlat
+// ============================================================================
+// Re-exports
+// ============================================================================
 
-export { type MetaFlatInput }
-
-/**
- * @deprecated No longer used
- */
-export type MergeHead = Record<string, any>
-
+// Attribute types
 export type { AriaAttributes } from './attributes/aria'
 export type { DataKeys } from './attributes/data'
 export type { HttpEventAttributes } from './attributes/event'
 export type { GlobalAttributes } from './attributes/global'
+
+// Body/HTML attributes
 export type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
-export type { LinkWithoutEvents } from './link'
+
+// Link types (narrowed)
+export type {
+  AlternateLink,
+  AuthorLink,
+  CanonicalLink,
+  DnsPrefetchLink,
+  GenericLink,
+  HelpLink,
+  IconLink,
+  LicenseLink,
+  Link,
+  LinkBase,
+  LinkHttpEvents,
+  ManifestLink,
+  ModulepreloadLink,
+  NextLink,
+  PingbackLink,
+  PreconnectLink,
+  PrefetchLink,
+  PreloadFontLink,
+  PreloadImageLink,
+  PreloadLink,
+  PreloadLinkBase,
+  PreloadOtherLink,
+  PreloadScriptLink,
+  PreloadStyleLink,
+  PrerenderLink,
+  PrevLink,
+  SearchLink,
+  StylesheetLink,
+}
+
+// Script types (narrowed)
+export type {
+  ApplicationJsonScript,
+  ExternalScript,
+  GenericScript,
+  ImportMapConfig,
+  ImportMapScript,
+  InlineModuleScript,
+  InlineScript,
+  JsonLdScript,
+  ModuleScript,
+  Script,
+  ScriptBase,
+  ScriptHttpEvents,
+  SpeculationRulesScript,
+}
+
+// Meta types (narrowed)
+export type {
+  CharsetMeta,
+  HttpEquivMeta,
+  Meta,
+  MetaBase,
+  MetaNames,
+  MetaProperties,
+  NameMeta,
+  PropertyMeta,
+}
+
+// Legacy exports for backwards compatibility
+export type { GenericLink as LinkWithoutEvents } from './link'
+// Other types
 export type { MetaFlat } from './metaFlat'
-export type { ScriptWithoutEvents } from './script'
+
+export type { GenericScript as ScriptWithoutEvents } from './script'
 export type { SpeculationRules } from './struct/speculationRules'
+
+// ============================================================================
+// Utility Types for Internal Use
+// ============================================================================
+// These types provide access to all possible properties across union members,
+// which is needed for internal code that dynamically creates/validates tags.
+
+/**
+ * Flat meta type with all properties optional (for internal use)
+ * @internal
+ */
+export interface MetaGeneric extends MetaBase {
+  'name'?: MetaNames | (string & Record<never, never>)
+  'property'?: MetaProperties | (string & Record<never, never>)
+  'http-equiv'?: 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | (string & Record<never, never>)
+  'charset'?: 'utf-8' | (string & Record<never, never>)
+  'content'?: Stringable
+}

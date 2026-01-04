@@ -1,6 +1,11 @@
 import type { PropResolver } from '../types'
 
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
+  // Skip _resolver (used by schema-org to attach resolver functions)
+  if (key === '_resolver') {
+    return val
+  }
+
   // Combined primitive type check
   const type = typeof val
 

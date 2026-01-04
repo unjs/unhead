@@ -17,7 +17,7 @@ describe('vue dom titleTemplate', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
       `"Test"`,
@@ -33,7 +33,7 @@ describe('vue dom titleTemplate', () => {
       })
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
@@ -53,7 +53,7 @@ describe('vue dom titleTemplate', () => {
     }, {
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
       `"test"`,
@@ -61,7 +61,7 @@ describe('vue dom titleTemplate', () => {
 
     entry!.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
       `""`,

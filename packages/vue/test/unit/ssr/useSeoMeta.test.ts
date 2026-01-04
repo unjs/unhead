@@ -21,7 +21,7 @@ describe('useSeoMeta vue ssr', () => {
         },
       })
     })
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -43,7 +43,7 @@ describe('useSeoMeta vue ssr', () => {
       })
       data.value = 'bar'
     })
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",

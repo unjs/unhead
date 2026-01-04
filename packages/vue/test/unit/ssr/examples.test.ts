@@ -131,7 +131,7 @@ describe('vue ssr examples', () => {
       }
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -158,7 +158,7 @@ describe('vue ssr examples', () => {
         ],
       }))
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

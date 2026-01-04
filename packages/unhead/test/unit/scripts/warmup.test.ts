@@ -12,7 +12,7 @@ describe('warmup', () => {
       head,
       trigger: 'server',
     })
-    const entry = head.headEntries()[0]!.input
+    const entry = [...head.entries.values()][0]!.input
     // @ts-expect-error untyped
     expect(entry.script[0].src).toBe('https://cdn.example.com/script.js')
     expect(entry.link).toBeUndefined()
@@ -26,7 +26,7 @@ describe('warmup', () => {
       trigger: 'client',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
+    const link = [...head.entries.values()][0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('https://cdn.example.com/script.js')
     expect(link.rel).toEqual('preload')
   })
@@ -39,7 +39,7 @@ describe('warmup', () => {
       trigger: 'client',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
+    const link = [...head.entries.values()][0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('/script.js')
     expect(link.rel).toEqual('preload')
   })
@@ -53,7 +53,7 @@ describe('warmup', () => {
       warmupStrategy: 'dns-prefetch',
     })
     // @ts-expect-error untyped
-    const link = head.headEntries()[0]!.input!.link![0] as LinkWithoutEvents
+    const link = [...head.entries.values()][0]!.input!.link![0] as LinkWithoutEvents
     expect(link.href).toEqual('https://cdn.example.com')
     expect(link.rel).toEqual('dns-prefetch')
   })

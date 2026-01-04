@@ -39,3 +39,5 @@ export const MetaTagsArrayable = /* @__PURE__ */ new Set([
   'twitter',
   'author',
 ])
+
+export const TagPriorityAliases = /* @__PURE__ */ { critical: -8, high: -1, low: 2 } as const
