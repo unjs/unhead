@@ -100,3 +100,8 @@ export interface BookEditionSimple extends Thing {
 ::alert{type="warning"}
 🔨 Schema in development
 ::
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Book author
+- [Organization](/docs/schema-org/api/schema/organization) - Publisher

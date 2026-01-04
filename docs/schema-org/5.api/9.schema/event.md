@@ -136,3 +136,9 @@ export interface EventSimple extends Thing {
   maximumAttendeeCapacity?: number
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Event organizer
+- [Person](/docs/schema-org/api/schema/person) - Event performer
+- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Event venue

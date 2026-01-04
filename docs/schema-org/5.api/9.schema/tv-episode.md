@@ -31,7 +31,7 @@
 
 - **video** `NodeRelations<VideoObject | string>`
 
-  Video content for the episode. Resolves to [VideoObject](/schema-org/api/schema/video).
+  Video content for the episode. Resolves to VideoObject.
 
 - **duration** `string`
 
@@ -112,3 +112,9 @@ export interface TVEpisodeSimple extends Thing {
   musicBy?: NodeRelations<Person | string>
 }
 ```
+
+## Related Schemas
+
+- [TVSeason](/docs/schema-org/api/schema/tv-season) - Parent season
+- [Person](/docs/schema-org/api/schema/person) - Director, actors
+- [Organization](/docs/schema-org/api/schema/organization) - Production company

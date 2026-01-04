@@ -4,14 +4,18 @@ navigation:
   title: Breadcrumbs
 ---
 
-Creating breadcrumbs on your site is a great way to help your users understand your website hierarchy.
+Use `defineBreadcrumb()` with an array of `{ name, item }` objects to create breadcrumb navigation markup. Google displays this as a clickable path in search results instead of showing the raw URL.
+
+::note
+Breadcrumb structured data replaces URLs in search results with a readable navigation path (Home > Category > Page), helping users understand your site hierarchy.
+::
 
 ## Useful Links
 
 - [Breadcrumb | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/breadcrumb)
 - [Breadcrumb | Yoast](https://developer.yoast.com/features/schema/pieces/breadcrumb)
 
-## Marking up Breadcrumbs
+## How do I mark up breadcrumbs?
 
 [defineBreadcrumb](/docs/schema-org/api/schema/breadcrumb) creates Breadcrumb Schema whilst handling relations for you.
 
@@ -55,7 +59,7 @@ Here's an example of how you might structure your breadcrumbs in HTML:
 </ul>
 ```
 
-## Adding Multiple Breadcrumbs
+## How do I add multiple breadcrumb trails?
 
 There may be some cases where you'd like multiple breadcrumbs to be displayed.
 
@@ -86,3 +90,8 @@ useSchemaOrg([
   }),
 ])
 ```
+
+## Related Recipes
+
+- [Blog Posts](/docs/schema-org/guides/recipes/blog) - Article structured data
+- [E-Commerce](/docs/schema-org/guides/recipes/e-commerce) - Product structured data

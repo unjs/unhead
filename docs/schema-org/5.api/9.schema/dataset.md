@@ -24,7 +24,7 @@
 
 - **creator** `NodeRelations<Person | Organization | string>`
 
-  The person or organization who created the dataset. Resolves to [Person](/schema-org/api/schema/person) or [Organization](/schema-org/api/schema/organization).
+  The person or organization who created the dataset. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
 
 - **distribution** `NodeRelations<DataDownload>`
 
@@ -50,10 +50,10 @@
 
 - **@type**: `Dataset`
 - **@id**: `${canonicalUrl}#dataset`
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/schema-org/getting-started/params))_
-- **url**: `currentRouteMeta.url` _(see: [Schema.org Params](/schema-org/getting-started/params))_
-- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/schema-org/getting-started/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/schema-org/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **url**: `currentRouteMeta.url` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 
 ## Examples
 
@@ -133,3 +133,8 @@ export interface DatasetSimple extends Thing {
   'identifier'?: string | string[]
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Dataset publisher
+- [Person](/docs/schema-org/api/schema/person) - Dataset creator

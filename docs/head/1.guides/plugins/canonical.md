@@ -4,7 +4,9 @@ description: "Fix relative URLs in your meta tags automatically for better SEO"
 navigation.title: "Canonical Plugin"
 ---
 
-## Introduction
+**Quick Answer:** The Canonical plugin automatically generates `<link rel="canonical">` tags and converts relative URLs to absolute URLs in your meta tags. Enable it with `CanonicalPlugin({ canonicalHost: 'https://mysite.com' })` in your head configuration.
+
+## Why Do I Need Absolute URLs in Meta Tags?
 
 The Canonical Plugin automatically converts relative URLs to absolute URLs in your meta tags, which is essential for:
 
@@ -12,7 +14,7 @@ The Canonical Plugin automatically converts relative URLs to absolute URLs in yo
 - [Facebook](https://developers.facebook.com/docs/sharing/webmasters/getting-started): Ignores relative image paths in Open Graph tags
 - [Twitter](https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup): Requires absolute URLs for Twitter Card images
 
-## How It Works
+## What Tags Does the Plugin Transform?
 
 The plugin transforms these tags automatically:
 
@@ -30,7 +32,7 @@ The plugin transforms these tags automatically:
 ```
 ::
 
-## Setup
+## How Do I Set Up the Canonical Plugin?
 
 Install the plugin in both your server & client entries:
 
@@ -48,7 +50,7 @@ const head = createHead({
 ```
 ::
 
-## Configuration
+## What Are the Configuration Options?
 
 ::code-block
 ```ts [Input]
@@ -61,7 +63,7 @@ interface CanonicalPluginOptions {
 ```
 ::
 
-### Fallback Behavior
+### What Happens If I Don't Set canonicalHost?
 
 - If no `canonicalHost` is provided:
   - Client-side: Uses `window.location.origin`
@@ -71,7 +73,7 @@ interface CanonicalPluginOptions {
 Always set `canonicalHost` explicitly for consistent behavior across environments.
 ::
 
-### Custom URL Resolution
+### How Do I Customize URL Resolution?
 
 Use `customResolver` to implement custom URL transformation logic:
 
@@ -96,9 +98,7 @@ Example transformation:
 ```
 ::
 
-## Common Use Cases
-
-### CDN Integration
+## How Do I Integrate with a CDN?
 
 Point image assets to your CDN domain:
 
@@ -115,3 +115,8 @@ CanonicalPlugin({
 })
 ```
 ::
+
+## Related
+
+- [Template Params](/docs/head/guides/plugins/template-params) - Dynamic template parameters
+- [Infer SEO Meta](/docs/head/guides/plugins/infer-seo-meta-tags) - Auto-generate SEO tags

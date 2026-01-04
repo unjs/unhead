@@ -9,7 +9,7 @@
 - [LocalBusiness - Schema.org](https://schema.org/LocalBusiness)
 - [Local Business Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/local-business)
 - [LocalBusiness - Yoast](https://developer.yoast.com/features/schema/pieces/localBusiness)
-- [Choose an Identity - Local Business](/schema-org/recipes/identity#local-business)
+- [Choose an Identity - Local Business](/docs/schema-org/guides/recipes/identity#local-business)
 
 ## Required properties
 
@@ -62,7 +62,7 @@ defineLocalBusiness({
 - **@type**: `['Organization', 'LocalBusiness']`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}`
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
+- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/docs/schema-org/guides/core-concepts/params)
 
 ## Sub-Types
 
@@ -187,3 +187,9 @@ export interface LocalBusinessSimple extends Organization {
   'openingHoursSpecification'?: NodeRelations<OpeningHoursSpecification>
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Parent organization
+- [Event](/docs/schema-org/api/schema/event) - Business events
+- [Product](/docs/schema-org/api/schema/product) - Products/services offered

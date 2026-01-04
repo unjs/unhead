@@ -23,7 +23,7 @@
 
 - **author** `NodeRelations<Person | Organization | string>`
 
-  The author/creator/host of the podcast. Resolves to [Person](/schema-org/api/schema/person) or [Organization](/schema-org/api/schema/organization).
+  The author/creator/host of the podcast. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
 
 - **image** `NodeRelations<string | ImageObject>`
 
@@ -96,3 +96,9 @@ export interface PodcastSeriesSimple extends Thing {
   keywords?: Arrayable<string>
 }
 ```
+
+## Related Schemas
+
+- [PodcastEpisode](/docs/schema-org/api/schema/podcast-episode) - Episodes
+- [Person](/docs/schema-org/api/schema/person) - Host
+- [Organization](/docs/schema-org/api/schema/organization) - Publisher

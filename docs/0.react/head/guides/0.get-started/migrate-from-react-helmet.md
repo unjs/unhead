@@ -5,7 +5,9 @@ navigation:
   title: 'Migrate React Helmet'
 ---
 
-## Introduction
+**Quick Answer:** Replace `<Helmet>` with `useHead()` or `<Head>` components. Most props map directly - just change the import to `@unhead/react`.
+
+## Why Migrate from React Helmet?
 
 [React Helmet](https://github.com/nfl/react-helmet) was the go-to solution for managing `<head>` tags in React applications for years. However, its last major release was in 2020 and the project is now in maintenance mode.
 
@@ -20,7 +22,7 @@ As well as a improved bundle size:
 - REACT HELMET Size: 26.6 kB (gzipped: 9.2 kB)
 - UNHEAD Size: 10.7 kB (gzipped: 4.5 kB)
 
-## Comparison
+## What's the Difference Between React Helmet and Unhead?
 
 React Helmet uses a `<Helmet>` component to manage head tags. Unhead provides a `<Head>` component, offering a similar
 API.
@@ -51,7 +53,7 @@ function App() {
 }
 ```
 
-## Migration Steps
+## How Do I Migrate from React Helmet to Unhead?
 
 ### 1. Update Dependencies
 
@@ -132,7 +134,7 @@ export function render(_url: string) {
 }
 ```
 
-### 5. That's It!
+### 5. What's Next?
 
 You've successfully migrated from React Helmet to Unhead.
 

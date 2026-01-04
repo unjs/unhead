@@ -5,7 +5,11 @@ navigation:
   title: eCommerce
 ---
 
-Implementing Schema.org for eCommerce sites can significantly improve your search visibility and product presentation in search results. Product markup helps search engines understand your offerings and can result in rich results with pricing, availability, reviews, and more.
+Use `defineProduct()` with `offers`, `aggregateRating`, and `review` properties to enable product rich results. Google can display price, availability, ratings, and review counts directly in search results.
+
+::note
+Product structured data enables rich snippets showing prices, star ratings, stock status, and reviews - significantly improving visibility and click-through rates for eCommerce pages.
+::
 
 ## Useful Links
 
@@ -13,11 +17,11 @@ Implementing Schema.org for eCommerce sites can significantly improve your searc
 - [Product | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
 - [Product | Yoast](https://developer.yoast.com/features/schema/pieces/product)
 
-## Marking up a Product
+## How do I mark up a product?
 
 [defineProduct](/docs/schema-org/api/schema/product) creates Product Schemas whilst handling relations for you.
 
-Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
+Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
 
 ```ts
 import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -36,7 +40,7 @@ useSchemaOrg([
 ])
 ```
 
-## Complete Product Example
+## What does a complete product schema look like?
 
 For optimal product markup, include as much information as possible:
 
@@ -92,7 +96,7 @@ useSchemaOrg([
 ])
 ```
 
-## Marking up Product Variants
+## How do I mark up product variants?
 
 For products with multiple variants (color, size, etc.), use the following approach:
 
@@ -138,7 +142,7 @@ useSchemaOrg([
 ])
 ```
 
-## Product Availability Values
+## What are the product availability values?
 
 For the `availability` property, use one of these Schema.org values:
 
@@ -151,7 +155,7 @@ For the `availability` property, use one of these Schema.org values:
 - `https://schema.org/OnlineOnly`: Item is available only online
 - `https://schema.org/SoldOut`: Item is sold out
 
-## Marking up a Product Collection Page
+## How do I mark up a product collection page?
 
 For category or collection pages that list multiple products, use the CollectionPage type:
 
@@ -167,7 +171,7 @@ useSchemaOrg([
 ])
 ```
 
-## Marking up Shopping Cart and Checkout
+## How do I mark up shopping cart and checkout pages?
 
 For shopping cart and checkout pages, you can use specific page types:
 
@@ -193,11 +197,11 @@ useSchemaOrg([
 ])
 ```
 
-## Setting up a Store's Identity
+## How do I set up a store's identity?
 
 For eCommerce sites, it's important to establish your brand's identity. This can be done using [Organization](/docs/schema-org/api/schema/organization) or [LocalBusiness](/docs/schema-org/api/schema/local-business) depending on whether your store has a physical location.
 
-See the [Identity](/schema-org/recipes/identity) guide for more details.
+See the [Identity](/docs/schema-org/guides/recipes/identity) guide for more details.
 
 ```ts
 // Organization Example
@@ -265,7 +269,7 @@ useSchemaOrg([
 ])
 ```
 
-## Best Practices for eCommerce Schema
+## What are the best practices for eCommerce schema?
 
 1. **Include all product details**: Provide complete information including prices, SKUs, availability, and images.
 
@@ -279,7 +283,7 @@ useSchemaOrg([
 
 6. **Keep pricing accurate**: Ensure pricing information matches what's displayed on your website.
 
-7. **Include breadcrumbs**: Add [breadcrumb navigation](/schema-org/recipes/breadcrumbs) to help users understand your site structure.
+7. **Include breadcrumbs**: Add [breadcrumb navigation](/docs/schema-org/guides/recipes/breadcrumbs) to help users understand your site structure.
 
 8. **Ensure consistency**: Make sure your schema markup matches the visible content on your page.
 
@@ -291,7 +295,7 @@ useSchemaOrg([
 For comprehensive eCommerce SEO, combine product schema with other relevant schemas like breadcrumbs, FAQ (for product questions), and organization/local business schemas.
 ::
 
-## eCommerce Schema Structure
+## What schema should I use on different eCommerce pages?
 
 For a typical eCommerce site, consider implementing this schema structure:
 
@@ -312,3 +316,9 @@ For a typical eCommerce site, consider implementing this schema structure:
    - WebPage (CheckoutPage)
 
 This comprehensive structure helps search engines understand your eCommerce site and can improve visibility for your products in search results.
+
+## Related Recipes
+
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Navigation for product pages
+- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Product FAQs

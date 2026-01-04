@@ -7,7 +7,7 @@
 ## Useful Links
 
 - [Schema.org Question](https://schema.org/Question)
-- [Recipe: FAQ](/schema-org/recipes/faq)
+- [Recipe: FAQ](/docs/schema-org/guides/recipes/faq)
 
 ## Required properties
 
@@ -34,7 +34,7 @@ defineQuestion({
 
 - **@type**: `Question`
 - **@id**: `${canonicalUrl}#/schema/question/${questionId}`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
 
 ## Resolves
 
@@ -93,3 +93,8 @@ export interface Answer extends Optional<Thing, '@id'> {
   text: string
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Question author
+- [Article](/docs/schema-org/api/schema/article) - Related article

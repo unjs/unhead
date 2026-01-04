@@ -104,3 +104,8 @@ export interface SoftwareAppSimple extends Thing {
   'featureList'?: string[]
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - App developer/publisher
+- [Person](/docs/schema-org/api/schema/person) - App author

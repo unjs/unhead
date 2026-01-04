@@ -17,7 +17,7 @@ Creating How-To content is an excellent way to provide valuable instructions to 
 
 The [defineHowTo](/docs/schema-org/api/schema/how-to) function creates HowTo Schema whilst handling relations for you.
 
-Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
+Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
 
 ```ts
 import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -214,3 +214,9 @@ For the best user experience, your HTML structure should match your schema. Here
 4. **Be specific**: Provide clear, actionable instructions in each step.
 5. **Include timing**: Add time estimates for each step when applicable.
 6. **Test in Google's Rich Results Test**: Validate your markup using [Google's Rich Results Test](https://search.google.com/test/rich-results).
+
+## Related Recipes
+
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
+- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Add FAQ structured data
+- [Blog Posts](/docs/schema-org/guides/recipes/blog) - Article structured data

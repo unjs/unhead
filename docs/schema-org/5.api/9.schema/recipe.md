@@ -7,7 +7,7 @@
 ## Useful Links
 
 - [Schema.org Recipe](https://schema.org/Recipe)
-- [Recipe Structed Data](https://developers.google.com/search/docs/advanced/structured-data/recipe)
+- [Recipe Structured Data](https://developers.google.com/search/docs/advanced/structured-data/recipe)
 
 ## Required properties
 
@@ -35,11 +35,11 @@
 
 - **@type**: `Recipe`
 - **@id**: `${canonicalUrl}#recipe`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
+- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 - **author**: (conditional) set to the current page article's author if one exists
 - **mainEntityOfPage**: WebPage Reference
 
@@ -162,3 +162,9 @@ export interface NutritionInformation extends Thing {
   'calories': string
 }
 ```
+
+## Related Schemas
+
+- [HowTo](/docs/schema-org/api/schema/how-to) - Step-by-step instructions
+- [Person](/docs/schema-org/api/schema/person) - Recipe author
+- [Organization](/docs/schema-org/api/schema/organization) - Recipe publisher

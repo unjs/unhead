@@ -19,15 +19,15 @@
 
 - **actor** `NodeRelations<Person | string>`
 
-  Array of actors in the series. Resolves to [Person](/schema-org/api/schema/person).
+  Array of actors in the series. Resolves to [Person](/docs/schema-org/api/schema/person).
 
 - **director** `NodeRelations<Person | string>`
 
-  Array of directors of the series. Resolves to [Person](/schema-org/api/schema/person).
+  Array of directors of the series. Resolves to [Person](/docs/schema-org/api/schema/person).
 
 - **creator** `NodeRelations<Person | Organization | string>`
 
-  The creator of the series. Resolves to [Person](/schema-org/api/schema/person) or [Organization](/schema-org/api/schema/organization).
+  The creator of the series. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
 
 - **numberOfSeasons** `number`
 

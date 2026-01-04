@@ -178,3 +178,8 @@ export interface JobPostingSimple extends Thing {
   directApply?: boolean
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Hiring organization
+- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Job location

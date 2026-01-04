@@ -9,7 +9,7 @@
 - [Product - Schema.org](https://schema.org/Product)
 - [Product Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
 - [Product - Yoast](https://developer.yoast.com/features/schema/pieces/product)
-- [Recipe: eCommerce](/schema-org/recipes/e-commerce)
+- [Recipe: eCommerce](/docs/schema-org/guides/recipes/e-commerce)
 
 ## Required properties
 
@@ -31,9 +31,9 @@
 
 - **@type**: `Product`
 - **@id**: `${canonicalUrl}#product`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 - **brand**: id reference of the identity
 - **mainEntityOfPage** id reference of the web page
 
@@ -151,3 +151,9 @@ export interface ProductSimple extends Thing {
   manufacturer?: NodeRelation<Organization>
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Product brand/manufacturer
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Product navigation
+- [ItemList](/docs/schema-org/api/schema/item-list) - Product lists

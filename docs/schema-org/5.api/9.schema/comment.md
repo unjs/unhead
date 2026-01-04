@@ -8,7 +8,7 @@
 
 - [Comment - Schema.org](https://schema.org/Comment)
 - [Comment - Yoast](https://developer.yoast.com/features/schema/pieces/comment)
-- [Recipe: Blog](/schema-org/recipes/blog)
+- [Recipe: Blog](/docs/schema-org/guides/recipes/blog)
 
 ## Required properties
 
@@ -34,7 +34,7 @@
 
 ## Examples
 
-See the [blog](/schema-org/recipes/blog) recipe for more examples.
+See the [blog](/docs/schema-org/guides/recipes/blog) recipe for more examples.
 
 ### Minimal
 
@@ -82,3 +82,8 @@ export interface CommentSimple extends Thing {
   downvoteCount?: number
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Comment author
+- [Article](/docs/schema-org/api/schema/article) - Commented content

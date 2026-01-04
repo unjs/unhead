@@ -61,10 +61,10 @@ defineHowTo({
 
 - **@type**: `HowTo`
 - **@id**: `${canonicalUrl}#howTo`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
 - **mainEntityOfPage**: WebPage Reference
 
 ## Types
@@ -162,3 +162,9 @@ export interface HowToStepSimple extends Thing {
   itemListElement?: NodeRelations<HowToDirection | string>[]
 }
 ```
+
+## Related Schemas
+
+- [Recipe](/docs/schema-org/api/schema/recipe) - Cooking instructions
+- [Article](/docs/schema-org/api/schema/article) - Tutorial articles
+- [Person](/docs/schema-org/api/schema/person) - Instruction author

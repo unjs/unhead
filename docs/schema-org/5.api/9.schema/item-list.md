@@ -39,3 +39,9 @@ export interface ItemListSimple extends Thing {
   numberOfItems?: number
 }
 ```
+
+## Related Schemas
+
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Navigation lists
+- [Product](/docs/schema-org/api/schema/product) - Product lists
+- [Article](/docs/schema-org/api/schema/article) - Article lists

@@ -9,7 +9,7 @@
 - [Article - Schema.org](https://schema.org/Article)
 - [Article Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/article)
 - [Article - Yoast](https://developer.yoast.com/features/schema/pieces/article)
-- [Recipe: Blog](/schema-org/recipes/blog)
+- [Recipe: Blog](/docs/schema-org/guides/recipes/blog)
 
 ## Required properties
 
@@ -27,7 +27,7 @@
 
 - **author** `AuthorInput` (conditional)
 
-  If the author of the article is not your identity (see [Choosing an identity](/schema-org/recipes/identity)) you will need to provide authors
+  If the author of the article is not your identity (see [Choosing an identity](/docs/schema-org/guides/recipes/identity)) you will need to provide authors
   manually.
 
   The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/docs/schema-org/api/schema/person).
@@ -42,12 +42,12 @@
 
 - **@type**: `Article`
 - **@id**: `${canonicalUrl}#article`
-- **headline**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/schema-org/getting-started/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/guide/getting-started/params))_
-- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **headline**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 - **publisher**: Identity Reference
 - **author**: Identity Reference
 - **isPartOf**: WebPage Reference
@@ -101,7 +101,7 @@ defineArticle({
 
 ## Examples
 
-See the [blog](/schema-org/recipes/blog) recipe for more examples.
+See the [blog](/docs/schema-org/guides/recipes/blog) recipe for more examples.
 
 ### Minimal
 
@@ -236,3 +236,9 @@ export interface ArticleSimple extends Thing {
   about?: string
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Article author
+- [Organization](/docs/schema-org/api/schema/organization) - Publisher
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Article navigation

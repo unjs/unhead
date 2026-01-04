@@ -3,10 +3,11 @@ title: FAQ
 description: Learn how to implement Schema.org FAQ markup to improve your search appearance.
 ---
 
-Creating a FAQ page on your site is a great way to help your users understand your website.
+Use `defineQuestion()` with `defineWebPage({ '@type': 'FAQPage' })` to mark up FAQ content. Google can display your questions and answers directly in search results as expandable rich snippets.
 
-Providing Schema.org for these Questions and Answers can help improve your organic reach by allowing Google to optimise
-your faq pages search appearance.
+::note
+FAQ structured data enables rich results where users can see and expand your Q&A directly in Google search, increasing visibility and click-through rates.
+::
 
 ## Useful Links
 
@@ -14,7 +15,7 @@ your faq pages search appearance.
 - [FAQ Page | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/faqpage)
 - [Question Schema | Yoast](https://developer.yoast.com/features/schema/pieces/question)
 
-## Marking up FAQs
+## How do I mark up FAQs?
 
 [defineQuestion](/docs/schema-org/api/schema/question) creates Question Schema whilst handling relations for you.
 
@@ -42,7 +43,7 @@ useSchemaOrg([
 ])
 ```
 
-## HTML Structured Content
+## How should I structure FAQ content in HTML?
 
 For the best user experience, it's good to structure your FAQ content in a way that matches your schema markup:
 
@@ -74,7 +75,7 @@ For the best user experience, it's good to structure your FAQ content in a way t
 </div>
 ```
 
-## Rich HTML Content in Answers
+## Can I use HTML in FAQ answers?
 
 You can include HTML content in your answers to provide a richer experience:
 
@@ -98,3 +99,8 @@ useSchemaOrg([
   }),
 ])
 ```
+
+## Related Recipes
+
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
+- [How-To Guide](/docs/schema-org/guides/recipes/how-to) - Step-by-step instructions

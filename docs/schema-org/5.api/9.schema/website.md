@@ -21,7 +21,7 @@
 - **@type**: `WebSite`
 - **@id**: `${canonicalHost}#website`
 - **url**: `canonicalHost`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/schema-org/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
 - **publisher**: Identity reference
 
 ## Example
