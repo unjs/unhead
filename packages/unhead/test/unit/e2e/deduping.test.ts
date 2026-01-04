@@ -168,7 +168,7 @@ describe('unhead e2e deduping', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <script data-hid="test">console.log('server log')</script>
+      <script data-hid="test">console.log('client log')</script>
       </head>
       <body>
 

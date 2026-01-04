@@ -179,7 +179,7 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
-  _domUpdatePromise?: Promise<void>
+  _domUpdating?: boolean
   /**
    * @internal
    */

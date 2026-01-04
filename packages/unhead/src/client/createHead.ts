@@ -22,7 +22,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
       {
         key: 'client',
         hooks: {
-          'entries:updated': render,
+          'entries:updated': (head) => { render(head) },
         },
       },
     ],
