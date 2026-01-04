@@ -61,7 +61,13 @@ export interface TagPriority {
 
 export type TagUserProperties = ResolvableProperties<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
-export type TagKey = keyof ResolvableHead
+export type TagKey = keyof ResolvableHead | InternalTagKey
+
+/**
+ * Internal tag types used by plugins
+ * @internal
+ */
+export type InternalTagKey = '_flatMeta'
 
 export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
 

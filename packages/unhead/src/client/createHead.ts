@@ -1,6 +1,8 @@
-import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { HookableCore } from 'hookable'
+import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
 import { TagPriorityAliases } from '../utils/const'
+import { createHooks } from '../utils/hooks'
 import { createDomRenderer } from './renderDOMHead'
 
 function tagWeight(tag: HeadTag) {
@@ -10,6 +12,7 @@ function tagWeight(tag: HeadTag) {
 }
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
+  hooks: HookableCore<ClientHeadHooks>
   dirty: boolean
   invalidate: () => void
 }
@@ -20,16 +23,19 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
 
   const core = createUnhead<T, boolean>(renderer, {
-    ...options,
+    document: options.document,
+    propResolvers: options.propResolvers,
     _tagWeight: tagWeight,
-    plugins: [], // register on wrapped head instead
     init: [], // push on wrapped head instead
   })
 
+  const hooks = createHooks<ClientHeadHooks>(options.hooks)
   let dirty = false
 
   const head: ClientUnhead<T> = {
     ...core,
+    hooks,
+    use: p => registerPlugin(head, p),
     get dirty() { return dirty },
     set dirty(v) { dirty = v },
     render() {
@@ -40,14 +46,14 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
         entry._dirty = true
       }
       dirty = true
-      core.hooks.callHook('entries:updated', head)
+      hooks.callHook('entries:updated', head)
     },
     push(input: T, _options?: HeadEntryOptions) {
       const active = core.push(input, _options)
       const entry = core.entries.get(active._i)!
       entry._dirty = true
       dirty = true
-      core.hooks.callHook('entries:updated', head)
+      hooks.callHook('entries:updated', head)
 
       const corePatch = active.patch
       const coreDispose = active.dispose
@@ -58,7 +64,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
           corePatch(input)
           entry._dirty = true
           dirty = true
-          core.hooks.callHook('entries:updated', head)
+          hooks.callHook('entries:updated', head)
         },
         dispose() {
           if (core.entries.has(active._i)) {

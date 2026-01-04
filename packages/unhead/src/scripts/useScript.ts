@@ -14,7 +14,7 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { ScriptNetworkEvents } from '../utils'
+import { callHook, ScriptNetworkEvents } from '../utils'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 function resolveScriptKey(input: UseScriptResolvedInput): string {
@@ -42,7 +42,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
     // eslint-disable-next-line ts/no-use-before-define
-    head.hooks.callHook(`script:updated`, hookCtx)
+    callHook(head, 'script:updated', hookCtx)
   }
   ScriptNetworkEvents
     .forEach((fn) => {
@@ -82,7 +82,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     if (head.ssr)
       return
     const emit = (api: T) => requestAnimationFrame(() => resolve(api))
-    const _ = head.hooks.hook('script:updated', ({ script }) => {
+    const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       // vue augmentation... not ideal
       const status = script.status
       if (script.id === id && (status === 'loaded' || status === 'error')) {
@@ -100,7 +100,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         else if (status === 'error') {
           resolve(false) // failed to load
         }
-        _()
+        unhook?.()
       }
     })
   })

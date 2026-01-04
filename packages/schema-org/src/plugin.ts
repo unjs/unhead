@@ -90,8 +90,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
               resolvedMeta = {
                 ...resolvedMeta,
-                // @ts-expect-error untyped
-                ...tag.props.schemaOrg,
+                ...(tag.props.schemaOrg as Record<string, any>),
               }
               delete tag.props.schemaOrg
             }
@@ -125,24 +124,24 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           }
         },
         'tags:afterResolve': (ctx) => {
-          let firstNodeKey: number | undefined
-          for (const k in ctx.tags) {
-            const tag = ctx.tags[k]
+          let firstNodeIdx: number | undefined
+          const toRemove = new Set<number>()
+          for (let i = 0; i < ctx.tags.length; i++) {
+            const tag = ctx.tags[i]
             if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
               delete tag.props.nodes
-              if (typeof firstNodeKey === 'undefined') {
-                firstNodeKey = k as any
+              if (typeof firstNodeIdx === 'undefined') {
+                firstNodeIdx = i
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeKey].props = mergeObjects(ctx.tags[firstNodeKey].props, tag.props)
-              delete ctx.tags[firstNodeKey].props.nodes
-              // @ts-expect-error untyped
-              ctx.tags[k] = false
+              ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
+              delete ctx.tags[firstNodeIdx].props.nodes
+              toRemove.add(i)
             }
           }
-          // there many be multiple script nodes within the same entry
-          ctx.tags = ctx.tags.filter(Boolean)
+          // there may be multiple script nodes within the same entry
+          ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
         },
       },
     }

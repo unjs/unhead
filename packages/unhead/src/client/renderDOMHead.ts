@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
+import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
@@ -31,7 +32,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     return false
 
   const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
-  head.hooks.callHook('dom:beforeRender', beforeRenderCtx)
+  callHook(head, 'dom:beforeRender', beforeRenderCtx)
   // allow integrations to block to the render
   if (!beforeRenderCtx.shouldRender)
     return false
@@ -203,7 +204,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     state.pendingSideEffects[k]()
   }
   head._dom = state
-  head.hooks.callHook('dom:rendered', { renders: tags })
+  callHook(head, 'dom:rendered', { renders: tags })
   head._domUpdating = false
   head.dirty = false
   return true
