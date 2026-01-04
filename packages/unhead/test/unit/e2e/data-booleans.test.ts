@@ -24,7 +24,7 @@ describe('unhead e2e data true', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

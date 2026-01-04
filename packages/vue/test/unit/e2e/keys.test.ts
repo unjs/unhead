@@ -24,7 +24,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(IndexSchema)
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -135,7 +135,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(schema(false))
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

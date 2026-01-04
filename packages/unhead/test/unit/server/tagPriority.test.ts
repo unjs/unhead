@@ -72,7 +72,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags.startsWith('<meta charset="utf-8"')).toBeTruthy()
   })
 
@@ -105,7 +105,7 @@ describe('tag priority', () => {
         href: '/base',
       },
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(
       headTags.startsWith('<meta charset="utf-8"'),
     ).toBeTruthy()
@@ -138,7 +138,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(
       headTags.startsWith(
         '<meta http-equiv="content-security-policy" content="test"',
@@ -163,7 +163,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src="/very-important-script.js"></script>
@@ -197,7 +197,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src="/must-be-first-script.js"></script>
@@ -244,7 +244,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `
       "<script src="/must-be-first-script.js" data-hid="first-script"></script>
@@ -268,7 +268,7 @@ describe('tag priority', () => {
         textContent: 'title override',
       },
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`"<title>high-priority title</title>"`)
   })
 
@@ -284,7 +284,7 @@ describe('tag priority', () => {
     head.push({
       titleTemplate: '%s - override title template',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`"<title>test - high-priority title template</title>"`)
   })
 })

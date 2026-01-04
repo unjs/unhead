@@ -79,7 +79,7 @@ describe('vue e2e', () => {
       })
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -189,7 +189,7 @@ describe('vue e2e', () => {
       useHead(schema)
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -368,7 +368,7 @@ describe('vue e2e', () => {
       title: 'Home page',
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data.headTags).toMatchInlineSnapshot(`"<title>Home page | Company</title>"`)
     expect(data).toMatchInlineSnapshot(`

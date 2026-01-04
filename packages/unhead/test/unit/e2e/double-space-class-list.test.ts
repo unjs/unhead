@@ -23,7 +23,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -85,7 +85,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

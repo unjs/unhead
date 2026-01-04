@@ -52,7 +52,7 @@ describe('schema-org SSR e2e', () => {
       }),
     ]) as any)
 
-    await renderSSRHead(head)
+    renderSSRHead(head)
   }, { iterations: 5000 })
 
   bench('complex e2e with schema.org (multiple entities)', async () => {
@@ -117,7 +117,7 @@ describe('schema-org SSR e2e', () => {
       },
     ]) as any)
 
-    await renderSSRHead(head)
+    renderSSRHead(head)
   }, { iterations: 5000 })
 
   bench('baseline without schema.org', async () => {
@@ -133,6 +133,6 @@ describe('schema-org SSR e2e', () => {
       ],
     })
 
-    await renderSSRHead(head)
+    renderSSRHead(head)
   }, { iterations: 5000 })
 })

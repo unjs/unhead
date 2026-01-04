@@ -27,7 +27,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -96,7 +96,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -170,7 +170,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -218,7 +218,7 @@ describe('schema.org e2e', () => {
         answer: 'Something else',
       }),
     ])
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -283,7 +283,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -319,7 +319,7 @@ describe('schema.org e2e', () => {
     // @ts-expect-error intentional
     useSchemaOrg(ssrHead, 'test')
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
   it('#441', async () => {
@@ -338,7 +338,7 @@ describe('schema.org e2e', () => {
       })],
     }])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

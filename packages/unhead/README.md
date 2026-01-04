@@ -65,7 +65,7 @@ useHead({
 }, { head })
 
 // Render head tags
-const { headTags, bodyTags } = await renderSSRHead(head)
+const { headTags, bodyTags } = renderSSRHead(head)
 ```
 
 ### Client-Side Hydration

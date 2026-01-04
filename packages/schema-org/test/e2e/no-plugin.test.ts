@@ -17,7 +17,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -86,7 +86,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -164,7 +164,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -216,7 +216,7 @@ describe('schema.org e2e no plugin', () => {
         acceptedAnswer: 'Something else',
       }),
     ])
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -279,7 +279,7 @@ describe('schema.org e2e no plugin', () => {
         name: 'Three',
       }),
     ])
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

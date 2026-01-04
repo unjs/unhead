@@ -60,7 +60,7 @@ describe('useSeoMeta hook', () => {
     const input = getByRole('textbox') as HTMLInputElement
     fireEvent.change(input, { target: { value: 'Updated Title' } })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
   })
 
@@ -86,7 +86,7 @@ describe('useSeoMeta hook', () => {
       </UnheadProvider>,
     )
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
   })
 })

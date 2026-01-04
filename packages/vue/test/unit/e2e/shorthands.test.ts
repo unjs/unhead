@@ -21,7 +21,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -70,7 +70,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -119,7 +119,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

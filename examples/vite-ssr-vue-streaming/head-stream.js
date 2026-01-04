@@ -12,7 +12,7 @@ export async function headStream(res, vueStream, htmlStart, htmlEnd, head) {
   async function writeFirstChunk() {
     const s = Buffer.from(bufferChunks).toString('utf8')
     bufferChunks = []
-    const headHtml = await renderSSRHead(head)
+    const headHtml = renderSSRHead(head)
     res.write((htmlStart.replace('</head>', `${headHtml.headTags}</head>`) + s))
   }
 
@@ -40,7 +40,7 @@ export async function headStream(res, vueStream, htmlStart, htmlEnd, head) {
     await writeFirstChunk()
   }
 
-  const headHtml = await renderSSRHead(head)
+  const headHtml = renderSSRHead(head)
   res.write((htmlEnd.replace('</body>', `${headHtml.bodyTags}</body>`)))
   res.end()
 }

@@ -4,22 +4,15 @@ import { capoTagWeight } from './sort'
 import { ssrRenderTags } from './util'
 
 /* @__NO_SIDE_EFFECTS__ */
-export async function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions) {
+export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
   const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
-  await head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
-  if (!beforeRenderCtx.shouldRender) {
-    return {
-      headTags: '',
-      bodyTags: '',
-      bodyTagsOpen: '',
-      htmlAttrs: '',
-      bodyAttrs: '',
-    }
-  }
+  head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
+  if (!beforeRenderCtx.shouldRender)
+    return ssrRenderTags([])
   const ctx = { tags: options?.resolvedTags || resolveTags(head, { tagWeight: options?.tagWeight ?? capoTagWeight }) }
-  await head.hooks.callHook('ssr:render', ctx)
+  head.hooks.callHook('ssr:render', ctx)
   const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
   const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
-  await head.hooks.callHook('ssr:rendered', renderCtx)
+  head.hooks.callHook('ssr:rendered', renderCtx)
   return renderCtx.html
 }

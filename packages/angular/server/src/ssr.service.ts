@@ -46,7 +46,7 @@ export class UnheadSSRService {
   async render() {
     const { input } = parseHtmlForUnheadExtraction(this.document.documentElement.outerHTML)
     this.unhead.entries.set(0, { _i: 0, input, options: {} })
-    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = await renderSSRHead(this.unhead, {
+    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(this.unhead, {
       omitLineBreaks: false,
     })
     htmlAttrs.match(attrRegex)?.forEach(attr => attrToElement(this.document.documentElement, attr))

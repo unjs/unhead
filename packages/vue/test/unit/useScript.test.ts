@@ -125,7 +125,7 @@ describe('vue e2e scripts', () => {
     }, {
       head,
     })
-    const ssr = await renderSSRHead(head)
+    const ssr = renderSSRHead(head)
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
         "<meta",
@@ -153,7 +153,7 @@ describe('vue e2e scripts', () => {
     }, {
       head,
     })
-    const ssr = await renderSSRHead(head)
+    const ssr = renderSSRHead(head)
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
         "<meta",
