@@ -14,7 +14,8 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { callHook, ScriptNetworkEvents } from '../utils'
+import { ScriptNetworkEvents } from '../utils'
+import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 
 function resolveScriptKey(input: UseScriptResolvedInput): string {
