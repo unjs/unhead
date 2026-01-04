@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { JSDOM } from 'jsdom'
-import type { CreateHeadOptions } from 'unhead/types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions } from 'unhead/types'
 import type { App, Component } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
@@ -8,7 +8,7 @@ import { VueHeadMixin } from '../src'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
-export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateHeadOptions) {
+export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateClientHeadOptions) {
   const head = createClientHead({
     document: dom.window.document,
     ...options,
@@ -30,7 +30,7 @@ export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, 
   return head
 }
 
-export async function ssrVueAppWithUnhead(fn: (head: ReturnType<typeof createServerHead>) => void | Promise<void>, options?: CreateHeadOptions) {
+export async function ssrVueAppWithUnhead(fn: (head: ReturnType<typeof createServerHead>) => void | Promise<void>, options?: CreateServerHeadOptions) {
   const head = createServerHead({
     disableDefaults: true,
     ...options,
@@ -62,7 +62,7 @@ export async function ssrRenderHeadToString(fn: () => void) {
   return renderSSRHead(head)
 }
 
-export async function ssrRenderOptionsHead(input: any, options?: CreateHeadOptions) {
+export async function ssrRenderOptionsHead(input: any, options?: CreateServerHeadOptions) {
   const head = createServerHead({
     disableDefaults: true,
     ...options,

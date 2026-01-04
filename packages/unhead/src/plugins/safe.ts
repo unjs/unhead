@@ -119,7 +119,7 @@ export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
   hooks: {
     'entries:normalize': (ctx) => {
       if (ctx.entry.options?._safe) {
-        ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag) => {
+        ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
           const safeTag = makeTagSafe(tag)
           if (safeTag)
             acc.push(safeTag as HeadTag)

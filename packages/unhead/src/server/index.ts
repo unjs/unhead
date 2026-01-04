@@ -3,6 +3,7 @@ import { renderSSRHead as _renderSSRHead } from './renderSSRHead'
 
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
 export { createHead } from './createHead'
+export type { ServerUnhead } from './createHead'
 export { createServerRenderer } from './renderSSRHead'
 export { capoTagWeight } from './sort'
 export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'

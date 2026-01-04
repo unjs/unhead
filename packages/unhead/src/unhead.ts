@@ -1,6 +1,5 @@
 import type {
   ActiveHeadEntry,
-  CoreHeadHooks,
   CreateHeadOptions,
   HeadEntry,
   HeadEntryOptions,
@@ -10,21 +9,15 @@ import type {
   ResolvableHead,
   Unhead,
 } from './types'
-import { HookableCore } from 'hookable'
 
-function addHooks<T extends Record<string, any>>(hooks: HookableCore<T>, configHooks: Partial<T>) {
-  for (const key in configHooks) {
-    hooks.hook(key as any, configHooks[key] as any)
-  }
-}
-
-export function registerPlugin(head: Unhead<any, any, any>, p: HeadPluginInput) {
+export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
   const key = plugin.key || String(head.plugins.size + 1)
-  const exists = head.plugins.get(key)
-  if (!exists) {
+  if (!head.plugins.get(key)) {
     head.plugins.set(key, plugin)
-    addHooks(head.hooks, plugin.hooks || {})
+    for (const hookKey in plugin.hooks || {}) {
+      head.hooks?.hook(hookKey as any, plugin.hooks![hookKey] as any)
+    }
   }
 }
 
@@ -33,18 +26,14 @@ export function registerPlugin(head: Unhead<any, any, any>, p: HeadPluginInput) 
  * and does not register DOM plugins.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createUnhead<T = ResolvableHead, R = unknown, H extends CoreHeadHooks = CoreHeadHooks>(renderer: HeadRenderer<R, H>, resolvedOptions: CreateHeadOptions<H> = {}): Unhead<T, R, H> {
-  const hooks = new HookableCore<H>()
-  addHooks(hooks, resolvedOptions.hooks || {})
+export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRenderer<R>, resolvedOptions: CreateHeadOptions = {}): Unhead<T, R> {
   const ssr = !resolvedOptions.document
-
   const entries: Map<number, HeadEntry<T>> = new Map()
   const plugins: Map<string, HeadPlugin> = new Map()
-  const head: Unhead<T, R, H> = {
-    _entryCount: 1, // 0 is reserved for internal use
+  const head: Unhead<T, R> = {
+    _entryCount: 1,
     plugins,
     resolvedOptions,
-    hooks,
     ssr,
     entries,
     render: () => renderer(head),
@@ -67,7 +56,6 @@ export function createUnhead<T = ResolvableHead, R = unknown, H extends CoreHead
       return active
     },
   }
-  ;(resolvedOptions?.plugins || []).forEach(p => registerPlugin(head, p))
   resolvedOptions.init?.forEach(e => e && head.push(e as T))
   return head
 }

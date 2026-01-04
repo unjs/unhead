@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, CoreHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
+import type { ClientHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -62,7 +62,9 @@ export interface HeadEntry<Input> {
   _promisesProcessed?: boolean
 }
 
-export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'>
+export interface HeadPluginOptions extends CreateHeadOptions {
+  hooks?: Record<string, (...args: any[]) => any>
+}
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })
 export type HeadPlugin = HeadPluginOptions & { key: string }
@@ -91,10 +93,8 @@ export interface ActiveHeadEntry<Input> {
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
 
-export interface CreateHeadOptions<Hooks extends CoreHeadHooks = HeadHooks> {
+export interface CreateHeadOptions {
   document?: Document
-  plugins?: HeadPluginInput[]
-  hooks?: Partial<Hooks>
   /**
    * Initial head input that should be added.
    *
@@ -111,7 +111,9 @@ export interface CreateHeadOptions<Hooks extends CoreHeadHooks = HeadHooks> {
   _tagWeight?: (tag: HeadTag) => number
 }
 
-export interface CreateServerHeadOptions extends CreateHeadOptions<ServerHeadHooks> {
+export interface CreateServerHeadOptions extends CreateHeadOptions {
+  plugins?: HeadPluginInput[]
+  hooks?: Partial<ServerHeadHooks>
   /**
    * Should default important tags be skipped.
    *
@@ -123,7 +125,9 @@ export interface CreateServerHeadOptions extends CreateHeadOptions<ServerHeadHoo
   disableDefaults?: boolean
 }
 
-export interface CreateClientHeadOptions extends CreateHeadOptions<ClientHeadHooks> {
+export interface CreateClientHeadOptions extends CreateHeadOptions {
+  plugins?: HeadPluginInput[]
+  hooks?: Partial<ClientHeadHooks>
   /**
    * Custom render function for DOM updates.
    */
@@ -142,9 +146,9 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export type HeadRenderer<T = unknown, H extends CoreHeadHooks = CoreHeadHooks> = (head: Unhead<any, any, H>) => T
+export type HeadRenderer<T = unknown> = (head: Unhead<any, any>) => T
 
-export interface Unhead<Input = ResolvableHead, RenderResult = unknown, Hooks extends CoreHeadHooks = HeadHooks> {
+export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * Render the head tags using the configured renderer.
    */
@@ -164,7 +168,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown, Hooks ex
   /**
    * Exposed hooks for easier extension.
    */
-  hooks: HookableCore<Hooks>
+  hooks?: HookableCore<HeadHooks>
   /**
    * Resolved options
    */

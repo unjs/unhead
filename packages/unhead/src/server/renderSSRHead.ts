@@ -1,4 +1,5 @@
 import type { HeadRenderer, RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
+import { callHook } from '../utils/hooks'
 import { resolveTags } from '../utils/resolve'
 import { capoTagWeight } from './sort'
 import { ssrRenderTags } from './util'
@@ -7,14 +8,14 @@ import { ssrRenderTags } from './util'
 export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRenderer<SSRHeadPayload> {
   return (head: Unhead<any>) => {
     const beforeRenderCtx: ShouldRenderContext = { shouldRender: true }
-    head.hooks.callHook('ssr:beforeRender', beforeRenderCtx)
+    callHook(head, 'ssr:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return ssrRenderTags([])
     const ctx = { tags: options.resolvedTags || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }) }
-    head.hooks.callHook('ssr:render', ctx)
+    callHook(head, 'ssr:render', ctx)
     const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
     const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
-    head.hooks.callHook('ssr:rendered', renderCtx)
+    callHook(head, 'ssr:rendered', renderCtx)
     return renderCtx.html
   }
 }
