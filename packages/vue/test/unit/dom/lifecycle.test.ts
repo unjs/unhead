@@ -28,10 +28,10 @@ describe('vue dom', () => {
     })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html><head>
+      "<html lang="de" dir="ltr"><head>
 
-      </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 
@@ -55,10 +55,10 @@ describe('vue dom', () => {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html><head>
+      "<html lang="de" dir="ltr" class="pre-update" data-something-to-remove="test"><head>
 
-      </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     lang.value = 'en'
@@ -77,10 +77,10 @@ describe('vue dom', () => {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html><head>
+      "<html lang="en" dir="ltr" class="post-update"><head>
 
-      </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark test"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 
@@ -94,10 +94,10 @@ describe('vue dom', () => {
     renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html><head>
+      "<html lang="en" dir="ltr"><head>
 
-      </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     entry!.dispose()
@@ -109,7 +109,7 @@ describe('vue dom', () => {
       "<html><head>
 
       </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 
@@ -147,20 +147,20 @@ describe('vue dom', () => {
 
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html lang="en" dir="ltr"><head>
+      "<html lang="de" dir="rtl"><head>
 
-      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
-      <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      </head>
+      <body class="test"><div id="app" data-v-app=""><div>hello world</div></div><script>console.log('hello')</script></body></html>"
     `)
 
     entry.dispose()
 
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html lang="en" dir="ltr"><head>
+      "<html><head>
 
-      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
-      <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      </head>
+      <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })

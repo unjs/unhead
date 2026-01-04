@@ -15,7 +15,7 @@ describe('titleTemplate', () => {
     renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      `""`,
+      `"test - my template"`,
     )
   })
   it('fn replace', async () => {
@@ -29,7 +29,7 @@ describe('titleTemplate', () => {
     })
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      `""`,
+      `"test - my template"`,
     )
   })
   it('titleTemplate as title', async () => {
@@ -43,7 +43,7 @@ describe('titleTemplate', () => {
     })
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.title).toMatchInlineSnapshot(
-      `""`,
+      `"Default Title"`,
     )
   })
   // TODO convert to client
@@ -56,15 +56,15 @@ describe('titleTemplate', () => {
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
     })
     renderDOMHead(head, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Default Title"`)
     const entry = head.push({
       title: 'Hello world',
     })
     renderDOMHead(head, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Hello world - Template"`)
     entry.dispose()
     renderDOMHead(head, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"Default Title"`)
   })
   it('reset title template', async () => {
     const dom = useDom()
@@ -79,7 +79,7 @@ describe('titleTemplate', () => {
       title: 'page title',
     })
     renderDOMHead(head, { document: dom.window.document })
-    expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"page title"`)
   })
 
   it('nested title template', async () => {
