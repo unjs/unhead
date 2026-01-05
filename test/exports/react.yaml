@@ -24,6 +24,21 @@
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadProvider: function
+./stream/client:
+  createStreamableHead: function
+  HeadStream: function
+  UnheadProvider: function
+./stream/server:
+  createStreamableHead: function
+  HeadStream: function
+  prepareStreamingTemplate: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  UnheadProvider: function
+  wrapStream: function
+./stream/vite:
+  default: function
+  unheadReactPlugin: function
 ./utils:
   dedupeKey: function
   dedupeTags: function

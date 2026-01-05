@@ -38,6 +38,22 @@
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
+./stream/client:
+  createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
+./stream/iife:
+  streamingIifeCode: string
+  streamingIifeSize: number
+./stream/server:
+  createStreamableHead: function
+  prepareStreamingTemplate: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  wrapStream: function
+./stream/vite:
+  createStreamingPlugin: function
+  VIRTUAL_CLIENT_ID: string
+  VIRTUAL_IIFE_ID: string
 ./types: {}
 ./utils:
   dedupeKey: function

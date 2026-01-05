@@ -32,6 +32,20 @@
   renderSSRHead: function
   transformHtmlTemplate: function
   VueHeadMixin: object
+./stream/client:
+  createStreamableHead: function
+  HeadStream: object
+  VueHeadMixin: object
+./stream/server:
+  createStreamableHead: function
+  HeadStream: object
+  prepareStreamingTemplate: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  wrapStream: function
+./stream/vite:
+  default: function
+  unheadVuePlugin: function
 ./types: {}
 ./utils:
   dedupeKey: function
