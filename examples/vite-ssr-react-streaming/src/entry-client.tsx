@@ -4,7 +4,6 @@ import { UnheadProvider, createStreamableHead } from '@unhead/react/stream/clien
 import App from './App'
 
 const head = createStreamableHead()
-console.log('entry-client.tsx head', head)
 
 hydrateRoot(
   document.getElementById('app')!,

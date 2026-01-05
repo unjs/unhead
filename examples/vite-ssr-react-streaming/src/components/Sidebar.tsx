@@ -1,20 +1,12 @@
 import { use } from 'react'
 import { useHead } from '@unhead/react'
+import { createSSRCache } from '../utils/cache'
 
-const cache = new Map<string, Promise<{ categories: string[] }>>()
+const cache = createSSRCache<{ categories: string[] }>()
+const DATA = { categories: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys'] }
 
 export default function Sidebar() {
-  const cacheKey = 'sidebar'
-  if (!cache.has(cacheKey)) {
-    const delay = typeof window === 'undefined' ? 625 : 0
-    cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({
-        categories: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys']
-      }), delay)
-    ))
-    cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
-  }
-  const data = use(cache.get(cacheKey)!)
+  const data = use(cache.get('sidebar', DATA, 625))
 
   useHead({
     title: 'StreamShop 2/11 - Loading...',

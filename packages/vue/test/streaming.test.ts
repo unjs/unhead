@@ -132,6 +132,8 @@ describe('vue streaming SSR', () => {
     it('renders script tag with head updates via Vue SSR', async () => {
       const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
+      // Mark shell as rendered for HeadStream to work (normally done by wrapStream)
+      ;(head as any)._shellRendered = () => true
 
       head.push({ title: 'Streamed Title' })
 
@@ -176,6 +178,8 @@ describe('vue streaming SSR', () => {
     it('properly escapes script content to prevent XSS', async () => {
       const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
+      // Mark shell as rendered for HeadStream to work (normally done by wrapStream)
+      ;(head as any)._shellRendered = () => true
 
       head.push({ title: '</script><script>alert("xss")</script>' })
 

@@ -1,18 +1,12 @@
 import { use } from 'react'
 import { useHead } from '@unhead/react'
+import { createSSRCache } from '../utils/cache'
 
-const cache = new Map<string, Promise<{ subscribers: number; discount: number }>>()
+const cache = createSSRCache<{ subscribers: number; discount: number }>()
+const DATA = { subscribers: 50000, discount: 10 }
 
 export default function Newsletter() {
-  const cacheKey = 'newsletter'
-  if (!cache.has(cacheKey)) {
-    const delay = typeof window === 'undefined' ? 2625 : 0
-    cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({ subscribers: 50000, discount: 10 }), delay)
-    ))
-    cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
-  }
-  const data = use(cache.get(cacheKey)!)
+  const data = use(cache.get('newsletter', DATA, 2625))
 
   useHead({
     title: 'StreamShop - Ready!',

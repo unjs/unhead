@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@unhead/vue": "workspace:*",
+    "unhead": "workspace:*",
     "compression": "^1.8.1",
     "express": "^5.2.1",
     "vue": "^3.5.25",

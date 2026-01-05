@@ -2,12 +2,8 @@ import { render as _render } from 'svelte/server'
 import App from './App.svelte'
 import { createStreamableHead, UnheadContextKey } from '@unhead/svelte/stream/server'
 
-async function* svelteToStream(rendered: ReturnType<typeof _render>): AsyncGenerator<string> {
-  yield rendered.html
-}
-
-export function render(url: string) {
-  const head = createStreamableHead()
+export function render(url: string, template: string) {
+  const { head, wrapStream } = createStreamableHead()
   const context = new Map()
   context.set(UnheadContextKey, head)
 
@@ -16,8 +12,13 @@ export function render(url: string) {
     context,
   })
 
-  return {
-    svelteStream: svelteToStream(rendered),
-    head,
-  }
+  // Convert sync render to ReadableStream
+  const svelteStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(rendered.html))
+      controller.close()
+    },
+  })
+
+  return wrapStream(svelteStream, template)
 }

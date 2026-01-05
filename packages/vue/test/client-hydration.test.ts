@@ -1,6 +1,20 @@
 import { JSDOM } from 'jsdom'
-import { describe, expect, it } from 'vitest'
+import { init as initIife } from 'unhead/stream/iife'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createStreamableHead } from '../src/stream/client'
+
+let originalWindow: any
+let originalDocument: any
+
+beforeEach(() => {
+  originalWindow = globalThis.window
+  originalDocument = globalThis.document
+})
+
+afterEach(() => {
+  globalThis.window = originalWindow
+  globalThis.document = originalDocument
+})
 
 function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') {
   const dom = new JSDOM(`<!DOCTYPE html>
@@ -13,11 +27,18 @@ function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') 
 </html>`)
 
   const win = dom.window as any
-  // Simulate queued entries from SSR streaming
+  // Simulate queued entries from SSR streaming (iife expects array of entries)
   win[streamKey] = {
-    _q: queuedEntries,
+    _q: queuedEntries.map(e => [e]),
     push: (e: any) => win[streamKey]._q.push(e),
   }
+
+  // Set globals for iife and createStreamableHead
+  globalThis.window = win
+  globalThis.document = win.document
+
+  // Simulate iife running - this creates _head and processes queue
+  initIife({ streamKey })
 
   return { dom, window: win, document: win.document }
 }
@@ -49,8 +70,8 @@ describe('vue streaming client hydration', () => {
       createStreamableHead({ document })
       await waitForDomUpdate()
 
-      // Simulate late-arriving streamed entry
-      window.__unhead__.push({ title: 'Late Streamed' })
+      // Simulate late-arriving streamed entry (push expects array of entries)
+      window.__unhead__.push([{ title: 'Late Streamed' }])
       await waitForDomUpdate()
 
       expect(document.title).toBe('Late Streamed')
@@ -60,9 +81,10 @@ describe('vue streaming client hydration', () => {
       const { document } = setupStreamingDom([])
 
       const head = createStreamableHead({ document })
+      expect(head).toBeDefined()
       await waitForDomUpdate()
 
-      head.push({ title: 'After Hydration' })
+      head!.push({ title: 'After Hydration' })
       await waitForDomUpdate()
 
       expect(document.title).toBe('After Hydration')
@@ -160,15 +182,18 @@ describe('vue streaming client hydration', () => {
   })
 
   describe('no queue present', () => {
-    it('works when window.__unhead__ does not exist', async () => {
+    it('returns undefined when iife has not run', async () => {
       const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body></body></html>`)
-      const document = dom.window.document
+      const win = dom.window as any
 
-      const head = createStreamableHead({ document })
-      head.push({ title: 'No Queue' })
-      await waitForDomUpdate()
+      // Temporarily set globals without running iife
+      const savedWindow = globalThis.window
+      globalThis.window = win
 
-      expect(document.title).toBe('No Queue')
+      const head = createStreamableHead({ document: win.document })
+      expect(head).toBeUndefined()
+
+      globalThis.window = savedWindow
     })
   })
 
@@ -179,9 +204,10 @@ describe('vue streaming client hydration', () => {
       ])
 
       const head = createStreamableHead({ document })
+      expect(head).toBeDefined()
       await waitForDomUpdate()
 
-      head.push({ meta: [{ name: 'description', content: 'Updated' }] })
+      head!.push({ meta: [{ name: 'description', content: 'Updated' }] })
       await waitForDomUpdate()
 
       const descriptions = document.querySelectorAll('meta[name="description"]')
@@ -194,7 +220,8 @@ describe('vue streaming client hydration', () => {
     it('has install method for Vue app.use()', async () => {
       const { document } = setupStreamingDom([])
       const head = createStreamableHead({ document })
-      expect(typeof head.install).toBe('function')
+      expect(head).toBeDefined()
+      expect(typeof head!.install).toBe('function')
     })
   })
 
@@ -205,10 +232,10 @@ describe('vue streaming client hydration', () => {
       createStreamableHead({ document })
       await waitForDomUpdate()
 
-      // First push - creates style element
-      window.__unhead__.push({
+      // First push - creates style element (push expects array of entries)
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:10%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       let styles = document.querySelectorAll('style')
@@ -216,9 +243,9 @@ describe('vue streaming client hydration', () => {
       expect(styles[0].innerHTML).toBe('.progress{width:10%}')
 
       // Second push with same key - should update, not create new
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:50%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       styles = document.querySelectorAll('style')
@@ -226,9 +253,9 @@ describe('vue streaming client hydration', () => {
       expect(styles[0].innerHTML).toBe('.progress{width:50%}')
 
       // Third push with same key
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:100%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       styles = document.querySelectorAll('style')
@@ -242,14 +269,14 @@ describe('vue streaming client hydration', () => {
       createStreamableHead({ document })
       await waitForDomUpdate()
 
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'one', innerHTML: '.one{color:red}' }],
-      })
+      }])
       await waitForDomUpdate()
 
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'two', innerHTML: '.two{color:blue}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       const styles = document.querySelectorAll('style')
@@ -294,11 +321,11 @@ describe('vue streaming client hydration', () => {
       expect(document.title).toBe('Initial')
 
       // Simulate more streaming content arriving after hydration started
-      window.__unhead__.push({ title: 'Late Entry 1' })
+      window.__unhead__.push([{ title: 'Late Entry 1' }])
       await waitForDomUpdate()
       expect(document.title).toBe('Late Entry 1')
 
-      window.__unhead__.push({ title: 'Late Entry 2' })
+      window.__unhead__.push([{ title: 'Late Entry 2' }])
       await waitForDomUpdate()
       expect(document.title).toBe('Late Entry 2')
     })

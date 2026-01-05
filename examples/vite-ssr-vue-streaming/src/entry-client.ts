@@ -3,9 +3,8 @@ import { VueHeadMixin, createStreamableHead } from '@unhead/vue/stream/client'
 
 const { app, router } = createApp()
 
-// Reuse head instance created by virtual:@unhead/streaming-client (loaded early in <head>)
-// Falls back to creating new one if virtual module didn't load
-const head = (window as any).__unheadInstance__ || createStreamableHead()
+// Get head instance created by iife script (loaded early in <head>)
+const head = createStreamableHead()!
 app.use(head)
 app.mixin(VueHeadMixin)
 

@@ -1,9 +1,10 @@
-import type { CreateStreamableServerHeadOptions, ResolvableHead, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
-import { renderSSRHead } from '../server/renderSSRHead'
+import { DEFAULT_STREAM_KEY } from './client'
 
 export * from '../server'
+export { DEFAULT_STREAM_KEY }
 
 /**
  * Base context with just the head instance.
@@ -84,9 +85,6 @@ export function createStreamableHead<T = ResolvableHead>(
     shellReady,
   }
 }
-// Default key for window attachment
-const DEFAULT_STREAM_KEY = '__unhead__'
-
 function getStreamKey(head: Unhead<any>): string {
   return head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
 }
@@ -114,11 +112,11 @@ function createBootstrapScript(streamKey: string): string {
  *
  * @example
  * ```ts
- * const shell = await renderSSRHeadShell(head, template)
+ * const shell = renderSSRHeadShell(head, template)
  * ```
  */
-export async function renderSSRHeadShell(head: Unhead<any>, template: string): Promise<string> {
-  const ssr = await renderSSRHead(head)
+export function renderSSRHeadShell(head: Unhead<any>, template: string): string {
+  const ssr = head.render() as SSRHeadPayload
   head.entries.clear()
   const bootstrapScript = createBootstrapScript(getStreamKey(head))
 
@@ -199,13 +197,14 @@ export function wrapStream(
   stream: ReadableStream<Uint8Array>,
   template: string,
   placeholder = '<!--app-html-->',
+  preRenderedState?: SSRHeadPayload,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const { shell, end } = await prepareStreamingTemplate(head, template, placeholder)
+        const { shell, end } = prepareStreamingTemplate(head, template, placeholder, preRenderedState)
         controller.enqueue(encoder.encode(shell))
 
         const reader = stream.getReader()
@@ -265,19 +264,23 @@ export interface StreamingTemplateParts {
  *
  * @example
  * ```ts
- * const { shell, end } = await prepareStreamingTemplate(head, template)
+ * const { shell, end } = prepareStreamingTemplate(head, template)
  * response.write(shell)
  * // ... stream app content ...
  * response.write(end)
  * ```
  */
-export async function prepareStreamingTemplate(
+export function prepareStreamingTemplate(
   head: Unhead<any>,
   template: string,
   placeholder = '<!--app-html-->',
-): Promise<StreamingTemplateParts> {
-  const ssr = await renderSSRHead(head)
-  head.entries.clear()
+  preRenderedState?: SSRHeadPayload,
+): StreamingTemplateParts {
+  // Use pre-rendered state if provided (Vue captures before render), otherwise render now
+  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+  if (!preRenderedState) {
+    head.entries.clear()
+  }
   const bootstrapScript = createBootstrapScript(getStreamKey(head))
 
   // Find the placeholder

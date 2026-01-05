@@ -1,5 +1,6 @@
 import { renderToWebStream } from 'vue/server-renderer'
-import { createStreamableHead, VueHeadMixin } from '@unhead/vue/stream/server'
+import { createStreamableHead } from '@unhead/vue/stream/server'
+import { VueHeadMixin } from '@unhead/vue'
 import { createApp } from './main'
 
 export async function render(url: string, template: string) {
@@ -10,11 +11,11 @@ export async function render(url: string, template: string) {
   app.mixin(VueHeadMixin)
   router.push(url)
 
-  // Create stream first - Vue starts rendering synchronously
-  const vueStream = renderToWebStream(app)
-
-  // Wait for router - by now Vue's sync render has pushed head entries
+  // Wait for router before rendering (lazy-loaded route components need this)
   await router.isReady()
+
+  // Now render with all route components loaded
+  const vueStream = renderToWebStream(app)
 
   return wrapStream(vueStream, template)
 }

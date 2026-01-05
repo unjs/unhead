@@ -1,5 +1,5 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { CreateStreamableServerHeadOptions, ResolvableHead } from 'unhead/types'
+import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload } from 'unhead/types'
 import type { VueHeadClient } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
@@ -23,6 +23,9 @@ export const HeadStream = defineComponent({
   setup() {
     const head = injectHead()
     return () => {
+      // Skip if shell hasn't been rendered yet - entries will be captured in shell
+      if (!(head as any)._shellRendered?.())
+        return null
       const update = renderSSRHeadSuspenseChunk(head)
       if (!update)
         return null
@@ -75,10 +78,20 @@ export function createStreamableHead(
   const vueHead = head as VueHeadClient
   vueHead.install = vueInstall(vueHead)
 
+  // Track shell render state - HeadStream skips entries until shell is rendered
+  let shellRendered = false
+  ;(vueHead as any)._shellRendered = () => shellRendered
+
   return {
     head: vueHead,
-    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) =>
-      coreWrapStream(vueHead, stream, template),
+    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
+      // Capture shell state before clearing entries
+      const preRenderedState = vueHead.render() as SSRHeadPayload
+      vueHead.entries.clear()
+      // Mark shell as rendered so HeadStream starts outputting streaming updates
+      shellRendered = true
+      return coreWrapStream(vueHead, stream, template, '<!--app-html-->', preRenderedState)
+    },
   }
 }
 

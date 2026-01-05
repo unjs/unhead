@@ -1,5 +1,5 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { CreateStreamableServerHeadOptions, Unhead } from 'unhead/types'
+import type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from 'unhead/types'
 import { getContext } from 'svelte'
 import {
   createStreamableHead as _createStreamableHead,
@@ -30,6 +30,10 @@ export function HeadStream(): string {
   if (!head)
     return ''
 
+  // Skip if shell hasn't been rendered yet - entries will be captured in shell
+  if (!(head as any)._shellRendered?.())
+    return ''
+
   const update = renderSSRHeadSuspenseChunk(head)
   if (!update)
     return ''
@@ -57,10 +61,21 @@ export type SvelteStreamableHeadContext = WebStreamableHeadContext
  */
 export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): SvelteStreamableHeadContext {
   const { head } = _createStreamableHead(options)
+
+  // Track shell render state - HeadStream skips entries until shell is rendered
+  let shellRendered = false
+  ;(head as any)._shellRendered = () => shellRendered
+
   return {
     head,
-    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) =>
-      coreWrapStream(head, stream, template),
+    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
+      // Capture shell state before clearing entries
+      const preRenderedState = head.render() as SSRHeadPayload
+      head.entries.clear()
+      // Mark shell as rendered so HeadStream starts outputting streaming updates
+      shellRendered = true
+      return coreWrapStream(head, stream, template, '<!--app-html-->', preRenderedState)
+    },
   }
 }
 

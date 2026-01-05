@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     vue(),
     // Streaming mode: transforms useHead() calls to output inline scripts during SSR streaming
-    unheadVuePlugin({ streaming: true }),
+    unheadVuePlugin(),
   ],
   build: {
     minify: false,

@@ -51,6 +51,9 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
         },
         patch(input) {
           entry.input = input
+          // Re-add to entries if removed (e.g. after shell render)
+          if (!entries.has(_i))
+            entries.set(_i, entry)
         },
       }
       return active

@@ -1,22 +1,12 @@
 import { use } from 'react'
 import { useHead } from '@unhead/react'
+import { createSSRCache } from '../utils/cache'
 
-const cache = new Map<string, Promise<{ title: string; subtitle: string; discount: number }>>()
+const cache = createSSRCache<{ title: string; subtitle: string; discount: number }>()
+const DATA = { title: 'Winter Sale', subtitle: 'Up to 50% off selected items', discount: 50 }
 
 export default function HeroBanner() {
-  const cacheKey = 'hero'
-  if (!cache.has(cacheKey)) {
-    const delay = typeof window === 'undefined' ? 1000 : 0
-    cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({
-        title: 'Winter Sale',
-        subtitle: 'Up to 50% off selected items',
-        discount: 50
-      }), delay)
-    ))
-    cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
-  }
-  const data = use(cache.get(cacheKey)!)
+  const data = use(cache.get('hero', DATA, 1000))
 
   useHead({
     title: 'StreamShop 3/11 - Loading...',

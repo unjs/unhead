@@ -3,7 +3,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import { renderSSRHeadShell } from '@unhead/svelte/stream/server'
 
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITE_TEST_BUILD
 
@@ -67,30 +66,23 @@ export async function createServer(
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const { svelteStream, head } = render(url)
+      const stream = render(url, template)
 
-      // Split template at app placeholder
-      const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+      res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
+      const reader = stream.getReader()
 
-      res.status(200).set({ 'Content-Type': 'text/html' })
-
-      // Render shell with initial head tags
-      const shell = await renderSSRHeadShell(head, htmlStart)
-      res.write(shell)
-
-      // Stream Svelte content
-      for await (const chunk of svelteStream) {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
         if (res.closed) break
-        res.write(chunk)
+        res.write(value)
       }
-
-      res.write(htmlEnd)
       res.end()
     }
     catch (e) {
       vite && vite.ssrFixStacktrace(e)
       console.log(e.stack)
-      res.status(500).end('Internal Server Error')
+      res.status(500).end(e.stack)
     }
   })
 

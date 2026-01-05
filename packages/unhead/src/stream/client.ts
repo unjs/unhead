@@ -1,52 +1,113 @@
-import type { CreateStreamableClientHeadOptions, ResolvableHead, SerializableHead } from '../types'
-import { createHead } from '../client/createHead'
-
-export * from '../client'
+import type { ClientUnhead } from '../client/createHead'
+import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, ResolvableHead, SerializableHead, Unhead } from '../types'
+import { registerPlugin } from '../unhead'
+import { createHooks } from '../utils/hooks'
 
 export interface UnheadStreamQueue {
-  _q: SerializableHead[]
-  push: (entry: SerializableHead) => void
+  _q: SerializableHead[][]
+  _head?: Unhead<any>
+  push: (entries: SerializableHead[]) => void
 }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'
 
+export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'render'> {
+  streamKey?: string
+}
+
 /**
- * Creates a client head instance that consumes streaming SSR queue.
- * Must use matching streamKey from server's createStreamableHead.
+ * Creates a client head by wrapping the core instance from the iife script.
+ * Adds hooks, plugins, and dirty tracking without bundling createDomRenderer.
  */
-export function createStreamableHead<T = ResolvableHead>(options: CreateStreamableClientHeadOptions = {}) {
+export function createStreamableHead<T = ResolvableHead>(options: CreateStreamableClientHeadOptions = {}): ClientUnhead<T> | undefined {
   const { streamKey = DEFAULT_STREAM_KEY, ...rest } = options
+  const win = typeof window !== 'undefined' ? window as any : undefined
+  const streamQueue = win?.[streamKey] as UnheadStreamQueue | undefined
+  const core = streamQueue?._head as Unhead<T> | undefined
 
-  // Get window from document or global
-  const doc = rest.document || (typeof document !== 'undefined' ? document : undefined)
-  const win = doc?.defaultView as any
+  if (!core)
+    return undefined
 
-  // Check for existing instance to adopt (from virtual module)
-  const existing = win?.[streamKey]?._head
-  if (existing) {
-    return existing
+  // Check if already wrapped
+  if ((core as any)._wrapped)
+    return core as ClientUnhead<T>
+
+  const hooks = createHooks<ClientHeadHooks>(rest.hooks)
+
+  // Cast core since iife adds dirty property dynamically
+  const coreWithDirty = core as Unhead<T> & { dirty: boolean }
+
+  const head: ClientUnhead<T> = {
+    ...coreWithDirty,
+    hooks,
+    use: p => registerPlugin(head, p),
+    render(): boolean {
+      return core.render() as boolean
+    },
+    invalidate() {
+      for (const entry of core.entries.values()) {
+        entry._dirty = true
+      }
+      coreWithDirty.dirty = true
+      hooks.callHook('entries:updated', head)
+    },
+    push(input: T, _options?: HeadEntryOptions) {
+      const active = core.push(input, _options)
+      const entry = core.entries.get(active._i)
+      if (entry)
+        entry._dirty = true
+      coreWithDirty.dirty = true
+      hooks.callHook('entries:updated', head)
+
+      const corePatch = active.patch
+      const coreDispose = active.dispose
+
+      const clientActive: ActiveHeadEntry<T> = {
+        _i: active._i,
+        patch(input) {
+          corePatch(input)
+          const e = core.entries.get(active._i)
+          if (e)
+            e._dirty = true
+          coreWithDirty.dirty = true
+          hooks.callHook('entries:updated', head)
+        },
+        dispose() {
+          if (core.entries.has(active._i)) {
+            coreDispose()
+            head.invalidate()
+          }
+        },
+      }
+      return clientActive
+    },
   }
 
-  // Create fresh instance
-  const head = createHead<T>({ ...rest, document: doc })
+  // Mark as wrapped to avoid double-wrapping
+  ;(head as any)._wrapped = true
 
-  if (!win) {
-    return head // No window, just return the head (SSR or non-browser)
-  }
+  // Register plugins
+  ;(rest.plugins || []).forEach(p => registerPlugin(head, p))
 
-  // Consume streaming queue if present
-  const streamQueue = win[streamKey] as UnheadStreamQueue | undefined
-  if (streamQueue) {
-    const queue = streamQueue._q || []
-    queue.forEach(entry => head.push(entry as T))
-  }
+  // Auto-render on entries:updated
+  registerPlugin(head, {
+    key: 'client',
+    hooks: {
+      'entries:updated': () => { head.render() },
+    },
+  })
 
-  // Replace queue with direct push to head instance (or create if not present)
-  win[streamKey] = {
-    _q: [],
-    push: (entry: SerializableHead) => head.push(entry as T),
-    _head: head,
-  }
+  // Push init entries
+  const initialPayload = rest.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
+  const initEntries = [
+    initialPayload ? JSON.parse(initialPayload) : false,
+    ...(rest.init || []),
+  ]
+  initEntries.forEach(e => e && head.push(e as T))
+
+  // Update the stream queue to use the wrapped head
+  if (streamQueue)
+    streamQueue._head = head as Unhead<any>
 
   return head
 }

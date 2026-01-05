@@ -1,6 +1,20 @@
 import { JSDOM } from 'jsdom'
 import { createStreamableHead } from 'unhead/stream/client'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { init as initIife } from '../../src/stream/iife'
+
+let originalWindow: any
+let originalDocument: any
+
+beforeEach(() => {
+  originalWindow = globalThis.window
+  originalDocument = globalThis.document
+})
+
+afterEach(() => {
+  globalThis.window = originalWindow
+  globalThis.document = originalDocument
+})
 
 function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') {
   const dom = new JSDOM(`<!DOCTYPE html>
@@ -13,11 +27,18 @@ function setupStreamingDom(queuedEntries: any[] = [], streamKey = '__unhead__') 
 </html>`)
 
   const win = dom.window as any
-  // Simulate queued entries from SSR streaming
+  // Simulate queued entries from SSR streaming (before iife runs)
   win[streamKey] = {
-    _q: queuedEntries,
+    _q: queuedEntries.map(e => [e]), // iife expects each item to be an array of entries
     push: (e: any) => win[streamKey]._q.push(e),
   }
+
+  // Set globals for iife and createStreamableHead
+  globalThis.window = win
+  globalThis.document = win.document
+
+  // Simulate iife running - this creates _head and processes queue
+  initIife({ streamKey })
 
   return { dom, window: win, document: win.document }
 }
@@ -34,7 +55,7 @@ describe('streaming client hydration', () => {
         { meta: [{ name: 'description', content: 'Streamed description' }] },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.title).toBe('Streamed Title')
@@ -46,11 +67,11 @@ describe('streaming client hydration', () => {
         { title: 'Initial Streamed' },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
-      // Simulate late-arriving streamed entry
-      window.__unhead__.push({ title: 'Late Streamed' })
+      // Simulate late-arriving streamed entry (push expects array of entries)
+      window.__unhead__.push([{ title: 'Late Streamed' }])
       await waitForDomUpdate()
 
       expect(document.title).toBe('Late Streamed')
@@ -59,10 +80,11 @@ describe('streaming client hydration', () => {
     it('handles empty queue', async () => {
       const { document } = setupStreamingDom([])
 
-      const head = createStreamableHead({ document })
+      const head = createStreamableHead()
+      expect(head).toBeDefined()
       await waitForDomUpdate()
 
-      head.push({ title: 'After Hydration' })
+      head!.push({ title: 'After Hydration' })
       await waitForDomUpdate()
 
       expect(document.title).toBe('After Hydration')
@@ -74,7 +96,7 @@ describe('streaming client hydration', () => {
         '__custom__',
       )
 
-      createStreamableHead({ document, streamKey: '__custom__' })
+      createStreamableHead({ streamKey: '__custom__' })
       await waitForDomUpdate()
 
       expect(document.title).toBe('Custom Key Title')
@@ -89,7 +111,7 @@ describe('streaming client hydration', () => {
         { title: 'Third' },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       // Last one wins
@@ -102,7 +124,7 @@ describe('streaming client hydration', () => {
         { meta: [{ name: 'keywords', content: 'test' }] },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.querySelector('meta[name="author"]')?.getAttribute('content')).toBe('John')
@@ -116,7 +138,7 @@ describe('streaming client hydration', () => {
         { htmlAttrs: { lang: 'fr', dir: 'rtl' } },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.documentElement.getAttribute('lang')).toBe('fr')
@@ -128,7 +150,7 @@ describe('streaming client hydration', () => {
         { bodyAttrs: { class: 'dark-mode' } },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.body.getAttribute('class')).toBe('dark-mode')
@@ -141,7 +163,7 @@ describe('streaming client hydration', () => {
         { script: [{ src: 'https://example.com/app.js' }] },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.querySelector('script[src="https://example.com/app.js"]')).toBeTruthy()
@@ -152,7 +174,7 @@ describe('streaming client hydration', () => {
         { link: [{ rel: 'stylesheet', href: 'https://example.com/styles.css' }] },
       ])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
       expect(document.querySelector('link[href="https://example.com/styles.css"]')).toBeTruthy()
@@ -160,15 +182,29 @@ describe('streaming client hydration', () => {
   })
 
   describe('no queue present', () => {
-    it('works when window.__unhead__ does not exist', async () => {
+    it('returns undefined when iife has not run', async () => {
       const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body></body></html>`)
-      const document = dom.window.document
+      const win = dom.window as any
 
-      const head = createStreamableHead({ document })
-      head.push({ title: 'No Queue' })
+      // Temporarily set globals
+      const savedWindow = globalThis.window
+      globalThis.window = win
+
+      const head = createStreamableHead()
+      expect(head).toBeUndefined()
+
+      globalThis.window = savedWindow
+    })
+
+    it('works with empty queue after iife runs', async () => {
+      const { document } = setupStreamingDom([])
+
+      const head = createStreamableHead()
+      expect(head).toBeDefined()
+      head!.push({ title: 'After Iife' })
       await waitForDomUpdate()
 
-      expect(document.title).toBe('No Queue')
+      expect(document.title).toBe('After Iife')
     })
   })
 
@@ -178,10 +214,11 @@ describe('streaming client hydration', () => {
         { meta: [{ name: 'description', content: 'From stream' }] },
       ])
 
-      const head = createStreamableHead({ document })
+      const head = createStreamableHead()
+      expect(head).toBeDefined()
       await waitForDomUpdate()
 
-      head.push({ meta: [{ name: 'description', content: 'Updated' }] })
+      head!.push({ meta: [{ name: 'description', content: 'Updated' }] })
       await waitForDomUpdate()
 
       const descriptions = document.querySelectorAll('meta[name="description"]')
@@ -194,13 +231,13 @@ describe('streaming client hydration', () => {
     it('updates style innerHTML when pushing styles with same key', async () => {
       const { window, document } = setupStreamingDom([])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
-      // First push - creates style element
-      window.__unhead__.push({
+      // First push - creates style element (push expects array of entries)
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:10%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       let styles = document.querySelectorAll('style')
@@ -208,9 +245,9 @@ describe('streaming client hydration', () => {
       expect(styles[0].innerHTML).toBe('.progress{width:10%}')
 
       // Second push with same key - should update, not create new
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:50%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       styles = document.querySelectorAll('style')
@@ -218,9 +255,9 @@ describe('streaming client hydration', () => {
       expect(styles[0].innerHTML).toBe('.progress{width:50%}')
 
       // Third push with same key
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'progress', innerHTML: '.progress{width:100%}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       styles = document.querySelectorAll('style')
@@ -231,17 +268,17 @@ describe('streaming client hydration', () => {
     it('creates separate styles for different keys', async () => {
       const { window, document } = setupStreamingDom([])
 
-      createStreamableHead({ document })
+      createStreamableHead()
       await waitForDomUpdate()
 
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'one', innerHTML: '.one{color:red}' }],
-      })
+      }])
       await waitForDomUpdate()
 
-      window.__unhead__.push({
+      window.__unhead__.push([{
         style: [{ key: 'two', innerHTML: '.two{color:blue}' }],
-      })
+      }])
       await waitForDomUpdate()
 
       const styles = document.querySelectorAll('style')

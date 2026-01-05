@@ -1,9 +1,10 @@
 import { use } from 'react'
 import { useHead } from '@unhead/react'
+import { createSSRCache } from '../utils/cache'
 
 type Product = { id: number; name: string; price: number; rating: number; image: string }
 
-const cache = new Map<string, Promise<Product>>()
+const cache = createSSRCache<Product>()
 
 const products: Record<number, Product> = {
   1: { id: 1, name: 'Wireless Headphones', price: 79.99, rating: 4.5, image: '🎧' },
@@ -15,15 +16,7 @@ const products: Record<number, Product> = {
 }
 
 export default function ProductCard({ id, delay }: { id: number; delay: number }) {
-  const cacheKey = `product-${id}`
-  if (!cache.has(cacheKey)) {
-    const actualDelay = typeof window === 'undefined' ? delay : 0
-    cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve(products[id]), actualDelay)
-    ))
-    cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
-  }
-  const product = use(cache.get(cacheKey)!)
+  const product = use(cache.get(`product-${id}`, products[id], delay))
 
   const progress = 3 + id // Products are 4-9 out of 11
   useHead({

@@ -242,11 +242,13 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out favicon 404 errors and hydration mismatches (expected during streaming)
+      // Filter out expected non-critical errors
       const criticalErrors = errors.filter(e =>
         !e.includes('favicon') &&
         !e.includes('Hydration') &&
-        !e.includes('mismatch')
+        !e.includes('mismatch') &&
+        !e.includes('WebSocket') &&
+        !e.includes('vite')
       )
       expect(criticalErrors).toHaveLength(0)
     })

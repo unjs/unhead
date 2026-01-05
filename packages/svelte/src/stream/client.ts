@@ -1,6 +1,6 @@
-import type { CreateStreamableClientHeadOptions, Unhead } from 'unhead/types'
-import { tick } from 'svelte'
-import { createDebouncedFn, createHead, renderDOMHead } from 'unhead/client'
+import type { ClientUnhead } from 'unhead/client'
+import type { CreateStreamableClientHeadOptions } from 'unhead/stream/client'
+import { createStreamableHead as _createStreamableHead } from 'unhead/stream/client'
 
 export { UnheadContextKey } from '../context'
 
@@ -11,26 +11,12 @@ export function HeadStream(): string {
   return ''
 }
 
-export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): Unhead {
-  const { streamKey = '__unhead__', ...rest } = options
-  const existing = (window as any)[streamKey]?._head
-
-  // Adopt existing core instance created by virtual module
-  if (existing) {
-    return existing
-  }
-
-  // Fallback: create fresh instance (non-streaming case)
-  const head = createHead({
-    ...rest,
-    domOptions: {
-      render: createDebouncedFn(() => renderDOMHead(head), fn => tick().then(fn)),
-    },
-  })
-  return head
+/**
+ * Creates a client head by wrapping the core instance from the iife script.
+ */
+export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): ClientUnhead | undefined {
+  return _createStreamableHead(options)
 }
 
-export type {
-  CreateStreamableClientHeadOptions,
-  Unhead,
-} from 'unhead/types'
+export { type CreateStreamableClientHeadOptions, DEFAULT_STREAM_KEY, type UnheadStreamQueue } from 'unhead/stream/client'
+export type { Unhead } from 'unhead/types'

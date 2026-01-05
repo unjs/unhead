@@ -11,7 +11,7 @@ export function HeadStream(): ReactNode {
 
 // Re-export everything from the base client module
 export * from '../client'
-// Export streaming-specific items only (not the re-exports from unhead/client)
+// Export streaming-specific items only
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,

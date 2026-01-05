@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream'
 import type { ReactNode } from 'react'
-import type { CreateStreamableServerHeadOptions, ResolvableHead } from 'unhead'
-import type { StreamableHeadContext } from 'unhead/stream/server'
+import type { CreateStreamableServerHeadOptions, StreamableHeadContext } from 'unhead/stream/server'
+import type { ResolvableHead } from 'unhead/types'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
 import {

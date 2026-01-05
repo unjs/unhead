@@ -141,15 +141,6 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
   streamKey?: string
 }
 
-export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'experimentalStreamKey'> {
-  /**
-   * Key used for window attachment during streaming SSR.
-   * Must match the server's streamKey.
-   * @default '__unhead__'
-   */
-  streamKey?: string
-}
-
 export interface CreateClientHeadOptions extends CreateHeadOptions {
   plugins?: HeadPluginInput[]
   hooks?: Partial<ClientHeadHooks>

@@ -1,18 +1,12 @@
 import { use } from 'react'
 import { useHead } from '@unhead/react'
+import { createSSRCache } from '../utils/cache'
 
-const cache = new Map<string, Promise<{ user: string; cartCount: number }>>()
+const cache = createSSRCache<{ user: string; cartCount: number }>()
+const DATA = { user: 'John Doe', cartCount: 3 }
 
 export default function Header() {
-  const cacheKey = 'header'
-  if (!cache.has(cacheKey)) {
-    const delay = typeof window === 'undefined' ? 250 : 0
-    cache.set(cacheKey, new Promise(resolve =>
-      setTimeout(() => resolve({ user: 'John Doe', cartCount: 3 }), delay)
-    ))
-    cache.get(cacheKey)!.finally(() => setTimeout(() => cache.delete(cacheKey), 100))
-  }
-  const data = use(cache.get(cacheKey)!)
+  const data = use(cache.get('header', DATA, 250))
 
   useHead({
     title: 'StreamShop 1/11 - Loading...',
