@@ -24,6 +24,21 @@
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadContextKey: symbol
+./stream/client:
+  createStreamableHead: function
+  HeadStream: function
+  UnheadContextKey: symbol
+./stream/server:
+  createStreamableHead: function
+  HeadStream: function
+  prepareStreamingTemplate: function
+  renderSSRHeadShell: function
+  renderSSRHeadSuspenseChunk: function
+  UnheadContextKey: symbol
+  wrapStream: function
+./stream/vite:
+  default: function
+  unheadSveltePlugin: function
 ./utils:
   dedupeKey: function
   dedupeTags: function

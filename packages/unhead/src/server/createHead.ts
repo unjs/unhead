@@ -15,6 +15,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     _tagWeight: capoTagWeight,
     // @ts-expect-error untyped
     document: false,
+    experimentalStreamKey: options.experimentalStreamKey,
     propResolvers: [
       ...(options.propResolvers || []),
       (k, v) => {

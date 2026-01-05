@@ -41,6 +41,14 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
@@ -56,11 +64,56 @@
     "./parser": {
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
+    },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
+    },
+    "./stream/iife": {
+      "types": "./dist/stream/iife.d.ts",
+      "default": "./dist/stream/iife.mjs"
     }
   },
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "plugins": [
+        "dist/plugins.d.ts"
+      ],
+      "server": [
+        "dist/server.d.ts"
+      ],
+      "client": [
+        "dist/client.d.ts"
+      ],
+      "stream/server": [
+        "dist/stream/server.d.ts"
+      ],
+      "stream/client": [
+        "dist/stream/client.d.ts"
+      ],
+      "utils": [
+        "dist/utils.d.ts"
+      ],
+      "types": [
+        "dist/types.d.ts"
+      ],
+      "scripts": [
+        "dist/scripts.d.ts"
+      ],
+      "parser": [
+        "dist/parser.d.ts"
+      ],
+      "stream/vite": [
+        "dist/stream/vite.d.ts"
+      ],
+      "stream/iife": [
+        "dist/stream/iife.d.ts"
+      ]
+    }
+  },
   "optionalPlugins": {
     "*": {
       "plugins": [
@@ -94,6 +147,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "hookable": "catalog:"
+    "hookable": "catalog:",
+    "magic-string": "catalog:",
+    "vite": "catalog:"
   }
 }
