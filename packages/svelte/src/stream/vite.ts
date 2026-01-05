@@ -1,5 +1,6 @@
 import MagicString from 'magic-string'
 import { findStaticImports } from 'mlly'
+import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
@@ -98,9 +99,10 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
  * }
  * ```
  */
-export function unheadSveltePlugin() {
+export function unheadSveltePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/svelte',
+    mode: options?.mode,
     transform(code, id, opts) {
       // Only process .svelte files
       if (!/\.svelte$/.test(id))

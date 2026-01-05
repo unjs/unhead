@@ -1,6 +1,7 @@
 import MagicString from 'magic-string'
 import { findStaticImports } from 'mlly'
 import { parseSync, Visitor } from 'oxc-parser'
+import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
@@ -136,9 +137,10 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
  * }
  * ```
  */
-export function unheadSolidPlugin() {
+export function unheadSolidPlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/solid-js',
+    mode: options?.mode,
     transform(code, id, opts) {
       // Only process jsx/tsx files
       if (!/\.[jt]sx$/.test(id))
