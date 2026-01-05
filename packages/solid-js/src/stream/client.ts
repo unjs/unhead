@@ -1,3 +1,5 @@
+export { UnheadContext } from '../context'
+
 /**
  * Client-side HeadStream - returns null (script already executed during SSR streaming)
  */

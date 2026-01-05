@@ -4,6 +4,7 @@ import { createStreamableHead as _createStreamableHead } from 'unhead/stream/cli
 import { defineComponent } from 'vue'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
+import { VueHeadMixin } from '../VueHeadMixin'
 
 /**
  * Client-side HeadStream - renders nothing (script already executed during SSR streaming)
@@ -30,4 +31,5 @@ export function createStreamableHead(options: CreateStreamableClientHeadOptions 
   return head
 }
 
+export { VueHeadMixin }
 export type { CreateStreamableClientHeadOptions, UnheadStreamQueue, VueHeadClient }

@@ -35,6 +35,7 @@
 ./stream/client:
   createStreamableHead: function
   HeadStream: object
+  VueHeadMixin: object
 ./stream/server:
   createStreamableHead: function
   HeadStream: object

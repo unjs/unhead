@@ -113,6 +113,8 @@
       .head-entry.new .head-time { color: #4ade80; }
       @keyframes flash { from { background: rgba(74,222,128,0.2); } to { background: transparent; } }
     </style>
+    <!-- SolidJS hydration runtime - must be before any streaming scripts that reference _$HY -->
+    <script>window._$HY||(e=>{let t=e=>e&&e.hasAttribute&&(e.hasAttribute("data-hk")?e:t(e.host&&e.host.nodeType?e.host:e.parentNode));["click","input"].forEach((o=>document.addEventListener(o,(o=>{if(!e.events)return;let s=t(o.composedPath&&o.composedPath()[0]||o.target);s&&!e.completed.has(s)&&e.events.push([s,o])}))))})(_$HY={events:[],completed:new WeakSet,r:{},fe(){}});</script>
     <script>
       // Must be defined early so bootstrap script can use __headLog
       const start = Date.now();

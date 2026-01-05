@@ -7,7 +7,7 @@ const head = createStreamableHead()
 
 hydrateRoot(
   document.getElementById('app')!,
-  <UnheadProvider head={head}>
+  <UnheadProvider value={head}>
     <BrowserRouter>
       <App />
     </BrowserRouter>

@@ -30,6 +30,17 @@ function init(options: { streamKey?: string } = {}) {
   const doc = typeof document !== 'undefined' ? document : undefined
   const head = createUnhead(createDomRenderer(), { document: doc })
 
+  // Hydration lock - ignore client pushes until hydration completes
+  // SSR streaming pushes (from inline scripts) happen before hydration starts
+  // After IIFE init, hydration begins and components re-call useHead
+  // We skip those during hydration to preserve the SSR-streamed state
+  let hydrationLocked = true
+
+  // Unlock after microtask - hydration should be complete by then
+  queueMicrotask(() => {
+    hydrationLocked = false
+  })
+
   // Consume existing queue - each item in queue is an array of entries
   if (queue?._q) {
     for (const entries of queue._q) {
@@ -44,8 +55,11 @@ function init(options: { streamKey?: string } = {}) {
   win[streamKey] = {
     _q: queue?._q || [],
     _head: head,
-    // Server pushes arrays of entries
+    _hydrationLocked: () => hydrationLocked,
+    // Server pushes arrays of entries (from inline scripts during streaming)
     push: (entries: any[]) => {
+      // During hydration, only SSR streaming scripts should push
+      // Client useHead calls are skipped to preserve streamed state
       for (const entry of entries) {
         head.push(entry)
       }

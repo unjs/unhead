@@ -5,6 +5,8 @@ export function HeadStream(): string {
   return ''
 }
 
+export { UnheadContextKey } from '../context'
+
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,

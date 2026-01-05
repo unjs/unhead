@@ -38,12 +38,12 @@ useHead({
       <section class="products-section">
         <h2>Featured Products</h2>
         <div class="product-grid">
-          <ProductCard id={1} />
-          <ProductCard id={2} />
-          <ProductCard id={3} />
-          <ProductCard id={4} />
-          <ProductCard id={5} />
-          <ProductCard id={6} />
+          <ProductCard id={1} delay={1375} />
+          <ProductCard id={2} delay={1500} />
+          <ProductCard id={3} delay={1625} />
+          <ProductCard id={4} delay={1750} />
+          <ProductCard id={5} delay={1875} />
+          <ProductCard id={6} delay={2000} />
         </div>
       </section>
 

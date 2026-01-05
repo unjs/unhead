@@ -201,6 +201,7 @@ describe('streaming client hydration', () => {
 
       const head = createStreamableHead()
       expect(head).toBeDefined()
+      await waitForDomUpdate() // wait for hydration lock to release
       head!.push({ title: 'After Iife' })
       await waitForDomUpdate()
 

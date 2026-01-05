@@ -1,7 +1,15 @@
+import { createResource, For } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
+const DATA = { categories: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books'] }
+
+const fetchData = async () => {
+  await new Promise(r => setTimeout(r, 625))
+  return DATA
+}
+
 export default function Sidebar() {
-  const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books']
+  const [data] = createResource(fetchData)
 
   useHead({
     title: 'StreamShop 2/11 - Loading...',
@@ -16,15 +24,13 @@ export default function Sidebar() {
     <aside class="sidebar">
       <h3>Categories</h3>
       <ul>
-        {categories.map(cat => (
-          <li><a href="#">{cat}</a></li>
-        ))}
+        <For each={data()?.categories}>{cat => <li><a href="#">{cat}</a></li>}</For>
       </ul>
       <div class="filters">
         <h4>Price Range</h4>
         <div class="price-range">$0 - $1000</div>
         <h4>Rating</h4>
-        <div class="stars">**** & up</div>
+        <div class="stars">★★★★ & up</div>
       </div>
     </aside>
   )

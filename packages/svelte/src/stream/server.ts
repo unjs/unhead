@@ -1,12 +1,9 @@
 import type { WebStreamableHeadContext } from 'unhead/stream/server'
-import type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from 'unhead/types'
-import { getContext } from 'svelte'
+import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream as coreWrapStream,
-  renderSSRHeadSuspenseChunk,
 } from 'unhead/stream/server'
-import { UnheadContextKey } from '../context'
 
 export { UnheadContextKey } from '../context'
 
@@ -23,22 +20,15 @@ export {
 /**
  * Streaming script function for Svelte.
  * Returns HTML string to be rendered with {@html}.
- * The Vite plugin with streaming: true auto-injects this.
+ *
+ * Note: Svelte SSR is synchronous, so all head entries are captured in the shell.
+ * This function exists for API parity with React/Solid but returns empty for Svelte
+ * since there are no streaming head updates to emit.
  */
 export function HeadStream(): string {
-  const head = getContext<Unhead | null>(UnheadContextKey)
-  if (!head)
-    return ''
-
-  // Skip if shell hasn't been rendered yet - entries will be captured in shell
-  if (!(head as any)._shellRendered?.())
-    return ''
-
-  const update = renderSSRHeadSuspenseChunk(head)
-  if (!update)
-    return ''
-
-  return `<script>${update}</script>`
+  // Svelte SSR is synchronous - all entries are captured in the shell render.
+  // No streaming updates needed since components don't render incrementally.
+  return ''
 }
 
 /**

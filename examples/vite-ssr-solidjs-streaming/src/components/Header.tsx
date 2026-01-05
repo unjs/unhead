@@ -1,7 +1,15 @@
+import { createResource } from 'solid-js'
 import { useHead } from '@unhead/solid-js'
 
+const DATA = { user: 'John Doe', cartCount: 3 }
+
+const fetchData = async () => {
+  await new Promise(r => setTimeout(r, 250))
+  return DATA
+}
+
 export default function Header() {
-  const data = { user: 'John Doe', cartCount: 3 }
+  const [data] = createResource(fetchData)
 
   useHead({
     title: 'StreamShop 1/11 - Loading...',
@@ -11,7 +19,7 @@ export default function Header() {
 
   return (
     <header class="site-header">
-      <div class="logo">StreamShop</div>
+      <div class="logo">🛒 StreamShop</div>
       <nav class="nav-links">
         <a href="/">Home</a>
         <a href="/about">About</a>
@@ -19,8 +27,8 @@ export default function Header() {
         <a href="#">Deals</a>
       </nav>
       <div class="user-area">
-        <span class="cart">Cart ({data.cartCount})</span>
-        <span class="user">{data.user}</span>
+        <span class="cart">🛒 {data()?.cartCount}</span>
+        <span class="user">👤 {data()?.user}</span>
       </div>
     </header>
   )

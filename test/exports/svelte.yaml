@@ -27,6 +27,7 @@
 ./stream/client:
   createStreamableHead: function
   HeadStream: function
+  UnheadContextKey: symbol
 ./stream/server:
   createStreamableHead: function
   HeadStream: function

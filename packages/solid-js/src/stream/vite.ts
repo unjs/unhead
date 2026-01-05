@@ -147,7 +147,8 @@ export function unheadSolidPlugin(options?: Pick<StreamingPluginOptions, 'mode'>
         return null
 
       const s = new MagicString(code)
-      if (!transform(code, id, opts?.ssr ?? false, s))
+      const transformed = transform(code, id, opts?.ssr ?? false, s)
+      if (!transformed)
         return null
 
       return {

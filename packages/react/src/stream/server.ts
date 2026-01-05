@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream'
 import type { ReactNode } from 'react'
 import type { CreateStreamableServerHeadOptions, StreamableHeadContext } from 'unhead/stream/server'
-import type { ResolvableHead } from 'unhead/types'
+import type { ResolvableHead, Unhead } from 'unhead/types'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
 import {
@@ -10,6 +10,10 @@ import {
   renderSSRHeadSuspenseChunk,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
+
+export function UnheadProvider({ value, children }: { value: Unhead, children: ReactNode }): ReactNode {
+  return createElement(UnheadContext.Provider, { value }, children)
+}
 
 /**
  * Streaming head component for React.

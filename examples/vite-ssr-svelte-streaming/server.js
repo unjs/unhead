@@ -66,7 +66,7 @@ export async function createServer(
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const stream = render(url, template)
+      const stream = await render(url, template)
 
       res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' })
       const reader = stream.getReader()

@@ -4,9 +4,9 @@ import { unheadSolidPlugin } from '@unhead/solid-js/stream/vite'
 
 export default defineConfig({
   plugins: [
-    solid({ ssr: true }),
-    // Streaming mode: transforms useHead() calls to output inline scripts during SSR streaming
+    // MUST come before solid() to see JSX before it's compiled to function calls
     unheadSolidPlugin(),
+    solid({ ssr: true }),
   ],
   build: {
     minify: false,

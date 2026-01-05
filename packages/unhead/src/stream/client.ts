@@ -22,7 +22,7 @@ export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHead
 export function createStreamableHead<T = ResolvableHead>(options: CreateStreamableClientHeadOptions = {}): ClientUnhead<T> | undefined {
   const { streamKey = DEFAULT_STREAM_KEY, ...rest } = options
   const win = typeof window !== 'undefined' ? window as any : undefined
-  const streamQueue = win?.[streamKey] as UnheadStreamQueue | undefined
+  const streamQueue = win?.[streamKey] as UnheadStreamQueue & { _hydrationLocked?: () => boolean } | undefined
   const core = streamQueue?._head as Unhead<T> | undefined
 
   if (!core)
@@ -36,6 +36,9 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
 
   // Cast core since iife adds dirty property dynamically
   const coreWithDirty = core as Unhead<T> & { dirty: boolean }
+
+  // Check if hydration is locked (client pushes should be skipped during hydration)
+  const isHydrationLocked = () => streamQueue?._hydrationLocked?.() ?? false
 
   const head: ClientUnhead<T> = {
     ...coreWithDirty,
@@ -52,6 +55,17 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       hooks.callHook('entries:updated', head)
     },
     push(input: T, _options?: HeadEntryOptions) {
+      // Skip pushes during hydration to preserve SSR-streamed state
+      // After hydration completes (microtask), pushes are allowed again
+      if (isHydrationLocked()) {
+        // Return a no-op entry during hydration
+        return {
+          _i: -1,
+          patch: () => {},
+          dispose: () => {},
+        } as ActiveHeadEntry<T>
+      }
+
       const active = core.push(input, _options)
       const entry = core.entries.get(active._i)
       if (entry)
@@ -65,6 +79,8 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       const clientActive: ActiveHeadEntry<T> = {
         _i: active._i,
         patch(input) {
+          if (isHydrationLocked())
+            return
           corePatch(input)
           const e = core.entries.get(active._i)
           if (e)
