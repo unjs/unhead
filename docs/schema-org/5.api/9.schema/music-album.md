@@ -18,7 +18,7 @@
 
 - **byArtist** `NodeRelations<Person | MusicGroup | string>`
 
-  The artist(s) of the album. Resolves to [Person](/schema-org/api/schema/person) or [MusicGroup](/schema-org/api/schema/music-group).
+  The artist(s) of the album. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
 
 - **albumProductionType** `string`
 
@@ -91,3 +91,9 @@ export interface MusicAlbumSimple extends Thing {
   review?: NodeRelations<Review>
 }
 ```
+
+## Related Schemas
+
+- [MusicGroup](/docs/schema-org/api/schema/music-group) - Artist/band
+- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Album tracks
+- [Person](/docs/schema-org/api/schema/person) - Artist

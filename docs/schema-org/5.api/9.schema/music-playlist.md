@@ -22,7 +22,7 @@
 
 - **creator** `NodeRelations<Person | MusicGroup | string>`
 
-  The person or group who created the playlist. Resolves to [Person](/schema-org/api/schema/person) or [MusicGroup](/schema-org/api/schema/music-group).
+  The person or group who created the playlist. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
 
 - **numTracks** `number`
 
@@ -81,3 +81,8 @@ export interface MusicPlaylistSimple extends Thing {
   aggregateRating?: NodeRelation<AggregateRating>
 }
 ```
+
+## Related Schemas
+
+- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Playlist tracks
+- [Person](/docs/schema-org/api/schema/person) - Playlist creator

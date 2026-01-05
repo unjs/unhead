@@ -8,7 +8,7 @@
 
 - [Organization - Schema.org](https://schema.org/Organization)
 - [Organization - Yoast](https://developer.yoast.com/features/schema/pieces/organization)
-- [Choose an Identity - Organization](/schema-org/recipes/identity#organization)
+- [Choose an Identity - Organization](/docs/schema-org/guides/recipes/identity#organization)
 
 ## Required properties
 
@@ -152,3 +152,8 @@ export interface Organization extends Thing {
   foundingDate?: string
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Organization members
+- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Physical locations

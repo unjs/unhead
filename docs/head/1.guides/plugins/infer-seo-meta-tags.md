@@ -4,9 +4,9 @@ description: "Automatically infer SEO meta tags from your page title and descrip
 navigation.title: "Infer SEO Meta"
 ---
 
-## Introduction
+**Quick Answer:** The Infer SEO Meta plugin automatically generates `og:title`, `og:description`, and `twitter:card` from your existing `title` and `description` tags, reducing duplicate meta tag definitions.
 
-Unhead is internally powered by a hook system which you can plug into to add your own logic.
+## What Does This Plugin Do?
 
 The Infer SEO Meta plugin automatically generates Open Graph and Twitter meta tags from your existing content:
 
@@ -14,15 +14,35 @@ The Infer SEO Meta plugin automatically generates Open Graph and Twitter meta ta
 - `og:description` - Inferred from your description meta
 - `twitter:card` - Set automatically when using `og:image`
 
-This helps maintain consistent metadata across platforms without duplicating content.
+Use this plugin when you want to avoid duplicating your page title and description across Open Graph and Twitter meta tags. It's ideal for sites that need consistent social sharing metadata without manual repetition.
 
-## Setup
+## How Does the Output Look?
+
+::code-block
+```ts [Input]
+useHead({
+  title: 'My Page Title',
+  meta: [
+    { name: 'description', content: 'A description of my page' }
+  ]
+})
+```
+
+```html [Output]
+<title>My Page Title</title>
+<meta name="description" content="A description of my page">
+<meta property="og:title" content="My Page Title">
+<meta property="og:description" content="A description of my page">
+```
+::
+
+## How Do I Set Up the Plugin?
 
 Add the plugin to your Unhead configuration:
 
 ::code-block
 ```ts [Input]
-import { InferSeoMetaPlugin } from '@unhead/addons'
+import { InferSeoMetaPlugin } from 'unhead/plugins'
 
 const head = createHead({
   plugins: [
@@ -36,7 +56,7 @@ head.use(InferSeoMetaPlugin())
 ```
 ::
 
-## Configuration
+## What Options Can I Configure?
 
 You can customize how the plugin transforms your content:
 
@@ -65,15 +85,13 @@ export interface InferSeoMetaPluginOptions {
 ```
 ::
 
-## Common Use Cases
-
-### Custom OG Title Format
+## How Do I Customize the OG Title?
 
 Remove site name suffix from Open Graph titles:
 
 ::code-block
 ```ts [Input]
-import { InferSeoMetaPlugin } from '@unhead/addons'
+import { InferSeoMetaPlugin } from 'unhead/plugins'
 
 const head = createHead({
   plugins: [
@@ -85,7 +103,7 @@ const head = createHead({
 ```
 ::
 
-### Disable Twitter Card
+## How Do I Disable Twitter Cards?
 
 If you don't want Twitter cards generated:
 
@@ -97,7 +115,7 @@ InferSeoMetaPlugin({
 ```
 ::
 
-### Custom Description Formatting
+## How Do I Format OG Descriptions?
 
 Append a call-to-action to your Open Graph descriptions:
 
@@ -108,3 +126,8 @@ InferSeoMetaPlugin({
 })
 ```
 ::
+
+## Related
+
+- [useSeoMeta()](/docs/head/api/composables/use-seo-meta) - Manual SEO meta management
+- [Template Params](/docs/head/guides/plugins/template-params) - Dynamic template parameters

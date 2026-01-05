@@ -7,7 +7,7 @@
 ## Useful Links
 
 - [Schema.org Person](https://schema.org/Person)
-- [Choose an Identity - Person](/schema-org/recipes/identity#person)
+- [Choose an Identity - Person](/docs/schema-org/guides/recipes/identity#person)
 
 ## Required properties
 
@@ -81,3 +81,8 @@ export interface PersonSimple extends Thing {
   url?: string
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Person's employer
+- [Article](/docs/schema-org/api/schema/article) - Articles by person

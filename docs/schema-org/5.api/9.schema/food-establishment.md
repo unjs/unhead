@@ -67,7 +67,7 @@ defineFoodEstablishment({
 - **@type**: `FoodEstablishment`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}`
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/schema-org/getting-started/params)
+- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/docs/schema-org/guides/core-concepts/params)
 
 ## Sub-Types
 
@@ -130,3 +130,9 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
   'starRating'?: NodeRelations<Rating>
 }
 ```
+
+## Related Schemas
+
+- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Parent type
+- [Organization](/docs/schema-org/api/schema/organization) - Parent organization
+- [Event](/docs/schema-org/api/schema/event) - Restaurant events

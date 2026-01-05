@@ -18,7 +18,7 @@
 
 - **member** `NodeRelations<Person | string>`
 
-  Array of band members. Resolves to [Person](/schema-org/api/schema/person).
+  Array of band members. Resolves to [Person](/docs/schema-org/api/schema/person).
 
 - **genre** `string | string[]`
 
@@ -89,3 +89,10 @@ export interface MusicGroupSimple extends Thing {
   sameAs?: Arrayable<string>
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Band members
+- [MusicAlbum](/docs/schema-org/api/schema/music-album) - Discography
+- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Songs
+- [Event](/docs/schema-org/api/schema/event) - Concerts

@@ -9,7 +9,7 @@
 - [BreadcrumbList - Schema.org](https://schema.org/BreadcrumbList)
 - [Breadcrumb Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/breadcrumb)
 - [Breadcrumb - Yoast](https://developer.yoast.com/features/schema/pieces/breadcrumb)
-- [Recipe: Breadcrumbs](/schema-org/recipes/breadcrumbs)
+- [Recipe: Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs)
 
 ## Required properties
 
@@ -55,3 +55,9 @@ defineBreadcrumb({
  */
 export interface BreadcrumbSimple extends ItemList {}
 ```
+
+## Related Schemas
+
+- [ItemList](/docs/schema-org/api/schema/item-list) - List structure
+- [Article](/docs/schema-org/api/schema/article) - Article navigation
+- [Product](/docs/schema-org/api/schema/product) - Product navigation

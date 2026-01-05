@@ -4,21 +4,22 @@ navigation:
     title: Blog
 ---
 
-Creating a blog is a fun way to share what you learn and grow a following through organic traffic.
+Use `defineArticle()` with `@type: 'BlogPosting'` to mark up blog posts. This enables rich snippets showing author, publish date, and article images in search results.
 
-Providing Schema.org can help improve your search appearance click-throughs rates
-by helping Google optimise how your site is shown.
+::note
+Schema.org Article markup helps Google display enhanced search results with author info, thumbnails, and publication dates - improving click-through rates.
+::
 
 ## Useful Links
 
 - [Article | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/article)
 - [Article Schema | Yoast](https://developer.yoast.com/features/schema/pieces/article)
 
-## Marking up an Article
+## How do I mark up a blog article?
 
 The [defineArticle](/docs/schema-org/api/schema/article) function is provided to create Article Schema whilst handling relations for you.
 
-Note that some fields may already be inferred, see [Schema.org Params](/guide/getting-started/params)
+Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
 
 ```ts
 import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -33,7 +34,7 @@ useSchemaOrg([
 ])
 ```
 
-## Specifying the Article Type
+## How do I specify the article type?
 
 Providing a type of Article can help clarify what kind of content the page is about.
 
@@ -52,9 +53,9 @@ useSchemaOrg([
 
 See the [Article Types](/docs/schema-org/api/schema/article#sub-types) for the list of available types.
 
-## Providing an author
+## How do I add an author?
 
-If the author of the article isn't the [site identity](/schema-org/recipes/identity), then you'll need to
+If the author of the article isn't the [site identity](/docs/schema-org/guides/recipes/identity), then you'll need to
 config the author or authors.
 
 When defining a Person when an Article is present, it will automatically associate them as the author.
@@ -79,7 +80,7 @@ useSchemaOrg([
 ])
 ```
 
-## Markup Blog Archive Pages
+## How do I mark up blog archive pages?
 
 Assuming you have the `WebPage` and `WebSite` schema loaded in from a parent layout component,
 you can augment the `WebPage` type to better indicate the purpose of the page.
@@ -95,3 +96,9 @@ useSchemaOrg([
   }),
 ])
 ```
+
+## Related Recipes
+
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Add navigation breadcrumbs
+- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Add FAQ structured data

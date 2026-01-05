@@ -85,3 +85,9 @@ export interface MovieSimple extends Thing {
   productionCompany?: NodeRelation<Organization>
 }
 ```
+
+## Related Schemas
+
+- [Person](/docs/schema-org/api/schema/person) - Director, actors
+- [Organization](/docs/schema-org/api/schema/organization) - Production company
+- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Soundtrack

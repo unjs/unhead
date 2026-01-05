@@ -4,11 +4,13 @@ description: "Control tag order with before: and after: aliases instead of numer
 navigation.title: "Alias Sorting"
 ---
 
-## Introduction
+**Quick Answer:** The Alias Sorting plugin lets you control head tag order using readable `before:` and `after:` prefixes instead of arbitrary numbers. Use `tagPriority: 'before:script:analytics'` to place a script before another.
+
+## What Is Alias Sorting?
 
 The Alias Sorting plugin lets you control tag order using descriptive `before:` and `after:` prefixes instead of numerical priorities.
 
-## Why Use Aliases?
+## Why Use Aliases Instead of Numbers?
 
 Numerical priorities become hard to maintain as your application grows:
 
@@ -18,7 +20,7 @@ Numerical priorities become hard to maintain as your application grows:
 
 Aliases make tag ordering more intuitive and maintainable with declarative relationships between tags.
 
-## Setup
+## How Do I Set Up Alias Sorting?
 
 Add the plugin to your Unhead configuration:
 
@@ -35,7 +37,7 @@ const head = createHead({
 ```
 ::
 
-## Usage
+## How Do I Use Alias Sorting?
 
 ### Basic Ordering
 
@@ -66,7 +68,7 @@ useHead({
 ```
 ::
 
-### Referencing Tags
+### What Is the Alias Format?
 
 The format is: `{before|after}:{tagName}:{key}`
 
@@ -108,9 +110,9 @@ useHead({
 ```
 ::
 
-### Combining with Numeric Priorities
+### Can I Combine Aliases with Numeric Priorities?
 
-Alias sorting works alongside numeric priorities. The plugin will preserve the numeric priority of the referenced tag:
+Yes. Alias sorting works alongside numeric priorities. The plugin will preserve the numeric priority of the referenced tag:
 
 ::code-block
 ```ts [Input]
@@ -133,7 +135,7 @@ useHead({
 
 ## Common Use Cases
 
-### Critical CSS Loading
+### How Do I Load Critical CSS First?
 
 Ensure critical CSS is loaded before other stylesheets:
 
@@ -157,7 +159,7 @@ useHead({
 ```
 ::
 
-### Script Loading Order
+### How Do I Control Script Loading Order?
 
 Control the execution sequence of dependent scripts:
 
@@ -194,3 +196,7 @@ useHead({
 ::note
 During hydration (SSR or page switches), tags may not reorder to avoid content flashing. The plugin respects this behavior.
 ::
+
+## Related
+
+- [Tag Positions](/docs/head/guides/core-concepts/positions) - Control tag ordering

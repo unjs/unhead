@@ -48,3 +48,9 @@ useSchemaOrg([
   })
 ])
 ```
+
+## Related Recipes
+
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Navigation breadcrumbs
+- [eCommerce](/docs/schema-org/guides/recipes/e-commerce) - Product structured data

@@ -22,7 +22,7 @@
 
 - **byArtist** `NodeRelations<Person | MusicGroup | string>`
 
-  The artist(s) who performed the song. Resolves to [Person](/schema-org/api/schema/person) or [MusicGroup](/schema-org/api/schema/music-group).
+  The artist(s) who performed the song. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
 
 - **inAlbum** `NodeRelation<MusicAlbum>`
 
@@ -94,3 +94,9 @@ export interface MusicRecordingSimple extends Thing {
   aggregateRating?: NodeRelation<AggregateRating>
 }
 ```
+
+## Related Schemas
+
+- [MusicAlbum](/docs/schema-org/api/schema/music-album) - Album containing track
+- [MusicGroup](/docs/schema-org/api/schema/music-group) - Performing artist
+- [Person](/docs/schema-org/api/schema/person) - Individual artist

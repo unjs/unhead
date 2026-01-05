@@ -23,7 +23,7 @@
 - **@type**: inferred from path, fallbacks to `WebPage`, see [resolves](#resolves)
 - **@id**: `${canonicalUrl}#webpage`
 - **url**: `canonicalUrl`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/guide/getting-started/params))_
+- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 - **isPartOf**: WebSite reference
 
 Home page only

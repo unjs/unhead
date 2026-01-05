@@ -44,7 +44,7 @@
 ## Defaults
 
 - **@type**: `PodcastEpisode`
-- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/schema-org/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 
 ## Examples
 
@@ -104,3 +104,8 @@ export interface PodcastEpisodeSimple extends Thing {
   keywords?: Arrayable<string>
 }
 ```
+
+## Related Schemas
+
+- [PodcastSeries](/docs/schema-org/api/schema/podcast-series) - Parent series
+- [Person](/docs/schema-org/api/schema/person) - Host, guests

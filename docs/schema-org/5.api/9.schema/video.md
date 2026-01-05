@@ -43,7 +43,7 @@
 
 - **@type**: `VideoObject`
 - **@id**: `${canonicalUrl}#/schema/video/${hash(image.url)}`
-- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/schema-org/getting-started/params))_
+- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
 - **contentUrl**: is set to `url`
 
 ## Resolves

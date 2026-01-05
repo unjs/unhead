@@ -22,7 +22,7 @@
 
 - **provider** `NodeRelations<Person | Organization | string>`
 
-  Who provides the service. Resolves to [Person](/schema-org/api/schema/person) or [Organization](/schema-org/api/schema/organization).
+  Who provides the service. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
 
 - **areaServed** `string`
 
@@ -30,14 +30,14 @@
 
 - **offers** `NodeRelations<Offer>`
 
-  Pricing information for the service. Resolves to [Offer](/schema-org/api/schema/offer).
+  Pricing information for the service. Resolves to Offer.
 
 ## Defaults
 
 - **@type**: `Service`
 - **@id**: `${canonicalUrl}#service`
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/schema-org/getting-started/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/schema-org/getting-started/params))_
+- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 
 ## Sub-Types
 
@@ -153,3 +153,9 @@ export interface ServiceSimple extends Thing {
   'brand'?: NodeRelation<Organization>
 }
 ```
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Service provider
+- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Service location
+- [Product](/docs/schema-org/api/schema/product) - Related products

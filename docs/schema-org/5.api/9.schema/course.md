@@ -63,3 +63,9 @@ export interface CourseSimple extends Thing {
 ::alert{type="warning"}
 🔨 Schema in development
 ::
+
+## Related Schemas
+
+- [Organization](/docs/schema-org/api/schema/organization) - Course provider
+- [Person](/docs/schema-org/api/schema/person) - Instructor
+- [Event](/docs/schema-org/api/schema/event) - Course sessions

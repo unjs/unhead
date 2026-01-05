@@ -84,3 +84,9 @@ export interface TVSeasonSimple extends Thing {
   trailer?: NodeRelation<VideoObject | string>
 }
 ```
+
+## Related Schemas
+
+- [TVEpisode](/docs/schema-org/api/schema/tv-episode) - Season episodes
+- [Person](/docs/schema-org/api/schema/person) - Director, actors
+- [Organization](/docs/schema-org/api/schema/organization) - Production company
