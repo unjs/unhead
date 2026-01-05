@@ -25,15 +25,11 @@
   UnheadContext: object
 ./stream/client:
   createStreamableHead: function
-  DEFAULT_STREAM_KEY: string
   HeadStream: function
-  UnheadContext: object
 ./stream/server:
-  createHead: function
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
-  renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContext: object

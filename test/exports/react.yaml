@@ -25,22 +25,14 @@
   transformHtmlTemplate: function
   UnheadProvider: function
 ./stream/client:
-  createHead: function
   createStreamableHead: function
-  DEFAULT_STREAM_KEY: string
   HeadStream: function
-  renderDOMHead: function
-  UnheadProvider: function
 ./stream/server:
-  createHead: function
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
-  renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  transformHtmlTemplate: function
-  UnheadProvider: function
   wrapStream: function
 ./stream/vite:
   default: function

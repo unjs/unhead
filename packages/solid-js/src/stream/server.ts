@@ -10,11 +10,8 @@ import {
 import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
-// Re-export everything except createStreamableHead which we override
 export {
-  createHead,
   prepareStreamingTemplate,
-  renderSSRHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   type StreamingTemplateParts,

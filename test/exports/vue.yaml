@@ -33,23 +33,14 @@
   transformHtmlTemplate: function
   VueHeadMixin: object
 ./stream/client:
-  createHead: function
   createStreamableHead: function
-  DEFAULT_STREAM_KEY: string
   HeadStream: object
-  renderDOMHead: function
-  VueHeadMixin: object
 ./stream/server:
-  createHead: function
   createStreamableHead: function
   HeadStream: object
   prepareStreamingTemplate: function
-  propsToString: function
-  renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
-  transformHtmlTemplate: function
-  VueHeadMixin: object
   wrapStream: function
 ./stream/vite:
   default: function

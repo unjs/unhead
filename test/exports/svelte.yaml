@@ -26,9 +26,7 @@
   UnheadContextKey: symbol
 ./stream/client:
   createStreamableHead: function
-  DEFAULT_STREAM_KEY: string
   HeadStream: function
-  UnheadContextKey: symbol
 ./stream/server:
   createStreamableHead: function
   HeadStream: function

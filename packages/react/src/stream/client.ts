@@ -12,6 +12,5 @@ export function HeadStream(): ReactNode {
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,
-  DEFAULT_STREAM_KEY,
   type UnheadStreamQueue,
 } from 'unhead/stream/client'

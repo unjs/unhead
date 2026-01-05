@@ -1,6 +1,6 @@
 import type { CreateStreamableClientHeadOptions, UnheadStreamQueue } from 'unhead/stream/client'
 import type { VueHeadClient } from '../types'
-import { createStreamableHead as _createStreamableHead, DEFAULT_STREAM_KEY } from 'unhead/stream/client'
+import { createStreamableHead as _createStreamableHead } from 'unhead/stream/client'
 import { defineComponent } from 'vue'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
@@ -30,5 +30,4 @@ export function createStreamableHead(options: CreateStreamableClientHeadOptions 
   return head
 }
 
-export { type CreateStreamableClientHeadOptions, DEFAULT_STREAM_KEY, type UnheadStreamQueue }
-export type { VueHeadClient }
+export type { CreateStreamableClientHeadOptions, UnheadStreamQueue, VueHeadClient }

@@ -3,9 +3,6 @@ import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { DEFAULT_STREAM_KEY } from './client'
 
-export * from '../server'
-export { DEFAULT_STREAM_KEY }
-
 /**
  * Base context with just the head instance.
  * Extended by framework-specific contexts.

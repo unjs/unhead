@@ -8,6 +8,5 @@ export function HeadStream(): null {
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,
-  DEFAULT_STREAM_KEY,
   type UnheadStreamQueue,
 } from 'unhead/stream/client'

@@ -106,8 +106,6 @@ export function createStreamableHead<T = ResolvableHead>(
   }
 }
 
-// Re-export everything from the base server module
-export * from '../server'
 // Export streaming-specific items from unhead (except createStreamableHead which we override)
 export {
   type BaseStreamableHeadContext,
