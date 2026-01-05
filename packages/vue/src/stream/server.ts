@@ -87,7 +87,7 @@ export function createStreamableHead(
       vueHead.entries.clear()
       // Mark shell as rendered so HeadStream starts outputting streaming updates
       shellRendered = true
-      return coreWrapStream(vueHead, stream, template, '<!--app-html-->', preRenderedState)
+      return coreWrapStream(vueHead, stream, template, preRenderedState)
     },
   }
 }

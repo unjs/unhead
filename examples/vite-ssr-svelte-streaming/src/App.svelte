@@ -12,8 +12,10 @@ let { url = '/' }: Props = $props()
 const isAbout = url === '/about'
 </script>
 
-{#if isAbout}
-  <AboutPage />
-{:else}
-  <HomePage />
-{/if}
+<div id="app">
+  {#if isAbout}
+    <AboutPage />
+  {:else}
+    <HomePage />
+  {/if}
+</div>

@@ -178,8 +178,7 @@ function safeJsonStringify(obj: any): string {
  *
  * @param head - The Unhead instance
  * @param stream - The app's ReadableStream (from renderToWebStream, etc.)
- * @param template - Full HTML template with an app placeholder
- * @param placeholder - The placeholder marking where app content goes (default: '<!--app-html-->')
+ * @param template - Full HTML template
  * @returns A new ReadableStream with shell and closing HTML included
  *
  * @example
@@ -193,7 +192,6 @@ export function wrapStream(
   head: Unhead<any>,
   stream: ReadableStream<Uint8Array>,
   template: string,
-  placeholder = '<!--app-html-->',
   preRenderedState?: SSRHeadPayload,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
@@ -201,7 +199,7 @@ export function wrapStream(
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const { shell, end } = prepareStreamingTemplate(head, template, placeholder, preRenderedState)
+        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState)
         controller.enqueue(encoder.encode(shell))
 
         const reader = stream.getReader()
@@ -246,7 +244,7 @@ export interface StreamingTemplateParts {
 /**
  * @experimental
  *
- * Prepares a template for streaming SSR by splitting it at the app placeholder
+ * Prepares a template for streaming SSR by splitting it at body tag boundaries
  * and injecting head content into both parts.
  *
  * This is the recommended way to handle streaming templates as it:
@@ -255,8 +253,7 @@ export interface StreamingTemplateParts {
  * - Injects body tags (scripts at end of body) into the closing part
  *
  * @param head - The Unhead instance
- * @param template - Full HTML template with an app placeholder
- * @param placeholder - The placeholder marking where app content goes (default: '<!--app-html-->')
+ * @param template - Full HTML template
  * @returns Object with `shell` (before app) and `end` (after app) parts
  *
  * @example
@@ -270,82 +267,45 @@ export interface StreamingTemplateParts {
 export function prepareStreamingTemplate(
   head: Unhead<any>,
   template: string,
-  placeholder = '<!--app-html-->',
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  // Use pre-rendered state if provided (Vue captures before render), otherwise render now
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
   if (!preRenderedState) {
     head.entries.clear()
   }
   const bootstrapScript = createBootstrapScript(getStreamKey(head))
 
-  // Find the placeholder
-  const placeholderIdx = template.indexOf(placeholder)
-  if (placeholderIdx === -1) {
-    // Fallback: use body tag positions from parser
-    const parsed = parseHtmlForIndexes(template)
-    const bodyEnd = parsed.indexes.bodyTagEnd
-    const bodyCloseStart = parsed.indexes.bodyCloseTagStart
+  const parsed = parseHtmlForIndexes(template)
+  const bodyEnd = parsed.indexes.bodyTagEnd
+  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
 
-    if (bodyEnd >= 0 && bodyCloseStart >= 0) {
-      const shellPart = template.substring(0, bodyEnd)
-      const endPart = template.substring(bodyCloseStart)
+  if (bodyEnd >= 0 && bodyCloseStart >= 0) {
+    const shellPart = template.substring(0, bodyEnd)
+    const endPart = template.substring(bodyCloseStart)
 
-      const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
-      const shell = applyHeadToHtml(shellParsed, {
-        htmlAttrs: ssr.htmlAttrs,
-        headTags: bootstrapScript + ssr.headTags,
-        bodyAttrs: ssr.bodyAttrs,
-        bodyTags: '',
-      }).replace('</body></html>', '')
+    const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
+    const shell = applyHeadToHtml(shellParsed, {
+      htmlAttrs: ssr.htmlAttrs,
+      headTags: bootstrapScript + ssr.headTags,
+      bodyAttrs: ssr.bodyAttrs,
+      bodyTags: '',
+    }).replace('</body></html>', '')
 
-      return {
-        shell,
-        end: ssr.bodyTags + endPart,
-      }
-    }
-
-    // Can't split, return full template as shell
-    const parsed2 = parseHtmlForIndexes(template)
     return {
-      shell: applyHeadToHtml(parsed2, {
-        htmlAttrs: ssr.htmlAttrs,
-        headTags: bootstrapScript + ssr.headTags,
-        bodyAttrs: ssr.bodyAttrs,
-        bodyTags: ssr.bodyTags,
-      }),
-      end: '',
+      shell,
+      end: ssr.bodyTags + endPart,
     }
   }
 
-  // Split at placeholder
-  const shellPart = template.substring(0, placeholderIdx)
-  const endPart = template.substring(placeholderIdx + placeholder.length)
-
-  // Parse and apply head to shell part
-  // We need to add fake closing tags for the parser to work correctly
-  const shellWithClosing = `${shellPart}</body></html>`
-  const shellParsed = parseHtmlForIndexes(shellWithClosing)
-  const shell = applyHeadToHtml(shellParsed, {
-    htmlAttrs: ssr.htmlAttrs,
-    headTags: bootstrapScript + ssr.headTags,
-    bodyAttrs: ssr.bodyAttrs,
-    bodyTags: '',
-  }).replace('</body></html>', '')
-
-  // Parse end part and inject body tags
-  const endParsed = parseHtmlForIndexes(`<html><head></head><body>${endPart}`)
-  const endWithBodyTags = applyHeadToHtml(endParsed, {
-    htmlAttrs: '',
-    headTags: '',
-    bodyAttrs: '',
-    bodyTags: ssr.bodyTags,
-  }).replace('<html><head></head><body>', '')
-
+  // Can't split, return full template as shell
   return {
-    shell,
-    end: endWithBodyTags,
+    shell: applyHeadToHtml(parsed, {
+      htmlAttrs: ssr.htmlAttrs,
+      headTags: bootstrapScript + ssr.headTags,
+      bodyAttrs: ssr.bodyAttrs,
+      bodyTags: ssr.bodyTags,
+    }),
+    end: '',
   }
 }
 

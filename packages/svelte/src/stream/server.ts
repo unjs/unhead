@@ -64,7 +64,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       head.entries.clear()
       // Mark shell as rendered so HeadStream starts outputting streaming updates
       shellRendered = true
-      return coreWrapStream(head, stream, template, '<!--app-html-->', preRenderedState)
+      return coreWrapStream(head, stream, template, preRenderedState)
     },
   }
 }

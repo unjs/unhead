@@ -9,7 +9,7 @@ export default function App(props: AppProps) {
   const isAbout = () => props.url === '/about'
 
   return (
-    <div class="app">
+    <div id="app" class="app">
       <div class="stream-progress" />
       {isAbout() ? <AboutPage /> : <HomePage />}
       <footer class="site-footer">

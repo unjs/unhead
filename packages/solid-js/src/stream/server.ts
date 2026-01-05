@@ -81,7 +81,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
         async start(controller) {
           // Wait for shell to be ready before writing
           const shellState = await shellReady
-          const { shell, end } = prepareStreamingTemplate(head, template, '<!--app-html-->', shellState)
+          const { shell, end } = prepareStreamingTemplate(head, template, shellState)
           controller.enqueue(encoder.encode(shell))
 
           const reader = stream.getReader()
