@@ -9,9 +9,6 @@ export function HeadStream(): ReactNode {
   return createElement('script', { suppressHydrationWarning: true })
 }
 
-// Re-export everything from the base client module
-export * from '../client'
-// Export streaming-specific items only
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,

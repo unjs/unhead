@@ -1,7 +1,7 @@
+import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import MagicString from 'magic-string'
 import { findStaticImports } from 'mlly'
 import { parseSync, Visitor } from 'oxc-parser'
-import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
