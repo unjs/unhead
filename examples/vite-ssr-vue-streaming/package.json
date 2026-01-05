@@ -14,16 +14,16 @@
   },
   "dependencies": {
     "@unhead/vue": "workspace:*",
-    "unhead": "workspace:*",
     "compression": "^1.8.1",
     "express": "^5.2.1",
-    "vue": "^3.5.25",
+    "unhead": "workspace:*",
+    "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.57.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^24.10.4",
+    "@types/node": "^25.0.3",
     "@vitejs/plugin-vue": "latest",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",

@@ -54,10 +54,10 @@ catalog:
   jsdom: ^27.4.0
   magic-string: ^0.30.21
   mlly: ^1.8.0
-  oxc-parser: ^0.103.0
+  oxc-parser: ^0.106.0
   react: ^19.2.3
   react-dom: ^19.2.3
-  rollup: ^4.54.0
+  rollup: ^4.55.1
   rollup-plugin-analyzer: ^4.0.0
   rollup-plugin-visualizer: ^6.0.5
   solid-js: ^1.9.10
