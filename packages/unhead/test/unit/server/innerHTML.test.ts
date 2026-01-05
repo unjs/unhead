@@ -19,7 +19,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -43,7 +43,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -65,7 +65,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -97,7 +97,7 @@ describe('ssr innerHTML', () => {
       }],
     } satisfies ResolvableHead)
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

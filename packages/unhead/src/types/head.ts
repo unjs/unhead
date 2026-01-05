@@ -1,6 +1,5 @@
-import type { Hookable, NestedHooks } from 'hookable'
-import type { HeadHooks } from './hooks'
-import type { DomPluginOptions } from './plugins'
+import type { HookableCore } from 'hookable'
+import type { ClientHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -53,12 +52,19 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
+   * Entry needs re-normalization (client-only)
+   * @internal
+   */
+  _dirty?: boolean
+  /**
    * @internal
    */
   _promisesProcessed?: boolean
 }
 
-export type HeadPluginOptions = Omit<CreateHeadOptions, 'plugins'>
+export interface HeadPluginOptions extends CreateHeadOptions {
+  hooks?: Record<string, (...args: any[]) => any>
+}
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })
 export type HeadPlugin = HeadPluginOptions & { key: string }
@@ -82,15 +88,13 @@ export interface ActiveHeadEntry<Input> {
   /**
    * @internal
    */
-  _poll: (rm?: boolean) => void
+  _i: number
 }
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
 
 export interface CreateHeadOptions {
   document?: Document
-  plugins?: HeadPluginInput[]
-  hooks?: NestedHooks<HeadHooks>
   /**
    * Initial head input that should be added.
    *
@@ -115,6 +119,8 @@ export interface CreateHeadOptions {
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {
+  plugins?: HeadPluginInput[]
+  hooks?: Partial<ServerHeadHooks>
   /**
    * Should default important tags be skipped.
    *
@@ -145,10 +151,12 @@ export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHead
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
+  plugins?: HeadPluginInput[]
+  hooks?: Partial<ClientHeadHooks>
   /**
-   * Options to pass to the DomPlugin.
+   * Custom render function for DOM updates.
    */
-  domOptions?: DomPluginOptions
+  render?: (head: Unhead<any>) => boolean | void
 }
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
@@ -163,7 +171,13 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _index?: number
 }
 
-export interface Unhead<Input = ResolvableHead> {
+export type HeadRenderer<T = unknown> = (head: Unhead<any, any>) => T
+
+export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
+  /**
+   * Render the head tags using the configured renderer.
+   */
+  render: () => RenderResult
   /**
    * Registered plugins.
    */
@@ -177,13 +191,9 @@ export interface Unhead<Input = ResolvableHead> {
    */
   push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
   /**
-   * Invalidate all entries and re-queue them for normalization.
-   */
-  invalidate: () => void
-  /**
    * Exposed hooks for easier extension.
    */
-  hooks: Hookable<HeadHooks>
+  hooks?: HookableCore<HeadHooks>
   /**
    * Resolved options
    */
@@ -196,6 +206,20 @@ export interface Unhead<Input = ResolvableHead> {
    * Is it a server-side render context.
    */
   ssr: boolean
+  /**
+   * @internal
+   */
+  _entryCount: number
+  // client-specific (optional)
+  /**
+   * @internal
+   */
+  dirty?: boolean
+  /**
+   * Invalidate all entries and re-queue them for normalization.
+   * @internal
+   */
+  invalidate?: () => void
   // dom specific runtime state
   /**
    * @internal
@@ -204,11 +228,7 @@ export interface Unhead<Input = ResolvableHead> {
   /**
    * @internal
    */
-  _domUpdatePromise?: Promise<void>
-  /**
-   * @internal
-   */
-  dirty: boolean
+  _domUpdating?: boolean
   /**
    * @internal
    */
@@ -221,14 +241,6 @@ export interface Unhead<Input = ResolvableHead> {
    * @internal
    */
   _separator?: string
-  /**
-   * @internal
-   */
-  _entryCount: number
-  /**
-   * @internal
-   */
-  _normalizeQueue: Set<number>
   /**
    * @internal
    */

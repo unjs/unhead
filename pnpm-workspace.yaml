@@ -17,16 +17,16 @@ overrides:
   vite: 7.2.2
 
 catalog:
-  '@angular-devkit/build-angular': ^21.0.3
-  '@angular/cli': ^21.0.3
-  '@angular/common': ^21.0.5
-  '@angular/compiler': ^21.0.5
-  '@angular/compiler-cli': ^21.0.5
-  '@angular/core': ^21.0.5
-  '@angular/platform-browser': ^21.0.5
-  '@angular/platform-browser-dynamic': ^21.0.5
-  '@angular/platform-server': ^21.0.5
-  '@antfu/eslint-config': ^6.7.1
+  '@angular-devkit/build-angular': ^21.0.4
+  '@angular/cli': ^21.0.4
+  '@angular/common': ^21.0.6
+  '@angular/compiler': ^21.0.6
+  '@angular/compiler-cli': ^21.0.6
+  '@angular/core': ^21.0.6
+  '@angular/platform-browser': ^21.0.6
+  '@angular/platform-browser-dynamic': ^21.0.6
+  '@angular/platform-server': ^21.0.6
+  '@antfu/eslint-config': ^6.7.3
   '@arethetypeswrong/cli': ^0.18.2
   '@babel/types': ^7.28.5
   '@fast-check/vitest': ^0.2.4
@@ -35,33 +35,33 @@ catalog:
   '@sveltejs/vite-plugin-svelte': ^6.2.1
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.1
-  '@testing-library/svelte': ^5.2.9
+  '@testing-library/svelte': ^5.3.1
   '@testing-library/user-event': 14.6.1
   '@types/estree': ^1.0.8
   '@types/fs-extra': ^11.0.4
   '@types/jsdom': ^27.0.0
   '@types/react': ^19.2.7
   '@types/react-dom': ^19.2.3
-  '@vue/server-renderer': ^3.5.25
+  '@vue/server-renderer': ^3.5.26
   acorn-loose: ^8.5.2
   bumpp: ^10.3.2
   devalue: ^5.6.1
   eslint: ^9.39.2
   estree-walker: ^3.0.3
-  fs-extra: ^11.3.2
+  fs-extra: ^11.3.3
   hookable: ^6.0.1
   js-yaml: ^4.1.1
-  jsdom: ^27.3.0
+  jsdom: ^27.4.0
   magic-string: ^0.30.21
   mlly: ^1.8.0
   oxc-parser: ^0.103.0
   react: ^19.2.3
   react-dom: ^19.2.3
-  rollup: ^4.53.5
+  rollup: ^4.54.0
   rollup-plugin-analyzer: ^4.0.0
-  rollup-plugin-visualizer: ^5.14.0
+  rollup-plugin-visualizer: ^6.0.5
   solid-js: ^1.9.10
-  svelte: ^5.46.0
+  svelte: ^5.46.1
   tinyexec: ^1.0.2
   tslib: ^2.8.1
   typescript: 5.9.3
@@ -74,9 +74,9 @@ catalog:
   vite: 7.2.2
   vite-plugin-solid: ^2.11.10
   vitest: ^4.0.16
-  vitest-package-exports: ^0.1.1
-  vue: ^3.5.25
-  vue-tsc: ^3.1.8
+  vitest-package-exports: ^1.1.1
+  vue: ^3.5.26
+  vue-tsc: ^3.2.1
   zone.js: ^0.16.0
 
 ignoredBuiltDependencies:

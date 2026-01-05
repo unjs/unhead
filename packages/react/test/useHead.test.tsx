@@ -77,7 +77,7 @@ describe('useHead hook', () => {
     const input = getByRole('textbox') as HTMLInputElement
     fireEvent.change(input, { target: { value: 'Updated Title' } })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
   })
 
@@ -108,7 +108,7 @@ describe('useHead hook', () => {
     const descriptionInput = getAllByRole('textbox')[1] as HTMLInputElement
     fireEvent.change(descriptionInput, { target: { value: 'Updated Description' } })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
     expect(headTags).toContain('<meta name="description" content="Updated Description">')
     expect(headTags).toContain('<meta property="og:title" content="Updated Title">')

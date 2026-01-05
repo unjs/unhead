@@ -36,7 +36,7 @@ describe('vue e2e charset', () => {
       useHead(IndexSchema)
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -74,8 +74,8 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta charset="utf-8">
-      <title>Home page</title>
+
+      <title>About page</title>
       </head>
       <body><div id="app"></div></body></html>"
     `)
@@ -90,9 +90,9 @@ describe('vue e2e charset', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
-      <meta charset="utf-8">
+
       <title>Home page</title>
-      </head>
+      <meta charset="utf-8"></head>
       <body><div id="app"></div></body></html>"
     `)
   })

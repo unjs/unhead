@@ -12,7 +12,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -33,7 +33,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -54,7 +54,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -7,10 +7,8 @@ describe('hooks', () => {
     let isDomPaused = true
     const head = useDOMHead({
       hooks: {
-        dom: {
-          beforeRender(ctx) {
-            ctx.shouldRender = !isDomPaused
-          },
+        'dom:beforeRender': function (ctx) {
+          ctx.shouldRender = !isDomPaused
         },
       },
     })

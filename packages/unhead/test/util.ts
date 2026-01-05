@@ -1,14 +1,14 @@
-import type { CreateHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead } from '../src/server'
 import { createStreamableHead as createServerStreamableHead } from '../src/stream/server'
 
-export function createClientHeadWithContext(resolvedOptions: CreateHeadOptions = {}) {
+export function createClientHeadWithContext(resolvedOptions: CreateClientHeadOptions = {}) {
   return createClientHead(resolvedOptions)
 }
 
-export function createServerHeadWithContext(resolvedOptions: CreateHeadOptions = {}): Unhead<ResolvableHead> {
+export function createServerHeadWithContext(resolvedOptions: CreateServerHeadOptions = {}): Unhead<ResolvableHead> {
   return createServerHead({
     disableDefaults: true,
     ...resolvedOptions,
@@ -104,7 +104,7 @@ export const basicSchema: SerializableHead = {
   ],
 }
 
-export function useDOMHead(options: CreateHeadOptions = {}) {
+export function useDOMHead(options: CreateClientHeadOptions = {}) {
   // If no document is provided, create a fresh DOM for this test
   if (!options.document) {
     activeDom = useDom()

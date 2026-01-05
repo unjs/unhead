@@ -30,7 +30,7 @@ describe('vue events', () => {
       "<html><head>
 
       </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body data-onresize=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })

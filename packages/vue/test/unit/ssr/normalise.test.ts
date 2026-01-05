@@ -38,7 +38,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags.split('" ')).toMatchInlineSnapshot(`
       [
         "<link array="a,1",
@@ -72,7 +72,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

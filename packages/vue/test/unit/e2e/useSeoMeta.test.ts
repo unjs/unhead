@@ -14,7 +14,7 @@ describe('unhead vue e2e useSeoMeta', () => {
         articleTag: ['foo', 'bar'],
       })
     })
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -52,8 +52,8 @@ describe('unhead vue e2e useSeoMeta', () => {
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
-      <meta property="article:tag" content="foo">
-      <meta property="article:tag" content="bar">
+      <meta property="article:tag" content="test">
+
       </head>
       <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)

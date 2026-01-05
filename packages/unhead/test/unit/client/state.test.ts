@@ -12,6 +12,7 @@ describe('state', () => {
     expect(head.entries).toMatchInlineSnapshot(`
       Map {
         1 => {
+          "_dirty": true,
           "_i": 1,
           "input": {
             "title": "hello",

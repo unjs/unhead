@@ -41,7 +41,7 @@ describe('vue ssr custom augmentation', () => {
     app.use(head)
     await renderToString(app)
 
-    const headResult = await renderSSRHead(head)
+    const headResult = renderSSRHead(head)
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>foo</title>

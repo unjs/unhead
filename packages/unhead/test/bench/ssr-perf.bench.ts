@@ -56,7 +56,7 @@ describe('ssr bench', () => {
           head,
         })
       }
-      await renderSSRHead(head)
+      renderSSRHead(head)
     }
   }, {
     iterations: 1000,

@@ -6,6 +6,7 @@
   useSeoMeta: function
 ./client:
   createDebouncedFn: function
+  createDomRenderer: function
   createHead: function
   renderDOMHead: function
 ./parser:
@@ -29,6 +30,7 @@
 ./server:
   capoTagWeight: function
   createHead: function
+  createServerRenderer: function
   escapeHtml: function
   propsToString: function
   renderSSRHead: function

@@ -24,7 +24,7 @@ describe('inferSeoMetaPlugin', () => {
       ],
     })
 
-    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
       "<title>My Title</title>
       <meta name="description" content="My Description">
       <meta property="og:image" content="https://example.com/image.jpg">
@@ -53,7 +53,7 @@ describe('inferSeoMetaPlugin', () => {
       ],
     })
 
-    expect((await renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
       "<title>Title</title>
       <meta property="og:description" content="My OG description">
       <meta property="og:title" content="My OG title">
@@ -69,7 +69,7 @@ describe('inferSeoMetaPlugin', () => {
       title: 'Title',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -96,7 +96,7 @@ describe('inferSeoMetaPlugin', () => {
       },
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -121,7 +121,7 @@ describe('inferSeoMetaPlugin', () => {
       },
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -139,7 +139,7 @@ describe('inferSeoMetaPlugin', () => {
       title: null,
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -159,7 +159,7 @@ describe('inferSeoMetaPlugin', () => {
       title: null,
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -173,7 +173,7 @@ describe('inferSeoMetaPlugin', () => {
       title: 'test',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -199,7 +199,7 @@ describe('inferSeoMetaPlugin', () => {
       titleTemplate: '%s - My Site',
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -228,7 +228,7 @@ describe('inferSeoMetaPlugin', () => {
       },
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -259,7 +259,7 @@ describe('inferSeoMetaPlugin', () => {
       titleTemplate: null,
     })
 
-    expect(await renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -295,7 +295,7 @@ describe('inferSeoMetaPlugin', () => {
       ],
     })
 
-    const result = await renderSSRHead(head)
+    const result = renderSSRHead(head)
 
     expect(result.headTags).toContain('<title>Welcome to Website</title>')
     expect(result.headTags).toContain('<meta property="og:title" data-infer="" content="Welcome to Website">')
@@ -323,7 +323,7 @@ describe('inferSeoMetaPlugin', () => {
       title: 'Hello World',
     })
 
-    const result = await renderSSRHead(head)
+    const result = renderSSRHead(head)
 
     expect(result.headTags).toMatchInlineSnapshot(`
       "<title>Nuxt SEO – Hello World</title>

@@ -7,8 +7,7 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   hooks: {
     'entries:normalize': (ctx) => {
       const tagsToAdd: HeadTag[] = []
-      ctx.tags = ctx.tags.map((t) => {
-        // @ts-expect-error untyped
+      ctx.tags = ctx.tags.map((t: HeadTag) => {
         if (t.tag !== '_flatMeta') {
           return t
         }

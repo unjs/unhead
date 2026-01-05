@@ -1,6 +1,7 @@
 import type { HeadTag, Unhead } from '../types'
 import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, isMetaArrayDupeKey } from './dedupe'
+import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
 // @ts-expect-error untyped
@@ -129,18 +130,18 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   const entries = [...head.entries.values()]
 
-  head.hooks.callHook('entries:resolve', { entries, ...ctx })
+  callHook(head, 'entries:resolve', { entries, ...ctx })
 
-  // Normalize queued entries
+  // Normalize dirty entries (all for server, only dirty for client)
   for (const e of entries) {
-    if (head._normalizeQueue?.has(e._i)) {
-      head._normalizeQueue.delete(e._i)
+    if (e._dirty || !e._tags) {
+      e._dirty = false
       const normalizeCtx = {
         tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
           .map(t => Object.assign(t, e.options)),
         entry: e,
       }
-      head.hooks.callHook('entries:normalize', normalizeCtx)
+      callHook(head, 'entries:normalize', normalizeCtx)
       e._tags = normalizeCtx.tags.map((t, i) => {
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
@@ -165,9 +166,9 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     ctx.tags = ctx.tags.flat().sort(sortTags)
   }
 
-  head.hooks.callHook('tags:beforeResolve', ctx)
-  head.hooks.callHook('tags:resolve', ctx)
-  head.hooks.callHook('tags:afterResolve', ctx)
+  callHook(head, 'tags:beforeResolve', ctx)
+  callHook(head, 'tags:resolve', ctx)
+  callHook(head, 'tags:afterResolve', ctx)
 
   // Filter and sanitize
   return sanitizeTags(ctx.tags)
