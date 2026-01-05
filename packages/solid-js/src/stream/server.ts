@@ -1,4 +1,4 @@
-import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
+import type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
 import {
@@ -22,7 +22,7 @@ export {
  * Solid-js streaming context returned by createStreamableHead.
  */
 export interface SolidStreamableHeadContext {
-  head: ReturnType<typeof _createStreamableHead>['head']
+  head: Unhead
   /**
    * Callback to pass to renderToStream's onCompleteShell option.
    * This captures head entries from shell components before streaming starts.
