@@ -35,11 +35,13 @@
   createHead: function
   createStreamableHead: function
   HeadStream: function
+  prepareStreamingTemplate: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   transformHtmlTemplate: function
   UnheadProvider: function
+  wrapStream: function
 ./stream/vite:
   default: function
   unheadReactPlugin: function

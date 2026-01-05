@@ -153,16 +153,21 @@ describe('react streaming SSR', () => {
 
       // Start rendering
       const passThrough = new PassThrough()
-      const { pipe } = renderToPipeableStream(
-        <UnheadProvider value={head}>
-          <App />
-        </UnheadProvider>,
-        {
-          onShellReady() {
-            pipe(passThrough)
+      const shellReady = new Promise<void>((resolve) => {
+        renderToPipeableStream(
+          <UnheadProvider value={head}>
+            <App />
+          </UnheadProvider>,
+          {
+            onShellReady() {
+              resolve()
+            },
           },
-        },
-      )
+        ).pipe(passThrough)
+      })
+
+      // Wait for shell to be ready (useHead has run)
+      await shellReady
 
       // Get initial shell
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')

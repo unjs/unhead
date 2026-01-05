@@ -39,15 +39,19 @@
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
 ./stream/client:
-  createDebouncedFn: function
-  createHead: function
   createStreamableHead: function
   DEFAULT_STREAM_KEY: string
-  renderDOMHead: function
+./stream/iife:
+  streamingIifeCode: string
+  streamingIifeSize: number
 ./stream/server:
+  capoTagWeight: function
   createHead: function
+  createServerRenderer: function
   createStreamableHead: function
+  DEFAULT_STREAM_KEY: string
   escapeHtml: function
+  prepareStreamingTemplate: function
   propsToString: function
   renderSSRHead: function
   renderSSRHeadShell: function
@@ -56,9 +60,11 @@
   tagToString: function
   transformHtmlTemplate: function
   transformHtmlTemplateRaw: function
+  wrapStream: function
 ./stream/vite:
   createStreamingPlugin: function
   VIRTUAL_CLIENT_ID: string
+  VIRTUAL_IIFE_ID: string
 ./types: {}
 ./utils:
   dedupeKey: function

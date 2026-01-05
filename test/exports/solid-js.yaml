@@ -24,21 +24,20 @@
   transformHtmlTemplate: function
   UnheadContext: object
 ./stream/client:
-  createDebouncedFn: function
-  createHead: function
   createStreamableHead: function
   DEFAULT_STREAM_KEY: string
   HeadStream: function
-  renderDOMHead: function
   UnheadContext: object
 ./stream/server:
   createHead: function
   createStreamableHead: function
   HeadStream: function
+  prepareStreamingTemplate: function
   renderSSRHead: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContext: object
+  wrapStream: function
 ./stream/vite:
   default: function
   unheadSolidPlugin: function
