@@ -70,6 +70,7 @@
       "default": "./dist/stream/vite.mjs"
     },
     "./stream/iife": {
+      "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
     }
   },
@@ -107,6 +108,9 @@
       ],
       "stream/vite": [
         "dist/stream/vite.d.ts"
+      ],
+      "stream/iife": [
+        "dist/stream/iife.d.ts"
       ]
     }
   },
