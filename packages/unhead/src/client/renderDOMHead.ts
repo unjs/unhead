@@ -16,7 +16,7 @@ export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDom
 
 function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
-  if (!dom || !head.dirty)
+  if (!dom || (!head.dirty && ![...head.entries.values()].some(e => e._pending !== undefined)))
     return false
   const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
   callHook(head, 'dom:beforeRender', beforeRenderCtx)
