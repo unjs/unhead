@@ -4,13 +4,8 @@ import { createUnhead, registerPlugin } from '../unhead'
 import { createHooks } from '../utils/hooks'
 import { createDomRenderer } from './renderDOMHead'
 
-const PriorityAliases: Record<string, number> = { critical: -8, high: -1, low: 2 }
-
-function tagWeight(tag: HeadTag) {
-  return typeof tag.tagPriority === 'number'
-    ? tag.tagPriority
-    : 100 + (PriorityAliases[tag.tagPriority as string] || 0)
-}
+const P: Record<string, number> = { critical: -8, high: -1, low: 2 }
+const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + (P[tag.tagPriority as string] || 0)
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   hooks: HookableCore<ClientHeadHooks>
@@ -22,17 +17,9 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
   const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
   const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-
-  const core = createUnhead<T, boolean>(renderer, {
-    document: options.document,
-    propResolvers: options.propResolvers,
-    _tagWeight: tagWeight,
-    init: [], // push on wrapped head instead
-  })
-
+  const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks>(options.hooks)
   let dirty = false
-
   const head: ClientUnhead<T> = {
     ...core,
     ssr: false,
@@ -42,8 +29,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     set dirty(v) { dirty = v },
     render: () => renderer(head),
     invalidate() {
-      for (const entry of core.entries.values())
-        delete entry._tags
+      for (const e of core.entries.values()) delete e._tags
       dirty = true
       hooks.callHook('entries:updated', head)
     },
@@ -68,13 +54,11 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
       }
     },
   }
-
   hooks.hook('entries:updated', () => {
     renderer(head)
   })
   options.plugins?.forEach(p => registerPlugin(head, p))
   initialPayload && head.push(JSON.parse(initialPayload) as T)
   options.init?.forEach(e => e && head.push(e as T))
-
   return head
 }
