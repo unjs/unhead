@@ -130,12 +130,20 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   const entries = [...head.entries.values()]
 
+  // Apply pending patches
+  for (const e of entries) {
+    if (e._pending !== undefined) {
+      e.input = e._pending
+      delete e._pending
+      delete e._tags // invalidate cache
+    }
+  }
+
   callHook(head, 'entries:resolve', { entries, ...ctx })
 
-  // Normalize dirty entries (all for server, only dirty for client)
+  // Normalize entries without cached tags
   for (const e of entries) {
-    if (e._dirty || !e._tags) {
-      e._dirty = false
+    if (!e._tags) {
       const normalizeCtx = {
         tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
           .map(t => Object.assign(t, e.options)),

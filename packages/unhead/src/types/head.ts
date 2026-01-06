@@ -52,10 +52,15 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
-   * Entry needs re-normalization (client-only)
+   * Pending patch to apply on next render (client-only)
    * @internal
    */
-  _dirty?: boolean
+  _pending?: Input
+  /**
+   * Original input for hydration side effect tracking (client-only)
+   * @internal
+   */
+  _originalInput?: Input
   /**
    * @internal
    */

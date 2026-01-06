@@ -42,7 +42,7 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
       const options = { ..._options || {} } as HeadEntryOptions
       delete options.head
       const _i = options._index ?? head._entryCount++
-      const entry = { _i, input, options }
+      const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {
         _i,
@@ -50,7 +50,14 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
           entries.delete(_i)
         },
         patch(input) {
-          entry.input = input
+          // SSR: apply immediately. Client: defer to next render (avoids hydration race)
+          if (ssr) {
+            entry.input = input
+            delete entry._tags
+          }
+          else {
+            entry._pending = input
+          }
           // Re-add to entries if removed (e.g. after shell render)
           if (!entries.has(_i))
             entries.set(_i, entry)

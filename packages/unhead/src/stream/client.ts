@@ -48,9 +48,8 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       return core.render() as boolean
     },
     invalidate() {
-      for (const entry of core.entries.values()) {
-        entry._dirty = true
-      }
+      for (const entry of core.entries.values())
+        delete entry._tags
       coreWithDirty.dirty = true
       hooks.callHook('entries:updated', head)
     },
@@ -69,22 +68,18 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       const active = core.push(input, _options)
       const entry = core.entries.get(active._i)
       if (entry)
-        entry._dirty = true
+        entry._originalInput = input // Track original for hydration side effects
       coreWithDirty.dirty = true
       hooks.callHook('entries:updated', head)
 
-      const corePatch = active.patch
       const coreDispose = active.dispose
 
-      const clientActive: ActiveHeadEntry<T> = {
+      return {
         _i: active._i,
-        patch(input) {
+        patch(input: T) {
           if (isHydrationLocked())
             return
-          corePatch(input)
-          const e = core.entries.get(active._i)
-          if (e)
-            e._dirty = true
+          active.patch(input)
           coreWithDirty.dirty = true
           hooks.callHook('entries:updated', head)
         },
@@ -95,7 +90,6 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
           }
         },
       }
-      return clientActive
     },
   }
 

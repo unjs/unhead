@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
 import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
@@ -42,27 +42,24 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
       return renderer(head)
     },
     invalidate() {
-      for (const entry of core.entries.values()) {
-        entry._dirty = true
-      }
+      for (const entry of core.entries.values())
+        delete entry._tags
       dirty = true
       hooks.callHook('entries:updated', head)
     },
     push(input: T, _options?: HeadEntryOptions) {
       const active = core.push(input, _options)
       const entry = core.entries.get(active._i)!
-      entry._dirty = true
+      entry._originalInput = input // Track original for hydration side effects
       dirty = true
       hooks.callHook('entries:updated', head)
 
-      const corePatch = active.patch
       const coreDispose = active.dispose
 
-      const clientActive: ActiveHeadEntry<T> = {
+      return {
         _i: active._i,
-        patch(input) {
-          corePatch(input)
-          entry._dirty = true
+        patch(input: T) {
+          active.patch(input)
           dirty = true
           hooks.callHook('entries:updated', head)
         },
@@ -73,7 +70,6 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
           }
         },
       }
-      return clientActive
     },
   }
 

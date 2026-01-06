@@ -46,10 +46,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   if (!state) {
     state = {
       title: dom.title,
-      elMap: new Map()
+      elMap: new Map<string, Element>()
         .set('htmlAttrs', dom.documentElement)
         .set('bodyAttrs', dom.body),
-    } as any as DomState
+      pendingSideEffects: {},
+      sideEffects: {},
+    }
 
     for (const key of ['body', 'head']) {
       const children = dom[key as 'head' | 'body']?.children
@@ -82,10 +84,30 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
       }
     }
-  }
 
-  // presume all side effects are stale, we mark them as not stale if they're re-introduced
-  state.pendingSideEffects = { ...state.sideEffects }
+    // Pre-register side effects for SSR classes that entries claim to manage
+    // Only register for classes in _originalInput, not all DOM classes
+    for (const entry of head.entries.values()) {
+      if (entry._originalInput !== undefined) {
+        const orig = entry._originalInput as Record<string, any>
+        for (const tag of ['bodyAttrs', 'htmlAttrs'] as const) {
+          const cls = orig[tag]?.class
+          if (typeof cls === 'string') {
+            const $el = state.elMap.get(tag)!
+            for (const c of cls.split(/\s+/)) {
+              if (c)
+                state.pendingSideEffects[`${tag}:attr:class:${c}`] = () => $el.classList.remove(c)
+            }
+          }
+        }
+        delete entry._originalInput
+      }
+    }
+  }
+  else {
+    // subsequent renders: presume all side effects are stale
+    state.pendingSideEffects = { ...state.sideEffects }
+  }
   state.sideEffects = {}
 
   function track(id: string, scope: string, fn: () => void) {
@@ -137,13 +159,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
 
       const ck = `attr:${k}`
       if (k === 'class' && value) {
-        for (const c of value as any as Set<string>) {
+        for (const c of value as Iterable<string>) {
           isAttrTag && track(id, `${ck}:${c}`, () => $el.classList.remove(c))
           !$el.classList.contains(c) && $el.classList.add(c)
         }
       }
       else if (k === 'style' && value) {
-        for (const [sk, sv] of value as any as Map<string, string>) {
+        for (const [sk, sv] of value as Iterable<[string, string]>) {
           track(id, `${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk))
           ;($el as HTMLElement).style.setProperty(sk, sv)
         }
