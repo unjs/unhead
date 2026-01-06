@@ -39,9 +39,8 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
     render: () => renderer(head),
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions | undefined) {
-      const options = { ..._options || {} } as HeadEntryOptions
-      delete options.head
-      const _i = options._index ?? head._entryCount++
+      const _i = _options?._index ?? head._entryCount++
+      const options = _options ? { ..._options, head: undefined } : {}
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {

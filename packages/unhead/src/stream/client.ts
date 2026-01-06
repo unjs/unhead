@@ -68,7 +68,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       const active = core.push(input, _options)
       const entry = core.entries.get(active._i)
       if (entry)
-        entry._originalInput = input // Track original for hydration side effects
+        entry._o = input
       coreWithDirty.dirty = true
       hooks.callHook('entries:updated', head)
 

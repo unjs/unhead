@@ -18,42 +18,37 @@ export interface ResolveTagsOptions {
 
 /**
  * Deduplicate tags into a tagMap using merge strategies.
- * Returns whether flat meta arrays were encountered.
  */
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
-  ctx.tags
-    .sort(sortTags)
-    .reduce((acc, next) => {
-      const k = String(next._d || next._p)
-      if (!acc.has(k))
-        return acc.set(k, next)
-
-      const prev = acc.get(k)!
-      const strategy = next?.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null)
-        || (next.key && next.key === prev.key ? 'merge' : null)
-
-      if (strategy === 'merge') {
-        const newProps = { ...prev.props }
-        Object.entries(next.props).forEach(([p, v]) =>
-          // @ts-expect-error untyped
-          newProps[p] = p === 'style'
-            // @ts-expect-error untyped
-            ? new Map([...(prev.props.style || new Map()), ...v])
-            : p === 'class' ? new Set([...(prev.props.class || new Set()), ...v]) : v)
-        acc.set(k, { ...next, props: newProps })
+  for (const next of ctx.tags.sort(sortTags)) {
+    const k = String(next._d || next._p)
+    const prev = ctx.tagMap.get(k)
+    if (!prev) {
+      ctx.tagMap.set(k, next)
+      continue
+    }
+    const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null)
+      || (next.key && next.key === prev.key ? 'merge' : null)
+    if (strategy === 'merge') {
+      const props = { ...prev.props }
+      for (const p in next.props) {
+        // @ts-expect-error untyped
+        props[p] = p === 'style'
+          ? new Map([...(prev.props.style || new Map()), ...next.props[p]])
+          : p === 'class' ? new Set([...(prev.props.class || []), ...next.props[p]]) : next.props[p]
       }
-      else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
-        acc.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
-        hasFlatMeta = true
-      }
-      // @ts-expect-error untyped
-      else if (next._w === prev._w ? next._p! > prev._p! : next?._w < prev?._w) {
-        acc.set(k, next)
-      }
-      return acc
-    }, ctx.tagMap)
-
+      ctx.tagMap.set(k, { ...next, props })
+    }
+    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
+      ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
+      hasFlatMeta = true
+    }
+    // @ts-expect-error untyped
+    else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
+      ctx.tagMap.set(k, next)
+    }
+  }
   return hasFlatMeta
 }
 
@@ -61,30 +56,25 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
  * Process title template and update the tagMap.
  */
 export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>): void {
-  const { tagMap } = ctx
-  const title = tagMap.get('title')
-  const titleTemplate = tagMap.get('titleTemplate')
+  const title = ctx.tagMap.get('title')
+  const tpl = ctx.tagMap.get('titleTemplate')
   head._title = title?.textContent
-
-  if (titleTemplate) {
-    const titleTemplateFn = titleTemplate?.textContent
-    head._titleTemplate = titleTemplateFn
-    if (titleTemplateFn) {
-      // @ts-expect-error untyped
-      let newTitle = (typeof titleTemplateFn === 'function' ? titleTemplateFn(title?.textContent) : titleTemplateFn)
-      if (typeof newTitle === 'string' && !head.plugins.has('template-params')) {
-        newTitle = newTitle.replace('%s', title?.textContent || '')
-      }
-      if (title) {
-        newTitle === null
-          ? tagMap.delete('title')
-          : tagMap.set('title', { ...title, textContent: newTitle })
-      }
-      else {
-        titleTemplate.tag = 'title'
-        titleTemplate.textContent = newTitle
-      }
-    }
+  if (!tpl)
+    return
+  const fn = tpl.textContent
+  head._titleTemplate = fn
+  if (!fn)
+    return
+  // @ts-expect-error untyped
+  let v = typeof fn === 'function' ? fn(title?.textContent) : fn
+  if (typeof v === 'string' && !head.plugins.has('template-params'))
+    v = v.replace('%s', title?.textContent || '')
+  if (title) {
+    v === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: v })
+  }
+  else {
+    tpl.tag = 'title'
+    tpl.textContent = v
   }
 }
 
@@ -95,23 +85,16 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   const finalTags: HeadTag[] = []
   for (const t of tags) {
     const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag)) {
+    if (!ValidHeadTags.has(tag))
       continue
-    }
-    if (Object.keys(props).length === 0 && !t.innerHTML && !t.textContent) {
+    if (!Object.keys(props).length && !t.innerHTML && !t.textContent)
       continue
-    }
-    if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset) {
+    if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
       continue
-    }
     if (tag === 'script' && innerHTML) {
-      if (String(props.type).endsWith('json')) {
-        const v = typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)
-        t.innerHTML = v.replace(/</g, '\\u003C')
-      }
-      else if (typeof innerHTML === 'string') {
-        t.innerHTML = innerHTML.replace(new RegExp(`</${tag}`, 'g'), `<\\/${tag}`)
-      }
+      t.innerHTML = String(props.type).endsWith('json')
+        ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(/</g, '\\u003C')
+        : typeof innerHTML === 'string' ? innerHTML.replace(/<\/script/g, '<\\/script') : innerHTML
       t._d = dedupeKey(t)
     }
     finalTags.push(t)

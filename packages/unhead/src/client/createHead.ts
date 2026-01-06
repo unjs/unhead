@@ -1,14 +1,15 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
-import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
 import { createDomRenderer } from './renderDOMHead'
+
+const PriorityAliases: Record<string, number> = { critical: -8, high: -1, low: 2 }
 
 function tagWeight(tag: HeadTag) {
   return typeof tag.tagPriority === 'number'
     ? tag.tagPriority
-    : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
+    : 100 + (PriorityAliases[tag.tagPriority as string] || 0)
 }
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
@@ -34,13 +35,12 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
 
   const head: ClientUnhead<T> = {
     ...core,
+    ssr: false,
     hooks,
     use: p => registerPlugin(head, p),
     get dirty() { return dirty },
     set dirty(v) { dirty = v },
-    render() {
-      return renderer(head)
-    },
+    render: () => renderer(head),
     invalidate() {
       for (const entry of core.entries.values())
         delete entry._tags
@@ -49,13 +49,9 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     },
     push(input: T, _options?: HeadEntryOptions) {
       const active = core.push(input, _options)
-      const entry = core.entries.get(active._i)!
-      entry._originalInput = input // Track original for hydration side effects
+      core.entries.get(active._i)!._o = input
       dirty = true
       hooks.callHook('entries:updated', head)
-
-      const coreDispose = active.dispose
-
       return {
         _i: active._i,
         patch(input: T) {
@@ -65,7 +61,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
         },
         dispose() {
           if (core.entries.has(active._i)) {
-            coreDispose()
+            active.dispose()
             head.invalidate()
           }
         },
@@ -73,23 +69,12 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     },
   }
 
-  // register plugins on wrapped head
-  ;(options.plugins || []).forEach(p => registerPlugin(head, p))
-
-  // auto-render on entries:updated
-  registerPlugin(head, {
-    key: 'client',
-    hooks: {
-      'entries:updated': () => { head.render() },
-    },
+  hooks.hook('entries:updated', () => {
+    renderer(head)
   })
-
-  // push init entries
-  const initEntries = [
-    initialPayload ? JSON.parse(initialPayload) : false,
-    ...(options.init || []),
-  ]
-  initEntries.forEach(e => e && head.push(e as T))
+  options.plugins?.forEach(p => registerPlugin(head, p))
+  initialPayload && head.push(JSON.parse(initialPayload) as T)
+  options.init?.forEach(e => e && head.push(e as T))
 
   return head
 }

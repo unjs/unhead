@@ -9,21 +9,19 @@ function normalizeStyleClassProps(
   const store = key === 'style' ? new Map() : new Set()
 
   function processValue(rawValue: string) {
-    if (rawValue == null || rawValue === undefined)
+    if (rawValue == null)
       return
-    const value = String(rawValue).trim()
-    if (!value)
+    const v = String(rawValue).trim()
+    if (!v)
       return
-
     if (key === 'style') {
-      const [k, ...v] = value.split(':').map(s => s ? s.trim() : '')
-      if (k && v.length)
-        // @ts-expect-error untyped
-        store.set(k, v.join(':'))
+      const [k, ...rest] = v.split(':').map(s => s?.trim() || '')
+      // @ts-expect-error untyped
+      k && rest.length && store.set(k, rest.join(':'))
     }
     else {
       // @ts-expect-error untyped
-      value.split(' ').filter(Boolean).forEach(c => store.add(c))
+      v.split(' ').filter(Boolean).forEach(c => store.add(c))
     }
   }
 
@@ -74,18 +72,12 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     }
 
     if (TagConfigKeys.has(key)) {
-      if (['textContent', 'innerHTML'].includes(key) && typeof value === 'object') {
-        let type = input.type
-        if (!input.type) {
-          type = 'application/json'
-        }
-        if (!type?.endsWith('json') && type !== 'speculationrules') {
+      if ((key === 'textContent' || key === 'innerHTML') && typeof value === 'object') {
+        const type = input.type || 'application/json'
+        if (!type.endsWith('json') && type !== 'speculationrules')
           return
-        }
-        input.type = type
-        tag.props.type = type
-        // @ts-expect-error untyped
-        tag[key] = JSON.stringify(value)
+        tag.props.type = input.type = type
+        tag[key as 'textContent' | 'innerHTML'] = JSON.stringify(value)
       }
       else {
         // @ts-expect-error untyped
@@ -134,28 +126,22 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
 }
 
 export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
-  if (!input) {
+  if (!input)
     return []
-  }
-  if (typeof input === 'function') {
+  if (typeof input === 'function')
     input = input()
-  }
   const resolvers = (key?: string, val?: any) => {
-    for (let i = 0; i < propResolvers.length; i++) {
-      val = propResolvers[i](key, val)
-    }
+    for (const r of propResolvers) val = r(key, val)
     return val
   }
-  input = resolvers(undefined, input)
-
+  input = walkResolver(resolvers(undefined, input), resolvers)
   const tags: (HeadTag | HeadTag[])[] = []
-
-  input = walkResolver(input, resolvers)
-  Object.entries(input || {}).forEach(([key, value]) => {
+  for (const key in input) {
+    const value = input[key]
     if (value === undefined)
-      return
+      continue
     for (const v of (Array.isArray(value) ? value : [value]))
       tags.push(normalizeTag(key as keyof ResolvableHead, v))
-  })
+  }
   return tags.flat()
 }

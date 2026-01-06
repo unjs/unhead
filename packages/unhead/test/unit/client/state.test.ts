@@ -13,7 +13,7 @@ describe('state', () => {
       Map {
         1 => {
           "_i": 1,
-          "_originalInput": {
+          "_o": {
             "title": "hello",
           },
           "input": {

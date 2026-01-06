@@ -57,10 +57,9 @@ export interface HeadEntry<Input> {
    */
   _pending?: Input
   /**
-   * Original input for hydration side effect tracking (client-only)
    * @internal
    */
-  _originalInput?: Input
+  _o?: Input
   /**
    * @internal
    */
@@ -224,7 +223,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * @internal
    */
-  _domUpdating?: boolean
+  _du?: boolean
   /**
    * @internal
    */
@@ -256,8 +255,20 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
 }
 
 export interface DomState {
-  title: string
-  pendingSideEffects: SideEffectsRecord
-  sideEffects: SideEffectsRecord
-  elMap: Map<string, Element>
+  /**
+   * @internal
+   */
+  _t: string
+  /**
+   * @internal
+   */
+  _p: SideEffectsRecord
+  /**
+   * @internal
+   */
+  _s: SideEffectsRecord
+  /**
+   * @internal
+   */
+  _e: Map<string, Element>
 }

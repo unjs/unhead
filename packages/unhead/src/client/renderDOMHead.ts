@@ -37,88 +37,66 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   if (!beforeRenderCtx.shouldRender)
     return false
 
-  if (head._domUpdating)
+  if (head._du)
     return false
 
-  head._domUpdating = true
+  head._du = true
   let state = head._dom as DomState
   // let's hydrate - fill the elMap for fast lookups
   if (!state) {
     state = {
-      title: dom.title,
-      elMap: new Map<string, Element>()
-        .set('htmlAttrs', dom.documentElement)
-        .set('bodyAttrs', dom.body),
-      pendingSideEffects: {},
-      sideEffects: {},
+      _t: dom.title,
+      _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]),
+      _p: {},
+      _s: {},
     }
 
-    for (const key of ['body', 'head']) {
-      const children = dom[key as 'head' | 'body']?.children
-      for (const c of children) {
-        const tag = c.tagName.toLowerCase() as HeadTag['tag']
-        if (!HasElementTags.has(tag)) {
-          continue
-        }
-        const next = normalizeProps({ tag, props: {} } as HeadTag, {
-          innerHTML: c.innerHTML,
-          ...c.getAttributeNames()
-            .reduce((props, name) => {
-              // @ts-expect-error untyped
-              props[name] = c.getAttribute(name)
-              return props
-            }, {}) || {},
-        })
-        next.key = c.getAttribute('data-hid') || undefined
-        next._d = dedupeKey(next) || hashTag(next)
-        if (state.elMap.has(next._d)) {
-          let count = 1
-          let k = next._d
-          while (state.elMap.has(k)) {
-            k = `${next._d}:${count++}`
-          }
-          state.elMap.set(k, c)
-        }
-        else {
-          state.elMap.set(next._d, c)
-        }
-      }
+    for (const el of [...dom.body.children, ...dom.head.children]) {
+      const tag = el.tagName.toLowerCase() as HeadTag['tag']
+      if (!HasElementTags.has(tag))
+        continue
+      const props: Record<string, any> = { innerHTML: el.innerHTML }
+      for (const name of el.getAttributeNames())
+        props[name] = el.getAttribute(name)
+      const next = normalizeProps({ tag, props: {} } as HeadTag, props)
+      next.key = el.getAttribute('data-hid') || undefined
+      let k = next._d = dedupeKey(next) || hashTag(next)
+      let count = 1
+      while (state._e.has(k))
+        k = `${next._d}:${count++}`
+      state._e.set(k, el)
     }
 
     // Pre-register side effects for SSR classes that entries claim to manage
-    // Only register for classes in _originalInput, not all DOM classes
     for (const entry of head.entries.values()) {
-      if (entry._originalInput !== undefined) {
-        const orig = entry._originalInput as Record<string, any>
+      if (entry._o !== undefined) {
+        const orig = entry._o as Record<string, any>
         for (const tag of ['bodyAttrs', 'htmlAttrs'] as const) {
           const cls = orig[tag]?.class
           if (typeof cls === 'string') {
-            const $el = state.elMap.get(tag)!
-            for (const c of cls.split(/\s+/)) {
-              if (c)
-                state.pendingSideEffects[`${tag}:attr:class:${c}`] = () => $el.classList.remove(c)
-            }
+            const $el = state._e.get(tag)!
+            for (const c of cls.split(/\s+/))
+              c && (state._p[`${tag}:attr:class:${c}`] = () => $el.classList.remove(c))
           }
         }
-        delete entry._originalInput
+        delete entry._o
       }
     }
   }
   else {
-    // subsequent renders: presume all side effects are stale
-    state.pendingSideEffects = { ...state.sideEffects }
+    state._p = { ...state._s }
   }
-  state.sideEffects = {}
+  state._s = {}
 
   function track(id: string, scope: string, fn: () => void) {
     const k = `${id}:${scope}`
-    state.sideEffects[k] = fn
-    delete state.pendingSideEffects[k]
+    state._s[k] = fn
+    delete state._p[k]
   }
 
   function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
     const isAttrTag = tag.tag.endsWith('Attrs')
-    state.elMap.set(id, $el)
+    state._e.set(id, $el)
     if (!isAttrTag) {
       if (tag.textContent && tag.textContent !== $el.textContent) {
         $el.textContent = tag.textContent
@@ -127,31 +105,19 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         $el.innerHTML = tag.innerHTML
       }
       track(id, 'el', () => {
-        // the element may have been removed by a duplicate tag or something out of our control
         $el?.remove()
-        state.elMap.delete(id)
+        state._e.delete(id)
       })
     }
     for (const k in tag.props) {
       const value = tag.props[k]
-      if (k.startsWith('on') && typeof value === 'function') {
+      if (k[0] === 'o' && k[1] === 'n' && typeof value === 'function') {
+        const ev = k.slice(2) // onload -> load
         const dataset = ($el as HTMLScriptElement | undefined)?.dataset
-        // check if it was already fired
-        if (dataset && dataset[`${k}fired`]) {
-          // onloadfired -> onload
-          const ek = k.slice(0, -5)
-          // onload -> load
-          // @ts-expect-error untyped
-          ;(value as () => any).call($el, new Event(ek.substring(2)))
-        }
-
+        if (dataset?.[`${k}fired`]) // onloadfired
+          (value as (e: Event) => any).call($el, new Event(ev))
         if ($el.getAttribute(`data-${k}`) !== '') {
-          // avoid overriding
-          (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(
-            // onload -> load
-            k.substring(2),
-            (value as () => any).bind($el),
-          )
+          (tag!.tag === 'bodyAttrs' ? dom!.defaultView! : $el).addEventListener(ev, (value as () => any).bind($el))
           $el.setAttribute(`data-${k}`, '')
         }
         continue
@@ -194,13 +160,12 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     tags.push(ctx)
 
-    // process immediately
     if (tag.tag === 'title') {
       dom.title = tag.textContent as string
-      track('title', '', () => dom.title = state.title)
+      track('title', '', () => dom.title = state._t)
       continue
     }
-    ctx.$el = state.elMap.get(id)
+    ctx.$el = state._e.get(id)
     if (ctx.$el) {
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
     }
@@ -221,13 +186,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   frag.bodyOpen && dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
   frag.bodyClose && dom.body.appendChild(frag.bodyClose)
 
-  // clear all side effects still pending
-  for (const k in state.pendingSideEffects) {
-    state.pendingSideEffects[k]()
-  }
+  for (const k in state._p)
+    state._p[k]()
   head._dom = state
   callHook(head, 'dom:rendered', { renders: tags })
-  head._domUpdating = false
+  head._du = false
   head.dirty = false
   return true
 }
