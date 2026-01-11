@@ -1,1 +1,1 @@
-export const UnheadContextKey = Symbol('unhead')
+export const UnheadContextKey = Symbol.for('unhead')

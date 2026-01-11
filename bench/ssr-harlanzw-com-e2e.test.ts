@@ -3,7 +3,7 @@ import { InferSeoMetaPlugin } from '@unhead/addons'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
-import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { useHead, useSeoMeta } from '../packages/vue/src'
 import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
@@ -140,7 +140,7 @@ describe('ssr e2e bench', () => {
     }, {
       head,
     })
-    useServerHead({
+    useHead({
       htmlAttrs: { lang: 'en' },
     }, {
       head,
@@ -200,7 +200,7 @@ describe('ssr e2e bench', () => {
       // we want this to be last in our head
       tagPosition: 'bodyClose',
     }]
-    useServerHead({
+    useHead({
       script,
       meta,
     }, {
@@ -232,7 +232,7 @@ describe('ssr e2e bench', () => {
       head,
     })
     // entry
-    useServerHead({
+    useHead({
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
@@ -278,7 +278,7 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
       omitLineBreaks: true,
     })
     function normalizeChunks(chunks: (string | undefined)[]) {
@@ -312,63 +312,7 @@ ${htmlContext.bodyAppend.join('\n')}
       </head>
       <body>
 
-      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph">{
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@id": "https://harlanzw.com#website",
-            "@type": "WebSite",
-            "description": "Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.",
-            "inLanguage": "en",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com",
-            "publisher": {
-              "@id": "https://harlanzw.com#identity"
-            }
-          },
-          {
-            "@id": "https://harlanzw.com/path#webpage",
-            "@type": "WebPage",
-            "description": "Home page description",
-            "name": "Home",
-            "url": "https://harlanzw.com/path",
-            "about": {
-              "@id": "https://harlanzw.com#identity"
-            },
-            "isPartOf": {
-              "@id": "https://harlanzw.com#website"
-            },
-            "potentialAction": [
-              {
-                "@type": "ReadAction",
-                "target": [
-                  "https://harlanzw.com/path"
-                ]
-              }
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com#identity",
-            "@type": "Person",
-            "name": "Harlan Wilton",
-            "url": "https://harlanzw.com/",
-            "image": {
-              "@id": "https://harlanzw.com#/schema/image/1"
-            },
-            "sameAs": [
-              "https://twitter.com/harlan_zw",
-              "https://twitter.com/harlan_zw"
-            ]
-          },
-          {
-            "@id": "https://harlanzw.com#/schema/image/1",
-            "@type": "ImageObject",
-            "contentUrl": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton",
-            "inLanguage": "en",
-            "url": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton"
-          }
-        ]
-      }</script>
+      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph"></script>
       </body>
       "
     `)

@@ -1,4 +1,4 @@
-import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, SchemaOrgUnheadPlugin, useSchemaOrg } from '@unhead/schema-org'
+import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
 import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
@@ -10,8 +10,7 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 
@@ -28,7 +27,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -46,7 +45,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -77,9 +76,9 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
+          host: '',
         }),
       ],
     })
@@ -97,7 +96,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -118,7 +117,7 @@ describe('schema.org e2e', () => {
     const dom = useDom(data)
 
     const csrHead = createClientHead()
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
@@ -152,8 +151,7 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
         }),
@@ -172,7 +170,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -201,8 +199,7 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin({
+        UnheadSchemaOrg({
           path: '/about',
           host: 'https://example.com',
         }),
@@ -212,18 +209,16 @@ describe('schema.org e2e', () => {
       defineWebPage({
         '@type': 'FAQPage',
       }),
-      // @ts-expect-error untyped
       defineQuestion({
         question: 'What is your return policy?',
         answer: 'Most unopened items in new condition and returned within 90 days will receive a refund or exchange.',
       }),
-      // @ts-expect-error untyped
       defineQuestion({
         question: 'What is something else?',
         answer: 'Something else',
       }),
     ])
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -271,8 +266,7 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 
@@ -289,7 +283,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -315,8 +309,7 @@ describe('schema.org e2e', () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
     useSchemaOrg(ssrHead, ['test'])
@@ -326,15 +319,14 @@ describe('schema.org e2e', () => {
     // @ts-expect-error intentional
     useSchemaOrg(ssrHead, 'test')
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
   it('#441', async () => {
     const ssrHead = createServerHead({
       disableDefaults: true,
       plugins: [
-        // @ts-expect-error untyped
-        SchemaOrgUnheadPlugin(),
+        UnheadSchemaOrg(),
       ],
     })
 
@@ -346,7 +338,7 @@ describe('schema.org e2e', () => {
       })],
     }])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

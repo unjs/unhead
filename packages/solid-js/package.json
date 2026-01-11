@@ -1,7 +1,7 @@
 {
   "name": "@unhead/solid-js",
   "type": "module",
-  "version": "2.1.1",
+  "version": "3.0.0-beta.5",
   "description": "Full-stack <head> manager built for SolidJS.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -29,6 +29,14 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
@@ -36,6 +44,10 @@
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
+    },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -49,11 +61,20 @@
       "client": [
         "dist/client"
       ],
+      "stream/server": [
+        "dist/stream/server"
+      ],
+      "stream/client": [
+        "dist/stream/client"
+      ],
       "plugins": [
         "dist/plugins"
       ],
       "utils": [
         "dist/utils"
+      ],
+      "stream/vite": [
+        "dist/stream/vite"
       ]
     }
   },
@@ -69,7 +90,13 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "solid-js": ">=19"
+    "solid-js": ">=19",
+    "vite": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "build": {
     "external": [
@@ -77,6 +104,9 @@
     ]
   },
   "dependencies": {
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
+    "oxc-parser": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
@@ -84,6 +114,7 @@
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/user-event": "catalog:",
     "solid-js": "catalog:",
+    "vite": "catalog:",
     "vite-plugin-solid": "catalog:"
   }
 }

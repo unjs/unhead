@@ -23,14 +23,14 @@ describe('vue dom', () => {
       })
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="de" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
@@ -51,13 +51,13 @@ describe('vue dom', () => {
       })
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="de" dir="ltr" class="pre-update" data-something-to-remove="test"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
@@ -73,13 +73,13 @@ describe('vue dom', () => {
       },
     })
 
-    await renderDOMHead(head, {
+    renderDOMHead(head, {
       document: dom.window.document,
     })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr" class="post-update"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark test"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
@@ -91,20 +91,20 @@ describe('vue dom', () => {
       entry = useHead(basicSchema)
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     entry!.dispose()
 
-    expect(head.headEntries()).toMatchInlineSnapshot(`[]`)
+    expect([...head.entries.values()]).toMatchInlineSnapshot(`[]`)
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
@@ -119,13 +119,13 @@ describe('vue dom', () => {
 
     const entry = head.push(basicSchema)
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     await setTimeout(500)
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><script src="https://cdn.example.com/script.js"></script><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
+      <script src="https://cdn.example.com/script.js"></script><meta charset="utf-8"><link rel="icon" type="image/x-icon" href="https://cdn.example.com/favicon.ico"></head>
       <body class="dark"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
@@ -145,7 +145,7 @@ describe('vue dom', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html lang="de" dir="rtl"><head>
 
@@ -155,7 +155,7 @@ describe('vue dom', () => {
 
     entry.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 

@@ -47,8 +47,6 @@ describe('unhead e2e', () => {
           charset: 'utf-8',
         },
       ],
-    }, {
-      mode: 'server',
     })
 
     // i.e pages/index.vue
@@ -71,7 +69,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -192,7 +190,7 @@ describe('unhead e2e', () => {
     // i.e App.vue
     ssrHead.push(schema)
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

@@ -17,3 +17,6 @@ docs/.nuxt
 .angular
 
 .vite-inspect
+
+test-results/
+playwright-report/

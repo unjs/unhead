@@ -6,7 +6,7 @@ export type Base = RawInput<'base'>
 export type HtmlAttributes = RawInput<'htmlAttrs'>
 export type Noscript = RawInput<'noscript'>
 export type Style = RawInput<'style'>
-export type Meta = RawInput<'meta'>
-export type Script = RawInput<'script'>
-export type Link = RawInput<'link'>
 export type BodyAttributes = RawInput<'bodyAttrs'>
+
+// Note: Meta, Script, and Link are now discriminated unions exported from head.ts
+// They include: Link, Script, Meta and all their narrowed variants

@@ -19,7 +19,7 @@ describe('vue dom innerContent', () => {
 
     const dom = useDom()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
@@ -43,7 +43,7 @@ describe('vue dom innerContent', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 
@@ -60,7 +60,7 @@ describe('vue dom innerContent', () => {
 
     entry.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
 

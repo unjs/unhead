@@ -1,7 +1,7 @@
 {
   "name": "@unhead/svelte",
   "type": "module",
-  "version": "2.1.1",
+  "version": "3.0.0-beta.5",
   "description": "Full-stack <head> manager built for Svelte.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -29,6 +29,14 @@
       "types": "./dist/client.d.ts",
       "default": "./dist/client.mjs"
     },
+    "./stream/server": {
+      "types": "./dist/stream/server.d.ts",
+      "default": "./dist/stream/server.mjs"
+    },
+    "./stream/client": {
+      "types": "./dist/stream/client.d.ts",
+      "default": "./dist/stream/client.mjs"
+    },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.mjs"
@@ -36,6 +44,10 @@
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
+    },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -48,6 +60,21 @@
       ],
       "client": [
         "dist/client"
+      ],
+      "stream/server": [
+        "dist/stream/server"
+      ],
+      "stream/client": [
+        "dist/stream/client"
+      ],
+      "plugins": [
+        "dist/plugins"
+      ],
+      "utils": [
+        "dist/utils"
+      ],
+      "stream/vite": [
+        "dist/stream/vite"
       ]
     }
   },
@@ -63,7 +90,13 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "svelte": ">=5.38.0"
+    "svelte": ">=5.38.0",
+    "vite": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "build": {
     "external": [
@@ -71,11 +104,14 @@
     ]
   },
   "dependencies": {
+    "magic-string": "catalog:",
+    "mlly": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "catalog:",
     "@testing-library/svelte": "catalog:",
-    "svelte": "catalog:"
+    "svelte": "catalog:",
+    "vite": "catalog:"
   }
 }

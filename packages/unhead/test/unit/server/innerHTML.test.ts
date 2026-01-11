@@ -1,6 +1,7 @@
 import type { ResolvableHead } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
+import { resolveTags } from '../../../src/utils/resolve'
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr innerHTML', () => {
@@ -18,7 +19,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -42,7 +43,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -64,7 +65,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -96,7 +97,7 @@ describe('ssr innerHTML', () => {
       }],
     } satisfies ResolvableHead)
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -126,6 +127,6 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    expect(await head.resolveTags()).toMatchInlineSnapshot('[]')
+    expect(resolveTags(head)).toMatchInlineSnapshot('[]')
   })
 })

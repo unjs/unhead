@@ -1,7 +1,7 @@
 import type { ResolvableHead, SerializableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { bench, describe } from 'vitest'
-import { useHead, useSeoMeta, useServerHead } from '../../src'
+import { useHead, useSeoMeta } from '../../src'
 import { createHead as createServerHead, renderSSRHead } from '../../src/server'
 
 describe('ssr e2e bench', () => {
@@ -25,14 +25,13 @@ describe('ssr e2e bench', () => {
         },
       ],
     })
-    const options = { mode: 'server' } as const
     // 1. payload
     head.push({
       link: [
         // resource hints for vue chunks
         { rel: 'preload', as: 'fetch', href: '/payload.json' },
       ],
-    }, options)
+    })
     // 2. styles
     head.push({
       link: [
@@ -43,7 +42,7 @@ describe('ssr e2e bench', () => {
         { rel: 'stylesheet', href: '/page4.css' },
         { rel: 'stylesheet', href: '/page5.css' },
       ],
-    }, options)
+    })
     // 3. resource hints
     head.push({
       link: [
@@ -51,15 +50,14 @@ describe('ssr e2e bench', () => {
         { rel: 'preload', as: 'script', href: '/_nuxt/vendors.js' },
         { rel: 'preload', as: 'script', href: '/_nuxt/app.js' },
       ],
-    }, options)
+    })
     // 4. payloads
     head.push({
       script: [
         // 4. payloads
-        { innerHTML: { id: '__NUXT_DATA__', data: { initial: { bar: 'foo' }, payload: { foo: 'bar' } } } },
+        { innerHTML: { id: '__NUXT_DATA__', data: { initial: { bar: 'foo' }, payload: { foo: 'bar' } } } } as any,
       ],
     }, {
-      ...options,
       tagPosition: 'bodyClose',
       tagPriority: 'high',
     })
@@ -79,7 +77,7 @@ describe('ssr e2e bench', () => {
           crossorigin: '',
         },
       ],
-    }, options)
+    })
     // start the vue rendererer
     // Nuxt SEO experiments
     head.use({
@@ -122,7 +120,7 @@ describe('ssr e2e bench', () => {
         content: '%site.description',
       },
     )
-    head.push(input, { tagPriority: 150 })
+    head.push(input as any, { tagPriority: 150 })
     // Nuxt SEO
     const minimalPriority = {
       tagPriority: 101,
@@ -134,7 +132,7 @@ describe('ssr e2e bench', () => {
     }, {
       head,
     })
-    useServerHead({
+    useHead({
       htmlAttrs: { lang: 'en' },
     }, {
       head,
@@ -175,7 +173,7 @@ describe('ssr e2e bench', () => {
       { property: 'og:image:alt', content: 'My Image' },
       { name: 'twitter:image:alt', content: 'My Image' },
     ]
-    const script: ResolvableHead['script'] = [{
+    const script = [{
       id: 'nuxt-og-image-options',
       type: 'application/json',
       processTemplateParams: true,
@@ -193,8 +191,8 @@ describe('ssr e2e bench', () => {
       },
       // we want this to be last in our head
       tagPosition: 'bodyClose',
-    }]
-    useServerHead({
+    }] as any
+    useHead({
       script,
       meta,
     }, {
@@ -203,12 +201,11 @@ describe('ssr e2e bench', () => {
     })
     // Schema.org
     // entry
-    useServerHead({
+    useHead({
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
-        // @ts-expect-error untyped
-        nodes: [],
+        innerHTML: '[]',
       }],
     }, {
       head,
@@ -237,7 +234,7 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
       omitLineBreaks: true,
     })
     function normalizeChunks(chunks: (string | undefined)[]) {
@@ -284,6 +281,6 @@ ${htmlContext.bodyAppend.join('\n')}
         },
       ],
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
 })

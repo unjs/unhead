@@ -1,9 +1,10 @@
 import { describe, it } from 'vitest'
-import { createClientHeadWithContext } from '../../util'
+import { resolveTags } from '../../../src/utils/resolve'
+import { createServerHeadWithContext } from '../../util'
 
 describe('capo', () => {
   it('basic', async () => {
-    const head = createClientHeadWithContext()
+    const head = createServerHeadWithContext()
     head.push({
       script: [{
         defer: true,
@@ -105,7 +106,7 @@ describe('capo', () => {
       }],
     })
 
-    const resolvedTags = await head.resolveTags()
+    const resolvedTags = resolveTags(head)
     // VIEWPORT
     expect(resolvedTags[0].tag).toEqual('meta')
     expect(resolvedTags[0].props.name).toEqual('viewport')

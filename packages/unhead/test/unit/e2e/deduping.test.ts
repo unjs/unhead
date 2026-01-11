@@ -19,7 +19,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -43,7 +43,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -76,7 +76,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -101,7 +101,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -133,7 +133,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data.headTags).toMatchInlineSnapshot(`"<script data-hid="test">console.log('server log')</script>"`)
 
@@ -164,7 +164,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
@@ -204,7 +204,7 @@ describe('unhead e2e deduping', () => {
     const ssrHead = createClientHeadWithContext()
     ssrHead.push(input)
     ssrHead.push(input)
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -220,7 +220,7 @@ describe('unhead e2e deduping', () => {
     const csrHead = createClientHeadWithContext()
     csrHead.push(input)
     csrHead.push(input)
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>

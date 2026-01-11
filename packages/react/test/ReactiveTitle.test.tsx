@@ -22,7 +22,7 @@ describe('unheadProvider', () => {
     })
 
     expect(getByText('Updated')).toBeDefined()
-    const res = await renderSSRHead(head)
+    const res = renderSSRHead(head)
     expect(res.headTags).toEqual(`<title>Updated</title>`)
   })
 })

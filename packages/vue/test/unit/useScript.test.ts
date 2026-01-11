@@ -1,10 +1,9 @@
 import { createHead } from '@unhead/vue/client'
-import { renderSSRHead } from '@unhead/vue/server'
+import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
 import { describe, it } from 'vitest'
 import { ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
-import { createHeadCore } from '../../src'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
@@ -118,22 +117,27 @@ describe('vue e2e scripts', () => {
   })
 
   it('respects useScript privacy controls - #293', async () => {
-    const head = createHeadCore()
+    const head = createServerHead()
     const script = useScript({
       src: 'https://s.kk-resources.com/leadtag.js',
       async: true,
       crossorigin: false,
     }, {
-      // @ts-expect-error untyped
       head,
     })
-    const ssr = await renderSSRHead(head)
+    const ssr = renderSSRHead(head)
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
-        "<link",
-        "as="script"",
+        "<meta",
+        "as="script">",
+        "charset="utf-8"
+      <meta",
+        "content="width=device-width,",
         "fetchpriority="low"",
         "href="https://s.kk-resources.com/leadtag.js"",
+        "initial-scale=1">
+      <link",
+        "name="viewport"",
         "referrerpolicy="no-referrer"",
         "rel="preload"",
       ]
@@ -141,23 +145,28 @@ describe('vue e2e scripts', () => {
     script.remove()
   })
   it('respects useScript privacy controls', async () => {
-    const head = createHeadCore()
+    const head = createServerHead()
     const script = useScript({
       src: 'https://s.kk-resources.com/leadtag.js',
       crossorigin: 'use-credentials',
       referrerpolicy: 'no-referrer-when-downgrade',
     }, {
-      // @ts-expect-error untyped
       head,
     })
-    const ssr = await renderSSRHead(head)
+    const ssr = renderSSRHead(head)
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
-        "<link",
-        "as="script"",
+        "<meta",
+        "as="script">",
+        "charset="utf-8"
+      <meta",
+        "content="width=device-width,",
         "crossorigin="use-credentials"",
         "fetchpriority="low"",
         "href="https://s.kk-resources.com/leadtag.js"",
+        "initial-scale=1">
+      <link",
+        "name="viewport"",
         "referrerpolicy="no-referrer-when-downgrade"",
         "rel="preload"",
       ]

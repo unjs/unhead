@@ -8,7 +8,7 @@ describe('titleTemplate', () => {
       titleTemplate: '%s - my template',
       title: 'test',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test - my template</title>"`,
     )
@@ -21,7 +21,7 @@ describe('titleTemplate', () => {
       },
       title: 'test',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test - my template</title>"`,
     )
@@ -32,7 +32,7 @@ describe('titleTemplate', () => {
       titleTemplate: (title?: string) => title ? `${title} - Template` : 'Default Title',
       title: null,
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `"<title>Default Title</title>"`,
     )
@@ -46,7 +46,7 @@ describe('titleTemplate', () => {
       titleTemplate: null,
       title: 'page title',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `"<title>page title</title>"`,
     )
@@ -60,7 +60,7 @@ describe('titleTemplate', () => {
     head.push({
       titleTemplate: null,
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       '""',
     )
@@ -72,7 +72,7 @@ describe('titleTemplate', () => {
       titleTemplate: (title?: string) => title === 'test' ? null : `${title} - Template`,
       title: 'test',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot('""')
   })
 
@@ -81,7 +81,7 @@ describe('titleTemplate', () => {
     head.push({
       title: '',
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(
       `""`,
     )

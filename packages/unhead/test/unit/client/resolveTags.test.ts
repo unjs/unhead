@@ -1,4 +1,5 @@
 import { describe, it } from 'vitest'
+import { resolveTags } from '../../../src/utils/resolve'
 import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
@@ -15,12 +16,12 @@ describe('resolveTags', () => {
       ],
     })
 
-    expect(await head.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(head)).toMatchInlineSnapshot(`
       [
         {
           "_d": "title",
           "_p": 1024,
-          "_w": 10,
+          "_w": 100,
           "props": {},
           "tag": "title",
           "textContent": "My title",
@@ -43,28 +44,10 @@ describe('resolveTags', () => {
 
     head.push(basicSchema)
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
-        {
-          "_d": "charset",
-          "_p": 1027,
-          "_w": -20,
-          "props": {
-            "charset": "utf-8",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": undefined,
-          "_p": 1026,
-          "_w": 50,
-          "props": {
-            "src": "https://cdn.example.com/script.js",
-          },
-          "tag": "script",
-        },
         {
           "_d": "htmlAttrs",
           "_p": 1024,
@@ -85,6 +68,24 @@ describe('resolveTags', () => {
             },
           },
           "tag": "bodyAttrs",
+        },
+        {
+          "_d": undefined,
+          "_p": 1026,
+          "_w": 100,
+          "props": {
+            "src": "https://cdn.example.com/script.js",
+          },
+          "tag": "script",
+        },
+        {
+          "_d": "charset",
+          "_p": 1027,
+          "_w": 100,
+          "props": {
+            "charset": "utf-8",
+          },
+          "tag": "meta",
         },
         {
           "_d": undefined,
@@ -116,14 +117,14 @@ describe('resolveTags', () => {
 
     await firstEntry.dispose()
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(1)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
           "_d": undefined,
           "_p": 2048,
-          "_w": 50,
+          "_w": 100,
           "props": {
             "src": "https://cdn.example.com/script2.js",
           },
@@ -147,28 +148,10 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags.length).toBe(5)
     expect(tags).toMatchInlineSnapshot(`
       [
-        {
-          "_d": "charset",
-          "_p": 1027,
-          "_w": -20,
-          "props": {
-            "charset": "utf-8",
-          },
-          "tag": "meta",
-        },
-        {
-          "_d": undefined,
-          "_p": 1026,
-          "_w": 50,
-          "props": {
-            "src": "https://cdn.example.com/script2.js",
-          },
-          "tag": "script",
-        },
         {
           "_d": "htmlAttrs",
           "_p": 1024,
@@ -189,6 +172,24 @@ describe('resolveTags', () => {
             },
           },
           "tag": "bodyAttrs",
+        },
+        {
+          "_d": undefined,
+          "_p": 1026,
+          "_w": 100,
+          "props": {
+            "src": "https://cdn.example.com/script2.js",
+          },
+          "tag": "script",
+        },
+        {
+          "_d": "charset",
+          "_p": 1027,
+          "_w": 100,
+          "props": {
+            "charset": "utf-8",
+          },
+          "tag": "meta",
         },
         {
           "_d": undefined,
@@ -226,7 +227,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -279,7 +280,7 @@ describe('resolveTags', () => {
       },
     })
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
     expect(tags).toMatchInlineSnapshot(`
       [
         {
@@ -314,7 +315,7 @@ describe('resolveTags', () => {
       ],
     })
 
-    const tags = await head.resolveTags()
+    const tags = resolveTags(head)
 
     expect(tags).toMatchInlineSnapshot(`
       [

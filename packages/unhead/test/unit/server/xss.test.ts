@@ -11,7 +11,7 @@ describe('xss', () => {
       title: '</title><script>alert(1)</script>',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<title>&lt;&#x2F;title&gt;&lt;script&gt;alert(1)&lt;&#x2F;script&gt;</title>"`)
   })
 
@@ -29,7 +29,7 @@ describe('xss', () => {
         { type: 'application/json', innerHTML: stringify({ state2: '</scr' + 'ipt>' }) },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`
       "<script>[{"state1":1},"\\u003C/script>"]</script>
       <script type="application/json">[{"state2":1},"\\u003C/script>"]</script>"
@@ -44,7 +44,7 @@ describe('xss', () => {
       titleTemplate: '%s - myApp',
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<title>&quot;test&quot; times - myApp</title>"`)
   })
 
@@ -57,7 +57,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description&quot; onload=&quot;alert(1)" content="This is a test">"`)
   })
 
@@ -70,7 +70,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<script>const data = { payload: "<\\/script><script>alert('XSS')<\\/script>" };</script>"`)
   })
 
@@ -83,7 +83,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<link rel="stylesheet" href="javascript:alert(1)">"`)
   })
 
@@ -96,7 +96,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<style>body { background: url('javascript:alert(1)') }</style>"`)
   })
 
@@ -111,7 +111,7 @@ describe('xss', () => {
       },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`""`)
   })
 
@@ -125,7 +125,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`""`)
   })
 
@@ -136,7 +136,7 @@ describe('xss', () => {
       base: { href: 'javascript:alert(1)' },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<base href="javascript:alert(1)">"`)
   })
 
@@ -151,7 +151,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="\\u003Cscript\\u003Ealert(1)\\u003C/script\\u003E">"`)
   })
 
@@ -173,7 +173,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`
       "<script>
                   const template = \`
@@ -195,7 +195,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<link rel="stylesheet" href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">"`)
   })
 
@@ -208,7 +208,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<style>body { color: expression(alert(1)) }</style>"`)
   })
 
@@ -222,7 +222,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`""`)
   })
 
@@ -235,7 +235,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<script>console.log("Null byte attack: \\0')<\\/script><script>alert(1)<\\/script>")</script>"`)
   })
 
@@ -248,7 +248,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="<svg><script>alert(1)</script></svg>">"`)
   })
 
@@ -264,7 +264,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta http-equiv="content-type" content="text/html; charset=UTF-7; X-Content-Type-Options: &quot;nosniff&quot;; X-XSS-Protection: &quot;0&quot;;">"`)
   })
 
@@ -277,7 +277,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="keywords" content="📝➡️<script>alert(1)</script>">"`)
   })
 
@@ -290,7 +290,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="<ScRiPt>alert(1)</ScRiPt>">"`)
   })
 
@@ -303,7 +303,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<script>console.log("</scr"+"ipt><script>alert(1)<\\/script>")</script>"`)
   })
 
@@ -316,7 +316,7 @@ describe('xss', () => {
       },
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`""`)
   })
 
@@ -329,7 +329,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`"<script>var xss = '<img src="1" onerror="alert(1)" />';</script>"`)
   })
 
@@ -344,7 +344,7 @@ describe('xss', () => {
       ],
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`
       "<link rel="stylesheet" href="//evil.com/xss.js">
       <link rel="stylesheet" href="javascript&#58;alert(1)">
@@ -360,7 +360,7 @@ describe('xss', () => {
         { innerHTML: '} </style><script>alert("XSS Attack Successful")</script><style>{</style>' },
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx.headTags).toMatchInlineSnapshot(`
       "<style>body {color: red;}<\\/style><script>alert('XSS')</script><style></style>
       <style>} <\\/style><script>alert("XSS Attack Successful")</script><style>{<\\/style></style>"

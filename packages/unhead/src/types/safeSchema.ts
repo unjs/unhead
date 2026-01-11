@@ -1,22 +1,22 @@
 import type {
   DataKeys,
-  LinkWithoutEvents,
+  GenericLink,
+  GenericScript,
+  MetaGeneric,
   Noscript,
   ResolvableHead,
   SchemaAugmentations,
-  ScriptWithoutEvents,
   Style,
   UnheadBodyAttributesWithoutEvents,
   UnheadHtmlAttributes,
-  UnheadMeta,
 } from './schema'
 import type { ResolvableProperties, ResolvableValue } from './util'
 
 export type SafeBodyAttr = ResolvableProperties<Pick<UnheadBodyAttributesWithoutEvents, 'id' | 'class' | 'style'> & DataKeys & SchemaAugmentations['bodyAttrs']>
 export type SafeHtmlAttr = ResolvableProperties<Pick<UnheadHtmlAttributes, 'id' | 'class' | 'style' | 'lang' | 'dir'> & DataKeys & SchemaAugmentations['htmlAttrs']>
-export type SafeMeta = ResolvableProperties<Pick<UnheadMeta, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
-export type SafeLink = ResolvableProperties<Pick<LinkWithoutEvents, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
-export type SafeScript = ResolvableProperties<Pick<ScriptWithoutEvents, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & SchemaAugmentations['script']>
+export type SafeMeta = ResolvableProperties<Pick<MetaGeneric, 'id' | 'name' | 'property' | 'charset' | 'content' | 'media'> & DataKeys & SchemaAugmentations['meta']>
+export type SafeLink = ResolvableProperties<Pick<GenericLink, 'id' | 'color' | 'crossorigin' | 'fetchpriority' | 'href' | 'hreflang' | 'imagesrcset' | 'imagesizes' | 'integrity' | 'media' | 'referrerpolicy' | 'rel' | 'sizes' | 'type'> & DataKeys & SchemaAugmentations['link']>
+export type SafeScript = ResolvableProperties<Pick<GenericScript, 'id' | 'type' | 'nonce' | 'blocking'> & DataKeys & SchemaAugmentations['script']>
 export type SafeNoscript = ResolvableProperties<Pick<Noscript, 'id'> & DataKeys & Omit<SchemaAugmentations['noscript'], 'innerHTML'>>
 export type SafeStyle = ResolvableProperties<Pick<Style, 'id' | 'media' | 'nonce' | 'title' | 'blocking'> & DataKeys & Omit<SchemaAugmentations['style'], 'innerHTML'>>
 

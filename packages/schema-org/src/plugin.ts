@@ -6,39 +6,6 @@ import {
   createSchemaOrgGraph,
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
-import { loadResolver } from './resolver'
-
-// Recursively collect all resolver strings from nested objects and preload them
-async function preloadNestedResolvers(obj: any): Promise<void> {
-  if (!obj || typeof obj !== 'object')
-    return
-
-  const promises: Promise<void>[] = []
-
-  if (typeof obj._resolver === 'string') {
-    const resolverName = obj._resolver
-    promises.push(loadResolver(resolverName).then((loaded) => {
-      if (loaded)
-        obj._resolver = loaded
-    }))
-  }
-
-  for (const key in obj) {
-    const val = obj[key]
-    if (val && typeof val === 'object') {
-      if (Array.isArray(val)) {
-        for (const item of val) {
-          promises.push(preloadNestedResolvers(item))
-        }
-      }
-      else {
-        promises.push(preloadNestedResolvers(val))
-      }
-    }
-  }
-
-  await Promise.all(promises)
-}
 
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
@@ -66,22 +33,7 @@ export interface PluginSchemaOrgOptions {
   trailingSlash?: boolean
 }
 
-export function UnheadSchemaOrg(options?: PluginSchemaOrgOptions) {
-  return SchemaOrgUnheadPlugin({} as MetaInput, () => ({}), options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function PluginSchemaOrg(options?: PluginSchemaOrgOptions & { resolveMeta?: () => Record<string, any> }) {
-  const fallback = () => ({} as Partial<MetaInput>)
-  return SchemaOrgUnheadPlugin({} as MetaInput, options?.resolveMeta || fallback, options)
-}
-
-/**
- * @deprecated Providing a plugin is no longer required. You can remove this code.
- */
-export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>>, options?: PluginSchemaOrgOptions) {
+export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
@@ -90,23 +42,23 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
     return {
       key: 'schema-org',
       hooks: {
-        'entries:normalize': async ({ tags }) => {
+        'entries:normalize': ({ tags }) => {
           graph = graph || createSchemaOrgGraph()
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
-              const nodes = await tag.props.nodes
+              const nodes = tag.props.nodes
               for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-                // malformed input
-                if (typeof node !== 'object' || Object.keys(node).length === 0) {
+                // malformed input - skip null/undefined but allow empty objects
+                if (typeof node !== 'object' || node === null) {
                   continue
                 }
-                // Preload all nested resolvers (mutates _resolver strings to loaded objects)
-                await preloadNestedResolvers(node)
+
                 const newNode = {
                   ...node,
                   _dedupeStrategy: tag.tagDuplicateStrategy,
                 }
+                // Push node (it already has _resolver if it came from a defineXXX function)
                 graph.push(newNode)
               }
               tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
@@ -138,8 +90,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
               resolvedMeta = {
                 ...resolvedMeta,
-                // @ts-expect-error untyped
-                ...tag.props.schemaOrg,
+                ...(tag.props.schemaOrg as Record<string, any>),
               }
               delete tag.props.schemaOrg
             }
@@ -151,7 +102,7 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
             const tag = ctx.tags[k]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               delete tag.props.nodes
-              const resolvedGraph = graph.resolveGraph({ ...(await meta?.() || {}), ...config, ...resolvedMeta })
+              const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
               if (!resolvedGraph.length) {
                 // removes the tag
                 tag.props = {}
@@ -173,24 +124,24 @@ export function SchemaOrgUnheadPlugin(config: MetaInput, meta: () => Partial<Met
           }
         },
         'tags:afterResolve': (ctx) => {
-          let firstNodeKey: number | undefined
-          for (const k in ctx.tags) {
-            const tag = ctx.tags[k]
+          let firstNodeIdx: number | undefined
+          const toRemove = new Set<number>()
+          for (let i = 0; i < ctx.tags.length; i++) {
+            const tag = ctx.tags[i]
             if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
               delete tag.props.nodes
-              if (typeof firstNodeKey === 'undefined') {
-                firstNodeKey = k as any
+              if (typeof firstNodeIdx === 'undefined') {
+                firstNodeIdx = i
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeKey].props = mergeObjects(ctx.tags[firstNodeKey].props, tag.props)
-              delete ctx.tags[firstNodeKey].props.nodes
-              // @ts-expect-error untyped
-              ctx.tags[k] = false
+              ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
+              delete ctx.tags[firstNodeIdx].props.nodes
+              toRemove.add(i)
             }
           }
-          // there many be multiple script nodes within the same entry
-          ctx.tags = ctx.tags.filter(Boolean)
+          // there may be multiple script nodes within the same entry
+          ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
         },
       },
     }

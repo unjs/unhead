@@ -1,17 +1,27 @@
-import type { CreateHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
+import type { ServerUnhead } from '../src/server'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, SerializableHead, SSRHeadPayload } from '../src/types'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead } from '../src/server'
+import { createStreamableHead as createServerStreamableHead } from '../src/stream/server'
 
-export function createClientHeadWithContext(resolvedOptions: CreateHeadOptions = {}) {
+export function createClientHeadWithContext(resolvedOptions: CreateClientHeadOptions = {}) {
   return createClientHead(resolvedOptions)
 }
 
-export function createServerHeadWithContext(resolvedOptions: CreateHeadOptions = {}): Unhead<ResolvableHead> {
+export function createServerHeadWithContext(resolvedOptions: CreateServerHeadOptions = {}): ServerUnhead {
   return createServerHead({
     disableDefaults: true,
     ...resolvedOptions,
   })
+}
+
+export function createStreamableServerHead(options: { streamKey?: string } = {}) {
+  const { head } = createServerStreamableHead({
+    disableDefaults: true,
+    ...options,
+  })
+  return head
 }
 
 // eslint-disable-next-line import/no-mutable-exports
@@ -95,16 +105,27 @@ export const basicSchema: SerializableHead = {
   ],
 }
 
-export function useDOMHead(options: CreateHeadOptions = {}) {
-  activeDom = useDom()
-  return createClientHeadWithContext({
-    document: activeDom.window.document,
-    ...options,
-  })
+export function useDOMHead(options: CreateClientHeadOptions = {}) {
+  // If no document is provided, create a fresh DOM for this test
+  if (!options.document) {
+    activeDom = useDom()
+    options.document = activeDom.window.document
+  }
+  return createClientHeadWithContext(options)
 }
 
 export function useDelayedSerializedDom() {
   return new Promise<string>((resolve) => {
     setTimeout(() => resolve(activeDom!.serialize()), 250)
   })
+}
+
+// Helper to get the current active DOM for tests that need it
+export function getActiveDom() {
+  return activeDom
+}
+
+// Helper to reset the active DOM between tests
+export function resetActiveDom() {
+  activeDom = null
 }
