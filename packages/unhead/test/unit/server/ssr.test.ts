@@ -1,4 +1,3 @@
-import { createHead } from '@unhead/dom'
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../../../src'
 import { renderSSRHead } from '../../../src/server'
@@ -391,7 +390,7 @@ describe('ssr', () => {
         </style>
     </head>
 `
-    const processedHtml = await transformHtmlTemplate(createHead(), input)
+    const processedHtml = transformHtmlTemplate(createServerHeadWithContext(), input)
     expect(processedHtml).toMatchInlineSnapshot(`
       "
           <head>

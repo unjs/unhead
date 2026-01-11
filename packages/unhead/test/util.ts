@@ -1,4 +1,5 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions, ResolvableHead, SerializableHead, SSRHeadPayload, Unhead } from '../src/types'
+import type { ServerUnhead } from '../src/server'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, SerializableHead, SSRHeadPayload } from '../src/types'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead } from '../src/server'
@@ -8,7 +9,7 @@ export function createClientHeadWithContext(resolvedOptions: CreateClientHeadOpt
   return createClientHead(resolvedOptions)
 }
 
-export function createServerHeadWithContext(resolvedOptions: CreateServerHeadOptions = {}): Unhead<ResolvableHead> {
+export function createServerHeadWithContext(resolvedOptions: CreateServerHeadOptions = {}): ServerUnhead {
   return createServerHead({
     disableDefaults: true,
     ...resolvedOptions,
