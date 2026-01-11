@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderDOMHead } from '../../../src/client'
-import { useDom, useDOMHead } from '../../util'
+import { useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
   it('basic', async () => {
@@ -19,11 +18,8 @@ describe('dom', () => {
       ],
     })
 
-    const dom = useDom()
-
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
+    // wait for auto-render
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
       <meta name="description" content="desc 2"></head>
@@ -40,9 +36,8 @@ describe('dom', () => {
 
     entry.dispose()
 
-    await renderDOMHead(head, { document: dom.window.document })
-
-    expect(dom.serialize()).toMatchInlineSnapshot(`
+    // wait for auto-render after dispose
+    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
       </head>
