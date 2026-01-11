@@ -2,13 +2,13 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { createHead, UnheadProvider } from '../src/client'
-import { renderSSRHead, transformHtmlTemplate } from '../src/server'
+import { UnheadProvider } from '../src/client'
+import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
 import { SimpleHead } from './fixtures/SimpleHead'
 
 describe('simpleHead component in ssr', () => {
   it('renders default head tags correctly', async () => {
-    const head = createHead()
+    const head = createHead({ disableDefaults: true })
 
     renderToString(
       <UnheadProvider head={head}>
@@ -37,7 +37,7 @@ describe('simpleHead component in ssr', () => {
     `)
   })
   it('renders head tags correctly with SSR', async () => {
-    const head = createHead()
+    const head = createHead({ disableDefaults: true })
     const html = renderToString(
       <html>
         <head></head>
