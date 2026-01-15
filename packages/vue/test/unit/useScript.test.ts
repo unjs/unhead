@@ -117,6 +117,43 @@ describe('vue e2e scripts', () => {
     expect(status2.value).toEqual('loading')
   })
 
+  it('getter function trigger', async () => {
+    const dom = useDom()
+    const head = createHead({
+      document: dom.window.document,
+    })
+
+    const shouldLoad = ref(false)
+
+    const { status, _triggerPromises } = useScript({
+      src: '//getter-trigger.script',
+    }, {
+      // getter function like () => shouldLoad.value
+      trigger: () => shouldLoad.value,
+      head,
+    })
+
+    // promise pending
+    expect(_triggerPromises).toMatchInlineSnapshot(`
+      [
+        Promise {},
+      ]
+    `)
+
+    expect(status.value).toEqual('awaitingLoad')
+
+    // trigger by setting the ref
+    shouldLoad.value = true
+    // wait next tick
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve()
+      }, 25)
+    })
+
+    expect(status.value).toEqual('loading')
+  })
+
   it('respects useScript privacy controls - #293', async () => {
     const head = createHeadCore()
     const script = useScript({
