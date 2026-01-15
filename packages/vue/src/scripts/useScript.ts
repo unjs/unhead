@@ -26,9 +26,10 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
    * - `Promise` - Load the script when the promise resolves, exists only on the client.
    * - `Function` - Register a callback function to load the script, exists only on the client.
    * - `server` - Have the script injected on the server.
-   * - `ref` - Load the script when the ref is true.
+   * - `Ref<boolean>` - Load the script when the ref becomes true.
+   * - `() => boolean` - Getter function, load the script when return value becomes true.
    */
-  trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean>
+  trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean> | (() => boolean)
   /**
    * Unhead instance.
    */
@@ -78,11 +79,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   if (scope && typeof options.trigger === 'undefined') {
     options.trigger = onMounted
   }
-  else if (isRef(options.trigger)) {
-    const refTrigger = options.trigger as Ref<boolean>
+  else if (isRef(options.trigger) || (typeof options.trigger === 'function' && options.trigger.length === 0)) {
+    // Handle refs, computed refs, and getter functions (zero-arg functions that return boolean)
+    // Getter functions like `() => shouldLoad.value` have length 0
+    // Callback functions like `(load) => onMounted(load)` have length 1+
+    const trigger = options.trigger as Ref<boolean> | (() => boolean)
     let off: WatchHandle
     options.trigger = new Promise<boolean>((resolve) => {
-      off = watch(refTrigger, (val) => {
+      off = watch(trigger, (val) => {
         if (val) {
           resolve(true)
         }
