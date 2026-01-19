@@ -1,5 +1,6 @@
 ---
 title: Schema.org Breadcrumbs
+description: 'Add BreadcrumbList structured data with defineBreadcrumb(). Display clickable navigation paths instead of URLs in Google search results.'
 navigation:
   title: Breadcrumbs
 ---

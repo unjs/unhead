@@ -1,6 +1,6 @@
 ---
 title: "Canonical Plugin"
-description: "Fix relative URLs in your meta tags automatically for better SEO"
+description: "Auto-generate canonical URLs and convert relative paths to absolute. Required for og:image, twitter:image, and SEO canonical links."
 navigation.title: "Canonical Plugin"
 ---
 

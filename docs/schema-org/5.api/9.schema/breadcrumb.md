@@ -1,3 +1,8 @@
+---
+title: Breadcrumb Schema
+description: Use defineBreadcrumb() to add BreadcrumbList structured data. Display clickable navigation paths in Google search results for better user experience.
+---
+
 ## Schema.org Breadcrumb
 
 - **Type**: `defineBreadcrumb(input?: Breadcrumb)`{lang="ts"}

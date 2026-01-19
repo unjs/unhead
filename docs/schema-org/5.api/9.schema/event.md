@@ -1,3 +1,8 @@
+---
+title: Event Schema
+description: Use defineEvent() to add Event structured data to your pages. Enable rich results for concerts, conferences, and meetups with dates, venues, and ticket info.
+---
+
 ## Schema.org Event
 
 - **Type**: `defineEvent(input?: Event)`{lang="ts"}

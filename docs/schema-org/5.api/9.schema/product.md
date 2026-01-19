@@ -1,3 +1,8 @@
+---
+title: Product Schema
+description: Use defineProduct() to add Product structured data for e-commerce. Enable rich snippets with pricing, reviews, and availability in Google search results.
+---
+
 ## Schema.org Product
 
 - **Type**: `defineProduct(input?: Product)`{lang="ts"}

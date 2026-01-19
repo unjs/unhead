@@ -1,3 +1,8 @@
+---
+title: Music Album Schema
+description: Use defineMusicAlbum() to add MusicAlbum structured data. Display album info with artist, tracks, and release date in search results.
+---
+
 ## Schema.org MusicAlbum
 
 **Type**: `defineMusicAlbum(input?: MusicAlbum)`{lang="ts"}

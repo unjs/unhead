@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Learn how to implement Schema.org FAQ markup to improve your search appearance.
+description: 'Add FAQPage structured data with defineQuestion(). Enable expandable Q&A rich snippets directly in Google search results.'
 ---
 
 Use `defineQuestion()` with `defineWebPage({ '@type': 'FAQPage' })` to mark up FAQ content. Google can display your questions and answers directly in search results as expandable rich snippets.
@@ -99,6 +99,40 @@ useSchemaOrg([
   }),
 ])
 ```
+
+## Expected JSON-LD Output
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": ["WebPage", "FAQPage"],
+      "@id": "https://example.com/faq/",
+      "name": "FAQ"
+    },
+    {
+      "@type": "Question",
+      "name": "How long is a piece of string?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The length of a piece of string is the number of characters."
+      }
+    }
+  ]
+}
+```
+
+## Common Issues
+
+### FAQ not showing in search results
+Google only shows FAQ rich results for authoritative, high-quality content. Ensure your site has good E-E-A-T signals.
+
+### Questions not appearing
+You must include both `defineWebPage({ '@type': 'FAQPage' })` AND `defineQuestion()` calls.
+
+### HTML in answers stripped
+Only basic HTML (links, lists, paragraphs) is supported. Complex HTML may be sanitized.
 
 ## Related Recipes
 

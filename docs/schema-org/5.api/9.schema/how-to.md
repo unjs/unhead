@@ -1,3 +1,8 @@
+---
+title: HowTo Schema
+description: Use defineHowTo() to add HowTo structured data. Enable step-by-step rich snippets with images and time estimates in Google search results.
+---
+
 ## Schema.org HowTo
 
 - **Type**: `defineHowTo(input?: HowTo)`{lang="ts"}

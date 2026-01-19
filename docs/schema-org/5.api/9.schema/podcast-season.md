@@ -1,3 +1,8 @@
+---
+title: Podcast Season Schema
+description: Use definePodcastSeason() to add PodcastSeason structured data. Organize podcast episodes by season with episode counts and dates.
+---
+
 ## Schema.org PodcastSeason
 
 **Type**: `definePodcastSeason(input?: PodcastSeason)`{lang="ts"}

@@ -1,3 +1,8 @@
+---
+title: WebSite Schema
+description: Use defineWebSite() to add WebSite structured data. Establish your site identity and enable sitelinks search box in Google search results.
+---
+
 ## Schema.org WebSite
 
 - **Type**: `defineWebSite(input?: WebSite)`{lang="ts"}

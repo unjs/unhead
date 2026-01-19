@@ -1,3 +1,8 @@
+---
+title: Video Schema
+description: Use defineVideo() to add VideoObject structured data. Enable video rich snippets with thumbnails, duration, and upload date in Google search results.
+---
+
 ## Schema.org Video
 
 - **Type**: `defineVideo(input?: Video)`{lang="ts"}

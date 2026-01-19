@@ -1,5 +1,6 @@
 ---
 title: Schema.org for a Blog
+description: 'Add Article/BlogPosting structured data with defineArticle(). Enable rich snippets for author, publish date, and thumbnails in search results.'
 navigation:
     title: Blog
 ---
@@ -96,6 +97,41 @@ useSchemaOrg([
   }),
 ])
 ```
+
+## Expected JSON-LD Output
+
+The above code generates JSON-LD like this:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": "https://example.com/blog/my-post/#article",
+      "headline": "My Article",
+      "image": "https://example.com/photos/16x9/photo.jpg",
+      "datePublished": "2020-02-01T00:00:00.000Z",
+      "dateModified": "2020-02-01T00:00:00.000Z",
+      "author": [
+        { "@type": "Person", "name": "John doe", "url": "https://johndoe.com" }
+      ],
+      "mainEntityOfPage": { "@id": "https://example.com/blog/my-post/" }
+    }
+  ]
+}
+```
+
+## Common Issues
+
+### Missing `image` warning
+Google requires at least one image for Article rich results. Always provide `image`.
+
+### `datePublished` format errors
+Use JavaScript `Date` objects—Unhead handles ISO 8601 conversion automatically.
+
+### Author not showing
+If using site identity as author, ensure you've called `defineOrganization()` or `definePerson()` in your layout.
 
 ## Related Recipes
 

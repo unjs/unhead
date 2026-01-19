@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: Overview of Unhead API including composables and hooks.
+description: 'Unhead API reference for useHead(), useSeoMeta(), useScript() composables and DOM/SSR rendering hooks. Full TypeScript support.'
 ---
 
 **Quick Reference:** The main composables are `useHead()` for general head management, `useSeoMeta()` for SEO tags, and `useScript()` for script loading. All return an entry with `patch()` and `dispose()` methods.
@@ -10,7 +10,7 @@ description: Overview of Unhead API including composables and hooks.
 ::div{class="grid grid-cols-2 gap-5"}
 
 :UPageCard{ spotlight spotlight-color="primary" title="useHead()" description="The main composable for managing head tags." to="/docs/head/api/composables/use-head"}
-:UPageCard{ spotlight spotlight-color="primary" title="useHeadSafe()" description="The main composable for managing head tags." to="/docs/head/api/composables/use-head-safe"}
+:UPageCard{ spotlight spotlight-color="primary" title="useHeadSafe()" description="XSS-safe head management for user-generated content." to="/docs/head/api/composables/use-head-safe"}
 :UPageCard{ spotlight spotlight-color="primary" title="useSeoMeta()" description="A composable for managing SEO-related tags." to="/docs/head/api/composables/use-seo-meta"}
 :UPageCard{ spotlight spotlight-color="primary" title="useScript()" description="A composable for loading and managing external scripts."  to="/docs/head/api/composables/use-script"}
 

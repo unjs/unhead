@@ -1,3 +1,8 @@
+---
+title: Music Group Schema
+description: Use defineMusicGroup() to add MusicGroup structured data. Display band info with members, genre, and discography in search results.
+---
+
 ## Schema.org MusicGroup
 
 **Type**: `defineMusicGroup(input?: MusicGroup)`{lang="ts"}

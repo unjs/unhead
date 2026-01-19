@@ -1,6 +1,6 @@
 ---
 title: Site Search
-description: Learn how to implement Schema.org markup for site search functionality.
+description: 'Add SearchAction to WebSite schema with defineSearchAction(). Enable Google Sitelinks Searchbox for your site in search results.'
 ---
 
 If your site offers a search function, you may like to define markup to help Google understand it.

@@ -1,3 +1,8 @@
+---
+title: WebPage Schema
+description: Use defineWebPage() to add WebPage structured data. Connect page content to your site hierarchy with automatic page type detection.
+---
+
 ## Schema.org WebPage
 
 - **Type**: `defineWebPage(input?: WebPage)`{lang="ts"}

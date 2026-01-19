@@ -1,3 +1,8 @@
+---
+title: TV Season Schema
+description: Use defineTVSeason() to add TVSeason structured data. Organize TV episodes by season with episode counts, cast, and air dates.
+---
+
 ## Schema.org TVSeason
 
 **Type**: `defineTVSeason(input?: TVSeason)`{lang="ts"}

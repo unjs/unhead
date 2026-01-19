@@ -1,3 +1,8 @@
+---
+title: Job Posting Schema
+description: Use defineJobPosting() to add JobPosting structured data. Display job listings with salary, location, and apply buttons in Google Jobs search.
+---
+
 ## Schema.org Job Posting
 
 - **Type**: `defineJobPosting(input: JobPosting)`{lang="ts"}

@@ -1,3 +1,8 @@
+---
+title: Person Schema
+description: Use definePerson() to add Person structured data. Establish author identity for articles and content with name, image, and social profile links.
+---
+
 ## Schema.org Person
 
 - **Type**: `definePerson(input?: Person)`{lang="ts"}

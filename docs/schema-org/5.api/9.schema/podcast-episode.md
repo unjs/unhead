@@ -1,3 +1,8 @@
+---
+title: Podcast Episode Schema
+description: Use definePodcastEpisode() to add PodcastEpisode structured data. Enable podcast rich results with episode title, audio, and description.
+---
+
 ## Schema.org PodcastEpisode
 
 **Type**: `definePodcastEpisode(input?: PodcastEpisode)`{lang="ts"}

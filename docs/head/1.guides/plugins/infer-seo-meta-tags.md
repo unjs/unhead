@@ -1,6 +1,6 @@
 ---
 title: "Infer SEO Meta"
-description: "Automatically infer SEO meta tags from your page title and description"
+description: "Auto-generate og:title, og:description, and twitter:card from existing title and description. Reduce duplicate meta tag definitions."
 navigation.title: "Infer SEO Meta"
 ---
 

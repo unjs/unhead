@@ -1,3 +1,8 @@
+---
+title: ItemList Schema
+description: Use defineItemList() to add ItemList structured data. Create carousels and ordered lists for products, articles, and other content in search.
+---
+
 ## Schema.org ItemList
 
 - **Type**: `defineItemList(input?: ItemList)`{lang="ts"}
