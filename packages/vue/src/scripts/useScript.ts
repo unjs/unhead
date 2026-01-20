@@ -104,7 +104,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
     // @ts-expect-error untyped
-    s._statusRef.value = s.status
+    if (s._statusRef) {
+      // @ts-expect-error untyped
+      s._statusRef.value = s.status
+    }
   })
   // @ts-expect-error untyped
   const script = _useScript(head, input as BaseUseScriptInput, options)
