@@ -34,7 +34,7 @@ export interface MetaFlatArticle {
 
   /**
    * Tag words associated with this article.
-   * @example ['Apple', 'Steve Jobs]
+   * @example ['Apple', 'Steve Jobs']
    */
   articleTag?: string[]
 }
@@ -60,7 +60,7 @@ export interface MetaFlatBook {
 
   /**
    * Tag words associated with this book.
-   * @example ['Apple', 'Steve Jobs]
+   * @example ['Apple', 'Steve Jobs']
    */
   bookTag?: string[]
 }
