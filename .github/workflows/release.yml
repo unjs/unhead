@@ -51,3 +51,7 @@ jobs:
       - name: Publish Next
         if: ${{ contains(github.ref_name, '-') }}
         run: pnpm publish -r --access public --no-git-checks --tag next
+
+      - name: Publish Beta
+        if: ${{ contains(github.ref_name, '-') }}
+        run: pnpm publish -r --access public --no-git-checks --tag beta
