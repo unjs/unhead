@@ -16,10 +16,10 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4.1.0
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
       - name: Use Node.js 24.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
           node-version: 24.x
           registry-url: https://registry.npmjs.org/
@@ -37,7 +37,7 @@ jobs:
       - name: Run Vue bundle size test
         run: pnpm test:vue-bundle-size
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3 # v2
 
       - name: Update stats
         run: bun bench/bundle/update.ts
