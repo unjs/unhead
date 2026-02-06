@@ -1,7 +1,7 @@
 {
   "name": "@unhead/vue",
   "type": "module",
-  "version": "3.0.0-beta.5",
+  "version": "3.0.0-beta.6",
   "description": "Full-stack <head> manager built for Vue.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
