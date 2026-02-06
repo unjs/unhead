@@ -1,3 +1,8 @@
+---
+title: TV Series Schema
+description: Use defineTVSeries() to add TVSeries structured data. Enable rich results for TV shows with cast, creator, ratings, and season info.
+---
+
 ## Schema.org TVSeries
 
 **Type**: `defineTVSeries(input?: TVSeries)`{lang="ts"}

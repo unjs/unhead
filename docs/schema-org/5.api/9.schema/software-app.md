@@ -1,3 +1,8 @@
+---
+title: Software App Schema
+description: Use defineSoftwareApp() to add SoftwareApplication structured data. Enable app rich results with ratings, pricing, and download info in search.
+---
+
 ## Schema.org SoftwareApp
 
 - **Type**: `defineSoftwareApp(input?: SoftwareApp)`{lang="ts"}

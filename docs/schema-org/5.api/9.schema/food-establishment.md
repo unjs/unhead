@@ -1,3 +1,8 @@
+---
+title: Food Establishment Schema
+description: Use defineFoodEstablishment() to add Restaurant structured data. Display menu, reservations, and cuisine info in Google Maps and local search.
+---
+
 ## Schema.org FoodEstablishment
 
 **Type**: `defineFoodEstablishment(input?: FoodEstablishment)`{lang="ts"}

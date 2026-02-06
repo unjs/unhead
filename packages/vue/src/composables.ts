@@ -26,10 +26,9 @@ export function injectHead() {
   if (hasInjectionContext()) {
     // fallback to vue context
     const instance = inject<VueHeadClient>(headSymbol)
-    if (!instance) {
-      throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
+    if (instance) {
+      return instance
     }
-    return instance
   }
   throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
 }

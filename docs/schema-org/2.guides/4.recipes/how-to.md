@@ -1,6 +1,6 @@
 ---
 title: Schema.org for How-To Content
-description: Learn how to implement Schema.org for How-To content to improve your search appearance.
+description: 'Add HowTo structured data with defineHowTo(). Enable step-by-step rich snippets with images, supplies, and time estimates.'
 navigation:
   title: How To
 ---

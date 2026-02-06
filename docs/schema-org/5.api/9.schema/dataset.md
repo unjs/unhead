@@ -1,3 +1,8 @@
+---
+title: Dataset Schema
+description: Use defineDataset() to add Dataset structured data. Make research data discoverable in Google Dataset Search with metadata and download links.
+---
+
 ## Schema.org Dataset
 
 **Type**: `defineDataset(input?: Dataset)`{lang="ts"}

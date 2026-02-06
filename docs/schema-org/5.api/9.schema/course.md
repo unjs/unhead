@@ -1,3 +1,8 @@
+---
+title: Course Schema
+description: Use defineCourse() to add Course structured data. Enable rich results for educational courses with provider, description, and course details.
+---
+
 ## Schema.org Course
 
 - **Type**: `defineCourse(input?: Course)`{lang="ts"}

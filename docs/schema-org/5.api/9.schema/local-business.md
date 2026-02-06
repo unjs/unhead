@@ -1,3 +1,8 @@
+---
+title: Local Business Schema
+description: Use defineLocalBusiness() to add LocalBusiness structured data. Display your business address, hours, and contact info in Google Maps and local search.
+---
+
 ## Schema.org LocalBusiness
 
 **Type**: `defineLocalBusiness(input?: LocalBusiness)`{lang="ts"}

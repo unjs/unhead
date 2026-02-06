@@ -1,3 +1,8 @@
+---
+title: Podcast Series Schema
+description: Use definePodcastSeries() to add PodcastSeries structured data. Enable podcast rich results with show info, host, and RSS feed link.
+---
+
 ## Schema.org PodcastSeries
 
 **Type**: `definePodcastSeries(input?: PodcastSeries)`{lang="ts"}

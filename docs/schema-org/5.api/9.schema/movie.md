@@ -1,3 +1,8 @@
+---
+title: Movie Schema
+description: Use defineMovie() to add Movie structured data. Enable rich results with ratings, cast, director, and release date in Google search.
+---
+
 ## Schema.org Movie
 
 **Type**: `defineMovie(input?: Movie)`{lang="ts"}

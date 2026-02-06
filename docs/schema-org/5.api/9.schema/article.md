@@ -1,3 +1,8 @@
+---
+title: Article Schema
+description: Use defineArticle() to add Article structured data to your pages. Enable rich snippets for blog posts, news, and content with author, date, and image information.
+---
+
 ## Schema.org Article
 
 - **Type**: `defineArticle(input?: Article)`{lang="ts"}

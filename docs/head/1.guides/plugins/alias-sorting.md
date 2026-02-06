@@ -1,6 +1,6 @@
 ---
 title: "Alias Sorting"
-description: "Control tag order with before: and after: aliases instead of numeric priorities"
+description: "Order head tags with before: and after: prefixes. More readable than numeric priorities for script loading and CSS dependencies."
 navigation.title: "Alias Sorting"
 ---
 

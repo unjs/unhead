@@ -1,3 +1,8 @@
+---
+title: Question Schema
+description: Use defineQuestion() to add FAQ structured data. Enable FAQ rich snippets with expandable Q&A directly in Google search results.
+---
+
 ## Schema.org Question
 
 - **Type**: `defineQuestion(input?: Question)`{lang="ts"}

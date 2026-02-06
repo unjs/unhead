@@ -1,3 +1,8 @@
+---
+title: Comment Schema
+description: Use defineComment() to add Comment structured data. Connect user comments to articles and blog posts with author and date information.
+---
+
 ## Schema.org Comment
 
 - **Type**: `defineComment(input?: Comment)`{lang="ts"}

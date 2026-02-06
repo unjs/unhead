@@ -1,3 +1,8 @@
+---
+title: Image Schema
+description: Use defineImage() to add ImageObject structured data. Provide image metadata with captions, dimensions, and alt text for rich results.
+---
+
 ## Schema.org Image
 
 - **Type**: `defineImage(input?: Image)`{lang="ts"}

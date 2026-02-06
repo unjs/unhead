@@ -1,3 +1,8 @@
+---
+title: Service Schema
+description: Use defineService() to add Service structured data. Display service offerings with pricing, provider info, and reviews in search results.
+---
+
 ## Schema.org Service
 
 **Type**: `defineService(input?: Service)`{lang="ts"}

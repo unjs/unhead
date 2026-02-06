@@ -1,6 +1,6 @@
 ---
 title: Migrating from React Helmet to Unhead
-description: A practical guide to replace React Helmet with Unhead in your React applications.
+description: 'Replace React Helmet with Unhead. Smaller bundle size (4.5kb gzipped), TypeScript support, and modern features.'
 navigation:
   title: 'Migrate React Helmet'
 ---

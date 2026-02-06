@@ -1,3 +1,8 @@
+---
+title: Music Playlist Schema
+description: Use defineMusicPlaylist() to add MusicPlaylist structured data. Display playlist info with track count, creator, and song list in search.
+---
+
 ## Schema.org MusicPlaylist
 
 **Type**: `defineMusicPlaylist(input?: MusicPlaylist)`{lang="ts"}

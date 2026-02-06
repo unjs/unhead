@@ -1,3 +1,8 @@
+---
+title: Music Recording Schema
+description: Use defineMusicRecording() to add MusicRecording structured data. Display song info with artist, album, and duration in search results.
+---
+
 ## Schema.org MusicRecording
 
 **Type**: `defineMusicRecording(input?: MusicRecording)`{lang="ts"}

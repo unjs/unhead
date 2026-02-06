@@ -1,3 +1,8 @@
+---
+title: Recipe Schema
+description: Use defineRecipe() to add Recipe structured data. Enable rich snippets with cooking time, ingredients, nutrition, and step-by-step instructions in search.
+---
+
 ## Schema.org Recipe
 
 - **Type**: `defineRecipe(input?: Recipe)`{lang="ts"}

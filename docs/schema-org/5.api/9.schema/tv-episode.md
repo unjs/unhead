@@ -1,3 +1,8 @@
+---
+title: TV Episode Schema
+description: Use defineTVEpisode() to add TVEpisode structured data. Enable rich results for TV episodes with cast, director, and ratings info.
+---
+
 ## Schema.org TVEpisode
 
 **Type**: `defineTVEpisode(input?: TVEpisode)`{lang="ts"}

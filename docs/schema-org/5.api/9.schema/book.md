@@ -1,3 +1,8 @@
+---
+title: Book Schema
+description: Use defineBook() to add Book structured data. Enable rich results with book editions, ISBN, author, and purchase actions in Google search.
+---
+
 ## Schema.org Book
 
 - **Type**: `defineBook(input?: Book)`{lang="ts"}

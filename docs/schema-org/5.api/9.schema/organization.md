@@ -1,3 +1,8 @@
+---
+title: Organization Schema
+description: Use defineOrganization() to add Organization structured data. Display your company logo, social profiles, and contact info in Google Knowledge Panel.
+---
+
 ## Schema.org Organization
 
 - **Type**: `defineOrganization(input?: Organization)`{lang="ts"}

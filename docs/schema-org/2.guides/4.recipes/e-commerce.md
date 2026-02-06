@@ -1,6 +1,6 @@
 ---
 title: Schema.org for eCommerce Sites
-description: Learn how to implement Schema.org for eCommerce websites to improve search visibility and product rich results.
+description: 'Add Product structured data with defineProduct(). Enable rich results with prices, ratings, stock status, and reviews in search.'
 navigation:
   title: eCommerce
 ---
