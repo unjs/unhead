@@ -449,4 +449,168 @@ describe('dedupe', () => {
       <meta name="custom-meta" content="Second custom meta tag">"
     `)
   })
+
+  it('dedupes alternate links by hreflang', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'fr',
+          href: 'https://example.com/fr/page',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'x-default',
+          href: 'https://example.com/page',
+        },
+      ],
+    })
+    // Simulate hydration - push the same links again
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'fr',
+          href: 'https://example.com/fr/page',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'x-default',
+          href: 'https://example.com/page',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 3 alternate links, not 6
+    expect(headTags.split('rel="alternate"').length).toBe(4) // 3 tags + 1 base = 4 parts
+    expect(headTags).toMatchInlineSnapshot(`
+      "<link rel="alternate" hreflang="en" href="https://example.com/en/page">
+      <link rel="alternate" hreflang="fr" href="https://example.com/fr/page">
+      <link rel="alternate" hreflang="x-default" href="https://example.com/page">"
+    `)
+  })
+
+  it('dedupes alternate links with same hreflang and href', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page',
+        },
+      ],
+    })
+    // Push the exact same link again (simulating hydration)
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 1 alternate link
+    expect(headTags.split('rel="alternate"').length).toBe(2) // 1 tag + 1 base = 2 parts
+    expect(headTags).toContain('https://example.com/en/page')
+  })
+
+  it('allows different hrefs for same hreflang (different pages)', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page1',
+        },
+      ],
+    })
+    // Different href for same hreflang should be treated as different link
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en/page2',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should have 2 alternate links since hrefs are different
+    expect(headTags.split('rel="alternate"').length).toBe(3) // 2 tags + 1 base = 3 parts
+    expect(headTags).toContain('https://example.com/en/page1')
+    expect(headTags).toContain('https://example.com/en/page2')
+  })
+
+  it('dedupes alternate links without hreflang using href', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          type: 'application/rss+xml',
+          href: 'https://example.com/feed.xml',
+          title: 'RSS Feed',
+        },
+      ],
+    })
+    // Push again (simulating hydration)
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          type: 'application/rss+xml',
+          href: 'https://example.com/feed.xml',
+          title: 'RSS Feed',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 1 alternate link
+    expect(headTags.split('rel="alternate"').length).toBe(2) // 1 tag + 1 base = 2 parts
+    expect(headTags).toMatchInlineSnapshot(`"<link rel="alternate" type="application/rss+xml" href="https://example.com/feed.xml" title="RSS Feed">"`)
+  })
+
+  it('allows multiple alternate links with different hreflang', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hreflang: 'en',
+          href: 'https://example.com/en',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'de',
+          href: 'https://example.com/de',
+        },
+        {
+          rel: 'alternate',
+          hreflang: 'fr',
+          href: 'https://example.com/fr',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should have all 3 different alternate links
+    expect(headTags.split('rel="alternate"').length).toBe(4) // 3 tags + 1 base = 4 parts
+    expect(headTags).toContain('hreflang="en"')
+    expect(headTags).toContain('hreflang="de"')
+    expect(headTags).toContain('hreflang="fr"')
+  })
 })

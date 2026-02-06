@@ -29,6 +29,10 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   if (name === 'link' && props.rel === 'canonical')
     return 'canonical'
 
+  if (name === 'link' && props.rel === 'alternate') {
+    return `alternate:${props.hreflang || props.type || 'x-default'}:${props.href || ''}`
+  }
+
   if (props.charset)
     return 'charset'
 
