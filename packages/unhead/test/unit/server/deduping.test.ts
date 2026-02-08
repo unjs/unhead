@@ -528,7 +528,7 @@ describe('dedupe', () => {
     expect(headTags).toContain('https://example.com/en/page')
   })
 
-  it('allows different hrefs for same hreflang (different pages)', async () => {
+  it('dedupes same hreflang with different hrefs', async () => {
     const head = createServerHeadWithContext()
     head.push({
       link: [
@@ -539,7 +539,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    // Different href for same hreflang should be treated as different link
+    // Same hreflang should be deduped regardless of href
     head.push({
       link: [
         {
@@ -550,10 +550,10 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    // Should have 2 alternate links since hrefs are different
-    expect(headTags.split('rel="alternate"').length).toBe(3) // 2 tags + 1 base = 3 parts
-    expect(headTags).toContain('https://example.com/en/page1')
+    // Should have 1 alternate link - last one wins
+    expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('https://example.com/en/page2')
+    expect(headTags).not.toContain('https://example.com/en/page1')
   })
 
   it('dedupes alternate links without hreflang using href', async () => {
@@ -612,5 +612,50 @@ describe('dedupe', () => {
     expect(headTags).toContain('hreflang="en"')
     expect(headTags).toContain('hreflang="de"')
     expect(headTags).toContain('hreflang="fr"')
+  })
+
+  it('dedupes RSS feeds with same type', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed.xml', title: 'RSS Feed' },
+      ],
+    })
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed2.xml', title: 'RSS Feed 2' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags).toContain('feed2.xml')
+    expect(headTags).not.toContain('feed.xml"')
+  })
+
+  it('allows RSS and Atom feeds to coexist', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/rss.xml', title: 'RSS' },
+        { rel: 'alternate', type: 'application/atom+xml', href: 'https://example.com/atom.xml', title: 'Atom' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags.split('rel="alternate"').length).toBe(3)
+    expect(headTags).toContain('rss.xml')
+    expect(headTags).toContain('atom.xml')
+  })
+
+  it('bare alternate without hreflang or type falls through to generic deduping', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', href: 'https://example.com/a' },
+        { rel: 'alternate', href: 'https://example.com/b' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // both should exist since no dedupe key matched
+    expect(headTags.split('rel="alternate"').length).toBe(3)
   })
 })
