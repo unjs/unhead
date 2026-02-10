@@ -44,7 +44,7 @@ catalog:
   acorn-loose: ^8.5.2
   bumpp: ^10.3.2
   devalue: ^5.6.1
-  eslint: ^9.39.2
+  eslint: ^10.0.0
   estree-walker: ^3.0.3
   fs-extra: ^11.3.3
   hookable: ^6.0.1
