@@ -64,7 +64,7 @@ catalog:
   typescript: 5.9.3
   ufo: ^1.6.2
   unbuild: ^3.6.1
-  unplugin: ^2.3.11
+  unplugin: ^3.0.0
   unplugin-ast: ^0.15.4
   unplugin-vue-components: ^30.0.0
   utility-types: ^3.11.0
