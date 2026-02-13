@@ -646,7 +646,7 @@ describe('dedupe', () => {
     expect(headTags).toContain('atom.xml')
   })
 
-  it('bare alternate without hreflang or type falls through to generic deduping', async () => {
+  it('bare alternate without hreflang or type dedupes by href', async () => {
     const head = createServerHeadWithContext()
     head.push({
       link: [
@@ -655,7 +655,101 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    // both should exist since no dedupe key matched
+    // both should exist since they have different hrefs
     expect(headTags.split('rel="alternate"').length).toBe(3)
+  })
+
+  it('dedupes bare alternate links with same href on hydration', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', href: '/' },
+      ],
+    })
+    // Simulate hydration - push the same link again
+    head.push({
+      link: [
+        { rel: 'alternate', href: '/' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 1 alternate link
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+  })
+
+  it('dedupes bare alternate links without href on hydration', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate' },
+      ],
+    })
+    // Simulate hydration - push the same link again
+    head.push({
+      link: [
+        { rel: 'alternate' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 1 alternate link
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+  })
+
+  it('dedupes alternate links by id (i18n use case)', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { id: 'i18n-alt-nl', rel: 'alternate', href: 'http://localhost:3000/nl/products/big-chair', hreflang: 'nl' },
+      ],
+    })
+    // Simulate dynamic parameter translation update
+    head.push({
+      link: [
+        { id: 'i18n-alt-nl', rel: 'alternate', href: 'http://localhost:3000/nl/products/grote-stoel', hreflang: 'nl' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should only have 1 alternate link - last one wins via hreflang dedupe
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags).toContain('grote-stoel')
+    expect(headTags).not.toContain('big-chair')
+  })
+
+  it('alternate links with key dedupe by key', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { key: 'my-alt', rel: 'alternate', href: 'https://example.com/a' },
+      ],
+    })
+    head.push({
+      link: [
+        { key: 'my-alt', rel: 'alternate', href: 'https://example.com/b' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should have 1 alternate link deduped by key - last one wins
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags).toContain('https://example.com/b')
+    expect(headTags).not.toContain('https://example.com/a')
+  })
+
+  it('alternate links with id dedupe by id when no hreflang', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { id: 'my-feed', rel: 'alternate', href: 'https://example.com/feed-v1.xml' },
+      ],
+    })
+    head.push({
+      link: [
+        { id: 'my-feed', rel: 'alternate', href: 'https://example.com/feed-v2.xml' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Should have 1 alternate link deduped by id - last one wins
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags).toContain('feed-v2.xml')
+    expect(headTags).not.toContain('feed-v1.xml')
   })
 })

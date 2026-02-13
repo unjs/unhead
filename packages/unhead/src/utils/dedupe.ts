@@ -29,9 +29,12 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   if (name === 'link' && props.rel === 'canonical')
     return 'canonical'
 
-  const altKey = props.hreflang || props.type
-  if (name === 'link' && props.rel === 'alternate' && altKey) {
-    return `alternate:${altKey}`
+  // dedupe alternate links with hreflang/type by that attribute
+  if (name === 'link' && props.rel === 'alternate') {
+    const altKey = props.hreflang || props.type
+    if (altKey) {
+      return `alternate:${altKey}`
+    }
   }
 
   if (props.charset)
@@ -57,6 +60,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 
   if (props.id) {
     return `${name}:id:${props.id}`
+  }
+
+  // bare alternate links (no hreflang/type/key/id) dedupe by href
+  if (name === 'link' && props.rel === 'alternate') {
+    return `alternate:${props.href || ''}`
   }
 
   // avoid duplicate tags with the same content (if no key is provided)
