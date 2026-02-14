@@ -63,7 +63,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "svelte": ">=5.38.0"
+    "svelte": ">=5.46.4"
   },
   "build": {
     "external": [
