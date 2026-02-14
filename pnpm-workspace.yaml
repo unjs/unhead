@@ -24,7 +24,7 @@ catalog:
   '@angular/platform-browser': ^21.0.8
   '@angular/platform-browser-dynamic': ^21.0.8
   '@angular/platform-server': ^21.0.8
-  '@antfu/eslint-config': ^6.7.3
+  '@antfu/eslint-config': ^7.4.3
   '@arethetypeswrong/cli': ^0.18.2
   '@babel/types': ^7.28.5
   '@fast-check/vitest': ^0.2.4
