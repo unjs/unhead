@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.1.4",
   "private": "true",
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.29.3",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "homepage": "https://unhead.unjs.io",
