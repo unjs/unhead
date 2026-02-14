@@ -31,6 +31,18 @@ The latest major is now stable! Check out the [v2 release notes](https://unhead.
 
 ## Get Started
 
+Install `unhead` dependency to your project:
+
+```bash
+npm install unhead
+```
+
+> [!TIP]
+> Generate an Agent Skill for this package using [skilld](https://github.com/harlan-zw/skilld):
+> ```bash
+> npx skilld add unhead
+> ```
+
 Visit the [documentation site](https://unhead.unjs.io/) for guides and API references.
 
 ## Sponsors
