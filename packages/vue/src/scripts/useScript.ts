@@ -61,9 +61,11 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
   script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  // capture the controller at registration time so this scope only aborts
+  // the controller it was associated with, not a newer one created by a later scope
+  const triggerAbortController = script._triggerAbortController
   onScopeDispose(() => {
-    // stop any trigger promises
-    script._triggerAbortController?.abort()
+    triggerAbortController?.abort()
   })
 }
 

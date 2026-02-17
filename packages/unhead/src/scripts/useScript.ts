@@ -116,8 +116,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     status: 'awaitingLoad',
 
     remove() {
-      // cancel any pending triggers as we've started loading
-      script._triggerAbortController?.abort()
+      // cancel all pending triggers
+      script._triggerAbortControllers?.forEach(ac => ac.abort())
+      script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
       script._warmupEl?.dispose()
       if (script.entry) {
@@ -154,8 +155,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
-      // cancel any pending triggers as we've started loading
-      script._triggerAbortController?.abort()
+      // cancel all pending triggers as we've started loading
+      script._triggerAbortControllers?.forEach(ac => ac.abort())
+      script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
@@ -195,19 +197,23 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         if (head.ssr) {
           return
         }
-        if (!script._triggerAbortController) {
-          script._triggerAbortController = new AbortController()
-          script._triggerAbortPromise = new Promise<void>((resolve) => {
-            script._triggerAbortController!.signal.addEventListener('abort', () => {
-              script._triggerAbortController = null
-              resolve()
-            })
+        // each trigger gets its own abort controller so that disposing one scope
+        // does not cancel triggers from other scopes
+        const abortController = new AbortController()
+        script._triggerAbortControllers = script._triggerAbortControllers || new Set()
+        script._triggerAbortControllers.add(abortController)
+        const abortPromise = new Promise<void>((resolve) => {
+          abortController.signal.addEventListener('abort', () => {
+            script._triggerAbortControllers?.delete(abortController)
+            resolve()
           })
-        }
+        })
+        // store the latest controller for external access
+        script._triggerAbortController = abortController
         script._triggerPromises = script._triggerPromises || []
         const idx = script._triggerPromises.push(Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
-          script._triggerAbortPromise,
+          abortPromise,
         ])
           // OK
           .catch(() => {})

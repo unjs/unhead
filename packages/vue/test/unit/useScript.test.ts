@@ -1,8 +1,9 @@
+// @vitest-environment jsdom
 import { createHead } from '@unhead/vue/client'
 import { renderSSRHead } from '@unhead/vue/server'
 
 import { describe, it } from 'vitest'
-import { ref, watch } from 'vue'
+import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { createHeadCore } from '../../src'
 import { useScript } from '../../src/scripts/useScript'
@@ -200,5 +201,60 @@ describe('vue e2e scripts', () => {
       ]
     `)
     script.remove()
+  })
+
+  it('setupTriggerHandler race condition: old scope disposal should not abort new scope trigger', async () => {
+    const dom = useDom()
+    const head = createHead({
+      document: dom.window.document,
+    })
+
+    // simulate a first page visit: component uses useScript with a trigger that never resolves
+    // and the user navigates away before interacting
+    const el1 = dom.window.document.createElement('div')
+    const app1 = createApp({
+      setup() {
+        useScript({
+          src: '//race-condition-script.js',
+        }, {
+          trigger: new Promise(() => {}), // never resolves
+          head,
+        })
+        return () => h('div')
+      },
+    })
+    app1.mount(el1)
+
+    const script = (head as any)._scripts['//race-condition-script.js']
+    expect(script.status).toBe('awaitingLoad')
+    expect(script._triggerAbortController).toBeTruthy()
+
+    const { resolve: resolveTrigger2, promise: trigger2 } = Promise.withResolvers<void>()
+
+    // simulate client-side navigation: the new page mounts BEFORE the old page unmounts
+    const el2 = dom.window.document.createElement('div')
+    const app2 = createApp({
+      setup() {
+        useScript({
+          src: '//race-condition-script.js',
+        }, {
+          trigger: trigger2,
+          head,
+        })
+        return () => h('div')
+      },
+    })
+    app2.mount(el2)
+
+    expect(script.status).toBe('awaitingLoad')
+
+    app1.unmount()
+
+    // the user interacts on the new page, resolving `trigger2`
+    resolveTrigger2()
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
+
+    // as `trigger2` is now resolved, we expect `script.load()` to have been called
+    expect(script.status).toBe('loading')
   })
 })
