@@ -1,7 +1,8 @@
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import MagicString from 'magic-string'
 import { findStaticImports } from 'mlly'
-import { parseSync, Visitor } from 'oxc-parser'
+import { parseSync } from 'oxc-parser'
+import { walk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
@@ -76,42 +77,50 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   // Find function components that contain useHead and have JSX returns
   const returns: { jsxStart: number, jsxEnd: number }[] = []
 
-  const visitor = new Visitor({
-    FunctionDeclaration: node => processFunction(node),
-    FunctionExpression: node => processFunction(node),
-    ArrowFunctionExpression: node => processFunction(node),
-  })
+  let currentFnHasHead = false
+  const fnStack: boolean[] = []
 
-  function processFunction(node: any) {
-    if (!node.body)
-      return
+  walk(result.program, {
+    enter(node: any) {
+      const isFn = node.type === 'FunctionDeclaration'
+        || node.type === 'FunctionExpression'
+        || node.type === 'ArrowFunctionExpression'
 
-    const bodyCode = code.slice(node.body.start, node.body.end)
-    if (!bodyCode.includes('useHead') && !bodyCode.includes('useSeoMeta') && !bodyCode.includes('useHeadSafe'))
-      return
-
-    // Arrow with implicit JSX return
-    if (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment') {
-      returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
-      return
-    }
-
-    // Find return statements with JSX
-    const innerVisitor = new Visitor({
-      ReturnStatement(innerNode: any) {
-        if (!innerNode.argument)
+      if (isFn) {
+        fnStack.push(currentFnHasHead)
+        if (!node.body) {
+          currentFnHasHead = false
           return
-        let arg = innerNode.argument
+        }
+        const bodyCode = code.slice(node.body.start, node.body.end)
+        currentFnHasHead = bodyCode.includes('useHead') || bodyCode.includes('useSeoMeta') || bodyCode.includes('useHeadSafe')
+
+        // Arrow with implicit JSX return
+        if (currentFnHasHead && (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')) {
+          returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
+        }
+        return
+      }
+
+      if (currentFnHasHead && node.type === 'ReturnStatement') {
+        if (!node.argument)
+          return
+        let arg = node.argument
         if (arg.type === 'ParenthesizedExpression' && arg.expression)
           arg = arg.expression
         if (arg.type === 'JSXElement' || arg.type === 'JSXFragment')
           returns.push({ jsxStart: arg.start, jsxEnd: arg.end })
-      },
-    })
-    innerVisitor.visit(node.body)
-  }
-
-  visitor.visit(result.program)
+      }
+    },
+    leave(node: any) {
+      const isFn = node.type === 'FunctionDeclaration'
+        || node.type === 'FunctionExpression'
+        || node.type === 'ArrowFunctionExpression'
+      if (isFn) {
+        currentFnHasHead = fnStack.pop()!
+      }
+    },
+  })
 
   if (returns.length === 0)
     return false

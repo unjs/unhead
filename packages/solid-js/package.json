@@ -107,6 +107,7 @@
     "magic-string": "catalog:",
     "mlly": "catalog:",
     "oxc-parser": "catalog:",
+    "oxc-walker": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {

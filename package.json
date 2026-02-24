@@ -38,7 +38,6 @@
     "@fast-check/vitest": "catalog:",
     "@types/fs-extra": "catalog:",
     "@types/jsdom": "catalog:",
-    "acorn-loose": "catalog:",
     "bumpp": "catalog:",
     "devalue": "catalog:",
     "eslint": "catalog:",
