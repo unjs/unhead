@@ -28,8 +28,13 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
   const inputRef = useRef(input)
   inputRef.current = input
 
-  // Create entry in effect to avoid orphaned entries in React 18 StrictMode.
-  // React 18 StrictMode resets useRef between its double-render invocations,
+  // Server: create entry during render since useEffect doesn't run in SSR
+  if (unhead.ssr && !entryRef.current) {
+    entryRef.current = fn(unhead, input, options) as T
+  }
+
+  // Client: create entry in effect to avoid orphaned entries in React 18 StrictMode.
+  // StrictMode resets useRef between its double-render invocations,
   // so creating entries during render causes an orphaned entry that never gets disposed.
   useEffect(() => {
     const entry = fn(unhead, inputRef.current, options) as T
@@ -46,6 +51,9 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
   }, [input])
 
   // Return a stable proxy that delegates to the real entry once created
+  if (unhead.ssr) {
+    return entryRef.current as T
+  }
   const proxyRef = useRef<T | null>(null)
   if (!proxyRef.current) {
     proxyRef.current = {
