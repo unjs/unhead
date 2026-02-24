@@ -146,9 +146,19 @@
     "test:attw": "attw --pack",
     "prepack": "pnpm run build"
   },
+  "peerDependencies": {
+    "vite": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "hookable": "catalog:",
-    "magic-string": "catalog:",
+    "magic-string": "catalog:"
+  },
+  "devDependencies": {
     "vite": "catalog:"
   }
 }
