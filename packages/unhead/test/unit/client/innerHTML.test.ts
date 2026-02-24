@@ -34,7 +34,7 @@ describe('dom innerHTML', () => {
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html><head>
 
-      <script type="speculationrules">{"prefetch":[{"source":"list","urls":["/test"],"requires":["anonymous-client-ip-when-cross-origin"]}]}</script><script type="application/json">{"test":"test","something":{"else":123}}</script></head>
+      <script type="application/json">{"test":"test","something":{"else":123}}</script><script type="speculationrules">{"prefetch":[{"source":"list","urls":["/test"],"requires":["anonymous-client-ip-when-cross-origin"]}]}</script></head>
       <body>
 
       <div>

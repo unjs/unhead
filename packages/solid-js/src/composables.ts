@@ -10,6 +10,7 @@ import type {
   UseSeoMetaInput,
 } from 'unhead/types'
 import { createEffect, createSignal, onCleanup, onMount, useContext } from 'solid-js'
+import { isServer } from 'solid-js/web'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContext } from './context'
 
@@ -24,17 +25,18 @@ export function useUnhead(): Unhead {
 
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
-  const [entry] = createSignal<T>(fn(unhead, input, options))
-  createEffect(() => {
-    entry().patch(input)
-  }, [input])
-  createEffect(() => {
-    return () => {
-      // unmount
-      entry().dispose()
-    }
-  }, [])
-  return entry()
+  const entry = fn(unhead, input, options) as T
+  // On client, set up reactive updates and cleanup
+  if (!isServer) {
+    const [entrySignal] = createSignal<T>(entry)
+    createEffect(() => {
+      entrySignal().patch(input)
+    })
+    createEffect(() => {
+      return () => entry.dispose()
+    })
+  }
+  return entry
 }
 
 export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {

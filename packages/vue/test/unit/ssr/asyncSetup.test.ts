@@ -24,7 +24,7 @@ describe('vue ssr asyncSetup', () => {
     app.use(head)
     await renderToString(app)
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).eq('<title>new title</title>')
   })
 })

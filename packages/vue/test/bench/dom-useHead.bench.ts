@@ -45,6 +45,7 @@ describe('dom-useHead', () => {
         ],
         link: [
           {
+            rel: 'preload',
             as: 'style',
             href: () => `https://example.com/style.js?${i}`,
           },
@@ -52,12 +53,12 @@ describe('dom-useHead', () => {
       })
     }
     const dom = useDom()
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     page.value.image = page.value.image.replace('_0', '_1')
     page.value.title = 'Updated'
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
   }, {
     iterations: 100,
   })

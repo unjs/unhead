@@ -1,7 +1,7 @@
 {
   "name": "@unhead/addons",
   "type": "module",
-  "version": "2.1.5",
+  "version": "3.0.0-beta.6",
   "description": "Unhead addons for build tools and bundlers.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
@@ -62,16 +62,13 @@
   },
   "dependencies": {
     "@rollup/pluginutils": "catalog:",
-    "estree-walker": "catalog:",
     "magic-string": "catalog:",
-    "mlly": "catalog:",
+    "oxc-parser": "catalog:",
+    "oxc-walker": "catalog:",
     "ufo": "catalog:",
-    "unplugin": "catalog:",
-    "unplugin-ast": "catalog:"
+    "unplugin": "catalog:"
   },
   "devDependencies": {
-    "@babel/types": "catalog:",
-    "@types/estree": "catalog:",
     "rollup": "catalog:",
     "unhead": "workspace:*",
     "vite": "catalog:"

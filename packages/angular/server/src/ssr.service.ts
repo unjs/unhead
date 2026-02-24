@@ -2,7 +2,8 @@ import type { Unhead as UnheadSchema } from 'unhead/types'
 import { DOCUMENT } from '@angular/common'
 import { Inject, Injectable } from '@angular/core'
 import { UnheadInjectionToken } from '@unhead/angular'
-import { extractUnheadInputFromHtml, renderSSRHead } from 'unhead/server'
+import { parseHtmlForUnheadExtraction } from 'unhead/parser'
+import { renderSSRHead } from 'unhead/server'
 
 function attrToElement(element: HTMLElement, acc: string) {
   const [key, value] = acc.match(/([a-z0-9-]+)(?:="([^"]*)")?/i)?.slice(1, 3) || []
@@ -43,9 +44,9 @@ export class UnheadSSRService {
   ) {}
 
   async render() {
-    const { input } = extractUnheadInputFromHtml(this.document.documentElement.outerHTML)
+    const { input } = parseHtmlForUnheadExtraction(this.document.documentElement.outerHTML)
     this.unhead.entries.set(0, { _i: 0, input, options: {} })
-    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = await renderSSRHead(this.unhead, {
+    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(this.unhead, {
       omitLineBreaks: false,
     })
     htmlAttrs.match(attrRegex)?.forEach(attr => attrToElement(this.document.documentElement, attr))

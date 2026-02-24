@@ -1,4 +1,3 @@
-import type { RuntimeMode } from './head'
 import type { ResolvableHead } from './schema'
 import type { ResolvableProperties } from './util'
 
@@ -45,6 +44,22 @@ export interface InnerContent {
   textContent?: InnerContentVal
 }
 
+/**
+ * String-only inner content for elements that don't support object serialization (style, noscript).
+ */
+export interface StringInnerContent {
+  /**
+   * Text content of the tag.
+   *
+   * Warning: This is not safe for XSS. Do not use this with user input, use `textContent` instead.
+   */
+  innerHTML?: string
+  /**
+   * Sets the textContent of an element. Safer for XSS.
+   */
+  textContent?: string
+}
+
 export interface TagPriority {
   /**
    * The priority for rendering the tag, without this all tags are rendered as they are registered
@@ -62,7 +77,13 @@ export interface TagPriority {
 
 export type TagUserProperties = ResolvableProperties<TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams>
 
-export type TagKey = keyof ResolvableHead
+export type TagKey = keyof ResolvableHead | InternalTagKey
+
+/**
+ * Internal tag types used by plugins
+ * @internal
+ */
+export type InternalTagKey = '_flatMeta'
 
 export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
 
@@ -94,10 +115,6 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   _h?: string
-  /**
-   * @internal
-   */
-  mode?: RuntimeMode
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

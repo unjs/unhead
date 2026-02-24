@@ -2,29 +2,18 @@ import type { HeadTag, TemplateParams } from '../types/tags'
 import { processTemplateParams } from '../utils'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
-const SupportedAttrs = {
+const SupportedAttrs: Partial<Record<string, string>> = {
   meta: 'content',
   link: 'href',
   htmlAttrs: 'lang',
-} as const
+}
 
-const contentAttrs = ['innerHTML', 'textContent']
+const contentAttrs: (keyof Pick<HeadTag, 'innerHTML' | 'textContent'>)[] = ['innerHTML', 'textContent']
 
 export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
     hooks: {
-      'entries:normalize': (ctx) => {
-        const params = ctx.tags.filter(t => t.tag === 'templateParams' && t.mode === 'server')?.[0]?.props || {}
-        if (Object.keys(params).length) {
-          head._ssrPayload = {
-            templateParams: {
-              ...head._ssrPayload?.templateParams || {},
-              ...params,
-            },
-          }
-        }
-      },
       'tags:resolve': ({ tagMap, tags }) => {
         // we always process params so we can substitute the title
         const params = (tagMap.get('templateParams')?.props || {}) as TemplateParams
@@ -42,7 +31,6 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           if (tag.processTemplateParams === false) {
             continue
           }
-          // @ts-expect-error untyped
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.props[v] === 'string') {
             tag.props[v] = processTemplateParams(tag.props[v], params, sep)
@@ -50,9 +38,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
             for (const p of contentAttrs) {
-              // @ts-expect-error untyped
               if (typeof tag[p] === 'string')
-                // @ts-expect-error untyped
                 tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && tag.props.type.endsWith('json'))
             }
           }

@@ -10,12 +10,11 @@ describe('useScript events', () => {
       trigger: 'server',
     })
     expect(await new Promise<true>((resolve) => {
-      instance.status = 'loaded'
-      // trigger the hook to fire callbacks
-      head.hooks.callHook('script:updated', { script: instance })
       instance.onLoaded(() => {
         resolve(true)
       })
+      // Trigger the hook to simulate the script being loaded
+      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
     })).toBeTruthy()
   })
   it('dedupe', async () => {
@@ -34,14 +33,13 @@ describe('useScript events', () => {
     }, {
       key: 'once',
     })
-    instance.status = 'loaded'
-    // trigger the hook to fire callbacks
-    head.hooks.callHook('script:updated', { script: instance })
     await new Promise<void>((resolve) => {
       instance.onLoaded(() => {
         calls.push('c')
         resolve()
       })
+      // Trigger the hook to simulate the script being loaded
+      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
     })
     expect(calls).toMatchInlineSnapshot(`
       [

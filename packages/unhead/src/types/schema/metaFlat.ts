@@ -429,7 +429,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
     /**
      * MIME type of the video.
      */
-    type?: 'application/x-shockwave-flash' | 'video/mp4'
+    type?: 'application/x-shockwave-flash' | 'video/mp4' | 'video/webm'
 
     /**
      * Width of video in pixels. This property is required for videos.
@@ -463,7 +463,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * @see https://ogp.me/#type_video
    */
-  ogVideoType?: 'application/x-shockwave-flash' | 'video/mp4'
+  ogVideoType?: 'application/x-shockwave-flash' | 'video/mp4' | 'video/webm'
 
   /**
    * Width of video in pixels. This property is required for videos.
@@ -505,7 +505,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
     /**
      * MIME type of the image.
      */
-    type?: 'image/jpeg' | 'image/gif' | 'image/png'
+    type?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
 
     /**
      * Width of image in pixels. Specify height and width for your image to ensure that the image loads properly the first time it's shared.
@@ -540,7 +540,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * @see https://developers.facebook.com/docs/sharing/webmasters#images
    */
-  ogImageType?: 'image/jpeg' | 'image/gif' | 'image/png'
+  ogImageType?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
 
   /**
    * Width of image in pixels. Specify height and width for your image to ensure that the image loads properly the first time it's shared.
@@ -665,7 +665,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
      * MIME type of the image.
      * @deprecated Twitter removed this property from their card specification.
      */
-    type?: 'image/jpeg' | 'image/gif' | 'image/png'
+    type?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
 
     /**
      * Width of image in pixels. Specify height and width for your image to ensure that the image loads properly the first time it's shared.
@@ -717,7 +717,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    * @deprecated Twitter removed this property from their card specification.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
-  twitterImageType?: 'image/jpeg' | 'image/gif' | 'image/png'
+  twitterImageType?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
 
   /**
    * A text description of the image conveying the essential nature of an image to users who are visually impaired.
@@ -1022,20 +1022,4 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
     seconds?: number | string
     url?: string
   }
-  // deprecated meta
-  /**
-   * A comma-separated list of keywords - relevant to the page (Legacy tag used to tell search engines what the page is about).
-   * @deprecated the "keywords" metatag is no longer used.
-   * @see https://web.dev/learn/html/metadata/#keywords
-   */
-  keywords?: string
 }
-
-/**
- * @deprecated Use MetaFlat
- */
-export type MetaFlatInput = MetaFlat
-/**
- * @deprecated Use MetaFlat
- */
-export type ResolvedMetaFlat = MetaFlat

@@ -13,6 +13,9 @@ describe('state', () => {
       Map {
         1 => {
           "_i": 1,
+          "_o": {
+            "title": "hello",
+          },
           "input": {
             "title": "hello",
           },

@@ -1,4 +1,3 @@
-import { DeprecationsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
@@ -13,37 +12,13 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
         "headTags": "<script src="/my-important-script.js"></script>",
-        "htmlAttrs": "",
-      }
-    `)
-  })
-  it('body: true', async () => {
-    const head = createServerHeadWithContext({
-      plugins: [DeprecationsPlugin],
-    })
-    head.push({
-      script: [
-        {
-          src: '/my-important-script.js',
-          // @ts-expect-error untyped
-          body: true,
-        },
-      ],
-    })
-    const tags = await renderSSRHead(head)
-    expect(tags).toMatchInlineSnapshot(`
-      {
-        "bodyAttrs": "",
-        "bodyTags": "<script src="/my-important-script.js"></script>",
-        "bodyTagsOpen": "",
-        "headTags": "",
         "htmlAttrs": "",
       }
     `)
@@ -58,7 +33,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -79,7 +54,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = await renderSSRHead(head)
+    const tags = renderSSRHead(head)
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -8,6 +8,17 @@ export default defineProject({
     alias: {
       '@unhead/ssr': resolve(__dirname, 'src/server'),
       '@unhead/dom': resolve(__dirname, 'src/client'),
+      'unhead/stream/server': resolve(__dirname, 'src/stream/server.ts'),
+      'unhead/stream/client': resolve(__dirname, 'src/stream/client.ts'),
+      'unhead/server': resolve(__dirname, 'src/server/index.ts'),
+      'unhead/client': resolve(__dirname, 'src/client/index.ts'),
+      'unhead/types': resolve(__dirname, 'src/types/index.ts'),
+      'unhead/plugins': resolve(__dirname, 'src/plugins/index.ts'),
+      'unhead/utils': resolve(__dirname, 'src/utils/index.ts'),
+      'unhead/scripts': resolve(__dirname, 'src/scripts/index.ts'),
+      'unhead/parser': resolve(__dirname, 'src/parser/index.ts'),
+      'unhead/legacy': resolve(__dirname, 'src/legacy.ts'),
+      'unhead': resolve(__dirname, 'src/index.ts'),
     },
   },
   test: {

@@ -1,5 +1,8 @@
-import { sortTags } from '../utils'
+import type { HeadTag } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
+
+// @ts-expect-error untyped
+const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
 const formatKey = (k: string) => !k.includes(':key') ? k.split(':').join(':key:') : k
 

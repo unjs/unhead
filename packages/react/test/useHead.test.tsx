@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { useHead } from '../src'
 import { createHead, renderDOMHead, UnheadProvider } from '../src/client'
 import { renderSSRHead } from '../src/server'
@@ -57,6 +57,14 @@ function TestComponentWithMemo() {
 }
 
 describe('useHead hook', () => {
+  // Reset document state between tests to avoid interference from debounced renders
+  beforeEach(async () => {
+    // Wait for any pending debounced renders from previous tests
+    await new Promise(resolve => setTimeout(resolve, 10))
+    document.documentElement.className = ''
+    document.body.className = ''
+  })
+
   it('updates head title based on state', async () => {
     const head = createHead()
 
@@ -69,7 +77,7 @@ describe('useHead hook', () => {
     const input = getByRole('textbox') as HTMLInputElement
     fireEvent.change(input, { target: { value: 'Updated Title' } })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
   })
 
@@ -100,7 +108,7 @@ describe('useHead hook', () => {
     const descriptionInput = getAllByRole('textbox')[1] as HTMLInputElement
     fireEvent.change(descriptionInput, { target: { value: 'Updated Description' } })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     expect(headTags).toContain('<title>Updated Title</title>')
     expect(headTags).toContain('<meta name="description" content="Updated Description">')
     expect(headTags).toContain('<meta property="og:title" content="Updated Title">')
@@ -153,27 +161,41 @@ describe('useHead hook', () => {
     const htmlElement = document.documentElement
 
     // Trigger initial DOM rendering
-    await renderDOMHead(head)
+    await act(async () => {
+      await renderDOMHead(head)
+    })
 
     // Initially should not have dark class
     expect(htmlElement.classList.contains('dark')).toBe(false)
     expect(getByText('light')).toBeTruthy()
 
     // Toggle to dark mode
-    fireEvent.click(button)
-    await renderDOMHead(head)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    await act(async () => {
+      await renderDOMHead(head)
+    })
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
 
     // Toggle back to light mode
-    fireEvent.click(button)
-    await renderDOMHead(head)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    await act(async () => {
+      await renderDOMHead(head)
+    })
     expect(htmlElement.classList.contains('dark')).toBe(false)
     expect(getByText('light')).toBeTruthy()
 
     // Toggle again to dark mode
-    fireEvent.click(button)
-    await renderDOMHead(head)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    await act(async () => {
+      await renderDOMHead(head)
+    })
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
   })
@@ -209,21 +231,31 @@ describe('useHead hook', () => {
     const htmlElement = document.documentElement
 
     // Trigger initial DOM rendering
-    await renderDOMHead(head)
+    await act(async () => {
+      await renderDOMHead(head)
+    })
 
     // Initially should have dark class
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
 
     // Toggle to light mode
-    fireEvent.click(button)
-    await renderDOMHead(head)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    await act(async () => {
+      await renderDOMHead(head)
+    })
     expect(htmlElement.classList.contains('dark')).toBe(false)
     expect(getByText('light')).toBeTruthy()
 
     // Toggle back to dark mode
-    fireEvent.click(button)
-    await renderDOMHead(head)
+    await act(async () => {
+      fireEvent.click(button)
+    })
+    await act(async () => {
+      await renderDOMHead(head)
+    })
     expect(htmlElement.classList.contains('dark')).toBe(true)
     expect(getByText('dark')).toBeTruthy()
   })

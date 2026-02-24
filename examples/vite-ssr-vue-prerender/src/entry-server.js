@@ -32,7 +32,7 @@ export async function render(url, manifest) {
   // which we can then use to determine what files need to be preloaded for this
   // request.
   const preloadLinks = renderPreloadLinks(ctx.modules, manifest)
-  const headHtml = await renderSSRHead(head)
+  const headHtml = renderSSRHead(head)
   return [html, preloadLinks, headHtml]
 }
 

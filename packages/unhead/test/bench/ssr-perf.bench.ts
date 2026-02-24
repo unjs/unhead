@@ -48,6 +48,7 @@ describe('ssr bench', () => {
           ],
           link: [
             {
+              rel: 'preload',
               as: 'style',
               href: `https://example.com/style.js?${i}/${i2}`,
             },
@@ -56,7 +57,7 @@ describe('ssr bench', () => {
           head,
         })
       }
-      await renderSSRHead(head)
+      renderSSRHead(head)
     }
   }, {
     iterations: 1000,

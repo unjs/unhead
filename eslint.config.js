@@ -8,5 +8,6 @@ export default antfu({
 }, {
   ignores: [
     'examples/*',
+    '**/*.md',
   ],
 })

@@ -1,7 +1,7 @@
 import type { Head } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/addons'
 import { bench, describe } from 'vitest'
-import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'
+import { useHead, useSeoMeta } from '../packages/vue/src'
 import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
@@ -134,7 +134,7 @@ describe('ssr e2e bench', () => {
     }, {
       head,
     })
-    useServerHead({
+    useHead({
       htmlAttrs: { lang: 'en' },
     }, {
       head,
@@ -194,7 +194,7 @@ describe('ssr e2e bench', () => {
       // we want this to be last in our head
       tagPosition: 'bodyClose',
     }]
-    useServerHead({
+    useHead({
       script,
       meta,
     }, {
@@ -203,7 +203,7 @@ describe('ssr e2e bench', () => {
     })
     // Schema.org
     // entry
-    useServerHead({
+    useHead({
       script: [{
         type: 'application/ld+json',
         key: 'schema-org-graph',
@@ -237,7 +237,7 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
       omitLineBreaks: true,
     })
     function normalizeChunks(chunks: (string | undefined)[]) {
@@ -285,6 +285,6 @@ ${htmlContext.bodyAppend.join('\n')}
         },
       ],
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
 })

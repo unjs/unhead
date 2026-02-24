@@ -3,6 +3,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
+import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../unhead/test/fixtures'
 
@@ -23,7 +24,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(IndexSchema)
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -64,7 +65,7 @@ describe('vue e2e keys', () => {
 
     csrHead.push(AboutSchema)
 
-    expect(await csrHead.resolveTags()).toMatchInlineSnapshot(`
+    expect(resolveTags(csrHead)).toMatchInlineSnapshot(`
       [
         {
           "_d": "link:key:main-icon",
@@ -83,7 +84,7 @@ describe('vue e2e keys', () => {
     `)
 
     // @ts-expect-error untyped
-    expect([...csrHead._dom?.elMap.values()][2]).toMatchInlineSnapshot(`
+    expect([...csrHead._dom?._e.values()][2]).toMatchInlineSnapshot(`
       <link
         data-hid="main-icon"
         href="/page-index.ico"
@@ -134,7 +135,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(schema(false))
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
 
     expect(data).toMatchInlineSnapshot(`
       {

@@ -21,7 +21,7 @@ describe('styles', () => {
     activeDom?.window.document.documentElement.style.setProperty('--header-height', '50px')
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html style="--header-height: 50px; --foo: bar; --color-primary: red; --color-secondary: blue;"><head>
+      "<!DOCTYPE html><html style="--foo: bar; --color-primary: red; --color-secondary: blue; --header-height: 50px;"><head>
 
       </head>
       <body>
@@ -38,7 +38,7 @@ describe('styles', () => {
     el.dispose()
 
     expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html style="--header-height: 50px; --foo: bar;"><head>
+      "<!DOCTYPE html><html style="--foo: bar; --header-height: 50px;"><head>
 
       </head>
       <body>

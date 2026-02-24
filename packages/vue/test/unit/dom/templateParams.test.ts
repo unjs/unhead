@@ -34,7 +34,7 @@ describe('vue templateParams', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
@@ -69,7 +69,7 @@ describe('vue templateParams', () => {
       ],
     })
 
-    await renderDOMHead(head, { document: dom.window.document })
+    renderDOMHead(head, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>

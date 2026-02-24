@@ -14,7 +14,7 @@ describe('unhead vue e2e useSeoMeta', () => {
         articleTag: ['foo', 'bar'],
       })
     })
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -32,7 +32,7 @@ describe('unhead vue e2e useSeoMeta', () => {
         articleTag: ['foo', 'bar'],
       })
     })
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>
@@ -48,7 +48,7 @@ describe('unhead vue e2e useSeoMeta', () => {
     }, {
       head: csrHead,
     })
-    await renderDOMHead(csrHead, { document: dom.window.document })
+    renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
       "<html><head>

@@ -18,7 +18,7 @@ describe.runIf(process.env.FUZZY_TEST)('useHead', () => {
       script: c,
       c,
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
   it.prop([fc.string(), fc.string(), fc.anything()])('breaks', async (a, b, c) => {
     const head = createHead()
@@ -30,6 +30,6 @@ describe.runIf(process.env.FUZZY_TEST)('useHead', () => {
       script: c,
       c,
     })
-    await renderSSRHead(head)
+    renderSSRHead(head)
   })
 })

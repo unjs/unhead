@@ -6,14 +6,15 @@ import type {
   DataKeys,
   HeadEntryOptions,
   HtmlAttributes,
-  HttpEventAttributes,
-  LinkWithoutEvents,
+  Link,
+  LinkHttpEvents,
   MaybeArray,
   MaybeEventFnHandlers,
-  MetaFlatInput,
+  MetaFlat,
   Noscript,
   SchemaAugmentations,
-  ScriptWithoutEvents,
+  Script,
+  ScriptHttpEvents,
   Stringable,
   Style,
   Unhead,
@@ -28,11 +29,11 @@ export interface HtmlAttr extends Omit<HtmlAttributes, 'class' | 'style'> {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<ResolvableValue<Stringable> | Record<string, ResolvableValue<Stringable>>>
+  class?: MaybeArray<ResolvableValue<Stringable> | Record<string, ResolvableValue<boolean>>>
   /**
-   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   * The style attribute contains CSS styling declarations to be applied to the element.
    *
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
    */
   style?: MaybeArray<ResolvableValue<Stringable> | ResolvableProperties<CSSProperties>>
 }
@@ -43,22 +44,28 @@ export interface BodyAttr extends Omit<BodyAttributesWithoutEvents, 'class' | 's
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
    */
-  class?: MaybeArray<ResolvableValue<Stringable>> | Record<string, ResolvableValue<Stringable>>
+  class?: MaybeArray<ResolvableValue<Stringable> | Record<string, ResolvableValue<boolean>>>
   /**
-   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   * The style attribute contains CSS styling declarations to be applied to the element.
    *
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
    */
-  style?: MaybeArray<ResolvableValue<string>> | ResolvableProperties<CSSProperties>
+  style?: MaybeArray<ResolvableValue<Stringable> | ResolvableProperties<CSSProperties>>
 }
 
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: Stringable } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = _ResolvableTitleTemplate | Ref<string>
-export type ResolvableBase = ResolvableProperties<Base & SchemaAugmentations['base']>
-export type ResolvableLink = ResolvableProperties<LinkWithoutEvents & DataKeys & SchemaAugmentations['link']> & MaybeEventFnHandlers<HttpEventAttributes>
-export type ResolvableMeta = ResolvableProperties<UnheadMeta & DataKeys & SchemaAugmentations['meta']>
+export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
+type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
+type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
+  ? T extends Events
+    ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
+    : ResolvableProperties<T & Aug>
+  : never
+export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents>
+export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']>
 export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']>
-export type ResolvableScript = ResolvableProperties<ScriptWithoutEvents & DataKeys & SchemaAugmentations['script']> & MaybeEventFnHandlers<HttpEventAttributes>
+export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents>
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']>
 export type ResolvableHtmlAttributes = ResolvableProperties<HtmlAttr & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<BodyAttr & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
@@ -138,7 +145,7 @@ export interface ReactiveHead {
 }
 
 export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadClient<any> }
-// eslint-disable-next-line unused-imports/no-unused-vars
-export type UseHeadInput<Deprecated = never> = ResolvableValue<ReactiveHead>
-export type UseSeoMetaInput = ResolvableProperties<MetaFlatInput> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
+
+export type UseHeadInput<_Deprecated = never> = ResolvableValue<ReactiveHead>
+export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
 export type VueHeadClient<I = UseHeadInput> = Unhead<I> & Plugin

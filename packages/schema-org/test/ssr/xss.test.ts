@@ -23,7 +23,7 @@ describe('schema.org ssr xss', () => {
       }),
     ])
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -50,7 +50,7 @@ describe('schema.org ssr xss', () => {
       ])
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = renderSSRHead(ssrHead)
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

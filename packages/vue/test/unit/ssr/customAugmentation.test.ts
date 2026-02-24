@@ -11,6 +11,7 @@ describe('vue ssr custom augmentation', () => {
       title: string
       link: ({
         ['data-test']: any
+        rel: string
         href: 'link-one' | 'link/two' | 'link/number/three'
         CUSTOM_FIELD: 10
       })[]
@@ -28,6 +29,7 @@ describe('vue ssr custom augmentation', () => {
           link: [
             {
               'data-test': () => 'test',
+              'rel': 'stylesheet',
               'href': 'link/two',
               'CUSTOM_FIELD': 10,
             },
@@ -41,11 +43,11 @@ describe('vue ssr custom augmentation', () => {
     app.use(head)
     await renderToString(app)
 
-    const headResult = await renderSSRHead(head)
+    const headResult = renderSSRHead(head)
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>foo</title>
-      <link data-test="test" href="link/two" CUSTOM_FIELD="10">"
+      <link data-test="test" rel="stylesheet" href="link/two" CUSTOM_FIELD="10">"
     `,
     )
   })

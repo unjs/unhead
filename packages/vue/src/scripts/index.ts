@@ -1,9 +1,8 @@
-import { createSpyProxy, resolveScriptKey } from 'unhead/scripts'
+import { createSpyProxy } from 'unhead/scripts'
 import { useScript } from './useScript'
 
 export {
   createSpyProxy,
-  resolveScriptKey,
   useScript,
 }
 

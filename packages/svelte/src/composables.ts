@@ -22,9 +22,13 @@ export function useUnhead(): Unhead {
 }
 
 function withSideEffects<T extends ActiveHeadEntry<any>>(instance: T): T {
-  onDestroy(() => {
-    instance.dispose()
-  })
+  // Only register dispose on client - on server, Svelte runs onDestroy callbacks
+  // after render completes which would dispose entries before we can render the head tags
+  if (typeof window !== 'undefined') {
+    onDestroy(() => {
+      instance.dispose()
+    })
+  }
   return instance
 }
 

@@ -1,87 +1,41 @@
 import type { HeadTag } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
-const allowedMetaProperties = ['name', 'property', 'http-equiv']
-
-// Standard single-value meta tags that should always deduplicate
-// Tags not included here can be duped by using content: ['one', 'two']
-const StandardSingleMetaTags = new Set([
-  'viewport',
-  'description',
-  'keywords',
-  'robots',
-])
-
 export function isMetaArrayDupeKey(v: string) {
-  const parts = v.split(':')
-  if (!parts.length)
-    return false
-  return MetaTagsArrayable.has(parts[1])
+  return MetaTagsArrayable.has(v.split(':')[1])
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
-  const { props, tag: name } = tag
-  // must only be a single base so we always dedupe
-  if (UniqueTags.has(name))
-    return name
-
-  // support only a single canonical
-  if (name === 'link' && props.rel === 'canonical')
+  const { props, tag: t, key } = tag
+  if (UniqueTags.has(t))
+    return t
+  if (t === 'link' && props.rel === 'canonical')
     return 'canonical'
-
-  // dedupe alternate links with hreflang/type by that attribute
-  if (name === 'link' && props.rel === 'alternate') {
+  if (t === 'link' && props.rel === 'alternate') {
     const altKey = props.hreflang || props.type
-    if (altKey) {
+    if (altKey)
       return `alternate:${altKey}`
-    }
   }
 
   if (props.charset)
     return 'charset'
-
-  if (tag.tag === 'meta') {
-    for (const n of allowedMetaProperties) {
-      // open graph props can have multiple tags with the same property
-      if (props[n] !== undefined) {
-        const propValue = props[n]
-        const isStructured = propValue && typeof propValue === 'string' && propValue.includes(':')
-        const isStandardSingle = propValue && StandardSingleMetaTags.has(propValue)
-        const shouldAlwaysDedupe = isStructured || isStandardSingle
-        const keyPart = (!shouldAlwaysDedupe && tag.key) ? `:key:${tag.key}` : ''
-        return `${name}:${propValue}${keyPart}`
-      }
+  if (t === 'meta') {
+    for (const n of ['name', 'property', 'http-equiv']) {
+      const v = props[n]
+      if (v !== undefined)
+        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !/^(?:viewport|description|keywords|robots)$/.test(v) && key ? `:key:${key}` : ''}`
     }
   }
-
-  if (tag.key) {
-    return `${name}:key:${tag.key}`
-  }
-
-  if (props.id) {
-    return `${name}:id:${props.id}`
-  }
-
-  // bare alternate links (no hreflang/type/key/id) dedupe by href
-  if (name === 'link' && props.rel === 'alternate') {
+  if (key)
+    return `${t}:key:${key}`
+  if (props.id)
+    return `${t}:id:${props.id}`
+  if (t === 'link' && props.rel === 'alternate')
     return `alternate:${props.href || ''}`
-  }
-
-  // avoid duplicate tags with the same content (if no key is provided)
-  if (TagsWithInnerContent.has(name)) {
-    const v = tag.textContent || tag.innerHTML
-    if (v) {
-      return `${name}:content:${v}`
-    }
-  }
+  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag) {
-  const dedupe = tag._h || tag._d
-  if (dedupe)
-    return dedupe
-  const inner = tag.textContent || tag.innerHTML
-  if (inner)
-    return inner
-  return `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join(',')}`
+  return tag._h || tag._d || tag.textContent || tag.innerHTML
+    || `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${v}`).join()}`
 }

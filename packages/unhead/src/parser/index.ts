@@ -535,19 +535,19 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
         continue
       }
       else if (tagId === TAG_META) {
-        ;(input.meta ||= []).push(attributes)
+        ;(input.meta ||= []).push(attributes as any)
         position = tagEnd
         lastCopyPosition = position
         continue
       }
       else if (tagId === TAG_LINK) {
-        ;(input.link ||= []).push(attributes)
+        ;(input.link ||= []).push(attributes as any)
         position = tagEnd
         lastCopyPosition = position
         continue
       }
       else if (tagId === TAG_BASE && !input.base) {
-        input.base = attributes
+        input.base = attributes as any
         position = tagEnd
         lastCopyPosition = position
         continue

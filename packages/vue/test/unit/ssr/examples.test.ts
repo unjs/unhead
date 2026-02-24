@@ -79,6 +79,7 @@ describe('vue ssr examples', () => {
       useHead({
         link: [
           {
+            rel: 'canonical',
             href: '/',
           },
           ...[].map(() => ({
@@ -91,7 +92,7 @@ describe('vue ssr examples', () => {
 
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
-      "<link href="/">
+      "<link rel="canonical" href="/">
       <link rel="icon" type="image/svg" href="/favicon.svg">"
     `,
     )
@@ -131,7 +132,7 @@ describe('vue ssr examples', () => {
       }
     })
 
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -158,7 +159,7 @@ describe('vue ssr examples', () => {
         ],
       }))
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = renderSSRHead(head)
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
