@@ -1,17 +1,22 @@
-export interface Noscript {
+import type { GlobalAttributes } from './attributes/global'
+
+/**
+ * Content for noscript elements - either textContent or innerHTML, not both
+ */
+type NoscriptContent = {
   /**
-   * This attribute defines the unique ID.
+   * Sets the textContent of an element. Safer for XSS.
    */
-  id?: string
+  textContent?: string
+  innerHTML?: never
+} | {
+  textContent?: never
   /**
-   * The class global attribute is a space-separated list of the case-sensitive classes of the element.
+   * Text content of the tag.
    *
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class
+   * Warning: This is not safe for XSS. Do not use this with user input, use `textContent` instead.
    */
-  class?: string
-  /**
-   * The style global attribute contains CSS styling declarations to be applied to the element.
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style
-   */
-  style?: string
+  innerHTML?: string
 }
+
+export type Noscript = Pick<GlobalAttributes, 'id' | 'class' | 'style'> & NoscriptContent

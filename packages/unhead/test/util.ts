@@ -1,5 +1,5 @@
 import type { ServerUnhead } from '../src/server'
-import type { CreateClientHeadOptions, CreateServerHeadOptions, SerializableHead, SSRHeadPayload } from '../src/types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, ResolvableHead, SSRHeadPayload } from '../src/types'
 import { JSDOM } from 'jsdom'
 import { createHead as createClientHead } from '../src/client'
 import { createHead as createServerHead } from '../src/server'
@@ -78,10 +78,10 @@ ${payload?.bodyTags || ''}
   )
 }
 
-export const basicSchema: SerializableHead = {
+export const basicSchema = {
   htmlAttrs: {
     lang: 'en',
-    dir: 'ltr',
+    dir: 'ltr' as const,
   },
   bodyAttrs: {
     class: 'dark',
@@ -93,17 +93,17 @@ export const basicSchema: SerializableHead = {
   ],
   meta: [
     {
-      charset: 'utf-8',
+      charset: 'utf-8' as const,
     },
   ],
   link: [
     {
-      rel: 'icon',
+      rel: 'icon' as const,
       type: 'image/x-icon',
       href: 'https://cdn.example.com/favicon.ico',
     },
   ],
-}
+} satisfies ResolvableHead
 
 export function useDOMHead(options: CreateClientHeadOptions = {}) {
   // If no document is provided, create a fresh DOM for this test

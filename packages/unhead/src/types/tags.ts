@@ -44,6 +44,22 @@ export interface InnerContent {
   textContent?: InnerContentVal
 }
 
+/**
+ * String-only inner content for elements that don't support object serialization (style, noscript).
+ */
+export interface StringInnerContent {
+  /**
+   * Text content of the tag.
+   *
+   * Warning: This is not safe for XSS. Do not use this with user input, use `textContent` instead.
+   */
+  innerHTML?: string
+  /**
+   * Sets the textContent of an element. Safer for XSS.
+   */
+  textContent?: string
+}
+
 export interface TagPriority {
   /**
    * The priority for rendering the tag, without this all tags are rendered as they are registered

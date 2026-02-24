@@ -74,7 +74,7 @@ export interface GlobalAttributes {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inputmode
    */
-  inputmode?: string
+  inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   /**
    * Allows you to specify that a standard HTML element should behave like a registered custom built-in element.
    *
@@ -117,7 +117,7 @@ export interface GlobalAttributes {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang
    */
-  lang?: string
+  lang?: 'en' | 'en-US' | 'en-GB' | 'de' | 'fr' | 'es' | 'it' | 'ja' | 'ko' | 'nl' | 'pl' | 'pt' | 'pt-BR' | 'ru' | 'zh' | 'zh-CN' | 'zh-TW' | 'ar' | 'hi' | 'id' | 'th' | 'tr' | 'uk' | 'vi' | (string & Record<never, never>)
   /**
    * A cryptographic nonce ("number used once") which can be used by Content Security Policy to determine whether or not
    * a given fetch will be allowed to proceed.

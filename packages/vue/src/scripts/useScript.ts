@@ -1,9 +1,9 @@
 import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
+  GenericScript,
   HeadEntryOptions,
   SchemaAugmentations,
-  ScriptWithoutEvents,
 } from 'unhead/types'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { ResolvableProperties, VueHeadClient } from '../types'
@@ -17,7 +17,7 @@ export interface VueScriptInstance<T extends Record<symbol | string, any>> exten
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (ResolvableProperties<Omit<ScriptWithoutEvents & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
+export type UseScriptInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
 export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'> {
   /**
    * The trigger to load the script:

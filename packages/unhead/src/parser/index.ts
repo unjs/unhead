@@ -547,7 +547,7 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
         continue
       }
       else if (tagId === TAG_BASE && !input.base) {
-        input.base = attributes
+        input.base = attributes as any
         position = tagEnd
         lastCopyPosition = position
         continue

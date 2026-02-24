@@ -1,14 +1,19 @@
-import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority } from '../tags'
+import type { InnerContent, ProcessesTemplateParams, ResolvesDuplicates, StringInnerContent, TagPosition, TagPriority } from '../tags'
 import type { DeepResolvableProperties, ResolvableProperties, ResolvableValue, Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { Base } from './base'
 import type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
 import type { HtmlAttributes } from './htmlAttributes'
 import type {
+  AlternateFeedLink,
+  AlternateLanguageLink,
   AlternateLink,
+  AlternateMediaLink,
+  AppleTouchIconLink,
   AuthorLink,
   CanonicalLink,
   DnsPrefetchLink,
+  FaviconLink,
   GenericLink,
   HelpLink,
   IconLink,
@@ -17,6 +22,7 @@ import type {
   LinkBase,
   LinkHttpEvents,
   ManifestLink,
+  MaskIconLink,
   ModulepreloadLink,
   NextLink,
   PingbackLink,
@@ -73,9 +79,9 @@ export interface SchemaAugmentations {
   bodyAttrs: ResolvesDuplicates & TagPriority
   link: TagPriority & TagPosition & ResolvesDuplicates & ProcessesTemplateParams
   meta: TagPriority & ResolvesDuplicates & ProcessesTemplateParams
-  style: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
+  style: TagPriority & TagPosition & StringInnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
-  noscript: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
+  noscript: TagPriority & TagPosition & StringInnerContent & ResolvesDuplicates & ProcessesTemplateParams
 }
 
 export type MaybeArray<T> = T | T[]
@@ -114,9 +120,9 @@ export interface UnheadHtmlAttributes extends Omit<HtmlAttributes, 'class' | 'st
  * Unhead meta with support for array content values
  */
 export type UnheadMeta
-  = | (Omit<NameMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
-    | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
-    | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<Stringable> | null })
+  = | (Omit<NameMeta, 'content'> & { content?: MaybeArray<string | number> | null })
+    | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<string | number> | null })
+    | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<string | number> | null })
     | CharsetMeta
 
 export type MaybeEventFnHandlers<T> = {
@@ -125,11 +131,17 @@ export type MaybeEventFnHandlers<T> = {
 
 export type ResolvableTitle = ResolvableValue<Stringable> | ResolvableProperties<({ textContent: string } & SchemaAugmentations['title'])>
 export type ResolvableTitleTemplate = string | ((title?: string) => string | null) | null | ({ textContent: string | ((title?: string) => string | null) } & SchemaAugmentations['titleTemplate'])
-export type ResolvableBase = ResolvableProperties<Base & SchemaAugmentations['base']>
-export type ResolvableLink = ResolvableProperties<Link & SchemaAugmentations['link']> & MaybeEventFnHandlers<LinkHttpEvents>
-export type ResolvableMeta = ResolvableProperties<UnheadMeta & SchemaAugmentations['meta']>
+export type ResolvableBase = DistributeResolvable<Base, SchemaAugmentations['base']>
+type DistributeResolvable<T, Aug> = T extends any ? ResolvableProperties<T & Aug> : never
+type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
+  ? T extends Events
+    ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
+    : ResolvableProperties<T & Aug>
+  : never
+export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents>
+export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']>
 export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string
-export type ResolvableScript = ResolvableProperties<Script & SchemaAugmentations['script']> & MaybeEventFnHandlers<ScriptHttpEvents> | string
+export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
@@ -243,10 +255,15 @@ export type { BodyAttributesWithoutEvents, BodyEvents } from './bodyAttributes'
 
 // Link types (narrowed)
 export type {
+  AlternateFeedLink,
+  AlternateLanguageLink,
   AlternateLink,
+  AlternateMediaLink,
+  AppleTouchIconLink,
   AuthorLink,
   CanonicalLink,
   DnsPrefetchLink,
+  FaviconLink,
   GenericLink,
   HelpLink,
   IconLink,
@@ -255,6 +272,7 @@ export type {
   LinkBase,
   LinkHttpEvents,
   ManifestLink,
+  MaskIconLink,
   ModulepreloadLink,
   NextLink,
   PingbackLink,
@@ -302,12 +320,8 @@ export type {
   PropertyMeta,
 }
 
-// Legacy exports for backwards compatibility
-export type { GenericLink as LinkWithoutEvents } from './link'
 // Other types
 export type { MetaFlat } from './metaFlat'
-
-export type { GenericScript as ScriptWithoutEvents } from './script'
 export type { SpeculationRules } from './struct/speculationRules'
 
 // ============================================================================
@@ -325,5 +339,5 @@ export interface MetaGeneric extends MetaBase {
   'property'?: MetaProperties | (string & Record<never, never>)
   'http-equiv'?: 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | (string & Record<never, never>)
   'charset'?: 'utf-8' | (string & Record<never, never>)
-  'content'?: Stringable
+  'content'?: string | number
 }

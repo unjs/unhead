@@ -36,6 +36,41 @@ export interface ScriptBase extends Pick<GlobalAttributes, 'nonce' | 'id'>, Bloc
 }
 
 // ============================================================================
+// Shared Constraints
+// ============================================================================
+
+/**
+ * Props that are invalid on non-loadable script types (data scripts, inline scripts)
+ */
+interface NoLoadableScriptProps {
+  src?: never
+  async?: never
+  defer?: never
+  integrity?: never
+  crossorigin?: never
+  nomodule?: never
+}
+
+/**
+ * Content for data scripts - either textContent or innerHTML, not both
+ */
+type DataScriptTextContent<T = string | Record<string, unknown>> = {
+  /**
+   * Sets the textContent of an element. Safer for XSS.
+   * Can be a string or an object that will be serialized to JSON.
+   */
+  textContent?: T
+  innerHTML?: never
+} | {
+  textContent?: never
+  /**
+   * Sets the innerHTML of an element.
+   * Can be a string or an object that will be serialized to JSON.
+   */
+  innerHTML?: T
+}
+
+// ============================================================================
 // External JavaScript Script
 // ============================================================================
 
@@ -90,6 +125,10 @@ export interface ExternalScript extends ScriptBase, ScriptHttpEvents {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-nomodule
    */
   nomodule?: Booleanable
+  /** Inline content is ignored when `src` is present. */
+  textContent?: never
+  /** Inline content is ignored when `src` is present. */
+  innerHTML?: never
 }
 
 // ============================================================================
@@ -134,6 +173,10 @@ export interface ModuleScript extends ScriptBase, ScriptHttpEvents {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-integrity
    */
   integrity?: string
+  /** Inline content is ignored when `src` is present. */
+  textContent?: never
+  /** Inline content is ignored when `src` is present. */
+  innerHTML?: never
 }
 
 // ============================================================================
@@ -143,7 +186,7 @@ export interface ModuleScript extends ScriptBase, ScriptHttpEvents {
 /**
  * Inline JavaScript (no events, no src)
  */
-export interface InlineScript extends ScriptBase {
+export interface InlineScript extends ScriptBase, NoLoadableScriptProps {
   /**
    * This attribute indicates the type of script represented.
    *
@@ -154,7 +197,8 @@ export interface InlineScript extends ScriptBase {
    * Sets the textContent of an element. Safer for XSS.
    */
   textContent: string
-  // Explicitly no: src, async, defer, integrity, crossorigin
+  /** Use `textContent` instead for inline scripts (safer for XSS). */
+  innerHTML?: never
 }
 
 // ============================================================================
@@ -164,7 +208,7 @@ export interface InlineScript extends ScriptBase {
 /**
  * Inline ES Module script (no src)
  */
-export interface InlineModuleScript extends ScriptBase {
+export interface InlineModuleScript extends ScriptBase, NoLoadableScriptProps {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for module scripts.
@@ -176,7 +220,8 @@ export interface InlineModuleScript extends ScriptBase {
    * Sets the textContent of an element. Safer for XSS.
    */
   textContent: string
-  // Explicitly no: src, async, defer, integrity, crossorigin
+  /** Use `textContent` instead for inline scripts (safer for XSS). */
+  innerHTML?: never
 }
 
 // ============================================================================
@@ -187,7 +232,7 @@ export interface InlineModuleScript extends ScriptBase {
  * JSON-LD structured data (uses textContent for XSS safety)
  * Note: For full schema.org typing, use @unhead/schema-org with useSchemaOrg()
  */
-export interface JsonLdScript extends ScriptBase {
+export type JsonLdScript = ScriptBase & NoLoadableScriptProps & DataScriptTextContent & {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for JSON-LD scripts.
@@ -195,12 +240,6 @@ export interface JsonLdScript extends ScriptBase {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type: 'application/ld+json'
-  /**
-   * Sets the textContent of an element. Safer for XSS.
-   * Can be a string or an object that will be serialized to JSON.
-   */
-  textContent: string | Record<string, unknown>
-  // Explicitly no: src, async, defer, integrity, crossorigin
 }
 
 // ============================================================================
@@ -210,7 +249,7 @@ export interface JsonLdScript extends ScriptBase {
 /**
  * Speculation Rules (uses textContent for safety)
  */
-export interface SpeculationRulesScript extends ScriptBase {
+export type SpeculationRulesScript = ScriptBase & NoLoadableScriptProps & DataScriptTextContent<string | SpeculationRules> & {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for speculation rules scripts.
@@ -218,12 +257,6 @@ export interface SpeculationRulesScript extends ScriptBase {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type: 'speculationrules'
-  /**
-   * Sets the textContent of an element.
-   * Can be a string or a SpeculationRules object that will be serialized to JSON.
-   */
-  textContent: string | SpeculationRules
-  // Explicitly no: src, async, defer, integrity, crossorigin
 }
 
 // ============================================================================
@@ -241,7 +274,7 @@ export interface ImportMapConfig {
 /**
  * Import map
  */
-export interface ImportMapScript extends ScriptBase {
+export type ImportMapScript = ScriptBase & NoLoadableScriptProps & {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for import map scripts.
@@ -254,7 +287,7 @@ export interface ImportMapScript extends ScriptBase {
    * Can be a string or an ImportMapConfig object that will be serialized to JSON.
    */
   textContent: string | ImportMapConfig
-  // Explicitly no: src, async, defer, integrity, crossorigin
+  innerHTML?: never
 }
 
 // ============================================================================
@@ -264,7 +297,7 @@ export interface ImportMapScript extends ScriptBase {
 /**
  * Application JSON script (generic JSON data)
  */
-export interface ApplicationJsonScript extends ScriptBase {
+export type ApplicationJsonScript = ScriptBase & NoLoadableScriptProps & DataScriptTextContent & {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for JSON scripts.
@@ -272,12 +305,6 @@ export interface ApplicationJsonScript extends ScriptBase {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type: 'application/json'
-  /**
-   * Sets the textContent of an element. Safer for XSS.
-   * Can be a string or an object that will be serialized to JSON.
-   */
-  textContent: string | Record<string, unknown>
-  // Explicitly no: src, async, defer, integrity, crossorigin
 }
 
 // ============================================================================
@@ -285,10 +312,13 @@ export interface ApplicationJsonScript extends ScriptBase {
 // ============================================================================
 
 /**
- * Generic/fallback (keeps full flexibility)
- * Note: Event handlers are added separately via MaybeEventFnHandlers in head.ts
+ * Fallback for custom or unknown `type` values.
+ *
+ * **Warning:** Misspelling a known `type` value (e.g. `'aplication/ld+json'` instead of
+ * `'application/ld+json'`) will silently match this type and bypass all validation.
+ * Use the narrowed script types (e.g. {@link ExternalScript}, {@link JsonLdScript}) for type safety.
  */
-export interface GenericScript extends ScriptBase {
+export interface GenericScript extends ScriptBase, ScriptHttpEvents {
   /**
    * This attribute specifies the URI of an external script.
    *
@@ -341,7 +371,7 @@ export interface GenericScript extends ScriptBase {
    *
    * Warning: This is not safe for XSS. Do not use this with user input, use `textContent` instead.
    */
-  innerHTML?: string
+  innerHTML?: string | Record<string, unknown>
   /**
    * Sets the textContent of an element. Safer for XSS.
    */
@@ -374,12 +404,3 @@ export type Script
     | ImportMapScript
     | ApplicationJsonScript
     | GenericScript
-
-// ============================================================================
-// Legacy Exports (for backwards compatibility during migration)
-// ============================================================================
-
-/**
- * @deprecated Use the narrowed Script union type instead
- */
-export type ScriptWithoutEvents = GenericScript

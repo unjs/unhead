@@ -1,4 +1,3 @@
-import type { Stringable } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { GlobalAttributes } from './attributes/global'
 
@@ -25,12 +24,8 @@ export type MetaNames
     | 'apple-mobile-web-app-title'
     | 'application-name'
     | 'author'
-    | 'charset'
     | 'color-scheme'
-    | 'content-security-policy'
-    | 'content-type'
     | 'creator'
-    | 'default-style'
     | 'description'
     | 'fb:app_id'
     | 'format-detection'
@@ -46,7 +41,6 @@ export type MetaNames
     | 'publisher'
     | 'rating'
     | 'referrer'
-    | 'refresh'
     | 'robots'
     | 'theme-color'
     | 'twitter:app:id:googleplay'
@@ -76,7 +70,6 @@ export type MetaNames
     | 'twitter:site'
     | 'twitter:title'
     | 'viewport'
-    | 'x-ua-compatible'
 
 /**
  * Known meta property values (OpenGraph, etc.)
@@ -148,13 +141,16 @@ export interface NameMeta extends MetaBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-name
    */
-  name: MetaNames | (string & Record<never, never>)
+  'name': MetaNames | (string & Record<never, never>)
   /**
    * This attribute contains the value for the name attribute.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-content
    */
-  content: Stringable
+  'content': string | number
+  'property'?: never
+  'http-equiv'?: never
+  'charset'?: never
 }
 
 // ============================================================================
@@ -170,13 +166,16 @@ export interface PropertyMeta extends MetaBase {
    * The property attribute is used to define a property associated with the content attribute.
    * Mainly used for og and twitter meta tags.
    */
-  property: MetaProperties | (string & Record<never, never>)
+  'property': MetaProperties | (string & Record<never, never>)
   /**
    * This attribute contains the value for the property attribute.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-content
    */
-  content: Stringable
+  'content': string | number
+  'name'?: never
+  'http-equiv'?: never
+  'charset'?: never
 }
 
 // ============================================================================
@@ -200,7 +199,10 @@ export interface HttpEquivMeta extends MetaBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-content
    */
-  'content': Stringable
+  'content': string | number
+  'name'?: never
+  'property'?: never
+  'charset'?: never
 }
 
 // ============================================================================
@@ -218,7 +220,11 @@ export interface CharsetMeta extends MetaBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-charset
    */
-  charset: 'utf-8' | (string & Record<never, never>)
+  'charset': 'utf-8' | (string & Record<never, never>)
+  'name'?: never
+  'property'?: never
+  'http-equiv'?: never
+  'content'?: never
 }
 
 // ============================================================================

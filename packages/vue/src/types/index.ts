@@ -9,7 +9,7 @@ export type * from './util'
 
 export type { ActiveHeadEntry, HeadEntryOptions, HeadTag, RawInput, RenderSSRHeadOptions, ResolvableHead, SerializableHead, Unhead } from 'unhead/types'
 
-export type { AriaAttributes, BodyAttributesWithoutEvents, BodyEvents, DataKeys, GlobalAttributes, HttpEventAttributes, LinkWithoutEvents, MetaFlat, ScriptWithoutEvents, SpeculationRules } from 'unhead/types'
+export type { AriaAttributes, BodyAttributesWithoutEvents, BodyEvents, DataKeys, GenericLink, GenericScript, GlobalAttributes, HttpEventAttributes, MetaFlat, SpeculationRules } from 'unhead/types'
 /** @deprecated */
 export type MergeHead = object
 /** @deprecated Use MetaFlat instead */
