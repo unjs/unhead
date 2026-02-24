@@ -5,7 +5,7 @@ import { createHead, UnheadProvider } from '@unhead/react/client'
 import React, { StrictMode, useEffect, useRef } from 'react'
 import { describe, expect, it } from 'vitest'
 
-console.log('React version:', React.version, '(debug tests)')
+console.warn('React version:', React.version, '(debug tests)')
 
 function wait(ms = 50) {
   return new Promise<void>(resolve => setTimeout(resolve, ms))
@@ -55,13 +55,15 @@ describe('debug React 18 StrictMode entry lifecycle', () => {
       </StrictMode>,
     )
 
-    await act(async () => { await wait() })
+    await act(async () => {
+      await wait()
+    })
 
     events.push(`after mount settled, entries: ${head.entries.size}, keys: [${[...head.entries.keys()]}]`)
 
-    console.log('\n=== Event Log ===')
-    events.forEach((e, i) => console.log(`${i}: ${e}`))
-    console.log('=================\n')
+    console.warn('\n=== Event Log ===')
+    events.forEach((e, i) => console.warn(`${i}: ${e}`))
+    console.warn('=================\n')
 
     // Verify we only have init + component
     expect(head.entries.size).toBe(2)
@@ -121,13 +123,15 @@ describe('debug React 18 StrictMode entry lifecycle', () => {
       </StrictMode>,
     )
 
-    await act(async () => { await wait() })
+    await act(async () => {
+      await wait()
+    })
 
     events.push(`settled, entries: ${head.entries.size}, keys: [${[...head.entries.keys()]}]`)
 
-    console.log('\n=== withSideEffects Trace ===')
-    events.forEach((e, i) => console.log(`${i}: ${e}`))
-    console.log(`entry IDs created: [${entryIds}]`)
-    console.log('=============================\n')
+    console.warn('\n=== withSideEffects Trace ===')
+    events.forEach((e, i) => console.warn(`${i}: ${e}`))
+    console.warn(`entry IDs created: [${entryIds}]`)
+    console.warn('=============================\n')
   })
 })
