@@ -3,6 +3,7 @@ import { unheadReactPlugin } from '../src/stream/vite'
 
 describe('unheadReactPlugin', () => {
   const plugin = unheadReactPlugin() as any
+  const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
     it('has correct name', () => {
@@ -15,9 +16,8 @@ describe('unheadReactPlugin', () => {
   })
 
   describe('transform', () => {
-    it('skips non-jsx/tsx files', () => {
-      const result = plugin.transform!('useHead({})', 'file.ts')
-      expect(result).toBeNull()
+    it('filters to jsx/tsx files only', () => {
+      expect(plugin.transform.filter.id).toEqual(/\.[jt]sx$/)
     })
 
     it('skips files without Suspense', () => {
@@ -26,7 +26,7 @@ describe('unheadReactPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).toBeNull()
     })
 
@@ -40,7 +40,7 @@ describe('unheadReactPlugin', () => {
           )
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<HeadStream />')
     })
@@ -53,7 +53,7 @@ describe('unheadReactPlugin', () => {
           return <div>Content</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: false })
+      const result = transform(code, 'app.tsx', { ssr: false })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/react/stream/client\'')
     })
@@ -66,7 +66,7 @@ describe('unheadReactPlugin', () => {
           return <div>Content</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      const result = transform(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/react/stream/server\'')
     })
@@ -80,7 +80,7 @@ describe('unheadReactPlugin', () => {
           return <div>Content</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      const result = transform(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('createStreamableHead, HeadStream')
     })
@@ -97,7 +97,7 @@ describe('unheadReactPlugin', () => {
           return <div>Page 2</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code.match(/<HeadStream \/>/g)?.length).toBe(2)
     })
@@ -110,7 +110,7 @@ describe('unheadReactPlugin', () => {
           return <div>Content</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<HeadStream />')
     })
@@ -125,7 +125,7 @@ describe('unheadReactPlugin', () => {
           )
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).toBeNull()
     })
 
@@ -137,7 +137,7 @@ describe('unheadReactPlugin', () => {
           return <div>Content</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })

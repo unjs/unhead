@@ -102,9 +102,6 @@ catalogs:
     magic-string:
       specifier: ^0.30.21
       version: 0.30.21
-    mlly:
-      specifier: ^1.8.0
-      version: 1.8.0
     oxc-parser:
       specifier: ^0.106.0
       version: 0.106.0
@@ -828,9 +825,6 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 0.30.21
-      mlly:
-        specifier: 'catalog:'
-        version: 1.8.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.106.0
@@ -890,9 +884,6 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 0.30.21
-      mlly:
-        specifier: 'catalog:'
-        version: 1.8.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.106.0
@@ -927,9 +918,12 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 0.30.21
-      mlly:
+      oxc-parser:
         specifier: 'catalog:'
-        version: 1.8.0
+        version: 0.106.0
+      oxc-walker:
+        specifier: 'catalog:'
+        version: 0.7.0(oxc-parser@0.106.0)
       unhead:
         specifier: workspace:*
         version: link:../unhead
@@ -967,9 +961,12 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 0.30.21
-      mlly:
+      oxc-parser:
         specifier: 'catalog:'
-        version: 1.8.0
+        version: 0.106.0
+      oxc-walker:
+        specifier: 'catalog:'
+        version: 0.7.0(oxc-parser@0.106.0)
       unhead:
         specifier: workspace:*
         version: link:../unhead

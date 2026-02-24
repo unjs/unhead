@@ -3,6 +3,7 @@ import { unheadSolidPlugin } from '../src/stream/vite'
 
 describe('unheadSolidPlugin', () => {
   const plugin = unheadSolidPlugin() as any
+  const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
     it('has correct name', () => {
@@ -15,9 +16,8 @@ describe('unheadSolidPlugin', () => {
   })
 
   describe('transform', () => {
-    it('skips non-jsx/tsx files', () => {
-      const result = plugin.transform!('useHead({})', 'file.ts')
-      expect(result).toBeNull()
+    it('filters to jsx/tsx files only', () => {
+      expect(plugin.transform.filter.id).toEqual(/\.[jt]sx$/)
     })
 
     it('skips files without useHead', () => {
@@ -26,7 +26,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).toBeNull()
     })
 
@@ -38,7 +38,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<><HeadStream />')
       expect(result!.code).toContain('</>')
@@ -52,7 +52,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: false })
+      const result = transform(code, 'app.tsx', { ssr: false })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/solid-js/stream/client\'')
     })
@@ -65,7 +65,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      const result = transform(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/solid-js/stream/server\'')
     })
@@ -79,7 +79,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx', { ssr: true })
+      const result = transform(code, 'app.tsx', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('createStreamableHead, HeadStream')
     })
@@ -92,7 +92,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<><HeadStream />')
     })
@@ -105,7 +105,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<><HeadStream />')
     })
@@ -120,7 +120,7 @@ describe('unheadSolidPlugin', () => {
           )
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<><HeadStream />')
     })
@@ -133,7 +133,7 @@ describe('unheadSolidPlugin', () => {
           return <div>Hello</div>
         }
       `
-      const result = plugin.transform!(code, 'app.tsx')
+      const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })

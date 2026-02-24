@@ -1,6 +1,6 @@
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import MagicString from 'magic-string'
-import { findStaticImports } from 'mlly'
+import { parseAndWalk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
@@ -64,14 +64,32 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
     return true
 
   const scriptEnd = scriptMatch.index! + scriptMatch[0].length
-  const imports = findStaticImports(code)
-  const existing = imports.find(i => i.specifier === importPath)
+  const scriptCloseIndex = code.indexOf('</script>', scriptEnd)
+  if (scriptCloseIndex === -1)
+    return true
 
-  if (existing) {
-    if (!existing.imports?.includes('HeadStream')) {
-      const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
+  const scriptContent = code.slice(scriptEnd, scriptCloseIndex)
+
+  let existingImport: { start: number, end: number, specifiers: string[] } | null = null
+  parseAndWalk(scriptContent, id, {
+    parseOptions: { lang: 'ts' },
+    enter(node: any) {
+      if (node.type === 'ImportDeclaration' && node.source.value === importPath) {
+        existingImport = {
+          start: scriptEnd + node.start,
+          end: scriptEnd + node.end,
+          specifiers: node.specifiers?.map((spec: any) => spec.local?.name).filter(Boolean) || [],
+        }
+        this.skip()
+      }
+    },
+  })
+
+  if (existingImport) {
+    if (!existingImport.specifiers.includes('HeadStream')) {
+      const inner = existingImport.specifiers.join(', ')
       const newImports = inner ? `${inner}, HeadStream` : 'HeadStream'
-      s.overwrite(existing.start, existing.end, `import { ${newImports} } from '${importPath}'\n`)
+      s.overwrite(existingImport.start, existingImport.end, `import { ${newImports} } from '${importPath}'\n`)
     }
   }
   else {
@@ -105,12 +123,9 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 export function unheadVuePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/vue',
+    filter: /\.vue$/,
     mode: options?.mode,
     transform(code, id, opts) {
-      // Only process .vue files
-      if (!/\.vue$/.test(id))
-        return null
-
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null

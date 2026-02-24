@@ -3,7 +3,7 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  externals: ['solid-js', 'vite', 'magic-string', 'mlly', 'oxc-parser'],
+  externals: ['solid-js', 'vite', 'magic-string', 'oxc-parser', 'oxc-walker'],
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/server', name: 'server' },
