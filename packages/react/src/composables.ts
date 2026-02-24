@@ -25,29 +25,39 @@ export function useUnhead(): Unhead {
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
   const entryRef = useRef<T | null>(null)
+  const inputRef = useRef(input)
+  inputRef.current = input
 
-  // Create entry only once, even in Strict Mode
-  if (!entryRef.current) {
-    entryRef.current = fn(unhead, input, options)
-  }
-
-  const entry = entryRef.current
-
-  // Patch entry when input changes
+  // Create entry in effect to avoid orphaned entries in React 18 StrictMode.
+  // React 18 StrictMode resets useRef between its double-render invocations,
+  // so creating entries during render causes an orphaned entry that never gets disposed.
   useEffect(() => {
-    entry?.patch(input)
-  }, [input, entry])
-
-  // Cleanup on unmount
-  useEffect(() => {
+    const entry = fn(unhead, inputRef.current, options) as T
+    entryRef.current = entry
     return () => {
-      entry?.dispose()
-      // Clear ref so new entry is created on remount
+      entry.dispose()
       entryRef.current = null
     }
-  }, [entry])
+  }, [unhead])
 
-  return entry as T
+  // Patch when input changes
+  useEffect(() => {
+    entryRef.current?.patch(input)
+  }, [input])
+
+  // Return a stable proxy that delegates to the real entry once created
+  const proxyRef = useRef<T | null>(null)
+  if (!proxyRef.current) {
+    proxyRef.current = {
+      patch: (newInput: any) => { entryRef.current?.patch(newInput) },
+      dispose: () => {
+        entryRef.current?.dispose()
+        entryRef.current = null
+      },
+      _poll: (rm?: boolean) => { entryRef.current?._poll(rm) },
+    } as T
+  }
+  return proxyRef.current
 }
 
 export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
