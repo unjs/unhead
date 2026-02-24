@@ -115,10 +115,17 @@ export interface PreloadLinkBase extends LinkBase, LinkHttpEvents {
 }
 
 /**
- * Preload: image (has imagesrcset/imagesizes)
+ * Base fields for image preload links.
  */
-export interface PreloadImageLink extends PreloadLinkBase {
+interface PreloadImageLinkFields extends Omit<PreloadLinkBase, 'href'> {
   as: 'image'
+  /**
+   * This attribute specifies the URL of the linked resource.
+   * Optional for image preloads when using imagesrcset instead.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href?: string
   type?: 'image/webp' | 'image/avif' | 'image/png' | 'image/jpeg' | 'image/gif' | 'image/svg+xml' | (string & Record<never, never>)
   /**
    * For rel="preload" and as="image" only, the imagesizes attribute indicates
@@ -135,6 +142,14 @@ export interface PreloadImageLink extends PreloadLinkBase {
    */
   imagesrcset?: string
 }
+
+/**
+ * Preload: image (has imagesrcset/imagesizes).
+ * Requires at least one of `href` or `imagesrcset`.
+ */
+export type PreloadImageLink
+  = | (PreloadImageLinkFields & { href: string })
+    | (PreloadImageLinkFields & { imagesrcset: string })
 
 /**
  * Preload: font
@@ -247,10 +262,13 @@ export interface PrefetchLink extends LinkBase {
 // ============================================================================
 
 /**
- * Icon-specific link
+ * Favicon link.
+ *
+ * Prefer `rel: 'icon'` over `'shortcut icon'` — the `shortcut` keyword is non-standard
+ * and was only used by older versions of Internet Explorer.
  */
-export interface IconLink extends LinkBase {
-  rel: 'icon' | 'apple-touch-icon' | 'shortcut icon'
+export interface FaviconLink extends LinkBase {
+  rel: 'icon' | 'shortcut icon'
   /**
    * This attribute specifies the URL of the linked resource.
    *
@@ -262,20 +280,65 @@ export interface IconLink extends LinkBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-sizes
    */
-  sizes?: 'any' | '16x16' | '32x32' | '48x48' | '64x64' | '96x96' | '128x128' | '180x180' | '192x192' | '512x512' | (string & Record<never, never>)
+  sizes?: 'any' | '16x16' | '32x32' | '48x48' | '64x64' | '96x96' | '128x128' | '192x192' | '512x512' | (string & Record<never, never>)
   /**
    * This attribute is used to define the type of the content linked to.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
    */
   type?: 'image/png' | 'image/svg+xml' | 'image/x-icon' | 'image/gif' | 'image/webp' | (string & Record<never, never>)
+}
+
+/**
+ * Apple touch icon link
+ */
+export interface AppleTouchIconLink extends LinkBase {
+  rel: 'apple-touch-icon'
   /**
-   * The color attribute is used with the mask-icon link type.
+   * This attribute specifies the URL of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href: string
+  /**
+   * This attribute defines the sizes of the icons for visual media contained in the resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-sizes
+   */
+  sizes?: '180x180' | '152x152' | '120x120' | '76x76' | (string & Record<never, never>)
+  /**
+   * This attribute is used to define the type of the content linked to.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
+   */
+  type?: 'image/png' | (string & Record<never, never>)
+}
+
+/**
+ * Mask icon link (Safari pinned tab). Requires `color`.
+ *
+ * @see https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/pinnedTabs/pinnedTabs.html
+ */
+export interface MaskIconLink extends LinkBase {
+  rel: 'mask-icon'
+  /**
+   * This attribute specifies the URL of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href: string
+  /**
+   * The color for the mask icon. Required per spec.
    *
    * @see https://html.spec.whatwg.org/multipage/semantics.html#attr-link-color
    */
-  color?: string
+  color: string
 }
+
+/**
+ * Combined icon link union
+ */
+export type IconLink = FaviconLink | AppleTouchIconLink | MaskIconLink
 
 // ============================================================================
 // Manifest Link
@@ -379,9 +442,46 @@ export interface PrerenderLink extends LinkBase {
 // ============================================================================
 
 /**
- * Alternate link (RSS, translations, etc.)
+ * Alternate language link (hreflang translations)
  */
-export interface AlternateLink extends LinkBase {
+export interface AlternateLanguageLink extends LinkBase {
+  rel: 'alternate'
+  /**
+   * This attribute specifies the URL of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href: string
+  /**
+   * This attribute indicates the language of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-hreflang
+   */
+  hreflang: 'x-default' | 'en' | 'en-US' | 'en-GB' | 'de' | 'fr' | 'es' | 'it' | 'ja' | 'ko' | 'nl' | 'pl' | 'pt' | 'pt-BR' | 'ru' | 'zh' | 'zh-CN' | 'zh-TW' | 'ar' | 'hi' | 'id' | 'th' | 'tr' | 'uk' | 'vi' | (string & Record<never, never>)
+  /**
+   * The title attribute defines the title of the link.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-title
+   */
+  title?: string
+  /**
+   * This attribute is used to define the type of the content linked to.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
+   */
+  type?: string
+  /**
+   * This attribute specifies the media that the linked resource applies to.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-media
+   */
+  media?: string
+}
+
+/**
+ * Alternate feed link (RSS, Atom, JSON Feed)
+ */
+export interface AlternateFeedLink extends LinkBase {
   rel: 'alternate'
   /**
    * This attribute specifies the URL of the linked resource.
@@ -394,13 +494,7 @@ export interface AlternateLink extends LinkBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
    */
-  type?: 'application/rss+xml' | 'application/atom+xml' | 'application/json' | (string & Record<never, never>)
-  /**
-   * This attribute indicates the language of the linked resource.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-hreflang
-   */
-  hreflang?: string
+  type: 'application/rss+xml' | 'application/atom+xml' | 'application/json' | (string & Record<never, never>)
   /**
    * The title attribute defines the title of the link.
    *
@@ -408,12 +502,49 @@ export interface AlternateLink extends LinkBase {
    */
   title?: string
   /**
+   * This attribute indicates the language of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-hreflang
+   */
+  hreflang?: 'x-default' | 'en' | 'en-US' | 'en-GB' | 'de' | 'fr' | 'es' | 'it' | 'ja' | 'ko' | 'nl' | 'pl' | 'pt' | 'pt-BR' | 'ru' | 'zh' | 'zh-CN' | 'zh-TW' | 'ar' | 'hi' | 'id' | 'th' | 'tr' | 'uk' | 'vi' | (string & Record<never, never>)
+}
+
+/**
+ * Alternate media link (responsive/device-specific)
+ */
+export interface AlternateMediaLink extends LinkBase {
+  rel: 'alternate'
+  /**
+   * This attribute specifies the URL of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href: string
+  /**
    * This attribute specifies the media that the linked resource applies to.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-media
    */
-  media?: string
+  media: string
+  /**
+   * The title attribute defines the title of the link.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-title
+   */
+  title?: string
+  /**
+   * This attribute is used to define the type of the content linked to.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
+   */
+  type?: string
 }
+
+/**
+ * Combined alternate link union.
+ * Requires at least one of: hreflang (language), type (feed), or media (responsive).
+ */
+export type AlternateLink = AlternateLanguageLink | AlternateFeedLink | AlternateMediaLink
 
 // ============================================================================
 // Other Standard Links
@@ -479,19 +610,22 @@ export interface PingbackLink extends LinkBase {
 // ============================================================================
 
 /**
- * Fallback for custom/unknown rel types (keeps full flexibility)
- * Note: Event handlers are added separately via MaybeEventFnHandlers in head.ts
+ * Fallback for custom or unknown `rel` types.
+ *
+ * **Warning:** Misspelling a known `rel` value (e.g. `'styleshet'` instead of `'stylesheet'`)
+ * will silently match this type and bypass all validation. Use the narrowed link types
+ * (e.g. {@link StylesheetLink}, {@link PreloadLink}) for type-safe links.
  */
 export interface GenericLink extends LinkBase {
-  rel?: string
-  href?: string
+  rel: string
+  href: string
   as?: 'audio' | 'document' | 'embed' | 'fetch' | 'font' | 'image' | 'object' | 'script' | 'style' | 'track' | 'video' | 'worker' | (string & Record<never, never>)
   sizes?: string
   type?: string
   media?: string
   crossorigin?: '' | 'anonymous' | 'use-credentials'
   integrity?: string
-  hreflang?: string
+  hreflang?: 'x-default' | 'en' | 'en-US' | 'en-GB' | 'de' | 'fr' | 'es' | 'it' | 'ja' | 'ko' | 'nl' | 'pl' | 'pt' | 'pt-BR' | 'ru' | 'zh' | 'zh-CN' | 'zh-TW' | 'ar' | 'hi' | 'id' | 'th' | 'tr' | 'uk' | 'vi' | (string & Record<never, never>)
   imagesizes?: string
   imagesrcset?: string
   color?: string
@@ -513,13 +647,17 @@ export type Link
     | PreloadLink
     | ModulepreloadLink
     | PrefetchLink
-    | IconLink
+    | FaviconLink
+    | AppleTouchIconLink
+    | MaskIconLink
     | ManifestLink
     | CanonicalLink
     | DnsPrefetchLink
     | PreconnectLink
     | PrerenderLink
-    | AlternateLink
+    | AlternateLanguageLink
+    | AlternateFeedLink
+    | AlternateMediaLink
     | AuthorLink
     | LicenseLink
     | HelpLink
@@ -528,43 +666,3 @@ export type Link
     | NextLink
     | PingbackLink
     | GenericLink
-
-// ============================================================================
-// Legacy Exports (for backwards compatibility during migration)
-// ============================================================================
-
-export type LinkRelTypes = 'alternate'
-  | 'author'
-  | 'shortcut icon'
-  | 'bookmark'
-  | 'canonical'
-  | 'dns-prefetch'
-  | 'external'
-  | 'help'
-  | 'icon'
-  | 'license'
-  | 'manifest'
-  | 'me'
-  | 'modulepreload'
-  | 'next'
-  | 'nofollow'
-  | 'noopener'
-  | 'noreferrer'
-  | 'opener'
-  | 'pingback'
-  | 'preconnect'
-  | 'prefetch'
-  | 'preload'
-  | 'prerender'
-  | 'prev'
-  | 'search'
-  | 'shortlink'
-  | 'stylesheet'
-  | 'tag'
-  | 'apple-touch-icon'
-  | 'apple-touch-startup-image'
-
-/**
- * @deprecated Use the narrowed Link union type instead
- */
-export type LinkWithoutEvents = GenericLink

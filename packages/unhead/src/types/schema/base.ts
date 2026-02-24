@@ -1,4 +1,4 @@
-export interface Base {
+interface BaseFields {
   /**
    * The base URL to be used throughout the document for relative URLs. Absolute and relative URLs are allowed.
    *
@@ -11,5 +11,14 @@ export interface Base {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base#attr-target
    */
-  target?: string
+  target?: '_blank' | '_self' | '_parent' | '_top' | (string & Record<never, never>)
 }
+
+/**
+ * The `<base>` HTML element requires at least `href` or `target` to be valid.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+ */
+export type Base
+  = | (BaseFields & { href: string })
+    | (BaseFields & { target: '_blank' | '_self' | '_parent' | '_top' | (string & Record<never, never>) })

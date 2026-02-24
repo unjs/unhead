@@ -48,6 +48,7 @@ describe('ssr bench', () => {
           ],
           link: [
             {
+              rel: 'preload',
               as: 'style',
               href: `https://example.com/style.js?${i}/${i2}`,
             },

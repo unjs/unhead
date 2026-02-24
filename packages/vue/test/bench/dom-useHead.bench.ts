@@ -45,6 +45,7 @@ describe('dom-useHead', () => {
         ],
         link: [
           {
+            rel: 'preload',
             as: 'style',
             href: () => `https://example.com/style.js?${i}`,
           },
