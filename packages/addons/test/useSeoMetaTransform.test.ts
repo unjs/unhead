@@ -1,11 +1,10 @@
-import { parse } from 'acorn-loose'
 import { describe, expect, it } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 
 async function transform(code: string | string[], id = 'some-id.js', opts: any = {}) {
   const plugin = UseSeoMetaTransform.vite(opts) as any
   const res = await plugin.transform.call(
-    { parse: (code: string) => parse(code, { ecmaVersion: 2022, sourceType: 'module', allowImportExportEverywhere: true, allowAwaitOutsideFunction: true }) },
+    {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
   )
@@ -653,8 +652,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       ' title: `Hello ${name}`,',
       // eslint-disable-next-line no-template-curly-in-string
       ' description: `Welcome to ${name}`',
-      '})'
-      + 'console.log(useSeoMeta)',
+      '})',
+      'console.log(useSeoMeta)',
     ])
     expect(code).toBeDefined()
     expect(code).toMatchInlineSnapshot(`
@@ -665,7 +664,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         meta: [
           { name: 'description', content: \`Welcome to \${name}\` },
         ]
-      })console.log(useSeoMeta)"
+      })
+      console.log(useSeoMeta)"
     `)
   })
 

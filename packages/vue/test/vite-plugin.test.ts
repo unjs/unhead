@@ -3,6 +3,7 @@ import { unheadVuePlugin } from '../src/stream/vite'
 
 describe('unheadVuePlugin', () => {
   const plugin = unheadVuePlugin() as any
+  const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
     it('has correct name', () => {
@@ -15,9 +16,8 @@ describe('unheadVuePlugin', () => {
   })
 
   describe('transform', () => {
-    it('skips non-vue files', () => {
-      const result = plugin.transform!('useHead({})', 'file.ts')
-      expect(result).toBeNull()
+    it('filters to .vue files only', () => {
+      expect(plugin.transform.filter.id).toEqual(/\.vue$/)
     })
 
     it('skips files without useHead', () => {
@@ -28,7 +28,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue')
+      const result = transform(code, 'component.vue')
       expect(result).toBeNull()
     })
 
@@ -42,7 +42,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue')
+      const result = transform(code, 'component.vue')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<HeadStream />')
     })
@@ -57,7 +57,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue', { ssr: false })
+      const result = transform(code, 'component.vue', { ssr: false })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/client\'')
     })
@@ -72,7 +72,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue', { ssr: true })
+      const result = transform(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/server\'')
     })
@@ -87,7 +87,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue', { ssr: true })
+      const result = transform(code, 'component.vue', { ssr: true })
       expect(result).not.toBeNull()
       expect(result!.code).toContain('useHead, HeadStream')
     })
@@ -102,7 +102,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue')
+      const result = transform(code, 'component.vue')
       expect(result).not.toBeNull()
       expect(result!.code).toContain('<HeadStream />')
     })
@@ -117,7 +117,7 @@ describe('unheadVuePlugin', () => {
           <div>Hello</div>
         </template>
       `
-      const result = plugin.transform!(code, 'component.vue')
+      const result = transform(code, 'component.vue')
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })

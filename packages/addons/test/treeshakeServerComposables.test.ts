@@ -1,11 +1,10 @@
-import { parse } from 'acorn-loose'
 import { describe, expect, it } from 'vitest'
 import { TreeshakeServerComposables } from '../src/unplugin/TreeshakeServerComposables'
 
 async function transform(code: string | string[], id = 'some-id.js') {
   const plugin = TreeshakeServerComposables.vite({}) as any
   const res = await plugin.transform.call(
-    { parse: (code: string) => parse(code, { ecmaVersion: 2022, sourceType: 'module' }) },
+    {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
   )
@@ -102,7 +101,7 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
         __name: "app",
         setup(__props, { expose }) {
           expose();
-          ;
+          
           const route = useRouter().currentRoute;
           useHead({
             htmlAttrs: {

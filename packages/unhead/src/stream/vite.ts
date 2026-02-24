@@ -10,8 +10,10 @@ export interface StreamingPluginOptions {
   framework: string
   /** Plugin name (optional, defaults to `${framework}:streaming`) */
   name?: string
-  /** Transform function - return true if transformed */
-  transform: Plugin['transform']
+  /** File extension filter for transform hook, e.g. /\.vue$/ */
+  filter: RegExp
+  /** Transform handler called for files matching `filter` */
+  transform: (code: string, id: string, options?: { ssr?: boolean }) => { code: string, map?: any } | null | undefined | void
   /**
    * How to load the streaming client:
    * - 'async': Load as async script (non-blocking, may have brief queue delay)
@@ -94,6 +96,9 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
       }]
     },
 
-    transform: options.transform,
+    transform: {
+      filter: { id: options.filter },
+      handler: options.transform,
+    },
   }
 }

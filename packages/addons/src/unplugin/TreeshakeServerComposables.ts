@@ -1,22 +1,19 @@
-import type { CallExpression } from '@babel/types'
-import type { Transformer } from 'unplugin-ast'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import { pathToFileURL } from 'node:url'
+import MagicString from 'magic-string'
+import { parseSync } from 'oxc-parser'
+import { walk } from 'oxc-walker'
 import { parseQuery, parseURL } from 'ufo'
 import { createUnplugin } from 'unplugin'
-import { transform } from 'unplugin-ast'
 
-function RemoveFunctions(functionNames: string[]): Transformer<CallExpression> {
-  return {
-    onNode: node => node.type === 'CallExpression'
-      && node.callee.type === 'Identifier'
-      && functionNames.includes(node.callee.name),
-    transform() {
-      return false
-    },
-  }
-}
+const functionNames = [
+  'useServerHead',
+  'useServerHeadSafe',
+  'useServerSeoMeta',
+  // plugins
+  'useSchemaOrg',
+]
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
   enabled?: boolean
@@ -59,7 +56,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
       return false
     },
 
-    async transform(code, id) {
+    transform(code, id) {
       if (
         !code.includes('useServerHead')
         && !code.includes('useServerHeadSafe')
@@ -69,24 +66,28 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return
       }
 
-      let transformed
-      try {
-        transformed = await transform(code, id, {
-          parserOptions: {},
-          transformer: [
-            RemoveFunctions([
-              'useServerHead',
-              'useServerHeadSafe',
-              'useServerSeoMeta',
-              // plugins
-              'useSchemaOrg',
-            ]),
-          ],
-        })
+      const ast = parseSync(id, code)
+      const s = new MagicString(code)
+
+      walk(ast.program, {
+        enter(node: any) {
+          if (
+            node.type === 'ExpressionStatement'
+            && node.expression.type === 'CallExpression'
+            && node.expression.callee.type === 'Identifier'
+            && functionNames.includes(node.expression.callee.name)
+          ) {
+            s.remove(node.start, node.end)
+          }
+        },
+      })
+
+      if (s.hasChanged()) {
+        return {
+          code: s.toString(),
+          map: s.generateMap({ includeContent: true, source: id }),
+        }
       }
-      // safely fail
-      catch {}
-      return transformed
     },
     webpack(ctx) {
       if (ctx.name === 'server')

@@ -1,7 +1,6 @@
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import MagicString from 'magic-string'
-import { findStaticImports } from 'mlly'
-import { parseSync, Visitor } from 'oxc-parser'
+import { parseAndWalk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
 /**
@@ -39,50 +38,74 @@ import { createStreamingPlugin } from 'unhead/stream/vite'
  */
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
   const lang = id.endsWith('.tsx') ? 'tsx' : id.endsWith('.jsx') ? 'jsx' : 'tsx'
-  const result = parseSync(id, code, { lang })
 
-  if (result.errors.length > 0)
-    return false
-
-  // Find function components that contain useHead and have JSX returns
   const returns: { jsxStart: number, jsxEnd: number }[] = []
+  let currentFnHasHead = false
+  const fnStack: boolean[] = []
 
-  const visitor = new Visitor({
-    FunctionDeclaration: node => processFunction(node),
-    FunctionExpression: node => processFunction(node),
-    ArrowFunctionExpression: node => processFunction(node),
-  })
+  const importPath = isSSR ? '@unhead/solid-js/stream/server' : '@unhead/solid-js/stream/client'
+  let existingImport: { start: number, end: number, specifiers: string[] } | null = null
+  let lastImportEnd = -1
 
-  function processFunction(node: any) {
-    if (!node.body)
-      return
+  const result = parseAndWalk(code, id, {
+    parseOptions: { lang },
+    enter(node: any) {
+      if (node.type === 'ImportDeclaration') {
+        if (node.source.value === importPath) {
+          existingImport = {
+            start: node.start,
+            end: node.end,
+            specifiers: node.specifiers?.map((spec: any) => spec.local?.name).filter(Boolean) || [],
+          }
+        }
+        if (node.end > lastImportEnd)
+          lastImportEnd = node.end
+        this.skip()
+        return
+      }
 
-    const bodyCode = code.slice(node.body.start, node.body.end)
-    if (!bodyCode.includes('useHead') && !bodyCode.includes('useSeoMeta') && !bodyCode.includes('useHeadSafe'))
-      return
+      const isFn = node.type === 'FunctionDeclaration'
+        || node.type === 'FunctionExpression'
+        || node.type === 'ArrowFunctionExpression'
 
-    // Arrow with implicit JSX return
-    if (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment') {
-      returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
-      return
-    }
-
-    // Find return statements with JSX
-    const innerVisitor = new Visitor({
-      ReturnStatement(innerNode: any) {
-        if (!innerNode.argument)
+      if (isFn) {
+        fnStack.push(currentFnHasHead)
+        if (!node.body) {
+          currentFnHasHead = false
           return
-        let arg = innerNode.argument
+        }
+        const bodyCode = code.slice(node.body.start, node.body.end)
+        currentFnHasHead = bodyCode.includes('useHead') || bodyCode.includes('useSeoMeta') || bodyCode.includes('useHeadSafe')
+
+        // Arrow with implicit JSX return
+        if (currentFnHasHead && (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')) {
+          returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
+        }
+        return
+      }
+
+      if (currentFnHasHead && node.type === 'ReturnStatement') {
+        if (!node.argument)
+          return
+        let arg = node.argument
         if (arg.type === 'ParenthesizedExpression' && arg.expression)
           arg = arg.expression
         if (arg.type === 'JSXElement' || arg.type === 'JSXFragment')
           returns.push({ jsxStart: arg.start, jsxEnd: arg.end })
-      },
-    })
-    innerVisitor.visit(node.body)
-  }
+      }
+    },
+    leave(node: any) {
+      const isFn = node.type === 'FunctionDeclaration'
+        || node.type === 'FunctionExpression'
+        || node.type === 'ArrowFunctionExpression'
+      if (isFn) {
+        currentFnHasHead = fnStack.pop()!
+      }
+    },
+  })
 
-  visitor.visit(result.program)
+  if (result.errors.length > 0)
+    return false
 
   if (returns.length === 0)
     return false
@@ -95,22 +118,18 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   }
 
   // Add import
-  const importPath = isSSR ? '@unhead/solid-js/stream/server' : '@unhead/solid-js/stream/client'
-  const imports = findStaticImports(code)
-  const existing = imports.find(i => i.specifier === importPath)
-
-  if (existing) {
-    if (!existing.imports?.includes('HeadStream')) {
-      const inner = existing.imports?.replace(/^\{\s*|\s*\}\s*$/g, '').trim() || ''
-      s.overwrite(existing.start, existing.end, `import { ${inner ? `${inner}, ` : ''}HeadStream } from '${importPath}'\n`)
+  const foundImport = existingImport as { start: number, end: number, specifiers: string[] } | null
+  if (foundImport) {
+    if (!foundImport.specifiers.includes('HeadStream')) {
+      const inner = foundImport.specifiers.join(', ')
+      s.overwrite(foundImport.start, foundImport.end, `import { ${inner ? `${inner}, ` : ''}HeadStream } from '${importPath}'`)
     }
   }
+  else if (lastImportEnd > -1) {
+    s.appendLeft(lastImportEnd, `\nimport { HeadStream } from '${importPath}'`)
+  }
   else {
-    const last = imports[imports.length - 1]
-    if (last)
-      s.appendLeft(last.end, `import { HeadStream } from '${importPath}'\n`)
-    else
-      s.prepend(`import { HeadStream } from '${importPath}'\n`)
+    s.prepend(`import { HeadStream } from '${importPath}'\n`)
   }
 
   return true
@@ -140,15 +159,11 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 export function unheadSolidPlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/solid-js',
+    filter: /\.[jt]sx$/,
     mode: options?.mode,
     transform(code, id, opts) {
-      // Only process jsx/tsx files
-      if (!/\.[jt]sx$/.test(id))
-        return null
-
       const s = new MagicString(code)
-      const transformed = transform(code, id, opts?.ssr ?? false, s)
-      if (!transformed)
+      if (!transform(code, id, opts?.ssr ?? false, s))
         return null
 
       return {

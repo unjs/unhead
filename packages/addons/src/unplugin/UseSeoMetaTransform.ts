@@ -1,13 +1,10 @@
-import type { ImportDeclaration, ObjectProperty } from '@babel/types'
-import type { SimpleCallExpression } from 'estree'
-import type { Node } from 'estree-walker'
 import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
 import { pathToFileURL } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
-import { walk } from 'estree-walker'
 import MagicString from 'magic-string'
-import { findStaticImports, parseStaticImport } from 'mlly'
+import { parseSync } from 'oxc-parser'
+import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { parseQuery, parseURL } from 'ufo'
 import {
   resolveMetaKeyType,
@@ -26,6 +23,8 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
    */
   importPaths?: string[]
 }
+
+const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
 
 /**
  * useSeoMeta({
@@ -86,204 +85,192 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
       if (!code.includes('useSeoMeta') && !code.includes('useServerSeoMeta'))
         return
 
-      // // useSeoMeta may be auto-imported or may not be
-      const statements = findStaticImports(code).filter(i => isValidPackage(i.specifier))
-      const importNames: Record<string, string> = {}
-      for (const i of statements.flatMap(i => parseStaticImport(i))) {
-        if (i.namedImports) {
-          for (const key in i.namedImports) {
-            if (key === 'useSeoMeta' || key === 'useServerSeoMeta')
-              importNames[i.namedImports[key]] = key
-          }
-        }
-        // note: namespaced imports are not supported
-      }
-
-      const ast = this.parse(code)
+      const scopeTracker = new ScopeTracker()
+      const ast = parseSync(id, code)
       const s = new MagicString(code)
-      let replacementPayload: ((f: boolean) => [number, number, string]) | undefined
-      let replaceCount = 0
-      let totalCount = 0
-      walk(ast as Node, {
-        enter(_node) {
-          if (options.imports && _node.type === 'ImportDeclaration' && isValidPackage(_node.source.value as string)) {
-            const node = _node as unknown as ImportDeclaration
-            const hasSeoMeta = node.specifiers.some(s =>
-              s.type === 'ImportSpecifier'
-              && ['useSeoMeta', 'useServerSeoMeta'].includes((s.imported as any).name),
-            )
 
-            if (!hasSeoMeta) {
-              return
-            }
+      // Track which ImportDeclarations need specifier rewrites
+      // Key: ImportDeclaration node, Value: set of original imported names that were transformed
+      const importRewrites = new Map<any, Set<string>>()
+      // Track if seoMeta is referenced as a value (not just called), keyed by original imported name
+      const valueReferenced = new Set<string>()
 
-            // Count how many specifiers we're removing
-            const toImport = new Set()
-            node.specifiers.forEach((spec) => {
-              if (spec.type === 'ImportSpecifier'
-                && ['useSeoMeta', 'useServerSeoMeta'].includes((spec.imported as any).name)) {
-                toImport.add((spec.imported as any).name.includes('Server') ? 'useServerHead' : 'useHead')
-              }
-              else {
-                // @ts-expect-error untyped
-                toImport.add((spec.imported as any).name)
-              }
-            })
-            if (toImport.size) {
-              // need to modify current node imports
-              // @ts-expect-error untyped
-              replacementPayload = (useSeoMeta = false) => [node.specifiers[0].start, node.specifiers[node.specifiers.length - 1].end, [...toImport, useSeoMeta ? 'useSeoMeta' : false].filter(Boolean).join(', ')]
+      walk(ast.program, {
+        scopeTracker,
+        enter(node: any, parent: any) {
+          // Track value references to seoMeta identifiers (e.g., console.log(useSeoMeta))
+          // Skip: call callees (handled below), import specifiers (definitions, not references)
+          if (node.type === 'Identifier'
+            && !(parent?.type === 'CallExpression' && parent.callee === node)
+            && parent?.type !== 'ImportSpecifier') {
+            const decl = scopeTracker.getDeclaration(node.name)
+            if (decl instanceof ScopeTrackerImport
+              && isValidPackage(decl.importNode.source.value)
+              && SEO_META_NAMES.has(decl.node.imported.name)) {
+              valueReferenced.add(decl.node.imported.name)
             }
           }
-          else if (
-            _node.type === 'CallExpression'
-            && _node.callee.type === 'Identifier'
-            && Object.keys({
-              useSeoMeta: 'useSeoMeta',
-              useServerSeoMeta: 'useServerSeoMeta',
-              ...importNames,
-            }).includes(_node.callee.name)) {
-            replaceCount++
-            const node = _node as SimpleCallExpression
 
-            const calleeName = importNames[(node.callee as any).name] || (node.callee as any).name
+          if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier')
+            return
 
-            // @ts-expect-error untyped
-            const properties = node.arguments[0].properties as ObjectProperty[]
-            if (!properties)
+          const decl = scopeTracker.getDeclaration(node.callee.name)
+
+          let originalName: string
+          let importDecl: any = null
+
+          if (decl instanceof ScopeTrackerImport) {
+            if (!isValidPackage(decl.importNode.source.value))
               return
+            originalName = decl.node.imported.name
+            importDecl = decl.importNode
+          }
+          else if (!decl && SEO_META_NAMES.has(node.callee.name)) {
+            // Auto-imported (no declaration found in scope)
+            originalName = node.callee.name
+          }
+          else {
+            return
+          }
 
-            // properties is currently an AST object of key => values, we need to transform it to an array of key => values instead
-            // and change the key names to 'name' and 'content'
-            let output: string[] | false = []
-            // need to split the title and titleTemplate into a useHead and meta into useServerHead
-            // @ts-expect-error untyped
-            const title = properties.find(property => property.key?.name === 'title')
-            // @ts-expect-error untyped
-            const titleTemplate = properties.find(property => property.key?.name === 'titleTemplate')
-            // @ts-expect-error untyped
-            const meta = properties.filter(property => property.key?.name !== 'title' && property.key?.name !== 'titleTemplate')
-            if (title || titleTemplate || calleeName === 'useSeoMeta') {
-              output.push('useHead({')
-              if (title) {
-                // @ts-expect-error untyped
-                output.push(`  title: ${code.substring(title.value.start, title.value.end)},`)
-              }
-              if (titleTemplate) {
-                // @ts-expect-error untyped
-                output.push(`  titleTemplate: ${code.substring(titleTemplate.value.start, titleTemplate.value.end)},`)
-              }
+          if (!SEO_META_NAMES.has(originalName))
+            return
+
+          const properties = node.arguments[0]?.properties
+          if (!properties)
+            return
+
+          let output: string[] | false = []
+          const title = properties.find((property: any) => property.key?.name === 'title')
+          const titleTemplate = properties.find((property: any) => property.key?.name === 'titleTemplate')
+          const meta = properties.filter((property: any) => property.key?.name !== 'title' && property.key?.name !== 'titleTemplate')
+          if (title || titleTemplate || originalName === 'useSeoMeta') {
+            output.push('useHead({')
+            if (title) {
+              output.push(`  title: ${code.substring(title.value.start, title.value.end)},`)
             }
-            if (calleeName === 'useServerSeoMeta') {
-              if (output.length)
-                output.push('});')
-              output.push('useServerHead({')
+            if (titleTemplate) {
+              output.push(`  titleTemplate: ${code.substring(titleTemplate.value.start, titleTemplate.value.end)},`)
             }
+          }
+          if (originalName === 'useServerSeoMeta') {
+            if (output.length)
+              output.push('});')
+            output.push('useServerHead({')
+          }
 
-            if (meta.length)
-              output.push('  meta: [')
+          if (meta.length)
+            output.push('  meta: [')
 
-            meta.forEach((property) => {
-              // not supported
-              // @ts-expect-error untyped
-              if (property.type === 'SpreadElement') {
-                output = false
-                return
-              }
-              if (property.key.type !== 'Identifier' || !property.value) {
-                output = false
-                return
-              }
+          meta.forEach((property: any) => {
+            if (property.type === 'SpreadElement') {
+              output = false
+              return
+            }
+            if (property.key.type !== 'Identifier' || !property.value) {
+              output = false
+              return
+            }
+            if (output === false)
+              return
+            const propertyKey = property.key
+            let key = resolveMetaKeyType(propertyKey.name)
+            const keyValue = resolveMetaKeyValue(propertyKey.name)
+            let valueKey = 'content'
+            if (keyValue === 'charset') {
+              valueKey = 'charset'
+              key = 'charset'
+            }
+            let value = code.substring(property.value.start as number, property.value.end as number)
+            if (property.value.type === 'ArrayExpression') {
               if (output === false)
                 return
-              const propertyKey = property.key
-              // store the AST object in meta
-              let key = resolveMetaKeyType(propertyKey.name)
-              const keyValue = resolveMetaKeyValue(propertyKey.name)
-              let valueKey = 'content'
-              if (keyValue === 'charset') {
-                valueKey = 'charset'
-                key = 'charset'
-              }
-              let value = code.substring(property.value.start as number, property.value.end as number)
-              if (property.value.type === 'ArrayExpression') {
-                // @ts-expect-error untyped
-                if (output === false)
-                  return
 
-                const elements = property.value.elements
-                if (!elements.length)
-                  return
+              const elements = property.value.elements
+              if (!elements.length)
+                return
 
-                // For each array element
-                const metaTags = elements.map((element) => {
-                  // If not an object, handle as a simple value
-                  // @ts-expect-error untyped
-                  if (element.type !== 'ObjectExpression')
-                    // @ts-expect-error untyped
-                    return `    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`
+              const metaTags = elements.map((element: any) => {
+                if (element.type !== 'ObjectExpression')
+                  return `    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`
 
-                  // Transform object properties to meta tags
-                  return element.properties.map((p: any) => {
-                    const propKey = p.key.name
-                    const propValue = code.substring(p.value.start, p.value.end)
-                    return `    { ${key}: '${keyValue}:${propKey}', ${valueKey}: ${propValue} },`
-                  }).join('\n')
-                })
+                return element.properties.map((p: any) => {
+                  const propKey = p.key.name
+                  const propValue = code.substring(p.value.start, p.value.end)
+                  return `    { ${key}: '${keyValue}:${propKey}', ${valueKey}: ${propValue} },`
+                }).join('\n')
+              })
 
-                output.push(metaTags.join('\n'))
+              output.push(metaTags.join('\n'))
+              return
+            }
+            else if (property.value.type === 'ObjectExpression') {
+              const isStatic = property.value.properties.every((p: any) => p.value.type === 'StringLiteral' && typeof p.value.value === 'string')
+              if (!isStatic) {
+                output = false
                 return
               }
-              // value may be an object, in which case we need to stringify it, this may be a problem if the object is reactive
-              else if (property.value.type === 'ObjectExpression') {
-                // make sure all of the entries are static strings
-                // @ts-expect-error untyped
-                const isStatic = property.value.properties.every(p => p.value.type === 'Literal' && typeof p.value.value === 'string')
-                if (!isStatic) {
-                  output = false
-                  return
-                }
-                // we need to run this code with the stringify function, needs to run in its own context
-                const context = createContext({
-                  resolvePackedMetaObjectValue,
-                })
-                const start = property.value.start as number
-                const end = property.value.end as number
-                try {
-                  value = JSON.stringify(runInContext(`resolvePackedMetaObjectValue(${code.slice(start, end)})`, context))
-                }
-                catch {
-                  // failed for some reason, possibly reactivity issue, abort to runtime
-                  output = false
-                  return
-                }
+              const context = createContext({
+                resolvePackedMetaObjectValue,
+              })
+              const start = property.value.start as number
+              const end = property.value.end as number
+              try {
+                value = JSON.stringify(runInContext(`resolvePackedMetaObjectValue(${code.slice(start, end)})`, context))
               }
-              if (valueKey === 'charset')
-                output.push(`    { ${key}: ${value} },`)
-              else
-                output.push(`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`)
-            })
-            if (output) {
-              if (meta.length)
-                output.push('  ]')
-              output.push('})')
-              // @ts-expect-error untyped
-              s.overwrite(node.start, node.end, output.join('\n'))
+              catch {
+                output = false
+                return
+              }
             }
-          }
-          else if (_node.type === 'Identifier'
-            && ['useSeoMeta', 'useServerSeoMeta'].includes(_node.name)) {
-            totalCount++
+            if (valueKey === 'charset')
+              output.push(`    { ${key}: ${value} },`)
+            else
+              output.push(`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`)
+          })
+          if (output) {
+            if (meta.length)
+              output.push('  ]')
+            output.push('})')
+            s.overwrite(node.start, node.end, output.join('\n'))
+
+            // Track import for rewriting
+            if (importDecl) {
+              if (!importRewrites.has(importDecl))
+                importRewrites.set(importDecl, new Set())
+              importRewrites.get(importDecl)!.add(originalName)
+            }
           }
         },
       })
 
-      if (s.hasChanged()) {
-        if (replacementPayload) {
-          // only if we swapped out useSeoMeta
-          s.overwrite(...replacementPayload(replaceCount + 3 === totalCount))
+      // Rewrite import specifiers
+      if (options.imports && importRewrites.size > 0) {
+        for (const [importNode, transformedNames] of importRewrites) {
+          const newSpecifiers = new Set<string>()
+          for (const spec of importNode.specifiers) {
+            if (spec.type !== 'ImportSpecifier')
+              continue
+            const importedName = spec.imported.name
+            if (transformedNames.has(importedName)) {
+              newSpecifiers.add(importedName.includes('Server') ? 'useServerHead' : 'useHead')
+              // Keep original import if it's still referenced as a value
+              if (valueReferenced.has(importedName))
+                newSpecifiers.add(importedName)
+            }
+            else {
+              newSpecifiers.add(importedName)
+            }
+          }
+          s.overwrite(
+            importNode.specifiers[0].start,
+            importNode.specifiers[importNode.specifiers.length - 1].end,
+            [...newSpecifiers].join(', '),
+          )
         }
+      }
 
+      if (s.hasChanged()) {
         return {
           code: s.toString(),
           map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
