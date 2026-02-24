@@ -12,8 +12,10 @@ export type ResolvableValue<T> = T | Falsy | (() => (T | Falsy))
 
 type Prettify<T> = { [K in keyof T]: T[K] } & {}
 type _ResolvablePropertiesRaw<T> = {
+  // eslint-disable-next-line ts/no-empty-object-type
   [K in keyof T as {} extends Pick<T, K> ? never : K]: ResolvableValue<T[K]>
 } & {
+  // eslint-disable-next-line ts/no-empty-object-type
   [K in keyof T as {} extends Pick<T, K> ? K : never]?: ResolvableValue<T[K]>
 }
 export type ResolvableProperties<T> = Prettify<_ResolvablePropertiesRaw<T>>
