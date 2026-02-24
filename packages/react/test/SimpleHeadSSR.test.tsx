@@ -18,8 +18,7 @@ describe('simpleHead component in ssr', () => {
 
     const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`
-      "<meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
+      "<meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
       <script noModule src="https://example.com/nomodule.js"></script>
@@ -54,8 +53,7 @@ describe('simpleHead component in ssr', () => {
 
     const headContent = transformed.match(/<head>(.*?)<\/head>/s)?.[1] || ''
     expect(headContent).toMatchInlineSnapshot(`
-      "<meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
+      "<meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
       <script noModule src="https://example.com/nomodule.js"></script>
