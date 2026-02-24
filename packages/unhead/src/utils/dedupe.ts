@@ -11,8 +11,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return t
   if (t === 'link' && props.rel === 'canonical')
     return 'canonical'
-  if (t === 'link' && props.rel === 'alternate')
-    return `alternate:${props.hreflang || props.type || 'x-default'}:${props.href || ''}`
+  if (t === 'link' && props.rel === 'alternate') {
+    const altKey = props.hreflang || props.type
+    if (altKey)
+      return `alternate:${altKey}`
+  }
 
   if (props.charset)
     return 'charset'
@@ -23,11 +26,13 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
         return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !/^(?:viewport|description|keywords|robots)$/.test(v) && key ? `:key:${key}` : ''}`
     }
   }
-  return key
-    ? `${t}:key:${key}`
-    : props.id
-      ? `${t}:id:${props.id}`
-      : TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
+  if (key)
+    return `${t}:key:${key}`
+  if (props.id)
+    return `${t}:id:${props.id}`
+  if (t === 'link' && props.rel === 'alternate')
+    return `alternate:${props.href || ''}`
+  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag) {
