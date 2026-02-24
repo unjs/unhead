@@ -82,11 +82,12 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
     },
   })
 
-  if (existingImport) {
-    if (!existingImport.specifiers.includes('HeadStream')) {
-      const inner = existingImport.specifiers.join(', ')
+  const foundImport = existingImport as { start: number, end: number, specifiers: string[] } | null
+  if (foundImport) {
+    if (!foundImport.specifiers.includes('HeadStream')) {
+      const inner = foundImport.specifiers.join(', ')
       const newImports = inner ? `${inner}, HeadStream` : 'HeadStream'
-      s.overwrite(existingImport.start, existingImport.end, `import { ${newImports} } from '${importPath}'`)
+      s.overwrite(foundImport.start, foundImport.end, `import { ${newImports} } from '${importPath}'`)
     }
   }
   else {
