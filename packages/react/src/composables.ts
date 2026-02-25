@@ -62,8 +62,8 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
         entryRef.current?.dispose()
         entryRef.current = null
       },
-      _poll: (rm?: boolean) => { entryRef.current?._poll(rm) },
-    } as T
+      _poll: (rm?: boolean) => { (entryRef.current as any)?._poll(rm) },
+    } as unknown as T
   }
   return proxyRef.current
 }

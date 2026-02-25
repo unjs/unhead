@@ -81,7 +81,6 @@
   organizationResolver: object
   personResolver: object
   placeResolver: object
-  PluginSchemaOrg: function
   podcastEpisodeResolver: object
   podcastSeasonResolver: object
   podcastSeriesResolver: object
@@ -104,7 +103,6 @@
   resolveNodeId: function
   resolveRelation: function
   reviewResolver: object
-  SchemaOrgUnheadPlugin: function
   searchActionResolver: object
   ServiceId: string
   serviceResolver: object
@@ -269,7 +267,6 @@
   defineVirtualLocation: function
   defineWebPage: function
   defineWebSite: function
-  PluginSchemaOrg: function
   SchemaOrgArticle: object
   schemaOrgAutoImports: object
   SchemaOrgBook: object
@@ -293,8 +290,8 @@
   SchemaOrgResolver: function
   SchemaOrgReview: object
   SchemaOrgSoftwareApp: object
-  SchemaOrgUnheadPlugin: function
   SchemaOrgVideo: object
   SchemaOrgWebPage: object
   SchemaOrgWebSite: object
+  UnheadSchemaOrg: function
   useSchemaOrg: function

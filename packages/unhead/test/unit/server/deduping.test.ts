@@ -647,13 +647,13 @@ describe('dedupe', () => {
     const head = createServerHeadWithContext()
     head.push({
       link: [
-        { rel: 'alternate' },
+        { rel: 'alternate', href: '' },
       ],
     })
     // Simulate hydration - push the same link again
     head.push({
       link: [
-        { rel: 'alternate' },
+        { rel: 'alternate', href: '' },
       ],
     })
     const { headTags } = await renderSSRHead(head)
