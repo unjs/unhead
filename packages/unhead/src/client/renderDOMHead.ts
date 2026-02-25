@@ -125,7 +125,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   const dupeKeyCounter = new Map<string, number>()
   for (const tag of rawTags) {
     const count = dupeKeyCounter.get(tag._d!) || 0
-    const id = (count ? `${tag._d}:${count}` : tag._d) || hashTag(tag)
+    const id = (count ? `${tag._d}:${count}` : tag._d) || tag._h!
     const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
     if (tag._d && isMetaArrayDupeKey(tag._d))
       dupeKeyCounter.set(tag._d, count + 1)

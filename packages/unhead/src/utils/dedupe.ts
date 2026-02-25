@@ -37,5 +37,5 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 
 export function hashTag(tag: HeadTag) {
   return tag._h || tag._d || tag.textContent || tag.innerHTML
-    || `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${v}`).join()}`
+    || `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join()}`
 }

@@ -1,6 +1,6 @@
 import type { HeadTag, Unhead } from '../types'
 import { UsesMergeStrategy, ValidHeadTags } from './const'
-import { dedupeKey, isMetaArrayDupeKey } from './dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
@@ -19,7 +19,7 @@ export interface ResolveTagsOptions {
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = String(next._d || next._p)
+    const k = next._d || hashTag(next)
     const prev = ctx.tagMap.get(k)
     if (!prev) {
       ctx.tagMap.set(k, next)
@@ -111,6 +111,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)
+        if (!t._d)
+          t._h = hashTag(t)
         return t
       })
     }

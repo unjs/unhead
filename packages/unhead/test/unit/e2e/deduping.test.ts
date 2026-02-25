@@ -182,6 +182,52 @@ describe('unhead e2e deduping', () => {
     `)
   })
 
+  it('duplicate script src and link href across entries', async () => {
+    const ssrHead = createClientHeadWithContext()
+    ssrHead.push({
+      script: [{ src: 'https://example.com/app.js', async: true }],
+      link: [{ rel: 'stylesheet', href: 'https://example.com/style.css' }],
+    })
+    ssrHead.push({
+      script: [{ src: 'https://example.com/app.js', async: true }],
+      link: [{ rel: 'stylesheet', href: 'https://example.com/style.css' }],
+    })
+
+    const data = renderSSRHead(ssrHead)
+    expect(data.headTags).toMatchInlineSnapshot(`
+      "<script src="https://example.com/app.js" async></script>
+      <link rel="stylesheet" href="https://example.com/style.css">"
+    `)
+
+    const dom = useDom(data)
+    const csrHead = createClientHeadWithContext()
+    csrHead.push({
+      script: [{ src: 'https://example.com/app.js', async: true }],
+      link: [{ rel: 'stylesheet', href: 'https://example.com/style.css' }],
+    })
+    csrHead.push({
+      script: [{ src: 'https://example.com/app.js', async: true }],
+      link: [{ rel: 'stylesheet', href: 'https://example.com/style.css' }],
+    })
+    renderDOMHead(csrHead, { document: dom.window.document })
+
+    expect(dom.serialize()).toMatchInlineSnapshot(`
+      "<!DOCTYPE html><html><head>
+      <script src="https://example.com/app.js" async=""></script>
+      <link rel="stylesheet" href="https://example.com/style.css">
+      </head>
+      <body>
+
+      <div>
+      <h1>hello world</h1>
+      </div>
+
+
+
+      </body></html>"
+    `)
+  })
+
   it('duplicate no key', async () => {
     const input = {
       style: ['this will be inserted twice'],
