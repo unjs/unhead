@@ -55,6 +55,53 @@ describe('schema.org dupes', () => {
     `)
   })
 
+  it('handles tags without props in afterResolve without crashing', async () => {
+    const ssrHead = createHead()
+
+    ssrHead.use(UnheadSchemaOrg())
+
+    ssrHead.hooks.hook('tags:resolve', (ctx) => {
+      // @ts-expect-error simulating a malformed tag with no props
+      ctx.tags.push({ tag: 'meta', props: undefined, _p: 0, _w: 0 })
+    })
+    ssrHead.hooks.hook('tags:afterResolve', (ctx) => {
+      ctx.tags = ctx.tags.filter(({ props }) => props !== undefined)
+    })
+
+    useHead(ssrHead, {
+      script: [
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          // @ts-expect-error untyped
+          nodes: [
+            defineWebSite({
+              url: '/',
+              inLanguage: 'en',
+              name: 'hello',
+            }),
+          ],
+        },
+      ],
+    })
+
+    const data = await renderSSRHead(ssrHead)
+    expect(data.bodyTags).toMatchInlineSnapshot(`
+      "<script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "#website",
+            "@type": "WebSite",
+            "inLanguage": "en",
+            "name": "hello",
+            "url": "/"
+          }
+        ]
+      }</script>"
+    `)
+  })
+
   it('handles three or more duplicate schema-org entries without crashing', async () => {
     const ssrHead = createHead()
 
