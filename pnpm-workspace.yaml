@@ -37,7 +37,7 @@ catalog:
   '@testing-library/user-event': 14.6.1
   '@types/estree': ^1.0.8
   '@types/fs-extra': ^11.0.4
-  '@types/jsdom': ^27.0.0
+  '@types/jsdom': ^28.0.0
   '@types/react': ^19.2.8
   '@types/react-dom': ^19.2.3
   '@vue/server-renderer': ^3.5.26
@@ -49,7 +49,7 @@ catalog:
   fs-extra: ^11.3.3
   hookable: ^6.0.1
   js-yaml: ^4.1.1
-  jsdom: ^27.4.0
+  jsdom: ^28.1.0
   magic-string: ^0.30.21
   mlly: ^1.8.0
   react: ^19.2.3
