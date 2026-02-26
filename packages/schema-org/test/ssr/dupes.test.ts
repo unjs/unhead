@@ -52,4 +52,53 @@ describe('schema.org dupes', () => {
       }</script>"
     `)
   })
+
+  it('handles three or more duplicate schema-org entries without crashing', async () => {
+    const ssrHead = createHead()
+
+    ssrHead.use(UnheadSchemaOrg())
+
+    useHead(ssrHead, {
+      script: [
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          // @ts-expect-error untyped
+          nodes: [
+            defineWebSite({
+              url: '/',
+              inLanguage: 'en',
+              name: 'first',
+            }),
+          ],
+        },
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          // @ts-expect-error untyped
+          nodes: [
+            // @ts-expect-error broken
+            defineWebSite({
+              '@type': 'AboutPage',
+            }),
+          ],
+        },
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          // @ts-expect-error untyped
+          nodes: [
+            defineWebSite({
+              name: 'third',
+            }),
+          ],
+        },
+      ],
+    })
+
+    const data = await renderSSRHead(ssrHead)
+    // should merge all three into a single script tag without throwing
+    expect(data.bodyTags).toContain('"@context": "https://schema.org"')
+    expect(data.bodyTags.match(/application\/ld\+json/g)?.length).toBe(1)
+  })
 })
