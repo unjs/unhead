@@ -48,10 +48,10 @@ jobs:
         if: ${{ !contains(github.ref_name, '-') }}
         run: pnpm publish -r --access public --no-git-checks
 
-      - name: Publish Next
-        if: ${{ contains(github.ref_name, '-') }}
-        run: pnpm publish -r --access public --no-git-checks --tag next
-
       - name: Publish Beta
-        if: ${{ contains(github.ref_name, '-') }}
+        if: ${{ contains(github.ref_name, 'beta') }}
         run: pnpm publish -r --access public --no-git-checks --tag beta
+
+      - name: Publish Next
+        if: ${{ contains(github.ref_name, '-') && !contains(github.ref_name, 'beta') }}
+        run: pnpm publish -r --access public --no-git-checks --tag next
