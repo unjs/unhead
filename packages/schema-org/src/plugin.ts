@@ -128,7 +128,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           const toRemove = new Set<number>()
           for (let i = 0; i < ctx.tags.length; i++) {
             const tag = ctx.tags[i]
-            if (!tag)
+            if (!tag?.props)
               continue
             if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
               delete tag.props.nodes

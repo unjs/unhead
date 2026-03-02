@@ -78,10 +78,10 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@unhead/react": "workspace:*",
-    "@unhead/solid-js": "workspace:*",
-    "@unhead/svelte": "workspace:*",
-    "@unhead/vue": "workspace:*"
+    "@unhead/react": "workspace:^",
+    "@unhead/solid-js": "workspace:^",
+    "@unhead/svelte": "workspace:^",
+    "@unhead/vue": "workspace:^"
   },
   "peerDependenciesMeta": {
     "@unhead/react": {
