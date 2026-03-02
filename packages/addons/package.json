@@ -58,7 +58,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "unhead": "workspace:*"
+    "unhead": "workspace:^"
   },
   "dependencies": {
     "@rollup/pluginutils": "catalog:",
