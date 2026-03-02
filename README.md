@@ -49,7 +49,7 @@ Visit the [documentation site](https://unhead.unjs.io/) for guides and API refer
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/harlan-zw/static/main/sponsors.svg">
-    <img src='https://raw.githubusercontent.com/harlan-zw/static/main/sponsors.svg'/>
+    <img src='https://raw.githubusercontent.com/harlan-zw/static/main/sponsors.svg' alt='logo'/>
   </a>
 </p>
 

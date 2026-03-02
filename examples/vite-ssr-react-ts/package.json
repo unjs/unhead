@@ -15,17 +15,17 @@
     "@unhead/schema-org": "workspace:*",
     "compression": "^1.8.1",
     "express": "^5.2.1",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-router-dom": "^7.12.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
     "sirv": "^3.0.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^24.10.7",
-    "@types/react": "^19.2.8",
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^5.1.4",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
     "vite": "^7.3.1"

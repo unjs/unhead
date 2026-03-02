@@ -10,12 +10,12 @@
 - Client: 9.5kB - gzipped 4.3 kB
 - Server: 6.97kB - gzipped 3.2 kB
 
-# main
+## main
 
 - CLIENT Size: 13 kB (gzipped: 5.1 kB)
 - SERVER Size: 10.2 kB (gzipped: 4.1 kB)
 
-```
+```text
 ✓ bench/ssr-harlanzw-com-e2e.bench.ts > ssr e2e bench 3000ms
 name           hz     min     max    mean     p75     p99    p995    p999     rme  samples
 · e2e      2,195.76  0.3875  1.5184  0.4554  0.4558  0.9170  0.9514  1.1057  ±0.62%     5000

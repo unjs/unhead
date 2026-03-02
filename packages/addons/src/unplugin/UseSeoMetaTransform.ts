@@ -142,7 +142,8 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               useSeoMeta: 'useSeoMeta',
               useServerSeoMeta: 'useServerSeoMeta',
               ...importNames,
-            }).includes(_node.callee.name)) {
+            }).includes(_node.callee.name)
+          ) {
             replaceCount++
             const node = _node as SimpleCallExpression
 
