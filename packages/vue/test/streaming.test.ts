@@ -1,10 +1,13 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest'
+import type { SSRHeadPayload } from 'unhead/types'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createSSRApp, defineComponent, h } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import {
+  createBootstrapScript,
   createStreamableHead,
   HeadStream,
+  renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
 } from '../src/stream/server'
@@ -224,6 +227,32 @@ describe('vue streaming SSR', () => {
 
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result).not.toContain('</script><script>')
+    })
+  })
+
+  describe('re-exported helpers', () => {
+    it('createBootstrapScript returns script with default key', () => {
+      const script = createBootstrapScript()
+      expect(script).toContain('window.__unhead__')
+    })
+
+    it('createBootstrapScript returns script with custom key', () => {
+      const script = createBootstrapScript('__vue__')
+      expect(script).toContain('window.__vue__')
+    })
+
+    it('renderShell renders and clears entries', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Shell' })
+
+      const result = renderShell(head)
+      expect(result.headTags).toContain('<title>Shell</title>')
+      expect(head.entries.size).toBe(0)
+    })
+
+    it('renderShell returns SSRHeadPayload', () => {
+      const { head } = createStreamableHead()
+      expectTypeOf(renderShell(head)).toEqualTypeOf<SSRHeadPayload>()
     })
   })
 

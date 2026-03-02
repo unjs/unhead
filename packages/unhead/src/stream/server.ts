@@ -90,9 +90,36 @@ function getStreamKey(head: Unhead<any>): string {
 /**
  * Generates the bootstrap script that creates the streaming queue on the window object.
  * This script is injected into the shell and must run before any streaming updates.
+ *
+ * For frameworks that construct HTML programmatically (without a template),
+ * use this directly to inject the bootstrap into your shell `<head>`.
+ *
+ * @param streamKey - The window property name for the stream queue (default: '__unhead__')
+ * @returns An inline `<script>` tag string
  */
-function createBootstrapScript(streamKey: string): string {
+export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY): string {
   return `<script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+}
+
+/**
+ * Renders the current head state and clears entries atomically.
+ *
+ * Use this for frameworks that construct HTML programmatically (without a template)
+ * where `renderSSRHeadShell` / `prepareStreamingTemplate` aren't suitable.
+ *
+ * @param head - The Unhead instance
+ * @returns The rendered SSR head payload
+ *
+ * @example
+ * ```ts
+ * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
+ * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
+ * ```
+ */
+export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
+  const result = head.render()
+  head.entries.clear()
+  return result
 }
 
 /**

@@ -37,9 +37,11 @@
   HeadStream: object
   VueHeadMixin: object
 ./stream/server:
+  createBootstrapScript: function
   createStreamableHead: function
   HeadStream: object
   prepareStreamingTemplate: function
+  renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function

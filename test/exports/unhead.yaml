@@ -45,8 +45,10 @@
   streamingIifeCode: string
   streamingIifeSize: number
 ./stream/server:
+  createBootstrapScript: function
   createStreamableHead: function
   prepareStreamingTemplate: function
+  renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function

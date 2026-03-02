@@ -1,5 +1,5 @@
 import type { CreateStreamableClientHeadOptions, UnheadStreamQueue } from 'unhead/stream/client'
-import type { VueHeadClient } from '../types'
+import type { UseHeadInput, VueHeadClient } from '../types'
 import { createStreamableHead as _createStreamableHead } from 'unhead/stream/client'
 import { defineComponent } from 'vue'
 import { vueInstall } from '../install'
@@ -20,11 +20,11 @@ export const HeadStream = defineComponent({
  * Creates a client head by wrapping the core instance from the iife script.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): VueHeadClient | undefined {
+export function createStreamableHead(options: CreateStreamableClientHeadOptions = {}): VueHeadClient<UseHeadInput, boolean> | undefined {
   const head = _createStreamableHead({
     ...options,
     propResolvers: [VueResolver, ...(options.propResolvers || [])],
-  }) as VueHeadClient | undefined
+  }) as VueHeadClient<UseHeadInput, boolean> | undefined
   if (head) {
     head.install = vueInstall(head)
   }
