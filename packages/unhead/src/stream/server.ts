@@ -1,3 +1,4 @@
+import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
@@ -11,7 +12,7 @@ export interface BaseStreamableHeadContext<T = ResolvableHead> {
   /**
    * The Unhead instance to provide to your framework
    */
-  head: Unhead<T>
+  head: ServerUnhead<T>
 }
 
 /**
