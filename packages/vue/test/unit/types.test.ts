@@ -1,5 +1,7 @@
+import type { SSRHeadPayload } from 'unhead/types'
 import type { RawInput, SerializableHead } from '../../src/'
 import { createHead } from '@unhead/vue/client'
+import { createHead as createServerHead } from '@unhead/vue/server'
 import { computed } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
 
@@ -122,6 +124,18 @@ describe('types', () => {
       },
     }
     useHead(input as any, { head })
+  })
+  it('types render() return types', () => {
+    // client render() returns boolean
+    const clientHead = createHead()
+    clientHead.render() satisfies boolean
+
+    // server render() returns SSRHeadPayload
+    const serverHead = createServerHead()
+    serverHead.render() satisfies SSRHeadPayload
+
+    // @ts-expect-error server render() should not be assignable to boolean
+    serverHead.render() satisfies boolean
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'

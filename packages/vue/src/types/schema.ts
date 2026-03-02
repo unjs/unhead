@@ -148,4 +148,4 @@ export type UseHeadOptions = Omit<HeadEntryOptions, 'head'> & { head?: VueHeadCl
 
 export type UseHeadInput<_Deprecated = never> = ResolvableValue<ReactiveHead>
 export type UseSeoMetaInput = ResolvableProperties<MetaFlat> & { title?: ReactiveHead['title'], titleTemplate?: ReactiveHead['titleTemplate'] }
-export type VueHeadClient<I = UseHeadInput> = Unhead<I> & Plugin
+export type VueHeadClient<I = UseHeadInput, R = unknown> = Unhead<I, R> & Plugin
