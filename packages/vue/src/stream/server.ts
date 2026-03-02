@@ -39,7 +39,7 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
   /**
    * The Vue head instance to use with app.use(head)
    */
-  head: VueHeadClient
+  head: VueHeadClient<any, SSRHeadPayload>
 }
 
 /**
@@ -72,7 +72,7 @@ export function createStreamableHead(
     ...options,
     propResolvers: [VueResolver],
   })
-  const vueHead = head as VueHeadClient
+  const vueHead = head as VueHeadClient<any, SSRHeadPayload>
   vueHead.install = vueInstall(vueHead)
 
   // Track shell render state - HeadStream skips entries until shell is rendered
@@ -83,7 +83,7 @@ export function createStreamableHead(
     head: vueHead,
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
       // Capture shell state before clearing entries
-      const preRenderedState = vueHead.render() as SSRHeadPayload
+      const preRenderedState = vueHead.render()
       vueHead.entries.clear()
       // Mark shell as rendered so HeadStream starts outputting streaming updates
       shellRendered = true

@@ -1,4 +1,5 @@
-import type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from 'unhead/types'
+import type { ServerUnhead } from 'unhead/server'
+import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
 import {
@@ -22,7 +23,7 @@ export {
  * Solid-js streaming context returned by createStreamableHead.
  */
 export interface SolidStreamableHeadContext {
-  head: Unhead
+  head: ServerUnhead
   /**
    * Callback to pass to renderToStream's onCompleteShell option.
    * This captures head entries from shell components before streaming starts.
@@ -68,7 +69,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
     head,
     onCompleteShell: () => {
       // Capture head entries from shell components before streaming starts
-      const shellState = head.render() as SSRHeadPayload
+      const shellState = head.render()
       head.entries.clear()
       // @ts-expect-error - custom property for SolidJS streaming
       head._solidShellComplete = true
