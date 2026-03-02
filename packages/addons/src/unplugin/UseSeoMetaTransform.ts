@@ -106,6 +106,8 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             const decl = scopeTracker.getDeclaration(node.name)
             if (decl instanceof ScopeTrackerImport
               && isValidPackage(decl.importNode.source.value)
+              && decl.node.type === 'ImportSpecifier'
+              && decl.node.imported.type === 'Identifier'
               && SEO_META_NAMES.has(decl.node.imported.name)) {
               valueReferenced.add(decl.node.imported.name)
             }
@@ -120,7 +122,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
           let importDecl: any = null
 
           if (decl instanceof ScopeTrackerImport) {
-            if (!isValidPackage(decl.importNode.source.value))
+            if (!isValidPackage(decl.importNode.source.value) || decl.node.type !== 'ImportSpecifier' || decl.node.imported.type !== 'Identifier')
               return
             originalName = decl.node.imported.name
             importDecl = decl.importNode
@@ -174,7 +176,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (output === false)
               return
             const propertyKey = property.key
-            let key = resolveMetaKeyType(propertyKey.name)
+            let key: string = resolveMetaKeyType(propertyKey.name)
             const keyValue = resolveMetaKeyValue(propertyKey.name)
             let valueKey = 'content'
             if (keyValue === 'charset') {
@@ -183,9 +185,6 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             }
             let value = code.substring(property.value.start as number, property.value.end as number)
             if (property.value.type === 'ArrayExpression') {
-              if (output === false)
-                return
-
               const elements = property.value.elements
               if (!elements.length)
                 return

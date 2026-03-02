@@ -47,9 +47,6 @@
   "exclude": [
     "examples",
     "bench",
-    "packages/angular",
-    "packages/addons",
-    "**/stream/vite.ts",
-    "**/vite-plugin.test.ts"
+    "packages/angular"
   ]
 }
