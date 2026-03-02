@@ -48,6 +48,8 @@
     "examples",
     "bench",
     "packages/angular",
-    "packages/addons"
+    "packages/addons",
+    "**/stream/vite.ts",
+    "**/vite-plugin.test.ts"
   ]
 }

@@ -63,7 +63,6 @@ describe('schema.org dupes', () => {
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
-          // @ts-expect-error untyped
           nodes: [
             defineWebSite({
               url: '/',
@@ -75,7 +74,6 @@ describe('schema.org dupes', () => {
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
-          // @ts-expect-error untyped
           nodes: [
             // @ts-expect-error broken
             defineWebSite({
@@ -86,14 +84,13 @@ describe('schema.org dupes', () => {
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
-          // @ts-expect-error untyped
           nodes: [
             defineWebSite({
               name: 'third',
             }),
           ],
         },
-      ],
+      ] as any,
     })
 
     const data = await renderSSRHead(ssrHead)
