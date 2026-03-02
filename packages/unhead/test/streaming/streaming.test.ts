@@ -1,9 +1,12 @@
+import type { SSRHeadPayload } from 'unhead/types'
 import {
+  createBootstrapScript,
   createStreamableHead,
+  renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
 } from 'unhead/stream/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 
 describe('streaming SSR', () => {
   describe('renderSSRHeadShell', () => {
@@ -525,6 +528,73 @@ describe('streaming SSR', () => {
 
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result.length).toBeGreaterThan(100000)
+    })
+  })
+
+  describe('createBootstrapScript', () => {
+    it('returns script tag with default key', () => {
+      const script = createBootstrapScript()
+      expect(script).toBe('<script>window.__unhead__={_q:[],push(e){this._q.push(e)}}</script>')
+    })
+
+    it('returns script tag with custom key', () => {
+      const script = createBootstrapScript('__myapp__')
+      expect(script).toContain('window.__myapp__')
+      expect(script).not.toContain('window.__unhead__')
+    })
+
+    it('returns a string', () => {
+      expectTypeOf(createBootstrapScript()).toBeString()
+    })
+  })
+
+  describe('renderShell', () => {
+    it('renders head and clears entries atomically', () => {
+      const { head } = createStreamableHead()
+      head.push({
+        title: 'Shell Test',
+        meta: [{ name: 'description', content: 'test' }],
+        htmlAttrs: { lang: 'en' },
+        bodyAttrs: { class: 'dark' },
+      })
+
+      const result = renderShell(head)
+
+      expect(result.headTags).toContain('<title>Shell Test</title>')
+      expect(result.headTags).toContain('<meta name="description" content="test">')
+      expect(result.htmlAttrs).toContain('lang="en"')
+      expect(result.bodyAttrs).toContain('class="dark"')
+
+      // entries should be cleared
+      expect(head.entries.size).toBe(0)
+      expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    })
+
+    it('returns SSRHeadPayload type', () => {
+      const { head } = createStreamableHead()
+      const result = renderShell(head)
+      expectTypeOf(result).toEqualTypeOf<SSRHeadPayload>()
+    })
+
+    it('can be called multiple times', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'First' })
+
+      const first = renderShell(head)
+      expect(first.headTags).toContain('First')
+
+      head.push({ title: 'Second' })
+
+      const second = renderShell(head)
+      expect(second.headTags).toContain('Second')
+      expect(second.headTags).not.toContain('First')
+    })
+
+    it('clears entries even with no custom pushes', () => {
+      const { head } = createStreamableHead()
+      renderShell(head)
+      // all default entries should be cleared
+      expect(head.entries.size).toBe(0)
     })
   })
 })

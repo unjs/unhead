@@ -94,8 +94,10 @@ export function createStreamableHead(
 
 // Export streaming-specific items only (not the re-exports from unhead/server)
 export {
+  createBootstrapScript,
   type CreateStreamableServerHeadOptions,
   prepareStreamingTemplate,
+  renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   type StreamingTemplateParts,
