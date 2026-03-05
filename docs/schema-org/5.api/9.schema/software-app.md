@@ -1,7 +1,39 @@
 ---
-title: Software App Schema
-description: Use defineSoftwareApp() to add SoftwareApplication structured data. Enable app rich results with ratings, pricing, and download info in search.
+title: SoftwareApplication Schema - JSON-LD Guide & Examples
+description: Implement SoftwareApplication structured data with Unhead. JSON-LD examples for app listings, ratings, pricing, and Google rich results.
+navigation:
+  title: SoftwareApplication
 ---
+
+SoftwareApplication schema describes a software product with its features, pricing, ratings, and platform compatibility. It enables rich result display in Google Search with star ratings and pricing information.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Photo Editor Pro",
+  "operatingSystem": "Windows, macOS",
+  "applicationCategory": "DesignApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "9.99",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.7",
+    "ratingCount": 1250
+  }
+}
+```
+
+With Unhead, generate this using the `defineSoftwareApp()` composable — see the [API reference](#schema-org-softwareapp) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org SoftwareApp
 

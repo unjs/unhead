@@ -1,7 +1,46 @@
 ---
-title: Local Business Schema
-description: Use defineLocalBusiness() to add LocalBusiness structured data. Display your business address, hours, and contact info in Google Maps and local search.
+title: LocalBusiness Schema - JSON-LD Guide & Examples
+description: Implement LocalBusiness structured data with Unhead. JSON-LD examples, required properties, subtypes (Dentist, Restaurant, Store), and Google rich result setup.
+navigation:
+  title: LocalBusiness
 ---
+
+LocalBusiness schema tells search engines about a physical business location — its name, address, opening hours, and services. It powers Google's local business panels, Maps listings, and "near me" search results.
+
+For better visibility, use a specific subtype like `Dentist`, `Restaurant`, or `ProfessionalService` rather than the generic `LocalBusiness` type.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Dave's Steak House",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "148 W 51st St",
+    "addressLocality": "New York",
+    "addressRegion": "NY",
+    "postalCode": "10019",
+    "addressCountry": "US"
+  },
+  "telephone": "+12122459600",
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "11:30",
+      "closes": "23:00"
+    }
+  ]
+}
+```
+
+With Unhead, generate this using the `defineLocalBusiness()` composable — see the [API reference](#schema-org-localbusiness) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org LocalBusiness
 

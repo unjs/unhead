@@ -1,7 +1,39 @@
 ---
-title: Organization Schema
-description: Use defineOrganization() to add Organization structured data. Display your company logo, social profiles, and contact info in Google Knowledge Panel.
+title: Organization Schema - JSON-LD Guide & Examples
+description: Add Organization structured data with Unhead. JSON-LD examples for company identity, logo, sameAs social profiles, and Google Knowledge Panel setup.
+navigation:
+  title: Organization
 ---
+
+Organization schema establishes your company or brand identity for search engines. It powers Google's Knowledge Panel, connects social profiles via `sameAs`, and serves as the publisher/author identity for other schema types like Article and LocalBusiness.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Acme Corp",
+  "url": "https://acme.com",
+  "logo": "https://acme.com/logo.png",
+  "sameAs": [
+    "https://twitter.com/acme",
+    "https://github.com/acme",
+    "https://linkedin.com/company/acme"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1-800-555-0199",
+    "contactType": "customer service"
+  }
+}
+```
+
+With Unhead, generate this using the `defineOrganization()` composable — see the [API reference](#schema-org-organization) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org Organization
 

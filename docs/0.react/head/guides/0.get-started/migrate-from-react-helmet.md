@@ -1,6 +1,6 @@
 ---
 title: Migrating from React Helmet to Unhead
-description: 'Replace React Helmet with Unhead. Smaller bundle size (4.5kb gzipped), TypeScript support, and modern features.'
+description: 'Replace React Helmet with Unhead - 60% smaller bundle (4.5kb gzipped), automatic Capo.js tag sorting, TypeScript support, and modern head management.'
 navigation:
   title: 'Migrate React Helmet'
 ---
@@ -11,16 +11,16 @@ navigation:
 
 [React Helmet](https://github.com/nfl/react-helmet) was the go-to solution for managing `<head>` tags in React applications for years. However, its last major release was in 2020 and the project is now in maintenance mode.
 
-Outside of regular maintenance [Unhead](/) offers a modern alternative with:
+::tip{icon="i-heroicons-scale"}
+**Bundle size:** React Helmet 26.6 kB (9.2 kB gzipped) → Unhead 10.7 kB (4.5 kB gzipped) — **60% smaller**
+::
+
+[Unhead](/) offers a modern alternative with:
 - Full TypeScript safety
 - DOM event handlers
 - Advanced DOM patching algorithm built for reactive frameworks
+- Automatic [Capo.js-based tag sorting](/docs/head/guides/core-concepts/positions) for optimal page load performance
 - Ecosystem of extras: `useSchemaOrg()`{lang="ts"}, `useScript()`{lang="ts"}, and more
-- Intelligent tag sorting for improved performance
-
-As well as a improved bundle size:
-- REACT HELMET Size: 26.6 kB (gzipped: 9.2 kB)
-- UNHEAD Size: 10.7 kB (gzipped: 4.5 kB)
 
 ## What's the Difference Between React Helmet and Unhead?
 

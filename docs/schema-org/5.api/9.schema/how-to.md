@@ -1,7 +1,40 @@
 ---
-title: HowTo Schema
-description: Use defineHowTo() to add HowTo structured data. Enable step-by-step rich snippets with images and time estimates in Google search results.
+title: HowTo Schema - JSON-LD Guide & Examples
+description: Add HowTo structured data to your site with Unhead. Step-by-step JSON-LD examples, required properties, and Google rich result guidance.
+navigation:
+  title: HowTo
 ---
+
+HowTo schema marks up step-by-step instructions so Google can display them as rich results with expandable steps. Use it for tutorials, guides, DIY instructions, and how-to content.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Tie a Tie",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "text": "Drape the tie around your neck with the wide end on your right, about 1/3 longer than the narrow end.",
+      "image": "https://example.com/step1.jpg"
+    },
+    {
+      "@type": "HowToStep",
+      "text": "Cross the wide end over the narrow end, then bring it underneath.",
+      "image": "https://example.com/step2.jpg"
+    }
+  ],
+  "totalTime": "PT5M"
+}
+```
+
+With Unhead, generate this using the `defineHowTo()` composable — see the [API reference](#schema-org-howto) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org HowTo
 
