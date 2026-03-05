@@ -1,7 +1,43 @@
 ---
-title: Article Schema
-description: Use defineArticle() to add Article structured data to your pages. Enable rich snippets for blog posts, news, and content with author, date, and image information.
+title: Article Schema - JSON-LD Guide & Examples
+description: Implement Article structured data with Unhead. JSON-LD examples for BlogPosting, NewsArticle, TechArticle with datePublished and author markup.
+navigation:
+  title: Article
 ---
+
+Article schema identifies written content like blog posts, news articles, and technical documentation. It helps search engines understand authorship, publish dates, and content type for rich results in Google Search.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to Build a REST API with Node.js",
+  "image": "https://example.com/photos/api-guide.jpg",
+  "datePublished": "2026-01-15T08:00:00+00:00",
+  "dateModified": "2026-02-20T10:30:00+00:00",
+  "author": {
+    "@type": "Person",
+    "name": "Jane Smith",
+    "url": "https://example.com/authors/jane"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dev Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://example.com/logo.png"
+    }
+  }
+}
+```
+
+With Unhead, generate this using the `defineArticle()` composable — see the [API reference](#schema-org-article) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org Article
 

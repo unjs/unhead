@@ -1,7 +1,43 @@
 ---
-title: ItemList Schema
-description: Use defineItemList() to add ItemList structured data. Create carousels and ordered lists for products, articles, and other content in search.
+title: ItemList Schema - JSON-LD Guide & Examples
+description: Add ItemList structured data with Unhead. JSON-LD examples for carousels, ranked lists, and product collections with Google rich result support.
+navigation:
+  title: ItemList
 ---
+
+ItemList schema represents an ordered or unordered list of items. Google uses it to display carousel rich results for recipes, products, courses, and other list-based content.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "url": "https://example.com/best-phones/iphone"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "url": "https://example.com/best-phones/pixel"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "url": "https://example.com/best-phones/galaxy"
+    }
+  ]
+}
+```
+
+With Unhead, generate this using the `defineItemList()` composable — see the [API reference](#schema-org-itemlist) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org ItemList
 

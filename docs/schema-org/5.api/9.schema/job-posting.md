@@ -1,7 +1,54 @@
 ---
-title: Job Posting Schema
-description: Use defineJobPosting() to add JobPosting structured data. Display job listings with salary, location, and apply buttons in Google Jobs search.
+title: JobPosting Schema - JSON-LD Guide & Examples
+description: Implement JobPosting structured data with Unhead. JSON-LD examples, required fields for Google Jobs, salary markup, and validation tips.
+navigation:
+  title: JobPosting
 ---
+
+JobPosting schema enables your job listings to appear in Google Jobs search results with salary, location, and application details. It's required for Google Jobs integration.
+
+### JSON-LD Example
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  "title": "Software Engineer",
+  "description": "We are looking for a Software Engineer to join our team.",
+  "datePosted": "2026-01-15",
+  "validThrough": "2026-04-15",
+  "employmentType": "FULL_TIME",
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": "Acme Corp",
+    "sameAs": "https://acme.com"
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "San Francisco",
+      "addressRegion": "CA",
+      "addressCountry": "US"
+    }
+  },
+  "baseSalary": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": {
+      "@type": "QuantitativeValue",
+      "value": 120000,
+      "unitText": "YEAR"
+    }
+  }
+}
+```
+
+With Unhead, generate this using the `defineJobPosting()` composable — see the [API reference](#schema-org-job-posting) below.
+
+::tip{icon="i-heroicons-wrench-screwdriver"}
+Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
+::
 
 ## Schema.org Job Posting
 
