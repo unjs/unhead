@@ -541,10 +541,24 @@ export interface AlternateMediaLink extends LinkBase {
 }
 
 /**
- * Combined alternate link union.
- * Requires at least one of: hreflang (language), type (feed), or media (responsive).
+ * Bare alternate link without hreflang, type, or media.
+ * Valid HTML, typically used as a fallback or generic alternate.
  */
-export type AlternateLink = AlternateLanguageLink | AlternateFeedLink | AlternateMediaLink
+export interface BareAlternateLink extends LinkBase {
+  rel: 'alternate'
+  /**
+   * This attribute specifies the URL of the linked resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
+   */
+  href: string
+}
+
+/**
+ * Combined alternate link union.
+ * Accepts language (hreflang), feed (type), responsive (media), or bare alternate links.
+ */
+export type AlternateLink = AlternateLanguageLink | AlternateFeedLink | AlternateMediaLink | BareAlternateLink
 
 // ============================================================================
 // Other Standard Links
@@ -610,11 +624,42 @@ export interface PingbackLink extends LinkBase {
 // ============================================================================
 
 /**
+ * Union of all `rel` values that have narrowed link type definitions.
+ * Useful for building type guards or conditional logic based on `rel` values.
+ */
+export type KnownLinkRel
+  = | 'stylesheet'
+    | 'preload'
+    | 'modulepreload'
+    | 'prefetch'
+    | 'icon'
+    | 'shortcut icon'
+    | 'apple-touch-icon'
+    | 'mask-icon'
+    | 'manifest'
+    | 'canonical'
+    | 'dns-prefetch'
+    | 'preconnect'
+    | 'prerender'
+    | 'alternate'
+    | 'author'
+    | 'license'
+    | 'help'
+    | 'search'
+    | 'prev'
+    | 'next'
+    | 'pingback'
+
+/**
  * Fallback for custom or unknown `rel` types.
  *
- * **Warning:** Misspelling a known `rel` value (e.g. `'styleshet'` instead of `'stylesheet'`)
- * will silently match this type and bypass all validation. Use the narrowed link types
- * (e.g. {@link StylesheetLink}, {@link PreloadLink}) for type-safe links.
+ * **Warning:** Because `rel` is typed as `string`, this interface absorbs all `rel` values
+ * including known ones (e.g. `'preload'`, `'stylesheet'`). Misspelling a known `rel` value
+ * will silently match this type and bypass validation. For type-safe link elements, use the
+ * narrowed link types directly (e.g. {@link StylesheetLink}, {@link PreloadLink}).
+ *
+ * To enforce `as` being required for `rel="preload"`, type your variable as {@link PreloadLink}
+ * rather than the general `Link` union.
  */
 export interface GenericLink extends LinkBase {
   rel: string
@@ -640,7 +685,16 @@ export interface GenericLink extends LinkBase {
 
 /**
  * Discriminated union of all link types.
- * Order matters for TypeScript narrowing - specific types before generic.
+ *
+ * Each named `rel` value maps to a specific interface that enforces per-`rel` required
+ * attributes. For example, `rel="preload"` requires the `as` attribute (see {@link PreloadLink}).
+ *
+ * `GenericLink` is included as a fallback for custom or non-standard `rel` values.
+ * Note: TypeScript cannot enforce `as` being required when using `{ rel: 'preload', ... }`
+ * directly as a `Link` (since `GenericLink` with `rel: string` absorbs it). For strict
+ * enforcement, type your variable as `PreloadLink` or use the `PreloadLink` union directly.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel
  */
 export type Link
   = | StylesheetLink
@@ -658,6 +712,7 @@ export type Link
     | AlternateLanguageLink
     | AlternateFeedLink
     | AlternateMediaLink
+    | BareAlternateLink
     | AuthorLink
     | LicenseLink
     | HelpLink

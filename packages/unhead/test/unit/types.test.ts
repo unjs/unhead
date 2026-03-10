@@ -1,4 +1,4 @@
-import type { SerializableHead } from '../../src/types'
+import type { PreloadLink, SerializableHead } from '../../src/types'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { createHead } from '../../src/server'
 
@@ -62,6 +62,36 @@ describe('types', () => {
         index: () => true,
       },
     })
+  })
+  it('types preload link enforces `as` via PreloadLink', () => {
+    const head = createHead()
+
+    // Valid: preload with `as`
+    useHead(head, {
+      link: [
+        { rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous' },
+        { rel: 'preload', href: '/script.js', as: 'script' },
+        { rel: 'preload', href: '/style.css', as: 'style' },
+        { rel: 'preload', href: '/video.mp4', as: 'video' },
+      ],
+    })
+
+    // Valid: modulepreload (`as` is optional — browser infers script)
+    useHead(head, {
+      link: [
+        { rel: 'modulepreload', href: '/module.js' },
+      ],
+    })
+
+    // The `PreloadLink` type directly enforces `as` as required.
+    // Typing a variable as `PreloadLink` (or one of its subtypes) correctly
+    // rejects missing `as` at the type level:
+    const validPreloadLink: PreloadLink = { rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous' }
+    // @ts-expect-error `as` is required for PreloadLink
+    const invalidPreloadLink: PreloadLink = { rel: 'preload', href: '/font.woff2' }
+
+    void validPreloadLink
+    void invalidPreloadLink
   })
   it('types SerializableHead', () => {
     const head = createHead()

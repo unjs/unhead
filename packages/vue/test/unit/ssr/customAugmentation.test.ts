@@ -1,4 +1,3 @@
-import type { SerializableHead } from '@unhead/vue'
 import { renderSSRHead } from '@unhead/ssr'
 import { injectHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
@@ -7,16 +6,6 @@ import { createSSRApp, ref } from 'vue'
 
 describe('vue ssr custom augmentation', () => {
   it('link auto-completion', async () => {
-    interface CustomHead extends SerializableHead {
-      title: string
-      link: ({
-        ['data-test']: any
-        rel: string
-        href: 'link-one' | 'link/two' | 'link/number/three'
-        CUSTOM_FIELD: 10
-      })[]
-    }
-
     const head = createHead({
       disableDefaults: true,
     })
@@ -24,18 +13,19 @@ describe('vue ssr custom augmentation', () => {
       setup() {
         const title = ref('')
         const head = injectHead()
-        const f = {
+        head.push({
           title: 'foo',
           link: [
+            // Non-standard link attributes require a type cast via GenericLink or as any.
+            // At runtime, unhead serializes all provided attributes to the DOM.
             {
               'data-test': () => 'test',
               'rel': 'stylesheet',
               'href': 'link/two',
               'CUSTOM_FIELD': 10,
-            },
+            } as any,
           ],
-        } satisfies CustomHead
-        head.push(f)
+        })
         title.value = 'hello'
         return () => '<div>hi</div>'
       },

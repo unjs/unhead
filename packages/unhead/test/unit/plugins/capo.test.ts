@@ -48,6 +48,7 @@ describe('capo', () => {
       link: [{
         rel: 'preload',
         href: 'preload.js',
+        as: 'script',
       }],
     })
     head.push({
