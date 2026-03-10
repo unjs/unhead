@@ -1,6 +1,6 @@
 import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
 import { imageResolver } from '../nodes'
-import { asArray, resolveAsGraphKey } from '../utils'
+import { asArray, resolveAsGraphKey, stripNullProperties } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 import { merge } from './util'
 
@@ -124,6 +124,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
         if (node._resolver?.resolveRootNode)
           node._resolver.resolveRootNode(node, ctx)
+
+        // Strip null opt-out sentinels after all resolvers have run
+        stripNullProperties(node)
 
         delete node._resolver
       }
