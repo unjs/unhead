@@ -8,6 +8,8 @@ import {
 import { resolveMeta } from './core/resolve'
 import { loadResolver } from './resolver'
 
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 // Recursively collect all resolver strings from nested objects and preload them
 async function preloadNestedResolvers(obj: any): Promise<void> {
   if (!obj || typeof obj !== 'object')
@@ -24,6 +26,8 @@ async function preloadNestedResolvers(obj: any): Promise<void> {
   }
 
   for (const key in obj) {
+    if (!Object.hasOwn(obj, key) || UNSAFE_KEYS.has(key))
+      continue
     const val = obj[key]
     if (val && typeof val === 'object') {
       if (Array.isArray(val)) {
@@ -44,7 +48,7 @@ async function preloadNestedResolvers(obj: any): Promise<void> {
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined)
+    if (!Object.hasOwn(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
       continue
 
     const isNestedObject = result[key]

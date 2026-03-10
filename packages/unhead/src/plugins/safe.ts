@@ -97,7 +97,7 @@ function stripProtoKeys(obj: any): any {
   if (obj && typeof obj === 'object') {
     const clean: Record<string, any> = {}
     for (const key of Object.keys(obj)) {
-      if (key === '__proto__' || key === 'constructor')
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype')
         continue
       clean[key] = stripProtoKeys(obj[key])
     }

@@ -60,6 +60,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   }
 
   Object.entries(input).forEach(([key, value]) => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype')
+      return
     // if the value is a primitive, return early
     if (value === null) {
       // @ts-expect-error untyped

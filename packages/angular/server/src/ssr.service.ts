@@ -15,7 +15,7 @@ function attrToElement(element: HTMLElement, acc: string) {
   else if (key === 'style') {
     const styleObj = value.split(';').reduce((acc, style) => {
       const [prop, val] = style.split(':').map(s => s.trim())
-      if (prop && val)
+      if (prop && val && prop !== '__proto__' && prop !== 'constructor' && prop !== 'prototype')
         acc[prop] = val
       return acc
     }, {} as Record<string, string>)
