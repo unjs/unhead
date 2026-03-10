@@ -71,6 +71,8 @@ import type {
 } from './script'
 import type { Style } from './style'
 
+export interface TemplateParamsAugmentations {}
+
 export interface SchemaAugmentations {
   title: TagPriority
   titleTemplate: TagPriority
@@ -82,7 +84,6 @@ export interface SchemaAugmentations {
   style: TagPriority & TagPosition & StringInnerContent & ResolvesDuplicates & ProcessesTemplateParams
   script: TagPriority & TagPosition & InnerContent & ResolvesDuplicates & ProcessesTemplateParams
   noscript: TagPriority & TagPosition & StringInnerContent & ResolvesDuplicates & ProcessesTemplateParams
-  templateParams: object
 }
 
 export type MaybeArray<T> = T | T[]
@@ -146,7 +147,7 @@ export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugm
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
-export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>> & SchemaAugmentations['templateParams']
+export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>> & TemplateParamsAugmentations
 
 export interface ResolvableHead {
   /**
