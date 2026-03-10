@@ -16,9 +16,9 @@ See the full [introduction to Unhead](https://unhead.unjs.io/docs/typescript/hea
 </table>
 </p>
 
-### Unhead v2 🎉
+### Unhead v3 🎉
 
-The latest major is now stable! Check out the [v2 release notes](https://unhead.unjs.io/v2).
+The latest major is in beta! Check out the [v3 release notes](https://unhead.unjs.io/v3).
 
 ## Highlights
 
@@ -34,7 +34,7 @@ The latest major is now stable! Check out the [v2 release notes](https://unhead.
 Install `unhead` dependency to your project:
 
 ```bash
-npm install unhead
+npm install unhead@beta
 ```
 
 > [!TIP]
