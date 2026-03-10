@@ -235,7 +235,7 @@ describe('unhead e2e deduping', () => {
       // this will be inserted once
       link: [
         {
-          rel: 'canonical',
+          rel: 'canonical' as const,
           href: 'https://test.com',
         },
       ],
