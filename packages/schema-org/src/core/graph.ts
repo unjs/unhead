@@ -83,7 +83,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       }
 
       // Dedupe and build nodeIndex in single pass
-      const dedupedNodes: Record<Id, SchemaOrgNode> = {}
+      const dedupedNodes: Record<Id, SchemaOrgNode> = Object.create(null)
       ctx.nodeIndex = new Map()
       for (let i = 0; i < ctx.nodes.length; i++) {
         const n = ctx.nodes[i]
@@ -128,7 +128,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
       // Final normalization: sort keys and dedupe only if new nodes were added
       const needsDedupe = ctx.nodes.length > countBeforeRelations
-      const normalizedNodes: Record<Id, SchemaOrgNode> = needsDedupe ? {} : null!
+      const normalizedNodes: Record<Id, SchemaOrgNode> = needsDedupe ? Object.create(null) : null!
       const result: SchemaOrgNode[] = needsDedupe ? null! : []
 
       for (let i = 0; i < ctx.nodes.length; i++) {
@@ -174,7 +174,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
     },
     nodes: [],
     nodeIndex: new Map(),
-    nodeIdCounters: {},
+    nodeIdCounters: Object.create(null),
     meta: {} as ResolvedMeta,
   }
   return ctx

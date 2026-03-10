@@ -10,7 +10,11 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
     return v.map(r => walkResolver(r, resolve))
   if (v?.constructor === Object) {
     const next: Record<string, any> = {}
-    for (const k in v) next[k] = walkResolver(v[k], resolve, k)
+    for (const k in v) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype')
+        continue
+      next[k] = walkResolver(v[k], resolve, k)
+    }
     return next
   }
   return v

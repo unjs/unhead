@@ -1,9 +1,11 @@
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 export function merge(target: any, source: any): any {
   if (!source)
     return target
 
   for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key))
+    if (!Object.hasOwn(source, key) || UNSAFE_KEYS.has(key))
       continue
 
     const value = source[key]
@@ -28,7 +30,7 @@ export function merge(target: any, source: any): any {
         }
         // potentialAction - dedupe by @type, merge targets
         else if (key === 'potentialAction') {
-          const byType: Record<string, any> = {}
+          const byType: Record<string, any> = Object.create(null)
           for (const action of merged) {
             const type = action['@type']
             if (byType[type]) {

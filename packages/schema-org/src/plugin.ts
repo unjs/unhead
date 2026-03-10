@@ -7,11 +7,13 @@ import {
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
 
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined)
+    if (!Object.hasOwn(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
       continue
 
     const isNestedObject = result[key]

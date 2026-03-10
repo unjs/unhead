@@ -1,6 +1,6 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
-import { DupeableTags, TagConfigKeys } from './const'
+import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -42,29 +42,36 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     tag.props = input
     return tag
   }
-  for (const key in input) {
-    const value = input[key]
+  const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
+
+  for (const prop in input) {
+    if (prop === '__proto__' || prop === 'constructor' || prop === 'prototype')
+      continue
+    const value = input[prop]
     if (value === null) {
-      tag.props[key] = null as any
+      tag.props[prop] = null as any
     }
-    else if (key === 'class' || key === 'style') {
-      tag.props[key] = normalizeStyleClassProps(key, value) as any
+    else if (prop === 'class' || prop === 'style') {
+      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
     }
-    else if (TagConfigKeys.has(key)) {
-      if ((key === 'textContent' || key === 'innerHTML') && typeof value === 'object') {
+    else if (TagConfigKeys.has(prop)) {
+      if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
         if (type.endsWith('json') || type === 'speculationrules') {
           tag.props.type = input.type = type
-          tag[key as 'textContent' | 'innerHTML'] = JSON.stringify(value)
+          tag[prop] = JSON.stringify(value)
         }
       }
       else {
-        (tag as any)[key] = value
+        (tag as any)[prop] = value
       }
     }
     else if (value !== undefined) {
+      // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
+      // Only for real HTML element tags, not internal virtual tags like _flatMeta
+      const isData = prop.startsWith('data-')
+      const key = isHtmlTag && !isData ? prop.toLowerCase() : prop
       const str = String(value)
-      const isData = key.startsWith('data-')
       const isMeta = tag.tag === 'meta' && key === 'content'
       tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
     }

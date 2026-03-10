@@ -93,8 +93,8 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = renderSSRHead(head)
-    expect(headTags.startsWith('<script myCustomMeta="second"')).toBeTruthy()
-    expect(headTags.split('myCustomMeta').length === 2).toBeTruthy()
+    expect(headTags.startsWith('<script mycustommeta="second"')).toBeTruthy()
+    expect(headTags.split('mycustommeta').length === 2).toBeTruthy()
   })
 
   it('dedupes canonical', async () => {
