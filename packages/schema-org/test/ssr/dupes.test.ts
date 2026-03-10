@@ -73,7 +73,6 @@ describe('schema.org dupes', () => {
         {
           type: 'application/ld+json',
           key: 'schema-org-graph',
-          // @ts-expect-error untyped
           nodes: [
             defineWebSite({
               url: '/',
@@ -81,7 +80,7 @@ describe('schema.org dupes', () => {
               name: 'hello',
             }),
           ],
-        },
+        } as any,
       ],
     })
 

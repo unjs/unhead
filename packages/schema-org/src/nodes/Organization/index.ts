@@ -92,7 +92,8 @@ export const organizationResolver
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
       const webPage = ctx.find<WebPage>(PrimaryWebPageId)
       if (node.logo && isIdentity) {
-        if (!ctx.some('#organization')) {
+        // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
+        if (!ctx.find('#organization')) {
         // create a node for the logo
           const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
             root: true,

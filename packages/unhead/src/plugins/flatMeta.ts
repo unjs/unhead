@@ -12,7 +12,7 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
           return t
         }
         // @ts-expect-error untyped
-        tagsToAdd.push(unpackMeta(t.props).map(p => ({
+        tagsToAdd.push(...unpackMeta(t.props).map(p => ({
           ...t,
           tag: 'meta',
           props: p,

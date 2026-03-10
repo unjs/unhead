@@ -109,7 +109,8 @@ describeBenchmark('streaming SSR benchmarks', () => {
         const start = performance.now()
 
         // Create concurrent streaming heads
-        const heads = Array.from({ length: streamCount }).fill(createStreamableServerHead())
+        // eslint-disable-next-line e18e/prefer-array-fill -- .fill() loses type info
+        const heads = Array.from({ length: streamCount }, () => createStreamableServerHead())
 
         // Push initial tags to all
         heads.forEach((head) => {
