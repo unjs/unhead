@@ -12,6 +12,7 @@ import type {
   MaybeEventFnHandlers,
   MetaFlat,
   Noscript,
+  ResolvableTemplateParams,
   SchemaAugmentations,
   Script,
   ScriptHttpEvents,
@@ -85,10 +86,7 @@ export interface ReactiveHead {
   /**
    * Variables used to substitute in the title and meta content.
    */
-  templateParams?: ResolvableProperties<
-    { separator?: '|' | '-' | '·' | string }
-    & Record<string, Stringable | ResolvableProperties<Record<string, Stringable>>>
-  >
+  templateParams?: ResolvableProperties<ResolvableTemplateParams>
   /**
    * The `<base>` HTML element specifies the base URL to use for all relative URLs in a document.
    * There can be only one <base> element in a document.
