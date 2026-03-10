@@ -27,6 +27,11 @@ describe('dom useHeadSafe', () => {
         {
           textContent: 'body { background: url("javascript:alert(1)") }',
         },
+        {
+          // @ts-expect-error intentionally invalid
+          'innerHTML': 'body { background: url("javascript:alert(1)") }',
+          'data-foo': 'bar',
+        },
       ],
       script: [
         {
@@ -44,10 +49,12 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    expect(await useDelayedSerializedDom()).toMatchInlineSnapshot(`
+    const dom = await useDelayedSerializedDom()
+    expect(dom).not.toContain('javascript:alert')
+    expect(dom).toMatchInlineSnapshot(`
       "<!DOCTYPE html><html lang="en" dir="ltr"><head>
 
-      <meta charset="utf-8"><link href="https://cdn.example.com/style.css" rel="stylesheet"><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><script type="application/json">{"value":"alert(1)"}</script></head>
+      <meta charset="utf-8"><link href="https://cdn.example.com/style.css" rel="stylesheet"><style data-foo="bar"></style><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><script type="application/json">{"value":"alert(1)"}</script></head>
       <body class="dark">
 
       <div>

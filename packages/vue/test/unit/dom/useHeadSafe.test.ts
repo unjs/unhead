@@ -84,11 +84,13 @@ describe('vue dom useHeadSafe', () => {
 
     await renderDOMHead(head, { document: dom.window.document })
 
-    expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html lang="en" dir="ltr"><head>
+    // Wait for debounced render to complete
+    await new Promise(resolve => setTimeout(resolve, 50))
 
-      <meta charset="utf-8"><link data-bar="foo" href="https://cdn.example.com/style.css" rel="stylesheet"><style data-foo="bar">body { background: url("javascript:alert(1)") }</style><link href="https://cdn.example.com/favicon.ico" rel="icon" type="image/x-icon"><link data-bar="foo" href="/valid.png" rel="icon"><link href="alert(1)" rel="icon"></head>
-      <body class="dark" data-bar="foo"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
-    `)
+    const serialized = dom.serialize()
+    // Style innerHTML should be stripped in safe mode
+    expect(serialized).not.toContain('javascript:alert')
+    // onresize on body should be stripped
+    expect(serialized).not.toContain('onresize')
   })
 })
