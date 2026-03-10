@@ -45,7 +45,7 @@ describe('vue ssr custom augmentation', () => {
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>foo</title>
-      <link data-test="test" href="link/two" CUSTOM_FIELD="10">"
+      <link data-test="test" href="link/two" custom_field="10">"
     `,
     )
   })

@@ -22,7 +22,7 @@ describe('simpleHead component in ssr', () => {
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
-      <script noModule src="https://example.com/nomodule.js"></script>
+      <script nomodule src="https://example.com/nomodule.js"></script>
       <link rel="stylesheet" href="default-styles.css">
       <style>body { background-color: #f0f0f0; }</style>
       <link rel="preload" href="https://example.com/font.woff2" as="font" type="font/woff2">
@@ -58,7 +58,7 @@ describe('simpleHead component in ssr', () => {
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>
       <script async src="https://example.com/async-script.js"></script>
-      <script noModule src="https://example.com/nomodule.js"></script>
+      <script nomodule src="https://example.com/nomodule.js"></script>
       <link rel="stylesheet" href="default-styles.css">
       <style>body { background-color: #f0f0f0; }</style>
       <link rel="preload" href="https://example.com/font.woff2" as="font" type="font/woff2">
