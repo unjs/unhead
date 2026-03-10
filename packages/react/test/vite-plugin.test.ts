@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { unheadReactPlugin } from '../src/stream/vite'
 
+const FILTER_RE = /\.[jt]sx$/
+const HEAD_STREAM_RE = /<HeadStream \/>/g
+
 describe('unheadReactPlugin', () => {
   const plugin = unheadReactPlugin() as any
   const transform = plugin.transform.handler
@@ -17,7 +20,7 @@ describe('unheadReactPlugin', () => {
 
   describe('transform', () => {
     it('filters to jsx/tsx files only', () => {
-      expect(plugin.transform.filter.id).toEqual(/\.[jt]sx$/)
+      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
     })
 
     it('skips files without Suspense', () => {
@@ -99,7 +102,7 @@ describe('unheadReactPlugin', () => {
       `
       const result = transform(code, 'app.tsx')
       expect(result).not.toBeNull()
-      expect(result!.code.match(/<HeadStream \/>/g)?.length).toBe(2)
+      expect(result!.code.match(HEAD_STREAM_RE)?.length).toBe(2)
     })
 
     it('handles arrow function components with useHead', () => {

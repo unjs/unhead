@@ -1,6 +1,8 @@
 import { renderDOMHead } from '../../../src/client'
 import { createClientHeadWithContext, useDom } from '../../util'
 
+const JETFLY_RE = /^ — /
+
 describe('titleTemplate', () => {
   it('string replace', async () => {
     const dom = useDom()
@@ -141,7 +143,7 @@ describe('titleTemplate', () => {
     createClientHeadWithContext({
       document: dom.window.document,
       init: [
-        { titleTemplate: title => `${title ?? ''} — Jetfly Group`.replace(/^ — /, '') },
+        { titleTemplate: title => `${title ?? ''} — Jetfly Group`.replace(JETFLY_RE, '') },
       ],
     })
 

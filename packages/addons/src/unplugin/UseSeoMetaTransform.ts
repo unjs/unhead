@@ -13,6 +13,9 @@ import {
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 
+const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
+const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
+
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
   /**
    * Whether to transform imports of `useSeoMeta` and `useServerSeoMeta` to `useHead` and `useServerHead`.
@@ -59,7 +62,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
-      if (pathname.match(/[\\/]node_modules[\\/]/))
+      if (NODE_MODULES_RE.test(pathname))
         return false
 
       // Included
@@ -75,7 +78,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         return true
 
       // js files
-      if (pathname.match(/\.((c|m)?j|t)sx?$/g))
+      if (TRANSFORM_RE.test(pathname))
         return true
 
       return false
@@ -263,7 +266,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
           }
           s.overwrite(
             importNode.specifiers[0].start,
-            importNode.specifiers[importNode.specifiers.length - 1].end,
+            importNode.specifiers.at(-1).end,
             [...newSpecifiers].join(', '),
           )
         }

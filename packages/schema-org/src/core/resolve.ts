@@ -10,6 +10,8 @@ import type { SchemaOrgGraph } from './graph'
 import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
 import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
 
+const ALIAS_RE = /([a-z])([A-Z])/g
+
 function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
   ctx.nodeIdCounters[alias] = (ctx.nodeIdCounters[alias] || 0) + 1
   return ctx.nodeIdCounters[alias].toString()
@@ -115,7 +117,7 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
   if (!alias) {
     const type = asArray(node['@type'])?.[0] || ''
     // kebab case type
-    alias = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    alias = type.replace(ALIAS_RE, '$1-$2').toLowerCase()
   }
 
   node['@id'] = prefixId(ctx.meta[prefix], `#/schema/${alias}/${node['@id'] || nextNodeId(ctx, alias!)}`)

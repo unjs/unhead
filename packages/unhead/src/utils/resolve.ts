@@ -4,6 +4,9 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
+const LT_RE = /</g
+const SCRIPT_END_RE = /<\/script/g
+
 // @ts-expect-error untyped
 const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
@@ -80,8 +83,8 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
       return false
     if (tag === 'script' && innerHTML) {
       t.innerHTML = String(props.type).endsWith('json')
-        ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(/</g, '\\u003C')
-        : typeof innerHTML === 'string' ? innerHTML.replace(/<\/script/g, '<\\/script') : innerHTML
+        ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(LT_RE, '\\u003C')
+        : typeof innerHTML === 'string' ? innerHTML.replace(SCRIPT_END_RE, '<\\/script') : innerHTML
       t._d = dedupeKey(t)
     }
     return true
@@ -120,7 +123,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   ctx.tags = entries.flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
-  ctx.tags = Array.from(ctx.tagMap.values())
+  ctx.tags = [...ctx.tagMap.values()]
   if (hasFlatMeta)
     ctx.tags = ctx.tags.flat().sort(sortTags)
   callHook(head, 'tags:beforeResolve', ctx)

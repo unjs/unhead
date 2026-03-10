@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { unheadSolidPlugin } from '../src/stream/vite'
 
+const FILTER_RE = /\.[jt]sx$/
+
 describe('unheadSolidPlugin', () => {
   const plugin = unheadSolidPlugin() as any
   const transform = plugin.transform.handler
@@ -17,7 +19,7 @@ describe('unheadSolidPlugin', () => {
 
   describe('transform', () => {
     it('filters to jsx/tsx files only', () => {
-      expect(plugin.transform.filter.id).toEqual(/\.[jt]sx$/)
+      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
     })
 
     it('skips files without useHead', () => {

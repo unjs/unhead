@@ -1,5 +1,10 @@
 import type { TemplateParams } from '../types'
 
+const BACKSLASH_RE = /\\/g
+const LT_RE = /</g
+const DOUBLE_QUOTE_RE = /"/g
+const TOKEN_RE = /%\w+(?:\.\w+)?/g
+
 const SepSub = '%separator'
 
 // for each %<word> token replace it with the corresponding runtime config or an empty value
@@ -18,9 +23,9 @@ function sub(p: TemplateParams, token: string, isJson = false) {
   if (val !== undefined) {
     return isJson
       ? (val || '')
-          .replace(/\\/g, '\\\\')
-          .replace(/</g, '\\u003C')
-          .replace(/"/g, '\\"')
+          .replace(BACKSLASH_RE, '\\\\')
+          .replace(LT_RE, '\\u003C')
+          .replace(DOUBLE_QUOTE_RE, '\\"')
       : val || ''
   }
   return undefined
@@ -37,7 +42,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
   }
   catch {}
   // find all tokens in decoded
-  const tokens = decoded.match(/%\w+(?:\.\w+)?/g)
+  const tokens = decoded.match(TOKEN_RE)
 
   if (!tokens) {
     return s
@@ -45,7 +50,7 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
 
   const hasSepSub = s.includes(SepSub)
 
-  s = s.replace(/%\w+(?:\.\w+)?/g, (token) => {
+  s = s.replace(TOKEN_RE, (token) => {
     if (token === SepSub || !tokens.includes(token)) {
       return token
     }

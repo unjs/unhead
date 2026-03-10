@@ -109,7 +109,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
         const start = performance.now()
 
         // Create concurrent streaming heads
-        const heads = Array.from({ length: streamCount }, () => createStreamableServerHead())
+        const heads = Array.from({ length: streamCount }).fill(createStreamableServerHead())
 
         // Push initial tags to all
         heads.forEach((head) => {

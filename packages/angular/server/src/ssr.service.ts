@@ -5,8 +5,11 @@ import { UnheadInjectionToken } from '@unhead/angular'
 import { parseHtmlForUnheadExtraction } from 'unhead/parser'
 import { renderSSRHead } from 'unhead/server'
 
+const ATTR_MATCH_RE = /([a-z0-9-]+)(?:="([^"]*)")?/i
+const ATTR_RE = /([a-z0-9-]+(?:="[^"]*")?)/gi
+
 function attrToElement(element: HTMLElement, acc: string) {
-  const [key, value] = acc.match(/([a-z0-9-]+)(?:="([^"]*)")?/i)?.slice(1, 3) || []
+  const [key, value] = acc.match(ATTR_MATCH_RE)?.slice(1, 3) || []
   if (!key)
     return
 
@@ -32,8 +35,6 @@ function attrToElement(element: HTMLElement, acc: string) {
   }
 }
 
-const attrRegex = /([a-z0-9-]+(?:="[^"]*")?)/gi
-
 @Injectable({
   providedIn: 'root',
 })
@@ -49,8 +50,8 @@ export class UnheadSSRService {
     const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(this.unhead, {
       omitLineBreaks: false,
     })
-    htmlAttrs.match(attrRegex)?.forEach(attr => attrToElement(this.document.documentElement, attr))
-    bodyAttrs.match(attrRegex)?.forEach(attr => attrToElement(this.document.body, attr))
+    htmlAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.documentElement, attr))
+    bodyAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.body, attr))
     this.document.body.innerHTML = bodyTagsOpen + this.document.body.innerHTML + bodyTags
     this.document.head.innerHTML = headTags
   }

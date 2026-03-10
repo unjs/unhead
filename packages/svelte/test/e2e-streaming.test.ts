@@ -6,6 +6,8 @@ import {
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
+const XSS_RE = /<title>.*<script>alert.*<\/title>/i
+
 describe('svelte streaming SSR e2e', () => {
   describe('full streaming workflow', () => {
     it('streams initial head tags in shell', async () => {
@@ -97,7 +99,7 @@ describe('svelte streaming SSR e2e', () => {
       const shell = await renderSSRHeadShell(head, htmlStart)
 
       expect(shell).toContain('<title>')
-      expect(shell).not.toMatch(/<title>.*<script>alert.*<\/title>/i)
+      expect(shell).not.toMatch(XSS_RE)
     })
 
     it('handles nested await with head updates', async () => {

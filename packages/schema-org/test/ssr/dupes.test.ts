@@ -3,6 +3,8 @@ import { useHead } from 'unhead'
 import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 
+const JSON_LD_RE = /application\/ld\+json/g
+
 describe('schema.org dupes', () => {
   it('basic websites', async () => {
     const ssrHead = createHead()
@@ -143,6 +145,6 @@ describe('schema.org dupes', () => {
     const data = await renderSSRHead(ssrHead)
     // should merge all three into a single script tag without throwing
     expect(data.bodyTags).toContain('"@context": "https://schema.org"')
-    expect(data.bodyTags.match(/application\/ld\+json/g)?.length).toBe(1)
+    expect(data.bodyTags.match(JSON_LD_RE)?.length).toBe(1)
   })
 })

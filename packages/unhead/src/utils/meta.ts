@@ -31,6 +31,9 @@ const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
   msapplicationTileImage: 'msapplication-TileImage',
 }
 
+const CAPS_RE = /([A-Z])/g
+const OG_TWITTER_RE = /^(?:og|twitter)/
+
 interface UnpackOptions {
   entrySeparator?: string
   keyValueSeparator?: string
@@ -75,13 +78,13 @@ export const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ 
 }
 
 function fixKeyCase(key: string): string {
-  const updated = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+  const updated = key.replace(CAPS_RE, '-$1').toLowerCase()
   const prefixIndex = updated.indexOf('-')
   return prefixIndex === -1
     ? updated
     : (
         NAMESPACES.META.has(updated.slice(0, prefixIndex)) || NAMESPACES.OG.has(updated.slice(0, prefixIndex))
-          ? key.replace(/([A-Z])/g, ':$1').toLowerCase()
+          ? key.replace(CAPS_RE, ':$1').toLowerCase()
           : updated
       )
 }
@@ -205,7 +208,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
     if (typeof value === 'object' && value) {
       if (NAMESPACES.MEDIA.has(key)) {
         const prefix = key.startsWith('twitter') ? 'twitter' : 'og'
-        const type = key.replace(/^(og|twitter)/, '').toLowerCase()
+        const type = key.replace(OG_TWITTER_RE, '').toLowerCase()
         const metaKey = prefix === 'twitter' ? 'name' : 'property'
 
         if (value.url) {

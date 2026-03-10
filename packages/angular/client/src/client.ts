@@ -11,7 +11,7 @@ export function provideClientHead(options: CreateClientHeadOptions = {}) {
       const document = inject(DOCUMENT)
       const domRenderer = createDomRenderer({ document })
       let head: Unhead
-      const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(() => fn(), 0))
+      const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(fn, 0))
       head = _createClientHead({ document, render: debouncedRenderer, ...options })
       return head
     },

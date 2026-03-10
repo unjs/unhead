@@ -26,6 +26,8 @@ import {
   useSchemaOrg,
 } from './index'
 
+const KEBAB_RE = /-./g
+
 function shallowVNodesToText(nodes: any) {
   let text = ''
   for (const node of nodes) {
@@ -37,7 +39,7 @@ function shallowVNodesToText(nodes: any) {
 
 function fixKey(s: string) {
   // kebab case to camel case
-  let key = s.replace(/-./g, x => x[1].toUpperCase())
+  let key = s.replace(KEBAB_RE, x => x[1].toUpperCase())
   // supports @type & @id
   if (key === 'type' || key === 'id')
     key = `@${key}`

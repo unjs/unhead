@@ -52,7 +52,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
     })
 
     // Get reference to the init entry to examine its internal state
-    const initEntry = Array.from(head.entries.values())[0]
+    const initEntry = [...head.entries.values()][0]
 
     // First resolution - init entry gets normalized
     resolveTags(head)
@@ -97,7 +97,7 @@ describe('break Normalize Queue - Replicate Bug', () => {
 
     // Step 2: Manually trigger a state that requires re-normalization
     // In a real scenario, this might happen due to plugins or other factors
-    const initEntry = Array.from(head.entries.values())[0]
+    const initEntry = [...head.entries.values()][0]
 
     // Clear the init entry's _tags to simulate needing re-normalization
     delete initEntry._tags

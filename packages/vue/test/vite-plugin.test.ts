@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { unheadVuePlugin } from '../src/stream/vite'
 
+const FILTER_RE = /\.vue$/
+
 describe('unheadVuePlugin', () => {
   const plugin = unheadVuePlugin() as any
   const transform = plugin.transform.handler
@@ -17,7 +19,7 @@ describe('unheadVuePlugin', () => {
 
   describe('transform', () => {
     it('filters to .vue files only', () => {
-      expect(plugin.transform.filter.id).toEqual(/\.vue$/)
+      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
     })
 
     it('skips files without useHead', () => {

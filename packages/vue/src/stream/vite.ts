@@ -3,6 +3,10 @@ import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
+const TEMPLATE_RE = /<template[^>]*>/
+const SCRIPT_RE = /<script[^>]*>/i
+const FILTER_RE = /\.vue$/
+
 /**
  * Transforms Vue SFC code to inject HeadStream components for streaming SSR support.
  *
@@ -48,7 +52,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
     return false
 
   // Find the template section
-  const templateMatch = code.match(/<template[^>]*>/)
+  const templateMatch = code.match(TEMPLATE_RE)
   if (!templateMatch)
     return false
 
@@ -59,7 +63,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 
   // Add import for HeadStream
   const importPath = `@unhead/vue/stream/${isSSR ? 'server' : 'client'}`
-  const scriptMatch = code.match(/<script[^>]*>/i)
+  const scriptMatch = code.match(SCRIPT_RE)
   if (!scriptMatch)
     return true
 
@@ -124,7 +128,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 export function unheadVuePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/vue',
-    filter: /\.vue$/,
+    filter: FILTER_RE,
     mode: options?.mode,
     transform(code, id, opts) {
       const s = new MagicString(code)

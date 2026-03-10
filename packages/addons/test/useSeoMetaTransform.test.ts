@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 
+const USE_SERVER_HEAD_RE = /useServerHead/
+const TITLE_RE = /title:/
+
 async function transform(code: string | string[], id = 'some-id.js', opts: any = {}) {
   const plugin = UseSeoMetaTransform.vite(opts) as any
   const res = await plugin.transform.call(
@@ -529,8 +532,8 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
       export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/home/harlan/packages/nuxt-head/playground/app.vue"]]);"
     `)
 
-    expect(code).match(/useServerHead/)
-    expect(code).match(/title:/)
+    expect(code).match(USE_SERVER_HEAD_RE)
+    expect(code).match(TITLE_RE)
   })
 
   it('#407', async () => {

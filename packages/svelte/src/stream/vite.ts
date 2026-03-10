@@ -3,6 +3,10 @@ import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
+const SCRIPT_CLOSE_RE = /<\/script>/
+const SCRIPT_RE = /<script[^>]*>/i
+const FILTER_RE = /\.svelte$/
+
 /**
  * Transforms Svelte code to inject HeadStream for streaming SSR support.
  *
@@ -45,7 +49,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
     return false
 
   // Find the end of the script tag to inject after it (in the template)
-  const scriptCloseMatch = code.match(/<\/script>/)
+  const scriptCloseMatch = code.match(SCRIPT_CLOSE_RE)
   if (!scriptCloseMatch)
     return false
 
@@ -56,7 +60,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 
   // Add import for HeadStream
   const importPath = `@unhead/svelte/stream/${isSSR ? 'server' : 'client'}`
-  const scriptMatch = code.match(/<script[^>]*>/i)
+  const scriptMatch = code.match(SCRIPT_RE)
   if (!scriptMatch)
     return true
 
@@ -121,7 +125,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 export function unheadSveltePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/svelte',
-    filter: /\.svelte$/,
+    filter: FILTER_RE,
     mode: options?.mode,
     transform(code, id, opts) {
       const s = new MagicString(code)

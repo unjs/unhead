@@ -4,6 +4,10 @@ import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { DEFAULT_STREAM_KEY } from './client'
 
+const LT_RE = /</g
+const GT_RE = />/g
+const AMP_RE = /&/g
+
 /**
  * Base context with just the head instance.
  * Extended by framework-specific contexts.
@@ -178,7 +182,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     return ''
 
   const streamKey = getStreamKey(head)
-  const inputs = [...head.entries.values()].map(e => e.input)
+  const inputs = Array.from(head.entries.values(), e => e.input)
   head.entries.clear()
   return `window.${streamKey}.push(${safeJsonStringify(inputs)})`
 }
@@ -188,9 +192,9 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
  */
 function safeJsonStringify(obj: any): string {
   return JSON.stringify(obj)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
+    .replace(LT_RE, '\\u003c')
+    .replace(GT_RE, '\\u003e')
+    .replace(AMP_RE, '\\u0026')
 }
 
 /**

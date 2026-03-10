@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
+const TEST_RE = /a/
+
 describe('normalise', () => {
   it('handles booleans nicely', async () => {
     const head = createServerHeadWithContext()
@@ -25,7 +27,7 @@ describe('normalise', () => {
           'string-empty': '',
           'string': 'string',
           'symbol': Symbol('a'),
-          'regex': /a/,
+          'regex': TEST_RE,
           undefined,
         },
       ],

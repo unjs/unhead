@@ -14,6 +14,8 @@ export interface SchemaOrgGraph {
   find: <T extends Thing>(id: Id | string) => T | null
 }
 
+const DOMAIN_RE = /(?:https?:)?\/\//
+
 // Helper to index a node by multiple key types for fast lookups
 function indexNode(index: Map<Id, SchemaOrgNode>, node: SchemaOrgNode) {
   if (!node['@id'])
@@ -26,7 +28,7 @@ function indexNode(index: Map<Id, SchemaOrgNode>, node: SchemaOrgNode) {
   // Full URL key
   index.set(nodeId as Id, node)
   // Domain-based key for path lookups
-  const domainKey = nodeId.replace(/(https?:)?\/\//, '').split('/')[0]
+  const domainKey = nodeId.replace(DOMAIN_RE, '').split('/')[0]
   index.set(domainKey as Id, node)
 }
 
@@ -43,7 +45,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       }
       else if (id[0] === '/') {
         resolver = (s: string) => s
-          .replace(/(https?:)?\/\//, '')
+          .replace(DOMAIN_RE, '')
           .split('/')[0]
       }
       const key = resolver(id) as Id

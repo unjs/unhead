@@ -1,6 +1,8 @@
 import type { HeadTag } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
+const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
+
 export function isMetaArrayDupeKey(v: string) {
   return MetaTagsArrayable.has(v.split(':')[1])
 }
@@ -23,7 +25,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     for (const n of ['name', 'property', 'http-equiv']) {
       const v = props[n]
       if (v !== undefined)
-        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !/^(?:viewport|description|keywords|robots)$/.test(v) && key ? `:key:${key}` : ''}`
+        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
     }
   }
   if (key)

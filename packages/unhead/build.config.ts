@@ -6,6 +6,9 @@ import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
 
+const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
+const WHITESPACE_RE = /\s+/g
+
 export default defineBuildConfig({
   clean: true,
   declaration: true,
@@ -24,7 +27,7 @@ export default defineBuildConfig({
       let code = output[0].code
 
       // Basic minification - remove comments and extra whitespace
-      code = code.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').replace(/\s+/g, ' ').trim()
+      code = code.replace(COMMENT_RE, '').replace(WHITESPACE_RE, ' ').trim()
 
       // Write as standalone IIFE file
       writeFileSync(resolve(ctx.options.rootDir, 'dist/stream/iife.global.js'), code)

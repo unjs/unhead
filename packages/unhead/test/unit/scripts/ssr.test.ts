@@ -79,7 +79,7 @@ describe('ssr useScript', () => {
       beforeInit() {
         if (typeof window !== 'undefined') {
           window.dataLayer = window.dataLayer || []
-          window.dataLayer.push({ 'gtm.start': new Date().getTime(), 'event': 'gtm.js' })
+          window.dataLayer.push({ 'gtm.start': Date.now(), 'event': 'gtm.js' })
         }
       },
       use() {

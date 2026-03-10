@@ -1,6 +1,8 @@
+const DOUBLE_QUOTE_RE = /"/g
+
 /* @__PURE__ */
 function encodeAttribute(value: string) {
-  return String(value).replace(/"/g, '&quot;')
+  return String(value).replace(DOUBLE_QUOTE_RE, '&quot;')
 }
 
 /* @__PURE__ */
@@ -16,9 +18,8 @@ export function propsToString(props: Record<string, any>) {
     // class (set) and style (map)
     if ((key === 'class' || key === 'style') && typeof value !== 'string') {
       value = key === 'class'
-        ? Array.from(value).join(' ')
-        : Array.from(value as Map<string, string>)
-            .map(([k, v]) => `${k}:${v}`)
+        ? [...value].join(' ')
+        : Array.from(value as Map<string, string>, ([k, v]) => `${k}:${v}`)
             .join(';')
     }
 

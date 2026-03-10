@@ -2,9 +2,11 @@ import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
+const ESCAPE_HTML_RE = /[&<>"'/]/g
+
 /* @__PURE__ */
 export function escapeHtml(str: string) {
-  return str.replace(/[&<>"'/]/g, (char) => {
+  return str.replace(ESCAPE_HTML_RE, (char) => {
     switch (char) {
       case '&':
         return '&amp;'

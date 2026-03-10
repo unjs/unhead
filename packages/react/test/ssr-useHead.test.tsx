@@ -7,6 +7,8 @@ import { useHead, useHeadSafe, useSeoMeta } from '../src/composables'
 import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
 import { SimpleHead } from './fixtures/SimpleHead'
 
+const HEAD_RE = /<head>(.*?)<\/head>/s
+
 describe('react SSR useHead regression', () => {
   it('renders SimpleHead component tags correctly', async () => {
     const head = createHead()
@@ -37,7 +39,7 @@ describe('react SSR useHead regression', () => {
     )
 
     const transformed = await transformHtmlTemplate(head, html)
-    const headContent = transformed.match(/<head>(.*?)<\/head>/s)?.[1] || ''
+    const headContent = transformed.match(HEAD_RE)?.[1] || ''
     expect(headContent).toContain('<title>Default Title 2</title>')
     expect(headContent).toContain('Default Description')
   })

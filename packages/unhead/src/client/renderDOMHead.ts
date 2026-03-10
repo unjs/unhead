@@ -5,6 +5,8 @@ import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
+const WHITESPACE_RE = /\s+/
+
 /* @__NO_SIDE_EFFECTS__ */
 export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
   return (head: Unhead<any>) => _renderDOMHead(head, options)
@@ -48,7 +50,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           const cls = orig[t]?.class
           if (typeof cls === 'string') {
             const $el = state._e.get(t)!
-            for (const c of cls.split(/\s+/)) {
+            for (const c of cls.split(WHITESPACE_RE)) {
               if (c)
                 state._p[`${t}:attr:class:${c}`] = () => $el.classList.remove(c)
             }

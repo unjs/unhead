@@ -10,7 +10,7 @@ export interface InferSeoMetaPluginOptions {
   /**
    * Transform the og description.
    *
-   * @param title
+   * @param description
    */
   ogDescription?: ((description?: string) => string)
   /**

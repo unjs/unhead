@@ -3,6 +3,8 @@ import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 import { createStreamingPlugin } from 'unhead/stream/vite'
 
+const FILTER_RE = /\.[jt]sx$/
+
 /**
  * Transforms Solid.js JSX code to inject HeadStream components for streaming SSR support.
  *
@@ -159,7 +161,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 export function unheadSolidPlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
   return createStreamingPlugin({
     framework: '@unhead/solid-js',
-    filter: /\.[jt]sx$/,
+    filter: FILTER_RE,
     mode: options?.mode,
     transform(code, id, opts) {
       const s = new MagicString(code)

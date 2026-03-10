@@ -7,6 +7,9 @@ import { walk } from 'oxc-walker'
 import { parseQuery, parseURL } from 'ufo'
 import { createUnplugin } from 'unplugin'
 
+const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
+const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
+
 const functionNames = [
   'useServerHead',
   'useServerHeadSafe',
@@ -34,7 +37,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
       const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
       const { type } = parseQuery(search)
 
-      if (pathname.match(/[\\/]node_modules[\\/]/))
+      if (NODE_MODULES_RE.test(pathname))
         return false
 
       // Included
@@ -50,7 +53,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return true
 
       // js files
-      if (pathname.match(/\.((c|m)?j|t)sx?$/g))
+      if (TRANSFORM_RE.test(pathname))
         return true
 
       return false

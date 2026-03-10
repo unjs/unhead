@@ -17,9 +17,9 @@ describe('invalidate Function', () => {
     expect(tags.find(t => t.tag === 'title')?.textContent).toBe('Entry 2')
 
     // Get references to entries to examine their state
-    const initEntry = Array.from(head.entries.values()).find(e => e.input.title === 'Init Title')!
-    const entry1Ref = Array.from(head.entries.values()).find(e => e.input.title === 'Entry 1')!
-    const entry2Ref = Array.from(head.entries.values()).find(e => e.input.title === 'Entry 2')!
+    const initEntry = [...head.entries.values()].find(e => e.input.title === 'Init Title')!
+    const entry1Ref = [...head.entries.values()].find(e => e.input.title === 'Entry 1')!
+    const entry2Ref = [...head.entries.values()].find(e => e.input.title === 'Entry 2')!
 
     // Clear all _tags to simulate a state that needs re-normalization
     delete initEntry._tags

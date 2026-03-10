@@ -7,6 +7,9 @@ import { resolveTags } from 'unhead/utils'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../unhead/test/fixtures'
 
+const SPACE_GLOBAL_RE = / /g
+const SPACE_RE = / /
+
 describe('vue e2e keys', () => {
   it('ssr / csr hydration', async () => {
     const IndexSchema: ReactiveHead = {
@@ -122,9 +125,9 @@ describe('vue e2e keys', () => {
 
     const schema = (value: boolean) => ({
       link: fonts.map((font) => {
-        const family = font.replace(/ /g, '+')
-        const text = value ? `&text=${font.replace(/ /g, '')}` : ''
-        const key = font.replace(/ /, '')
+        const family = font.replace(SPACE_GLOBAL_RE, '+')
+        const text = value ? `&text=${font.replace(SPACE_GLOBAL_RE, '')}` : ''
+        const key = font.replace(SPACE_RE, '')
         return {
           rel: 'stylesheet',
           href: `https://fonts.googleapis.com/css?family=${family}${text}`,

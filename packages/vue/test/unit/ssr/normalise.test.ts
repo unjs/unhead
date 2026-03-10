@@ -2,6 +2,8 @@ import { renderSSRHead } from '@unhead/ssr'
 import { createHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
 
+const TEST_RE = /a/
+
 describe('normalise', () => {
   it('handles booleans nicely', async () => {
     const head = createHead({
@@ -31,7 +33,7 @@ describe('normalise', () => {
           'string-empty': '',
           'string': 'string',
           'symbol': Symbol('a'),
-          'regex': /a/,
+          'regex': TEST_RE,
           'function': fn,
           undefined,
         },

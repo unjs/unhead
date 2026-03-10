@@ -6,6 +6,8 @@ import { UnheadProvider } from '../src/client'
 import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
 import { SimpleHead } from './fixtures/SimpleHead'
 
+const HEAD_RE = /<head>(.*?)<\/head>/s
+
 describe('simpleHead component in ssr', () => {
   it('renders default head tags correctly', async () => {
     const head = createHead({ disableDefaults: true })
@@ -51,7 +53,7 @@ describe('simpleHead component in ssr', () => {
 
     const transformed = await transformHtmlTemplate(head, html)
 
-    const headContent = transformed.match(/<head>(.*?)<\/head>/s)?.[1] || ''
+    const headContent = transformed.match(HEAD_RE)?.[1] || ''
     expect(headContent).toMatchInlineSnapshot(`
       "<meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Default Title 2</title>

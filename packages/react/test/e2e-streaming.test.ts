@@ -8,6 +8,8 @@ import { useHead } from '../src/composables'
 import { UnheadContext } from '../src/context'
 import { createStreamableHead, renderSSRHeadShell } from '../src/stream/server'
 
+const XSS_RE = /<title>.*<script>alert.*<\/title>/i
+
 // Manual HeadStream for testing
 function HeadStream() {
   const head = useContext(UnheadContext)
@@ -217,7 +219,7 @@ describe('react streaming SSR e2e', () => {
       // The title tag itself should have the escaped content
       expect(shell).toContain('<title>')
       // Should NOT contain unescaped script injection
-      expect(shell).not.toMatch(/<title>.*<script>alert.*<\/title>/i)
+      expect(shell).not.toMatch(XSS_RE)
     })
 
     it('handles nested Suspense with head updates', async () => {

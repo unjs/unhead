@@ -9,6 +9,13 @@ import {
  */
 import { describe, expect, it } from 'vitest'
 
+const PUSH_RE = /\.push\((.+)\)$/
+const ROBOTS_RE = /robots/g
+const PUSH_SIMPLE_RE = /push\((.+)\)$/
+const LT_RE = /\\u003c/g
+const GT_RE = /\\u003e/g
+const AMP_RE = /\\u0026/g
+
 describe('streaming SSR - potentially broken features', () => {
   describe('tag deduplication across stream boundaries', () => {
     it('dedupes meta by name across shell and chunk', async () => {
@@ -282,7 +289,7 @@ describe('streaming SSR - potentially broken features', () => {
       expect(chunk).toContain('Product')
 
       // Verify JSON is valid in the output by parsing the push argument
-      const match = chunk.match(/\.push\((.+)\)$/)
+      const match = chunk.match(PUSH_RE)
       if (match) {
         const entries = JSON.parse(match[1])
         // Entries is an array of head inputs
@@ -393,7 +400,7 @@ describe('streaming SSR - potentially broken features', () => {
       const chunk = await renderSSRHeadSuspenseChunk(head)
 
       // Count occurrences
-      const matches = chunk.match(/robots/g) || []
+      const matches = chunk.match(ROBOTS_RE) || []
       // Should only appear once due to deduplication by hash
       expect(matches.length).toBeLessThanOrEqual(2) // name + content
     })
@@ -529,13 +536,13 @@ describe('streaming SSR - potentially broken features', () => {
       const chunk = renderSSRHeadSuspenseChunk(head)
 
       // Extract and parse the JSON
-      const match = chunk.match(/push\((.+)\)$/)
+      const match = chunk.match(PUSH_SIMPLE_RE)
       expect(match).toBeTruthy()
 
       const jsonStr = match![1]
-        .replace(/\\u003c/g, '<')
-        .replace(/\\u003e/g, '>')
-        .replace(/\\u0026/g, '&')
+        .replace(LT_RE, '<')
+        .replace(GT_RE, '>')
+        .replace(AMP_RE, '&')
 
       expect(() => JSON.parse(jsonStr)).not.toThrow()
 

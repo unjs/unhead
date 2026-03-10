@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { unheadSveltePlugin } from '../src/stream/vite'
 
+const FILTER_RE = /\.svelte$/
+
 describe('unheadSveltePlugin', () => {
   const plugin = unheadSveltePlugin() as any
   const transform = plugin.transform.handler
@@ -17,7 +19,7 @@ describe('unheadSveltePlugin', () => {
 
   describe('transform', () => {
     it('filters to .svelte files only', () => {
-      expect(plugin.transform.filter.id).toEqual(/\.svelte$/)
+      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
     })
 
     it('skips files without useHead', () => {

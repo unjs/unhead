@@ -1,10 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
+
 import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
 } from '../src/stream/server'
+
+const XSS_RE = /<title>.*<script>alert.*<\/title>/i
 
 describe('vue streaming SSR integration', () => {
   describe('full streaming workflow', () => {
@@ -261,7 +264,7 @@ describe('vue streaming SSR integration', () => {
       const shell = await renderSSRHeadShell(head, htmlStart)
 
       expect(shell).toContain('<title>')
-      expect(shell).not.toMatch(/<title>.*<script>alert.*<\/title>/i)
+      expect(shell).not.toMatch(XSS_RE)
     })
   })
 

@@ -7,7 +7,7 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   hooks: {
     'entries:normalize': (ctx) => {
       const tagsToAdd: HeadTag[] = []
-      ctx.tags = ctx.tags.map((t: HeadTag) => {
+      ctx.tags = [...ctx.tags.map((t: HeadTag) => {
         if (t.tag !== '_flatMeta') {
           return t
         }
@@ -19,8 +19,7 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
         })))
         return false
       })
-        .filter(Boolean)
-        .concat(...tagsToAdd) as HeadTag[]
+        .filter(Boolean), ...tagsToAdd] as HeadTag[]
     },
   },
 })

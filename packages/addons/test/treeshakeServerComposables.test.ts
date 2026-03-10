@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { TreeshakeServerComposables } from '../src/unplugin/TreeshakeServerComposables'
 
+const USE_SERVER_HEAD_RE = /useServerHead/
+
 async function transform(code: string | string[], id = 'some-id.js') {
   const plugin = TreeshakeServerComposables.vite({}) as any
   const res = await plugin.transform.call(
@@ -146,6 +148,6 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
       export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/home/harlan/packages/nuxt-head/playground/app.vue"]]);"
     `)
 
-    expect(code).not.toMatch(/useServerHead/)
+    expect(code).not.toMatch(USE_SERVER_HEAD_RE)
   })
 })
