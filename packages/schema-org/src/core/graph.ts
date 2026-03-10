@@ -124,11 +124,13 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
         if (node._resolver?.resolveRootNode)
           node._resolver.resolveRootNode(node, ctx)
+      }
 
-        // Strip null opt-out sentinels after all resolvers have run
-        stripNullProperties(node)
-
-        delete node._resolver
+      // Strip null opt-out sentinels and clean up resolvers after ALL resolveRootNode calls complete
+      // so that later resolvers can still observe null sentinels on earlier nodes
+      for (let i = 0; i < ctx.nodes.length; i++) {
+        stripNullProperties(ctx.nodes[i])
+        delete ctx.nodes[i]._resolver
       }
 
       // Final normalization: sort keys and dedupe only if new nodes were added
