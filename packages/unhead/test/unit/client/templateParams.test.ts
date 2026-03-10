@@ -246,4 +246,38 @@ describe('templateParams', () => {
 
     expect(html).toContain('<title>Site title</title>')
   })
+
+  it('defaultTitle used when no page title is set', async () => {
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
+
+    useHead(head, {
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        siteName: 'My Site',
+        defaultTitle: 'My Site',
+      },
+    })
+
+    expect(await useDelayedSerializedDom()).toContain('<title>My Site</title>')
+  })
+
+  it('defaultTitle ignored when page title is set', async () => {
+    const head = useDOMHead({
+      plugins: [TemplateParamsPlugin],
+    })
+
+    useHead(head, {
+      title: 'Page Title',
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        siteName: 'My Site',
+        defaultTitle: 'My Site',
+        separator: '-',
+      },
+    })
+
+    expect(await useDelayedSerializedDom()).toContain('<title>Page Title - My Site</title>')
+  })
 })

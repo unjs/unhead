@@ -20,13 +20,23 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
+        const defaultTitle = params.defaultTitle as string | undefined
+        delete params.defaultTitle
         // pre-process title
+        const rawPageTitle = params.pageTitle as string || head._title || ''
         params.pageTitle = processTemplateParams(
-          // find templateParams
-          params.pageTitle as string || head._title || '',
+          rawPageTitle,
           params,
           sep,
         )
+        // when no page title is set and a defaultTitle is provided, use it directly
+        // as the final title, bypassing the titleTemplate (e.g. "%s - Site" → "Site")
+        const useDefaultTitle = !rawPageTitle && !!defaultTitle
+        if (useDefaultTitle) {
+          const titleTag = tagMap.get('title')
+          if (titleTag)
+            titleTag.textContent = defaultTitle!
+        }
         for (const tag of tags) {
           if (tag.processTemplateParams === false) {
             continue

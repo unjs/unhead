@@ -138,6 +138,31 @@ describe('titleTemplate', () => {
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
   })
+  it('string template with no title renders nothing', async () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({
+      document: dom.window.document,
+    })
+    head.push({
+      titleTemplate: '%s - My Site',
+    })
+    renderDOMHead(head, { document: dom.window.document })
+    // without a title, "%s - My Site" should not render as " - My Site"
+    expect(dom.window.document.title).toMatchInlineSnapshot(`""`)
+  })
+
+  it('string template without %s and no title renders template as title', async () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({
+      document: dom.window.document,
+    })
+    head.push({
+      titleTemplate: 'My Site',
+    })
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toMatchInlineSnapshot(`"My Site"`)
+  })
+
   it('#513', async () => {
     const dom = useDom()
     createClientHeadWithContext({

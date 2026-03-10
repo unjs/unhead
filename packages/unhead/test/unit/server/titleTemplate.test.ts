@@ -86,4 +86,23 @@ describe('titleTemplate', () => {
       `""`,
     )
   })
+
+  it('string template with no title renders nothing', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      titleTemplate: '%s - My Site',
+    })
+    const { headTags } = renderSSRHead(head)
+    // without a title, "%s - My Site" should not render as " - My Site"
+    expect(headTags).toMatchInlineSnapshot(`""`)
+  })
+
+  it('string template without %s and no title renders template as title', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      titleTemplate: 'My Site',
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`"<title>My Site</title>"`)
+  })
 })

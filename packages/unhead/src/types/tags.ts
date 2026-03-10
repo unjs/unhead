@@ -85,7 +85,15 @@ export type TagKey = keyof ResolvableHead | InternalTagKey
  */
 export type InternalTagKey = '_flatMeta'
 
-export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
+export type TemplateParams = {
+  separator?: '|' | '-' | '·' | string
+  /**
+   * A default title to use when no page title is provided.
+   * When using a titleTemplate like `%s - My Site`, if no title is set the result would be ` - My Site`.
+   * Setting defaultTitle will use this value as the title instead, e.g. `My Site`.
+   */
+  defaultTitle?: string
+} & Record<string, null | string | Record<string, string>>
 
 export interface ProcessesTemplateParams { processTemplateParams?: boolean }
 

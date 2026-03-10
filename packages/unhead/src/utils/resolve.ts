@@ -69,6 +69,13 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
     v === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: v })
   }
   else {
+    if (v === null)
+      return
+    // when there is no page title and the template is a plain string containing %s
+    // (without the template-params plugin to handle it), skip promoting it to avoid
+    // rendering an empty substitution like " - MyApp"
+    if (!head.plugins.has('template-params') && typeof fn === 'string' && fn.includes('%s'))
+      return
     // create a new object instead of mutating the cached tpl tag
     ctx.tagMap.set('titleTemplate', { ...tpl, tag: 'title', textContent: v })
   }

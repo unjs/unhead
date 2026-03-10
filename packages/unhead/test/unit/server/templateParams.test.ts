@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
@@ -119,5 +119,39 @@ describe('ssr templateParams', () => {
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test foo | subPage% | test</title>"`,
     )
+  })
+
+  it('defaultTitle used when no page title is set', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        siteName: 'My Site',
+        defaultTitle: 'My Site',
+      },
+    })
+    const { headTags } = renderSSRHead(head)
+    // with no title, defaultTitle should be used instead of " | My Site"
+    expect(headTags).toMatchInlineSnapshot(`"<title>My Site</title>"`)
+  })
+
+  it('defaultTitle ignored when page title is set', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      title: 'Page Title',
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        siteName: 'My Site',
+        defaultTitle: 'My Site',
+        separator: '-',
+      },
+    })
+    const { headTags } = renderSSRHead(head)
+    // when title is provided, defaultTitle is ignored and template is used normally
+    expect(headTags).toMatchInlineSnapshot(`"<title>Page Title - My Site</title>"`)
   })
 })
