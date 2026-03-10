@@ -15,6 +15,7 @@ import {
   onActivated,
   onBeforeUnmount,
   onDeactivated,
+  onUnmounted,
   ref,
   watchEffect,
 } from 'vue'
@@ -86,3 +87,25 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions 
 }
 
 export { useScript } from './scripts/useScript'
+
+/**
+ * Register a callback to be called after unhead has finished applying DOM updates.
+ * Useful for synchronising analytics tools (e.g. Amplitude) with the current page title.
+ *
+ * @example
+ * onHeadUpdated(({ renders }) => {
+ *   amplitude.track('Page View', { title: document.title })
+ * })
+ */
+export function onHeadUpdated(
+  callback: (ctx: { renders: import('unhead/types').DomRenderTagContext[] }) => void | Promise<void>,
+  options: { head?: import('unhead/types').Unhead<any> } = {},
+): () => void {
+  const head = options.head || injectHead()
+  const unhook = head.hooks.hook('dom:rendered', callback as any)
+  const vm = getCurrentInstance()
+  if (vm) {
+    onUnmounted(unhook)
+  }
+  return unhook
+}

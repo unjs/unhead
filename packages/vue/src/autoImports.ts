@@ -1,3 +1,3 @@
 export const unheadVueComposablesImports = {
-  '@unhead/vue': ['injectHead', 'useHead', 'useSeoMeta', 'useHeadSafe'],
+  '@unhead/vue': ['injectHead', 'onHeadUpdated', 'useHead', 'useSeoMeta', 'useHeadSafe'],
 }

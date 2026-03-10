@@ -1,5 +1,5 @@
 export { unheadVueComposablesImports } from './autoImports'
-export { injectHead, useHead, useHeadSafe, useScript, useSeoMeta } from './composables'
+export { injectHead, onHeadUpdated, useHead, useHeadSafe, useScript, useSeoMeta } from './composables'
 export { headSymbol } from './install'
 export type * from './scripts/index'
 export type * from './types'
