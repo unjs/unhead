@@ -94,8 +94,8 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags.startsWith('<script myCustomMeta="second"')).toBeTruthy()
-    expect(headTags.split('myCustomMeta').length === 2).toBeTruthy()
+    expect(headTags.startsWith('<script mycustommeta="second"')).toBeTruthy()
+    expect(headTags.split('mycustommeta').length === 2).toBeTruthy()
   })
 
   it('dedupes canonical', async () => {
@@ -554,6 +554,36 @@ describe('dedupe', () => {
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('https://example.com/en/page2')
     expect(headTags).not.toContain('https://example.com/en/page1')
+  })
+
+  it('does not dedupe alternate links with same href but different hrefLang (camelCase)', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        {
+          rel: 'alternate',
+          hrefLang: 'x-default',
+          href: 'https://www.google.at',
+        },
+        {
+          rel: 'alternate',
+          hrefLang: 'de-de',
+          href: 'https://www.google.de',
+        },
+        {
+          rel: 'alternate',
+          hrefLang: 'de-at',
+          href: 'https://www.google.at',
+        },
+      ] as any,
+    })
+    const { headTags } = await renderSSRHead(head)
+    // All 3 should be present - same href with different hreflang are NOT duplicates
+    expect(headTags).toMatchInlineSnapshot(`
+      "<link rel="alternate" hreflang="x-default" href="https://www.google.at">
+      <link rel="alternate" hreflang="de-de" href="https://www.google.de">
+      <link rel="alternate" hreflang="de-at" href="https://www.google.at">"
+    `)
   })
 
   it('dedupes alternate links without hreflang using href', async () => {

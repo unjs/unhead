@@ -1,6 +1,6 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
-import { DupeableTags, TagConfigKeys } from './const'
+import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -59,24 +59,26 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     return tag
   }
 
-  Object.entries(input).forEach(([key, value]) => {
-    if (key === '__proto__' || key === 'constructor' || key === 'prototype')
+  const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
+
+  Object.entries(input).forEach(([prop, value]) => {
+    if (prop === '__proto__' || prop === 'constructor' || prop === 'prototype')
       return
     // if the value is a primitive, return early
     if (value === null) {
       // @ts-expect-error untyped
-      tag.props[key] = null
+      tag.props[prop] = null
       return
     }
 
-    if (key === 'class' || key === 'style') {
+    if (prop === 'class' || prop === 'style') {
       // @ts-expect-error untyped
-      tag.props[key] = normalizeStyleClassProps(key as 'class' | 'style', value)
+      tag.props[prop] = normalizeStyleClassProps(prop as 'class' | 'style', value)
       return
     }
 
-    if (TagConfigKeys.has(key)) {
-      if (['textContent', 'innerHTML'].includes(key) && typeof value === 'object') {
+    if (TagConfigKeys.has(prop)) {
+      if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         let type = input.type
         if (!input.type) {
           type = 'application/json'
@@ -86,18 +88,21 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
         }
         input.type = type
         tag.props.type = type
-        // @ts-expect-error untyped
-        tag[key] = JSON.stringify(value)
+        tag[prop] = JSON.stringify(value)
       }
       else {
         // @ts-expect-error untyped
-        tag[key] = value
+        tag[prop] = value
       }
       return
     }
 
+    // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
+    // Only for real HTML element tags, not internal virtual tags like _flatMeta
+    const isDataKey = prop.startsWith('data-')
+    const key = isHtmlTag && !isDataKey ? prop.toLowerCase() : prop
+
     const strValue = String(value)
-    const isDataKey = key.startsWith('data-')
     const isMetaContentKey = tag.tag === 'meta' && key === 'content'
 
     if (strValue === 'true' || strValue === '') {
