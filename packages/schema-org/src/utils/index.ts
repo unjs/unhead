@@ -52,7 +52,7 @@ export function resolvableDateToIso(val: Date | string | undefined) {
 export const IdentityId = '#identity'
 
 export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any) {
-  if (node?.[field] === undefined && value)
+  if (node?.[field] === undefined && value != null)
     node[field] = value
 }
 
@@ -162,6 +162,17 @@ export function stripEmptyProperties(obj: any) {
  * so that null can act as an explicit opt-out sentinel.
  */
 export function stripNullProperties(obj: any) {
+  if (Array.isArray(obj)) {
+    for (let i = obj.length - 1; i >= 0; i--) {
+      const v = obj[i]
+      if (v === null)
+        obj.splice(i, 1)
+      else if (typeof v === 'object' && v !== null)
+        stripNullProperties(v)
+    }
+    return obj
+  }
+
   for (const k in obj) {
     if (!Object.hasOwn(obj, k))
       continue
