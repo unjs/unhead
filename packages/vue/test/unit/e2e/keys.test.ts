@@ -129,7 +129,7 @@ describe('vue e2e keys', () => {
         const text = value ? `&text=${font.replace(SPACE_GLOBAL_RE, '')}` : ''
         const key = font.replace(SPACE_RE, '')
         return {
-          rel: 'stylesheet',
+          rel: 'stylesheet' as const,
           href: `https://fonts.googleapis.com/css?family=${family}${text}`,
           key,
         }

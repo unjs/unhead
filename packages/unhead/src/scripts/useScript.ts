@@ -140,7 +140,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         const $url = new URL(src)
         href = `${$url.protocol}//${$url.host}`
       }
-      const link: RawInput<'link'> = {
+      // Type assertion is safe: runtime logic ensures `as: 'script'` is set when rel === 'preload',
+      // and `as` is omitted for preconnect/dns-prefetch which don't require it.
+      const link = {
         href,
         rel,
         crossorigin: typeof input.crossorigin !== 'undefined' ? input.crossorigin : (isCrossOrigin ? 'anonymous' : undefined),
@@ -148,7 +150,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         fetchpriority: typeof input.fetchpriority !== 'undefined' ? input.fetchpriority : 'low',
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
-      }
+      } as RawInput<'link'>
       script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
       return script._warmupEl
     },

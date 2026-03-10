@@ -123,7 +123,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
             script: [{ src: 'app.js' }, { src: 'analytics.js' }],
             link: [
               { rel: 'stylesheet', href: 'styles.css' },
-              { rel: 'preload', href: 'font.woff2', as: 'font' },
+              { rel: 'preload', href: 'font.woff2', as: 'font', crossorigin: 'anonymous' as const },
             ],
           })
         })

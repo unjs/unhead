@@ -23,13 +23,19 @@ export interface InferSeoMetaPluginOptions {
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin((head) => {
+    if (options.twitterCard !== false) {
+      head.push({
+        meta: [
+          {
+            name: 'twitter:card',
+            content: options.twitterCard || 'summary_large_image',
+            tagPriority: 'low',
+          },
+        ],
+      })
+    }
     head.push({
       meta: [
-        {
-          name: 'twitter:card',
-          content: options.twitterCard || 'summary_large_image',
-          tagPriority: 'low',
-        },
         {
           'property': 'og:title',
           'tagPriority': 'low',
