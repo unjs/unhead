@@ -1,22 +1,22 @@
-import type { HeadValidationRule } from '../../../src/plugins'
+import type { HeadValidationRule, ValidatePluginOptions } from '../../../src/plugins'
 import { renderSSRHead } from '@unhead/ssr'
 import { describe, expect, it, vi } from 'vitest'
 import { ValidatePlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
 
-function createValidationHead(opts?: { disableRules?: string[] }) {
-  const rules: HeadValidationRule[] = []
+function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
+  const results: HeadValidationRule[] = []
   const head = createHead({
     disableDefaults: true,
     plugins: [ValidatePlugin({
-      onReport: r => rules.push(...r),
+      onReport: r => results.push(...r),
       ...opts,
     })],
   })
-  return { head, rules }
+  return { head, rules: results }
 }
 
-describe('devValidationPlugin', () => {
+describe('validatePlugin', () => {
   describe('url validity', () => {
     it('warns on non-absolute canonical', () => {
       const { head, rules } = createValidationHead()
@@ -540,11 +540,20 @@ describe('devValidationPlugin', () => {
       spy.mockRestore()
     })
 
-    it('respects disableRules', () => {
-      const { head, rules } = createValidationHead({ disableRules: ['empty-title'] })
+    it('respects rules off', () => {
+      const { head, rules } = createValidationHead({ rules: { 'empty-title': 'off' } })
       head.push({ title: '' })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'empty-title')).toBeFalsy()
+    })
+
+    it('overrides severity via rules config', () => {
+      const { head, rules } = createValidationHead({ rules: { 'missing-title': 'info' } })
+      head.push({ meta: [{ name: 'description', content: 'test' }] })
+      renderSSRHead(head)
+      const rule = rules.find(r => r.id === 'missing-title')
+      expect(rule).toBeTruthy()
+      expect(rule!.severity).toBe('info')
     })
 
     it('reports all rules in batch via onReport', () => {

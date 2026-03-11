@@ -59,9 +59,9 @@ export interface ValidatePluginOptions {
    */
   onReport?: (rules: HeadValidationRule[]) => void
   /**
-   * Rule IDs to disable.
+   * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override.
    */
-  disableRules?: string[]
+  rules?: Partial<Record<string, 'warn' | 'info' | 'off'>>
 }
 ```
 ::
@@ -114,12 +114,18 @@ export interface ValidatePluginOptions {
 
 Typo detection only runs for recognized prefixes (`og:`, `article:`, `book:`, `profile:`, `fb:`, `twitter:`, or standard meta names without a colon). Custom prefixes like `custom:foo` are ignored.
 
-## How Do I Disable Specific Rules?
+## How Do I Configure Rules?
+
+Rules can be disabled or have their severity overridden, similar to ESLint's flat config:
 
 ::code-block
 ```ts [Input]
 ValidatePlugin({
-  disableRules: ['missing-description', 'viewport-user-scalable']
+  rules: {
+    'missing-description': 'off',
+    'viewport-user-scalable': 'off',
+    'missing-title': 'info', // downgrade from warn to info
+  }
 })
 ```
 ::

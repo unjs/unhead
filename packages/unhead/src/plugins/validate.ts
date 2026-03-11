@@ -1,6 +1,8 @@
 import type { HeadTag } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
+export type RuleSeverity = 'warn' | 'info' | 'off'
+
 export interface HeadValidationRule {
   id: string
   message: string
@@ -15,9 +17,9 @@ export interface ValidatePluginOptions {
    */
   onReport?: (rules: HeadValidationRule[]) => void
   /**
-   * Rule IDs to disable.
+   * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override severity.
    */
-  disableRules?: string[]
+  rules?: Partial<Record<string, RuleSeverity>>
 }
 
 const URL_META_KEYS = new Set([
@@ -177,16 +179,17 @@ function isAbsoluteUrl(url: string): boolean {
 }
 
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
-  const disabled = new Set(options.disableRules || [])
+  const ruleConfig = options.rules || {}
 
   return defineHeadPlugin({
-    key: 'dev-validation',
+    key: 'validate',
     hooks: {
       'tags:afterResolve': ({ tags }) => {
         const rules: HeadValidationRule[] = []
 
-        function report(id: string, message: string, severity: 'warn' | 'info', tag?: HeadTag) {
-          if (!disabled.has(id))
+        function report(id: string, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
+          const severity = ruleConfig[id] ?? defaultSeverity
+          if (severity !== 'off')
             rules.push({ id, message, severity, tag })
         }
 
