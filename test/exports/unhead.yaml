@@ -24,6 +24,7 @@
   PromisesPlugin: object
   SafeInputPlugin: object
   TemplateParamsPlugin: function
+  ValidatePlugin: function
 ./scripts:
   createSpyProxy: function
   useScript: function
