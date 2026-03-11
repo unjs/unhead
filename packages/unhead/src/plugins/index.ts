@@ -7,4 +7,4 @@ export { PromisesPlugin } from './promises' // optional
 export { SafeInputPlugin } from './safe' // optional
 export { TemplateParamsPlugin } from './templateParams' // optional
 export { ValidatePlugin } from './validate' // optional
-export type { HeadValidationRule, RuleSeverity, ValidatePluginOptions, ValidationRuleId } from './validate'
+export type { HeadValidationRule, RuleConfig, RulesConfig, RuleSeverity, ValidatePluginOptions, ValidationRuleId, ValidationRuleOptions } from './validate'

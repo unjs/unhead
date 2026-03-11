@@ -599,4 +599,244 @@ describe('validatePlugin', () => {
       expect(rules.length).toBeGreaterThanOrEqual(2)
     })
   })
+
+  describe('performance hints', () => {
+    it('warns on preload with fetchpriority="low"', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'low' as const }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeTruthy()
+    })
+
+    it('does not warn on preload with fetchpriority="high"', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'high' as const }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeFalsy()
+    })
+
+    it('warns when more than 6 preloads exist', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 7 }, (_, i) => ({
+          rel: 'preload' as const,
+          href: `/resource-${i}.js`,
+          as: 'script' as const,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
+    })
+
+    it('does not warn when 6 or fewer preloads exist', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 6 }, (_, i) => ({
+          rel: 'preload' as const,
+          href: `/resource-${i}.js`,
+          as: 'script' as const,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
+    })
+
+    it('warns on redundant dns-prefetch when preconnect exists', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+          { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeTruthy()
+    })
+
+    it('does not warn on dns-prefetch without matching preconnect', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+          { rel: 'dns-prefetch', href: 'https://cdn.example.com' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeFalsy()
+    })
+
+    it('warns on preload + async script conflict', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const }],
+        script: [{ src: '/analytics.js', async: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
+    })
+
+    it('warns on preload + defer script conflict', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
+        script: [{ src: '/app.js', defer: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
+    })
+
+    it('does not warn on preload + blocking script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/critical.js', as: 'script' as const }],
+        script: [{ src: '/critical.js' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
+    })
+
+    it('warns on prefetch + preload conflict', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preload', href: '/style.css', as: 'style' as const },
+          { rel: 'prefetch', href: '/style.css' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'prefetch-preload-conflict')).toBeTruthy()
+    })
+
+    it('does not warn on prefetch without matching preload', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preload', href: '/style.css', as: 'style' as const },
+          { rel: 'prefetch', href: '/next-page.js' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'prefetch-preload-conflict')).toBeFalsy()
+    })
+
+    it('warns on large inline style (>14KB)', () => {
+      const { head, rules } = createValidationHead()
+      const largeCSS = 'a'.repeat(15 * 1024)
+      head.push({
+        style: [{ innerHTML: largeCSS }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-style-size')).toBeTruthy()
+    })
+
+    it('does not warn on small inline style', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        style: [{ innerHTML: 'body { color: red; }' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-style-size')).toBeFalsy()
+    })
+
+    it('warns on large inline script (>2KB)', () => {
+      const { head, rules } = createValidationHead()
+      const largeJS = 'a'.repeat(3 * 1024)
+      head.push({
+        script: [{ innerHTML: largeJS }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
+    })
+
+    it('does not warn on small inline script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ innerHTML: 'console.log("hi")' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-script-size')).toBeFalsy()
+    })
+
+    it('warns when more than 4 preconnects exist', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 5 }, (_, i) => ({
+          rel: 'preconnect' as const,
+          href: `https://cdn${i}.example.com`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preconnects')).toBeTruthy()
+    })
+
+    it('does not warn when 4 or fewer preconnects exist', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 4 }, (_, i) => ({
+          rel: 'preconnect' as const,
+          href: `https://cdn${i}.example.com`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preconnects')).toBeFalsy()
+    })
+
+    it('respects custom max for too-many-preloads', () => {
+      const { head, rules } = createValidationHead({ rules: { 'too-many-preloads': ['warn', { max: 3 }] } })
+      head.push({
+        link: Array.from({ length: 4 }, (_, i) => ({
+          rel: 'preload' as const,
+          href: `/resource-${i}.js`,
+          as: 'script' as const,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
+    })
+
+    it('respects custom max for too-many-preconnects', () => {
+      const { head, rules } = createValidationHead({ rules: { 'too-many-preconnects': ['warn', { max: 2 }] } })
+      head.push({
+        link: Array.from({ length: 3 }, (_, i) => ({
+          rel: 'preconnect' as const,
+          href: `https://cdn${i}.example.com`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preconnects')).toBeTruthy()
+    })
+
+    it('respects custom maxKB for inline-style-size', () => {
+      const { head, rules } = createValidationHead({ rules: { 'inline-style-size': ['info', { maxKB: 1 }] } })
+      const css = 'a'.repeat(2 * 1024)
+      head.push({ style: [{ innerHTML: css }] })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-style-size')).toBeTruthy()
+    })
+
+    it('respects custom maxKB for inline-script-size', () => {
+      const { head, rules } = createValidationHead({ rules: { 'inline-script-size': ['info', { maxKB: 1 }] } })
+      const js = 'a'.repeat(1.5 * 1024)
+      head.push({ script: [{ innerHTML: js }] })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
+    })
+
+    it('tuple severity can disable a rule with options', () => {
+      const { head, rules } = createValidationHead({ rules: { 'too-many-preloads': ['off', { max: 3 }] } })
+      head.push({
+        link: Array.from({ length: 10 }, (_, i) => ({
+          rel: 'preload' as const,
+          href: `/resource-${i}.js`,
+          as: 'script' as const,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
+    })
+  })
 })

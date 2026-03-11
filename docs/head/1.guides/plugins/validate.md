@@ -118,6 +118,21 @@ export interface ValidatePluginOptions {
 
 Typo detection only runs for recognized prefixes (`og:`, `article:`, `book:`, `profile:`, `fb:`, `twitter:`, or standard meta names without a colon). Custom prefixes like `custom:foo` are ignored.
 
+### Performance Hints
+
+Rules inspired by [webperf-snippets](https://webperf-snippets.nucliweb.net/) that catch common performance anti-patterns in head tags:
+
+| Rule ID | Severity | What it catches |
+|---------|----------|----------------|
+| `preload-fetchpriority-conflict` | `warn` | `<link rel="preload" fetchpriority="low">` is contradictory — preload signals critical, low priority contradicts that |
+| `too-many-preloads` | `warn` | More than 6 `<link rel="preload">` tags compete for bandwidth and hurt performance |
+| `too-many-preconnects` | `warn` | More than 4 `<link rel="preconnect">` tags — each initiates a TCP+TLS handshake, competing for limited connections |
+| `redundant-dns-prefetch` | `info` | Same origin has both `<link rel="preconnect">` and `<link rel="dns-prefetch">` — preconnect already includes DNS resolution |
+| `preload-async-defer-conflict` | `warn` | A script is preloaded but also has `async` or `defer` — preload escalates the priority, defeating the purpose |
+| `prefetch-preload-conflict` | `warn` | Same resource has both `preload` and `prefetch` — use preload for current page, prefetch for future navigation |
+| `inline-style-size` | `info` | Inline `<style>` exceeds 14KB (the critical CSS budget for the first TCP round-trip) |
+| `inline-script-size` | `info` | Inline `<script>` exceeds 2KB — consider moving to an external file for cacheability |
+
 ## How Do I Configure Rules?
 
 Rules can be disabled or have their severity overridden, similar to ESLint's flat config:
@@ -133,6 +148,23 @@ ValidatePlugin({
 })
 ```
 ::
+
+Some rules accept an options object as an ESLint-style `[severity, options]` tuple:
+
+::code-block
+```ts [Input]
+ValidatePlugin({
+  rules: {
+    'too-many-preloads': ['warn', { max: 10 }],
+    'too-many-preconnects': ['warn', { max: 6 }],
+    'inline-style-size': ['info', { maxKB: 20 }],
+    'inline-script-size': ['info', { maxKB: 5 }],
+  }
+})
+```
+::
+
+The configuration is fully type-safe — only rules that support options accept the tuple form, and options are typed per-rule.
 
 ## How Does Source Tracing Work?
 
