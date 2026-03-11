@@ -135,6 +135,10 @@ const KNOWN_META_NAMES = new Set([
 ])
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
+const MAX_SCALE_RE = /maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/
+const NUMERIC_RE = /^\d+$/
+const OG_PREFIX_RE = /^(?:og|article|book|profile|fb):/
+const HTML_CHARS_RE = /[<>]/
 
 function levenshtein(a: string, b: string): number {
   const m = a.length
@@ -263,17 +267,17 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (metaKey === 'viewport' && content) {
               if (content.includes('user-scalable=no'))
                 report('viewport-user-scalable', `viewport has "user-scalable=no" which prevents zooming and harms accessibility.`, 'info', tag)
-              if (/maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/.test(content))
+              if (MAX_SCALE_RE.test(content))
                 report('viewport-user-scalable', `viewport "maximum-scale=1" limits zooming and may harm accessibility.`, 'info', tag)
             }
 
             // Twitter handle missing @
-            if ((metaKey === 'twitter:site' || metaKey === 'twitter:creator') && content && !content.startsWith('@') && !/^\d+$/.test(content))
+            if ((metaKey === 'twitter:site' || metaKey === 'twitter:creator') && content && !content.startsWith('@') && !NUMERIC_RE.test(content))
               report('twitter-handle-missing-at', `${metaKey} should start with "@", received "${content}".`, 'warn', tag)
 
             // === Typo Detection ===
 
-            if (props.property && !KNOWN_META_PROPERTIES.has(props.property) && /^(og|article|book|profile|fb):/.test(props.property)) {
+            if (props.property && !KNOWN_META_PROPERTIES.has(props.property) && OG_PREFIX_RE.test(props.property)) {
               const suggestion = findClosestMatch(props.property, KNOWN_META_PROPERTIES)
               if (suggestion)
                 report('possible-typo', `Unknown meta property "${props.property}". Did you mean "${suggestion}"?`, 'warn', tag)
@@ -289,7 +293,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Title checks
           if (tag.tag === 'title') {
             const text = tag.textContent || ''
-            if (/[<>]/.test(text))
+            if (HTML_CHARS_RE.test(text))
               report('html-in-title', `Title contains HTML characters which will be escaped, not rendered: "${text}".`, 'warn', tag)
             if (TEMPLATE_PARAM_RE.test(text))
               report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
