@@ -21,6 +21,10 @@ export interface ValidatePluginOptions {
    * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override severity.
    */
   rules?: Partial<Record<string, RuleSeverity>>
+  /**
+   * Project root path. When set, source locations are displayed as relative paths.
+   */
+  root?: string
 }
 
 const URL_META_KEYS = new Set([
@@ -180,28 +184,34 @@ function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
 }
 
-function captureSource(): string | undefined {
+function captureSource(root?: string): string | undefined {
   const stack = new Error('source').stack
   if (!stack)
     return undefined
-  // skip Error, captureSource, report, plugin hook frames — find the first user frame
   const lines = stack.split('\n')
   for (let i = 4; i < lines.length; i++) {
     const line = lines[i].trim()
-    if (line && !line.includes('node_modules') && !line.includes('unhead/src/'))
-      return line.replace(AT_PREFIX_RE, '')
+    if (line && !line.includes('node_modules') && !line.includes('unhead/src/')) {
+      let source = line.replace(AT_PREFIX_RE, '')
+      if (root) {
+        const prefix = root.endsWith('/') ? root : `${root}/`
+        source = source.replace(prefix, '')
+      }
+      return source
+    }
   }
   return undefined
 }
 
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
+  const root = options.root
   const stacks = new Map<number, string>()
 
   return defineHeadPlugin((head: Unhead) => {
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
-      const source = captureSource()
+      const source = captureSource(root)
       const active = _push(input, opts)
       if (source)
         stacks.set(active._i, source)
