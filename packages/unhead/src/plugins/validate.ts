@@ -3,8 +3,29 @@ import { defineHeadPlugin } from './defineHeadPlugin'
 
 export type RuleSeverity = 'warn' | 'info' | 'off'
 
+export type ValidationRuleId
+  = | 'canonical-og-url-mismatch'
+    | 'empty-meta-content'
+    | 'empty-title'
+    | 'html-in-title'
+    | 'missing-description'
+    | 'missing-title'
+    | 'non-absolute-canonical'
+    | 'non-absolute-og-url'
+    | 'og-image-missing-dimensions'
+    | 'og-missing-description'
+    | 'og-missing-title'
+    | 'possible-typo'
+    | 'preload-font-crossorigin'
+    | 'preload-missing-as'
+    | 'robots-conflict'
+    | 'script-src-with-content'
+    | 'twitter-handle-missing-at'
+    | 'unresolved-template-param'
+    | 'viewport-user-scalable'
+
 export interface HeadValidationRule {
-  id: string
+  id: ValidationRuleId
   message: string
   severity: 'warn' | 'info'
   source?: string
@@ -20,7 +41,7 @@ export interface ValidatePluginOptions {
   /**
    * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override severity.
    */
-  rules?: Partial<Record<string, RuleSeverity>>
+  rules?: Partial<Record<ValidationRuleId, RuleSeverity>>
   /**
    * Project root path. When set, source locations are displayed as relative paths.
    */
@@ -230,7 +251,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         'tags:afterResolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
-          function report(id: string, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
+          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
             const severity = ruleConfig[id] ?? defaultSeverity
             if (severity === 'off')
               return
