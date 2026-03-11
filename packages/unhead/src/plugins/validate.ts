@@ -8,6 +8,8 @@ export type ValidationRuleId
     | 'empty-meta-content'
     | 'empty-title'
     | 'html-in-title'
+    | 'inline-script-size'
+    | 'inline-style-size'
     | 'missing-description'
     | 'missing-title'
     | 'non-absolute-canonical'
@@ -16,13 +18,32 @@ export type ValidationRuleId
     | 'og-missing-description'
     | 'og-missing-title'
     | 'possible-typo'
+    | 'prefetch-preload-conflict'
+    | 'preload-async-defer-conflict'
+    | 'preload-fetchpriority-conflict'
     | 'preload-font-crossorigin'
     | 'preload-missing-as'
+    | 'redundant-dns-prefetch'
     | 'robots-conflict'
     | 'script-src-with-content'
+    | 'too-many-preconnects'
+    | 'too-many-preloads'
     | 'twitter-handle-missing-at'
     | 'unresolved-template-param'
     | 'viewport-user-scalable'
+
+export interface ValidationRuleOptions {
+  'inline-script-size': { maxKB: number }
+  'inline-style-size': { maxKB: number }
+  'too-many-preloads': { max: number }
+  'too-many-preconnects': { max: number }
+}
+
+export type RuleConfig<Id extends ValidationRuleId> = Id extends keyof ValidationRuleOptions
+  ? RuleSeverity | [severity: RuleSeverity, options: ValidationRuleOptions[Id]]
+  : RuleSeverity
+
+export type RulesConfig = { [K in ValidationRuleId]?: RuleConfig<K> }
 
 export interface HeadValidationRule {
   id: ValidationRuleId
@@ -39,9 +60,19 @@ export interface ValidatePluginOptions {
    */
   onReport?: (rules: HeadValidationRule[]) => void
   /**
-   * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override severity.
+   * Configure rule severity and options. Accepts a severity string or an ESLint-style
+   * `[severity, options]` tuple for rules that support configuration.
+   *
+   * @example
+   * ```ts
+   * rules: {
+   *   'missing-description': 'off',
+   *   'too-many-preloads': ['warn', { max: 10 }],
+   *   'inline-style-size': ['info', { maxKB: 20 }],
+   * }
+   * ```
    */
-  rules?: Partial<Record<ValidationRuleId, RuleSeverity>>
+  rules?: RulesConfig
   /**
    * Project root path. When set, source locations are displayed as relative paths.
    */
@@ -206,6 +237,23 @@ function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
 }
 
+function resolveSeverity(config: RuleSeverity | [RuleSeverity, unknown] | undefined, fallback: RuleSeverity): RuleSeverity {
+  if (config == null)
+    return fallback
+  return Array.isArray(config) ? config[0] : config
+}
+
+function resolveOptions<Id extends keyof ValidationRuleOptions>(
+  config: RulesConfig,
+  id: Id,
+  defaults: ValidationRuleOptions[Id],
+): ValidationRuleOptions[Id] {
+  const entry = config[id]
+  if (Array.isArray(entry))
+    return { ...defaults, ...entry[1] }
+  return defaults
+}
+
 function captureSource(root?: string): string | undefined {
   const stack = new Error('source').stack
   if (!stack)
@@ -252,7 +300,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const rules: HeadValidationRule[] = []
 
           function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
-            const severity = ruleConfig[id] ?? defaultSeverity
+            const severity = resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, defaultSeverity)
             if (severity === 'off')
               return
             const entryIndex = tag?._p != null ? tag._p >> 10 : undefined
@@ -382,6 +430,31 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             if (tag.tag === 'script' && props.src && (tag.innerHTML || tag.textContent))
               report('script-src-with-content', `Script has both "src" and inline content — the browser will ignore the inline content.`, 'warn', tag)
+
+            // === Performance Hints ===
+            // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
+
+            // Preload + fetchpriority="low" is contradictory
+            if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low')
+              report('preload-fetchpriority-conflict', `Preload with fetchpriority="low" is contradictory — preload signals critical, low priority contradicts that.`, 'warn', tag)
+
+            // Inline style size check (14KB critical CSS budget)
+            if (tag.tag === 'style' && (tag.innerHTML || tag.textContent)) {
+              const content = tag.innerHTML || tag.textContent || ''
+              const sizeKB = new TextEncoder().encode(content).byteLength / 1024
+              const { maxKB: styleMaxKB } = resolveOptions(ruleConfig, 'inline-style-size', { maxKB: 14 })
+              if (sizeKB > styleMaxKB)
+                report('inline-style-size', `Inline <style> is ${sizeKB.toFixed(1)}KB — exceeds ${styleMaxKB}KB critical CSS budget. Consider moving to an external stylesheet for cacheability.`, 'info', tag)
+            }
+
+            // Inline script size check (2KB threshold)
+            if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)) {
+              const content = tag.innerHTML || tag.textContent || ''
+              const sizeKB = new TextEncoder().encode(content).byteLength / 1024
+              const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
+              if (sizeKB > scriptMaxKB)
+                report('inline-script-size', `Inline <script> is ${sizeKB.toFixed(1)}KB — consider moving to an external file for cacheability.`, 'info', tag)
+            }
           }
 
           // === Cross-tag Validation ===
@@ -410,6 +483,64 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Missing description (only when indexable)
           if (!hasDescription && isIndexable)
             report('missing-description', `Page is missing a meta description and is indexable by search engines.`, 'warn')
+
+          // === Performance Cross-tag Checks ===
+          // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
+
+          // Too many preloads compete for bandwidth
+          const { max: maxPreloads } = resolveOptions(ruleConfig, 'too-many-preloads', { max: 6 })
+          const preloadCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'preload').length
+          if (preloadCount > maxPreloads)
+            report('too-many-preloads', `Found ${preloadCount} preload links — more than ${maxPreloads} preloads compete for bandwidth and can hurt performance.`, 'warn')
+
+          // Too many preconnects waste connections
+          const { max: maxPreconnects } = resolveOptions(ruleConfig, 'too-many-preconnects', { max: 4 })
+          const preconnectCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'preconnect').length
+          if (preconnectCount > maxPreconnects)
+            report('too-many-preconnects', `Found ${preconnectCount} preconnect links — each initiates a TCP+TLS handshake, more than ${maxPreconnects} compete for limited connections.`, 'warn')
+
+          // Redundant dns-prefetch when preconnect exists for same origin
+          const preconnectOrigins = new Set<string>()
+          const dnsPrefetchTags: HeadTag[] = []
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.href) {
+              if (tag.props.rel === 'preconnect')
+                preconnectOrigins.add(tag.props.href)
+              else if (tag.props.rel === 'dns-prefetch')
+                dnsPrefetchTags.push(tag)
+            }
+          }
+          for (const tag of dnsPrefetchTags) {
+            if (preconnectOrigins.has(tag.props.href))
+              report('redundant-dns-prefetch', `dns-prefetch for "${tag.props.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
+          }
+
+          // Preload + async/defer script conflict (priority escalation anti-pattern)
+          const preloadScriptHrefs = new Map<string, HeadTag>()
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href)
+              preloadScriptHrefs.set(tag.props.href, tag)
+          }
+          for (const tag of tags) {
+            if (tag.tag === 'script' && tag.props.src && (tag.props.async || tag.props.defer)) {
+              const preloadTag = preloadScriptHrefs.get(tag.props.src)
+              if (preloadTag) {
+                const attr = tag.props.async ? 'async' : 'defer'
+                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
+              }
+            }
+          }
+
+          // Prefetch + preload conflict (should be one or the other)
+          const preloadHrefs = new Set<string>()
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.href)
+              preloadHrefs.add(tag.props.href)
+          }
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.rel === 'prefetch' && tag.props.href && preloadHrefs.has(tag.props.href))
+              report('prefetch-preload-conflict', `"${tag.props.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
+          }
 
           // Dispatch
           if (rules.length) {
