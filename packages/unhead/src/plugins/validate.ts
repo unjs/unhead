@@ -195,7 +195,7 @@ function captureSource(root?: string): string | undefined {
       let source = line.replace(AT_PREFIX_RE, '')
       if (root) {
         const prefix = root.endsWith('/') ? root : `${root}/`
-        source = source.replace(prefix, '')
+        source = source.replace(prefix, './')
       }
       return source
     }
