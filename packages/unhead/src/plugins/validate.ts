@@ -53,9 +53,9 @@ const KNOWN_META_PROPERTIES = new Set([
   'article:tag',
   'book:author',
   'book:isbn',
-  'book:release_data',
+  'book:release_date',
   'book:tag',
-  'fb:app:id',
+  'fb:app_id',
   'og:audio',
   'og:audio:secure_url',
   'og:audio:type',
@@ -70,7 +70,7 @@ const KNOWN_META_PROPERTIES = new Set([
   'og:image:width',
   'og:locale',
   'og:locale:alternate',
-  'og:site:name',
+  'og:site_name',
   'og:title',
   'og:type',
   'og:url',
@@ -142,7 +142,8 @@ const KNOWN_META_NAMES = new Set([
 ])
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
-const MAX_SCALE_RE = /maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/
+const MAX_SCALE_RE = /maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/i
+const USER_SCALABLE_NO_RE = /user-scalable\s*=\s*no(?:\s|,|$)/i
 const NUMERIC_RE = /^\d+$/
 const OG_PREFIX_RE = /^(?:og|article|book|profile|fb):/
 const HTML_CHARS_RE = /[<>]/
@@ -215,6 +216,11 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       const active = _push(input, opts)
       if (source)
         stacks.set(active._i, source)
+      const _dispose = active.dispose
+      active.dispose = () => {
+        stacks.delete(active._i)
+        _dispose()
+      }
       return active
     }
 
@@ -308,7 +314,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
               // Viewport accessibility
               if (metaKey === 'viewport' && content) {
-                if (content.includes('user-scalable=no'))
+                if (USER_SCALABLE_NO_RE.test(content))
                   report('viewport-user-scalable', `viewport has "user-scalable=no" which prevents zooming and harms accessibility.`, 'info', tag)
                 if (MAX_SCALE_RE.test(content))
                   report('viewport-user-scalable', `viewport "maximum-scale=1" limits zooming and may harm accessibility.`, 'info', tag)
