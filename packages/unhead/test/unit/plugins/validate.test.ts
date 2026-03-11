@@ -555,6 +555,40 @@ describe('validatePlugin', () => {
       expect(rule!.severity).toBe('info')
     })
 
+    it('includes source on reported rules', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [ValidatePlugin({
+          onReport: r => results.push(...r),
+        })],
+      })
+      head.push({ link: [{ rel: 'canonical', href: '/page' }] })
+      renderSSRHead(head)
+      const rule = results.find(r => r.id === 'non-absolute-canonical')
+      expect(rule).toBeTruthy()
+      expect(rule!.source).toBeDefined()
+      expect(typeof rule!.source).toBe('string')
+    })
+
+    it('applies root to make source relative', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [ValidatePlugin({
+          root: process.cwd(),
+          onReport: r => results.push(...r),
+        })],
+      })
+      head.push({ link: [{ rel: 'canonical', href: '/page' }] })
+      renderSSRHead(head)
+      const rule = results.find(r => r.id === 'non-absolute-canonical')
+      expect(rule).toBeTruthy()
+      // source should not contain the absolute cwd prefix when root is set
+      if (rule!.source)
+        expect(rule!.source).not.toContain(process.cwd())
+    })
+
     it('reports all rules in batch via onReport', () => {
       const { head, rules } = createValidationHead()
       head.push({

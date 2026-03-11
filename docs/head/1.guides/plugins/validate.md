@@ -38,10 +38,10 @@ By default, warnings are logged via `console.warn`. You can provide a custom rep
 ```ts [Input]
 ValidatePlugin({
   onReport(rules) {
-    // rules: Array<{ id: string, message: string, severity: 'warn' | 'info', tag?: HeadTag }>
+    // rules: Array<{ id, message, severity, source?, tag? }>
     for (const rule of rules) {
-      // render in DevTools overlay, send to logging service, etc.
-      console.warn(`[${rule.id}] ${rule.message}`)
+      const loc = rule.source ? ` (${rule.source})` : ''
+      console.warn(`[${rule.id}] ${rule.message}${loc}`)
     }
   }
 })
@@ -62,6 +62,10 @@ export interface ValidatePluginOptions {
    * Configure rule severity. Set to 'off' to disable, or 'warn'/'info' to override.
    */
   rules?: Partial<Record<string, 'warn' | 'info' | 'off'>>
+  /**
+   * Project root path. When set, source locations are displayed as relative paths (e.g. ./src/components/MyPage.vue:42:5).
+   */
+  root?: string
 }
 ```
 ::
@@ -127,6 +131,19 @@ ValidatePlugin({
     'missing-title': 'info', // downgrade from warn to info
   }
 })
+```
+::
+
+## How Does Source Tracing Work?
+
+Each validation rule includes a `source` field pointing to the `head.push()` call that introduced the problematic tag. By default this is an absolute path. Set `root` to get clickable relative paths in your terminal or IDE:
+
+::code-block
+```ts [Input]
+ValidatePlugin({
+  root: process.cwd(),
+})
+// output: [unhead] Canonical URL should be absolute, received "/page". (./src/components/MyPage.vue:42:5)
 ```
 ::
 
