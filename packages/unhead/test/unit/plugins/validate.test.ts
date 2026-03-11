@@ -227,7 +227,6 @@ describe('validatePlugin', () => {
     it('warns on preload without as', () => {
       const { head, rules } = createValidationHead()
       head.push({
-        // @ts-expect-error missing as
         link: [{ rel: 'preload', href: '/style.css' }],
       })
       renderSSRHead(head)
