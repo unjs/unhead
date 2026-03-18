@@ -289,4 +289,32 @@ describe('tag priority', () => {
     const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`"<title>test - high-priority title template</title>"`)
   })
+
+  it('seo meta above inline style', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      style: [{
+        textContent: 'body { background: red; }',
+      }],
+    })
+    head.push({
+      meta: [
+        {
+          property: 'og:title',
+          content: 'test title',
+        },
+        {
+          name: 'description',
+          content: 'desc',
+        },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // SEO meta tags should appear before style tags
+    const ogIndex = headTags.indexOf('og:title')
+    const styleIndex = headTags.indexOf('<style>')
+    expect(ogIndex).toBeLessThan(styleIndex)
+    const descIndex = headTags.indexOf('description')
+    expect(descIndex).toBeLessThan(styleIndex)
+  })
 })

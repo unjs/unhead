@@ -4,13 +4,27 @@ import { TagPriorityAliases } from '../utils/const'
 // Capo.js tag weights for optimal head ordering
 const TAG_WEIGHTS = { base: -10, title: 10 } as const
 const CAPO_WEIGHTS = {
-  meta: { 'content-security-policy': -30, 'charset': -20, 'viewport': -15 },
+  meta: { 'content-security-policy': -30, 'charset': -20, 'viewport': -15, 'seo': 55 },
   link: { 'preconnect': 20, 'stylesheet': 60, 'preload': 70, 'modulepreload': 70, 'prefetch': 90, 'dns-prefetch': 90, 'prerender': 90 },
   script: { async: 30, defer: 80, sync: 50 },
   style: { imported: 40, sync: 60 },
 } as const
 const ImportStyleRe = /@import/
 const isTruthy = (v?: string | boolean) => v === '' || v === true
+
+// SEO meta tags that should appear before style tags for crawler visibility
+const SEO_META_NAMES = new Set(['description', 'keywords', 'author', 'robots', 'generator', 'theme-color'])
+function isSeoMeta(props: Record<string, unknown>): boolean {
+  const prop = String(props.property || '')
+  if (prop.startsWith('og:') || prop.startsWith('twitter:') || prop.startsWith('fb:'))
+    return true
+  const name = String(props.name || '').toLowerCase()
+  if (SEO_META_NAMES.has(name))
+    return true
+  // article:, book:, profile: prefixes are also SEO-related
+  const propLower = prop.toLowerCase()
+  return propLower.startsWith('article:') || propLower.startsWith('book:') || propLower.startsWith('profile:')
+}
 
 export function capoTagWeight(tag: HeadTag): number {
   if (typeof tag.tagPriority === 'number')
@@ -21,7 +35,7 @@ export function capoTagWeight(tag: HeadTag): number {
     weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
   }
   else if (tag.tag === 'meta') {
-    const t = tag.props['http-equiv'] === 'content-security-policy' ? 'content-security-policy' : tag.props.charset ? 'charset' : tag.props.name === 'viewport' ? 'viewport' : null
+    const t = tag.props['http-equiv'] === 'content-security-policy' ? 'content-security-policy' : tag.props.charset ? 'charset' : tag.props.name === 'viewport' ? 'viewport' : isSeoMeta(tag.props) ? 'seo' : null
     if (t)
       weight = CAPO_WEIGHTS.meta[t as keyof typeof CAPO_WEIGHTS.meta]
   }
