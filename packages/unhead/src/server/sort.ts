@@ -15,15 +15,14 @@ const isTruthy = (v?: string | boolean) => v === '' || v === true
 // SEO meta tags that should appear before style tags for crawler visibility
 const SEO_META_NAMES = new Set(['description', 'keywords', 'author', 'robots', 'generator', 'theme-color'])
 function isSeoMeta(props: Record<string, unknown>): boolean {
-  const prop = String(props.property || '')
+  const prop = String(props.property || '').toLowerCase()
   if (prop.startsWith('og:') || prop.startsWith('twitter:') || prop.startsWith('fb:'))
     return true
   const name = String(props.name || '').toLowerCase()
   if (SEO_META_NAMES.has(name))
     return true
   // article:, book:, profile: prefixes are also SEO-related
-  const propLower = prop.toLowerCase()
-  return propLower.startsWith('article:') || propLower.startsWith('book:') || propLower.startsWith('profile:')
+  return prop.startsWith('article:') || prop.startsWith('book:') || prop.startsWith('profile:')
 }
 
 export function capoTagWeight(tag: HeadTag): number {

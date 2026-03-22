@@ -309,7 +309,7 @@ describe('tag priority', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = renderSSRHead(head)
     // SEO meta tags should appear before style tags
     const ogIndex = headTags.indexOf('og:title')
     const styleIndex = headTags.indexOf('<style>')
