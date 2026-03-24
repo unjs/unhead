@@ -21,10 +21,10 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.4.0",
+    "@types/node": "^25.5.0",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^7.3.1",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^8.0.2",
+    "vite-plugin-solid": "^2.11.11"
   }
 }
