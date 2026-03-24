@@ -1,4 +1,4 @@
-import { defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
+import { defineProduct, defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
@@ -6,6 +6,50 @@ import { describe, expect, it } from 'vitest'
 const JSON_LD_RE = /application\/ld\+json/g
 
 describe('schema.org dupes', () => {
+  it('merges two Products with conflicting offers.availability', async () => {
+    const ssrHead = createHead()
+
+    ssrHead.use(UnheadSchemaOrg())
+
+    useHead(ssrHead, {
+      script: [
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          nodes: [
+            defineProduct({
+              name: 'Test Product',
+              image: '/image.jpg',
+              offers: {
+                price: 100,
+                availability: 'InStock',
+              },
+            }),
+          ],
+        } as any,
+        {
+          type: 'application/ld+json',
+          key: 'schema-org-graph',
+          nodes: [
+            defineProduct({
+              name: 'Test Product',
+              image: '/image.jpg',
+              offers: {
+                price: 100,
+                availability: 'OutOfStock',
+              },
+            }),
+          ],
+        } as any,
+      ],
+    })
+
+    const data = await renderSSRHead(ssrHead)
+    // The second Product's offers should win, with OutOfStock availability
+    expect(data.bodyTags).toContain('https://schema.org/OutOfStock')
+    expect(data.bodyTags).not.toContain('https://schema.org/InStock')
+  })
+
   it('basic websites', async () => {
     const ssrHead = createHead()
 

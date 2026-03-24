@@ -45,7 +45,21 @@ export function merge(target: any, source: any): any {
           target[key] = Object.values(byType)
         }
         else {
-          target[key] = merged
+          // For arrays of typed schema.org objects, dedupe by @type so that
+          // later definitions override earlier ones (e.g. two Products defining
+          // offers with different availability values)
+          const hasTypedObjects = merged.length > 0 && merged.every((item: any) =>
+            item && typeof item === 'object' && item['@type'],
+          )
+          if (hasTypedObjects) {
+            const byType: Record<string, any> = Object.create(null)
+            for (const item of merged)
+              byType[item['@type']] = item
+            target[key] = Object.values(byType)
+          }
+          else {
+            target[key] = merged
+          }
         }
       }
       else {

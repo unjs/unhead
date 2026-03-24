@@ -44,8 +44,17 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
     return {
       key: 'schema-org',
       hooks: {
-        'entries:normalize': ({ tags }) => {
+        'entries:resolve': (ctx) => {
           graph = graph || createSchemaOrgGraph()
+          // Reset graph nodes each cycle so disposed entries don't leave stale nodes.
+          // Force all entries to re-normalize so their nodes are re-pushed to the graph.
+          graph.nodes = []
+          graph.nodeIndex = new Map()
+          for (const entry of ctx.entries) {
+            delete entry._tags
+          }
+        },
+        'entries:normalize': ({ tags }) => {
           for (const tag of tags) {
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
               // this is a bit expensive, load in seperate chunk
