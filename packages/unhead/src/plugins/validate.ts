@@ -149,6 +149,7 @@ const KNOWN_META_NAMES = new Set([
   'creator',
   'description',
   'fb:app_id',
+  'fediverse:creator',
   'format-detection',
   'generator',
   'google-site-verification',
@@ -401,7 +402,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                   report('possible-typo', `Unknown meta property "${props.property}". Did you mean "${suggestion}"?`, 'warn', tag)
               }
 
-              if (props.name && !KNOWN_META_NAMES.has(props.name) && (props.name.startsWith('twitter:') || !props.name.includes(':'))) {
+              if (props.name && !KNOWN_META_NAMES.has(props.name) && (props.name.startsWith('twitter:') || props.name.startsWith('fediverse:') || !props.name.includes(':'))) {
                 const suggestion = findClosestMatch(props.name, KNOWN_META_NAMES)
                 if (suggestion)
                   report('possible-typo', `Unknown meta name "${props.name}". Did you mean "${suggestion}"?`, 'warn', tag)

@@ -4,7 +4,7 @@ import { MetaTagsArrayable } from './const'
 type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
 export const NAMESPACES = /* @__PURE__ */ {
-  META: new Set(['twitter']),
+  META: new Set(['twitter', 'fediverse']),
   OG: new Set(['og', 'book', 'article', 'profile', 'fb']),
   MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
   HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),

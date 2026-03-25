@@ -612,6 +612,13 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    * @see https://developers.facebook.com/docs/sharing/webmasters#basic
    */
   fbAppId?: string | number
+  /**
+   * The Fediverse account of the content creator.
+   *
+   * @example '@gargron@mastodon.social'
+   * @see https://blog.joinmastodon.org/2024/07/highlighting-journalism-on-mastodon/
+   */
+  fediverseCreator?: string
   // Twitter meta
   /**
    * The card type
