@@ -119,8 +119,15 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
       if (!code.includes('useHead') && !code.includes('useServerHead'))
         return
 
+      let ast
+      try {
+        ast = parseSync(id, code)
+      }
+      catch {
+        return
+      }
+
       const scopeTracker = new ScopeTracker()
-      const ast = parseSync(id, code)
       const s = new MagicString(code)
       const pendingMinifications: Promise<void>[] = []
 
