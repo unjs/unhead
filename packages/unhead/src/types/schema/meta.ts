@@ -28,6 +28,7 @@ export type MetaNames
     | 'creator'
     | 'description'
     | 'fb:app_id'
+    | 'fediverse:creator'
     | 'format-detection'
     | 'generator'
     | 'google-site-verification'
