@@ -1,9 +1,14 @@
 import { resolve } from 'node:path'
 /// <reference types="vitest" />
 /// <reference types="vitest/globals" />
-import { defineProject } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
 
-export default defineProject({
+export default defineConfig({
+  oxc: {
+    jsx: {
+      runtime: 'automatic',
+    },
+  },
   resolve: {
     alias: {
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
