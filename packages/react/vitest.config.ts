@@ -5,7 +5,9 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   oxc: {
-    jsx: 'react-jsx',
+    jsx: {
+      runtime: 'automatic',
+    },
   },
   resolve: {
     alias: {
