@@ -84,7 +84,7 @@ export type MetaProperties
     | 'article:tag'
     | 'book:author'
     | 'book:isbn'
-    | 'book:release_data'
+    | 'book:release_date'
     | 'book:tag'
     | 'fb:app:id'
     | 'og:audio:secure_url'
