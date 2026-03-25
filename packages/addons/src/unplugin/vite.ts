@@ -1,13 +1,19 @@
 import type { Plugin } from 'vite'
 import type { UnpluginOptions } from './types'
+import { MinifyTransform } from './MinifyTransform'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 export type { UnpluginOptions }
 
 export default (options: UnpluginOptions = {}): Plugin[] => {
-  return [
+  const plugins: Plugin[] = [
     TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.treeshake }),
     UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...options.transformSeoMeta }),
   ]
+  if (options.minify !== false) {
+    const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
+    plugins.push(MinifyTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
+  }
+  return plugins
 }

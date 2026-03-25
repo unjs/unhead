@@ -48,9 +48,11 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   })
 
   const hooks = createHooks<ServerHeadHooks>(options.hooks)
+  const renderer = createServerRenderer({ tagWeight: capoTagWeight })
   const head: ServerUnhead<T> = {
     ...core,
     hooks,
+    render: () => renderer(head),
     use: p => registerPlugin(head, p),
   }
 

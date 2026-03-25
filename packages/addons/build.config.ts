@@ -15,6 +15,10 @@ export default defineBuildConfig({
     'unhead',
     'unplugin',
     'unhead/plugins',
+    'unhead/minify',
     'unhead/utils',
+    'esbuild',
+    'lightningcss',
+    'rolldown',
   ],
 })

@@ -9,6 +9,10 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./minify:
+  minifyCSS: function
+  minifyJS: function
+  minifyJSON: function
 ./parser:
   applyHeadToHtml: function
   parseAttributes: function
@@ -21,6 +25,7 @@
   defineHeadPlugin: function
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
+  MinifyPlugin: function
   PromisesPlugin: object
   SafeInputPlugin: object
   TemplateParamsPlugin: function
