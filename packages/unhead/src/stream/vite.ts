@@ -38,8 +38,7 @@ export function createStreamingPlugin(options: StreamingPluginOptions): Plugin {
     async configResolved() {
       if (!iifeCodeLoaded) {
         iifeCodeLoaded = true
-        // After build, iife.mjs exports streamingIifeCode string (not the source module)
-        const mod = await import('unhead/stream/iife') as unknown as { streamingIifeCode: string }
+        const mod = await import('unhead/stream/iife')
         iifeCode = mod.streamingIifeCode
       }
     },
