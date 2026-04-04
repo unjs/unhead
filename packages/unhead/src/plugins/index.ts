@@ -1,5 +1,5 @@
 export { AliasSortingPlugin } from './aliasSorting'
-export { CanonicalPlugin } from './canonical'
+export { CanonicalPlugin, DEFAULT_QUERY_WHITELIST } from './canonical'
 export { defineHeadPlugin } from './defineHeadPlugin'
 export { FlatMetaPlugin } from './flatMeta' // optional
 export { InferSeoMetaPlugin } from './inferSeoMetaPlugin' // optional

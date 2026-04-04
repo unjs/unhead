@@ -35,15 +35,34 @@ export interface CanonicalPluginOptions {
 const META_TRANSFORMABLE_URL = [
   'og:url',
   'og:image',
+  'og:image:url',
   'og:image:secure_url',
   'twitter:image',
   'twitter:image:src',
   'og:video',
+  'og:video:url',
   'og:video:secure_url',
-  'og:see_also',
+  'og:audio',
+  'og:audio:url',
+  'og:audio:secure_url',
+  'twitter:player',
+  'twitter:player:stream',
 ]
 
-const META_QUERY_FILTERABLE = new Set([
+/**
+ * Link rel values that should have their href resolved to absolute URLs.
+ */
+const LINK_REL_RESOLVABLE = new Set([
+  'canonical',
+  'next',
+  'prev',
+])
+
+/**
+ * Tags that represent page URLs and should have query params filtered,
+ * hash fragments stripped, and trailing slash normalized.
+ */
+const META_CANONICAL_URL = new Set([
   'og:url',
 ])
 
@@ -135,12 +154,16 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
             // allow interchangable use of property and name for DX
             if (tag.tag === 'meta' && META_TRANSFORMABLE_URL.includes(metaKey)) {
               tag.props.content = resolvePath(tag.props.content)
-              if (META_QUERY_FILTERABLE.has(metaKey)) {
+              if (META_CANONICAL_URL.has(metaKey)) {
                 tag.props.content = normalizeCanonicalUrl(tag.props.content)
               }
             }
-            else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
-              tag.props.href = normalizeCanonicalUrl(resolvePath(tag.props.href))
+            else if (tag.tag === 'link' && LINK_REL_RESOLVABLE.has(tag.props.rel)) {
+              const isCanonical = tag.props.rel === 'canonical'
+              tag.props.href = resolvePath(tag.props.href)
+              if (isCanonical) {
+                tag.props.href = normalizeCanonicalUrl(tag.props.href)
+              }
             }
           }
         },

@@ -401,4 +401,128 @@ describe('canonicalPlugin', () => {
       expect(ctx.tags[0].props.content).toBe('https://example.com/page/')
     })
   })
+
+  describe('rel next/prev resolution', () => {
+    it('should resolve rel="next" to absolute URL', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'next', href: '/page/2' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page/2')
+    })
+
+    it('should resolve rel="prev" to absolute URL', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'prev', href: '/page/1' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page/1')
+    })
+
+    it('should NOT apply query filtering to rel="next"', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'next', href: '/page?cursor=abc123&page=2' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page?cursor=abc123&page=2')
+    })
+
+    it('should NOT apply query filtering to rel="prev"', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'prev', href: '/page?cursor=xyz&page=1' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page?cursor=xyz&page=1')
+    })
+  })
+
+  describe('og:audio resolution', () => {
+    it('should resolve og:audio to absolute URL', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:audio', content: '/audio/track.mp3' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/audio/track.mp3')
+    })
+
+    it('should resolve og:audio:secure_url to absolute URL', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:audio:secure_url', content: '/audio/track.mp3' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/audio/track.mp3')
+    })
+  })
+
+  describe('customResolver with normalization', () => {
+    it('should apply normalization after customResolver on canonical', () => {
+      const plugin = CanonicalPlugin({
+        canonicalHost: 'https://example.com',
+        customResolver: path => `https://example.com/prefix${path}`,
+      })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page?utm_source=twitter&page=2#section' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/prefix/page?page=2')
+    })
+
+    it('should apply normalization after customResolver on og:url', () => {
+      const plugin = CanonicalPlugin({
+        canonicalHost: 'https://example.com',
+        customResolver: path => `https://example.com${path}`,
+      })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:url', content: '/page?fbclid=abc#top' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/page')
+    })
+  })
 })
