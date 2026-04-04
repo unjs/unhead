@@ -56,6 +56,12 @@ const LINK_REL_RESOLVABLE = new Set([
   'canonical',
   'next',
   'prev',
+  'alternate',
+  'author',
+  'license',
+  'help',
+  'search',
+  'pingback',
 ])
 
 /**

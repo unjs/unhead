@@ -525,4 +525,73 @@ describe('canonicalPlugin', () => {
       expect(ctx.tags[0].props.content).toBe('https://example.com/page')
     })
   })
+
+  describe('link rel resolution', () => {
+    it.each([
+      ['alternate', '/en/page'],
+      ['author', '/about/author'],
+      ['license', '/license'],
+      ['help', '/help'],
+      ['search', '/opensearch.xml'],
+      ['pingback', '/xmlrpc.php'],
+    ])('should resolve rel="%s" to absolute URL', (rel, href) => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel, href } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe(`https://example.com${href}`)
+    })
+
+    it('should resolve alternate hreflang links', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'alternate', hreflang: 'es', href: '/es/page' } },
+          { tag: 'link', props: { rel: 'alternate', hreflang: 'fr', href: '/fr/page' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/es/page')
+      expect(ctx.tags[1].props.href).toBe('https://example.com/fr/page')
+    })
+
+    it('should NOT apply canonical normalization to non-canonical link rels', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'alternate', href: '/page?ref=rss#latest' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page?ref=rss#latest')
+    })
+
+    it('should NOT resolve non-resolvable link rels', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'stylesheet', href: '/styles.css' } },
+          { tag: 'link', props: { rel: 'icon', href: '/favicon.ico' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('/styles.css')
+      expect(ctx.tags[1].props.href).toBe('/favicon.ico')
+    })
+  })
 })
