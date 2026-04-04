@@ -269,4 +269,136 @@ describe('canonicalPlugin', () => {
       expect(ctx.tags[0].props.href).toBe('https://example.com/page?page=3')
     })
   })
+
+  describe('hash stripping', () => {
+    it('should strip hash fragments from canonical URLs', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page#section' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page')
+    })
+
+    it('should strip hash fragments from og:url', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:url', content: '/page#section' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/page')
+    })
+
+    it('should NOT strip hash fragments from og:image', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:image', content: '/image.jpg#ref' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/image.jpg#ref')
+    })
+  })
+
+  describe('trailing slash normalization', () => {
+    it('should add trailing slash when trailingSlash is true', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', trailingSlash: true })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page/')
+    })
+
+    it('should not double trailing slash', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', trailingSlash: true })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page/' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page/')
+    })
+
+    it('should remove trailing slash when trailingSlash is false', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', trailingSlash: false })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page/' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page')
+    })
+
+    it('should not remove trailing slash from root path', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', trailingSlash: false })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/')
+    })
+
+    it('should leave trailing slash as-is when not configured', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '/page/' } },
+          { tag: 'meta', props: { property: 'og:url', content: '/other' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page/')
+      expect(ctx.tags[1].props.content).toBe('https://example.com/other')
+    })
+
+    it('should apply trailing slash to og:url', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', trailingSlash: true })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'meta', props: { property: 'og:url', content: '/page' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.content).toBe('https://example.com/page/')
+    })
+  })
 })

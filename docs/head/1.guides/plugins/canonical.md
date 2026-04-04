@@ -121,6 +121,34 @@ CanonicalPlugin({
 Query filtering only applies to `rel="canonical"` and `og:url` tags. Image and video URLs (`og:image`, `twitter:image`, etc.) are never filtered, since their query parameters often control dimensions and formats.
 ::
 
+## How Does Trailing Slash Normalization Work?
+
+Inconsistent trailing slashes (`/about` vs `/about/`) create duplicate canonical URLs. Use the `trailingSlash` option to enforce consistency:
+
+::code-block
+```ts [Input]
+// Always add trailing slash
+CanonicalPlugin({
+  canonicalHost: 'https://mysite.com',
+  trailingSlash: true
+})
+
+// Always remove trailing slash
+CanonicalPlugin({
+  canonicalHost: 'https://mysite.com',
+  trailingSlash: false
+})
+```
+::
+
+::tip
+The root path `/` is never stripped of its trailing slash, even when `trailingSlash` is `false`.
+::
+
+## Does the Plugin Strip URL Fragments?
+
+Yes. Hash fragments (e.g. `#section`) are automatically removed from canonical and `og:url` tags. Search engines ignore fragments, and leaving them in can create unnecessary URL variations.
+
 ## What Are the Configuration Options?
 
 ::code-block
@@ -133,6 +161,8 @@ interface CanonicalPluginOptions {
   // Query parameters to preserve (default: ['page', 'sort', 'filter', 'search', 'q', 'category', 'tag'])
   // Set to false to disable filtering
   queryWhitelist?: string[] | false
+  // Normalize trailing slashes (true = add, false = remove, undefined = leave as-is)
+  trailingSlash?: boolean
 }
 ```
 ::

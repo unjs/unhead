@@ -22,6 +22,14 @@ export interface CanonicalPluginOptions {
    * @default ['page', 'sort', 'filter', 'search', 'q', 'category', 'tag']
    */
   queryWhitelist?: string[] | false
+  /**
+   * Whether canonical URLs should have a trailing slash.
+   *
+   * - `true` - always add trailing slash
+   * - `false` - always remove trailing slash
+   * - `undefined` - leave as-is (default)
+   */
+  trailingSlash?: boolean
 }
 
 const META_TRANSFORMABLE_URL = [
@@ -69,24 +77,34 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
 
     const whitelist = options.queryWhitelist !== undefined ? options.queryWhitelist : DEFAULT_QUERY_WHITELIST
 
-    function filterQueryParams(url: string): string {
-      if (whitelist === false)
-        return url
-
+    function normalizeCanonicalUrl(url: string): string {
       try {
         const parsed = new URL(url)
-        if (!parsed.search)
-          return url
 
-        const filtered = new URLSearchParams()
-        for (const key of whitelist) {
-          if (parsed.searchParams.has(key)) {
-            for (const value of parsed.searchParams.getAll(key)) {
-              filtered.append(key, value)
+        // strip hash fragments - they're client-side only and ignored by search engines
+        parsed.hash = ''
+
+        // filter query params
+        if (whitelist !== false && parsed.search) {
+          const filtered = new URLSearchParams()
+          for (const key of whitelist) {
+            if (parsed.searchParams.has(key)) {
+              for (const value of parsed.searchParams.getAll(key)) {
+                filtered.append(key, value)
+              }
             }
           }
+          parsed.search = filtered.toString()
         }
-        parsed.search = filtered.toString()
+
+        // normalize trailing slash
+        if (options.trailingSlash === true && !parsed.pathname.endsWith('/')) {
+          parsed.pathname = `${parsed.pathname}/`
+        }
+        else if (options.trailingSlash === false && parsed.pathname !== '/' && parsed.pathname.endsWith('/')) {
+          parsed.pathname = parsed.pathname.slice(0, -1)
+        }
+
         return parsed.toString()
       }
       catch {
@@ -118,11 +136,11 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
             if (tag.tag === 'meta' && META_TRANSFORMABLE_URL.includes(metaKey)) {
               tag.props.content = resolvePath(tag.props.content)
               if (META_QUERY_FILTERABLE.has(metaKey)) {
-                tag.props.content = filterQueryParams(tag.props.content)
+                tag.props.content = normalizeCanonicalUrl(tag.props.content)
               }
             }
             else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
-              tag.props.href = filterQueryParams(resolvePath(tag.props.href))
+              tag.props.href = normalizeCanonicalUrl(resolvePath(tag.props.href))
             }
           }
         },
