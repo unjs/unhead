@@ -12,7 +12,9 @@ export default (options: UnpluginOptions = {}) => {
   ]
   if (options.minify !== false) {
     const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
-    plugins.push(MinifyTransform.webpack({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
+    if (minifyOpts.jsMinifier || minifyOpts.cssMinifier) {
+      plugins.push(MinifyTransform.webpack({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
+    }
   }
   return plugins
 }

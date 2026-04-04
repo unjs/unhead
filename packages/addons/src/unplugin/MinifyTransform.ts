@@ -12,17 +12,33 @@ const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 
 const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
 
+export type MinifyFn = (code: string) => Promise<string | null>
+
 export interface MinifyTransformOptions extends BaseTransformerTypes {
   /**
    * Whether to minify inline JS content in `innerHTML` / `textContent` properties.
+   * Pass `false` to disable, or a custom minifier function.
    * @default true
    */
   js?: boolean
   /**
    * Whether to minify inline CSS content in `innerHTML` / `textContent` properties.
+   * Pass `false` to disable, or a custom minifier function.
    * @default true
    */
   css?: boolean
+  /**
+   * JS minifier function. If not provided, JS minification is skipped.
+   * Use a subpath import to get a preconfigured minifier:
+   * - `@unhead/addons/minify/rolldown` (Vite 8+)
+   * - `@unhead/addons/minify/esbuild` (Vite 7)
+   */
+  jsMinifier?: MinifyFn
+  /**
+   * CSS minifier function. If not provided, CSS minification is skipped.
+   * Use `@unhead/addons/minify/lightningcss` for a preconfigured minifier.
+   */
+  cssMinifier?: MinifyFn
 }
 
 /**
@@ -33,54 +49,11 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
  * These never enter the SSR runtime bundle since they run only in the Vite `transform` hook.
  */
 export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}) => {
-  const doJS = options.js !== false
-  const doCSS = options.css !== false
+  const doJS = options.js !== false && !!options.jsMinifier
+  const doCSS = options.css !== false && !!options.cssMinifier
 
-  let minifyJSBuildTime: ((code: string) => Promise<string | null>) | undefined
-  let minifyCSSBuildTime: ((code: string) => Promise<string | null>) | undefined
-
-  async function getJSMinifier(): Promise<(code: string) => Promise<string | null>> {
-    if (minifyJSBuildTime)
-      return minifyJSBuildTime
-    minifyJSBuildTime = async (code: string) => {
-      // rolldown first (Vite 8+)
-      try {
-        const rolldownPath = 'rolldown/experimental'
-        const { minify } = await import(/* @vite-ignore */ rolldownPath) as { minify: (filename: string, code: string) => Promise<{ code: string }> }
-        const result = await minify('inline.js', code)
-        return result.code.trim()
-      }
-      catch {}
-      // esbuild fallback (Vite 7)
-      try {
-        const esbuild = await import('esbuild' as string) as { transform: (code: string, opts: { minify: boolean, loader: string }) => Promise<{ code: string }> }
-        const result = await esbuild.transform(code, { minify: true, loader: 'js' })
-        return result.code.trim()
-      }
-      catch {}
-      return null
-    }
-    return minifyJSBuildTime
-  }
-
-  async function getCSSMinifier(): Promise<(code: string) => Promise<string | null>> {
-    if (minifyCSSBuildTime)
-      return minifyCSSBuildTime
-    minifyCSSBuildTime = async (code: string) => {
-      try {
-        const lightningcss = await import('lightningcss' as string) as { transform: (opts: { filename: string, code: Uint8Array, minify: boolean }) => { code: Uint8Array } }
-        const result = lightningcss.transform({
-          filename: 'inline.css',
-          code: new TextEncoder().encode(code),
-          minify: true,
-        })
-        return new TextDecoder().decode(result.code).trim()
-      }
-      catch {}
-      return null
-    }
-    return minifyCSSBuildTime
-  }
+  const jsMinifier = options.jsMinifier
+  const cssMinifier = options.cssMinifier
 
   // head composable names that accept script/style tags
   const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
@@ -162,7 +135,7 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
           // look for script: [...] and style: [...] properties
           for (const prop of arg.properties) {
-            if (prop.type !== 'ObjectProperty' || prop.key?.type !== 'Identifier')
+            if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
               continue
 
             const tagType = prop.key.name
@@ -210,22 +183,22 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     // for scripts, check if it's a skippable type
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
-        (p: any) => p.type === 'ObjectProperty' && p.key?.type === 'Identifier' && p.key.name === 'type',
+        (p: any) => p.type === 'Property' && p.key?.type === 'Identifier' && p.key.name === 'type',
       )
-      if (typeProp?.value?.type === 'StringLiteral' && SKIP_JS_TYPES.has(typeProp.value.value))
+      if (typeProp?.value?.type === 'Literal' && SKIP_JS_TYPES.has(typeProp.value.value))
         return
     }
 
     // find innerHTML or textContent property with a static string value
     for (const prop of objectNode.properties) {
-      if (prop.type !== 'ObjectProperty' || prop.key?.type !== 'Identifier')
+      if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
         continue
 
       if (!CONTENT_PROPS.has(prop.key.name))
         continue
 
       // only handle static string literals and template literals without expressions
-      if (prop.value?.type === 'StringLiteral') {
+      if (prop.value?.type === 'Literal') {
         const raw = prop.value.value as string
         if (raw.length < 20)
           continue
@@ -256,11 +229,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   }
 
   async function minifyStringContent(content: string, tagType: 'script' | 'style'): Promise<string | null> {
-    if (tagType === 'script') {
-      const minifier = await getJSMinifier()
-      return minifier(content)
-    }
-    const minifier = await getCSSMinifier()
-    return minifier(content)
+    if (tagType === 'script' && jsMinifier)
+      return jsMinifier(content)
+    if (tagType === 'style' && cssMinifier)
+      return cssMinifier(content)
+    return null
   }
 })
