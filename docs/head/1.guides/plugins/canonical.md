@@ -50,6 +50,77 @@ const head = createHead({
 ```
 ::
 
+## How Does Query Parameter Filtering Work?
+
+Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate URLs that dilute your SEO. The plugin automatically strips query parameters from canonical and `og:url` tags, keeping only content-affecting parameters.
+
+### Default Whitelisted Parameters
+
+These parameters are preserved by default:
+
+- `page` - Pagination
+- `sort` - Sort order
+- `filter` - Content filters
+- `search` - Search queries
+- `q` - Search queries
+- `category` - Category filters
+- `tag` - Tag filters
+
+All other query parameters (e.g. `utm_source`, `fbclid`, `gclid`, `ref`) are stripped automatically.
+
+::code-block
+```html [Before]
+<link rel="canonical" href="https://mysite.com/blog?page=2&utm_source=twitter&fbclid=abc">
+```
+
+```html [After]
+<link rel="canonical" href="https://mysite.com/blog?page=2">
+```
+::
+
+### How Do I Customize the Query Whitelist?
+
+Pass a custom list of parameter names to keep:
+
+::code-block
+```ts [Input]
+CanonicalPlugin({
+  canonicalHost: 'https://mysite.com',
+  queryWhitelist: ['page', 'lang', 'variant']
+})
+```
+::
+
+### How Do I Disable Query Filtering?
+
+Set `queryWhitelist` to `false` to keep all query parameters:
+
+::code-block
+```ts [Input]
+CanonicalPlugin({
+  canonicalHost: 'https://mysite.com',
+  queryWhitelist: false
+})
+```
+::
+
+### How Do I Strip All Query Parameters?
+
+Pass an empty array to remove all query parameters from canonical URLs:
+
+::code-block
+```ts [Input]
+CanonicalPlugin({
+  canonicalHost: 'https://mysite.com',
+  queryWhitelist: []
+})
+```
+::
+
+::tip
+Query filtering only applies to `rel="canonical"` and `og:url` tags. Image and video URLs (`og:image`, `twitter:image`, etc.) are never filtered, since their query parameters often control dimensions and formats.
+::
+
 ## What Are the Configuration Options?
 
 ::code-block
@@ -59,6 +130,9 @@ interface CanonicalPluginOptions {
   canonicalHost?: string
   // Optional: Custom function to transform URLs
   customResolver?: (path: string) => string
+  // Query parameters to preserve (default: ['page', 'sort', 'filter', 'search', 'q', 'category', 'tag'])
+  // Set to false to disable filtering
+  queryWhitelist?: string[] | false
 }
 ```
 ::
@@ -113,6 +187,105 @@ CanonicalPlugin({
     return `https://mysite.com${path}`
   }
 })
+```
+::
+
+## Framework Setup Guides
+
+### Nuxt
+
+Nuxt has built-in Unhead support. Register the plugin in a [Nuxt plugin](https://nuxt.com/docs/guide/directory-structure/plugins):
+
+::code-block
+```ts [plugins/canonical.ts]
+import { injectHead } from '@unhead/vue'
+import { CanonicalPlugin } from 'unhead/plugins'
+
+export default defineNuxtPlugin(() => {
+  const head = injectHead()
+  head.use(CanonicalPlugin({
+    canonicalHost: 'https://mysite.com'
+  }))
+})
+```
+::
+
+### Vue
+
+Register the plugin when creating your head instance:
+
+::code-block
+```ts [main.ts]
+import { createHead } from '@unhead/vue'
+import { CanonicalPlugin } from 'unhead/plugins'
+
+const head = createHead({
+  plugins: [
+    CanonicalPlugin({
+      canonicalHost: 'https://mysite.com'
+    })
+  ]
+})
+
+app.use(head)
+```
+::
+
+### React
+
+Register the plugin in your app entry:
+
+::code-block
+```tsx [app.tsx]
+import { createHead } from '@unhead/react'
+import { CanonicalPlugin } from 'unhead/plugins'
+
+const head = createHead({
+  plugins: [
+    CanonicalPlugin({
+      canonicalHost: 'https://mysite.com'
+    })
+  ]
+})
+```
+::
+
+### Svelte
+
+Use `useUnhead()` to access the head instance and register the plugin:
+
+::code-block
+```ts [+layout.ts]
+import { useUnhead } from '@unhead/svelte'
+import { CanonicalPlugin } from 'unhead/plugins'
+
+const head = useUnhead()
+head.use(CanonicalPlugin({
+  canonicalHost: 'https://mysite.com'
+}))
+```
+::
+
+### Angular
+
+Register the plugin via `provideClientHead` options:
+
+::code-block
+```ts [app.config.ts]
+import { provideClientHead } from '@unhead/angular'
+import { CanonicalPlugin } from 'unhead/plugins'
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideClientHead({
+      plugins: [
+        CanonicalPlugin({
+          canonicalHost: 'https://mysite.com'
+        })
+      ]
+    })
+  ]
+}
 ```
 ::
 
