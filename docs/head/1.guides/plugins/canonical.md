@@ -16,19 +16,32 @@ The Canonical Plugin automatically converts relative URLs to absolute URLs in yo
 
 ## What Tags Does the Plugin Transform?
 
-The plugin transforms these tags automatically:
+The plugin resolves relative URLs to absolute URLs in all of these tags:
 
-- `og:image` and `twitter:image` meta tags
-- `og:url` meta tag
-- `rel="canonical"` link tag
+### Meta Tags
+
+- `og:url`, `og:image`, `og:image:url`, `og:image:secure_url`
+- `og:video`, `og:video:url`, `og:video:secure_url`
+- `og:audio`, `og:audio:url`, `og:audio:secure_url`
+- `twitter:image`, `twitter:image:src`
+- `twitter:player`, `twitter:player:stream`
+
+### Link Tags
+
+- `rel="canonical"` — with query filtering, hash stripping, and trailing slash normalization
+- `rel="next"` / `rel="prev"` — pagination links
+- `rel="alternate"` — hreflang and feed links (critical for international SEO)
+- `rel="author"`, `rel="license"`, `rel="help"`, `rel="search"`, `rel="pingback"`
 
 ::code-block
 ```html [Before]
 <meta property="og:image" content="/images/hero.jpg">
+<link rel="alternate" hreflang="es" href="/es/page">
 ```
 
 ```html [After]
 <meta property="og:image" content="https://mysite.com/images/hero.jpg">
+<link rel="alternate" hreflang="es" href="https://mysite.com/es/page">
 ```
 ::
 
