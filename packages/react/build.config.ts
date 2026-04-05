@@ -17,5 +17,6 @@ export default defineBuildConfig({
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins', name: 'plugins' },
     { input: 'src/stream/vite', name: 'stream/vite' },
+    { input: 'src/helmet', name: 'helmet' },
   ],
 })
