@@ -9,7 +9,7 @@ import type {
   UseScriptReturn,
   UseSeoMetaInput,
 } from 'unhead/types'
-import { createEffect, createSignal, onCleanup, onMount, useContext } from 'solid-js'
+import { createEffect, createSignal, getOwner, onCleanup, onMount, runWithOwner, useContext } from 'solid-js'
 import { isServer } from 'solid-js/web'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContext } from './context'
@@ -25,6 +25,14 @@ export function useUnhead(): Unhead {
 
 function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
   const unhead = options.head || useUnhead()
+  // Wrap onRendered to preserve the Solid reactive owner context
+  if (options.onRendered && !isServer) {
+    const owner = getOwner()
+    if (owner) {
+      const _onRendered = options.onRendered
+      options = { ...options, onRendered: (ctx: any) => runWithOwner(owner, () => _onRendered(ctx)) }
+    }
+  }
   const entry = fn(unhead, input, options) as T
   // On client, set up reactive updates and cleanup
   if (!isServer) {

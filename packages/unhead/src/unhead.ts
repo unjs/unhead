@@ -27,6 +27,7 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
       const _i = _options?._index ?? head._entryCount++
       const options = _options ? { ..._options } : {}
       delete (options as any).head
+      delete (options as any).onRendered
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {

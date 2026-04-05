@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
+import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -156,6 +156,21 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Called after unhead has finished applying DOM updates.
+   *
+   * Useful for synchronising external tools (e.g. analytics) with the current document head.
+   *
+   * Only called on the client — ignored during SSR.
+   *
+   * @example
+   * useHead({ title: 'My Page' }, {
+   *   onRendered({ renders }) {
+   *     amplitude.track('Page View', { title: document.title })
+   *   }
+   * })
+   */
+  onRendered?: (ctx: { renders: DomRenderTagContext[] }) => void | Promise<void>
   /**
    * @internal
    */

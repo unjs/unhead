@@ -10,6 +10,7 @@ import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
 import { walkResolver } from 'unhead/utils'
 import {
   getCurrentInstance,
+  getCurrentScope,
   hasInjectionContext,
   inject,
   onActivated,
@@ -40,6 +41,15 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   const deactivated = ref(false)
+
+  // Wrap onRendered to preserve the Vue component's effect scope
+  if (options.onRendered) {
+    const scope = getCurrentScope()
+    if (scope) {
+      const _onRendered = options.onRendered
+      options = { ...options, onRendered: ctx => scope.run(() => _onRendered(ctx)) }
+    }
+  }
 
   let entry: ActiveHeadEntry<I>
   watchEffect(() => {
