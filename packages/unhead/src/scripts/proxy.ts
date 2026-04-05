@@ -27,7 +27,7 @@ export function createForwardingProxy<T extends Record<string, any>>(target: T):
   const handler: ProxyHandler<T> = {
     get(_, prop, receiver) {
       const v = Reflect.get(_, prop, receiver)
-      return typeof v === 'object' ? new Proxy(v, handler) : v
+      return v !== null && typeof v === 'object' ? new Proxy(v, handler) : v
     },
     apply(_, __, args) {
       // @ts-expect-error untyped
