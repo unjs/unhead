@@ -35,13 +35,13 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     },
     push(input: T, _options?: HeadEntryOptions) {
       const onRendered = _options?.onRendered
+      const unhook = onRendered
+        ? hooks.hook('dom:rendered', onRendered as any)
+        : undefined
       const active = core.push(input, _options)
       core.entries.get(active._i)!._o = input
       dirty = true
       hooks.callHook('entries:updated', head)
-      const unhook = onRendered
-        ? hooks.hook('dom:rendered', onRendered as any)
-        : undefined
       return {
         _i: active._i,
         patch(input: T) {

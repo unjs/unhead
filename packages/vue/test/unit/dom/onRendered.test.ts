@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { getCurrentInstance, nextTick, ref } from 'vue'
 import { useDom } from '../../../../unhead/test/fixtures'
 import { useHead, useSeoMeta } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
@@ -80,6 +80,28 @@ describe('onRendered option (Vue)', () => {
 
     head.push({ title: 'Page 2' })
     renderDOMHead(head, { document: dom.window.document })
+    expect(onRendered).toHaveBeenCalledTimes(1)
+  })
+
+  it('cleans up onRendered when Vue component unmounts', async () => {
+    const dom = useDom()
+    const onRendered = vi.fn()
+    let app: any
+
+    const head = csrVueAppWithUnhead(dom, () => {
+      app = getCurrentInstance()!.appContext.app
+      useHead({ title: 'Component Page' }, { onRendered })
+    })
+
+    renderDOMHead(head, { document: dom.window.document })
+    expect(onRendered).toHaveBeenCalledTimes(1)
+
+    // Unmount the Vue app — this triggers onBeforeUnmount → entry.dispose() → unhook()
+    app.unmount()
+
+    head.push({ title: 'After Unmount' })
+    renderDOMHead(head, { document: dom.window.document })
+    // onRendered should NOT fire after component unmount
     expect(onRendered).toHaveBeenCalledTimes(1)
   })
 

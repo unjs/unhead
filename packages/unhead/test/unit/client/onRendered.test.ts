@@ -80,12 +80,13 @@ describe('onRendered option', () => {
     const onRendered1 = vi.fn()
     const onRendered2 = vi.fn()
 
+    // First push triggers an immediate render (via entries:updated), onRendered1 fires
     useHead(head, { title: 'Page' }, { onRendered: onRendered1 })
+    // Second push triggers another render, both onRendered1 and onRendered2 fire
     useHead(head, { meta: [{ name: 'description', content: 'test' }] }, { onRendered: onRendered2 })
 
-    await renderDOMHead(head, { document: head.resolvedOptions.document! })
-
-    expect(onRendered1).toHaveBeenCalledOnce()
+    // onRendered fires on every render, not just renders from the owning entry
+    expect(onRendered1).toHaveBeenCalledTimes(2)
     expect(onRendered2).toHaveBeenCalledOnce()
   })
 
@@ -94,18 +95,18 @@ describe('onRendered option', () => {
     const onRendered1 = vi.fn()
     const onRendered2 = vi.fn()
 
+    // First push: renders once, onRendered1 fires (1)
     const entry1 = useHead(head, { title: 'Page' }, { onRendered: onRendered1 })
+    // Second push: renders again, both fire (onRendered1=2, onRendered2=1)
     useHead(head, { meta: [{ name: 'description', content: 'test' }] }, { onRendered: onRendered2 })
 
-    await renderDOMHead(head, { document: head.resolvedOptions.document! })
-    expect(onRendered1).toHaveBeenCalledTimes(1)
+    expect(onRendered1).toHaveBeenCalledTimes(2)
     expect(onRendered2).toHaveBeenCalledTimes(1)
 
     entry1.dispose()
 
-    head.push({ title: 'Page 2' })
-    await renderDOMHead(head, { document: head.resolvedOptions.document! })
-    expect(onRendered1).toHaveBeenCalledTimes(1) // stopped
+    // dispose triggers invalidate which renders again, only onRendered2 fires
+    expect(onRendered1).toHaveBeenCalledTimes(2) // stopped
     expect(onRendered2).toHaveBeenCalledTimes(2) // still fires
   })
 })
