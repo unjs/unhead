@@ -35,8 +35,11 @@ export function merge(target: any, source: any): any {
             const type = action['@type']
             if (byType[type]) {
               // merge target arrays
-              if (action.target && byType[type].target)
-                byType[type].target = [...new Set([...byType[type].target, ...action.target])]
+              if (action.target && byType[type].target) {
+                const a = Array.isArray(byType[type].target) ? byType[type].target : [byType[type].target]
+                const b = Array.isArray(action.target) ? action.target : [action.target]
+                byType[type].target = [...new Set([...a, ...b])]
+              }
             }
             else {
               byType[type] = { ...action }
