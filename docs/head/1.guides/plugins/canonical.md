@@ -65,21 +65,7 @@ const head = createHead({
 
 ## How Does Query Parameter Filtering Work?
 
-Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate URLs that dilute your SEO. The plugin automatically strips query parameters from canonical and `og:url` tags, keeping only content-affecting parameters.
-
-### Default Whitelisted Parameters
-
-These parameters are preserved by default:
-
-- `page` - Pagination
-- `sort` - Sort order
-- `filter` - Content filters
-- `search` - Search queries
-- `q` - Search queries
-- `category` - Category filters
-- `tag` - Tag filters
-
-All other query parameters (e.g. `utm_source`, `fbclid`, `gclid`, `ref`) are stripped automatically.
+Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate URLs that dilute your SEO. The plugin automatically strips **all** query parameters from canonical and `og:url` tags by default.
 
 ::code-block
 ```html [Before]
@@ -87,22 +73,31 @@ All other query parameters (e.g. `utm_source`, `fbclid`, `gclid`, `ref`) are str
 ```
 
 ```html [After]
-<link rel="canonical" href="https://mysite.com/blog?page=2">
+<link rel="canonical" href="https://mysite.com/blog">
 ```
 ::
 
-### How Do I Customize the Query Whitelist?
+### How Do I Preserve Specific Query Parameters?
 
-Pass a custom list of parameter names to keep:
+If your site uses query parameters that affect content (e.g. pagination, filters), pass them via `queryWhitelist`:
 
 ::code-block
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
-  queryWhitelist: ['page', 'lang', 'variant']
+  queryWhitelist: ['page', 'sort', 'q', 'category']
 })
 ```
 ::
+
+Common parameters you may want to whitelist:
+
+- `page` - Pagination
+- `sort` - Sort order
+- `filter` - Content filters
+- `search`, `q` - Search queries
+- `category`, `tag` - Category/tag filters
+- `lang`, `locale` - Language variants
 
 ### How Do I Disable Query Filtering?
 
@@ -113,19 +108,6 @@ Set `queryWhitelist` to `false` to keep all query parameters:
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
   queryWhitelist: false
-})
-```
-::
-
-### How Do I Strip All Query Parameters?
-
-Pass an empty array to remove all query parameters from canonical URLs:
-
-::code-block
-```ts [Input]
-CanonicalPlugin({
-  canonicalHost: 'https://mysite.com',
-  queryWhitelist: []
 })
 ```
 ::
@@ -171,7 +153,7 @@ interface CanonicalPluginOptions {
   canonicalHost?: string
   // Optional: Custom function to transform URLs
   customResolver?: (path: string) => string
-  // Query parameters to preserve (default: ['page', 'sort', 'filter', 'search', 'q', 'category', 'tag'])
+  // Query parameters to preserve (default: [] — strips all)
   // Set to false to disable filtering
   queryWhitelist?: string[] | false
   // Normalize trailing slashes (true = add, false = remove, undefined = leave as-is)

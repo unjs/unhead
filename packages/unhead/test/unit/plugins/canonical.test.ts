@@ -1,6 +1,6 @@
 import type { Unhead } from 'unhead/types'
 import { describe, expect, it } from 'vitest'
-import { CanonicalPlugin, DEFAULT_QUERY_WHITELIST } from '../../../src/plugins/canonical'
+import { CanonicalPlugin } from '../../../src/plugins/canonical'
 
 describe('canonicalPlugin', () => {
   it('doesnt modify non url props', () => {
@@ -125,7 +125,7 @@ describe('canonicalPlugin', () => {
   })
 
   describe('query parameter filtering', () => {
-    it('should strip non-whitelisted query params from canonical URLs', () => {
+    it('should strip all query params from canonical URLs by default', () => {
       const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
       const ctx = {
         tags: [
@@ -136,10 +136,10 @@ describe('canonicalPlugin', () => {
       // @ts-expect-error untyped
       plugin.hooks['tags:resolve'](ctx)
 
-      expect(ctx.tags[0].props.href).toBe('https://example.com/page?page=2')
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page')
     })
 
-    it('should strip non-whitelisted query params from og:url', () => {
+    it('should strip all query params from og:url by default', () => {
       const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
       const ctx = {
         tags: [
@@ -150,7 +150,7 @@ describe('canonicalPlugin', () => {
       // @ts-expect-error untyped
       plugin.hooks['tags:resolve'](ctx)
 
-      expect(ctx.tags[0].props.content).toBe('https://example.com/page?q=hello')
+      expect(ctx.tags[0].props.content).toBe('https://example.com/page')
     })
 
     it('should NOT filter query params from og:image', () => {
@@ -223,22 +223,18 @@ describe('canonicalPlugin', () => {
       expect(ctx.tags[0].props.href).toBe('https://example.com/page?ref=docs&v=2')
     })
 
-    it('should preserve all default whitelisted params', () => {
-      const params = DEFAULT_QUERY_WHITELIST.map(k => `${k}=val`).join('&')
-      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+    it('should preserve whitelisted params when configured', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com', queryWhitelist: ['page', 'sort', 'q'] })({ ssr: false } as Unhead)
       const ctx = {
         tags: [
-          { tag: 'link', props: { rel: 'canonical', href: `/page?${params}&utm_source=twitter` } },
+          { tag: 'link', props: { rel: 'canonical', href: '/page?page=2&sort=date&q=hello&utm_source=twitter' } },
         ],
       }
 
       // @ts-expect-error untyped
       plugin.hooks['tags:resolve'](ctx)
 
-      for (const key of DEFAULT_QUERY_WHITELIST) {
-        expect(ctx.tags[0].props.href).toContain(`${key}=val`)
-      }
-      expect(ctx.tags[0].props.href).not.toContain('utm_source')
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page?page=2&sort=date&q=hello')
     })
 
     it('should handle URLs without query params', () => {
@@ -266,7 +262,7 @@ describe('canonicalPlugin', () => {
       // @ts-expect-error untyped
       plugin.hooks['tags:resolve'](ctx)
 
-      expect(ctx.tags[0].props.href).toBe('https://example.com/page?page=3')
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page')
     })
 
     it('should normalize protocol-relative canonical URLs', () => {
@@ -519,7 +515,7 @@ describe('canonicalPlugin', () => {
       // @ts-expect-error untyped
       plugin.hooks['tags:resolve'](ctx)
 
-      expect(ctx.tags[0].props.href).toBe('https://example.com/prefix/page?page=2')
+      expect(ctx.tags[0].props.href).toBe('https://example.com/prefix/page')
     })
 
     it('should apply normalization after customResolver on og:url', () => {

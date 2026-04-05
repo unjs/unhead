@@ -1,25 +1,15 @@
 import type { HeadPluginOptions, Unhead } from '../types'
 
-export const DEFAULT_QUERY_WHITELIST = [
-  'page',
-  'sort',
-  'filter',
-  'search',
-  'q',
-  'category',
-  'tag',
-]
-
 export interface CanonicalPluginOptions {
   canonicalHost?: string
   customResolver?: (url: string) => string
   /**
    * Query parameters to preserve in canonical and og:url tags.
-   * All other query parameters will be stripped.
+   * All other query parameters will be stripped by default.
    *
    * Set to `false` to disable query filtering (keep all params).
    *
-   * @default ['page', 'sort', 'filter', 'search', 'q', 'category', 'tag']
+   * @default [] (strips all query params)
    */
   queryWhitelist?: string[] | false
   /**
@@ -100,7 +90,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
     // have error thrown if canonicalHost is not a valid URL
     host = new URL(host).origin
 
-    const whitelist = options.queryWhitelist !== undefined ? options.queryWhitelist : DEFAULT_QUERY_WHITELIST
+    const whitelist = options.queryWhitelist !== undefined ? options.queryWhitelist : []
 
     function normalizeCanonicalUrl(url: string): string {
       try {
