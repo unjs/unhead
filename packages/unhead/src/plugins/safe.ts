@@ -17,8 +17,8 @@ const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'pre
 
 const SafeAttrName = /^[a-z][a-z0-9\-]*[a-z0-9]$/i
 
-const HtmlEntityHex = /&#x([0-9a-f]{1,6});?/gi
-const HtmlEntityDec = /&#(\d{1,7});?/g
+const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
+const HtmlEntityDec = /&#(\d+);?/g
 const HtmlEntityNamed = /&(tab|newline|colon|semi|lpar|rpar|sol|bsol|comma|period|excl|num|dollar|percnt|amp|apos|ast|plus|lt|gt|equals|quest|at|lsqb|rsqb|lcub|rcub|vert|hat|grave|tilde|nbsp);?/gi
 // eslint-disable-next-line no-control-regex
 const ControlChars = /[\x00-\x20]+/g
