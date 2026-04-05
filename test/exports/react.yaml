@@ -10,6 +10,8 @@
   createHead: function
   renderDOMHead: function
   UnheadProvider: function
+./helmet:
+  Helmet: function
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
