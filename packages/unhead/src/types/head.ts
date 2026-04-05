@@ -126,6 +126,27 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
   plugins?: HeadPluginInput[]
   hooks?: Partial<ServerHeadHooks>
   /**
+   * Custom tag weight function for controlling `<head>` tag ordering.
+   *
+   * By default, tags are sorted using CAPO weights optimised for the browser preload scanner.
+   * Override this to change the ordering — for example, to prioritise SEO meta tags for bot requests.
+   *
+   * @example
+   * ```ts
+   * import { capoTagWeight } from 'unhead/server'
+   *
+   * createHead({
+   *   tagWeight(tag) {
+   *     // Promote SEO meta above styles for bots
+   *     if (isBot && tag.tag === 'meta' && tag.props.property?.startsWith('og:'))
+   *       return 55 // just above styles (60)
+   *     return capoTagWeight(tag)
+   *   }
+   * })
+   * ```
+   */
+  tagWeight?: (tag: HeadTag) => number
+  /**
    * Should default important tags be skipped.
    *
    * Adds the following tags with low priority:
