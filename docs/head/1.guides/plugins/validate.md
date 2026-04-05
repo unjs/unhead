@@ -21,6 +21,7 @@ The Validate plugin inspects the final resolved head output and warns about issu
 Register the plugin when you want head tag validation — it's fully tree-shakeable when not imported:
 
 ::code-block
+
 ```ts [Input]
 import { ValidatePlugin } from 'unhead/plugins'
 
@@ -30,11 +31,13 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
 By default, warnings are logged via `console.warn`. You can provide a custom reporter:
 
 ::code-block
+
 ```ts [Input]
 ValidatePlugin({
   onReport(rules) {
@@ -46,11 +49,13 @@ ValidatePlugin({
   }
 })
 ```
+
 ::
 
 ## What Options Can I Configure?
 
 ::code-block
+
 ```ts [Input]
 export interface ValidatePluginOptions {
   /**
@@ -68,6 +73,7 @@ export interface ValidatePluginOptions {
   root?: string
 }
 ```
+
 ::
 
 ## What Rules Are Included?
@@ -139,6 +145,7 @@ Rules inspired by [webperf-snippets](https://webperf-snippets.nucliweb.net/) tha
 Rules can be disabled or have their severity overridden, similar to ESLint's flat config:
 
 ::code-block
+
 ```ts [Input]
 ValidatePlugin({
   rules: {
@@ -148,11 +155,13 @@ ValidatePlugin({
   }
 })
 ```
+
 ::
 
 Some rules accept an options object as an ESLint-style `[severity, options]` tuple:
 
 ::code-block
+
 ```ts [Input]
 ValidatePlugin({
   rules: {
@@ -164,6 +173,7 @@ ValidatePlugin({
   }
 })
 ```
+
 ::
 
 The configuration is fully type-safe — only rules that support options accept the tuple form, and options are typed per-rule.
@@ -173,12 +183,14 @@ The configuration is fully type-safe — only rules that support options accept 
 Each validation rule includes a `source` field pointing to the `head.push()` call that introduced the problematic tag. By default this is an absolute path. Set `root` to get clickable relative paths in your terminal or IDE:
 
 ::code-block
+
 ```ts [Input]
 ValidatePlugin({
   root: process.cwd(),
 })
 // output: [unhead] Canonical URL should be absolute, received "/page". (./src/components/MyPage.vue:42:5)
 ```
+
 ::
 
 ## How Do I Integrate with Framework DevTools?
@@ -186,6 +198,7 @@ ValidatePlugin({
 The `onReport` callback receives structured rule objects, making it easy to integrate with any UI:
 
 ::code-block
+
 ```ts [Input]
 ValidatePlugin({
   onReport(rules) {
@@ -201,6 +214,7 @@ ValidatePlugin({
   }
 })
 ```
+
 ::
 
 ## Related

@@ -16,6 +16,7 @@ navigation:
 ::
 
 [Unhead](/) offers a modern alternative with:
+
 - Full TypeScript safety
 - DOM event handlers
 - Advanced DOM patching algorithm built for reactive frameworks
@@ -108,6 +109,7 @@ return (
 ```
 
 There are some nuanced differences to be aware of:
+
 - `defaultTitle` is not supported
 - `onChangeClientState` is not supported
 
@@ -139,6 +141,7 @@ export function render(_url: string) {
 You've successfully migrated from React Helmet to Unhead.
 
 Check out some of the Unhead concepts:
+
 - [Tag Placement](/docs/head/guides/core-concepts/positions)
 - [DOM Event Handling](/docs/head/guides/core-concepts/dom-event-handling)
 - [Handling Duplicates](/docs/head/guides/core-concepts/handling-duplicates)
@@ -146,5 +149,6 @@ Check out some of the Unhead concepts:
 ## Need Help?
 
 If you run into issues during migration:
+
 - File an issue on [GitHub](https://github.com/unjs/unhead)
 - Join our [Discord community](https://discord.gg/unjs)

@@ -19,6 +19,7 @@ Use this plugin when you want to avoid duplicating your page title and descripti
 ## How Does the Output Look?
 
 ::code-block
+
 ```ts [Input]
 useHead({
   title: 'My Page Title',
@@ -34,6 +35,7 @@ useHead({
 <meta property="og:title" content="My Page Title">
 <meta property="og:description" content="A description of my page">
 ```
+
 ::
 
 ## How Do I Set Up the Plugin?
@@ -41,6 +43,7 @@ useHead({
 Add the plugin to your Unhead configuration:
 
 ::code-block
+
 ```ts [Input]
 import { InferSeoMetaPlugin } from 'unhead/plugins'
 
@@ -54,6 +57,7 @@ const head = createHead({
 
 head.use(InferSeoMetaPlugin())
 ```
+
 ::
 
 ## What Options Can I Configure?
@@ -61,6 +65,7 @@ head.use(InferSeoMetaPlugin())
 You can customize how the plugin transforms your content:
 
 ::code-block
+
 ```ts [Input]
 export interface InferSeoMetaPluginOptions {
   /**
@@ -83,6 +88,7 @@ export interface InferSeoMetaPluginOptions {
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
 }
 ```
+
 ::
 
 ## How Do I Customize the OG Title?
@@ -90,6 +96,7 @@ export interface InferSeoMetaPluginOptions {
 Remove site name suffix from Open Graph titles:
 
 ::code-block
+
 ```ts [Input]
 import { InferSeoMetaPlugin } from 'unhead/plugins'
 
@@ -101,6 +108,7 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
 ## How Do I Disable Twitter Cards?
@@ -108,11 +116,13 @@ const head = createHead({
 If you don't want Twitter cards generated:
 
 ::code-block
+
 ```ts [Input]
 InferSeoMetaPlugin({
   twitterCard: false
 })
 ```
+
 ::
 
 ## How Do I Format OG Descriptions?
@@ -120,11 +130,13 @@ InferSeoMetaPlugin({
 Append a call-to-action to your Open Graph descriptions:
 
 ::code-block
+
 ```ts [Input]
 InferSeoMetaPlugin({
   ogDescription: description => `${description} Learn more now!`
 })
 ```
+
 ::
 
 ## Related
