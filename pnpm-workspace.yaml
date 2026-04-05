@@ -61,7 +61,7 @@ catalog:
   svelte: ^5.55.0
   tinyexec: ^1.0.4
   tslib: ^2.8.1
-  typescript: 5.9.3
+  typescript: 6.0.2
   ufo: ^1.6.3
   unbuild: ^3.6.1
   unplugin: ^3.0.0
