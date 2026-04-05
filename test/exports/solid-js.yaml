@@ -12,6 +12,7 @@
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
+  DEFAULT_QUERY_WHITELIST: object
   defineHeadPlugin: function
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
