@@ -9,7 +9,6 @@ function extractTextContent(children: VNode['children']): string | undefined {
   if (typeof children === 'string')
     return children
   if (Array.isArray(children)) {
-    // @ts-expect-error untyped vnode children
     const first = children[0]
     if (typeof first === 'string')
       return first
