@@ -104,7 +104,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
 
     function normalizeCanonicalUrl(url: string): string {
       try {
-        const parsed = new URL(url)
+        const parsed = new URL(url, host)
 
         // strip hash fragments - they're client-side only and ignored by search engines
         parsed.hash = ''

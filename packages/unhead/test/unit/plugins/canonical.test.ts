@@ -268,6 +268,20 @@ describe('canonicalPlugin', () => {
 
       expect(ctx.tags[0].props.href).toBe('https://example.com/page?page=3')
     })
+
+    it('should normalize protocol-relative canonical URLs', () => {
+      const plugin = CanonicalPlugin({ canonicalHost: 'https://example.com' })({ ssr: false } as Unhead)
+      const ctx = {
+        tags: [
+          { tag: 'link', props: { rel: 'canonical', href: '//example.com/page?utm_source=twitter#section' } },
+        ],
+      }
+
+      // @ts-expect-error untyped
+      plugin.hooks['tags:resolve'](ctx)
+
+      expect(ctx.tags[0].props.href).toBe('https://example.com/page')
+    })
   })
 
   describe('hash stripping', () => {

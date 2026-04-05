@@ -259,7 +259,7 @@ Register the plugin when creating your head instance:
 
 ::code-block
 ```ts [main.ts]
-import { createHead } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { CanonicalPlugin } from 'unhead/plugins'
 
 const head = createHead({
@@ -280,7 +280,7 @@ Register the plugin in your app entry:
 
 ::code-block
 ```tsx [app.tsx]
-import { createHead } from '@unhead/react'
+import { createHead } from '@unhead/react/client'
 import { CanonicalPlugin } from 'unhead/plugins'
 
 const head = createHead({
@@ -295,14 +295,14 @@ const head = createHead({
 
 ### Svelte
 
-Use `useUnhead()` to access the head instance and register the plugin:
+Register the plugin when creating the head instance in your entry file:
 
 ::code-block
-```ts [+layout.ts]
-import { useUnhead } from '@unhead/svelte'
+```ts [src/entry-client.ts]
+import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 import { CanonicalPlugin } from 'unhead/plugins'
 
-const head = useUnhead()
+const head = createHead()
 head.use(CanonicalPlugin({
   canonicalHost: 'https://mysite.com'
 }))
