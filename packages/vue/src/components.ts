@@ -3,6 +3,22 @@ import type { ReactiveHead } from './types'
 import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
 import { useHead } from './composables'
 
+function extractTextContent(children: VNode['children']): string | undefined {
+  if (!children)
+    return undefined
+  if (typeof children === 'string')
+    return children
+  if (Array.isArray(children)) {
+    // @ts-expect-error untyped vnode children
+    const first = children[0]
+    if (typeof first === 'string')
+      return first
+    if (first && typeof first === 'object' && 'children' in first)
+      return extractTextContent(first.children as VNode['children'])
+  }
+  return undefined
+}
+
 function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
   const nodeType = node.type
   const type
@@ -15,19 +31,29 @@ function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
   if (typeof type !== 'string' || !(type in obj))
     return
 
-  const props: Record<string, any> = (node.props) || {}
-  if (node.children) {
-    const childrenAttr = 'children'
-    props.children = Array.isArray(node.children)
-      // @ts-expect-error untyped
-      ? node.children[0]![childrenAttr]
-      : node[childrenAttr]
+  const props: Record<string, any> = { ...(node.props || {}) }
+
+  // script uses innerHTML; style, noscript, title use textContent
+  const innerKey = type === 'script' ? 'innerHTML' : 'textContent'
+
+  // Map legacy `children` prop to the appropriate inner content key
+  if (props.children !== undefined) {
+    props[innerKey] = props.children
+    delete props.children
   }
+
+  // Extract slot/vnode text content and map to the appropriate inner content key
+  if (node.children) {
+    const textContent = extractTextContent(node.children)
+    if (textContent !== undefined)
+      props[innerKey] = textContent
+  }
+
   if (Array.isArray(obj[type]))
     (obj[type] as Record<string, any>[]).push(props)
 
   else if (type === 'title')
-    obj.title = props.children
+    obj.title = props.textContent ?? props.innerHTML
 
   else
     (obj[type] as Record<string, any>) = props
