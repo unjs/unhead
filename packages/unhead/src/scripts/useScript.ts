@@ -170,10 +170,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         const ac = new AbortController()
         script._triggerAbortControllers = script._triggerAbortControllers || new Set()
         script._triggerAbortControllers.add(ac)
-        const abortPromise = new Promise<void>((r) => {
+        const abortPromise = new Promise((r) => {
           ac.signal.addEventListener('abort', () => {
             script._triggerAbortControllers?.delete(ac)
-            r()
+            r(undefined)
           })
         })
         script._triggerAbortController = ac

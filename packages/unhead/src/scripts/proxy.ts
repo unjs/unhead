@@ -47,8 +47,8 @@ export function replayProxyRecordings<T extends object>(target: T, stack: Record
         prev = ctx
         ctx = ctx[key]
       }
-      // @ts-expect-error untyped
       else if (type === 'apply') {
+        // @ts-expect-error untyped
         ctx = (ctx as () => any).call(prev, ...args)
       }
     }
