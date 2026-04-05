@@ -11,8 +11,9 @@ export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPaylo
 
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
-  const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight: capoTagWeight }), {
-    _tagWeight: capoTagWeight,
+  const tagWeight = options.tagWeight || capoTagWeight
+  const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight }), {
+    _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,

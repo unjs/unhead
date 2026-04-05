@@ -132,6 +132,7 @@ Rules inspired by [webperf-snippets](https://webperf-snippets.nucliweb.net/) tha
 | `prefetch-preload-conflict` | `warn` | Same resource has both `preload` and `prefetch` — use preload for current page, prefetch for future navigation |
 | `inline-style-size` | `info` | Inline `<style>` exceeds 14KB (the critical CSS budget for the first TCP round-trip) |
 | `inline-script-size` | `info` | Inline `<script>` exceeds 2KB — consider moving to an external file for cacheability |
+| `meta-beyond-1mb` | `warn` | A `<meta>` tag is rendered beyond the 1MB crawler parsing limit — social crawlers (Facebook, Twitter) may not see it |
 
 ## How Do I Configure Rules?
 
@@ -159,6 +160,7 @@ ValidatePlugin({
     'too-many-preconnects': ['warn', { max: 6 }],
     'inline-style-size': ['info', { maxKB: 20 }],
     'inline-script-size': ['info', { maxKB: 5 }],
+    'meta-beyond-1mb': ['warn', { maxBytes: 512_000 }], // 500KB instead of default 1MB
   }
 })
 ```

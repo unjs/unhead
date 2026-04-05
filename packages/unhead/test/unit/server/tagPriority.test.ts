@@ -1,5 +1,5 @@
 import { AliasSortingPlugin } from '../../../src/plugins/aliasSorting'
-import { renderSSRHead } from '../../../src/server'
+import { capoTagWeight, renderSSRHead } from '../../../src/server'
 import { resolveTags } from '../../../src/utils/resolve'
 import { createServerHeadWithContext } from '../../util'
 
@@ -288,5 +288,38 @@ describe('tag priority', () => {
     })
     const { headTags } = renderSSRHead(head)
     expect(headTags).toMatchInlineSnapshot(`"<title>test - high-priority title template</title>"`)
+  })
+
+  it('custom tagWeight option on createHead', () => {
+    const head = createServerHeadWithContext({
+      tagWeight(tag) {
+        // Promote all non-pragma meta tags above styles (60)
+        if (tag.tag === 'meta' && !tag.props.charset && tag.props.name !== 'viewport' && tag.props['http-equiv'] !== 'content-security-policy') {
+          return 55
+        }
+        return capoTagWeight(tag)
+      },
+    })
+
+    head.push({
+      link: [{ rel: 'stylesheet', href: '/styles.css' }],
+    })
+    head.push({
+      meta: [
+        { property: 'og:title', content: 'test' },
+        { name: 'description', content: 'desc' },
+      ],
+    })
+    head.push({
+      style: [{ textContent: 'body { color: red }' }],
+    })
+
+    const { headTags } = head.render()
+    expect(headTags).toMatchInlineSnapshot(`
+      "<meta property="og:title" content="test">
+      <meta name="description" content="desc">
+      <link rel="stylesheet" href="/styles.css">
+      <style>body { color: red }</style>"
+    `)
   })
 })

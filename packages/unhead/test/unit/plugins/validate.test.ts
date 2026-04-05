@@ -838,5 +838,35 @@ describe('validatePlugin', () => {
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
     })
+
+    it('warns when meta tags are rendered beyond 1MB crawler limit', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'meta-beyond-1mb': ['warn', { maxBytes: 500 }] },
+      })
+      // Push a large inline style that pushes meta past the limit
+      head.push({
+        style: [{ textContent: 'x'.repeat(600) }],
+      })
+      head.push({
+        meta: [{ property: 'og:title', content: 'test' }],
+      })
+      renderSSRHead(head)
+      const rule = rules.find(r => r.id === 'meta-beyond-1mb')
+      expect(rule).toBeTruthy()
+      expect(rule!.message).toContain('og:title')
+      expect(rule!.message).toContain('crawler parsing limit')
+    })
+
+    it('does not warn when meta tags are within crawler limit', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        style: [{ textContent: 'body { color: red }' }],
+      })
+      head.push({
+        meta: [{ property: 'og:title', content: 'test' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'meta-beyond-1mb')).toBeFalsy()
+    })
   })
 })

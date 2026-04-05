@@ -10,6 +10,7 @@ export type ValidationRuleId
     | 'html-in-title'
     | 'inline-script-size'
     | 'inline-style-size'
+    | 'meta-beyond-1mb'
     | 'missing-description'
     | 'missing-title'
     | 'non-absolute-canonical'
@@ -35,6 +36,7 @@ export type ValidationRuleId
 export interface ValidationRuleOptions {
   'inline-script-size': { maxKB: number }
   'inline-style-size': { maxKB: number }
+  'meta-beyond-1mb': { maxBytes: number }
   'too-many-preloads': { max: number }
   'too-many-preconnects': { max: number }
 }
@@ -541,6 +543,34 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           for (const tag of tags) {
             if (tag.tag === 'link' && tag.props.rel === 'prefetch' && tag.props.href && preloadHrefs.has(tag.props.href))
               report('prefetch-preload-conflict', `"${tag.props.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
+          }
+
+          // Meta tags rendered after the crawler byte limit (default 1MB)
+          // Social crawlers (Facebook, Twitter) only parse the first ~1MB of HTML.
+          // Large inline styles can push SEO/OG meta tags past this limit.
+          const { maxBytes: crawlerMaxBytes } = resolveOptions(ruleConfig, 'meta-beyond-1mb', { maxBytes: 1_048_576 })
+          let byteOffset = 0
+          for (const tag of tags) {
+            if (tag.tagPosition && tag.tagPosition !== 'head')
+              continue
+            // Estimate rendered tag size
+            const props = Object.entries(tag.props)
+              .filter(([, v]) => v !== false && v != null)
+              .map(([k, v]) => v === true || v === '' ? ` ${k}` : ` ${k}="${v}"`)
+              .join('')
+            const content = tag.innerHTML || tag.textContent || ''
+            // <tag props>content</tag> + newline
+            const tagSize = `<${tag.tag}${props}>${content}</${tag.tag}>\n`.length
+            byteOffset += tagSize
+            if (byteOffset > crawlerMaxBytes && tag.tag === 'meta') {
+              const key = tag.props.property || tag.props.name || 'unknown'
+              report(
+                'meta-beyond-1mb',
+                `Meta tag "${key}" is rendered ~${(byteOffset / 1024).toFixed(0)}KB into <head>, beyond the ${(crawlerMaxBytes / 1_048_576).toFixed(0)}MB crawler parsing limit. Social crawlers (Facebook, Twitter) may not see it. Use \`tagPriority\` to promote it, or configure a custom \`tagWeight\` to reorder tags for bot requests.`,
+                'warn',
+                tag,
+              )
+            }
           }
 
           // Dispatch
