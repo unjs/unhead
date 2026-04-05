@@ -24,13 +24,17 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   for (const next of ctx.tags.sort(sortTags)) {
     const k = next._d || hashTag(next)
     const prev = ctx.tagMap.get(k)
-    if (!prev) { ctx.tagMap.set(k, next); continue }
+    if (!prev) {
+      ctx.tagMap.set(k, next)
+      continue
+    }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
       const props = { ...prev.props }
       for (const p in next.props) {
         // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style' ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
+        props[p] = p === 'style'
+          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
           : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
       }
       ctx.tagMap.set(k, { ...next, props })
@@ -40,7 +44,9 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
       hasFlatMeta = true
     }
     // @ts-expect-error untyped
-    else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) { ctx.tagMap.set(k, next) }
+    else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
+      ctx.tagMap.set(k, next)
+    }
   }
   return hasFlatMeta
 }

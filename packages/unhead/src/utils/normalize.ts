@@ -6,34 +6,61 @@ function normalizeStyleClassProps(key: 'class' | 'style', value: any): Map<strin
   const isStyle = key === 'style'
   const store: any = isStyle ? new Map() : new Set()
   const add = (v: string) => {
-    if (!v) return
-    if (isStyle) { const i = v.indexOf(':'); i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim()) }
-    else { v.split(' ').forEach(c => c && store.add(c)) }
+    if (!v)
+      return
+    if (isStyle) {
+      const i = v.indexOf(':')
+      i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
+    }
+    else {
+      v.split(' ').forEach(c => c && store.add(c))
+    }
   }
-  if (typeof value === 'string') (isStyle ? value.split(';') : [value]).forEach(add)
-  else if (Array.isArray(value)) value.forEach(add)
+  if (typeof value === 'string') {
+    (isStyle ? value.split(';') : [value]).forEach(add)
+  }
+  else if (Array.isArray(value)) {
+    value.forEach(add)
+  }
   else if (value && typeof value === 'object') {
-    for (const k in value) { const v = value[k]; v && v !== 'false' && (isStyle ? store.set(k.trim(), String(v)) : add(k)) }
+    for (const k in value) {
+      const v = value[k]
+      v && v !== 'false' && (isStyle ? store.set(k.trim(), String(v)) : add(k))
+    }
   }
   return store
 }
 
 export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
   tag.props = tag.props || {}
-  if (!input) return tag
-  if (tag.tag === 'templateParams') { tag.props = input; return tag }
+  if (!input)
+    return tag
+  if (tag.tag === 'templateParams') {
+    tag.props = input
+    return tag
+  }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
   for (const prop in input) {
-    if (prop === '__proto__' || prop === 'constructor' || prop === 'prototype') continue
+    if (prop === '__proto__' || prop === 'constructor' || prop === 'prototype')
+      continue
     const value = input[prop]
-    if (value === null) { tag.props[prop] = null as any }
-    else if (prop === 'class' || prop === 'style') { tag.props[prop] = normalizeStyleClassProps(prop, value) as any }
+    if (value === null) {
+      tag.props[prop] = null as any
+    }
+    else if (prop === 'class' || prop === 'style') {
+      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
+    }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
-        if (type.endsWith('json') || type === 'speculationrules') { tag.props.type = input.type = type; tag[prop] = JSON.stringify(value) }
+        if (type.endsWith('json') || type === 'speculationrules') {
+          tag.props.type = input.type = type
+          tag[prop] = JSON.stringify(value)
+        }
       }
-      else { (tag as any)[prop] = value }
+      else {
+        (tag as any)[prop] = value
+      }
     }
     else if (value !== undefined) {
       const isData = prop.startsWith('data-')
@@ -75,7 +102,8 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
   for (const key in input) {
     const value = input[key]
     if (value !== undefined) {
-      for (const v of (Array.isArray(value) ? value : [value])) tags.push(normalizeTag(key as keyof ResolvableHead, v))
+      for (const v of (Array.isArray(value) ? value : [value]))
+        tags.push(normalizeTag(key as keyof ResolvableHead, v))
     }
   }
   return tags.flat()

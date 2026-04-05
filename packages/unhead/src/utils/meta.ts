@@ -68,9 +68,12 @@ function unpackToString(value: Record<string, any>, options: UnpackOptions = {})
   const { entrySeparator = '', keyValueSeparator = '', wrapValue, resolve } = options
   return Object.entries(value).map(([key, val]) => {
     const resolved = resolve?.({ key, value: val })
-    if (resolved !== undefined) return resolved
-    const pv = typeof val === 'object' ? unpackToString(val, options)
-      : typeof val === 'number' ? val.toString()
+    if (resolved !== undefined)
+      return resolved
+    const pv = typeof val === 'object'
+      ? unpackToString(val, options)
+      : typeof val === 'number'
+        ? val.toString()
         : typeof val === 'string' && wrapValue ? `${wrapValue}${val.replace(new RegExp(wrapValue, 'g'), `\\${wrapValue}`)}${wrapValue}` : val
     return `${key}${keyValueSeparator}${pv}`
   }).join(entrySeparator)
@@ -130,8 +133,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
   for (const [key, value] of Object.entries(input)) {
     if (Array.isArray(value)) {
       if (key === 'themeColor') {
-        for (const v of value)
-          if (typeof v === 'object' && v !== null) extras.push({ name: 'theme-color', ...v })
+        for (const v of value) {
+          if (typeof v === 'object' && v !== null)
+            extras.push({ name: 'theme-color', ...v })
+        }
         continue
       }
       for (const v of value) {
@@ -157,8 +162,10 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
         const type = key.replace(OG_TWITTER_RE, '').toLowerCase()
         const mk = prefix === 'twitter' ? 'name' : 'property'
         const base = `${prefix}:${type}`
-        if (value.url) extras.push({ [mk]: base, content: value.url } as MetaGeneric as UnheadMeta)
-        if (value.secureUrl) extras.push({ [mk]: `${base}:secure_url`, content: value.secureUrl } as MetaGeneric as UnheadMeta)
+        if (value.url)
+          extras.push({ [mk]: base, content: value.url } as MetaGeneric as UnheadMeta)
+        if (value.secureUrl)
+          extras.push({ [mk]: `${base}:secure_url`, content: value.secureUrl } as MetaGeneric as UnheadMeta)
         for (const [pk, pv] of Object.entries(value)) {
           if (pk !== 'url' && pk !== 'secureUrl')
             extras.push({ [mk]: `${base}:${pk}`, content: pv } as MetaGeneric as UnheadMeta)

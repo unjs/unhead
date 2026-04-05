@@ -85,7 +85,8 @@ function acceptDataAttrs(value: Record<string, string>, allowId = true) {
 function pickWhitelisted(prev: Record<string, any>, whitelist: Set<string>): Record<string, any> {
   const o: Record<string, any> = {}
   for (const k of whitelist) {
-    if (prev[k]) o[k] = prev[k]
+    if (prev[k])
+      o[k] = prev[k]
   }
   return o
 }
@@ -113,22 +114,28 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
   else if (type === 'link') {
     for (const key of WhitelistAttributes.link) {
       const val = prev[key]
-      if (!val) continue
-      if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase()))) continue
+      if (!val)
+        continue
+      if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase())))
+        continue
       if (key === 'href' || key === 'imagesrcset') {
-        if (typeof val !== 'string') continue
+        if (typeof val !== 'string')
+          continue
         const urls = key === 'imagesrcset' ? val.split(',').map(s => s.trim()) : [val]
-        if (urls.some(u => hasDangerousProtocol(u))) continue
+        if (urls.some(u => hasDangerousProtocol(u)))
+          continue
       }
       next[key] = val
     }
-    if ((!next.href && !next.imagesrcset) || !next.rel) return false
+    if ((!next.href && !next.imagesrcset) || !next.rel)
+      return false
   }
   else if (type === 'noscript') {
     next = pickWhitelisted(prev, WhitelistAttributes.noscript)
   }
   else if (type === 'script') {
-    if (!tag.textContent || typeof prev.type !== 'string' || !prev.type.endsWith('json')) return false
+    if (!tag.textContent || typeof prev.type !== 'string' || !prev.type.endsWith('json'))
+      return false
     try {
       const jsonVal = typeof tag.textContent === 'string' ? JSON.parse(tag.textContent) : tag.textContent
       tag.textContent = JSON.stringify(stripProtoKeys(jsonVal), null, 0)
@@ -140,11 +147,13 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
   // title: textContent is escaped in rendering, no extra props needed
 
   delete tag.innerHTML
-  if (type !== 'title' && type !== 'script') delete tag.textContent
+  if (type !== 'title' && type !== 'script')
+    delete tag.textContent
 
   tag.props = type === 'style' ? next : { ...acceptDataAttrs(prev), ...next }
 
-  if (!Object.keys(tag.props).length && !type.endsWith('Attrs') && !tag.textContent) return false
+  if (!Object.keys(tag.props).length && !type.endsWith('Attrs') && !tag.textContent)
+    return false
   return tag
 }
 
