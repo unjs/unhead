@@ -154,29 +154,28 @@ describe('minifyPlugin', () => {
       plugins: [MinifyPlugin({
         js: code => `minified:${code.length}`,
         css: code => `minified:${code.length}`,
-        threshold: 0,
       })],
     })
     head.push({
-      script: [{ innerHTML: 'function helloWorld() { return true }' }],
-      style: [{ innerHTML: 'body { margin: 0; padding: 0 }' }],
+      script: [{ innerHTML: 'function helloWorld() { return true; }; helloWorld()' }],
+      style: [{ innerHTML: 'body { margin: 0; padding: 0; color: red }' }],
     })
 
     const { headTags } = head.render()
-    expect(headTags).toContain('minified:37')
-    expect(headTags).toContain('minified:30')
+    expect(headTags).toContain('minified:52')
+    expect(headTags).toContain('minified:42')
   })
 
   it('does not increase content length', () => {
     const head = createServerHeadWithContext({
-      plugins: [MinifyPlugin({ threshold: 0 })],
+      plugins: [MinifyPlugin()],
     })
-    // already minified content
+    // already minified content (>20 chars to pass internal threshold)
     head.push({
-      script: [{ innerHTML: 'function a(){return 1}a()' }],
+      script: [{ innerHTML: 'function a(){return 1}a();void 0' }],
     })
 
     const { headTags } = head.render()
-    expect(headTags).toContain('function a(){return 1}a()')
+    expect(headTags).toContain('function a(){return 1}a();void 0')
   })
 })

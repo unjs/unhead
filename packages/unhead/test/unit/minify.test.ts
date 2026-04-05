@@ -118,7 +118,7 @@ describe('minifyJSON', () => {
     expect(minifyJSON(input)).toBe('{"a":1,"b":[1,2,3]}')
   })
 
-  it('throws on invalid JSON', () => {
-    expect(() => minifyJSON('not json')).toThrow()
+  it('returns invalid JSON unchanged', () => {
+    expect(minifyJSON('not json')).toBe('not json')
   })
 })

@@ -19,11 +19,6 @@ export interface MinifyPluginOptions {
    * @default true
    */
   json?: boolean
-  /**
-   * Minimum content length to minify. Content shorter than this is skipped.
-   * @default 20
-   */
-  threshold?: number
 }
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json'])
@@ -50,15 +45,13 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
   const jsMinify = options?.js === false ? false : (options?.js || minifyJS)
   const cssMinify = options?.css === false ? false : (options?.css || minifyCSS)
   const jsonMinify = options?.json !== false
-  const threshold = options?.threshold ?? 20
-
   return {
     key: 'minify',
     hooks: {
       'ssr:render': ({ tags }) => {
         for (const tag of tags) {
           const content = tag.innerHTML
-          if (!content || content.length < threshold)
+          if (!content || content.length < 20)
             continue
 
           if (tag.tag === 'script') {

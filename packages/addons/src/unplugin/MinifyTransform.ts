@@ -16,29 +16,19 @@ export type MinifyFn = (code: string) => Promise<string | null>
 
 export interface MinifyTransformOptions extends BaseTransformerTypes {
   /**
-   * Whether to minify inline JS content in `innerHTML` / `textContent` properties.
-   * Pass `false` to disable, or a custom minifier function.
-   * @default true
-   */
-  js?: boolean
-  /**
-   * Whether to minify inline CSS content in `innerHTML` / `textContent` properties.
-   * Pass `false` to disable, or a custom minifier function.
-   * @default true
-   */
-  css?: boolean
-  /**
-   * JS minifier function. If not provided, JS minification is skipped.
+   * Custom JS minifier function, or `false` to disable JS minification.
+   *
    * Use a subpath import to get a preconfigured minifier:
    * - `@unhead/addons/minify/rolldown` (Vite 8+)
    * - `@unhead/addons/minify/esbuild` (Vite 7)
    */
-  jsMinifier?: MinifyFn
+  js?: false | MinifyFn
   /**
-   * CSS minifier function. If not provided, CSS minification is skipped.
+   * Custom CSS minifier function, or `false` to disable CSS minification.
+   *
    * Use `@unhead/addons/minify/lightningcss` for a preconfigured minifier.
    */
-  cssMinifier?: MinifyFn
+  css?: false | MinifyFn
 }
 
 /**
@@ -49,11 +39,10 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
  * These never enter the SSR runtime bundle since they run only in the Vite `transform` hook.
  */
 export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}) => {
-  const doJS = options.js !== false && !!options.jsMinifier
-  const doCSS = options.css !== false && !!options.cssMinifier
-
-  const jsMinifier = options.jsMinifier
-  const cssMinifier = options.cssMinifier
+  const jsMinifier = options.js !== false ? options.js : undefined
+  const cssMinifier = options.css !== false ? options.css : undefined
+  const doJS = !!jsMinifier
+  const doCSS = !!cssMinifier
 
   // head composable names that accept script/style tags
   const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])

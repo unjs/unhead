@@ -16,7 +16,7 @@ export function minifyCSS(code: string): string {
       result += ch
       i++
       while (i < len && code[i] !== quote) {
-        if (code[i] === '\\')
+        if (code[i] === '\\' && i + 1 < len)
           result += code[i++]
         result += code[i++]
       }

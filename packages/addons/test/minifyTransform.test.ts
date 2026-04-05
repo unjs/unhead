@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
+import { describe, expect, it } from 'vitest'
 import { MinifyTransform } from '../src/unplugin/MinifyTransform'
 
 const mockJSMinifier: MinifyFn = async (code: string) => {
@@ -11,7 +11,7 @@ const mockCSSMinifier: MinifyFn = async (code: string) => {
   return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim()
 }
 
-async function transform(code: string | string[], opts: { jsMinifier?: MinifyFn, cssMinifier?: MinifyFn, js?: boolean, css?: boolean } = {}, id = '/app/some-id.js') {
+async function transform(code: string | string[], opts: { js?: false | MinifyFn, css?: false | MinifyFn } = {}, id = '/app/some-id.js') {
   const plugin = MinifyTransform.vite(opts) as any
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return undefined
@@ -24,32 +24,32 @@ async function transform(code: string | string[], opts: { jsMinifier?: MinifyFn,
 }
 
 describe('minifyTransform', () => {
-  it('minifies inline script innerHTML with provided jsMinifier', async () => {
+  it('minifies inline script innerHTML with provided js minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
     expect(code).toContain('var x = 1; var y = 2;')
   })
 
-  it('minifies inline style innerHTML with provided cssMinifier', async () => {
+  it('minifies inline style innerHTML with provided css minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
       `  style: [{ innerHTML: '/* comment */ body { margin: 0; }' }]`,
       `})`,
-    ], { cssMinifier: mockCSSMinifier })
+    ], { css: mockCSSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('/* comment */')
   })
 
-  it('skips JS minification when no jsMinifier is provided', async () => {
+  it('skips JS minification when no js minifier is provided', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
@@ -60,7 +60,7 @@ describe('minifyTransform', () => {
     expect(code).toBeUndefined()
   })
 
-  it('skips CSS minification when no cssMinifier is provided', async () => {
+  it('skips CSS minification when no css minifier is provided', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
@@ -71,24 +71,24 @@ describe('minifyTransform', () => {
     expect(code).toBeUndefined()
   })
 
-  it('respects js: false option even with jsMinifier provided', async () => {
+  it('respects js: false option', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier, js: false })
+    ], { js: false })
 
     expect(code).toBeUndefined()
   })
 
-  it('respects css: false option even with cssMinifier provided', async () => {
+  it('respects css: false option', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
       `  style: [{ innerHTML: '/* comment */ body { margin: 0; }' }]`,
       `})`,
-    ], { cssMinifier: mockCSSMinifier, css: false })
+    ], { css: false })
 
     expect(code).toBeUndefined()
   })
@@ -99,7 +99,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ type: 'application/ld+json', innerHTML: '{ "name":  "test",  "value":   123 }' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeUndefined()
   })
@@ -110,7 +110,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ type: 'speculationrules', innerHTML: '{ "prerender":  [{ "where": {} }] }' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeUndefined()
   })
@@ -121,7 +121,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ type: 'importmap', innerHTML: '{ "imports":  { "lodash":  "/lodash.js" } }' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeUndefined()
   })
@@ -132,7 +132,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ innerHTML: 'var x = 1' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeUndefined()
   })
@@ -143,7 +143,7 @@ describe('minifyTransform', () => {
       `useServerHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
@@ -155,7 +155,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: { innerHTML: '// comment\\nvar x = 1;  var y = 2;' }`,
       `})`,
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
@@ -167,7 +167,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier }, '/app/node_modules/some-lib/index.js')
+    ], { js: mockJSMinifier }, '/app/node_modules/some-lib/index.js')
 
     expect(code).toBeUndefined()
   })
@@ -178,7 +178,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier }, '/app/test.css')
+    ], { js: mockJSMinifier }, '/app/test.css')
 
     expect(code).toBeUndefined()
   })
@@ -189,7 +189,7 @@ describe('minifyTransform', () => {
       'useHead({',
       '  script: [{ innerHTML: `// comment\nvar x = 1;  var y = 2;` }]',
       '})',
-    ], { jsMinifier: mockJSMinifier })
+    ], { js: mockJSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
@@ -202,7 +202,7 @@ describe('minifyTransform', () => {
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }],`,
       `  style: [{ innerHTML: '/* comment */ body { margin: 0; }' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier, cssMinifier: mockCSSMinifier })
+    ], { js: mockJSMinifier, css: mockCSSMinifier })
 
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
@@ -215,7 +215,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier }, '/app/test.vue?type=script')
+    ], { js: mockJSMinifier }, '/app/test.vue?type=script')
 
     expect(code).toBeDefined()
   })
@@ -226,7 +226,7 @@ describe('minifyTransform', () => {
       `useHead({`,
       `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
       `})`,
-    ], { jsMinifier: mockJSMinifier }, '/app/test.vue?type=template')
+    ], { js: mockJSMinifier }, '/app/test.vue?type=template')
 
     expect(code).toBeUndefined()
   })

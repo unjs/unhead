@@ -1,4 +1,4 @@
-import type { MinifyFn, MinifyTransformOptions } from './MinifyTransform'
+import type { MinifyTransformOptions } from './MinifyTransform'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 

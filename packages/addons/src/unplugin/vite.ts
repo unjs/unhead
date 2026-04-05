@@ -13,7 +13,7 @@ export default (options: UnpluginOptions = {}): Plugin[] => {
   ]
   if (options.minify !== false) {
     const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
-    if (minifyOpts.jsMinifier || minifyOpts.cssMinifier) {
+    if (minifyOpts.js || minifyOpts.css) {
       plugins.push(MinifyTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
     }
   }
