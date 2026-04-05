@@ -1,6 +1,6 @@
 import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
 import { imageResolver } from '../nodes'
-import { asArray, resolveAsGraphKey } from '../utils'
+import { asArray, resolveAsGraphKey, stripNullProperties } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 import { merge } from './util'
 
@@ -124,9 +124,16 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
         if (node._resolver?.resolveRootNode)
           node._resolver.resolveRootNode(node, ctx)
-
-        delete node._resolver
       }
+
+      // Delete _resolver before stripping so stripNullProperties does not traverse resolver objects
+      for (let i = 0; i < ctx.nodes.length; i++)
+        delete ctx.nodes[i]._resolver
+
+      // Strip null opt-out sentinels after ALL resolveRootNode calls complete
+      // so that later resolvers can still observe null sentinels on earlier nodes
+      for (let i = 0; i < ctx.nodes.length; i++)
+        stripNullProperties(ctx.nodes[i])
 
       // Final normalization: sort keys and dedupe only if new nodes were added
       const needsDedupe = ctx.nodes.length > countBeforeRelations

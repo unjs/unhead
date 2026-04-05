@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, HeadHooks, ServerHeadHooks } from './hooks'
+import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
 import type { ResolvableHead } from './schema'
 import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
@@ -126,6 +126,27 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
   plugins?: HeadPluginInput[]
   hooks?: Partial<ServerHeadHooks>
   /**
+   * Custom tag weight function for controlling `<head>` tag ordering.
+   *
+   * By default, tags are sorted using CAPO weights optimised for the browser preload scanner.
+   * Override this to change the ordering — for example, to prioritise SEO meta tags for bot requests.
+   *
+   * @example
+   * ```ts
+   * import { capoTagWeight } from 'unhead/server'
+   *
+   * createHead({
+   *   tagWeight(tag) {
+   *     // Promote SEO meta above styles for bots
+   *     if (isBot && tag.tag === 'meta' && tag.props.property?.startsWith('og:'))
+   *       return 55 // just above styles (60)
+   *     return capoTagWeight(tag)
+   *   }
+   * })
+   * ```
+   */
+  tagWeight?: (tag: HeadTag) => number
+  /**
    * Should default important tags be skipped.
    *
    * Adds the following tags with low priority:
@@ -156,6 +177,21 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Called after unhead has finished applying DOM updates.
+   *
+   * Useful for synchronising external tools (e.g. analytics) with the current document head.
+   *
+   * Only called on the client — ignored during SSR.
+   *
+   * @example
+   * useHead({ title: 'My Page' }, {
+   *   onRendered({ renders }) {
+   *     amplitude.track('Page View', { title: document.title })
+   *   }
+   * })
+   */
+  onRendered?: (ctx: { renders: DomRenderTagContext[] }) => void | Promise<void>
   /**
    * @internal
    */

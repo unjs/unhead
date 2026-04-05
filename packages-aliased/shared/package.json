@@ -23,7 +23,7 @@
     "meta tags",
     "types"
   ],
-  "sideEffects": false,
+  "sideEffects": true,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

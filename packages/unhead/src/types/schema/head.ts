@@ -11,12 +11,14 @@ import type {
   AlternateMediaLink,
   AppleTouchIconLink,
   AuthorLink,
+  BareAlternateLink,
   CanonicalLink,
   DnsPrefetchLink,
   FaviconLink,
   GenericLink,
   HelpLink,
   IconLink,
+  KnownLinkRel,
   LicenseLink,
   Link,
   LinkBase,
@@ -70,6 +72,8 @@ import type {
   SpeculationRulesScript,
 } from './script'
 import type { Style } from './style'
+
+export interface TemplateParamsAugmentations {}
 
 export interface SchemaAugmentations {
   title: TagPriority
@@ -145,7 +149,7 @@ export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugm
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
-export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
+export type ResolvableTemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>> & TemplateParamsAugmentations
 
 export interface ResolvableHead {
   /**
@@ -261,12 +265,14 @@ export type {
   AlternateMediaLink,
   AppleTouchIconLink,
   AuthorLink,
+  BareAlternateLink,
   CanonicalLink,
   DnsPrefetchLink,
   FaviconLink,
   GenericLink,
   HelpLink,
   IconLink,
+  KnownLinkRel,
   LicenseLink,
   Link,
   LinkBase,

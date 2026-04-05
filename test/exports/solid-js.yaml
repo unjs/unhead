@@ -18,6 +18,7 @@
   PromisesPlugin: object
   SafeInputPlugin: object
   TemplateParamsPlugin: function
+  ValidatePlugin: function
 ./server:
   createHead: function
   renderSSRHead: function

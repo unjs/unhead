@@ -108,6 +108,64 @@ describe('defineProduct', () => {
     })
   })
 
+  it('null opts out of setIfEmpty defaults (brand)', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        definePerson({
+          name: 'Harlan Wilton',
+          image: '/image/me.png',
+        }),
+        defineProduct({
+          name: 'test',
+          image: '/product.png',
+          brand: null as any,
+          offers: [{ price: 50 }],
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      const product = graphNodes.find((n: any) => n['@type'] === 'Product')
+      expect(product).not.toHaveProperty('brand')
+    })
+  })
+
+  it('null opts out of inheritMeta defaults (description)', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'test',
+          image: '/product.png',
+          description: null as any,
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      const product = graphNodes.find((n: any) => n['@type'] === 'Product')
+      expect(product).not.toHaveProperty('description')
+    }, { description: 'page description' })
+  })
+
+  it('null opts out of offer defaults (priceValidUntil, priceCurrency)', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'test',
+          image: '/product.png',
+          offers: [{
+            price: 50,
+            priceValidUntil: null as any,
+            priceCurrency: null as any,
+          }],
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      const product = graphNodes.find((n: any) => n['@type'] === 'Product')
+      expect(product!.offers).not.toHaveProperty('priceValidUntil')
+      expect(product!.offers).not.toHaveProperty('priceCurrency')
+    })
+  })
+
   it('merchant listing experience', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

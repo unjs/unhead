@@ -38,6 +38,16 @@ export default defineBuildConfig({
         `export const streamingIifeCode = ${JSON.stringify(code)};\nexport const streamingIifeSize = ${code.length};\n`,
       )
 
+      // Write correct type declarations for the post-build exports
+      writeFileSync(
+        resolve(ctx.options.rootDir, 'dist/stream/iife.d.ts'),
+        `export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n`,
+      )
+      writeFileSync(
+        resolve(ctx.options.rootDir, 'dist/stream/iife.d.mts'),
+        `export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n`,
+      )
+
       console.log(`Built streaming IIFE: ${code.length} bytes`)
       await bundle.close()
     },

@@ -1,5 +1,6 @@
 import { renderSSRHead } from '@unhead/ssr'
 import { describe, it } from 'vitest'
+import { useHead, useSeoMeta } from '../../../src'
 import { InferSeoMetaPlugin, TemplateParamsPlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
 
@@ -329,6 +330,46 @@ describe('inferSeoMetaPlugin', () => {
       "<title>Nuxt SEO – Hello World</title>
       <meta name="twitter:card" content="summary_large_image">
       <meta property="og:title" data-infer="" content="Nuxt SEO – Hello World">"
+    `)
+  })
+
+  it('user twitterCard via useSeoMeta overrides plugin default (#555)', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    useSeoMeta(head, { twitterCard: 'summary' })
+
+    const result = renderSSRHead(head)
+    expect(result.headTags).toMatchInlineSnapshot(`"<meta name="twitter:card" content="summary">"`)
+  })
+
+  it('user twitter:card via useHead overrides plugin default (#555)', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    useHead(head, { meta: [{ name: 'twitter:card', content: 'summary' }] })
+
+    const result = renderSSRHead(head)
+    expect(result.headTags).toMatchInlineSnapshot(`"<meta name="twitter:card" content="summary">"`)
+  })
+
+  it('plugin twitterCard: false disables twitter:card output (#555)', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({ twitterCard: false })],
+    })
+
+    head.push({ title: 'My Title' })
+
+    const result = renderSSRHead(head)
+    expect(result.headTags).not.toContain('twitter:card')
+    expect(result.headTags).toMatchInlineSnapshot(`
+      "<title>My Title</title>
+      <meta property="og:title" data-infer="" content="My Title">"
     `)
   })
 })

@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
-import { init as initIife } from 'unhead/stream/iife'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { init as initIife } from '../../unhead/src/stream/iife'
 import { createStreamableHead } from '../src/stream/client'
 
 let originalWindow: any

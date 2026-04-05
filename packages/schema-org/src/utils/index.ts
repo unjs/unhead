@@ -52,7 +52,7 @@ export function resolvableDateToIso(val: Date | string | undefined) {
 export const IdentityId = '#identity'
 
 export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any) {
-  if (!node?.[field] && value)
+  if (node?.[field] === undefined && value != null)
     node[field] = value
 }
 
@@ -134,7 +134,8 @@ export function resolveAsGraphKey(key?: Id | string) {
 }
 
 /**
- * Removes attributes which have a null or undefined value
+ * Removes attributes which have an empty string or undefined value.
+ * null values are preserved as opt-out sentinels until finalStripNullProperties.
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
@@ -142,7 +143,7 @@ export function stripEmptyProperties(obj: any) {
       continue
 
     const v = obj[k]
-    if (v === '' || v === null || v === undefined) {
+    if (v === '' || v === undefined) {
       delete obj[k]
     }
     else if (typeof v === 'object' && v !== null) {
@@ -150,6 +151,40 @@ export function stripEmptyProperties(obj: any) {
       if (v.__v_isReadonly || v.__v_isRef)
         continue
       stripEmptyProperties(v)
+    }
+  }
+  return obj
+}
+
+/**
+ * Removes attributes which have a null value.
+ * Called after all resolvers (including resolveRootNode) have run,
+ * so that null can act as an explicit opt-out sentinel.
+ */
+export function stripNullProperties(obj: any) {
+  if (Array.isArray(obj)) {
+    for (let i = obj.length - 1; i >= 0; i--) {
+      const v = obj[i]
+      if (v === null)
+        obj.splice(i, 1)
+      else if (typeof v === 'object' && v !== null)
+        stripNullProperties(v)
+    }
+    return obj
+  }
+
+  for (const k in obj) {
+    if (!Object.hasOwn(obj, k))
+      continue
+
+    const v = obj[k]
+    if (v === null) {
+      delete obj[k]
+    }
+    else if (typeof v === 'object') {
+      if (v.__v_isReadonly || v.__v_isRef)
+        continue
+      stripNullProperties(v)
     }
   }
   return obj

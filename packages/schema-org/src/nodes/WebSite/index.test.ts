@@ -122,6 +122,25 @@ describe('defineWebSite', () => {
     })
   })
 
+  it('can merge duplicate search actions with object target (#709)', async () => {
+    await useSetup(async (head) => {
+      const schema = defineWebSite({
+        name: 'test',
+        potentialAction: defineSearchAction({
+          target: '/search?query={search_term_string}',
+        }),
+      })
+
+      // simulate SPA navigation re-registering the same schema
+      useSchemaOrg(head, [schema])
+      useSchemaOrg(head, [schema])
+
+      const website = await findNode<WebSite>(head, PrimaryWebSiteId)
+      expect(website?.potentialAction).toBeDefined()
+      expect(website?.potentialAction).toHaveLength(1)
+    })
+  })
+
   it('can handle multiple websites', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

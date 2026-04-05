@@ -23,6 +23,7 @@
   PromisesPlugin: object
   SafeInputPlugin: object
   TemplateParamsPlugin: function
+  ValidatePlugin: function
 ./scripts:
   createSpyProxy: function
   useScript: function
@@ -36,6 +37,9 @@
   createStreamableHead: function
   HeadStream: object
   VueHeadMixin: object
+./stream/iife:
+  streamingIifeCode: string
+  streamingIifeSize: number
 ./stream/server:
   createBootstrapScript: function
   createStreamableHead: function
