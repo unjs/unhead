@@ -180,7 +180,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         script._triggerPromises = script._triggerPromises || []
         const idx = script._triggerPromises.push(
           Promise.race([trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined), abortPromise])
-            .catch(() => {}).then(res => res?.()).finally(() => script._triggerPromises?.splice(idx, 1)),
+            .catch(() => {})
+            .then((res: any) => { res?.() })
+            .finally(() => script._triggerPromises?.splice(idx, 1)),
         )
       }
       else if (typeof trigger === 'function') {
