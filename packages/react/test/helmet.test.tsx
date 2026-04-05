@@ -141,6 +141,120 @@ describe('helmet compat', () => {
     expect(headTags).toContain('<title>Test</title>')
   })
 
+  it('preserves falsy inner content like 0', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <title>{0}</title>
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>0</title>')
+  })
+
+  it('renders multiple meta and link tags', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <meta name="description" content="Desc" />
+          <meta property="og:title" content="OG Title" />
+          <meta property="og:description" content="OG Desc" />
+          <link rel="canonical" href="https://example.com" />
+          <link rel="alternate" hrefLang="en" href="https://example.com/en" />
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('name="description"')
+    expect(headTags).toContain('property="og:title"')
+    expect(headTags).toContain('property="og:description"')
+    expect(headTags).toContain('rel="canonical"')
+    expect(headTags).toContain('rel="alternate"')
+  })
+
+  it('renders style tags with textContent', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <style>{'body { color: red; }'}</style>
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('body { color: red; }')
+  })
+
+  it('renders noscript tags', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <noscript>{'<img src="pixel.gif" />'}</noscript>
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<noscript>')
+  })
+
+  it('renders base tag', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <base href="https://example.com/" />
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('href="https://example.com/"')
+  })
+
+  it('ignores invalid child elements', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <title>Valid</title>
+          {/* @ts-expect-error testing invalid tag */}
+          <div>Invalid</div>
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>Valid</title>')
+    expect(headTags).not.toContain('div')
+  })
+
+  it('renders with no children', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet defaultTitle="Fallback" />
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>Fallback</title>')
+  })
+
   it('cleans up on unmount', async () => {
     const head = createHead()
 

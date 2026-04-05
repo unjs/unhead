@@ -24,8 +24,8 @@ export interface HelmetProps {
    * Equivalent to react-helmet's `onChangeClientState`.
    *
    * @param newState - The new head state after rendering.
-   * @param addedTags - Tags that were added to the DOM.
-   * @param removedTags - Tags that were removed from the DOM.
+   * @param addedTags - Always empty — unhead manages DOM diffing internally.
+   * @param removedTags - Always empty — unhead manages DOM diffing internally.
    */
   onChangeClientState?: (newState: Record<string, any>, addedTags: Record<string, HTMLElement[]>, removedTags: Record<string, HTMLElement[]>) => void
   /**
@@ -96,7 +96,7 @@ const Helmet: React.FC<HelmetProps> = ({
 
       const data: Record<string, any> = { ...(typeof props === 'object' ? props : {}) }
 
-      if (TagsWithInnerContent.has(tagName) && data.children) {
+      if (TagsWithInnerContent.has(tagName) && data.children != null) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'
         data[contentKey] = Array.isArray(data.children)
           ? data.children.map(String).join('')
@@ -145,9 +145,8 @@ const Helmet: React.FC<HelmetProps> = ({
   onChangeClientStateRef.current = onChangeClientState
 
   useEffect(() => {
-    const options: Record<string, any> = {}
-    if (onChangeClientStateRef.current) {
-      options.onRendered = () => {
+    const options: Record<string, any> = {
+      onRendered: () => {
         const cb = onChangeClientStateRef.current
         if (!cb)
           return
@@ -160,10 +159,9 @@ const Helmet: React.FC<HelmetProps> = ({
         for (const tag of ['meta', 'link', 'script', 'style', 'base'] as const) {
           state[`${tag}Tags`] = Array.from(document.querySelectorAll(`head ${tag}`))
         }
-        // react-helmet passes (newState, addedTags, removedTags)
-        // We provide the state and empty add/remove maps since unhead manages diffing internally
+        // addedTags/removedTags are always empty since unhead manages DOM diffing internally
         cb(state, {}, {})
-      }
+      },
     }
     headRef.current = head.push(getHeadChanges(), options)
     return () => {
