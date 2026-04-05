@@ -226,7 +226,7 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
   return tag
 }
 
-export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
+export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'safe',
   hooks: {
     'entries:normalize': (ctx) => {
