@@ -25,22 +25,14 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
     use: (p: HeadPluginInput) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions) {
       const _i = _options?._index ?? head._entryCount++
-      const onRendered = _options?.onRendered
       const options = _options ? { ..._options } : {}
       delete (options as any).head
       delete (options as any).onRendered
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
-      // register dom:rendered hook if onRendered callback is provided (client-only)
-      const unhook = !ssr && onRendered && head.hooks
-        ? head.hooks.hook('dom:rendered', onRendered as any)
-        : undefined
       const active: ActiveHeadEntry<T> = {
         _i,
-        dispose() {
-          unhook?.()
-          entries.delete(_i)
-        },
+        dispose() { entries.delete(_i) },
         patch(input) {
           if (ssr) {
             entry.input = input
