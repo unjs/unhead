@@ -32,6 +32,18 @@
     "./webpack": {
       "types": "./dist/webpack.d.ts",
       "default": "./dist/webpack.mjs"
+    },
+    "./minify/rolldown": {
+      "types": "./dist/minify/rolldown.d.ts",
+      "default": "./dist/minify/rolldown.mjs"
+    },
+    "./minify/esbuild": {
+      "types": "./dist/minify/esbuild.d.ts",
+      "default": "./dist/minify/esbuild.mjs"
+    },
+    "./minify/lightningcss": {
+      "types": "./dist/minify/lightningcss.d.ts",
+      "default": "./dist/minify/lightningcss.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -44,6 +56,15 @@
       ],
       "webpack": [
         "dist/webpack"
+      ],
+      "minify/rolldown": [
+        "dist/minify/rolldown"
+      ],
+      "minify/esbuild": [
+        "dist/minify/esbuild"
+      ],
+      "minify/lightningcss": [
+        "dist/minify/lightningcss"
       ]
     }
   },
@@ -58,7 +79,21 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "unhead": "workspace:^"
+    "unhead": "workspace:^",
+    "esbuild": ">=0.17.0",
+    "lightningcss": ">=1.20.0",
+    "rolldown": ">=1.0.0-beta.0"
+  },
+  "peerDependenciesMeta": {
+    "esbuild": {
+      "optional": true
+    },
+    "lightningcss": {
+      "optional": true
+    },
+    "rolldown": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@rollup/pluginutils": "catalog:",

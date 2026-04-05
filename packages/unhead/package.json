@@ -33,6 +33,10 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
+    "./minify": {
+      "types": "./dist/minify.d.ts",
+      "default": "./dist/minify.mjs"
+    },
     "./server": {
       "types": "./dist/server.d.ts",
       "default": "./dist/server.mjs"
@@ -81,6 +85,9 @@
     "*": {
       "plugins": [
         "dist/plugins.d.ts"
+      ],
+      "minify": [
+        "dist/minify.d.ts"
       ],
       "server": [
         "dist/server.d.ts"

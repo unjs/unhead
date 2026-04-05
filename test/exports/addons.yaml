@@ -1,6 +1,12 @@
 .:
   DefaultCriticalTags: object
   InferSeoMetaPlugin: function
+./minify/esbuild:
+  createJSMinifier: function
+./minify/lightningcss:
+  createCSSMinifier: function
+./minify/rolldown:
+  createJSMinifier: function
 ./vite:
   default: function
 ./webpack:
