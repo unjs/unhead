@@ -1,6 +1,5 @@
 import { defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
-import { useHead } from 'unhead'
-import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
+import { createHead as createClientHead } from 'unhead/client'
 import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useDom } from '../../../unhead/test/fixtures'
@@ -9,7 +8,6 @@ describe('schema.org client dispose (#577)', () => {
   it('clears schema-org from DOM when entry is disposed (manual render)', async () => {
     const dom = useDom()
     const csrHead = createClientHead({
-      disableDefaults: true,
       plugins: [UnheadSchemaOrg({ host: 'https://example.com' })],
       document: dom.window.document,
     })
@@ -40,7 +38,6 @@ describe('schema.org client dispose (#577)', () => {
   it('fully clears schema-org from DOM when all entries disposed (auto render)', async () => {
     const dom = useDom()
     const csrHead = createClientHead({
-      disableDefaults: true,
       plugins: [UnheadSchemaOrg({ host: 'https://example.com' })],
       document: dom.window.document,
     })
@@ -63,7 +60,6 @@ describe('schema.org client dispose (#577)', () => {
   it('re-mount after dispose shows new schema data', async () => {
     const dom = useDom()
     const csrHead = createClientHead({
-      disableDefaults: true,
       plugins: [UnheadSchemaOrg({ host: 'https://example.com' })],
       document: dom.window.document,
     })
@@ -109,7 +105,6 @@ describe('schema.org client dispose (#577)', () => {
     // Hydrate on client
     const dom = useDom(data)
     const csrHead = createClientHead({
-      disableDefaults: true,
       plugins: [UnheadSchemaOrg({ host: 'https://example.com' })],
       document: dom.window.document,
     })
