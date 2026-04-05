@@ -69,8 +69,8 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
     v === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: v })
   }
   else {
-    tpl.tag = 'title'
-    tpl.textContent = v
+    // create a new object instead of mutating the cached tpl tag
+    ctx.tagMap.set('titleTemplate', { ...tpl, tag: 'title', textContent: v })
   }
 }
 
