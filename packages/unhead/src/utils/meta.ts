@@ -3,33 +3,17 @@ import { MetaTagsArrayable } from './const'
 
 type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
-export const NAMESPACES = /* @__PURE__ */ {
-  META: new Set(['twitter', 'fediverse']),
-  OG: new Set(['og', 'book', 'article', 'profile', 'fb']),
-  MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
-  HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
+export const NAMESPACES = {
+  META: /* @__PURE__ */ new Set(['twitter', 'fediverse']),
+  OG: /* @__PURE__ */ new Set(['og', 'book', 'article', 'profile', 'fb']),
+  MEDIA: /* @__PURE__ */ new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
+  HTTP_EQUIV: /* @__PURE__ */ new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
 } as const
 
-const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
-  articleExpirationTime: 'article:expiration_time',
-  articleModifiedTime: 'article:modified_time',
-  articlePublishedTime: 'article:published_time',
-  bookReleaseDate: 'book:release_date',
-  fbAppId: 'fb:app_id',
-  ogAudioSecureUrl: 'og:audio:secure_url',
-  ogAudioUrl: 'og:audio',
-  ogImageSecureUrl: 'og:image:secure_url',
-  ogImageUrl: 'og:image',
-  ogSiteName: 'og:site_name',
-  ogVideoSecureUrl: 'og:video:secure_url',
-  ogVideoUrl: 'og:video',
-  profileFirstName: 'profile:first_name',
-  profileLastName: 'profile:last_name',
-  profileUsername: 'profile:username',
-  msapplicationConfig: 'msapplication-Config',
-  msapplicationTileColor: 'msapplication-TileColor',
-  msapplicationTileImage: 'msapplication-TileImage',
-}
+const META_ALIASES: Record<string, string> = /* @__PURE__ */ Object.fromEntries(
+  'articleExpirationTime article:expiration_time,articleModifiedTime article:modified_time,articlePublishedTime article:published_time,bookReleaseDate book:release_date,fbAppId fb:app_id,ogAudioSecureUrl og:audio:secure_url,ogAudioUrl og:audio,ogImageSecureUrl og:image:secure_url,ogImageUrl og:image,ogSiteName og:site_name,ogVideoSecureUrl og:video:secure_url,ogVideoUrl og:video,profileFirstName profile:first_name,profileLastName profile:last_name,profileUsername profile:username,msapplicationConfig msapplication-Config,msapplicationTileColor msapplication-TileColor,msapplicationTileImage msapplication-TileImage'
+    .split(',').map(e => e.split(' ')),
+)
 
 const CAPS_RE = /([A-Z])/g
 const OG_TWITTER_RE = /^(?:og|twitter)/
@@ -46,34 +30,13 @@ interface MetaPackingEntry {
   unpack?: UnpackOptions
 }
 
+const _r = (entrySeparator: string, resolve: UnpackOptions['resolve']): MetaPackingEntry => ({ unpack: { entrySeparator, resolve } })
+
 export const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
-  appleItunesApp: {
-    unpack: {
-      entrySeparator: ', ',
-      resolve: ({ key, value }) => `${fixKeyCase(key)}=${value}`,
-    },
-  },
-  refresh: {
-    metaKey: 'http-equiv',
-    unpack: {
-      entrySeparator: ';',
-      resolve: ({ key, value }) => key === 'seconds' ? `${value}` : undefined,
-    },
-  },
-  robots: {
-    unpack: {
-      entrySeparator: ', ',
-      resolve: ({ key, value }) =>
-        typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`,
-    },
-  },
-  contentSecurityPolicy: {
-    metaKey: 'http-equiv',
-    unpack: {
-      entrySeparator: '; ',
-      resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}`,
-    },
-  },
+  appleItunesApp: _r(', ', ({ key, value }) => `${fixKeyCase(key)}=${value}`),
+  refresh: { metaKey: 'http-equiv', unpack: { entrySeparator: ';', resolve: ({ key, value }) => key === 'seconds' ? `${value}` : undefined } },
+  robots: _r(', ', ({ key, value }) => typeof value === 'boolean' ? fixKeyCase(key) : `${fixKeyCase(key)}:${value}`),
+  contentSecurityPolicy: { metaKey: 'http-equiv', unpack: { entrySeparator: '; ', resolve: ({ key, value }) => `${fixKeyCase(key)} ${value}` } },
   charset: {},
 }
 
@@ -104,21 +67,12 @@ function transformObject(obj: any): any {
 function unpackToString(value: Record<string, any>, options: UnpackOptions = {}): string {
   const { entrySeparator = '', keyValueSeparator = '', wrapValue, resolve } = options
   return Object.entries(value).map(([key, val]) => {
-    if (resolve) {
-      const resolved = resolve({ key, value: val })
-      if (resolved !== undefined)
-        return resolved
-    }
-
-    const processedVal = typeof val === 'object'
-      ? unpackToString(val, options)
-      : typeof val === 'number'
-        ? val.toString()
-        : typeof val === 'string' && wrapValue
-          ? `${wrapValue}${val.replace(new RegExp(wrapValue, 'g'), `\\${wrapValue}`)}${wrapValue}`
-          : val
-
-    return `${key}${keyValueSeparator}${processedVal}`
+    const resolved = resolve?.({ key, value: val })
+    if (resolved !== undefined) return resolved
+    const pv = typeof val === 'object' ? unpackToString(val, options)
+      : typeof val === 'number' ? val.toString()
+        : typeof val === 'string' && wrapValue ? `${wrapValue}${val.replace(new RegExp(wrapValue, 'g'), `\\${wrapValue}`)}${wrapValue}` : val
+    return `${key}${keyValueSeparator}${pv}`
   }).join(entrySeparator)
 }
 
@@ -176,30 +130,22 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
   for (const [key, value] of Object.entries(input)) {
     if (Array.isArray(value)) {
       if (key === 'themeColor') {
-        value.forEach((v) => {
-          if (typeof v === 'object' && v !== null) {
-            extras.push({ name: 'theme-color', ...v })
-          }
-        })
+        for (const v of value)
+          if (typeof v === 'object' && v !== null) extras.push({ name: 'theme-color', ...v })
         continue
       }
-
       for (const v of value) {
         if (typeof v === 'object' && v !== null) {
           const urlProps: UnheadMeta[] = []
           const otherProps: UnheadMeta[] = []
-
-          for (const [propKey, propValue] of Object.entries(v)) {
-            const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
-            const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
-            ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
+          for (const [pk, pv] of Object.entries(v)) {
+            const m = unpackMeta({ [`${key}${pk === 'url' ? '' : `:${pk}`}`]: pv }) as UnheadMeta[]
+            ;(pk === 'url' ? urlProps : otherProps).push(...m)
           }
           extras.push(...urlProps, ...otherProps)
         }
         else {
-          extras.push(...(typeof v === 'string'
-            ? unpackMeta({ [key]: v }) as UnheadMeta[]
-            : handleObjectEntry(key, v)))
+          extras.push(...(typeof v === 'string' ? unpackMeta({ [key]: v }) as UnheadMeta[] : handleObjectEntry(key, v)))
         }
       }
       continue
@@ -209,28 +155,13 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
       if (NAMESPACES.MEDIA.has(key)) {
         const prefix = key.startsWith('twitter') ? 'twitter' : 'og'
         const type = key.replace(OG_TWITTER_RE, '').toLowerCase()
-        const metaKey = prefix === 'twitter' ? 'name' : 'property'
-
-        if (value.url) {
-          extras.push({
-            [metaKey]: `${prefix}:${type}`,
-            content: value.url,
-          } as MetaGeneric as UnheadMeta)
-        }
-        if (value.secureUrl) {
-          extras.push({
-            [metaKey]: `${prefix}:${type}:secure_url`,
-            content: value.secureUrl,
-          } as MetaGeneric as UnheadMeta)
-        }
-
-        for (const [propKey, propValue] of Object.entries(value)) {
-          if (propKey !== 'url' && propKey !== 'secureUrl') {
-            extras.push({
-              [metaKey]: `${prefix}:${type}:${propKey}`,
-              content: propValue,
-            } as MetaGeneric as UnheadMeta)
-          }
+        const mk = prefix === 'twitter' ? 'name' : 'property'
+        const base = `${prefix}:${type}`
+        if (value.url) extras.push({ [mk]: base, content: value.url } as MetaGeneric as UnheadMeta)
+        if (value.secureUrl) extras.push({ [mk]: `${base}:secure_url`, content: value.secureUrl } as MetaGeneric as UnheadMeta)
+        for (const [pk, pv] of Object.entries(value)) {
+          if (pk !== 'url' && pk !== 'secureUrl')
+            extras.push({ [mk]: `${base}:${pk}`, content: pv } as MetaGeneric as UnheadMeta)
         }
       }
       else if (MetaTagsArrayable.has(fixKeyCase(key) as keyof MetaFlat)) {
@@ -248,27 +179,13 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
   const meta = Object.entries(primitives).map(([key, value]): UnheadMeta => {
     if (key === 'charset')
       return { charset: value === null ? '_null' : value }
-
-    const metaKey = resolveMetaKeyType(key)
-    const keyValue = resolveMetaKeyValue(key)
-    const processedValue = value === null
-      ? '_null'
-      : typeof value === 'object'
-        ? resolvePackedMetaObjectValue(value, key)
-        : typeof value === 'number'
-          ? value.toString()
-          : value
-
-    return (metaKey === 'http-equiv'
-      ? { 'http-equiv': keyValue, 'content': processedValue }
-      : { [metaKey]: keyValue, content: processedValue }) as MetaGeneric as UnheadMeta
+    const mk = resolveMetaKeyType(key)
+    const kv = resolveMetaKeyValue(key)
+    const cv = value === null ? '_null' : typeof value === 'object' ? resolvePackedMetaObjectValue(value, key) : typeof value === 'number' ? value.toString() : value
+    return (mk === 'http-equiv' ? { 'http-equiv': kv, 'content': cv } : { [mk]: kv, content: cv }) as MetaGeneric as UnheadMeta
   })
 
   return [...extras, ...meta].map(m =>
-    !('content' in m)
-      ? m
-      : m.content === '_null'
-        ? { ...m, content: null }
-        : m,
+    !('content' in m) ? m : m.content === '_null' ? { ...m, content: null } : m,
   ) as Required<ResolvableHead>['meta']
 }

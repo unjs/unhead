@@ -3,27 +3,11 @@ import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
 const ESCAPE_HTML_RE = /[&<>"'/]/g
+const ESCAPE_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#x27;', '/': '&#x2F;' }
 
 /* @__PURE__ */
 export function escapeHtml(str: string) {
-  return str.replace(ESCAPE_HTML_RE, (char) => {
-    switch (char) {
-      case '&':
-        return '&amp;'
-      case '<':
-        return '&lt;'
-      case '>':
-        return '&gt;'
-      case '"':
-        return '&quot;'
-      case '\'':
-        return '&#x27;'
-      case '/':
-        return '&#x2F;'
-      default:
-        return char
-    }
-  })
+  return str.replace(ESCAPE_HTML_RE, c => ESCAPE_MAP[c] || c)
 }
 
 /* @__PURE__ */

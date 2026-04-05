@@ -2,17 +2,18 @@ import type { HeadSafe } from '../types/safeSchema'
 import type { HeadTag } from '../types/tags'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
-const WhitelistAttributes = {
-  htmlAttrs: new Set(['class', 'style', 'lang', 'dir']),
-  bodyAttrs: new Set(['class', 'style']),
-  meta: new Set(['name', 'property', 'charset', 'content', 'media']),
-  noscript: new Set([] as string[]),
-  style: new Set(['media', 'nonce', 'title', 'blocking']),
-  script: new Set(['type', 'textContent', 'nonce', 'blocking']),
-  link: new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type']),
-} as const
+const _s = /* @__PURE__ */ (s: string) => new Set(s.split(' '))
+const WhitelistAttributes: Record<string, Set<string>> = /* @__PURE__ */ {
+  htmlAttrs: _s('class style lang dir'),
+  bodyAttrs: _s('class style'),
+  meta: _s('name property charset content media'),
+  noscript: new Set(),
+  style: _s('media nonce title blocking'),
+  script: _s('type textContent nonce blocking'),
+  link: _s('color crossorigin fetchpriority href hreflang imagesrcset imagesizes integrity media referrerpolicy rel sizes type'),
+}
 
-const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+const BlockedLinkRels = /* @__PURE__ */ _s('canonical modulepreload prerender preload prefetch dns-prefetch preconnect manifest pingback')
 
 const SafeAttrName = /^[a-z][a-z0-9\-]*[a-z0-9]$/i
 
@@ -22,40 +23,10 @@ const HtmlEntityNamed = /&(tab|newline|colon|semi|lpar|rpar|sol|bsol|comma|perio
 // eslint-disable-next-line no-control-regex
 const ControlChars = /[\x00-\x20]+/g
 
-const NamedEntityMap: Record<string, string> = {
-  tab: '\t',
-  newline: '\n',
-  colon: ':',
-  semi: ';',
-  lpar: '(',
-  rpar: ')',
-  sol: '/',
-  bsol: '\\',
-  comma: ',',
-  period: '.',
-  excl: '!',
-  num: '#',
-  dollar: '$',
-  percnt: '%',
-  amp: '&',
-  apos: '\'',
-  ast: '*',
-  plus: '+',
-  lt: '<',
-  gt: '>',
-  equals: '=',
-  quest: '?',
-  at: '@',
-  lsqb: '[',
-  rsqb: ']',
-  lcub: '{',
-  rcub: '}',
-  vert: '|',
-  hat: '^',
-  grave: '`',
-  tilde: '~',
-  nbsp: '\u00A0',
-}
+const NamedEntityMap: Record<string, string> = /* @__PURE__ */ Object.fromEntries(
+  'tab\t,newline\n,colon:,semi;,lpar(,rpar),sol/,bsol\\,comma,,period.,excl!,num#,dollar$,percnt%,amp&,apos\',ast*,plus+,lt<,gt>,equals=,quest?,at@,lsqb[,rsqb],lcub{,rcub},vert|,hat^,grave`,tilde~,nbsp\u00A0'
+    .split(',').map(e => [e.slice(0, -1), e.slice(-1)]),
+)
 
 // Decode HTML entities (numeric and named) that browsers decode in attribute values before URL processing
 function safeFromCodePoint(codePoint: number): string {
@@ -90,15 +61,15 @@ function hasDangerousProtocol(url: string): boolean {
   return lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')
 }
 
+const ProtoKeys = /* @__PURE__ */ new Set(['__proto__', 'constructor', 'prototype'])
 function stripProtoKeys(obj: any): any {
   if (Array.isArray(obj))
     return obj.map(stripProtoKeys)
   if (obj && typeof obj === 'object') {
     const clean: Record<string, any> = {}
     for (const key of Object.keys(obj)) {
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype')
-        continue
-      clean[key] = stripProtoKeys(obj[key])
+      if (!ProtoKeys.has(key))
+        clean[key] = stripProtoKeys(obj[key])
     }
     return clean
   }
@@ -111,122 +82,73 @@ function acceptDataAttrs(value: Record<string, string>, allowId = true) {
   )
 }
 
+function pickWhitelisted(prev: Record<string, any>, whitelist: Set<string>): Record<string, any> {
+  const o: Record<string, any> = {}
+  for (const k of whitelist) {
+    if (prev[k]) o[k] = prev[k]
+  }
+  return o
+}
+
 function makeTagSafe(tag: HeadTag): HeadSafe | false {
-  let next: Record<string, any> = {}
   const { tag: type, props: prev } = tag
+  let next: Record<string, any> = {}
 
-  switch (type) {
-    // title: textContent is escaped in rendering (tagToString), no props needed
-    case 'title':
-      break
-    // virtual tags, not rendered to HTML — but sanitize to prevent injection if rendered
-    case 'titleTemplate':
-    case 'templateParams':
-      next = prev
-      break
-    case 'htmlAttrs':
-    case 'bodyAttrs':
-      WhitelistAttributes[type].forEach((attr) => {
-        if (prev[attr]) {
-          next[attr] = prev[attr]
-        }
-      })
-      // don't allow id on html/body (DOM clobbering)
-      delete tag.innerHTML
-      delete tag.textContent
-      tag.props = { ...acceptDataAttrs(prev, false), ...next }
-      return !Object.keys(tag.props).length ? false : tag
-    case 'style':
-      next = acceptDataAttrs(prev)
-      WhitelistAttributes.style.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
-        }
-      })
-      break
-    // meta is safe, except for http-equiv
-    case 'meta':
-      WhitelistAttributes.meta.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
-        }
-      })
-      break
-    // link tags we block preloading, prerendering, prefetching, dns-prefetch, preconnect, manifest, etc
-    case 'link':
-      WhitelistAttributes.link.forEach((key) => {
-        const val = prev[key]
-        if (!val) {
-          return
-        }
-        // block bad rel types
-        if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase()))) {
-          return
-        }
-        if (key === 'href' || key === 'imagesrcset') {
-          if (typeof val !== 'string') {
-            return
-          }
-          // for imagesrcset, validate each comma-separated URL entry
-          const urls = key === 'imagesrcset' ? val.split(',').map(s => s.trim()) : [val]
-          if (urls.some(u => hasDangerousProtocol(u))) {
-            return
-          }
-          next[key] = val
-        }
-        else if (val) {
-          next[key] = val
-        }
-      })
-      if ((!next.href && !next.imagesrcset) || !next.rel) {
-        return false
-      }
-      break
-    case 'noscript':
-      WhitelistAttributes.noscript.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
-        }
-      })
-      break
-    // we only allow JSON in scripts
-    case 'script':
-      if (!tag.textContent || typeof prev.type !== 'string' || !prev.type.endsWith('json')) {
-        return false
-      }
-      // sanitize textContent via JSON round-trip, stripping proto keys
-      try {
-        const jsonVal = typeof tag.textContent === 'string' ? JSON.parse(tag.textContent) : tag.textContent
-        tag.textContent = JSON.stringify(stripProtoKeys(jsonVal), null, 0)
-      }
-      catch {
-        return false
-      }
-      WhitelistAttributes.script.forEach((s) => {
-        if (s !== 'textContent' && prev[s]) {
-          next[s] = prev[s]
-        }
-      })
-      break
+  if (type === 'titleTemplate' || type === 'templateParams') {
+    next = prev
   }
-
-  // never allow innerHTML in safe mode
-  delete tag.innerHTML
-  // only allow textContent for title (escaped in rendering) and script (JSON-sanitized above)
-  if (type !== 'title' && type !== 'script') {
+  else if (type === 'htmlAttrs' || type === 'bodyAttrs') {
+    next = pickWhitelisted(prev, WhitelistAttributes[type])
+    delete tag.innerHTML
     delete tag.textContent
+    tag.props = { ...acceptDataAttrs(prev, false), ...next }
+    return Object.keys(tag.props).length ? tag : false
   }
-
-  tag.props = { ...acceptDataAttrs(prev), ...next }
-
-  if (!Object.keys(tag.props).length && !tag.tag.endsWith('Attrs') && !tag.textContent) {
-    return false
+  else if (type === 'style') {
+    next = { ...acceptDataAttrs(prev), ...pickWhitelisted(prev, WhitelistAttributes.style) }
   }
+  else if (type === 'meta') {
+    next = pickWhitelisted(prev, WhitelistAttributes.meta)
+  }
+  else if (type === 'link') {
+    for (const key of WhitelistAttributes.link) {
+      const val = prev[key]
+      if (!val) continue
+      if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase()))) continue
+      if (key === 'href' || key === 'imagesrcset') {
+        if (typeof val !== 'string') continue
+        const urls = key === 'imagesrcset' ? val.split(',').map(s => s.trim()) : [val]
+        if (urls.some(u => hasDangerousProtocol(u))) continue
+      }
+      next[key] = val
+    }
+    if ((!next.href && !next.imagesrcset) || !next.rel) return false
+  }
+  else if (type === 'noscript') {
+    next = pickWhitelisted(prev, WhitelistAttributes.noscript)
+  }
+  else if (type === 'script') {
+    if (!tag.textContent || typeof prev.type !== 'string' || !prev.type.endsWith('json')) return false
+    try {
+      const jsonVal = typeof tag.textContent === 'string' ? JSON.parse(tag.textContent) : tag.textContent
+      tag.textContent = JSON.stringify(stripProtoKeys(jsonVal), null, 0)
+    }
+    catch { return false }
+    next = pickWhitelisted(prev, WhitelistAttributes.script)
+    delete next.textContent
+  }
+  // title: textContent is escaped in rendering, no extra props needed
 
+  delete tag.innerHTML
+  if (type !== 'title' && type !== 'script') delete tag.textContent
+
+  tag.props = type === 'style' ? next : { ...acceptDataAttrs(prev), ...next }
+
+  if (!Object.keys(tag.props).length && !type.endsWith('Attrs') && !tag.textContent) return false
   return tag
 }
 
-export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
+export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'safe',
   hooks: {
     'entries:normalize': (ctx) => {
