@@ -125,12 +125,15 @@ The above code generates JSON-LD like this:
 ## Common Issues
 
 ### Missing `image` warning
+
 Google requires at least one image for Article rich results. Always provide `image`.
 
 ### `datePublished` format errors
+
 Use JavaScript `Date` objects—Unhead handles ISO 8601 conversion automatically.
 
 ### Author not showing
+
 If using site identity as author, ensure you've called `defineOrganization()` or `definePerson()` in your layout.
 
 ## Related Recipes

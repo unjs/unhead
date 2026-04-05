@@ -126,12 +126,15 @@ useSchemaOrg([
 ## Common Issues
 
 ### FAQ not showing in search results
+
 Google only shows FAQ rich results for authoritative, high-quality content. Ensure your site has good E-E-A-T signals.
 
 ### Questions not appearing
+
 You must include both `defineWebPage({ '@type': 'FAQPage' })` AND `defineQuestion()` calls.
 
 ### HTML in answers stripped
+
 Only basic HTML (links, lists, paragraphs) is supported. Complex HTML may be sanitized.
 
 ## Related Recipes
