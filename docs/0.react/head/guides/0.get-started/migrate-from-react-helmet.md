@@ -5,7 +5,7 @@ navigation:
   title: 'Migrate React Helmet'
 ---
 
-**Quick Answer:** Replace `<Helmet>` with `useHead()` or `<Head>` components. Most props map directly - just change the import to `@unhead/react`.
+**Quick Answer:** For the fastest migration, swap your import to `@unhead/react/helmet` — it provides a drop-in `<Helmet>` component with the same API. Or replace `<Helmet>` with `useHead()` or `<Head>` for the full Unhead experience.
 
 ## Why Migrate from React Helmet?
 
@@ -56,38 +56,54 @@ function App() {
 
 ## How Do I Migrate from React Helmet to Unhead?
 
-### 1. Update Dependencies
+### Quick Migration with `@unhead/react/helmet`
 
-Remove React Helmet and install Unhead:
+For the fastest migration path, Unhead provides a drop-in `<Helmet>` component that supports the same API as react-helmet — including `defaultTitle`, `titleTemplate`, and `onChangeClientState`.
+
+#### 1. Swap Your Dependencies
 
 ```bash
 npm remove react-helmet
 npm install @unhead/react
 ```
 
-### 2. Add the Provider
+#### 2. Update Your Imports
 
-Unlike React Helmet, Unhead uses a provider, providing a safer context for managing head tags.
+```diff
+-import { Helmet } from 'react-helmet'
++import { Helmet } from '@unhead/react/helmet'
+```
 
-Add it to your app's entry point:
+That's it — your existing `<Helmet>` usage will work as-is. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. The `defaultTitle`, `titleTemplate`, and `onChangeClientState` props are all supported.
 
-```tsx [src/entry-client.tsx]
-import { createHead, UnheadProvider } from '@unhead/react/client'
+::note
+For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#4-update-server-rendering) below.
+::
 
-const head = createHead()
+```tsx
+import { Helmet } from '@unhead/react/helmet'
 
 function App() {
   return (
-    <UnheadProvider head={head}>
-      <YourApp />
-    </UnheadProvider>
+    <Helmet
+      defaultTitle="My Site"
+      titleTemplate="%s | My Site"
+      onChangeClientState={(newState) => console.log(newState)}
+    >
+      <title>Page Title</title>
+      <meta name="description" content="Description" />
+    </Helmet>
   )
 }
 ```
 
-### 3. Replace Components
+::note
+The `encodeSpecialCharacters` and `defer` props are accepted for compatibility but have no effect — Unhead handles these automatically.
+::
 
-Replace all instances of `<Helmet>` with `<Head>`.
+### 3. Full Migration to `<Head>` (Optional)
+
+If you'd prefer to adopt the Unhead API directly, replace `<Helmet>` with `<Head>`:
 
 ```diff
 -import { Helmet } from 'react-helmet'
@@ -96,10 +112,10 @@ Replace all instances of `<Helmet>` with `<Head>`.
 function Title() {
 return (
   <div>
--    <Helmet title-template="%s | My Site" />
+-    <Helmet titleTemplate="%s | My Site">
 -      <title>Hello World</title>
 -    </Helmet>
-+    <Head title-template="%s | My Site">
++    <Head titleTemplate="%s | My Site">
 +      <title>Hello World</title>
 +    </Head>
     <h1>Hello World</h1>
@@ -107,11 +123,6 @@ return (
   )
 }
 ```
-
-There are some nuanced differences to be aware of:
-
-- `defaultTitle` is not supported
-- `onChangeClientState` is not supported
 
 ### 4. Update Server Rendering
 

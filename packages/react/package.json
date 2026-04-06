@@ -48,6 +48,10 @@
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
+    },
+    "./helmet": {
+      "types": "./dist/helmet.d.ts",
+      "default": "./dist/helmet.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -75,6 +79,9 @@
       ],
       "stream/vite": [
         "dist/stream/vite"
+      ],
+      "helmet": [
+        "dist/helmet"
       ]
     }
   },
