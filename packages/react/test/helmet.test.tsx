@@ -256,7 +256,7 @@ describe('helmet compat', () => {
   })
 
   it('works without UnheadProvider (self-registers)', async () => {
-    const { container } = render(
+    render(
       <Helmet>
         <title>No Provider</title>
         <meta name="description" content="Auto-created head" />
