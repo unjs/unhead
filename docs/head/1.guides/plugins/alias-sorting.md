@@ -25,6 +25,7 @@ Aliases make tag ordering more intuitive and maintainable with declarative relat
 Add the plugin to your Unhead configuration:
 
 ::code-block
+
 ```ts [Input]
 import { createHead } from 'unhead'
 import { AliasSortingPlugin } from 'unhead/plugins'
@@ -35,6 +36,7 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
 ## How Do I Use Alias Sorting?
@@ -44,6 +46,7 @@ const head = createHead({
 Use `before:` or `after:` with the tag type and key:
 
 ::code-block
+
 ```ts [Input]
 useHead({
   // First script
@@ -66,6 +69,7 @@ useHead({
 <script src="/critical.js"></script>
 <script src="/analytics.js"></script>
 ```
+
 ::
 
 ### What Is the Alias Format?
@@ -73,6 +77,7 @@ useHead({
 The format is: `{before|after}:{tagName}:{key}`
 
 For example:
+
 - `before:script:analytics`{lang="ts"} - Place before the analytics script
 - `after:meta:description`{lang="ts"} - Place after the description meta tag
 - `before:link:styles`{lang="ts"} - Place before the styles link tag
@@ -82,6 +87,7 @@ For example:
 You can order multiple tags relative to each other:
 
 ::code-block
+
 ```ts [Input]
 useHead({
   script: [
@@ -108,6 +114,7 @@ useHead({
 <script src="/b.js"></script>
 <script src="/c.js"></script>
 ```
+
 ::
 
 ### Can I Combine Aliases with Numeric Priorities?
@@ -115,6 +122,7 @@ useHead({
 Yes. Alias sorting works alongside numeric priorities. The plugin will preserve the numeric priority of the referenced tag:
 
 ::code-block
+
 ```ts [Input]
 useHead({
   script: [
@@ -131,6 +139,7 @@ useHead({
   ]
 })
 ```
+
 ::
 
 ## Common Use Cases
@@ -140,6 +149,7 @@ useHead({
 Ensure critical CSS is loaded before other stylesheets:
 
 ::code-block
+
 ```ts [Input]
 useHead({
   link: [
@@ -157,6 +167,7 @@ useHead({
   ]
 })
 ```
+
 ::
 
 ### How Do I Control Script Loading Order?
@@ -164,6 +175,7 @@ useHead({
 Control the execution sequence of dependent scripts:
 
 ::code-block
+
 ```ts [Input]
 useHead({
   script: [
@@ -184,6 +196,7 @@ useHead({
   ]
 })
 ```
+
 ::
 
 ## Best Practices

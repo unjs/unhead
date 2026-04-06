@@ -1,8 +1,30 @@
 import type { ReactNode } from 'react'
-import type { ActiveHeadEntry, ResolvableHead as UseHeadInput } from 'unhead/types'
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import type { ActiveHeadEntry, Unhead, ResolvableHead as UseHeadInput } from 'unhead/types'
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import { createDebouncedFn, createDomRenderer, createHead as _createHead } from 'unhead/client'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
-import { useUnhead } from './composables'
+import { UnheadContext } from './context'
+
+let _singletonHead: Unhead | null = null
+
+function useHelmetHead(): Unhead {
+  const ctx = useContext<Unhead | null>(UnheadContext)
+  if (ctx) {
+    return ctx
+  }
+  // Lazily create a singleton client head when no provider is present (client-only)
+  if (!_singletonHead) {
+    if (typeof window === 'undefined') {
+      throw new Error('Helmet requires UnheadProvider on the server. Wrap your app with <UnheadProvider>.')
+    }
+    const domRenderer = createDomRenderer()
+    let head: ReturnType<typeof _createHead>
+    const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(fn, 0))
+    head = _createHead({ render: debouncedRenderer })
+    _singletonHead = head
+  }
+  return _singletonHead
+}
 
 export interface HelmetProps {
   children?: ReactNode
@@ -72,7 +94,7 @@ const Helmet: React.FC<HelmetProps> = ({
   encodeSpecialCharacters: _encodeSpecialCharacters,
   defer: _defer,
 }) => {
-  const head = useUnhead()
+  const head = useHelmetHead()
 
   const processedElements = useMemo(() =>
     React.Children.toArray(children).filter(React.isValidElement), [children])

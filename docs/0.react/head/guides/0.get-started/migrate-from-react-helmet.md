@@ -16,6 +16,7 @@ navigation:
 ::
 
 [Unhead](/) offers a modern alternative with:
+
 - Full TypeScript safety
 - DOM event handlers
 - Advanced DOM patching algorithm built for reactive frameworks
@@ -66,32 +67,18 @@ npm remove react-helmet
 npm install @unhead/react
 ```
 
-#### 2. Add the Provider
-
-Unlike React Helmet, Unhead uses a provider for managing head tags. Add it to your app's entry point:
-
-```tsx [src/entry-client.tsx]
-import { createHead, UnheadProvider } from '@unhead/react/client'
-
-const head = createHead()
-
-function App() {
-  return (
-    <UnheadProvider head={head}>
-      <YourApp />
-    </UnheadProvider>
-  )
-}
-```
-
-#### 3. Update Your Imports
+#### 2. Update Your Imports
 
 ```diff
 -import { Helmet } from 'react-helmet'
 +import { Helmet } from '@unhead/react/helmet'
 ```
 
-That's it — your existing `<Helmet>` usage will work as-is. The `defaultTitle`, `titleTemplate`, and `onChangeClientState` props are all supported.
+That's it — your existing `<Helmet>` usage will work as-is. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. The `defaultTitle`, `titleTemplate`, and `onChangeClientState` props are all supported.
+
+::note
+For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#_4-update-server-rendering) below.
+::
 
 ```tsx
 import { Helmet } from '@unhead/react/helmet'
@@ -114,7 +101,7 @@ function App() {
 The `encodeSpecialCharacters` and `defer` props are accepted for compatibility but have no effect — Unhead handles these automatically.
 ::
 
-### Full Migration to `<Head>`
+### 3. Full Migration to `<Head>` (Optional)
 
 If you'd prefer to adopt the Unhead API directly, replace `<Helmet>` with `<Head>`:
 
@@ -165,6 +152,7 @@ export function render(_url: string) {
 You've successfully migrated from React Helmet to Unhead.
 
 Check out some of the Unhead concepts:
+
 - [Tag Placement](/docs/head/guides/core-concepts/positions)
 - [DOM Event Handling](/docs/head/guides/core-concepts/dom-event-handling)
 - [Handling Duplicates](/docs/head/guides/core-concepts/handling-duplicates)
@@ -172,5 +160,6 @@ Check out some of the Unhead concepts:
 ## Need Help?
 
 If you run into issues during migration:
+
 - File an issue on [GitHub](https://github.com/unjs/unhead)
 - Join our [Discord community](https://discord.gg/unjs)

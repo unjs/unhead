@@ -255,6 +255,20 @@ describe('helmet compat', () => {
     expect(headTags).toContain('<title>Fallback</title>')
   })
 
+  it('works without UnheadProvider (self-registers)', async () => {
+    const { container } = render(
+      <Helmet>
+        <title>No Provider</title>
+        <meta name="description" content="Auto-created head" />
+      </Helmet>,
+    )
+
+    // The singleton head should have applied the tags to the DOM
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(document.title).toBe('No Provider')
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Auto-created head')
+  })
+
   it('cleans up on unmount', async () => {
     const head = createHead()
 

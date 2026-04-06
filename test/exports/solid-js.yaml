@@ -15,6 +15,7 @@
   defineHeadPlugin: function
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
+  MinifyPlugin: function
   PromisesPlugin: object
   SafeInputPlugin: object
   TemplateParamsPlugin: function

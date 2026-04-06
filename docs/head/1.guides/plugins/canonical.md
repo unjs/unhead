@@ -34,6 +34,7 @@ The plugin resolves relative URLs to absolute URLs in all of these tags:
 - `rel="author"`, `rel="license"`, `rel="help"`, `rel="search"`, `rel="pingback"`
 
 ::code-block
+
 ```html [Before]
 <meta property="og:image" content="/images/hero.jpg">
 <link rel="alternate" hreflang="es" href="/es/page">
@@ -43,6 +44,7 @@ The plugin resolves relative URLs to absolute URLs in all of these tags:
 <meta property="og:image" content="https://mysite.com/images/hero.jpg">
 <link rel="alternate" hreflang="es" href="https://mysite.com/es/page">
 ```
+
 ::
 
 ## How Do I Set Up the Canonical Plugin?
@@ -50,6 +52,7 @@ The plugin resolves relative URLs to absolute URLs in all of these tags:
 Install the plugin in both your server & client entries:
 
 ::code-block
+
 ```ts [Input]
 import { CanonicalPlugin } from 'unhead/plugins'
 
@@ -61,6 +64,7 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
 ## How Does Query Parameter Filtering Work?
@@ -68,6 +72,7 @@ const head = createHead({
 Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate URLs that dilute your SEO. The plugin automatically strips **all** query parameters from canonical and `og:url` tags by default.
 
 ::code-block
+
 ```html [Before]
 <link rel="canonical" href="https://mysite.com/blog?page=2&utm_source=twitter&fbclid=abc">
 ```
@@ -75,6 +80,7 @@ Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate UR
 ```html [After]
 <link rel="canonical" href="https://mysite.com/blog">
 ```
+
 ::
 
 ### How Do I Preserve Specific Query Parameters?
@@ -82,12 +88,14 @@ Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate UR
 If your site uses query parameters that affect content (e.g. pagination, filters), pass them via `queryWhitelist`:
 
 ::code-block
+
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
   queryWhitelist: ['page', 'sort', 'q', 'category']
 })
 ```
+
 ::
 
 Common parameters you may want to whitelist:
@@ -104,12 +112,14 @@ Common parameters you may want to whitelist:
 Set `queryWhitelist` to `false` to keep all query parameters:
 
 ::code-block
+
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
   queryWhitelist: false
 })
 ```
+
 ::
 
 ::tip
@@ -121,6 +131,7 @@ Query filtering only applies to `rel="canonical"` and `og:url` tags. Image and v
 Inconsistent trailing slashes (`/about` vs `/about/`) create duplicate canonical URLs. Use the `trailingSlash` option to enforce consistency:
 
 ::code-block
+
 ```ts [Input]
 // Always add trailing slash
 CanonicalPlugin({
@@ -134,6 +145,7 @@ CanonicalPlugin({
   trailingSlash: false
 })
 ```
+
 ::
 
 ::tip
@@ -147,6 +159,7 @@ Yes. Hash fragments (e.g. `#section`) are automatically removed from canonical a
 ## What Are the Configuration Options?
 
 ::code-block
+
 ```ts [Input]
 interface CanonicalPluginOptions {
   // Your site's domain (required)
@@ -160,6 +173,7 @@ interface CanonicalPluginOptions {
   trailingSlash?: boolean
 }
 ```
+
 ::
 
 ### What Happens If I Don't Set canonicalHost?
@@ -177,17 +191,20 @@ Always set `canonicalHost` explicitly for consistent behavior across environment
 Use `customResolver` to implement custom URL transformation logic:
 
 ::code-block
+
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
   customResolver: path => new URL(`/cdn${path}`, 'https://example.com').toString()
 })
 ```
+
 ::
 
 Example transformation:
 
 ::code-block
+
 ```html [Before]
 <meta property="og:image" content="/hero.jpg">
 ```
@@ -195,6 +212,7 @@ Example transformation:
 ```html [After]
 <meta property="og:image" content="https://mysite.com/cdn/hero.jpg">
 ```
+
 ::
 
 ## How Do I Integrate with a CDN?
@@ -202,6 +220,7 @@ Example transformation:
 Point image assets to your CDN domain:
 
 ::code-block
+
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
@@ -213,6 +232,7 @@ CanonicalPlugin({
   }
 })
 ```
+
 ::
 
 ## Framework Setup Guides
@@ -222,6 +242,7 @@ CanonicalPlugin({
 Nuxt has built-in Unhead support. Register the plugin in a [Nuxt plugin](https://nuxt.com/docs/guide/directory-structure/plugins):
 
 ::code-block
+
 ```ts [plugins/canonical.ts]
 import { injectHead } from '@unhead/vue'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -233,6 +254,7 @@ export default defineNuxtPlugin(() => {
   }))
 })
 ```
+
 ::
 
 ### Vue
@@ -240,6 +262,7 @@ export default defineNuxtPlugin(() => {
 Register the plugin when creating your head instance:
 
 ::code-block
+
 ```ts [main.ts]
 import { createHead } from '@unhead/vue/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -254,6 +277,7 @@ const head = createHead({
 
 app.use(head)
 ```
+
 ::
 
 ### React
@@ -261,6 +285,7 @@ app.use(head)
 Register the plugin in your app entry:
 
 ::code-block
+
 ```tsx [app.tsx]
 import { createHead } from '@unhead/react/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -273,6 +298,7 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
 ### Svelte
@@ -280,6 +306,7 @@ const head = createHead({
 Register the plugin when creating the head instance in your entry file:
 
 ::code-block
+
 ```ts [src/entry-client.ts]
 import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -289,6 +316,7 @@ head.use(CanonicalPlugin({
   canonicalHost: 'https://mysite.com'
 }))
 ```
+
 ::
 
 ### Angular
@@ -296,6 +324,7 @@ head.use(CanonicalPlugin({
 Register the plugin via `provideClientHead` options:
 
 ::code-block
+
 ```ts [app.config.ts]
 import { provideClientHead } from '@unhead/angular'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -312,6 +341,7 @@ export const appConfig: ApplicationConfig = {
   ]
 }
 ```
+
 ::
 
 ## Related

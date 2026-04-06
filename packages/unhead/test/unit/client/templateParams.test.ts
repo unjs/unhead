@@ -246,4 +246,50 @@ describe('templateParams', () => {
 
     expect(html).toContain('<title>Site title</title>')
   })
+
+  it('#618 - stale title after navigating from page with title to page without', async () => {
+    const dom = useDom()
+    const head = createClientHeadWithContext({
+      document: dom.window.document,
+      plugins: [TemplateParamsPlugin],
+    })
+
+    // Root layout sets titleTemplate and templateParams
+    useHead(head, {
+      titleTemplate: '%s %separator %siteName',
+      templateParams: {
+        separator: '|',
+        siteName: 'MyApp',
+      },
+    })
+
+    // Simulate navigating to "PageWithTitle"
+    const pageEntry = head.push({
+      title: 'PageWithTitle',
+    })
+
+    const { renderDOMHead } = await import('../../../src/client')
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toBe('PageWithTitle | MyApp')
+
+    // Simulate navigating away (disposing the page entry)
+    pageEntry.dispose()
+    renderDOMHead(head, { document: dom.window.document })
+
+    // When no title is set, the titleTemplate should render without %s
+    // Expected: "MyApp" (separator should be stripped since %s is empty)
+    expect(dom.window.document.title).toBe('MyApp')
+
+    // Navigate to another page with a title
+    const pageEntry2 = head.push({
+      title: 'AnotherPage',
+    })
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toBe('AnotherPage | MyApp')
+
+    // Navigate away again
+    pageEntry2.dispose()
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toBe('MyApp')
+  })
 })
