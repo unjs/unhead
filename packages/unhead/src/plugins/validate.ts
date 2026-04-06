@@ -575,7 +575,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               report('deprecated-prop-children', `"children" was removed in v3. Use "innerHTML" instead.`, 'warn', tag)
             if ('hid' in tag.props || 'vmid' in tag.props)
               report('deprecated-prop-hid-vmid', `"${('hid' in tag.props) ? 'hid' : 'vmid'}" was removed in v3. Use "key" instead.`, 'warn', tag)
-            if ('body' in tag.props)
+            if (tag.props.body === true)
               report('deprecated-prop-body', `"body: true" was removed in v3. Use "tagPosition: 'bodyClose'" instead.`, 'warn', tag)
           }
 
