@@ -554,7 +554,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Missing TemplateParamsPlugin (silent breakage — %params appear literally)
           if (!head.plugins.has('template-params')) {
-            if (tags.some(t => t.tag === 'templateParams'))
+            if (tags.some((t: HeadTag) => t.tag === 'templateParams'))
               report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn')
           }
 
