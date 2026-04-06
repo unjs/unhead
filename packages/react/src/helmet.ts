@@ -18,12 +18,12 @@ function useHelmetHead(): Unhead {
       throw new Error('Helmet requires UnheadProvider on the server. Wrap your app with <UnheadProvider>.')
     }
     const domRenderer = createDomRenderer()
-    let head: ReturnType<typeof _createHead>
+    let head: ReturnType<typeof _createHead<UseHeadInput>>
     const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(fn, 0))
-    head = _createHead({ render: debouncedRenderer })
+    head = _createHead<UseHeadInput>({ render: debouncedRenderer })
     _singletonHead = head
   }
-  return _singletonHead
+  return _singletonHead!
 }
 
 export interface HelmetProps {

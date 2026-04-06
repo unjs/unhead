@@ -231,7 +231,6 @@ describe('helmet compat', () => {
       <UnheadProvider head={head}>
         <Helmet>
           <title>Valid</title>
-          {/* @ts-expect-error testing invalid tag */}
           <div>Invalid</div>
         </Helmet>
       </UnheadProvider>,
