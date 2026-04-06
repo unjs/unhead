@@ -77,7 +77,7 @@ npm install @unhead/react
 That's it — your existing `<Helmet>` usage will work as-is. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. The `defaultTitle`, `titleTemplate`, and `onChangeClientState` props are all supported.
 
 ::note
-For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#_4-update-server-rendering) below.
+For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#4-update-server-rendering) below.
 ::
 
 ```tsx

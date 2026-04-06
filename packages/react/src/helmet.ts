@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ActiveHeadEntry, Unhead, ResolvableHead as UseHeadInput } from 'unhead/types'
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { createDebouncedFn, createDomRenderer, createHead as _createHead } from 'unhead/client'
+import { createHead as _createHead, createDebouncedFn, createDomRenderer } from 'unhead/client'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { UnheadContext } from './context'
 
@@ -15,7 +15,7 @@ function useHelmetHead(): Unhead {
   // Lazily create a singleton client head when no provider is present (client-only)
   if (!_singletonHead) {
     if (typeof window === 'undefined') {
-      throw new Error('Helmet requires UnheadProvider on the server. Wrap your app with <UnheadProvider>.')
+      throw new TypeError('Helmet requires UnheadProvider on the server. Wrap your app with <UnheadProvider>.')
     }
     const domRenderer = createDomRenderer()
     let head: ReturnType<typeof _createHead<UseHeadInput>>
@@ -110,7 +110,13 @@ const Helmet: React.FC<HelmetProps> = ({
     for (const element of processedElements) {
       const reactElement = element as React.ReactElement
       const { type, props } = reactElement
-      const tagName = String(type)
+      let tagName = String(type)
+
+      // Normalize react-helmet's <html>/<body> to unhead's htmlAttrs/bodyAttrs
+      if (tagName === 'html')
+        tagName = 'htmlAttrs'
+      else if (tagName === 'body')
+        tagName = 'bodyAttrs'
 
       if (!ValidHeadTags.has(tagName)) {
         continue
@@ -166,6 +172,12 @@ const Helmet: React.FC<HelmetProps> = ({
   const onChangeClientStateRef = useRef(onChangeClientState)
   onChangeClientStateRef.current = onChangeClientState
 
+  // Server: create entry during render since useEffect doesn't run in SSR
+  if (head.ssr && !headRef.current) {
+    headRef.current = head.push(getHeadChanges())
+  }
+
+  // Client: create entry in effect to avoid orphaned entries in React 18 StrictMode
   useEffect(() => {
     const options: Record<string, any> = {
       onRendered: () => {

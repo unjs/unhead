@@ -224,6 +224,24 @@ describe('helmet compat', () => {
     expect(headTags).toContain('href="https://example.com/"')
   })
 
+  it('normalizes html and body to htmlAttrs and bodyAttrs', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet>
+          <html lang="en" />
+          {/* @ts-expect-error class is the HTML attr, not className */}
+          <body class="dark" />
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { bodyAttrs, htmlAttrs } = renderSSRHead(head)
+    expect(htmlAttrs).toContain('lang="en"')
+    expect(bodyAttrs).toContain('class="dark"')
+  })
+
   it('ignores invalid child elements', async () => {
     const head = createHead()
 
