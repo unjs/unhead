@@ -64,6 +64,17 @@ export interface HelmetProps {
    * @deprecated Unhead batches DOM updates automatically. This prop is accepted for compatibility but has no effect.
    */
   defer?: boolean
+
+  // Prop-based API (alternative to children)
+  title?: string
+  base?: Record<string, any>
+  meta?: Array<Record<string, any>>
+  link?: Array<Record<string, any>>
+  script?: Array<Record<string, any>>
+  style?: Array<Record<string, any>>
+  noscript?: Array<Record<string, any>>
+  htmlAttributes?: Record<string, any>
+  bodyAttributes?: Record<string, any>
 }
 
 /**
@@ -90,6 +101,15 @@ const Helmet: React.FC<HelmetProps> = ({
   defaultTitle,
   titleTemplate,
   onChangeClientState,
+  title: titleProp,
+  base: baseProp,
+  meta: metaProp,
+  link: linkProp,
+  script: scriptProp,
+  style: styleProp,
+  noscript: noscriptProp,
+  htmlAttributes,
+  bodyAttributes,
   // accepted for compat, intentionally unused
   encodeSpecialCharacters: _encodeSpecialCharacters,
   defer: _defer,
@@ -106,7 +126,36 @@ const Helmet: React.FC<HelmetProps> = ({
       input.titleTemplate = titleTemplate
     }
 
-    let hasTitle = false
+    // Apply prop-based API values first (children override these)
+    if (titleProp != null) {
+      input.title = titleProp
+    }
+    if (baseProp) {
+      input.base = baseProp as any
+    }
+    if (metaProp) {
+      input.meta = [...metaProp] as any
+    }
+    if (linkProp) {
+      input.link = [...linkProp] as any
+    }
+    if (scriptProp) {
+      input.script = [...scriptProp] as any
+    }
+    if (styleProp) {
+      input.style = [...styleProp] as any
+    }
+    if (noscriptProp) {
+      input.noscript = [...noscriptProp] as any
+    }
+    if (htmlAttributes) {
+      input.htmlAttrs = htmlAttributes as any
+    }
+    if (bodyAttributes) {
+      input.bodyAttrs = bodyAttributes as any
+    }
+
+    let hasTitle = !!titleProp
     for (const element of processedElements) {
       const reactElement = element as React.ReactElement
       const { type, props } = reactElement
@@ -150,7 +199,7 @@ const Helmet: React.FC<HelmetProps> = ({
       }
     }
 
-    // Apply defaultTitle when no <title> child is provided
+    // Apply defaultTitle when no title is provided via props or children
     if (!hasTitle && defaultTitle) {
       input.title = defaultTitle
     }
@@ -164,7 +213,7 @@ const Helmet: React.FC<HelmetProps> = ({
     }
 
     return input
-  }, [processedElements, titleTemplate, defaultTitle])
+  }, [processedElements, titleTemplate, defaultTitle, titleProp, baseProp, metaProp, linkProp, scriptProp, styleProp, noscriptProp, htmlAttributes, bodyAttributes])
 
   const headRef = useRef<ActiveHeadEntry<any> | null>(null)
 

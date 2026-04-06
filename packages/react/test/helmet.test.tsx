@@ -286,6 +286,71 @@ describe('helmet compat', () => {
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Auto-created head')
   })
 
+  it('supports prop-based title', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet title="Prop Title" />
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>Prop Title</title>')
+  })
+
+  it('supports prop-based meta, link, and script', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet
+          meta={[{ name: 'description', content: 'Prop desc' }]}
+          link={[{ rel: 'canonical', href: 'https://example.com' }]}
+          script={[{ src: 'https://example.com/app.js' }]}
+        />
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('name="description" content="Prop desc"')
+    expect(headTags).toContain('rel="canonical" href="https://example.com"')
+    expect(headTags).toContain('src="https://example.com/app.js"')
+  })
+
+  it('supports prop-based htmlAttributes and bodyAttributes', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet
+          htmlAttributes={{ lang: 'fr' }}
+          bodyAttributes={{ class: 'dark' }}
+        />
+      </UnheadProvider>,
+    )
+
+    const { htmlAttrs, bodyAttrs } = renderSSRHead(head)
+    expect(htmlAttrs).toContain('lang="fr"')
+    expect(bodyAttrs).toContain('class="dark"')
+  })
+
+  it('children override prop-based title', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Helmet title="Prop Title">
+          <title>Child Title</title>
+        </Helmet>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>Child Title</title>')
+    expect(headTags).not.toContain('Prop Title')
+  })
+
   it('cleans up on unmount', async () => {
     const head = createHead()
 
