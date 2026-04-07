@@ -19,14 +19,14 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
    * Custom JS minifier function, or `false` to disable JS minification.
    *
    * Use a subpath import to get a preconfigured minifier:
-   * - `@unhead/addons/minify/rolldown` (Vite 8+)
-   * - `@unhead/addons/minify/esbuild` (Vite 7)
+   * - `@unhead/bundler/minify/rolldown` (Vite 8+)
+   * - `@unhead/bundler/minify/esbuild` (Vite 7)
    */
   js?: false | MinifyFn
   /**
    * Custom CSS minifier function, or `false` to disable CSS minification.
    *
-   * Use `@unhead/addons/minify/lightningcss` for a preconfigured minifier.
+   * Use `@unhead/bundler/minify/lightningcss` for a preconfigured minifier.
    */
   css?: false | MinifyFn
 }

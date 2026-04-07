@@ -70,3 +70,5 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./vite:
+  default: function

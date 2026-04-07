@@ -4,6 +4,8 @@ export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
 export const VIRTUAL_IIFE_ID = 'virtual:@unhead/streaming-iife.js'
 const RESOLVED_ID = `\0${VIRTUAL_CLIENT_ID}`
 const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
+const VIRTUAL_RE = /virtual:@unhead\/streaming/
+const RESOLVED_RE = /^\0virtual:@unhead\/streaming/
 
 export interface StreamingPluginOptions {
   /** Framework package e.g. '@unhead/vue' */
@@ -43,28 +45,36 @@ export function createStreamingPlugin(options: StreamingPluginOptions): Plugin {
       }
     },
 
-    resolveId(id) {
-      if (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`)
-        return RESOLVED_ID
-      if (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`)
-        return RESOLVED_IIFE_ID
+    resolveId: {
+      filter: { id: VIRTUAL_RE },
+      handler(id) {
+        if (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`)
+          return RESOLVED_ID
+        if (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`)
+          return RESOLVED_IIFE_ID
+      },
     },
 
-    load(id, opts) {
-      if (id === RESOLVED_ID) {
-        if (opts?.ssr)
-          return 'export {}'
-        // ES module client - uses framework's createHead
-        return `import{createHead}from'${framework}/client'
-const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}`
-      }
-      if (id === RESOLVED_IIFE_ID) {
-        if (opts?.ssr)
-          return ''
-        if (!iifeCode)
-          throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-        return iifeCode
-      }
+    load: {
+      filter: { id: RESOLVED_RE },
+      handler(id, opts) {
+        if (id === RESOLVED_ID) {
+          if (opts?.ssr)
+            return { code: 'export {}', moduleType: 'js' }
+          return {
+            code: `import{createHead}from'${framework}/client'
+const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}`,
+            moduleType: 'js',
+          }
+        }
+        if (id === RESOLVED_IIFE_ID) {
+          if (opts?.ssr)
+            return { code: '', moduleType: 'js' }
+          if (!iifeCode)
+            throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
+          return { code: iifeCode, moduleType: 'js' }
+        }
+      },
     },
 
     transformIndexHtml() {

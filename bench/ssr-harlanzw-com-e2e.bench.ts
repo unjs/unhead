@@ -1,5 +1,5 @@
 import type { Head } from 'unhead/types'
-import { InferSeoMetaPlugin } from '@unhead/addons'
+import { InferSeoMetaPlugin } from '@unhead/bundler'
 import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta, useServerHead } from '../packages/vue/src'

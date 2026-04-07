@@ -19,6 +19,9 @@ const functionNames = [
 ]
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
+  /**
+   * @deprecated Use `treeshake: false` at the top level instead.
+   */
   enabled?: boolean
 }
 
@@ -98,8 +101,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
     },
     vite: {
       apply(config: UserConfig, env: ConfigEnv) {
-        // @ts-expect-error Vite 4 support
-        if (env.ssrBuild || env.isSsrBuild) {
+        if (env.isSsrBuild) {
           options.enabled = false
           return true
         }

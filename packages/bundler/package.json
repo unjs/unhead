@@ -1,8 +1,8 @@
 {
-  "name": "@unhead/addons",
+  "name": "@unhead/bundler",
   "type": "module",
   "version": "3.0.0-beta.12",
-  "description": "Unhead addons for build tools and bundlers.",
+  "description": "Unhead build-time optimizations for Vite and Webpack.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
@@ -10,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/unjs/unhead.git",
-    "directory": "packages/addons"
+    "directory": "packages/bundler"
   },
   "publishConfig": {
     "access": "public",

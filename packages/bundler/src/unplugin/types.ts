@@ -11,7 +11,7 @@ export interface BaseTransformerTypes {
 }
 
 export interface UnpluginOptions extends BaseTransformerTypes {
-  treeshake?: TreeshakeServerComposablesOptions
-  transformSeoMeta?: UseSeoMetaTransformOptions
-  minify?: MinifyTransformOptions | boolean
+  treeshake?: TreeshakeServerComposablesOptions | false
+  transformSeoMeta?: UseSeoMetaTransformOptions | false
+  minify?: MinifyTransformOptions | false
 }
