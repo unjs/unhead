@@ -970,5 +970,32 @@ describe('validatePlugin', () => {
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
     })
+
+    it('warns on deprecated "mode" option in head.push()', () => {
+      const { head } = createValidationHead()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      head.push({ title: 'Test' }, { mode: 'server' } as any)
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"mode: \'server\'" option was removed in v3'),
+      )
+      warnSpy.mockRestore()
+    })
+
+    it('does not warn on "mode" option when rule is off', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          ValidatePlugin({
+            onReport: r => results.push(...r),
+            rules: { 'deprecated-option-mode': 'off' },
+          }),
+        ],
+      })
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      head.push({ title: 'Test' }, { mode: 'server' } as any)
+      expect(warnSpy).not.toHaveBeenCalled()
+      warnSpy.mockRestore()
+    })
   })
 })

@@ -5,6 +5,7 @@ export type RuleSeverity = 'warn' | 'info' | 'off'
 
 export type ValidationRuleId
   = | 'canonical-og-url-mismatch'
+    | 'deprecated-option-mode'
     | 'deprecated-prop-body'
     | 'deprecated-prop-children'
     | 'deprecated-prop-hid-vmid'
@@ -289,6 +290,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   return defineHeadPlugin((head: Unhead) => {
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
+      if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
+        console.warn(`[unhead] "mode: '${(opts as any).mode}'" option was removed in v3. Use the appropriate createHead import (unhead/client or unhead/server) instead.`)
+      }
       const source = captureSource(root)
       const active = _push(input, opts)
       if (source)

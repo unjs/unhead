@@ -38,11 +38,11 @@ Remove `ValidatePlugin` once your migration is complete, or keep it for ongoing 
 ## Table of Contents
 
 1. [Legacy Property Names](#1-legacy-property-names) - High Impact
-2. [Schema.org Plugin](#2-schema-org-plugin) - High Impact
+2. [Schema.org Plugin](#2-schemaorg-plugin) - High Impact
 3. [Server Composables](#3-server-composables) - Medium-High Impact
 4. [Vue Legacy Exports](#4-vue-legacy-exports) - Medium Impact
 5. [Core API Changes](#5-core-api-changes) - Medium Impact
-6. [Schema.org Config Options](#6-schema-org-config-options) - Low-Medium Impact
+6. [Schema.org Config Options](#6-schemaorg-config-options) - Low-Medium Impact
 7. [Server Utilities](#7-server-utilities) - Low Impact
 8. [Type Changes](#8-type-changes) - Low Impact
 9. [Hooks](#9-hooks) - Low Impact
@@ -197,9 +197,9 @@ The `useServerHead`, `useServerHeadSafe`, and `useServerSeoMeta` composables hav
 
 **Impact: Medium** - Affects Vue users on older setups.
 
-### `/legacy` Export Path Removed
+### `/legacy` Export Path Deprecated
 
-The `/legacy` export path has been removed from `@unhead/vue`.
+The `@unhead/vue/legacy` import still works but emits a runtime deprecation warning. Update to the explicit client or server import:
 
 ```diff
 - import { createHead } from '@unhead/vue/legacy'
