@@ -868,6 +868,204 @@ describe('validatePlugin', () => {
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'meta-beyond-1mb')).toBeFalsy()
     })
+
+    it('warns on render-blocking script in head', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'render-blocking-script')).toBeTruthy()
+    })
+
+    it('does not warn on async script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js', async: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
+    })
+
+    it('does not warn on defer script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js', defer: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
+    })
+
+    it('does not warn on module script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js', type: 'module' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
+    })
+
+    it('warns on defer with module script (redundant)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js', type: 'module', defer: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'defer-on-module-script')).toBeTruthy()
+    })
+
+    it('does not warn on module script without defer', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/app.js', type: 'module' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'defer-on-module-script')).toBeFalsy()
+    })
+
+    it('warns on too many fetchpriority="high"', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preload', href: '/a.js', as: 'script' as const, fetchpriority: 'high' as const },
+          { rel: 'preload', href: '/b.js', as: 'script' as const, fetchpriority: 'high' as const },
+          { rel: 'preload', href: '/c.js', as: 'script' as const, fetchpriority: 'high' as const },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-fetchpriority-high')).toBeTruthy()
+    })
+
+    it('does not warn on 2 or fewer fetchpriority="high"', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preload', href: '/a.js', as: 'script' as const, fetchpriority: 'high' as const },
+          { rel: 'preload', href: '/b.js', as: 'script' as const, fetchpriority: 'high' as const },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-fetchpriority-high')).toBeFalsy()
+    })
+
+    it('does not warn on preconnect with and without crossorigin (different connection pools)', () => {
+      const { head, rules } = createValidationHead()
+      // Non-CORS and CORS preconnects establish separate connection pools, both are intentional
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://cdn.example.com' },
+          { rel: 'preconnect', href: 'https://cdn.example.com', crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeFalsy()
+    })
+
+    it('warns on duplicate prefetch for same href (different keys bypass dedup)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'prefetch' as const, href: '/next-page.js', key: 'pf1' },
+          { rel: 'prefetch' as const, href: '/next-page.js', key: 'pf2' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeTruthy()
+    })
+
+    it('does not warn on different preload hrefs', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preload', href: '/a.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+          { rel: 'preload', href: '/b.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeFalsy()
+    })
+
+    it('warns when charset is not early in head', () => {
+      const { head, rules } = createValidationHead({ rules: { 'charset-not-early': ['warn', { maxPosition: 1 }] } })
+      // Push CSP meta which sorts before charset (weight -30 vs -20)
+      head.push({
+        meta: [{ 'http-equiv': 'content-security-policy', 'content': 'default-src \'self\'' }],
+      })
+      head.push({
+        meta: [{ charset: 'utf-8' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'charset-not-early')).toBeTruthy()
+    })
+
+    it('does not warn when charset is within maxPosition', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [{ charset: 'utf-8' }],
+      })
+      head.push({
+        style: [{ innerHTML: 'body { color: red }' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'charset-not-early')).toBeFalsy()
+    })
+
+    it('warns on preload as="script" for module script (should use modulepreload)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/app.mjs', as: 'script' as const }],
+        script: [{ src: '/app.mjs', type: 'module' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-not-modulepreload')).toBeTruthy()
+    })
+
+    it('does not warn on preload for non-module script', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
+        script: [{ src: '/app.js' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-not-modulepreload')).toBeFalsy()
+    })
+
+    it('warns on preconnect missing crossorigin when CORS resources use same origin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://fonts.gstatic.com' },
+          { rel: 'preload', href: 'https://fonts.gstatic.com/s/roboto.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeTruthy()
+    })
+
+    it('does not warn on preconnect with crossorigin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
+          { rel: 'preload', href: 'https://fonts.gstatic.com/s/roboto.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeFalsy()
+    })
+
+    it('does not warn on intentional dual preconnect (CORS + non-CORS)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://cdn.example.com' },
+          { rel: 'preconnect', href: 'https://cdn.example.com', crossorigin: 'anonymous' },
+          { rel: 'preload', href: 'https://cdn.example.com/font.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeFalsy()
+    })
   })
 
   describe('v2 migration', () => {
