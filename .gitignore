@@ -20,3 +20,6 @@ docs/.nuxt
 
 test-results/
 playwright-report/
+
+# Skilld references (recreated by `skilld install`)
+.skilld
