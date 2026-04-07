@@ -161,7 +161,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       script._triggerPromises = [] // clear any pending promises
       if (!script.entry) {
         syncStatus('loading')
-        const defaults: RawInput<'script'> = {
+        const defaults: Partial<RawInput<'script'>> = {
           defer: true,
           fetchpriority: 'low',
         }
