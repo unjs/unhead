@@ -5,10 +5,13 @@ export type RuleSeverity = 'warn' | 'info' | 'off'
 
 export type ValidationRuleId
   = | 'canonical-og-url-mismatch'
+    | 'charset-not-early'
+    | 'defer-on-module-script'
     | 'deprecated-option-mode'
     | 'deprecated-prop-body'
     | 'deprecated-prop-children'
     | 'deprecated-prop-hid-vmid'
+    | 'duplicate-resource-hint'
     | 'empty-meta-content'
     | 'empty-title'
     | 'html-in-title'
@@ -25,14 +28,18 @@ export type ValidationRuleId
     | 'og-missing-description'
     | 'og-missing-title'
     | 'possible-typo'
+    | 'preconnect-missing-crossorigin'
     | 'prefetch-preload-conflict'
     | 'preload-async-defer-conflict'
     | 'preload-fetchpriority-conflict'
     | 'preload-font-crossorigin'
     | 'preload-missing-as'
+    | 'preload-not-modulepreload'
     | 'redundant-dns-prefetch'
+    | 'render-blocking-script'
     | 'robots-conflict'
     | 'script-src-with-content'
+    | 'too-many-fetchpriority-high'
     | 'too-many-preconnects'
     | 'too-many-preloads'
     | 'twitter-handle-missing-at'
@@ -40,9 +47,11 @@ export type ValidationRuleId
     | 'viewport-user-scalable'
 
 export interface ValidationRuleOptions {
+  'charset-not-early': { maxPosition: number }
   'inline-script-size': { maxKB: number }
   'inline-style-size': { maxKB: number }
   'meta-beyond-1mb': { maxBytes: number }
+  'too-many-fetchpriority-high': { max: number }
   'too-many-preloads': { max: number }
   'too-many-preconnects': { max: number }
 }
@@ -246,6 +255,13 @@ function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
 }
 
+function extractOrigin(url: string): string | undefined {
+  if (!isAbsoluteUrl(url))
+    return undefined
+  const slash = url.indexOf('/', url.indexOf('//') + 2)
+  return slash === -1 ? url : url.slice(0, slash)
+}
+
 function resolveSeverity(config: RuleSeverity | [RuleSeverity, unknown] | undefined, fallback: RuleSeverity): RuleSeverity {
   if (config == null)
     return fallback
@@ -443,6 +459,14 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tag.tag === 'script' && props.src && (tag.innerHTML || tag.textContent))
               report('script-src-with-content', `Script has both "src" and inline content — the browser will ignore the inline content.`, 'warn', tag)
 
+            // Render-blocking script in head without async/defer/module
+            if (tag.tag === 'script' && props.src && !props.async && !props.defer && props.type !== 'module' && (!tag.tagPosition || tag.tagPosition === 'head'))
+              report('render-blocking-script', `Script "${props.src}" is render-blocking. Add "async", "defer", or use type="module" to avoid blocking the critical rendering path.`, 'warn', tag)
+
+            // defer on module scripts is redundant
+            if (tag.tag === 'script' && props.type === 'module' && props.defer)
+              report('defer-on-module-script', `"defer" is redundant on module scripts. Modules are deferred by default.`, 'info', tag)
+
             // === Performance Hints ===
             // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
 
@@ -581,6 +605,70 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               report('deprecated-prop-hid-vmid', `"${('hid' in tag.props) ? 'hid' : 'vmid'}" was removed in v3. Use "key" instead.`, 'warn', tag)
             if (tag.props.body === true)
               report('deprecated-prop-body', `"body: true" was removed in v3. Use "tagPosition: 'bodyClose'" instead.`, 'warn', tag)
+          }
+
+          // Too many fetchpriority="high" dilutes the signal
+          const { max: maxHighPriority } = resolveOptions(ruleConfig, 'too-many-fetchpriority-high', { max: 2 })
+          const highPriorityCount = tags.filter((t: HeadTag) => t.props.fetchpriority === 'high').length
+          if (highPriorityCount > maxHighPriority)
+            report('too-many-fetchpriority-high', `Found ${highPriorityCount} resources with fetchpriority="high". When everything is high priority, nothing is. Limit to ${maxHighPriority} for the signal to be effective.`, 'warn')
+
+          // Duplicate resource hints (same href in multiple preload/preconnect/prefetch)
+          const resourceHintsSeen = new Map<string, HeadTag>()
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.href && (tag.props.rel === 'preload' || tag.props.rel === 'prefetch' || tag.props.rel === 'preconnect')) {
+              const key = `${tag.props.rel}:${tag.props.href}`
+              if (resourceHintsSeen.has(key))
+                report('duplicate-resource-hint', `Duplicate ${tag.props.rel} for "${tag.props.href}".`, 'warn', tag)
+              else
+                resourceHintsSeen.set(key, tag)
+            }
+          }
+
+          // charset meta should appear early in head
+          const { maxPosition: charsetMaxPos } = resolveOptions(ruleConfig, 'charset-not-early', { maxPosition: 3 })
+          let headIndex = 0
+          let charsetTag: HeadTag | undefined
+          let charsetPosition = -1
+          for (const tag of tags) {
+            if (tag.tagPosition && tag.tagPosition !== 'head')
+              continue
+            headIndex++
+            if (tag.tag === 'meta' && ('charset' in tag.props || tag.props['http-equiv']?.toLowerCase() === 'content-type')) {
+              charsetTag = tag
+              charsetPosition = headIndex
+              break
+            }
+          }
+          if (charsetTag && charsetPosition > charsetMaxPos)
+            report('charset-not-early', `<meta charset> is at position ${charsetPosition} in <head>. It should be within the first ${charsetMaxPos} tags so the browser doesn't need to re-parse.`, 'warn', charsetTag)
+
+          // preload as="script" when the actual script is type="module" should use modulepreload
+          const moduleScriptSrcs = new Set<string>()
+          for (const tag of tags) {
+            if (tag.tag === 'script' && tag.props.type === 'module' && tag.props.src)
+              moduleScriptSrcs.add(tag.props.src)
+          }
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && moduleScriptSrcs.has(tag.props.href))
+              report('preload-not-modulepreload', `"${tag.props.href}" is a module script but uses rel="preload". Use rel="modulepreload" instead to also trigger module parsing.`, 'warn', tag)
+          }
+
+          // Preconnect missing crossorigin for origins that serve CORS resources
+          const corsOrigins = new Set<string>()
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.href && 'crossorigin' in tag.props) {
+              const origin = extractOrigin(tag.props.href)
+              if (origin)
+                corsOrigins.add(origin)
+            }
+          }
+          for (const tag of tags) {
+            if (tag.tag === 'link' && tag.props.rel === 'preconnect' && tag.props.href && !('crossorigin' in tag.props)) {
+              const origin = extractOrigin(tag.props.href)
+              if (origin && corsOrigins.has(origin))
+                report('preconnect-missing-crossorigin', `Preconnect to "${tag.props.href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
+            }
           }
 
           // Meta tags rendered after the crawler byte limit (default 1MB)

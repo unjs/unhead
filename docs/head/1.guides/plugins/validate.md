@@ -1,6 +1,6 @@
 ---
 title: "Validate"
-description: "Catch common SEO and head tag mistakes. Validates URLs, meta tags, Open Graph, Twitter Cards, and detects typos with fuzzy matching."
+description: "Catch common SEO, performance, and head tag mistakes. Validates URLs, meta tags, Open Graph, Twitter Cards, web vitals anti-patterns, and detects typos with fuzzy matching."
 navigation.title: "Validate"
 ---
 
@@ -130,6 +130,13 @@ Rules inspired by [webperf-snippets](https://webperf-snippets.nucliweb.net/) tha
 
 | Rule ID | Severity | What it catches |
 |---------|----------|----------------|
+| `render-blocking-script` | `warn` | `<script src>` in head without `async`, `defer`, or `type="module"` blocks the critical rendering path |
+| `too-many-fetchpriority-high` | `warn` | More than 2 resources with `fetchpriority="high"`. When everything is high priority, nothing is |
+| `defer-on-module-script` | `info` | `defer` on a `type="module"` script is redundant. Modules are deferred by default |
+| `duplicate-resource-hint` | `warn` | Same `rel`/`href` pair appears multiple times in preload, prefetch, or preconnect tags |
+| `charset-not-early` | `warn` | `<meta charset>` is not within the first few tags in `<head>`, which can force the browser to re-parse |
+| `preload-not-modulepreload` | `warn` | `<link rel="preload" as="script">` for a module script should use `rel="modulepreload"` to also trigger module parsing |
+| `preconnect-missing-crossorigin` | `warn` | `<link rel="preconnect">` is missing `crossorigin` but CORS resources are loaded from that origin, causing a separate connection |
 | `preload-fetchpriority-conflict` | `warn` | `<link rel="preload" fetchpriority="low">` is contradictory — preload signals critical, low priority contradicts that |
 | `too-many-preloads` | `warn` | More than 6 `<link rel="preload">` tags compete for bandwidth and hurt performance |
 | `too-many-preconnects` | `warn` | More than 4 `<link rel="preconnect">` tags — each initiates a TCP+TLS handshake, competing for limited connections |
@@ -167,6 +174,8 @@ ValidatePlugin({
   rules: {
     'too-many-preloads': ['warn', { max: 10 }],
     'too-many-preconnects': ['warn', { max: 6 }],
+    'too-many-fetchpriority-high': ['warn', { max: 3 }],
+    'charset-not-early': ['warn', { maxPosition: 5 }],
     'inline-style-size': ['info', { maxKB: 20 }],
     'inline-script-size': ['info', { maxKB: 5 }],
     'meta-beyond-1mb': ['warn', { maxBytes: 512_000 }], // 500KB instead of default 1MB
