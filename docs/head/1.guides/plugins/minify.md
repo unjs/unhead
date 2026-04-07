@@ -84,41 +84,25 @@ Note: The `ssr:render` hook runs synchronously, so custom minifiers must be sync
 
 ## Build-Time Minification
 
-For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, use the Vite/Webpack transform plugin from `@unhead/bundler`. This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
-
-::code-group
-
-```bash [pnpm]
-pnpm add -D @unhead/bundler
-```
-
-```bash [yarn]
-yarn add -D @unhead/bundler
-```
-
-```bash [npm]
-npm install -D @unhead/bundler
-```
-
-::
-
-Configure the Vite plugin with minifier functions:
+For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, enable the `minify` option on the [unified Vite plugin](/docs/head/guides/advanced/vite-plugin). This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
 
 ::code-block
 ```ts [vite.config.ts]
-import UnheadVite from '@unhead/bundler/vite'
+import vue from '@vitejs/plugin-vue'
+import unhead from '@unhead/vue/vite'
 import { createJSMinifier } from '@unhead/bundler/minify/rolldown'
 import { createCSSMinifier } from '@unhead/bundler/minify/lightningcss'
 
 export default defineConfig({
   plugins: [
-    UnheadVite({
+    vue(),
+    unhead({
       minify: {
         js: createJSMinifier(),
         css: createCSSMinifier(),
-      }
-    })
-  ]
+      },
+    }),
+  ],
 })
 ```
 ::
