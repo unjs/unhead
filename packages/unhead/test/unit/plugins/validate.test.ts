@@ -209,6 +209,7 @@ describe('validatePlugin', () => {
     it('warns on preload font without crossorigin', () => {
       const { head, rules } = createValidationHead()
       head.push({
+        // @ts-expect-error deliberately missing crossorigin to test runtime validation
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font' }],
       })
       renderSSRHead(head)
@@ -227,6 +228,7 @@ describe('validatePlugin', () => {
     it('warns on preload without as', () => {
       const { head, rules } = createValidationHead()
       head.push({
+        // @ts-expect-error deliberately missing `as` to test runtime validation
         link: [{ rel: 'preload', href: '/style.css' }],
       })
       renderSSRHead(head)
@@ -236,6 +238,7 @@ describe('validatePlugin', () => {
     it('warns on script with src and inline content', () => {
       const { head, rules } = createValidationHead()
       head.push({
+        // @ts-expect-error deliberately invalid: src + textContent to test runtime validation
         script: [{ src: '/app.js', textContent: 'console.log("hi")' }],
       })
       renderSSRHead(head)
@@ -412,6 +415,7 @@ describe('validatePlugin', () => {
     it('warns on script with src and innerHTML', () => {
       const { head, rules } = createValidationHead()
       head.push({
+        // @ts-expect-error deliberately invalid: src + innerHTML to test runtime validation
         script: [{ src: '/app.js', innerHTML: '<script>alert(1)</script>' }],
       })
       renderSSRHead(head)

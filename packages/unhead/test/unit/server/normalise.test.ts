@@ -83,7 +83,7 @@ describe('normalise', () => {
         {
           type: 'true', // string 'true' - preserved as string for script type
           innerHTML: 'console.log("true type")',
-        },
+        } as any,
         {
           type: 'application/json',
           innerHTML: '{"test": "json"}',

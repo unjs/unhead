@@ -83,9 +83,9 @@ describe('vue ssr examples', () => {
             href: '/',
           },
           ...[].map(() => ({
-            rel: 'prefetch',
+            rel: 'prefetch' as const,
             href: '',
-          })), // this damages the type inference
+          })),
           { rel: 'icon', type: 'image/svg', href: '/favicon.svg' },
         ],
       }))

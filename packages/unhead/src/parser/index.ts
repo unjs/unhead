@@ -509,7 +509,7 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
           position = tagEnd
         }
         lastCopyPosition = position
-        ;(input.script ||= []).push(scriptAttrs)
+        ;(input.script ||= []).push(scriptAttrs as any)
         continue
       }
       else if (tagId === TAG_STYLE) {

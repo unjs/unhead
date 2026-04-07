@@ -653,13 +653,13 @@ export type KnownLinkRel
 /**
  * Fallback for custom or unknown `rel` types.
  *
- * **Warning:** Because `rel` is typed as `string`, this interface absorbs all `rel` values
- * including known ones (e.g. `'preload'`, `'stylesheet'`). Misspelling a known `rel` value
- * will silently match this type and bypass validation. For type-safe link elements, use the
- * narrowed link types directly (e.g. {@link StylesheetLink}, {@link PreloadLink}).
+ * Not included in the {@link Link} union to prevent silent absorption of known `rel` values.
+ * Use this type explicitly when you need a non-standard `rel` value:
  *
- * To enforce `as` being required for `rel="preload"`, type your variable as {@link PreloadLink}
- * rather than the general `Link` union.
+ * ```ts
+ * import type { GenericLink } from 'unhead/types'
+ * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * ```
  */
 export interface GenericLink extends LinkBase {
   rel: string
@@ -687,12 +687,14 @@ export interface GenericLink extends LinkBase {
  * Discriminated union of all link types.
  *
  * Each named `rel` value maps to a specific interface that enforces per-`rel` required
- * attributes. For example, `rel="preload"` requires the `as` attribute (see {@link PreloadLink}).
+ * attributes. For example, `rel="preload"` requires the `as` attribute (see {@link PreloadLink}),
+ * and `rel="mask-icon"` requires `color` (see {@link MaskIconLink}).
  *
- * `GenericLink` is included as a fallback for custom or non-standard `rel` values.
- * Note: TypeScript cannot enforce `as` being required when using `{ rel: 'preload', ... }`
- * directly as a `Link` (since `GenericLink` with `rel: string` absorbs it). For strict
- * enforcement, type your variable as `PreloadLink` or use the `PreloadLink` union directly.
+ * For custom or non-standard `rel` values, use {@link GenericLink} directly:
+ * ```ts
+ * import type { GenericLink } from 'unhead/types'
+ * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * ```
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel
  */
@@ -720,4 +722,3 @@ export type Link
     | PrevLink
     | NextLink
     | PingbackLink
-    | GenericLink
