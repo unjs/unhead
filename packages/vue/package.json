@@ -128,7 +128,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "vite": ">=6",
+    "vite": ">=6.4.2",
     "vue": ">=3.5.18"
   },
   "peerDependenciesMeta": {
