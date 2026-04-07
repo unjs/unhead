@@ -9,6 +9,7 @@ import type {
   BreadcrumbList,
   Comment,
   Course,
+  Dataset,
   Event,
   FoodEstablishment,
   HowTo,
@@ -19,11 +20,18 @@ import type {
   ListItem,
   LocalBusiness,
   Movie,
+  MusicAlbum,
+  MusicGroup,
+  MusicPlaylist,
+  MusicRecording,
   Offer,
   OpeningHoursSpecification,
   Organization,
   Person,
   Place,
+  PodcastEpisode,
+  PodcastSeason,
+  PodcastSeries,
   PostalAddress,
   Product,
   Question,
@@ -31,8 +39,12 @@ import type {
   Recipe,
   Review,
   SearchAction,
+  Service,
   SoftwareApp,
   Thing,
+  TVEpisode,
+  TVSeason,
+  TVSeries,
   VideoObject,
   VirtualLocation,
   WebPage,
@@ -50,6 +62,7 @@ import { bookEditionResolver, bookResolver } from '../../nodes/Book'
 import { breadcrumbResolver } from '../../nodes/Breadcrumb'
 import { commentResolver } from '../../nodes/Comment'
 import { courseResolver } from '../../nodes/Course'
+import { datasetResolver } from '../../nodes/Dataset'
 import { eventResolver } from '../../nodes/Event'
 import { foodEstablishmentResolver } from '../../nodes/FoodEstablishment'
 import { howToResolver } from '../../nodes/HowTo'
@@ -60,17 +73,28 @@ import { jobPostingResolver } from '../../nodes/JobPosting'
 import { listItemResolver } from '../../nodes/ListItem'
 import { localBusinessResolver } from '../../nodes/LocalBusiness'
 import { movieResolver } from '../../nodes/Movie'
+import { musicAlbumResolver } from '../../nodes/MusicAlbum'
+import { musicGroupResolver } from '../../nodes/MusicGroup'
+import { musicPlaylistResolver } from '../../nodes/MusicPlaylist'
+import { musicRecordingResolver } from '../../nodes/MusicRecording'
 import { offerResolver } from '../../nodes/Offer'
 import { openingHoursResolver } from '../../nodes/OpeningHours'
 import { organizationResolver } from '../../nodes/Organization'
 import { personResolver } from '../../nodes/Person'
 import { placeResolver } from '../../nodes/Place'
+import { podcastEpisodeResolver } from '../../nodes/PodcastEpisode'
+import { podcastSeasonResolver } from '../../nodes/PodcastSeason'
+import { podcastSeriesResolver } from '../../nodes/PodcastSeries'
 import { addressResolver } from '../../nodes/PostalAddress'
 import { productResolver } from '../../nodes/Product'
 import { questionResolver } from '../../nodes/Question'
 import { recipeResolver } from '../../nodes/Recipe'
 import { reviewResolver } from '../../nodes/Review'
+import { serviceResolver } from '../../nodes/Service'
 import { softwareAppResolver } from '../../nodes/SoftwareApp'
+import { tvEpisodeResolver } from '../../nodes/TVEpisode'
+import { tvSeasonResolver } from '../../nodes/TVSeason'
+import { tvSeriesResolver } from '../../nodes/TVSeries'
 import { videoResolver } from '../../nodes/Video'
 import { virtualLocationResolver } from '../../nodes/VirtualLocation'
 import { webPageResolver } from '../../nodes/WebPage'
@@ -199,6 +223,42 @@ export function defineSoftwareApp<T extends Record<string, any>>(input?: DeepRes
 }
 export function defineBookEdition<T extends Record<string, any>>(input?: DeepResolvableProperties<BookEdition & T>) {
   return provideResolver(input, bookEditionResolver)
+}
+export function defineDataset<T extends Record<string, any>>(input?: DeepResolvableProperties<Dataset & T>) {
+  return provideResolver(input, datasetResolver)
+}
+export function defineMusicRecording<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicRecording & T>) {
+  return provideResolver(input, musicRecordingResolver)
+}
+export function defineMusicAlbum<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicAlbum & T>) {
+  return provideResolver(input, musicAlbumResolver)
+}
+export function defineMusicGroup<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicGroup & T>) {
+  return provideResolver(input, musicGroupResolver)
+}
+export function defineMusicPlaylist<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicPlaylist & T>) {
+  return provideResolver(input, musicPlaylistResolver)
+}
+export function definePodcastSeries<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastSeries & T>) {
+  return provideResolver(input, podcastSeriesResolver)
+}
+export function definePodcastEpisode<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastEpisode & T>) {
+  return provideResolver(input, podcastEpisodeResolver)
+}
+export function definePodcastSeason<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastSeason & T>) {
+  return provideResolver(input, podcastSeasonResolver)
+}
+export function defineTVSeries<T extends Record<string, any>>(input?: DeepResolvableProperties<TVSeries & T>) {
+  return provideResolver(input, tvSeriesResolver)
+}
+export function defineTVSeason<T extends Record<string, any>>(input?: DeepResolvableProperties<TVSeason & T>) {
+  return provideResolver(input, tvSeasonResolver)
+}
+export function defineTVEpisode<T extends Record<string, any>>(input?: DeepResolvableProperties<TVEpisode & T>) {
+  return provideResolver(input, tvEpisodeResolver)
+}
+export function defineService<T extends Record<string, any>>(input?: DeepResolvableProperties<Service & T>) {
+  return provideResolver(input, serviceResolver)
 }
 
 export type UseSchemaOrgInput = Arrayable<DeepResolvableProperties<Thing | Record<string, any>>>
