@@ -617,7 +617,8 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const resourceHintsSeen = new Map<string, HeadTag>()
           for (const tag of tags) {
             if (tag.tag === 'link' && tag.props.href && (tag.props.rel === 'preload' || tag.props.rel === 'prefetch' || tag.props.rel === 'preconnect')) {
-              const key = `${tag.props.rel}:${tag.props.href}`
+              const crossoriginSuffix = tag.props.rel === 'preconnect' && 'crossorigin' in tag.props ? ':cors' : ''
+              const key = `${tag.props.rel}:${tag.props.href}${crossoriginSuffix}`
               if (resourceHintsSeen.has(key))
                 report('duplicate-resource-hint', `Duplicate ${tag.props.rel} for "${tag.props.href}".`, 'warn', tag)
               else
@@ -656,17 +657,22 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Preconnect missing crossorigin for origins that serve CORS resources
           const corsOrigins = new Set<string>()
+          const preconnectCorsOrigins = new Set<string>()
           for (const tag of tags) {
             if (tag.tag === 'link' && tag.props.href && 'crossorigin' in tag.props) {
               const origin = extractOrigin(tag.props.href)
-              if (origin)
+              if (origin) {
                 corsOrigins.add(origin)
+                if (tag.props.rel === 'preconnect')
+                  preconnectCorsOrigins.add(origin)
+              }
             }
           }
           for (const tag of tags) {
             if (tag.tag === 'link' && tag.props.rel === 'preconnect' && tag.props.href && !('crossorigin' in tag.props)) {
               const origin = extractOrigin(tag.props.href)
-              if (origin && corsOrigins.has(origin))
+              // Skip if a CORS preconnect already exists for this origin (intentional dual connection pool)
+              if (origin && corsOrigins.has(origin) && !preconnectCorsOrigins.has(origin))
                 report('preconnect-missing-crossorigin', `Preconnect to "${tag.props.href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
             }
           }

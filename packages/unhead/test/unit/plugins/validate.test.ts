@@ -948,14 +948,25 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'too-many-fetchpriority-high')).toBeFalsy()
     })
 
-    it('warns on duplicate preconnect for same origin with different props', () => {
+    it('does not warn on preconnect with and without crossorigin (different connection pools)', () => {
       const { head, rules } = createValidationHead()
-      // Two preconnects to the same origin: one with crossorigin, one without.
-      // They hash differently so unhead keeps both, but they are logically duplicates.
+      // Non-CORS and CORS preconnects establish separate connection pools, both are intentional
       head.push({
         link: [
-          { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-          { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: 'anonymous' },
+          { rel: 'preconnect', href: 'https://cdn.example.com' },
+          { rel: 'preconnect', href: 'https://cdn.example.com', crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeFalsy()
+    })
+
+    it('warns on duplicate prefetch for same href (different keys bypass dedup)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'prefetch' as const, href: '/next-page.js', key: 'pf1' },
+          { rel: 'prefetch' as const, href: '/next-page.js', key: 'pf2' },
         ],
       })
       renderSSRHead(head)
@@ -1037,6 +1048,19 @@ describe('validatePlugin', () => {
         link: [
           { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
           { rel: 'preload', href: 'https://fonts.gstatic.com/s/roboto.woff2', as: 'font' as const, crossorigin: 'anonymous' },
+        ],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeFalsy()
+    })
+
+    it('does not warn on intentional dual preconnect (CORS + non-CORS)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [
+          { rel: 'preconnect', href: 'https://cdn.example.com' },
+          { rel: 'preconnect', href: 'https://cdn.example.com', crossorigin: 'anonymous' },
+          { rel: 'preload', href: 'https://cdn.example.com/font.woff2', as: 'font' as const, crossorigin: 'anonymous' },
         ],
       })
       renderSSRHead(head)
