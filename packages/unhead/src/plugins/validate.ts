@@ -5,13 +5,19 @@ export type RuleSeverity = 'warn' | 'info' | 'off'
 
 export type ValidationRuleId
   = | 'canonical-og-url-mismatch'
+    | 'deprecated-option-mode'
+    | 'deprecated-prop-body'
+    | 'deprecated-prop-children'
+    | 'deprecated-prop-hid-vmid'
     | 'empty-meta-content'
     | 'empty-title'
     | 'html-in-title'
     | 'inline-script-size'
     | 'inline-style-size'
     | 'meta-beyond-1mb'
+    | 'missing-alias-sorting-plugin'
     | 'missing-description'
+    | 'missing-template-params-plugin'
     | 'missing-title'
     | 'non-absolute-canonical'
     | 'non-absolute-og-url'
@@ -284,6 +290,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   return defineHeadPlugin((head: Unhead) => {
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
+      if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
+        console.warn(`[unhead] "mode: '${(opts as any).mode}'" option was removed in v3. Use the appropriate createHead import (unhead/client or unhead/server) instead.`)
+      }
       const source = captureSource(root)
       const active = _push(input, opts)
       if (source)
@@ -543,6 +552,35 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           for (const tag of tags) {
             if (tag.tag === 'link' && tag.props.rel === 'prefetch' && tag.props.href && preloadHrefs.has(tag.props.href))
               report('prefetch-preload-conflict', `"${tag.props.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
+          }
+
+          // === v2 → v3 Migration Checks ===
+
+          // Missing TemplateParamsPlugin (silent breakage — %params appear literally)
+          if (!head.plugins.has('template-params')) {
+            if (tags.some((t: HeadTag) => t.tag === 'templateParams'))
+              report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn')
+          }
+
+          // Missing AliasSortingPlugin (silent breakage — before:/after: priorities ignored)
+          if (!head.plugins.has('aliasSorting')) {
+            for (const tag of tags) {
+              const p = typeof tag.tagPriority === 'string' ? tag.tagPriority : ''
+              if (p.startsWith('before:') || p.startsWith('after:')) {
+                report('missing-alias-sorting-plugin', `Tag priority alias "${p}" requires AliasSortingPlugin. In v3, this plugin is opt-in. Add it to createHead({ plugins: [AliasSortingPlugin] }).`, 'warn', tag)
+                break
+              }
+            }
+          }
+
+          // Deprecated v2 property names (no longer auto-converted)
+          for (const tag of tags) {
+            if ('children' in tag.props)
+              report('deprecated-prop-children', `"children" was removed in v3. Use "innerHTML" instead.`, 'warn', tag)
+            if ('hid' in tag.props || 'vmid' in tag.props)
+              report('deprecated-prop-hid-vmid', `"${('hid' in tag.props) ? 'hid' : 'vmid'}" was removed in v3. Use "key" instead.`, 'warn', tag)
+            if (tag.props.body === true)
+              report('deprecated-prop-body', `"body: true" was removed in v3. Use "tagPosition: 'bodyClose'" instead.`, 'warn', tag)
           }
 
           // Meta tags rendered after the crawler byte limit (default 1MB)

@@ -1,7 +1,7 @@
 import type { HeadValidationRule, ValidatePluginOptions } from '../../../src/plugins'
 import { renderSSRHead } from '@unhead/ssr'
 import { describe, expect, it, vi } from 'vitest'
-import { ValidatePlugin } from '../../../src/plugins'
+import { AliasSortingPlugin, TemplateParamsPlugin, ValidatePlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
 
 function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
@@ -867,6 +867,135 @@ describe('validatePlugin', () => {
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'meta-beyond-1mb')).toBeFalsy()
+    })
+  })
+
+  describe('v2 migration', () => {
+    it('warns when templateParams used without TemplateParamsPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        templateParams: { site: { name: 'My Site' }, separator: '|' },
+        title: 'Hello',
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
+    })
+
+    it('does not warn about templateParams when TemplateParamsPlugin is registered', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          TemplateParamsPlugin,
+          ValidatePlugin({ onReport: r => results.push(...r) }),
+        ],
+      })
+      head.push({
+        templateParams: { site: { name: 'My Site' }, separator: '|' },
+        title: 'Hello',
+      } as any)
+      renderSSRHead(head)
+      expect(results.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
+    })
+
+    it('warns when before:/after: tagPriority used without AliasSortingPlugin', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/a.js', tagPriority: 'before:script:key:b' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-alias-sorting-plugin')).toBeTruthy()
+    })
+
+    it('does not warn about alias sorting when AliasSortingPlugin is registered', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          AliasSortingPlugin,
+          ValidatePlugin({ onReport: r => results.push(...r) }),
+        ],
+      })
+      head.push({
+        script: [{ src: '/a.js', tagPriority: 'before:script:key:b' }],
+      })
+      renderSSRHead(head)
+      expect(results.find(r => r.id === 'missing-alias-sorting-plugin')).toBeFalsy()
+    })
+
+    it('warns on deprecated "children" prop', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ children: 'console.log("hello")' }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-children')).toBeTruthy()
+    })
+
+    it('warns on deprecated "hid" prop', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [{ hid: 'description', name: 'description', content: 'test' }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeTruthy()
+    })
+
+    it('warns on deprecated "vmid" prop', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [{ vmid: 'description', name: 'description', content: 'test' }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeTruthy()
+    })
+
+    it('warns on deprecated "body" prop', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        script: [{ src: '/script.js', body: true }],
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-body')).toBeTruthy()
+    })
+
+    it('respects rule severity config for migration rules', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'missing-template-params-plugin': 'off' },
+      })
+      head.push({
+        templateParams: { site: { name: 'My Site' } },
+        title: 'Hello',
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
+    })
+
+    it('warns on deprecated "mode" option in head.push()', () => {
+      const { head } = createValidationHead()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      head.push({ title: 'Test' }, { mode: 'server' } as any)
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"mode: \'server\'" option was removed in v3'),
+      )
+      warnSpy.mockRestore()
+    })
+
+    it('does not warn on "mode" option when rule is off', () => {
+      const results: HeadValidationRule[] = []
+      const head = createHead({
+        disableDefaults: true,
+        plugins: [
+          ValidatePlugin({
+            onReport: r => results.push(...r),
+            rules: { 'deprecated-option-mode': 'off' },
+          }),
+        ],
+      })
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      head.push({ title: 'Test' }, { mode: 'server' } as any)
+      expect(warnSpy).not.toHaveBeenCalled()
+      warnSpy.mockRestore()
     })
   })
 })

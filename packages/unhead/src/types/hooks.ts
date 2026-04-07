@@ -47,7 +47,9 @@ export interface CoreHeadHooks {
 
 export interface DOMHeadHooks {
   'dom:beforeRender': (ctx: DomBeforeRenderCtx) => SyncHookResult
+  /** @deprecated Not called internally. Will be removed in v4. */
   'dom:renderTag': (ctx: DomRenderTagContext, document: Document, track: (id: string, scope: string, fn: () => void) => void) => HookResult
+  /** @deprecated Will be removed in v4. DOM rendering is synchronous; run post-render logic after calling `renderDOMHead()` directly. */
   'dom:rendered': (ctx: { renders: DomRenderTagContext[] }) => HookResult
 }
 
