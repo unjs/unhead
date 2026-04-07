@@ -45,6 +45,10 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.mjs"
+    },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
@@ -76,6 +80,9 @@
       ],
       "utils": [
         "dist/utils"
+      ],
+      "vite": [
+        "dist/vite"
       ],
       "stream/vite": [
         "dist/stream/vite"
@@ -111,6 +118,7 @@
     ]
   },
   "dependencies": {
+    "@unhead/bundler": "workspace:*",
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",

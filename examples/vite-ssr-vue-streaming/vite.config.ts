@@ -1,12 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { unheadVuePlugin } from '@unhead/vue/stream/vite'
+import unhead from '@unhead/vue/vite'
 
 export default defineConfig({
   plugins: [
     vue(),
-    // Streaming mode: transforms useHead() calls to output inline scripts during SSR streaming
-    unheadVuePlugin(),
+    unhead({ streaming: true }),
   ],
   build: {
     minify: false,

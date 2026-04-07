@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { unheadReactPlugin } from '@unhead/react/stream/vite'
+import unhead from '@unhead/react/vite'
 
 export default defineConfig({
   plugins: [
     react(),
-    unheadReactPlugin(),
+    unhead({ streaming: true }),
   ],
   build: {
     minify: false,

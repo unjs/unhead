@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { unheadSveltePlugin } from '@unhead/svelte/stream/vite'
+import unhead from '@unhead/svelte/vite'
 
 export default defineConfig({
   plugins: [
-    unheadSveltePlugin({ streaming: true }),
+    unhead({ streaming: true }),
     svelte(),
   ],
 })

@@ -1,4 +1,4 @@
-# @unhead/addons
+# @unhead/bundler
 
 > Unhead addons for build tools and bundlers
 
@@ -17,13 +17,13 @@
 
 ```bash
 # npm
-npm install @unhead/addons
+npm install @unhead/bundler
 
 # yarn
-yarn add @unhead/addons
+yarn add @unhead/bundler
 
 # pnpm
-pnpm add @unhead/addons
+pnpm add @unhead/bundler
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ pnpm add @unhead/addons
 ### Vite Plugin
 
 ```ts
-import UnheadVite from '@unhead/addons/vite'
+import UnheadVite from '@unhead/bundler/vite'
 // vite.config.ts
 import { defineConfig } from 'vite'
 
@@ -48,7 +48,7 @@ export default defineConfig({
 
 ```js
 // webpack.config.js
-const UnheadWebpack = require('@unhead/addons/webpack')
+const UnheadWebpack = require('@unhead/bundler/webpack')
 
 module.exports = {
   plugins: [
@@ -114,11 +114,11 @@ Visit the [Unhead documentation](https://unhead.unjs.io/) for more details.
 [MIT](./LICENSE)
 
 <!-- Badges -->
-[npm-version-src]: https://img.shields.io/npm/v/@unhead/addons/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
-[npm-version-href]: https://npmjs.com/package/@unhead/addons
+[npm-version-src]: https://img.shields.io/npm/v/@unhead/bundler/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-version-href]: https://npmjs.com/package/@unhead/bundler
 
-[npm-downloads-src]: https://img.shields.io/npm/dm/@unhead/addons.svg?style=flat&colorA=18181B&colorB=28CF8D
-[npm-downloads-href]: https://npmjs.com/package/@unhead/addons
+[npm-downloads-src]: https://img.shields.io/npm/dm/@unhead/bundler.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-downloads-href]: https://npmjs.com/package/@unhead/bundler
 
 [license-src]: https://img.shields.io/github/license/unjs/unhead.svg?style=flat&colorA=18181B&colorB=28CF8D
 [license-href]: https://github.com/unjs/unhead/blob/main/LICENSE

@@ -86,3 +86,5 @@
   ValidHeadTags: object
   VueResolver: function
   walkResolver: function
+./vite:
+  default: function

@@ -62,8 +62,8 @@
     "vue-tsc": "catalog:"
   },
   "resolutions": {
-    "@unhead/addons": "workspace:*",
     "@unhead/angular": "workspace:*",
+    "@unhead/bundler": "workspace:*",
     "@unhead/dom": "workspace:*",
     "@unhead/schema": "workspace:*",
     "@unhead/schema-org": "workspace:*",

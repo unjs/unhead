@@ -8,7 +8,7 @@ export default defineProject({
       'unhead/server': resolve(__dirname, '../packages/unhead/src/server'),
       'unhead/types': resolve(__dirname, '../packages/unhead/src/types'),
       'unhead': resolve(__dirname, '../packages/unhead/src'),
-      '@unhead/addons': resolve(__dirname, '../packages/addons/src'),
+      '@unhead/bundler': resolve(__dirname, '../packages/bundler/src'),
       '@unhead/schema-org': resolve(__dirname, '../packages/schema-org/src'),
       '@unhead/vue': resolve(__dirname, '../packages/vue/src'),
     },

@@ -84,20 +84,20 @@ Note: The `ssr:render` hook runs synchronously, so custom minifiers must be sync
 
 ## Build-Time Minification
 
-For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, use the Vite/Webpack transform plugin from `@unhead/addons`. This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
+For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, use the Vite/Webpack transform plugin from `@unhead/bundler`. This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
 
 ::code-group
 
 ```bash [pnpm]
-pnpm add -D @unhead/addons
+pnpm add -D @unhead/bundler
 ```
 
 ```bash [yarn]
-yarn add -D @unhead/addons
+yarn add -D @unhead/bundler
 ```
 
 ```bash [npm]
-npm install -D @unhead/addons
+npm install -D @unhead/bundler
 ```
 
 ::
@@ -106,9 +106,9 @@ Configure the Vite plugin with minifier functions:
 
 ::code-block
 ```ts [vite.config.ts]
-import UnheadVite from '@unhead/addons/vite'
-import { createJSMinifier } from '@unhead/addons/minify/rolldown'
-import { createCSSMinifier } from '@unhead/addons/minify/lightningcss'
+import UnheadVite from '@unhead/bundler/vite'
+import { createJSMinifier } from '@unhead/bundler/minify/rolldown'
+import { createCSSMinifier } from '@unhead/bundler/minify/lightningcss'
 
 export default defineConfig({
   plugins: [
@@ -127,9 +127,9 @@ Available minifier backends:
 
 | Package | Function | Use case |
 |---------|----------|----------|
-| `@unhead/addons/minify/rolldown` | `createJSMinifier()` | JS minification (Vite 8+) |
-| `@unhead/addons/minify/esbuild` | `createJSMinifier()` | JS minification (Vite 7) |
-| `@unhead/addons/minify/lightningcss` | `createCSSMinifier()` | CSS minification |
+| `@unhead/bundler/minify/rolldown` | `createJSMinifier()` | JS minification (Vite 8+) |
+| `@unhead/bundler/minify/esbuild` | `createJSMinifier()` | JS minification (Vite 7) |
+| `@unhead/bundler/minify/lightningcss` | `createCSSMinifier()` | CSS minification |
 
 ## Standalone Minifier Utilities
 

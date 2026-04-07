@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
-import { unheadSolidPlugin } from '@unhead/solid-js/stream/vite'
+import unhead from '@unhead/solid-js/vite'
 
 export default defineConfig({
   plugins: [
     // MUST come before solid() to see JSX before it's compiled to function calls
-    unheadSolidPlugin(),
+    unhead({ streaming: true }),
     solid({ ssr: true }),
   ],
   build: {

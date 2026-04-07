@@ -1,5 +1,5 @@
 import type { ResolvableHead, SerializableHead } from 'unhead/types'
-import { InferSeoMetaPlugin } from '@unhead/addons'
+import { InferSeoMetaPlugin } from '@unhead/bundler'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta } from '../../src'
 import { createHead as createServerHead, renderSSRHead } from '../../src/server'
