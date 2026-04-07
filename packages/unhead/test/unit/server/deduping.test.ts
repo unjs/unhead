@@ -306,6 +306,7 @@ describe('dedupe', () => {
       meta: [
         {
           name: 'description',
+          content: null,
         },
       ],
     })
@@ -324,7 +325,7 @@ describe('dedupe', () => {
           crossorigin: 'anonymous',
           referrerpolicy: 'no-referrer-when-downgrade',
           innerHTML: 'console.log(\'A\')',
-        },
+        } as any,
       ],
     })
     head.push({

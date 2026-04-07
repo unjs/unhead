@@ -184,31 +184,42 @@ export interface ModuleScript extends ScriptBase, ScriptHttpEvents {
 // ============================================================================
 
 /**
- * Inline JavaScript (no events, no src)
+ * Inline JavaScript (no events, no src).
+ * Requires either `textContent` (recommended, XSS-safe) or `innerHTML`.
  */
-export interface InlineScript extends ScriptBase, NoLoadableScriptProps {
+export type InlineScript = ScriptBase & NoLoadableScriptProps & {
   /**
    * This attribute indicates the type of script represented.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type?: '' | 'text/javascript'
-  /**
-   * Sets the textContent of an element. Safer for XSS.
-   */
-  textContent: string
-  /** Use `textContent` instead for inline scripts (safer for XSS). */
-  innerHTML?: never
-}
+} & (
+  | {
+    /** Sets the textContent of an element. Safer for XSS. */
+    textContent: string
+    innerHTML?: never
+  }
+  | {
+    textContent?: never
+    /**
+     * Sets the innerHTML of an element.
+     *
+     * Warning: not safe for XSS. Prefer `textContent` for inline scripts.
+     */
+    innerHTML: string | Record<string, unknown>
+  }
+)
 
 // ============================================================================
 // Inline Module Script
 // ============================================================================
 
 /**
- * Inline ES Module script (no src)
+ * Inline ES Module script (no src).
+ * Requires either `textContent` (recommended, XSS-safe) or `innerHTML`.
  */
-export interface InlineModuleScript extends ScriptBase, NoLoadableScriptProps {
+export type InlineModuleScript = ScriptBase & NoLoadableScriptProps & {
   /**
    * This attribute indicates the type of script represented.
    * Required discriminant for module scripts.
@@ -216,13 +227,22 @@ export interface InlineModuleScript extends ScriptBase, NoLoadableScriptProps {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type: 'module'
-  /**
-   * Sets the textContent of an element. Safer for XSS.
-   */
-  textContent: string
-  /** Use `textContent` instead for inline scripts (safer for XSS). */
-  innerHTML?: never
-}
+} & (
+  | {
+    /** Sets the textContent of an element. Safer for XSS. */
+    textContent: string
+    innerHTML?: never
+  }
+  | {
+    textContent?: never
+    /**
+     * Sets the innerHTML of an element.
+     *
+     * Warning: not safe for XSS. Prefer `textContent` for inline scripts.
+     */
+    innerHTML: string
+  }
+)
 
 // ============================================================================
 // JSON-LD Structured Data Script
@@ -314,9 +334,13 @@ export type ApplicationJsonScript = ScriptBase & NoLoadableScriptProps & DataScr
 /**
  * Fallback for custom or unknown `type` values.
  *
- * **Warning:** Misspelling a known `type` value (e.g. `'aplication/ld+json'` instead of
- * `'application/ld+json'`) will silently match this type and bypass all validation.
- * Use the narrowed script types (e.g. {@link ExternalScript}, {@link JsonLdScript}) for type safety.
+ * Not included in the {@link Script} union to prevent silent absorption of known `type` values.
+ * Use this type explicitly when you need a non-standard `type` value:
+ *
+ * ```ts
+ * import type { GenericScript } from 'unhead/types'
+ * useHead({ script: [{ type: 'text/plain', textContent: '...' } satisfies GenericScript] })
+ * ```
  */
 export interface GenericScript extends ScriptBase, ScriptHttpEvents {
   /**
@@ -392,7 +416,15 @@ export interface GenericScript extends ScriptBase, ScriptHttpEvents {
 
 /**
  * Discriminated union of all script types.
- * Order matters for TypeScript narrowing - specific types before generic.
+ *
+ * Each `type` value maps to a specific interface that enforces per-type constraints.
+ * For example, inline scripts require `textContent` and forbid `src`/`async`/`defer`.
+ *
+ * For custom or non-standard `type` values, use {@link GenericScript} directly:
+ * ```ts
+ * import type { GenericScript } from 'unhead/types'
+ * useHead({ script: [{ type: 'text/plain', textContent: '...' } satisfies GenericScript] })
+ * ```
  */
 export type Script
   = | ExternalScript
@@ -403,4 +435,3 @@ export type Script
     | SpeculationRulesScript
     | ImportMapScript
     | ApplicationJsonScript
-    | GenericScript

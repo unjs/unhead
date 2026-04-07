@@ -300,7 +300,7 @@ describe('streaming SSR', () => {
           innerHTML: 'console.log("test")',
           tagPosition: 'head',
           tagPriority: 'high',
-        }],
+        } as any],
       })
 
       const result = renderSSRHeadSuspenseChunk(head)

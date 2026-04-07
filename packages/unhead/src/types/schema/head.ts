@@ -121,12 +121,13 @@ export interface UnheadHtmlAttributes extends Omit<HtmlAttributes, 'class' | 'st
 }
 
 /**
- * Unhead meta with support for array content values
+ * Unhead meta with support for array content values.
+ * Content is required (use `null` explicitly to remove a meta tag).
  */
 export type UnheadMeta
-  = | (Omit<NameMeta, 'content'> & { content?: MaybeArray<string | number> | null })
-    | (Omit<PropertyMeta, 'content'> & { content?: MaybeArray<string | number> | null })
-    | (Omit<HttpEquivMeta, 'content'> & { content?: MaybeArray<string | number> | null })
+  = | (Omit<NameMeta, 'content'> & { content: MaybeArray<string | number> | null })
+    | (Omit<PropertyMeta, 'content'> & { content: MaybeArray<string | number> | null })
+    | (Omit<HttpEquivMeta, 'content'> & { content: MaybeArray<string | number> | null })
     | CharsetMeta
 
 export type MaybeEventFnHandlers<T> = {

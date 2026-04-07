@@ -36,16 +36,17 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
     }
     head.push({
       meta: [
+        // content is intentionally omitted - inferred from title/description by the hook below
         {
           'property': 'og:title',
           'tagPriority': 'low',
           'data-infer': '',
-        },
+        } as any,
         {
           'property': 'og:description',
           'tagPriority': 'low',
           'data-infer': '',
-        },
+        } as any,
       ],
     })
     return {

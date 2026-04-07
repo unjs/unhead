@@ -11,7 +11,7 @@ describe('vue ssr deduping', () => {
             src: 'test',
             key: 'my-script',
             innerHTML: 'console.log(\'A\')',
-          },
+          } as any,
         ],
       })
       useHead({
@@ -38,7 +38,7 @@ describe('vue ssr deduping', () => {
             crossorigin: 'anonymous',
             referrerpolicy: 'no-referrer-when-downgrade',
             innerHTML: 'console.log(\'A\')',
-          },
+          } as any,
         ],
       })
       useHead({
