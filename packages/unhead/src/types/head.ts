@@ -200,6 +200,11 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
    * @internal
    */
   _index?: number
+  /**
+   * Source location for devtools tracing.
+   * @internal
+   */
+  _source?: string
 }
 
 export type HeadRenderer<T = unknown> = (head: Unhead<any, any>) => T

@@ -705,6 +705,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             }
           }
 
+          // Store rules on the head instance for devtools integration
+          ;(head as any)._validationRules = rules
+
           // Dispatch
           if (rules.length) {
             if (options.onReport) {
