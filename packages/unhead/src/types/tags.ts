@@ -115,6 +115,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * @internal
    */
   _h?: string
+  /**
+   * Source file:line that created this tag (devtools only).
+   * @internal
+   */
+  _source?: string
 }
 
 export type HeadTagKeys = (keyof HeadTag)[]

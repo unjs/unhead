@@ -96,3 +96,10 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions 
 }
 
 export { useScript } from './scripts/useScript'
+
+/** @deprecated Use `useHead` instead. */
+export const useServerHead = useHead
+/** @deprecated Use `useHeadSafe` instead. */
+export const useServerHeadSafe = useHeadSafe
+/** @deprecated Use `useSeoMeta` instead. */
+export const useServerSeoMeta = useSeoMeta

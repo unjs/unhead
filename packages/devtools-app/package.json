@@ -1,0 +1,20 @@
+{
+  "name": "@unhead/devtools-app",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi generate",
+    "generate": "nuxi generate"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "catalog:conflicts_@nuxt/ui_h4_6_1",
+    "@unhead/vue": "workspace:*",
+    "@vitejs/devtools-kit": "catalog:",
+    "@vueuse/nuxt": "catalog:conflicts_conflicts_@vueuse/nuxt_h14_h14_2_1",
+    "nuxt": "catalog:conflicts_nuxt_h4_4_2",
+    "pathe": "catalog:conflicts_pathe_h2",
+    "tailwindcss": "catalog:",
+    "vue": "catalog:"
+  }
+}
