@@ -27,8 +27,8 @@ Add the plugin to your Unhead configuration:
 ::code-block
 
 ```ts [Input]
-import { createHead } from 'unhead'
-import { AliasSortingPlugin } from 'unhead/plugins'
+import { createHead } from '@unhead/dynamic-import'
+import { AliasSortingPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [

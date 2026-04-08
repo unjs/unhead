@@ -23,7 +23,7 @@ Register the plugin when you want head tag validation — it's fully tree-shakea
 ::code-block
 
 ```ts [Input]
-import { ValidatePlugin } from 'unhead/plugins'
+import { ValidatePlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [

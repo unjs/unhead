@@ -22,7 +22,7 @@ Register the plugin when creating your head instance:
 
 ::code-block
 ```ts [Input]
-import { MinifyPlugin } from 'unhead/plugins'
+import { MinifyPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [
@@ -84,7 +84,7 @@ Note: The `ssr:render` hook runs synchronously, so custom minifiers must be sync
 
 ## Build-Time Minification
 
-For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, enable the `minify` option on the [unified Vite plugin](/docs/head/guides/advanced/vite-plugin). This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
+For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, enable the `minify` option on the [unified Vite plugin](/docs/head/guides/build-plugins/minify-transform). This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
 
 ::code-block
 ```ts [vite.config.ts]
@@ -121,7 +121,7 @@ The built-in minifiers are also available as standalone functions for use in cus
 
 ::code-block
 ```ts [Input]
-import { minifyCSS, minifyJS, minifyJSON } from 'unhead/minify'
+import { minifyCSS, minifyJS, minifyJSON } from '@unhead/dynamic-import/minify'
 
 const minifiedJS = minifyJS('// comment\nvar x = 1;')
 const minifiedCSS = minifyCSS('body { margin: 0; }')
@@ -131,6 +131,6 @@ const minifiedJSON = minifyJSON('{ "name": "test" }')
 
 ## Related
 
-- [Build Plugins](/docs/head/guides/advanced/vite-plugin) - Vite and Webpack build optimizations
+- [Build Plugins](/docs/head/guides/build-plugins/overview) - Vite and Webpack build optimizations
 - [Validate Plugin](/docs/head/guides/plugins/validate) - Catch common SEO and head tag mistakes
 - [Inner Content](/docs/head/guides/core-concepts/inner-content) - Working with innerHTML and textContent
