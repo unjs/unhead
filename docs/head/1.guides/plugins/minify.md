@@ -89,14 +89,14 @@ For build-time minification of static string literals inside `useHead()` / `useS
 ::code-block
 ```ts [vite.config.ts]
 import vue from '@vitejs/plugin-vue'
-import unhead from '@unhead/vue/vite'
+import { Unhead } from '@unhead/vue/vite'
 import { createJSMinifier } from '@unhead/bundler/minify/rolldown'
 import { createCSSMinifier } from '@unhead/bundler/minify/lightningcss'
 
 export default defineConfig({
   plugins: [
     vue(),
-    unhead({
+    Unhead({
       minify: {
         js: createJSMinifier(),
         css: createCSSMinifier(),
