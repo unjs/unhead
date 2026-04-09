@@ -10,7 +10,6 @@ packages:
   - '!examples/vue-2'
   - examples/*
   - docs
-
 overrides:
   chokidar: 4.0.1
 catalog:
@@ -46,7 +45,7 @@ catalog:
   bumpp: ^11.0.1
   devalue: ^5.7.1
   eslint: ^10.2.0
-  eslint-plugin-harlanzw: ^0.12.0
+  eslint-plugin-harlanzw: ^0.12.1
   fs-extra: ^11.3.4
   hookable: ^6.1.0
   js-yaml: ^4.1.1
