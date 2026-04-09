@@ -253,8 +253,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const hookCtx = { script }
 
   script.setupTriggerHandler(options.trigger)
-  if (options.use && !head.ssr) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(options.use() || {} as T)
+  if (options.use) {
+    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
