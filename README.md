@@ -16,25 +16,26 @@ See the full [introduction to Unhead](https://unhead.unjs.io/docs/typescript/hea
 </table>
 </p>
 
-### Unhead v3 🎉
+### Unhead v3 is out 🎉
 
-The latest major is in beta! Check out the [v3 release notes](https://unhead.unjs.io/v3).
+32% faster, 11% smaller, streaming SSR, and a unified Vite plugin with DevTools. See the [v3 release notes](https://unhead.unjs.io/v3).
 
 ## Highlights
 
-- ✨ `useHead()`: Deduping, sorting, and tag merging
-- 🍣 `useSeoMeta()`: Flat SEO meta tags
+- 🌊 **Streaming SSR**: head tags push to the DOM as suspense boundaries resolve
+- 🛠️ **Unified Vite plugin + DevTools**: tree-shaking, validation, source tracing
+- ✨ `useHead()`: Deduping, sorting, tag merging, and type narrowing
+- 🍣 `useSeoMeta()`: Flat SEO meta tags with compile-time transform
 - 🧩 `useScript()`: Powerful and performant script loading API
-- 🚀 Performant: Capo.js tag sorting, tiny (4.4kb gz), tree-shaken, etc.
-- 🤝 Supports Vue, Angular, React, Solid.js and Svelte
-- Used by [Nuxt](https://nuxt.com/)
+- 🚀 Tiny (4.4kb gz), tree-shaken, [Capo.js](https://unhead.unjs.io/learn/guides/what-is-capo) tag sorting
+- 🤝 Vue, React, Solid, Svelte, Angular. Used by [Nuxt](https://nuxt.com/)
 
 ## Get Started
 
 Install `unhead` dependency to your project:
 
 ```bash
-npm install unhead@beta
+npm install unhead
 ```
 
 > [!TIP]
