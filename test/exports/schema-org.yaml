@@ -103,6 +103,7 @@
   resolveNodeId: function
   resolveRelation: function
   reviewResolver: object
+  schemaAutoImports: object
   searchActionResolver: object
   ServiceId: string
   serviceResolver: object

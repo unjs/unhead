@@ -8,6 +8,6 @@
 ./minify/rolldown:
   createJSMinifier: function
 ./vite:
-  default: function
+  Unhead: function
 ./webpack:
-  default: function
+  Unhead: function
