@@ -605,13 +605,22 @@ describe('validatePlugin', () => {
   })
 
   describe('performance hints', () => {
-    it('warns on preload with fetchpriority="low"', () => {
+    it('warns on preload with fetchpriority="low" for non-script assets', () => {
       const { head, rules } = createValidationHead()
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'low' as const }],
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeTruthy()
+    })
+
+    it('does not warn on preload with fetchpriority="low" for scripts (valid warmup pattern)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const, fetchpriority: 'low' as const }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeFalsy()
     })
 
     it('does not warn on preload with fetchpriority="high"', () => {
@@ -698,6 +707,26 @@ describe('validatePlugin', () => {
       head.push({
         link: [{ rel: 'preload', href: '/critical.js', as: 'script' as const }],
         script: [{ src: '/critical.js' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
+    })
+
+    it('does not warn on preload + defer script when preload has fetchpriority="low" (useScript warmup)', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/gtm.js', as: 'script' as const, fetchpriority: 'low' as const }],
+        script: [{ src: '/gtm.js', defer: true }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
+    })
+
+    it('does not warn on preload + async script when preload has fetchpriority="low"', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const, fetchpriority: 'low' as const }],
+        script: [{ src: '/analytics.js', async: true }],
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
@@ -1011,6 +1040,23 @@ describe('validatePlugin', () => {
         style: [{ innerHTML: 'body { color: red }' }],
       })
       renderSSRHead(head)
+      expect(rules.find(r => r.id === 'charset-not-early')).toBeFalsy()
+    })
+
+    it('skips virtual tags (templateParams, titleTemplate) when counting charset position', () => {
+      const { head, rules } = createValidationHead({ rules: { 'charset-not-early': ['warn', { maxPosition: 2 }] } })
+      head.push({
+        templateParams: { site: { name: 'Test' } } as any,
+        titleTemplate: '%s | %site.name' as any,
+      })
+      head.push({
+        title: 'Home',
+      })
+      head.push({
+        meta: [{ charset: 'utf-8' }],
+      })
+      renderSSRHead(head)
+      // charset should be position 2 (title=1, charset=2), not 4 (templateParams=1, titleTemplate=2, title=3, charset=4)
       expect(rules.find(r => r.id === 'charset-not-early')).toBeFalsy()
     })
 
