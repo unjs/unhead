@@ -328,7 +328,14 @@ function toggleRow(tag: any) {
                 </button>
               </td>
               <td class="p-2">
-                <UBadge :color="tag.mode === 'server' ? 'info' : tag.mode === 'client' ? 'warning' : 'success'" variant="subtle" size="xs">
+                <UBadge
+                  :color="tag.mode === 'server' ? 'info'
+                    : tag.mode === 'client' ? 'warning'
+                      : tag.mode === 'stream' ? 'primary'
+                        : 'success'"
+                  variant="subtle"
+                  size="xs"
+                >
                   {{ tag.mode }}
                 </UBadge>
               </td>

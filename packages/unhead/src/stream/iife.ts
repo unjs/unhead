@@ -41,11 +41,20 @@ function init(options: { streamKey?: string } = {}) {
     hydrationLocked = false
   })
 
+  // Push an entry and tag it as streamed so devtools can distinguish
+  // entries that arrived via inline streaming scripts from client pushes.
+  function pushStreamed(entry: any) {
+    const active = head.push(entry)
+    const stored = head.entries.get(active._i) as any
+    if (stored)
+      stored._streamed = true
+  }
+
   // Consume existing queue - each item in queue is an array of entries
   if (queue?._q) {
     for (const entries of queue._q) {
       for (const entry of entries) {
-        head.push(entry)
+        pushStreamed(entry)
       }
     }
     head.dirty = true
@@ -61,7 +70,7 @@ function init(options: { streamKey?: string } = {}) {
       // During hydration, only SSR streaming scripts should push
       // Client useHead calls are skipped to preserve streamed state
       for (const entry of entries) {
-        head.push(entry)
+        pushStreamed(entry)
       }
       head.dirty = true
       head.render()

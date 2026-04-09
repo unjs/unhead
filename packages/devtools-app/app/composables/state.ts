@@ -10,7 +10,7 @@ export interface SeoOverview {
   ogImage: string
 }
 
-export type TagRenderMode = 'server' | 'client' | 'hydrated'
+export type TagRenderMode = 'server' | 'client' | 'hydrated' | 'stream'
 
 export interface SerializedEntry {
   id: number

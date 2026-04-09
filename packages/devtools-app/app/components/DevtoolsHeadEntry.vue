@@ -9,6 +9,7 @@ const modeConfig = {
   server: { color: 'info', icon: 'i-carbon-cloud' },
   client: { color: 'warning', icon: 'i-carbon-laptop' },
   hydrated: { color: 'success', icon: 'i-carbon-arrows-horizontal' },
+  stream: { color: 'primary', icon: 'i-carbon-flow-stream' },
 } as const
 </script>
 

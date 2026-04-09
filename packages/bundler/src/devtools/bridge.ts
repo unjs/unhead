@@ -75,9 +75,20 @@ function safeSerialize(value: any, seen = new WeakSet()): any {
   return result
 }
 
-function resolveEntryMode(entry: any, wasSSR: boolean, ssrSources: Set<string>): TagRenderMode {
+function resolveEntryMode(entry: any, wasSSR: boolean, ssrSources: Set<string>, wasStreamed: boolean): TagRenderMode {
   if (entry._devtoolsMode)
     return entry._devtoolsMode
+  // Entries pushed via the streaming queue (window.__unhead__.push) are
+  // tagged by the streaming IIFE so they can be distinguished from regular
+  // hydrated/client entries.
+  if (entry._streamed)
+    return 'stream'
+  // In streaming mode, the SSR payload script is absent, so we can't match
+  // sources against an ssrSources set. Any entry that arrived via useHead
+  // (i.e. has a source) is hydrating a tag that was first painted by the
+  // streaming inline scripts, so treat it as hydrated.
+  if (wasStreamed && entry.options?._source)
+    return 'hydrated'
   if (!wasSSR)
     return 'client'
   // Match against SSR payload sources to determine if this entry was server-rendered
@@ -114,6 +125,19 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
     }
   }
 
+  // Detect streaming mode by looking for any entry tagged by the IIFE.
+  // When streaming, useHead pushes during hydration are real client entries
+  // hydrating tags that the streaming inline scripts already painted.
+  let wasStreamed = false
+  if (head.entries) {
+    for (const [, entry] of head.entries) {
+      if (entry._streamed) {
+        wasStreamed = true
+        break
+      }
+    }
+  }
+
   // Collect client entry IDs to find server-only entries
   const clientEntryIds = new Set<number>()
 
@@ -121,7 +145,7 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
     for (const [id, entry] of head.entries) {
       clientEntryIds.add(id)
       const tags = entry._tags || []
-      const mode = resolveEntryMode(entry, wasSSR, ssrSources)
+      const mode = resolveEntryMode(entry, wasSSR, ssrSources, wasStreamed)
       entries.push({
         id,
         source: entry.options?._source,
