@@ -470,8 +470,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             // === Performance Hints ===
             // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
 
-            // Preload + fetchpriority="low" is contradictory
-            if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low')
+            // Preload + fetchpriority="low" without a matching low-priority script is contradictory
+            // Note: preload + fetchpriority="low" is a valid warmup pattern (used by useScript)
+            // to hint the browser to start fetching early at low priority
+            if (tag.tag === 'link' && props.rel === 'preload' && props.fetchpriority === 'low' && props.as !== 'script')
               report('preload-fetchpriority-conflict', `Preload with fetchpriority="low" is contradictory — preload signals critical, low priority contradicts that.`, 'warn', tag)
 
             // Inline style size check (14KB critical CSS budget)
@@ -498,11 +500,11 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Canonical vs og:url mismatch
           const ogUrl = metaByKey.get('og:url')
           if (canonicalHref && ogUrl?.props.content && canonicalHref !== ogUrl.props.content)
-            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrl.props.content}".`, 'warn')
+            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrl.props.content}".`, 'warn', ogUrl)
 
           // og:image without dimensions
           if (metaByKey.has('og:image') && (!metaByKey.has('og:image:width') || !metaByKey.has('og:image:height')))
-            report('og-image-missing-dimensions', `og:image is set but og:image:width and/or og:image:height are missing — social platforms may not display the image.`, 'warn')
+            report('og-image-missing-dimensions', `og:image is set but og:image:width and/or og:image:height are missing — social platforms may not display the image.`, 'warn', metaByKey.get('og:image'))
 
           // OG tags without og:title or og:description
           if (hasOgTags) {
@@ -552,9 +554,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           }
 
           // Preload + async/defer script conflict (priority escalation anti-pattern)
+          // Skip when the preload has fetchpriority="low" as this is a valid warmup pattern (used by useScript)
           const preloadScriptHrefs = new Map<string, HeadTag>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && tag.props.fetchpriority !== 'low')
               preloadScriptHrefs.set(tag.props.href, tag)
           }
           for (const tag of tags) {
@@ -582,8 +585,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Missing TemplateParamsPlugin (silent breakage — %params appear literally)
           if (!head.plugins.has('template-params')) {
-            if (tags.some((t: HeadTag) => t.tag === 'templateParams'))
-              report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn')
+            const tpTag = tags.find((t: HeadTag) => t.tag === 'templateParams')
+            if (tpTag)
+              report('missing-template-params-plugin', `templateParams are set but TemplateParamsPlugin is not registered. In v3, this plugin is opt-in. Add it to createHead({ plugins: [TemplateParamsPlugin] }).`, 'warn', tpTag)
           }
 
           // Missing AliasSortingPlugin (silent breakage — before:/after: priorities ignored)
@@ -627,22 +631,27 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           }
 
           // charset meta should appear early in head
-          const { maxPosition: charsetMaxPos } = resolveOptions(ruleConfig, 'charset-not-early', { maxPosition: 3 })
-          let headIndex = 0
-          let charsetTag: HeadTag | undefined
-          let charsetPosition = -1
-          for (const tag of tags) {
-            if (tag.tagPosition && tag.tagPosition !== 'head')
-              continue
-            headIndex++
-            if (tag.tag === 'meta' && ('charset' in tag.props || tag.props['http-equiv']?.toLowerCase() === 'content-type')) {
-              charsetTag = tag
-              charsetPosition = headIndex
-              break
+          // Only check on SSR where we control the render order; on the client the DOM order
+          // is already set by SSR and capo weights ensure charset is placed early.
+          if (head.ssr) {
+            const { maxPosition: charsetMaxPos } = resolveOptions(ruleConfig, 'charset-not-early', { maxPosition: 3 })
+            const headElementTags = new Set(['title', 'base', 'meta', 'link', 'style', 'script', 'noscript'])
+            const sortedHeadTags = tags
+              .filter((t: any) => headElementTags.has(t.tag) && (!t.tagPosition || t.tagPosition === 'head'))
+              .sort((a: any, b: any) => (a._w ?? 100) === (b._w ?? 100) ? (a._p ?? 0) - (b._p ?? 0) : (a._w ?? 100) - (b._w ?? 100))
+            let charsetTag: HeadTag | undefined
+            let charsetPosition = -1
+            for (let i = 0; i < sortedHeadTags.length; i++) {
+              const tag = sortedHeadTags[i]
+              if (tag.tag === 'meta' && ('charset' in tag.props || tag.props['http-equiv']?.toLowerCase() === 'content-type')) {
+                charsetTag = tag
+                charsetPosition = i + 1
+                break
+              }
             }
+            if (charsetTag && charsetPosition > charsetMaxPos)
+              report('charset-not-early', `<meta charset> is at position ${charsetPosition} in <head>. It should be within the first ${charsetMaxPos} tags so the browser doesn't need to re-parse.`, 'warn', charsetTag)
           }
-          if (charsetTag && charsetPosition > charsetMaxPos)
-            report('charset-not-early', `<meta charset> is at position ${charsetPosition} in <head>. It should be within the first ${charsetMaxPos} tags so the browser doesn't need to re-parse.`, 'warn', charsetTag)
 
           // preload as="script" when the actual script is type="module" should use modulepreload
           const moduleScriptSrcs = new Set<string>()
