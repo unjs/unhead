@@ -159,8 +159,13 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             }
           }
           if (originalName === 'useServerSeoMeta') {
-            if (output.length)
-              output.push('});')
+            if (output.length) {
+              const secondArg = node.arguments[1]
+              if (secondArg)
+                output.push(`}, ${code.substring(secondArg.start, secondArg.end)});`)
+              else
+                output.push('});')
+            }
             output.push('useServerHead({')
           }
 
@@ -233,7 +238,14 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
           if (output) {
             if (meta.length)
               output.push('  ]')
-            output.push('})')
+            // Preserve the second argument (options like { head }) if present
+            if (node.arguments.length >= 2) {
+              const optionsArg = code.substring(node.arguments[1].start, node.arguments[1].end)
+              output.push(`}, ${optionsArg})`)
+            }
+            else {
+              output.push('})')
+            }
             s.overwrite(node.start, node.end, output.join('\n'))
 
             // Track import for rewriting

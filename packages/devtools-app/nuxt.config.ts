@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
   ],
 
-  css: [resolve(__dirname, 'assets/css/global.css')],
+  css: [resolve(__dirname, 'app/assets/css/global.css')],
 
   imports: {
     autoImport: true,

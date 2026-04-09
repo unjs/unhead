@@ -97,6 +97,7 @@
   },
   "dependencies": {
     "@rollup/pluginutils": "catalog:",
+    "@unhead/devtools-app": "workspace:*",
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
@@ -104,6 +105,7 @@
     "unplugin": "catalog:"
   },
   "devDependencies": {
+    "@vitejs/devtools-kit": "catalog:",
     "rollup": "catalog:",
     "unhead": "workspace:*",
     "vite": "catalog:"

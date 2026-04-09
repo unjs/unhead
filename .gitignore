@@ -23,3 +23,6 @@ playwright-report/
 
 # Skilld references (recreated by `skilld install`)
 .skilld
+
+.nuxt
+.output

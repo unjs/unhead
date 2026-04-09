@@ -43,6 +43,7 @@
   "exclude": [
     "examples",
     "bench",
-    "packages/angular"
+    "packages/angular",
+    "packages/devtools-app"
   ]
 }

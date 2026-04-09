@@ -8,12 +8,15 @@
     "generate": "nuxi generate"
   },
   "devDependencies": {
-    "@nuxt/ui": "catalog:conflicts_@nuxt/ui_h4_6_1",
+    "@nuxt/ui": "catalog:",
+    "@shikijs/langs": "catalog:",
+    "@shikijs/themes": "catalog:",
     "@unhead/vue": "workspace:*",
     "@vitejs/devtools-kit": "catalog:",
-    "@vueuse/nuxt": "catalog:conflicts_conflicts_@vueuse/nuxt_h14_h14_2_1",
-    "nuxt": "catalog:conflicts_nuxt_h4_4_2",
-    "pathe": "catalog:conflicts_pathe_h2",
+    "@vueuse/nuxt": "catalog:",
+    "nuxt": "catalog:",
+    "pathe": "catalog:",
+    "shiki": "catalog:",
     "tailwindcss": "catalog:",
     "vue": "catalog:"
   }
