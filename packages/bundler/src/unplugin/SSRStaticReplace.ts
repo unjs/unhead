@@ -44,7 +44,7 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
       apply(_config: UserConfig, env: ConfigEnv) {
         if (env.isSsrBuild)
           ssr = true
-        return false
+        return true
       },
     },
   }

@@ -26,12 +26,13 @@ Plugins can also be a function that receives the `Unhead` instance:
 
 ```ts
 import { defineHeadPlugin } from 'unhead/plugins'
+import { resolveTags } from 'unhead/utils'
 
 export const myPlugin = defineHeadPlugin((head) => ({
   key: 'my-plugin',
   hooks: {
     'entries:updated': () => {
-      const tags = head.resolveTags()
+      const tags = resolveTags(head)
       console.log('Current tags:', tags)
     }
   }
