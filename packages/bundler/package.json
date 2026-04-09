@@ -96,7 +96,6 @@
     }
   },
   "dependencies": {
-    "@rollup/pluginutils": "catalog:",
     "@vitejs/devtools-kit": "catalog:",
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
