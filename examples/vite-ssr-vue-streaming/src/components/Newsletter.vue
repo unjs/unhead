@@ -14,7 +14,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Newsletter', '#22d3ee')`" />
   <div class="newsletter">
     <h3>Join Our Newsletter</h3>
     <p>Get {{ data.discount }}% off your first order! Join {{ data.subscribers.toLocaleString() }}+ subscribers.</p>

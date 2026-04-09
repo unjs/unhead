@@ -20,7 +20,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Hero Banner', '#f472b6')`" />
   <div class="hero-banner">
     <h1>{{ data.title }}</h1>
     <p>{{ data.subtitle }}</p>

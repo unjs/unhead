@@ -35,7 +35,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Reviews', '#fbbf24')`" />
   <div class="reviews-section">
     <h3>Customer Reviews</h3>
     <div class="avg-rating">Average: {{ avgStars }} {{ data.avgRating }}/5</div>

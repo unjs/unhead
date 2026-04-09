@@ -88,6 +88,9 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
   let bridgeCode: string | undefined
   let unheadVersion = ''
   const pkgDir = fileURLToPath(new URL('..', import.meta.url))
+  // At runtime this file is bundled into dist/vite.mjs, so the devtools-ui
+  // assets are a sibling directory inside @unhead/bundler's own dist.
+  const devtoolsUiDir = fileURLToPath(new URL('./devtools-ui', import.meta.url))
 
   return {
     name: '@unhead/devtools',
@@ -179,10 +182,8 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
 
     devtools: {
       setup(ctx) {
-        // devtools-app dist is in a sibling package
-        const clientPath = resolve(pkgDir, 'node_modules/@unhead/devtools-app/dist')
-        if (existsSync(clientPath)) {
-          ctx.views.hostStatic(DEVTOOLS_UI_ROUTE, clientPath)
+        if (existsSync(devtoolsUiDir)) {
+          ctx.views.hostStatic(DEVTOOLS_UI_ROUTE, devtoolsUiDir)
         }
 
         ctx.docks.register({

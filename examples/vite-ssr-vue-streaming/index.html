@@ -111,48 +111,7 @@
 
       @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       @keyframes cardIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-      /* Stream Timeline */
-      #stream-log { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 15px; border-radius: 10px; font-size: 11px; font-family: 'SF Mono', Monaco, monospace; width: 280px; z-index: 1000; border: 1px solid #333; max-height: 50vh; overflow-y: auto; }
-      #stream-log h3 { margin: 0 0 10px; color: #4ade80; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-      .log-entry { padding: 4px 0; border-bottom: 1px solid #222; display: flex; gap: 10px; }
-      .log-entry:last-child { border: none; }
-      .log-time { color: #666; min-width: 45px; }
-      .log-msg { flex: 1; }
-
-      /* Head Updates */
-      #head-updates { position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 15px; border-radius: 10px; font-size: 10px; font-family: 'SF Mono', Monaco, monospace; width: 280px; max-height: 200px; overflow-y: auto; border: 1px solid #333; }
-      #head-updates h3 { margin: 0 0 10px; color: #06b6d4; font-size: 12px; }
-      .head-entry { color: #666; padding: 3px 0; display: flex; gap: 10px; border-bottom: 1px solid #222; }
-      .head-entry:last-child { border: none; }
-      .head-time { color: #666; min-width: 40px; }
-      .head-desc { flex: 1; }
-      .head-entry.new { color: #4ade80; animation: flash 0.5s; }
-      .head-entry.new .head-time { color: #4ade80; }
-      @keyframes flash { from { background: rgba(74,222,128,0.2); } to { background: transparent; } }
     </style>
-    <script>
-      // Must be defined early so bootstrap script can use __headLog
-      const start = Date.now();
-      const seen = new Set();
-
-      window.__streamLog = (name, color = '#4ade80') => {
-        if (seen.has(name)) return;
-        seen.add(name);
-        const el = document.createElement('div');
-        el.className = 'log-entry';
-        el.innerHTML = `<span class="log-time">${((Date.now() - start) / 1000).toFixed(2)}s</span><span class="log-msg" style="color:${color}">${name}</span>`;
-        document.getElementById('log-entries')?.appendChild(el);
-      };
-
-      window.__headLog = (desc) => {
-        const el = document.createElement('div');
-        el.className = 'head-entry new';
-        el.innerHTML = `<span class="head-time">${((Date.now() - start) / 1000).toFixed(2)}s</span><span class="head-desc">${desc}</span>`;
-        document.getElementById('head-entries')?.appendChild(el);
-        setTimeout(() => el.classList.remove('new'), 500);
-      };
-    </script>
     <script type="module" src="/src/entry-client.ts"></script>
   </head>
   <body></body>

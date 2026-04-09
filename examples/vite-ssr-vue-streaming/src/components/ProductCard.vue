@@ -34,7 +34,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Product ${id}', '#4ade80')`" />
   <div class="product-card" :data-product-id="id">
     <div class="product-image">[{{ product.image }}]</div>
     <h4>{{ product.name }}</h4>

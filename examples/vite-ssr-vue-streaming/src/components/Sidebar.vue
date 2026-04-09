@@ -16,7 +16,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Sidebar', '#a78bfa')`" />
   <aside class="sidebar">
     <h3>Categories</h3>
     <ul>

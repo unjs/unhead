@@ -14,7 +14,6 @@ useHead({
 </script>
 
 <template>
-  <component :is="'script'" v-html="`window.__streamLog?.('Header', '#60a5fa')`" />
   <header class="site-header">
     <div class="logo">StreamShop</div>
     <nav class="nav-links">

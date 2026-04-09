@@ -134,7 +134,7 @@ useHead({
     </div>
 
     <footer class="site-footer">
-      <p>2024 StreamShop - Vue Streaming SSR Demo</p>
+      <p>StreamShop, Vue Streaming SSR Demo</p>
     </footer>
   </div>
 </template>
