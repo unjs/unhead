@@ -1,3 +1,7 @@
+catalogMode: prefer
+shellEmulator: true
+
+trustPolicy: no-downgrade
 
 packages:
   - packages/*
@@ -7,6 +11,8 @@ packages:
   - examples/*
   - docs
 
+overrides:
+  chokidar: 4.0.1
 catalog:
   '@angular-devkit/build-angular': ^21.2.7
   '@angular/cli': ^21.2.7
@@ -75,7 +81,6 @@ catalog:
   vue: ^3.5.32
   vue-tsc: ^3.2.6
   zone.js: ^0.16.1
-catalogMode: prefer
 ignoredBuiltDependencies:
   - lmdb
   - msgpackr-extract
@@ -84,11 +89,5 @@ onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
   - unrs-resolver
-
-overrides:
-  chokidar: 4.0.1
-shellEmulator: true
-
-trustPolicy: no-downgrade
 
 trustPolicyIgnoreAfter: 262800

@@ -525,7 +525,7 @@ function renderStars(value: number, max: number = 5): string {
               >
                 {{ preview.eligibility === 'eligible' ? 'Eligible' : preview.eligibility === 'partial' ? 'Partial' : 'Missing required' }}
               </UBadge>
-              <a v-if="preview.documentationUrl" :href="preview.documentationUrl" target="_blank" rel="noopener noreferrer" class="text-muted hover:text-default">
+              <a v-if="preview.documentationUrl" :href="preview.documentationUrl" target="_blank" rel="noopener noreferrer" class="text-muted hover:text-default" :aria-label="`Open ${preview.type} rich result documentation`">
                 <UIcon name="i-carbon-launch" class="text-xs" />
               </a>
             </div>

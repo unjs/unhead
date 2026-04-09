@@ -88,6 +88,18 @@ async function checkUrl(url: string, identifier: string): Promise<number | 'erro
 
 export function validateLinks(tags: SerializedTag[]) {
   const urls = extractCheckableUrls(tags)
+  const activeUrls = new Set(urls.map(u => u.url))
+
+  // Prune stale broken-link entries for URLs that no longer exist in the tag set
+  let pruned = false
+  for (const url of brokenLinks.value.keys()) {
+    if (!activeUrls.has(url)) {
+      brokenLinks.value.delete(url)
+      pruned = true
+    }
+  }
+  if (pruned)
+    triggerBrokenLinks()
 
   for (const { url, tag, identifier, tagDedupeKey } of urls) {
     if (pendingUrls.value.has(url))

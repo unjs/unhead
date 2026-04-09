@@ -11,8 +11,11 @@ interface ParsedVersion {
   prerelease: string | null
 }
 
+const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/
+const DIGITS_RE = /^\d+$/
+
 function parseVersion(v: string): ParsedVersion | null {
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/.exec(v)
+  const match = SEMVER_RE.exec(v)
   if (!match)
     return null
   return {
@@ -52,8 +55,8 @@ function compareSemver(a: string, b: string): number {
       return -1
     if (y === undefined)
       return 1
-    const xn = /^\d+$/.test(x) ? Number(x) : null
-    const yn = /^\d+$/.test(y) ? Number(y) : null
+    const xn = DIGITS_RE.test(x) ? Number(x) : null
+    const yn = DIGITS_RE.test(y) ? Number(y) : null
     if (xn !== null && yn !== null) {
       if (xn !== yn)
         return xn - yn

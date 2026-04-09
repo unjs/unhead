@@ -48,7 +48,7 @@ const filteredTags = computed(() => {
     return result
   return result.filter((t) => {
     const name = t.props?.name || t.props?.property || t.props?.rel || t.props?.src || ''
-    return t.tag.includes(filter) || name.toLowerCase().includes(filter) || (t.source || '').toLowerCase().includes(filter)
+    return t.tag.toLowerCase().includes(filter) || name.toLowerCase().includes(filter) || (t.source || '').toLowerCase().includes(filter)
   })
 })
 
@@ -284,11 +284,19 @@ function toggleRow(tag: any) {
             >
               <td class="p-2">
                 <div class="flex items-center gap-1.5">
-                  <UIcon
-                    name="i-carbon-chevron-right"
-                    class="text-xs text-muted shrink-0 transition-transform duration-150"
-                    :class="{ 'rotate-90': expandedRows.has(tagMatchKey(tag)) }"
-                  />
+                  <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ui-primary)]"
+                    :aria-expanded="expandedRows.has(tagMatchKey(tag))"
+                    :aria-label="expandedRows.has(tagMatchKey(tag)) ? `Collapse ${tag.tag} details` : `Expand ${tag.tag} details`"
+                    @click.stop="toggleRow(tag)"
+                  >
+                    <UIcon
+                      name="i-carbon-chevron-right"
+                      class="text-xs text-muted shrink-0 transition-transform duration-150"
+                      :class="{ 'rotate-90': expandedRows.has(tagMatchKey(tag)) }"
+                    />
+                  </button>
                   <UBadge :color="tagTypeColor(tag.tag)" variant="subtle" size="xs">
                     {{ tag.tag }}
                   </UBadge>
