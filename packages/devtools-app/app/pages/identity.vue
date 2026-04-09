@@ -67,6 +67,34 @@ const htmlLang = computed(() => {
   const tag = state.value.tags.find(t => t.tag === 'htmlAttrs')
   return tag?.props?.lang || null
 })
+
+// Checklist items: always visible, showing done/missing state
+interface TipItem {
+  done: boolean
+  html: string
+}
+
+const browserChecklist = computed<TipItem[]>(() => [
+  { done: !!seo.value.title, html: 'Set a <code>title</code> for the browser tab and search results.' },
+  { done: !!seo.value.description, html: 'Add a <code>description</code> meta tag for search result snippets.' },
+  { done: !!seo.value.canonical, html: 'Set a <code>canonical</code> URL so search engines know the preferred address.' },
+  { done: !!htmlLang.value, html: `Set the <code>lang</code> attribute on <code>&lt;html&gt;</code> for accessibility.` },
+])
+
+const iconChecklist = computed<TipItem[]>(() => [
+  { done: icons.value.some(i => i.rel === 'icon'), html: 'Add a <code>&lt;link rel="icon"&gt;</code> favicon.' },
+  { done: icons.value.some(i => i.rel === 'apple-touch-icon'), html: 'Add an <code>apple-touch-icon</code> for iOS home screen.' },
+  { done: icons.value.some(i => i.sizes), html: 'Specify <code>sizes</code> on icons for resolution hints.' },
+])
+
+const themeChecklist = computed<TipItem[]>(() => [
+  { done: themeColors.value.length > 0, html: 'Set a <code>theme-color</code> to brand the mobile browser UI.' },
+  {
+    done: themeColors.value.some(tc => tc.context === 'light') && themeColors.value.some(tc => tc.context === 'dark'),
+    html: 'Add light/dark <code>theme-color</code> variants with <code>prefers-color-scheme</code> media queries.',
+  },
+  { done: !!colorScheme.value, html: 'Set <code>color-scheme</code> to declare supported modes (e.g. <code>light dark</code>).' },
+])
 </script>
 
 <template>
@@ -106,16 +134,8 @@ const htmlLang = computed(() => {
         <div class="id-browser__body" aria-hidden="true" />
       </div>
 
-      <div class="mt-3 space-y-2">
-        <DevtoolsTip v-if="!seo.title">
-          Add a <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">title</code> via <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">useHead()</code> to set the browser tab text.
-        </DevtoolsTip>
-        <DevtoolsTip v-if="!seo.canonical">
-          Set a <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">canonical</code> URL so search engines know the preferred page address.
-        </DevtoolsTip>
-        <DevtoolsTip v-if="!htmlLang">
-          Set the <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">lang</code> attribute on <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">&lt;html&gt;</code> for accessibility and SEO.
-        </DevtoolsTip>
+      <div class="mt-3 space-y-1">
+        <DevtoolsTip v-for="(tip, i) in browserChecklist" :key="i" :done="tip.done" :html="tip.html" />
       </div>
     </UCard>
 
@@ -171,22 +191,18 @@ const htmlLang = computed(() => {
               </div>
             </div>
           </div>
-          <DevtoolsTip v-if="!groupIcons.some(i => i.sizes)" class="mt-3">
-            Specify <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">sizes</code> on icons so browsers pick the best resolution.
-          </DevtoolsTip>
         </div>
       </template>
 
-      <template v-else>
-        <DevtoolsEmptyState icon="i-carbon-image" title="No favicons detected">
-          <template #description>
-            Add a <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">&lt;link rel="icon"&gt;</code> tag via <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">useHead()</code> to set your favicon.
-          </template>
-        </DevtoolsEmptyState>
-        <DevtoolsTip class="mt-2">
-          Consider adding both a <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">favicon.ico</code> and an <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">apple-touch-icon</code> for full device coverage.
-        </DevtoolsTip>
-      </template>
+      <DevtoolsEmptyState v-if="!icons.length" icon="i-carbon-image" title="No favicons detected">
+        <template #description>
+          Add a <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">&lt;link rel="icon"&gt;</code> tag via <code class="bg-elevated px-1.5 py-0.5 rounded text-xs">useHead()</code> to set your favicon.
+        </template>
+      </DevtoolsEmptyState>
+
+      <div class="space-y-1" :class="icons.length ? 'mt-4' : 'mt-2'">
+        <DevtoolsTip v-for="(tip, i) in iconChecklist" :key="i" :done="tip.done" :html="tip.html" />
+      </div>
     </UCard>
 
     <!-- Theme Colors -->
@@ -240,21 +256,17 @@ const htmlLang = computed(() => {
             </div>
           </div>
         </div>
-        <DevtoolsTip v-if="themeColors.length === 1 && themeColors[0]?.context === 'default'" class="mt-3">
-          Add separate <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">theme-color</code> values with <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">media="(prefers-color-scheme: dark)"</code> for light/dark mode support.
-        </DevtoolsTip>
       </div>
 
-      <template v-if="!themeColors.length && !colorScheme">
-        <DevtoolsEmptyState icon="i-carbon-color-palette" title="No theme colors set">
-          <template #description>
-            Theme colors customize the browser chrome and mobile status bar.
-          </template>
-        </DevtoolsEmptyState>
-        <DevtoolsTip class="mt-2">
-          Add a <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">theme-color</code> meta tag via <code class="bg-elevated px-1 py-0.5 rounded text-[11px]">useHead()</code> to brand the browser UI on mobile.
-        </DevtoolsTip>
-      </template>
+      <DevtoolsEmptyState v-if="!themeColors.length && !colorScheme" icon="i-carbon-color-palette" title="No theme colors set">
+        <template #description>
+          Theme colors customize the browser chrome and mobile status bar.
+        </template>
+      </DevtoolsEmptyState>
+
+      <div class="space-y-1" :class="(themeColors.length || colorScheme) ? 'mt-4' : 'mt-2'">
+        <DevtoolsTip v-for="(tip, i) in themeChecklist" :key="i" :done="tip.done" :html="tip.html" />
+      </div>
     </UCard>
   </div>
 </template>

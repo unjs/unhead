@@ -230,27 +230,29 @@ function toggleRow(index: number) {
       </div>
     </template>
     <div class="overflow-auto max-h-[400px]">
-      <UInput v-model="tagFilter" placeholder="Filter tags…" aria-label="Filter tags" name="tag-filter" autocomplete="off" size="xs" class="w-48" />
-      <div v-if="Object.keys(tagTypeCounts).length > 1" class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag type">
-        <button
-          v-for="(count, tag) in tagTypeCounts"
-          :key="tag"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-150 border"
-          :class="activeTagType === tag
-            ? 'tag-filter-active border-current'
-            : 'tag-filter border-transparent hover:border-current'"
-          :data-color="tagTypeColor(tag as string)"
-          :aria-pressed="activeTagType === tag"
-          @click="toggleTagType(tag as string)"
-        >
-          <span class="tag-filter-dot" />
-          <template v-if="singletonTags.has(tag as string)">
-            {{ tag }}
-          </template>
-          <template v-else>
-            {{ count }} {{ tag }}
-          </template>
-        </button>
+      <div class="mb-3 flex gap-3">
+        <UInput v-model="tagFilter" placeholder="Filter tags…" aria-label="Filter tags" name="tag-filter" autocomplete="off" size="xs" class="w-48" />
+        <div v-if="Object.keys(tagTypeCounts).length > 1" class="flex flex-wrap gap-2" role="group" aria-label="Filter by tag type">
+          <button
+            v-for="(count, tag) in tagTypeCounts"
+            :key="tag"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-150 border"
+            :class="activeTagType === tag
+              ? 'tag-filter-active border-current'
+              : 'tag-filter border-transparent hover:border-current'"
+            :data-color="tagTypeColor(tag as string)"
+            :aria-pressed="activeTagType === tag"
+            @click="toggleTagType(tag as string)"
+          >
+            <span class="tag-filter-dot" />
+            <template v-if="singletonTags.has(tag as string)">
+              {{ tag }}
+            </template>
+            <template v-else>
+              {{ count }} {{ tag }}
+            </template>
+          </button>
+        </div>
       </div>
       <table class="w-full text-sm">
         <thead class="sticky top-0 bg-default">

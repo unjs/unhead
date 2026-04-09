@@ -87,14 +87,6 @@ const validationSummary = computed(() => {
           {{ validationSummary.errors }} missing required propert{{ validationSummary.errors > 1 ? 'ies' : 'y' }}
         </p>
       </DevtoolsAlert>
-      <DevtoolsAlert
-        v-else-if="validationSummary.warnings > 0"
-        variant="warning"
-      >
-        <p class="font-medium">
-          {{ validationSummary.warnings }} missing recommended propert{{ validationSummary.warnings > 1 ? 'ies' : 'y' }}
-        </p>
-      </DevtoolsAlert>
 
       <!-- Node Cards -->
       <UCard v-for="(node, index) in graphNodes" :key="index">
@@ -102,9 +94,6 @@ const validationSummary = computed(() => {
           <div class="flex items-center gap-2">
             <UIcon :name="getSchemaIcon(getNodeType(node))" class="text-lg" />
             <span class="font-medium text-sm">{{ getNodeType(node) }}</span>
-            <UBadge v-if="isRichResultType(getNodeType(node))" color="info" variant="subtle" size="xs">
-              Google Supported
-            </UBadge>
           </div>
           <p class="text-xs text-muted mt-1 truncate">
             {{ getNodeDescription(node) }}

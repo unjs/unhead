@@ -147,7 +147,8 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
       let code = bridgeCode
       // Inject unhead version
       if (unheadVersion)
-        code = code.replace(`__UNHEAD_VERSION__ = ''`, `__UNHEAD_VERSION__ = '${unheadVersion}'`)
+        // eslint-disable-next-line e18e/prefer-static-regex
+        code = code.replace(/__UNHEAD_VERSION__ = ['"]'?["']/, `__UNHEAD_VERSION__ = '${unheadVersion}'`)
       const kitClientPath = resolve(pkgDir, 'node_modules/@vitejs/devtools-kit/dist/client.js')
       if (existsSync(kitClientPath))
         return code.replace(`'@vitejs/devtools-kit/client'`, `'${kitClientPath}'`)

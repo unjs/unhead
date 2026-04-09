@@ -313,6 +313,27 @@ const richPreviews = computed<RichPreview[]>(() => {
           base.features.push({ icon: 'i-carbon-education', text: node.provider.name })
         break
       }
+      case 'Organization': {
+        if (node.name)
+          base.features.push({ icon: 'i-carbon-building', text: node.name })
+        if (node.url)
+          base.features.push({ icon: 'i-carbon-link', text: node.url })
+        if (node.telephone)
+          base.features.push({ icon: 'i-carbon-phone', text: node.telephone })
+        break
+      }
+      case 'SearchAction': {
+        if (node.target)
+          base.features.push({ icon: 'i-carbon-search', text: typeof node.target === 'string' ? node.target : node.target?.urlTemplate || 'Sitelinks searchbox' })
+        break
+      }
+      case 'WebSite': {
+        if (node.name)
+          base.features.push({ icon: 'i-carbon-globe', text: node.name })
+        if (node.url)
+          base.features.push({ icon: 'i-carbon-link', text: node.url })
+        break
+      }
     }
     return base
   })
