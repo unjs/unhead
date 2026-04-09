@@ -2,8 +2,8 @@ import type { Plugin } from 'vite'
 import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 
-const HEAD_FACTORIES = ['createHead']
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
+const UNHEAD_SOURCE_RE = /^(?:@unhead\/[^/]+|unhead)(?:\/[^?]*)?$/
 
 export interface RuntimePluginRegistration {
   /** Import to inject */
@@ -48,7 +48,7 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
         const registrations = ctx.getRegistrations()
         if (!registrations.length)
           return
-        if (!HEAD_FACTORIES.some(f => code.includes(f)))
+        if (!code.includes('createHead'))
           return
 
         const isServer = this.environment?.config?.consumer === 'server'
@@ -58,23 +58,37 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
 
         const s = new MagicString(code)
         let transformed = false
+        const directCreateHeadNames = new Set<string>()
+        const namespaceNames = new Set<string>()
 
         parseAndWalk(code, id, {
           parseOptions: { lang: 'ts' },
           enter(node: any) {
+            if (node.type === 'ImportDeclaration') {
+              const source = node.source?.value
+              if (typeof source !== 'string' || !UNHEAD_SOURCE_RE.test(source))
+                return
+              for (const spec of node.specifiers || []) {
+                if (spec.type === 'ImportSpecifier' && spec.imported?.name === 'createHead')
+                  directCreateHeadNames.add(spec.local.name)
+                else if (spec.type === 'ImportNamespaceSpecifier')
+                  namespaceNames.add(spec.local.name)
+              }
+              return
+            }
             if (node.type !== 'CallExpression')
               return
             const callee = node.callee
             if (!callee)
               return
 
-            const name = callee.type === 'Identifier'
-              ? callee.name
-              : callee.type === 'MemberExpression' && callee.property?.type === 'Identifier'
-                ? callee.property.name
-                : null
-
-            if (!name || !HEAD_FACTORIES.includes(name))
+            const isDirect = callee.type === 'Identifier' && directCreateHeadNames.has(callee.name)
+            const isNamespaced = callee.type === 'MemberExpression'
+              && callee.object?.type === 'Identifier'
+              && namespaceNames.has(callee.object.name)
+              && callee.property?.type === 'Identifier'
+              && callee.property.name === 'createHead'
+            if (!isDirect && !isNamespaced)
               return
 
             const statements = envRegistrations

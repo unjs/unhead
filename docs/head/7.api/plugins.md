@@ -3,7 +3,7 @@ title: Plugins
 description: Create custom plugins with defineHeadPlugin to hook into Unhead's tag resolution, DOM rendering, and SSR lifecycle.
 ---
 
-Unhead uses a hooks based architecture powered by [unjs/hookable](https://github.com/unjs/hookable). Plugins let you tap into different parts of the head tag management lifecycle.
+Unhead uses a hooks-based architecture powered by [unjs/hookable](https://github.com/unjs/hookable). Plugins let you tap into different parts of the head tag management lifecycle.
 
 ## defineHeadPlugin
 
@@ -26,12 +26,13 @@ Plugins can also be a function that receives the `Unhead` instance:
 
 ```ts
 import { defineHeadPlugin } from 'unhead/plugins'
+import { resolveTags } from 'unhead/utils'
 
 export const myPlugin = defineHeadPlugin((head) => ({
   key: 'my-plugin',
   hooks: {
     'entries:updated': () => {
-      const tags = head.resolveTags()
+      const tags = resolveTags(head)
       console.log('Current tags:', tags)
     }
   }
