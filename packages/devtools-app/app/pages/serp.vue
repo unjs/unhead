@@ -197,7 +197,17 @@ interface RichPreview {
   documentationUrl?: string
 }
 
+// Favicon for SERP preview
+const faviconUrl = computed(() => {
+  const iconTags = state.value.tags.filter(
+    t => t.tag === 'link' && ['icon'].includes(t.props?.rel || ''),
+  )
+  const ico = iconTags.find(t => t.props?.href?.includes('favicon.ico'))
+  return ico?.props?.href || iconTags[0]?.props?.href || null
+})
+
 const richPreviews = computed<RichPreview[]>(() => {
+  const seen = new Set<string>()
   return richResultNodes.value.map((node) => {
     const type = getNodeType(node)
     const analysis = analyzeNodeProperties(node)
@@ -336,6 +346,13 @@ const richPreviews = computed<RichPreview[]>(() => {
       }
     }
     return base
+  }).filter((preview) => {
+    // Dedupe by type + name + url to collapse equivalent nodes (e.g. duplicate Organization @ids)
+    const key = `${preview.type}::${preview.label}::${preview.features.find(f => f.icon === 'i-carbon-link')?.text || ''}`
+    if (seen.has(key))
+      return false
+    seen.add(key)
+    return true
   })
 })
 
@@ -405,8 +422,9 @@ function renderStars(value: number, max: number = 5): string {
         >
           <div class="serp-preview">
             <div class="flex items-center gap-3 mb-2">
-              <div class="w-[26px] h-[26px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                <UIcon name="i-carbon-earth" class="w-3.5 h-3.5 text-neutral-400" />
+              <div class="w-[26px] h-[26px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                <img v-if="faviconUrl" :src="faviconUrl" alt="" class="w-3.5 h-3.5 object-contain">
+                <UIcon v-else name="i-carbon-earth" class="w-3.5 h-3.5 text-neutral-400" />
               </div>
               <!-- Breadcrumbs replace URL when available -->
               <div v-if="richPreviews.find(r => r.breadcrumbs)" class="serp-rich-breadcrumbs">

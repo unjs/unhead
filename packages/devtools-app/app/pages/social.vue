@@ -52,6 +52,73 @@ const socialTags = computed(() =>
     return key.startsWith('og:') || key.startsWith('twitter:')
   }),
 )
+
+// Quick lookups for OG and Twitter tags by key
+const ogMap = computed(() => {
+  const map: Record<string, string> = {}
+  for (const t of state.value.tags) {
+    if (t.tag !== 'meta')
+      continue
+    const prop = t.props?.property || ''
+    if (prop.startsWith('og:'))
+      map[prop] = t.props?.content || ''
+  }
+  return map
+})
+
+const twitterMap = computed(() => {
+  const map: Record<string, string> = {}
+  for (const t of state.value.tags) {
+    if (t.tag !== 'meta')
+      continue
+    const name = t.props?.name || ''
+    if (name.startsWith('twitter:'))
+      map[name] = t.props?.content || ''
+  }
+  return map
+})
+
+interface TipItem {
+  done: boolean
+  html: string
+}
+
+const socialChecklist = computed<TipItem[]>(() => [
+  {
+    done: !!(ogMap.value['og:title'] || seo.value.ogTitle),
+    html: 'Set <code>og:title</code> to control how your page appears when shared.',
+  },
+  {
+    done: !!(ogMap.value['og:description'] || seo.value.ogDescription),
+    html: 'Add <code>og:description</code> for a compelling preview snippet.',
+  },
+  {
+    done: !!(ogMap.value['og:image'] || seo.value.ogImage) && !ogImageBroken.value,
+    html: ogImageBroken.value
+      ? 'Fix <code>og:image</code>: the current URL is broken or unreachable.'
+      : 'Add an <code>og:image</code> (1200x630) for rich social previews.',
+  },
+  {
+    done: !!ogMap.value['og:url'],
+    html: 'Set <code>og:url</code> to the canonical URL of this page.',
+  },
+  {
+    done: !!ogMap.value['og:type'],
+    html: 'Set <code>og:type</code> (e.g. <code>website</code>, <code>article</code>) for content classification.',
+  },
+  {
+    done: !!ogMap.value['og:site_name'],
+    html: 'Set <code>og:site_name</code> to identify your brand across platforms.',
+  },
+  {
+    done: !!twitterMap.value['twitter:card'],
+    html: 'Set <code>twitter:card</code> (usually <code>summary_large_image</code>) for Twitter/X previews.',
+  },
+  {
+    done: !!(twitterMap.value['twitter:image'] || ogMap.value['og:image']),
+    html: 'Provide a <code>twitter:image</code> or rely on <code>og:image</code> fallback.',
+  },
+])
 </script>
 
 <template>
@@ -195,6 +262,19 @@ const socialTags = computed(() =>
             </div>
           </div>
         </div>
+      </div>
+    </UCard>
+
+    <!-- Social Checklist -->
+    <UCard>
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon name="i-carbon-task" class="text-lg" />
+          <span class="font-medium">Social Checklist</span>
+        </div>
+      </template>
+      <div class="space-y-1">
+        <DevtoolsTip v-for="(tip, i) in socialChecklist" :key="i" :done="tip.done" :html="tip.html" />
       </div>
     </UCard>
 
