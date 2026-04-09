@@ -15,3 +15,14 @@ export interface UnpluginOptions extends BaseTransformerTypes {
   transformSeoMeta?: UseSeoMetaTransformOptions | false
   minify?: MinifyTransformOptions | false
 }
+
+export interface VitePluginOptions extends UnpluginOptions {
+  /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
+  devtools?: UnheadDevtoolsOptions | false
+  /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
+  validate?: boolean
+  /** @internal */
+  _framework?: string
+}
+
+export interface UnheadDevtoolsOptions {}

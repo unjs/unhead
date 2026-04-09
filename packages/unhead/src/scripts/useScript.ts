@@ -39,9 +39,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     return prevScript
   }
   options.beforeInit?.()
+  const _events: { type: string, timestamp: number }[] = []
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
+    _events.push({ type: s, timestamp: Date.now() })
     // eslint-disable-next-line ts/no-use-before-define
     callHook(head, 'script:updated', hookCtx)
   }
@@ -108,9 +110,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   const script = {
     _loadPromise: loadPromise,
+    _events,
+    _warmupStrategy: undefined as string | undefined,
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
     id,
+    src: input.src,
+    input,
     status: 'awaitingLoad',
 
     remove() {
@@ -247,12 +253,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const hookCtx = { script }
 
   script.setupTriggerHandler(options.trigger)
-  if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
+  if (options.use && !head.ssr) {
+    const { proxy, stack } = createNoopedRecordingProxy<T>(options.use() || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
-      // just forward everything with the same behavior
       script.proxy = createForwardingProxy(instance)
     })
   }
@@ -261,6 +266,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     options.warmupStrategy = 'preload'
   }
   if (options.warmupStrategy) {
+    script._warmupStrategy = options.warmupStrategy
     script.warmup(options.warmupStrategy)
   }
   head._scripts = Object.assign(head._scripts || {}, { [id]: script })

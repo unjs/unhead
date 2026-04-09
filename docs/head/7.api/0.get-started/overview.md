@@ -16,6 +16,10 @@ description: 'Unhead API reference for useHead(), useSeoMeta(), useScript() comp
 
 ::
 
+## How do I create plugins?
+
+See the [Plugins API](/docs/head/api/plugins) for creating custom plugins with `defineHeadPlugin`.
+
 ## What hooks can I use?
 
 ### Entry Hooks

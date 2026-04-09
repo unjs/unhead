@@ -54,7 +54,7 @@ Install the plugin in both your server & client entries:
 ::code-block
 
 ```ts [Input]
-import { CanonicalPlugin } from 'unhead/plugins'
+import { CanonicalPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [
@@ -237,15 +237,14 @@ CanonicalPlugin({
 
 ## Framework Setup Guides
 
-### Nuxt
+Register the plugin when creating your head instance:
 
-Nuxt has built-in Unhead support. Register the plugin in a [Nuxt plugin](https://nuxt.com/docs/guide/directory-structure/plugins):
+::FrameworkCode
 
-::code-block
-
+#nuxt
 ```ts [plugins/canonical.ts]
 import { injectHead } from '@unhead/vue'
-import { CanonicalPlugin } from 'unhead/plugins'
+import { CanonicalPlugin } from '@unhead/dynamic-import/plugins'
 
 export default defineNuxtPlugin(() => {
   const head = injectHead()
@@ -255,14 +254,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-::
-
-### Vue
-
-Register the plugin when creating your head instance:
-
-::code-block
-
+#vue
 ```ts [main.ts]
 import { createHead } from '@unhead/vue/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -278,14 +270,7 @@ const head = createHead({
 app.use(head)
 ```
 
-::
-
-### React
-
-Register the plugin in your app entry:
-
-::code-block
-
+#react
 ```tsx [app.tsx]
 import { createHead } from '@unhead/react/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -299,14 +284,7 @@ const head = createHead({
 })
 ```
 
-::
-
-### Svelte
-
-Register the plugin when creating the head instance in your entry file:
-
-::code-block
-
+#svelte
 ```ts [src/entry-client.ts]
 import { createHead, UnheadContextKey } from '@unhead/svelte/client'
 import { CanonicalPlugin } from 'unhead/plugins'
@@ -317,14 +295,7 @@ head.use(CanonicalPlugin({
 }))
 ```
 
-::
-
-### Angular
-
-Register the plugin via `provideClientHead` options:
-
-::code-block
-
+#angular
 ```ts [app.config.ts]
 import { provideClientHead } from '@unhead/angular'
 import { CanonicalPlugin } from 'unhead/plugins'

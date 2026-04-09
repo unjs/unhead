@@ -3,7 +3,7 @@ import vuePlugin from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import { unheadVueComposablesImports } from '@unhead/vue'
-import UnheadPlugin from '@unhead/bundler/vite'
+import { Unhead } from '@unhead/vue/vite'
 import Inspect from 'vite-plugin-inspect'
 
 const virtualFile = '@virtual-file'
@@ -30,7 +30,7 @@ export default defineConfig(({ command, ssrBuild }) => ({
       build: true,
       outputDir: '.vite-inspect'
     }),
-    UnheadPlugin(),
+    Unhead(),
     vuePlugin(),
     vueJsx(),
     {

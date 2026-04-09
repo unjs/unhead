@@ -15,8 +15,8 @@
     "@unhead/schema-org": "workspace:*",
     "compression": "^1.8.1",
     "express": "^5.2.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.0",
     "sirv": "^3.0.2"
   },
@@ -28,6 +28,6 @@
     "@vitejs/plugin-react": "^6.0.1",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.0.5"
+    "vite": "^8.0.8"
   }
 }

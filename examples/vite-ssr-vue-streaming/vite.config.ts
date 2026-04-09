@@ -1,12 +1,18 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import unhead from '@unhead/vue/vite'
+import { DevTools } from '@vitejs/devtools'
+import { Unhead } from '@unhead/vue/vite'
 
 export default defineConfig({
   plugins: [
+    DevTools(),
     vue(),
-    unhead({ streaming: true }),
+    Unhead({ streaming: true }),
   ],
+  devtools: {
+    enabled: true,
+    clientAuth: false,
+  },
   build: {
     minify: false,
   },
