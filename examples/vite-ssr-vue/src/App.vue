@@ -1,36 +1,57 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from './components/HelloWorld.vue'
-import { useHead } from '@unhead/vue'
+import { RouterLink, RouterView } from 'vue-router'
 
 useHead({
-  title: 'hello from app.vue'
+  titleTemplate: '%s | Unhead Demo',
+  templateParams: {
+    separator: '|',
+  },
+  htmlAttrs: { lang: 'en' },
+  meta: [
+    { charset: 'utf-8' },
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { name: 'color-scheme', content: 'light dark' },
+    { name: 'theme-color', content: '#4f46e5', media: '(prefers-color-scheme: light)' },
+    { name: 'theme-color', content: '#818cf8', media: '(prefers-color-scheme: dark)' },
+  ],
+  link: [
+    { rel: 'icon', type: 'image/svg+xml', href: '/vite.svg' },
+    { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+    { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+  ],
 })
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+<div id="layout">
+  <nav class="site-nav">
+    <RouterLink to="/">Home</RouterLink>
+    <RouterLink to="/about">About</RouterLink>
+    <RouterLink to="/blog">Blog</RouterLink>
+    <RouterLink to="/scripts">Scripts</RouterLink>
+  </nav>
+  <main>
+    <RouterView />
+  </main>
+</div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
+.site-nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.site-nav a {
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 500;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.site-nav a:hover {
+  text-decoration: underline;
+}
+main {
+  padding: 2rem;
 }
 </style>

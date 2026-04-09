@@ -84,6 +84,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
+  _warmupStrategy?: string
+  /**
+   * @internal
+   */
   _loadPromise: Promise<T | false>
   /**
    * @internal

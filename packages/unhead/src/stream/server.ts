@@ -313,6 +313,11 @@ export function prepareStreamingTemplate(
 
   if (bodyEnd >= 0 && bodyCloseStart >= 0) {
     const shellPart = template.substring(0, bodyEnd)
+    // Static content sitting between <body> and </body> in the template
+    // (e.g. scripts injected by Vite plugins via transformIndexHtml with
+    // injectTo: 'body'). Without preserving this, anything plugins inject
+    // into the body silently disappears in streaming mode.
+    const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
     const endPart = template.substring(bodyCloseStart)
 
     const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
@@ -325,7 +330,7 @@ export function prepareStreamingTemplate(
 
     return {
       shell,
-      end: ssr.bodyTags + endPart,
+      end: bodyInterior + ssr.bodyTags + endPart,
     }
   }
 

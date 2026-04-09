@@ -2,6 +2,7 @@ import type { SSRHeadPayload } from 'unhead/types'
 import {
   createBootstrapScript,
   createStreamableHead,
+  prepareStreamingTemplate,
   renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
@@ -595,6 +596,78 @@ describe('streaming SSR', () => {
       renderShell(head)
       // all default entries should be cleared
       expect(head.entries.size).toBe(0)
+    })
+  })
+
+  describe('prepareStreamingTemplate', () => {
+    it('preserves static content between <body> and </body>', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Test' })
+
+      // Simulates a Vite plugin (e.g. devtools) injecting a script via
+      // transformIndexHtml with injectTo: 'body'.
+      const template = '<!DOCTYPE html><html><head></head><body><script type="module">import("/@plugin/bridge.mjs")</script></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      // Shell ends with the opening <body>, end starts at </body>...
+      expect(shell).toContain('<title>Test</title>')
+      expect(shell).toContain('window.__unhead__')
+      expect(shell).toContain('<body>')
+      expect(shell).not.toContain('/@plugin/bridge.mjs')
+
+      // Body interior must survive in the end part so it reaches the client.
+      expect(end).toContain('/@plugin/bridge.mjs')
+      expect(end).toContain('</body></html>')
+
+      // Round trip: shell + stream + end should still contain the script.
+      const fullHtml = `${shell}<div id="app">app</div>${end}`
+      expect(fullHtml).toContain('/@plugin/bridge.mjs')
+    })
+
+    it('preserves multiple body-injected tags in their original order', () => {
+      const { head } = createStreamableHead()
+
+      const template = '<html><head></head><body><script>a()</script><script>b()</script><script>c()</script></body></html>'
+      const { end } = prepareStreamingTemplate(head, template)
+
+      const aIdx = end.indexOf('a()')
+      const bIdx = end.indexOf('b()')
+      const cIdx = end.indexOf('c()')
+      expect(aIdx).toBeGreaterThanOrEqual(0)
+      expect(bIdx).toBeGreaterThan(aIdx)
+      expect(cIdx).toBeGreaterThan(bIdx)
+    })
+
+    it('handles empty body without losing closing tags', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Empty Body' })
+
+      const template = '<html><head></head><body></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<title>Empty Body</title>')
+      expect(shell).toContain('<body>')
+      expect(end).toBe('</body></html>')
+    })
+
+    it('places head bodyTags after preserved body content', () => {
+      const { head } = createStreamableHead()
+      head.push({
+        script: [{ src: 'user-tag.js', tagPosition: 'bodyClose' }],
+      })
+
+      const template = '<html><head></head><body><script>plugin()</script></body></html>'
+      const { end } = prepareStreamingTemplate(head, template)
+
+      const pluginIdx = end.indexOf('plugin()')
+      const userIdx = end.indexOf('user-tag.js')
+      const closeIdx = end.indexOf('</body>')
+
+      // Plugin-injected script first (matching original template order),
+      // then unhead body tags, then </body>.
+      expect(pluginIdx).toBeGreaterThanOrEqual(0)
+      expect(userIdx).toBeGreaterThan(pluginIdx)
+      expect(closeIdx).toBeGreaterThan(userIdx)
     })
   })
 })

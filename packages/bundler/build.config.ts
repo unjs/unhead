@@ -10,6 +10,7 @@ export default defineBuildConfig({
     { input: 'src/minify/rolldown', name: 'minify/rolldown' },
     { input: 'src/minify/esbuild', name: 'minify/esbuild' },
     { input: 'src/minify/lightningcss', name: 'minify/lightningcss' },
+    { input: 'src/devtools/bridge', name: 'devtools/bridge' },
   ],
   externals: [
     'vite',
@@ -23,5 +24,8 @@ export default defineBuildConfig({
     'esbuild',
     'lightningcss',
     'rolldown',
+    '@vitejs/devtools-kit',
+    '@vitejs/devtools-kit/client',
+    '@unhead/devtools-app',
   ],
 })

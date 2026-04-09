@@ -1,5 +1,6 @@
 .:
   DefaultCriticalTags: object
+  devtoolsPlugin: function
   InferSeoMetaPlugin: function
 ./minify/esbuild:
   createJSMinifier: function

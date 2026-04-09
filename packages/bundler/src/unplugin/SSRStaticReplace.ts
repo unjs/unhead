@@ -41,7 +41,7 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         ssr = true
     },
     vite: {
-      apply(_config: UserConfig, env: ConfigEnv) {
+      apply(_config: UserConfig, env: ConfigEnv): boolean {
         if (env.isSsrBuild)
           ssr = true
         return true

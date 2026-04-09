@@ -1,0 +1,23 @@
+{
+  "name": "@unhead/devtools-app",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi generate",
+    "generate": "nuxi generate"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "catalog:",
+    "@shikijs/langs": "catalog:",
+    "@shikijs/themes": "catalog:",
+    "@unhead/vue": "workspace:*",
+    "@vitejs/devtools-kit": "catalog:",
+    "@vueuse/nuxt": "catalog:",
+    "nuxt": "catalog:",
+    "pathe": "catalog:",
+    "shiki": "catalog:",
+    "tailwindcss": "catalog:",
+    "vue": "catalog:"
+  }
+}

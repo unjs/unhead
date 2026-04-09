@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite'
 import type { VitePluginOptions } from './types'
+import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -35,6 +36,12 @@ export function Unhead(options: VitePluginOptions = {}): Plugin[] {
       import: { name: 'ValidatePlugin', source: pluginsSource, as: '__unhead_validate' },
       client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
     })
+  }
+
+  // Devtools registers its own runtime plugins via ctx during configResolved
+  if (options.devtools !== false) {
+    const devtoolsOpts = typeof options.devtools === 'object' ? options.devtools : {}
+    plugins.push(unheadDevtools({ ...devtoolsOpts, _ctx: ctx }))
   }
 
   // Replace head.ssr with static boolean for tree-shaking

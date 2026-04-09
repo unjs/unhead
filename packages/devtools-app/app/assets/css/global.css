@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@font-face {
+  font-family: 'Hubot Sans';
+  src: url('../fonts/hubot-sans.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  src: url('../fonts/fira-code.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@theme {
+  --font-sans: 'Hubot Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Hubot Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, monospace;
+
+  /* Warm amber-tinted neutral scale (hue 75) */
+  --color-neutral-50: oklch(0.984 0.003 75);
+  --color-neutral-100: oklch(0.968 0.006 75);
+  --color-neutral-200: oklch(0.920 0.010 75);
+  --color-neutral-300: oklch(0.870 0.014 75);
+  --color-neutral-400: oklch(0.710 0.018 75);
+  --color-neutral-500: oklch(0.555 0.018 75);
+  --color-neutral-600: oklch(0.445 0.016 75);
+  --color-neutral-700: oklch(0.370 0.014 75);
+  --color-neutral-800: oklch(0.270 0.012 75);
+  --color-neutral-900: oklch(0.190 0.010 75);
+  --color-neutral-950: oklch(0.110 0.008 75);
+
+  --ui-text-secondary: #82AAFF;
+}
+
+:root {
+  --ui-text: oklch(0.370 0.014 75);
+  --ui-text-highlighted: oklch(0.210 0.012 75);
+}
+
+.dark {
+  --ui-bg: var(--color-neutral-950);
+  --ui-bg-muted: var(--color-neutral-900);
+  --ui-bg-elevated: var(--color-neutral-800);
+  --ui-bg-accented: var(--color-neutral-700);
+  --ui-bg-inverted: #fff;
+  --ui-text-dimmed: var(--color-neutral-500);
+  --ui-text-muted: var(--color-neutral-400);
+  --ui-text-toned: var(--color-neutral-300);
+  --ui-text: var(--color-neutral-300);
+  --ui-text-highlighted: var(--color-neutral-100);
+  --ui-text-inverted: var(--color-neutral-900);
+  --ui-border: var(--color-neutral-800);
+  --ui-border-muted: var(--color-neutral-800);
+  --ui-border-accented: var(--color-neutral-700);
+  --ui-border-inverted: #fff;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+#root, #__nuxt {
+  isolation: isolate;
+}
+
+/* Noise grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+html:not(.dark) body::before {
+  opacity: 0.06;
+}
+
+/* Scrollbar */
+* {
+  --scrollbar-track: initial;
+  --scrollbar-thumb: #acbad2;
+
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.dark * {
+  --scrollbar-thumb: #3b5178;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
