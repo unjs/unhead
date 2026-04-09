@@ -37,8 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: pnpm i
-      - run: pnpm build:devtools-app
-      - run: pnpm build
+      - run: pnpm build:all
 
       - name: Detect prerelease tag
         id: prerelease
