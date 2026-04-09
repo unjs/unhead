@@ -1,0 +1,46 @@
+name: Nightly
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - '!**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
+      - run: pnpm i
+      - run: pnpm build
+      - run: pnpm build:aliases
+
+      - name: Publish
+        run: >-
+          pnpm dlx pkg-pr-new publish
+          ./packages/addons
+          ./packages/angular
+          ./packages/bundler
+          ./packages/react
+          ./packages/schema-org
+          ./packages/solid-js
+          ./packages/svelte
+          ./packages/unhead
+          ./packages/vue
+          './packages-aliased/*'

@@ -13,21 +13,19 @@ jobs:
   release:
     # Skip pre-release tags from main branch
     if: ${{ !contains(github.ref_name, '-') || github.event.base_ref != 'refs/heads/main' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
-      - name: Set node
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: latest
+          node-version: lts/*
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: https://registry.npmjs.org
 
       - name: Force Set pnpm Registry
         run: pnpm config set registry https://registry.npmjs.org
@@ -36,22 +34,26 @@ jobs:
         if: ${{ !contains(github.ref_name, '-') }}
         run: npx changelogithub
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Dependencies
-        run: pnpm i
+      - run: pnpm i
+      - run: pnpm build
 
-      - name: Build
-        run: pnpm build
+      - name: Detect prerelease tag
+        id: prerelease
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" != *-* ]]; then
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == *beta* ]]; then
+            echo "tag=--tag beta" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == *alpha* ]]; then
+            echo "tag=--tag alpha" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == *rc* ]]; then
+            echo "tag=--tag rc" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=--tag next" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Publish Stable
-        if: ${{ !contains(github.ref_name, '-') }}
-        run: pnpm publish -r --access public --no-git-checks
-
-      - name: Publish Beta
-        if: ${{ contains(github.ref_name, 'beta') }}
-        run: pnpm publish -r --access public --no-git-checks --tag beta
-
-      - name: Publish Next
-        if: ${{ contains(github.ref_name, '-') && !contains(github.ref_name, 'beta') }}
-        run: pnpm publish -r --access public --no-git-checks --tag next
+      - name: Publish
+        run: pnpm publish -r --access public --no-git-checks --provenance ${{ steps.prerelease.outputs.tag }}
