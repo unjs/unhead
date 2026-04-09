@@ -64,7 +64,7 @@ useSeoMeta({
         <dt>What is Unhead?</dt>
         <dd>Unhead is a document head manager for any JavaScript framework.</dd>
         <dt>Does Unhead support SSR?</dt>
-        <dd>Yes, Unhead has first class SSR support with streaming capabilities.</dd>
+        <dd>Yes, Unhead has first-class SSR support with streaming capabilities.</dd>
       </dl>
     </article>
   </div>

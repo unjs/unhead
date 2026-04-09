@@ -65,7 +65,8 @@ export function devtoolsPlugin(): HeadPluginInput {
           }
           ctx.tags.push({
             tag: 'script',
-            innerHTML: JSON.stringify({ entries, tags }),
+            // Escape `<` so a serialized `</script>` cannot close the inline JSON block early
+            innerHTML: JSON.stringify({ entries, tags }).replace(/</g, '\\u003C'),
             props: { id: 'unhead:devtools', type: 'application/json' },
           })
         },

@@ -21,7 +21,8 @@ const activeTab = computed(() => {
   for (const item of navItems) {
     if (item.to === '/' && route.path === '/')
       return item.value
-    if (item.to !== '/' && route.path.startsWith(item.to))
+    // Match exact path or nested children, not sibling paths like `/schema-preview` for `/schema`
+    if (item.to !== '/' && (route.path === item.to || route.path.startsWith(`${item.to}/`)))
       return item.value
   }
   return navItems[0]?.value

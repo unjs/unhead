@@ -17,8 +17,6 @@ const IMAGE_EXT_RE = /\.(?:png|jpe?g|gif|svg|ico|webp|avif)(?:\?.*)?$/i
 export const brokenLinks = shallowRef(new Map<string, BrokenLink>())
 /** URLs currently being checked */
 export const pendingUrls = shallowRef(new Set<string>())
-/** All URLs that have been checked (including successful ones) */
-const checkedUrls = new Set<string>()
 
 function triggerBrokenLinks() {
   brokenLinks.value = new Map(brokenLinks.value)
@@ -64,6 +62,10 @@ function extractCheckableUrls(tags: SerializedTag[]): Array<{ url: string, tag: 
 }
 
 async function checkUrl(url: string, identifier: string): Promise<number | 'error'> {
+  // Skip during SSR/prerender — `new Image()` and `fetch` to relative URLs both fail there
+  if (typeof window === 'undefined')
+    return 200
+
   // For image URLs (including relative icon paths), use Image() which reliably detects broken images
   if (IMAGE_URL_META.has(identifier) || ICON_RELS.has(identifier) || IMAGE_EXT_RE.test(url)) {
     return new Promise<number>((resolve) => {
@@ -88,18 +90,22 @@ export function validateLinks(tags: SerializedTag[]) {
   const urls = extractCheckableUrls(tags)
 
   for (const { url, tag, identifier, tagDedupeKey } of urls) {
-    if (checkedUrls.has(url))
+    if (pendingUrls.value.has(url))
       continue
-    checkedUrls.add(url)
     pendingUrls.value.add(url)
     triggerPending()
 
     checkUrl(url, identifier).then((status) => {
       pendingUrls.value.delete(url)
       triggerPending()
-      // 200 = loaded fine, skip. 0 = image failed to load
-      if (status === 'error' || status === 0 || (status >= 400 && status < 600)) {
+      const isBroken = status === 'error' || status === 0 || (status >= 400 && status < 600)
+      if (isBroken) {
         brokenLinks.value.set(url, { url, tag, identifier, status, tagDedupeKey })
+        triggerBrokenLinks()
+      }
+      // Recovered: drop any stale broken-link entry so the UI updates
+      else if (brokenLinks.value.has(url)) {
+        brokenLinks.value.delete(url)
         triggerBrokenLinks()
       }
     })
@@ -110,5 +116,4 @@ export function validateLinks(tags: SerializedTag[]) {
 export function resetLinkChecker() {
   brokenLinks.value = new Map()
   pendingUrls.value = new Set()
-  checkedUrls.clear()
 }

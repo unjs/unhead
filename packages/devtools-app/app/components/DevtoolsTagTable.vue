@@ -202,13 +202,14 @@ function hasInlineCode(tag: any): false | { code: string, lang: 'js' | 'json' | 
   return false
 }
 
-const expandedRows = ref(new Set<number>())
+const expandedRows = ref(new Set<string>())
 
-function toggleRow(index: number) {
-  if (expandedRows.value.has(index))
-    expandedRows.value.delete(index)
+function toggleRow(tag: any) {
+  const key = tagMatchKey(tag)
+  if (expandedRows.value.has(key))
+    expandedRows.value.delete(key)
   else
-    expandedRows.value.add(index)
+    expandedRows.value.add(key)
 }
 </script>
 
@@ -275,18 +276,18 @@ function toggleRow(index: number) {
           </tr>
         </thead>
         <tbody>
-          <template v-for="(tag, i) in filteredTags" :key="i">
+          <template v-for="tag in filteredTags" :key="tagMatchKey(tag)">
             <tr
               class="border-b border-default hover:bg-elevated transition-colors cursor-pointer"
-              :class="{ 'bg-elevated/30': expandedRows.has(i) }"
-              @click="toggleRow(i)"
+              :class="{ 'bg-elevated/30': expandedRows.has(tagMatchKey(tag)) }"
+              @click="toggleRow(tag)"
             >
               <td class="p-2">
                 <div class="flex items-center gap-1.5">
                   <UIcon
                     name="i-carbon-chevron-right"
                     class="text-xs text-muted shrink-0 transition-transform duration-150"
-                    :class="{ 'rotate-90': expandedRows.has(i) }"
+                    :class="{ 'rotate-90': expandedRows.has(tagMatchKey(tag)) }"
                   />
                   <UBadge :color="tagTypeColor(tag.tag)" variant="subtle" size="xs">
                     {{ tag.tag }}
@@ -332,7 +333,7 @@ function toggleRow(index: number) {
                 </UBadge>
               </td>
             </tr>
-            <tr v-if="expandedRows.has(i)" class="border-b border-default">
+            <tr v-if="expandedRows.has(tagMatchKey(tag))" class="border-b border-default">
               <td colspan="5" class="px-4 py-3 bg-elevated/50">
                 <div class="space-y-3">
                   <!-- Warnings -->

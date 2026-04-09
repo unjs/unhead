@@ -22,7 +22,7 @@ const modeConfig = {
       </UBadge>
       <UBadge :color="modeConfig[entry.mode]?.color || 'neutral'" variant="subtle" size="xs">
         <UIcon :name="modeConfig[entry.mode]?.icon || 'i-carbon-help'" class="text-xs" />
-        {{ entry.mode }}
+        {{ entry.mode || 'unknown' }}
       </UBadge>
       <span v-if="entry.source" class="text-xs text-muted font-mono ml-auto">
         {{ entry.source }}

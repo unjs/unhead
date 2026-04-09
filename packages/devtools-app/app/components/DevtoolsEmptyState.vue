@@ -16,10 +16,11 @@ const {
     <p class="font-medium text-sm mb-1">
       {{ title }}
     </p>
-    <p v-if="description || $slots.description" class="text-xs text-muted max-w-sm mx-auto">
-      <slot name="description">
-        {{ description }}
-      </slot>
+    <div v-if="$slots.description" class="text-xs text-muted max-w-sm mx-auto">
+      <slot name="description" />
+    </div>
+    <p v-else-if="description" class="text-xs text-muted max-w-sm mx-auto">
+      {{ description }}
     </p>
     <div v-if="$slots.default" class="mt-3">
       <slot />

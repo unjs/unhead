@@ -101,10 +101,9 @@ html:not(.dark) body::before {
 /* Scrollbar */
 * {
   --scrollbar-track: initial;
-  --scrollbar-thumb: initial;
+  --scrollbar-thumb: #acbad2;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
-  --scrollbar-thumb: #acbad2;
 }
 
 .dark * {

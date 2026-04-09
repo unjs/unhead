@@ -15,6 +15,7 @@ export async function loadShiki(): Promise<HighlighterCore | undefined> {
       import('@shikijs/langs/json'),
       import('@shikijs/langs/js'),
       import('@shikijs/langs/xml'),
+      import('@shikijs/langs/css'),
     ],
     engine: createJavaScriptRegexEngine(),
   }).catch((err) => {

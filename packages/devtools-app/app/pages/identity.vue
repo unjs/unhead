@@ -163,7 +163,12 @@ const themeChecklist = computed<TipItem[]>(() => [
             {{ iconRelLabels[rel]?.description || '' }}
           </p>
           <div class="id-icon-grid">
-            <div v-for="icon in groupIcons" :key="icon.href" class="id-icon-card" :class="{ 'id-icon-card--broken': isBrokenUrl(icon.href) }">
+            <div
+              v-for="(icon, index) in groupIcons"
+              :key="`${icon.rel}:${icon.href}:${icon.sizes || ''}:${icon.type || ''}:${index}`"
+              class="id-icon-card"
+              :class="{ 'id-icon-card--broken': isBrokenUrl(icon.href) }"
+            >
               <div class="id-icon-preview">
                 <template v-if="isBrokenUrl(icon.href)">
                   <UIcon name="i-carbon-warning-filled" class="text-red-400 text-lg" />

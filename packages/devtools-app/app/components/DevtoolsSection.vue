@@ -10,7 +10,6 @@ const {
   text?: string
   description?: string
   collapse?: boolean
-  open?: boolean
   padding?: boolean
 }>()
 

@@ -153,22 +153,25 @@ function checkIconColor(status: string): string {
   return 'text-red-400'
 }
 
-// Rich Results from JSON-LD
+// Rich Results from JSON-LD — parse every JSON-LD script so multi-tag pages
+// (BreadcrumbList + Organization + WebSite, etc.) all reach the preview.
 const jsonLdData = computed(() => {
-  const jsonLdTags = state.value.tags.filter(
-    t => t.tag === 'script' && t.props?.type === 'application/ld+json',
-  )
-  if (!jsonLdTags.length)
+  const docs = state.value.tags
+    .filter(t => t.tag === 'script' && t.props?.type === 'application/ld+json')
+    .flatMap((tag) => {
+      try {
+        return [JSON.parse(tag.innerHTML || '{}')]
+      }
+      catch {
+        return []
+      }
+    })
+
+  if (!docs.length)
     return null
-  for (const tag of jsonLdTags) {
-    try {
-      return JSON.parse(tag.innerHTML || '{}')
-    }
-    catch {
-      continue
-    }
-  }
-  return null
+  if (docs.length === 1)
+    return docs[0]
+  return { '@graph': docs.flatMap(doc => extractSchemaNodes(doc)) }
 })
 
 const richResultNodes = computed(() => {
@@ -399,6 +402,9 @@ function renderStars(value: number, max: number = 5): string {
           </div>
           <div class="flex items-center gap-1">
             <button
+              type="button"
+              aria-label="Desktop preview"
+              :aria-pressed="previewMode === 'desktop'"
               class="px-2 py-1 text-xs rounded"
               :class="previewMode === 'desktop' ? 'bg-elevated font-medium' : 'text-muted'"
               @click="previewMode = 'desktop'"
@@ -406,6 +412,9 @@ function renderStars(value: number, max: number = 5): string {
               <UIcon name="i-carbon-laptop" class="text-sm" />
             </button>
             <button
+              type="button"
+              aria-label="Mobile preview"
+              :aria-pressed="previewMode === 'mobile'"
               class="px-2 py-1 text-xs rounded"
               :class="previewMode === 'mobile' ? 'bg-elevated font-medium' : 'text-muted'"
               @click="previewMode = 'mobile'"
