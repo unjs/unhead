@@ -69,4 +69,4 @@
   ValidHeadTags: object
   walkResolver: function
 ./vite:
-  default: function
+  Unhead: function

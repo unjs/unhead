@@ -1,10 +1,10 @@
-import type { UnpluginOptions } from '@unhead/bundler/vite'
+import type { VitePluginOptions } from '@unhead/bundler/vite'
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import type { Plugin } from 'vite'
-import buildPlugins from '@unhead/bundler/vite'
+import { Unhead as buildPlugins } from '@unhead/bundler/vite'
 import { unheadVuePlugin } from './stream/vite'
 
-export interface UnheadVueViteOptions extends UnpluginOptions {
+export interface UnheadVueViteOptions extends VitePluginOptions {
   /**
    * Enable streaming SSR support.
    * Set to `true` or a config object to enable.
@@ -23,15 +23,15 @@ export interface UnheadVueViteOptions extends UnpluginOptions {
  * ```ts
  * // vite.config.ts
  * import vue from '@vitejs/plugin-vue'
- * import unhead from '@unhead/vue/vite'
+ * import { Unhead } from '@unhead/vue/vite'
  *
  * export default defineConfig({
- *   plugins: [vue(), unhead()],
+ *   plugins: [vue(), Unhead()],
  * })
  * ```
  */
-export default function unhead(options: UnheadVueViteOptions = {}): Plugin[] {
-  const plugins: Plugin[] = [...buildPlugins(options)]
+export function Unhead(options: UnheadVueViteOptions = {}): Plugin[] {
+  const plugins: Plugin[] = [...buildPlugins({ ...options, _framework: '@unhead/vue' })]
   if (options.streaming) {
     const streamingOpts = typeof options.streaming === 'object' ? options.streaming : undefined
     plugins.push(unheadVuePlugin(streamingOpts))

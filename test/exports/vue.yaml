@@ -2,11 +2,15 @@
   createUnhead: function
   headSymbol: string
   injectHead: function
+  resolveUnrefHeadInput: function
   unheadVueComposablesImports: object
   useHead: function
   useHeadSafe: function
   useScript: function
   useSeoMeta: function
+  useServerHead: function
+  useServerHeadSafe: function
+  useServerSeoMeta: function
   VueHeadMixin: object
 ./client:
   createHead: function
@@ -74,6 +78,7 @@
   resolvePackedMetaObjectValue: function
   resolveTags: function
   resolveTitleTemplate: function
+  resolveUnrefHeadInput: function
   sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
@@ -87,4 +92,4 @@
   VueResolver: function
   walkResolver: function
 ./vite:
-  default: function
+  Unhead: function

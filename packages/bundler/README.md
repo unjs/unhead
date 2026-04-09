@@ -31,13 +31,13 @@ pnpm add @unhead/bundler
 ### Vite Plugin
 
 ```ts
-import UnheadVite from '@unhead/bundler/vite'
 // vite.config.ts
 import { defineConfig } from 'vite'
+import { Unhead } from '@unhead/bundler/vite'
 
 export default defineConfig({
   plugins: [
-    UnheadVite({
+    Unhead({
       // Options
     })
   ]
@@ -48,11 +48,11 @@ export default defineConfig({
 
 ```js
 // webpack.config.js
-const UnheadWebpack = require('@unhead/bundler/webpack')
+const { Unhead } = require('@unhead/bundler/webpack')
 
 module.exports = {
   plugins: [
-    UnheadWebpack({
+    Unhead({
       // Options
     })
   ]

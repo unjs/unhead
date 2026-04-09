@@ -1,10 +1,10 @@
-import type { UnpluginOptions } from '@unhead/bundler/vite'
+import type { VitePluginOptions } from '@unhead/bundler/vite'
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import type { Plugin } from 'vite'
-import buildPlugins from '@unhead/bundler/vite'
+import { Unhead as buildPlugins } from '@unhead/bundler/vite'
 import { unheadSolidPlugin } from './stream/vite'
 
-export interface UnheadSolidViteOptions extends UnpluginOptions {
+export interface UnheadSolidViteOptions extends VitePluginOptions {
   /**
    * Enable streaming SSR support.
    * Set to `true` or a config object to enable.
@@ -23,15 +23,15 @@ export interface UnheadSolidViteOptions extends UnpluginOptions {
  * ```ts
  * // vite.config.ts
  * import solid from 'vite-plugin-solid'
- * import unhead from '@unhead/solid-js/vite'
+ * import { Unhead } from '@unhead/solid-js/vite'
  *
  * export default defineConfig({
- *   plugins: [solid(), unhead()],
+ *   plugins: [Unhead(), solid()],
  * })
  * ```
  */
-export default function unhead(options: UnheadSolidViteOptions = {}): Plugin[] {
-  const plugins: Plugin[] = [...buildPlugins(options)]
+export function Unhead(options: UnheadSolidViteOptions = {}): Plugin[] {
+  const plugins: Plugin[] = [...buildPlugins({ ...options, _framework: '@unhead/solid-js' })]
   if (options.streaming) {
     const streamingOpts = typeof options.streaming === 'object' ? options.streaming : undefined
     plugins.push(unheadSolidPlugin(streamingOpts))

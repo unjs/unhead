@@ -45,7 +45,7 @@ Add the plugin to your Unhead configuration:
 ::code-block
 
 ```ts [Input]
-import { InferSeoMetaPlugin } from 'unhead/plugins'
+import { InferSeoMetaPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [
@@ -98,7 +98,7 @@ Remove site name suffix from Open Graph titles:
 ::code-block
 
 ```ts [Input]
-import { InferSeoMetaPlugin } from 'unhead/plugins'
+import { InferSeoMetaPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [

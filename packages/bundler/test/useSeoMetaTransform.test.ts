@@ -714,6 +714,33 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     `)
   })
 
+  it('preserves second argument (options) when present', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'@unhead/vue\'',
+      'useSeoMeta({ title: \'Hello\', description: \'World\' }, { head })',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toContain('{ head }')
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from '@unhead/vue'
+      useHead({
+        title: 'Hello',
+        meta: [
+          { name: 'description', content: 'World' },
+        ]
+      }, { head })"
+    `)
+  })
+
+  it('preserves complex second argument', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ description: \'Test\' }, { head, mode: \'server\' })',
+    ])
+    expect(code).toBeDefined()
+    expect(code).toContain('{ head, mode: \'server\' }')
+  })
+
   it('handles #import', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'#imports\'',
