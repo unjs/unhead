@@ -12,7 +12,7 @@ packages:
   - docs
 
 overrides:
-  chokidar: 4.0.1
+  chokidar: 5.0.0
 catalog:
   '@angular-devkit/build-angular': ^21.2.7
   '@angular/cli': ^21.2.7
