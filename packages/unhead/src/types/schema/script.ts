@@ -52,14 +52,16 @@ interface NoLoadableScriptProps {
 }
 
 /**
- * Content for data scripts - either textContent or innerHTML, not both
+ * Content for data scripts — requires exactly one of `textContent` or
+ * `innerHTML`. Data scripts (JSON-LD, speculation rules, application/json) must
+ * carry inline content; an empty payload is invalid.
  */
 type DataScriptTextContent<T = string | Record<string, unknown>> = {
   /**
    * Sets the textContent of an element. Safer for XSS.
    * Can be a string or an object that will be serialized to JSON.
    */
-  textContent?: T
+  textContent: T
   innerHTML?: never
 } | {
   textContent?: never
@@ -67,7 +69,7 @@ type DataScriptTextContent<T = string | Record<string, unknown>> = {
    * Sets the innerHTML of an element.
    * Can be a string or an object that will be serialized to JSON.
    */
-  innerHTML?: T
+  innerHTML: T
 }
 
 // ============================================================================
@@ -339,12 +341,16 @@ export type ApplicationJsonScript = ScriptBase & NoLoadableScriptProps & DataScr
 /**
  * Fallback for custom or unknown `type` values.
  *
- * Not included in the {@link Script} union to prevent silent absorption of known `type` values.
- * Use this type explicitly when you need a non-standard `type` value:
+ * Not included in the {@link Script} union to prevent silent absorption of known
+ * `type` values (e.g. so `type: 'module'` without `src` or inline content stays
+ * an error instead of collapsing into this permissive shape).
+ *
+ * For custom `type` values, prefer {@link defineScript}, which enforces strict
+ * narrowing on known types while accepting `GenericScript` for anything else:
  *
  * ```ts
- * import type { GenericScript } from 'unhead/types'
- * useHead({ script: [{ type: 'text/plain', textContent: '...' } satisfies GenericScript] })
+ * import { defineScript } from 'unhead'
+ * useHead({ script: [defineScript({ type: 'text/plain', textContent: '...' })] })
  * ```
  */
 export interface GenericScript extends ScriptBase, ScriptHttpEvents {
@@ -425,10 +431,10 @@ export interface GenericScript extends ScriptBase, ScriptHttpEvents {
  * Each `type` value maps to a specific interface that enforces per-type constraints.
  * For example, inline scripts require `textContent` and forbid `src`/`async`/`defer`.
  *
- * For custom or non-standard `type` values, use {@link GenericScript} directly:
+ * For custom or non-standard `type` values, use {@link defineScript}:
  * ```ts
- * import type { GenericScript } from 'unhead/types'
- * useHead({ script: [{ type: 'text/plain', textContent: '...' } satisfies GenericScript] })
+ * import { defineScript } from 'unhead'
+ * useHead({ script: [defineScript({ type: 'text/plain', textContent: '...' })] })
  * ```
  */
 export type Script
@@ -440,3 +446,50 @@ export type Script
     | SpeculationRulesScript
     | ImportMapScript
     | ApplicationJsonScript
+
+// ============================================================================
+// defineScript helper (type inference)
+// ============================================================================
+
+/**
+ * Union of all `type` values that have narrowed script type definitions.
+ */
+export type KnownScriptType
+  = | ''
+    | 'text/javascript'
+    | 'module'
+    | 'application/ld+json'
+    | 'speculationrules'
+    | 'importmap'
+    | 'application/json'
+
+/**
+ * Pick {@link Script} union members whose `type` accepts `U`.
+ *
+ * Handles members whose `type` is itself a union (e.g. {@link ExternalScript}'s
+ * `'' | 'text/javascript'`), and members where `type` is optional.
+ */
+type MatchScriptByType<U>
+  = Script extends infer M
+    ? M extends { type?: infer MT }
+      ? U extends MT
+        ? M
+        : never
+      : never
+    : never
+
+/**
+ * Resolve a single script input to either its strict {@link Script} variant (when
+ * `type` is a {@link KnownScriptType}) or {@link GenericScript} (for custom types).
+ *
+ * When no `type` field is present, or `type` is non-string, the full {@link Script}
+ * union is returned so discriminators like `src` vs `textContent` still apply.
+ */
+export type InferScript<T>
+  = T extends { type: infer U }
+    ? U extends string
+      ? U extends KnownScriptType
+        ? MatchScriptByType<U>
+        : GenericScript & { type: U }
+      : Script
+    : Script

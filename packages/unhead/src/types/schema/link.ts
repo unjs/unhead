@@ -619,6 +619,85 @@ export interface PingbackLink extends LinkBase {
   href: string
 }
 
+/**
+ * Me link. Identifies the resource as representing the current user
+ * (IndieWeb / rel-me verification, Mastodon profile verification).
+ *
+ * @see https://html.spec.whatwg.org/multipage/links.html#link-type-me
+ */
+export interface MeLink extends LinkBase {
+  rel: 'me'
+  href: string
+}
+
+/**
+ * Privacy policy link.
+ *
+ * @see https://html.spec.whatwg.org/multipage/links.html#link-type-privacy-policy
+ */
+export interface PrivacyPolicyLink extends LinkBase {
+  rel: 'privacy-policy'
+  href: string
+}
+
+/**
+ * Terms of service link.
+ *
+ * @see https://html.spec.whatwg.org/multipage/links.html#link-type-terms-of-service
+ */
+export interface TermsOfServiceLink extends LinkBase {
+  rel: 'terms-of-service'
+  href: string
+}
+
+/**
+ * Expect link. Blocks rendering until a named element is present and ready.
+ *
+ * @see https://html.spec.whatwg.org/multipage/links.html#link-type-expect
+ */
+export interface ExpectLink extends LinkBase {
+  rel: 'expect'
+  href: string
+  blocking?: 'render'
+}
+
+/**
+ * Webmention endpoint link (IndieWeb).
+ *
+ * @see https://www.w3.org/TR/webmention/
+ */
+export interface WebmentionLink extends LinkBase {
+  rel: 'webmention'
+  href: string
+}
+
+/**
+ * Compression dictionary link (experimental).
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/link#compression-dictionary
+ */
+export interface CompressionDictionaryLink extends LinkBase {
+  rel: 'compression-dictionary'
+  href: string
+}
+
+/**
+ * Alternate stylesheet link. User-selectable alternate stylesheet.
+ * Requires a `title` to appear in the browser's stylesheet picker.
+ *
+ * @see https://html.spec.whatwg.org/multipage/semantics.html#rel-alternate-stylesheet
+ */
+export interface AlternateStylesheetLink extends LinkBase, LinkHttpEvents {
+  rel: 'alternate stylesheet'
+  href: string
+  title: string
+  media?: string
+  crossorigin?: '' | 'anonymous' | 'use-credentials'
+  integrity?: string
+  type?: 'text/css' | (string & Record<never, never>)
+  disabled?: boolean
+}
+
 // ============================================================================
 // Generic/Fallback Link
 // ============================================================================
@@ -629,6 +708,7 @@ export interface PingbackLink extends LinkBase {
  */
 export type KnownLinkRel
   = | 'stylesheet'
+    | 'alternate stylesheet'
     | 'preload'
     | 'modulepreload'
     | 'prefetch'
@@ -649,16 +729,27 @@ export type KnownLinkRel
     | 'prev'
     | 'next'
     | 'pingback'
+    | 'me'
+    | 'webmention'
+    | 'privacy-policy'
+    | 'terms-of-service'
+    | 'expect'
+    | 'compression-dictionary'
 
 /**
  * Fallback for custom or unknown `rel` types.
  *
- * Not included in the {@link Link} union to prevent silent absorption of known `rel` values.
- * Use this type explicitly when you need a non-standard `rel` value:
+ * Not included in the {@link Link} union to prevent silent absorption of known
+ * `rel` values (e.g. so `rel: 'preload'` without `as` stays an error instead of
+ * collapsing into this permissive shape).
+ *
+ * For non-standard `rel` values not covered by {@link KnownLinkRel}, prefer
+ * {@link defineLink}, which enforces strict narrowing on known rels while
+ * accepting `GenericLink` for anything else:
  *
  * ```ts
- * import type { GenericLink } from 'unhead/types'
- * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * import { defineLink } from 'unhead'
+ * useHead({ link: [defineLink({ rel: 'openid2.provider', href: 'https://...' })] })
  * ```
  */
 export interface GenericLink extends LinkBase {
@@ -690,16 +781,17 @@ export interface GenericLink extends LinkBase {
  * attributes. For example, `rel="preload"` requires the `as` attribute (see {@link PreloadLink}),
  * and `rel="mask-icon"` requires `color` (see {@link MaskIconLink}).
  *
- * For custom or non-standard `rel` values, use {@link GenericLink} directly:
+ * For non-standard `rel` values not covered by {@link KnownLinkRel}, use {@link defineLink}:
  * ```ts
- * import type { GenericLink } from 'unhead/types'
- * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * import { defineLink } from 'unhead'
+ * useHead({ link: [defineLink({ rel: 'openid2.provider', href: 'https://...' })] })
  * ```
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel
  */
 export type Link
   = | StylesheetLink
+    | AlternateStylesheetLink
     | PreloadLink
     | ModulepreloadLink
     | PrefetchLink
@@ -722,3 +814,41 @@ export type Link
     | PrevLink
     | NextLink
     | PingbackLink
+    | MeLink
+    | WebmentionLink
+    | PrivacyPolicyLink
+    | TermsOfServiceLink
+    | ExpectLink
+    | CompressionDictionaryLink
+
+// ============================================================================
+// defineLink helper (type inference)
+// ============================================================================
+
+/**
+ * Pick {@link Link} union members whose `rel` accepts `R`.
+ *
+ * Unlike `Extract<Link, { rel: R }>`, this handles members whose `rel` is itself
+ * a union (e.g. {@link FaviconLink}'s `'icon' | 'shortcut icon'`).
+ */
+type MatchLinkByRel<R>
+  = Link extends infer M
+    ? M extends { rel: infer MR }
+      ? R extends MR
+        ? M
+        : never
+      : never
+    : never
+
+/**
+ * Resolve a single link input to either its strict {@link Link} variant (when
+ * `rel` is a {@link KnownLinkRel}) or {@link GenericLink} (for custom rels).
+ */
+export type InferLink<T>
+  = T extends { rel: infer R }
+    ? R extends KnownLinkRel
+      ? MatchLinkByRel<R>
+      : R extends string
+        ? GenericLink & { rel: R }
+        : never
+    : never
