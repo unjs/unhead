@@ -131,4 +131,141 @@ describe('defineScript', () => {
       ],
     })
   })
+
+  // Nuxt cross-origin-prefetch: speculationrules with structured innerHTML object
+  it('accepts speculationrules with object innerHTML without defineScript', () => {
+    const head = createHead()
+    useHead(head, {
+      script: [{
+        type: 'speculationrules',
+        key: 'speculationrules',
+        innerHTML: {
+          prefetch: [
+            {
+              source: 'list',
+              urls: ['https://example.com'],
+              requires: ['anonymous-client-ip-when-cross-origin'],
+            },
+          ],
+        },
+      }],
+    })
+  })
+
+  // Nuxt importmap: structured innerHTML with imports object
+  it('accepts importmap with object innerHTML without defineScript', () => {
+    const head = createHead()
+    useHead(head, {
+      script: [{
+        type: 'importmap',
+        innerHTML: { imports: { '#entry': '/entry.mjs' } },
+      }],
+    })
+  })
+
+  // as const speculationrules should work directly with useHead
+  it('accepts as const speculationrules directly in useHead', () => {
+    const spec = {
+      type: 'speculationrules',
+      innerHTML: {
+        prerender: [{ source: 'list', urls: ['/next-page'] }],
+      },
+    } as const
+    const head = createHead()
+    useHead(head, { script: [spec] })
+  })
+
+  // as const importmap should work directly with useHead
+  it('accepts as const importmap directly in useHead', () => {
+    const map = {
+      type: 'importmap',
+      innerHTML: { imports: { '#entry': '/entry.mjs' } },
+    } as const
+    const head = createHead()
+    useHead(head, { script: [map] })
+  })
+
+  // Nuxt cross-origin-prefetch: helper function returning script for useHead
+  it('works from a helper function without defineScript', () => {
+    function generateRules() {
+      return {
+        type: 'speculationrules' as const,
+        key: 'speculationrules',
+        innerHTML: {
+          prefetch: [
+            {
+              source: 'list' as const,
+              urls: ['https://a.com', 'https://b.com'],
+              requires: ['anonymous-client-ip-when-cross-origin'] as const,
+            },
+          ],
+        },
+      }
+    }
+    const head = createHead()
+    useHead(head, { script: [generateRules()] })
+  })
+
+  // defineScript still works for custom types that need it
+  it('accepts as const objects via defineScript', () => {
+    const spec = {
+      type: 'speculationrules',
+      innerHTML: {
+        prerender: [{ source: 'list', urls: ['/next-page'] }],
+      },
+    } as const
+    defineScript(spec)
+  })
+})
+
+describe('useHead — as const link patterns', () => {
+  // Nuxt renderer: preload link directly in useHead
+  it('accepts preload link directly in useHead', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        { rel: 'preload', as: 'fetch', crossorigin: 'anonymous', href: '/payload.json' },
+      ],
+    })
+  })
+
+  // Nuxt renderer: stylesheet with crossorigin directly in useHead
+  it('accepts stylesheet with crossorigin directly', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        { rel: 'stylesheet', href: '/style.css', crossorigin: '' },
+      ],
+    })
+  })
+
+  // Nuxt renderer: preload as script directly in useHead
+  it('accepts preload as script directly', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        { rel: 'preload', as: 'script', href: '/chunk.js' },
+      ],
+    })
+  })
+
+  // Nuxt docs: preconnect directly in useHead
+  it('accepts preconnect directly', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      ],
+    })
+  })
+
+  // defineLink only needed for non-standard rels
+  it('needs defineLink only for non-standard rels', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        defineLink({ rel: 'openid2.provider', href: 'https://example.com/openid' }),
+      ],
+    })
+  })
 })

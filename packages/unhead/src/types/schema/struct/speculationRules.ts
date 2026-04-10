@@ -1,8 +1,8 @@
 import type { ReferrerPolicy } from '../shared'
 
 export interface SpeculationRules {
-  prefetch?: (SpeculationRuleList | SpeculationRuleDocument)[]
-  prerender?: (SpeculationRuleList | SpeculationRuleDocument)[]
+  prefetch?: readonly (SpeculationRuleList | SpeculationRuleDocument)[]
+  prerender?: readonly (SpeculationRuleList | SpeculationRuleDocument)[]
 }
 
 export interface SpeculationRuleBase {
@@ -23,7 +23,7 @@ export interface SpeculationRuleBase {
    *
    * @see https://github.com/WICG/nav-speculation/blob/main/triggers.md#requirements
    */
-  requires?: 'anonymous-client-ip-when-cross-origin'[]
+  requires?: readonly 'anonymous-client-ip-when-cross-origin'[]
   /**
    * Indicating where the page expects the prerendered content to be activated.
    *
@@ -40,11 +40,11 @@ export interface SpeculationRuleBase {
 
 export interface SpeculationRuleList extends SpeculationRuleBase {
   source: 'list'
-  urls: string[]
+  urls: readonly string[]
 }
 
 export type SpeculationRuleFn = 'and' | 'or' | 'href_matches' | 'selector_matches' | 'not'
-export type SpeculationRuleWhere = Partial<Record<SpeculationRuleFn, Partial<(Record<SpeculationRuleFn, (Partial<Record<SpeculationRuleFn, string>>) | string>)>[]>>
+export type SpeculationRuleWhere = Partial<Record<SpeculationRuleFn, readonly Partial<(Record<SpeculationRuleFn, (Partial<Record<SpeculationRuleFn, string>>) | string>)>[]>>
 
 export interface SpeculationRuleDocument extends SpeculationRuleBase {
   source: 'document'
