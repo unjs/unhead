@@ -82,7 +82,8 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
     if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
       return false
     if (tag === 'script' && innerHTML) {
-      t.innerHTML = String(props.type).endsWith('json')
+      const type = String(props.type)
+      t.innerHTML = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
         ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(LT_RE, '\\u003C')
         : typeof innerHTML === 'string' ? innerHTML.replace(SCRIPT_END_RE, '<\\/script') : innerHTML
       t._d = dedupeKey(t)

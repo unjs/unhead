@@ -157,4 +157,73 @@ describe('capo', () => {
     expect(resolvedTags[16].tag).toEqual('meta')
     expect(resolvedTags[16].props.name).toEqual('description')
   })
+
+  it('importmap precedes modulepreload and module scripts', async () => {
+    const head = createServerHeadWithContext()
+    // push in reverse order to prove sorting, not insertion order
+    head.push({
+      script: [{
+        src: 'entry.js',
+        type: 'module',
+      }],
+    })
+    head.push({
+      link: [{
+        rel: 'modulepreload',
+        href: 'preloaded.js',
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: JSON.stringify({ imports: { '#entry': '/entry.js' } }),
+      }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
+    // IMPORTMAP must come first
+    expect(scriptAndLinkTags[0].tag).toEqual('script')
+    expect(scriptAndLinkTags[0].props.type).toEqual('importmap')
+    // MODULEPRELOAD
+    expect(scriptAndLinkTags[1].tag).toEqual('link')
+    expect(scriptAndLinkTags[1].props.rel).toEqual('modulepreload')
+    // MODULE SCRIPT
+    expect(scriptAndLinkTags[2].tag).toEqual('script')
+    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+  })
+
+  it('speculationrules sorts late alongside prefetch/prerender', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      script: [{
+        type: 'speculationrules',
+        innerHTML: JSON.stringify({ prefetch: [{ source: 'list', urls: ['/next'] }] }),
+      }],
+    })
+    head.push({
+      link: [{ rel: 'stylesheet', href: 'styles.css' }],
+    })
+    head.push({
+      script: [{ src: 'sync.js' }],
+    })
+    head.push({
+      script: [{ src: 'module.js', type: 'module' }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
+    // sync script (50) first
+    expect(scriptAndLinkTags[0].tag).toEqual('script')
+    expect(scriptAndLinkTags[0].props.src).toEqual('sync.js')
+    // stylesheet (60)
+    expect(scriptAndLinkTags[1].tag).toEqual('link')
+    expect(scriptAndLinkTags[1].props.rel).toEqual('stylesheet')
+    // module script (80)
+    expect(scriptAndLinkTags[2].tag).toEqual('script')
+    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+    // speculationrules (90) last, after modules
+    expect(scriptAndLinkTags[3].tag).toEqual('script')
+    expect(scriptAndLinkTags[3].props.type).toEqual('speculationrules')
+  })
 })

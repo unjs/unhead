@@ -719,4 +719,25 @@ describe('dedupe', () => {
     expect(headTags).toContain('feed-v2.xml')
     expect(headTags).not.toContain('feed-v1.xml')
   })
+
+  it('importmap is unique per document', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: JSON.stringify({ imports: { '#entry': '/v1.js' } }),
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: JSON.stringify({ imports: { '#entry': '/v2.js' } }),
+      }],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Only the latest importmap should render per HTML spec
+    expect(headTags.split('type="importmap"').length).toBe(2)
+    expect(headTags).toContain('/v2.js')
+    expect(headTags).not.toContain('/v1.js')
+  })
 })

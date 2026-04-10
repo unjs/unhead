@@ -18,6 +18,9 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     if (altKey)
       return `alternate:${altKey}`
   }
+  // importmap is unique per document per HTML spec
+  if (t === 'script' && props.type === 'importmap')
+    return 'script:importmap'
 
   if (props.charset)
     return 'charset'
