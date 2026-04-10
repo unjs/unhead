@@ -28,8 +28,8 @@ export type ResolvableUnion<T> = T extends string | number | boolean
 
 /**
  * Recursively marks all properties and arrays as readonly.
- * Used in type narrowing so that `defineScript`/`defineLink` accept both
- * mutable and `as const` (readonly) inputs without touching schema types.
+ * Applied to `InferScript`/`InferLink` return types so that
+ * `defineScript`/`defineLink` accept both mutable and `as const` inputs.
  */
 export type DeepReadonly<T> = T extends (...a: any[]) => any
   ? T
