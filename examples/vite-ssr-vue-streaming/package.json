@@ -23,7 +23,7 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.2",
+    "@types/node": "^25.6.0",
     "@vitejs/devtools": "^0.1.13",
     "@vitejs/plugin-vue": "latest",
     "cross-env": "^10.1.0",

@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.5.2",
+    "@types/node": "^25.6.0",
     "@unhead/bundler": "workspace:*",
     "@vitejs/devtools": "^0.1.13",
     "@vitejs/plugin-vue": "^6.0.5",
