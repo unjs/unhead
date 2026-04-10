@@ -40,7 +40,7 @@ export function capoTagWeight(tag: HeadTag): number {
       weight = CAPO_WEIGHTS.script.speculationrules
     else if (isTruthy(tag.props.async))
       weight = CAPO_WEIGHTS.script.async
-    else if ((tag.props.src && !isTruthy(tag.props.defer) && !isTruthy(tag.props.async) && type !== 'module' && !type.endsWith('json')) || (tag.innerHTML && !type.endsWith('json')))
+    else if ((tag.props.src && !isTruthy(tag.props.defer) && !isTruthy(tag.props.async) && type !== 'module' && !type.endsWith('json')) || ((tag.innerHTML || tag.textContent) && !type.endsWith('json')))
       weight = CAPO_WEIGHTS.script.sync
     else if ((isTruthy(tag.props.defer) && tag.props.src && !isTruthy(tag.props.async)) || type === 'module')
       weight = CAPO_WEIGHTS.script.defer

@@ -256,4 +256,24 @@ describe('capo', () => {
     expect(scriptTags[1].props.type).toEqual('module')
     expect(scriptTags[1].props.async).toEqual(true)
   })
+
+  it('inline script with textContent sorts in the sync bucket', async () => {
+    const head = createServerHeadWithContext()
+    // inline scripts can use textContent (recommended, XSS-safe) instead of
+    // innerHTML; they should still sort in the sync-script bucket (50), not
+    // fall through to the default 100.
+    head.push({
+      script: [{ src: 'prefetch.js', async: true }],
+    })
+    head.push({
+      script: [{ textContent: 'console.log("inline")' }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptTags = resolvedTags.filter(t => t.tag === 'script')
+    // async (30) should come before sync inline (50)
+    expect(scriptTags[0].props.src).toEqual('prefetch.js')
+    expect(scriptTags[0].props.async).toEqual(true)
+    expect(scriptTags[1].textContent).toEqual('console.log("inline")')
+  })
 })

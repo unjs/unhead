@@ -81,11 +81,16 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
       return false
     if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
       return false
-    if (tag === 'script' && innerHTML) {
+    if (tag === 'script' && (innerHTML || t.textContent)) {
       const type = String(props.type)
-      t.innerHTML = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
-        ? (typeof innerHTML === 'string' ? innerHTML : JSON.stringify(innerHTML)).replace(LT_RE, '\\u003C')
-        : typeof innerHTML === 'string' ? innerHTML.replace(SCRIPT_END_RE, '<\\/script') : innerHTML
+      const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
+      const escape = (content: unknown): unknown => isJsonLike
+        ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
+        : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
+      if (innerHTML)
+        t.innerHTML = escape(innerHTML) as typeof innerHTML
+      if (t.textContent)
+        t.textContent = escape(t.textContent) as typeof t.textContent
       t._d = dedupeKey(t)
     }
     return true
