@@ -185,6 +185,53 @@ describe('streaming SSR', () => {
       const result = renderSSRHeadSuspenseChunk(head)
       expect(result).toContain('\\"')
     })
+
+    // GHSA-x7mm-9vvv-64w8: streamKey was interpolated into inline JS without
+    // escaping or identifier validation, letting an attacker-controlled key
+    // break out of the dot-notation sink and inject arbitrary script.
+    describe('streamKey injection (GHSA-x7mm-9vvv-64w8)', () => {
+      it('rejects streamKey that breaks out of dot notation', () => {
+        expect(() =>
+          createStreamableHead({ streamKey: '__unhead__;globalThis.PWNED=1;//' }),
+        ).toThrow(/Invalid streamKey/)
+      })
+
+      it('rejects streamKey containing closing script tag', () => {
+        expect(() =>
+          createStreamableHead({ streamKey: '</script><script>alert(1)</script>' }),
+        ).toThrow(/Invalid streamKey/)
+      })
+
+      it('rejects streamKey with spaces or dots', () => {
+        expect(() => createStreamableHead({ streamKey: 'foo bar' })).toThrow(/Invalid streamKey/)
+        expect(() => createStreamableHead({ streamKey: 'foo.bar' })).toThrow(/Invalid streamKey/)
+      })
+
+      it('rejects empty streamKey', () => {
+        expect(() => createStreamableHead({ streamKey: '' })).toThrow(/Invalid streamKey/)
+      })
+
+      it('rejects streamKey starting with a digit', () => {
+        expect(() => createStreamableHead({ streamKey: '1badKey' })).toThrow(/Invalid streamKey/)
+      })
+
+      it('rejects non-string streamKey', () => {
+        // @ts-expect-error testing runtime guard against non-string input
+        expect(() => createStreamableHead({ streamKey: 123 })).toThrow(/Invalid streamKey/)
+      })
+
+      it('accepts valid identifier-shaped keys', () => {
+        expect(() => createStreamableHead({ streamKey: '__unhead__' })).not.toThrow()
+        expect(() => createStreamableHead({ streamKey: '$foo' })).not.toThrow()
+        expect(() => createStreamableHead({ streamKey: '_private123' })).not.toThrow()
+      })
+
+      it('rejects injection via createBootstrapScript direct call', () => {
+        expect(() => createBootstrapScript('__unhead__;globalThis.PWNED=1;//')).toThrow(
+          /Invalid streamKey/,
+        )
+      })
+    })
   })
 
   describe('unicode and special characters', () => {
@@ -480,12 +527,13 @@ describe('streaming SSR', () => {
       expect(shell).toContain('window.__my_app_123__')
     })
 
-    it('handles unicode in stream key', async () => {
-      const { head } = createStreamableHead({ streamKey: '__アプリ__' })
-      head.push({ title: 'Test' })
-
-      const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
-      expect(shell).toContain('window.__アプリ__')
+    it('rejects unicode in stream key', () => {
+      // GHSA-x7mm-9vvv-64w8: streamKey is locked to ASCII identifiers to
+      // avoid homoglyph and complex Unicode validation edge cases at the
+      // inline-JS sink.
+      expect(() =>
+        createStreamableHead({ streamKey: '__アプリ__' }),
+      ).toThrow(/Invalid streamKey/)
     })
   })
 

@@ -8,6 +8,20 @@ const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
 
+// Conservative ASCII identifier: must be a safe `window.<name>` accessor.
+// Disallows anything that could break out of the dot-notation sink used by
+// the bootstrap and suspense-chunk scripts (GHSA-x7mm-9vvv-64w8).
+const VALID_STREAM_KEY_RE = /^[$_a-z][$\w]*$/i
+
+function assertValidStreamKey(streamKey: string): void {
+  if (typeof streamKey !== 'string' || !VALID_STREAM_KEY_RE.test(streamKey)) {
+    throw new Error(
+      `[unhead] Invalid streamKey: must be a valid JavaScript identifier matching ${VALID_STREAM_KEY_RE}. `
+      + `Received: ${JSON.stringify(streamKey)}`,
+    )
+  }
+}
+
 /**
  * Base context with just the head instance.
  * Extended by framework-specific contexts.
@@ -71,6 +85,8 @@ export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
   const { streamKey, ...rest } = options
+  if (streamKey !== undefined)
+    assertValidStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
@@ -88,7 +104,9 @@ export function createStreamableHead<T = ResolvableHead>(
   }
 }
 function getStreamKey(head: Unhead<any>): string {
-  return head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
+  const key = head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
+  assertValidStreamKey(key)
+  return key
 }
 
 /**
@@ -102,6 +120,7 @@ function getStreamKey(head: Unhead<any>): string {
  * @returns An inline `<script>` tag string
  */
 export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY): string {
+  assertValidStreamKey(streamKey)
   return `<script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
 }
 
