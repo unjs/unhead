@@ -7,7 +7,7 @@ export interface MetaFlatArticle {
    * Writers of the article.
    * @example ['https://example.com/some.html', 'https://example.com/one.html']
    */
-  articleAuthor?: string[]
+  articleAuthor?: readonly string[]
 
   /**
    * When the article is out of date after.
@@ -36,7 +36,7 @@ export interface MetaFlatArticle {
    * Tag words associated with this article.
    * @example ['Apple', 'Steve Jobs']
    */
-  articleTag?: string[]
+  articleTag?: readonly string[]
 }
 
 export interface MetaFlatBook {
@@ -44,7 +44,7 @@ export interface MetaFlatBook {
    * Who wrote this book.
    * @example ['https://example.com/some.html', 'https://example.com/one.html']
    */
-  bookAuthor?: string[]
+  bookAuthor?: readonly string[]
 
   /**
    * The ISBN.
@@ -62,7 +62,7 @@ export interface MetaFlatBook {
    * Tag words associated with this book.
    * @example ['Apple', 'Steve Jobs']
    */
-  bookTag?: string[]
+  bookTag?: readonly string[]
 }
 
 export interface MetaFlatProfile {

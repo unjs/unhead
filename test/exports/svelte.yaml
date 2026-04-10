@@ -1,5 +1,7 @@
 .:
   autoImports: object
+  defineLink: function
+  defineScript: function
   UnheadContextKey: symbol
   useHead: function
   useHeadSafe: function

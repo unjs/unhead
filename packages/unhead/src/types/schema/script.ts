@@ -1,4 +1,4 @@
-import type { Booleanable } from '../util'
+import type { Booleanable, DeepReadonly } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { GlobalAttributes } from './attributes/global'
@@ -489,7 +489,7 @@ export type InferScript<T>
   = T extends { type: infer U }
     ? U extends string
       ? U extends KnownScriptType
-        ? MatchScriptByType<U>
-        : GenericScript & { type: U }
-      : Script
-    : Script
+        ? DeepReadonly<MatchScriptByType<U>>
+        : DeepReadonly<GenericScript> & { type: U }
+      : DeepReadonly<Script>
+    : DeepReadonly<Script>

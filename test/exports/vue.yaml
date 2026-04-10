@@ -1,5 +1,7 @@
 .:
   createUnhead: function
+  defineLink: function
+  defineScript: function
   headSymbol: string
   injectHead: function
   resolveUnrefHeadInput: function

@@ -1,3 +1,4 @@
+import type { DeepReadonly } from '../util'
 import type { DataKeys } from './attributes/data'
 import type { HttpEventAttributes } from './attributes/event'
 import type { GlobalAttributes } from './attributes/global'
@@ -847,8 +848,8 @@ type MatchLinkByRel<R>
 export type InferLink<T>
   = T extends { rel: infer R }
     ? R extends KnownLinkRel
-      ? MatchLinkByRel<R>
+      ? DeepReadonly<MatchLinkByRel<R>>
       : R extends string
-        ? GenericLink & { rel: R }
+        ? DeepReadonly<GenericLink> & { rel: R }
         : never
     : never
