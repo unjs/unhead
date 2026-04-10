@@ -653,12 +653,16 @@ export type KnownLinkRel
 /**
  * Fallback for custom or unknown `rel` types.
  *
- * Not included in the {@link Link} union to prevent silent absorption of known `rel` values.
- * Use this type explicitly when you need a non-standard `rel` value:
+ * Not included in the {@link Link} union to prevent silent absorption of known
+ * `rel` values (e.g. so `rel: 'preload'` without `as` stays an error instead of
+ * collapsing into this permissive shape).
+ *
+ * For custom `rel` values, prefer {@link defineLink}, which enforces strict
+ * narrowing on known rels while accepting `GenericLink` for anything else:
  *
  * ```ts
- * import type { GenericLink } from 'unhead/types'
- * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * import { defineLink } from 'unhead'
+ * useHead({ link: [defineLink({ rel: 'me', href: 'https://mastodon.social/@me' })] })
  * ```
  */
 export interface GenericLink extends LinkBase {
@@ -690,10 +694,10 @@ export interface GenericLink extends LinkBase {
  * attributes. For example, `rel="preload"` requires the `as` attribute (see {@link PreloadLink}),
  * and `rel="mask-icon"` requires `color` (see {@link MaskIconLink}).
  *
- * For custom or non-standard `rel` values, use {@link GenericLink} directly:
+ * For custom or non-standard `rel` values, use {@link defineLink}:
  * ```ts
- * import type { GenericLink } from 'unhead/types'
- * useHead({ link: [{ rel: 'me', href: '...' } satisfies GenericLink] })
+ * import { defineLink } from 'unhead'
+ * useHead({ link: [defineLink({ rel: 'me', href: 'https://mastodon.social/@me' })] })
  * ```
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel
@@ -722,3 +726,35 @@ export type Link
     | PrevLink
     | NextLink
     | PingbackLink
+
+// ============================================================================
+// defineLink helper (type inference)
+// ============================================================================
+
+/**
+ * Pick {@link Link} union members whose `rel` accepts `R`.
+ *
+ * Unlike `Extract<Link, { rel: R }>`, this handles members whose `rel` is itself
+ * a union (e.g. {@link FaviconLink}'s `'icon' | 'shortcut icon'`).
+ */
+type MatchLinkByRel<R>
+  = Link extends infer M
+    ? M extends { rel: infer MR }
+      ? R extends MR
+        ? M
+        : never
+      : never
+    : never
+
+/**
+ * Resolve a single link input to either its strict {@link Link} variant (when
+ * `rel` is a {@link KnownLinkRel}) or {@link GenericLink} (for custom rels).
+ */
+export type InferLink<T>
+  = T extends { rel: infer R }
+    ? R extends KnownLinkRel
+      ? MatchLinkByRel<R>
+      : R extends string
+        ? GenericLink & { rel: R }
+        : never
+    : never
