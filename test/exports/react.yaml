@@ -1,7 +1,7 @@
 .:
-  Head: function
   defineLink: function
   defineScript: function
+  Head: function
   hookImports: object
   useHead: function
   useHeadSafe: function
