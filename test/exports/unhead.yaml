@@ -1,5 +1,7 @@
 .:
   createUnhead: function
+  defineLink: function
+  defineScript: function
   useHead: function
   useHeadSafe: function
   useScript: function
