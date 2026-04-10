@@ -3,15 +3,35 @@ import { defineLink, defineScript } from '../../src/define'
 import { createHead } from '../../src/server'
 
 describe('defineLink', () => {
-  it('accepts custom rel values without a cast', () => {
+  it('accepts non-standard rel values without a cast', () => {
     const head = createHead()
     useHead(head, {
       link: [
-        defineLink({ rel: 'me', href: 'https://mastodon.social/@me' }),
-        defineLink({ rel: 'webmention', href: '/webmention' }),
+        defineLink({ rel: 'openid2.provider', href: 'https://example.com/openid' }),
+        defineLink({ rel: 'EditURI', href: '/rsd.xml', type: 'application/rsd+xml' }),
         defineLink({ rel: 'hub', href: 'https://pubsubhubbub.appspot.com/' }),
       ],
     })
+  })
+
+  it('accepts newly-added standard rels without defineLink', () => {
+    const head = createHead()
+    useHead(head, {
+      link: [
+        { rel: 'me', href: 'https://mastodon.social/@me' },
+        { rel: 'webmention', href: '/webmention' },
+        { rel: 'privacy-policy', href: '/privacy' },
+        { rel: 'terms-of-service', href: '/terms' },
+        { rel: 'expect', href: '#main', blocking: 'render' },
+        { rel: 'compression-dictionary', href: '/dict.bin' },
+        { rel: 'alternate stylesheet', href: '/dark.css', title: 'Dark theme' },
+      ],
+    })
+  })
+
+  it('enforces `title` on rel="alternate stylesheet"', () => {
+    // @ts-expect-error AlternateStylesheetLink requires `title`
+    defineLink({ rel: 'alternate stylesheet', href: '/dark.css' })
   })
 
   it('still enforces `as` on rel="preload"', () => {

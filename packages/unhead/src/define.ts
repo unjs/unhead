@@ -5,9 +5,13 @@ import type { InferLink, InferScript, Link, Script } from './types'
  *
  * Known `rel` values stay strict: `rel: 'preload'` still requires `as`,
  * preload fonts still require `crossorigin`, `rel: 'mask-icon'` still requires
- * `color`, etc. Custom or non-standard `rel` values (e.g. `'me'`, `'webmention'`,
- * `'hub'`) are accepted via {@link GenericLink} without losing strictness on
- * the rest of the union.
+ * `color`, etc. Non-standard `rel` values not covered by `KnownLinkRel` (e.g.
+ * OpenID endpoints, custom protocol discovery links) are accepted via
+ * `GenericLink` without losing strictness on the rest of the union.
+ *
+ * Standard rels like `'me'`, `'webmention'`, `'privacy-policy'`, and
+ * `'terms-of-service'` are already in the `Link` union, so they work with
+ * `useHead` directly without this helper.
  *
  * @example
  * ```ts
@@ -15,8 +19,8 @@ import type { InferLink, InferScript, Link, Script } from './types'
  *
  * useHead({
  *   link: [
- *     defineLink({ rel: 'me', href: 'https://mastodon.social/@me' }),
- *     defineLink({ rel: 'webmention', href: '/webmention' }),
+ *     defineLink({ rel: 'openid2.provider', href: 'https://example.com/openid' }),
+ *     defineLink({ rel: 'EditURI', href: '/rsd.xml', type: 'application/rsd+xml' }),
  *   ],
  * })
  * ```
