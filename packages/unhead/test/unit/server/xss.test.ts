@@ -351,6 +351,34 @@ describe('xss', () => {
       <link rel="stylesheet" href="vbscript:alert(1)">"
     `)
   })
+  it('importmap textContent is escaped like JSON types', async () => {
+    const head = createServerHeadWithContext()
+    // textContent is the recommended path for json-like scripts; the
+    // `\u003C` escape must apply to textContent too, not just innerHTML.
+    head.push({
+      script: [{
+        type: 'importmap',
+        textContent: '{"imports":{"</script><script>alert(1)</script>":"/x.js"}}',
+      }],
+    })
+    const ctx = renderSSRHead(head)
+    expect(ctx.headTags).toContain('\\u003C')
+    expect(ctx.headTags).not.toMatch(/<\/script><script>alert/)
+  })
+
+  it('speculationrules textContent is escaped like JSON types', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      script: [{
+        type: 'speculationrules',
+        textContent: '{"prefetch":[{"urls":["</script><script>alert(1)</script>"]}]}',
+      }],
+    })
+    const ctx = renderSSRHead(head)
+    expect(ctx.headTags).toContain('\\u003C')
+    expect(ctx.headTags).not.toMatch(/<\/script><script>alert/)
+  })
+
   it('style tag', async () => {
     // body {color: red;}</style><script>alert('XSS')</script><style>
     const head = createServerHeadWithContext()

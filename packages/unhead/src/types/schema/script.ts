@@ -292,7 +292,7 @@ export interface ImportMapConfig {
 }
 
 /**
- * Import map
+ * Import map. Requires either `textContent` (recommended) or `innerHTML`.
  */
 export type ImportMapScript = ScriptBase & NoLoadableScriptProps & {
   /**
@@ -302,13 +302,18 @@ export type ImportMapScript = ScriptBase & NoLoadableScriptProps & {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attr-type
    */
   type: 'importmap'
-  /**
-   * Sets the textContent of an element.
-   * Can be a string or an ImportMapConfig object that will be serialized to JSON.
-   */
-  textContent: string | ImportMapConfig
-  innerHTML?: never
-}
+} & (
+  | {
+    /** Import map content as a string or ImportMapConfig object (auto-serialized). */
+    textContent: string | ImportMapConfig
+    innerHTML?: never
+  }
+  | {
+    textContent?: never
+    /** Import map content as a string or ImportMapConfig object (auto-serialized). */
+    innerHTML: string | ImportMapConfig
+  }
+)
 
 // ============================================================================
 // Application JSON Script
