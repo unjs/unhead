@@ -720,22 +720,67 @@ describe('dedupe', () => {
     expect(headTags).not.toContain('feed-v1.xml')
   })
 
-  it('importmap is unique per document', async () => {
+  it('multiple distinct importmaps render so the browser can merge them', async () => {
     const head = createServerHeadWithContext()
+    // Per HTML spec, browsers merge multiple importmaps into a single global
+    // import map. Unhead must not silently drop any, otherwise entries get lost.
     head.push({
       script: [{
         type: 'importmap',
-        innerHTML: JSON.stringify({ imports: { '#entry': '/v1.js' } }),
+        textContent: { imports: { '#entry': '/entry.js' } },
       }],
     })
     head.push({
       script: [{
         type: 'importmap',
-        innerHTML: JSON.stringify({ imports: { '#entry': '/v2.js' } }),
+        textContent: { imports: { '#helper': '/helper.js' } },
       }],
     })
     const { headTags } = await renderSSRHead(head)
-    // Only the latest importmap should render per HTML spec
+    // Both importmaps should render so the browser can merge them
+    expect(headTags.split('type="importmap"').length).toBe(3)
+    expect(headTags).toContain('/entry.js')
+    expect(headTags).toContain('/helper.js')
+  })
+
+  it('identical importmaps still collapse via content-based dedupe', async () => {
+    const head = createServerHeadWithContext()
+    const map = { imports: { '#entry': '/entry.js' } }
+    head.push({
+      script: [{
+        type: 'importmap',
+        textContent: map,
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        textContent: map,
+      }],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Exact duplicates are deduped by content-based key
+    expect(headTags.split('type="importmap"').length).toBe(2)
+  })
+
+  it('importmaps with the same key collapse to last-wins', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      script: [{
+        key: 'base-map',
+        type: 'importmap',
+        textContent: { imports: { '#entry': '/v1.js' } },
+      }],
+    })
+    head.push({
+      script: [{
+        key: 'base-map',
+        type: 'importmap',
+        textContent: { imports: { '#entry': '/v2.js' } },
+      }],
+    })
+    const { headTags } = await renderSSRHead(head)
+    // Users who want "replace, not merge" can opt in via `key`
     expect(headTags.split('type="importmap"').length).toBe(2)
     expect(headTags).toContain('/v2.js')
     expect(headTags).not.toContain('/v1.js')

@@ -176,7 +176,8 @@ describe('capo', () => {
     head.push({
       script: [{
         type: 'importmap',
-        innerHTML: JSON.stringify({ imports: { '#entry': '/entry.js' } }),
+        // raw object exercises the normalize auto-serialization path
+        textContent: { imports: { '#entry': '/entry.js' } },
       }],
     })
 
@@ -185,6 +186,9 @@ describe('capo', () => {
     // IMPORTMAP must come first
     expect(scriptAndLinkTags[0].tag).toEqual('script')
     expect(scriptAndLinkTags[0].props.type).toEqual('importmap')
+    // normalize should have serialized the object to a JSON string
+    expect(typeof scriptAndLinkTags[0].textContent).toBe('string')
+    expect(scriptAndLinkTags[0].textContent).toContain('#entry')
     // MODULEPRELOAD
     expect(scriptAndLinkTags[1].tag).toEqual('link')
     expect(scriptAndLinkTags[1].props.rel).toEqual('modulepreload')
@@ -198,7 +202,8 @@ describe('capo', () => {
     head.push({
       script: [{
         type: 'speculationrules',
-        innerHTML: JSON.stringify({ prefetch: [{ source: 'list', urls: ['/next'] }] }),
+        // raw object exercises the normalize auto-serialization path
+        textContent: { prefetch: [{ source: 'list', urls: ['/next'] }] },
       }],
     })
     head.push({
@@ -225,5 +230,30 @@ describe('capo', () => {
     // speculationrules (90) last, after modules
     expect(scriptAndLinkTags[3].tag).toEqual('script')
     expect(scriptAndLinkTags[3].props.type).toEqual('speculationrules')
+  })
+
+  it('importmap precedes async module scripts', async () => {
+    const head = createServerHeadWithContext()
+    // async module scripts must not sort before importmap per HTML spec:
+    // importmap must be declared before any module script, async or not.
+    head.push({
+      script: [{
+        src: 'entry.js',
+        type: 'module',
+        async: true,
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: JSON.stringify({ imports: { '#entry': '/entry.js' } }),
+      }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptTags = resolvedTags.filter(t => t.tag === 'script')
+    expect(scriptTags[0].props.type).toEqual('importmap')
+    expect(scriptTags[1].props.type).toEqual('module')
+    expect(scriptTags[1].props.async).toEqual(true)
   })
 })

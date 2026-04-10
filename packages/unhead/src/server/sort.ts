@@ -6,7 +6,7 @@ const TAG_WEIGHTS = { base: -10, title: 10 } as const
 const CAPO_WEIGHTS = {
   meta: { 'content-security-policy': -30, 'charset': -20, 'viewport': -15 },
   link: { 'preconnect': 20, 'stylesheet': 60, 'preload': 70, 'modulepreload': 70, 'prefetch': 90, 'dns-prefetch': 90, 'prerender': 90 },
-  script: { async: 30, defer: 80, sync: 50, speculationrules: 90 },
+  script: { importmap: 25, async: 30, defer: 80, sync: 50, speculationrules: 90 },
   style: { imported: 40, sync: 60 },
 } as const
 const ImportStyleRe = /@import/
@@ -31,8 +31,10 @@ export function capoTagWeight(tag: HeadTag): number {
   else if (tag.tag === 'script') {
     const type = String(tag.props.type)
     if (type === 'importmap')
-      // must precede modules and modulepreload per HTML spec
-      weight = CAPO_WEIGHTS.script.sync
+      // parse-time directive, not a loadable resource: placed between
+      // preconnect (20) and async scripts (30) so it precedes every module
+      // script (including `<script type="module" async>`) per HTML spec
+      weight = CAPO_WEIGHTS.script.importmap
     else if (type === 'speculationrules')
       // performance hint, belongs late in head alongside prefetch/prerender
       weight = CAPO_WEIGHTS.script.speculationrules
