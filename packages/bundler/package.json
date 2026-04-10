@@ -1,7 +1,7 @@
 {
   "name": "@unhead/bundler",
   "type": "module",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Unhead build-time optimizations for Vite and Webpack.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
