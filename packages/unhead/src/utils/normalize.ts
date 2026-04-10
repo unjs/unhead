@@ -57,7 +57,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
-        if (type.endsWith('json') || type === 'speculationrules') {
+        if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
           tag.props.type = input.type = type
           tag[prop] = JSON.stringify(value)
         }

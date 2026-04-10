@@ -213,17 +213,20 @@ describe('useHeadSafe edge cases', () => {
       expect(ctx.headTags).toBe('')
     })
 
-    it('preserves HTML in JSON values (safe in ld+json context)', async () => {
+    it('escapes `<` in JSON values consistently for textContent and innerHTML', async () => {
+      // Defense-in-depth: the `\u003C` escape applies to all `<` characters
+      // in JSON-like script content, not only `</script>`. This matches the
+      // long-standing innerHTML behavior so textContent and innerHTML produce
+      // identical SSR output for ld+json/importmap/speculationrules scripts.
       const ctx = await safeRender({
         script: [{
           type: 'application/ld+json',
           textContent: '{"name":"<img onerror=alert(1)>"}',
         }],
       })
-      // ld+json content is NOT parsed as HTML by browsers, so HTML in values is safe
-      // The important thing is that </script> is escaped (tested above)
       expect(ctx.headTags).toContain('application/ld+json')
-      expect(ctx.headTags).toContain('"name":"<img onerror=alert(1)>"')
+      expect(ctx.headTags).toContain('\\u003Cimg onerror=alert(1)>')
+      expect(ctx.headTags).not.toContain('"<img')
     })
   })
 

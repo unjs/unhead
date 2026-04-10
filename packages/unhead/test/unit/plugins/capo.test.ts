@@ -157,4 +157,123 @@ describe('capo', () => {
     expect(resolvedTags[16].tag).toEqual('meta')
     expect(resolvedTags[16].props.name).toEqual('description')
   })
+
+  it('importmap precedes modulepreload and module scripts', async () => {
+    const head = createServerHeadWithContext()
+    // push in reverse order to prove sorting, not insertion order
+    head.push({
+      script: [{
+        src: 'entry.js',
+        type: 'module',
+      }],
+    })
+    head.push({
+      link: [{
+        rel: 'modulepreload',
+        href: 'preloaded.js',
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        // raw object exercises the normalize auto-serialization path
+        textContent: { imports: { '#entry': '/entry.js' } },
+      }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
+    // IMPORTMAP must come first
+    expect(scriptAndLinkTags[0].tag).toEqual('script')
+    expect(scriptAndLinkTags[0].props.type).toEqual('importmap')
+    // normalize should have serialized the object to a JSON string
+    expect(typeof scriptAndLinkTags[0].textContent).toBe('string')
+    expect(scriptAndLinkTags[0].textContent).toContain('#entry')
+    // MODULEPRELOAD
+    expect(scriptAndLinkTags[1].tag).toEqual('link')
+    expect(scriptAndLinkTags[1].props.rel).toEqual('modulepreload')
+    // MODULE SCRIPT
+    expect(scriptAndLinkTags[2].tag).toEqual('script')
+    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+  })
+
+  it('speculationrules sorts late alongside prefetch/prerender', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      script: [{
+        type: 'speculationrules',
+        // raw object exercises the normalize auto-serialization path
+        textContent: { prefetch: [{ source: 'list', urls: ['/next'] }] },
+      }],
+    })
+    head.push({
+      link: [{ rel: 'stylesheet', href: 'styles.css' }],
+    })
+    head.push({
+      script: [{ src: 'sync.js' }],
+    })
+    head.push({
+      script: [{ src: 'module.js', type: 'module' }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptAndLinkTags = resolvedTags.filter(t => t.tag === 'script' || t.tag === 'link')
+    // sync script (50) first
+    expect(scriptAndLinkTags[0].tag).toEqual('script')
+    expect(scriptAndLinkTags[0].props.src).toEqual('sync.js')
+    // stylesheet (60)
+    expect(scriptAndLinkTags[1].tag).toEqual('link')
+    expect(scriptAndLinkTags[1].props.rel).toEqual('stylesheet')
+    // module script (80)
+    expect(scriptAndLinkTags[2].tag).toEqual('script')
+    expect(scriptAndLinkTags[2].props.type).toEqual('module')
+    // speculationrules (90) last, after modules
+    expect(scriptAndLinkTags[3].tag).toEqual('script')
+    expect(scriptAndLinkTags[3].props.type).toEqual('speculationrules')
+  })
+
+  it('importmap precedes async module scripts', async () => {
+    const head = createServerHeadWithContext()
+    // async module scripts must not sort before importmap per HTML spec:
+    // importmap must be declared before any module script, async or not.
+    head.push({
+      script: [{
+        src: 'entry.js',
+        type: 'module',
+        async: true,
+      }],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: JSON.stringify({ imports: { '#entry': '/entry.js' } }),
+      }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptTags = resolvedTags.filter(t => t.tag === 'script')
+    expect(scriptTags[0].props.type).toEqual('importmap')
+    expect(scriptTags[1].props.type).toEqual('module')
+    expect(scriptTags[1].props.async).toEqual(true)
+  })
+
+  it('inline script with textContent sorts in the sync bucket', async () => {
+    const head = createServerHeadWithContext()
+    // inline scripts can use textContent (recommended, XSS-safe) instead of
+    // innerHTML; they should still sort in the sync-script bucket (50), not
+    // fall through to the default 100.
+    head.push({
+      script: [{ src: 'prefetch.js', async: true }],
+    })
+    head.push({
+      script: [{ textContent: 'console.log("inline")' }],
+    })
+
+    const resolvedTags = resolveTags(head)
+    const scriptTags = resolvedTags.filter(t => t.tag === 'script')
+    // async (30) should come before sync inline (50)
+    expect(scriptTags[0].props.src).toEqual('prefetch.js')
+    expect(scriptTags[0].props.async).toEqual(true)
+    expect(scriptTags[1].textContent).toEqual('console.log("inline")')
+  })
 })
