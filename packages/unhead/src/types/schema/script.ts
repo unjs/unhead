@@ -52,14 +52,16 @@ interface NoLoadableScriptProps {
 }
 
 /**
- * Content for data scripts - either textContent or innerHTML, not both
+ * Content for data scripts — requires exactly one of `textContent` or
+ * `innerHTML`. Data scripts (JSON-LD, speculation rules, application/json) must
+ * carry inline content; an empty payload is invalid.
  */
 type DataScriptTextContent<T = string | Record<string, unknown>> = {
   /**
    * Sets the textContent of an element. Safer for XSS.
    * Can be a string or an object that will be serialized to JSON.
    */
-  textContent?: T
+  textContent: T
   innerHTML?: never
 } | {
   textContent?: never
@@ -67,7 +69,7 @@ type DataScriptTextContent<T = string | Record<string, unknown>> = {
    * Sets the innerHTML of an element.
    * Can be a string or an object that will be serialized to JSON.
    */
-  innerHTML?: T
+  innerHTML: T
 }
 
 // ============================================================================

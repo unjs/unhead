@@ -82,7 +82,7 @@ describe('defineScript', () => {
     })
   })
 
-  it('still enforces `src` or inline content on rel="module"', () => {
+  it('still enforces `src` or inline content on type="module"', () => {
     // Valid: module with src
     defineScript({ type: 'module', src: '/app.mjs' })
     // Valid: inline module with textContent
@@ -91,11 +91,32 @@ describe('defineScript', () => {
     defineScript({ type: 'module' })
   })
 
-  it('still enforces inline content on rel="application/ld+json"', () => {
+  it('still enforces inline content on type="application/ld+json"', () => {
     // Valid
     defineScript({ type: 'application/ld+json', textContent: '{"@context":"https://schema.org"}' })
-    // @ts-expect-error JsonLdScript requires textContent/innerHTML
+    defineScript({ type: 'application/ld+json', innerHTML: '{"@context":"https://schema.org"}' })
+    // @ts-expect-error JsonLdScript forbids src
     defineScript({ type: 'application/ld+json', src: '/ld.json' })
+    // @ts-expect-error JsonLdScript requires textContent or innerHTML
+    defineScript({ type: 'application/ld+json' })
+  })
+
+  it('enforces inline content on type="speculationrules"', () => {
+    defineScript({ type: 'speculationrules', textContent: '{"prerender":[]}' })
+    // @ts-expect-error SpeculationRulesScript requires textContent or innerHTML
+    defineScript({ type: 'speculationrules' })
+  })
+
+  it('enforces inline content on type="application/json"', () => {
+    defineScript({ type: 'application/json', textContent: '{}' })
+    // @ts-expect-error ApplicationJsonScript requires textContent or innerHTML
+    defineScript({ type: 'application/json' })
+  })
+
+  it('enforces inline content on type="importmap"', () => {
+    defineScript({ type: 'importmap', textContent: '{"imports":{}}' })
+    // @ts-expect-error ImportMapScript requires textContent or innerHTML
+    defineScript({ type: 'importmap' })
   })
 
   it('accepts valid known script types unchanged', () => {
