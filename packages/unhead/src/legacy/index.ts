@@ -54,7 +54,7 @@ export function createHead<T extends Record<string, any> = ResolvableHead>(optio
   })
 }
 
-export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: Omit<CreateServerHeadOptions, 'propsResolver'> = {}): Unhead<T> {
+export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): Unhead<T> {
   return activeHead.value = _createServerHead<T>({
     ...options,
     plugins: [...LEGACY_PLUGINS, ...(options.plugins || [])],
