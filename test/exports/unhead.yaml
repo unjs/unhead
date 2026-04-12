@@ -11,6 +11,14 @@
   createDomRenderer: function
   createHead: function
   renderDOMHead: function
+./legacy:
+  activeHead: object
+  createHead: function
+  createHeadCore: function
+  createServerHead: function
+  DeprecationsPlugin: object
+  getActiveHead: function
+  legacyPlugins: object
 ./minify:
   minifyCSS: function
   minifyJS: function

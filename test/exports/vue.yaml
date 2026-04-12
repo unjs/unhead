@@ -21,7 +21,10 @@
 ./components:
   Head: object
 ./legacy:
+  createClientHead: function
   createHead: function
+  createServerHead: function
+  legacyPlugins: object
   renderDOMHead: function
   VueHeadMixin: object
 ./plugins:
