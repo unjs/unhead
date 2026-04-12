@@ -39,7 +39,11 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
   },
 })
 
-const LEGACY_PLUGINS = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+/**
+ * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
+ * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ */
+export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
 
 export const activeHead: { value: Unhead<any> | null } = { value: null }
 
@@ -50,14 +54,14 @@ export function getActiveHead<T extends Record<string, any> = ResolvableHead>():
 export function createHead<T extends Record<string, any> = ResolvableHead>(options: CreateClientHeadOptions = {}): Unhead<T> {
   return activeHead.value = _createClientHead<T>({
     ...options,
-    plugins: [...LEGACY_PLUGINS, ...(options.plugins || [])],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   })
 }
 
 export function createServerHead<T extends Record<string, any> = ResolvableHead>(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): Unhead<T> {
   return activeHead.value = _createServerHead<T>({
     ...options,
-    plugins: [...LEGACY_PLUGINS, ...(options.plugins || [])],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   })
 }
 

@@ -8,7 +8,11 @@ import { createHead as _createServerHead } from './server'
 export * from './client'
 export { createHead as createClientHead } from './client'
 
-const LEGACY_PLUGINS = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+/**
+ * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
+ * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ */
+export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
 
 /**
  * Creates a client `VueHeadClient` with the v2 migration plugin set pre-registered so that
@@ -19,7 +23,7 @@ const LEGACY_PLUGINS = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient<UseHeadInput, boolean> {
   return _createClientHead({
     ...options,
-    plugins: [...LEGACY_PLUGINS, ...(options.plugins || [])],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   })
 }
 
@@ -30,6 +34,6 @@ export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient
 export function createServerHead(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): VueHeadClient<UseHeadInput, SSRHeadPayload> {
   return _createServerHead({
     ...options,
-    plugins: [...LEGACY_PLUGINS, ...(options.plugins || [])],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   })
 }
