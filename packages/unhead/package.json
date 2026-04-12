@@ -33,6 +33,10 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
+    "./legacy": {
+      "types": "./dist/legacy.d.ts",
+      "default": "./dist/legacy.mjs"
+    },
     "./minify": {
       "types": "./dist/minify.d.ts",
       "default": "./dist/minify.mjs"
@@ -85,6 +89,9 @@
     "*": {
       "plugins": [
         "dist/plugins.d.ts"
+      ],
+      "legacy": [
+        "dist/legacy.d.ts"
       ],
       "minify": [
         "dist/minify.d.ts"

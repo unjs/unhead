@@ -63,6 +63,7 @@ export default defineBuildConfig({
     { input: 'src/scripts/index', name: 'scripts' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins/index', name: 'plugins' },
+    { input: 'src/legacy/index', name: 'legacy' },
     { input: 'src/minify/index', name: 'minify' },
     { input: 'src/parser/index', name: 'parser' },
     { input: 'src/stream/vite', name: 'stream/vite' },
