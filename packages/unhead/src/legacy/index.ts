@@ -8,8 +8,8 @@ import { createHead as _createServerHead } from '../server'
 import { createUnhead } from '../unhead'
 
 /**
- * Maps unhead v1 tag props (`children`, `hid`, `vmid`, `body`) to their v3 equivalents
- * (`innerHTML`, `key`, `tagPosition`).
+ * Maps unhead v1/v2 tag props (`children`, `hid`, `vmid`, `body`, `renderPriority`) to their
+ * v3 equivalents (`innerHTML`, `key`, `tagPosition`, `tagPriority`).
  *
  * Intended as a temporary migration aid. Remove once all call sites use the v3 API.
  */
@@ -30,9 +30,15 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
           tag.key = tag.props.vmid
           delete tag.props.vmid
         }
-        if (tag.props.body) {
-          tag.tagPosition = 'bodyClose'
+        if ('body' in tag.props) {
+          if (tag.props.body) {
+            tag.tagPosition = 'bodyClose'
+          }
           delete tag.props.body
+        }
+        if (tag.props.renderPriority != null) {
+          tag.tagPriority = tag.props.renderPriority
+          delete tag.props.renderPriority
         }
       }
     },
