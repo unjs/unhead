@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions, ResolvableHead, Unhead } from '../types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput, ResolvableHead, Unhead } from '../types'
 import { createHead as _createClientHead } from '../client'
 import { AliasSortingPlugin } from '../plugins/aliasSorting'
 import { defineHeadPlugin } from '../plugins/defineHeadPlugin'
@@ -49,7 +49,7 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
  * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
  * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
  */
-export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
 
 export const activeHead: { value: Unhead<any> | null } = { value: null }
 
