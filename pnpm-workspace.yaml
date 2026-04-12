@@ -62,7 +62,7 @@ catalog:
   rollup-plugin-visualizer: ^7.0.1
   shiki: ^4.0.2
   solid-js: ^1.9.12
-  svelte: ^5.55.2
+  svelte: ^5.55.3
   tailwindcss: ^4.2.2
   tinyexec: ^1.1.1
   tslib: ^2.8.1
