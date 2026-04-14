@@ -1,0 +1,64 @@
+{
+  "name": "@unhead/cli",
+  "type": "module",
+  "version": "3.0.3",
+  "description": "Codemods and tooling for migrating Unhead projects between major versions.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./migrate": {
+      "types": "./dist/migrate.d.ts",
+      "default": "./dist/migrate.mjs"
+    }
+  },
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "migrate": [
+        "dist/migrate"
+      ]
+    }
+  },
+  "bin": {
+    "unhead": "./bin/unhead.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "test:attw": "attw --pack",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "citty": "catalog:",
+    "magic-string": "catalog:",
+    "oxc-parser": "catalog:",
+    "oxc-walker": "catalog:",
+    "pathe": "catalog:",
+    "tinyglobby": "catalog:"
+  }
+}
