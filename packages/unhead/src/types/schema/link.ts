@@ -683,6 +683,50 @@ export interface CompressionDictionaryLink extends LinkBase {
 }
 
 /**
+ * Sitemap link. Points to a sitemap for the site.
+ *
+ * @see https://www.iana.org/assignments/link-relations/link-relations.xhtml
+ */
+export interface SitemapLink extends LinkBase {
+  rel: 'sitemap'
+  href: string
+  type?: 'application/xml' | (string & Record<never, never>)
+  title?: string
+}
+
+/**
+ * Apple touch startup image link. Specifies a splash screen image for iOS
+ * when a web app is launched from the home screen.
+ *
+ * @see https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+ */
+export interface AppleTouchStartupImageLink extends LinkBase {
+  rel: 'apple-touch-startup-image'
+  href: string
+  media?: string
+}
+
+/**
+ * AMP HTML link. Points to the AMP version of the current document.
+ *
+ * @see https://amp.dev/documentation/guides-and-tutorials/start/create/prepare_for_discovery/
+ */
+export interface AmpHtmlLink extends LinkBase {
+  rel: 'amphtml'
+  href: string
+}
+
+/**
+ * WebSub hub link. Points to a WebSub hub for real-time content distribution.
+ *
+ * @see https://www.w3.org/TR/websub/
+ */
+export interface HubLink extends LinkBase {
+  rel: 'hub'
+  href: string
+}
+
+/**
  * Alternate stylesheet link. User-selectable alternate stylesheet.
  * Requires a `title` to appear in the browser's stylesheet picker.
  *
@@ -736,6 +780,10 @@ export type KnownLinkRel
     | 'terms-of-service'
     | 'expect'
     | 'compression-dictionary'
+    | 'sitemap'
+    | 'apple-touch-startup-image'
+    | 'amphtml'
+    | 'hub'
 
 /**
  * Fallback for custom or unknown `rel` types.
@@ -821,6 +869,10 @@ export type Link
     | TermsOfServiceLink
     | ExpectLink
     | CompressionDictionaryLink
+    | SitemapLink
+    | AppleTouchStartupImageLink
+    | AmpHtmlLink
+    | HubLink
 
 // ============================================================================
 // defineLink helper (type inference)
