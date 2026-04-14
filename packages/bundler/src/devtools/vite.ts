@@ -12,6 +12,7 @@ import { getConfigRpc } from './rpc'
 const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const LEADING_SLASH_RE = /^\//
+const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/
 
 const UNHEAD_ICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FBBF24'/%3E%3Cstop offset='100%25' stop-color='%23f0db4f'/%3E%3C/linearGradient%3E%3Cmask id='m'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cpath d='M12 32 L1 32 L15 15 Z' fill='black'/%3E%3C/mask%3E%3C/defs%3E%3Cpath fill='none' stroke='url(%23g)' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 4v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4' mask='url(%23m)'/%3E%3C/svg%3E`
 
@@ -150,8 +151,8 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
       let code = bridgeCode
       // Inject unhead version
       if (unheadVersion)
-        // eslint-disable-next-line e18e/prefer-static-regex
-        code = code.replace(/__UNHEAD_VERSION__ = ['"]'?["']/, `__UNHEAD_VERSION__ = '${unheadVersion}'`)
+
+        code = code.replace(UNHEAD_VERSION_RE, `__UNHEAD_VERSION__ = '${unheadVersion}'`)
       const kitClientPath = resolve(pkgDir, 'node_modules/@vitejs/devtools-kit/dist/client.js')
       if (existsSync(kitClientPath))
         return code.replace(`'@vitejs/devtools-kit/client'`, `'${kitClientPath}'`)

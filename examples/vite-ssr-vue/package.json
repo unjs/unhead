@@ -27,7 +27,7 @@
     "@types/node": "^25.6.0",
     "@unhead/bundler": "workspace:*",
     "@vitejs/devtools": "^0.1.13",
-    "@vitejs/plugin-vue": "^6.0.5",
+    "@vitejs/plugin-vue": "^6.0.6",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
     "unplugin-auto-import": "^21.0.0",

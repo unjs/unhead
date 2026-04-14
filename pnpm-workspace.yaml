@@ -22,7 +22,7 @@ catalog:
   '@angular/platform-browser': ^21.2.8
   '@angular/platform-browser-dynamic': ^21.2.8
   '@angular/platform-server': ^21.2.8
-  '@antfu/eslint-config': ^8.1.1
+  '@antfu/eslint-config': ^8.2.0
   '@arethetypeswrong/cli': ^0.18.2
   '@fast-check/vitest': ^0.4.0
   '@nuxt/ui': ^4.6.1
@@ -52,7 +52,7 @@ catalog:
   magic-string: ^0.30.21
   nuxt: ^4.4.2
 
-  oxc-parser: ^0.124.0
+  oxc-parser: ^0.125.0
   oxc-walker: ^0.7.0
   pathe: ^2.0.3
   react: ^19.2.5
