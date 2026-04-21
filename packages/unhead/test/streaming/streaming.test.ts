@@ -721,6 +721,17 @@ describe('streaming SSR', () => {
 
     it('also accepts <!--ssr-outlet--> as an outlet marker', () => {
       const { head } = createStreamableHead()
+      // No-space canonical form, matching the documented Vite marker.
+      const template = '<html><head></head><body><main><!--ssr-outlet--></main></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<main>')
+      expect(shell).not.toContain('ssr-outlet')
+      expect(end.startsWith('</main>')).toBe(true)
+    })
+
+    it('tolerates whitespace inside the outlet marker', () => {
+      const { head } = createStreamableHead()
       const template = '<html><head></head><body><main><!-- ssr-outlet --></main></body></html>'
       const { shell, end } = prepareStreamingTemplate(head, template)
 
