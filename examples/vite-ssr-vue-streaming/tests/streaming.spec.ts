@@ -228,29 +228,41 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       await expect(page).toHaveTitle('StreamShop - Ready!')
     })
 
-    test('no unexpected console errors during streaming and hydration', async ({ page }) => {
-      const errors: string[] = []
+    // Regression guard for the HeadStream hydration model: every script
+    // that carries a streamed head update must have `data-allow-mismatch` so
+    // Vue tolerates the inner-text difference between server and client.
+    test('HeadStream scripts carry data-allow-mismatch for hydration safety', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
+      const unsafe = await page.evaluate(() => {
+        const nodes = Array.from(document.querySelectorAll('script'))
+        return nodes
+          .filter(n => (n.textContent || '').includes('window.__unhead__.push'))
+          .filter(n => !n.hasAttribute('data-allow-mismatch'))
+          .length
+      })
+      expect(unsafe).toBe(0)
+    })
+
+    test('no unexpected console errors or hydration warnings', async ({ page }) => {
+      const issues: string[] = []
       page.on('console', msg => {
-        if (msg.type() === 'error') {
-          errors.push(msg.text())
-        }
+        if (msg.type() === 'error' || msg.type() === 'warning')
+          issues.push(`[${msg.type()}] ${msg.text()}`)
       })
 
       await page.goto('/')
       await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
-
-      // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out expected non-critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('Hydration') &&
-        !e.includes('mismatch') &&
-        !e.includes('WebSocket') &&
-        !e.includes('vite')
+      // No filter for hydration/mismatch: the symmetric HeadStream +
+      // `<!--app-html-->` outlet pattern must produce a clean hydration.
+      const critical = issues.filter(e =>
+        !e.includes('favicon')
+        && !e.includes('WebSocket')
+        && !e.includes('vite'),
       )
-      expect(criticalErrors).toHaveLength(0)
+      expect(critical, critical.join('\n')).toHaveLength(0)
     })
   })
 })

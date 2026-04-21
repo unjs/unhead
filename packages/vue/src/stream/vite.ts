@@ -8,60 +8,28 @@ const SCRIPT_RE = /<script[^>]*>/i
 const FILTER_RE = /\.vue$/
 
 /**
- * Transforms Vue SFC code to inject HeadStream components for streaming SSR support.
+ * Transforms Vue SFC code to inject `<HeadStream />` components for streaming
+ * SSR support. One is added as the first child of each SFC `<template>` that
+ * uses `useHead` / `useSeoMeta` / `useHeadSafe`; an import is inserted into
+ * `<script>`.
  *
- * @param code - The source code to transform
- * @param id - The file path/id being transformed
- * @param isSSR - Whether the code is being transformed for SSR
- * @param s - MagicString instance for code manipulation
- * @returns `true` if transformations were applied, `false` otherwise
- *
- * @example
- * ```vue
- * // Input code:
- * <script setup>
- * import { useHead } from '@unhead/vue'
- *
- * useHead({
- *   title: 'My Page'
- * })
- * </script>
- *
- * <template>
- *   <div>Hello World</div>
- * </template>
- *
- * // Transformed output:
- * <script setup>
- * import { useHead } from '@unhead/vue'
- * import { HeadStream } from '@unhead/vue/stream/server' // or /client
- *
- * useHead({
- *   title: 'My Page'
- * })
- * </script>
- *
- * <template>
- *   <HeadStream /><div>Hello World</div>
- * </template>
- * ```
+ * On the server `HeadStream` emits a `<script data-allow-mismatch="children">`
+ * containing the pending head-update JS; on the client it emits an identical
+ * empty `<script>`. Symmetric vnode types + `data-allow-mismatch` make Vue's
+ * hydrator silently tolerate the inner-content difference.
  */
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
-  // Only transform files that use head composables
   if (!code.includes('useHead') && !code.includes('useSeoMeta') && !code.includes('useHeadSafe'))
     return false
 
-  // Find the template section
   const templateMatch = code.match(TEMPLATE_RE)
   if (!templateMatch)
     return false
 
   const templateStart = templateMatch.index! + templateMatch[0].length
 
-  // Inject HeadStream at the start of template content
   s.appendRight(templateStart, '<HeadStream />')
 
-  // Add import for HeadStream
   const importPath = `@unhead/vue/stream/${isSSR ? 'server' : 'client'}`
   const scriptMatch = code.match(SCRIPT_RE)
   if (!scriptMatch)
@@ -105,13 +73,9 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
 }
 
 /**
- * Vite plugin for Vue streaming SSR support.
- * Automatically injects HeadStream components into Vue SFC templates.
- *
- * @returns Vite plugin configuration object with:
- *   - `name`: Plugin identifier
- *   - `enforce`: Plugin execution order ('pre')
- *   - `transform`: Transform hook for processing .vue files
+ * Vite plugin for Vue streaming SSR support. Automatically injects
+ * `<HeadStream />` into Vue SFC templates for components that use head
+ * composables.
  *
  * @example
  * ```ts
@@ -120,8 +84,8 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
  *
  * export default {
  *   plugins: [
- *     unheadVuePlugin()
- *   ]
+ *     unheadVuePlugin(),
+ *   ],
  * }
  * ```
  */
