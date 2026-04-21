@@ -9,7 +9,7 @@ describe('defineLink', () => {
       link: [
         defineLink({ rel: 'openid2.provider', href: 'https://example.com/openid' }),
         defineLink({ rel: 'EditURI', href: '/rsd.xml', type: 'application/rsd+xml' }),
-        defineLink({ rel: 'hub', href: 'https://pubsubhubbub.appspot.com/' }),
+        defineLink({ rel: 'x-custom-feed', href: '/feed.xml' }),
       ],
     })
   })
