@@ -234,13 +234,17 @@ test.describe('Vue Streaming SSR with Unhead', () => {
     test('HeadStream scripts carry data-allow-mismatch for hydration safety', async ({ page }) => {
       await page.goto('/')
       await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
-      const unsafe = await page.evaluate(() => {
+      const { total, unsafe } = await page.evaluate(() => {
         const nodes = Array.from(document.querySelectorAll('script'))
-        return nodes
+        const updateScripts = nodes
           .filter(n => (n.textContent || '').includes('window.__unhead__.push'))
-          .filter(n => !n.hasAttribute('data-allow-mismatch'))
-          .length
+        return {
+          total: updateScripts.length,
+          unsafe: updateScripts.filter(n => !n.hasAttribute('data-allow-mismatch')).length,
+        }
       })
+      // Guard must not be vacuous: at least one streamed update must have rendered.
+      expect(total).toBeGreaterThan(0)
       expect(unsafe).toBe(0)
     })
 
