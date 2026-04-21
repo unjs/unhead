@@ -698,6 +698,37 @@ describe('streaming SSR', () => {
       expect(end).toBe('</body></html>')
     })
 
+    it('splits shell/end at the <!--app-html--> outlet marker', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Outlet' })
+
+      // Canonical Vite SSR template: an explicit outlet inside a wrapper div.
+      const template = '<html><head></head><body><div id="app"><!--app-html--></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      // Wrapper opening must be in the shell so the app stream lands inside it.
+      expect(shell).toContain('<div id="app">')
+      expect(shell).not.toContain('<!--app-html-->')
+      // Wrapper close (and everything after the outlet) belongs to the end part.
+      expect(end.startsWith('</div>')).toBe(true)
+      expect(end).toContain('</body></html>')
+
+      // Round trip: the outlet marker is consumed, not duplicated.
+      const fullHtml = `${shell}STREAM${end}`
+      expect(fullHtml).not.toContain('<!--app-html-->')
+      expect(fullHtml).toContain('<div id="app">STREAM</div>')
+    })
+
+    it('also accepts <!--ssr-outlet--> as an outlet marker', () => {
+      const { head } = createStreamableHead()
+      const template = '<html><head></head><body><main><!-- ssr-outlet --></main></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<main>')
+      expect(shell).not.toContain('ssr-outlet')
+      expect(end.startsWith('</main>')).toBe(true)
+    })
+
     it('places head bodyTags after preserved body content', () => {
       const { head } = createStreamableHead()
       head.push({

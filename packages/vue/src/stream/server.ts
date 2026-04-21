@@ -19,7 +19,7 @@ import { VueResolver } from '../resolver'
  * silences the inner-content difference.
  *
  * The Vite plugin injects one `<HeadStream />` at the top of every SFC
- * `<template>` that uses `useHead` / `useSeoMeta`.
+ * `<template>` that uses `useHead` / `useSeoMeta` / `useHeadSafe`.
  */
 export const HeadStream = defineComponent({
   name: 'HeadStream',
