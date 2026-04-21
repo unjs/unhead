@@ -25,8 +25,32 @@ describe('defineLink', () => {
         { rel: 'expect', href: '#main', blocking: 'render' },
         { rel: 'compression-dictionary', href: '/dict.bin' },
         { rel: 'alternate stylesheet', href: '/dark.css', title: 'Dark theme' },
+        { rel: 'sitemap', href: '/sitemap.xml', type: 'application/xml' },
+        { rel: 'amphtml', href: '/amp/page' },
+        { rel: 'hub', href: 'https://pubsubhubbub.appspot.com/' },
+        { rel: 'apple-touch-startup-image', href: '/splash.png', media: '(device-width: 320px)' },
       ],
     })
+  })
+
+  it('enforces `href` on rel="sitemap"', () => {
+    // @ts-expect-error SitemapLink requires `href`
+    defineLink({ rel: 'sitemap' })
+  })
+
+  it('enforces `href` on rel="amphtml"', () => {
+    // @ts-expect-error AmpHtmlLink requires `href`
+    defineLink({ rel: 'amphtml' })
+  })
+
+  it('enforces `href` on rel="hub"', () => {
+    // @ts-expect-error HubLink requires `href`
+    defineLink({ rel: 'hub' })
+  })
+
+  it('enforces `href` on rel="apple-touch-startup-image"', () => {
+    // @ts-expect-error AppleTouchStartupImageLink requires `href`
+    defineLink({ rel: 'apple-touch-startup-image' })
   })
 
   it('enforces `title` on rel="alternate stylesheet"', () => {
