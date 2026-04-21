@@ -24,10 +24,10 @@
     "@playwright/test": "^1.59.1",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
-    "@vitejs/devtools": "^0.1.13",
+    "@vitejs/devtools": "^0.1.14",
     "@vitejs/plugin-vue": "latest",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.9"
   }
 }
