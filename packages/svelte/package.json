@@ -113,7 +113,6 @@
   "dependencies": {
     "@unhead/bundler": "workspace:*",
     "magic-string": "catalog:",
-    "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
     "unhead": "workspace:*"
   },

@@ -113,16 +113,13 @@
   "dependencies": {
     "@unhead/bundler": "workspace:*",
     "magic-string": "catalog:",
-    "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "@solidjs/testing-library": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/user-event": "catalog:",
     "solid-js": "catalog:",
-    "vite": "catalog:",
-    "vite-plugin-solid": "catalog:"
+    "vite": "catalog:"
   }
 }

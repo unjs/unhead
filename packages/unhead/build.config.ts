@@ -1,8 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-// @ts-expect-error bundled by unbuild
 import nodeResolve from '@rollup/plugin-node-resolve'
-// @ts-expect-error bundled by unbuild
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
 

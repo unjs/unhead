@@ -3,7 +3,7 @@ import { MetaTagsArrayable } from './const'
 
 type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
-export const NAMESPACES = /* @__PURE__ */ {
+const NAMESPACES = /* @__PURE__ */ {
   META: new Set(['twitter', 'fediverse']),
   OG: new Set(['og', 'book', 'article', 'profile', 'fb']),
   MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
@@ -46,7 +46,7 @@ interface MetaPackingEntry {
   unpack?: UnpackOptions
 }
 
-export const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
+const MetaPackingSchema: Record<string, MetaPackingEntry> = /* @__PURE__ */ {
   appleItunesApp: {
     unpack: {
       entrySeparator: ', ',
