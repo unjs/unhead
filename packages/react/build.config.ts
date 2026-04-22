@@ -3,7 +3,7 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  externals: ['react', 'vite', 'magic-string', 'oxc-parser', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: ['react', 'vite', 'magic-string', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
   rollup: {
     inlineDependencies: true,
     emitCJS: false,

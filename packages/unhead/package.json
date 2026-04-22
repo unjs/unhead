@@ -169,10 +169,11 @@
     }
   },
   "dependencies": {
-    "hookable": "catalog:",
-    "magic-string": "catalog:"
+    "hookable": "catalog:"
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "catalog:",
+    "rollup": "catalog:",
     "vite": "catalog:"
   }
 }
