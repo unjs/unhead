@@ -47,5 +47,9 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add bench/bundle/last.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: update bundle stats [skip ci]"
-          git push
+          if git diff --staged --quiet; then
+            echo "No bundle stat changes to commit."
+          else
+            git commit -m "chore: update bundle stats [skip ci]"
+            git push
+          fi
