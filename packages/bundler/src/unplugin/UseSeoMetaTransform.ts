@@ -97,6 +97,9 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
       const importRewrites = new Map<any, Set<string>>()
       // Track if seoMeta is referenced as a value (not just called), keyed by original imported name
       const valueReferenced = new Set<string>()
+      // Track useSeoMeta/useServerSeoMeta calls that could not be transformed (e.g. dynamic first
+      // arg, spread properties). The original import must be preserved alongside the useHead rewrite.
+      const untransformedCallees = new Set<string>()
 
       walk(ast.program, {
         scopeTracker,
@@ -142,8 +145,11 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             return
 
           const properties = node.arguments[0]?.properties
-          if (!properties)
+          if (!properties) {
+            if (importDecl)
+              untransformedCallees.add(originalName)
             return
+          }
 
           let output: string[] | false = []
           const title = properties.find((property: any) => property.key?.name === 'title')
@@ -255,6 +261,9 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               importRewrites.get(importDecl)!.add(originalName)
             }
           }
+          else if (importDecl) {
+            untransformedCallees.add(originalName)
+          }
         },
       })
 
@@ -268,8 +277,9 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             const importedName = spec.imported.name
             if (transformedNames.has(importedName)) {
               newSpecifiers.add(importedName.includes('Server') ? 'useServerHead' : 'useHead')
-              // Keep original import if it's still referenced as a value
-              if (valueReferenced.has(importedName))
+              // Keep original import if it's still referenced as a value or called in a form we
+              // couldn't statically transform (dynamic first arg, spread properties, etc.).
+              if (valueReferenced.has(importedName) || untransformedCallees.has(importedName))
                 newSpecifiers.add(importedName)
             }
             else {
