@@ -7,8 +7,22 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
-// Canonical Vite SSR outlet markers. Either form is accepted.
-const OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
+// Default SSR outlet markers. `<!--app-html-->` is the convention used
+// across this repo's `vite-ssr-*` examples and docs; `<!--ssr-outlet-->`
+// is the placeholder shown in Vite's SSR guide. Users with a custom
+// marker should pass `outlet` via StreamingTemplateOptions.
+const DEFAULT_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
+
+function resolveOutletPattern(outlet: RegExp | string | false | undefined): RegExp | null {
+  if (outlet === false)
+    return null
+  if (outlet == null)
+    return DEFAULT_OUTLET_RE
+  if (outlet instanceof RegExp)
+    return outlet
+  // Escape regex metacharacters in literal string
+  return new RegExp(outlet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+}
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -250,13 +264,14 @@ export function wrapStream(
   stream: ReadableStream<Uint8Array>,
   template: string,
   preRenderedState?: SSRHeadPayload,
+  options?: StreamingTemplateOptions,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState)
+        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState, options)
         controller.enqueue(encoder.encode(shell))
 
         const reader = stream.getReader()
@@ -280,6 +295,30 @@ export function wrapStream(
       }
     },
   })
+}
+
+/**
+ * Options shared by `wrapStream` and `prepareStreamingTemplate`.
+ */
+export interface StreamingTemplateOptions {
+  /**
+   * SSR outlet marker to split the body interior at. When the template marks
+   * an outlet (e.g. `<div id="app"><!--app-html--></div>`), the shell is
+   * extended up to the marker so the app stream lands *inside* the outlet's
+   * wrapper element instead of before it, avoiding a hydration container
+   * mismatch.
+   *
+   * - `RegExp` / `string`: match and split at the first occurrence.
+   *   Strings are treated as literal (metachars escaped).
+   * - `false`: disable outlet splitting entirely.
+   *
+   * The default matches `<!--app-html-->` (convention used across this repo's
+   * Vite SSR examples and docs) and `<!--ssr-outlet-->` (from Vite's SSR
+   * guide).
+   *
+   * @default /<!--\s*(?:app-html|ssr-outlet)\s*-->/
+   */
+  outlet?: RegExp | string | false
 }
 
 /**
@@ -325,7 +364,9 @@ export function prepareStreamingTemplate(
   head: Unhead<any>,
   template: string,
   preRenderedState?: SSRHeadPayload,
+  options?: StreamingTemplateOptions,
 ): StreamingTemplateParts {
+  const outletRe = resolveOutletPattern(options?.outlet)
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
   if (!preRenderedState) {
     head.entries.clear()
@@ -353,18 +394,16 @@ export function prepareStreamingTemplate(
       bodyTags: '',
     }).replace('</body></html>', '')
 
-    // If the template marks an explicit SSR outlet (canonical Vite pattern),
-    // split the body interior at that marker so the app stream lands inside
-    // it instead of before it. This lets a template wrap the stream in
-    // `<div id="app"><!--app-html--></div>` without creating a hydration
-    // container mismatch.
-    const outletMatch = bodyInterior.match(OUTLET_RE)
+    // If the template marks an explicit SSR outlet, split the body interior
+    // at that marker so the app stream lands inside it instead of before it.
+    // This lets a template wrap the stream in e.g.
+    // `<div id="app"><!--app-html--></div>` without a hydration container
+    // mismatch.
+    const outletMatch = outletRe ? bodyInterior.match(outletRe) : null
     if (outletMatch) {
       const outletIndex = outletMatch.index!
-      const beforeOutlet = bodyInterior.substring(0, outletIndex)
-      const afterOutlet = bodyInterior.substring(outletIndex + outletMatch[0].length)
-      shell = shell + beforeOutlet
-      bodyInterior = afterOutlet
+      shell = shell + bodyInterior.substring(0, outletIndex)
+      bodyInterior = bodyInterior.substring(outletIndex + outletMatch[0].length)
     }
 
     return {
