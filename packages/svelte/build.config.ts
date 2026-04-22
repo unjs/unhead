@@ -3,7 +3,7 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  externals: ['svelte', 'vite', 'magic-string', 'oxc-parser', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: ['svelte', 'vite', 'magic-string', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/server', name: 'server' },

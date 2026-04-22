@@ -1,5 +1,5 @@
 // Create a thenable that React's use() can read synchronously without suspending
-export function resolvedThenable<T>(value: T): Promise<T> {
+function resolvedThenable<T>(value: T): Promise<T> {
   return {
     status: 'fulfilled',
     value,
@@ -11,7 +11,7 @@ export function resolvedThenable<T>(value: T): Promise<T> {
 }
 
 // Create a delayed promise for server-side streaming simulation
-export function delayedPromise<T>(value: T, delay: number): Promise<T> {
+function delayedPromise<T>(value: T, delay: number): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(value), delay))
 }
 
