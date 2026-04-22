@@ -12,21 +12,28 @@ import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
 
 /**
- * Streaming script component - outputs inline script with current head state.
- * The Vite plugin with streaming: true auto-injects this.
+ * Emits a `<script data-allow-mismatch="children">` whose `innerHTML` is the
+ * pending head-update JS (if any). The client counterpart renders an identical
+ * `<script data-allow-mismatch="children">` with empty innerHTML: symmetric
+ * vnode types let Vue's hydrator match the node, and `data-allow-mismatch`
+ * silences the inner-content difference.
+ *
+ * The Vite plugin injects one `<HeadStream />` at the top of every SFC
+ * `<template>` that uses `useHead` / `useSeoMeta`.
  */
 export const HeadStream = defineComponent({
   name: 'HeadStream',
   setup() {
     const head = injectHead()
     return () => {
-      // Skip if shell hasn't been rendered yet - entries will be captured in shell
+      // Before `wrapStream` has captured the shell, entries belong to the
+      // initial render and are serialized by the shell, not re-emitted into
+      // the tree. Emit an empty placeholder so the client vnode tree stays in
+      // sync.
       if (!(head as any)._shellRendered?.())
-        return null
+        return h('script', { 'data-allow-mismatch': 'children' })
       const update = renderSSRHeadSuspenseChunk(head)
-      if (!update)
-        return null
-      return h('script', { innerHTML: update })
+      return h('script', { 'data-allow-mismatch': 'children', 'innerHTML': update || '' })
     }
   },
 })
@@ -55,10 +62,7 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
  *   app.mixin(VueHeadMixin)
  *   router.push(url)
  *
- *   // Create stream first - Vue starts rendering synchronously
  *   const vueStream = renderToWebStream(app)
- *
- *   // Wait for router - by now Vue's sync render has pushed head entries
  *   await router.isReady()
  *
  *   return wrapStream(vueStream, template)
@@ -75,17 +79,16 @@ export function createStreamableHead(
   const vueHead = head as VueHeadClient<any, SSRHeadPayload>
   vueHead.install = vueInstall(vueHead)
 
-  // Track shell render state - HeadStream skips entries until shell is rendered
+  // HeadStream flips from "empty placeholder" to "pending suspense-chunk JS"
+  // once `wrapStream` has captured the shell state.
   let shellRendered = false
   ;(vueHead as any)._shellRendered = () => shellRendered
 
   return {
     head: vueHead,
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
-      // Capture shell state before clearing entries
       const preRenderedState = vueHead.render()
       vueHead.entries.clear()
-      // Mark shell as rendered so HeadStream starts outputting streaming updates
       shellRendered = true
       return coreWrapStream(vueHead, stream, template, preRenderedState)
     },
