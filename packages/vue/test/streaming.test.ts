@@ -132,58 +132,66 @@ describe('vue streaming SSR', () => {
   })
 
   describe('headStream component', () => {
-    it('renders script tag with head updates via Vue SSR', async () => {
+    it('emits <script data-allow-mismatch="children"> with update content after shell', async () => {
       const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
-      // Mark shell as rendered for HeadStream to work (normally done by wrapStream)
       ;(head as any)._shellRendered = () => true
-
       head.push({ title: 'Streamed Title' })
 
-      // Create a minimal app that provides head and renders HeadStream
       const App = defineComponent({
         setup() {
           return () => h(HeadStream)
         },
       })
-
       const app = createSSRApp(App)
       app.provide('usehead', head)
-
       const html = await renderToString(app)
 
-      expect(html).toContain('<script>')
+      expect(html).toContain('data-allow-mismatch="children"')
       expect(html).toContain('window.__unhead__.push')
       expect(html).toContain('Streamed Title')
-      expect(html).toContain('</script>')
     })
 
-    it('renders null when no updates', async () => {
+    it('emits empty placeholder script when no updates are pending', async () => {
       const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
-
-      // No new entries pushed
+      ;(head as any)._shellRendered = () => true
 
       const App = defineComponent({
         setup() {
           return () => h(HeadStream)
         },
       })
-
       const app = createSSRApp(App)
       app.provide('usehead', head)
-
       const html = await renderToString(app)
 
-      expect(html).toBe('<!---->') // Vue SSR comment for null render
+      // Symmetric with the client vnode so Vue's hydrator matches.
+      expect(html).toBe('<script data-allow-mismatch="children"></script>')
+    })
+
+    it('emits empty placeholder before shell is rendered', async () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Shell Title' })
+      // _shellRendered defaults to false: HeadStream must not leak shell-time
+      // entries back into the tree.
+
+      const App = defineComponent({
+        setup() {
+          return () => h(HeadStream)
+        },
+      })
+      const app = createSSRApp(App)
+      app.provide('usehead', head)
+      const html = await renderToString(app)
+
+      expect(html).toBe('<script data-allow-mismatch="children"></script>')
     })
 
     it('properly escapes script content to prevent XSS', async () => {
       const { head } = createStreamableHead()
       await renderSSRHeadShell(head, '<html><head></head><body>')
-      // Mark shell as rendered for HeadStream to work (normally done by wrapStream)
       ;(head as any)._shellRendered = () => true
-
       head.push({ title: '</script><script>alert("xss")</script>' })
 
       const App = defineComponent({
@@ -191,15 +199,12 @@ describe('vue streaming SSR', () => {
           return () => h(HeadStream)
         },
       })
-
       const app = createSSRApp(App)
       app.provide('usehead', head)
-
       const html = await renderToString(app)
 
-      // Should not contain unescaped closing script tag
-      expect(html).not.toContain('</script><script>')
-      expect(html).toContain('\\u003c') // Escaped <
+      expect(html).not.toContain('</script><script>alert')
+      expect(html).toContain('\\u003c')
     })
   })
 

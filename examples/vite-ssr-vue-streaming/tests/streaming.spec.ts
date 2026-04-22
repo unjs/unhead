@@ -228,6 +228,24 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       await expect(page).toHaveTitle('StreamShop - Ready!')
     })
 
+    // Regression guard for the HeadStream hydration model: every script
+    // that carries a streamed head update must have `data-allow-mismatch` so
+    // Vue tolerates the inner-text difference between server and client.
+    test('HeadStream scripts carry data-allow-mismatch for hydration safety', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
+      const { total, unsafe } = await page.evaluate(() => {
+        const updateScripts = Array.from(document.querySelectorAll('script'))
+          .filter(n => (n.textContent || '').includes('window.__unhead__.push'))
+        return {
+          total: updateScripts.length,
+          unsafe: updateScripts.filter(n => !n.hasAttribute('data-allow-mismatch')).length,
+        }
+      })
+      expect(total).toBeGreaterThan(0)
+      expect(unsafe).toBe(0)
+    })
+
     test('no unexpected console errors during streaming and hydration', async ({ page }) => {
       const errors: string[] = []
       page.on('console', msg => {
