@@ -717,5 +717,55 @@ describe('streaming SSR', () => {
       expect(userIdx).toBeGreaterThan(pluginIdx)
       expect(closeIdx).toBeGreaterThan(userIdx)
     })
+
+    describe('outlet splitting', () => {
+      const outletTemplate = '<html><head></head><body><div id="app"><!--ssr-outlet--></div></body></html>'
+
+      it('splits the body interior at the default outlet marker', () => {
+        const { head } = createStreamableHead()
+        const { shell, end } = prepareStreamingTemplate(head, outletTemplate)
+
+        // Shell extends up to and into the outlet wrapper, consuming the marker.
+        expect(shell).toContain('<div id="app">')
+        expect(shell).not.toContain('ssr-outlet')
+        // End closes the wrapper after the streamed app content.
+        expect(end.startsWith('</div>')).toBe(true)
+      })
+
+      it('accepts a custom marker via `outlet` option', () => {
+        const { head } = createStreamableHead()
+        const template = '<html><head></head><body><div id="app"><!--custom-outlet--></div></body></html>'
+        const { shell, end } = prepareStreamingTemplate(head, template, undefined, {
+          outlet: '<!--custom-outlet-->',
+        })
+
+        expect(shell).toContain('<div id="app">')
+        expect(shell).not.toContain('custom-outlet')
+        expect(end.startsWith('</div>')).toBe(true)
+      })
+
+      it('accepts a RegExp marker via `outlet` option', () => {
+        const { head } = createStreamableHead()
+        const template = '<html><head></head><body><div id="app"><!--APP--></div></body></html>'
+        const { shell } = prepareStreamingTemplate(head, template, undefined, {
+          outlet: /<!--APP-->/,
+        })
+
+        expect(shell).toContain('<div id="app">')
+        expect(shell).not.toContain('<!--APP-->')
+      })
+
+      it('disables outlet splitting when `outlet: false`', () => {
+        const { head } = createStreamableHead()
+        const { shell, end } = prepareStreamingTemplate(head, outletTemplate, undefined, {
+          outlet: false,
+        })
+
+        // Outlet marker stays in the end part; shell ends at <body>.
+        expect(shell).not.toContain('<div id="app">')
+        expect(end).toContain('<div id="app">')
+        expect(end).toContain('<!--ssr-outlet-->')
+      })
+    })
   })
 })

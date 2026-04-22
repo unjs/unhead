@@ -246,29 +246,25 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       expect(unsafe).toBe(0)
     })
 
-    test('no unexpected console errors during streaming and hydration', async ({ page }) => {
-      const errors: string[] = []
+    test('no unexpected console errors or hydration warnings', async ({ page }) => {
+      const issues: string[] = []
       page.on('console', msg => {
-        if (msg.type() === 'error') {
-          errors.push(msg.text())
-        }
+        if (msg.type() === 'error' || msg.type() === 'warning')
+          issues.push(`[${msg.type()}] ${msg.text()}`)
       })
 
       await page.goto('/')
       await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
-
-      // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out expected non-critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('Hydration') &&
-        !e.includes('mismatch') &&
-        !e.includes('WebSocket') &&
-        !e.includes('vite')
+      // No filter for hydration/mismatch: the symmetric HeadStream +
+      // `<!--app-html-->` outlet pattern must produce a clean hydration.
+      const critical = issues.filter(e =>
+        !e.includes('favicon')
+        && !e.includes('WebSocket')
+        && !e.includes('vite'),
       )
-      expect(criticalErrors).toHaveLength(0)
+      expect(critical, critical.join('\n')).toHaveLength(0)
     })
   })
 })

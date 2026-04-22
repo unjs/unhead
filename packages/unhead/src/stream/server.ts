@@ -7,6 +7,22 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+// Default SSR outlet markers. `<!--app-html-->` is the convention used
+// across this repo's `vite-ssr-*` examples and docs; `<!--ssr-outlet-->`
+// is the placeholder shown in Vite's SSR guide. Users with a custom
+// marker should pass `outlet` via StreamingTemplateOptions.
+const DEFAULT_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
+
+function resolveOutletPattern(outlet: RegExp | string | false | undefined): RegExp | null {
+  if (outlet === false)
+    return null
+  if (outlet == null)
+    return DEFAULT_OUTLET_RE
+  if (outlet instanceof RegExp)
+    return outlet
+  // Escape regex metacharacters in literal string
+  return new RegExp(outlet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+}
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -227,6 +243,10 @@ function safeJsonStringify(obj: any): string {
  * 3. Streams the app content
  * 4. Writes the closing HTML (with body tags)
  *
+ * Per-suspense head updates ride inside the framework's own stream via
+ * the framework-specific `HeadStream` component (injected by the streaming
+ * Vite plugin). This function only owns the shell / end envelope.
+ *
  * @param head - The Unhead instance
  * @param stream - The app's ReadableStream (from renderToWebStream, etc.)
  * @param template - Full HTML template
@@ -244,13 +264,14 @@ export function wrapStream(
   stream: ReadableStream<Uint8Array>,
   template: string,
   preRenderedState?: SSRHeadPayload,
+  options?: StreamingTemplateOptions,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState)
+        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState, options)
         controller.enqueue(encoder.encode(shell))
 
         const reader = stream.getReader()
@@ -274,6 +295,30 @@ export function wrapStream(
       }
     },
   })
+}
+
+/**
+ * Options shared by `wrapStream` and `prepareStreamingTemplate`.
+ */
+export interface StreamingTemplateOptions {
+  /**
+   * SSR outlet marker to split the body interior at. When the template marks
+   * an outlet (e.g. `<div id="app"><!--app-html--></div>`), the shell is
+   * extended up to the marker so the app stream lands *inside* the outlet's
+   * wrapper element instead of before it, avoiding a hydration container
+   * mismatch.
+   *
+   * - `RegExp` / `string`: match and split at the first occurrence.
+   *   Strings are treated as literal (metachars escaped).
+   * - `false`: disable outlet splitting entirely.
+   *
+   * The default matches `<!--app-html-->` (convention used across this repo's
+   * Vite SSR examples and docs) and `<!--ssr-outlet-->` (from Vite's SSR
+   * guide).
+   *
+   * @default /<!--\s*(?:app-html|ssr-outlet)\s*-->/
+   */
+  outlet?: RegExp | string | false
 }
 
 /**
@@ -319,7 +364,9 @@ export function prepareStreamingTemplate(
   head: Unhead<any>,
   template: string,
   preRenderedState?: SSRHeadPayload,
+  options?: StreamingTemplateOptions,
 ): StreamingTemplateParts {
+  const outletRe = resolveOutletPattern(options?.outlet)
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
   if (!preRenderedState) {
     head.entries.clear()
@@ -336,16 +383,28 @@ export function prepareStreamingTemplate(
     // (e.g. scripts injected by Vite plugins via transformIndexHtml with
     // injectTo: 'body'). Without preserving this, anything plugins inject
     // into the body silently disappears in streaming mode.
-    const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
+    let bodyInterior = template.substring(bodyEnd, bodyCloseStart)
     const endPart = template.substring(bodyCloseStart)
 
     const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
-    const shell = applyHeadToHtml(shellParsed, {
+    let shell = applyHeadToHtml(shellParsed, {
       htmlAttrs: ssr.htmlAttrs,
       headTags: bootstrapScript + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
       bodyTags: '',
     }).replace('</body></html>', '')
+
+    // If the template marks an explicit SSR outlet, split the body interior
+    // at that marker so the app stream lands inside it instead of before it.
+    // This lets a template wrap the stream in e.g.
+    // `<div id="app"><!--app-html--></div>` without a hydration container
+    // mismatch.
+    const outletMatch = outletRe ? bodyInterior.match(outletRe) : null
+    if (outletMatch) {
+      const outletIndex = outletMatch.index!
+      shell = shell + bodyInterior.substring(0, outletIndex)
+      bodyInterior = bodyInterior.substring(outletIndex + outletMatch[0].length)
+    }
 
     return {
       shell,
