@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
 
 const USE_SERVER_HEAD_RE = /useServerHead/
@@ -12,6 +12,30 @@ async function transform(code: string | string[], id = 'some-id.js', opts: any =
     id,
   )
   return res?.code
+}
+
+// Executes the transform output in a sandboxed scope. Only names that the
+// rewritten `import { ... } from 'unhead'` actually lists get bound to spies;
+// anything else the code calls surfaces as a real `ReferenceError`. This
+// reproduces the original bug where `useSeoMeta` was stripped from the import
+// but still referenced by an untransformable call site.
+function runTransformed(code: string): { imported: string[], useHead: ReturnType<typeof vi.fn>, useSeoMeta: ReturnType<typeof vi.fn> } {
+  const importMatch = code.match(/^import\s*\{([^}]*)\}\s*from\s*['"]unhead['"][^\n]*\n?/m)
+  const imported = importMatch
+    ? importMatch[1].split(',').map(s => s.trim()).filter(Boolean)
+    : []
+  const body = importMatch ? code.replace(importMatch[0], '') : code
+  const spies: Record<string, ReturnType<typeof vi.fn>> = {
+    useHead: vi.fn(),
+    useSeoMeta: vi.fn(),
+    useServerHead: vi.fn(),
+    useServerSeoMeta: vi.fn(),
+  }
+  const params = imported.filter(name => name in spies)
+  const args = params.map(name => spies[name])
+  // eslint-disable-next-line no-new-func
+  new Function(...params, body)(...args)
+  return { imported, useHead: spies.useHead, useSeoMeta: spies.useSeoMeta }
 }
 
 describe('useSeoMetaTransform', () => {
@@ -38,6 +62,62 @@ describe('useSeoMetaTransform', () => {
         'console.log(useSeoMeta(meta))',
       ]),
     ).not.toBeDefined()
+  })
+
+  it('keeps original import when a sibling call is untransformable', async () => {
+    // One static call gets rewritten to useHead, another uses a dynamic first arg
+    // and must stay as useSeoMeta(...). The import must keep both names.
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const meta = {}',
+      'useSeoMeta({ title: \'Hello\', description: \'World\' })',
+      'useSeoMeta(meta, { tagPriority: 10 })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useSeoMeta } from 'unhead'
+      const meta = {}
+      useHead({
+        title: 'Hello',
+        meta: [
+          { name: 'description', content: 'World' },
+        ]
+      })
+      useSeoMeta(meta, { tagPriority: 10 })"
+    `)
+  })
+
+  it('keeps original import when a spread-property call is untransformable', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const extra = { description: \'d\' }',
+      'useSeoMeta({ title: \'Hello\', description: \'World\' })',
+      'useSeoMeta({ title: \'Dyn\', ...extra })',
+    ])
+    expect(code).toContain('import { useHead, useSeoMeta } from')
+    expect(code).toContain('useSeoMeta({ title: \'Dyn\', ...extra })')
+  })
+
+  it('transformed code runs without ReferenceError when a sibling call is untransformable', async () => {
+    // Regression for a bug where the bundler rewrote `useSeoMeta -> useHead`
+    // for the transformable call but stripped `useSeoMeta` from the import,
+    // leaving the untransformable call site dangling (`ReferenceError:
+    // useSeoMeta is not defined`) at runtime.
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const meta = { description: \'dynamic\' }',
+      'useSeoMeta({ title: \'Static\', description: \'Static desc\' })',
+      'useSeoMeta(meta, { tagPriority: 10 })',
+    ])
+    expect(code).toBeDefined()
+
+    const { useHead, useSeoMeta } = runTransformed(code!)
+    expect(useHead).toHaveBeenCalledTimes(1)
+    expect(useHead).toHaveBeenCalledWith({
+      title: 'Static',
+      meta: [{ name: 'description', content: 'Static desc' }],
+    })
+    expect(useSeoMeta).toHaveBeenCalledTimes(1)
+    expect(useSeoMeta).toHaveBeenCalledWith({ description: 'dynamic' }, { tagPriority: 10 })
   })
 
   it('statically replaces where possible', async () => {
