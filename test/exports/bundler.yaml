@@ -8,6 +8,10 @@
   createCSSMinifier: function
 ./minify/rolldown:
   createJSMinifier: function
+./rollup:
+  Unhead: function
+./rspack:
+  Unhead: function
 ./vite:
   Unhead: function
 ./webpack:

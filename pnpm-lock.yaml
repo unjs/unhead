@@ -909,6 +909,9 @@ importers:
       unhead:
         specifier: workspace:*
         version: link:../unhead
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.0.0
     devDependencies:
       '@testing-library/react':
         specifier: 'catalog:'
@@ -968,6 +971,9 @@ importers:
       unhead:
         specifier: workspace:*
         version: link:../unhead
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.0.0
     devDependencies:
       '@testing-library/jest-dom':
         specifier: 'catalog:'
@@ -996,6 +1002,9 @@ importers:
       unhead:
         specifier: workspace:*
         version: link:../unhead
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.0.0
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: 'catalog:'
@@ -1040,6 +1049,9 @@ importers:
       unhead:
         specifier: workspace:*
         version: link:../unhead
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.0.0
     devDependencies:
       '@vue/server-renderer':
         specifier: 'catalog:'

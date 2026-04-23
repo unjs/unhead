@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { unheadSveltePlugin } from '../src/stream/vite'
+import { unheadSvelteStreamingPlugin } from '../src/stream/plugin'
 
 const FILTER_RE = /\.svelte$/
 
-describe('unheadSveltePlugin', () => {
-  const plugin = unheadSveltePlugin() as any
+describe('unheadSvelteStreamingPlugin', () => {
+  const plugin = unheadSvelteStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
 
   describe('basic configuration', () => {

@@ -49,9 +49,17 @@
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
     },
-    "./stream/vite": {
-      "types": "./dist/stream/vite.d.ts",
-      "default": "./dist/stream/vite.mjs"
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "default": "./dist/webpack.mjs"
+    },
+    "./rspack": {
+      "types": "./dist/rspack.d.ts",
+      "default": "./dist/rspack.mjs"
+    },
+    "./rollup": {
+      "types": "./dist/rollup.d.ts",
+      "default": "./dist/rollup.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -80,8 +88,14 @@
       "vite": [
         "dist/vite"
       ],
-      "stream/vite": [
-        "dist/stream/vite"
+      "webpack": [
+        "dist/webpack"
+      ],
+      "rspack": [
+        "dist/rspack"
+      ],
+      "rollup": [
+        "dist/rollup"
       ]
     }
   },
@@ -114,7 +128,8 @@
     "@unhead/bundler": "workspace:*",
     "magic-string": "catalog:",
     "oxc-walker": "catalog:",
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "unplugin": "catalog:"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "catalog:",

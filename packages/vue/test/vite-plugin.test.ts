@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { unheadVuePlugin } from '../src/stream/vite'
+import { unheadVueStreamingPlugin } from '../src/stream/plugin'
 
-describe('unheadVuePlugin', () => {
-  const plugin = unheadVuePlugin() as any
+describe('unheadVueStreamingPlugin', () => {
+  const plugin = unheadVueStreamingPlugin.vite() as any
 
   describe('basic configuration', () => {
     it('has correct name', () => {
@@ -13,11 +13,10 @@ describe('unheadVuePlugin', () => {
       expect(plugin.enforce).toBe('pre')
     })
 
-    // No SFC source transform runs: per-chunk head patches are emitted by
-    // wrapStream on the server. The transform hook is still registered by
-    // the core factory, but with a never-matching filter.
-    it('registers a never-matching transform filter', () => {
-      expect(plugin.transform.filter.id.test('any.vue')).toBe(false)
+    // Vue does not register a source transform: per-chunk head patches are
+    // emitted by wrapStream on the server. No filter/transform hook present.
+    it('does not register a transform hook', () => {
+      expect(plugin.transform).toBeUndefined()
     })
   })
 

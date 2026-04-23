@@ -73,21 +73,9 @@
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
     },
-    "./stream/vite": {
-      "types": "./dist/stream/vite.d.ts",
-      "default": "./dist/stream/vite.mjs"
-    },
-    "./stream/webpack": {
-      "types": "./dist/stream/webpack.d.ts",
-      "default": "./dist/stream/webpack.mjs"
-    },
-    "./stream/rspack": {
-      "types": "./dist/stream/rspack.d.ts",
-      "default": "./dist/stream/rspack.mjs"
-    },
-    "./stream/rollup": {
-      "types": "./dist/stream/rollup.d.ts",
-      "default": "./dist/stream/rollup.mjs"
+    "./stream/unplugin": {
+      "types": "./dist/stream/unplugin.d.ts",
+      "default": "./dist/stream/unplugin.mjs"
     },
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
@@ -132,17 +120,8 @@
       "parser": [
         "dist/parser.d.ts"
       ],
-      "stream/vite": [
-        "dist/stream/vite.d.ts"
-      ],
-      "stream/webpack": [
-        "dist/stream/webpack.d.ts"
-      ],
-      "stream/rspack": [
-        "dist/stream/rspack.d.ts"
-      ],
-      "stream/rollup": [
-        "dist/stream/rollup.d.ts"
+      "stream/unplugin": [
+        "dist/stream/unplugin.d.ts"
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"

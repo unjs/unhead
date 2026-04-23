@@ -60,10 +60,6 @@
 ./stream/iife:
   streamingIifeCode: string
   streamingIifeSize: number
-./stream/rollup:
-  createStreamingRollupPlugin: function
-./stream/rspack:
-  createStreamingRspackPlugin: function
 ./stream/server:
   createBootstrapScript: function
   createStreamableHead: function
@@ -72,13 +68,11 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function
-./stream/vite:
+./stream/unplugin:
   buildStreamingPluginOptions: function
-  createStreamingVitePlugin: function
+  createStreamingPlugin: object
   VIRTUAL_CLIENT_ID: string
   VIRTUAL_IIFE_ID: string
-./stream/webpack:
-  createStreamingWebpackPlugin: function
 ./types: {}
 ./utils:
   dedupeKey: function

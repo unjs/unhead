@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { unheadReactPlugin } from '../src/stream/vite'
+import { unheadReactStreamingPlugin } from '../src/stream/plugin'
 
 const FILTER_RE = /\.[jt]sx$/
 const HEAD_STREAM_RE = /<HeadStream \/>/g
 
-describe('unheadReactPlugin', () => {
-  const plugin = unheadReactPlugin() as any
+describe('unheadReactStreamingPlugin', () => {
+  const plugin = unheadReactStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
 
   describe('basic configuration', () => {

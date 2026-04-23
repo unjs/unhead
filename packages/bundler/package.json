@@ -33,6 +33,14 @@
       "types": "./dist/webpack.d.ts",
       "default": "./dist/webpack.mjs"
     },
+    "./rspack": {
+      "types": "./dist/rspack.d.ts",
+      "default": "./dist/rspack.mjs"
+    },
+    "./rollup": {
+      "types": "./dist/rollup.d.ts",
+      "default": "./dist/rollup.mjs"
+    },
     "./minify/rolldown": {
       "types": "./dist/minify/rolldown.d.ts",
       "default": "./dist/minify/rolldown.mjs"
@@ -56,6 +64,12 @@
       ],
       "webpack": [
         "dist/webpack"
+      ],
+      "rspack": [
+        "dist/rspack"
+      ],
+      "rollup": [
+        "dist/rollup"
       ],
       "minify/rolldown": [
         "dist/minify/rolldown"

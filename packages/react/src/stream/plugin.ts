@@ -1,7 +1,8 @@
-import type { StreamingPluginOptions } from 'unhead/stream/vite'
+import type { StreamingPluginOptions } from 'unhead/stream/unplugin'
 import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
-import { createStreamingVitePlugin } from 'unhead/stream/vite'
+import { buildStreamingPluginOptions } from 'unhead/stream/unplugin'
+import { createUnplugin } from 'unplugin'
 
 const FILTER_RE = /\.[jt]sx$/
 
@@ -13,59 +14,6 @@ const FILTER_RE = /\.[jt]sx$/
  * @param isSSR - Whether the code is being transformed for SSR
  * @param s - MagicString instance for code manipulation
  * @returns `true` if transformations were applied, `false` otherwise
- *
- * @example
- * ```tsx
- * // Input code:
- * import { useHead } from '@unhead/react'
- *
- * export function MyComponent() {
- *   useHead({
- *     title: 'My Page'
- *   })
- *   return <div>Hello World</div>
- * }
- *
- * // Transformed output (SSR):
- * import { useHead } from '@unhead/react'
- * import { HeadStream } from '@unhead/react/stream/server'
- *
- * export function MyComponent() {
- *   useHead({
- *     title: 'My Page'
- *   })
- *   return <><HeadStream /><div>Hello World</div></>
- * }
- * ```
- *
- * @example
- * ```tsx
- * // Input code with arrow function:
- * const Page = () => {
- *   useSeoMeta({
- *     description: 'Page description'
- *   })
- *   return (
- *     <main>
- *       <h1>Title</h1>
- *     </main>
- *   )
- * }
- *
- * // Transformed output (client):
- * import { HeadStream } from '@unhead/react/stream/client'
- *
- * const Page = () => {
- *   useSeoMeta({
- *     description: 'Page description'
- *   })
- *   return (
- *     <><HeadStream /><main>
- *       <h1>Title</h1>
- *     </main></>
- *   )
- * }
- * ```
  */
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
   const lang = id.endsWith('.tsx') ? 'tsx' : id.endsWith('.jsx') ? 'jsx' : 'tsx'
@@ -108,7 +56,6 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
         const bodyCode = code.slice(node.body.start, node.body.end)
         currentFnHasHead = bodyCode.includes('useHead') || bodyCode.includes('useSeoMeta') || bodyCode.includes('useHeadSafe')
 
-        // Arrow with implicit JSX return
         if (currentFnHasHead && (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')) {
           returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
         }
@@ -141,14 +88,12 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   if (returns.length === 0)
     return false
 
-  // Wrap JSX returns with HeadStream (reverse order to maintain positions)
   returns.sort((a, b) => b.jsxStart - a.jsxStart)
   for (const ret of returns) {
     const jsxCode = code.slice(ret.jsxStart, ret.jsxEnd)
     s.overwrite(ret.jsxStart, ret.jsxEnd, `<><HeadStream />${jsxCode}</>`)
   }
 
-  // Add import
   const foundImport = existingImport as { start: number, end: number, specifiers: string[] } | null
   if (foundImport) {
     if (!foundImport.specifiers.includes('HeadStream')) {
@@ -166,43 +111,27 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
   return true
 }
 
+export type UnheadReactStreamingOptions = Pick<StreamingPluginOptions, 'mode'>
+
 /**
- * Vite plugin for React streaming SSR support.
- * Automatically injects HeadStream components into React components that use useHead hooks.
- *
- * @returns Vite plugin configuration object with:
- *   - `name`: Plugin identifier
- *   - `enforce`: Plugin execution order ('pre')
- *   - `transform`: Transform hook for processing JSX/TSX files
- *
- * @example
- * ```ts
- * // vite.config.ts
- * import { unheadReactPlugin } from '@unhead/react/stream/vite'
- *
- * export default {
- *   plugins: [
- *     unheadReactPlugin()
- *   ]
- * }
- * ```
+ * Bundler-agnostic streaming SSR plugin for `@unhead/react`. Exposes
+ * `.vite()`, `.webpack()`, `.rspack()`, `.rollup()`, `.esbuild()` builders
+ * via unplugin. Consumers should prefer the unified per-bundler entries
+ * at `@unhead/react/{vite,webpack,rspack,rollup}`.
  */
-export function unheadReactPlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
-  return createStreamingVitePlugin({
+export const unheadReactStreamingPlugin = createUnplugin<UnheadReactStreamingOptions | undefined>((options = {}) =>
+  buildStreamingPluginOptions({
     framework: '@unhead/react',
     filter: FILTER_RE,
-    mode: options?.mode,
-    transform(code: string, id: string, opts?: { ssr?: boolean }) {
+    mode: options.mode,
+    transform(code, id, opts) {
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null
-
       return {
         code: s.toString(),
         map: s.generateMap({ includeContent: true, source: id }),
       }
     },
-  })
-}
-
-export default unheadReactPlugin
+  }),
+)

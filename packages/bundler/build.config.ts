@@ -10,6 +10,8 @@ export default defineBuildConfig({
     { input: 'src/index', name: 'index' },
     { input: 'src/unplugin/vite', name: 'vite' },
     { input: 'src/unplugin/webpack', name: 'webpack' },
+    { input: 'src/unplugin/rspack', name: 'rspack' },
+    { input: 'src/unplugin/rollup', name: 'rollup' },
     { input: 'src/minify/rolldown', name: 'minify/rolldown' },
     { input: 'src/minify/esbuild', name: 'minify/esbuild' },
     { input: 'src/minify/lightningcss', name: 'minify/lightningcss' },
@@ -18,6 +20,7 @@ export default defineBuildConfig({
   externals: [
     'vite',
     'webpack',
+    '@rspack/core',
     'rollup',
     'unhead',
     'unplugin',

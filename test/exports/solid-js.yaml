@@ -22,6 +22,10 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./rollup:
+  Unhead: function
+./rspack:
+  Unhead: function
 ./server:
   createHead: function
   renderSSRHead: function
@@ -39,9 +43,6 @@
   renderSSRHeadSuspenseChunk: function
   UnheadContext: object
   wrapStream: function
-./stream/vite:
-  default: function
-  unheadSolidPlugin: function
 ./utils:
   dedupeKey: function
   dedupeTags: function
@@ -70,4 +71,6 @@
   ValidHeadTags: object
   walkResolver: function
 ./vite:
+  Unhead: function
+./webpack:
   Unhead: function

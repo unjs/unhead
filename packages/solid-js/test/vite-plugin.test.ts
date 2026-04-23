@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { unheadSolidPlugin } from '../src/stream/vite'
+import { unheadSolidStreamingPlugin } from '../src/stream/plugin'
 
 const FILTER_RE = /\.[jt]sx$/
 
-describe('unheadSolidPlugin', () => {
-  const plugin = unheadSolidPlugin() as any
+describe('unheadSolidStreamingPlugin', () => {
+  const plugin = unheadSolidStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
 
   describe('basic configuration', () => {

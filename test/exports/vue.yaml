@@ -38,6 +38,10 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./rollup:
+  Unhead: function
+./rspack:
+  Unhead: function
 ./scripts:
   createSpyProxy: function
   useScript: function
@@ -61,9 +65,6 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function
-./stream/vite:
-  default: function
-  unheadVuePlugin: function
 ./types: {}
 ./utils:
   dedupeKey: function
@@ -95,4 +96,6 @@
   VueResolver: function
   walkResolver: function
 ./vite:
+  Unhead: function
+./webpack:
   Unhead: function

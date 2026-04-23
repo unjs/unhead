@@ -15,7 +15,7 @@
       "unhead/types": ["./packages/unhead/src/types/index"],
       "unhead/stream/client": ["./packages/unhead/src/stream/client"],
       "unhead/stream/server": ["./packages/unhead/src/stream/server"],
-      "unhead/stream/vite": ["./packages/unhead/src/stream/vite"],
+      "unhead/stream/unplugin": ["./packages/unhead/src/stream/unplugin"],
       "unhead/stream/iife": ["./packages/unhead/src/stream/iife-code"],
       "@unhead/ssr": ["./packages/unhead/src/server/index"],
       "@unhead/dom": ["./packages/unhead/src/client/index"],

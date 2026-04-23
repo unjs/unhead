@@ -48,7 +48,7 @@ async function loadIifeCode(): Promise<void> {
 
 /**
  * Builds the bundler-agnostic unplugin hook set for the streaming plugin. Exposed so
- * framework wrappers (e.g. `@unhead/vue/stream/vite`, `@unhead/vue/stream/webpack`) can
+ * framework wrappers (e.g. `@unhead/vue/vite`, `@unhead/vue/webpack`) can
  * bake in their own `framework`, `filter`, and `transform` while still using this factory
  * to produce hooks that work across vite/webpack/rspack/rollup/esbuild via `createUnplugin`.
  *
@@ -166,7 +166,7 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
  * Internal cross-bundler unplugin factory. Framework wrappers pick a single bundler's
  * output (`.vite`, `.webpack`, `.rspack`, etc.) to expose via their own subpath export.
  *
- * Consumers should prefer the bundler-specific subpaths (e.g. `@unhead/vue/stream/vite`)
+ * Consumers should prefer the bundler-specific framework subpaths (e.g. `@unhead/vue/vite`)
  * rather than importing this directly.
  */
 export const createStreamingPlugin = createUnplugin<StreamingPluginOptions>(buildStreamingPluginOptions)
