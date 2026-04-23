@@ -421,6 +421,38 @@ describe('streaming SSR', () => {
       expect(result).toContain('data-theme="dark"')
       expect(result).toContain('data-page="home"')
     })
+
+    it('splits at <!--app-html--> outlet marker', () => {
+      const { head } = createStreamableHead()
+      head.push({ title: 'Outlet Test' })
+
+      const template = '<html><head></head><body><div id="app"><!--app-html--></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<title>Outlet Test</title>')
+      expect(shell).toContain('<div id="app">')
+      expect(shell).not.toContain('<!--app-html-->')
+      expect(end).toContain('</div></body></html>')
+    })
+
+    it('splits at <!--ssr-outlet--> outlet marker', () => {
+      const { head } = createStreamableHead()
+      const template = '<html><head></head><body><div id="root"><!--ssr-outlet--></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<div id="root">')
+      expect(shell).not.toContain('<!--ssr-outlet-->')
+      expect(end).toContain('</div></body></html>')
+    })
+
+    it('falls back to body boundary when no outlet marker present', () => {
+      const { head } = createStreamableHead()
+      const template = '<html><head></head><body><div id="app"></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).not.toContain('<div id="app">')
+      expect(end).toContain('<div id="app">')
+    })
   })
 
   describe('concurrent streams', () => {

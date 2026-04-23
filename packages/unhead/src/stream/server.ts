@@ -7,6 +7,8 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+// Canonical Vite SSR outlet markers. Either form is accepted.
+const OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -336,16 +338,30 @@ export function prepareStreamingTemplate(
     // (e.g. scripts injected by Vite plugins via transformIndexHtml with
     // injectTo: 'body'). Without preserving this, anything plugins inject
     // into the body silently disappears in streaming mode.
-    const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
+    let bodyInterior = template.substring(bodyEnd, bodyCloseStart)
     const endPart = template.substring(bodyCloseStart)
 
     const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
-    const shell = applyHeadToHtml(shellParsed, {
+    let shell = applyHeadToHtml(shellParsed, {
       htmlAttrs: ssr.htmlAttrs,
       headTags: bootstrapScript + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
       bodyTags: '',
     }).replace('</body></html>', '')
+
+    // If the template marks an explicit SSR outlet (canonical Vite pattern),
+    // split the body interior at that marker so the app stream lands inside
+    // it instead of before it. This lets a template wrap the stream in
+    // `<div id="app"><!--app-html--></div>` without creating a hydration
+    // container mismatch.
+    const outletMatch = bodyInterior.match(OUTLET_RE)
+    if (outletMatch) {
+      const outletIndex = outletMatch.index!
+      const beforeOutlet = bodyInterior.substring(0, outletIndex)
+      const afterOutlet = bodyInterior.substring(outletIndex + outletMatch[0].length)
+      shell = shell + beforeOutlet
+      bodyInterior = afterOutlet
+    }
 
     return {
       shell,
