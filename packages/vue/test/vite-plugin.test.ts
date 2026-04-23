@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { unheadVuePlugin } from '../src/stream/vite'
 
-const FILTER_RE = /\.vue$/
-
 describe('unheadVuePlugin', () => {
   const plugin = unheadVuePlugin() as any
-  const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
     it('has correct name', () => {
@@ -15,113 +12,35 @@ describe('unheadVuePlugin', () => {
     it('enforces pre order', () => {
       expect(plugin.enforce).toBe('pre')
     })
+
+    // No SFC source transform runs: per-chunk head patches are emitted by
+    // wrapStream on the server. The transform hook is still registered by
+    // the core factory, but with a never-matching filter.
+    it('registers a never-matching transform filter', () => {
+      expect(plugin.transform.filter.id.test('any.vue')).toBe(false)
+    })
   })
 
-  describe('transform', () => {
-    it('filters to .vue files only', () => {
-      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
+  describe('virtual modules', () => {
+    it('resolves the iife virtual id', () => {
+      const resolved = plugin.resolveId.handler('virtual:@unhead/streaming-iife.js')
+      expect(resolved).toBe('\0virtual:@unhead/streaming-iife.js')
     })
 
-    it('skips files without useHead', () => {
-      const code = `
-        <script setup>
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue')
-      expect(result).toBeNull()
+    it('resolves the client virtual id', () => {
+      const resolved = plugin.resolveId.handler('virtual:@unhead/streaming-client')
+      expect(resolved).toBe('\0virtual:@unhead/streaming-client')
     })
+  })
 
-    it('injects HeadStream in template for components with useHead', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStream />')
-    })
-
-    it('adds HeadStream import from client for non-SSR builds', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue', { ssr: false })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/client\'')
-    })
-
-    it('adds HeadStream import from server for SSR builds', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue', { ssr: true })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('import { HeadStream } from \'@unhead/vue/stream/server\'')
-    })
-
-    it('adds HeadStream to existing server import for SSR builds', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue/stream/server'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue', { ssr: true })
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('useHead, HeadStream')
-    })
-
-    it('transforms files with useSeoMeta', () => {
-      const code = `
-        <script setup>
-          import { useSeoMeta } from '@unhead/vue'
-          useSeoMeta({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue')
-      expect(result).not.toBeNull()
-      expect(result!.code).toContain('<HeadStream />')
-    })
-
-    it('generates source map', () => {
-      const code = `
-        <script setup>
-          import { useHead } from '@unhead/vue'
-          useHead({ title: 'Test' })
-        </script>
-        <template>
-          <div>Hello</div>
-        </template>
-      `
-      const result = transform(code, 'component.vue')
-      expect(result).not.toBeNull()
-      expect(result!.map).toBeDefined()
+  describe('transformIndexHtml', () => {
+    it('injects the iife script tag for async mode', () => {
+      const tags = plugin.transformIndexHtml()
+      expect(Array.isArray(tags)).toBe(true)
+      expect(tags[0].tag).toBe('script')
+      expect(tags[0].injectTo).toBe('head-prepend')
+      expect(tags[0].attrs).toMatchObject({ async: true })
+      expect(tags[0].attrs.src).toContain('virtual:@unhead/streaming-iife.js')
     })
   })
 })

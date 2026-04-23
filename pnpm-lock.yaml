@@ -1034,15 +1034,6 @@ importers:
       hookable:
         specifier: 'catalog:'
         version: 6.1.1
-      magic-string:
-        specifier: 'catalog:'
-        version: 0.30.21
-      oxc-parser:
-        specifier: 'catalog:'
-        version: 0.127.0
-      oxc-walker:
-        specifier: 'catalog:'
-        version: 0.7.0(oxc-parser@0.127.0)
       unhead:
         specifier: workspace:*
         version: link:../unhead

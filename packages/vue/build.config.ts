@@ -1,7 +1,7 @@
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  externals: ['vue', 'vite', 'magic-string', 'oxc-parser', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: ['vue', 'vite', '@unhead/bundler', '@unhead/bundler/vite'],
   declaration: true,
   entries: [
     { input: 'src/index', name: 'index' },

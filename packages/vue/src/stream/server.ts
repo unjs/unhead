@@ -3,40 +3,11 @@ import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload 
 import type { VueHeadClient } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
-  wrapStream as coreWrapStream,
+  prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
 } from 'unhead/stream/server'
-import { defineComponent, h } from 'vue'
-import { injectHead } from '../composables'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
-
-/**
- * Emits a `<script data-allow-mismatch="children">` whose `innerHTML` is the
- * pending head-update JS (if any). The client counterpart renders an identical
- * `<script data-allow-mismatch="children">` with empty innerHTML: symmetric
- * vnode types let Vue's hydrator match the node, and `data-allow-mismatch`
- * silences the inner-content difference.
- *
- * The Vite plugin injects one `<HeadStream />` at the top of every SFC
- * `<template>` that uses `useHead` / `useSeoMeta`.
- */
-export const HeadStream = defineComponent({
-  name: 'HeadStream',
-  setup() {
-    const head = injectHead()
-    return () => {
-      // Before `wrapStream` has captured the shell, entries belong to the
-      // initial render and are serialized by the shell, not re-emitted into
-      // the tree. Emit an empty placeholder so the client vnode tree stays in
-      // sync.
-      if (!(head as any)._shellRendered?.())
-        return h('script', { 'data-allow-mismatch': 'children' })
-      const update = renderSSRHeadSuspenseChunk(head)
-      return h('script', { 'data-allow-mismatch': 'children', 'innerHTML': update || '' })
-    }
-  },
-})
 
 /**
  * Vue-specific context returned by createStreamableHead.
@@ -51,6 +22,17 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
 
 /**
  * Creates a head instance configured for Vue streaming SSR.
+ *
+ * `wrapStream` is Vue-specific: Vue's `renderToWebStream` flushes chunks in
+ * document order per resolved Suspense boundary, so any head entries added
+ * during a chunk's render can be emitted as a self-deleting inline
+ * `<script>` right after the chunk. The script executes at HTML parse
+ * (updating the client head state progressively) and calls
+ * `document.currentScript.remove()` so the DOM is clean before Vue
+ * hydrates. This pattern is not safe for frameworks with out-of-order
+ * Suspense reveals (React, Solid) or framework-specific chunk formats
+ * (Svelte) — those continue to use an in-tree `<HeadStream />` component
+ * whose output is serialized inside the framework's own stream.
  *
  * @example
  * ```ts
@@ -79,19 +61,46 @@ export function createStreamableHead(
   const vueHead = head as VueHeadClient<any, SSRHeadPayload>
   vueHead.install = vueInstall(vueHead)
 
-  // HeadStream flips from "empty placeholder" to "pending suspense-chunk JS"
-  // once `wrapStream` has captured the shell state.
-  let shellRendered = false
-  ;(vueHead as any)._shellRendered = () => shellRendered
+  const encoder = new TextEncoder()
+
+  const flushPatch = (controller: ReadableStreamDefaultController<Uint8Array>) => {
+    const patch = renderSSRHeadSuspenseChunk(vueHead)
+    if (patch)
+      controller.enqueue(encoder.encode(`<script>${patch};document.currentScript.remove()</script>`))
+  }
 
   return {
     head: vueHead,
-    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
-      const preRenderedState = vueHead.render()
-      vueHead.entries.clear()
-      shellRendered = true
-      return coreWrapStream(vueHead, stream, template, preRenderedState)
-    },
+    wrapStream: (stream, template) =>
+      new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            const { shell, end } = prepareStreamingTemplate(vueHead, template)
+            controller.enqueue(encoder.encode(shell))
+
+            const reader = stream.getReader()
+            try {
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done)
+                  break
+                controller.enqueue(value)
+                flushPatch(controller)
+              }
+            }
+            finally {
+              reader.releaseLock()
+            }
+
+            flushPatch(controller)
+            controller.enqueue(encoder.encode(end))
+            controller.close()
+          }
+          catch (error) {
+            controller.error(error)
+          }
+        },
+      }),
   }
 }
 

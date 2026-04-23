@@ -151,9 +151,6 @@
   "dependencies": {
     "@unhead/bundler": "workspace:*",
     "hookable": "catalog:",
-    "magic-string": "catalog:",
-    "oxc-parser": "catalog:",
-    "oxc-walker": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
