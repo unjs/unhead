@@ -168,17 +168,22 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
       },
     },
 
-    transformIndexHtml() {
-      if (!enabled)
-        return []
-      // Inject into head (not body) so that streaming SSR — which splits the
-      // template at body boundaries — does not strip the bridge import.
-      return [{
-        tag: 'script',
-        attrs: { type: 'module' },
-        children: `import("/@unhead/bridge.mjs")`,
-        injectTo: 'head',
-      }]
+    transformIndexHtml: {
+      // Run before non-pre HTML transforms so the injected module import
+      // goes through the full Vite plugin pipeline.
+      order: 'pre',
+      handler() {
+        if (!enabled)
+          return []
+        // Inject into head (not body) so that streaming SSR — which splits the
+        // template at body boundaries — does not strip the bridge import.
+        return [{
+          tag: 'script',
+          attrs: { type: 'module' },
+          children: `import("/@unhead/bridge.mjs")`,
+          injectTo: 'head',
+        }]
+      },
     },
 
     devtools: {

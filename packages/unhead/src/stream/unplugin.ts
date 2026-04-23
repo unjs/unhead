@@ -61,6 +61,15 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
   const { framework, name, mode = 'async' } = options
   let ssr = false
 
+  // Shared SSR detection used by both load and transform hooks. Vite v6+
+  // dev mode has per-environment contexts where the `opts.ssr` flag on each
+  // call is authoritative; fall back to the bundler-hook closure set by
+  // webpack/rspack/vite.apply for non-dev builds.
+  function isSSRCall(hookThis: any, opts?: { ssr?: boolean }): boolean {
+    const envName = hookThis?.environment?.name
+    return envName === 'ssr' || envName === 'server' || opts?.ssr === true || ssr
+  }
+
   return {
     name: name ?? `${framework}:streaming`,
     enforce: 'pre',
@@ -81,9 +90,10 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
 
     load: {
       filter: { id: RESOLVED_RE },
-      handler(id) {
+      handler(this: any, id: string, opts?: { ssr?: boolean }) {
+        const isSSR = isSSRCall(this, opts)
         if (id === RESOLVED_ID) {
-          if (ssr)
+          if (isSSR)
             return { code: 'export {}' }
           return {
             code: `import{createHead}from'${framework}/client'
@@ -91,7 +101,7 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
           }
         }
         if (id === RESOLVED_IIFE_ID) {
-          if (ssr)
+          if (isSSR)
             return { code: '' }
           if (!iifeCode)
             throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
@@ -105,25 +115,23 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
           transform: {
             filter: { id: options.filter },
             handler(this: any, code: string, id: string, opts?: { ssr?: boolean }) {
-              // Vite v6+ dev mode exposes environment per-transform call (one plugin
-              // instance, two environments). Fall back to the options.ssr flag
-              // (vite <=5 and tests), then the bundler-hook closure for
-              // vite build (separate instances per build) and webpack/rspack.
-              const envName = this?.environment?.name
-              const isSSR = envName === 'ssr' || envName === 'server' || opts?.ssr === true || ssr
-              return options.transform!(code, id, { ssr: isSSR })
+              return options.transform!(code, id, { ssr: isSSRCall(this, opts) })
             },
           },
         }
       : {}),
 
     webpack(compiler) {
-      if (compiler.options.name === 'server')
+      // `name === 'server'` is convention but not universal; webpack SSR
+      // configs typically set `target: 'node'` / `'async-node'` too.
+      const { name: n, target } = compiler.options
+      if (n === 'server' || target === 'node' || target === 'async-node')
         ssr = true
     },
 
     rspack(compiler) {
-      if (compiler.options.name === 'server')
+      const { name: n, target } = compiler.options
+      if (n === 'server' || target === 'node' || target === 'async-node')
         ssr = true
     },
 
@@ -133,30 +141,38 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
           ssr = true
         return true
       },
-      transformIndexHtml() {
-        if (mode === 'inline') {
-          if (!iifeCode)
-            throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
+      transformIndexHtml: {
+        // `order: 'pre'` is separate from the plugin-level `enforce: 'pre'`:
+        // it runs this HTML transform before other non-pre HTML transforms
+        // so the virtual module `<script>` tags we inject go through the
+        // full Vite plugin pipeline (resolveId/load) and aren't stripped or
+        // rewritten by downstream HTML transforms.
+        order: 'pre',
+        handler() {
+          if (mode === 'inline') {
+            if (!iifeCode)
+              throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
+            return [{
+              tag: 'script',
+              children: iifeCode,
+              injectTo: 'head-prepend',
+            }]
+          }
+
+          if (mode === 'async') {
+            return [{
+              tag: 'script',
+              attrs: { async: true, src: `/${VIRTUAL_IIFE_ID}` },
+              injectTo: 'head-prepend',
+            }]
+          }
+
           return [{
             tag: 'script',
-            children: iifeCode,
+            children: `import("/${VIRTUAL_CLIENT_ID}")`,
             injectTo: 'head-prepend',
           }]
-        }
-
-        if (mode === 'async') {
-          return [{
-            tag: 'script',
-            attrs: { async: true, src: `/${VIRTUAL_IIFE_ID}` },
-            injectTo: 'head-prepend',
-          }]
-        }
-
-        return [{
-          tag: 'script',
-          children: `import("/${VIRTUAL_CLIENT_ID}")`,
-          injectTo: 'head-prepend',
-        }]
+        },
       },
     },
   }

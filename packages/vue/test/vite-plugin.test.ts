@@ -30,8 +30,11 @@ describe('unheadVueStreamingPlugin', () => {
       expect(resolved).toBe('\0virtual:@unhead/streaming-client')
     })
 
-    it('injects the iife script tag for async mode', () => {
-      const tags = plugin.transformIndexHtml()
+    it('injects the iife script tag for async mode with order: pre', () => {
+      // `order: 'pre'` is required so our virtual-module script src is
+      // injected before other HTML transforms run against it.
+      expect(plugin.transformIndexHtml.order).toBe('pre')
+      const tags = plugin.transformIndexHtml.handler()
       expect(Array.isArray(tags)).toBe(true)
       expect(tags[0].tag).toBe('script')
       expect(tags[0].injectTo).toBe('head-prepend')
