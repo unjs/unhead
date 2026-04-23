@@ -77,6 +77,10 @@
       "types": "./dist/stream/unplugin.d.ts",
       "default": "./dist/stream/unplugin.mjs"
     },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
+    },
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
@@ -122,6 +126,9 @@
       ],
       "stream/unplugin": [
         "dist/stream/unplugin.d.ts"
+      ],
+      "stream/vite": [
+        "dist/stream/vite.d.ts"
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"

@@ -92,20 +92,23 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
       filter: { id: RESOLVED_RE },
       handler(this: any, id: string, opts?: { ssr?: boolean }) {
         const isSSR = isSSRCall(this, opts)
+        // `moduleType: 'js'` is required by Rolldown for virtual modules
+        // (added in df9c846f). Other bundlers ignore it.
         if (id === RESOLVED_ID) {
           if (isSSR)
-            return { code: 'export {}' }
+            return { code: 'export {}', moduleType: 'js' }
           return {
             code: `import{createHead}from'${framework}/client'
 const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}`,
+            moduleType: 'js',
           }
         }
         if (id === RESOLVED_IIFE_ID) {
           if (isSSR)
-            return { code: '' }
+            return { code: '', moduleType: 'js' }
           if (!iifeCode)
             throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-          return { code: iifeCode }
+          return { code: iifeCode, moduleType: 'js' }
         }
       },
     },
