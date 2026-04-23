@@ -61,6 +61,10 @@
       "types": "./dist/rollup.d.ts",
       "default": "./dist/rollup.mjs"
     },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
+    },
     "./helmet": {
       "types": "./dist/helmet.d.ts",
       "default": "./dist/helmet.mjs"
@@ -100,6 +104,9 @@
       ],
       "rollup": [
         "dist/rollup"
+      ],
+      "stream/vite": [
+        "dist/stream/vite"
       ],
       "helmet": [
         "dist/helmet"

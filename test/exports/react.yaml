@@ -46,6 +46,10 @@
   renderSSRHeadSuspenseChunk: function
   UnheadProvider: function
   wrapStream: function
+./stream/vite:
+  default: function
+  unheadReactPlugin: function
+  unheadReactStreamingPlugin: object
 ./utils:
   dedupeKey: function
   dedupeTags: function

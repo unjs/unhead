@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { unheadSolidStreamingPlugin } from '../src/stream/plugin'
+import { unheadSolidPlugin } from '../src/stream/vite'
 
 const FILTER_RE = /\.[jt]sx$/
 
@@ -139,5 +140,37 @@ describe('unheadSolidStreamingPlugin', () => {
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })
+  })
+
+  describe('webpack adapter', () => {
+    const wp = unheadSolidStreamingPlugin.webpack() as any
+
+    it('exposes a webpack plugin instance with apply()', () => {
+      expect(typeof wp.apply).toBe('function')
+    })
+  })
+
+  describe('rspack adapter', () => {
+    const rs = unheadSolidStreamingPlugin.rspack() as any
+
+    it('exposes an rspack plugin instance with apply()', () => {
+      expect(typeof rs.apply).toBe('function')
+    })
+  })
+
+  describe('rollup adapter', () => {
+    const rl = unheadSolidStreamingPlugin.rollup() as any
+
+    it('has correct name', () => {
+      expect(rl.name).toBe('@unhead/solid-js:streaming')
+    })
+  })
+})
+
+describe('deprecated unheadSolidPlugin', () => {
+  it('returns a vite plugin (back-compat alias for unheadSolidStreamingPlugin.vite)', () => {
+    const plugin = unheadSolidPlugin() as any
+    expect(plugin.name).toBe('@unhead/solid-js:streaming')
+    expect(plugin.enforce).toBe('pre')
   })
 })

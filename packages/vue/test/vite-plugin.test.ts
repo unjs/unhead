@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { unheadVueStreamingPlugin } from '../src/stream/plugin'
+import { unheadVuePlugin } from '../src/stream/vite'
 
 describe('unheadVueStreamingPlugin', () => {
   const plugin = unheadVueStreamingPlugin.vite() as any
 
-  describe('basic configuration', () => {
+  describe('vite adapter', () => {
     it('has correct name', () => {
       expect(plugin.name).toBe('@unhead/vue:streaming')
     })
@@ -18,9 +19,7 @@ describe('unheadVueStreamingPlugin', () => {
     it('does not register a transform hook', () => {
       expect(plugin.transform).toBeUndefined()
     })
-  })
 
-  describe('virtual modules', () => {
     it('resolves the iife virtual id', () => {
       const resolved = plugin.resolveId.handler('virtual:@unhead/streaming-iife.js')
       expect(resolved).toBe('\0virtual:@unhead/streaming-iife.js')
@@ -30,9 +29,7 @@ describe('unheadVueStreamingPlugin', () => {
       const resolved = plugin.resolveId.handler('virtual:@unhead/streaming-client')
       expect(resolved).toBe('\0virtual:@unhead/streaming-client')
     })
-  })
 
-  describe('transformIndexHtml', () => {
     it('injects the iife script tag for async mode', () => {
       const tags = plugin.transformIndexHtml()
       expect(Array.isArray(tags)).toBe(true)
@@ -41,5 +38,45 @@ describe('unheadVueStreamingPlugin', () => {
       expect(tags[0].attrs).toMatchObject({ async: true })
       expect(tags[0].attrs.src).toContain('virtual:@unhead/streaming-iife.js')
     })
+  })
+
+  describe('webpack adapter', () => {
+    const wp = unheadVueStreamingPlugin.webpack() as any
+
+    it('exposes a webpack plugin instance with apply()', () => {
+      expect(typeof wp.apply).toBe('function')
+    })
+  })
+
+  describe('rspack adapter', () => {
+    const rs = unheadVueStreamingPlugin.rspack() as any
+
+    it('exposes an rspack plugin instance with apply()', () => {
+      expect(typeof rs.apply).toBe('function')
+    })
+  })
+
+  describe('rollup adapter', () => {
+    const rl = unheadVueStreamingPlugin.rollup() as any
+
+    it('has correct name', () => {
+      expect(rl.name).toBe('@unhead/vue:streaming')
+    })
+
+    it('resolves the iife virtual id', () => {
+      // rollup normalises plugin hooks to `{ handler }` shape
+      const resolved = typeof rl.resolveId === 'function'
+        ? rl.resolveId('virtual:@unhead/streaming-iife.js')
+        : rl.resolveId.handler('virtual:@unhead/streaming-iife.js')
+      expect(resolved).toBe('\0virtual:@unhead/streaming-iife.js')
+    })
+  })
+})
+
+describe('deprecated unheadVuePlugin', () => {
+  it('returns a vite plugin (back-compat alias for unheadVueStreamingPlugin.vite)', () => {
+    const plugin = unheadVuePlugin() as any
+    expect(plugin.name).toBe('@unhead/vue:streaming')
+    expect(plugin.enforce).toBe('pre')
   })
 })

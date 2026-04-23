@@ -30,6 +30,7 @@ export default defineBuildConfig({
     { input: 'src/webpack', name: 'webpack' },
     { input: 'src/rspack', name: 'rspack' },
     { input: 'src/rollup', name: 'rollup' },
+    { input: 'src/stream/vite', name: 'stream/vite' },
     { input: 'src/stream/iife', name: 'stream/iife' },
     { input: 'src/legacy', name: 'legacy' },
   ],

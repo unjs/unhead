@@ -65,6 +65,10 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function
+./stream/vite:
+  default: function
+  unheadVuePlugin: function
+  unheadVueStreamingPlugin: object
 ./types: {}
 ./utils:
   dedupeKey: function

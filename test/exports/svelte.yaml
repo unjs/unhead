@@ -44,6 +44,10 @@
   renderSSRHeadSuspenseChunk: function
   UnheadContextKey: symbol
   wrapStream: function
+./stream/vite:
+  default: function
+  unheadSveltePlugin: function
+  unheadSvelteStreamingPlugin: object
 ./utils:
   dedupeKey: function
   dedupeTags: function

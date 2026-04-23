@@ -77,6 +77,10 @@
       "types": "./dist/rollup.d.ts",
       "default": "./dist/rollup.mjs"
     },
+    "./stream/vite": {
+      "types": "./dist/stream/vite.d.ts",
+      "default": "./dist/stream/vite.mjs"
+    },
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
@@ -129,6 +133,9 @@
       ],
       "rollup": [
         "dist/rollup"
+      ],
+      "stream/vite": [
+        "dist/stream/vite"
       ],
       "stream/iife": [
         "dist/stream/iife"

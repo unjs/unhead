@@ -8,6 +8,10 @@ export default defineProject({
     alias: {
       '@unhead/dom': resolve(__dirname, 'src/client'),
       '@unhead/ssr': resolve(__dirname, '../unhead/src/server/index.ts'),
+      '@unhead/bundler/vite': resolve(__dirname, '../bundler/src/unplugin/vite.ts'),
+      '@unhead/bundler/webpack': resolve(__dirname, '../bundler/src/unplugin/webpack.ts'),
+      '@unhead/bundler/rspack': resolve(__dirname, '../bundler/src/unplugin/rspack.ts'),
+      '@unhead/bundler/rollup': resolve(__dirname, '../bundler/src/unplugin/rollup.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),
       '@unhead/schema-org/vue': resolve(__dirname, '../schema-org/src/vue/index.ts'),
       '@unhead/vue/server': resolve(__dirname, 'src/server.ts'),
