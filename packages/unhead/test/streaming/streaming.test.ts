@@ -698,6 +698,42 @@ describe('streaming SSR', () => {
       expect(end).toBe('</body></html>')
     })
 
+    it('splits at <!--app-html--> marker so streamed content lands inside the container', () => {
+      const { head } = createStreamableHead()
+
+      const template = '<html><head></head><body><div id="app"><!--app-html--></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      // Shell ends inside the container; streamed content lands as its
+      // first child. Container closing tag plus </body></html> live in end.
+      expect(shell.endsWith('<div id="app">')).toBe(true)
+      expect(end).toBe('</div></body></html>')
+    })
+
+    it('also recognises Vite\'s <!--ssr-outlet--> marker', () => {
+      const { head } = createStreamableHead()
+
+      const template = '<html><head></head><body><div id="root"><!--ssr-outlet--></div></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell.endsWith('<div id="root">')).toBe(true)
+      expect(end).toBe('</div></body></html>')
+    })
+
+    it('preserves siblings around the marker', () => {
+      const { head } = createStreamableHead()
+      head.push({ script: [{ src: 'user.js', tagPosition: 'bodyClose' }] })
+
+      const template = '<html><head></head><body><header>before</header><div id="app"><!--app-html--></div><footer>after</footer></body></html>'
+      const { shell, end } = prepareStreamingTemplate(head, template)
+
+      expect(shell).toContain('<header>before</header><div id="app">')
+      // After-marker content + bodyTags + closing tags, in order.
+      expect(end.indexOf('</div>')).toBeLessThan(end.indexOf('<footer>after</footer>'))
+      expect(end.indexOf('<footer>after</footer>')).toBeLessThan(end.indexOf('user.js'))
+      expect(end.indexOf('user.js')).toBeLessThan(end.indexOf('</body>'))
+    })
+
     it('places head bodyTags after preserved body content', () => {
       const { head } = createStreamableHead()
       head.push({

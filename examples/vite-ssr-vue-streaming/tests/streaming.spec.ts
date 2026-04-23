@@ -243,12 +243,12 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       expect(leftover).toBe(0)
     })
 
-    test('no unexpected console errors during streaming and hydration', async ({ page }) => {
-      const errors: string[] = []
-      page.on('console', msg => {
-        if (msg.type() === 'error') {
-          errors.push(msg.text())
-        }
+    test('no console errors or hydration warnings during streaming and hydration', async ({ page }) => {
+      const messages: string[] = []
+      page.on('console', (msg) => {
+        const type = msg.type()
+        if (type === 'error' || type === 'warning')
+          messages.push(`[${type}] ${msg.text()}`)
       })
 
       await page.goto('/')
@@ -257,15 +257,15 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out expected non-critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('Hydration') &&
-        !e.includes('mismatch') &&
-        !e.includes('WebSocket') &&
-        !e.includes('vite')
+      // Hydration mismatches surface as errors AND warnings — both must be
+      // clean for the streaming setup to be considered correct.
+      const critical = messages.filter(m =>
+        !m.includes('favicon')
+        && !m.includes('WebSocket')
+        && !m.includes('[vite]')
+        && !m.includes('Suspense> is an experimental feature'),
       )
-      expect(criticalErrors).toHaveLength(0)
+      expect(critical, critical.join('\n')).toEqual([])
     })
   })
 })

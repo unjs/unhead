@@ -49,7 +49,6 @@
   VueHeadMixin: object
 ./stream/client:
   createStreamableHead: function
-  HeadStream: object
   VueHeadMixin: object
 ./stream/iife:
   streamingIifeCode: string
@@ -57,7 +56,6 @@
 ./stream/server:
   createBootstrapScript: function
   createStreamableHead: function
-  HeadStream: object
   prepareStreamingTemplate: function
   renderShell: function
   renderSSRHeadShell: function

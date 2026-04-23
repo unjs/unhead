@@ -295,8 +295,10 @@ export interface StreamingTemplateParts {
 /**
  * @experimental
  *
- * Prepares a template for streaming SSR by splitting it at body tag boundaries
- * and injecting head content into both parts.
+ * Prepares a template for streaming SSR by splitting it at the SSR outlet
+ * marker (`<!--app-html-->` / `<!--ssr-outlet-->`) when present, so the
+ * streamed app content lands inside the mount container. Falls back to
+ * splitting at body tag boundaries when no marker is found.
  *
  * This is the recommended way to handle streaming templates as it:
  * - Uses consistent template parsing (same as transformHtmlTemplateRaw)
@@ -331,12 +333,25 @@ export function prepareStreamingTemplate(
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart
 
   if (bodyEnd >= 0 && bodyCloseStart >= 0) {
-    const shellPart = template.substring(0, bodyEnd)
-    // Static content sitting between <body> and </body> in the template
-    // (e.g. scripts injected by Vite plugins via transformIndexHtml with
-    // injectTo: 'body'). Without preserving this, anything plugins inject
-    // into the body silently disappears in streaming mode.
     const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
+    // Prefer splitting at a Vite-style SSR outlet marker so the streamed
+    // app content lands inside the container (e.g. `<div id="app">`) that
+    // the client mounts onto. Falls back to splitting at the <body> tag,
+    // which preserves any static body interior in `end`.
+    const markerMatch = bodyInterior.match(/<!--\s*(?:app-html|ssr-outlet)\s*-->/)
+
+    let beforeStream: string
+    let afterStream: string
+    if (markerMatch) {
+      beforeStream = bodyInterior.substring(0, markerMatch.index!)
+      afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
+    }
+    else {
+      beforeStream = ''
+      afterStream = bodyInterior
+    }
+
+    const shellPart = template.substring(0, bodyEnd) + beforeStream
     const endPart = template.substring(bodyCloseStart)
 
     const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
@@ -349,7 +364,7 @@ export function prepareStreamingTemplate(
 
     return {
       shell,
-      end: bodyInterior + ssr.bodyTags + endPart,
+      end: afterStream + ssr.bodyTags + endPart,
     }
   }
 
