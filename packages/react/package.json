@@ -125,11 +125,23 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
+    "@rspack/core": ">=1.0.0",
     "react": ">=19.2.4",
-    "vite": ">=6.4.2"
+    "rollup": ">=4.0.0",
+    "vite": ">=6.4.2",
+    "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "@rspack/core": {
+      "optional": true
+    },
+    "rollup": {
+      "optional": true
+    },
     "vite": {
+      "optional": true
+    },
+    "webpack": {
       "optional": true
     }
   },
