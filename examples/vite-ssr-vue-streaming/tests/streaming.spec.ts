@@ -228,30 +228,27 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       await expect(page).toHaveTitle('StreamShop - Ready!')
     })
 
-    // Regression guard for the HeadStream hydration model: every script
-    // that carries a streamed head update must have `data-allow-mismatch` so
-    // Vue tolerates the inner-text difference between server and client.
-    test('HeadStream scripts carry data-allow-mismatch for hydration safety', async ({ page }) => {
+    // Each per-suspense head patch is emitted as a self-deleting inline
+    // script: it executes at HTML-parse time and calls
+    // `document.currentScript.remove()` so the DOM is clean before Vue
+    // hydrates. By the time the last chunk is rendered, no update scripts
+    // should remain attached.
+    test('streamed head patches self-delete before hydration', async ({ page }) => {
       await page.goto('/')
       await expect(page.locator('.newsletter')).toBeVisible({ timeout: 10000 })
-      const { total, unsafe } = await page.evaluate(() => {
-        const updateScripts = Array.from(document.querySelectorAll('script'))
-          .filter(n => (n.textContent || '').includes('window.__unhead__.push'))
-        return {
-          total: updateScripts.length,
-          unsafe: updateScripts.filter(n => !n.hasAttribute('data-allow-mismatch')).length,
-        }
-      })
-      expect(total).toBeGreaterThan(0)
-      expect(unsafe).toBe(0)
+      const leftover = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('script'))
+          .filter(n => (n.textContent || '').includes('window.__unhead__.push')).length,
+      )
+      expect(leftover).toBe(0)
     })
 
-    test('no unexpected console errors during streaming and hydration', async ({ page }) => {
-      const errors: string[] = []
-      page.on('console', msg => {
-        if (msg.type() === 'error') {
-          errors.push(msg.text())
-        }
+    test('no console errors or hydration warnings during streaming and hydration', async ({ page }) => {
+      const messages: string[] = []
+      page.on('console', (msg) => {
+        const type = msg.type()
+        if (type === 'error' || type === 'warning')
+          messages.push(`[${type}] ${msg.text()}`)
       })
 
       await page.goto('/')
@@ -260,15 +257,15 @@ test.describe('Vue Streaming SSR with Unhead', () => {
       // Wait for hydration
       await page.waitForTimeout(500)
 
-      // Filter out expected non-critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('Hydration') &&
-        !e.includes('mismatch') &&
-        !e.includes('WebSocket') &&
-        !e.includes('vite')
+      // Hydration mismatches surface as errors AND warnings — both must be
+      // clean for the streaming setup to be considered correct.
+      const critical = messages.filter(m =>
+        !m.includes('favicon')
+        && !m.includes('WebSocket')
+        && !m.includes('[vite]')
+        && !m.includes('Suspense> is an experimental feature'),
       )
-      expect(criticalErrors).toHaveLength(0)
+      expect(critical, critical.join('\n')).toEqual([])
     })
   })
 })

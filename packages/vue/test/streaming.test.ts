@@ -1,12 +1,9 @@
 // @vitest-environment node
 import type { SSRHeadPayload } from 'unhead/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { createSSRApp, defineComponent, h } from 'vue'
-import { renderToString } from 'vue/server-renderer'
 import {
   createBootstrapScript,
   createStreamableHead,
-  HeadStream,
   renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
@@ -131,80 +128,62 @@ describe('vue streaming SSR', () => {
     })
   })
 
-  describe('headStream component', () => {
-    it('emits <script data-allow-mismatch="children"> with update content after shell', async () => {
-      const { head } = createStreamableHead()
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-      ;(head as any)._shellRendered = () => true
-      head.push({ title: 'Streamed Title' })
+  describe('wrapStream head patches', () => {
+    const TEMPLATE = '<html><head></head><body><div id="app"><!--app-html--></div></body></html>'
 
-      const App = defineComponent({
-        setup() {
-          return () => h(HeadStream)
+    // `pull` defers the chunk + head.push until wrapStream is reading, so
+    // the entry lands after shell preparation and should surface as an
+    // interleaved patch script rather than in the shell.
+    it('interleaves self-deleting head-update scripts between app chunks', async () => {
+      const { head, wrapStream } = createStreamableHead()
+      head.push({ title: 'Initial' })
+
+      const encoder = new TextEncoder()
+      let step = 0
+      const appStream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          if (step === 0) {
+            c.enqueue(encoder.encode('<div>first</div>'))
+            head.push({ title: 'Updated mid-stream' })
+          }
+          else if (step === 1) {
+            c.enqueue(encoder.encode('<div>second</div>'))
+          }
+          else {
+            c.close()
+          }
+          step++
         },
       })
-      const app = createSSRApp(App)
-      app.provide('usehead', head)
-      const html = await renderToString(app)
 
-      expect(html).toContain('data-allow-mismatch="children"')
-      expect(html).toContain('window.__unhead__.push')
-      expect(html).toContain('Streamed Title')
+      const text = await new Response(wrapStream(appStream, TEMPLATE)).text()
+
+      expect(text).toContain('<title>Initial</title>')
+      expect(text).toMatch(/<div>first<\/div><script>window\.__unhead__\.push\(.*Updated mid-stream.*\);document\.currentScript\.remove\(\)<\/script><div>second<\/div>/)
     })
 
-    it('emits empty placeholder script when no updates are pending', async () => {
-      const { head } = createStreamableHead()
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-      ;(head as any)._shellRendered = () => true
+    it('escapes script-breakout sequences in streamed head updates', async () => {
+      const { head, wrapStream } = createStreamableHead()
 
-      const App = defineComponent({
-        setup() {
-          return () => h(HeadStream)
+      const encoder = new TextEncoder()
+      let step = 0
+      const appStream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          if (step === 0) {
+            c.enqueue(encoder.encode('<div>app</div>'))
+            head.push({ title: '</script><script>alert("xss")</script>' })
+          }
+          else {
+            c.close()
+          }
+          step++
         },
       })
-      const app = createSSRApp(App)
-      app.provide('usehead', head)
-      const html = await renderToString(app)
 
-      // Symmetric with the client vnode so Vue's hydrator matches.
-      expect(html).toBe('<script data-allow-mismatch="children"></script>')
-    })
+      const text = await new Response(wrapStream(appStream, TEMPLATE)).text()
 
-    it('emits empty placeholder before shell is rendered', async () => {
-      const { head } = createStreamableHead()
-      head.push({ title: 'Shell Title' })
-      // _shellRendered defaults to false: HeadStream must not leak shell-time
-      // entries back into the tree.
-
-      const App = defineComponent({
-        setup() {
-          return () => h(HeadStream)
-        },
-      })
-      const app = createSSRApp(App)
-      app.provide('usehead', head)
-      const html = await renderToString(app)
-
-      expect(html).toBe('<script data-allow-mismatch="children"></script>')
-    })
-
-    it('properly escapes script content to prevent XSS', async () => {
-      const { head } = createStreamableHead()
-      await renderSSRHeadShell(head, '<html><head></head><body>')
-      ;(head as any)._shellRendered = () => true
-      head.push({ title: '</script><script>alert("xss")</script>' })
-
-      const App = defineComponent({
-        setup() {
-          return () => h(HeadStream)
-        },
-      })
-      const app = createSSRApp(App)
-      app.provide('usehead', head)
-      const html = await renderToString(app)
-
-      expect(html).not.toContain('</script><script>alert')
-      expect(html).toContain('\\u003c')
+      expect(text).not.toContain('</script><script>alert')
+      expect(text).toContain('\\u003c')
     })
   })
 
