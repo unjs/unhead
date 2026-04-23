@@ -1,7 +1,7 @@
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
 import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
-import { createStreamingPlugin } from 'unhead/stream/vite'
+import { createStreamingVitePlugin } from 'unhead/stream/vite'
 
 const SCRIPT_CLOSE_RE = /<\/script>/
 const SCRIPT_RE = /<script[^>]*>/i
@@ -123,11 +123,11 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
  * ```
  */
 export function unheadSveltePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
-  return createStreamingPlugin({
+  return createStreamingVitePlugin({
     framework: '@unhead/svelte',
     filter: FILTER_RE,
     mode: options?.mode,
-    transform(code, id, opts) {
+    transform(code: string, id: string, opts?: { ssr?: boolean }) {
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null

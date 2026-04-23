@@ -1,113 +1,14 @@
 import type { Plugin } from 'vite'
+import type { StreamingPluginOptions } from './unplugin'
+import { createStreamingPlugin } from './unplugin'
 
-export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
-export const VIRTUAL_IIFE_ID = 'virtual:@unhead/streaming-iife.js'
-const RESOLVED_ID = `\0${VIRTUAL_CLIENT_ID}`
-const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
-const VIRTUAL_RE = /virtual:@unhead\/streaming/
-const RESOLVED_RE = /^\0virtual:@unhead\/streaming/
+export type { StreamingPluginOptions }
+export { buildStreamingPluginOptions, VIRTUAL_CLIENT_ID, VIRTUAL_IIFE_ID } from './unplugin'
 
-export interface StreamingPluginOptions {
-  /** Framework package e.g. '@unhead/vue' */
-  framework: string
-  /** Plugin name (optional, defaults to `${framework}:streaming`) */
-  name?: string
-  /** File extension filter for transform hook, e.g. /\.vue$/ */
-  filter: RegExp
-  /** Transform handler called for files matching `filter` */
-  transform: (code: string, id: string, options?: { ssr?: boolean }) => { code: string, map?: any } | null | undefined | void
-  /**
-   * How to load the streaming client:
-   * - 'async': Load as async script (non-blocking, may have brief queue delay)
-   * - 'inline': Inline the IIFE directly in HTML (larger HTML, but immediate execution)
-   * - 'module': Use ES module import (original behavior, waits for bundle)
-   * @default 'async'
-   */
-  mode?: 'async' | 'inline' | 'module'
-}
-
-// IIFE code will be loaded at config time
-let iifeCode: string | undefined
-let iifeCodeLoaded = false
-
-export function createStreamingPlugin(options: StreamingPluginOptions): Plugin {
-  const { framework, name, mode = 'async' } = options
-
-  return {
-    name: name ?? `${framework}:streaming`,
-    enforce: 'pre',
-
-    async configResolved() {
-      if (!iifeCodeLoaded) {
-        iifeCodeLoaded = true
-        const mod = await import('unhead/stream/iife')
-        iifeCode = mod.streamingIifeCode
-      }
-    },
-
-    resolveId: {
-      filter: { id: VIRTUAL_RE },
-      handler(id) {
-        if (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`)
-          return RESOLVED_ID
-        if (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`)
-          return RESOLVED_IIFE_ID
-      },
-    },
-
-    load: {
-      filter: { id: RESOLVED_RE },
-      handler(id, opts) {
-        if (id === RESOLVED_ID) {
-          if (opts?.ssr)
-            return { code: 'export {}', moduleType: 'js' }
-          return {
-            code: `import{createHead}from'${framework}/client'
-const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}`,
-            moduleType: 'js',
-          }
-        }
-        if (id === RESOLVED_IIFE_ID) {
-          if (opts?.ssr)
-            return { code: '', moduleType: 'js' }
-          if (!iifeCode)
-            throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-          return { code: iifeCode, moduleType: 'js' }
-        }
-      },
-    },
-
-    transformIndexHtml() {
-      if (mode === 'inline') {
-        if (!iifeCode)
-          throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-        return [{
-          tag: 'script',
-          children: iifeCode,
-          injectTo: 'head-prepend',
-        }]
-      }
-
-      if (mode === 'async') {
-        // Async script - non-blocking, loads IIFE bundle
-        return [{
-          tag: 'script',
-          attrs: { async: true, src: `/${VIRTUAL_IIFE_ID}` },
-          injectTo: 'head-prepend',
-        }]
-      }
-
-      // Module mode (original) - dynamic import
-      return [{
-        tag: 'script',
-        children: `import("/${VIRTUAL_CLIENT_ID}")`,
-        injectTo: 'head-prepend',
-      }]
-    },
-
-    transform: {
-      filter: { id: options.filter },
-      handler: options.transform,
-    },
-  }
+/**
+ * Create a vite plugin for streaming SSR. Framework wrappers typically call this
+ * with their own `framework`, `filter`, and `transform` baked in.
+ */
+export function createStreamingVitePlugin(options: StreamingPluginOptions): Plugin {
+  return createStreamingPlugin.vite(options) as Plugin
 }

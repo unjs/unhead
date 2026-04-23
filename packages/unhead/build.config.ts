@@ -65,5 +65,8 @@ export default defineBuildConfig({
     { input: 'src/minify/index', name: 'minify' },
     { input: 'src/parser/index', name: 'parser' },
     { input: 'src/stream/vite', name: 'stream/vite' },
+    { input: 'src/stream/webpack', name: 'stream/webpack' },
+    { input: 'src/stream/rspack', name: 'stream/rspack' },
+    { input: 'src/stream/rollup', name: 'stream/rollup' },
   ],
 })

@@ -1015,6 +1015,9 @@ importers:
       hookable:
         specifier: 'catalog:'
         version: 6.1.1
+      unplugin:
+        specifier: 'catalog:'
+        version: 3.0.0
     devDependencies:
       '@rollup/plugin-node-resolve':
         specifier: 'catalog:'

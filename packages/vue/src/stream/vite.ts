@@ -1,5 +1,5 @@
 import type { StreamingPluginOptions } from 'unhead/stream/vite'
-import { createStreamingPlugin } from 'unhead/stream/vite'
+import { createStreamingVitePlugin } from 'unhead/stream/vite'
 
 /**
  * Vite plugin for Vue streaming SSR support.
@@ -20,7 +20,7 @@ import { createStreamingPlugin } from 'unhead/stream/vite'
  * ```
  */
 export function unheadVuePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
-  return createStreamingPlugin({
+  return createStreamingVitePlugin({
     framework: '@unhead/vue',
     // No-op transform: per-chunk head patches are emitted by wrapStream on
     // the server. The filter/transform options are required by the factory;

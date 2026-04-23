@@ -77,6 +77,18 @@
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
     },
+    "./stream/webpack": {
+      "types": "./dist/stream/webpack.d.ts",
+      "default": "./dist/stream/webpack.mjs"
+    },
+    "./stream/rspack": {
+      "types": "./dist/stream/rspack.d.ts",
+      "default": "./dist/stream/rspack.mjs"
+    },
+    "./stream/rollup": {
+      "types": "./dist/stream/rollup.d.ts",
+      "default": "./dist/stream/rollup.mjs"
+    },
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
@@ -122,6 +134,15 @@
       ],
       "stream/vite": [
         "dist/stream/vite.d.ts"
+      ],
+      "stream/webpack": [
+        "dist/stream/webpack.d.ts"
+      ],
+      "stream/rspack": [
+        "dist/stream/rspack.d.ts"
+      ],
+      "stream/rollup": [
+        "dist/stream/rollup.d.ts"
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
@@ -169,7 +190,8 @@
     }
   },
   "dependencies": {
-    "hookable": "catalog:"
+    "hookable": "catalog:",
+    "unplugin": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",
