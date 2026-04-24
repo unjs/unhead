@@ -101,8 +101,8 @@ const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document})
 
 /**
  * Builds the bundler-agnostic unplugin hook set for the streaming plugin. Exposed so
- * framework wrappers (e.g. `@unhead/vue/vite`, `@unhead/vue/webpack`) can
- * bake in their own `framework`, `filter`, and `transform` while still using this factory
+ * framework wrappers (e.g. `@unhead/vue/bundler`) can bake in their own
+ * `framework`, `filter`, and `transform` while still using this factory
  * to produce hooks that work across vite/webpack/rspack/rollup/esbuild via `createUnplugin`.
  *
  * SSR detection is bundler-specific:
@@ -283,7 +283,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
  * Internal cross-bundler unplugin factory. Framework wrappers pick a single bundler's
  * output (`.vite`, `.webpack`, `.rspack`, etc.) to expose via their own subpath export.
  *
- * Consumers should prefer the bundler-specific framework subpaths (e.g. `@unhead/vue/vite`)
+ * Consumers should prefer the unified framework bundler entry (e.g. `@unhead/vue/bundler`)
  * rather than importing this directly.
  */
 export const createStreamingPlugin = createUnplugin<StreamingPluginOptions>(buildStreamingPluginOptions)

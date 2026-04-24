@@ -14,6 +14,8 @@
   useServerHeadSafe: function
   useServerSeoMeta: function
   VueHeadMixin: object
+./bundler:
+  Unhead: function
 ./client:
   createHead: function
   renderDOMHead: function
@@ -96,6 +98,4 @@
   VueResolver: function
   walkResolver: function
 ./vite:
-  Unhead: function
-./webpack:
   Unhead: function

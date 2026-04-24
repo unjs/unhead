@@ -1,4 +1,5 @@
-console.warn('[unhead] `@unhead/addons/webpack` is deprecated. Please migrate to `@unhead/bundler/webpack` instead.')
-
-export { default } from '@unhead/bundler/webpack'
-export * from '@unhead/bundler/webpack'
+throw new Error(
+  '[unhead] `@unhead/addons/webpack` has been removed. '
+  + 'Use the framework bundler entry instead, e.g. '
+  + '`import { Unhead } from \'@unhead/vue/bundler\'` and `Unhead().webpack()`.',
+)

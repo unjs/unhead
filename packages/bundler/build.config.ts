@@ -9,7 +9,6 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/unplugin/vite', name: 'vite' },
-    { input: 'src/unplugin/webpack', name: 'webpack' },
     { input: 'src/unplugin/framework', name: 'framework' },
     { input: 'src/minify/rolldown', name: 'minify/rolldown' },
     { input: 'src/minify/esbuild', name: 'minify/esbuild' },
