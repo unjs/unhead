@@ -6,6 +6,5 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/vite', name: 'vite' },
-    { input: 'src/webpack', name: 'webpack' },
   ],
 })
