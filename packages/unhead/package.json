@@ -73,6 +73,10 @@
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
     },
+    "./stream/unplugin": {
+      "types": "./dist/stream/unplugin.d.ts",
+      "default": "./dist/stream/unplugin.mjs"
+    },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
@@ -119,6 +123,9 @@
       ],
       "parser": [
         "dist/parser.d.ts"
+      ],
+      "stream/unplugin": [
+        "dist/stream/unplugin.d.ts"
       ],
       "stream/vite": [
         "dist/stream/vite.d.ts"
@@ -169,7 +176,8 @@
     }
   },
   "dependencies": {
-    "hookable": "catalog:"
+    "hookable": "catalog:",
+    "unplugin": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "catalog:",

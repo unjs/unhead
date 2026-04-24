@@ -1,7 +1,16 @@
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  externals: ['vue', 'vite', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: [
+    'vue',
+    'vite',
+    'webpack',
+    'unplugin',
+    '@unhead/bundler',
+    '@unhead/bundler/vite',
+    '@unhead/bundler/webpack',
+    '@unhead/bundler/framework',
+  ],
   declaration: true,
   entries: [
     { input: 'src/index', name: 'index' },
@@ -15,6 +24,7 @@ export default defineBuildConfig({
     { input: 'src/scripts', name: 'scripts' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/vite', name: 'vite' },
+    { input: 'src/webpack', name: 'webpack' },
     { input: 'src/stream/vite', name: 'stream/vite' },
     { input: 'src/stream/iife', name: 'stream/iife' },
     { input: 'src/legacy', name: 'legacy' },

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { unheadSvelteStreamingPlugin } from '../src/stream/plugin'
 import { unheadSveltePlugin } from '../src/stream/vite'
 
 const FILTER_RE = /\.svelte$/
 
-describe('unheadSveltePlugin', () => {
-  const plugin = unheadSveltePlugin() as any
+describe('unheadSvelteStreamingPlugin', () => {
+  const plugin = unheadSvelteStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
@@ -111,5 +112,37 @@ describe('unheadSveltePlugin', () => {
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })
+  })
+
+  describe('webpack adapter', () => {
+    const wp = unheadSvelteStreamingPlugin.webpack() as any
+
+    it('exposes a webpack plugin instance with apply()', () => {
+      expect(typeof wp.apply).toBe('function')
+    })
+  })
+
+  describe('rspack adapter', () => {
+    const rs = unheadSvelteStreamingPlugin.rspack() as any
+
+    it('exposes an rspack plugin instance with apply()', () => {
+      expect(typeof rs.apply).toBe('function')
+    })
+  })
+
+  describe('rollup adapter', () => {
+    const rl = unheadSvelteStreamingPlugin.rollup() as any
+
+    it('has correct name', () => {
+      expect(rl.name).toBe('@unhead/svelte:streaming')
+    })
+  })
+})
+
+describe('deprecated unheadSveltePlugin', () => {
+  it('returns a vite plugin (back-compat alias for unheadSvelteStreamingPlugin.vite)', () => {
+    const plugin = unheadSveltePlugin() as any
+    expect(plugin.name).toBe('@unhead/svelte:streaming')
+    expect(plugin.enforce).toBe('pre')
   })
 })

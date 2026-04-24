@@ -3,7 +3,18 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  externals: ['solid-js', 'vite', 'magic-string', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: [
+    'solid-js',
+    'vite',
+    'webpack',
+    'unplugin',
+    'magic-string',
+    'oxc-walker',
+    '@unhead/bundler',
+    '@unhead/bundler/vite',
+    '@unhead/bundler/webpack',
+    '@unhead/bundler/framework',
+  ],
   entries: [
     { input: 'src/index', name: 'index' },
     { input: 'src/server', name: 'server' },
@@ -13,6 +24,7 @@ export default defineBuildConfig({
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins', name: 'plugins' },
     { input: 'src/vite', name: 'vite' },
+    { input: 'src/webpack', name: 'webpack' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
 })

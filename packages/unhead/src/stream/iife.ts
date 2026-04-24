@@ -5,17 +5,11 @@
  *
  * @module unhead/stream/iife
  */
-import type { Unhead } from '../types'
+import type { StreamingGlobal } from './types'
 import { createDomRenderer } from '../client/renderDOMHead'
 import { createUnhead } from '../unhead'
 
 const DEFAULT_STREAM_KEY = '__unhead__'
-
-interface StreamQueue {
-  _q: any[]
-  _head?: Unhead<any>
-  push: (entry: any) => void
-}
 
 function init(options: { streamKey?: string } = {}) {
   const { streamKey = DEFAULT_STREAM_KEY } = options
@@ -23,7 +17,7 @@ function init(options: { streamKey?: string } = {}) {
   if (!win)
     return
 
-  const queue = win[streamKey] as StreamQueue | undefined
+  const queue = win[streamKey] as StreamingGlobal | undefined
   if (queue?._head)
     return queue._head
 
@@ -75,7 +69,7 @@ function init(options: { streamKey?: string } = {}) {
       head.dirty = true
       head.render()
     },
-  }
+  } satisfies StreamingGlobal
 
   return head
 }

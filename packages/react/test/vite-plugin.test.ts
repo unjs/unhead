@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import { unheadReactStreamingPlugin } from '../src/stream/plugin'
 import { unheadReactPlugin } from '../src/stream/vite'
 
 const FILTER_RE = /\.[jt]sx$/
 const HEAD_STREAM_RE = /<HeadStream \/>/g
 
-describe('unheadReactPlugin', () => {
-  const plugin = unheadReactPlugin() as any
+describe('unheadReactStreamingPlugin', () => {
+  const plugin = unheadReactStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
 
   describe('basic configuration', () => {
@@ -144,5 +145,42 @@ describe('unheadReactPlugin', () => {
       expect(result).not.toBeNull()
       expect(result!.map).toBeDefined()
     })
+  })
+
+  describe('webpack adapter', () => {
+    const wp = unheadReactStreamingPlugin.webpack() as any
+
+    it('exposes a webpack plugin instance with apply()', () => {
+      expect(typeof wp.apply).toBe('function')
+    })
+  })
+
+  describe('rspack adapter', () => {
+    const rs = unheadReactStreamingPlugin.rspack() as any
+
+    it('exposes an rspack plugin instance with apply()', () => {
+      expect(typeof rs.apply).toBe('function')
+    })
+  })
+
+  describe('rollup adapter', () => {
+    const rl = unheadReactStreamingPlugin.rollup() as any
+
+    it('has correct name', () => {
+      expect(rl.name).toBe('@unhead/react:streaming')
+    })
+
+    it('registers a jsx/tsx-filtered transform', () => {
+      // rollup adapter exposes transform as a function directly
+      expect(typeof rl.transform === 'function' || typeof rl.transform?.handler === 'function').toBe(true)
+    })
+  })
+})
+
+describe('deprecated unheadReactPlugin', () => {
+  it('returns a vite plugin (back-compat alias for unheadReactStreamingPlugin.vite)', () => {
+    const plugin = unheadReactPlugin() as any
+    expect(plugin.name).toBe('@unhead/react:streaming')
+    expect(plugin.enforce).toBe('pre')
   })
 })

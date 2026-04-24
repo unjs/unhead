@@ -117,11 +117,13 @@ function getStreamKey(head: Unhead<any>): string {
  * use this directly to inject the bootstrap into your shell `<head>`.
  *
  * @param streamKey - The window property name for the stream queue (default: '__unhead__')
+ * @param nonce - Optional CSP nonce to stamp on the script tag
  * @returns An inline `<script>` tag string
  */
-export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY): string {
+export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, nonce?: string): string {
   assertValidStreamKey(streamKey)
-  return `<script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+  const nonceAttr = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : ''
+  return `<script${nonceAttr}>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
 }
 
 /**

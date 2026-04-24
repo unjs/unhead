@@ -68,7 +68,13 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function
+./stream/unplugin:
+  buildStreamingPluginOptions: function
+  createStreamingPlugin: object
+  VIRTUAL_CLIENT_ID: string
+  VIRTUAL_IIFE_ID: string
 ./stream/vite:
+  buildStreamingPluginOptions: function
   createStreamingPlugin: function
   VIRTUAL_CLIENT_ID: string
   VIRTUAL_IIFE_ID: string

@@ -33,6 +33,10 @@
       "types": "./dist/webpack.d.ts",
       "default": "./dist/webpack.mjs"
     },
+    "./framework": {
+      "types": "./dist/framework.d.ts",
+      "default": "./dist/framework.mjs"
+    },
     "./minify/rolldown": {
       "types": "./dist/minify/rolldown.d.ts",
       "default": "./dist/minify/rolldown.mjs"
@@ -56,6 +60,9 @@
       ],
       "webpack": [
         "dist/webpack"
+      ],
+      "framework": [
+        "dist/framework"
       ],
       "minify/rolldown": [
         "dist/minify/rolldown"
@@ -82,7 +89,9 @@
     "esbuild": ">=0.17.0",
     "lightningcss": ">=1.20.0",
     "rolldown": ">=1.0.0-beta.0",
-    "unhead": "workspace:^"
+    "unhead": "workspace:^",
+    "vite": ">=6.4.2",
+    "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
     "esbuild": {
@@ -92,6 +101,12 @@
       "optional": true
     },
     "rolldown": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "webpack": {
       "optional": true
     }
   },

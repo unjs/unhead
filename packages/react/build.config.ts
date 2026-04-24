@@ -3,7 +3,18 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  externals: ['react', 'vite', 'magic-string', 'oxc-walker', '@unhead/bundler', '@unhead/bundler/vite'],
+  externals: [
+    'react',
+    'vite',
+    'webpack',
+    'unplugin',
+    'magic-string',
+    'oxc-walker',
+    '@unhead/bundler',
+    '@unhead/bundler/vite',
+    '@unhead/bundler/webpack',
+    '@unhead/bundler/framework',
+  ],
   rollup: {
     inlineDependencies: true,
     emitCJS: false,
@@ -17,6 +28,7 @@ export default defineBuildConfig({
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins', name: 'plugins' },
     { input: 'src/vite', name: 'vite' },
+    { input: 'src/webpack', name: 'webpack' },
     { input: 'src/stream/vite', name: 'stream/vite' },
     { input: 'src/helmet', name: 'helmet' },
   ],

@@ -2,6 +2,9 @@
   DefaultCriticalTags: object
   devtoolsPlugin: function
   InferSeoMetaPlugin: function
+./framework:
+  createFrameworkVitePlugin: function
+  createFrameworkWebpackPlugin: function
 ./minify/esbuild:
   createJSMinifier: function
 ./minify/lightningcss:
@@ -11,4 +14,5 @@
 ./vite:
   Unhead: function
 ./webpack:
+  default: function
   Unhead: function

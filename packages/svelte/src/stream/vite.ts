@@ -1,143 +1,17 @@
-import type { StreamingPluginOptions } from 'unhead/stream/vite'
-import MagicString from 'magic-string'
-import { parseAndWalk } from 'oxc-walker'
-import { createStreamingPlugin } from 'unhead/stream/vite'
+import type { Plugin } from 'vite'
+import type { UnheadSvelteStreamingOptions } from './plugin'
+import { unheadSvelteStreamingPlugin } from './plugin'
 
-const SCRIPT_CLOSE_RE = /<\/script>/
-const SCRIPT_RE = /<script[^>]*>/i
-const FILTER_RE = /\.svelte$/
+export type { UnheadSvelteStreamingOptions }
+export { unheadSvelteStreamingPlugin } from './plugin'
 
 /**
- * Transforms Svelte code to inject HeadStream for streaming SSR support.
- *
- * @param code - The source code to transform
- * @param id - The file path/id being transformed
- * @param isSSR - Whether the code is being transformed for SSR
- * @param s - MagicString instance for code manipulation
- * @returns `true` if transformations were applied, `false` otherwise
- *
- * @example
- * ```svelte
- * // Input code:
- * <script>
- * import { useHead } from '@unhead/svelte'
- *
- * useHead({
- *   title: 'My Page'
- * })
- * </script>
- *
- * <h1>Hello World</h1>
- *
- * // Transformed output:
- * <script>
- * import { useHead } from '@unhead/svelte'
- * import { HeadStream } from '@unhead/svelte/stream/server' // or /client
- *
- * useHead({
- *   title: 'My Page'
- * })
- * </script>
- *
- * {@html HeadStream()}
- * <h1>Hello World</h1>
- * ```
+ * @deprecated Use `Unhead({ streaming: true })` from `@unhead/svelte/vite` instead.
+ * The `@unhead/svelte/stream/vite` subpath and `unheadSveltePlugin` export will be
+ * removed in a future major release.
  */
-function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
-  // Only transform files that use head composables
-  if (!code.includes('useHead') && !code.includes('useSeoMeta') && !code.includes('useHeadSafe'))
-    return false
-
-  // Find the end of the script tag to inject after it (in the template)
-  const scriptCloseMatch = code.match(SCRIPT_CLOSE_RE)
-  if (!scriptCloseMatch)
-    return false
-
-  const templateStart = scriptCloseMatch.index! + scriptCloseMatch[0].length
-
-  // Inject {@html HeadStream()} after the script tag
-  s.appendRight(templateStart, '\n{@html HeadStream()}')
-
-  // Add import for HeadStream
-  const importPath = `@unhead/svelte/stream/${isSSR ? 'server' : 'client'}`
-  const scriptMatch = code.match(SCRIPT_RE)
-  if (!scriptMatch)
-    return true
-
-  const scriptEnd = scriptMatch.index! + scriptMatch[0].length
-  const scriptCloseIndex = code.indexOf('</script>', scriptEnd)
-  if (scriptCloseIndex === -1)
-    return true
-
-  const scriptContent = code.slice(scriptEnd, scriptCloseIndex)
-
-  let existingImport: { start: number, end: number, specifiers: string[] } | null = null
-  parseAndWalk(scriptContent, id, {
-    parseOptions: { lang: 'ts' },
-    enter(node: any) {
-      if (node.type === 'ImportDeclaration' && node.source.value === importPath) {
-        existingImport = {
-          start: scriptEnd + node.start,
-          end: scriptEnd + node.end,
-          specifiers: node.specifiers?.map((spec: any) => spec.local?.name).filter(Boolean) || [],
-        }
-        this.skip()
-      }
-    },
-  })
-
-  const foundImport = existingImport as { start: number, end: number, specifiers: string[] } | null
-  if (foundImport) {
-    if (!foundImport.specifiers.includes('HeadStream')) {
-      const inner = foundImport.specifiers.join(', ')
-      const newImports = inner ? `${inner}, HeadStream` : 'HeadStream'
-      s.overwrite(foundImport.start, foundImport.end, `import { ${newImports} } from '${importPath}'`)
-    }
-  }
-  else {
-    s.appendRight(scriptEnd, `\nimport { HeadStream } from '${importPath}'`)
-  }
-
-  return true
-}
-
-/**
- * Vite plugin for Svelte streaming SSR support.
- * Automatically injects HeadStream into Svelte components.
- *
- * @returns Vite plugin configuration object with:
- *   - `name`: Plugin identifier
- *   - `enforce`: Plugin execution order ('pre')
- *   - `transform`: Transform hook for processing .svelte files
- *
- * @example
- * ```ts
- * // vite.config.ts
- * import { unheadSveltePlugin } from '@unhead/svelte/stream/vite'
- *
- * export default {
- *   plugins: [
- *     unheadSveltePlugin()
- *   ]
- * }
- * ```
- */
-export function unheadSveltePlugin(options?: Pick<StreamingPluginOptions, 'mode'>) {
-  return createStreamingPlugin({
-    framework: '@unhead/svelte',
-    filter: FILTER_RE,
-    mode: options?.mode,
-    transform(code, id, opts) {
-      const s = new MagicString(code)
-      if (!transform(code, id, opts?.ssr ?? false, s))
-        return null
-
-      return {
-        code: s.toString(),
-        map: s.generateMap({ includeContent: true, source: id }),
-      }
-    },
-  })
+export function unheadSveltePlugin(options?: UnheadSvelteStreamingOptions): Plugin {
+  return unheadSvelteStreamingPlugin.vite(options) as Plugin
 }
 
 export default unheadSveltePlugin

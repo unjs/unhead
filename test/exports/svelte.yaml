@@ -43,6 +43,7 @@
 ./stream/vite:
   default: function
   unheadSveltePlugin: function
+  unheadSvelteStreamingPlugin: object
 ./utils:
   dedupeKey: function
   dedupeTags: function
@@ -71,4 +72,6 @@
   ValidHeadTags: object
   walkResolver: function
 ./vite:
+  Unhead: function
+./webpack:
   Unhead: function

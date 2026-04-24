@@ -42,6 +42,7 @@
 ./stream/vite:
   default: function
   unheadSolidPlugin: function
+  unheadSolidStreamingPlugin: object
 ./utils:
   dedupeKey: function
   dedupeTags: function
@@ -70,4 +71,6 @@
   ValidHeadTags: object
   walkResolver: function
 ./vite:
+  Unhead: function
+./webpack:
   Unhead: function

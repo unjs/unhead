@@ -65,6 +65,10 @@
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
     },
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "default": "./dist/webpack.mjs"
+    },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
@@ -113,6 +117,9 @@
       "vite": [
         "dist/vite"
       ],
+      "webpack": [
+        "dist/webpack"
+      ],
       "stream/vite": [
         "dist/stream/vite"
       ],
@@ -136,10 +143,14 @@
   },
   "peerDependencies": {
     "vite": ">=6.4.2",
-    "vue": ">=3.5.18"
+    "vue": ">=3.5.18",
+    "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
     "vite": {
+      "optional": true
+    },
+    "webpack": {
       "optional": true
     }
   },
@@ -151,7 +162,8 @@
   "dependencies": {
     "@unhead/bundler": "workspace:*",
     "hookable": "catalog:",
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "unplugin": "catalog:"
   },
   "devDependencies": {
     "@vue/server-renderer": "catalog:",

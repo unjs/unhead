@@ -6,12 +6,20 @@ import { defineProject } from 'vitest/config'
 export default defineProject({
   resolve: {
     alias: {
+      '@unhead/bundler/vite': resolve(__dirname, '../bundler/src/unplugin/vite.ts'),
+      '@unhead/bundler/webpack': resolve(__dirname, '../bundler/src/unplugin/webpack.ts'),
+      '@unhead/bundler/rspack': resolve(__dirname, '../bundler/src/unplugin/rspack.ts'),
+      '@unhead/bundler/rollup': resolve(__dirname, '../bundler/src/unplugin/rollup.ts'),
+      '@unhead/bundler/esbuild': resolve(__dirname, '../bundler/src/unplugin/esbuild.ts'),
+      '@unhead/bundler/rolldown': resolve(__dirname, '../bundler/src/unplugin/rolldown.ts'),
+      '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
+      '@unhead/bundler': resolve(__dirname, '../bundler/src'),
       '@unhead/solid-js/server': resolve(__dirname, 'src/server.ts'),
       '@unhead/solid-js/client': resolve(__dirname, 'src/client.ts'),
       '@unhead/solid-js': resolve(__dirname, 'src/index.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
-      'unhead/stream/vite': resolve(__dirname, '../unhead/src/stream/vite.ts'),
+      'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
       'unhead/server': resolve(__dirname, '../unhead/src/server/index.ts'),
       'unhead/client': resolve(__dirname, '../unhead/src/client/index.ts'),
       'unhead/types': resolve(__dirname, '../unhead/src/types/index.ts'),

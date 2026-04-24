@@ -64,6 +64,7 @@
 ./stream/vite:
   default: function
   unheadVuePlugin: function
+  unheadVueStreamingPlugin: object
 ./types: {}
 ./utils:
   dedupeKey: function
@@ -95,4 +96,6 @@
   VueResolver: function
   walkResolver: function
 ./vite:
+  Unhead: function
+./webpack:
   Unhead: function

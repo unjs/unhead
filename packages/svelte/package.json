@@ -49,6 +49,10 @@
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
     },
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "default": "./dist/webpack.mjs"
+    },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
@@ -80,6 +84,9 @@
       "vite": [
         "dist/vite"
       ],
+      "webpack": [
+        "dist/webpack"
+      ],
       "stream/vite": [
         "dist/stream/vite"
       ]
@@ -98,10 +105,14 @@
   },
   "peerDependencies": {
     "svelte": ">=5.38.0",
-    "vite": ">=6.4.2"
+    "vite": ">=6.4.2",
+    "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
     "vite": {
+      "optional": true
+    },
+    "webpack": {
       "optional": true
     }
   },
@@ -114,7 +125,8 @@
     "@unhead/bundler": "workspace:*",
     "magic-string": "catalog:",
     "oxc-walker": "catalog:",
-    "unhead": "workspace:*"
+    "unhead": "workspace:*",
+    "unplugin": "catalog:"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "catalog:",

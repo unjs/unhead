@@ -64,6 +64,7 @@ export default defineBuildConfig({
     { input: 'src/legacy/index', name: 'legacy' },
     { input: 'src/minify/index', name: 'minify' },
     { input: 'src/parser/index', name: 'parser' },
+    { input: 'src/stream/unplugin', name: 'stream/unplugin' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
 })
