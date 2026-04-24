@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite'
-import type { VitePluginOptions } from './types'
+import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform } from './MinifyTransform'
@@ -9,10 +9,18 @@ import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 export type { VitePluginOptions }
 
-export function Unhead(options: VitePluginOptions = {}): Plugin[] {
+/**
+ * Vite plugin factory that composes the core Unhead build-time transforms
+ * (tree-shake, seo-meta, minify, SSR static replace, devtools).
+ *
+ * Framework packages (e.g. `@unhead/vue/vite`) should not call this directly;
+ * use the `createFrameworkVitePlugin` helper in `./framework` which threads
+ * `_framework` correctly without exposing it on public options.
+ */
+export function Unhead(options: VitePluginOptions = {}, internal: InternalFrameworkContext = {}): Plugin[] {
   const plugins: Plugin[] = []
   const ctx = createHeadTransformContext()
-  const framework = options._framework
+  const framework = internal.framework
 
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}

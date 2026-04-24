@@ -12,6 +12,8 @@
   createHead: function
   renderDOMHead: function
   UnheadContextKey: symbol
+./esbuild:
+  Unhead: function
 ./plugins:
   AliasSortingPlugin: object
   CanonicalPlugin: function
@@ -23,6 +25,8 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./rolldown:
+  Unhead: function
 ./rollup:
   Unhead: function
 ./rspack:

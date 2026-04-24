@@ -1,13 +1,10 @@
 import type { ClientUnhead } from '../client/createHead'
-import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, ResolvableHead, SerializableHead, Unhead } from '../types'
+import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, ResolvableHead, Unhead } from '../types'
+import type { StreamingGlobal, UnheadStreamQueue } from './types'
 import { registerPlugin } from '../unhead'
 import { createHooks } from '../utils/hooks'
 
-export interface UnheadStreamQueue {
-  _q: SerializableHead[][]
-  _head?: Unhead<any>
-  push: (entries: SerializableHead[]) => void
-}
+export type { StreamingGlobal, UnheadStreamQueue }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'
 

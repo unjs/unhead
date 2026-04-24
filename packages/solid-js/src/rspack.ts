@@ -1,24 +1,11 @@
-import type { UnpluginOptions as BundlerOptions } from '@unhead/bundler/rspack'
+import type { UnheadFrameworkUnpluginOptions } from '@unhead/bundler/framework'
 import type { UnheadSolidStreamingOptions } from './stream/plugin'
-import { Unhead as buildPlugins } from '@unhead/bundler/rspack'
+import { createFrameworkRspackPlugin } from '@unhead/bundler/framework'
 import { unheadSolidStreamingPlugin } from './stream/plugin'
 
-export interface UnheadSolidRspackOptions extends BundlerOptions {
-  /**
-   * Enable streaming SSR support.
-   * @default false
-   */
-  streaming?: true | UnheadSolidStreamingOptions | false
-}
+export type UnheadSolidRspackOptions = UnheadFrameworkUnpluginOptions<UnheadSolidStreamingOptions>
 
-/**
- * Unified rspack plugin for `@unhead/solid-js`.
- */
-export function Unhead(options: UnheadSolidRspackOptions = {}) {
-  const plugins = [...buildPlugins(options)]
-  if (options.streaming) {
-    const streamingOpts = typeof options.streaming === 'object' ? options.streaming : undefined
-    plugins.push(unheadSolidStreamingPlugin.rspack(streamingOpts))
-  }
-  return plugins
-}
+export const Unhead = createFrameworkRspackPlugin<UnheadSolidStreamingOptions>({
+  framework: '@unhead/solid-js',
+  streamingPlugin: unheadSolidStreamingPlugin,
+})

@@ -1,5 +1,5 @@
 import type { UnpluginOptions } from 'unplugin'
-import type { ConfigEnv, UserConfig } from 'vite'
+import type { ConfigEnv, ResolvedConfig, UserConfig } from 'vite'
 import { createUnplugin } from 'unplugin'
 
 export const VIRTUAL_CLIENT_ID = 'virtual:@unhead/streaming-client'
@@ -9,13 +9,15 @@ const RESOLVED_IIFE_ID = `\0${VIRTUAL_IIFE_ID}`
 const VIRTUAL_RE = /virtual:@unhead\/streaming/
 const RESOLVED_RE = /^\0virtual:@unhead\/streaming/
 
+export type Nonce = string | (() => string | undefined)
+
 export interface StreamingPluginOptions {
   /** Framework package e.g. '@unhead/vue' */
   framework: string
   /** Plugin name (optional, defaults to `${framework}:streaming`) */
   name?: string
   /**
-   * File extension filter for transform hook, e.g. /\.vue$/. Optional —
+   * File extension filter for transform hook, e.g. /\.vue$/. Optional;
    * only required by frameworks whose client streaming support relies on
    * source-level AST injection (React/Solid/Svelte). Vue does not use it.
    */
@@ -24,13 +26,46 @@ export interface StreamingPluginOptions {
   transform?: (code: string, id: string, options?: { ssr?: boolean }) => { code: string, map?: any } | null | undefined | void
   /**
    * How to load the streaming client (vite-only, ignored on webpack/rspack/rollup where
-   * index.html injection isn't available — frameworks inject the iife themselves in SSR).
-   * - 'async': Load as async script (non-blocking, may have brief queue delay)
-   * - 'inline': Inline the IIFE directly in HTML (larger HTML, but immediate execution)
-   * - 'module': Use ES module import (original behavior, waits for bundle)
-   * @default 'async'
+   * index.html injection isn't available; frameworks inject the iife themselves in SSR).
+   * - 'inline' (default): Inline the IIFE directly in HTML. Largest HTML, smallest TTFB,
+   *   always safe in production. Recommended for streaming SSR.
+   * - 'async': Non-blocking external script. In dev served from a virtual module; in
+   *   production emitted as a real asset chunk via `emitFile`.
+   * - 'module': ES module dynamic import of the client bootstrap. Vite rewrites the
+   *   import path through its module graph so it survives production builds.
+   * @default 'inline'
    */
   mode?: 'async' | 'inline' | 'module'
+  /**
+   * CSP nonce forwarded on every injected `<script>` tag. Pass a string or a
+   * function returning a string (useful when the nonce rotates per request).
+   * Omit to inject without a nonce.
+   */
+  nonce?: Nonce
+  /**
+   * Stream key global name; must match `experimentalStreamKey` on the server
+   * head instance. Used by dev-mode warnings to detect when the server
+   * bootstrap script hasn't run (common misconfig).
+   * @default '__unhead__'
+   */
+  streamKey?: string
+  /**
+   * Emit a warning when the client IIFE runs but no server bootstrap queue
+   * has been installed (i.e. server didn't call `wrapStream` /
+   * `renderSSRHeadShell`). Dev-only.
+   * @default true in dev, false in prod
+   */
+  warnOnMissingServerBootstrap?: boolean
+}
+
+interface InternalState {
+  mode: 'async' | 'inline' | 'module'
+  /** Production build detected via vite configResolved. */
+  isBuild: boolean
+  /** Asset handle for the emitted iife in `async` production builds. */
+  emittedIifeFileName?: string
+  /** True when vite config phase detected ssr. */
+  ssr: boolean
 }
 
 // IIFE code is loaded once per process (module-level cache across plugin instances).
@@ -46,6 +81,24 @@ async function loadIifeCode(): Promise<void> {
   await iifeCodeLoading
 }
 
+function resolveNonce(nonce?: Nonce): string | undefined {
+  if (!nonce)
+    return undefined
+  return typeof nonce === 'function' ? nonce() : nonce
+}
+
+function buildClientStub(framework: string, streamKey: string, warnOnMissing: boolean): string {
+  // Minified client bootstrap. Reads from `window[streamKey]`, swaps `_head`
+  // for a real Unhead instance, replays queued entries, rebinds `.push`.
+  // Uses the `StreamingGlobal` shape declared in `./types.ts`; keep in sync.
+  const key = JSON.stringify(streamKey)
+  const warnBranch = warnOnMissing
+    ? `else{console.warn('[unhead] streaming client loaded but window['+${key}+'] is undefined; did the server call wrapStream()/renderSSRHeadShell()?')}`
+    : ''
+  return `import{createHead}from'${framework}/client'
+const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}${warnBranch}`
+}
+
 /**
  * Builds the bundler-agnostic unplugin hook set for the streaming plugin. Exposed so
  * framework wrappers (e.g. `@unhead/vue/vite`, `@unhead/vue/webpack`) can
@@ -55,11 +108,23 @@ async function loadIifeCode(): Promise<void> {
  * SSR detection is bundler-specific:
  * - vite build: `config.env.isSsrBuild`
  * - vite dev (v6+ environments): `this.environment.name === 'ssr'` per-transform
- * - webpack/rspack: `compiler.options.name === 'server'`
+ * - webpack/rspack: `compiler.options.name === 'server'` or `target === 'node'`
  */
 export function buildStreamingPluginOptions(options: StreamingPluginOptions): UnpluginOptions {
-  const { framework, name, mode = 'async' } = options
-  let ssr = false
+  const {
+    framework,
+    name,
+    mode = 'inline',
+    nonce,
+    streamKey = '__unhead__',
+    warnOnMissingServerBootstrap,
+  } = options
+
+  const state: InternalState = {
+    mode,
+    isBuild: false,
+    ssr: false,
+  }
 
   // Shared SSR detection used by both load and transform hooks. Vite v6+
   // dev mode has per-environment contexts where the `opts.ssr` flag on each
@@ -67,7 +132,11 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
   // webpack/rspack/vite.apply for non-dev builds.
   function isSSRCall(hookThis: any, opts?: { ssr?: boolean }): boolean {
     const envName = hookThis?.environment?.name
-    return envName === 'ssr' || envName === 'server' || opts?.ssr === true || ssr
+    return envName === 'ssr' || envName === 'server' || opts?.ssr === true || state.ssr
+  }
+
+  function warnEnabled(): boolean {
+    return warnOnMissingServerBootstrap ?? !state.isBuild
   }
 
   return {
@@ -76,6 +145,19 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
 
     async buildStart() {
       await loadIifeCode()
+      // In `async` mode for production Vite builds, emit the IIFE as a real
+      // asset chunk so the eventual `<script async src="...">` points at a
+      // hashed file that ships with the build. In dev / other bundlers the
+      // virtual module path is resolved on-the-fly.
+      if (mode === 'async' && state.isBuild && typeof (this as any).emitFile === 'function') {
+        if (!iifeCode)
+          throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
+        state.emittedIifeFileName = (this as any).emitFile({
+          type: 'asset',
+          name: 'unhead-streaming.js',
+          source: iifeCode,
+        })
+      }
     },
 
     resolveId: {
@@ -98,8 +180,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
           if (isSSR)
             return { code: 'export {}', moduleType: 'js' }
           return {
-            code: `import{createHead}from'${framework}/client'
-const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}`,
+            code: buildClientStub(framework, streamKey, warnEnabled()),
             moduleType: 'js',
           }
         }
@@ -129,20 +210,26 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
       // configs typically set `target: 'node'` / `'async-node'` too.
       const { name: n, target } = compiler.options
       if (n === 'server' || target === 'node' || target === 'async-node')
-        ssr = true
+        state.ssr = true
     },
 
     rspack(compiler) {
       const { name: n, target } = compiler.options
       if (n === 'server' || target === 'node' || target === 'async-node')
-        ssr = true
+        state.ssr = true
     },
 
     vite: {
       apply(_config: UserConfig, env: ConfigEnv): boolean {
         if (env.isSsrBuild)
-          ssr = true
+          state.ssr = true
+        if (env.command === 'build')
+          state.isBuild = true
         return true
+      },
+      configResolved(config: ResolvedConfig) {
+        if (config.command === 'build')
+          state.isBuild = true
       },
       transformIndexHtml: {
         // `order: 'pre'` is separate from the plugin-level `enforce: 'pre'`:
@@ -152,26 +239,37 @@ const s=window.__unhead__;if(s){const q=s._q;s._q=[];const h=createHead({documen
         // rewritten by downstream HTML transforms.
         order: 'pre',
         handler() {
+          const nonceValue = resolveNonce(nonce)
+          const nonceAttr = nonceValue ? { nonce: nonceValue } : {}
+
           if (mode === 'inline') {
             if (!iifeCode)
               throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
             return [{
               tag: 'script',
+              attrs: nonceAttr,
               children: iifeCode,
               injectTo: 'head-prepend',
             }]
           }
 
           if (mode === 'async') {
+            // Production builds reference the emitted asset path so it
+            // survives bundling; dev (and bundlers without emitFile) fall
+            // back to the virtual module URL served by the load hook.
+            const src = state.isBuild && state.emittedIifeFileName
+              ? `/${state.emittedIifeFileName}`
+              : `/${VIRTUAL_IIFE_ID}`
             return [{
               tag: 'script',
-              attrs: { async: true, src: `/${VIRTUAL_IIFE_ID}` },
+              attrs: { ...nonceAttr, async: true, src },
               injectTo: 'head-prepend',
             }]
           }
 
           return [{
             tag: 'script',
+            attrs: nonceAttr,
             children: `import("/${VIRTUAL_CLIENT_ID}")`,
             injectTo: 'head-prepend',
           }]

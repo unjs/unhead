@@ -1,11 +1,11 @@
 import type { UnheadFrameworkUnpluginOptions } from '@unhead/bundler/framework'
 import type { UnheadSvelteStreamingOptions } from './stream/plugin'
-import { createFrameworkRollupPlugin } from '@unhead/bundler/framework'
+import { createFrameworkRolldownPlugin } from '@unhead/bundler/framework'
 import { unheadSvelteStreamingPlugin } from './stream/plugin'
 
-export type UnheadSvelteRollupOptions = UnheadFrameworkUnpluginOptions<UnheadSvelteStreamingOptions>
+export type UnheadSvelteRolldownOptions = UnheadFrameworkUnpluginOptions<UnheadSvelteStreamingOptions>
 
-export const Unhead = createFrameworkRollupPlugin<UnheadSvelteStreamingOptions>({
+export const Unhead = createFrameworkRolldownPlugin<UnheadSvelteStreamingOptions>({
   framework: '@unhead/svelte',
   streamingPlugin: unheadSvelteStreamingPlugin,
 })

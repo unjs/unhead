@@ -3,7 +3,10 @@ import { unheadVueStreamingPlugin } from '../src/stream/plugin'
 import { unheadVuePlugin } from '../src/stream/vite'
 
 describe('unheadVueStreamingPlugin', () => {
-  const plugin = unheadVueStreamingPlugin.vite() as any
+  // Use `async` mode so transformIndexHtml returns the external-script shape
+  // exercised below; default ('inline') requires the iife code to be loaded
+  // via buildStart() first, which tests don't run.
+  const plugin = unheadVueStreamingPlugin.vite({ mode: 'async' }) as any
 
   describe('vite adapter', () => {
     it('has correct name', () => {

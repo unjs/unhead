@@ -17,6 +17,9 @@ export default defineBuildConfig({
     '@unhead/bundler/webpack',
     '@unhead/bundler/rspack',
     '@unhead/bundler/rollup',
+    '@unhead/bundler/esbuild',
+    '@unhead/bundler/rolldown',
+    '@unhead/bundler/framework',
   ],
   rollup: {
     inlineDependencies: true,
@@ -34,6 +37,8 @@ export default defineBuildConfig({
     { input: 'src/webpack', name: 'webpack' },
     { input: 'src/rspack', name: 'rspack' },
     { input: 'src/rollup', name: 'rollup' },
+    { input: 'src/esbuild', name: 'esbuild' },
+    { input: 'src/rolldown', name: 'rolldown' },
     { input: 'src/stream/vite', name: 'stream/vite' },
     { input: 'src/helmet', name: 'helmet' },
   ],

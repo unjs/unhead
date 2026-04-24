@@ -6,7 +6,7 @@ import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 export type { UnpluginOptions }
 
-export function Unhead(options: UnpluginOptions = {}) {
+export function Unhead(options: UnpluginOptions = {}): any[] {
   const plugins: any[] = []
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
@@ -25,3 +25,5 @@ export function Unhead(options: UnpluginOptions = {}) {
   plugins.push(SSRStaticReplace.webpack({}))
   return plugins
 }
+
+export default Unhead

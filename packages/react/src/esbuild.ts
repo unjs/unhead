@@ -1,11 +1,11 @@
 import type { UnheadFrameworkUnpluginOptions } from '@unhead/bundler/framework'
 import type { UnheadReactStreamingOptions } from './stream/plugin'
-import { createFrameworkRollupPlugin } from '@unhead/bundler/framework'
+import { createFrameworkEsbuildPlugin } from '@unhead/bundler/framework'
 import { unheadReactStreamingPlugin } from './stream/plugin'
 
-export type UnheadReactRollupOptions = UnheadFrameworkUnpluginOptions<UnheadReactStreamingOptions>
+export type UnheadReactEsbuildOptions = UnheadFrameworkUnpluginOptions<UnheadReactStreamingOptions>
 
-export const Unhead = createFrameworkRollupPlugin<UnheadReactStreamingOptions>({
+export const Unhead = createFrameworkEsbuildPlugin<UnheadReactStreamingOptions>({
   framework: '@unhead/react',
   streamingPlugin: unheadReactStreamingPlugin,
 })

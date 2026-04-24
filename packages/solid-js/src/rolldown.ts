@@ -1,11 +1,11 @@
 import type { UnheadFrameworkUnpluginOptions } from '@unhead/bundler/framework'
 import type { UnheadSolidStreamingOptions } from './stream/plugin'
-import { createFrameworkWebpackPlugin } from '@unhead/bundler/framework'
+import { createFrameworkRolldownPlugin } from '@unhead/bundler/framework'
 import { unheadSolidStreamingPlugin } from './stream/plugin'
 
-export type UnheadSolidWebpackOptions = UnheadFrameworkUnpluginOptions<UnheadSolidStreamingOptions>
+export type UnheadSolidRolldownOptions = UnheadFrameworkUnpluginOptions<UnheadSolidStreamingOptions>
 
-export const Unhead = createFrameworkWebpackPlugin<UnheadSolidStreamingOptions>({
+export const Unhead = createFrameworkRolldownPlugin<UnheadSolidStreamingOptions>({
   framework: '@unhead/solid-js',
   streamingPlugin: unheadSolidStreamingPlugin,
 })

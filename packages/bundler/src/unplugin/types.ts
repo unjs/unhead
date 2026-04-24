@@ -21,8 +21,18 @@ export interface VitePluginOptions extends UnpluginOptions {
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
   validate?: boolean
-  /** @internal */
-  _framework?: string
+}
+
+/**
+ * Internal extension carrying the framework package name (e.g. `@unhead/vue`)
+ * so the base bundler factory can import runtime plugins from the right path.
+ * Never exposed on public option types; framework wrappers pass this via
+ * the factory helpers in `./framework`.
+ *
+ * @internal
+ */
+export interface InternalFrameworkContext {
+  framework?: string
 }
 
 export interface UnheadDevtoolsOptions {}

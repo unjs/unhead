@@ -2,12 +2,23 @@
   DefaultCriticalTags: object
   devtoolsPlugin: function
   InferSeoMetaPlugin: function
+./esbuild:
+  Unhead: function
+./framework:
+  createFrameworkEsbuildPlugin: function
+  createFrameworkRolldownPlugin: function
+  createFrameworkRollupPlugin: function
+  createFrameworkRspackPlugin: function
+  createFrameworkVitePlugin: function
+  createFrameworkWebpackPlugin: function
 ./minify/esbuild:
   createJSMinifier: function
 ./minify/lightningcss:
   createCSSMinifier: function
 ./minify/rolldown:
   createJSMinifier: function
+./rolldown:
+  Unhead: function
 ./rollup:
   Unhead: function
 ./rspack:
@@ -15,4 +26,5 @@
 ./vite:
   Unhead: function
 ./webpack:
+  default: function
   Unhead: function

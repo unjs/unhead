@@ -6,22 +6,27 @@ import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 export type { UnpluginOptions }
 
+/**
+ * esbuild plugin set. esbuild has no transformIndexHtml, so streaming
+ * client-script injection is not supported here; use the vite subpath entry
+ * (or emit a bootstrap script manually on the server) if you need streaming.
+ */
 export function Unhead(options: UnpluginOptions = {}): any[] {
   const plugins: any[] = []
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
-    plugins.push(TreeshakeServerComposables.rspack({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
+    plugins.push(TreeshakeServerComposables.esbuild({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    plugins.push(UseSeoMetaTransform.rspack({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
+    plugins.push(UseSeoMetaTransform.esbuild({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
   }
   if (options.minify !== false) {
     const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
     if (minifyOpts.js || minifyOpts.css) {
-      plugins.push(MinifyTransform.rspack({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
+      plugins.push(MinifyTransform.esbuild({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
     }
   }
-  plugins.push(SSRStaticReplace.rspack({}))
+  plugins.push(SSRStaticReplace.esbuild({}))
   return plugins
 }

@@ -41,6 +41,18 @@
       "types": "./dist/rollup.d.ts",
       "default": "./dist/rollup.mjs"
     },
+    "./esbuild": {
+      "types": "./dist/esbuild.d.ts",
+      "default": "./dist/esbuild.mjs"
+    },
+    "./rolldown": {
+      "types": "./dist/rolldown.d.ts",
+      "default": "./dist/rolldown.mjs"
+    },
+    "./framework": {
+      "types": "./dist/framework.d.ts",
+      "default": "./dist/framework.mjs"
+    },
     "./minify/rolldown": {
       "types": "./dist/minify/rolldown.d.ts",
       "default": "./dist/minify/rolldown.mjs"
@@ -70,6 +82,15 @@
       ],
       "rollup": [
         "dist/rollup"
+      ],
+      "esbuild": [
+        "dist/esbuild"
+      ],
+      "rolldown": [
+        "dist/rolldown"
+      ],
+      "framework": [
+        "dist/framework"
       ],
       "minify/rolldown": [
         "dist/minify/rolldown"

@@ -61,6 +61,14 @@
       "types": "./dist/rollup.d.ts",
       "default": "./dist/rollup.mjs"
     },
+    "./esbuild": {
+      "types": "./dist/esbuild.d.ts",
+      "default": "./dist/esbuild.mjs"
+    },
+    "./rolldown": {
+      "types": "./dist/rolldown.d.ts",
+      "default": "./dist/rolldown.mjs"
+    },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
       "default": "./dist/stream/vite.mjs"
@@ -100,6 +108,12 @@
       ],
       "rollup": [
         "dist/rollup"
+      ],
+      "esbuild": [
+        "dist/esbuild"
+      ],
+      "rolldown": [
+        "dist/rolldown"
       ],
       "stream/vite": [
         "dist/stream/vite"
