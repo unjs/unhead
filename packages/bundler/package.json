@@ -33,22 +33,6 @@
       "types": "./dist/webpack.d.ts",
       "default": "./dist/webpack.mjs"
     },
-    "./rspack": {
-      "types": "./dist/rspack.d.ts",
-      "default": "./dist/rspack.mjs"
-    },
-    "./rollup": {
-      "types": "./dist/rollup.d.ts",
-      "default": "./dist/rollup.mjs"
-    },
-    "./esbuild": {
-      "types": "./dist/esbuild.d.ts",
-      "default": "./dist/esbuild.mjs"
-    },
-    "./rolldown": {
-      "types": "./dist/rolldown.d.ts",
-      "default": "./dist/rolldown.mjs"
-    },
     "./framework": {
       "types": "./dist/framework.d.ts",
       "default": "./dist/framework.mjs"
@@ -77,18 +61,6 @@
       "webpack": [
         "dist/webpack"
       ],
-      "rspack": [
-        "dist/rspack"
-      ],
-      "rollup": [
-        "dist/rollup"
-      ],
-      "esbuild": [
-        "dist/esbuild"
-      ],
-      "rolldown": [
-        "dist/rolldown"
-      ],
       "framework": [
         "dist/framework"
       ],
@@ -114,19 +86,14 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "@rspack/core": ">=1.0.0",
     "esbuild": ">=0.17.0",
     "lightningcss": ">=1.20.0",
     "rolldown": ">=1.0.0-beta.0",
-    "rollup": ">=4.0.0",
     "unhead": "workspace:^",
     "vite": ">=6.4.2",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
-    "@rspack/core": {
-      "optional": true
-    },
     "esbuild": {
       "optional": true
     },
@@ -134,9 +101,6 @@
       "optional": true
     },
     "rolldown": {
-      "optional": true
-    },
-    "rollup": {
       "optional": true
     },
     "vite": {

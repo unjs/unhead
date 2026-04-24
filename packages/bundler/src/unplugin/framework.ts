@@ -1,11 +1,6 @@
-import type { Plugin as RollupPlugin } from 'rollup'
 import type { UnpluginInstance } from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
-import { Unhead as baseEsbuild } from './esbuild'
-import { Unhead as baseRolldown } from './rolldown'
-import { Unhead as baseRollup } from './rollup'
-import { Unhead as baseRspack } from './rspack'
 import { Unhead as baseVite } from './vite'
 import { Unhead as baseWebpack } from './webpack'
 
@@ -51,50 +46,6 @@ export function createFrameworkWebpackPlugin<S>({ streamingPlugin }: FrameworkPl
     const plugins: any[] = [...baseWebpack(rest)]
     if (streaming) {
       plugins.push(streamingPlugin.webpack(resolveStreamingOpts(streaming)))
-    }
-    return plugins
-  }
-}
-
-export function createFrameworkRspackPlugin<S>({ streamingPlugin }: FrameworkPluginConfig<S>) {
-  return (options: UnheadFrameworkUnpluginOptions<S> = {}): any[] => {
-    const { streaming, ...rest } = options
-    const plugins: any[] = [...baseRspack(rest)]
-    if (streaming) {
-      plugins.push(streamingPlugin.rspack(resolveStreamingOpts(streaming)))
-    }
-    return plugins
-  }
-}
-
-export function createFrameworkRollupPlugin<S>({ streamingPlugin }: FrameworkPluginConfig<S>) {
-  return (options: UnheadFrameworkUnpluginOptions<S> = {}): RollupPlugin[] => {
-    const { streaming, ...rest } = options
-    const plugins: RollupPlugin[] = [...baseRollup(rest)]
-    if (streaming) {
-      plugins.push(streamingPlugin.rollup(resolveStreamingOpts(streaming)) as unknown as RollupPlugin)
-    }
-    return plugins
-  }
-}
-
-export function createFrameworkEsbuildPlugin<S>({ streamingPlugin }: FrameworkPluginConfig<S>) {
-  return (options: UnheadFrameworkUnpluginOptions<S> = {}): any[] => {
-    const { streaming, ...rest } = options
-    const plugins: any[] = [...baseEsbuild(rest)]
-    if (streaming) {
-      plugins.push(streamingPlugin.esbuild(resolveStreamingOpts(streaming)))
-    }
-    return plugins
-  }
-}
-
-export function createFrameworkRolldownPlugin<S>({ streamingPlugin }: FrameworkPluginConfig<S>) {
-  return (options: UnheadFrameworkUnpluginOptions<S> = {}): any[] => {
-    const { streaming, ...rest } = options
-    const plugins: any[] = [...baseRolldown(rest)]
-    if (streaming) {
-      plugins.push(streamingPlugin.rollup(resolveStreamingOpts(streaming)))
     }
     return plugins
   }

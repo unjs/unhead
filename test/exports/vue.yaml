@@ -20,8 +20,6 @@
   VueHeadMixin: object
 ./components:
   Head: object
-./esbuild:
-  Unhead: function
 ./legacy:
   createClientHead: function
   createHead: function
@@ -40,12 +38,6 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
-./rolldown:
-  Unhead: function
-./rollup:
-  Unhead: function
-./rspack:
-  Unhead: function
 ./scripts:
   createSpyProxy: function
   useScript: function

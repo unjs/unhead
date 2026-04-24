@@ -12,8 +12,6 @@
   createHead: function
   renderDOMHead: function
   UnheadProvider: function
-./esbuild:
-  Unhead: function
 ./helmet:
   Helmet: function
 ./plugins:
@@ -27,12 +25,6 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
-./rolldown:
-  Unhead: function
-./rollup:
-  Unhead: function
-./rspack:
-  Unhead: function
 ./server:
   createHead: function
   renderSSRHead: function
