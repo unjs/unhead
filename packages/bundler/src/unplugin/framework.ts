@@ -40,6 +40,13 @@ export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
  * Shape returned by the unified framework factory. Mirrors the subset of
  * `UnpluginInstance` methods that Nuxt's `addBuildPlugin` consumes, so a
  * call site can forward the factory object directly.
+ *
+ * Note: `rollup()` is provided for completeness (e.g. SSG static builds)
+ * but does **not** detect SSR context. `SSRStaticReplace` always sees
+ * `ssr=false` here because rollup has no equivalent of vite's
+ * `env.isSsrBuild` or webpack's `compiler.options.name === 'server'` hook;
+ * `head.ssr` references will always be statically rewritten to `false`.
+ * Use `.vite()` or `.webpack()` for SSR builds.
  */
 export interface UnheadBundlerFactory {
   vite: () => VitePlugin[]
@@ -92,6 +99,17 @@ function resolveStreamingOpts<S>(streaming: true | S | false | undefined): S | u
 }
 
 /**
+ * Push a plugin (or array of plugins) onto an output array, flattening one
+ * level. Mirrors the dispatch helper's array handling so streaming plugins
+ * created with `Nested=true` don't leak nested arrays into the output.
+ */
+function pushPlugin<T>(out: T[], value: T | T[]): void {
+  if (Array.isArray(value))
+    out.push(...value)
+  else out.push(value)
+}
+
+/**
  * Unified framework factory. Returns an object with per-bundler dispatch
  * methods so consumers (e.g. Nuxt's `addBuildPlugin`) can forward it
  * directly without per-bundler imports.
@@ -135,30 +153,29 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
         }
         plugins.push(SSRStaticReplace.vite({}))
         plugins.push(CreateHeadTransform(ctx))
-        if (wantStreaming) {
-          plugins.push(streamingPlugin.vite(streamOpts) as unknown as VitePlugin)
-        }
+        if (wantStreaming)
+          pushPlugin(plugins, streamingPlugin.vite(streamOpts) as unknown as VitePlugin | VitePlugin[])
         return plugins
       },
       webpack: () => {
         const plugins = dispatch('webpack', defs)
         plugins.push(SSRStaticReplace.webpack({}))
         if (wantStreaming)
-          plugins.push(streamingPlugin.webpack(streamOpts))
+          pushPlugin(plugins, streamingPlugin.webpack(streamOpts))
         return plugins
       },
       rspack: () => {
         const plugins = dispatch('rspack', defs)
         plugins.push(SSRStaticReplace.rspack({}))
         if (wantStreaming)
-          plugins.push(streamingPlugin.rspack(streamOpts))
+          pushPlugin(plugins, streamingPlugin.rspack(streamOpts))
         return plugins
       },
       rollup: () => {
         const plugins = dispatch('rollup', defs)
         plugins.push(SSRStaticReplace.rollup({}))
         if (wantStreaming)
-          plugins.push(streamingPlugin.rollup(streamOpts) as any)
+          pushPlugin(plugins, streamingPlugin.rollup(streamOpts) as any)
         return plugins
       },
     }
