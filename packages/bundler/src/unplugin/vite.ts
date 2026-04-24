@@ -20,7 +20,7 @@ export type { VitePluginOptions }
 export function Unhead(options: VitePluginOptions = {}, internal: InternalFrameworkContext = {}): Plugin[] {
   const plugins: Plugin[] = []
   const ctx = createHeadTransformContext()
-  const framework = internal.framework
+  const framework = internal.framework ?? options._framework
 
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}

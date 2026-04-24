@@ -27,13 +27,13 @@ export interface StreamingPluginOptions {
   /**
    * How to load the streaming client (vite-only, ignored on webpack/rspack/rollup where
    * index.html injection isn't available; frameworks inject the iife themselves in SSR).
-   * - 'inline' (default): Inline the IIFE directly in HTML. Largest HTML, smallest TTFB,
+   * - 'async' (default): Non-blocking external script. In dev served from a virtual
+   *   module; in production emitted as a real asset chunk via `emitFile`.
+   * - 'inline': Inline the IIFE directly in HTML. Largest HTML, smallest TTFB,
    *   always safe in production. Recommended for streaming SSR.
-   * - 'async': Non-blocking external script. In dev served from a virtual module; in
-   *   production emitted as a real asset chunk via `emitFile`.
    * - 'module': ES module dynamic import of the client bootstrap. Vite rewrites the
    *   import path through its module graph so it survives production builds.
-   * @default 'inline'
+   * @default 'async'
    */
   mode?: 'async' | 'inline' | 'module'
   /**
@@ -114,7 +114,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
   const {
     framework,
     name,
-    mode = 'inline',
+    mode = 'async',
     nonce,
     streamKey = '__unhead__',
     warnOnMissingServerBootstrap,

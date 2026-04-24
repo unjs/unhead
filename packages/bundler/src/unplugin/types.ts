@@ -21,6 +21,12 @@ export interface VitePluginOptions extends UnpluginOptions {
   devtools?: UnheadDevtoolsOptions | false
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
   validate?: boolean
+  /**
+   * @internal
+   * @deprecated Pass via the `internal` second argument of `Unhead()` instead.
+   * Retained as a passthrough so existing framework wrappers keep working.
+   */
+  _framework?: string
 }
 
 /**

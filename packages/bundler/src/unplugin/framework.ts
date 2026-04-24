@@ -22,12 +22,12 @@ export interface FrameworkPluginConfig<S> {
 
 export interface UnheadFrameworkViteOptions<S> extends VitePluginOptions {
   /** Enable streaming SSR support. */
-  streaming?: true | S
+  streaming?: true | S | false
 }
 
 export interface UnheadFrameworkUnpluginOptions<S> extends UnpluginOptions {
   /** Enable streaming SSR support. */
-  streaming?: true | S
+  streaming?: true | S | false
 }
 
 function resolveStreamingOpts<S>(streaming: true | S | undefined): S | undefined {
