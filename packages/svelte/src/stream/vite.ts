@@ -6,7 +6,7 @@ export type { UnheadSvelteStreamingOptions }
 export { unheadSvelteStreamingPlugin } from './plugin'
 
 /**
- * @deprecated Use `Unhead({ streaming: true })` from `@unhead/svelte/vite` instead.
+ * @deprecated Use `Unhead({ streaming: true }).vite()` from `@unhead/svelte/bundler` instead.
  * The `@unhead/svelte/stream/vite` subpath and `unheadSveltePlugin` export will be
  * removed in a future major release.
  */

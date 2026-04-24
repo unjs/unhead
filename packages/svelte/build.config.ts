@@ -12,7 +12,6 @@ export default defineBuildConfig({
     'oxc-walker',
     '@unhead/bundler',
     '@unhead/bundler/vite',
-    '@unhead/bundler/webpack',
     '@unhead/bundler/framework',
   ],
   entries: [
@@ -23,8 +22,8 @@ export default defineBuildConfig({
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins', name: 'plugins' },
+    { input: 'src/bundler', name: 'bundler' },
     { input: 'src/vite', name: 'vite' },
-    { input: 'src/webpack', name: 'webpack' },
     { input: 'src/stream/vite', name: 'stream/vite' },
   ],
 })

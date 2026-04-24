@@ -6,7 +6,7 @@ export type { UnheadVueStreamingOptions }
 export { unheadVueStreamingPlugin } from './plugin'
 
 /**
- * @deprecated Use `Unhead({ streaming: true })` from `@unhead/vue/vite` instead.
+ * @deprecated Use `Unhead({ streaming: true }).vite()` from `@unhead/vue/bundler` instead.
  * The `@unhead/vue/stream/vite` subpath and `unheadVuePlugin` export will be
  * removed in a future major release.
  */

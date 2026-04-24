@@ -1,20 +1,13 @@
-import type { UnheadFrameworkViteOptions } from '@unhead/bundler/framework'
-import type { UnheadReactStreamingOptions } from './stream/plugin'
-import { createFrameworkVitePlugin } from '@unhead/bundler/framework'
-import { unheadReactStreamingPlugin } from './stream/plugin'
+import type { Plugin } from 'vite'
+import type { UnheadReactOptions } from './bundler'
+import { Unhead as UnheadBundler } from './bundler'
 
-export type UnheadReactViteOptions = UnheadFrameworkViteOptions<UnheadReactStreamingOptions>
+export type UnheadReactViteOptions = UnheadReactOptions
 
 /**
- * Unified Vite plugin for `@unhead/react`.
- *
- * @example
- * ```ts
- * import { Unhead } from '@unhead/react/vite'
- * export default defineConfig({ plugins: [react(), Unhead({ streaming: true })] })
- * ```
+ * Vite plugin for `@unhead/react`. Kept for backwards compatibility; prefer
+ * the unified `@unhead/react/bundler` entry which dispatches to all bundlers.
  */
-export const Unhead = createFrameworkVitePlugin<UnheadReactStreamingOptions>({
-  framework: '@unhead/react',
-  streamingPlugin: unheadReactStreamingPlugin,
-})
+export function Unhead(options: UnheadReactOptions = {}): Plugin[] {
+  return UnheadBundler(options).vite()
+}

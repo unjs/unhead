@@ -7,6 +7,8 @@
   useScript: function
   useSeoMeta: function
   useUnhead: function
+./bundler:
+  Unhead: function
 ./client:
   createHead: function
   renderDOMHead: function
@@ -71,6 +73,4 @@
   ValidHeadTags: object
   walkResolver: function
 ./vite:
-  Unhead: function
-./webpack:
   Unhead: function

@@ -44,21 +44,6 @@ export default defineConfig({
 })
 ```
 
-### Webpack Plugin
-
-```js
-// webpack.config.js
-const { Unhead } = require('@unhead/bundler/webpack')
-
-module.exports = {
-  plugins: [
-    Unhead({
-      // Options
-    })
-  ]
-}
-```
-
 ### Options
 
 ```ts

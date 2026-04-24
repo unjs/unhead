@@ -1,21 +1,19 @@
-import type { UnheadFrameworkViteOptions } from '@unhead/bundler/framework'
-import type { UnheadVueStreamingOptions } from './stream/plugin'
-import { createFrameworkVitePlugin } from '@unhead/bundler/framework'
-import { unheadVueStreamingPlugin } from './stream/plugin'
+import type { Plugin } from 'vite'
+import type { UnheadVueOptions } from './bundler'
+import { Unhead as UnheadBundler } from './bundler'
 
-export type UnheadVueViteOptions = UnheadFrameworkViteOptions<UnheadVueStreamingOptions>
+export type UnheadVueViteOptions = UnheadVueOptions
 
 /**
- * Unified Vite plugin for `@unhead/vue`. Combines build-time transforms
- * with optional streaming SSR support.
+ * Vite plugin for `@unhead/vue`. Kept for backwards compatibility; prefer
+ * the unified `@unhead/vue/bundler` entry which dispatches to all bundlers.
  *
  * @example
  * ```ts
  * import { Unhead } from '@unhead/vue/vite'
- * export default defineConfig({ plugins: [Unhead({ streaming: true })] })
+ * export default defineConfig({ plugins: [...Unhead({ streaming: true })] })
  * ```
  */
-export const Unhead = createFrameworkVitePlugin<UnheadVueStreamingOptions>({
-  framework: '@unhead/vue',
-  streamingPlugin: unheadVueStreamingPlugin,
-})
+export function Unhead(options: UnheadVueOptions = {}): Plugin[] {
+  return UnheadBundler(options).vite()
+}
