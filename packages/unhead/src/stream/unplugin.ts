@@ -283,7 +283,8 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
  * Internal cross-bundler unplugin factory. Framework wrappers pick a single bundler's
  * output (`.vite`, `.webpack`, `.rspack`, etc.) to expose via their own subpath export.
  *
- * Consumers should prefer the unified framework bundler entry (e.g. `@unhead/vue/bundler`)
- * rather than importing this directly.
+ * Consumers should prefer the unified framework bundler entry (e.g.
+ * `@unhead/{vue,react,svelte,solid-js}/bundler`) rather than importing this
+ * directly.
  */
 export const createStreamingPlugin = createUnplugin<StreamingPluginOptions>(buildStreamingPluginOptions)

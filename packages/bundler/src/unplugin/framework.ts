@@ -22,6 +22,18 @@ export interface FrameworkPluginConfig<S> {
 export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
   /** Enable streaming SSR support. */
   streaming?: true | S | false
+  /**
+   * Inject the runtime `ValidatePlugin`. **Vite-only**: ignored by `.webpack()`,
+   * `.rspack()`, and `.rollup()` because injection happens via the Vite
+   * `CreateHeadTransform` plugin, which has no equivalent on other bundlers.
+   */
+  validate?: VitePluginOptions['validate']
+  /**
+   * Enable the Vite Devtools integration. **Vite-only**: ignored by `.webpack()`,
+   * `.rspack()`, and `.rollup()` since `unheadDevtools` depends on
+   * `@vitejs/devtools-kit`.
+   */
+  devtools?: VitePluginOptions['devtools']
 }
 
 /**
@@ -51,7 +63,11 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
   }
   if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
+    const minifyOpts = typeof options.minify === 'object'
+      ? options.minify
+      : options.minify === true
+        ? { js: true, css: true }
+        : {}
     if (minifyOpts.js || minifyOpts.css) {
       defs.push({ instance: MinifyTransform, options: { ...common, ...minifyOpts } })
     }

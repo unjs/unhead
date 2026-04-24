@@ -11,7 +11,7 @@ export type UnheadVueViteOptions = UnheadVueOptions
  * @example
  * ```ts
  * import { Unhead } from '@unhead/vue/vite'
- * export default defineConfig({ plugins: [Unhead({ streaming: true })] })
+ * export default defineConfig({ plugins: [...Unhead({ streaming: true })] })
  * ```
  */
 export function Unhead(options: UnheadVueOptions = {}): Plugin[] {

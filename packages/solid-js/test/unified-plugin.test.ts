@@ -22,9 +22,14 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
     expect(streamIdx).toBeGreaterThan(0)
   })
 
-  it('webpack returns a plugin array including the streaming plugin when enabled', () => {
-    const plugins = Unhead({ streaming: true }).webpack() as any[]
-    expect(Array.isArray(plugins)).toBe(true)
-    expect(plugins.some(p => typeof p?.apply === 'function')).toBe(true)
+  it('webpack adds exactly one extra plugin when streaming is enabled', () => {
+    // Webpack plugin wrappers from unplugin only expose `.apply`, no `name`,
+    // so we verify the streaming plugin's presence indirectly via the count
+    // delta against the no-streaming baseline.
+    const baseline = Unhead().webpack() as any[]
+    const withStreaming = Unhead({ streaming: true }).webpack() as any[]
+    expect(Array.isArray(withStreaming)).toBe(true)
+    expect(withStreaming.every(p => typeof p?.apply === 'function')).toBe(true)
+    expect(withStreaming.length).toBe(baseline.length + 1)
   })
 })
