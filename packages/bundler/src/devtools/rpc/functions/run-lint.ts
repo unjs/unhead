@@ -57,7 +57,8 @@ export const runLintRpc: any = defineRpcFunction({
           column: m.column,
           endLine: m.endLine,
           endColumn: m.endColumn,
-          fixable: Boolean(m.fix) || Boolean(m.suggestions?.length),
+          // Only `fix` is auto-applied by `--fix`; suggestions are editor-only.
+          fixable: Boolean(m.fix),
         })),
       })).filter((f: LintFileResult) => f.errorCount > 0 || f.warningCount > 0 || f.fixed)
 

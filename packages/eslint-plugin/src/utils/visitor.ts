@@ -19,11 +19,8 @@ export const HEAD_INPUT_CALLEES = new Set([
  * These are the v3 narrowing helpers (`defineLink`, etc.).
  */
 export const TAG_HELPER_CALLEES = new Set([
-  'defineMeta',
   'defineLink',
   'defineScript',
-  'defineNoscript',
-  'defineStyle',
 ])
 
 /**

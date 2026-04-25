@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RuleSeverity, ValidationRuleId } from 'unhead/validate'
+import type { LintFileResult, LintMessage, LintResponse } from '~/composables/state'
 import { callRpc } from '~/composables/rpc'
 import { useRuleOverrides } from '~/composables/rule-overrides'
 
@@ -21,45 +22,6 @@ function onSeverityChange(id: ValidationRuleId, value: RuleSeverity | 'default')
 }
 
 const overrideCount = computed(() => Object.keys(overrides.value).length)
-
-interface LintMessage {
-  ruleId: string | null
-  message: string
-  severity: 'error' | 'warn'
-  line?: number
-  column?: number
-  fixable: boolean
-}
-
-interface LintFileResult {
-  filePath: string
-  relativePath: string
-  errorCount: number
-  warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
-  messages: LintMessage[]
-  fixed?: boolean
-}
-
-interface LintRunResult {
-  available: true
-  mode: 'audit' | 'migrate'
-  files: LintFileResult[]
-  errorCount: number
-  warningCount: number
-  fixableErrorCount: number
-  fixableWarningCount: number
-  filesFixed: number
-  durationMs: number
-}
-
-interface LintUnavailableResult {
-  available: false
-  message: string
-}
-
-type LintResponse = LintRunResult | LintUnavailableResult
 
 const result = ref<LintResponse | null>(null)
 const loading = ref(false)

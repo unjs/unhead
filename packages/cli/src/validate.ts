@@ -37,7 +37,7 @@ export function printReport({ source, rules }: ValidationOutput): void {
     console.log(`  ${severitySymbol(rule.severity)} ${rule.id}: ${rule.message}`)
   const warnings = rules.filter(r => r.severity === 'warn').length
   const info = rules.filter(r => r.severity === 'info').length
-  console.log(`\n  ${rules.length} issue${rules.length === 1 ? '' : 's'} (${warnings} warning, ${info} info)`)
+  console.log(`\n  ${rules.length} issue${rules.length === 1 ? '' : 's'} (${warnings} warning${warnings === 1 ? '' : 's'}, ${info} info)`)
 }
 
 /**

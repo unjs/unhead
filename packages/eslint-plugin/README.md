@@ -19,7 +19,7 @@ export default [
 ]
 ```
 
-For projects migrating from unhead v2, swap in `unhead.configs.migration` to also wrap tag literals in the `defineLink` / `defineScript` / `defineMeta` helpers.
+For projects migrating from unhead v2, swap in `unhead.configs.migration` to also wrap tag literals in the `defineLink` / `defineScript` helpers.
 
 ## Rules
 
@@ -32,7 +32,7 @@ For projects migrating from unhead v2, swap in `unhead.configs.migration` to als
 | `no-unknown-meta` | warn | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
 | `non-absolute-canonical` | warn |   | relative URLs in `<link rel="canonical">` |
 | `numeric-tag-priority` | warn | suggestion | numeric `tagPriority` (suggests `'critical' | 'high' | 'low'`) |
-| `prefer-define-helpers` | off (migration only) | ✓ | wraps tag object literals in `defineLink` / `defineScript` / `defineMeta` |
+| `prefer-define-helpers` | off (migration only) | ✓ | wraps `link` / `script` tag object literals in `defineLink` / `defineScript` |
 | `preload-font-crossorigin` | error | ✓ | font preloads missing `crossorigin` (would refetch) |
 | `preload-missing-as` | error |   | `<link rel="preload">` missing required `as` |
 | `robots-conflict` | error |   | `index, noindex` or `follow, nofollow` in robots meta |
@@ -42,7 +42,7 @@ For projects migrating from unhead v2, swap in `unhead.configs.migration` to als
 
 ## Coverage
 
-These rules walk source-level calls into the unhead API: `useHead`, `useHeadSafe`, `useServerHead`, `useServerHeadSafe`, `useSeoMeta`, `useServerSeoMeta`, and the tag helpers `defineMeta` / `defineLink` / `defineScript` / `defineNoscript` / `defineStyle`. Tag arrays inside `meta` / `link` / `script` / `noscript` / `style` keys are descended automatically.
+These rules walk source-level calls into the unhead API: `useHead`, `useHeadSafe`, `useServerHead`, `useServerHeadSafe`, `useSeoMeta`, `useServerSeoMeta`, and the tag helpers `defineLink` / `defineScript`. Tag arrays inside `meta` / `link` / `script` / `noscript` / `style` keys are descended automatically.
 
 Rules can only see what's expressible in the AST. Cross-tag and rendered-output checks (e.g. `canonical-og-url-mismatch`, `meta-beyond-1mb`, `charset-not-early`, `too-many-preloads`) live in the runtime `ValidatePlugin` and are surfaced by the `unhead validate-url` / `unhead validate-html` CLI commands.
 

@@ -2,12 +2,12 @@ import type { Rule } from 'eslint'
 import type * as ESTree from 'estree'
 import { createTagVisitor } from '../utils/visitor'
 
+// Only `defineLink` and `defineScript` exist as exported helpers on `unhead`
+// (and re-exported from `@unhead/vue`, `@unhead/react`, etc.). There is no
+// `defineMeta`, `defineNoscript`, or `defineStyle`, so we don't suggest them.
 const TAG_TO_HELPER: Record<string, string> = {
-  meta: 'defineMeta',
   link: 'defineLink',
   script: 'defineScript',
-  noscript: 'defineNoscript',
-  style: 'defineStyle',
 }
 
 /**
