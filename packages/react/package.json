@@ -45,13 +45,13 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
+    "./bundler": {
+      "types": "./dist/bundler.d.ts",
+      "default": "./dist/bundler.mjs"
+    },
     "./vite": {
       "types": "./dist/vite.d.ts",
       "default": "./dist/vite.mjs"
-    },
-    "./webpack": {
-      "types": "./dist/webpack.d.ts",
-      "default": "./dist/webpack.mjs"
     },
     "./stream/vite": {
       "types": "./dist/stream/vite.d.ts",
@@ -85,11 +85,11 @@
       "utils": [
         "dist/utils"
       ],
+      "bundler": [
+        "dist/bundler"
+      ],
       "vite": [
         "dist/vite"
-      ],
-      "webpack": [
-        "dist/webpack"
       ],
       "stream/vite": [
         "dist/stream/vite"

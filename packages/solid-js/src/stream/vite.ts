@@ -6,7 +6,7 @@ export type { UnheadSolidStreamingOptions }
 export { unheadSolidStreamingPlugin } from './plugin'
 
 /**
- * @deprecated Use `Unhead({ streaming: true })` from `@unhead/solid-js/vite` instead.
+ * @deprecated Use `Unhead({ streaming: true }).vite()` from `@unhead/solid-js/bundler` instead.
  * The `@unhead/solid-js/stream/vite` subpath and `unheadSolidPlugin` export will be
  * removed in a future major release.
  */

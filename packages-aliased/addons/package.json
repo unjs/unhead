@@ -28,10 +28,6 @@
     "./vite": {
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.mjs"
-    },
-    "./webpack": {
-      "types": "./dist/webpack.d.ts",
-      "import": "./dist/webpack.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -41,9 +37,6 @@
     "*": {
       "vite": [
         "dist/vite"
-      ],
-      "webpack": [
-        "dist/webpack"
       ]
     }
   },

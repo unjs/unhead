@@ -1,14 +1,14 @@
-import type { UnheadFrameworkViteOptions } from '@unhead/bundler/framework'
-import type { UnheadSvelteStreamingOptions } from './stream/plugin'
-import { createFrameworkVitePlugin } from '@unhead/bundler/framework'
-import { unheadSvelteStreamingPlugin } from './stream/plugin'
+import type { Plugin } from 'vite'
+import type { UnheadSvelteOptions } from './bundler'
+import { Unhead as UnheadBundler } from './bundler'
 
-export type UnheadSvelteViteOptions = UnheadFrameworkViteOptions<UnheadSvelteStreamingOptions>
+export type UnheadSvelteViteOptions = UnheadSvelteOptions
 
 /**
- * Unified Vite plugin for `@unhead/svelte`.
+ * Vite plugin for `@unhead/svelte`. Kept for backwards compatibility;
+ * prefer the unified `@unhead/svelte/bundler` entry which dispatches to
+ * all bundlers.
  */
-export const Unhead = createFrameworkVitePlugin<UnheadSvelteStreamingOptions>({
-  framework: '@unhead/svelte',
-  streamingPlugin: unheadSvelteStreamingPlugin,
-})
+export function Unhead(options: UnheadSvelteOptions = {}): Plugin[] {
+  return UnheadBundler(options).vite()
+}
