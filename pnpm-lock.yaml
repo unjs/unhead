@@ -70,7 +70,7 @@ catalogs:
       specifier: 14.6.1
       version: 14.6.1
     '@types/estree':
-      specifier: ^1.0.6
+      specifier: ^1.0.8
       version: 1.0.8
     '@types/jsdom':
       specifier: ^28.0.1
@@ -94,8 +94,8 @@ catalogs:
       specifier: ^11.0.1
       version: 11.0.1
     citty:
-      specifier: ^0.1.6
-      version: 0.1.6
+      specifier: ^0.2.2
+      version: 0.2.2
     devalue:
       specifier: ^5.7.1
       version: 5.7.1
@@ -157,7 +157,7 @@ catalogs:
       specifier: ^1.1.1
       version: 1.1.1
     tinyglobby:
-      specifier: ^0.2.15
+      specifier: ^0.2.16
       version: 0.2.16
     tslib:
       specifier: ^2.8.1
@@ -881,7 +881,7 @@ importers:
         version: link:../eslint-plugin
       citty:
         specifier: 'catalog:'
-        version: 0.1.6
+        version: 0.2.2
       pathe:
         specifier: 'catalog:'
         version: 2.0.3
