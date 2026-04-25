@@ -73,6 +73,10 @@
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
     },
+    "./validate": {
+      "types": "./dist/validate.d.ts",
+      "default": "./dist/validate.mjs"
+    },
     "./stream/unplugin": {
       "types": "./dist/stream/unplugin.d.ts",
       "default": "./dist/stream/unplugin.mjs"
@@ -123,6 +127,9 @@
       ],
       "parser": [
         "dist/parser.d.ts"
+      ],
+      "validate": [
+        "dist/validate.d.ts"
       ],
       "stream/unplugin": [
         "dist/stream/unplugin.d.ts"

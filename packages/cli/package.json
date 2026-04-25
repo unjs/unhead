@@ -1,0 +1,67 @@
+{
+  "name": "@unhead/cli",
+  "type": "module",
+  "version": "3.0.5",
+  "description": "CLI for auditing and migrating unhead head usage in your codebase.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "keywords": [
+    "cli",
+    "unhead",
+    "lint",
+    "audit",
+    "seo"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "unhead": "bin/unhead.mjs"
+  },
+  "files": [
+    "*.d.ts",
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "test": "vitest run",
+    "prepack": "pnpm run build"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0"
+  },
+  "dependencies": {
+    "@unhead/eslint-plugin": "workspace:*",
+    "citty": "catalog:",
+    "pathe": "catalog:",
+    "tinyglobby": "catalog:",
+    "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "vitest": "catalog:"
+  }
+}

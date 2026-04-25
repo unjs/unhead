@@ -31,3 +31,10 @@ export async function useDevtoolsConnection(): Promise<void> {
       console.warn('[unhead] Failed to connect to devtools:', err)
     })
 }
+
+export async function callRpc<T = any>(name: string, ...args: any[]): Promise<T> {
+  const client: any = await getDevToolsRpcClient()
+  if (!client?.call)
+    throw new Error('[unhead] DevTools RPC client unavailable')
+  return await client.call(name, ...args) as T
+}

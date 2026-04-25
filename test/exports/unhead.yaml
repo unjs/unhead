@@ -106,3 +106,12 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./validate:
+  DEPRECATED_PROPS: object
+  findClosestMatch: function
+  KNOWN_META_NAMES: object
+  KNOWN_META_PROPERTIES: object
+  levenshtein: function
+  TAG_PRIORITY_ALIASES: object
+  URL_META_KEYS: object
+  VALIDATION_RULE_IDS: object

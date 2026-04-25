@@ -53,6 +53,50 @@ export interface SerializedValidationRule {
   tagDedupeKey?: string
 }
 
+// Lint result types — kept in sync with packages/bundler/src/devtools/rpc/types.ts
+// (mirrored here rather than imported from a published subpath, matching the
+// existing duplication pattern for the other Serialized* types in this file).
+export interface LintMessage {
+  ruleId: string | null
+  message: string
+  severity: 'error' | 'warn'
+  line?: number
+  column?: number
+  endLine?: number
+  endColumn?: number
+  fixable: boolean
+}
+
+export interface LintFileResult {
+  filePath: string
+  relativePath: string
+  errorCount: number
+  warningCount: number
+  fixableErrorCount: number
+  fixableWarningCount: number
+  messages: LintMessage[]
+  fixed?: boolean
+}
+
+export interface LintRunResult {
+  available: true
+  mode: 'audit' | 'migrate'
+  files: LintFileResult[]
+  errorCount: number
+  warningCount: number
+  fixableErrorCount: number
+  fixableWarningCount: number
+  filesFixed: number
+  durationMs: number
+}
+
+export interface LintUnavailableResult {
+  available: false
+  message: string
+}
+
+export type LintResponse = LintRunResult | LintUnavailableResult
+
 export interface UnheadDevtoolsState {
   version: string
   entries: SerializedEntry[]

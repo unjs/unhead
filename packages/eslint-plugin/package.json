@@ -1,0 +1,61 @@
+{
+  "name": "@unhead/eslint-plugin",
+  "type": "module",
+  "version": "3.0.5",
+  "description": "ESLint rules for catching unhead misuse, type-narrowing issues, and v2-to-v3 migration problems.",
+  "author": "Harlan Wilton <harlan@harlanzw.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/harlan-zw",
+  "homepage": "https://unhead.unjs.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unjs/unhead.git",
+    "directory": "packages/eslint-plugin"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  },
+  "bugs": {
+    "url": "https://github.com/unjs/unhead/issues"
+  },
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "unhead",
+    "head",
+    "seo"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "*.d.ts",
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub",
+    "test": "vitest run",
+    "prepack": "pnpm run build"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "unhead": "workspace:^"
+  },
+  "dependencies": {
+    "unhead": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/estree": "catalog:",
+    "eslint": "catalog:",
+    "vitest": "catalog:"
+  }
+}
