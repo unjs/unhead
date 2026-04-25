@@ -17,19 +17,19 @@
     "compression": "^1.8.1",
     "express": "^5.2.1",
     "sirv": "^3.0.2",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+    "vue": "^3.5.33",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
     "@unhead/bundler": "workspace:*",
-    "@vitejs/devtools": "^0.1.14",
+    "@vitejs/devtools": "^0.1.15",
     "@vitejs/plugin-vue": "^6.0.6",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
     "unplugin-auto-import": "^21.0.0",
-    "vite": "^8.0.9",
+    "vite": "^8.0.10",
     "vue-tsc": "^3.2.7"
   }
 }

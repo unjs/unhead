@@ -13,19 +13,19 @@ packages:
 overrides:
   chokidar: 5.0.0
 catalog:
-  '@angular-devkit/build-angular': ^21.2.7
-  '@angular/cli': ^21.2.7
-  '@angular/common': ^21.2.9
-  '@angular/compiler': ^21.2.9
-  '@angular/compiler-cli': ^21.2.9
-  '@angular/core': ^21.2.9
-  '@angular/platform-browser': ^21.2.9
-  '@angular/platform-browser-dynamic': ^21.2.9
-  '@angular/platform-server': ^21.2.9
+  '@angular-devkit/build-angular': ^21.2.8
+  '@angular/cli': ^21.2.8
+  '@angular/common': ^21.2.10
+  '@angular/compiler': ^21.2.10
+  '@angular/compiler-cli': ^21.2.10
+  '@angular/core': ^21.2.10
+  '@angular/platform-browser': ^21.2.10
+  '@angular/platform-browser-dynamic': ^21.2.10
+  '@angular/platform-server': ^21.2.10
   '@antfu/eslint-config': ^8.2.0
   '@arethetypeswrong/cli': ^0.18.2
   '@fast-check/vitest': ^0.4.0
-  '@nuxt/ui': ^4.6.1
+  '@nuxt/ui': ^4.7.0
   '@rollup/plugin-node-resolve': ^16.0.3
   '@shikijs/langs': ^4.0.2
   '@shikijs/themes': ^4.0.2
@@ -37,8 +37,8 @@ catalog:
   '@types/jsdom': ^28.0.1
   '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.3
-  '@vitejs/devtools-kit': ^0.1.14
-  '@vue/server-renderer': ^3.5.32
+  '@vitejs/devtools-kit': ^0.1.15
+  '@vue/server-renderer': ^3.5.33
   '@vueuse/nuxt': ^14.2.1
   bumpp: ^11.0.1
   devalue: ^5.7.1
@@ -59,8 +59,8 @@ catalog:
   rollup-plugin-visualizer: ^7.0.1
   shiki: ^4.0.2
   solid-js: ^1.9.12
-  svelte: ^5.55.4
-  tailwindcss: ^4.2.3
+  svelte: ^5.55.5
+  tailwindcss: ^4.2.4
   tinyexec: ^1.1.1
   tslib: ^2.8.1
   typescript: 6.0.2
@@ -68,10 +68,10 @@ catalog:
   unbuild: ^3.6.1
   unplugin: ^3.0.0
   unplugin-vue-components: ^32.0.0
-  vite: ^8.0.9
-  vitest: ^4.1.4
+  vite: ^8.0.10
+  vitest: ^4.1.5
   vitest-package-exports: ^1.2.0
-  vue: ^3.5.32
+  vue: ^3.5.33
   vue-tsc: ^3.2.7
   zone.js: ^0.16.1
 ignoredBuiltDependencies:

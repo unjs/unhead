@@ -17,17 +17,17 @@
     "compression": "^1.8.1",
     "express": "^5.2.1",
     "unhead": "workspace:*",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4"
+    "vue": "^3.5.33",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
-    "@vitejs/devtools": "^0.1.14",
+    "@vitejs/devtools": "^0.1.15",
     "@vitejs/plugin-vue": "latest",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.0.9"
+    "vite": "^8.0.10"
   }
 }
