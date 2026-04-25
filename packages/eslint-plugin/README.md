@@ -31,7 +31,7 @@ For projects migrating from unhead v2, swap in `unhead.configs.migration` to als
 | `no-html-in-title` | warn |   | HTML chars in `title` (will be escaped, not rendered) |
 | `no-unknown-meta` | warn | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
 | `non-absolute-canonical` | warn |   | relative URLs in `<link rel="canonical">` |
-| `numeric-tag-priority` | warn | suggestion | numeric `tagPriority` (suggests `'critical' | 'high' | 'low'`) |
+| `numeric-tag-priority` | warn | suggestion | numeric `tagPriority` (suggests `'critical'`, `'high'`, or `'low'`) |
 | `prefer-define-helpers` | off (migration only) | ✓ | wraps `link` / `script` tag object literals in `defineLink` / `defineScript` |
 | `preload-font-crossorigin` | error | ✓ | font preloads missing `crossorigin` (would refetch) |
 | `preload-missing-as` | error |   | `<link rel="preload">` missing required `as` |

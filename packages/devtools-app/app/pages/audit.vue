@@ -51,7 +51,9 @@ function openFile(file: LintFileResult, message?: LintMessage) {
   const loc = message?.line != null
     ? `${file.filePath}:${message.line}${message.column != null ? `:${message.column}` : ''}`
     : file.filePath
-  fetch(`/__open-in-editor?file=${encodeURIComponent(loc)}`).catch(() => {})
+  fetch(`/__open-in-editor?file=${encodeURIComponent(loc)}`).catch((err) => {
+    console.warn('[unhead devtools] open-in-editor failed:', err)
+  })
 }
 </script>
 
