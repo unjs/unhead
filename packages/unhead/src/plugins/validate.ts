@@ -1,66 +1,21 @@
 import type { HeadTag, Unhead } from '../types'
+import type { RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
+import {
+  DEPRECATED_PROPS,
+  findClosestMatch,
+  KNOWN_META_NAMES,
+  KNOWN_META_PROPERTIES,
+  URL_META_KEYS,
+} from '../validate'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
-export type RuleSeverity = 'warn' | 'info' | 'off'
-
-export type ValidationRuleId
-  = | 'canonical-og-url-mismatch'
-    | 'charset-not-early'
-    | 'defer-on-module-script'
-    | 'deprecated-option-mode'
-    | 'deprecated-prop-body'
-    | 'deprecated-prop-children'
-    | 'deprecated-prop-hid-vmid'
-    | 'duplicate-resource-hint'
-    | 'empty-meta-content'
-    | 'empty-title'
-    | 'html-in-title'
-    | 'inline-script-size'
-    | 'inline-style-size'
-    | 'meta-beyond-1mb'
-    | 'missing-alias-sorting-plugin'
-    | 'missing-description'
-    | 'missing-template-params-plugin'
-    | 'missing-title'
-    | 'non-absolute-canonical'
-    | 'non-absolute-og-url'
-    | 'og-image-missing-dimensions'
-    | 'og-missing-description'
-    | 'og-missing-title'
-    | 'possible-typo'
-    | 'preconnect-missing-crossorigin'
-    | 'prefetch-preload-conflict'
-    | 'preload-async-defer-conflict'
-    | 'preload-fetchpriority-conflict'
-    | 'preload-font-crossorigin'
-    | 'preload-missing-as'
-    | 'preload-not-modulepreload'
-    | 'redundant-dns-prefetch'
-    | 'render-blocking-script'
-    | 'robots-conflict'
-    | 'script-src-with-content'
-    | 'too-many-fetchpriority-high'
-    | 'too-many-preconnects'
-    | 'too-many-preloads'
-    | 'twitter-handle-missing-at'
-    | 'unresolved-template-param'
-    | 'viewport-user-scalable'
-
-export interface ValidationRuleOptions {
-  'charset-not-early': { maxPosition: number }
-  'inline-script-size': { maxKB: number }
-  'inline-style-size': { maxKB: number }
-  'meta-beyond-1mb': { maxBytes: number }
-  'too-many-fetchpriority-high': { max: number }
-  'too-many-preloads': { max: number }
-  'too-many-preconnects': { max: number }
-}
-
-export type RuleConfig<Id extends ValidationRuleId> = Id extends keyof ValidationRuleOptions
-  ? RuleSeverity | [severity: RuleSeverity, options: ValidationRuleOptions[Id]]
-  : RuleSeverity
-
-export type RulesConfig = { [K in ValidationRuleId]?: RuleConfig<K> }
+export type {
+  RuleConfig,
+  RulesConfig,
+  RuleSeverity,
+  ValidationRuleId,
+  ValidationRuleOptions,
+} from '../validate'
 
 export interface HeadValidationRule {
   id: ValidationRuleId
@@ -96,121 +51,6 @@ export interface ValidatePluginOptions {
   root?: string
 }
 
-const URL_META_KEYS = new Set([
-  'og:url',
-  'og:image',
-  'og:image:url',
-  'og:image:secure_url',
-  'og:video',
-  'og:video:url',
-  'og:video:secure_url',
-  'og:audio',
-  'og:audio:url',
-  'og:audio:secure_url',
-  'twitter:image',
-  'twitter:image:src',
-  'twitter:player',
-  'twitter:player:stream',
-])
-
-const KNOWN_META_PROPERTIES = new Set([
-  'article:author',
-  'article:expiration_time',
-  'article:modified_time',
-  'article:published_time',
-  'article:section',
-  'article:tag',
-  'book:author',
-  'book:isbn',
-  'book:release_date',
-  'book:tag',
-  'fb:app_id',
-  'og:audio',
-  'og:audio:secure_url',
-  'og:audio:type',
-  'og:audio:url',
-  'og:description',
-  'og:determiner',
-  'og:image',
-  'og:image:height',
-  'og:image:secure_url',
-  'og:image:type',
-  'og:image:url',
-  'og:image:width',
-  'og:locale',
-  'og:locale:alternate',
-  'og:site_name',
-  'og:title',
-  'og:type',
-  'og:url',
-  'og:video',
-  'og:video:height',
-  'og:video:secure_url',
-  'og:video:type',
-  'og:video:url',
-  'og:video:width',
-  'profile:first_name',
-  'profile:gender',
-  'profile:last_name',
-  'profile:username',
-])
-
-const KNOWN_META_NAMES = new Set([
-  'apple-itunes-app',
-  'apple-mobile-web-app-capable',
-  'apple-mobile-web-app-status-bar-style',
-  'apple-mobile-web-app-title',
-  'application-name',
-  'author',
-  'color-scheme',
-  'creator',
-  'description',
-  'fb:app_id',
-  'fediverse:creator',
-  'format-detection',
-  'generator',
-  'google-site-verification',
-  'google',
-  'googlebot',
-  'keywords',
-  'mobile-web-app-capable',
-  'msapplication-Config',
-  'msapplication-TileColor',
-  'msapplication-TileImage',
-  'publisher',
-  'rating',
-  'referrer',
-  'robots',
-  'theme-color',
-  'viewport',
-  'twitter:app:id:googleplay',
-  'twitter:app:id:ipad',
-  'twitter:app:id:iphone',
-  'twitter:app:name:googleplay',
-  'twitter:app:name:ipad',
-  'twitter:app:name:iphone',
-  'twitter:app:url:googleplay',
-  'twitter:app:url:ipad',
-  'twitter:app:url:iphone',
-  'twitter:card',
-  'twitter:creator',
-  'twitter:creator:id',
-  'twitter:data:1',
-  'twitter:data:2',
-  'twitter:description',
-  'twitter:image',
-  'twitter:image:alt',
-  'twitter:label:1',
-  'twitter:label:2',
-  'twitter:player',
-  'twitter:player:height',
-  'twitter:player:stream',
-  'twitter:player:width',
-  'twitter:site',
-  'twitter:site:id',
-  'twitter:title',
-])
-
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 const MAX_SCALE_RE = /maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/i
 const USER_SCALABLE_NO_RE = /user-scalable\s*=\s*no(?:\s|,|$)/i
@@ -218,38 +58,6 @@ const NUMERIC_RE = /^\d+$/
 const OG_PREFIX_RE = /^(?:og|article|book|profile|fb):/
 const HTML_CHARS_RE = /[<>]/
 const AT_PREFIX_RE = /^at\s+/
-
-function levenshtein(a: string, b: string): number {
-  const m = a.length
-  const n = b.length
-  const d: number[] = Array.from({ length: n + 1 }, (_, i) => i)
-  for (let i = 1; i <= m; i++) {
-    let prev = i - 1
-    d[0] = i
-    for (let j = 1; j <= n; j++) {
-      const tmp = d[j]
-      d[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, d[j], d[j - 1])
-      prev = tmp
-    }
-  }
-  return d[n]
-}
-
-function findClosestMatch(value: string, knownSet: Set<string>): string | undefined {
-  const threshold = value.length <= 8 ? 2 : 3
-  let best: string | undefined
-  let bestDist = threshold + 1
-  for (const known of knownSet) {
-    if (Math.abs(known.length - value.length) > threshold)
-      continue
-    const dist = levenshtein(value, known)
-    if (dist < bestDist) {
-      bestDist = dist
-      best = known
-    }
-  }
-  return best
-}
 
 function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
@@ -603,12 +411,29 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Deprecated v2 property names (no longer auto-converted)
           for (const tag of tags) {
-            if ('children' in tag.props)
-              report('deprecated-prop-children', `"children" was removed in v3. Use "innerHTML" instead.`, 'warn', tag)
-            if ('hid' in tag.props || 'vmid' in tag.props)
-              report('deprecated-prop-hid-vmid', `"${('hid' in tag.props) ? 'hid' : 'vmid'}" was removed in v3. Use "key" instead.`, 'warn', tag)
-            if (tag.props.body === true)
-              report('deprecated-prop-body', `"body: true" was removed in v3. Use "tagPosition: 'bodyClose'" instead.`, 'warn', tag)
+            for (const propName of Object.keys(DEPRECATED_PROPS)) {
+              if (!(propName in tag.props))
+                continue
+              if (propName === 'body' && tag.props.body !== true)
+                continue
+              const { replacement, ruleId } = DEPRECATED_PROPS[propName]
+              const message = propName === 'body'
+                ? `"body: true" was removed in v3. Use "${replacement}" instead.`
+                : `"${propName}" was removed in v3. Use "${replacement}" instead.`
+              report(ruleId, message, 'warn', tag)
+            }
+          }
+
+          // Numeric tagPriority (alias is preferred for readability and stability)
+          for (const tag of tags) {
+            if (typeof tag.tagPriority === 'number') {
+              report(
+                'numeric-tag-priority',
+                `Numeric tagPriority (${tag.tagPriority}) is brittle. Prefer an alias ('critical' | 'high' | 'low'), or 'before:<key>' / 'after:<key>' to position relative to another tag.`,
+                'info',
+                tag,
+              )
+            }
           }
 
           // Too many fetchpriority="high" dilutes the signal
