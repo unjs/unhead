@@ -1,0 +1,6 @@
+.:
+  audit: object
+  migrate: object
+  run: function
+  validateHtmlCommand: object
+  validateUrlCommand: object
