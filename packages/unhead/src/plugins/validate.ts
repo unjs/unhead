@@ -157,7 +157,8 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               hasTitle = true
 
             if (tag.tag === 'meta') {
-              const key = tag.props.property || tag.props.name
+              // HTML `meta[name]` is case-insensitive; normalize for cross-tag lookups.
+              const key = tag.props.property || (tag.props.name ? String(tag.props.name).toLowerCase() : undefined)
               if (key) {
                 metaByKey.set(key, tag)
                 if (key.startsWith('og:'))
@@ -176,7 +177,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Per-tag validation
           for (const tag of tags) {
             const { props } = tag
-            const metaKey = props.property || props.name
+            const metaKey = props.property || (props.name ? String(props.name).toLowerCase() : undefined)
 
             // === URL Validity ===
 

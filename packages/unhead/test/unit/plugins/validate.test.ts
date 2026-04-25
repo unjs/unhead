@@ -465,6 +465,16 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
     })
 
+    it('treats meta[name] as case-insensitive for cross-tag checks', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        title: 'test',
+        meta: [{ name: 'Description', content: 'A valid description' }],
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
+    })
+
     it('warns og-image-missing-dimensions when only width provided', () => {
       const { head, rules } = createValidationHead()
       head.push({
