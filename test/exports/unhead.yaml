@@ -114,3 +114,4 @@
   levenshtein: function
   TAG_PRIORITY_ALIASES: object
   URL_META_KEYS: object
+  VALIDATION_RULE_IDS: object
