@@ -830,6 +830,9 @@ importers:
 
   packages/bundler:
     dependencies:
+      '@unhead/cli':
+        specifier: workspace:^
+        version: link:../cli
       '@vitejs/devtools-kit':
         specifier: 'catalog:'
         version: 0.1.15(typescript@6.0.2)(vite@8.0.10)
