@@ -237,10 +237,14 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                   report('possible-typo', `Unknown meta property "${props.property}". Did you mean "${suggestion}"?`, 'warn', tag)
               }
 
-              if (props.name && !KNOWN_META_NAMES.has(props.name) && (props.name.startsWith('twitter:') || props.name.startsWith('fediverse:') || !props.name.includes(':'))) {
-                const suggestion = findClosestMatch(props.name, KNOWN_META_NAMES)
-                if (suggestion)
-                  report('possible-typo', `Unknown meta name "${props.name}". Did you mean "${suggestion}"?`, 'warn', tag)
+              if (props.name) {
+                // HTML `meta[name]` is case-insensitive, so normalize before lookup.
+                const lower = String(props.name).toLowerCase()
+                if (!KNOWN_META_NAMES.has(lower) && (lower.startsWith('twitter:') || lower.startsWith('fediverse:') || !lower.includes(':'))) {
+                  const suggestion = findClosestMatch(lower, KNOWN_META_NAMES)
+                  if (suggestion)
+                    report('possible-typo', `Unknown meta name "${props.name}". Did you mean "${suggestion}"?`, 'warn', tag)
+                }
               }
             }
 

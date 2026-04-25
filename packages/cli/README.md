@@ -41,6 +41,8 @@ unhead validate-html '.output/public/**/*.html'
 unhead validate-html dist/index.html --json
 ```
 
+Exits with code 1 when any rule fires at `warn` severity. Runtime `ValidatePlugin` rules don't have an `error` tier (`audit` does), so this is the strictest CI gate; downgrade specific rules to `info` or `off` via the plugin options if you want them non-blocking.
+
 ### `unhead validate-url <url>`
 
 Fetch a live URL and run the runtime `ValidatePlugin` over its `<head>`.
@@ -49,9 +51,12 @@ Fetch a live URL and run the runtime `ValidatePlugin` over its `<head>`.
 unhead validate-url https://example.com
 unhead validate-url https://example.com --json
 unhead validate-url https://example.com --user-agent 'Twitterbot/1.0'
+unhead validate-url https://example.com --timeout 10000
 ```
 
-The default user agent is `facebookexternalhit/1.1` so social-crawler-aware rules (e.g. `meta-beyond-1mb`) engage on the response.
+The default user agent is `facebookexternalhit/1.1` so social-crawler-aware rules (e.g. `meta-beyond-1mb`) engage on the response. The fetch is aborted after `--timeout` milliseconds (default 30000) and non-HTML responses fail fast.
+
+Exits with code 1 when any rule fires at `warn` severity (runtime rules don't expose an `error` tier).
 
 ## What runs where
 

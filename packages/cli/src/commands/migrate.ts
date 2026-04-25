@@ -12,12 +12,6 @@ export const migrate = defineCommand({
     description: 'Apply autofixes for v2-to-v3 migration: rewrite deprecated props and wrap tag literals in defineX helpers.',
   },
   args: {
-    'patterns': {
-      type: 'positional',
-      description: 'File globs to migrate (default: all source files).',
-      required: false,
-      valueHint: 'glob',
-    },
     'cwd': {
       type: 'string',
       description: 'Project root.',
@@ -35,13 +29,13 @@ export const migrate = defineCommand({
     const patterns = positional.length > 0 ? positional : DEFAULT_PATTERNS
 
     const dryRun = args['dry-run'] === true
-    const mode = dryRun ? 'audit' : 'migrate'
 
     const { results, fixableErrorCount, fixableWarningCount } = await runLint({
       patterns,
-      mode,
+      mode: 'migrate',
       cwd,
       ignore: DEFAULT_IGNORE,
+      write: !dryRun,
     })
 
     const output = await formatResults(results)

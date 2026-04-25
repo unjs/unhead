@@ -15,12 +15,6 @@ export const validateHtmlCommand = defineCommand({
     description: 'Run the runtime ValidatePlugin over prerendered HTML files (e.g. dist/, .output/, build/).',
   },
   args: {
-    patterns: {
-      type: 'positional',
-      description: 'Glob patterns matching HTML files (default: **/*.html).',
-      required: false,
-      valueHint: 'glob',
-    },
     cwd: {
       type: 'string',
       description: 'Project root.',
@@ -67,6 +61,10 @@ export const validateHtmlCommand = defineCommand({
       console.log(`\n${filesWithIssues}/${files.length} file${files.length === 1 ? '' : 's'} with issues, ${totalIssues} total`)
     }
 
+    // The runtime ValidatePlugin's rule severities are 'warn' | 'info' (no
+    // 'error'-tier), so we exit 1 on any 'warn'. CI consumers can downgrade
+    // specific rules to 'info' or 'off' via plugin options if they want them
+    // non-blocking.
     if (reports.some(r => r.rules.some(rule => rule.severity === 'warn')))
       process.exitCode = 1
   },

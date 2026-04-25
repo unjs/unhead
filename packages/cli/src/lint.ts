@@ -9,6 +9,13 @@ export interface LintOptions {
   mode: Mode
   cwd?: string
   ignore?: string[]
+  /**
+   * Whether to persist fixes to disk. Defaults to `mode === 'migrate'` so the
+   * `migrate` command writes by default and `audit` never does. Pass `false`
+   * with `mode: 'migrate'` for a dry-run that still computes fixes against the
+   * full migration rule set.
+   */
+  write?: boolean
 }
 
 function buildConfig(mode: Mode, ignore: string[]): Linter.Config[] {
@@ -20,13 +27,14 @@ function buildConfig(mode: Mode, ignore: string[]): Linter.Config[] {
   return ignore.length ? [{ ignores: ignore }, base] : [base]
 }
 
-export async function runLint({ patterns, mode, cwd, ignore = [] }: LintOptions): Promise<{
+export async function runLint({ patterns, mode, cwd, ignore = [], write }: LintOptions): Promise<{
   results: ESLintType.LintResult[]
   errorCount: number
   warningCount: number
   fixableErrorCount: number
   fixableWarningCount: number
 }> {
+  const shouldWrite = write ?? (mode === 'migrate')
   const eslint = new ESLint({
     cwd,
     overrideConfigFile: true,
@@ -36,7 +44,7 @@ export async function runLint({ patterns, mode, cwd, ignore = [] }: LintOptions)
 
   const results = await eslint.lintFiles(patterns)
 
-  if (mode === 'migrate')
+  if (shouldWrite)
     await ESLint.outputFixes(results)
 
   let errorCount = 0

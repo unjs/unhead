@@ -7,7 +7,7 @@ import { validateUrlCommand } from './commands/validate-url'
 const main = defineCommand({
   meta: {
     name: 'unhead',
-    description: 'Audit and migrate unhead head usage.',
+    description: 'Audit, migrate, and validate unhead head usage.',
   },
   subCommands: {
     'audit': audit,

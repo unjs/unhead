@@ -47,13 +47,29 @@ export function getCalleeName(node: ESTree.CallExpression): string | undefined {
   return undefined
 }
 
-export function getStringValue(node: ESTree.Node | undefined): string | undefined {
+/**
+ * Strip TypeScript wrapper expressions so checks against `'ObjectExpression'`,
+ * `'Literal'`, etc. still work on `useHead(input as UseHeadInput)` and friends.
+ * Recursive so nested wrappers like `(x as A) as B` collapse.
+ */
+export function unwrapTS(node: ESTree.Node | undefined): ESTree.Node | undefined {
   if (!node)
+    return node
+  // @typescript-eslint nodes are not in the upstream estree types, hence the cast.
+  const t = (node as { type: string }).type
+  if (t === 'TSAsExpression' || t === 'TSTypeAssertion' || t === 'TSNonNullExpression' || t === 'TSSatisfiesExpression' || t === 'TSInstantiationExpression')
+    return unwrapTS((node as unknown as { expression: ESTree.Node }).expression)
+  return node
+}
+
+export function getStringValue(node: ESTree.Node | undefined): string | undefined {
+  const inner = unwrapTS(node)
+  if (!inner)
     return undefined
-  if (node.type === 'Literal' && typeof node.value === 'string')
-    return node.value
-  if (node.type === 'TemplateLiteral' && node.expressions.length === 0 && node.quasis.length === 1)
-    return node.quasis[0].value.cooked ?? undefined
+  if (inner.type === 'Literal' && typeof inner.value === 'string')
+    return inner.value
+  if (inner.type === 'TemplateLiteral' && inner.expressions.length === 0 && inner.quasis.length === 1)
+    return inner.quasis[0].value.cooked ?? undefined
   return undefined
 }
 
@@ -77,8 +93,15 @@ export function hasInnerContent(tag: ESTree.ObjectExpression): boolean {
   return Boolean(html || text)
 }
 
+/**
+ * Returns the *last* matching property to mirror runtime JS semantics, where
+ * a duplicate key in an object literal is overwritten by the later occurrence.
+ * Without this, fixers like `no-deprecated-props` could disagree with what the
+ * engine actually sees.
+ */
 export function findProperty(obj: ESTree.ObjectExpression, key: string): ESTree.Property | undefined {
-  for (const prop of obj.properties) {
+  for (let i = obj.properties.length - 1; i >= 0; i--) {
+    const prop = obj.properties[i]
     if (prop.type !== 'Property' || prop.computed)
       continue
     const k = prop.key
@@ -106,8 +129,9 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
       if (!arr || !visitor.onTag)
         return
       for (const el of arr.elements) {
-        if (el && el.type === 'ObjectExpression')
-          visitor.onTag(el, tagType, ctx)
+        const inner = unwrapTS(el as ESTree.Node | undefined)
+        if (inner && inner.type === 'ObjectExpression')
+          visitor.onTag(inner, tagType, ctx)
       }
     }
 
@@ -118,7 +142,7 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
           return
 
         if (TAG_HELPER_CALLEES.has(name)) {
-          const arg = node.arguments[0]
+          const arg = unwrapTS(node.arguments[0] as ESTree.Node | undefined)
           if (arg?.type === 'ObjectExpression') {
             const tagType = name.slice('define'.length).toLowerCase()
             visitor.onTag?.(arg, tagType, ctx)
@@ -129,7 +153,7 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
         if (!HEAD_INPUT_CALLEES.has(name))
           return
 
-        const arg = node.arguments[0]
+        const arg = unwrapTS(node.arguments[0] as ESTree.Node | undefined)
         if (arg?.type !== 'ObjectExpression')
           return
 
@@ -149,10 +173,11 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
               : undefined
           if (!key || !HEAD_INPUT_TAG_KEYS.has(key))
             continue
-          if (prop.value.type === 'ArrayExpression')
-            visitTagArray(prop.value, key)
-          else if (prop.value.type === 'ObjectExpression')
-            visitor.onTag?.(prop.value, key, ctx)
+          const value = unwrapTS(prop.value)
+          if (value?.type === 'ArrayExpression')
+            visitTagArray(value, key)
+          else if (value?.type === 'ObjectExpression')
+            visitor.onTag?.(value, key, ctx)
         }
       },
     }

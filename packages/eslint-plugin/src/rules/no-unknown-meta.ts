@@ -48,12 +48,15 @@ export const noUnknownMeta: Rule.RuleModule = {
 
       if (nameProp) {
         const value = getStringValue(nameProp.value)
+        // HTML `meta[name]` is case-insensitive, so normalize before lookup.
+        const lower = value?.toLowerCase()
         if (
           value
-          && !KNOWN_META_NAMES.has(value)
-          && (value.startsWith('twitter:') || value.startsWith('fediverse:') || !value.includes(':'))
+          && lower
+          && !KNOWN_META_NAMES.has(lower)
+          && (lower.startsWith('twitter:') || lower.startsWith('fediverse:') || !lower.includes(':'))
         ) {
-          const suggestion = findClosestMatch(value, KNOWN_META_NAMES)
+          const suggestion = findClosestMatch(lower, KNOWN_META_NAMES)
           if (suggestion) {
             ctx.report({
               node: nameProp.value,

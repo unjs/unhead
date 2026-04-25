@@ -18,6 +18,23 @@ export const noDeprecatedProps: Rule.RuleModule = {
   },
   create: createTagVisitor({
     onTag(tag, _tagType, ctx) {
+      // Collect existing key names so we can skip the autofix when the
+      // target name is already present (otherwise the fix would produce a
+      // duplicate-key object literal where the runtime silently picks one).
+      const existingKeys = new Set<string>()
+      for (const prop of tag.properties) {
+        if (prop.type !== 'Property' || prop.computed)
+          continue
+        const k = prop.key
+        const name = k.type === 'Identifier'
+          ? k.name
+          : k.type === 'Literal' && typeof k.value === 'string'
+            ? k.value
+            : undefined
+        if (name)
+          existingKeys.add(name)
+      }
+
       for (const prop of tag.properties) {
         if (prop.type !== 'Property' || prop.computed)
           continue
@@ -36,22 +53,28 @@ export const noDeprecatedProps: Rule.RuleModule = {
         if (propName === 'body') {
           if (prop.value.type !== 'Literal' || prop.value.value !== true)
             continue
+          const fix = existingKeys.has('tagPosition')
+            ? undefined
+            : (fixer: Rule.RuleFixer) => fixer.replaceText(prop, `tagPosition: 'bodyClose'`)
           ctx.report({
             node: prop,
             messageId: 'deprecated',
             data: { prop: propName, replacement },
-            fix: fixer => fixer.replaceText(prop, `tagPosition: 'bodyClose'`),
+            fix,
           })
           continue
         }
 
         // children → innerHTML, hid/vmid → key. Replace the key only, leaving the value.
         const newKeyName = propName === 'children' ? 'innerHTML' : 'key'
+        const fix = existingKeys.has(newKeyName)
+          ? undefined
+          : (fixer: Rule.RuleFixer) => fixer.replaceText(key, newKeyName)
         ctx.report({
           node: prop,
           messageId: 'deprecated',
           data: { prop: propName, replacement },
-          fix: fixer => fixer.replaceText(key, newKeyName),
+          fix,
         })
       }
     },

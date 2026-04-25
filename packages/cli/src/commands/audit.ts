@@ -12,12 +12,6 @@ export const audit = defineCommand({
     description: 'Lint your codebase for unhead misuse, type-narrowing issues, and SEO/perf foot-guns.',
   },
   args: {
-    patterns: {
-      type: 'positional',
-      description: 'File globs to scan (default: all source files).',
-      required: false,
-      valueHint: 'glob',
-    },
     cwd: {
       type: 'string',
       description: 'Project root.',
