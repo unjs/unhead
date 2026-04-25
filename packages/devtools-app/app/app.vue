@@ -2,6 +2,7 @@
 import type { DevtoolsNavItem } from '~/components/DevtoolsLayout.vue'
 import { brokenLinks, validateLinks } from '~/composables/link-checker'
 import { useDevtoolsConnection } from '~/composables/rpc'
+import { applyOverrides, useRuleOverrides } from '~/composables/rule-overrides'
 import { loadShiki } from '~/composables/shiki'
 import { state } from '~/composables/state'
 import { checkForUpdate, hasUpdate, latestVersion } from '~/composables/update-check'
@@ -15,8 +16,14 @@ watch(() => state.value.tags, tags => validateLinks(tags), { immediate: true })
 // Check for version updates once we have the version
 watch(() => state.value.version, v => checkForUpdate(v), { immediate: true })
 
+const { overrides } = useRuleOverrides()
+
 const tagsErrors = computed(() => brokenLinks.value.size)
-const tagsWarnings = computed(() => (state.value.validationRules || []).filter(r => r.severity === 'warn').length)
+const tagsWarnings = computed(() =>
+  applyOverrides([...(state.value.validationRules || [])], overrides.value)
+    .filter(r => r.severity === 'warn')
+    .length,
+)
 
 const socialErrors = computed(() => {
   let count = 0
@@ -40,6 +47,7 @@ const navItems = computed<DevtoolsNavItem[]>(() => [
   { value: 'identity', to: '/identity', icon: 'i-carbon-user-profile', label: 'Identity' },
   { value: 'schema', to: '/schema', icon: 'i-carbon-chart-relationship', label: 'Schema.org' },
   { value: 'scripts', to: '/scripts', icon: 'i-carbon-script', label: 'Scripts' },
+  { value: 'audit', to: '/audit', icon: 'i-carbon-rule-test', label: 'Audit' },
   { value: 'docs', to: '/docs', icon: 'i-carbon-document', label: 'Docs' },
 ])
 </script>

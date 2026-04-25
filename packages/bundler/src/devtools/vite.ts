@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
-import { getConfigRpc } from './rpc'
+import { getConfigRpc, runLintRpc } from './rpc'
 
 const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
@@ -201,6 +201,7 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
         })
 
         ctx.rpc.register(getConfigRpc)
+        ctx.rpc.register(runLintRpc)
       },
     },
   }

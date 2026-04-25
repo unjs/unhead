@@ -28,6 +28,7 @@ export default defineBuildConfig({
     'rolldown',
     '@vitejs/devtools-kit',
     '@vitejs/devtools-kit/client',
+    '@unhead/cli',
   ],
   hooks: {
     'build:done': async function (ctx) {

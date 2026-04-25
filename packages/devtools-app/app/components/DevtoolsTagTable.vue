@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SerializedTag } from '~/composables/state'
 import { brokenLinks, isBrokenUrl } from '~/composables/link-checker'
+import { applyOverrides, useRuleOverrides } from '~/composables/rule-overrides'
 import { state } from '~/composables/state'
 
 const { tags, title = 'Tags', icon = 'i-carbon-tag-group' } = defineProps<{
@@ -60,7 +61,10 @@ function toggleTagType(tag: string) {
   activeTagType.value = activeTagType.value === tag ? null : tag
 }
 
-// Merge server validation rules with client-side broken link checks
+const { overrides } = useRuleOverrides()
+
+// Merge server validation rules with client-side broken link checks, then
+// apply view-side severity overrides from the audit settings panel.
 const validationRules = computed(() => {
   const rules = [...(state.value.validationRules || [])]
   for (const broken of brokenLinks.value.values()) {
@@ -71,7 +75,7 @@ const validationRules = computed(() => {
       tagDedupeKey: broken.tagDedupeKey,
     })
   }
-  return rules
+  return applyOverrides(rules, overrides.value)
 })
 
 const URL_SUFFIX_RE = /:\s+(https?:\/\/\S+|\/\S+)$/
@@ -331,9 +335,18 @@ function toggleRow(tag: any) {
                 </div>
               </td>
               <td class="p-2 font-mono text-xs text-muted">
-                <button v-if="tag.source" class="hover:text-default hover:underline transition-colors cursor-pointer" :class="{ 'text-default font-medium': activeSource === tag.source }" @click.stop="toggleSource(tag.source!)">
-                  {{ tag.source }}
-                </button>
+                <div v-if="tag.source" class="flex items-center gap-1">
+                  <button class="hover:text-default hover:underline transition-colors cursor-pointer" :class="{ 'text-default font-medium': activeSource === tag.source }" @click.stop="toggleSource(tag.source!)">
+                    {{ tag.source }}
+                  </button>
+                  <button
+                    class="opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
+                    title="Open in editor"
+                    @click.stop="openInEditor(tag.source)"
+                  >
+                    <UIcon name="i-carbon-launch" class="text-sm" />
+                  </button>
+                </div>
               </td>
               <td class="p-2">
                 <UBadge
@@ -363,8 +376,19 @@ function toggleRow(tag: any) {
                         class="text-sm mt-0.5 shrink-0"
                         :class="rule.id === 'broken-link' ? 'text-red-500' : rule.severity === 'warn' ? 'text-amber-500' : 'text-blue-400'"
                       />
-                      <div class="min-w-0">
-                        <span class="text-xs font-mono">{{ rule.id }}</span>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-xs font-mono">{{ rule.id }}</span>
+                          <button
+                            v-if="(rule as any).source"
+                            class="text-xs font-mono text-muted hover:text-default hover:underline cursor-pointer flex items-center gap-1"
+                            title="Open in editor"
+                            @click.stop="openInEditor((rule as any).source)"
+                          >
+                            {{ (rule as any).source }}
+                            <UIcon name="i-carbon-launch" class="text-xs opacity-70" />
+                          </button>
+                        </div>
                         <p class="text-xs text-muted">
                           {{ rule.message }}
                         </p>
