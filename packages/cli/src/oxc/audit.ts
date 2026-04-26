@@ -1,6 +1,6 @@
 import type { Diagnostic, HeadInputView, PredicateContext, TagInput } from 'unhead/validate'
 import type { ScriptBlock } from './sfc'
-import type { CallGraph, CandidateTitle } from './walker'
+import type { CallGraph } from './walker'
 import { readFile } from 'node:fs/promises'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
@@ -13,6 +13,7 @@ import {
 } from 'unhead/validate'
 import { applyFix } from './applyFix'
 import { materializeHeadInput, materializeTag } from './materialize'
+import { analyzeUseHeadForUseSeoMeta, renderUseSeoMetaArg } from './prefer-use-seo-meta'
 import { extractScriptBlocks, langForExt } from './sfc'
 import { collectImportedHelpers, extractCallGraph, extractCandidateTitles, HEAD_INPUT_CALLEES, walkHeadCalls } from './walker'
 
@@ -93,6 +94,9 @@ const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'twitter-handle-missing-at': 'warning',
   'viewport-user-scalable': 'warning',
   'prefer-define-helpers': 'warning',
+  'prefer-use-seo-meta': 'info',
+  'parse-error': 'warning',
+  'page-missing-head': 'info',
 }
 
 function lineCol(source: string, offset: number): { line: number, column: number } {
@@ -229,7 +233,32 @@ async function auditFile(
         const { line, column } = lineCol(source, piece.offset + call.start)
         headCalls.push({ name: callee, line, column })
       },
-      onHeadInput(input, callee) {
+      onHeadInput(input, callee, call) {
+        if (callee === 'useHead') {
+          const conversion = analyzeUseHeadForUseSeoMeta(input, piece.code)
+          if (conversion) {
+            const { line, column } = lineCol(source, piece.offset + call.start)
+            diagnostics.push({
+              ruleId: 'prefer-use-seo-meta',
+              message: 'This useHead call is meta-only — switch to useSeoMeta for full TypeScript autocompletion of SEO/OG/Twitter tags.',
+              line,
+              column,
+              severity: 'info',
+            })
+            if (shouldFix && magic) {
+              const calleeNode = (call as any).callee
+              const calleeStart = calleeNode?.type === 'Identifier' ? calleeNode.start : call.start
+              const calleeEnd = calleeNode?.type === 'Identifier' ? calleeNode.end : call.start
+              if (calleeNode?.type === 'Identifier') {
+                magic.overwrite(piece.offset + calleeStart, piece.offset + calleeEnd, 'useSeoMeta')
+              }
+              const originalSource = piece.code.slice(input.start, input.end)
+              const newArg = renderUseSeoMetaArg(conversion, originalSource)
+              magic.overwrite(piece.offset + input.start, piece.offset + input.end, newArg)
+              edited = true
+            }
+          }
+        }
         const view: HeadInputView = materializeHeadInput(input, callee)
         if (view.props.title !== undefined) {
           const titleProp = (input.properties as any[]).find((p: any) => {

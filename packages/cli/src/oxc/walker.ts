@@ -123,7 +123,7 @@ export interface HeadCallVisitor {
   /** Called for each tag-shaped object literal in a head input or `defineX` helper call. */
   onTag?: (tag: Node, tagType: string, info: { inArray: boolean }) => void
   /** Called for the top-level `useHead` / `useSeoMeta` argument. */
-  onHeadInput?: (input: Node, callee: string) => void
+  onHeadInput?: (input: Node, callee: string, call: Node) => void
   /**
    * Called once per recognised head/seo call (`useHead`, `useSeoMeta`,
    * `defineLink`, …), regardless of whether the argument is a recognisable
@@ -219,13 +219,15 @@ function readStringLiteral(value: Node): { value: string, dynamic: boolean } | u
   if (v.type === 'Literal' && typeof v.value === 'string')
     return { value: v.value, dynamic: false }
   if (v.type === 'TemplateLiteral') {
-    // Concatenate quasi cooked text with `${…}` placeholders so the
-    // separator / suffix analysis still has something to work with.
+    // Concatenate quasi cooked text with a literal "{…}" placeholder for each
+    // interpolation so the separator / suffix analysis still has something
+    // to work with. Avoids the actual `${…}` form to keep the escape rules
+    // simple (and to satisfy no-template-curly-in-string).
     let out = ''
     for (let i = 0; i < v.quasis.length; i++) {
       out += v.quasis[i].value.cooked ?? v.quasis[i].value.raw ?? ''
       if (i < v.expressions.length)
-        out += '${…}'
+        out += '{…}'
     }
     return { value: out, dynamic: v.expressions.length > 0 }
   }
@@ -303,7 +305,7 @@ export function walkHeadCalls(program: Node, visitor: HeadCallVisitor): void {
         if (!head)
           return
         visitor.onCall?.(node, name)
-        visitor.onHeadInput?.(head, name)
+        visitor.onHeadInput?.(head, name, node)
         descendHeadInput(head, name, visitor)
         return
       }
@@ -317,7 +319,7 @@ export function walkHeadCalls(program: Node, visitor: HeadCallVisitor): void {
       if (arg?.type !== 'ObjectExpression')
         return
 
-      visitor.onHeadInput?.(arg, name)
+      visitor.onHeadInput?.(arg, name, node)
       descendHeadInput(arg, name, visitor)
     },
   })

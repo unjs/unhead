@@ -1,5 +1,4 @@
 import type { AuditFileResult } from './oxc/audit'
-import type { TitleFinding } from './oxc/title-consistency'
 import { relative } from 'pathe'
 import { analyzeTitleConsistency } from './oxc/title-consistency'
 
