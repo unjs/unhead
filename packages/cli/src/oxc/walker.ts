@@ -194,6 +194,82 @@ export function extractCallGraph(program: Node): CallGraph {
   return { functions, allCalls: collectCallees(program) }
 }
 
+export interface CandidateTitle {
+  /** Identifier name of the called function (resolved through TS wrappers). */
+  callee: string
+  /** Resolvable string value of the `title` property. */
+  value: string
+  /**
+   * Whether the value contained a `${}` template substitution that we coerced
+   * to a placeholder. The title-consistency analyser ignores these for
+   * separator/suffix detection.
+   */
+  dynamic: boolean
+  /** Start offset of the `title:` property within the program. */
+  start: number
+}
+
+const TITLE_PROP_KEY = 'title'
+const TITLE_TEMPLATE_PROP_KEY = 'titleTemplate'
+
+function readStringLiteral(value: Node): { value: string, dynamic: boolean } | undefined {
+  const v = unwrapTS(value)
+  if (!v)
+    return undefined
+  if (v.type === 'Literal' && typeof v.value === 'string')
+    return { value: v.value, dynamic: false }
+  if (v.type === 'TemplateLiteral') {
+    // Concatenate quasi cooked text with `${…}` placeholders so the
+    // separator / suffix analysis still has something to work with.
+    let out = ''
+    for (let i = 0; i < v.quasis.length; i++) {
+      out += v.quasis[i].value.cooked ?? v.quasis[i].value.raw ?? ''
+      if (i < v.expressions.length)
+        out += '${…}'
+    }
+    return { value: out, dynamic: v.expressions.length > 0 }
+  }
+  return undefined
+}
+
+/**
+ * Walk the whole program and capture every CallExpression whose first arg is
+ * an ObjectExpression carrying a literal `title:` (or `titleTemplate:`)
+ * string. Used by the title-consistency analyser to follow project-specific
+ * head-providing wrappers like `useToolSeo({ title: '…' })` once the fixpoint
+ * has identified them.
+ */
+export function extractCandidateTitles(program: Node): { titles: CandidateTitle[], templates: CandidateTitle[] } {
+  const titles: CandidateTitle[] = []
+  const templates: CandidateTitle[] = []
+  walk(program as any, {
+    enter(node: any) {
+      if (node.type !== 'CallExpression')
+        return
+      const callee = getCalleeName(node)
+      if (!callee)
+        return
+      const arg = unwrapTS(node.arguments[0])
+      if (arg?.type !== 'ObjectExpression')
+        return
+      for (const prop of arg.properties) {
+        const key = getKeyName(prop)
+        if (key !== TITLE_PROP_KEY && key !== TITLE_TEMPLATE_PROP_KEY)
+          continue
+        const lit = readStringLiteral(prop.value)
+        if (!lit)
+          continue
+        const entry: CandidateTitle = { callee, value: lit.value, dynamic: lit.dynamic, start: prop.start }
+        if (key === TITLE_PROP_KEY)
+          titles.push(entry)
+        else
+          templates.push(entry)
+      }
+    },
+  })
+  return { titles, templates }
+}
+
 /**
  * Walk an oxc Program and dispatch each head call (`useHead`, `useSeoMeta`,
  * `defineLink`, `defineScript`, …) to the visitor. Mirrors the eslint-plugin

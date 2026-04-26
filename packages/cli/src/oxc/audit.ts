@@ -1,6 +1,6 @@
 import type { Diagnostic, HeadInputView, PredicateContext, TagInput } from 'unhead/validate'
 import type { ScriptBlock } from './sfc'
-import type { CallGraph } from './walker'
+import type { CallGraph, CandidateTitle } from './walker'
 import { readFile } from 'node:fs/promises'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
@@ -14,7 +14,7 @@ import {
 import { applyFix } from './applyFix'
 import { materializeHeadInput, materializeTag } from './materialize'
 import { extractScriptBlocks, langForExt } from './sfc'
-import { collectImportedHelpers, extractCallGraph, HEAD_INPUT_CALLEES, walkHeadCalls } from './walker'
+import { collectImportedHelpers, extractCallGraph, extractCandidateTitles, HEAD_INPUT_CALLEES, walkHeadCalls } from './walker'
 
 export type Mode = 'audit' | 'migrate'
 
@@ -46,6 +46,10 @@ export interface TitleObservation {
   column: number
   /** Composable that emitted it (`useHead`, `useSeoMeta`, `defineNuxtConfig`). */
   callee: string
+}
+
+interface CandidateTitleSite extends TitleObservation {
+  dynamic: boolean
 }
 
 export interface AuditFileResult {
@@ -137,11 +141,13 @@ async function auditFile(
   pieces: AuditPiece[],
   predicateNames: string[],
   shouldFix: boolean,
-): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], titles: TitleObservation[], titleTemplates: TitleObservation[], callGraph: CallGraph, output?: string }> {
+): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], titles: TitleObservation[], titleTemplates: TitleObservation[], candidateTitles: CandidateTitleSite[], candidateTemplates: CandidateTitleSite[], callGraph: CallGraph, output?: string }> {
   const diagnostics: FileDiagnostic[] = []
   const headCalls: HeadCallSite[] = []
   const titles: TitleObservation[] = []
   const titleTemplates: TitleObservation[] = []
+  const candidateTitles: CandidateTitleSite[] = []
+  const candidateTemplates: CandidateTitleSite[] = []
   const callGraph: CallGraph = { functions: new Map(), allCalls: new Set() }
   const magic = shouldFix ? new MagicString(source) : undefined
   let edited = false
@@ -190,6 +196,16 @@ async function auditFile(
       else {
         callGraph.functions.set(n, new Set(calls))
       }
+    }
+
+    const cands = extractCandidateTitles(program)
+    for (const t of cands.titles) {
+      const { line, column } = lineCol(source, piece.offset + t.start)
+      candidateTitles.push({ value: t.value, line, column, callee: t.callee, dynamic: t.dynamic })
+    }
+    for (const t of cands.templates) {
+      const { line, column } = lineCol(source, piece.offset + t.start)
+      candidateTemplates.push({ value: t.value, line, column, callee: t.callee, dynamic: t.dynamic })
     }
 
     function emit(diag: Diagnostic, node: any): void {
@@ -271,6 +287,8 @@ async function auditFile(
     headCalls,
     titles,
     titleTemplates,
+    candidateTitles,
+    candidateTemplates,
     callGraph,
     output: edited && magic ? magic.toString() : undefined,
   }
@@ -336,6 +354,7 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
   const results: AuditFileResult[] = []
   const allGraphs: CallGraph[] = []
   const pageFiles: { filePath: string, callGraph: CallGraph, headCalls: HeadCallSite[], existingResultIdx: number }[] = []
+  const pendingCandidates: { filePath: string, candidateTitles: CandidateTitleSite[], candidateTemplates: CandidateTitleSite[], existingResultIdx: number }[] = []
 
   for (const filePath of files) {
     const source = await readFile(filePath, 'utf8')
@@ -371,10 +390,47 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
     if (isPage && result.headCalls.length === 0) {
       pageFiles.push({ filePath, callGraph: result.callGraph, headCalls: result.headCalls, existingResultIdx: resultIdx })
     }
+
+    if (result.candidateTitles.length > 0 || result.candidateTemplates.length > 0) {
+      pendingCandidates.push({ filePath, candidateTitles: result.candidateTitles, candidateTemplates: result.candidateTemplates, existingResultIdx: resultIdx })
+    }
+  }
+
+  const headProviding = computeHeadProvidingCallees(allGraphs)
+
+  // Fold candidate titles from project-local head-providing wrappers
+  // (e.g. `useToolSeo({ title: '…' })`) into each result's titles. Direct
+  // useHead / useSeoMeta calls are already captured during the per-file walk
+  // and skipped here to avoid duplication.
+  for (const c of pendingCandidates) {
+    const extraTitles: TitleObservation[] = []
+    const extraTemplates: TitleObservation[] = []
+    for (const t of c.candidateTitles) {
+      if (HEAD_INPUT_CALLEES.has(t.callee))
+        continue
+      if (!headProviding.has(t.callee))
+        continue
+      extraTitles.push({ value: t.value, line: t.line, column: t.column, callee: t.callee })
+    }
+    for (const t of c.candidateTemplates) {
+      if (HEAD_INPUT_CALLEES.has(t.callee))
+        continue
+      if (!headProviding.has(t.callee))
+        continue
+      extraTemplates.push({ value: t.value, line: t.line, column: t.column, callee: t.callee })
+    }
+    if (extraTitles.length === 0 && extraTemplates.length === 0)
+      continue
+    if (c.existingResultIdx >= 0) {
+      results[c.existingResultIdx].titles.push(...extraTitles)
+      results[c.existingResultIdx].titleTemplates.push(...extraTemplates)
+    }
+    else {
+      results.push({ filePath: c.filePath, diagnostics: [], headCalls: [], titles: extraTitles, titleTemplates: extraTemplates })
+    }
   }
 
   if (pageFiles.length > 0) {
-    const headProviding = computeHeadProvidingCallees(allGraphs)
     for (const page of pageFiles) {
       let provides = false
       for (const c of page.callGraph.allCalls) {
