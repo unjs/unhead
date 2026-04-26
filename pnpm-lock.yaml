@@ -876,12 +876,18 @@ importers:
 
   packages/cli:
     dependencies:
-      '@unhead/eslint-plugin':
-        specifier: workspace:*
-        version: link:../eslint-plugin
       citty:
         specifier: 'catalog:'
         version: 0.2.2
+      magic-string:
+        specifier: 'catalog:'
+        version: 0.30.21
+      oxc-parser:
+        specifier: 'catalog:'
+        version: 0.127.0
+      oxc-walker:
+        specifier: 'catalog:'
+        version: 0.7.0(oxc-parser@0.127.0)
       pathe:
         specifier: 'catalog:'
         version: 2.0.3
@@ -892,9 +898,6 @@ importers:
         specifier: workspace:*
         version: link:../unhead
     devDependencies:
-      eslint:
-        specifier: 'catalog:'
-        version: 10.2.1(jiti@2.6.1)
       vitest:
         specifier: 'catalog:'
         version: 4.1.5(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.10)

@@ -1,6 +1,6 @@
 # `@unhead/cli`
 
-Command-line tools to audit and migrate unhead head usage in your codebase. Wraps `@unhead/eslint-plugin` for source-level checks and the runtime `ValidatePlugin` for rendered-HTML checks.
+Command-line tools to audit and migrate unhead head usage in your codebase. Source-level checks run on a native [oxc-parser](https://oxc.rs) AST so `.js` / `.ts` / `.tsx` / `.vue` / `.svelte` files lint with zero parser configuration. Rendered-HTML checks reuse the runtime `ValidatePlugin`.
 
 ## Install
 
@@ -14,12 +14,14 @@ The binary is installed as `unhead`.
 
 ### `unhead audit [globs...]`
 
-Lint your source for unhead misuse using the recommended ESLint rule set.
+Lint your source for unhead misuse using the recommended rule set.
 
 ```bash
 unhead audit                   # default: **/*.{js,ts,vue,svelte,...}
 unhead audit src/**/*.ts
 ```
+
+Vue and Svelte single-file components are handled by extracting each `<script>` block and parsing it with oxc; diagnostics report the original file's line/column. No `eslint`, `typescript-eslint`, or `vue-eslint-parser` install is needed.
 
 Exits with code 1 when any rule fires at `error` severity.
 
@@ -91,3 +93,7 @@ Source-level lint is the cheapest feedback loop and runs in your editor. The HTM
 ## Rule references
 
 Rule IDs are shared across all three layers. See [`@unhead/eslint-plugin`'s rules table](../eslint-plugin/README.md#rules) for source-level rules; runtime-only rule IDs are documented in `unhead/plugins`'s `ValidatePlugin` JSDoc.
+
+## Sharing logic with the editor
+
+`audit` and `migrate` invoke the same predicate functions exported from `unhead/validate` that `@unhead/eslint-plugin` registers as ESLint rules. Source-level diagnostics are byte-for-byte identical between `unhead audit` (CLI) and `pnpm lint` (your editor + CI ESLint pipeline). Use the CLI for one-shot project-wide audits and CI; use the ESLint plugin for inline editor feedback.

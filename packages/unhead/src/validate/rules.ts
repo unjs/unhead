@@ -32,6 +32,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'og-missing-title',
   'possible-typo',
   'preconnect-missing-crossorigin',
+  'prefer-define-helpers',
   'prefetch-preload-conflict',
   'preload-async-defer-conflict',
   'preload-fetchpriority-conflict',

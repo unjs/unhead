@@ -1,5 +1,6 @@
 import type { Rule } from 'eslint'
-import { createTagVisitor, findProperty, getStringProp } from '../utils/visitor'
+import { preloadFontCrossorigin as preloadFontCrossoriginPredicate, preloadMissingAs as preloadMissingAsPredicate } from 'unhead/validate'
+import { createTagPredicateRule } from '../utils/createPredicateRule'
 
 export const preloadMissingAs: Rule.RuleModule = {
   meta: {
@@ -10,20 +11,8 @@ export const preloadMissingAs: Rule.RuleModule = {
       url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preload',
     },
     schema: [],
-    messages: {
-      missingAs: 'Preload link is missing the required "as" attribute.',
-    },
   },
-  create: createTagVisitor({
-    onTag(tag, tagType, ctx) {
-      if (tagType !== 'link')
-        return
-      if (getStringProp(tag, 'rel') !== 'preload')
-        return
-      if (!findProperty(tag, 'as'))
-        ctx.report({ node: tag, messageId: 'missingAs' })
-    },
-  }),
+  create: createTagPredicateRule(preloadMissingAsPredicate),
 }
 
 export const preloadFontCrossorigin: Rule.RuleModule = {
@@ -36,26 +25,6 @@ export const preloadFontCrossorigin: Rule.RuleModule = {
     },
     fixable: 'code',
     schema: [],
-    messages: {
-      missingCrossorigin: 'Font preload requires "crossorigin" — without it the font will be fetched twice.',
-    },
   },
-  create: createTagVisitor({
-    onTag(tag, tagType, ctx) {
-      if (tagType !== 'link')
-        return
-      if (getStringProp(tag, 'rel') !== 'preload')
-        return
-      if (getStringProp(tag, 'as') !== 'font')
-        return
-      if (findProperty(tag, 'crossorigin'))
-        return
-      const asProp = findProperty(tag, 'as')!
-      ctx.report({
-        node: tag,
-        messageId: 'missingCrossorigin',
-        fix: fixer => fixer.insertTextAfter(asProp, `, crossorigin: 'anonymous'`),
-      })
-    },
-  }),
+  create: createTagPredicateRule(preloadFontCrossoriginPredicate),
 }

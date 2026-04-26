@@ -1,5 +1,6 @@
 import type { Rule } from 'eslint'
-import { createTagVisitor, findProperty, getStringProp } from '../utils/visitor'
+import { emptyMetaContent as predicate } from 'unhead/validate'
+import { createTagPredicateRule } from '../utils/createPredicateRule'
 
 export const emptyMetaContent: Rule.RuleModule = {
   meta: {
@@ -10,22 +11,6 @@ export const emptyMetaContent: Rule.RuleModule = {
       url: 'https://unhead.unjs.io/docs/typescript/head/api/composables/use-seo-meta',
     },
     schema: [],
-    messages: {
-      empty: 'Meta tag "{{key}}" has empty content.',
-    },
   },
-  create: createTagVisitor({
-    onTag(tag, tagType, ctx) {
-      if (tagType !== 'meta')
-        return
-      const contentProp = findProperty(tag, 'content')
-      if (!contentProp)
-        return
-      const value = contentProp.value
-      if (value.type !== 'Literal' || value.value !== '')
-        return
-      const key = getStringProp(tag, 'name') || getStringProp(tag, 'property') || 'meta'
-      ctx.report({ node: contentProp, messageId: 'empty', data: { key } })
-    },
-  }),
+  create: createTagPredicateRule(predicate),
 }

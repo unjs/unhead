@@ -12,14 +12,16 @@ pnpm add -D @unhead/eslint-plugin eslint
 
 ```ts
 // eslint.config.ts
-import unhead from '@unhead/eslint-plugin'
+import { configs } from '@unhead/eslint-plugin'
 
 export default [
-  unhead.configs.recommended,
+  configs.recommended,
 ]
 ```
 
-For projects migrating from unhead v2, swap in `unhead.configs.migration` to also wrap tag literals in the `defineLink` / `defineScript` helpers.
+For projects migrating from unhead v2, swap in `configs.migration` to also wrap tag literals in the `defineLink` / `defineScript` helpers.
+
+> Don't want to wire ESLint? `@unhead/cli` ships the same rules as a standalone command (`unhead audit` / `unhead migrate`) running on a native oxc parser — no parser configuration, works out-of-the-box on `.ts` / `.tsx` / `.vue` / `.svelte`.
 
 ## Rules
 
