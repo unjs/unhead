@@ -24,7 +24,9 @@ export interface ScriptBlock {
 // have on inputs like `"""""…` (CodeQL js/redos).
 const SCRIPT_OPEN_RE = /<script\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi
 const SCRIPT_CLOSE_RE = /<\/script\s*>/gi
-const LANG_ATTR_RE = /\blang\s*=\s*['"]([^'"]+)['"]/i
+// Matches quoted ("ts" / 'ts') and unquoted (`lang=ts`) values — Vue / Svelte
+// SFCs accept both forms.
+const LANG_ATTR_RE = /\blang\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'>]+))/i
 
 /**
  * Extract every `<script>` block from a `.vue` / `.svelte` source. Multiple
@@ -44,7 +46,7 @@ export function extractScriptBlocks(source: string): ScriptBlock[] {
       continue
     const code = source.slice(openEnd, closeMatch.index)
     const langMatch = attrs.match(LANG_ATTR_RE)
-    const declared = langMatch?.[1]?.toLowerCase()
+    const declared = (langMatch?.[1] ?? langMatch?.[2] ?? langMatch?.[3])?.toLowerCase()
     const lang: ScriptBlock['lang'] = declared === 'ts'
       ? 'ts'
       : declared === 'tsx'

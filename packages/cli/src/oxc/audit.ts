@@ -37,11 +37,26 @@ export interface HeadCallSite {
   column: number
 }
 
+export interface TitleObservation {
+  /** Statically-resolved title or titleTemplate string. */
+  value: string
+  /** 1-based line in the original file source. */
+  line: number
+  /** 1-based column in the original file source. */
+  column: number
+  /** Composable that emitted it (`useHead`, `useSeoMeta`, `defineNuxtConfig`). */
+  callee: string
+}
+
 export interface AuditFileResult {
   filePath: string
   diagnostics: FileDiagnostic[]
   /** Head/SEO calls found in the file — useful so users can confirm coverage. */
   headCalls: HeadCallSite[]
+  /** Resolvable `title:` literals found in the file. */
+  titles: TitleObservation[]
+  /** Resolvable `titleTemplate:` literals found in the file. */
+  titleTemplates: TitleObservation[]
   /** Migrated source if any fixes were applied. */
   output?: string
 }
@@ -122,9 +137,11 @@ async function auditFile(
   pieces: AuditPiece[],
   predicateNames: string[],
   shouldFix: boolean,
-): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], callGraph: CallGraph, output?: string }> {
+): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], titles: TitleObservation[], titleTemplates: TitleObservation[], callGraph: CallGraph, output?: string }> {
   const diagnostics: FileDiagnostic[] = []
   const headCalls: HeadCallSite[] = []
+  const titles: TitleObservation[] = []
+  const titleTemplates: TitleObservation[] = []
   const callGraph: CallGraph = { functions: new Map(), allCalls: new Set() }
   const magic = shouldFix ? new MagicString(source) : undefined
   let edited = false
@@ -198,6 +215,28 @@ async function auditFile(
       },
       onHeadInput(input, callee) {
         const view: HeadInputView = materializeHeadInput(input, callee)
+        if (view.props.title !== undefined) {
+          const titleProp = (input.properties as any[]).find((p: any) => {
+            const k = p.key
+            return (k?.type === 'Identifier' && k.name === 'title')
+              || (k?.type === 'Literal' && k.value === 'title')
+          })
+          if (titleProp) {
+            const { line, column } = lineCol(source, piece.offset + titleProp.start)
+            titles.push({ value: view.props.title, line, column, callee })
+          }
+        }
+        if (view.props.titleTemplate !== undefined) {
+          const tplProp = (input.properties as any[]).find((p: any) => {
+            const k = p.key
+            return (k?.type === 'Identifier' && k.name === 'titleTemplate')
+              || (k?.type === 'Literal' && k.value === 'titleTemplate')
+          })
+          if (tplProp) {
+            const { line, column } = lineCol(source, piece.offset + tplProp.start)
+            titleTemplates.push({ value: view.props.titleTemplate, line, column, callee })
+          }
+        }
         for (const name of predicateNames) {
           const pred = (headInputPredicates as Record<string, any>)[name]
           if (!pred)
@@ -230,6 +269,8 @@ async function auditFile(
   return {
     diagnostics,
     headCalls,
+    titles,
+    titleTemplates,
     callGraph,
     output: edited && magic ? magic.toString() : undefined,
   }
@@ -313,10 +354,18 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
     const isPage = isPagePath(filePath)
     const hasInterestingResult = result.diagnostics.length > 0 || !!result.output || result.headCalls.length > 0
 
+    const hasTitles = result.titles.length > 0 || result.titleTemplates.length > 0
     let resultIdx = -1
-    if (hasInterestingResult) {
+    if (hasInterestingResult || hasTitles) {
       resultIdx = results.length
-      results.push({ filePath, diagnostics: result.diagnostics, headCalls: result.headCalls, output: result.output })
+      results.push({
+        filePath,
+        diagnostics: result.diagnostics,
+        headCalls: result.headCalls,
+        titles: result.titles,
+        titleTemplates: result.titleTemplates,
+        output: result.output,
+      })
     }
 
     if (isPage && result.headCalls.length === 0) {
@@ -347,7 +396,7 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
         results[page.existingResultIdx].diagnostics.push(diag)
       }
       else {
-        results.push({ filePath: page.filePath, diagnostics: [diag], headCalls: [] })
+        results.push({ filePath: page.filePath, diagnostics: [diag], headCalls: [], titles: [], titleTemplates: [] })
       }
     }
   }

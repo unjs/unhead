@@ -42,4 +42,16 @@ const x: T = {} as T
   it('returns empty for template-only files', () => {
     expect(extractScriptBlocks(`<template><div /></template>`)).toHaveLength(0)
   })
+
+  it('parses unquoted lang attribute (lang=ts)', () => {
+    const out = extractScriptBlocks(`<script setup lang=ts>\nconst x: number = 1\n</script>`)
+    expect(out).toHaveLength(1)
+    expect(out[0].lang).toBe('ts')
+  })
+
+  it('parses single-quoted lang attribute', () => {
+    const out = extractScriptBlocks(`<script lang='tsx'>const x = <div/></script>`)
+    expect(out).toHaveLength(1)
+    expect(out[0].lang).toBe('tsx')
+  })
 })

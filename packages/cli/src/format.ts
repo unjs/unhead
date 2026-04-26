@@ -1,5 +1,7 @@
 import type { AuditFileResult } from './oxc/audit'
+import type { TitleFinding } from './oxc/title-consistency'
 import { relative } from 'pathe'
+import { analyzeTitleConsistency } from './oxc/title-consistency'
 
 const RED = '\x1B[31m'
 const YELLOW = '\x1B[33m'
@@ -14,7 +16,8 @@ const BOLD = '\x1B[1m'
  * `stylish` formatter. Output is colourised with ANSI when stdout is a TTY.
  */
 export function formatStylish(results: AuditFileResult[], cwd: string, color: boolean): string {
-  if (results.length === 0)
+  const titleFindings = analyzeTitleConsistency(results)
+  if (results.length === 0 && titleFindings.length === 0)
     return ''
 
   const c = color
@@ -64,7 +67,20 @@ export function formatStylish(results: AuditFileResult[], cwd: string, color: bo
     }
   }
 
-  if (total === 0 && covered.length === 0)
+  if (titleFindings.length > 0) {
+    lines.push('')
+    lines.push(`${c.bold}Title consistency${c.reset}`)
+    for (const f of titleFindings) {
+      lines.push(`  ${c.yellow}⚠${c.reset} ${f.message}`)
+      lines.push(`    ${c.dim}→ ${f.hint}${c.reset}`)
+      for (const o of f.occurrences) {
+        const path = relative(cwd, o.filePath)
+        lines.push(`    ${c.dim}${path}:${o.line}${c.reset}  ${truncate(o.value, 80)}`)
+      }
+    }
+  }
+
+  if (total === 0 && covered.length === 0 && titleFindings.length === 0)
     return ''
 
   if (total > 0) {
@@ -78,6 +94,10 @@ export function formatStylish(results: AuditFileResult[], cwd: string, color: bo
     lines.push(`${summaryColor}${c.bold}${glyph} ${summary}${c.reset}`)
   }
   return `${lines.join('\n')}\n`
+}
+
+function truncate(s: string, n: number): string {
+  return s.length <= n ? s : `${s.slice(0, n - 1)}…`
 }
 
 function summariseCalls(calls: AuditFileResult['headCalls']): string {
