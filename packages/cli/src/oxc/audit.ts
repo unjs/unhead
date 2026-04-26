@@ -27,9 +27,20 @@ export interface FileDiagnostic {
   severity: 'error' | 'warning'
 }
 
+export interface HeadCallSite {
+  /** Identifier the call resolved to (`useHead`, `useSeoMeta`, `defineLink`, …). */
+  name: string
+  /** 1-based line in the original file source. */
+  line: number
+  /** 1-based column in the original file source. */
+  column: number
+}
+
 export interface AuditFileResult {
   filePath: string
   diagnostics: FileDiagnostic[]
+  /** Head/SEO calls found in the file — useful so users can confirm coverage. */
+  headCalls: HeadCallSite[]
   /** Migrated source if any fixes were applied. */
   output?: string
 }
@@ -110,8 +121,9 @@ async function auditFile(
   pieces: AuditPiece[],
   predicateNames: string[],
   shouldFix: boolean,
-): Promise<{ diagnostics: FileDiagnostic[], output?: string }> {
+): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], output?: string }> {
   const diagnostics: FileDiagnostic[] = []
+  const headCalls: HeadCallSite[] = []
   const magic = shouldFix ? new MagicString(source) : undefined
   let edited = false
 
@@ -166,6 +178,10 @@ async function auditFile(
     }
 
     walkHeadCalls(program, {
+      onCall(call, callee) {
+        const { line, column } = lineCol(source, piece.offset + call.start)
+        headCalls.push({ name: callee, line, column })
+      },
       onHeadInput(input, callee) {
         const view: HeadInputView = materializeHeadInput(input, callee)
         for (const name of predicateNames) {
@@ -199,6 +215,7 @@ async function auditFile(
 
   return {
     diagnostics,
+    headCalls,
     output: edited && magic ? magic.toString() : undefined,
   }
 }
@@ -228,9 +245,9 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
     if (pieces.length === 0)
       continue
     const result = await auditFile(filePath, source, pieces, predicateNames, shouldFix)
-    if (result.diagnostics.length === 0 && !result.output)
+    if (result.diagnostics.length === 0 && !result.output && result.headCalls.length === 0)
       continue
-    results.push({ filePath, diagnostics: result.diagnostics, output: result.output })
+    results.push({ filePath, diagnostics: result.diagnostics, headCalls: result.headCalls, output: result.output })
   }
   return results
 }

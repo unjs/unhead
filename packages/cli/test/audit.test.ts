@@ -53,13 +53,15 @@ describe('runAudit (audit)', () => {
     expect(titleDiag.line).toBeLessThan(20)
   })
 
-  it('emits zero diagnostics for clean source', async () => {
+  it('emits zero diagnostics for clean source but reports head-call coverage', async () => {
     const results = await runAudit({
       patterns: ['clean.ts'],
       mode: 'audit',
       cwd: fixturesDir,
     })
-    expect(results).toHaveLength(0)
+    expect(results).toHaveLength(1)
+    expect(results[0].diagnostics).toHaveLength(0)
+    expect(results[0].headCalls.map(c => c.name)).toEqual(['useHead'])
   })
 
   it('summary aggregates errors and warnings by severity', async () => {
@@ -71,6 +73,33 @@ describe('runAudit (audit)', () => {
     const { errorCount, warningCount } = summarise(results)
     expect(errorCount).toBeGreaterThan(0)
     expect(warningCount).toBeGreaterThan(0)
+  })
+
+  it('audits app.head inside defineNuxtConfig', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-nuxt-'))
+    await writeFile(join(tmp, 'nuxt.config.ts'), `
+import { defineNuxtConfig } from 'nuxt/config'
+export default defineNuxtConfig({
+  app: {
+    head: {
+      title: '<b>Bad</b>',
+      meta: [
+        { name: 'twitter:site', content: 'unjsio' },
+      ],
+    },
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['nuxt.config.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    const ruleIds = results[0].diagnostics.map(d => d.ruleId).sort()
+    expect(ruleIds).toContain('html-in-title')
+    expect(ruleIds).toContain('twitter-handle-missing-at')
+    expect(results[0].headCalls.map(c => c.name)).toEqual(['defineNuxtConfig'])
   })
 
   it('surfaces parse errors as a diagnostic instead of silently skipping', async () => {

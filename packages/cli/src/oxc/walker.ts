@@ -13,6 +13,14 @@ export const HEAD_INPUT_CALLEES = new Set([
   'useServerSeoMeta',
 ])
 
+/**
+ * Nuxt-config wrappers whose first argument may carry an `app.head` block
+ * that is functionally identical to a `useHead` input.
+ */
+export const NUXT_CONFIG_CALLEES = new Set([
+  'defineNuxtConfig',
+])
+
 export const TAG_HELPER_CALLEES = new Set([
   'defineLink',
   'defineScript',
@@ -116,6 +124,12 @@ export interface HeadCallVisitor {
   onTag?: (tag: Node, tagType: string, info: { inArray: boolean }) => void
   /** Called for the top-level `useHead` / `useSeoMeta` argument. */
   onHeadInput?: (input: Node, callee: string) => void
+  /**
+   * Called once per recognised head/seo call (`useHead`, `useSeoMeta`,
+   * `defineLink`, …), regardless of whether the argument is a recognisable
+   * object literal. Used to surface coverage information.
+   */
+  onCall?: (call: Node, callee: string) => void
 }
 
 /**
@@ -134,6 +148,7 @@ export function walkHeadCalls(program: Node, visitor: HeadCallVisitor): void {
         return
 
       if (TAG_HELPER_CALLEES.has(name)) {
+        visitor.onCall?.(node, name)
         const arg = unwrapTS(node.arguments[0])
         if (arg?.type === 'ObjectExpression') {
           const tagType = name.slice('define'.length).toLowerCase()
@@ -142,35 +157,77 @@ export function walkHeadCalls(program: Node, visitor: HeadCallVisitor): void {
         return
       }
 
+      if (NUXT_CONFIG_CALLEES.has(name)) {
+        const arg = unwrapTS(node.arguments[0])
+        if (arg?.type !== 'ObjectExpression')
+          return
+        const head = findNuxtAppHead(arg)
+        if (!head)
+          return
+        visitor.onCall?.(node, name)
+        visitor.onHeadInput?.(head, name)
+        descendHeadInput(head, name, visitor)
+        return
+      }
+
       if (!HEAD_INPUT_CALLEES.has(name))
         return
+
+      visitor.onCall?.(node, name)
 
       const arg = unwrapTS(node.arguments[0])
       if (arg?.type !== 'ObjectExpression')
         return
 
       visitor.onHeadInput?.(arg, name)
-
-      // `useSeoMeta` is flat meta props, not a head input — don't descend into tag arrays.
-      if (name === 'useSeoMeta' || name === 'useServerSeoMeta')
-        return
-
-      for (const prop of arg.properties) {
-        const key = getKeyName(prop)
-        if (!key || !HEAD_INPUT_TAG_KEYS.has(key))
-          continue
-        const value = unwrapTS(prop.value)
-        if (value?.type === 'ArrayExpression') {
-          for (const el of value.elements) {
-            const inner = unwrapTS(el)
-            if (inner?.type === 'ObjectExpression')
-              visitor.onTag?.(inner, key, { inArray: true })
-          }
-        }
-        else if (value?.type === 'ObjectExpression') {
-          visitor.onTag?.(value, key, { inArray: false })
-        }
-      }
+      descendHeadInput(arg, name, visitor)
     },
   })
+}
+
+function descendHeadInput(arg: Node, name: string, visitor: HeadCallVisitor): void {
+  // `useSeoMeta` is flat meta props, not a head input — don't descend into tag arrays.
+  if (name === 'useSeoMeta' || name === 'useServerSeoMeta')
+    return
+
+  for (const prop of arg.properties) {
+    const key = getKeyName(prop)
+    if (!key || !HEAD_INPUT_TAG_KEYS.has(key))
+      continue
+    const value = unwrapTS(prop.value)
+    if (value?.type === 'ArrayExpression') {
+      for (const el of value.elements) {
+        const inner = unwrapTS(el)
+        if (inner?.type === 'ObjectExpression')
+          visitor.onTag?.(inner, key, { inArray: true })
+      }
+    }
+    else if (value?.type === 'ObjectExpression') {
+      visitor.onTag?.(value, key, { inArray: false })
+    }
+  }
+}
+
+/**
+ * Find the `app.head` ObjectExpression inside a `defineNuxtConfig({...})`
+ * argument, if present. Other shapes (spread, references, function calls)
+ * are skipped — we only audit head config that's authored as an object literal.
+ */
+function findNuxtAppHead(config: Node): Node | undefined {
+  for (const prop of config.properties) {
+    if (getKeyName(prop) !== 'app')
+      continue
+    const app = unwrapTS(prop.value)
+    if (app?.type !== 'ObjectExpression')
+      return undefined
+    for (const inner of app.properties) {
+      if (getKeyName(inner) !== 'head')
+        continue
+      const head = unwrapTS(inner.value)
+      if (head?.type === 'ObjectExpression')
+        return head
+      return undefined
+    }
+  }
+  return undefined
 }

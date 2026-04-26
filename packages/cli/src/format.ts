@@ -3,6 +3,7 @@ import { relative } from 'pathe'
 
 const RED = '\x1B[31m'
 const YELLOW = '\x1B[33m'
+const GREEN = '\x1B[32m'
 const DIM = '\x1B[90m'
 const RESET = '\x1B[0m'
 const BOLD = '\x1B[1m'
@@ -16,8 +17,8 @@ export function formatStylish(results: AuditFileResult[], cwd: string, color: bo
     return ''
 
   const c = color
-    ? { red: RED, yellow: YELLOW, dim: DIM, reset: RESET, bold: BOLD }
-    : { red: '', yellow: '', dim: '', reset: '', bold: '' }
+    ? { red: RED, yellow: YELLOW, green: GREEN, dim: DIM, reset: RESET, bold: BOLD }
+    : { red: '', yellow: '', green: '', dim: '', reset: '', bold: '' }
 
   const lines: string[] = []
   let total = 0
@@ -46,11 +47,35 @@ export function formatStylish(results: AuditFileResult[], cwd: string, color: bo
     }
   }
 
-  if (total === 0)
+  const covered = results.filter(r => r.diagnostics.length === 0 && r.headCalls.length > 0)
+  if (covered.length > 0) {
+    lines.push('')
+    lines.push(`${c.dim}Scanned ${covered.length} file${covered.length === 1 ? '' : 's'} with head usage and no issues:${c.reset}`)
+    const padPath = covered.reduce((n, r) => Math.max(n, relative(cwd, r.filePath).length), 0)
+    for (const r of covered) {
+      const path = relative(cwd, r.filePath).padEnd(padPath)
+      const counts = summariseCalls(r.headCalls)
+      lines.push(`  ${c.green}✓${c.reset} ${path}  ${c.dim}${counts}${c.reset}`)
+    }
+  }
+
+  if (total === 0 && covered.length === 0)
     return ''
 
-  lines.push('')
-  const summary = `${total} problem${total === 1 ? '' : 's'} (${errors} error${errors === 1 ? '' : 's'}, ${warnings} warning${warnings === 1 ? '' : 's'})`
-  lines.push(`${errors > 0 ? c.red : c.yellow}${c.bold}✖ ${summary}${c.reset}`)
+  if (total > 0) {
+    lines.push('')
+    const summary = `${total} problem${total === 1 ? '' : 's'} (${errors} error${errors === 1 ? '' : 's'}, ${warnings} warning${warnings === 1 ? '' : 's'})`
+    lines.push(`${errors > 0 ? c.red : c.yellow}${c.bold}✖ ${summary}${c.reset}`)
+  }
   return `${lines.join('\n')}\n`
+}
+
+function summariseCalls(calls: AuditFileResult['headCalls']): string {
+  const counts = new Map<string, number>()
+  for (const call of calls)
+    counts.set(call.name, (counts.get(call.name) ?? 0) + 1)
+  return Array.from(counts.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, n]) => n === 1 ? name : `${name} ×${n}`)
+    .join(', ')
 }
