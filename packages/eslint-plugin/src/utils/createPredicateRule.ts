@@ -3,7 +3,7 @@ import type * as ESTree from 'estree'
 import type { HeadInputPredicate, PredicateContext, TagInput, TagPredicate } from 'unhead/validate'
 import { reportDiagnostic } from './applyDiagnostic'
 import { materializeHeadInput, materializeTag } from './materialize'
-import { createTagVisitor, getCalleeName, HEAD_INPUT_CALLEES } from './visitor'
+import { createTagVisitor, getCalleeName, HEAD_INPUT_CALLEES, unwrapTS } from './visitor'
 
 const HELPER_NAMES = new Set(['defineLink', 'defineScript'])
 const HELPER_SOURCES = new Set([
@@ -88,12 +88,14 @@ export function createHeadInputPredicateRule(
       const name = getCalleeName(node)
       if (!name || !HEAD_INPUT_CALLEES.has(name))
         return
-      const arg = node.arguments[0]
+      // Mirror createTagVisitor: peel TS wrappers so `useHead({...} as ...)`
+      // and `useHead({...} satisfies ...)` are recognised.
+      const arg = unwrapTS(node.arguments[0] as ESTree.Node | undefined)
       if (!arg || arg.type !== 'ObjectExpression')
         return
       const input = materializeHeadInput(arg, name)
       for (const diag of predicate(input))
-        reportDiagnostic(ctx, arg, diag)
+        reportDiagnostic(ctx, arg as ESTree.ObjectExpression, diag)
     },
   })
 }

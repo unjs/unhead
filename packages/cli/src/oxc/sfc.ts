@@ -13,8 +13,12 @@ export interface ScriptBlock {
   lang: 'ts' | 'tsx' | 'js' | 'jsx'
 }
 
-const SCRIPT_OPEN_RE = /<script\b([^>]*)>/gi
-const SCRIPT_CLOSE = '</script>'
+// Match `<script ...>` allowing `>` to appear inside quoted attribute values.
+// Vue 3.3+ generic attributes (`generic="T extends Foo<Bar>"`) and any
+// attribute carrying inequality / generic syntax would otherwise terminate
+// the opener early and leave the script body unparsed.
+const SCRIPT_OPEN_RE = /<script\b((?:"[^"]*"|'[^']*'|[^>])*)>/gi
+const SCRIPT_CLOSE_RE = /<\/script\s*>/gi
 const LANG_ATTR_RE = /\blang\s*=\s*['"]([^'"]+)['"]/i
 
 /**
@@ -29,10 +33,11 @@ export function extractScriptBlocks(source: string): ScriptBlock[] {
   for (let m = SCRIPT_OPEN_RE.exec(source); m; m = SCRIPT_OPEN_RE.exec(source)) {
     const attrs = m[1]
     const openEnd = m.index + m[0].length
-    const closeIdx = source.indexOf(SCRIPT_CLOSE, openEnd)
-    if (closeIdx === -1)
+    SCRIPT_CLOSE_RE.lastIndex = openEnd
+    const closeMatch = SCRIPT_CLOSE_RE.exec(source)
+    if (!closeMatch)
       continue
-    const code = source.slice(openEnd, closeIdx)
+    const code = source.slice(openEnd, closeMatch.index)
     const langMatch = attrs.match(LANG_ATTR_RE)
     const declared = langMatch?.[1]?.toLowerCase()
     const lang: ScriptBlock['lang'] = declared === 'ts'
@@ -43,7 +48,7 @@ export function extractScriptBlocks(source: string): ScriptBlock[] {
           ? 'jsx'
           : 'js'
     out.push({ code, offset: openEnd, lang })
-    SCRIPT_OPEN_RE.lastIndex = closeIdx + SCRIPT_CLOSE.length
+    SCRIPT_OPEN_RE.lastIndex = closeMatch.index + closeMatch[0].length
   }
   return out
 }
