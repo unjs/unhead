@@ -9,7 +9,7 @@ type Node = any
 /**
  * Apply a {@link PredicateFix} to the file-level {@link MagicString}. `obj` is
  * the oxc object literal node the fix targets, with positions in *piece*
- * coordinates. `pieceOffset` is the byte offset of the piece's start within
+ * coordinates. `pieceOffset` is the UTF-16 character offset of the piece's start within
  * the original file source — added to every node position so the edit lands
  * in the right spot of `magic`.
  *

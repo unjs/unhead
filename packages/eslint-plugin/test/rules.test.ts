@@ -36,7 +36,7 @@ tester.run('twitter-handle-missing-at', twitterHandleMissingAt, {
   invalid: [
     {
       code: `useHead({ meta: [{ name: 'twitter:site', content: 'harlan_zw' }] })`,
-      output: `useHead({ meta: [{ name: 'twitter:site', content: '@harlan_zw' }] })`,
+      output: `useHead({ meta: [{ name: 'twitter:site', content: "@harlan_zw" }] })`,
       errors: [{ message: /should start with "@"/ }],
     },
   ],

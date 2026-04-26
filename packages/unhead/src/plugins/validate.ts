@@ -58,12 +58,26 @@ const AT_PREFIX_RE = /^at\s+/
  * Per-rule severity used by the runtime ValidatePlugin path that runs through
  * shared predicates. ValidatePlugin historically classifies a few rules as
  * `'info'` (lower-noise dev hints) while the source-level eslint-plugin and
- * CLI treat them as `'warn'` — that legacy split is preserved here.
+ * CLI treat them as `'warn'` — that legacy split is preserved here. Every
+ * predicate-emitted ruleId is listed explicitly so a new predicate's default
+ * is a deliberate decision, not a `'warn'` fall-through.
  */
 const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'defer-on-module-script': 'info',
-  'viewport-user-scalable': 'info',
+  'deprecated-prop-body': 'warn',
+  'deprecated-prop-children': 'warn',
+  'deprecated-prop-hid-vmid': 'warn',
+  'empty-meta-content': 'warn',
+  'html-in-title': 'warn',
+  'non-absolute-canonical': 'warn',
   'numeric-tag-priority': 'info',
+  'possible-typo': 'warn',
+  'preload-font-crossorigin': 'warn',
+  'preload-missing-as': 'warn',
+  'robots-conflict': 'warn',
+  'script-src-with-content': 'warn',
+  'twitter-handle-missing-at': 'warn',
+  'viewport-user-scalable': 'info',
 }
 
 function isAbsoluteUrl(url: string): boolean {

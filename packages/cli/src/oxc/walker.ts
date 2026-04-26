@@ -36,7 +36,11 @@ function unwrapTS(node: Node | undefined): Node | undefined {
 }
 
 function getCalleeName(node: Node): string | undefined {
-  const callee = node.callee
+  // Peel TS wrappers so `(useHead as typeof useHead)({...})` and friends still
+  // resolve to the underlying identifier.
+  const callee = unwrapTS(node.callee)
+  if (!callee)
+    return undefined
   if (callee.type === 'Identifier')
     return callee.name
   if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier')
@@ -58,14 +62,42 @@ function getKeyName(prop: Node): string | undefined {
 const HELPER_NAMES = new Set(['defineLink', 'defineScript'])
 
 /**
+ * Module specifiers that re-export `defineLink` / `defineScript`. Imports of
+ * those names from any other module belong to a different library and must
+ * not be treated as the unhead helper — otherwise `prefer-define-helpers`
+ * would emit an autofix that wraps a tag in a foreign function.
+ */
+const HELPER_SOURCES = new Set([
+  'unhead',
+  '@unhead/vue',
+  '@unhead/react',
+  '@unhead/svelte',
+  '@unhead/solid-js',
+  '@unhead/angular',
+])
+
+function isHelperSource(source: string): boolean {
+  if (HELPER_SOURCES.has(source))
+    return true
+  // Sub-paths of the framework packages also re-export helpers (e.g.
+  // `@unhead/vue/server`). Be permissive within the @unhead namespace.
+  return source.startsWith('@unhead/')
+}
+
+/**
  * Scan a Program for `defineLink` / `defineScript` import specifiers so the
  * `prefer-define-helpers` predicate can decide between an autofix (helper
- * already imported) and a suggestion (would need a new import).
+ * already imported) and a suggestion (would need a new import). Only counts
+ * imports from `unhead` or its framework subpaths — imports of the same name
+ * from unrelated libraries are not the helper.
  */
 export function collectImportedHelpers(program: Node): Set<string> {
   const out = new Set<string>()
   for (const node of program.body) {
     if (node.type !== 'ImportDeclaration')
+      continue
+    const source = typeof node.source?.value === 'string' ? node.source.value : ''
+    if (!isHelperSource(source))
       continue
     for (const spec of node.specifiers) {
       if (spec.type === 'ImportSpecifier' && spec.imported.type === 'Identifier' && HELPER_NAMES.has(spec.imported.name))

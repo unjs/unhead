@@ -21,7 +21,12 @@ export const scriptSrcWithContent: TagPredicate = (tag) => {
     return []
   if (typeof tag.props.src !== 'string')
     return []
-  if (!tag.keys.has('innerHTML') && !tag.keys.has('textContent'))
+  // Treat empty `innerHTML: ''` / `textContent: ''` as no content — the browser
+  // wouldn't drop a real inline payload, and flagging the empty-string case
+  // produces a confusing diagnostic.
+  const hasInner = (tag.keys.has('innerHTML') && tag.props.innerHTML !== '')
+    || (tag.keys.has('textContent') && tag.props.textContent !== '')
+  if (!hasInner)
     return []
   const diag: Diagnostic = {
     ruleId: 'script-src-with-content',

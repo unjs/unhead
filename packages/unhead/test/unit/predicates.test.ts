@@ -43,7 +43,7 @@ describe('twitter-handle-missing-at', () => {
   it('flags handles missing @', () => {
     const [d] = twitterHandleMissingAt(tag({ name: 'twitter:site', content: 'harlan_zw' }))
     expect(d.ruleId).toBe('twitter-handle-missing-at')
-    expect(d.fix).toEqual({ type: 'replace-prop-value', key: 'content', newSource: `'@harlan_zw'` })
+    expect(d.fix).toEqual({ type: 'replace-prop-value', key: 'content', newSource: `"@harlan_zw"` })
   })
   it('skips non-twitter meta', () => {
     expect(twitterHandleMissingAt(tag({ name: 'description', content: 'foo' }))).toEqual([])

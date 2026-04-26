@@ -1,12 +1,14 @@
 /**
  * Single `<script>` block extracted from a Vue / Svelte SFC. `lang` is the
  * declared script language (`'ts'`, `'tsx'`, `'js'`, …). `offset` is the
- * absolute byte offset of the first character of `code` within the original
- * source — used to translate oxc spans back to file-level positions for
- * diagnostics.
+ * absolute character offset of the first character of `code` within the
+ * original source (UTF-16 code units, matching both oxc-parser spans and
+ * JavaScript string indexing). Used to translate oxc spans back to file-level
+ * positions for diagnostics and MagicString edits.
  */
 export interface ScriptBlock {
   code: string
+  /** UTF-16 character offset of `code[0]` within the source file. */
   offset: number
   lang: 'ts' | 'tsx' | 'js' | 'jsx'
 }

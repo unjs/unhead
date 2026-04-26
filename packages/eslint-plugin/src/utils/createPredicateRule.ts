@@ -6,11 +6,30 @@ import { materializeHeadInput, materializeTag } from './materialize'
 import { createTagVisitor, getCalleeName, HEAD_INPUT_CALLEES } from './visitor'
 
 const HELPER_NAMES = new Set(['defineLink', 'defineScript'])
+const HELPER_SOURCES = new Set([
+  'unhead',
+  '@unhead/vue',
+  '@unhead/react',
+  '@unhead/svelte',
+  '@unhead/solid-js',
+  '@unhead/angular',
+])
+
+function isHelperSource(source: string): boolean {
+  if (HELPER_SOURCES.has(source))
+    return true
+  // Be permissive within the @unhead namespace so framework subpaths (e.g.
+  // `@unhead/vue/server`) still count.
+  return source.startsWith('@unhead/')
+}
 
 function collectImportedHelpers(program: ESTree.Program): Set<string> {
   const out = new Set<string>()
   for (const node of program.body) {
     if (node.type !== 'ImportDeclaration')
+      continue
+    const source = typeof node.source?.value === 'string' ? node.source.value : ''
+    if (!isHelperSource(source))
       continue
     for (const spec of node.specifiers) {
       if (spec.type === 'ImportSpecifier' && spec.imported.type === 'Identifier' && HELPER_NAMES.has(spec.imported.name))

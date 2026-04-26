@@ -128,7 +128,10 @@ describe('runAudit (migrate)', () => {
       cwd: tmp,
     })
     const out = results[0].output!
-    expect(out).toContain(`'@unjsio'`)
+    // The fix uses JSON.stringify to safely escape arbitrary handle values,
+    // so the literal lands as a double-quoted string. Tools like Prettier
+    // will normalise back to project quote style on next save.
+    expect(out).toContain(`"@unjsio"`)
     expect(out).not.toContain(`'unjsio'`)
   })
 
