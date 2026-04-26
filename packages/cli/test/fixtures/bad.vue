@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { useHead } from '@unhead/vue'
 
 useHead({

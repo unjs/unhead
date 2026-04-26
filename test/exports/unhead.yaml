@@ -107,11 +107,30 @@
   ValidHeadTags: object
   walkResolver: function
 ./validate:
+  deferOnModuleScript: function
   DEPRECATED_PROPS: object
+  emptyMetaContent: function
   findClosestMatch: function
+  headInputPredicates: object
   KNOWN_META_NAMES: object
   KNOWN_META_PROPERTIES: object
   levenshtein: function
+  migrationTagPredicates: object
+  noDeprecatedProps: function
+  noHtmlInTitle: function
+  nonAbsoluteCanonical: function
+  noUnknownMeta: function
+  numericTagPriority: function
+  preferDefineHelpers: function
+  preloadFontCrossorigin: function
+  preloadMissingAs: function
+  robotsConflict: function
+  scriptSrcWithContent: function
   TAG_PRIORITY_ALIASES: object
+  tagInputFromRuntime: function
+  tagPredicates: object
+  titleInputFromRuntime: function
+  twitterHandleMissingAt: function
   URL_META_KEYS: object
   VALIDATION_RULE_IDS: object
+  viewportUserScalable: function
