@@ -1,5 +1,6 @@
 import type { Diagnostic, HeadInputView, PredicateContext, TagInput } from 'unhead/validate'
 import type { ScriptBlock } from './sfc'
+import type { CallGraph } from './walker'
 import { readFile } from 'node:fs/promises'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
@@ -13,7 +14,7 @@ import {
 import { applyFix } from './applyFix'
 import { materializeHeadInput, materializeTag } from './materialize'
 import { extractScriptBlocks, langForExt } from './sfc'
-import { collectImportedHelpers, walkHeadCalls } from './walker'
+import { collectImportedHelpers, extractCallGraph, HEAD_INPUT_CALLEES, walkHeadCalls } from './walker'
 
 export type Mode = 'audit' | 'migrate'
 
@@ -24,7 +25,7 @@ export interface FileDiagnostic {
   line: number
   /** 1-based column in the original file source. */
   column: number
-  severity: 'error' | 'warning'
+  severity: 'error' | 'warning' | 'info'
 }
 
 export interface HeadCallSite {
@@ -56,7 +57,7 @@ export interface RunOptions {
  * Severity for each predicate ruleId in the recommended preset. The CLI uses
  * these to decide its exit code (any `error` → exit 1).
  */
-const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning'> = {
+const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'defer-on-module-script': 'warning',
   'empty-meta-content': 'warning',
   'deprecated-prop-children': 'error',
@@ -121,9 +122,10 @@ async function auditFile(
   pieces: AuditPiece[],
   predicateNames: string[],
   shouldFix: boolean,
-): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], output?: string }> {
+): Promise<{ diagnostics: FileDiagnostic[], headCalls: HeadCallSite[], callGraph: CallGraph, output?: string }> {
   const diagnostics: FileDiagnostic[] = []
   const headCalls: HeadCallSite[] = []
+  const callGraph: CallGraph = { functions: new Map(), allCalls: new Set() }
   const magic = shouldFix ? new MagicString(source) : undefined
   let edited = false
 
@@ -160,6 +162,18 @@ async function auditFile(
 
     const program: any = parsed.program
     let importedHelpers: Map<string, string> | undefined
+
+    const pieceGraph = extractCallGraph(program)
+    for (const c of pieceGraph.allCalls) callGraph.allCalls.add(c)
+    for (const [n, calls] of pieceGraph.functions) {
+      const existing = callGraph.functions.get(n)
+      if (existing) {
+        for (const c of calls) existing.add(c)
+      }
+      else {
+        callGraph.functions.set(n, new Set(calls))
+      }
+    }
 
     function emit(diag: Diagnostic, node: any): void {
       const absOffset = piece.offset + anchorOffset(node, diag)
@@ -216,8 +230,54 @@ async function auditFile(
   return {
     diagnostics,
     headCalls,
+    callGraph,
     output: edited && magic ? magic.toString() : undefined,
   }
+}
+
+const PAGE_PATH_RE = /[\\/]pages[\\/].+\.vue$/
+
+function isPagePath(filePath: string): boolean {
+  return PAGE_PATH_RE.test(filePath)
+}
+
+/**
+ * Compute the set of identifier names that, when called, ultimately invoke
+ * `useHead` / `useSeoMeta` (or their server/safe variants). Seeded with the
+ * unhead composables and grown by fixpoint over the per-file call graphs:
+ * any function whose body calls a name already in the set is added.
+ */
+function computeHeadProvidingCallees(graphs: CallGraph[]): Set<string> {
+  const merged = new Map<string, Set<string>>()
+  for (const g of graphs) {
+    for (const [name, calls] of g.functions) {
+      const existing = merged.get(name)
+      if (existing) {
+        for (const c of calls) existing.add(c)
+      }
+      else {
+        merged.set(name, new Set(calls))
+      }
+    }
+  }
+
+  const set = new Set<string>(HEAD_INPUT_CALLEES)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const [name, calls] of merged) {
+      if (set.has(name))
+        continue
+      for (const c of calls) {
+        if (set.has(c)) {
+          set.add(name)
+          changed = true
+          break
+        }
+      }
+    }
+  }
+  return set
 }
 
 export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
@@ -233,6 +293,9 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
     : [...Object.keys(tagPredicates), ...Object.keys(headInputPredicates)]
 
   const results: AuditFileResult[] = []
+  const allGraphs: CallGraph[] = []
+  const pageFiles: { filePath: string, callGraph: CallGraph, headCalls: HeadCallSite[], existingResultIdx: number }[] = []
+
   for (const filePath of files) {
     const source = await readFile(filePath, 'utf8')
     const ext = extname(filePath).toLowerCase()
@@ -245,23 +308,66 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
     if (pieces.length === 0)
       continue
     const result = await auditFile(filePath, source, pieces, predicateNames, shouldFix)
-    if (result.diagnostics.length === 0 && !result.output && result.headCalls.length === 0)
-      continue
-    results.push({ filePath, diagnostics: result.diagnostics, headCalls: result.headCalls, output: result.output })
+    allGraphs.push(result.callGraph)
+
+    const isPage = isPagePath(filePath)
+    const hasInterestingResult = result.diagnostics.length > 0 || !!result.output || result.headCalls.length > 0
+
+    let resultIdx = -1
+    if (hasInterestingResult) {
+      resultIdx = results.length
+      results.push({ filePath, diagnostics: result.diagnostics, headCalls: result.headCalls, output: result.output })
+    }
+
+    if (isPage && result.headCalls.length === 0) {
+      pageFiles.push({ filePath, callGraph: result.callGraph, headCalls: result.headCalls, existingResultIdx: resultIdx })
+    }
   }
+
+  if (pageFiles.length > 0) {
+    const headProviding = computeHeadProvidingCallees(allGraphs)
+    for (const page of pageFiles) {
+      let provides = false
+      for (const c of page.callGraph.allCalls) {
+        if (headProviding.has(c)) {
+          provides = true
+          break
+        }
+      }
+      if (provides)
+        continue
+      const diag: FileDiagnostic = {
+        ruleId: 'page-missing-head',
+        message: 'Page does not call useHead/useSeoMeta directly or via a composable. Pages should set page-specific head metadata for SEO.',
+        line: 1,
+        column: 1,
+        severity: 'info',
+      }
+      if (page.existingResultIdx >= 0) {
+        results[page.existingResultIdx].diagnostics.push(diag)
+      }
+      else {
+        results.push({ filePath: page.filePath, diagnostics: [diag], headCalls: [] })
+      }
+    }
+  }
+
   return results
 }
 
-export function summarise(results: AuditFileResult[]): { errorCount: number, warningCount: number, fileCount: number } {
+export function summarise(results: AuditFileResult[]): { errorCount: number, warningCount: number, infoCount: number, fileCount: number } {
   let errorCount = 0
   let warningCount = 0
+  let infoCount = 0
   for (const r of results) {
     for (const d of r.diagnostics) {
       if (d.severity === 'error')
         errorCount++
-      else
+      else if (d.severity === 'warning')
         warningCount++
+      else
+        infoCount++
     }
   }
-  return { errorCount, warningCount, fileCount: results.length }
+  return { errorCount, warningCount, infoCount, fileCount: results.length }
 }

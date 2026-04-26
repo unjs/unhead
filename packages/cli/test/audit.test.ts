@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'pathe'
@@ -73,6 +73,35 @@ describe('runAudit (audit)', () => {
     const { errorCount, warningCount } = summarise(results)
     expect(errorCount).toBeGreaterThan(0)
     expect(warningCount).toBeGreaterThan(0)
+  })
+
+  it('flags pages/* without useHead/useSeoMeta as page-missing-head info', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-page-'))
+    await mkdir(join(tmp, 'pages'))
+    await writeFile(join(tmp, 'app.vue'), `<script setup lang="ts">\nuseHead({ title: 'App' })\n</script>\n`)
+    await writeFile(join(tmp, 'pages/empty.vue'), `<script setup lang="ts">\nconst x = 1\n</script>\n`)
+    const results = await runAudit({
+      patterns: ['**/*.vue'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    const empty = results.find(r => r.filePath.endsWith('pages/empty.vue'))
+    expect(empty).toBeDefined()
+    expect(empty!.diagnostics.some(d => d.ruleId === 'page-missing-head' && d.severity === 'info')).toBe(true)
+  })
+
+  it('does not flag pages that call a project composable that transitively calls useHead', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-page2-'))
+    await mkdir(join(tmp, 'pages'))
+    await writeFile(join(tmp, 'composables.ts'), `export function useDefaultMeta() {\n  useHead({ title: 'D' })\n}\nexport function usePageMeta() {\n  useDefaultMeta()\n}\n`)
+    await writeFile(join(tmp, 'pages/about.vue'), `<script setup lang="ts">\nusePageMeta()\n</script>\n`)
+    const results = await runAudit({
+      patterns: ['**/*.{ts,vue}'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    const about = results.find(r => r.filePath.endsWith('pages/about.vue'))
+    expect(about?.diagnostics.some(d => d.ruleId === 'page-missing-head')).not.toBe(true)
   })
 
   it('audits app.head inside defineNuxtConfig', async () => {

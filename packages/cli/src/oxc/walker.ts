@@ -133,6 +133,68 @@ export interface HeadCallVisitor {
 }
 
 /**
+ * Project-wide function call graph used by the `page-missing-head` check.
+ * For each named function defined in the file, its body's set of called
+ * identifier names; plus the set of all called identifier names anywhere
+ * in the file. Together these let the auditor compute a transitive set of
+ * "head-providing" composables across the project.
+ */
+export interface CallGraph {
+  /** Function name → set of identifier names called inside its body. */
+  functions: Map<string, Set<string>>
+  /** Every identifier name called anywhere in the file. */
+  allCalls: Set<string>
+}
+
+function collectCallees(root: Node): Set<string> {
+  const calls = new Set<string>()
+  walk(root as any, {
+    enter(n: any) {
+      if (n.type === 'CallExpression') {
+        const name = getCalleeName(n)
+        if (name)
+          calls.add(name)
+      }
+    },
+  })
+  return calls
+}
+
+function visitDecl(decl: Node, fns: Map<string, Set<string>>): void {
+  if (decl.type === 'FunctionDeclaration' && decl.id?.name) {
+    fns.set(decl.id.name, collectCallees(decl.body))
+    return
+  }
+  if (decl.type === 'VariableDeclaration') {
+    for (const d of decl.declarations) {
+      if (d.id?.type !== 'Identifier' || !d.init)
+        continue
+      const init = unwrapTS(d.init)
+      if (init && (init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression'))
+        fns.set(d.id.name, collectCallees(init.body))
+    }
+  }
+}
+
+export function extractCallGraph(program: Node): CallGraph {
+  const functions = new Map<string, Set<string>>()
+  for (const stmt of program.body) {
+    if (stmt.type === 'ExportNamedDeclaration' && stmt.declaration) {
+      visitDecl(stmt.declaration, functions)
+    }
+    else if (stmt.type === 'ExportDefaultDeclaration') {
+      const d = stmt.declaration
+      if (d?.type === 'FunctionDeclaration' && d.id?.name)
+        functions.set(d.id.name, collectCallees(d.body))
+    }
+    else {
+      visitDecl(stmt, functions)
+    }
+  }
+  return { functions, allCalls: collectCallees(program) }
+}
+
+/**
  * Walk an oxc Program and dispatch each head call (`useHead`, `useSeoMeta`,
  * `defineLink`, `defineScript`, …) to the visitor. Mirrors the eslint-plugin
  * `createTagVisitor` shape so predicates run identically across both adapters.
