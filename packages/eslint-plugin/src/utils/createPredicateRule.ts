@@ -23,8 +23,8 @@ function isHelperSource(source: string): boolean {
   return source.startsWith('@unhead/')
 }
 
-function collectImportedHelpers(program: ESTree.Program): Set<string> {
-  const out = new Set<string>()
+function collectImportedHelpers(program: ESTree.Program): Map<string, string> {
+  const out = new Map<string, string>()
   for (const node of program.body) {
     if (node.type !== 'ImportDeclaration')
       continue
@@ -33,9 +33,7 @@ function collectImportedHelpers(program: ESTree.Program): Set<string> {
       continue
     for (const spec of node.specifiers) {
       if (spec.type === 'ImportSpecifier' && spec.imported.type === 'Identifier' && HELPER_NAMES.has(spec.imported.name))
-        out.add(spec.imported.name)
-      else if (spec.type === 'ImportDefaultSpecifier' && HELPER_NAMES.has(spec.local.name))
-        out.add(spec.local.name)
+        out.set(spec.imported.name, spec.local.name)
     }
   }
   return out
@@ -56,8 +54,8 @@ export function createTagPredicateRule(
   opts: { needsHelpers?: boolean } = {},
 ): (ctx: Rule.RuleContext) => Rule.RuleListener {
   return (ctx) => {
-    let helpers: Set<string> | undefined
-    function ensureHelpers(): Set<string> {
+    let helpers: Map<string, string> | undefined
+    function ensureHelpers(): Map<string, string> {
       if (!helpers)
         helpers = collectImportedHelpers(ctx.sourceCode.ast as ESTree.Program)
       return helpers

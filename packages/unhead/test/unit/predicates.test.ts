@@ -227,9 +227,16 @@ describe('prefer-define-helpers', () => {
   it('promotes to fix when helper imported', () => {
     const [d] = preferDefineHelpers(
       tag({ rel: 'preload', as: 'script', href: '/a.js' }, 'link', { inArray: true }),
-      { importedHelpers: new Set(['defineLink']) },
+      { importedHelpers: new Map([['defineLink', 'defineLink']]) },
     )
     expect(d.fix).toEqual({ type: 'wrap-tag', wrapWith: 'defineLink' })
+  })
+  it('uses the local binding when helper is imported under an alias', () => {
+    const [d] = preferDefineHelpers(
+      tag({ rel: 'preload', as: 'script', href: '/a.js' }, 'link', { inArray: true }),
+      { importedHelpers: new Map([['defineLink', 'dl']]) },
+    )
+    expect(d.fix).toEqual({ type: 'wrap-tag', wrapWith: 'dl' })
   })
   it('skips meta/noscript/style (no helper exists)', () => {
     expect(preferDefineHelpers(tag({ name: 'description', content: 'x' }, 'meta', { inArray: true }))).toEqual([])

@@ -20,15 +20,19 @@ export const preferDefineHelpers: TagPredicate = (tag, ctx) => {
   const helper = TAG_TO_HELPER[tag.tagType]
   if (!helper)
     return []
-  const imported = ctx?.importedHelpers?.has(helper) ?? false
-  const fix = { type: 'wrap-tag' as const, wrapWith: helper }
+  // Use the file's local binding for the helper if present, so renamed imports
+  // (`import { defineLink as dl }`) get a fix that wraps with `dl(...)` rather
+  // than a reference to the canonical name (which the file hasn't imported).
+  const localName = ctx?.importedHelpers?.get(helper)
+  const imported = localName !== undefined
+  const fix = { type: 'wrap-tag' as const, wrapWith: localName ?? helper }
   const diag: Diagnostic = {
     ruleId: 'prefer-define-helpers',
     message: `Wrap this ${tag.tagType} entry in \`${helper}()\` so unhead can narrow its type.`,
     fix: imported ? fix : undefined,
     suggestions: imported
       ? undefined
-      : [{ message: `Wrap in \`${helper}()\` (you may need to import it).`, fix }],
+      : [{ message: `Wrap in \`${helper}()\` (you may need to import it).`, fix: { type: 'wrap-tag', wrapWith: helper } }],
   }
   return [diag]
 }

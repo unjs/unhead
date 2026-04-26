@@ -129,7 +129,7 @@ async function auditFile(
       continue
 
     const program: any = parsed.program
-    let importedHelpers: Set<string> | undefined
+    let importedHelpers: Map<string, string> | undefined
 
     function emit(diag: Diagnostic, node: any): void {
       const absOffset = piece.offset + anchorOffset(node, diag)

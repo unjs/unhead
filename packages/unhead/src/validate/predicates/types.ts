@@ -94,8 +94,13 @@ export interface Diagnostic {
  * these should ignore the argument entirely.
  */
 export interface PredicateContext {
-  /** Helper names the file already imports (used by `prefer-define-helpers`). */
-  importedHelpers?: Set<string>
+  /**
+   * Map of canonical helper names (`defineLink`, `defineScript`) to the local
+   * binding they're imported under (`'defineLink'` for an unaliased import,
+   * `'dl'` for `import { defineLink as dl }`). Predicates emit fixes using
+   * the local binding so renamed imports stay valid.
+   */
+  importedHelpers?: Map<string, string>
 }
 
 export type TagPredicate = (tag: TagInput, ctx?: PredicateContext) => Diagnostic[]

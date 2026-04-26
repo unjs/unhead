@@ -90,9 +90,13 @@ function isHelperSource(source: string): boolean {
  * already imported) and a suggestion (would need a new import). Only counts
  * imports from `unhead` or its framework subpaths — imports of the same name
  * from unrelated libraries are not the helper.
+ *
+ * Returns a `canonical → local-binding` map, so a renamed import like
+ * `import { defineLink as dl } from 'unhead'` produces `defineLink → 'dl'`
+ * and the predicate can emit a fix that calls `dl(...)`.
  */
-export function collectImportedHelpers(program: Node): Set<string> {
-  const out = new Set<string>()
+export function collectImportedHelpers(program: Node): Map<string, string> {
+  const out = new Map<string, string>()
   for (const node of program.body) {
     if (node.type !== 'ImportDeclaration')
       continue
@@ -101,9 +105,7 @@ export function collectImportedHelpers(program: Node): Set<string> {
       continue
     for (const spec of node.specifiers) {
       if (spec.type === 'ImportSpecifier' && spec.imported.type === 'Identifier' && HELPER_NAMES.has(spec.imported.name))
-        out.add(spec.imported.name)
-      else if (spec.type === 'ImportDefaultSpecifier' && HELPER_NAMES.has(spec.local.name))
-        out.add(spec.local.name)
+        out.set(spec.imported.name, spec.local?.name ?? spec.imported.name)
     }
   }
   return out
