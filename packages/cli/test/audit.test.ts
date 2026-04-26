@@ -72,6 +72,19 @@ describe('runAudit (audit)', () => {
     expect(errorCount).toBeGreaterThan(0)
     expect(warningCount).toBeGreaterThan(0)
   })
+
+  it('surfaces parse errors as a diagnostic instead of silently skipping', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-parse-'))
+    await writeFile(join(tmp, 'broken.ts'), 'useHead({ title: \'oops\' )) // unbalanced\n')
+    const results = await runAudit({
+      patterns: ['broken.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    const ruleIds = results[0].diagnostics.map(d => d.ruleId)
+    expect(ruleIds).toContain('parse-error')
+  })
 })
 
 describe('runAudit (migrate)', () => {

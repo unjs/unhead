@@ -120,13 +120,31 @@ async function auditFile(
     try {
       parsed = parseSync(filePath, piece.code, { sourceType: 'module', lang: piece.lang })
     }
-    catch {
-      // Parse failure on a piece is not surfaced — the goal is to lint head
-      // usage, not type-check. A real parse error is the project's concern.
+    catch (err) {
+      // Surface as a warning so users know coverage was skipped rather than
+      // mistaking silent skip for a clean file. We do not type-check; this
+      // only flags inputs the parser couldn't read at all.
+      const message = err instanceof Error ? err.message : String(err)
+      diagnostics.push({
+        ruleId: 'parse-error',
+        message: `skipped ${piece.lang} block: ${message}`,
+        line: lineCol(source, piece.offset).line,
+        column: 1,
+        severity: 'warning',
+      })
       continue
     }
-    if (parsed.errors.length > 0)
+    if (parsed.errors.length > 0) {
+      const first = parsed.errors[0]
+      diagnostics.push({
+        ruleId: 'parse-error',
+        message: `skipped ${piece.lang} block: ${first.message ?? 'parse error'}`,
+        line: lineCol(source, piece.offset).line,
+        column: 1,
+        severity: 'warning',
+      })
       continue
+    }
 
     const program: any = parsed.program
     let importedHelpers: Map<string, string> | undefined
