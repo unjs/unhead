@@ -17,7 +17,12 @@ export interface ScriptBlock {
 // Vue 3.3+ generic attributes (`generic="T extends Foo<Bar>"`) and any
 // attribute carrying inequality / generic syntax would otherwise terminate
 // the opener early and leave the script body unparsed.
-const SCRIPT_OPEN_RE = /<script\b((?:"[^"]*"|'[^']*'|[^>])*)>/gi
+//
+// The three alternation branches match non-overlapping character classes —
+// `"` and `'` only enter the quoted branches, never `[^>"']` — which avoids
+// the catastrophic-backtracking shape that an overlapping alternation would
+// have on inputs like `"""""…` (CodeQL js/redos).
+const SCRIPT_OPEN_RE = /<script\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi
 const SCRIPT_CLOSE_RE = /<\/script\s*>/gi
 const LANG_ATTR_RE = /\blang\s*=\s*['"]([^'"]+)['"]/i
 
