@@ -94,7 +94,7 @@ const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'twitter-handle-missing-at': 'warning',
   'viewport-user-scalable': 'warning',
   'prefer-define-helpers': 'warning',
-  'prefer-use-seo-meta': 'info',
+  'prefer-use-seo-meta': 'warning',
   'parse-error': 'warning',
   'page-missing-head': 'info',
 }
@@ -240,10 +240,10 @@ async function auditFile(
             const { line, column } = lineCol(source, piece.offset + call.start)
             diagnostics.push({
               ruleId: 'prefer-use-seo-meta',
-              message: 'This useHead call is meta-only — switch to useSeoMeta for full TypeScript autocompletion of SEO/OG/Twitter tags.',
+              message: 'This useHead call is meta-only. Switch to useSeoMeta — meta name/property values are typed as plain strings here, so a typo (e.g. "descriptipon") compiles and silently ships broken meta. useSeoMeta keys are typed and catch typos at write time.',
               line,
               column,
-              severity: 'info',
+              severity: 'warning',
             })
             if (shouldFix && magic) {
               const calleeNode = (call as any).callee

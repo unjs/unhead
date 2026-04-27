@@ -30,7 +30,7 @@ describe('prefer-use-seo-meta', () => {
     const results = await runAudit({ patterns: ['page.ts'], mode: 'audit', cwd: tmp })
     const diag = results[0]?.diagnostics.find(d => d.ruleId === 'prefer-use-seo-meta')
     expect(diag).toBeDefined()
-    expect(diag!.severity).toBe('info')
+    expect(diag!.severity).toBe('warning')
   })
 
   it('does not fire when useHead has link/script/htmlAttrs', async () => {
