@@ -104,9 +104,9 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "solid-js": ">=1.9.0",
+    "solid-js": ">=1.9.12",
     "vite": ">=6.4.2",
-    "webpack": ">=5.0.0"
+    "webpack": ">=5.106.2"
   },
   "peerDependenciesMeta": {
     "vite": {
