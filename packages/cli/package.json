@@ -1,7 +1,7 @@
 {
   "name": "@unhead/cli",
   "type": "module",
-  "version": "3.0.5",
+  "version": "3.1.0",
   "description": "CLI for auditing and migrating unhead head usage in your codebase.",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
