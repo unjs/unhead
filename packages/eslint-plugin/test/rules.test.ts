@@ -19,11 +19,11 @@ tester.run('viewport-user-scalable', viewportUserScalable, {
   invalid: [
     {
       code: `useHead({ meta: [{ name: 'viewport', content: 'width=device-width, user-scalable=no' }] })`,
-      errors: [{ messageId: 'userScalable' }],
+      errors: [{ message: /user-scalable=no/ }],
     },
     {
       code: `useHead({ meta: [{ name: 'viewport', content: 'maximum-scale=1' }] })`,
-      errors: [{ messageId: 'maxScale' }],
+      errors: [{ message: /maximum-scale=1/ }],
     },
   ],
 })
@@ -36,8 +36,8 @@ tester.run('twitter-handle-missing-at', twitterHandleMissingAt, {
   invalid: [
     {
       code: `useHead({ meta: [{ name: 'twitter:site', content: 'harlan_zw' }] })`,
-      output: `useHead({ meta: [{ name: 'twitter:site', content: '@harlan_zw' }] })`,
-      errors: [{ messageId: 'missingAt' }],
+      output: `useHead({ meta: [{ name: 'twitter:site', content: "@harlan_zw" }] })`,
+      errors: [{ message: /should start with "@"/ }],
     },
   ],
 })
@@ -50,11 +50,11 @@ tester.run('robots-conflict', robotsConflict, {
   invalid: [
     {
       code: `useHead({ meta: [{ name: 'robots', content: 'index, noindex' }] })`,
-      errors: [{ messageId: 'indexConflict' }],
+      errors: [{ message: /"index" and "noindex"/ }],
     },
     {
       code: `useHead({ meta: [{ name: 'robots', content: 'follow, nofollow' }] })`,
-      errors: [{ messageId: 'followConflict' }],
+      errors: [{ message: /"follow" and "nofollow"/ }],
     },
   ],
 })
@@ -68,7 +68,7 @@ tester.run('defer-on-module-script', deferOnModuleScript, {
     {
       code: `useHead({ script: [{ src: '/x.js', type: 'module', defer: true }] })`,
       output: `useHead({ script: [{ src: '/x.js', type: 'module' }] })`,
-      errors: [{ messageId: 'deferModule' }],
+      errors: [{ message: /redundant on module scripts/ }],
     },
   ],
 })
@@ -81,7 +81,7 @@ tester.run('script-src-with-content', scriptSrcWithContent, {
   invalid: [
     {
       code: `useHead({ script: [{ src: '/x.js', innerHTML: 'console.log(1)' }] })`,
-      errors: [{ messageId: 'conflict' }],
+      errors: [{ message: /both "src" and inline content/ }],
     },
   ],
 })
@@ -94,7 +94,7 @@ tester.run('preload-missing-as', preloadMissingAs, {
   invalid: [
     {
       code: `useHead({ link: [{ rel: 'preload', href: '/a.woff2' }] })`,
-      errors: [{ messageId: 'missingAs' }],
+      errors: [{ message: /missing the required "as"/ }],
     },
   ],
 })
@@ -108,7 +108,7 @@ tester.run('preload-font-crossorigin', preloadFontCrossorigin, {
     {
       code: `useHead({ link: [{ rel: 'preload', href: '/f.woff2', as: 'font' }] })`,
       output: `useHead({ link: [{ rel: 'preload', href: '/f.woff2', as: 'font', crossorigin: 'anonymous' }] })`,
-      errors: [{ messageId: 'missingCrossorigin' }],
+      errors: [{ message: /Font preload requires "crossorigin"/ }],
     },
   ],
 })
@@ -121,7 +121,7 @@ tester.run('non-absolute-canonical', nonAbsoluteCanonical, {
   invalid: [
     {
       code: `useHead({ link: [{ rel: 'canonical', href: '/about' }] })`,
-      errors: [{ messageId: 'nonAbsolute' }],
+      errors: [{ message: /Canonical URL should be absolute/ }],
     },
   ],
 })
@@ -134,11 +134,11 @@ tester.run('no-html-in-title', noHtmlInTitle, {
   invalid: [
     {
       code: `useHead({ title: 'Hello <b>world</b>' })`,
-      errors: [{ messageId: 'htmlChars' }],
+      errors: [{ message: /HTML characters/ }],
     },
     {
       code: `useSeoMeta({ title: '<b>x</b>' })`,
-      errors: [{ messageId: 'htmlChars' }],
+      errors: [{ message: /HTML characters/ }],
     },
   ],
 })
@@ -151,7 +151,7 @@ tester.run('empty-meta-content', emptyMetaContent, {
   invalid: [
     {
       code: `useHead({ meta: [{ name: 'description', content: '' }] })`,
-      errors: [{ messageId: 'empty' }],
+      errors: [{ message: /"description" has empty content/ }],
     },
   ],
 })

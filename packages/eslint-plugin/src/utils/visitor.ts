@@ -110,9 +110,14 @@ export function findProperty(obj: ESTree.ObjectExpression, key: string): ESTree.
   return undefined
 }
 
+export interface TagVisitorInfo {
+  /** True when the tag literal lives inside an array element (a head-input tag list). */
+  inArray: boolean
+}
+
 export interface TagVisitor {
   /** Called for every individual tag-shaped object literal: meta items, link items, etc. */
-  onTag?: (tag: ESTree.ObjectExpression, tagType: string, ctx: Rule.RuleContext) => void
+  onTag?: (tag: ESTree.ObjectExpression, tagType: string, ctx: Rule.RuleContext, info: TagVisitorInfo) => void
   /** Called for the top-level head input object literal passed to useHead/useSeoMeta/etc. */
   onHeadInput?: (input: ESTree.ObjectExpression, calleeName: string, ctx: Rule.RuleContext) => void
 }
@@ -128,7 +133,7 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
       for (const el of arr.elements) {
         const inner = unwrapTS(el as ESTree.Node | undefined)
         if (inner && inner.type === 'ObjectExpression')
-          visitor.onTag(inner, tagType, ctx)
+          visitor.onTag(inner, tagType, ctx, { inArray: true })
       }
     }
 
@@ -142,7 +147,7 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
           const arg = unwrapTS(node.arguments[0] as ESTree.Node | undefined)
           if (arg?.type === 'ObjectExpression') {
             const tagType = name.slice('define'.length).toLowerCase()
-            visitor.onTag?.(arg, tagType, ctx)
+            visitor.onTag?.(arg, tagType, ctx, { inArray: false })
           }
           return
         }
@@ -174,7 +179,7 @@ export function createTagVisitor(visitor: TagVisitor): (ctx: Rule.RuleContext) =
           if (value?.type === 'ArrayExpression')
             visitTagArray(value, key)
           else if (value?.type === 'ObjectExpression')
-            visitor.onTag?.(value, key, ctx)
+            visitor.onTag?.(value, key, ctx, { inArray: false })
         }
       },
     }

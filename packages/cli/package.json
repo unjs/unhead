@@ -50,18 +50,16 @@
     "test": "vitest run",
     "prepack": "pnpm run build"
   },
-  "peerDependencies": {
-    "eslint": ">=9.0.0"
-  },
   "dependencies": {
-    "@unhead/eslint-plugin": "workspace:*",
     "citty": "catalog:",
+    "magic-string": "catalog:",
+    "oxc-parser": "catalog:",
+    "oxc-walker": "catalog:",
     "pathe": "catalog:",
     "tinyglobby": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {
-    "eslint": "catalog:",
     "vitest": "catalog:"
   }
 }

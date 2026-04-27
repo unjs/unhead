@@ -1,7 +1,8 @@
 import process from 'node:process'
 import { defineCommand } from 'citty'
 import { resolve } from 'pathe'
-import { formatResults, runLint } from '../lint'
+import { formatStylish } from '../format'
+import { runAudit, summarise } from '../oxc/audit'
 
 const DEFAULT_PATTERNS = ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,vue,svelte}']
 const DEFAULT_IGNORE = ['**/node_modules/**', '**/dist/**', '**/.output/**', '**/.nuxt/**']
@@ -23,17 +24,14 @@ export const audit = defineCommand({
     const positional = (args._ ?? []).map(String).filter(Boolean)
     const patterns = positional.length > 0 ? positional : DEFAULT_PATTERNS
 
-    const { results, errorCount, warningCount } = await runLint({ patterns, mode: 'audit', cwd, ignore: DEFAULT_IGNORE })
-
-    const output = await formatResults(results)
+    const results = await runAudit({ patterns, mode: 'audit', cwd, ignore: DEFAULT_IGNORE })
+    const { errorCount, warningCount } = summarise(results)
+    const output = formatStylish(results, cwd, process.stdout.isTTY ?? false)
     if (output)
       process.stdout.write(output)
-
-    if (errorCount > 0) {
+    if (errorCount > 0)
       process.exitCode = 1
-    }
-    else if (warningCount > 0 && !output) {
+    else if (warningCount > 0 && !output)
       console.log(`unhead audit: ${warningCount} warning${warningCount === 1 ? '' : 's'}`)
-    }
   },
 })

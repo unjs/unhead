@@ -15,22 +15,22 @@ tester.run('numeric-tag-priority', numericTagPriority, {
     {
       code: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 1 }] })`,
       errors: [{
-        messageId: 'numeric',
+        message: /Numeric tagPriority \(1\)/,
         suggestions: [
-          { messageId: 'suggestCritical', output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'critical' }] })` },
-          { messageId: 'suggestHigh', output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'high' }] })` },
-          { messageId: 'suggestLow', output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'low' }] })` },
+          { desc: `Replace with 'critical'`, output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'critical' }] })` },
+          { desc: `Replace with 'high'`, output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'high' }] })` },
+          { desc: `Replace with 'low'`, output: `useHead({ link: [{ rel: 'preload', href: '/a.js', tagPriority: 'low' }] })` },
         ],
       }],
     },
     {
       code: `defineScript({ src: '/x.js', tagPriority: 100 })`,
       errors: [{
-        messageId: 'numeric',
+        message: /Numeric tagPriority \(100\)/,
         suggestions: [
-          { messageId: 'suggestCritical', output: `defineScript({ src: '/x.js', tagPriority: 'critical' })` },
-          { messageId: 'suggestHigh', output: `defineScript({ src: '/x.js', tagPriority: 'high' })` },
-          { messageId: 'suggestLow', output: `defineScript({ src: '/x.js', tagPriority: 'low' })` },
+          { desc: `Replace with 'critical'`, output: `defineScript({ src: '/x.js', tagPriority: 'critical' })` },
+          { desc: `Replace with 'high'`, output: `defineScript({ src: '/x.js', tagPriority: 'high' })` },
+          { desc: `Replace with 'low'`, output: `defineScript({ src: '/x.js', tagPriority: 'low' })` },
         ],
       }],
     },

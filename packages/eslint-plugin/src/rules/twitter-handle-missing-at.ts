@@ -1,7 +1,6 @@
 import type { Rule } from 'eslint'
-import { createTagVisitor, findProperty, getStringProp } from '../utils/visitor'
-
-const NUMERIC_RE = /^\d+$/
+import { twitterHandleMissingAt as predicate } from 'unhead/validate'
+import { createTagPredicateRule } from '../utils/createPredicateRule'
 
 export const twitterHandleMissingAt: Rule.RuleModule = {
   meta: {
@@ -13,32 +12,6 @@ export const twitterHandleMissingAt: Rule.RuleModule = {
     },
     fixable: 'code',
     schema: [],
-    messages: {
-      missingAt: '{{key}} should start with "@", received "{{value}}".',
-    },
   },
-  create: createTagVisitor({
-    onTag(tag, tagType, ctx) {
-      if (tagType !== 'meta')
-        return
-      const name = getStringProp(tag, 'name')
-      if (name !== 'twitter:site' && name !== 'twitter:creator')
-        return
-      const contentProp = findProperty(tag, 'content')
-      if (!contentProp)
-        return
-      const value = contentProp.value
-      if (value.type !== 'Literal' || typeof value.value !== 'string')
-        return
-      const v = value.value
-      if (v.startsWith('@') || NUMERIC_RE.test(v))
-        return
-      ctx.report({
-        node: value,
-        messageId: 'missingAt',
-        data: { key: name, value: v },
-        fix: fixer => fixer.replaceText(value, `'@${v}'`),
-      })
-    },
-  }),
+  create: createTagPredicateRule(predicate),
 }

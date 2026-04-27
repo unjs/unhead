@@ -1,10 +1,10 @@
 import type { HeadTag, Unhead } from '../types'
-import type { RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
+import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
 import {
-  DEPRECATED_PROPS,
-  findClosestMatch,
-  KNOWN_META_NAMES,
-  KNOWN_META_PROPERTIES,
+  headInputPredicates,
+  tagInputFromRuntime,
+  tagPredicates,
+  titleInputFromRuntime,
   URL_META_KEYS,
 } from '../validate'
 import { defineHeadPlugin } from './defineHeadPlugin'
@@ -52,12 +52,33 @@ export interface ValidatePluginOptions {
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
-const MAX_SCALE_RE = /maximum-scale\s*=\s*1(?:\.0?)?(?:\s|,|$)/i
-const USER_SCALABLE_NO_RE = /user-scalable\s*=\s*no(?:\s|,|$)/i
-const NUMERIC_RE = /^\d+$/
-const OG_PREFIX_RE = /^(?:og|article|book|profile|fb):/
-const HTML_CHARS_RE = /[<>]/
 const AT_PREFIX_RE = /^at\s+/
+
+/**
+ * Per-rule severity used by the runtime ValidatePlugin path that runs through
+ * shared predicates. ValidatePlugin historically classifies a few rules as
+ * `'info'` (lower-noise dev hints) while the source-level eslint-plugin and
+ * CLI treat them as `'warn'` — that legacy split is preserved here. Every
+ * predicate-emitted ruleId is listed explicitly so a new predicate's default
+ * is a deliberate decision, not a `'warn'` fall-through.
+ */
+const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
+  'defer-on-module-script': 'info',
+  'deprecated-prop-body': 'warn',
+  'deprecated-prop-children': 'warn',
+  'deprecated-prop-hid-vmid': 'warn',
+  'empty-meta-content': 'warn',
+  'html-in-title': 'warn',
+  'non-absolute-canonical': 'warn',
+  'numeric-tag-priority': 'info',
+  'possible-typo': 'warn',
+  'preload-font-crossorigin': 'warn',
+  'preload-missing-as': 'warn',
+  'robots-conflict': 'warn',
+  'script-src-with-content': 'warn',
+  'twitter-handle-missing-at': 'warn',
+  'viewport-user-scalable': 'info',
+}
 
 function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://')
@@ -174,18 +195,36 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               canonicalHref = tag.props.href
           }
 
+          // Predicate dispatch: per-tag rules whose logic is shared with the
+          // source-level eslint-plugin / CLI. Adapt each runtime tag into a
+          // predicate-friendly TagInput, run every predicate, and translate
+          // each Diagnostic back into a `report()` call. Cross-tag and
+          // runtime-only checks (URL_META_KEYS, render-blocking, content size,
+          // template-param interpolation) stay inline below.
+          function emitFromPredicates(diagnostics: Diagnostic[], tag: HeadTag) {
+            for (const diag of diagnostics) {
+              const sev = PREDICATE_SEVERITY[diag.ruleId] ?? 'warn'
+              report(diag.ruleId as ValidationRuleId, diag.message, sev, tag)
+            }
+          }
+
           // Per-tag validation
           for (const tag of tags) {
             const { props } = tag
             const metaKey = props.property || (props.name ? String(props.name).toLowerCase() : undefined)
 
-            // === URL Validity ===
-
-            // Canonical
-            if (tag.tag === 'link' && props.rel === 'canonical' && props.href) {
-              if (!isAbsoluteUrl(props.href))
-                report('non-absolute-canonical', `Canonical URL should be absolute, received "${props.href}".`, 'warn', tag)
+            // Shared predicates (covers: empty-meta-content, robots-conflict,
+            // viewport-user-scalable, twitter-handle-missing-at, possible-typo,
+            // non-absolute-canonical, preload-missing-as, preload-font-crossorigin,
+            // script-src-with-content, defer-on-module-script,
+            // deprecated-prop-* via no-deprecated-props).
+            const tagInput = tagInputFromRuntime(tag)
+            if (tagInput) {
+              for (const predicate of Object.values(tagPredicates))
+                emitFromPredicates(predicate(tagInput), tag)
             }
+
+            // === URL Validity (runtime-only: depends on URL_META_KEYS lookup) ===
 
             // OG/Twitter URL meta
             if (tag.tag === 'meta' && metaKey && URL_META_KEYS.has(metaKey)) {
@@ -194,91 +233,35 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 report('non-absolute-og-url', `${metaKey} should be an absolute URL, received "${content}".`, 'warn', tag)
             }
 
-            // === Content Quality ===
+            // === Template-param interpolation (runtime-only: needs resolved string) ===
 
             if (tag.tag === 'meta' && metaKey) {
               const content = String(props.content ?? '')
-
-              // Empty content
-              if ('content' in props && content === '')
-                report('empty-meta-content', `Meta tag "${metaKey}" has empty content.`, 'warn', tag)
-
-              // Unresolved template params in meta content
               if (content && TEMPLATE_PARAM_RE.test(content))
                 report('unresolved-template-param', `Unresolved template param in ${metaKey}: "${content}".`, 'warn', tag)
-
-              // === Conflict Detection ===
-
-              // Robots conflicts
-              if (metaKey === 'robots' && content) {
-                const directives = content.toLowerCase().split(',').map((d: string) => d.trim())
-                if (directives.includes('index') && directives.includes('noindex'))
-                  report('robots-conflict', `Robots meta has conflicting "index" and "noindex" directives.`, 'warn', tag)
-                if (directives.includes('follow') && directives.includes('nofollow'))
-                  report('robots-conflict', `Robots meta has conflicting "follow" and "nofollow" directives.`, 'warn', tag)
-              }
-
-              // Viewport accessibility
-              if (metaKey === 'viewport' && content) {
-                if (USER_SCALABLE_NO_RE.test(content))
-                  report('viewport-user-scalable', `viewport has "user-scalable=no" which prevents zooming and harms accessibility.`, 'info', tag)
-                if (MAX_SCALE_RE.test(content))
-                  report('viewport-user-scalable', `viewport "maximum-scale=1" limits zooming and may harm accessibility.`, 'info', tag)
-              }
-
-              // Twitter handle missing @
-              if ((metaKey === 'twitter:site' || metaKey === 'twitter:creator') && content && !content.startsWith('@') && !NUMERIC_RE.test(content))
-                report('twitter-handle-missing-at', `${metaKey} should start with "@", received "${content}".`, 'warn', tag)
-
-              // === Typo Detection ===
-
-              if (props.property && !KNOWN_META_PROPERTIES.has(props.property) && OG_PREFIX_RE.test(props.property)) {
-                const suggestion = findClosestMatch(props.property, KNOWN_META_PROPERTIES)
-                if (suggestion)
-                  report('possible-typo', `Unknown meta property "${props.property}". Did you mean "${suggestion}"?`, 'warn', tag)
-              }
-
-              if (props.name) {
-                // HTML `meta[name]` is case-insensitive, so normalize before lookup.
-                const lower = String(props.name).toLowerCase()
-                if (!KNOWN_META_NAMES.has(lower) && (lower.startsWith('twitter:') || lower.startsWith('fediverse:') || !lower.includes(':'))) {
-                  const suggestion = findClosestMatch(lower, KNOWN_META_NAMES)
-                  if (suggestion)
-                    report('possible-typo', `Unknown meta name "${props.name}". Did you mean "${suggestion}"?`, 'warn', tag)
-                }
-              }
             }
 
-            // Title checks
+            // Title checks. `html-in-title` is shared via the HeadInputPredicate
+            // path; `unresolved-template-param` and `empty-title` are
+            // runtime-only (need the resolved text) so stay inline.
             if (tag.tag === 'title') {
+              const titleInput = titleInputFromRuntime(tag)
+              if (titleInput) {
+                for (const diag of headInputPredicates['no-html-in-title'](titleInput))
+                  report(diag.ruleId as ValidationRuleId, diag.message, 'warn', tag)
+              }
               const text = tag.textContent || ''
-              if (HTML_CHARS_RE.test(text))
-                report('html-in-title', `Title contains HTML characters which will be escaped, not rendered: "${text}".`, 'warn', tag)
               if (TEMPLATE_PARAM_RE.test(text))
                 report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
               if (!text.trim())
                 report('empty-title', `Title tag is empty. If using titleTemplate, ensure it produces output.`, 'warn', tag)
             }
 
-            // === Preload / Script ===
-
-            if (tag.tag === 'link' && props.rel === 'preload') {
-              if (props.as === 'font' && !('crossorigin' in props))
-                report('preload-font-crossorigin', `Font preload requires "crossorigin" attribute — without it the font will be fetched twice.`, 'warn', tag)
-              if (!props.as)
-                report('preload-missing-as', `Preload link is missing the required "as" attribute.`, 'warn', tag)
-            }
-
-            if (tag.tag === 'script' && props.src && (tag.innerHTML || tag.textContent))
-              report('script-src-with-content', `Script has both "src" and inline content — the browser will ignore the inline content.`, 'warn', tag)
+            // === Render-blocking script (runtime-only: needs tagPosition) ===
 
             // Render-blocking script in head without async/defer/module
             if (tag.tag === 'script' && props.src && !props.async && !props.defer && props.type !== 'module' && (!tag.tagPosition || tag.tagPosition === 'head'))
               report('render-blocking-script', `Script "${props.src}" is render-blocking. Add "async", "defer", or use type="module" to avoid blocking the critical rendering path.`, 'warn', tag)
-
-            // defer on module scripts is redundant
-            if (tag.tag === 'script' && props.type === 'module' && props.defer)
-              report('defer-on-module-script', `"defer" is redundant on module scripts. Modules are deferred by default.`, 'info', tag)
 
             // === Performance Hints ===
             // Inspired by webperf-snippets (https://webperf-snippets.nucliweb.net/)
@@ -414,32 +397,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             }
           }
 
-          // Deprecated v2 property names (no longer auto-converted)
-          for (const tag of tags) {
-            for (const propName of Object.keys(DEPRECATED_PROPS)) {
-              if (!(propName in tag.props))
-                continue
-              if (propName === 'body' && tag.props.body !== true)
-                continue
-              const { replacement, ruleId } = DEPRECATED_PROPS[propName]
-              const message = propName === 'body'
-                ? `"body: true" was removed in v3. Use "${replacement}" instead.`
-                : `"${propName}" was removed in v3. Use "${replacement}" instead.`
-              report(ruleId, message, 'warn', tag)
-            }
-          }
-
-          // Numeric tagPriority (alias is preferred for readability and stability)
-          for (const tag of tags) {
-            if (typeof tag.tagPriority === 'number') {
-              report(
-                'numeric-tag-priority',
-                `Numeric tagPriority (${tag.tagPriority}) is brittle. Prefer an alias ('critical' | 'high' | 'low'), or 'before:<key>' / 'after:<key>' to position relative to another tag.`,
-                'info',
-                tag,
-              )
-            }
-          }
+          // `no-deprecated-props` and `numeric-tag-priority` are dispatched
+          // through the per-tag shared-predicate path above (the runtime
+          // adapter surfaces `tag.tagPriority` as `props.tagPriority` so the
+          // predicate fires on resolved tags).
 
           // Too many fetchpriority="high" dilutes the signal
           const { max: maxHighPriority } = resolveOptions(ruleConfig, 'too-many-fetchpriority-high', { max: 2 })
