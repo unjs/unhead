@@ -21,13 +21,33 @@ unhead audit                   # default: **/*.{js,ts,vue,svelte,...}
 unhead audit src/**/*.ts
 ```
 
-Vue and Svelte single-file components are handled by extracting each `<script>` block and parsing it with oxc; diagnostics report the original file's line/column. No `eslint`, `typescript-eslint`, or `vue-eslint-parser` install is needed.
+Vue and Svelte single-file components are handled by extracting each `<script>` block and parsing it with oxc; diagnostics report the original file's line/column. `nuxt.config.ts`'s `app.head` block is treated as a `useHead` input and audited the same way. No `eslint`, `typescript-eslint`, or `vue-eslint-parser` install is needed.
 
-Exits with code 1 when any rule fires at `error` severity.
+Exits with code 1 when any rule fires at `error` severity. Warnings and info findings don't block CI.
+
+The output also includes:
+
+- A green `✓` line for every file with `useHead` / `useSeoMeta` usage and zero diagnostics, with a per-file call breakdown (e.g. `useHead ×2, useSeoMeta`). Confirms which files were actually scanned vs silently skipped.
+- A `parse-error` warning for any script block oxc-parser refused (typically a real TS/JS syntax error in the file), so you don't mistake a parse failure for a clean run.
+- A **Title consistency** section (see below) that surfaces project-wide title-format observations.
+
+### Project insights
+
+In addition to per-file lints, `audit` runs a few cross-file checks:
+
+- **`page-missing-head`** (`info`) — flags any file under `**/pages/**/*.vue` that doesn't call `useHead` / `useSeoMeta` directly *or* via a project composable that transitively does. The transitive part comes from a fixpoint over the project's call graph, so wrappers like `useDefaultMeta()` → `useHead()` count as coverage.
+- **`prefer-use-seo-meta`** (`warning`, autofixable) — fires on `useHead` calls that only set `title` / `description` / `meta:[…]`. The flat `useSeoMeta` shape is fully typed against `MetaFlat`, so a typo like `name: 'descriptipon'` becomes a TypeScript error instead of silently shipping a broken meta tag. `migrate` rewrites the call in place.
+- **Title consistency** — collects every static `title:` / `titleTemplate:` literal from `useHead`, `useSeoMeta`, `defineNuxtConfig`, **and** any project composable that the call-graph fixpoint identifies as head-providing (e.g. `useToolSeo({ title: '…' })`). Reports:
+  - mixed separators across pages (`" | "` vs `" - "` vs `" · "`),
+  - a common trailing suffix shared by ≥50% of titles (suggests extracting via `titleTemplate` + `templateParams.siteName`),
+  - the suffix being duplicated when `titleTemplate` is *already* set (titles will render the suffix twice),
+  - mixing literal titles with titles that already use `%templateParams`.
+
+  Each finding pairs the observation with a concrete `templateParams` / `titleTemplate` migration hint.
 
 ### `unhead migrate [globs...]`
 
-Apply autofixes for v2-to-v3 migration: rewrites deprecated props (`children` → `innerHTML`, `hid`/`vmid` → `key`, `body: true` → `tagPosition: 'bodyClose'`), prepends missing `@` on Twitter handles, removes redundant `defer` on module scripts, adds `crossorigin` to font preloads, and wraps tag object literals in their `defineX` helper for type narrowing.
+Apply autofixes for v2-to-v3 migration plus the type-safety upgrades: rewrites deprecated props (`children` → `innerHTML`, `hid`/`vmid` → `key`, `body: true` → `tagPosition: 'bodyClose'`), prepends missing `@` on Twitter handles, removes redundant `defer` on module scripts, adds `crossorigin` to font preloads, wraps tag object literals in their `defineX` helper for type narrowing, and converts meta-only `useHead` calls to `useSeoMeta` for typed key autocompletion.
 
 ```bash
 unhead migrate
@@ -87,6 +107,10 @@ unhead validation lives in three layers; each catches a different class of issue
 | Preload + async/defer / preload + prefetch conflicts | — | ✓ | ✓ |
 | Inline script / style size budget | — | ✓ | ✓ |
 | Missing `TemplateParamsPlugin` / `AliasSortingPlugin` | — | — | ✓ (plugin presence is runtime-only) |
+| `prefer-use-seo-meta` (meta-only `useHead` → `useSeoMeta`) | ✓ (autofix) | — | — |
+| `page-missing-head` (no `useHead`/composable in `pages/**`) | ✓ (info, cross-file fixpoint) | — | — |
+| Title separator / suffix consistency across pages | ✓ (cross-file) | — | — |
+| `parse-error` (script block oxc couldn't parse) | ✓ | — | — |
 
 Source-level lint is the cheapest feedback loop and runs in your editor. The HTML pass catches everything that depends on the resolved tag list. The runtime plugin gives you live warnings during dev. Use them together.
 
