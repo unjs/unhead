@@ -47,7 +47,7 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "eslint": ">=9.0.0",
+    "eslint": ">=10.2.1",
     "unhead": "workspace:^"
   },
   "dependencies": {
