@@ -80,12 +80,12 @@
   },
   "peerDependencies": {
     "@unhead/cli": "workspace:^",
-    "esbuild": ">=0.17.0",
-    "lightningcss": ">=1.20.0",
-    "rolldown": ">=1.0.0-beta.0",
+    "esbuild": ">=0.28.0",
+    "lightningcss": ">=1.32.0",
+    "rolldown": ">=1.0.0-rc.18",
     "unhead": "workspace:^",
     "vite": ">=6.4.2",
-    "webpack": ">=5.0.0"
+    "webpack": ">=5.106.2"
   },
   "peerDependenciesMeta": {
     "@unhead/cli": {

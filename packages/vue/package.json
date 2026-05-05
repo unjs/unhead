@@ -143,8 +143,8 @@
   },
   "peerDependencies": {
     "vite": ">=6.4.2",
-    "vue": ">=3.5.18",
-    "webpack": ">=5.0.0"
+    "vue": ">=3.5.33",
+    "webpack": ">=5.106.2"
   },
   "peerDependenciesMeta": {
     "vite": {
