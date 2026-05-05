@@ -581,7 +581,44 @@ describe('dedupe', () => {
     expect(headTags).toContain('hreflang="fr"')
   })
 
-  it('dedupes RSS feeds with same type', async () => {
+  it('dedupes RSS feeds with same type and same href on rehydration', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed.xml', title: 'RSS Feed' },
+      ],
+    })
+    // Push the same link again (simulating SSR + hydration of the same feed).
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed.xml', title: 'RSS Feed' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags).toContain('feed.xml')
+  })
+
+  it('keeps multiple RSS feeds with same type and different hrefs (#758)', async () => {
+    // Regression for https://github.com/unjs/unhead/issues/758 — `dedupeKey`
+    // for `rel="alternate"` used to collapse on `type` alone, which dropped
+    // every feed but the last when two RSS feeds shared `application/rss+xml`.
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed.xml', title: 'RSS Feed' },
+        { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed2.xml', title: 'RSS Feed 2' },
+      ],
+    })
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags.split('rel="alternate"').length).toBe(3)
+    expect(headTags).toContain('feed.xml')
+    expect(headTags).toContain('feed2.xml')
+  })
+
+  it('keeps multiple RSS feeds across separate head pushes (#758)', async () => {
+    // Same as above but split across two `head.push` calls (the way Vue/Nuxt
+    // composables typically register tags from different components).
     const head = createServerHeadWithContext()
     head.push({
       link: [
@@ -594,9 +631,9 @@ describe('dedupe', () => {
       ],
     })
     const { headTags } = await renderSSRHead(head)
-    expect(headTags.split('rel="alternate"').length).toBe(2)
+    expect(headTags.split('rel="alternate"').length).toBe(3)
+    expect(headTags).toContain('feed.xml')
     expect(headTags).toContain('feed2.xml')
-    expect(headTags).not.toContain('feed.xml"')
   })
 
   it('allows RSS and Atom feeds to coexist', async () => {
