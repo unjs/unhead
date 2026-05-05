@@ -111,9 +111,9 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "react": ">=19.2.4",
+    "react": ">=19.2.5",
     "vite": ">=6.4.2",
-    "webpack": ">=5.0.0"
+    "webpack": ">=5.106.2"
   },
   "peerDependenciesMeta": {
     "vite": {
