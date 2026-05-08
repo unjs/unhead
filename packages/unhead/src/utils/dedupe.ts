@@ -31,10 +31,10 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 
   // dedupe alternate links with hreflang/type by that attribute
   if (name === 'link' && props.rel === 'alternate') {
-    const altKey = props.hreflang || props.type
-    if (altKey) {
-      return `alternate:${altKey}`
-    }
+    if (props.hreflang)
+      return `alternate:${props.hreflang}`
+    if (props.type)
+      return `alternate:${props.type}:${props.href || ''}`
   }
 
   if (props.charset)
