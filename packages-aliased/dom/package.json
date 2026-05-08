@@ -13,7 +13,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "v2"
+    "tag": "2x"
   },
   "bugs": {
     "url": "https://github.com/unjs/unhead/issues"
