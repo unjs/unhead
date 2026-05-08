@@ -37,4 +37,4 @@ jobs:
       - name: Install Dependencies
         run: pnpm i
 
-      - run: pnpm publish -r --access public --no-git-checks --tag v2
+      - run: pnpm publish -r --access public --no-git-checks --tag 2x
