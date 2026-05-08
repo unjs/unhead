@@ -17,7 +17,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "v2"
   },
   "keywords": [
     "schema.org",

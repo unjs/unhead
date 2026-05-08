@@ -10,7 +10,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "v2"
   },
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
