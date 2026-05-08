@@ -44,15 +44,15 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           if [[ "$TAG" != *-* ]]; then
-            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "tag=--tag v2" >> "$GITHUB_OUTPUT"
           elif [[ "$TAG" == *beta* ]]; then
-            echo "tag=--tag beta" >> "$GITHUB_OUTPUT"
+            echo "tag=--tag v2-beta" >> "$GITHUB_OUTPUT"
           elif [[ "$TAG" == *alpha* ]]; then
-            echo "tag=--tag alpha" >> "$GITHUB_OUTPUT"
+            echo "tag=--tag v2-alpha" >> "$GITHUB_OUTPUT"
           elif [[ "$TAG" == *rc* ]]; then
-            echo "tag=--tag rc" >> "$GITHUB_OUTPUT"
+            echo "tag=--tag v2-rc" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=--tag next" >> "$GITHUB_OUTPUT"
+            echo "tag=--tag v2-next" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish
