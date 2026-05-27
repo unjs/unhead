@@ -12,6 +12,7 @@ packages:
   - examples/*
   - docs
 overrides:
+  '@arethetypeswrong/core>fflate': 0.8.2
   chokidar: 5.0.0
 catalog:
   '@angular-devkit/build-angular': ^21.2.12
