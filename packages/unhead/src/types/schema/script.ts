@@ -464,23 +464,46 @@ export type KnownScriptType
     | 'application/json'
 
 /**
- * Pick {@link Script} union members whose `type` accepts `U`.
+ * Pick {@link Script} union members whose `type` accepts `U`. Distributes over
+ * `U`, so a union type like `'text/javascript' | 'module'` returns the union of
+ * all matching variants.
  *
  * Handles members whose `type` is itself a union (e.g. {@link ExternalScript}'s
  * `'' | 'text/javascript'`), and members where `type` is optional.
  */
 type MatchScriptByType<U>
-  = Script extends infer M
-    ? M extends { type?: infer MT }
-      ? U extends MT
-        ? M
+  = U extends any
+    ? Script extends infer M
+      ? M extends { type?: infer MT }
+        ? U extends MT
+          ? M
+          : never
         : never
       : never
     : never
 
+type UnionToIntersection<U>
+  = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
+
+type IsUnion<T, U extends T = T> = T extends T ? ([U] extends [T] ? false : true) : never
+
+/**
+ * For a union `type` input, the structural intersection of matching variants
+ * (minus their `type` discriminator) plus the original type union. Lets
+ * {@link defineScript} accept a runtime-determined type like
+ * `cond ? 'text/javascript' : 'module'` without losing field validation.
+ */
+type InferScriptUnion<U>
+  = UnionToIntersection<MatchScriptByType<U> extends infer M ? (M extends any ? Omit<M, 'type'> : never) : never>
+    & { type: U }
+
 /**
  * Resolve a single script input to either its strict {@link Script} variant (when
  * `type` is a {@link KnownScriptType}) or {@link GenericScript} (for custom types).
+ *
+ * Union `type` inputs (e.g. `'text/javascript' | 'module'`) resolve to the
+ * structural intersection of matching variants, so runtime-determined types are
+ * accepted without casts.
  *
  * When no `type` field is present, or `type` is non-string, the full {@link Script}
  * union is returned so discriminators like `src` vs `textContent` still apply.
@@ -489,7 +512,9 @@ export type InferScript<T>
   = T extends { type: infer U }
     ? U extends string
       ? U extends KnownScriptType
-        ? DeepReadonly<MatchScriptByType<U>>
+        ? IsUnion<U> extends true
+          ? DeepReadonly<InferScriptUnion<U>>
+          : DeepReadonly<MatchScriptByType<U>>
         : DeepReadonly<GenericScript> & { type: U }
       : DeepReadonly<Script>
     : DeepReadonly<Script>
