@@ -879,28 +879,53 @@ export type Link
 // ============================================================================
 
 /**
- * Pick {@link Link} union members whose `rel` accepts `R`.
+ * Pick {@link Link} union members whose `rel` accepts `R`. Distributes over `R`,
+ * so a union rel like `'preconnect' | 'dns-prefetch'` returns the union of all
+ * matching variants.
  *
  * Unlike `Extract<Link, { rel: R }>`, this handles members whose `rel` is itself
  * a union (e.g. {@link FaviconLink}'s `'icon' | 'shortcut icon'`).
  */
 type MatchLinkByRel<R>
-  = Link extends infer M
-    ? M extends { rel: infer MR }
-      ? R extends MR
-        ? M
+  = R extends any
+    ? Link extends infer M
+      ? M extends { rel: infer MR }
+        ? R extends MR
+          ? M
+          : never
         : never
       : never
     : never
 
+type UnionToIntersection<U>
+  = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
+
+type IsUnion<T, U extends T = T> = T extends T ? ([U] extends [T] ? false : true) : never
+
+/**
+ * For a union rel input, the structural intersection of matching variants
+ * (minus their `rel` discriminator) plus the original rel union. Lets
+ * {@link defineLink} accept a runtime-determined rel like
+ * `cond ? 'preconnect' : 'dns-prefetch'` without losing field validation.
+ */
+type InferLinkUnion<R>
+  = UnionToIntersection<MatchLinkByRel<R> extends infer M ? (M extends any ? Omit<M, 'rel'> : never) : never>
+    & { rel: R }
+
 /**
  * Resolve a single link input to either its strict {@link Link} variant (when
  * `rel` is a {@link KnownLinkRel}) or {@link GenericLink} (for custom rels).
+ *
+ * Union `rel` inputs (e.g. `'preconnect' | 'dns-prefetch'`) resolve to the
+ * structural intersection of matching variants, so runtime-determined rels are
+ * accepted without casts.
  */
 export type InferLink<T>
   = T extends { rel: infer R }
     ? R extends KnownLinkRel
-      ? DeepReadonly<MatchLinkByRel<R>>
+      ? IsUnion<R> extends true
+        ? DeepReadonly<InferLinkUnion<R>>
+        : DeepReadonly<MatchLinkByRel<R>>
       : R extends string
         ? DeepReadonly<GenericLink> & { rel: R }
         : never
