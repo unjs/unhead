@@ -40,7 +40,9 @@ export function processTemplateParams(s: string, p: TemplateParams, sep?: string
   try {
     decoded = decodeURI(s)
   }
-  catch {}
+  catch {
+    // Malformed encoded input should fall back to token matching against the original string.
+  }
   // find all tokens in decoded
   const tokens = decoded.match(TOKEN_RE)
 

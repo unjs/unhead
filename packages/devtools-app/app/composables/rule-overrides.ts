@@ -35,7 +35,9 @@ function writeStorage(map: OverrideMap): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
   }
-  catch {}
+  catch {
+    // Rule overrides are best-effort UI state; ignore unavailable or full localStorage.
+  }
 }
 
 const overrides = ref<OverrideMap>(readStorage())

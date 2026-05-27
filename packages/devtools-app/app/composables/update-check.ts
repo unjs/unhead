@@ -102,7 +102,10 @@ export function checkForUpdate(currentVersion: string) {
       hasUpdate.value = best !== null
       checked = true
     })
-    .catch(() => {})
+    .catch((error) => {
+      // Update checks are opportunistic; transient registry/network failures should be silent.
+      void error
+    })
     .finally(() => {
       checking = false
     })

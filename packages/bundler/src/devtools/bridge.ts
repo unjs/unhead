@@ -273,7 +273,9 @@ function serializeHeadState(head: any, wasSSR = false, ssrPayload: { entries: an
     try {
       templateParams = JSON.parse(JSON.stringify(head._templateParams))
     }
-    catch {}
+    catch {
+      // Template params may contain unserializable values; omit them from the devtools snapshot.
+    }
   }
 
   const title = head._title || document.title || ''

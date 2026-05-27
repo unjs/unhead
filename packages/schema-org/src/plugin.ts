@@ -91,6 +91,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
                   resolvedMeta.host = new URL(resolvedMeta.url).origin
                 }
                 catch {
+                  // Canonical URLs may contain unresolved template params; leave host unset.
                 }
               }
             }

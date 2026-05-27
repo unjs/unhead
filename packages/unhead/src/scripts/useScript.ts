@@ -222,7 +222,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           abortPromise,
         ])
           // OK
-          .catch(() => {})
+          .catch((error) => {
+            // Trigger failures leave the script unloaded; consumers can observe status separately.
+            void error
+          })
           .then((res) => {
             res?.()
           })

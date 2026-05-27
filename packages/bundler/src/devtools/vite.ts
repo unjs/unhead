@@ -118,7 +118,9 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
         if (existsSync(unheadPkg))
           unheadVersion = JSON.parse(readFileSync(unheadPkg, 'utf-8')).version || ''
       }
-      catch {}
+      catch {
+        // Version metadata is optional for devtools; leave it blank if package resolution fails.
+      }
 
       const bridgePath = resolve(pkgDir, 'dist/devtools/bridge.mjs')
       if (existsSync(bridgePath))

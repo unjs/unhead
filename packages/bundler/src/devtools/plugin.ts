@@ -37,7 +37,9 @@ export function devtoolsPlugin(): HeadPluginInput {
                 return v
               }))
             }
-            catch {}
+            catch {
+              // Entries can contain unserializable input; keep the devtools payload usable.
+            }
             entries.push({
               id,
               source: entry.options?._source,
