@@ -18,17 +18,17 @@
     "express": "^5.2.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.15.0"
+    "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.6.2",
-    "@types/react": "^19.2.14",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.0.11"
+    "vite": "^8.0.14"
   }
 }
