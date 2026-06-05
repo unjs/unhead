@@ -3,8 +3,9 @@ import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
 import type { UnheadDevtoolsOptions } from '../unplugin/types'
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 import { getConfigRpc, runLintRpc } from './rpc'
@@ -13,6 +14,24 @@ const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const LEADING_SLASH_RE = /^\//
 const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/
+
+/**
+ * Resolve the `@unhead/bundler` package root by walking up from this module.
+ *
+ * unbuild may code-split the devtools plugin into `dist/shared/*.mjs` rather
+ * than emitting it as `dist/vite.mjs`, so we can't assume a fixed depth from
+ * `import.meta.url`. Walking up to the nearest `package.json` works whichever
+ * chunk this code ends up in (dist/vite.mjs, dist/shared/*.mjs, or stubbed src).
+ */
+function findPkgRoot(fromUrl: string): string {
+  let dir = dirname(fileURLToPath(fromUrl))
+  while (dir !== dirname(dir)) {
+    if (existsSync(resolve(dir, 'package.json')))
+      return dir
+    dir = dirname(dir)
+  }
+  return dir
+}
 
 const UNHEAD_ICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FBBF24'/%3E%3Cstop offset='100%25' stop-color='%23f0db4f'/%3E%3C/linearGradient%3E%3Cmask id='m'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cpath d='M12 32 L1 32 L15 15 Z' fill='black'/%3E%3C/mask%3E%3C/defs%3E%3Cpath fill='none' stroke='url(%23g)' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 4v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4' mask='url(%23m)'/%3E%3C/svg%3E`
 
@@ -88,10 +107,8 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
   let enabled = false
   let bridgeCode: string | undefined
   let unheadVersion = ''
-  const pkgDir = fileURLToPath(new URL('..', import.meta.url))
-  // At runtime this file is bundled into dist/vite.mjs, so the devtools-ui
-  // assets are a sibling directory inside @unhead/bundler's own dist.
-  const devtoolsUiDir = fileURLToPath(new URL('./devtools-ui', import.meta.url))
+  const pkgDir = findPkgRoot(import.meta.url)
+  const devtoolsUiDir = resolve(pkgDir, 'dist/devtools-ui')
 
   return {
     name: '@unhead/devtools',
@@ -112,11 +129,14 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
         })
       }
 
-      // Resolve unhead version for the devtools UI
+      // Resolve unhead version for the devtools UI. Resolve the `unhead` entry
+      // through Node's module resolution then walk up to its package.json, so it
+      // works under hoisted and pnpm installs (unhead doesn't export
+      // ./package.json, and it isn't nested inside @unhead/bundler).
       try {
-        const unheadPkg = resolve(pkgDir, 'node_modules/unhead/package.json')
-        if (existsSync(unheadPkg))
-          unheadVersion = JSON.parse(readFileSync(unheadPkg, 'utf-8')).version || ''
+        const unheadEntry = createRequire(import.meta.url).resolve('unhead')
+        const unheadPkg = resolve(findPkgRoot(pathToFileURL(unheadEntry).href), 'package.json')
+        unheadVersion = JSON.parse(readFileSync(unheadPkg, 'utf-8')).version || ''
       }
       catch {
         // Version metadata is optional for devtools; leave it blank if package resolution fails.
