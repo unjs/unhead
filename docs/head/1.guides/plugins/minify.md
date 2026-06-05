@@ -52,7 +52,26 @@ export interface MinifyPluginOptions {
    * @default true
    */
   json?: boolean
+  /**
+   * Omit the line breaks between rendered tags, producing a single line of output.
+   * Only removes the separators between tags; newlines inside inline content are
+   * left to the minifiers above.
+   * @default false
+   */
+  omitLineBreaks?: boolean
 }
+```
+::
+
+### Omit Line Breaks
+
+By default tags render one per line. Set `omitLineBreaks` to render them on a single line. This only drops the separators between tags, so newlines inside inline `<script>`/`<style>`/JSON-LD content are preserved (the minifiers handle those):
+
+::code-block
+```ts [Input]
+MinifyPlugin({
+  omitLineBreaks: true,
+})
 ```
 ::
 
