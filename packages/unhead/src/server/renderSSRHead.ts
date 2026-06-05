@@ -11,9 +11,14 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRe
     callHook(head, 'ssr:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return ssrRenderTags([])
-    const ctx = { tags: options.resolvedTags || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }) }
+    // Fresh per-render options so plugins (e.g. MinifyPlugin) can override
+    // render behaviour like `omitLineBreaks` without leaking into the closure.
+    const ctx = {
+      tags: options.resolvedTags || resolveTags(head, { tagWeight: options.tagWeight ?? capoTagWeight }),
+      options: { ...options },
+    }
     callHook(head, 'ssr:render', ctx)
-    const html: SSRHeadPayload = ssrRenderTags(ctx.tags, options)
+    const html: SSRHeadPayload = ssrRenderTags(ctx.tags, ctx.options)
     const renderCtx: SSRRenderContext = { tags: ctx.tags, html }
     callHook(head, 'ssr:rendered', renderCtx)
     return renderCtx.html

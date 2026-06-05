@@ -155,6 +155,17 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
    * - <meta name="viewport" content="width=device-width, initial-scale=1">
    */
   disableDefaults?: boolean
+  /**
+   * Omit line breaks between rendered tags, producing a single line of output.
+   *
+   * Only removes the separators *between* tags; newlines inside inline
+   * `<script>`/`<style>`/JSON-LD content are preserved.
+   *
+   * @deprecated Prefer `MinifyPlugin` from `unhead/plugins`, which minifies the
+   * inline content itself (where the real bytes are) rather than only dropping
+   * separators.
+   */
+  omitLineBreaks?: boolean
 }
 
 export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHeadOptions, 'experimentalStreamKey'> {

@@ -55,7 +55,7 @@ export interface DOMHeadHooks {
 
 export interface SSRHeadHooks {
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
-  'ssr:render': (ctx: { tags: HeadTag[] }) => HookResult
+  'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }
 
