@@ -178,4 +178,29 @@ describe('minifyPlugin', () => {
     const { headTags } = head.render()
     expect(headTags).toContain('function a(){return 1}a();void 0')
   })
+
+  it('omitLineBreaks drops inter-tag separators surgically', () => {
+    const head = createServerHeadWithContext({
+      plugins: [MinifyPlugin({ omitLineBreaks: true })],
+    })
+    head.push({
+      script: [
+        { innerHTML: 'const a = 1;\nconst b = 2;' },
+        // content minify never touches: its internal newlines must survive,
+        // proving this is a renderer-level join change and not a blanket strip
+        { type: 'speculationrules', innerHTML: '{\n  "prerender": []\n}' },
+        { type: 'importmap', innerHTML: '{\n  "imports": {}\n}' },
+        { innerHTML: 'a =\n1' }, // under the 20-char minify threshold
+      ],
+      meta: [{ name: 'a', content: '1' }],
+    })
+
+    const { headTags } = head.render()
+    // no separators between tags
+    expect(headTags).not.toContain('>\n<')
+    // un-minified content keeps its internal newlines
+    expect(headTags).toContain('{\n  "prerender": []\n}')
+    expect(headTags).toContain('{\n  "imports": {}\n}')
+    expect(headTags).toContain('a =\n1')
+  })
 })

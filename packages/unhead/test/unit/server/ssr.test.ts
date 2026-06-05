@@ -131,6 +131,27 @@ describe('ssr', () => {
   `)
   })
 
+  it('omitLineBreaks via createHead option applies to head.render()', () => {
+    const head = createServerHeadWithContext({ omitLineBreaks: true })
+
+    head.push({
+      script: [
+        { src: 'https://cdn.example.com/script-1.js' },
+        { src: 'https://cdn.example.com/script-2.js' },
+      ],
+    })
+
+    expect(head.render()).toMatchInlineSnapshot(`
+    {
+      "bodyAttrs": "",
+      "bodyTags": "",
+      "bodyTagsOpen": "",
+      "headTags": "<script src="https://cdn.example.com/script-1.js"></script><script src="https://cdn.example.com/script-2.js"></script>",
+      "htmlAttrs": "",
+    }
+  `)
+  })
+
   it('multiword attributes in html template', async () => {
     const head = createServerHeadWithContext()
 

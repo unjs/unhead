@@ -19,6 +19,15 @@ export interface MinifyPluginOptions {
    * @default true
    */
   json?: boolean
+  /**
+   * Omit line breaks between rendered tags, producing a single line of output.
+   *
+   * Applied surgically by the renderer (separators only); newlines inside
+   * inline content are still handled by the minifiers above, so this is safe.
+   *
+   * @default false
+   */
+  omitLineBreaks?: boolean
 }
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json'])
@@ -45,11 +54,14 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
   const jsMinify = options?.js === false ? false : (options?.js || minifyJS)
   const cssMinify = options?.css === false ? false : (options?.css || minifyCSS)
   const jsonMinify = options?.json !== false
+  const omitLineBreaks = options?.omitLineBreaks === true
   return {
     key: 'minify',
     hooks: {
-      'ssr:render': ({ tags }) => {
-        for (const tag of tags) {
+      'ssr:render': (ctx) => {
+        if (omitLineBreaks)
+          ctx.options.omitLineBreaks = true
+        for (const tag of ctx.tags) {
           const content = tag.innerHTML
           if (!content || content.length < 20)
             continue
