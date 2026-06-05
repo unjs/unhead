@@ -4,15 +4,15 @@
     "gz": 4499
   },
   "server": {
-    "size": 10923,
-    "gz": 4412
+    "size": 10978,
+    "gz": 4426
   },
   "vueClient": {
     "size": 12104,
     "gz": 4982
   },
   "vueServer": {
-    "size": 11890,
-    "gz": 4851
+    "size": 11945,
+    "gz": 4866
   }
 }
