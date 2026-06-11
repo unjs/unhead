@@ -29,6 +29,12 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
 
 const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
 
+// Keys whose runtime value is structurally expanded into multiple meta tags based on its shape
+// (e.g. `ogImage: { url, width }` -> `og:image` + `og:image:width`). See `unpackMeta` MEDIA branch.
+// We can only reproduce this statically for object/array literals; any dynamic value (ref, computed,
+// getter, identifier) could resolve to an object and MUST be left to runtime `unpackMeta`.
+const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
+
 /**
  * useSeoMeta({
  *   title: 'My Title',
@@ -198,6 +204,59 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               key = 'charset'
             }
             let value = code.substring(property.value.start as number, property.value.end as number)
+
+            if (MEDIA_KEYS.has(propertyKey.name)) {
+              // Expand an object literal `{ url, width, ... }` into `og:image`, `og:image:width`, ...
+              // matching runtime `unpackMeta`. Leaf values may be dynamic; only the structure must
+              // be statically known. Returns false when a prop key can't be resolved statically.
+              const expandObject = (objNode: any): string | false => {
+                const tags: string[] = []
+                for (const p of objNode.properties) {
+                  if (p.type === 'SpreadElement' || p.key?.type !== 'Identifier')
+                    return false
+                  const suffix = p.key.name === 'url' ? '' : `:${p.key.name}`
+                  tags.push(`    { ${key}: '${keyValue}${suffix}', ${valueKey}: ${code.substring(p.value.start, p.value.end)} },`)
+                }
+                return tags.join('\n')
+              }
+              if (property.value.type === 'ObjectExpression') {
+                const expanded = expandObject(property.value)
+                if (expanded === false) {
+                  output = false
+                  return
+                }
+                output.push(expanded)
+                return
+              }
+              if (property.value.type === 'ArrayExpression') {
+                if (!property.value.elements.length)
+                  return
+                const parts: string[] = []
+                for (const element of property.value.elements) {
+                  if (!element || element.type !== 'ObjectExpression') {
+                    output = false
+                    return
+                  }
+                  const expanded = expandObject(element)
+                  if (expanded === false) {
+                    output = false
+                    return
+                  }
+                  parts.push(expanded)
+                }
+                output.push(parts.join('\n'))
+                return
+              }
+              // Literals (string/number/boolean) and template literals always resolve to a scalar
+              // -> a single safe tag. Any other value (identifier, ref(), computed(), getter) could
+              // resolve to an object or array; we can't expand it statically, so bail to runtime.
+              const t = property.value.type
+              if (t !== 'Literal' && t !== 'StringLiteral' && t !== 'NumericLiteral' && t !== 'TemplateLiteral') {
+                output = false
+                return
+              }
+            }
+
             if (property.value.type === 'ArrayExpression') {
               const elements = property.value.elements
               if (!elements.length)

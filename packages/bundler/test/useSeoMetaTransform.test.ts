@@ -145,12 +145,12 @@ describe('useSeoMetaTransform', () => {
     `)
   })
 
-  it('handles reactivity', async () => {
+  it('inlines reactive values for non-structural keys', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'unhead\'',
       'import { ref } from \'vue\'',
       'const someValue = { value: \'test\' }',
-      'useSeoMeta({ title: \'Hello\', description: () => someValue.value, ogImage: ref(\'test\')  })',
+      'useSeoMeta({ title: \'Hello\', description: () => someValue.value, ogTitle: ref(\'test\')  })',
     ])
     expect(code).toMatchInlineSnapshot(`
       "import { useHead } from 'unhead'
@@ -160,7 +160,44 @@ describe('useSeoMetaTransform', () => {
         title: 'Hello',
         meta: [
           { name: 'description', content: () => someValue.value },
-          { property: 'og:image', content: ref('test') },
+          { property: 'og:title', content: ref('test') },
+        ]
+      })"
+    `)
+  })
+
+  it('leaves dynamic media values to runtime (issue #769)', async () => {
+    // A dynamic `ogImage` (ref/computed/getter) can resolve to an object or array that runtime
+    // `unpackMeta` expands into `og:image`, `og:image:width`, ... Inlining it as a single
+    // `content` would serialize the object to `[object Object]`, so the call must stay
+    // `useSeoMeta(...)` and be handled at runtime. A static sibling still transforms.
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'import { computed } from \'vue\'',
+      'const og = computed(() => [{ url: \'/og.png\', width: 800 }])',
+      'useSeoMeta({ title: \'Static\', description: \'desc\' })',
+      'useSeoMeta({ ogImage: () => [{ url: \'/og.png\', width: 800 }] })',
+      'useSeoMeta({ ogImage: og })',
+    ])
+    expect(code).toContain('import { useHead, useSeoMeta } from')
+    expect(code).toContain('useSeoMeta({ ogImage: () => [{ url: \'/og.png\', width: 800 }] })')
+    expect(code).toContain('useSeoMeta({ ogImage: og })')
+    expect(code).toContain('{ name: \'description\', content: \'desc\' }')
+  })
+
+  it('expands static media object and array literals', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: { url: \'/og.png\', width: 800 }, twitterImage: [{ url: \'/t.png\', alt: \'hi\' }] })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        meta: [
+          { property: 'og:image', content: '/og.png' },
+          { property: 'og:image:width', content: 800 },
+          { name: 'twitter:image', content: '/t.png' },
+          { name: 'twitter:image:alt', content: 'hi' },
         ]
       })"
     `)
@@ -239,11 +276,11 @@ describe('useSeoMetaTransform', () => {
       "import { useHead } from 'unhead'
       useHead({
         meta: [
-          { property: 'og:image:url', content: 'https://example.com/image.png' },
+          { property: 'og:image', content: 'https://example.com/image.png' },
           { property: 'og:image:width', content: 800 },
           { property: 'og:image:height', content: 600 },
           { property: 'og:image:alt', content: 'My amazing image' },
-          { name: 'twitter:image:url', content: 'https://example.com/image.png' },
+          { name: 'twitter:image', content: 'https://example.com/image.png' },
           { name: 'twitter:image:width', content: 800 },
           { name: 'twitter:image:height', content: 600 },
           { name: 'twitter:image:alt', content: 'My amazing image' },
