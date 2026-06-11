@@ -203,6 +203,56 @@ describe('useSeoMetaTransform', () => {
     `)
   })
 
+  it('maps secureUrl to secure_url in static media objects', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: { url: \'/og.png\', secureUrl: \'/s.png\' } })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        meta: [
+          { property: 'og:image', content: '/og.png' },
+          { property: 'og:image:secure_url', content: '/s.png' },
+        ]
+      })"
+    `)
+  })
+
+  it('bails media objects with getters/methods/computed keys', async () => {
+    // These can't be reproduced as plain `key: value` tags, so the call must go to runtime.
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: { get url() { return \'/o.png\' } } })',
+    ])).toBeUndefined()
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: { [key]: \'/o.png\' } })',
+    ])).toBeUndefined()
+  })
+
+  it('bails non-primitive literal media values (regexp)', async () => {
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: /og.*/i })',
+    ])).toBeUndefined()
+  })
+
+  it('preserves aliased import when a media call bails', async () => {
+    const code = await transform([
+      'import { useSeoMeta as usm } from \'unhead\'',
+      'usm({ title: \'Static\' })',
+      'usm({ ogImage: og })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useSeoMeta as usm } from 'unhead'
+      useHead({
+        title: 'Static',
+      })
+      usm({ ogImage: og })"
+    `)
+  })
+
   it('fails gracefully with nested objects', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'unhead\'',
