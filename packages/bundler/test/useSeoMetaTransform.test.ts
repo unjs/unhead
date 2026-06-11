@@ -229,6 +229,10 @@ describe('useSeoMetaTransform', () => {
       'import { useSeoMeta } from \'unhead\'',
       'useSeoMeta({ ogImage: { [key]: \'/o.png\' } })',
     ])).toBeUndefined()
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ ogImage: { url() { return \'/o.png\' } } })',
+    ])).toBeUndefined()
   })
 
   it('bails non-primitive literal media values (regexp)', async () => {
