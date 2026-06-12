@@ -12,9 +12,11 @@ const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w 
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
-// hooks that receive references to resolved tags and may mutate them in place;
+// matches the hooks that receive references to resolved tags and may mutate them in place
+// (tags:beforeResolve, tags:resolve, tags:afterResolve, ssr:render, ssr:rendered, dom:rendered
+// and deprecated dom:renderTag — but not *:beforeRender, entries:* or script:updated);
 // when none are registered the per-render defensive clone can be skipped
-const TAG_MUTATING_HOOKS = ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render', 'ssr:rendered', 'dom:rendered'] as const
+const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
@@ -119,20 +121,15 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       delete e._tags
     }
   }
-  if (hooks['entries:resolve'])
-    callHook(head, 'entries:resolve', { entries, ...ctx })
+  callHook(head, 'entries:resolve', { entries, ...ctx })
   for (const e of entries) {
     if (!e._tags) {
-      let tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
-      if (e.options && Object.keys(e.options).length) {
-        for (const t of tags) Object.assign(t, e.options)
+      const normalizeCtx = {
+        tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || []).map(t => Object.assign(t, e.options)),
+        entry: e,
       }
-      if (hooks['entries:normalize']) {
-        const normalizeCtx = { tags, entry: e }
-        callHook(head, 'entries:normalize', normalizeCtx)
-        tags = normalizeCtx.tags
-      }
-      e._tags = tags.map((t, i) => {
+      callHook(head, 'entries:normalize', normalizeCtx)
+      e._tags = normalizeCtx.tags.map((t, i) => {
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)
@@ -142,7 +139,13 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       })
     }
   }
-  const needsClone = TAG_MUTATING_HOOKS.some(h => hooks[h]?.some((f: any) => !f._nonMutating))
+  let needsClone = false
+  for (const k in hooks) {
+    if (TAG_MUTATING_HOOK_RE.test(k) && hooks[k]?.some((f: any) => !f._nonMutating)) {
+      needsClone = true
+      break
+    }
+  }
   ctx.tags = needsClone
     ? entries.flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
     : entries.flatMap(e => e._tags || [])
