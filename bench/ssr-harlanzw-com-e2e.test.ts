@@ -91,9 +91,10 @@ describe('ssr e2e bench', () => {
     head.use({
       key: 'nuxt-seo-experiments',
       hooks: {
-        'tags:resolve': async ({ tags }) => {
+        'tags:resolve': ({ tags }) => {
           // iterate through tags that require absolute URLs and add the host base
-          for (const tag of tags) {
+          for (let i = 0; i < tags.length; i++) {
+            const tag = tags[i]
             // og:image and twitter:image need to be absolute
             if (tag.tag !== 'meta')
               continue
@@ -101,7 +102,7 @@ describe('ssr e2e bench', () => {
               continue
             if (typeof tag.props.content !== 'string' || !tag.props.content.trim() || tag.props.content.startsWith('http') || tag.props.content.startsWith('//'))
               continue
-            tag.props.content = `https://harlanzw.com${tag.props.content}`
+            tags[i] = { ...tag, props: { ...tag.props, content: `https://harlanzw.com${tag.props.content}` } }
           }
         },
       },
@@ -312,7 +313,63 @@ ${htmlContext.bodyAppend.join('\n')}
       </head>
       <body>
 
-      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph"></script>
+      <script id="nuxt-og-image-options" type="application/json">{"props":{"color":"red","title":"Home"}}</script><script type="module" src="/module.js" crossorigin></script><script src="/non-module.js" defer crossorigin></script><script type="application/json">{"id":"__NUXT_DATA__","data":{"initial":{"bar":"foo"},"payload":{"foo":"bar"}}}</script><script type="application/ld+json" data-hid="schema-org-graph">{
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "https://harlanzw.com#website",
+            "@type": "WebSite",
+            "description": "Open source developer, contributing to the Vue, Nuxt, and Vite ecosystems.",
+            "inLanguage": "en",
+            "name": "Harlan Wilton",
+            "url": "https://harlanzw.com",
+            "publisher": {
+              "@id": "https://harlanzw.com#identity"
+            }
+          },
+          {
+            "@id": "https://harlanzw.com/path#webpage",
+            "@type": "WebPage",
+            "description": "Home page description",
+            "name": "Home",
+            "url": "https://harlanzw.com/path",
+            "about": {
+              "@id": "https://harlanzw.com#identity"
+            },
+            "isPartOf": {
+              "@id": "https://harlanzw.com#website"
+            },
+            "potentialAction": [
+              {
+                "@type": "ReadAction",
+                "target": [
+                  "https://harlanzw.com/path"
+                ]
+              }
+            ]
+          },
+          {
+            "@id": "https://harlanzw.com#identity",
+            "@type": "Person",
+            "name": "Harlan Wilton",
+            "url": "https://harlanzw.com/",
+            "image": {
+              "@id": "https://harlanzw.com#/schema/image/1"
+            },
+            "sameAs": [
+              "https://twitter.com/harlan_zw",
+              "https://twitter.com/harlan_zw"
+            ]
+          },
+          {
+            "@id": "https://harlanzw.com#/schema/image/1",
+            "@type": "ImageObject",
+            "contentUrl": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton",
+            "inLanguage": "en",
+            "url": "https://res.cloudinary.com/dl6o1xpyq/image/upload/f_jpg,q_auto:best,dpr_auto,w_240,h_240/images/harlan-wilton"
+          }
+        ]
+      }</script>
       </body>
       "
     `)

@@ -52,24 +52,36 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
     return {
       key: 'infer-seo-meta',
       hooks: {
-        'tags:beforeResolve': ({ tagMap }) => {
+        'tags:beforeResolve': ({ tagMap, tags }) => {
           let title = head._titleTemplate || head._title
-          // check if the current title is %infer
+          // resolved tags are immutable: replace the inferred tags with new objects
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
             if (typeof title === 'function') {
               // @ts-expect-error untyped
               title = title(head._title)
             }
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
-            ogTitle.processTemplateParams = true
+            const i = tags.indexOf(ogTitle)
+            if (i !== -1) {
+              tags[i] = {
+                ...ogTitle,
+                processTemplateParams: true,
+                props: { ...ogTitle.props, content: options.ogTitle ? options.ogTitle(title) : title || '' },
+              }
+            }
           }
 
           const description = tagMap.get('meta:description')?.props?.content
           const ogDescription = tagMap.get('meta:og:description')
           if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
-            ogDescription.processTemplateParams = true
+            const i = tags.indexOf(ogDescription)
+            if (i !== -1) {
+              tags[i] = {
+                ...ogDescription,
+                processTemplateParams: true,
+                props: { ...ogDescription.props, content: options.ogDescription ? options.ogDescription(description) : description || '' },
+              }
+            }
           }
         },
       },

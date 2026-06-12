@@ -86,9 +86,10 @@ describe('ssr e2e bench', () => {
     head.use({
       key: 'nuxt-seo-experiments',
       hooks: {
-        'tags:resolve': async ({ tags }) => {
+        'tags:resolve': ({ tags }) => {
           // iterate through tags that require absolute URLs and add the host base
-          for (const tag of tags) {
+          for (let i = 0; i < tags.length; i++) {
+            const tag = tags[i]
             // og:image and twitter:image need to be absolute
             if (tag.tag !== 'meta')
               continue
@@ -96,7 +97,7 @@ describe('ssr e2e bench', () => {
               continue
             if (typeof tag.props.content !== 'string' || !tag.props.content.trim() || tag.props.content.startsWith('http') || tag.props.content.startsWith('//'))
               continue
-            tag.props.content = `https://harlanzw.com${tag.props.content}`
+            tags[i] = { ...tag, props: { ...tag.props, content: `https://harlanzw.com${tag.props.content}` } }
           }
         },
       },

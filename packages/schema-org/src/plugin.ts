@@ -108,29 +108,35 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             }
           }
         },
-        'tags:resolve': async (ctx) => {
+        'tags:resolve': (ctx) => {
           // find the schema.org node, should be a single instance
-          for (const k in ctx.tags) {
-            const tag = ctx.tags[k]
+          const tags = ctx.tags
+          for (let i = 0; i < tags.length; i++) {
+            const tag = tags[i]
             if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
-              delete tag.props.nodes
+              // resolved tags are immutable: replace with a new tag without `nodes`
+              const { nodes: _nodes, ...props } = tag.props
               const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
               if (!resolvedGraph.length) {
                 // removes the tag
-                tag.props = {}
+                tags[i] = { ...tag, props: {} }
                 return
               }
               // eslint-disable-next-line node/prefer-global/process
               const minify = options?.minify || process.env.NODE_ENV === 'production'
-              tag.innerHTML = JSON.stringify({
-                '@context': 'https://schema.org',
-                '@graph': resolvedGraph,
-              }, (_, value) => {
-                // process template params here
-                if (typeof value !== 'object')
-                  return processTemplateParams(value, head._templateParams!, head._separator!)
-                return value
-              }, minify ? 0 : 2)
+              tags[i] = {
+                ...tag,
+                props,
+                innerHTML: JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@graph': resolvedGraph,
+                }, (_, value) => {
+                  // process template params here
+                  if (typeof value !== 'object')
+                    return processTemplateParams(value, head._templateParams!, head._separator!)
+                  return value
+                }, minify ? 0 : 2),
+              }
               return
             }
           }
@@ -143,19 +149,24 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
             if (!tag?.props)
               continue
             if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
-              delete tag.props.nodes
               if (typeof firstNodeIdx === 'undefined') {
                 firstNodeIdx = i
+                if (tag.props.nodes) {
+                  const { nodes: _nodes, ...props } = tag.props
+                  ctx.tags[i] = { ...tag, props }
+                }
                 continue
               }
               // merge props on to first node and delete
-              ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
-              delete ctx.tags[firstNodeIdx].props.nodes
+              const first = ctx.tags[firstNodeIdx]
+              const { nodes: _nodes, ...merged } = mergeObjects(first.props, tag.props)
+              ctx.tags[firstNodeIdx] = { ...first, props: merged }
               toRemove.add(i)
             }
           }
           // there may be multiple script nodes within the same entry
-          ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
+          if (toRemove.size)
+            ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
         },
       },
     }

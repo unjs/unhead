@@ -61,34 +61,30 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
       'ssr:render': (ctx) => {
         if (omitLineBreaks)
           ctx.options.omitLineBreaks = true
-        for (const tag of ctx.tags) {
+        const tags = ctx.tags
+        for (let i = 0; i < tags.length; i++) {
+          const tag = tags[i]
           const content = tag.innerHTML
           if (!content || content.length < 20)
             continue
 
+          let min: string | undefined
           if (tag.tag === 'script') {
             const type = tag.props?.type
             if (type && JSON_TYPES.has(type)) {
-              if (jsonMinify) {
-                const min = minifyJSON(content)
-                if (min.length < content.length)
-                  tag.innerHTML = min
-              }
-              continue
+              if (jsonMinify)
+                min = minifyJSON(content)
             }
-            if (type && SKIP_JS_TYPES.has(type))
-              continue
-            if (jsMinify) {
-              const min = jsMinify(content)
-              if (min.length < content.length)
-                tag.innerHTML = min
+            else if (!(type && SKIP_JS_TYPES.has(type)) && jsMinify) {
+              min = jsMinify(content)
             }
           }
           else if (tag.tag === 'style' && cssMinify) {
-            const min = cssMinify(content)
-            if (min.length < content.length)
-              tag.innerHTML = min
+            min = cssMinify(content)
           }
+          // resolved tags are immutable: swap in a replacement object
+          if (min !== undefined && min.length < content.length)
+            tags[i] = { ...tag, innerHTML: min }
         }
       },
     },

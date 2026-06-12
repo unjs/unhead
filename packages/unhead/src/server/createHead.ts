@@ -73,9 +73,6 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       })
     }
   }
-  // only appends a fresh tag, never mutates resolved tags, so it must not
-  // force the defensive clone in resolveTags
-  payloadHook._nonMutating = true
   registerPlugin(head, {
     key: 'server',
     hooks: {

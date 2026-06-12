@@ -16,7 +16,8 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
     hooks: {
       'tags:resolve': ({ tagMap, tags }) => {
         // we always process params so we can substitute the title
-        const params = (tagMap.get('templateParams')?.props || {}) as TemplateParams
+        // resolved tags are immutable: copy props before deriving params
+        const params = { ...(tagMap.get('templateParams')?.props || {}) } as TemplateParams
         // ensure a separator exists
         const sep = params.separator || '|'
         delete params.separator
@@ -27,31 +28,44 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           params,
           sep,
         )
-        for (const tag of tags) {
+        for (let i = 0; i < tags.length; i++) {
+          const tag = tags[i]
           if (tag.processTemplateParams === false) {
             continue
           }
           const v = SupportedAttrs[tag.tag]
           if (v && typeof tag.props[v] === 'string') {
-            tag.props[v] = processTemplateParams(tag.props[v], params, sep)
+            const next = processTemplateParams(tag.props[v], params, sep)
+            if (next !== tag.props[v])
+              tags[i] = { ...tag, props: { ...tag.props, [v]: next } }
           }
           // everything else requires explicit opt-in
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
+            let replaced: HeadTag | undefined
             for (const p of contentAttrs) {
-              if (typeof tag[p] === 'string')
-                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && typeof tag.props.type === 'string' && tag.props.type.endsWith('json'))
+              if (typeof tag[p] === 'string') {
+                const next = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && typeof tag.props.type === 'string' && tag.props.type.endsWith('json'))
+                if (next !== tag[p])
+                  (replaced ??= { ...tag })[p] = next
+              }
             }
+            if (replaced)
+              tags[i] = replaced
           }
         }
         // resolved template params
         head._templateParams = params
         head._separator = sep
       },
-      'tags:afterResolve': ({ tagMap }) => {
-        // we need to re-process in case then user had a function as the titleTemplate
-        const title: HeadTag | undefined = tagMap.get('title')
-        if (title?.textContent && title.processTemplateParams !== false) {
-          title.textContent = processTemplateParams(title.textContent, head._templateParams!, head._separator!)
+      'tags:afterResolve': ({ tags }) => {
+        // we need to re-process in case the user had a function as the titleTemplate
+        for (let i = 0; i < tags.length; i++) {
+          const tag = tags[i]
+          if (tag.tag === 'title' && typeof tag.textContent === 'string' && tag.processTemplateParams !== false) {
+            const next = processTemplateParams(tag.textContent, head._templateParams!, head._separator!)
+            if (next !== tag.textContent)
+              tags[i] = { ...tag, textContent: next }
+          }
         }
       },
     },

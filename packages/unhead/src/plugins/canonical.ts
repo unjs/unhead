@@ -144,22 +144,26 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
     return {
       key: 'canonical',
       hooks: {
-        'tags:resolve': (ctx) => {
-          for (const tag of ctx.tags) {
+        'tags:resolve': ({ tags }) => {
+          for (let i = 0; i < tags.length; i++) {
+            const tag = tags[i]
             const metaKey = tag.props?.property || tag.props?.name
             // allow interchangable use of property and name for DX
             if (tag.tag === 'meta' && META_TRANSFORMABLE_URL.includes(metaKey)) {
-              tag.props.content = resolvePath(tag.props.content)
+              let content = resolvePath(tag.props.content)
               if (META_CANONICAL_URL.has(metaKey)) {
-                tag.props.content = normalizeCanonicalUrl(tag.props.content)
+                content = normalizeCanonicalUrl(content)
               }
+              if (content !== tag.props.content)
+                tags[i] = { ...tag, props: { ...tag.props, content } }
             }
             else if (tag.tag === 'link' && LINK_REL_RESOLVABLE.has(tag.props.rel)) {
-              const isCanonical = tag.props.rel === 'canonical'
-              tag.props.href = resolvePath(tag.props.href)
-              if (isCanonical) {
-                tag.props.href = normalizeCanonicalUrl(tag.props.href)
+              let href = resolvePath(tag.props.href)
+              if (tag.props.rel === 'canonical') {
+                href = normalizeCanonicalUrl(href)
               }
+              if (href !== tag.props.href)
+                tags[i] = { ...tag, props: { ...tag.props, href } }
             }
           }
         },

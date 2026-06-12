@@ -12,9 +12,10 @@ const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w 
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
-// hooks that receive references to resolved tags and may mutate them in place;
-// when none are registered the per-render defensive clone can be skipped
-const TAG_MUTATING_HOOKS = ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render', 'ssr:rendered', 'dom:rendered'] as const
+// resolved tags are shared across renders (and potentially across heads);
+// freeze them outside production so contract violations throw in dev/test
+// eslint-disable-next-line node/prefer-global/process
+const DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production'
 
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
@@ -97,21 +98,11 @@ function foldBucket(state: DedupeState, k: string): void {
   let winner: HeadTag | HeadTag[] = bucket[0]
   for (let i = 1; i < bucket.length; i++)
     winner = mergeResolvedTag(winner, bucket[i], k)
-  state.winners.set(k, winner)
-}
-
-const cloneTag = (t: HeadTag): HeadTag => ({ ...t, props: { ...t.props } })
-
-function cloneWinner(w: HeadTag | HeadTag[]): HeadTag | HeadTag[] {
-  if (!Array.isArray(w))
-    return cloneTag(w)
-  const arr = w.map(cloneTag)
-  // flat-meta winners are arrays carrying tag props (tag, props, _w, ...) as own keys
-  for (const k in w) {
-    if (Number.isNaN(+k))
-      (arr as any)[k] = k === 'props' ? { ...(w as any).props } : (w as any)[k]
+  if (DEV && winner !== bucket[0]) {
+    Object.freeze((winner as HeadTag).props)
+    Object.freeze(winner)
   }
-  return arr as any
+  state.winners.set(k, winner)
 }
 
 /**
@@ -187,6 +178,10 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
 }
 
 function insertTag(state: DedupeState, t: HeadTag): void {
+  if (DEV) {
+    Object.freeze(t.props)
+    Object.freeze(t)
+  }
   const k = tagKey(t)
   const bucket = state.buckets.get(k)
   if (bucket === undefined)
@@ -318,12 +313,11 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     state.order = slots
     state.flat = flat
   }
-  // emit: per-render view over the shared winners; cloned only when a
-  // registered hook may mutate tags in place (v3 contract)
-  const needsClone = TAG_MUTATING_HOOKS.some(h => hooks[h]?.some((f: any) => !f._nonMutating))
+  // emit: per-render view over the shared winners. Tags are immutable —
+  // hooks replace array elements with new objects instead of mutating
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   for (const slot of state.order)
-    ctx.tagMap.set(slot.k, (needsClone ? cloneWinner(slot.w) : slot.w) as HeadTag)
+    ctx.tagMap.set(slot.k, slot.w as HeadTag)
   resolveTitleTemplate(ctx, head)
   ctx.tags = [...ctx.tagMap.values()]
   if (state.flat)
