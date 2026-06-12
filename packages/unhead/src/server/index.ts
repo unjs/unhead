@@ -1,7 +1,6 @@
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
 export { createHead } from './createHead'
 export type { ServerUnhead } from './createHead'
-export { createServerRenderer, renderSSRHead } from './renderSSRHead'
+export { createServerRenderer } from './renderSSRHead'
 export { capoTagWeight } from './sort'
-export { transformHtmlTemplate, transformHtmlTemplateRaw } from './transformHtmlTemplate'
 export { escapeHtml, propsToString, ssrRenderTags, tagToString } from './util'

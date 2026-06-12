@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 
 import { TemplateParamsPlugin } from '../../../src/plugins'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr templateParams', () => {
@@ -40,7 +40,7 @@ describe('ssr templateParams', () => {
         siteName: 'My Awesome Site',
       },
     })
-    const { headTags, htmlAttrs } = renderSSRHead(head)
+    const { headTags, htmlAttrs } = head.render()
 
     expect(htmlAttrs).toMatchInlineSnapshot(`" lang="en""`)
     expect(headTags).toMatchInlineSnapshot(`
@@ -67,7 +67,7 @@ describe('ssr templateParams', () => {
         s: 'My Site',
       },
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
 
     expect(headTags).toContain('<script>console.log("My Site")</script>')
     expect(headTags).not.toContain('%s')
@@ -88,7 +88,7 @@ describe('ssr templateParams', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>This|is|an|example||with||multiple||||pipes</title>
@@ -112,7 +112,7 @@ describe('ssr templateParams', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
 
     expect(headTags).toMatchInlineSnapshot(`
       "<title>Home &amp; &#x2F;&#x2F;&lt;&quot;With Encoding&quot;&gt;\\</title>
@@ -137,7 +137,7 @@ describe('ssr templateParams', () => {
         foo: 'foo',
       },
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(
       `"<title>test foo | subPage% | test</title>"`,
     )

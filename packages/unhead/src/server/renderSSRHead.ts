@@ -24,11 +24,3 @@ export function createServerRenderer(options: RenderSSRHeadOptions = {}): HeadRe
     return renderCtx.html
   }
 }
-
-/**
- * @deprecated Use `head.render()` instead.
- */
-/* @__NO_SIDE_EFFECTS__ */
-export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
-  return createServerRenderer(options)(head)
-}

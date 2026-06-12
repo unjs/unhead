@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useSeoMeta } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('useSeoMeta', () => {
@@ -11,7 +11,7 @@ describe('useSeoMeta', () => {
       charset: 'utf-8',
     })
 
-    expect((renderSSRHead(head)).headTags).toContain('<meta charset="utf-8">')
+    expect((head.render()).headTags).toContain('<meta charset="utf-8">')
   })
   it('payment namespace', async () => {
     const head = createServerHeadWithContext()
@@ -27,7 +27,7 @@ describe('useSeoMeta', () => {
       paymentSuccessUrl: 'https://example.com/success',
     })
 
-    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+    expect((head.render()).headTags).toMatchInlineSnapshot(`
       "<meta property="og:type" content="payment.link">
       <meta property="payment:description" content="Invoice #123">
       <meta property="payment:currency" content="USD">
@@ -48,7 +48,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -67,7 +67,7 @@ describe('useSeoMeta', () => {
       themeColor: 'cyan',
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -98,7 +98,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+    expect((head.render()).headTags).toMatchInlineSnapshot(`
       "<meta name="twitter:image" content="/twitter-image.png">
       <meta name="twitter:image:alt" content="test">
       <meta name="twitter:image:width" content="100">
@@ -117,7 +117,7 @@ describe('useSeoMeta', () => {
       description: 'test',
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -131,7 +131,7 @@ describe('useSeoMeta', () => {
       description: null,
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -147,7 +147,7 @@ describe('useSeoMeta', () => {
     useSeoMeta(head, {
       robots: 'noindex, nofollow',
     })
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -168,7 +168,7 @@ describe('useSeoMeta', () => {
         maxSnippet: -1,
       },
     })
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -356,7 +356,7 @@ describe('useSeoMeta', () => {
       xUaCompatible: 'IE=edge',
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -525,7 +525,7 @@ describe('useSeoMeta', () => {
       ],
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -594,7 +594,7 @@ describe('useSeoMeta', () => {
       },
     })
 
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",

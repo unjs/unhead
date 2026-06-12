@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
-import { renderSSRHead } from '../../../src/server'
+
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('e2e double-space-class-list', () => {
@@ -23,7 +23,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -60,8 +60,6 @@ describe('e2e double-space-class-list', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -85,7 +83,7 @@ describe('e2e double-space-class-list', () => {
       },
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -125,8 +123,6 @@ describe('e2e double-space-class-list', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

@@ -1,4 +1,4 @@
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
 import { useSeoMeta } from '../packages/unhead/src'
 
@@ -23,7 +23,7 @@ describe('use seo meta', () => {
         head,
       })
     }
-    renderSSRHead(head)
+    head.render()
   }, {
     iterations: 1000,
     time: 1000,

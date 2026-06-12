@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { computed, ref } from 'vue'
@@ -128,7 +128,7 @@ describe('vue dom styles', () => {
       })
     })
 
-    const dom = useDom(renderSSRHead(ssrHead))
+    const dom = useDom(ssrHead.render())
     const styles = ref('.ssr { color: blue; }')
 
     csrVueAppWithUnhead(dom, () => {

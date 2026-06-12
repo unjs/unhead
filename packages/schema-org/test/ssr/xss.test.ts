@@ -1,5 +1,5 @@
 import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from 'unhead'
 import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
@@ -23,7 +23,7 @@ describe('schema.org ssr xss', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -50,7 +50,7 @@ describe('schema.org ssr xss', () => {
       ])
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

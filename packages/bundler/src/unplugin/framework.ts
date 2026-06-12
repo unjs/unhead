@@ -143,7 +143,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
 
         if (validate !== false) {
           ctx.addRuntimePlugin({
-            import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
+            import: { name: 'ValidatePlugin', source: 'unhead/validate', as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
           })
         }

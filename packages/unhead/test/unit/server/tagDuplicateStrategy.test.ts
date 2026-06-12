@@ -1,5 +1,5 @@
 import { describe } from 'vitest'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('tagDuplicateStrategy', () => {
@@ -17,7 +17,7 @@ describe('tagDuplicateStrategy', () => {
       },
     })
 
-    const { htmlAttrs } = renderSSRHead(head)
+    const { htmlAttrs } = head.render()
     expect(htmlAttrs).toMatchInlineSnapshot(
       `" data-layout="base" data-page="page""`,
     )
@@ -39,7 +39,7 @@ describe('tagDuplicateStrategy', () => {
       },
     })
 
-    const { htmlAttrs } = renderSSRHead(head)
+    const { htmlAttrs } = head.render()
     expect(htmlAttrs).toMatchInlineSnapshot(
       `" class="html-doc my-specific-page" style="color:red;background:green""`,
     )

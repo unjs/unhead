@@ -1,4 +1,4 @@
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead, useSeoMeta } from '@unhead/vue'
 import { it } from 'vitest'
 import { ref } from 'vue'
@@ -132,7 +132,7 @@ describe('vue ssr examples', () => {
       }
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -159,7 +159,7 @@ describe('vue ssr examples', () => {
         ],
       }))
     })
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

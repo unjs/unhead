@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
-import { renderSSRHead } from '../../../src/server'
+
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e data true', () => {
@@ -24,7 +24,7 @@ describe('unhead e2e data true', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -61,8 +61,6 @@ describe('unhead e2e data true', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

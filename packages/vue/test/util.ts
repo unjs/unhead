@@ -6,7 +6,7 @@ import { renderToString } from '@vue/server-renderer'
 import { createApp, createSSRApp, h } from 'vue'
 import { VueHeadMixin } from '../src'
 import { createHead as createClientHead } from '../src/client'
-import { createHead as createServerHead, renderSSRHead } from '../src/server'
+import { createHead as createServerHead } from '../src/server'
 
 export function csrVueAppWithUnhead(dom: JSDOM, fn: () => void | Promise<void>, options?: CreateClientHeadOptions) {
   const head = createClientHead({
@@ -59,7 +59,7 @@ export async function ssrRenderHeadToString(fn: () => void) {
   app.use(head)
   await renderToString(app)
 
-  return renderSSRHead(head)
+  return head.render()
 }
 
 export async function ssrRenderOptionsHead(input: any, options?: CreateServerHeadOptions) {
@@ -79,7 +79,7 @@ export async function ssrRenderOptionsHead(input: any, options?: CreateServerHea
   app.use(head)
   await renderToString(app)
 
-  return renderSSRHead(head)
+  return head.render()
 }
 
 type InstanceType<V> = V extends { new (...arg: any[]): infer X } ? X : never

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
+
 import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('dom useHeadSafe', () => {
@@ -9,7 +9,7 @@ describe('dom useHeadSafe', () => {
 
     useHeadSafe(head, basicSchema)
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": " class="dark"",
@@ -41,7 +41,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -65,7 +65,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -88,7 +88,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).not.toContain('onload')
     expect(ctx.headTags).toContain('rel="stylesheet"')
     expect(ctx.headTags).toContain('href="/valid-stylesheet.css"')
@@ -106,7 +106,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toBe('')
   })
 
@@ -119,7 +119,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toBe('')
   })
 
@@ -133,7 +133,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toContain('application/ld+json')
     expect(ctx.headTags).toContain('"@type":"Organization"')
   })
@@ -147,7 +147,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).not.toContain('data:')
   })
 
@@ -158,7 +158,7 @@ describe('dom useHeadSafe', () => {
       title: 'My Safe Page',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toContain('<title>My Safe Page</title>')
   })
 
@@ -171,7 +171,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).not.toContain('display:none')
     expect(ctx.headTags).not.toContain('evil.com')
   })
@@ -187,7 +187,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).not.toContain('javascript')
     expect(ctx.headTags).not.toContain('background')
   })
@@ -202,7 +202,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toBe('')
   })
 
@@ -216,7 +216,7 @@ describe('dom useHeadSafe', () => {
       }],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toBe('')
   })
 
@@ -231,7 +231,7 @@ describe('dom useHeadSafe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

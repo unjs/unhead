@@ -1,6 +1,6 @@
 import { defineWebPage, defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 
 describe('schema.org graph cleanup on dispose', () => {
@@ -24,7 +24,7 @@ describe('schema.org graph cleanup on dispose', () => {
     })
 
     // Before dispose: should contain the WebPage with image
-    let data = await renderSSRHead(ssrHead)
+    let data = ssrHead.render()
     expect(data.bodyTags).toContain('Test Page')
     expect(data.bodyTags).toContain('image.jpg')
 
@@ -32,7 +32,7 @@ describe('schema.org graph cleanup on dispose', () => {
     entry.dispose()
 
     // After dispose: the graph should be empty, no stale nodes
-    data = await renderSSRHead(ssrHead)
+    data = ssrHead.render()
     expect(data.bodyTags).not.toContain('Test Page')
     expect(data.bodyTags).not.toContain('image.jpg')
   })
@@ -72,7 +72,7 @@ describe('schema.org graph cleanup on dispose', () => {
     })
 
     // Both present before dispose
-    let data = await renderSSRHead(ssrHead)
+    let data = ssrHead.render()
     expect(data.bodyTags).toContain('Persistent Site')
     expect(data.bodyTags).toContain('Temporary Page')
 
@@ -80,7 +80,7 @@ describe('schema.org graph cleanup on dispose', () => {
     entryB.dispose()
 
     // After dispose: only entry A should remain
-    data = await renderSSRHead(ssrHead)
+    data = ssrHead.render()
     expect(data.bodyTags).toContain('Persistent Site')
     expect(data.bodyTags).not.toContain('Temporary Page')
   })

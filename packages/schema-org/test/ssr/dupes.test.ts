@@ -1,6 +1,6 @@
 import { defineProduct, defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 
 const JSON_LD_RE = /application\/ld\+json/g
@@ -44,7 +44,7 @@ describe('schema.org dupes', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     // The second Product's offers should win, with OutOfStock availability
     expect(data.bodyTags).toContain('https://schema.org/OutOfStock')
     expect(data.bodyTags).not.toContain('https://schema.org/InStock')
@@ -82,7 +82,7 @@ describe('schema.org dupes', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph" id="schema-org-graph-2">{
         "@context": "https://schema.org",
@@ -128,7 +128,7 @@ describe('schema.org dupes', () => {
       ],
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -185,7 +185,7 @@ describe('schema.org dupes', () => {
       ] as any,
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     // should merge all three into a single script tag without throwing
     expect(data.bodyTags).toContain('"@context": "https://schema.org"')
     expect(data.bodyTags.match(JSON_LD_RE)?.length).toBe(1)

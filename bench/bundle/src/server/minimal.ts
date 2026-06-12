@@ -1,5 +1,5 @@
 import { useHead } from 'unhead'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 
 async function doHead() {
 // Full usage with all core features
@@ -19,7 +19,7 @@ async function doHead() {
     ],
   })
 
-  return renderSSRHead(head)
+  return head.render()
 }
 
 doHead()

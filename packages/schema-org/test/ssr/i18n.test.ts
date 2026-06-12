@@ -1,5 +1,5 @@
 import { defineWebSite, useSchemaOrg } from '@unhead/schema-org'
-import { createHead, renderSSRHead } from '@unhead/ssr'
+import { createHead } from '@unhead/ssr'
 import { useHead } from 'unhead'
 import { describe, expect, it } from 'vitest'
 
@@ -40,7 +40,7 @@ describe('schema.org i18n', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

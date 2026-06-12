@@ -1,7 +1,7 @@
 import type { HeadValidationRule } from 'unhead/plugins'
 import { parseHtmlForUnheadExtraction } from 'unhead/parser'
 import { ValidatePlugin } from 'unhead/plugins'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 
 export interface ValidationOutput {
   source: string
@@ -19,7 +19,7 @@ export function validateHtml(html: string, source: string): ValidationOutput {
     plugins: [ValidatePlugin({ onReport: rs => captured.push(...rs) })],
   })
   head.push(input)
-  renderSSRHead(head)
+  head.render()
   return { source, rules: captured }
 }
 

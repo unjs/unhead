@@ -1,7 +1,7 @@
 import { defineOrganization, defineQuestion, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
-import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
+import { createHead as createServerHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useDom } from '../../../unhead/test/fixtures'
 
@@ -17,7 +17,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -54,7 +54,6 @@ describe('schema.org e2e no plugin', () => {
           }
         ]
       }</script>
-
 
       </body></html>"
     `)
@@ -86,7 +85,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -131,7 +130,6 @@ describe('schema.org e2e no plugin', () => {
           }
         ]
       }</script>
-
 
       </body></html>"
     `)
@@ -164,7 +162,7 @@ describe('schema.org e2e no plugin', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -216,7 +214,7 @@ describe('schema.org e2e no plugin', () => {
         acceptedAnswer: 'Something else',
       }),
     ])
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -279,7 +277,7 @@ describe('schema.org e2e no plugin', () => {
         name: 'Three',
       }),
     ])
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

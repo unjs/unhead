@@ -1,6 +1,6 @@
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { resolveTags } from 'unhead/utils'
@@ -27,7 +27,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(IndexSchema)
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -58,8 +58,6 @@ describe('vue e2e keys', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)
@@ -107,8 +105,6 @@ describe('vue e2e keys', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -138,7 +134,7 @@ describe('vue e2e keys', () => {
 
     ssrHead.push(schema(false))
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -174,8 +170,6 @@ describe('vue e2e keys', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
 
@@ -193,8 +187,6 @@ describe('vue e2e keys', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

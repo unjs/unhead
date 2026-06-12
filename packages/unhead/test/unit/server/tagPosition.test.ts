@@ -1,4 +1,4 @@
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('tagPosition', () => {
@@ -12,7 +12,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = renderSSRHead(head)
+    const tags = head.render()
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -33,7 +33,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = renderSSRHead(head)
+    const tags = head.render()
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -54,7 +54,7 @@ describe('tagPosition', () => {
         },
       ],
     })
-    const tags = renderSSRHead(head)
+    const tags = head.render()
     expect(tags).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

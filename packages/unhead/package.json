@@ -33,10 +33,6 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
     },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
-    },
     "./minify": {
       "types": "./dist/minify.d.ts",
       "default": "./dist/minify.mjs"
@@ -88,6 +84,10 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
+    },
+    "./transform": {
+      "types": "./dist/transform.d.ts",
+      "default": "./dist/transform.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -97,9 +97,6 @@
     "*": {
       "plugins": [
         "dist/plugins.d.ts"
-      ],
-      "legacy": [
-        "dist/legacy.d.ts"
       ],
       "minify": [
         "dist/minify.d.ts"
@@ -139,6 +136,9 @@
       ],
       "stream/iife": [
         "dist/stream/iife.d.ts"
+      ],
+      "transform": [
+        "dist/transform.d.ts"
       ]
     }
   },

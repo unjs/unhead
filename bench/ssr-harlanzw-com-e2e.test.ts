@@ -4,7 +4,7 @@ import { definePerson, defineWebPage, defineWebSite, useSchemaOrg } from '@unhea
 import { TemplateParamsPlugin } from 'unhead/plugins'
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../packages/vue/src'
-import { createHead as createServerHead, renderSSRHead } from '../packages/vue/src/server'
+import { createHead as createServerHead, createServerRenderer } from '../packages/vue/src/server'
 
 describe('ssr e2e bench', () => {
   it('e2e', async () => {
@@ -279,9 +279,9 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = createServerRenderer({
       omitLineBreaks: true,
-    })
+    })(head)
     function normalizeChunks(chunks: (string | undefined)[]) {
       return chunks.filter(Boolean).map(i => i!.trim())
     }

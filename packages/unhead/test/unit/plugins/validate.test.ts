@@ -1,5 +1,5 @@
 import type { HeadValidationRule, ValidatePluginOptions } from '../../../src/plugins'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { describe, expect, it, vi } from 'vitest'
 import { AliasSortingPlugin, TemplateParamsPlugin, ValidatePlugin } from '../../../src/plugins'
 import { createHead } from '../../../src/server'
@@ -21,42 +21,42 @@ describe('validatePlugin', () => {
     it('warns on non-absolute canonical', () => {
       const { head, rules } = createValidationHead()
       head.push({ link: [{ rel: 'canonical', href: '/page' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-canonical')).toBeTruthy()
     })
 
     it('does not warn on absolute canonical', () => {
       const { head, rules } = createValidationHead()
       head.push({ link: [{ rel: 'canonical', href: 'https://example.com/page' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-canonical')).toBeFalsy()
     })
 
     it('warns on non-absolute og:image', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:image', content: '/image.jpg' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeTruthy()
     })
 
     it('warns on non-absolute og:url', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:url', content: '/page' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeTruthy()
     })
 
     it('warns on non-absolute twitter:image', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:image', content: '/img.png' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeTruthy()
     })
 
     it('does not warn on absolute og:image', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:image', content: 'https://example.com/image.jpg' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeFalsy()
     })
 
@@ -66,7 +66,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'canonical', href: 'https://example.com/a' }],
         meta: [{ property: 'og:url', content: 'https://example.com/b' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'canonical-og-url-mismatch')).toBeTruthy()
     })
 
@@ -76,7 +76,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'canonical', href: 'https://example.com/a' }],
         meta: [{ property: 'og:url', content: 'https://example.com/a' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'canonical-og-url-mismatch')).toBeFalsy()
     })
   })
@@ -85,21 +85,21 @@ describe('validatePlugin', () => {
     it('warns on empty meta content', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'description', content: '' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'empty-meta-content')).toBeTruthy()
     })
 
     it('warns on HTML in title', () => {
       const { head, rules } = createValidationHead()
       head.push({ title: '<b>My Title</b>' })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'html-in-title')).toBeTruthy()
     })
 
     it('does not warn on normal title', () => {
       const { head, rules } = createValidationHead()
       head.push({ title: 'My Title' })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'html-in-title')).toBeFalsy()
     })
 
@@ -110,35 +110,35 @@ describe('validatePlugin', () => {
         title: '%siteName%',
         // intentionally no templateParams defined
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'unresolved-template-param')).toBeTruthy()
     })
 
     it('warns on unresolved template params in meta content', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'description', content: 'Welcome to %siteName%' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'unresolved-template-param')).toBeTruthy()
     })
 
     it('warns on empty title', () => {
       const { head, rules } = createValidationHead()
       head.push({ title: '' })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'empty-title')).toBeTruthy()
     })
 
     it('warns when no title tag exists', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'description', content: 'test' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-title')).toBeTruthy()
     })
 
     it('warns when no description and page is indexable', () => {
       const { head, rules } = createValidationHead()
       head.push({ title: 'test' })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-description')).toBeTruthy()
     })
 
@@ -148,7 +148,7 @@ describe('validatePlugin', () => {
         title: 'test',
         meta: [{ name: 'robots', content: 'noindex' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
     })
   })
@@ -163,7 +163,7 @@ describe('validatePlugin', () => {
           { property: 'og:description', content: 'Desc' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-image-missing-dimensions')).toBeTruthy()
     })
 
@@ -178,7 +178,7 @@ describe('validatePlugin', () => {
           { property: 'og:description', content: 'Desc' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-image-missing-dimensions')).toBeFalsy()
     })
 
@@ -190,7 +190,7 @@ describe('validatePlugin', () => {
           { property: 'og:description', content: 'Desc' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-missing-title')).toBeTruthy()
     })
 
@@ -202,7 +202,7 @@ describe('validatePlugin', () => {
           { property: 'og:title', content: 'Title' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-missing-description')).toBeTruthy()
     })
 
@@ -212,7 +212,7 @@ describe('validatePlugin', () => {
         // @ts-expect-error deliberately missing crossorigin to test runtime validation
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-font-crossorigin')).toBeTruthy()
     })
 
@@ -221,7 +221,7 @@ describe('validatePlugin', () => {
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-font-crossorigin')).toBeFalsy()
     })
 
@@ -231,7 +231,7 @@ describe('validatePlugin', () => {
         // @ts-expect-error deliberately missing `as` to test runtime validation
         link: [{ rel: 'preload', href: '/style.css' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-missing-as')).toBeTruthy()
     })
 
@@ -241,7 +241,7 @@ describe('validatePlugin', () => {
         // @ts-expect-error deliberately invalid: src + textContent to test runtime validation
         script: [{ src: '/app.js', textContent: 'console.log("hi")' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'script-src-with-content')).toBeTruthy()
     })
   })
@@ -250,56 +250,56 @@ describe('validatePlugin', () => {
     it('warns on robots index + noindex conflict', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'robots', content: 'index, noindex' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'robots-conflict')).toBeTruthy()
     })
 
     it('warns on robots follow + nofollow conflict', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'robots', content: 'follow, nofollow' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'robots-conflict')).toBeTruthy()
     })
 
     it('does not warn on valid robots', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'robots', content: 'index, follow' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'robots-conflict')).toBeFalsy()
     })
 
     it('warns on viewport user-scalable=no', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'viewport', content: 'width=device-width, user-scalable=no' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'viewport-user-scalable')).toBeTruthy()
     })
 
     it('warns on viewport maximum-scale=1', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'viewport', content: 'width=device-width, maximum-scale=1' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'viewport-user-scalable')).toBeTruthy()
     })
 
     it('warns on twitter handle missing @', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:site', content: 'username' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'twitter-handle-missing-at')).toBeTruthy()
     })
 
     it('does not warn on twitter handle with @', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:site', content: '@username' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'twitter-handle-missing-at')).toBeFalsy()
     })
 
     it('does not warn on twitter numeric ID', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:site', content: '123456' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'twitter-handle-missing-at')).toBeFalsy()
     })
   })
@@ -308,7 +308,7 @@ describe('validatePlugin', () => {
     it('suggests correction for og:titl typo', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:titl', content: 'Title' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = rules.find(r => r.id === 'possible-typo')
       expect(rule).toBeTruthy()
       expect(rule!.message).toContain('og:title')
@@ -317,7 +317,7 @@ describe('validatePlugin', () => {
     it('suggests correction for og:descriptio typo', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:descriptio', content: 'Desc' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = rules.find(r => r.id === 'possible-typo')
       expect(rule).toBeTruthy()
       expect(rule!.message).toContain('og:description')
@@ -326,7 +326,7 @@ describe('validatePlugin', () => {
     it('suggests correction for twitter:sit typo', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:sit', content: '@user' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = rules.find(r => r.id === 'possible-typo')
       expect(rule).toBeTruthy()
       expect(rule!.message).toContain('twitter:site')
@@ -335,14 +335,14 @@ describe('validatePlugin', () => {
     it('does not warn on completely unknown custom meta', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'x-custom:foo', content: 'bar' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'possible-typo')).toBeFalsy()
     })
 
     it('does not warn on valid meta names', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'description', content: 'Valid' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'possible-typo')).toBeFalsy()
     })
   })
@@ -358,7 +358,7 @@ describe('validatePlugin', () => {
         ],
         title: 'test',
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-canonical')).toBeFalsy()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeFalsy()
     })
@@ -366,49 +366,49 @@ describe('validatePlugin', () => {
     it('warns on non-absolute og:video', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:video', content: '/video.mp4' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeTruthy()
     })
 
     it('warns on non-absolute og:audio', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:audio', content: '/audio.mp3' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeTruthy()
     })
 
     it('does not warn on URL meta with empty content', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:image', content: '' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-og-url')).toBeFalsy()
     })
 
     it('warns on twitter:creator missing @', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'twitter:creator', content: 'username' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'twitter-handle-missing-at')).toBeTruthy()
     })
 
     it('does not report typo for unknown property without og/article/book/profile/fb prefix', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'custom:something', content: 'val' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'possible-typo')).toBeFalsy()
     })
 
     it('does not report typo for unknown meta name with non-twitter colon prefix', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'custom:foo', content: 'val' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'possible-typo')).toBeFalsy()
     })
 
     it('does not suggest typo when no close match exists', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ property: 'og:zzzzzzzzzzz', content: 'val' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'possible-typo')).toBeFalsy()
     })
 
@@ -418,7 +418,7 @@ describe('validatePlugin', () => {
         // @ts-expect-error deliberately invalid: src + innerHTML to test runtime validation
         script: [{ src: '/app.js', innerHTML: '<script>alert(1)</script>' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'script-src-with-content')).toBeTruthy()
     })
 
@@ -426,21 +426,21 @@ describe('validatePlugin', () => {
       const { head, rules } = createValidationHead()
       // @ts-expect-error intentionally missing href
       head.push({ link: [{ rel: 'canonical' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'non-absolute-canonical')).toBeFalsy()
     })
 
     it('warns on viewport maximum-scale=1.0', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'viewport', content: 'width=device-width, maximum-scale=1.0' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'viewport-user-scalable')).toBeTruthy()
     })
 
     it('does not warn on normal viewport', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'viewport-user-scalable')).toBeFalsy()
     })
 
@@ -450,7 +450,7 @@ describe('validatePlugin', () => {
         title: 'test',
         meta: [{ name: 'description', content: 'test' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-missing-title')).toBeFalsy()
       expect(rules.find(r => r.id === 'og-missing-description')).toBeFalsy()
     })
@@ -461,7 +461,7 @@ describe('validatePlugin', () => {
         title: 'test',
         meta: [{ name: 'description', content: 'A valid description' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
     })
 
@@ -471,7 +471,7 @@ describe('validatePlugin', () => {
         title: 'test',
         meta: [{ name: 'Description', content: 'A valid description' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
     })
 
@@ -485,7 +485,7 @@ describe('validatePlugin', () => {
           { property: 'og:description', content: 'D' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-image-missing-dimensions')).toBeTruthy()
     })
 
@@ -499,7 +499,7 @@ describe('validatePlugin', () => {
           { property: 'og:description', content: 'D' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'og-image-missing-dimensions')).toBeTruthy()
     })
 
@@ -521,21 +521,21 @@ describe('validatePlugin', () => {
         ],
         link: [{ rel: 'canonical', href: 'https://example.com/page' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(onReport).not.toHaveBeenCalled()
     })
 
     it('does not warn empty-meta-content when content prop is absent', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ charset: 'utf-8' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'empty-meta-content')).toBeFalsy()
     })
 
     it('does not warn on robots with only noindex (no conflict)', () => {
       const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'robots', content: 'noindex, follow' }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'robots-conflict')).toBeFalsy()
     })
   })
@@ -548,7 +548,7 @@ describe('validatePlugin', () => {
         plugins: [ValidatePlugin()],
       })
       head.push({ title: '' })
-      renderSSRHead(head)
+      head.render()
       expect(spy).toHaveBeenCalled()
       spy.mockRestore()
     })
@@ -556,14 +556,14 @@ describe('validatePlugin', () => {
     it('respects rules off', () => {
       const { head, rules } = createValidationHead({ rules: { 'empty-title': 'off' } })
       head.push({ title: '' })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'empty-title')).toBeFalsy()
     })
 
     it('overrides severity via rules config', () => {
       const { head, rules } = createValidationHead({ rules: { 'missing-title': 'info' } })
       head.push({ meta: [{ name: 'description', content: 'test' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = rules.find(r => r.id === 'missing-title')
       expect(rule).toBeTruthy()
       expect(rule!.severity).toBe('info')
@@ -578,7 +578,7 @@ describe('validatePlugin', () => {
         })],
       })
       head.push({ link: [{ rel: 'canonical', href: '/page' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = results.find(r => r.id === 'non-absolute-canonical')
       expect(rule).toBeTruthy()
       expect(rule!.source).toBeDefined()
@@ -595,7 +595,7 @@ describe('validatePlugin', () => {
         })],
       })
       head.push({ link: [{ rel: 'canonical', href: '/page' }] })
-      renderSSRHead(head)
+      head.render()
       const rule = results.find(r => r.id === 'non-absolute-canonical')
       expect(rule).toBeTruthy()
       // source should not contain the absolute cwd prefix when root is set
@@ -609,7 +609,7 @@ describe('validatePlugin', () => {
         title: '',
         meta: [{ name: 'robots', content: 'index, noindex' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.length).toBeGreaterThanOrEqual(2)
     })
   })
@@ -620,7 +620,7 @@ describe('validatePlugin', () => {
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'low' as const }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeTruthy()
     })
 
@@ -629,7 +629,7 @@ describe('validatePlugin', () => {
       head.push({
         link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const, fetchpriority: 'low' as const }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeFalsy()
     })
 
@@ -638,7 +638,7 @@ describe('validatePlugin', () => {
       head.push({
         link: [{ rel: 'preload', href: '/font.woff2', as: 'font', crossorigin: 'anonymous', fetchpriority: 'high' as const }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-fetchpriority-conflict')).toBeFalsy()
     })
 
@@ -651,7 +651,7 @@ describe('validatePlugin', () => {
           as: 'script' as const,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
     })
 
@@ -664,7 +664,7 @@ describe('validatePlugin', () => {
           as: 'script' as const,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
     })
 
@@ -676,7 +676,7 @@ describe('validatePlugin', () => {
           { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeTruthy()
     })
 
@@ -688,7 +688,7 @@ describe('validatePlugin', () => {
           { rel: 'dns-prefetch', href: 'https://cdn.example.com' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'redundant-dns-prefetch')).toBeFalsy()
     })
 
@@ -698,7 +698,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const }],
         script: [{ src: '/analytics.js', async: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
     })
 
@@ -708,7 +708,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
         script: [{ src: '/app.js', defer: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeTruthy()
     })
 
@@ -718,7 +718,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/critical.js', as: 'script' as const }],
         script: [{ src: '/critical.js' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
     })
 
@@ -728,7 +728,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/gtm.js', as: 'script' as const, fetchpriority: 'low' as const }],
         script: [{ src: '/gtm.js', defer: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
     })
 
@@ -738,7 +738,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/analytics.js', as: 'script' as const, fetchpriority: 'low' as const }],
         script: [{ src: '/analytics.js', async: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-async-defer-conflict')).toBeFalsy()
     })
 
@@ -750,7 +750,7 @@ describe('validatePlugin', () => {
           { rel: 'prefetch', href: '/style.css' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'prefetch-preload-conflict')).toBeTruthy()
     })
 
@@ -762,7 +762,7 @@ describe('validatePlugin', () => {
           { rel: 'prefetch', href: '/next-page.js' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'prefetch-preload-conflict')).toBeFalsy()
     })
 
@@ -772,7 +772,7 @@ describe('validatePlugin', () => {
       head.push({
         style: [{ innerHTML: largeCSS }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-style-size')).toBeTruthy()
     })
 
@@ -781,7 +781,7 @@ describe('validatePlugin', () => {
       head.push({
         style: [{ innerHTML: 'body { color: red; }' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-style-size')).toBeFalsy()
     })
 
@@ -791,7 +791,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ innerHTML: largeJS }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
     })
 
@@ -800,7 +800,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ innerHTML: 'console.log("hi")' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-script-size')).toBeFalsy()
     })
 
@@ -812,7 +812,7 @@ describe('validatePlugin', () => {
           href: `https://cdn${i}.example.com`,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preconnects')).toBeTruthy()
     })
 
@@ -824,7 +824,7 @@ describe('validatePlugin', () => {
           href: `https://cdn${i}.example.com`,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preconnects')).toBeFalsy()
     })
 
@@ -837,7 +837,7 @@ describe('validatePlugin', () => {
           as: 'script' as const,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
     })
 
@@ -849,7 +849,7 @@ describe('validatePlugin', () => {
           href: `https://cdn${i}.example.com`,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preconnects')).toBeTruthy()
     })
 
@@ -857,7 +857,7 @@ describe('validatePlugin', () => {
       const { head, rules } = createValidationHead({ rules: { 'inline-style-size': ['info', { maxKB: 1 }] } })
       const css = 'a'.repeat(2 * 1024)
       head.push({ style: [{ innerHTML: css }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-style-size')).toBeTruthy()
     })
 
@@ -865,7 +865,7 @@ describe('validatePlugin', () => {
       const { head, rules } = createValidationHead({ rules: { 'inline-script-size': ['info', { maxKB: 1 }] } })
       const js = 'a'.repeat(1.5 * 1024)
       head.push({ script: [{ innerHTML: js }] })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'inline-script-size')).toBeTruthy()
     })
 
@@ -878,7 +878,7 @@ describe('validatePlugin', () => {
           as: 'script' as const,
         })),
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
     })
 
@@ -893,7 +893,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ property: 'og:title', content: 'test' }],
       })
-      renderSSRHead(head)
+      head.render()
       const rule = rules.find(r => r.id === 'meta-beyond-1mb')
       expect(rule).toBeTruthy()
       expect(rule!.message).toContain('og:title')
@@ -908,7 +908,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ property: 'og:title', content: 'test' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'meta-beyond-1mb')).toBeFalsy()
     })
 
@@ -917,7 +917,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'render-blocking-script')).toBeTruthy()
     })
 
@@ -926,7 +926,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js', async: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
     })
 
@@ -935,7 +935,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js', defer: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
     })
 
@@ -944,7 +944,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js', type: 'module' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'render-blocking-script')).toBeFalsy()
     })
 
@@ -953,7 +953,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js', type: 'module', defer: true }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'defer-on-module-script')).toBeTruthy()
     })
 
@@ -962,7 +962,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/app.js', type: 'module' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'defer-on-module-script')).toBeFalsy()
     })
 
@@ -975,7 +975,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: '/c.js', as: 'script' as const, fetchpriority: 'high' as const },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-fetchpriority-high')).toBeTruthy()
     })
 
@@ -987,7 +987,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: '/b.js', as: 'script' as const, fetchpriority: 'high' as const },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'too-many-fetchpriority-high')).toBeFalsy()
     })
 
@@ -1000,7 +1000,7 @@ describe('validatePlugin', () => {
           { rel: 'preconnect', href: 'https://cdn.example.com', crossorigin: 'anonymous' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeFalsy()
     })
 
@@ -1012,7 +1012,7 @@ describe('validatePlugin', () => {
           { rel: 'prefetch' as const, href: '/next-page.js', key: 'pf2' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeTruthy()
     })
 
@@ -1024,7 +1024,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: '/b.woff2', as: 'font' as const, crossorigin: 'anonymous' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'duplicate-resource-hint')).toBeFalsy()
     })
 
@@ -1037,7 +1037,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ charset: 'utf-8' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'charset-not-early')).toBeTruthy()
     })
 
@@ -1049,7 +1049,7 @@ describe('validatePlugin', () => {
       head.push({
         style: [{ innerHTML: 'body { color: red }' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'charset-not-early')).toBeFalsy()
     })
 
@@ -1065,7 +1065,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ charset: 'utf-8' }],
       })
-      renderSSRHead(head)
+      head.render()
       // charset should be position 2 (title=1, charset=2), not 4 (templateParams=1, titleTemplate=2, title=3, charset=4)
       expect(rules.find(r => r.id === 'charset-not-early')).toBeFalsy()
     })
@@ -1076,7 +1076,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/app.mjs', as: 'script' as const }],
         script: [{ src: '/app.mjs', type: 'module' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-not-modulepreload')).toBeTruthy()
     })
 
@@ -1086,7 +1086,7 @@ describe('validatePlugin', () => {
         link: [{ rel: 'preload', href: '/app.js', as: 'script' as const }],
         script: [{ src: '/app.js' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preload-not-modulepreload')).toBeFalsy()
     })
 
@@ -1098,7 +1098,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: 'https://fonts.gstatic.com/s/roboto.woff2', as: 'font' as const, crossorigin: 'anonymous' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeTruthy()
     })
 
@@ -1110,7 +1110,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: 'https://fonts.gstatic.com/s/roboto.woff2', as: 'font' as const, crossorigin: 'anonymous' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeFalsy()
     })
 
@@ -1123,7 +1123,7 @@ describe('validatePlugin', () => {
           { rel: 'preload', href: 'https://cdn.example.com/font.woff2', as: 'font' as const, crossorigin: 'anonymous' },
         ],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'preconnect-missing-crossorigin')).toBeFalsy()
     })
   })
@@ -1135,7 +1135,7 @@ describe('validatePlugin', () => {
         templateParams: { site: { name: 'My Site' }, separator: '|' },
         title: 'Hello',
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeTruthy()
     })
 
@@ -1152,7 +1152,7 @@ describe('validatePlugin', () => {
         templateParams: { site: { name: 'My Site' }, separator: '|' },
         title: 'Hello',
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(results.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
     })
 
@@ -1161,7 +1161,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/a.js', tagPriority: 'before:script:key:b' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-alias-sorting-plugin')).toBeTruthy()
     })
 
@@ -1177,7 +1177,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/a.js', tagPriority: 'before:script:key:b' }],
       })
-      renderSSRHead(head)
+      head.render()
       expect(results.find(r => r.id === 'missing-alias-sorting-plugin')).toBeFalsy()
     })
 
@@ -1186,7 +1186,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ children: 'console.log("hello")' }],
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'deprecated-prop-children')).toBeTruthy()
     })
 
@@ -1195,7 +1195,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ hid: 'description', name: 'description', content: 'test' }],
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeTruthy()
     })
 
@@ -1204,7 +1204,7 @@ describe('validatePlugin', () => {
       head.push({
         meta: [{ vmid: 'description', name: 'description', content: 'test' }],
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeTruthy()
     })
 
@@ -1213,7 +1213,7 @@ describe('validatePlugin', () => {
       head.push({
         script: [{ src: '/script.js', body: true }],
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'deprecated-prop-body')).toBeTruthy()
     })
 
@@ -1225,7 +1225,7 @@ describe('validatePlugin', () => {
         templateParams: { site: { name: 'My Site' } },
         title: 'Hello',
       } as any)
-      renderSSRHead(head)
+      head.render()
       expect(rules.find(r => r.id === 'missing-template-params-plugin')).toBeFalsy()
     })
 

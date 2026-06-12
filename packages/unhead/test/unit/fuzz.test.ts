@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { fc, it } from '@fast-check/vitest'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '../../src/composables'
 import { createHead } from '../../src/server'
 
@@ -18,7 +18,7 @@ describe.runIf(process.env.FUZZY_TEST)('useHead', () => {
       script: c,
       c,
     })
-    renderSSRHead(head)
+    head.render()
   })
   it.prop([fc.string(), fc.string(), fc.anything()])('breaks', async (a, b, c) => {
     const head = createHead()
@@ -30,6 +30,6 @@ describe.runIf(process.env.FUZZY_TEST)('useHead', () => {
       script: c,
       c,
     })
-    renderSSRHead(head)
+    head.render()
   })
 })

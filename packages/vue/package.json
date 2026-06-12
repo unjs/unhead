@@ -76,10 +76,6 @@
     "./stream/iife": {
       "types": "./dist/stream/iife.d.ts",
       "default": "./dist/stream/iife.mjs"
-    },
-    "./legacy": {
-      "types": "./dist/legacy.d.ts",
-      "default": "./dist/legacy.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -125,9 +121,6 @@
       ],
       "stream/iife": [
         "dist/stream/iife"
-      ],
-      "legacy": [
-        "dist/legacy"
       ]
     }
   },

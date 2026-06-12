@@ -2,7 +2,7 @@ import type { ResolvableHead } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
-import { renderSSRHead } from '../../../src/server'
+
 import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e', () => {
@@ -69,7 +69,7 @@ describe('unhead e2e', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -137,8 +137,6 @@ describe('unhead e2e', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -190,7 +188,7 @@ describe('unhead e2e', () => {
     // i.e App.vue
     ssrHead.push(schema)
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {

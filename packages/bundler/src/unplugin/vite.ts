@@ -39,9 +39,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
 
   // Register runtime plugins into the shared context
   if (options.validate !== false) {
-    const pluginsSource = framework ? `${framework}/plugins` : 'unhead/plugins'
     ctx.addRuntimePlugin({
-      import: { name: 'ValidatePlugin', source: pluginsSource, as: '__unhead_validate' },
+      import: { name: 'ValidatePlugin', source: 'unhead/validate', as: '__unhead_validate' },
       client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
     })
   }

@@ -1,6 +1,6 @@
 import type { ResolvableHead } from '../../../src/types'
 import { describe, it } from 'vitest'
-import { renderSSRHead } from '../../../src/server'
+
 import { resolveTags } from '../../../src/utils/resolve'
 import { createServerHeadWithContext } from '../../util'
 
@@ -19,7 +19,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -43,7 +43,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -65,7 +65,7 @@ describe('ssr innerHTML', () => {
         },
       ],
     })
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -97,7 +97,7 @@ describe('ssr innerHTML', () => {
       }],
     } satisfies ResolvableHead)
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

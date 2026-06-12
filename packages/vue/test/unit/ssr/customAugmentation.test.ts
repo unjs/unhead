@@ -1,4 +1,4 @@
-import { renderSSRHead } from '@unhead/ssr'
+
 import { injectHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
@@ -33,7 +33,7 @@ describe('vue ssr custom augmentation', () => {
     app.use(head)
     await renderToString(app)
 
-    const headResult = renderSSRHead(head)
+    const headResult = head.render()
     expect(headResult.headTags).toMatchInlineSnapshot(
       `
       "<title>foo</title>

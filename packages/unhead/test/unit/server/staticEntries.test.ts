@@ -1,6 +1,6 @@
 import type { ResolvableHead, StaticEntryStore } from '../../../src/types'
 import { describe, expect, it } from 'vitest'
-import { createHead, renderSSRHead } from '../../../src/server'
+import { createHead } from '../../../src/server'
 import { resolveTags } from '../../../src/utils'
 
 describe('static entry sharing', () => {
@@ -16,10 +16,10 @@ describe('static entry sharing', () => {
     }
     const plain = createHead()
     plain.push(structuredClone(shared) as any)
-    const expected = renderSSRHead(plain)
+    const expected = plain.render()
     for (let i = 0; i < 3; i++) {
       const h = createHead({ staticCache, init: [shared] })
-      expect(renderSSRHead(h)).toStrictEqual(expected)
+      expect(h.render()).toStrictEqual(expected)
     }
   })
 
@@ -52,7 +52,7 @@ describe('static entry sharing', () => {
     const ca = resolveTags(a).find(t => t.props.charset)
     const cb = resolveTags(b).find(t => t.props.charset)
     expect(ca).not.toBe(cb)
-    expect(renderSSRHead(a)).toStrictEqual(renderSSRHead(b))
+    expect(a.render()).toStrictEqual(b.render())
   })
 
   it('the static entry option promotes on first use', () => {
@@ -85,14 +85,14 @@ describe('static entry sharing', () => {
       titleTemplate: (t?: string) => `${t} - ${suffix}`,
     }
     const a = createHead({ staticCache, disableDefaults: true, init: [input] })
-    expect(renderSSRHead(a).headTags).toContain('Page - A')
+    expect(a.render().headTags).toContain('Page - A')
     const b = createHead({ staticCache, disableDefaults: true, init: [input] })
     suffix = 'B'
-    expect(renderSSRHead(b).headTags).toContain('Page - B')
+    expect(b.render().headTags).toContain('Page - B')
     // promoted by now; the template function is still called per render
     const c = createHead({ staticCache, disableDefaults: true, init: [input] })
     suffix = 'C'
-    expect(renderSSRHead(c).headTags).toContain('Page - C')
+    expect(c.render().headTags).toContain('Page - C')
   })
 
   it('patching with the same identity disqualifies and invalidates the input', () => {
@@ -115,7 +115,7 @@ describe('static entry sharing', () => {
     resolveTags(createHead({ staticCache }))
     const head = createHead({ staticCache })
     head.push({ meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' }] })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toContain('maximum-scale=1')
     expect(headTags.match(/name="viewport"/g)).toHaveLength(1)
   })
@@ -141,10 +141,10 @@ describe('static entry sharing', () => {
     }
     const a = createHead({ staticCache, disableDefaults: true })
     a.push(input as any, { static: true })
-    const first = renderSSRHead(a).headTags
+    const first = a.render().headTags
     const b = createHead({ staticCache, disableDefaults: true })
     b.push(input as any, { static: true })
-    const second = renderSSRHead(b).headTags
+    const second = b.render().headTags
     expect(second).toBe(first)
     expect(second).not.toContain('</script><img')
   })
@@ -153,7 +153,7 @@ describe('static entry sharing', () => {
     const staticCache: StaticEntryStore = {}
     const input: ResolvableHead = { meta: [{ name: 'description', content: 'orig %sep' }] }
     for (let i = 0; i < 2; i++)
-      renderSSRHead(createHead({ staticCache, disableDefaults: true, init: [input] }))
+      createHead({ staticCache, disableDefaults: true, init: [input] }).render()
     const head = createHead({ staticCache, disableDefaults: true, init: [input] })
     head.use({
       key: 'rewriter',
@@ -167,6 +167,6 @@ describe('static entry sharing', () => {
         },
       },
     })
-    expect(renderSSRHead(head).headTags).toContain('content="replaced"')
+    expect(head.render().headTags).toContain('content="replaced"')
   })
 })

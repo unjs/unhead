@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
-import { renderSSRHead } from '../../../src/server'
+
 import { createClientHeadWithContext, useDom } from '../../util'
 
 describe('unhead e2e deduping', () => {
@@ -19,7 +19,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -55,8 +55,6 @@ describe('unhead e2e deduping', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -76,7 +74,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -113,8 +111,6 @@ describe('unhead e2e deduping', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -133,7 +129,7 @@ describe('unhead e2e deduping', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data.headTags).toMatchInlineSnapshot(`"<script data-hid="test">console.log('server log')</script>"`)
 
@@ -148,8 +144,6 @@ describe('unhead e2e deduping', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)
@@ -176,8 +170,6 @@ describe('unhead e2e deduping', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -193,7 +185,7 @@ describe('unhead e2e deduping', () => {
       link: [{ rel: 'stylesheet', href: 'https://example.com/style.css' }],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.headTags).toMatchInlineSnapshot(`
       "<script src="https://example.com/app.js" async></script>
       <link rel="stylesheet" href="https://example.com/style.css">"
@@ -222,8 +214,6 @@ describe('unhead e2e deduping', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -250,7 +240,7 @@ describe('unhead e2e deduping', () => {
     const ssrHead = createClientHeadWithContext()
     ssrHead.push(input)
     ssrHead.push(input)
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -279,8 +269,6 @@ describe('unhead e2e deduping', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

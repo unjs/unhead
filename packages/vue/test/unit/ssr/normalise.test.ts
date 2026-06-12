@@ -1,4 +1,4 @@
-import { renderSSRHead } from '@unhead/ssr'
+
 import { createHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
 
@@ -40,7 +40,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags.split('" ')).toMatchInlineSnapshot(`
       [
         "<link array="a,1",
@@ -74,7 +74,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -1,3 +1,5 @@
+export { ValidatePlugin } from '../plugins/validate'
+export type { HeadValidationRule, RuleConfig, RulesConfig, RuleSeverity, ValidatePluginOptions, ValidationRuleId, ValidationRuleOptions } from '../plugins/validate'
 export * from './known'
 export * from './levenshtein'
 export * from './predicates'

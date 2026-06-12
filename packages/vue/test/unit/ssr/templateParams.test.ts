@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { ref } from 'vue'
 import { TemplateParamsPlugin } from '../../../src/plugins'
-import { createHead, renderSSRHead } from '../../../src/server'
+import { createHead } from '../../../src/server'
 import { ssrRenderOptionsHead } from '../../util'
 
 describe('ssr vue templateParams', () => {
@@ -197,7 +197,7 @@ describe('ssr vue templateParams', () => {
         },
       },
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`
       "<title>my tag line | test</title>
       <meta name="description" content="Hi, welcome to the dev v0.0.0 of test.">"
@@ -214,7 +214,7 @@ describe('ssr vue templateParams', () => {
     }, {
       processTemplateParams: false,
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`"<title>Hello %name</title>"`)
   })
 })

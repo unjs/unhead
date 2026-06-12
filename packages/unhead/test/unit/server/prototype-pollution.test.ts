@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('prototype pollution', () => {
@@ -10,7 +10,7 @@ describe('prototype pollution', () => {
         JSON.parse('{"name":"description","content":"safe","__proto__":{"polluted":true}}'),
       ],
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -21,7 +21,7 @@ describe('prototype pollution', () => {
         { name: 'description', content: 'safe', constructor: { prototype: { polluted: true } } } as any,
       ],
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -32,7 +32,7 @@ describe('prototype pollution', () => {
         { name: 'description', content: 'safe', prototype: { polluted: true } } as any,
       ],
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -41,7 +41,7 @@ describe('prototype pollution', () => {
     head.push({
       htmlAttrs: JSON.parse('{"lang":"en","__proto__":{"polluted":true}}'),
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -50,7 +50,7 @@ describe('prototype pollution', () => {
     head.push({
       bodyAttrs: JSON.parse('{"class":"dark","__proto__":{"polluted":true}}'),
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -61,7 +61,7 @@ describe('prototype pollution', () => {
         JSON.parse('{"src":"https://example.com/app.js","__proto__":{"polluted":true}}'),
       ],
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -72,7 +72,7 @@ describe('prototype pollution', () => {
         JSON.parse('{"rel":"stylesheet","href":"/style.css","__proto__":{"polluted":true}}'),
       ],
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -83,7 +83,7 @@ describe('prototype pollution', () => {
         JSON.parse('{"name":"description","content":"hello","__proto__":{"polluted":true}}'),
       ],
     })
-    const ctx = await renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toContain('name="description"')
     expect(ctx.headTags).toContain('content="hello"')
     expect(ctx.headTags).not.toContain('__proto__')
@@ -97,7 +97,7 @@ describe('prototype pollution', () => {
         style: JSON.parse('{"color":"red","__proto__":{"polluted":true}}'),
       } as any,
     })
-    await renderSSRHead(head)
+    head.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 })

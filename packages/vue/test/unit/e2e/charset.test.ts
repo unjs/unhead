@@ -1,6 +1,6 @@
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../unhead/test/fixtures'
@@ -36,7 +36,7 @@ describe('vue e2e charset', () => {
       useHead(IndexSchema)
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {

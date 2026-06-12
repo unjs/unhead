@@ -2,7 +2,7 @@
 
 import type { ReactiveHead } from '@unhead/vue'
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
@@ -79,7 +79,7 @@ describe('vue e2e', () => {
       })
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -189,7 +189,7 @@ describe('vue e2e', () => {
       useHead(schema)
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -368,7 +368,7 @@ describe('vue e2e', () => {
       title: 'Home page',
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data.headTags).toMatchInlineSnapshot(`"<title>Home page | Company</title>"`)
     expect(data).toMatchInlineSnapshot(`
@@ -391,7 +391,6 @@ describe('vue e2e', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
 
       </body></html>"
     `)

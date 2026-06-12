@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useScript } from '../../../src/composables'
-import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
+import { createHead as createServerHead } from '../../../src/server'
 
 describe('ssr useScript', () => {
   it('default', async () => {
@@ -12,7 +12,7 @@ describe('ssr useScript', () => {
       src: 'https://cdn.example.com/script.js',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -34,7 +34,7 @@ describe('ssr useScript', () => {
       trigger: 'server',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -57,7 +57,7 @@ describe('ssr useScript', () => {
       trigger: 'server',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -95,7 +95,7 @@ describe('ssr useScript', () => {
       event: 'page.load',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -2,7 +2,7 @@ import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { renderDOMHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
-import { renderSSRHead } from '../../../src/server'
+
 import { createClientHeadWithContext, createServerHeadWithContext, useDom } from '../../../test/util'
 
 describe('unhead e2e scripts', () => {
@@ -20,7 +20,7 @@ describe('unhead e2e scripts', () => {
     // i.e App.vue
     useHead(ssrHead, input)
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -49,8 +49,6 @@ describe('unhead e2e scripts', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

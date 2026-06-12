@@ -1,5 +1,5 @@
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { createClientHeadWithContext, useDom } from '../../util'
@@ -16,7 +16,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -49,8 +49,6 @@ describe('unhead e2e shorthands', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -67,7 +65,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -106,8 +104,6 @@ describe('unhead e2e shorthands', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -126,7 +122,7 @@ describe('unhead e2e shorthands', () => {
     // i.e App.vue
     useHead(ssrHead, input)
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -155,8 +151,6 @@ describe('unhead e2e shorthands', () => {
       <h1>hello world</h1>
       </div>
 
-
-
       </body></html>"
     `)
   })
@@ -172,7 +166,7 @@ describe('unhead e2e shorthands', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -199,13 +193,9 @@ describe('unhead e2e shorthands', () => {
       "<!DOCTYPE html><html><head>
       <noscript></noscript><noscript>&lt;iframe src="https://www.googletagmanager.com/ns.html" height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript></head><body><iframe src="https://www.googletagmanager.com/ns.html" height="0" width="0" style="display:none;visibility:hidden"></iframe>
 
-
-
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

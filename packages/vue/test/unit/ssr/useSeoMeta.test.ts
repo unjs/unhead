@@ -1,4 +1,4 @@
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useSeoMeta } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { ssrVueAppWithUnhead } from '../../util'
@@ -21,7 +21,7 @@ describe('useSeoMeta vue ssr', () => {
         },
       })
     })
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",
@@ -43,7 +43,7 @@ describe('useSeoMeta vue ssr', () => {
       })
       data.value = 'bar'
     })
-    expect(renderSSRHead(head)).toMatchInlineSnapshot(`
+    expect(head.render()).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
         "bodyTags": "",

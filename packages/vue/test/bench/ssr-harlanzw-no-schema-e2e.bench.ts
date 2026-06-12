@@ -2,7 +2,7 @@ import type { ResolvableHead, SerializableHead } from 'unhead/types'
 import { InferSeoMetaPlugin } from '@unhead/bundler'
 import { bench, describe } from 'vitest'
 import { useHead, useSeoMeta } from '../../src'
-import { createHead as createServerHead, renderSSRHead } from '../../src/server'
+import { createHead as createServerHead, createServerRenderer } from '../../src/server'
 
 describe('ssr e2e bench', () => {
   bench('e2e', async () => {
@@ -235,9 +235,9 @@ describe('ssr e2e bench', () => {
       head,
     })
 
-    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(head, {
+    const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = createServerRenderer({
       omitLineBreaks: true,
-    })
+    })(head)
     function normalizeChunks(chunks: (string | undefined)[]) {
       return chunks.filter(Boolean).map(i => i!.trim())
     }
@@ -282,6 +282,6 @@ ${htmlContext.bodyAppend.join('\n')}
         },
       ],
     })
-    renderSSRHead(head)
+    head.render()
   })
 })

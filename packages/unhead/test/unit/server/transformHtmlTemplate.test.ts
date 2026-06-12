@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/server/transformHtmlTemplate'
+import { transformHtmlTemplate, transformHtmlTemplateRaw } from '../../../src/transform'
 import { createServerHeadWithContext } from '../../util'
 
 describe('transformHtmlTemplate edge cases', () => {

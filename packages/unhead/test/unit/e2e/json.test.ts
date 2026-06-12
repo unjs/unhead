@@ -1,5 +1,5 @@
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { createClientHeadWithContext, useDom } from '../../util'
@@ -21,7 +21,7 @@ describe('unhead e2e json', () => {
       ],
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -58,8 +58,6 @@ describe('unhead e2e json', () => {
       <div>
       <h1>hello world</h1>
       </div>
-
-
 
       </body></html>"
     `)

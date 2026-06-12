@@ -26,7 +26,6 @@ export default defineBuildConfig({
     { input: 'src/vite', name: 'vite' },
     { input: 'src/stream/vite', name: 'stream/vite' },
     { input: 'src/stream/iife', name: 'stream/iife' },
-    { input: 'src/legacy', name: 'legacy' },
   ],
   hooks: {
     'rollup:options': (_, options) => {

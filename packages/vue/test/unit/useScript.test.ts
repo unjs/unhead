@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createHead } from '@unhead/vue/client'
-import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
+import { createHead as createServerHead } from '@unhead/vue/server'
 
 import { describe, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
@@ -163,7 +163,7 @@ describe('vue e2e scripts', () => {
     }, {
       head,
     })
-    const ssr = renderSSRHead(head)
+    const ssr = head.render()
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
         "<meta",
@@ -191,7 +191,7 @@ describe('vue e2e scripts', () => {
     }, {
       head,
     })
-    const ssr = renderSSRHead(head)
+    const ssr = head.render()
     expect(ssr.headTags.replace('>', '').split(' ').sort()).toMatchInlineSnapshot(`
       [
         "<meta",

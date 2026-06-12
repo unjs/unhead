@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DeprecationsPlugin } from '../../../src/legacy'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('deprecationsPlugin', () => {
@@ -21,7 +21,7 @@ describe('deprecationsPlugin', () => {
       ],
     })
 
-    const { headTags, bodyTags } = await renderSSRHead(head)
+    const { headTags, bodyTags } = head.render()
 
     expect(headTags).toContain('<script>console.log(1)</script>')
     expect(headTags).toContain('<meta name="description" content="a">')
@@ -38,7 +38,7 @@ describe('deprecationsPlugin', () => {
       ],
     })
 
-    const { headTags, bodyTags } = await renderSSRHead(head)
+    const { headTags, bodyTags } = head.render()
 
     expect(headTags).toContain('<script src="/keep-in-head.js"></script>')
     expect(headTags).not.toContain('body="false"')
@@ -60,7 +60,7 @@ describe('deprecationsPlugin', () => {
       ],
     })
 
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
 
     expect(headTags).toContain('content="second"')
     expect(headTags).not.toContain('content="first"')

@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('dedupe', () => {
@@ -17,7 +17,7 @@ describe('dedupe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -43,7 +43,7 @@ describe('dedupe', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="custom-meta" content="Second custom meta tag">"`)
   })
 
@@ -65,7 +65,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`"<meta name="description" content="my page description">"`)
     expect(
       headTags.includes('<meta name="description" content="my page description"'),
@@ -92,7 +92,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.startsWith('<script mycustommeta="second"')).toBeTruthy()
     expect(headTags.split('mycustommeta').length === 2).toBeTruthy()
   })
@@ -115,7 +115,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(
       headTags.startsWith(
         '<link rel="canonical" href="https://website.com/new"',
@@ -149,7 +149,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.startsWith('<meta charset="utf-8"')).toBeTruthy()
     expect(headTags.split('charset').length === 2).toBeTruthy()
   })
@@ -167,7 +167,7 @@ describe('dedupe', () => {
         href: '/',
       },
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('base').length === 2).toBeTruthy()
     expect(headTags.startsWith('<base href="/">')).toBeTruthy()
   })
@@ -191,7 +191,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('http-equiv').length === 2).toBeTruthy()
   })
 
@@ -203,7 +203,7 @@ describe('dedupe', () => {
         { rel: 'canonical', href: 'https://mydomain.me' },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(
       `
       "<link rel="icon" href="/favicon.ico">
@@ -224,7 +224,7 @@ describe('dedupe', () => {
       ],
       link: [{ rel: 'icon', href: '/favicon.ico', key: 'icon' }],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(
       `
       "<meta name="description" content="test">
@@ -253,7 +253,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(
       `
       "<meta property="og:image" content="https://example.com/image1.jpg">
@@ -286,7 +286,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(
       `"<meta name="og:image" content="https://example.com/image2.jpg">"`,
     )
@@ -310,7 +310,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`""`)
   })
 
@@ -343,7 +343,7 @@ describe('dedupe', () => {
       ],
     })
 
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`"<script data-hid="my-script" foo="bar">console.log('B')</script>"`)
   })
 
@@ -385,7 +385,7 @@ describe('dedupe', () => {
       ],
     })
 
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`
       "<meta charset="utf-1">
       <meta name="viewport" content="width=device-width, initial-scale=2">
@@ -410,7 +410,7 @@ describe('dedupe', () => {
       ],
     })
 
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).toMatchInlineSnapshot(`
       "<meta name="custom-meta" content="First custom meta tag">
       <meta name="custom-meta" content="Second custom meta tag">"
@@ -458,7 +458,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 3 alternate links, not 6
     expect(headTags.split('rel="alternate"').length).toBe(4) // 3 tags + 1 base = 4 parts
     expect(headTags).toMatchInlineSnapshot(`
@@ -489,7 +489,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 1 alternate link
     expect(headTags.split('rel="alternate"').length).toBe(2) // 1 tag + 1 base = 2 parts
     expect(headTags).toContain('https://example.com/en/page')
@@ -516,7 +516,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should have 1 alternate link - last one wins
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('https://example.com/en/page2')
@@ -546,7 +546,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 1 alternate link
     expect(headTags.split('rel="alternate"').length).toBe(2) // 1 tag + 1 base = 2 parts
     expect(headTags).toMatchInlineSnapshot(`"<link rel="alternate" type="application/rss+xml" href="https://example.com/feed.xml" title="RSS Feed">"`)
@@ -573,7 +573,7 @@ describe('dedupe', () => {
         },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should have all 3 different alternate links
     expect(headTags.split('rel="alternate"').length).toBe(4) // 3 tags + 1 base = 4 parts
     expect(headTags).toContain('hreflang="en"')
@@ -594,7 +594,7 @@ describe('dedupe', () => {
         { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed.xml', title: 'RSS Feed' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('feed.xml')
   })
@@ -610,7 +610,7 @@ describe('dedupe', () => {
         { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed2.xml', title: 'RSS Feed 2' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('rel="alternate"').length).toBe(3)
     expect(headTags).toContain('feed.xml')
     expect(headTags).toContain('feed2.xml')
@@ -630,7 +630,7 @@ describe('dedupe', () => {
         { rel: 'alternate', type: 'application/rss+xml', href: 'https://example.com/feed2.xml', title: 'RSS Feed 2' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('rel="alternate"').length).toBe(3)
     expect(headTags).toContain('feed.xml')
     expect(headTags).toContain('feed2.xml')
@@ -644,7 +644,7 @@ describe('dedupe', () => {
         { rel: 'alternate', type: 'application/atom+xml', href: 'https://example.com/atom.xml', title: 'Atom' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags.split('rel="alternate"').length).toBe(3)
     expect(headTags).toContain('rss.xml')
     expect(headTags).toContain('atom.xml')
@@ -658,7 +658,7 @@ describe('dedupe', () => {
         { rel: 'alternate', href: 'https://example.com/b' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // both should exist since they have different hrefs
     expect(headTags.split('rel="alternate"').length).toBe(3)
   })
@@ -676,7 +676,7 @@ describe('dedupe', () => {
         { rel: 'alternate', href: '/' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 1 alternate link
     expect(headTags.split('rel="alternate"').length).toBe(2)
   })
@@ -694,7 +694,7 @@ describe('dedupe', () => {
         { rel: 'alternate', href: '' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 1 alternate link
     expect(headTags.split('rel="alternate"').length).toBe(2)
   })
@@ -712,7 +712,7 @@ describe('dedupe', () => {
         { id: 'i18n-alt-nl', rel: 'alternate', href: 'http://localhost:3000/nl/products/grote-stoel', hreflang: 'nl' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should only have 1 alternate link - last one wins via hreflang dedupe
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('grote-stoel')
@@ -731,7 +731,7 @@ describe('dedupe', () => {
         { key: 'my-alt', rel: 'alternate', href: 'https://example.com/b' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should have 1 alternate link deduped by key - last one wins
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('https://example.com/b')
@@ -750,7 +750,7 @@ describe('dedupe', () => {
         { id: 'my-feed', rel: 'alternate', href: 'https://example.com/feed-v2.xml' },
       ],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Should have 1 alternate link deduped by id - last one wins
     expect(headTags.split('rel="alternate"').length).toBe(2)
     expect(headTags).toContain('feed-v2.xml')
@@ -773,7 +773,7 @@ describe('dedupe', () => {
         textContent: { imports: { '#helper': '/helper.js' } },
       }],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Both importmaps should render so the browser can merge them
     expect(headTags.split('type="importmap"').length).toBe(3)
     expect(headTags).toContain('/entry.js')
@@ -795,7 +795,7 @@ describe('dedupe', () => {
         textContent: map,
       }],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Exact duplicates are deduped by content-based key
     expect(headTags.split('type="importmap"').length).toBe(2)
   })
@@ -816,7 +816,7 @@ describe('dedupe', () => {
         textContent: { imports: { '#entry': '/v2.js' } },
       }],
     })
-    const { headTags } = await renderSSRHead(head)
+    const { headTags } = head.render()
     // Users who want "replace, not merge" can opt in via `key`
     expect(headTags.split('type="importmap"').length).toBe(2)
     expect(headTags).toContain('/v2.js')

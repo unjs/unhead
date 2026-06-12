@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useSeoMeta } from '@unhead/vue'
 import { describe, it } from 'vitest'
 import { useDom } from '../../../../unhead/test/fixtures'
@@ -14,7 +14,7 @@ describe('unhead vue e2e useSeoMeta', () => {
         articleTag: ['foo', 'bar'],
       })
     })
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -3,7 +3,7 @@ import { DOCUMENT } from '@angular/common'
 import { Inject, Injectable } from '@angular/core'
 import { UnheadInjectionToken } from '@unhead/angular'
 import { parseHtmlForUnheadExtraction } from 'unhead/parser'
-import { renderSSRHead } from 'unhead/server'
+import { createServerRenderer } from 'unhead/server'
 
 const ATTR_MATCH_RE = /([a-z0-9-]+)(?:="([^"]*)")?/i
 const ATTR_RE = /([a-z0-9-]+(?:="[^"]*")?)/gi
@@ -47,9 +47,9 @@ export class UnheadSSRService {
   async render() {
     const { input } = parseHtmlForUnheadExtraction(this.document.documentElement.outerHTML)
     this.unhead.entries.set(0, { _i: 0, input, options: {} })
-    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = renderSSRHead(this.unhead, {
+    const { headTags, htmlAttrs, bodyAttrs, bodyTags, bodyTagsOpen } = createServerRenderer({
       omitLineBreaks: false,
-    })
+    })(this.unhead)
     htmlAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.documentElement, attr))
     bodyAttrs.match(ATTR_RE)?.forEach(attr => attrToElement(this.document.body, attr))
     this.document.body.innerHTML = bodyTagsOpen + this.document.body.innerHTML + bodyTags

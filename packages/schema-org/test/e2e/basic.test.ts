@@ -1,7 +1,7 @@
 import { defineImage, defineOrganization, defineQuestion, defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead as createClientHead, renderDOMHead } from 'unhead/client'
-import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
+import { createHead as createServerHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useDom } from '../../../unhead/test/fixtures'
 
@@ -27,7 +27,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -66,7 +66,6 @@ describe('schema.org e2e', () => {
           }
         ]
       }</script>
-
 
       </body></html>"
     `)
@@ -96,7 +95,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -142,7 +141,6 @@ describe('schema.org e2e', () => {
         ]
       }</script>
 
-
       </body></html>"
     `)
   })
@@ -170,7 +168,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -218,7 +216,7 @@ describe('schema.org e2e', () => {
         answer: 'Something else',
       }),
     ])
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -283,7 +281,7 @@ describe('schema.org e2e', () => {
       }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -319,7 +317,7 @@ describe('schema.org e2e', () => {
     // @ts-expect-error intentional
     useSchemaOrg(ssrHead, 'test')
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`""`)
   })
   it('#441', async () => {
@@ -338,7 +336,7 @@ describe('schema.org e2e', () => {
       })],
     }])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

@@ -1,6 +1,6 @@
 import { defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 
 async function doHead() {
   const head = createHead()
@@ -19,7 +19,7 @@ async function doHead() {
     }),
   ])
 
-  return renderSSRHead(head)
+  return head.render()
 }
 
 doHead()

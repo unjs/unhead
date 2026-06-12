@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { useHead, useSeoMeta } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
-import { transformHtmlTemplate } from '../../../src/server/transformHtmlTemplate'
+import { createServerRenderer } from '../../../src/server'
+import { transformHtmlTemplate } from '../../../src/transform'
 import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('ssr', () => {
@@ -15,7 +15,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": " class="dark"",
@@ -34,7 +34,7 @@ describe('ssr', () => {
         lang: 'de',
       },
     })
-    renderSSRHead(head)
+    head.render()
   })
 
   it('number title', async () => {
@@ -44,7 +44,7 @@ describe('ssr', () => {
       title: 12345,
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -66,7 +66,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -91,7 +91,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
 
     expect(ctx).toMatchInlineSnapshot(`
       {
@@ -118,7 +118,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head, { omitLineBreaks: true })
+    const ctx = createServerRenderer({ omitLineBreaks: true })(head)
 
     expect(ctx).toMatchInlineSnapshot(`
     {
@@ -197,7 +197,7 @@ describe('ssr', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -229,7 +229,7 @@ describe('ssr', () => {
       twitterCard: 'summary_large_image',
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -258,7 +258,7 @@ describe('ssr', () => {
       },
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

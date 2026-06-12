@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 const TEST_RE = /a/
@@ -33,7 +33,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -58,7 +58,7 @@ describe('normalise', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -92,7 +92,7 @@ describe('normalise', () => {
     })
 
     // Should render without throwing TypeError with String() coercion in endsWith checks
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

@@ -1,5 +1,5 @@
 import { defineOrganization, defineWebPage } from '@unhead/schema-org'
-import { renderSSRHead } from 'unhead/server'
+
 import { describe, expect, it } from 'vitest'
 import { useSetup } from '..'
 
@@ -20,7 +20,7 @@ describe('schema.org prototype pollution', () => {
       })
     })
 
-    await renderSSRHead(ssrHead)
+    ssrHead.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -40,7 +40,7 @@ describe('schema.org prototype pollution', () => {
       })
     })
 
-    await renderSSRHead(ssrHead)
+    ssrHead.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -60,7 +60,7 @@ describe('schema.org prototype pollution', () => {
       })
     })
 
-    await renderSSRHead(ssrHead)
+    ssrHead.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 
@@ -81,7 +81,7 @@ describe('schema.org prototype pollution', () => {
       })
     })
 
-    const data = await renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toContain('"name": "My Page"')
     expect(data.bodyTags).toContain('"description": "A safe description"')
     expect(data.bodyTags).not.toContain('__proto__')
@@ -105,7 +105,7 @@ describe('schema.org prototype pollution', () => {
       })
     })
 
-    await renderSSRHead(ssrHead)
+    ssrHead.render()
     expect(({} as any).polluted).toBeUndefined()
   })
 })

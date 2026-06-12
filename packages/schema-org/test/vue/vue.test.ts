@@ -1,7 +1,7 @@
 import { defineArticle, defineWebPage, defineWebSite, useSchemaOrg } from '@unhead/schema-org/vue'
 import { useHead } from '@unhead/vue'
 import { createHead as createClientHead, renderDOMHead } from '@unhead/vue/client'
-import { renderSSRHead } from '@unhead/vue/server'
+
 import { describe, expect, it } from 'vitest'
 import { computed, ref } from 'vue'
 import { useDom } from '../../../unhead/test/fixtures'
@@ -29,7 +29,7 @@ describe('schema.org e2e', () => {
       ])
     })
 
-    const data = renderSSRHead(head)
+    const data = head.render()
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -119,7 +119,6 @@ describe('schema.org e2e', () => {
         ]
       }</script>
 
-
       </body></html>"
     `)
   })
@@ -132,7 +131,7 @@ describe('schema.org e2e', () => {
         }),
       ])
     })
-    const data = renderSSRHead(head)
+    const data = head.render()
     expect(data).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",
@@ -162,7 +161,7 @@ describe('schema.org e2e', () => {
       })),
     ], { head })
 
-    const data = renderSSRHead(head)
+    const data = head.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",
@@ -203,7 +202,7 @@ describe('schema.org e2e', () => {
       })),
     ], { head })
 
-    const data = renderSSRHead(head)
+    const data = head.render()
     expect(data.bodyTags).toMatchInlineSnapshot(`
       "<script type="application/ld+json" data-hid="schema-org-graph">{
         "@context": "https://schema.org",

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderDOMHead } from '@unhead/dom'
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
@@ -21,7 +21,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -54,7 +54,6 @@ describe('unhead vue e2e shorthands', () => {
       <h1>hello world</h1>
       </div>
 
-
       </body></html>"
     `)
   })
@@ -70,7 +69,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {
@@ -103,7 +102,6 @@ describe('unhead vue e2e shorthands', () => {
       <h1>hello world</h1>
       </div>
 
-
       </body></html>"
     `)
   })
@@ -119,7 +117,7 @@ describe('unhead vue e2e shorthands', () => {
       })
     })
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
 
     expect(data).toMatchInlineSnapshot(`
       {

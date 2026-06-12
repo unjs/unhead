@@ -1,4 +1,4 @@
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
 import {
   definePerson,
@@ -52,7 +52,7 @@ describe('schema-org SSR e2e', () => {
       }),
     ]) as any)
 
-    renderSSRHead(head)
+    head.render()
   }, { iterations: 5000 })
 
   bench('complex e2e with schema.org (multiple entities)', async () => {
@@ -117,7 +117,7 @@ describe('schema-org SSR e2e', () => {
       },
     ]) as any)
 
-    renderSSRHead(head)
+    head.render()
   }, { iterations: 5000 })
 
   bench('baseline without schema.org', async () => {
@@ -133,6 +133,6 @@ describe('schema-org SSR e2e', () => {
       ],
     })
 
-    renderSSRHead(head)
+    head.render()
   }, { iterations: 5000 })
 })

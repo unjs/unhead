@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { describe, it } from 'vitest'
-import { renderSSRHead } from '../../src/server'
+
 import { renderSSRHeadShell, renderSSRHeadSuspenseChunk } from '../../src/stream/server'
 import { createServerHeadWithContext, createStreamableServerHead } from '../util'
 
@@ -80,7 +80,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
             content: `value-${i}`,
           })),
         })
-        await renderSSRHead(head)
+        head.render()
       }))
 
       console.log('\n=== Head Tag Resolution Overhead ===')
@@ -201,7 +201,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
               content: `This is meta content for tag number ${i} with some extra text`,
             })),
           })
-          await renderSSRHead(head)
+          head.render()
         }))
       }
 
@@ -264,7 +264,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
               innerHTML: JSON.stringify(jsonLd),
             }],
           })
-          await renderSSRHead(head)
+          head.render()
         }))
       }
 
@@ -346,7 +346,7 @@ describeBenchmark('streaming SSR benchmarks', () => {
             as: 'script',
           })),
         })
-        await renderSSRHead(head)
+        head.render()
       }))
 
       console.log('\n=== Combined Large Payload Performance ===')

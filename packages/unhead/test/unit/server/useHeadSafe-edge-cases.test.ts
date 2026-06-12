@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 // Note: SafeInputPlugin must be registered via useHeadSafe() — calling
@@ -9,7 +9,7 @@ import { createServerHeadWithContext } from '../../util'
 async function safeRender(input: any) {
   const head = createServerHeadWithContext()
   useHeadSafe(head, input)
-  return renderSSRHead(head)
+  return head.render()
 }
 
 describe('useHeadSafe edge cases', () => {

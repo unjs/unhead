@@ -1,6 +1,6 @@
 import { defineWebPage, defineWebSite, UnheadSchemaOrg, useSchemaOrg } from '@unhead/schema-org'
 import { createHead as createClientHead } from 'unhead/client'
-import { createHead as createServerHead, renderSSRHead } from 'unhead/server'
+import { createHead as createServerHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 import { useDom } from '../../../unhead/test/fixtures'
 
@@ -99,7 +99,7 @@ describe('schema.org client dispose (#577)', () => {
       defineWebPage({ name: 'Comp2 Page' }),
     ])
 
-    const data = renderSSRHead(ssrHead)
+    const data = ssrHead.render()
     expect(data.bodyTags).toContain('Comp2 Page')
 
     // Hydrate on client

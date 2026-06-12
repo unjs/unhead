@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest'
 import { useHead } from '../../src'
-import { createHead, renderSSRHead } from '../../src/server'
+import { createHead } from '../../src/server'
 
 describe('ssr bench', () => {
   bench('x50 ssr', async () => {
@@ -57,7 +57,7 @@ describe('ssr bench', () => {
           head,
         })
       }
-      renderSSRHead(head)
+      head.render()
     }
   }, {
     iterations: 1000,

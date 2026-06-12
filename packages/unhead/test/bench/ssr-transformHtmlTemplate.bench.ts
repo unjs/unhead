@@ -4,7 +4,7 @@ import { bench, describe } from 'vitest'
 import {
   transformHtmlTemplate,
   transformHtmlTemplateRaw,
-} from '../../src/server/transformHtmlTemplate'
+} from '../../src/transform'
 
 describe('transformHtmlTemplate', () => {
   const basicHtml = `<!DOCTYPE html>

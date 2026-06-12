@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
-import { renderSSRHead } from '../../../src/server'
+
 import { createServerHeadWithContext } from '../../util'
 
 describe('ssr event handlers', () => {
@@ -18,7 +18,7 @@ describe('ssr event handlers', () => {
       ],
     })
 
-    const ctx = renderSSRHead(head)
+    const ctx = head.render()
     expect(ctx).toMatchInlineSnapshot(`
       {
         "bodyAttrs": "",

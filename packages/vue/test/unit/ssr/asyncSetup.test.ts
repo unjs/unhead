@@ -1,4 +1,4 @@
-import { renderSSRHead } from '@unhead/ssr'
+
 import { useHead } from '@unhead/vue'
 import { createHead } from '@unhead/vue/server'
 import { renderToString } from '@vue/server-renderer'
@@ -24,7 +24,7 @@ describe('vue ssr asyncSetup', () => {
     app.use(head)
     await renderToString(app)
 
-    const { headTags } = renderSSRHead(head)
+    const { headTags } = head.render()
     expect(headTags).eq('<title>new title</title>')
   })
 })
