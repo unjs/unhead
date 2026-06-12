@@ -60,22 +60,26 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   options.plugins?.forEach(p => registerPlugin(head, p))
 
   head._ssrPayload = {}
+  const payloadHook = (ctx: { tags: any[] }) => {
+    let payload: ResolvableHead = {}
+    if (Object.keys(head._ssrPayload || {}).length > 0) {
+      payload = { ...head._ssrPayload }
+    }
+    if (Object.values(payload).some(Boolean)) {
+      ctx.tags.push({
+        tag: 'script',
+        innerHTML: JSON.stringify(payload),
+        props: { id: 'unhead:payload', type: 'application/json' },
+      })
+    }
+  }
+  // only appends a fresh tag, never mutates resolved tags, so it must not
+  // force the defensive clone in resolveTags
+  payloadHook._nonMutating = true
   registerPlugin(head, {
     key: 'server',
     hooks: {
-      'tags:resolve': function (ctx) {
-        let payload: ResolvableHead = {}
-        if (Object.keys(head._ssrPayload || {}).length > 0) {
-          payload = { ...head._ssrPayload }
-        }
-        if (Object.values(payload).some(Boolean)) {
-          ctx.tags.push({
-            tag: 'script',
-            innerHTML: JSON.stringify(payload),
-            props: { id: 'unhead:payload', type: 'application/json' },
-          })
-        }
-      },
+      'tags:resolve': payloadHook,
     },
   })
   return head

@@ -10,6 +10,12 @@ const SCRIPT_END_RE = /<\/script/g
 // @ts-expect-error untyped
 const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
 
+const DEFAULT_TAG_WEIGHT = () => 100
+
+// hooks that receive references to resolved tags and may mutate them in place;
+// when none are registered the per-render defensive clone can be skipped
+const TAG_MUTATING_HOOKS = ['tags:beforeResolve', 'tags:resolve', 'tags:afterResolve', 'ssr:render', 'ssr:rendered', 'dom:rendered'] as const
+
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
   tags: HeadTag[]
@@ -75,31 +81,36 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
 }
 
 export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  return tags.filter((t) => {
+  const out: HeadTag[] = []
+  for (let t of tags) {
     const { innerHTML, tag, props } = t
     if (!ValidHeadTags.has(tag) || (!Object.keys(props).length && !innerHTML && !t.textContent))
-      return false
+      continue
     if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
-      return false
+      continue
     if (tag === 'script' && (innerHTML || t.textContent)) {
       const type = String(props.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
       const escape = (content: unknown): unknown => isJsonLike
         ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
         : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
+      // copy-on-write: resolved tags may be shared with the entry cache
+      t = { ...t }
       if (innerHTML)
         t.innerHTML = escape(innerHTML) as typeof innerHTML
       if (t.textContent)
         t.textContent = escape(t.textContent) as typeof t.textContent
       t._d = dedupeKey(t)
     }
-    return true
-  })
+    out.push(t)
+  }
+  return out
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
-  const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? (() => 100)
+  const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
+  const hooks = (head.hooks as any)?._hooks || {}
   const entries = [...head.entries.values()]
   for (const e of entries) {
     if (e._pending !== undefined) {
@@ -108,15 +119,20 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       delete e._tags
     }
   }
-  callHook(head, 'entries:resolve', { entries, ...ctx })
+  if (hooks['entries:resolve'])
+    callHook(head, 'entries:resolve', { entries, ...ctx })
   for (const e of entries) {
     if (!e._tags) {
-      const normalizeCtx = {
-        tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || []).map(t => Object.assign(t, e.options)),
-        entry: e,
+      let tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+      if (e.options && Object.keys(e.options).length) {
+        for (const t of tags) Object.assign(t, e.options)
       }
-      callHook(head, 'entries:normalize', normalizeCtx)
-      e._tags = normalizeCtx.tags.map((t, i) => {
+      if (hooks['entries:normalize']) {
+        const normalizeCtx = { tags, entry: e }
+        callHook(head, 'entries:normalize', normalizeCtx)
+        tags = normalizeCtx.tags
+      }
+      e._tags = tags.map((t, i) => {
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)
@@ -126,7 +142,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       })
     }
   }
-  ctx.tags = entries.flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
+  const needsClone = TAG_MUTATING_HOOKS.some(h => hooks[h]?.some((f: any) => !f._nonMutating))
+  ctx.tags = needsClone
+    ? entries.flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
+    : entries.flatMap(e => e._tags || [])
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   ctx.tags = [...ctx.tagMap.values()]

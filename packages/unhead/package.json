@@ -142,28 +142,6 @@
       ]
     }
   },
-  "optionalPlugins": {
-    "*": {
-      "plugins": [
-        "dist/plugins"
-      ],
-      "server": [
-        "dist/server"
-      ],
-      "client": [
-        "dist/client"
-      ],
-      "types": [
-        "dist/types"
-      ],
-      "utils": [
-        "dist/utils"
-      ],
-      "scripts": [
-        "dist/scripts"
-      ]
-    }
-  },
   "files": [
     "*.d.ts",
     "dist"

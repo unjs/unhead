@@ -14,6 +14,11 @@ describe('propsToString', () => {
       style: 'color: red; font-size: 12px',
     })).toStrictEqual(' class="a b" style="color: red; font-size: 12px"')
   })
+  it('skips enumerable inherited props', () => {
+    const props = Object.create({ onload: 'alert(1)' })
+    props.src = '/app.js'
+    expect(propsToString(props)).toStrictEqual(' src="/app.js"')
+  })
   it('stringifies all properties correctly', async () => {
     expect(propsToString({
       'array': ['a', 1],
