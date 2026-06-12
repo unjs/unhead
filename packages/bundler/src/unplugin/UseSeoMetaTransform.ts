@@ -29,6 +29,12 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
 
 const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
 
+// Keys whose runtime value is structurally expanded into multiple meta tags based on its shape
+// (e.g. `ogImage: { url, width }` -> `og:image` + `og:image:width`). See `unpackMeta` MEDIA branch.
+// We can only reproduce this statically for object/array literals; any dynamic value (ref, computed,
+// getter, identifier) could resolve to an object and MUST be left to runtime `unpackMeta`.
+const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
+
 /**
  * useSeoMeta({
  *   title: 'My Title',
@@ -198,6 +204,67 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
               key = 'charset'
             }
             let value = code.substring(property.value.start as number, property.value.end as number)
+
+            if (MEDIA_KEYS.has(propertyKey.name)) {
+              // Expand an object literal `{ url, width, ... }` into `og:image`, `og:image:width`, ...
+              // matching runtime `unpackMeta`. Leaf values may be dynamic; only the structure must
+              // be statically known. Returns false when a prop key can't be resolved statically.
+              const expandObject = (objNode: any): string | false => {
+                const tags: string[] = []
+                for (const p of objNode.properties) {
+                  // Only plain `key: value` pairs can be reproduced statically. Spreads, getters,
+                  // setters, methods, and computed/non-identifier keys bail to runtime.
+                  if (p.type === 'SpreadElement' || p.computed || p.method || p.kind !== 'init' || p.key?.type !== 'Identifier')
+                    return false
+                  // Match runtime `unpackMeta`: `url` -> bare property, `secureUrl` -> `:secure_url`.
+                  const name = p.key.name
+                  const suffix = name === 'url' ? '' : `:${name === 'secureUrl' ? 'secure_url' : name}`
+                  tags.push(`    { ${key}: '${keyValue}${suffix}', ${valueKey}: ${code.substring(p.value.start, p.value.end)} },`)
+                }
+                return tags.join('\n')
+              }
+              if (property.value.type === 'ObjectExpression') {
+                const expanded = expandObject(property.value)
+                if (expanded === false) {
+                  output = false
+                  return
+                }
+                output.push(expanded)
+                return
+              }
+              if (property.value.type === 'ArrayExpression') {
+                if (!property.value.elements.length)
+                  return
+                const parts: string[] = []
+                for (const element of property.value.elements) {
+                  if (!element || element.type !== 'ObjectExpression') {
+                    output = false
+                    return
+                  }
+                  const expanded = expandObject(element)
+                  if (expanded === false) {
+                    output = false
+                    return
+                  }
+                  parts.push(expanded)
+                }
+                output.push(parts.join('\n'))
+                return
+              }
+              // Primitive literals (string/number/boolean) and template literals always resolve to a
+              // scalar -> a single safe tag. Anything else (identifier, ref(), computed(), getter,
+              // or a non-primitive literal like a regexp) could resolve to an object/array, so bail
+              // to runtime `unpackMeta`.
+              const v = property.value
+              const primitive = typeof v.value === 'string' || typeof v.value === 'number' || typeof v.value === 'boolean'
+              const isScalar = v.type === 'TemplateLiteral'
+                || ((v.type === 'Literal' || v.type === 'StringLiteral' || v.type === 'NumericLiteral') && primitive)
+              if (!isScalar) {
+                output = false
+                return
+              }
+            }
+
             if (property.value.type === 'ArrayExpression') {
               const elements = property.value.elements
               if (!elements.length)
@@ -275,15 +342,17 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
             if (spec.type !== 'ImportSpecifier')
               continue
             const importedName = spec.imported.name
+            // Preserve the local alias (`useSeoMeta as usm`) so kept call sites stay bound.
+            const keepOriginal = importedName === spec.local.name ? importedName : `${importedName} as ${spec.local.name}`
             if (transformedNames.has(importedName)) {
               newSpecifiers.add(importedName.includes('Server') ? 'useServerHead' : 'useHead')
               // Keep original import if it's still referenced as a value or called in a form we
               // couldn't statically transform (dynamic first arg, spread properties, etc.).
               if (valueReferenced.has(importedName) || untransformedCallees.has(importedName))
-                newSpecifiers.add(importedName)
+                newSpecifiers.add(keepOriginal)
             }
             else {
-              newSpecifiers.add(importedName)
+              newSpecifiers.add(keepOriginal)
             }
           }
           s.overwrite(
