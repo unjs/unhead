@@ -51,8 +51,10 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
     })
     return {
       key: 'infer-seo-meta',
+      // run before TemplateParamsPlugin and other transforms (v3 tags:beforeResolve)
+      order: -10,
       hooks: {
-        'tags:beforeResolve': ({ tagMap, tags }) => {
+        'tags:resolve': ({ tagMap, tags }) => {
           let title = head._titleTemplate || head._title
           // resolved tags are immutable: replace the inferred tags with new objects
           const ogTitle = tagMap.get('meta:og:title')

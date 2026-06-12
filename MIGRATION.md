@@ -47,6 +47,38 @@ Notes:
 - The `_nonMutating` hook marker and the per-render defensive clone machinery are gone — they are no longer needed.
 - First-party plugins (`TemplateParamsPlugin`, `InferSeoMetaPlugin`, `CanonicalPlugin`, `MinifyPlugin`, `AliasSortingPlugin`, `@unhead/schema-org`) have been rewritten to the replacement style; use them as reference implementations.
 
+## One sync `tags:resolve` hook
+
+The three tag-resolution phases are collapsed into a single synchronous hook. Async tag hooks are no longer supported on the render path (renders have been synchronous since v3; async hooks silently raced the output).
+
+Rename map:
+
+| v3 hook | v4 equivalent |
+| --- | --- |
+| `tags:beforeResolve` | `tags:resolve` with plugin `order: -10` |
+| `tags:resolve` | `tags:resolve` (unchanged name; now sync-only) |
+| `tags:afterResolve` | `tags:resolve` with plugin `order: 50`+ |
+| `tag:normalise` | removed (was never called) |
+| `dom:renderTag` | removed (deprecated in v3) |
+
+Plugins now accept an `order` option (number, lower runs earlier, default `0`; equal orders run in registration order) to sequence their callbacks against other plugins:
+
+```ts
+defineHeadPlugin({
+  key: 'my-plugin',
+  order: -10, // run before TemplateParamsPlugin etc.
+  hooks: {
+    'tags:resolve': (ctx) => { /* ... */ },
+  },
+})
+```
+
+First-party orders for reference: `InferSeoMetaPlugin` -10, most plugins 0, `AliasSortingPlugin` 50, devtools 90, validation 100.
+
+Other hot-path hooks (`entries:normalize`, `ssr:beforeRender`, `ssr:render`, `ssr:rendered`, `dom:beforeRender`, `dom:rendered`) are also called synchronously without promise chaining — returned promises are ignored. `entries:resolve` keeps async support for `PromisesPlugin`-style input resolution.
+
+If you need async work, do it at the entry level (e.g. `PromisesPlugin`, or resolve your data before calling `useHead`).
+
 ### Fixed: schema.org graph race
 
 `@unhead/schema-org`'s `tags:resolve` hook was `async`; since the render pipeline became synchronous in v3 (#629), the JSON-LD graph could be rendered as an empty `<script>` because the hook's work landed after rendering. The hook is now synchronous and the graph always renders. If you snapshot rendered output that includes `schema-org-graph` scripts, expect the (previously missing) JSON-LD payload to appear.

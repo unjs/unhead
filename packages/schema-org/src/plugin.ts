@@ -120,7 +120,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
               if (!resolvedGraph.length) {
                 // removes the tag
                 tags[i] = { ...tag, props: {} }
-                return
+                break
               }
               // eslint-disable-next-line node/prefer-global/process
               const minify = options?.minify || process.env.NODE_ENV === 'production'
@@ -137,11 +137,10 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
                   return value
                 }, minify ? 0 : 2),
               }
-              return
+              break
             }
           }
-        },
-        'tags:afterResolve': (ctx) => {
+          // merge any duplicate graph tags into the first one (formerly tags:afterResolve)
           let firstNodeIdx: number | undefined
           const toRemove = new Set<number>()
           for (let i = 0; i < ctx.tags.length; i++) {

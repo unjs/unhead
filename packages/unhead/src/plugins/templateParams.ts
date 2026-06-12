@@ -57,17 +57,6 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         head._templateParams = params
         head._separator = sep
       },
-      'tags:afterResolve': ({ tags }) => {
-        // we need to re-process in case the user had a function as the titleTemplate
-        for (let i = 0; i < tags.length; i++) {
-          const tag = tags[i]
-          if (tag.tag === 'title' && typeof tag.textContent === 'string' && tag.processTemplateParams !== false) {
-            const next = processTemplateParams(tag.textContent, head._templateParams!, head._separator!)
-            if (next !== tag.textContent)
-              tags[i] = { ...tag, textContent: next }
-          }
-        }
-      },
     },
   }
 })

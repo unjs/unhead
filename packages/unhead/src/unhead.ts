@@ -5,8 +5,15 @@ export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
   const key = plugin.key || String(head.plugins.size + 1)
   if (!head.plugins.get(key)) {
     head.plugins.set(key, plugin)
-    for (const k in plugin.hooks || {})
-      head.hooks?.hook(k as any, plugin.hooks![k] as any)
+    for (const k in plugin.hooks || {}) {
+      const fn = plugin.hooks![k] as any
+      fn._o = plugin.order || 0
+      head.hooks?.hook(k as any, fn)
+      // callbacks run in plugin `order` (lower first), stable by registration
+      const list = (head.hooks as any)?._hooks?.[k]
+      if (list?.length > 1)
+        list.sort((a: any, b: any) => (a._o || 0) - (b._o || 0))
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
-import { callHook } from '../utils/hooks'
+import { callSyncHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
 
@@ -21,7 +21,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   if (!dom || (!head.dirty && ![...head.entries.values()].some(e => e._pending !== undefined)))
     return false
   const beforeRenderCtx: DomBeforeRenderCtx = { shouldRender: true, tags: [] }
-  callHook(head, 'dom:beforeRender', beforeRenderCtx)
+  callSyncHook(head, 'dom:beforeRender', beforeRenderCtx)
   if (!beforeRenderCtx.shouldRender || head._du)
     return false
   head._du = true
@@ -157,7 +157,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   for (const k in state._p)
     state._p[k]()
   head._dom = state
-  callHook(head, 'dom:rendered', { renders: tags })
+  callSyncHook(head, 'dom:rendered', { renders: tags })
   head._du = false
   head.dirty = false
   return true

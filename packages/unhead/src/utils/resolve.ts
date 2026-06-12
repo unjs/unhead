@@ -1,7 +1,7 @@
 import type { HeadTag, Unhead } from '../types'
 import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
-import { callHook } from './hooks'
+import { callHook, callSyncHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
 
 const LT_RE = /</g
@@ -243,7 +243,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       }
       if (hooks['entries:normalize']) {
         const normalizeCtx = { tags, entry: e }
-        callHook(head, 'entries:normalize', normalizeCtx)
+        callSyncHook(head, 'entries:normalize', normalizeCtx)
         tags = normalizeCtx.tags
       }
       e._tags = tags.map((t, i) => {
@@ -322,8 +322,6 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   ctx.tags = [...ctx.tagMap.values()]
   if (state.flat)
     ctx.tags = ctx.tags.flat().sort(sortTags)
-  callHook(head, 'tags:beforeResolve', ctx)
-  callHook(head, 'tags:resolve', ctx)
-  callHook(head, 'tags:afterResolve', ctx)
+  callSyncHook(head, 'tags:resolve', ctx)
   return sanitizeTags(ctx.tags)
 }

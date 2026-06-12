@@ -8,6 +8,8 @@ const formatKey = (k: string) => !k.includes(':key') ? k.split(':').join(':key:'
 
 export const AliasSortingPlugin = defineHeadPlugin({
   key: 'aliasSorting',
+  // sort after other plugins have added or replaced tags
+  order: 50,
   hooks: {
     'tags:resolve': (ctx) => {
       let m = false

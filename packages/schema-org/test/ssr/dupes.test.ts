@@ -108,7 +108,7 @@ describe('schema.org dupes', () => {
       // @ts-expect-error simulating a malformed tag with no props
       ctx.tags.push({ tag: 'meta', props: undefined, _p: 0, _w: 0 })
     })
-    ssrHead.hooks.hook('tags:afterResolve', (ctx) => {
+    ssrHead.hooks.hook('tags:resolve', (ctx) => {
       ctx.tags = ctx.tags.filter(({ props }) => props !== undefined)
     })
 

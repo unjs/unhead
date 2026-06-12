@@ -11,6 +11,8 @@ export function devtoolsPlugin(): HeadPluginInput {
   return (head: any) => {
     return {
       key: 'devtools',
+      // serialize the final tags after all transforming plugins
+      order: 90,
       hooks: {
         'entries:normalize': function ({ tags, entry }: { tags: any[], entry: any }) {
           const source = entry.options?._source

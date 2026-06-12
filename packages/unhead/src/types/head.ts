@@ -68,6 +68,12 @@ export interface HeadEntry<Input> {
 
 export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
+  /**
+   * Execution order for this plugin's hook callbacks relative to other
+   * plugins on the same hook. Lower runs earlier; default `0`. Plugins with
+   * equal order run in registration order.
+   */
+  order?: number
 }
 
 export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })

@@ -152,8 +152,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
     return {
       key: 'validate',
+      // read-only: run after all transforming plugins
+      order: 100,
       hooks: {
-        'tags:afterResolve': ({ tags }) => {
+        'tags:resolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
           function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {

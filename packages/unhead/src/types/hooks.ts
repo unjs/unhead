@@ -1,5 +1,5 @@
 import type { ScriptInstance } from '../scripts'
-import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
+import type { HeadEntry, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -38,10 +38,13 @@ export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
   'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
-  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
-  'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
+  /**
+   * Single sync tag hook, called once per resolve with the deduped, ordered
+   * tags. Replaces v3's `tags:beforeResolve` / `tags:resolve` /
+   * `tags:afterResolve` phases — use the plugin `order` option to sequence
+   * callbacks across plugins. Tags are immutable; replace array elements.
+   */
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
-  'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => void | Promise<void>
 }
 
