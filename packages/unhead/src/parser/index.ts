@@ -195,10 +195,10 @@ export function parseAttributes(attrStr: string): Record<string, string> {
         break
 
       case QUOTED_VALUE:
-        if (charCode === BACKSLASH_CHAR && i + 1 < len) {
-          i++
-        }
-        else if (charCode === quoteChar) {
+        // HTML attribute values have no backslash escaping; the quote char
+        // always terminates the value (matches browser parsing and the
+        // tag-boundary scanner above).
+        if (charCode === quoteChar) {
           result[name] = attrStr.substring(valueStart, i)
           state = WHITESPACE
         }
