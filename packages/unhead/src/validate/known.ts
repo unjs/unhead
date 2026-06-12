@@ -13,6 +13,7 @@ export const URL_META_KEYS = /* @__PURE__ */ new Set([
   'twitter:image:src',
   'twitter:player',
   'twitter:player:stream',
+  'payment:success_url',
 ])
 
 export const KNOWN_META_PROPERTIES = /* @__PURE__ */ new Set([
@@ -54,6 +55,13 @@ export const KNOWN_META_PROPERTIES = /* @__PURE__ */ new Set([
   'og:video:type',
   'og:video:url',
   'og:video:width',
+  'payment:amount',
+  'payment:currency',
+  'payment:description',
+  'payment:expires_at',
+  'payment:id',
+  'payment:status',
+  'payment:success_url',
   'profile:first_name',
   'profile:gender',
   'profile:last_name',

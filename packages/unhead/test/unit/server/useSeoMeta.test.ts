@@ -13,6 +13,31 @@ describe('useSeoMeta', () => {
 
     expect((renderSSRHead(head)).headTags).toContain('<meta charset="utf-8">')
   })
+  it('payment namespace', async () => {
+    const head = createServerHeadWithContext()
+
+    useSeoMeta(head, {
+      ogType: 'payment.link',
+      paymentDescription: 'Invoice #123',
+      paymentCurrency: 'USD',
+      paymentAmount: 19.99,
+      paymentExpiresAt: new Date(0).toISOString(),
+      paymentStatus: 'PENDING',
+      paymentId: 'pay_abc123',
+      paymentSuccessUrl: 'https://example.com/success',
+    })
+
+    expect((renderSSRHead(head)).headTags).toMatchInlineSnapshot(`
+      "<meta property="og:type" content="payment.link">
+      <meta property="payment:description" content="Invoice #123">
+      <meta property="payment:currency" content="USD">
+      <meta property="payment:amount" content="19.99">
+      <meta property="payment:expires_at" content="1970-01-01T00:00:00.000Z">
+      <meta property="payment:status" content="PENDING">
+      <meta property="payment:id" content="pay_abc123">
+      <meta property="payment:success_url" content="https://example.com/success">"
+    `)
+  })
   it('themeColor array', async () => {
     const head = createServerHeadWithContext()
 
