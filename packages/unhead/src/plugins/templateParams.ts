@@ -39,7 +39,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
           else if (tag.processTemplateParams || tag.tag === 'titleTemplate' || tag.tag === 'title') {
             for (const p of contentAttrs) {
               if (typeof tag[p] === 'string')
-                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && tag.props.type.endsWith('json'))
+                tag[p] = processTemplateParams(tag[p], params, sep, tag.tag === 'script' && typeof tag.props.type === 'string' && tag.props.type.endsWith('json'))
             }
           }
         }

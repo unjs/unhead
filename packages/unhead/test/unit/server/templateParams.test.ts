@@ -51,6 +51,28 @@ describe('ssr templateParams', () => {
     `)
   })
 
+  it('script with processTemplateParams and no type does not throw', async () => {
+    const head = createServerHeadWithContext({
+      plugins: [TemplateParamsPlugin],
+    })
+    head.push({
+      title: 'My Site',
+      script: [
+        {
+          innerHTML: 'console.log("%s")',
+          processTemplateParams: true,
+        },
+      ],
+      templateParams: {
+        s: 'My Site',
+      },
+    })
+    const { headTags } = renderSSRHead(head)
+
+    expect(headTags).toContain('<script>console.log("My Site")</script>')
+    expect(headTags).not.toContain('%s')
+  })
+
   it('does not affect other content', async () => {
     const head = createServerHeadWithContext({
       plugins: [TemplateParamsPlugin],
