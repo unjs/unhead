@@ -5,7 +5,7 @@ type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
 const NAMESPACES = /* @__PURE__ */ {
   META: new Set(['twitter', 'fediverse']),
-  OG: new Set(['og', 'book', 'article', 'profile', 'fb']),
+  OG: new Set(['og', 'book', 'article', 'profile', 'fb', 'payment']),
   MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
   HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
 } as const
@@ -23,6 +23,8 @@ const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
   ogSiteName: 'og:site_name',
   ogVideoSecureUrl: 'og:video:secure_url',
   ogVideoUrl: 'og:video',
+  paymentExpiresAt: 'payment:expires_at',
+  paymentSuccessUrl: 'payment:success_url',
   profileFirstName: 'profile:first_name',
   profileLastName: 'profile:last_name',
   profileUsername: 'profile:username',

@@ -87,7 +87,61 @@ export interface MetaFlatProfile {
   profileUsername?: string
 }
 
-export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile {
+export interface MetaFlatPayment {
+  /**
+   * Description about the payment link.
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentDescription?: string
+
+  /**
+   * The currency code ISO 4217 of the payment.
+   * @example 'USD'
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentCurrency?: string
+
+  /**
+   * An amount requested on the payment link in decimal format.
+   * @example 19.99
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentAmount?: string | number
+
+  /**
+   * The date and time including minutes and seconds on which the payment link expires.
+   * @example '1970-01-01T00:00:00.000Z'
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentExpiresAt?: string
+
+  /**
+   * Status of the payment.
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED'
+
+  /**
+   * The unique identifier associated with the payment link for a given payment gateway or service provider.
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentId?: string
+
+  /**
+   * A valid URL that gets redirected when payment is success.
+   *
+   * @see https://ogp.me/ns/payment#
+   */
+  paymentSuccessUrl?: string
+}
+
+export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile, MetaFlatPayment {
   /**
    * This attribute declares the document's character encoding.
    * If the attribute is present, its value must be an ASCII case-insensitive match for the string "utf-8",
@@ -380,6 +434,8 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
     | 'music.song' | 'music.album' | 'music.playlist' | 'music.radio_station'
   // Namespace URI https://ogp.me/ns/video#
     | 'video.movie' | 'video.episode' | 'video.tv_show' | 'video.other'
+  // Namespace URI https://ogp.me/ns/payment# (beta)
+    | 'payment.link'
 
   /**
    * The locale of the resource. Defaults to en_US.
