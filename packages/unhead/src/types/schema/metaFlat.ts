@@ -377,7 +377,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    */
   ogType?: 'website' | 'article' | 'book' | 'profile'
   // Namespace URI https://ogp.me/ns/music#
-    | 'music.song' | 'music.album' | 'music.playlist' | 'music.radio_status'
+    | 'music.song' | 'music.album' | 'music.playlist' | 'music.radio_station'
   // Namespace URI https://ogp.me/ns/video#
     | 'video.movie' | 'video.episode' | 'video.tv_show' | 'video.other'
 
