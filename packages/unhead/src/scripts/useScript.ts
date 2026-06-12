@@ -84,7 +84,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // promise never resolves
     if (head.ssr)
       return
-    const emit = (api: T) => requestAnimationFrame(() => resolve(api))
+    // resolve on a microtask rather than requestAnimationFrame: rAF is suspended while the
+    // tab is hidden, which would defer onLoaded() callbacks indefinitely (unjs/unhead#771)
+    const emit = (api: T) => queueMicrotask(() => resolve(api))
     const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       // vue augmentation... not ideal
       const status = script.status
