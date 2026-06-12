@@ -105,8 +105,9 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
         val = propResolvers[i](key, val)
       return val
     }
-    input = resolve(undefined, input)
   }
+  // walkResolver applies the resolver chain to the root, so the input
+  // passes through each propResolver exactly once
   input = walkResolver(input, resolve)
   const tags: (HeadTag | HeadTag[])[] = []
   for (const key in input) {
