@@ -1,5 +1,4 @@
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
-export { defineStaticEntry } from '../utils/staticEntry'
 export { createHead } from './createHead'
 export type { ServerUnhead } from './createHead'
 export { createServerRenderer, renderSSRHead } from './renderSSRHead'

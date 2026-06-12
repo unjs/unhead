@@ -1,4 +1,5 @@
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from './types'
+import { markImpureInput } from './utils/staticEntry'
 
 export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
   const plugin = typeof p === 'function' ? p(head) : p
@@ -35,12 +36,20 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
       const options = _options ? { ..._options } : {}
       delete (options as any).head
       delete (options as any).onRendered
+      const isStatic = (options as any).static
+      delete (options as any).static
       const entry: HeadEntry<T> = { _i, input, options }
+      if (isStatic)
+        entry._static = true
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {
         _i,
         dispose() { entries.delete(_i) },
         patch(input) {
+          // patching with the same object identity means it was mutated in
+          // place — it can never be treated as a shared static input
+          if (resolvedOptions.staticCache && input === entry.input)
+            markImpureInput(resolvedOptions.staticCache, input)
           if (ssr) {
             entry.input = input
             delete entry._tags
@@ -55,6 +64,13 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
       return active
     },
   }
-  resolvedOptions.init?.forEach(e => e && head.push(e as T))
+  resolvedOptions.init?.forEach((e) => {
+    if (e) {
+      const active = head.push(e as T)
+      // init inputs are config-level and usually identical across heads:
+      // eligible for automatic static-entry inference
+      entries.get(active._i)!._init = true
+    }
+  })
   return head
 }

@@ -1,12 +1,12 @@
 import type { HeadTag, Unhead } from '../types'
-import { UsesMergeStrategy, ValidHeadTags } from './const'
+import { UsesMergeStrategy } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook, callSyncHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
-import { isStaticEntry, materializeStaticEntry } from './staticEntry'
+import { sanitizeTags } from './sanitize'
+import { getStaticCache, materializeStaticEntry, promoteStaticEntry, shouldPromoteStatic } from './staticEntry'
 
-const LT_RE = /</g
-const SCRIPT_END_RE = /<\/script/g
+export { sanitizeTags }
 
 // @ts-expect-error untyped
 const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w - b._w
@@ -151,33 +151,6 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
   }
 }
 
-export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  const out: HeadTag[] = []
-  for (let t of tags) {
-    const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (!Object.keys(props).length && !innerHTML && !t.textContent))
-      continue
-    if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
-      continue
-    if (tag === 'script' && (innerHTML || t.textContent)) {
-      const type = String(props.type)
-      const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
-      const escape = (content: unknown): unknown => isJsonLike
-        ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
-        : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
-      // copy-on-write: resolved tags may be shared with the entry cache
-      t = { ...t }
-      if (innerHTML)
-        t.innerHTML = escape(innerHTML) as typeof innerHTML
-      if (t.textContent)
-        t.textContent = escape(t.textContent) as typeof t.textContent
-      t._d = dedupeKey(t)
-    }
-    out.push(t)
-  }
-  return out
-}
-
 function insertTag(state: DedupeState, t: HeadTag): void {
   if (DEV) {
     Object.freeze(t.props)
@@ -236,13 +209,31 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   if (hooks['entries:resolve'])
     callHook(head, 'entries:resolve', { entries, tagMap: new Map(), tags: [] })
+  // static-entry sharing requires the caller-provided process-scoped store;
+  // entries:normalize hooks may depend on per-render side effects (e.g.
+  // schema-org graph collection), so sharing is disabled when any exist
+  const staticStore = !hooks['entries:normalize'] ? head.resolvedOptions.staticCache : undefined
   for (const e of entries) {
     if (!e._tags) {
-      if (isStaticEntry(e.input)) {
-        e._tags = materializeStaticEntry(e.input, e, weightFn)
+      const input: any = e.input
+      // inference is scoped to init entries and explicit `static` pushes so
+      // regular per-page entries pay no tracking overhead
+      const canShare = staticStore && (e._init || e._static) && input && typeof input === 'object'
+      if (canShare) {
+        const c = getStaticCache(staticStore, input, weightFn)
+        if (c) {
+          e._tags = materializeStaticEntry(c, e)
+          continue
+        }
+      }
+      const track = canShare ? { pure: true } : undefined
+      let tags = normalizeEntryToTags(input, head.resolvedOptions.propResolvers || [], track)
+      // a pure input normalized by a second head (or pushed with the
+      // explicit `static` entry option) is promoted to the shared cache
+      if (track?.pure && shouldPromoteStatic(staticStore!, input, head, !!e._static)) {
+        e._tags = materializeStaticEntry(promoteStaticEntry(staticStore!, input, tags, weightFn), e)
         continue
       }
-      let tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
       if (e.options && Object.keys(e.options).length) {
         for (const t of tags) Object.assign(t, e.options)
       }

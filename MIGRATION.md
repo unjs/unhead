@@ -79,26 +79,36 @@ Other hot-path hooks (`entries:normalize`, `ssr:beforeRender`, `ssr:render`, `ss
 
 If you need async work, do it at the entry level (e.g. `PromisesPlugin`, or resolve your data before calling `useHead`).
 
-## Shared static entries (new, opt-in)
+## Shared static entries (new, opt-in via `staticCache`)
 
-`defineStaticEntry(input)` (exported from `unhead`, `unhead/server` and the framework server entries) wraps head input that is identical for every request. The input is normalized, weighted and dedupe-keyed **once per process**; the resulting frozen tags are shared across all head instances. The built-in server defaults (charset / viewport / `lang="en"`) now use this internally.
+Pass a process-scoped `staticCache` object (create it once at module scope) to `createHead()` to enable static-entry sharing. Head inputs that are **pure** (no functions unwrapped, no promises, no framework refs) and identical across requests are then normalized, weighted, dedupe-keyed, escaped and rendered-to-string **once per process**; the frozen tags are shared by every head using the same store. No new exported APIs — everything flows through the existing options bags.
 
 ```ts
-// module scope — computed once, shared by every request
-const appHead = defineStaticEntry({
-  titleTemplate: '%s · Acme',
-  link: [{ rel: 'icon', href: '/favicon.ico' }],
-})
+// module scope — one per process
+const staticCache = {}
+const appHead = { titleTemplate: '%s · Acme', link: [{ rel: 'icon', href: '/favicon.ico' }] }
 
 export default defineEventHandler(() => {
-  const head = createHead({ init: [appHead] })
+  const head = createHead({ staticCache, init: [appHead] })
   // ...
 })
 ```
 
-Constraints: the input must be plain, deterministic data. Functions, promises, framework refs and `propResolvers` are not applied. Regular dedupe/priority rules still apply, so per-request entries override static ones as usual.
+How inputs become shared:
 
-Measured on a typical app-head + page-head request: ~6.9us vs ~9.8us per request and 6.6 KB vs 9.3 KB retained per head.
+- **`init` entries** (including the built-in charset/viewport/`lang` defaults) are detected automatically: the first head observes that normalization was pure; when a second head normalizes the same object, it is promoted to the cache.
+- **Pushed entries** opt in through the entry options bag: `useHead(input, { static: true })` promotes on first use. Impure inputs silently fall back to regular per-head normalization, so semantics never change — it is purely a performance hint.
+
+Rules:
+
+- Without a `staticCache` store nothing is shared and there is zero overhead.
+- Promoted inputs must not be mutated in place. Patching an entry with the same object identity permanently disqualifies that input (the cache is dropped and it is re-normalized).
+- `titleTemplate` functions remain live — they are stored, not captured, and still run per render.
+- Regular dedupe/priority rules apply unchanged; per-request entries override static ones as usual.
+- Heads with `entries:normalize` hooks (e.g. `@unhead/schema-org`) bypass sharing, since those hooks can depend on per-render side effects.
+- Hook-replaced tags lose their shared identity, so they are always re-sanitized and re-rendered — script escaping cannot be bypassed via the cache.
+
+Measured on a typical app-head + page-head request: ~6.2us vs ~9.8us per request and 6.8 KB vs 9.7 KB retained per head, with the static portion of the head rendering via cached strings.
 
 ### Fixed: schema.org graph race
 

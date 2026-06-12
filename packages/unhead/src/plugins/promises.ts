@@ -1,14 +1,8 @@
-import { isStaticEntry } from '../utils/staticEntry'
-
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 async function walkPromises(v: any): Promise<any> {
   const type = typeof v
   if (type === 'function') {
-    return v
-  }
-  // static entries are deterministic by contract; copying would strip the marker
-  if (isStaticEntry(v)) {
     return v
   }
   // Combined primitive type check

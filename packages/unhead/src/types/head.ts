@@ -61,6 +61,17 @@ export interface HeadEntry<Input> {
    */
   _o?: Input
   /**
+   * Input marked request-stable via the `static` entry option.
+   * @internal
+   */
+  _static?: boolean
+  /**
+   * Entry created from `CreateHeadOptions.init`; eligible for automatic
+   * static-entry inference.
+   * @internal
+   */
+  _init?: boolean
+  /**
    * @internal
    */
   _promisesProcessed?: boolean
@@ -103,8 +114,36 @@ export interface ActiveHeadEntry<Input> {
 
 export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
 
+/**
+ * Process-scoped store enabling static-entry sharing across head instances.
+ * Create one plain object at module scope and pass it to every
+ * `createHead()` call; internals are attached lazily.
+ */
+export interface StaticEntryStore {
+  /** @internal */
+  _m?: WeakMap<object, unknown>
+}
+
 export interface CreateHeadOptions {
   document?: Document
+  /**
+   * Opts into static-entry sharing: head inputs that are pure (no functions,
+   * promises or framework refs) and identical across requests — config-level
+   * `init` entries and `static: true` pushes — are normalized, weighted and
+   * dedupe-keyed once per process, with the frozen tags and their rendered
+   * HTML shared across heads.
+   *
+   * Pass the same object (module scope) to every `createHead()` call.
+   * Inputs shared this way must not be mutated in place.
+   *
+   * @example
+   * ```ts
+   * // module scope — one per process
+   * const staticCache = {}
+   * export default () => createHead({ staticCache })
+   * ```
+   */
+  staticCache?: StaticEntryStore
   /**
    * Initial head input that should be added.
    *
@@ -194,6 +233,17 @@ export interface CreateClientHeadOptions extends CreateHeadOptions {
 
 export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
   head?: Unhead
+  /**
+   * Marks the input as identical for every request/head instance, promoting
+   * it to a process-level cache on first use: normalized, weighted and
+   * dedupe-keyed once, with the frozen tags shared across heads.
+   *
+   * The input must be plain, deterministic data — entries containing
+   * functions, promises or framework refs fall back to regular per-head
+   * normalization. Inputs that satisfy this are also detected automatically
+   * after being normalized twice; the flag just skips the detection warmup.
+   */
+  static?: boolean
   /**
    * Called after unhead has finished applying DOM updates.
    *

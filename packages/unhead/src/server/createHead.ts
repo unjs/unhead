@@ -2,12 +2,12 @@ import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
 import { createHooks } from '../utils/hooks'
-import { defineStaticEntry } from '../utils/staticEntry'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
-// module scope: normalized once per process, tags shared across all requests
-const DEFAULT_INIT = /* @__PURE__ */ defineStaticEntry({
+// module scope: the stable identity lets static-entry inference promote it to
+// the process-level cache, sharing the normalized tags across all requests
+const DEFAULT_INIT = {
   htmlAttrs: {
     lang: 'en',
   },
@@ -20,7 +20,7 @@ const DEFAULT_INIT = /* @__PURE__ */ defineStaticEntry({
       content: 'width=device-width, initial-scale=1',
     },
   ],
-})
+}
 
 export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPayload> {
   hooks: HookableCore<ServerHeadHooks>
@@ -34,6 +34,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
+    staticCache: options.staticCache,
     experimentalStreamKey: options.experimentalStreamKey,
     propResolvers: [
       ...(options.propResolvers || []),

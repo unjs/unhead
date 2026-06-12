@@ -1,4 +1,5 @@
 import type { HeadTag, RenderSSRHeadOptions } from '../../types'
+import { staticTagState } from '../../utils/sanitize'
 import { propsToString } from './propsToString'
 import { tagToString } from './tagToString'
 
@@ -17,7 +18,9 @@ export function ssrRenderTags<T extends HeadTag>(tags: T[], options?: RenderSSRH
       Object.assign(schema[tag.tag], tag.props)
       continue
     }
-    const s = tagToString(tag)
+    // shared static tags render once; the cache box survives the tag freeze
+    const st = staticTagState(tag)
+    const s = st ? (st.html ??= tagToString(tag)) : tagToString(tag)
     const tagPosition = tag.tagPosition || 'head'
     schema.tags[tagPosition] += schema.tags[tagPosition]
       ? `${lineBreaks}${s}`

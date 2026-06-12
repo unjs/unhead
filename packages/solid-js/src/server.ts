@@ -1,6 +1,6 @@
 export { UnheadContext } from './context'
 
-export { createHead, defineStaticEntry, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
+export { createHead, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
 export type {
   CreateServerHeadOptions,

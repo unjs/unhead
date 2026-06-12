@@ -17,7 +17,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
   const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
   const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-  const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, _tagWeight: tagWeight, init: [] })
+  const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, staticCache: options.staticCache, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks>(options.hooks)
   let dirty = false
   const head: ClientUnhead<T> = {

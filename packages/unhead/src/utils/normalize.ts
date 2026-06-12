@@ -6,6 +6,9 @@ import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 // straight from a head entry and still needs function/prop resolution
 interface ResolveCtx {
   resolve?: PropResolver
+  // observes whether normalization was pure (no functions unwrapped, no
+  // resolver rewrites) — pure inputs are eligible for process-level sharing
+  track?: { pure: boolean }
 }
 
 const isUnsafeKey = (k: string) => k === '__proto__' || k === 'constructor' || k === 'prototype'
@@ -47,7 +50,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>, _resolv
   if (!input)
     return tag
   if (tag.tag === 'templateParams') {
-    tag.props = _resolveCtx ? walkResolver(input, _resolveCtx.resolve) : input
+    tag.props = _resolveCtx ? walkResolver(input, _resolveCtx.resolve, undefined, _resolveCtx.track) : input
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
@@ -57,7 +60,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>, _resolv
       continue
     let value = input[prop]
     if (_resolveCtx)
-      value = walkResolver(value, _resolveCtx.resolve, prop)
+      value = walkResolver(value, _resolveCtx.resolve, prop, _resolveCtx.track)
     if (value === null) {
       tag.props[prop] = null as any
     }
@@ -66,7 +69,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>, _resolv
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
-        const type = walkResolver(input.type, _resolveCtx?.resolve, 'type') || 'application/json'
+        const type = walkResolver(input.type, _resolveCtx?.resolve, 'type', _resolveCtx?.track) || 'application/json'
         if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
           tag.props.type = type
           tag[prop] = JSON.stringify(value)
@@ -105,7 +108,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   return Array.isArray(tag.props.content) ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } })) : tag
 }
 
-export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
+export function normalizeEntryToTags(input: any, propResolvers: PropResolver[], track?: { pure: boolean }): HeadTag[] {
   if (!input)
     return []
   const resolve: PropResolver | undefined = propResolvers.length === 0
@@ -120,13 +123,21 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
   // unwrap function values (except titleTemplate/on* keys) then apply prop resolvers,
   // matching the old walkResolver per-node semantics
   const unwrap = (v: any, key?: string) => {
-    if (typeof v === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on'))))
+    if (typeof v === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on')))) {
+      if (track)
+        track.pure = false
       v = v()
-    return resolve ? resolve(key, v) : v
+    }
+    if (!resolve)
+      return v
+    const r = resolve(key, v)
+    if (track && r !== v)
+      track.pure = false
+    return r
   }
   // two passes match the old pre-walk + root walkResolver calls
   input = unwrap(unwrap(input))
-  const resolveCtx: ResolveCtx = { resolve }
+  const resolveCtx: ResolveCtx = { resolve, track }
   const tags: (HeadTag | HeadTag[])[] = []
   for (const key in input) {
     if (isUnsafeKey(key))
