@@ -10,8 +10,8 @@ describe('tag-mutating hooks', () => {
         'tags:resolve': (ctx) => {
           for (const tag of ctx.tags) {
             if (tag.tag === 'htmlAttrs') {
-              ;(tag.props.class as Set<string>).add(`render-${render}`)
-              ;(tag.props.style as Map<string, string>).set(`--render-${render}`, '1')
+              ;(tag.props.class as unknown as Set<string>).add(`render-${render}`)
+              ;(tag.props.style as unknown as Map<string, string>).set(`--render-${render}`, '1')
             }
           }
         },
