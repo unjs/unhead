@@ -18,6 +18,7 @@
     "pathe": "catalog:",
     "shiki": "catalog:",
     "tailwindcss": "catalog:",
+    "unhead": "workspace:*",
     "vue": "catalog:"
   }
 }
