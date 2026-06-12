@@ -3,27 +3,12 @@ import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
 import { propsToString } from './propsToString'
 
 const ESCAPE_HTML_RE = /[&<>"'/]/g
+const CLOSE_TAG_RE: Record<string, RegExp> = {}
+const ESCAPE_HTML_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#x27;', '/': '&#x2F;' }
 
 /* @__PURE__ */
 export function escapeHtml(str: string) {
-  return str.replace(ESCAPE_HTML_RE, (char) => {
-    switch (char) {
-      case '&':
-        return '&amp;'
-      case '<':
-        return '&lt;'
-      case '>':
-        return '&gt;'
-      case '"':
-        return '&quot;'
-      case '\'':
-        return '&#x27;'
-      case '/':
-        return '&#x2F;'
-      default:
-        return char
-    }
-  })
+  return str.replace(ESCAPE_HTML_RE, c => ESCAPE_HTML_MAP[c])
 }
 
 /* @__PURE__ */
@@ -36,6 +21,6 @@ export function tagToString<T extends HeadTag>(tag: T) {
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent || tag.innerHTML || '')
-  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
   return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
 }

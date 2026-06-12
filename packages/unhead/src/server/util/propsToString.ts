@@ -2,7 +2,8 @@ const DOUBLE_QUOTE_RE = /"/g
 
 /* @__PURE__ */
 function encodeAttribute(value: string) {
-  return String(value).replace(DOUBLE_QUOTE_RE, '&quot;')
+  const s = typeof value === 'string' ? value : String(value)
+  return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
 }
 
 /* @__PURE__ */

@@ -1,11 +1,11 @@
 import type { HookableCore } from 'hookable'
 import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
+import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
 import { createDomRenderer } from './renderDOMHead'
 
-const P: Record<string, number> = { critical: -8, high: -1, low: 2 }
-const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + (P[tag.tagPriority as string] || 0)
+const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   hooks: HookableCore<ClientHeadHooks>

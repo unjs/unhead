@@ -98,12 +98,16 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     return []
   if (typeof input === 'function')
     input = input()
-  const resolvers = (key?: string, val?: any) => {
-    for (const r of propResolvers)
-      val = r(key, val)
-    return val
+  let resolve: PropResolver | undefined
+  if (propResolvers.length) {
+    resolve = (key, val) => {
+      for (let i = 0; i < propResolvers.length; i++)
+        val = propResolvers[i](key, val)
+      return val
+    }
+    input = resolve(undefined, input)
   }
-  input = walkResolver(resolvers(undefined, input), resolvers)
+  input = walkResolver(input, resolve)
   const tags: (HeadTag | HeadTag[])[] = []
   for (const key in input) {
     const value = input[key]
