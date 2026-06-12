@@ -105,6 +105,10 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
         val = propResolvers[i](key, val)
       return val
     }
+    // load-bearing: walkResolver unwraps functions BEFORE resolving, so a
+    // resolvable yielding a function (e.g. `useHead(ref(() => ({...})))`,
+    // see vite-pwa/vite-plugin-pwa#832) only renders if a resolve pass runs
+    // first. The root intentionally passes through the resolver chain twice.
     input = resolve(undefined, input)
   }
   input = walkResolver(input, resolve)
