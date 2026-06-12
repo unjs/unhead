@@ -69,7 +69,8 @@ describe('ssr templateParams', () => {
     })
     const { headTags } = renderSSRHead(head)
 
-    expect(headTags).toContain('My Site')
+    expect(headTags).toContain('<script>console.log("My Site")</script>')
+    expect(headTags).not.toContain('%s')
   })
 
   it('does not affect other content', async () => {
