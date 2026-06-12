@@ -79,6 +79,27 @@ Other hot-path hooks (`entries:normalize`, `ssr:beforeRender`, `ssr:render`, `ss
 
 If you need async work, do it at the entry level (e.g. `PromisesPlugin`, or resolve your data before calling `useHead`).
 
+## Shared static entries (new, opt-in)
+
+`defineStaticEntry(input)` (exported from `unhead`, `unhead/server` and the framework server entries) wraps head input that is identical for every request. The input is normalized, weighted and dedupe-keyed **once per process**; the resulting frozen tags are shared across all head instances. The built-in server defaults (charset / viewport / `lang="en"`) now use this internally.
+
+```ts
+// module scope — computed once, shared by every request
+const appHead = defineStaticEntry({
+  titleTemplate: '%s · Acme',
+  link: [{ rel: 'icon', href: '/favicon.ico' }],
+})
+
+export default defineEventHandler(() => {
+  const head = createHead({ init: [appHead] })
+  // ...
+})
+```
+
+Constraints: the input must be plain, deterministic data. Functions, promises, framework refs and `propResolvers` are not applied. Regular dedupe/priority rules still apply, so per-request entries override static ones as usual.
+
+Measured on a typical app-head + page-head request: ~6.9us vs ~9.8us per request and 6.6 KB vs 9.3 KB retained per head.
+
 ### Fixed: schema.org graph race
 
 `@unhead/schema-org`'s `tags:resolve` hook was `async`; since the render pipeline became synchronous in v3 (#629), the JSON-LD graph could be rendered as an empty `<script>` because the hook's work landed after rendering. The hook is now synchronous and the graph always renders. If you snapshot rendered output that includes `schema-org-graph` scripts, expect the (previously missing) JSON-LD payload to appear.

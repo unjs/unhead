@@ -3,6 +3,7 @@ import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook, callSyncHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { isStaticEntry, materializeStaticEntry } from './staticEntry'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -237,6 +238,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     callHook(head, 'entries:resolve', { entries, tagMap: new Map(), tags: [] })
   for (const e of entries) {
     if (!e._tags) {
+      if (isStaticEntry(e.input)) {
+        e._tags = materializeStaticEntry(e.input, e, weightFn)
+        continue
+      }
       let tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
       if (e.options && Object.keys(e.options).length) {
         for (const t of tags) Object.assign(t, e.options)
