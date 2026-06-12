@@ -147,7 +147,15 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     }
   }
   ctx.tags = needsClone
-    ? entries.flatMap(e => (e._tags || []).map(t => ({ ...t, props: { ...t.props } })))
+    ? entries.flatMap(e => (e._tags || []).map((t) => {
+        const props = { ...t.props }
+        // class/style are containers; copy them so hooks can't mutate the entry cache
+        if (props.class instanceof Set)
+          props.class = new Set(props.class) as any
+        if (props.style instanceof Map)
+          props.style = new Map(props.style) as any
+        return { ...t, props }
+      }))
     : entries.flatMap(e => e._tags || [])
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
