@@ -65,7 +65,7 @@ function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: He
   const vm = getCurrentInstance()
   if (vm) {
     onBeforeUnmount(() => {
-      entry.dispose()
+      entry?.dispose()
     })
     onDeactivated(() => {
       deactivated.value = true

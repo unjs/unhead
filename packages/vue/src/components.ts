@@ -94,7 +94,7 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
     const entry = useHead(obj)
 
     onBeforeUnmount(() => {
-      entry.dispose()
+      entry?.dispose()
     })
 
     return () => {
