@@ -40,15 +40,25 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 }
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+  const scope = getCurrentScope()
+
+  // If the owning effect scope has already been stopped — e.g. a component whose
+  // `setup` resumes after an `await` once a KeepAlive/Suspense teardown stopped
+  // its scope — a `watchEffect` created now is inert: its initial run never fires
+  // (the effect is constructed with its active flag cleared, so the scheduled
+  // first job bails), so no entry is ever pushed. Nothing will render and there's
+  // no live unmount hook to clean up, so return a no-op entry instead of letting
+  // `useHead` hand back `undefined` while typed as `ActiveHeadEntry`.
+  if (scope && !scope.active) {
+    return { patch() {}, dispose() {}, _i: -1 }
+  }
+
   const deactivated = ref(false)
 
   // Wrap onRendered to preserve the Vue component's effect scope
-  if (options.onRendered) {
-    const scope = getCurrentScope()
-    if (scope) {
-      const _onRendered = options.onRendered
-      options = { ...options, onRendered: ctx => scope.run(() => _onRendered(ctx)) }
-    }
+  if (options.onRendered && scope) {
+    const _onRendered = options.onRendered
+    options = { ...options, onRendered: ctx => scope.run(() => _onRendered(ctx)) }
   }
 
   let entry: ActiveHeadEntry<I>
