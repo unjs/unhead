@@ -13,14 +13,18 @@ const mockCSSMinifier: MinifyFn = async (code: string) => {
 
 async function transform(code: string | string[], opts: { js?: false | MinifyFn, css?: false | MinifyFn } = {}, id = '/app/some-id.js') {
   const plugin = MinifyTransform.vite(opts) as any
+  const res = await transformWithPlugin(plugin, code, id)
+  return res?.code
+}
+
+async function transformWithPlugin(plugin: any, code: string | string[], id = '/app/some-id.js') {
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return undefined
-  const res = await plugin.transform.call(
+  return plugin.transform.call(
     {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
   )
-  return res?.code
 }
 
 describe('minifyTransform', () => {
@@ -149,6 +153,43 @@ describe('minifyTransform', () => {
     expect(code).not.toContain('// comment')
   })
 
+  it('handles aliased imports', async () => {
+    const code = await transform([
+      `import { useHead as head } from 'unhead'`,
+      `head({`,
+      `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).not.toContain('// comment')
+  })
+
+  it('handles namespace imports', async () => {
+    const code = await transform([
+      `import * as head from 'unhead'`,
+      `head.useHead({`,
+      `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).not.toContain('// comment')
+  })
+
+  it('does not transform shadowed aliases or namespace imports', async () => {
+    const code = await transform([
+      `import { useHead as head } from 'unhead'`,
+      `import * as unhead from 'unhead'`,
+      `function setup(head, unhead) {`,
+      `  head({ script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }] })`,
+      `  unhead.useHead({ style: [{ innerHTML: '/* comment */ body { margin: 0; }' }] })`,
+      `}`,
+    ], { js: mockJSMinifier, css: mockCSSMinifier })
+
+    expect(code).toBeUndefined()
+  })
+
   it('handles single object (non-array) script/style', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
@@ -195,6 +236,30 @@ describe('minifyTransform', () => {
     expect(code).not.toContain('// comment')
   })
 
+  it('handles comments between content property names and values', async () => {
+    const code = await transform([
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ innerHTML /* retained syntax */ : '// comment\\nvar x = 1;  var y = 2;' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).not.toContain('// comment')
+  })
+
+  it('handles escaped content property names', async () => {
+    const code = await transform([
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ inner\\u0048TML: '// comment\\nvar x = 1;  var y = 2;' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).not.toContain('// comment')
+  })
+
   it('handles both JS and CSS minification together', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
@@ -207,6 +272,45 @@ describe('minifyTransform', () => {
     expect(code).toBeDefined()
     expect(code).not.toContain('// comment')
     expect(code).not.toContain('/* comment */')
+  })
+
+  it('deduplicates identical minifications across concurrent transforms', async () => {
+    let calls = 0
+    const minifier: MinifyFn = async (code) => {
+      calls++
+      await Promise.resolve()
+      return code.replace(/\/\/.*$/gm, '').replace(/\s+/g, ' ').trim()
+    }
+    const plugin = MinifyTransform.vite({ js: minifier }) as any
+    const source = [
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
+      `})`,
+    ]
+
+    const results = await Promise.all([
+      transformWithPlugin(plugin, source, '/app/one.ts'),
+      transformWithPlugin(plugin, source, '/app/two.ts'),
+    ])
+
+    expect(calls).toBe(1)
+    expect(results.every(result => result?.code.includes('var x = 1; var y = 2;'))).toBe(true)
+  })
+
+  it('preserves source content in generated sourcemaps', async () => {
+    const source = [
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  style: [{ innerHTML: '/* comment */ body { margin: 0; }' }]`,
+      `})`,
+    ].join('\n')
+    const plugin = MinifyTransform.vite({ css: mockCSSMinifier }) as any
+    const result = await transformWithPlugin(plugin, source, '/app/source-map.ts')
+
+    expect(result?.map).toBeDefined()
+    expect(result.map.sources).toEqual(['/app/source-map.ts'])
+    expect(result.map.sourcesContent).toEqual([source])
   })
 
   it('transforms vue script blocks', async () => {
