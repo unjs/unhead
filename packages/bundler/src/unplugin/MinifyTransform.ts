@@ -6,6 +6,7 @@ import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { parseQuery, parseURL } from 'ufo'
 import { createUnplugin } from 'unplugin'
+import { withCodeFilter } from './utils'
 
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -49,7 +50,7 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   // properties that hold inline content
   const CONTENT_PROPS = new Set(['innerHTML', 'textContent'])
 
-  return {
+  return withCodeFilter({
     name: 'unhead:minify-transform',
     enforce: 'post',
 
@@ -160,7 +161,7 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
         }
       }
     },
-  }
+  }, /\buse(?:Server)?Head\b/)
 
   function processScriptOrStyleObject(
     objectNode: any,

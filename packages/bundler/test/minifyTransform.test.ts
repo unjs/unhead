@@ -15,7 +15,8 @@ async function transform(code: string | string[], opts: { js?: false | MinifyFn,
   const plugin = MinifyTransform.vite(opts) as any
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return undefined
-  const res = await plugin.transform.call(
+  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
+  const res = await handler.call(
     {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
@@ -24,6 +25,11 @@ async function transform(code: string | string[], opts: { js?: false | MinifyFn,
 }
 
 describe('minifyTransform', () => {
+  it('filters modules without head composables', () => {
+    const plugin = MinifyTransform.vite({ js: mockJSMinifier }) as any
+    expect(plugin.transform.filter.code).toEqual(/\buse(?:Server)?Head\b/)
+  })
+
   it('minifies inline script innerHTML with provided js minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,

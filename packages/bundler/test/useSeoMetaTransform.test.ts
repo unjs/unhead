@@ -6,7 +6,8 @@ const TITLE_RE = /title:/
 
 async function transform(code: string | string[], id = 'some-id.js', opts: any = {}) {
   const plugin = UseSeoMetaTransform.vite(opts) as any
-  const res = await plugin.transform.call(
+  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
+  const res = await handler.call(
     {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
@@ -43,6 +44,11 @@ describe('useSeoMetaTransform', () => {
     'import { useSeoMeta } from \'unhead\'',
     'useSeoMeta({ title: \'Hello\', description: \'World\' })',
   ]
+
+  it('filters modules without seo meta composables', () => {
+    const plugin = UseSeoMetaTransform.vite({}) as any
+    expect(plugin.transform.filter.code).toEqual(/\buse(?:Server)?SeoMeta\b/)
+  })
 
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
