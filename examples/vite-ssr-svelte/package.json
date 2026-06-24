@@ -22,7 +22,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tsconfig/svelte": "^5.0.8",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "cross-env": "^10.1.0",
     "svelte": "^5.56.3",
     "svelte-check": "^4.6.0",

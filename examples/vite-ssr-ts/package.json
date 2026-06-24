@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
     "vite": "^8.0.16"

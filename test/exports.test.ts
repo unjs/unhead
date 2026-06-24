@@ -1,5 +1,4 @@
-// @ts-expect-error untyped
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import { x } from 'tinyexec'
 import { describe, expect, it } from 'vitest'
 import { getPackageExportsManifest } from 'vitest-package-exports'
@@ -17,7 +16,6 @@ describe('exports-snapshot', async () => {
         importMode: 'dist',
         cwd: pkg.path,
       })
-      // @ts-expect-error untyped
       await expect(yaml.dump(manifest.exports, { sortKeys: (a, b) => a.localeCompare(b) }))
         .toMatchFileSnapshot(`./exports/${pkg.name.split('/').pop()}.yaml`)
     })
