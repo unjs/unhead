@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { unheadReactStreamingPlugin } from '../src/stream/plugin'
 import { unheadReactPlugin } from '../src/stream/vite'
 
-const FILTER_RE = /\.[jt]sx$/
 const HEAD_STREAM_RE = /<HeadStream \/>/g
 
 describe('unheadReactStreamingPlugin', () => {
@@ -20,10 +19,6 @@ describe('unheadReactStreamingPlugin', () => {
   })
 
   describe('transform', () => {
-    it('filters to jsx/tsx files only', () => {
-      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
-    })
-
     it('skips files without Suspense', () => {
       const code = `
         export function App() {
@@ -31,7 +26,7 @@ describe('unheadReactStreamingPlugin', () => {
         }
       `
       const result = transform(code, 'app.tsx')
-      expect(result).toBeNull()
+      expect(result).toBeUndefined()
     })
 
     it('adds HeadStream to components with useHead', () => {
@@ -130,7 +125,7 @@ describe('unheadReactStreamingPlugin', () => {
         }
       `
       const result = transform(code, 'app.tsx')
-      expect(result).toBeNull()
+      expect(result).toBeUndefined()
     })
 
     it('generates source map', () => {

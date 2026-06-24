@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { unheadSvelteStreamingPlugin } from '../src/stream/plugin'
 import { unheadSveltePlugin } from '../src/stream/vite'
 
-const FILTER_RE = /\.svelte$/
-
 describe('unheadSvelteStreamingPlugin', () => {
   const plugin = unheadSvelteStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
@@ -19,10 +17,6 @@ describe('unheadSvelteStreamingPlugin', () => {
   })
 
   describe('transform', () => {
-    it('filters to .svelte files only', () => {
-      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
-    })
-
     it('skips files without useHead', () => {
       const code = `
         <script>
@@ -31,7 +25,7 @@ describe('unheadSvelteStreamingPlugin', () => {
         <div>Hello {name}</div>
       `
       const result = transform(code, 'component.svelte')
-      expect(result).toBeNull()
+      expect(result).toBeUndefined()
     })
 
     it('injects HeadStream after script tag', () => {

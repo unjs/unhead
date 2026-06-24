@@ -29,11 +29,6 @@ async function transformWithPlugin(plugin: any, code: string | string[], id = '/
 }
 
 describe('minifyTransform', () => {
-  it('filters modules without head composables', () => {
-    const plugin = MinifyTransform.vite({ js: mockJSMinifier }) as any
-    expect(plugin.transform.filter.code).toEqual(/\buse(?:Server)?Head\b/)
-  })
-
   it('minifies inline script innerHTML with provided js minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,

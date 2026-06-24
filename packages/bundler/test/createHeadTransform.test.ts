@@ -12,6 +12,7 @@ function createPlugin(registrations: Parameters<ReturnType<typeof createHeadTran
     environment: { config: { consumer } },
   }
   return {
+    plugin,
     transform(code: string, id = 'entry.ts') {
       return plugin.transform.handler.call(mockContext, code, id)
     },
@@ -26,9 +27,6 @@ describe('createHeadTransform', () => {
     }])
     expect(await transform('const x = 1')).toBeUndefined()
   })
-
-  // Note: non-JS file filtering is handled by Vite's transform.filter.id at runtime,
-  // not by the handler itself, so we don't test it here.
 
   it('does nothing when no registrations exist', async () => {
     const { transform } = createPlugin([])

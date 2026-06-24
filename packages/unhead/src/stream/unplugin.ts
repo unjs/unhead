@@ -22,6 +22,8 @@ export interface StreamingPluginOptions {
    * source-level AST injection (React/Solid/Svelte). Vue does not use it.
    */
   filter?: RegExp
+  /** Optional source-code prefilter for transform hooks. */
+  codeFilter?: RegExp
   /** Transform handler called for files matching `filter`. */
   transform?: (code: string, id: string, options?: { ssr?: boolean }) => { code: string, map?: any } | null | undefined | void
   /**
@@ -197,7 +199,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
     ...(options.transform && options.filter
       ? {
           transform: {
-            filter: { id: options.filter },
+            filter: options.codeFilter
+              ? { id: options.filter, code: options.codeFilter }
+              : { id: options.filter },
             handler(this: any, code: string, id: string, opts?: { ssr?: boolean }) {
               return options.transform!(code, id, { ssr: isSSRCall(this, opts) })
             },
