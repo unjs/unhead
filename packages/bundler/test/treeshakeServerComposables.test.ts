@@ -5,7 +5,10 @@ const USE_SERVER_HEAD_RE = /useServerHead/
 
 async function transform(code: string | string[], id = 'some-id.js') {
   const plugin = TreeshakeServerComposables.vite({}) as any
-  const res = await plugin.transform.call(
+  if (plugin.transformInclude && !plugin.transformInclude(id))
+    return
+  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
+  const res = await handler.call(
     {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
@@ -18,6 +21,11 @@ describe('treeshakeServerComposables', () => {
     'import { useServerHead } from \'unhead\'',
     'useServerHead({ title: \'Hello\', description: \'World\' })',
   ]
+
+  it('uses a code filter for server-only composables', () => {
+    const plugin = TreeshakeServerComposables.vite({}) as any
+    expect(plugin.transform.filter.code).toEqual(/\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/)
+  })
 
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()

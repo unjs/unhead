@@ -1,11 +1,10 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
-import { pathToFileURL } from 'node:url'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { walk } from 'oxc-walker'
-import { parseQuery, parseURL } from 'ufo'
 import { createUnplugin } from 'unplugin'
+import { isVueScriptRequest, splitTransformId, withCodeFilter } from './utils'
 
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -28,7 +27,7 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
 export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
   options.enabled = options.enabled !== undefined ? options.enabled : true
 
-  return {
+  return withCodeFilter({
     name: 'unhead:remove-server-composables',
     enforce: 'post',
 
@@ -37,8 +36,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
       if (!options.enabled)
         return false
 
-      const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
-      const { type } = parseQuery(search)
+      const { pathname, query } = splitTransformId(id)
 
       if (NODE_MODULES_RE.test(pathname))
         return false
@@ -52,7 +50,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return false
 
       // vue files
-      if (pathname.endsWith('.vue') && (type === 'script' || !search))
+      if (isVueScriptRequest(pathname, query))
         return true
 
       // js files
@@ -108,5 +106,5 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return false
       },
     },
-  }
+  }, /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/)
 })

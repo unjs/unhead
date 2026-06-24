@@ -1,18 +1,16 @@
 import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
-import { pathToFileURL } from 'node:url'
 import { createContext, runInContext } from 'node:vm'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
-import { parseQuery, parseURL } from 'ufo'
 import {
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
-import { withCodeFilter } from './utils'
+import { isVueScriptRequest, splitTransformId, withCodeFilter } from './utils'
 
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -53,12 +51,13 @@ const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
  */
 export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
   options.imports = options.imports || true
+  const importPaths = options.importPaths?.length ? new Set(options.importPaths) : undefined
 
   function isValidPackage(s: string) {
     if (s === 'unhead' || s.startsWith('@unhead')) {
       return true
     }
-    return [...(options.importPaths || [])].includes(s)
+    return importPaths?.has(s) === true
   }
 
   return withCodeFilter({
@@ -66,8 +65,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
     enforce: 'post',
 
     transformInclude(id) {
-      const { pathname, search } = parseURL(decodeURIComponent(pathToFileURL(id).href))
-      const { type } = parseQuery(search)
+      const { pathname, query } = splitTransformId(id)
 
       if (NODE_MODULES_RE.test(pathname))
         return false
@@ -81,7 +79,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         return false
 
       // vue files
-      if (pathname.endsWith('.vue') && (type === 'script' || !search))
+      if (isVueScriptRequest(pathname, query))
         return true
 
       // js files

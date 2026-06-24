@@ -8,8 +8,12 @@ const SCRIPT_CLOSE_RE = /<\/script>/
 const SCRIPT_RE = /<script[^>]*>/i
 const FILTER_RE = /\.svelte$/
 
+function hasHeadComposable(code: string): boolean {
+  return code.includes('useHead') || code.includes('useSeoMeta') || code.includes('useHeadSafe')
+}
+
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
-  if (!code.includes('useHead') && !code.includes('useSeoMeta') && !code.includes('useHeadSafe'))
+  if (!hasHeadComposable(code))
     return false
 
   const scriptCloseMatch = code.match(SCRIPT_CLOSE_RE)
@@ -70,6 +74,9 @@ export const unheadSvelteStreamingPlugin = createUnplugin<UnheadSvelteStreamingO
     filter: FILTER_RE,
     mode: options.mode,
     transform(code, id, opts) {
+      if (!hasHeadComposable(code))
+        return null
+
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null
