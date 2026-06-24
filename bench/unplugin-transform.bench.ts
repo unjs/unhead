@@ -2,6 +2,7 @@ import type { MinifyFn } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { bench, describe } from 'vitest'
 import { CreateHeadTransform, createHeadTransformContext } from '../packages/bundler/src/unplugin/CreateHeadTransform'
 import { MinifyTransform } from '../packages/bundler/src/unplugin/MinifyTransform'
+import { SSRStaticReplace } from '../packages/bundler/src/unplugin/SSRStaticReplace'
 import { TreeshakeServerComposables } from '../packages/bundler/src/unplugin/TreeshakeServerComposables'
 import { UseSeoMetaTransform } from '../packages/bundler/src/unplugin/UseSeoMetaTransform'
 import { unheadReactStreamingPlugin } from '../packages/react/src/stream/plugin'
@@ -46,9 +47,19 @@ const treeshakeCode = [
   ...Array.from({ length: 200 }, (_, i) => `useServerHead({ title: 'Page ${i}' });\nuseServerSeoMeta({ description: 'Description ${i}' });`),
 ].join('\n')
 
+const ssrStaticReplaceCode = [
+  `import { createHead } from 'unhead'`,
+  ...Array.from({ length: 200 }, (_, i) => `if (head.ssr) { console.log('server ${i}') }`),
+].join('\n')
+
 const createHeadCode = [
   `import { createHead } from '@unhead/vue/client'`,
   ...Array.from({ length: 120 }, (_, i) => `const head${i} = createHead()`),
+].join('\n')
+
+const unrelatedCode = [
+  `import { ref } from 'vue'`,
+  ...Array.from({ length: 300 }, (_, i) => `export const value${i} = ref(${i})`),
 ].join('\n')
 
 const jsxWithoutHeadCode = [
@@ -74,6 +85,10 @@ function transformHandler(plugin: any) {
 
 async function runPluginTransform(plugin: any, code: string, id: string, context: any = {}) {
   if (plugin.transformInclude && !plugin.transformInclude(id))
+    return undefined
+  const transform = plugin.transform
+  const codeFilter = typeof transform === 'function' ? undefined : transform?.filter?.code
+  if (codeFilter && !codeFilter.test(code))
     return undefined
   return await transformHandler(plugin).call(context, code, id)
 }
@@ -108,6 +123,23 @@ describe('unplugin transform CPU', () => {
   bench('treeshakeServerComposables many calls', async () => {
     const plugin = TreeshakeServerComposables.vite({}) as any
     await runPluginTransform(plugin, treeshakeCode, '/project/src/page.ts')
+  })
+
+  bench('treeshakeServerComposables skip unrelated code', async () => {
+    const plugin = TreeshakeServerComposables.vite({}) as any
+    await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts')
+  })
+
+  bench('ssrStaticReplace many head.ssr reads', async () => {
+    const plugin = SSRStaticReplace.vite({}) as any
+    plugin.apply({}, { command: 'build', isSsrBuild: false })
+    await runPluginTransform(plugin, ssrStaticReplaceCode, '/project/node_modules/unhead/dist/index.mjs')
+  })
+
+  bench('ssrStaticReplace skip unrelated code', async () => {
+    const plugin = SSRStaticReplace.vite({}) as any
+    plugin.apply({}, { command: 'build', isSsrBuild: false })
+    await runPluginTransform(plugin, unrelatedCode, '/project/node_modules/unhead/dist/index.mjs')
   })
 
   bench('createHeadTransform many createHead calls', async () => {

@@ -1,6 +1,7 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import MagicString from 'magic-string'
 import { createUnplugin } from 'unplugin'
+import { withCodeFilter } from './utils'
 
 const UNHEAD_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/]/
 const HEAD_SSR_RE = /\bhead\.ssr\b/g
@@ -10,7 +11,7 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
   let ssr = false
   let enabled = true
 
-  return {
+  return withCodeFilter({
     name: 'unhead:ssr-static-replace',
     enforce: 'pre',
 
@@ -58,5 +59,5 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         return true
       },
     },
-  }
+  }, /\bhead\.ssr\b/)
 })

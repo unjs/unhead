@@ -4,7 +4,7 @@ import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
-import { isVueScriptRequest, splitTransformId } from './utils'
+import { isVueScriptRequest, splitTransformId, withCodeFilter } from './utils'
 
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -27,7 +27,7 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
 export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
   options.enabled = options.enabled !== undefined ? options.enabled : true
 
-  return {
+  return withCodeFilter({
     name: 'unhead:remove-server-composables',
     enforce: 'post',
 
@@ -106,5 +106,5 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return false
       },
     },
-  }
+  }, /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/)
 })

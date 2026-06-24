@@ -11,7 +11,8 @@ function createPlugin(env: { isSsrBuild?: boolean, command?: string } = {}) {
 function transform(plugin: any, code: string, id: string) {
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return undefined
-  return plugin.transform(code, id)
+  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
+  return handler.call({}, code, id)
 }
 
 const UNHEAD_MODULE_ID = '/node_modules/@unhead/vue/dist/index.mjs'
@@ -24,6 +25,11 @@ describe('ssrStaticReplace', () => {
     expect(plugin.transformInclude(USER_MODULE_ID)).toBe(false)
     expect(plugin.transformInclude('/node_modules/unhead/dist/index.mjs')).toBe(true)
     expect(plugin.transformInclude('/src/components/Head.vue')).toBe(false)
+  })
+
+  it('uses a code filter for head.ssr', () => {
+    const plugin = createPlugin()
+    expect(plugin.transform.filter.code).toEqual(/\bhead\.ssr\b/)
   })
 
   it('replaces head.ssr with false for client builds', () => {
