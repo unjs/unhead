@@ -56,6 +56,13 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
         if (!envRegistrations.length)
           return
 
+        const rootLiteral = JSON.stringify(root)
+        const statements = envRegistrations
+          .map(r => (isServer ? r.server! : r.client!).replace(/__ROOT__/g, rootLiteral))
+          .join(',')
+        const imports = envRegistrations
+          .map(reg => `import { ${reg.import.name} as ${reg.import.as} } from '${reg.import.source}';\n`)
+          .join('')
         const s = new MagicString(code)
         let transformed = false
         const directCreateHeadNames = new Set<string>()
@@ -91,10 +98,6 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
             if (!isDirect && !isNamespaced)
               return
 
-            const statements = envRegistrations
-              .map(r => (isServer ? r.server! : r.client!).replace(/__ROOT__/g, JSON.stringify(root)))
-              .join(',')
-
             s.prependLeft(node.start, `((_h)=>(${statements},_h))(`)
             s.appendRight(node.end, `)`)
             transformed = true
@@ -104,9 +107,7 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
         if (!transformed)
           return
 
-        for (const reg of envRegistrations) {
-          s.prepend(`import { ${reg.import.name} as ${reg.import.as} } from '${reg.import.source}';\n`)
-        }
+        s.prepend(imports)
 
         return {
           code: s.toString(),

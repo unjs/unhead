@@ -6,6 +6,10 @@ import { createUnplugin } from 'unplugin'
 
 const FILTER_RE = /\.[jt]sx$/
 
+function hasHeadComposable(code: string): boolean {
+  return code.includes('useHead') || code.includes('useSeoMeta') || code.includes('useHeadSafe')
+}
+
 /**
  * Transforms React/JSX code to inject HeadStream components for streaming SSR support.
  *
@@ -16,6 +20,9 @@ const FILTER_RE = /\.[jt]sx$/
  * @returns `true` if transformations were applied, `false` otherwise
  */
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
+  if (!hasHeadComposable(code))
+    return false
+
   const lang = id.endsWith('.tsx') ? 'tsx' : id.endsWith('.jsx') ? 'jsx' : 'tsx'
 
   const returns: { jsxStart: number, jsxEnd: number }[] = []
@@ -54,7 +61,7 @@ function transform(code: string, id: string, isSSR: boolean, s: MagicString): bo
           return
         }
         const bodyCode = code.slice(node.body.start, node.body.end)
-        currentFnHasHead = bodyCode.includes('useHead') || bodyCode.includes('useSeoMeta') || bodyCode.includes('useHeadSafe')
+        currentFnHasHead = hasHeadComposable(bodyCode)
 
         if (currentFnHasHead && (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')) {
           returns.push({ jsxStart: node.body.start, jsxEnd: node.body.end })
@@ -125,6 +132,9 @@ export const unheadReactStreamingPlugin = createUnplugin<UnheadReactStreamingOpt
     filter: FILTER_RE,
     mode: options.mode,
     transform(code, id, opts) {
+      if (!hasHeadComposable(code))
+        return null
+
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null
