@@ -40,15 +40,21 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 }
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+  const scope = getCurrentScope()
+
+  // Dead scope (e.g. setup resuming after an await once a Suspense/KeepAlive
+  // teardown stopped it): a watchEffect is inert here, so no entry gets pushed.
+  // The component is gone, so return a no-op rather than hand back `undefined`.
+  if (scope && !scope.active) {
+    return { patch() {}, dispose() {}, _i: -1 }
+  }
+
   const deactivated = ref(false)
 
   // Wrap onRendered to preserve the Vue component's effect scope
-  if (options.onRendered) {
-    const scope = getCurrentScope()
-    if (scope) {
-      const _onRendered = options.onRendered
-      options = { ...options, onRendered: ctx => scope.run(() => _onRendered(ctx)) }
-    }
+  if (options.onRendered && scope) {
+    const _onRendered = options.onRendered
+    options = { ...options, onRendered: ctx => scope.run(() => _onRendered(ctx)) }
   }
 
   let entry: ActiveHeadEntry<I>
@@ -65,7 +71,7 @@ function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: He
   const vm = getCurrentInstance()
   if (vm) {
     onBeforeUnmount(() => {
-      entry?.dispose()
+      entry.dispose()
     })
     onDeactivated(() => {
       deactivated.value = true
