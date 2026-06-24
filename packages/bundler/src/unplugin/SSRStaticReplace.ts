@@ -4,7 +4,7 @@ import { createUnplugin } from 'unplugin'
 
 const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
 const HEAD_SSR_FILTER_RE = /\bhead\.ssr\b/
-const HEAD_SSR_RE = /\bhead\.ssr\b/g
+const HEAD_SSR_RE = new RegExp(HEAD_SSR_FILTER_RE.source, 'g')
 
 export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() => {
   let ssr = false

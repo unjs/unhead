@@ -44,6 +44,19 @@ describe('unheadReactStreamingPlugin', () => {
       expect(result!.code).toContain('<HeadStream />')
     })
 
+    it('adds HeadStream to components with useHeadSafe', () => {
+      const code = `
+        import { useHeadSafe } from '@unhead/react'
+        export function App() {
+          useHeadSafe({ title: 'Test' })
+          return <div>Content</div>
+        }
+      `
+      const result = transform(code, 'app.tsx')
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('<HeadStream />')
+    })
+
     it('adds HeadStream import from client for non-SSR builds', () => {
       const code = `
         import { useHead } from '@unhead/react'

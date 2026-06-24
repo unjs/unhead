@@ -7,7 +7,7 @@ import { createUnplugin } from 'unplugin'
 const SCRIPT_CLOSE_RE = /<\/script>/
 const SCRIPT_RE = /<script[^>]*>/i
 const FILTER_RE = /\.svelte$/
-const HEAD_COMPOSABLE_RE = /useHead|useSeoMeta/
+const HEAD_COMPOSABLE_RE = /\b(?:useHead|useHeadSafe|useSeoMeta)\b/
 
 function hasHeadComposable(code: string): boolean {
   return HEAD_COMPOSABLE_RE.test(code)

@@ -94,6 +94,19 @@ describe('unheadSolidStreamingPlugin', () => {
       expect(result!.code).toContain('<><HeadStream />')
     })
 
+    it('transforms files with useHeadSafe', () => {
+      const code = `
+        import { useHeadSafe } from '@unhead/solid-js'
+        export function App() {
+          useHeadSafe({ title: 'Test' })
+          return <div>Hello</div>
+        }
+      `
+      const result = transform(code, 'app.tsx')
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('<><HeadStream />')
+    })
+
     it('handles arrow function with implicit return', () => {
       const code = `
         import { useHead } from '@unhead/solid-js'

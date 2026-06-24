@@ -94,6 +94,19 @@ describe('unheadSvelteStreamingPlugin', () => {
       expect(result!.code).toContain('{@html HeadStream()}')
     })
 
+    it('transforms files with useHeadSafe', () => {
+      const code = `
+        <script>
+          import { useHeadSafe } from '@unhead/svelte'
+          useHeadSafe({ title: 'Test' })
+        </script>
+        <div>Hello</div>
+      `
+      const result = transform(code, 'component.svelte')
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('{@html HeadStream()}')
+    })
+
     it('generates source map', () => {
       const code = `
         <script>

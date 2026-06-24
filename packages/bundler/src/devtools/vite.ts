@@ -11,7 +11,7 @@ import { parseAndWalk } from 'oxc-walker'
 import { getConfigRpc, runLintRpc } from './rpc'
 
 const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
-const HEAD_COMPOSABLE_RE = /useHead|useSeoMeta|useScript/
+const HEAD_COMPOSABLE_RE = new RegExp(`\\b(?:${HEAD_COMPOSABLES.join('|')})\\b`)
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const LEADING_SLASH_RE = /^\//
 const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/

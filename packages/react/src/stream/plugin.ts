@@ -5,7 +5,7 @@ import { buildStreamingPluginOptions } from 'unhead/stream/unplugin'
 import { createUnplugin } from 'unplugin'
 
 const FILTER_RE = /\.[jt]sx$/
-const HEAD_COMPOSABLE_RE = /useHead|useSeoMeta/
+const HEAD_COMPOSABLE_RE = /\b(?:useHead|useHeadSafe|useSeoMeta)\b/
 
 function hasHeadComposable(code: string): boolean {
   return HEAD_COMPOSABLE_RE.test(code)
