@@ -12,6 +12,19 @@ const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 
 const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
+const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
+const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
+const MINIFY_CACHE_MAX = 100
+
+type TagType = 'script' | 'style'
+
+interface PendingMinification {
+  end: number
+  minified: Promise<string | null>
+  raw: string
+  start: number
+}
 
 export type MinifyFn = (code: string) => Promise<string | null>
 
@@ -45,10 +58,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   const doJS = !!jsMinifier
   const doCSS = !!cssMinifier
 
-  // head composable names that accept script/style tags
-  const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
-  // properties that hold inline content
-  const CONTENT_PROPS = new Set(['innerHTML', 'textContent'])
+  const minifyCache: Record<TagType, Map<string, Promise<string | null>>> = {
+    script: new Map(),
+    style: new Map(),
+  }
 
   return withCodeFilter({
     name: 'unhead:minify-transform',
@@ -82,6 +95,11 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
       if (!code.includes('useHead') && !code.includes('useServerHead'))
         return
 
+      // Escaped identifiers still need parsing because their source does not
+      // contain the decoded property name.
+      if (!CONTENT_PROP_NAMES.some(name => code.includes(name)) && !code.includes('\\u'))
+        return
+
       let ast
       try {
         ast = parseSync(id, code)
@@ -91,32 +109,15 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
       }
 
       const scopeTracker = new ScopeTracker()
-      const s = new MagicString(code)
-      const pendingMinifications: Promise<void>[] = []
+      const pendingMinifications: PendingMinification[] = []
 
       walk(ast.program, {
         scopeTracker,
         enter(node: any, _parent: any) {
-          if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier')
+          if (node.type !== 'CallExpression')
             return
 
-          // check if this is a useHead/useServerHead call (imported or auto-imported)
-          const decl = scopeTracker.getDeclaration(node.callee.name)
-          let originalName: string
-
-          if (decl instanceof ScopeTrackerImport) {
-            if (decl.node.type !== 'ImportSpecifier' || decl.node.imported.type !== 'Identifier')
-              return
-            originalName = decl.node.imported.name
-          }
-          else if (!decl && HEAD_FN_NAMES.has(node.callee.name)) {
-            originalName = node.callee.name
-          }
-          else {
-            return
-          }
-
-          if (!HEAD_FN_NAMES.has(originalName))
+          if (!resolveHeadFunctionName(node.callee, scopeTracker))
             return
 
           const arg = node.arguments[0]
@@ -146,29 +147,69 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
               if (!element || element.type !== 'ObjectExpression')
                 continue
 
-              processScriptOrStyleObject(element, tagType, code, s, pendingMinifications)
+              processScriptOrStyleObject(element, tagType, pendingMinifications)
             }
           }
         },
       })
 
-      await Promise.all(pendingMinifications)
+      if (!pendingMinifications.length)
+        return
 
-      if (s.hasChanged()) {
-        return {
-          code: s.toString(),
-          map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
-        }
+      const minified = await Promise.all(pendingMinifications.map(pending => pending.minified))
+      const s = new MagicString(code)
+
+      for (let i = 0; i < pendingMinifications.length; i++) {
+        const pending = pendingMinifications[i]
+        const result = minified[i]
+        if (result && result.length < pending.raw.length)
+          s.overwrite(pending.start, pending.end, JSON.stringify(result))
+      }
+
+      if (!s.hasChanged())
+        return
+
+      return {
+        code: s.toString(),
+        map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
       }
     },
   }, /\buse(?:Server)?Head\b/)
 
+  function resolveHeadFunctionName(callee: any, scopeTracker: ScopeTracker): string | undefined {
+    if (callee.type === 'Identifier') {
+      const decl = scopeTracker.getDeclaration(callee.name)
+
+      if (decl instanceof ScopeTrackerImport) {
+        if (decl.node.type === 'ImportSpecifier'
+          && decl.node.imported.type === 'Identifier'
+          && HEAD_FN_NAMES.has(decl.node.imported.name)) {
+          return decl.node.imported.name
+        }
+      }
+      else if (!decl && HEAD_FN_NAMES.has(callee.name)) {
+        return callee.name
+      }
+      return
+    }
+
+    if (callee.type !== 'MemberExpression'
+      || callee.computed
+      || callee.object.type !== 'Identifier'
+      || callee.property.type !== 'Identifier'
+      || !HEAD_FN_NAMES.has(callee.property.name)) {
+      return
+    }
+
+    const decl = scopeTracker.getDeclaration(callee.object.name)
+    if (decl instanceof ScopeTrackerImport && decl.node.type === 'ImportNamespaceSpecifier')
+      return callee.property.name
+  }
+
   function processScriptOrStyleObject(
     objectNode: any,
-    tagType: 'script' | 'style',
-    code: string,
-    s: MagicString,
-    pendingMinifications: Promise<void>[],
+    tagType: TagType,
+    pendingMinifications: PendingMinification[],
   ) {
     // for scripts, check if it's a skippable type
     if (tagType === 'script') {
@@ -189,40 +230,60 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
       // only handle static string literals and template literals without expressions
       if (prop.value?.type === 'Literal') {
-        const raw = prop.value.value as string
-        if (raw.length < 20)
+        const raw = prop.value.value
+        if (typeof raw !== 'string' || raw.length < 20)
           continue
 
-        pendingMinifications.push(
-          minifyStringContent(raw, tagType).then((minified) => {
-            if (minified && minified.length < raw.length) {
-              // replace the string literal value (keep the quotes)
-              s.overwrite(prop.value.start, prop.value.end, JSON.stringify(minified))
-            }
-          }),
-        )
+        pendingMinifications.push({
+          end: prop.value.end,
+          minified: minifyStringContent(raw, tagType),
+          raw,
+          start: prop.value.start,
+        })
       }
       else if (prop.value?.type === 'TemplateLiteral' && prop.value.expressions.length === 0) {
         const raw = prop.value.quasis[0]?.value?.cooked as string
         if (!raw || raw.length < 20)
           continue
 
-        pendingMinifications.push(
-          minifyStringContent(raw, tagType).then((minified) => {
-            if (minified && minified.length < raw.length) {
-              s.overwrite(prop.value.start, prop.value.end, JSON.stringify(minified))
-            }
-          }),
-        )
+        pendingMinifications.push({
+          end: prop.value.end,
+          minified: minifyStringContent(raw, tagType),
+          raw,
+          start: prop.value.start,
+        })
       }
     }
   }
 
-  async function minifyStringContent(content: string, tagType: 'script' | 'style'): Promise<string | null> {
-    if (tagType === 'script' && jsMinifier)
-      return jsMinifier(content)
-    if (tagType === 'style' && cssMinifier)
-      return cssMinifier(content)
-    return null
+  function minifyStringContent(content: string, tagType: TagType): Promise<string | null> {
+    const minifier = tagType === 'script' ? jsMinifier : cssMinifier
+    if (!minifier)
+      return Promise.resolve(null)
+
+    const cache = minifyCache[tagType]
+    const cached = cache.get(content)
+    if (cached) {
+      cache.delete(content)
+      cache.set(content, cached)
+      return cached
+    }
+
+    const pending: Promise<string | null> = Promise.resolve()
+      .then(() => minifier(content))
+      .catch((error) => {
+        if (cache.get(content) === pending)
+          cache.delete(content)
+        throw error
+      })
+    cache.set(content, pending)
+
+    if (cache.size > MINIFY_CACHE_MAX) {
+      const oldest = cache.keys().next().value
+      if (oldest !== undefined)
+        cache.delete(oldest)
+    }
+
+    return pending
   }
 })
