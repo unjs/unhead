@@ -20,7 +20,8 @@ async function transform(code: string | string[], opts: { js?: false | MinifyFn,
 async function transformWithPlugin(plugin: any, code: string | string[], id = '/app/some-id.js') {
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return undefined
-  return plugin.transform.call(
+  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
+  return handler.call(
     {},
     Array.isArray(code) ? code.join('\n') : code,
     id,
@@ -28,6 +29,11 @@ async function transformWithPlugin(plugin: any, code: string | string[], id = '/
 }
 
 describe('minifyTransform', () => {
+  it('filters modules without head composables', () => {
+    const plugin = MinifyTransform.vite({ js: mockJSMinifier }) as any
+    expect(plugin.transform.filter.code).toEqual(/\buse(?:Server)?Head\b/)
+  })
+
   it('minifies inline script innerHTML with provided js minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,

@@ -12,6 +12,7 @@ import {
   resolvePackedMetaObjectValue,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
+import { withCodeFilter } from './utils'
 
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -60,7 +61,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
     return [...(options.importPaths || [])].includes(s)
   }
 
-  return {
+  return withCodeFilter({
     name: 'unhead:use-seo-meta-transform',
     enforce: 'post',
 
@@ -370,5 +371,5 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         }
       }
     },
-  }
+  }, /\buse(?:Server)?SeoMeta\b/)
 })
