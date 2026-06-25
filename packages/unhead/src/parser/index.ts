@@ -33,6 +33,8 @@ export const TagIdMap = /* @__PURE__ */ {
   base: TAG_BASE,
 } as const
 
+const HEAD_ELEMENTS_TO_EXTRACT = /* @__PURE__ */ new Set([TAG_TITLE, TAG_META, TAG_LINK, TAG_SCRIPT, TAG_STYLE, TAG_BASE])
+
 export interface PreparedHtmlTemplate {
   html: string
   input: SerializableHead
@@ -286,9 +288,6 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
     bodyCloseTagStart: -1,
   }
 
-  // Track which elements we're extracting from head
-  const headElementsToExtract = new Set([TAG_TITLE, TAG_META, TAG_LINK, TAG_SCRIPT, TAG_STYLE, TAG_BASE])
-
   // Helper function to copy accumulated text and update indexes
   function copyAccumulatedText() {
     if (lastCopyPosition < position) {
@@ -473,7 +472,7 @@ export function parseHtmlForUnheadExtraction(html: string): PreparedHtmlTemplate
       copyAccumulatedText()
       addText(html.substring(position, tagEnd))
     }
-    else if (inHead && headElementsToExtract.has(tagId)) {
+    else if (inHead && HEAD_ELEMENTS_TO_EXTRACT.has(tagId)) {
       // Extract head elements and don't include them in output
       if (tagId === TAG_TITLE) {
         // Extract title content if not self-closing

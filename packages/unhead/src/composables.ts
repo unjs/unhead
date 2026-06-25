@@ -25,10 +25,15 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
     if (input._flatMeta) {
       return input
     }
-    const { title, titleTemplate, ...meta } = input || {}
+    const meta: Record<string, any> = {}
+    for (const key in input) {
+      if (!Object.hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
+        continue
+      meta[key] = input[key as keyof UseSeoMetaInput]
+    }
     return {
-      title,
-      titleTemplate,
+      title: input.title,
+      titleTemplate: input.titleTemplate,
       _flatMeta: meta,
     }
   }
