@@ -106,7 +106,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       registered = true
       sideEffects.push(destroy)
     }
-    const destroy = () => {
+    function destroy() {
       if (!active)
         return
       active = false

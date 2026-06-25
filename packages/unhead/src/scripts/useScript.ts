@@ -229,8 +229,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         // store the latest controller for external access
         script._triggerAbortController = abortController
         script._triggerPromises = script._triggerPromises || []
-        let triggerPromise: Promise<void>
-        triggerPromise = Promise.race([
+        const triggerPromise: Promise<void> = Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
           abortPromise,
         ])
