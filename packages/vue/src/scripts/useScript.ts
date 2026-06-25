@@ -47,13 +47,15 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
       cb(script.instance)
       return () => {}
     }
-    let i: number | null = script._cbs[key].push(cb)
+    script._cbs[key].push(cb)
+    let active = true
     const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
+      if (!active)
+        return
+      const idx = script._cbs[key]?.indexOf(cb) ?? -1
+      if (idx !== -1)
+        script._cbs[key]?.splice(idx, 1)
+      active = false
     }
     onScopeDispose(destroy)
     return destroy

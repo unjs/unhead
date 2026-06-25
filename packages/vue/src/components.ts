@@ -1,6 +1,6 @@
 import type { DefineComponent, Ref, VNode } from 'vue'
 import type { ReactiveHead } from './types'
-import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useHead } from './composables'
 
 function extractTextContent(children: VNode['children']): string | undefined {
@@ -93,16 +93,9 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
 
     const entry = useHead(obj)
 
-    onBeforeUnmount(() => {
-      entry.dispose()
-    })
-
     return () => {
-      watchEffect(() => {
-        if (!slots.default)
-          return
+      if (slots.default)
         entry.patch(vnodesToHeadObj(slots.default()))
-      })
       return null
     }
   },

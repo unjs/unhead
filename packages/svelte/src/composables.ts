@@ -56,6 +56,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
+  const triggerAbortController = script._triggerAbortController
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   const sideEffects: (() => void)[] = []
   const _registerCb = (key: 'loaded' | 'error', cb: any) => {
@@ -63,13 +64,15 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       cb(script.instance)
       return () => {}
     }
-    let i: number | null = script._cbs[key].push(cb)
+    script._cbs[key].push(cb)
+    let active = true
     const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
+      if (!active)
+        return
+      const idx = script._cbs[key]?.indexOf(cb) ?? -1
+      if (idx !== -1)
+        script._cbs[key]?.splice(idx, 1)
+      active = false
     }
     sideEffects.push(destroy)
     return destroy
@@ -79,7 +82,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
   onDestroy(() => {
     // stop any trigger promises
-    script._triggerAbortController?.abort()
+    triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
   return script

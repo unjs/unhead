@@ -40,9 +40,7 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
     createEffect(() => {
       entrySignal().patch(input)
     })
-    createEffect(() => {
-      return () => entry.dispose()
-    })
+    onCleanup(() => entry.dispose())
   }
   return entry
 }
@@ -69,7 +67,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   let isMounted = false
   onMount(() => {
     isMounted = true
-    mountCbs.forEach(i => i())
+    const pending = mountCbs.splice(0)
+    pending.forEach(i => i())
   })
 
   if (typeof options.trigger === 'undefined') {
@@ -84,31 +83,47 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
+  const triggerAbortController = script._triggerAbortController
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   const sideEffects: (() => void)[] = []
   onCleanup(() => {
     isMounted = false
-    script._triggerAbortController?.abort()
+    triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
   const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    let i: number | null
-    const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
-    }
-    mountCbs.push(() => {
+    let active = true
+    let registered = false
+    const register = () => {
+      if (!active)
+        return
       if (!script._cbs[key]) {
         cb(script.instance)
-        return () => {}
+        active = false
+        return
       }
-      i = script._cbs[key].push(cb)
+      script._cbs[key].push(cb)
+      registered = true
       sideEffects.push(destroy)
-      return destroy
-    })
+    }
+    const destroy = () => {
+      if (!active)
+        return
+      active = false
+      const pendingIdx = mountCbs.indexOf(register)
+      if (pendingIdx !== -1)
+        mountCbs.splice(pendingIdx, 1)
+      if (registered) {
+        const idx = script._cbs[key]?.indexOf(cb) ?? -1
+        if (idx !== -1)
+          script._cbs[key]?.splice(idx, 1)
+      }
+    }
+    if (isMounted)
+      register()
+    else
+      mountCbs.push(register)
+    return destroy
   }
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)

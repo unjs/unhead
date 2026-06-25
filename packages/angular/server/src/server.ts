@@ -6,9 +6,11 @@ import { createHead as _createServerHead } from 'unhead/server'
 import { UnheadSSRService } from './ssr.service'
 
 export function provideServerHead(options: CreateServerHeadOptions = {}) {
-  const head = _createServerHead(options)
   return makeEnvironmentProviders([
-    { provide: UnheadInjectionToken, useValue: head },
+    {
+      provide: UnheadInjectionToken,
+      useFactory: () => _createServerHead(options),
+    },
     UnheadSSRService,
     {
       provide: BEFORE_APP_SERIALIZED,

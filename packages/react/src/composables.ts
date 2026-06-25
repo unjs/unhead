@@ -13,6 +13,15 @@ import { useContext, useEffect, useRef } from 'react'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContext } from './context'
 
+interface ScriptCallbackRecord {
+  active: boolean
+  handler: any
+  key: 'loaded' | 'error'
+  registered: boolean
+  renderId: number
+  script: UseScriptReturn<any>
+}
+
 export function useUnhead(): Unhead {
   // fallback to react context
   const instance = useContext<Unhead | null>(UnheadContext)
@@ -83,57 +92,106 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
-  const head = options?.head || useUnhead()
-  options.head = head
+  const head = options.head || useUnhead()
+  const trigger = options.trigger
+  const resolvedOptions = {
+    ...options,
+    head,
+    trigger: head.ssr && trigger === 'server' ? 'server' : 'manual',
+  } as UseScriptOptions<T>
 
-  const mountCbs: (() => void)[] = []
-  let isMounted = false
-  useEffect(() => {
-    isMounted = true
-    mountCbs.forEach(i => i())
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  const callbackRecords = useRef<ScriptCallbackRecord[]>([])
+  const isMounted = useRef(false)
+  const renderId = useRef(0)
+  const committedRenderId = useRef(0)
+  const currentRenderId = ++renderId.current
 
-  if (typeof options.trigger === 'undefined') {
-    options.trigger = (load) => {
-      if (isMounted) {
-        load()
-      }
-      else {
-        mountCbs.push(load)
-      }
-    }
-  }
   // @ts-expect-error untyped
-  const script = baseUseScript(head, input as BaseUseScriptInput, options)
-  // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
-  const sideEffects: (() => void)[] = []
+  const script = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+
   useEffect(() => {
+    isMounted.current = true
+    committedRenderId.current = currentRenderId
+    reconcileScriptCallbacks(currentRenderId)
+    callbackRecords.current.forEach(registerScriptCallback)
     return () => {
-      script._triggerAbortController?.abort()
-      sideEffects.forEach(i => i())
+      isMounted.current = false
+      callbackRecords.current.forEach(unregisterScriptCallback)
     }
-  }, [])
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    let i: number | null
-    const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
+  })
+
+  useEffect(() => {
+    const existingControllers = new Set(script._triggerAbortControllers)
+    script.setupTriggerHandler(trigger)
+    const triggerAbortControllers = script._triggerAbortControllers
+      ? [...script._triggerAbortControllers].filter(controller => !existingControllers.has(controller))
+      : []
+
+    return () => {
+      triggerAbortControllers.forEach(controller => controller.abort())
     }
-    mountCbs.push(() => {
-      if (!script._cbs[key]) {
-        cb(script.instance)
-        return () => {}
+  }, [script, trigger])
+
+  function reconcileScriptCallbacks(activeRenderId: number) {
+    callbackRecords.current.forEach((record) => {
+      if (record.renderId !== activeRenderId) {
+        record.active = false
+        unregisterScriptCallback(record)
       }
-      i = script._cbs[key].push(cb)
-      sideEffects.push(destroy)
-      return destroy
     })
+    callbackRecords.current = callbackRecords.current.filter(record => record.active && record.renderId === activeRenderId)
+  }
+
+  function registerScriptCallback(record: ScriptCallbackRecord) {
+    if (!record.active || record.registered)
+      return
+    const cbs = record.script._cbs[record.key]
+    if (!cbs) {
+      record.handler(record.script.instance)
+      return
+    }
+    cbs.push(record.handler)
+    record.registered = true
+  }
+
+  function unregisterScriptCallback(record: ScriptCallbackRecord) {
+    if (!record.registered)
+      return
+    const idx = record.script._cbs[record.key]?.indexOf(record.handler) ?? -1
+    if (idx !== -1)
+      record.script._cbs[record.key]?.splice(idx, 1)
+    record.registered = false
+  }
+
+  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+    const record: ScriptCallbackRecord = {
+      active: true,
+      handler: (...args: any[]) => {
+        if (!record.active)
+          return
+        record.active = false
+        record.registered = false
+        cb(...args)
+      },
+      key,
+      registered: false,
+      renderId: currentRenderId,
+      script,
+    }
+    callbackRecords.current.push(record)
+    if (isMounted.current && committedRenderId.current === currentRenderId)
+      registerScriptCallback(record)
+    return destroy
+
+    function destroy() {
+      if (!record.active)
+        return
+      record.active = false
+      unregisterScriptCallback(record)
+      const idx = callbackRecords.current.indexOf(record)
+      if (idx !== -1)
+        callbackRecords.current.splice(idx, 1)
+    }
   }
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)

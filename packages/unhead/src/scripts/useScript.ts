@@ -72,8 +72,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       _uniqueCbs.add(key)
     }
     if (_cbs[key]) {
-      const i: number = _cbs[key].push(cb)
-      return () => _cbs[key]?.splice(i - 1, 1)
+      _cbs[key].push(cb)
+      return () => {
+        const idx = _cbs[key]?.indexOf(cb) ?? -1
+        if (idx !== -1)
+          _cbs[key]?.splice(idx, 1)
+      }
     }
     // the event has already happened, run immediately
     // eslint-disable-next-line ts/no-use-before-define
@@ -90,7 +94,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       // vue augmentation... not ideal
       const status = script.status
-      if (script.id === id && (status === 'loaded' || status === 'error')) {
+      if (script.id === id && (status === 'loaded' || status === 'error' || status === 'removed')) {
         if (status === 'loaded') {
           if (typeof options.use === 'function') {
             const api = options.use()
@@ -104,6 +108,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         }
         else if (status === 'error') {
           resolve(false) // failed to load
+        }
+        else if (status === 'removed') {
+          resolve(false)
         }
         unhook?.()
       }
@@ -122,19 +129,22 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     status: 'awaitingLoad',
 
     remove() {
+      const hadEntry = !!script.entry
       // cancel all pending triggers
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
       script._warmupEl?.dispose()
+      script._warmupEl = undefined
       if (script.entry) {
         script.entry.dispose()
         script.entry = undefined
-        syncStatus('removed')
-        delete head._scripts?.[id]
-        return true
       }
-      return false
+      if (head._scripts?.[id])
+        delete head._scripts[id]
+      if (script.status !== 'removed')
+        syncStatus('removed')
+      return hadEntry
     },
     warmup(rel: WarmupStrategy) {
       const { src } = input
@@ -219,7 +229,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         // store the latest controller for external access
         script._triggerAbortController = abortController
         script._triggerPromises = script._triggerPromises || []
-        const idx = script._triggerPromises.push(Promise.race([
+        let triggerPromise: Promise<void>
+        triggerPromise = Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
           abortPromise,
         ])
@@ -233,8 +244,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           })
           .finally(() => {
             // remove the promise from the list
-            script._triggerPromises?.splice(idx, 1)
-          }))
+            const idx = script._triggerPromises?.indexOf(triggerPromise) ?? -1
+            if (idx !== -1)
+              script._triggerPromises?.splice(idx, 1)
+          })
+        script._triggerPromises.push(triggerPromise)
       }
       else if (typeof trigger === 'function') {
         trigger(script.load)
@@ -251,7 +265,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         _cbs.loaded = null
       }
       else {
-        _cbs.error?.forEach(cb => cb())
+        if (script.status === 'error')
+          _cbs.error?.forEach(cb => cb())
+        _cbs.loaded = null
         _cbs.error = null
       }
     })
