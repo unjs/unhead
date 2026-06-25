@@ -8,6 +8,8 @@ export default defineProject({
     alias: {
       '@unhead/ssr': resolve(__dirname, '../unhead/src/server'),
       '@unhead/dom': resolve(__dirname, '../unhead/src/client'),
+      '@unhead/schema-org/imports': resolve(__dirname, 'src/imports.ts'),
+      '@unhead/schema-org/vue/meta': resolve(__dirname, 'src/vue/meta.ts'),
       '@unhead/schema-org/vue': resolve(__dirname, 'src/vue/index.ts'),
       '@unhead/schema-org': resolve(__dirname, 'src/index.ts'),
       '@unhead/vue/server': resolve(__dirname, '../vue/src/server.ts'),

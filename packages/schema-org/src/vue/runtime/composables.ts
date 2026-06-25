@@ -1,60 +1,54 @@
 import type { DeepResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
 import type { ActiveHeadEntry } from 'unhead/types'
-import type {
-  AggregateOffer,
-  AggregateRating,
-  Article,
-  Book,
-  BookEdition,
-  BreadcrumbList,
-  Comment,
-  Course,
-  Dataset,
-  Event,
-  FoodEstablishment,
-  HowTo,
-  HowToStep,
-  ImageObject,
-  ItemList,
-  JobPosting,
-  ListItem,
-  LocalBusiness,
-  Movie,
-  MusicAlbum,
-  MusicGroup,
-  MusicPlaylist,
-  MusicRecording,
-  Offer,
-  OpeningHoursSpecification,
-  Organization,
-  Person,
-  Place,
-  PodcastEpisode,
-  PodcastSeason,
-  PodcastSeries,
-  PostalAddress,
-  Product,
-  Question,
-  ReadAction,
-  Recipe,
-  Review,
-  SearchAction,
-  Service,
-  SoftwareApp,
-  Thing,
-  TVEpisode,
-  TVSeason,
-  TVSeries,
-  VideoObject,
-  VirtualLocation,
-  WebPage,
-  WebSite,
-} from '../../'
-import type { Arrayable, SchemaOrgNodeDefinition } from '../../types'
+import type { AggregateOffer } from '../../nodes/AggregateOffer'
+import type { AggregateRating } from '../../nodes/AggregateRating'
+import type { Article } from '../../nodes/Article'
+import type { Book, BookEdition } from '../../nodes/Book'
+import type { BreadcrumbList } from '../../nodes/Breadcrumb'
+import type { Comment } from '../../nodes/Comment'
+import type { Course } from '../../nodes/Course'
+import type { Dataset } from '../../nodes/Dataset'
+import type { Event } from '../../nodes/Event'
+import type { FoodEstablishment } from '../../nodes/FoodEstablishment'
+import type { HowTo } from '../../nodes/HowTo'
+import type { HowToStep } from '../../nodes/HowTo/HowToStep'
+import type { ImageObject } from '../../nodes/Image'
+import type { ItemList } from '../../nodes/ItemList'
+import type { JobPosting } from '../../nodes/JobPosting'
+import type { ListItem } from '../../nodes/ListItem'
+import type { LocalBusiness } from '../../nodes/LocalBusiness'
+import type { Movie } from '../../nodes/Movie'
+import type { MusicAlbum } from '../../nodes/MusicAlbum'
+import type { MusicGroup } from '../../nodes/MusicGroup'
+import type { MusicPlaylist } from '../../nodes/MusicPlaylist'
+import type { MusicRecording } from '../../nodes/MusicRecording'
+import type { Offer } from '../../nodes/Offer'
+import type { OpeningHoursSpecification } from '../../nodes/OpeningHours'
+import type { Organization } from '../../nodes/Organization'
+import type { Person } from '../../nodes/Person'
+import type { Place } from '../../nodes/Place'
+import type { PodcastEpisode } from '../../nodes/PodcastEpisode'
+import type { PodcastSeason } from '../../nodes/PodcastSeason'
+import type { PodcastSeries } from '../../nodes/PodcastSeries'
+import type { PostalAddress } from '../../nodes/PostalAddress'
+import type { Product } from '../../nodes/Product'
+import type { Question } from '../../nodes/Question'
+import type { Recipe } from '../../nodes/Recipe'
+import type { Review } from '../../nodes/Review'
+import type { Service } from '../../nodes/Service'
+import type { SoftwareApp } from '../../nodes/SoftwareApp'
+import type { TVEpisode } from '../../nodes/TVEpisode'
+import type { TVSeason } from '../../nodes/TVSeason'
+import type { TVSeries } from '../../nodes/TVSeries'
+import type { VideoObject } from '../../nodes/Video'
+import type { VirtualLocation } from '../../nodes/VirtualLocation'
+import type { WebPage } from '../../nodes/WebPage'
+import type { ReadAction } from '../../nodes/WebPage/ReadAction'
+import type { WebSite } from '../../nodes/WebSite'
+import type { SearchAction } from '../../nodes/WebSite/SearchAction'
+import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
 import { toValue } from 'vue'
-import { normalizeSchemaOrgInput,
-} from '../../'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -102,6 +96,7 @@ import { readActionResolver } from '../../nodes/WebPage/ReadAction'
 import { webSiteResolver } from '../../nodes/WebSite'
 import { searchActionResolver } from '../../nodes/WebSite/SearchAction'
 import { UnheadSchemaOrg } from '../../plugin'
+import { normalizeSchemaOrgInput } from '../../runtime'
 
 function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>): any {
   if (!input)

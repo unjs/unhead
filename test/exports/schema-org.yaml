@@ -117,6 +117,8 @@
   virtualLocationResolver: object
   webPageResolver: object
   webSiteResolver: object
+./imports:
+  schemaAutoImports: object
 ./react:
   defineArticle: function
   defineBook: function
@@ -308,3 +310,7 @@
   SchemaOrgWebSite: object
   UnheadSchemaOrg: function
   useSchemaOrg: function
+./vue/meta:
+  schemaOrgAutoImports: object
+  schemaOrgComponents: object
+  SchemaOrgResolver: function

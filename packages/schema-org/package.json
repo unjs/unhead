@@ -30,9 +30,17 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
+    "./imports": {
+      "types": "./dist/imports.d.ts",
+      "default": "./dist/imports.mjs"
+    },
     "./vue": {
       "types": "./dist/vue.d.ts",
       "default": "./dist/vue.mjs"
+    },
+    "./vue/meta": {
+      "types": "./dist/vue/meta.d.ts",
+      "default": "./dist/vue/meta.mjs"
     },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
@@ -52,8 +60,14 @@
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "imports": [
+        "dist/imports"
+      ],
       "vue": [
         "dist/vue"
+      ],
+      "vue/meta": [
+        "dist/vue/meta"
       ],
       "svelte": [
         "dist/svelte"
