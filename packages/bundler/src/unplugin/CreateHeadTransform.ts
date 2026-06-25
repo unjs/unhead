@@ -3,7 +3,7 @@ import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
-const CREATE_HEAD_RE = /createHead/
+const CREATE_HEAD_RE = /\bcreateHead\b/
 const UNHEAD_SOURCE_RE = /^(?:@unhead\/[^/]+|unhead)(?:\/[^?]*)?$/
 
 export interface RuntimePluginRegistration {
