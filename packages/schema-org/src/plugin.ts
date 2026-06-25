@@ -36,6 +36,7 @@ export interface PluginSchemaOrgOptions {
 }
 
 function getDefaultMinify(): boolean {
+  // eslint-disable-next-line node/prefer-global/process
   const globalProcess = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process
   return globalProcess?.env?.NODE_ENV === 'production'
 }

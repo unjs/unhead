@@ -1,6 +1,6 @@
-import * as vueExports from '@unhead/schema-org/vue'
 import { schemaAutoImports as schemaAutoImportsSubpath } from '@unhead/schema-org/imports'
-import { SchemaOrgResolver, schemaOrgAutoImports } from '@unhead/schema-org/vue/meta'
+import * as vueExports from '@unhead/schema-org/vue'
+import { schemaOrgAutoImports, SchemaOrgResolver } from '@unhead/schema-org/vue/meta'
 import { describe, expect, it } from 'vitest'
 import { schemaAutoImports } from '../../src/imports'
 
