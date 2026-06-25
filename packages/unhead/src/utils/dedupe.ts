@@ -40,6 +40,16 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 }
 
 export function hashTag(tag: HeadTag) {
-  return tag._h || tag._d || tag.textContent || tag.innerHTML
-    || `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join()}`
+  const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
+  if (identity)
+    return identity
+  let hash = `${tag.tag}:`
+  let separator = ''
+  for (const key in tag.props) {
+    if (Object.hasOwn(tag.props, key)) {
+      hash += `${separator}${key}:${String(tag.props[key])}`
+      separator = ','
+    }
+  }
+  return hash
 }
