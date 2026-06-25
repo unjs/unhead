@@ -38,10 +38,12 @@ jobs:
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
+          pnpm test:schema-org-bundle-size
           cp bench/bundle/dist/client/client/minimal.mjs /tmp/base-client.mjs
           cp bench/bundle/dist/server/server/minimal.mjs /tmp/base-server.mjs
           cp bench/bundle/dist/vue-server/vue-server/minimal.mjs /tmp/base-vue-server.mjs
           cp bench/bundle/dist/vue-client/vue-client/minimal.mjs /tmp/base-vue-client.mjs
+          cp bench/bundle/dist/schema-org/schema-org/minimal.mjs /tmp/base-schema-org.mjs
           git checkout -
 
       - name: Build PR bundles
@@ -50,13 +52,14 @@ jobs:
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
+          pnpm test:schema-org-bundle-size
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Run analyze script
         id: analyze
         run: |
-          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.mjs /tmp/base-vue-server.mjs)
+          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.mjs /tmp/base-vue-server.mjs /tmp/base-schema-org.mjs)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT

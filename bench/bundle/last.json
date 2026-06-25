@@ -14,5 +14,17 @@
   "vueServer": {
     "size": 11926,
     "gz": 4974
+  },
+  "schemaOrg": {
+    "size": 26704,
+    "gz": 9598
+  },
+  "schemaOrgImports": {
+    "size": 98,
+    "gz": 109
+  },
+  "schemaOrgVueMeta": {
+    "size": 845,
+    "gz": 441
   }
 }
