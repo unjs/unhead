@@ -37,6 +37,9 @@ jobs:
       - name: Run Vue bundle size test
         run: pnpm test:vue-bundle-size
 
+      - name: Run Schema.org bundle size test
+        run: pnpm test:schema-org-bundle-size
+
       - uses: oven-sh/setup-bun@v2
 
       - name: Update stats
