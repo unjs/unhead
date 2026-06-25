@@ -77,25 +77,148 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
       const encoder = new TextEncoder()
+      let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+      let readerReleased = false
+      let settled = false
+      let pumpDone: Promise<void> = Promise.resolve()
+      let cancelInner: (reason: unknown) => Promise<unknown> = async () => undefined
+      let resolveSettled = () => {}
+      const settledSignal = new Promise<void>((resolve) => {
+        resolveSettled = resolve
+      })
+
+      const settle = () => {
+        if (settled)
+          return false
+        settled = true
+        resolveSettled()
+        return true
+      }
 
       return new ReadableStream<Uint8Array>({
-        async start(controller) {
-          // Wait for shell to be ready before writing
-          const shellState = await shellReady
-          const { shell, end } = prepareStreamingTemplate(head, template, shellState)
-          controller.enqueue(encoder.encode(shell))
+        start(controller) {
+          let shellResolved = false
+          let shellFlushed = false
+          let innerDone = false
+          let end = ''
+          let shellState: SSRHeadPayload | undefined
+          const bufferedChunks: Uint8Array[] = []
 
-          const reader = stream.getReader()
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done)
-              break
-            controller.enqueue(value)
+          const fail = (error: unknown) => {
+            if (!settle())
+              return
+            controller.error(error)
           }
-          reader.releaseLock()
 
-          controller.enqueue(encoder.encode(end))
-          controller.close()
+          const releaseReader = () => {
+            if (!reader || readerReleased)
+              return
+            reader.releaseLock()
+            readerReleased = true
+          }
+
+          cancelInner = async (reason: unknown): Promise<unknown> => {
+            if (!reader || readerReleased)
+              return
+            try {
+              await reader.cancel(reason)
+            }
+            catch (error) {
+              return error
+            }
+          }
+
+          const flushShellAndChunks = () => {
+            if (settled || !shellResolved)
+              return
+
+            try {
+              if (!shellFlushed) {
+                const prepared = prepareStreamingTemplate(head, template, shellState)
+                controller.enqueue(encoder.encode(prepared.shell))
+                end = prepared.end
+                shellFlushed = true
+              }
+
+              while (bufferedChunks.length) {
+                controller.enqueue(bufferedChunks.shift()!)
+              }
+
+              if (innerDone) {
+                controller.enqueue(encoder.encode(end))
+                settle()
+                controller.close()
+              }
+            }
+            catch (error) {
+              fail(error)
+              void cancelInner(error)
+            }
+          }
+
+          try {
+            reader = stream.getReader()
+          }
+          catch (error) {
+            fail(error)
+            return
+          }
+
+          // Read immediately so app stream failures before onCompleteShell do not hang the wrapper.
+          pumpDone = (async () => {
+            try {
+              while (true) {
+                if (settled)
+                  break
+                const { done, value } = await reader!.read()
+                if (settled)
+                  break
+                if (done) {
+                  innerDone = true
+                  flushShellAndChunks()
+                  break
+                }
+                if (shellFlushed) {
+                  controller.enqueue(value)
+                }
+                else {
+                  bufferedChunks.push(value)
+                  flushShellAndChunks()
+                }
+              }
+            }
+            catch (error) {
+              fail(error)
+            }
+            finally {
+              releaseReader()
+            }
+          })()
+
+          void (async () => {
+            try {
+              const ready = await Promise.race([
+                shellReady.then(state => ({ state })),
+                settledSignal.then(() => undefined),
+              ])
+              if (!ready)
+                return
+              shellState = ready.state
+              shellResolved = true
+              flushShellAndChunks()
+            }
+            catch (error) {
+              fail(error)
+              void cancelInner(error)
+            }
+          })()
+        },
+        async cancel(reason?: unknown) {
+          settle()
+          const cancelError = await cancelInner(reason)
+          await pumpDone
+          if (cancelError)
+            throw cancelError
         },
       })
     },

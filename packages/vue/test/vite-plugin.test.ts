@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { unheadVueStreamingPlugin } from '../src/stream/plugin'
 import { unheadVuePlugin } from '../src/stream/vite'
+
+vi.mock('unhead/stream/iife', () => ({
+  streamingIifeCode: 'window.__unhead_test_iife__=true;',
+}))
 
 describe('unheadVueStreamingPlugin', () => {
   const plugin = unheadVueStreamingPlugin.vite() as any
@@ -21,7 +25,9 @@ describe('unheadVueStreamingPlugin', () => {
     })
 
     it('resolves the iife virtual id', () => {
-      const resolved = plugin.resolveId.handler('virtual:@unhead/streaming-iife.js')
+      const vitePlugin = unheadVueStreamingPlugin.vite() as any
+      vitePlugin.apply({}, { command: 'serve', mode: 'development', isSsrBuild: false })
+      const resolved = vitePlugin.resolveId.handler('virtual:@unhead/streaming-iife.js')
       expect(resolved).toBe('\0virtual:@unhead/streaming-iife.js')
     })
 
@@ -40,6 +46,43 @@ describe('unheadVueStreamingPlugin', () => {
       expect(tags[0].injectTo).toBe('head-prepend')
       expect(tags[0].attrs).toMatchObject({ async: true })
       expect(tags[0].attrs.src).toContain('virtual:@unhead/streaming-iife.js')
+    })
+
+    it('injects the emitted iife asset path for async production builds', async () => {
+      const buildPlugin = unheadVueStreamingPlugin.vite() as any
+      buildPlugin.apply({}, { command: 'build', mode: 'production', isSsrBuild: false })
+      buildPlugin.configResolved({ command: 'build' })
+
+      const emittedRef = 'asset-ref-1'
+      let emittedAsset: any
+      await buildPlugin.buildStart.call({
+        emitFile(asset: any) {
+          emittedAsset = asset
+          return emittedRef
+        },
+      })
+
+      const fileName = 'assets/unhead-streaming.abc123.js'
+      const bundle = {
+        [fileName]: {
+          type: 'asset',
+          name: 'unhead-streaming.js',
+          names: ['unhead-streaming.js'],
+          fileName,
+          source: emittedAsset.source,
+        },
+      }
+
+      const tags = buildPlugin.transformIndexHtml.handler.call({
+        getFileName() {
+          return emittedRef
+        },
+      }, '<html></html>', { bundle })
+
+      const src = tags[0].attrs.src
+      expect(src).toBe(`/${fileName}`)
+      expect(src).not.toContain(emittedRef)
+      expect(bundle[src.slice(1) as keyof typeof bundle]).toBeDefined()
     })
   })
 
@@ -66,12 +109,12 @@ describe('unheadVueStreamingPlugin', () => {
       expect(rl.name).toBe('@unhead/vue:streaming')
     })
 
-    it('resolves the iife virtual id', () => {
+    it('does not resolve the vite-only iife virtual id', () => {
       // rollup normalises plugin hooks to `{ handler }` shape
       const resolved = typeof rl.resolveId === 'function'
         ? rl.resolveId('virtual:@unhead/streaming-iife.js')
         : rl.resolveId.handler('virtual:@unhead/streaming-iife.js')
-      expect(resolved).toBe('\0virtual:@unhead/streaming-iife.js')
+      expect(resolved).toBeUndefined()
     })
   })
 })

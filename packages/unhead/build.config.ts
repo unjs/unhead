@@ -15,6 +15,9 @@ export default defineBuildConfig({
       options.experimentalLogSideEffects = true
     },
     'build:done': async function (ctx) {
+      if (ctx.options.stub)
+        return
+
       // Build the streaming IIFE with all dependencies bundled
       const bundle = await rollup({
         input: resolve(ctx.options.rootDir, 'dist/stream/iife.mjs'),

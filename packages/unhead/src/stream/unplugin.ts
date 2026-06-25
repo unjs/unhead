@@ -62,10 +62,12 @@ export interface StreamingPluginOptions {
 
 interface InternalState {
   mode: 'async' | 'inline' | 'module'
+  /** True once Vite-specific hooks have identified this as a Vite run. */
+  isVite: boolean
   /** Production build detected via vite configResolved. */
   isBuild: boolean
-  /** Asset handle for the emitted iife in `async` production builds. */
-  emittedIifeFileName?: string
+  /** Rollup asset reference id for the emitted iife in `async` production builds. */
+  emittedIifeFileId?: string
   /** True when vite config phase detected ssr. */
   ssr: boolean
 }
@@ -112,7 +114,7 @@ const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document})
  * - vite dev (v6+ environments): `this.environment.name === 'ssr'` per-transform
  * - webpack/rspack: `compiler.options.name === 'server'` or `target === 'node'`
  */
-export function buildStreamingPluginOptions(options: StreamingPluginOptions): UnpluginOptions {
+export function buildStreamingPluginOptions(options: StreamingPluginOptions, meta: { framework?: string } = {}): UnpluginOptions {
   const {
     framework,
     name,
@@ -124,6 +126,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
 
   const state: InternalState = {
     mode,
+    isVite: meta.framework === 'vite',
     isBuild: false,
     ssr: false,
   }
@@ -141,11 +144,29 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
     return warnOnMissingServerBootstrap ?? !state.isBuild
   }
 
+  function resolveEmittedIifePath(hookThis: any, ctx?: { bundle?: Record<string, any> }): string | undefined {
+    const ref = state.emittedIifeFileId
+    if (!ref)
+      return
+    for (const asset of Object.values(ctx?.bundle || {})) {
+      if (asset?.type === 'asset' && asset.fileName && (asset.name === 'unhead-streaming.js' || asset.names?.includes('unhead-streaming.js')))
+        return asset.fileName
+    }
+    if (typeof hookThis?.getFileName === 'function') {
+      const fileName = hookThis.getFileName(ref)
+      if (fileName && fileName !== ref)
+        return fileName
+    }
+  }
+
   return {
     name: name ?? `${framework}:streaming`,
     enforce: 'pre',
 
     async buildStart() {
+      if (!state.isVite || mode === 'module')
+        return
+
       await loadIifeCode()
       // In `async` mode for production Vite builds, emit the IIFE as a real
       // asset chunk so the eventual `<script async src="...">` points at a
@@ -154,7 +175,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
       if (mode === 'async' && state.isBuild && typeof (this as any).emitFile === 'function') {
         if (!iifeCode)
           throw new Error('[unhead] Streaming IIFE not built. Run `pnpm build` in packages/unhead first.')
-        state.emittedIifeFileName = (this as any).emitFile({
+        state.emittedIifeFileId = (this as any).emitFile({
           type: 'asset',
           name: 'unhead-streaming.js',
           source: iifeCode,
@@ -167,7 +188,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
       handler(id) {
         if (id === VIRTUAL_CLIENT_ID || id === `/${VIRTUAL_CLIENT_ID}`)
           return RESOLVED_ID
-        if (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`)
+        if (state.isVite && (id === VIRTUAL_IIFE_ID || id === `/${VIRTUAL_IIFE_ID}`))
           return RESOLVED_IIFE_ID
       },
     },
@@ -187,6 +208,8 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
           }
         }
         if (id === RESOLVED_IIFE_ID) {
+          if (!state.isVite)
+            return
           if (isSSR)
             return { code: '', moduleType: 'js' }
           if (!iifeCode)
@@ -225,6 +248,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
 
     vite: {
       apply(_config: UserConfig, env: ConfigEnv): boolean {
+        state.isVite = true
         if (env.isSsrBuild)
           state.ssr = true
         if (env.command === 'build')
@@ -232,6 +256,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
         return true
       },
       configResolved(config: ResolvedConfig) {
+        state.isVite = true
         if (config.command === 'build')
           state.isBuild = true
       },
@@ -242,7 +267,7 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
         // full Vite plugin pipeline (resolveId/load) and aren't stripped or
         // rewritten by downstream HTML transforms.
         order: 'pre',
-        handler() {
+        handler(this: any, _html?: string, ctx?: { bundle?: Record<string, any> }) {
           const nonceValue = resolveNonce(nonce)
           const nonceAttr = nonceValue ? { nonce: nonceValue } : {}
 
@@ -261,8 +286,9 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions): Un
             // Production builds reference the emitted asset path so it
             // survives bundling; dev (and bundlers without emitFile) fall
             // back to the virtual module URL served by the load hook.
-            const src = state.isBuild && state.emittedIifeFileName
-              ? `/${state.emittedIifeFileName}`
+            const fileName = state.isBuild ? resolveEmittedIifePath(this, ctx) : undefined
+            const src = fileName
+              ? `/${fileName}`
               : `/${VIRTUAL_IIFE_ID}`
             return [{
               tag: 'script',
