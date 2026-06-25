@@ -1,43 +1,54 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import MagicString from 'magic-string'
 import { createUnplugin } from 'unplugin'
-import { withCodeFilter } from './utils'
 
-const UNHEAD_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/]/
-const HEAD_SSR_RE = /\bhead\.ssr\b/g
-const JS_RE = /\.(?:c|m)?js$/
+const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
+const HEAD_SSR_FILTER_RE = /\bhead\.ssr\b/
+const HEAD_SSR_RE = new RegExp(HEAD_SSR_FILTER_RE.source, 'g')
 
 export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() => {
   let ssr = false
   let enabled = true
 
-  return withCodeFilter({
+  function shouldTransformId(id: string): boolean {
+    if (!enabled)
+      return false
+    return UNHEAD_JS_MODULE_RE.test(id)
+  }
+
+  function shouldTransformCode(code: string): boolean {
+    return HEAD_SSR_FILTER_RE.test(code)
+  }
+
+  return {
     name: 'unhead:ssr-static-replace',
     enforce: 'pre',
+    transformInclude: shouldTransformId,
 
-    transformInclude(id) {
-      if (!enabled)
-        return false
-      if (!UNHEAD_MODULE_RE.test(id))
-        return false
-      return JS_RE.test(id)
-    },
+    transform: {
+      filter: {
+        code: HEAD_SSR_FILTER_RE,
+        id: UNHEAD_JS_MODULE_RE,
+      },
+      handler(code, id) {
+        if (!shouldTransformId(id))
+          return
 
-    transform(code) {
-      if (!code.includes('head.ssr'))
-        return
+        if (!shouldTransformCode(code))
+          return
 
-      const s = new MagicString(code)
-      for (const match of code.matchAll(HEAD_SSR_RE)) {
-        s.overwrite(match.index!, match.index! + match[0].length, String(ssr))
-      }
-
-      if (s.hasChanged()) {
-        return {
-          code: s.toString(),
-          map: s.generateMap({ includeContent: true }),
+        const s = new MagicString(code)
+        for (const match of code.matchAll(HEAD_SSR_RE)) {
+          s.overwrite(match.index!, match.index! + match[0].length, String(ssr))
         }
-      }
+
+        if (s.hasChanged()) {
+          return {
+            code: s.toString(),
+            map: s.generateMap({ includeContent: true }),
+          }
+        }
+      },
     },
 
     webpack(ctx) {
@@ -59,5 +70,5 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         return true
       },
     },
-  }, /\bhead\.ssr\b/)
+  }
 })

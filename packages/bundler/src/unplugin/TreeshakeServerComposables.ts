@@ -4,10 +4,10 @@ import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
-import { isVueScriptRequest, splitTransformId, withCodeFilter } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
-const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
+const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/
 
 const functionNames = [
   'useServerHead',
@@ -27,71 +27,80 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
 export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
   options.enabled = options.enabled !== undefined ? options.enabled : true
 
-  return withCodeFilter({
+  function shouldTransformId(id: string): boolean {
+    // should only run on client builds
+    if (!options.enabled)
+      return false
+
+    const { pathname, query } = splitTransformId(id)
+
+    if (NODE_MODULES_RE.test(pathname))
+      return false
+
+    // Included
+    if (options.filter?.include?.some(pattern => id.match(pattern)))
+      return true
+
+    // Excluded
+    if (options.filter?.exclude?.some(pattern => id.match(pattern)))
+      return false
+
+    // vue files
+    if (isVueScriptRequest(pathname, query))
+      return true
+
+    // js files
+    if (TRANSFORM_RE.test(pathname))
+      return true
+
+    return false
+  }
+
+  function shouldTransformCode(code: string): boolean {
+    return SERVER_COMPOSABLE_RE.test(code)
+  }
+
+  return {
     name: 'unhead:remove-server-composables',
     enforce: 'post',
+    transformInclude: shouldTransformId,
 
-    transformInclude(id) {
-      // should only run on client builds
-      if (!options.enabled)
-        return false
+    transform: {
+      filter: {
+        code: SERVER_COMPOSABLE_RE,
+        id: createJsVueTransformIdFilter(options.filter?.include),
+      },
+      handler(code, id) {
+        if (!shouldTransformId(id))
+          return
 
-      const { pathname, query } = splitTransformId(id)
-
-      if (NODE_MODULES_RE.test(pathname))
-        return false
-
-      // Included
-      if (options.filter?.include?.some(pattern => id.match(pattern)))
-        return true
-
-      // Excluded
-      if (options.filter?.exclude?.some(pattern => id.match(pattern)))
-        return false
-
-      // vue files
-      if (isVueScriptRequest(pathname, query))
-        return true
-
-      // js files
-      if (TRANSFORM_RE.test(pathname))
-        return true
-
-      return false
-    },
-
-    transform(code, id) {
-      if (
-        !code.includes('useServerHead')
-        && !code.includes('useServerHeadSafe')
-        && !code.includes('useServerSeoMeta')
-        && !code.includes('useSchemaOrg')
-      ) {
-        return
-      }
-
-      const ast = parseSync(id, code)
-      const s = new MagicString(code)
-
-      walk(ast.program, {
-        enter(node: any) {
-          if (
-            node.type === 'ExpressionStatement'
-            && node.expression.type === 'CallExpression'
-            && node.expression.callee.type === 'Identifier'
-            && functionNames.includes(node.expression.callee.name)
-          ) {
-            s.remove(node.start, node.end)
-          }
-        },
-      })
-
-      if (s.hasChanged()) {
-        return {
-          code: s.toString(),
-          map: s.generateMap({ includeContent: true, source: id }),
+        if (!shouldTransformCode(code)) {
+          return
         }
-      }
+
+        const ast = parseSync(id, code)
+        const s = new MagicString(code)
+
+        walk(ast.program, {
+          enter(node: any) {
+            if (
+              node.type === 'ExpressionStatement'
+              && node.expression.type === 'CallExpression'
+              && node.expression.callee.type === 'Identifier'
+              && functionNames.includes(node.expression.callee.name)
+            ) {
+              s.remove(node.start, node.end)
+            }
+          },
+        })
+
+        if (s.hasChanged()) {
+          return {
+            code: s.toString(),
+            map: s.generateMap({ includeContent: true, source: id }),
+          }
+        }
+      },
     },
     webpack(ctx) {
       if (ctx.name === 'server')
@@ -106,5 +115,5 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         return false
       },
     },
-  }, /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/)
+  }
 })

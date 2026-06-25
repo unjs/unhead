@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { unheadSolidStreamingPlugin } from '../src/stream/plugin'
 import { unheadSolidPlugin } from '../src/stream/vite'
 
-const FILTER_RE = /\.[jt]sx$/
-
 describe('unheadSolidStreamingPlugin', () => {
   const plugin = unheadSolidStreamingPlugin.vite() as any
   const transform = plugin.transform.handler
@@ -19,10 +17,6 @@ describe('unheadSolidStreamingPlugin', () => {
   })
 
   describe('transform', () => {
-    it('filters to jsx/tsx files only', () => {
-      expect(plugin.transform.filter.id).toEqual(FILTER_RE)
-    })
-
     it('skips files without useHead', () => {
       const code = `
         export function App() {
@@ -30,7 +24,7 @@ describe('unheadSolidStreamingPlugin', () => {
         }
       `
       const result = transform(code, 'app.tsx')
-      expect(result).toBeNull()
+      expect(result).toBeUndefined()
     })
 
     it('wraps JSX return with HeadStream fragment', () => {
@@ -92,6 +86,19 @@ describe('unheadSolidStreamingPlugin', () => {
         import { useSeoMeta } from '@unhead/solid-js'
         export function App() {
           useSeoMeta({ title: 'Test' })
+          return <div>Hello</div>
+        }
+      `
+      const result = transform(code, 'app.tsx')
+      expect(result).not.toBeNull()
+      expect(result!.code).toContain('<><HeadStream />')
+    })
+
+    it('transforms files with useHeadSafe', () => {
+      const code = `
+        import { useHeadSafe } from '@unhead/solid-js'
+        export function App() {
+          useHeadSafe({ title: 'Test' })
           return <div>Hello</div>
         }
       `

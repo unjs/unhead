@@ -11,6 +11,7 @@ import { parseAndWalk } from 'oxc-walker'
 import { getConfigRpc, runLintRpc } from './rpc'
 
 const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
+const HEAD_COMPOSABLE_RE = new RegExp(`\\b(?:${HEAD_COMPOSABLES.join('|')})\\b`)
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const LEADING_SLASH_RE = /^\//
 const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/
@@ -41,7 +42,7 @@ const DEVTOOLS_UI_ROUTE = '/__unhead/'
  * Transforms source code to inject `_source` metadata into head composable calls.
  */
 function transformSourceLocations(code: string, id: string, root: string): { code: string, map: any } | undefined {
-  if (!HEAD_COMPOSABLES.some(c => code.includes(c)))
+  if (!HEAD_COMPOSABLE_RE.test(code))
     return
 
   const s = new MagicString(code)
@@ -182,7 +183,7 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
     },
 
     transform: {
-      filter: { id: FILE_RE },
+      filter: { id: FILE_RE, code: HEAD_COMPOSABLE_RE },
       handler(code, id) {
         if (!enabled)
           return

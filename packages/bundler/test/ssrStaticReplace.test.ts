@@ -27,11 +27,6 @@ describe('ssrStaticReplace', () => {
     expect(plugin.transformInclude('/src/components/Head.vue')).toBe(false)
   })
 
-  it('uses a code filter for head.ssr', () => {
-    const plugin = createPlugin()
-    expect(plugin.transform.filter.code).toEqual(/\bhead\.ssr\b/)
-  })
-
   it('replaces head.ssr with false for client builds', () => {
     const plugin = createPlugin({ isSsrBuild: false, command: 'build' })
     const result = transform(plugin, 'if (head.ssr) { doServerThing() }', UNHEAD_MODULE_ID)

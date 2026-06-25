@@ -3,6 +3,7 @@ import MagicString from 'magic-string'
 import { parseAndWalk } from 'oxc-walker'
 
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
+const CREATE_HEAD_RE = /createHead/
 const UNHEAD_SOURCE_RE = /^(?:@unhead\/[^/]+|unhead)(?:\/[^?]*)?$/
 
 export interface RuntimePluginRegistration {
@@ -43,12 +44,12 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
     },
 
     transform: {
-      filter: { id: FILE_RE },
+      filter: { id: FILE_RE, code: CREATE_HEAD_RE },
       handler(code, id) {
         const registrations = ctx.getRegistrations()
         if (!registrations.length)
           return
-        if (!code.includes('createHead'))
+        if (!CREATE_HEAD_RE.test(code))
           return
 
         const isServer = this.environment?.config?.consumer === 'server'

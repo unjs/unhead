@@ -5,9 +5,10 @@ import { buildStreamingPluginOptions } from 'unhead/stream/unplugin'
 import { createUnplugin } from 'unplugin'
 
 const FILTER_RE = /\.[jt]sx$/
+const HEAD_COMPOSABLE_RE = /\b(?:useHead|useHeadSafe|useSeoMeta)\b/
 
 function hasHeadComposable(code: string): boolean {
-  return code.includes('useHead') || code.includes('useSeoMeta') || code.includes('useHeadSafe')
+  return HEAD_COMPOSABLE_RE.test(code)
 }
 
 function transform(code: string, id: string, isSSR: boolean, s: MagicString): boolean {
@@ -115,6 +116,7 @@ export const unheadSolidStreamingPlugin = createUnplugin<UnheadSolidStreamingOpt
   buildStreamingPluginOptions({
     framework: '@unhead/solid-js',
     filter: FILTER_RE,
+    codeFilter: HEAD_COMPOSABLE_RE,
     mode: options.mode,
     transform(code, id, opts) {
       if (!hasHeadComposable(code))

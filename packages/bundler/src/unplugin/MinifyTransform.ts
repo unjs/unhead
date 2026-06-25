@@ -4,10 +4,10 @@ import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
-import { isVueScriptRequest, splitTransformId, withCodeFilter } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
-const NODE_MODULES_RE = /[\\/]node_modules[\\/]/
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
+const HEAD_RE = /\buse(?:Server)?Head\b/
 
 const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
@@ -61,117 +61,131 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     style: new Map(),
   }
 
-  return withCodeFilter({
+  function shouldTransformId(id: string): boolean {
+    const { pathname, query } = splitTransformId(id)
+
+    if (NODE_MODULES_RE.test(pathname))
+      return false
+
+    if (options.filter?.include?.some(pattern => id.match(pattern)))
+      return true
+
+    if (options.filter?.exclude?.some(pattern => id.match(pattern)))
+      return false
+
+    // vue files
+    if (isVueScriptRequest(pathname, query))
+      return true
+
+    // js/ts files
+    if (TRANSFORM_RE.test(pathname))
+      return true
+
+    return false
+  }
+
+  function shouldTransformCode(code: string): boolean {
+    return HEAD_RE.test(code)
+  }
+
+  return {
     name: 'unhead:minify-transform',
     enforce: 'post',
+    transformInclude: shouldTransformId,
 
-    transformInclude(id) {
-      const { pathname, query } = splitTransformId(id)
+    transform: {
+      filter: {
+        code: HEAD_RE,
+        id: createJsVueTransformIdFilter(options.filter?.include),
+      },
+      async handler(code, id) {
+        if (!shouldTransformId(id))
+          return
 
-      if (NODE_MODULES_RE.test(pathname))
-        return false
+        if (!shouldTransformCode(code))
+          return
 
-      if (options.filter?.include?.some(pattern => id.match(pattern)))
-        return true
+        // Escaped identifiers still need parsing because their source does not
+        // contain the decoded property name.
+        if (!CONTENT_PROP_NAMES.some(name => code.includes(name)) && !code.includes('\\u'))
+          return
 
-      if (options.filter?.exclude?.some(pattern => id.match(pattern)))
-        return false
+        let ast
+        try {
+          ast = parseSync(id, code)
+        }
+        catch {
+          return
+        }
 
-      // vue files
-      if (isVueScriptRequest(pathname, query))
-        return true
+        const scopeTracker = new ScopeTracker()
+        const pendingMinifications: PendingMinification[] = []
 
-      // js/ts files
-      if (TRANSFORM_RE.test(pathname))
-        return true
+        walk(ast.program, {
+          scopeTracker,
+          enter(node: any, _parent: any) {
+            if (node.type !== 'CallExpression')
+              return
 
-      return false
-    },
+            if (!resolveHeadFunctionName(node.callee, scopeTracker))
+              return
 
-    async transform(code, id) {
-      if (!code.includes('useHead') && !code.includes('useServerHead'))
-        return
+            const arg = node.arguments[0]
+            if (!arg || arg.type !== 'ObjectExpression')
+              return
 
-      // Escaped identifiers still need parsing because their source does not
-      // contain the decoded property name.
-      if (!CONTENT_PROP_NAMES.some(name => code.includes(name)) && !code.includes('\\u'))
-        return
-
-      let ast
-      try {
-        ast = parseSync(id, code)
-      }
-      catch {
-        return
-      }
-
-      const scopeTracker = new ScopeTracker()
-      const pendingMinifications: PendingMinification[] = []
-
-      walk(ast.program, {
-        scopeTracker,
-        enter(node: any, _parent: any) {
-          if (node.type !== 'CallExpression')
-            return
-
-          if (!resolveHeadFunctionName(node.callee, scopeTracker))
-            return
-
-          const arg = node.arguments[0]
-          if (!arg || arg.type !== 'ObjectExpression')
-            return
-
-          // look for script: [...] and style: [...] properties
-          for (const prop of arg.properties) {
-            if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
-              continue
-
-            const tagType = prop.key.name
-            if (tagType !== 'script' && tagType !== 'style')
-              continue
-
-            if (tagType === 'script' && !doJS)
-              continue
-            if (tagType === 'style' && !doCSS)
-              continue
-
-            // handle both array and single object: script: [{ innerHTML: '...' }] or script: { innerHTML: '...' }
-            const elements = prop.value?.type === 'ArrayExpression'
-              ? prop.value.elements
-              : [prop.value]
-
-            for (const element of elements) {
-              if (!element || element.type !== 'ObjectExpression')
+            // look for script: [...] and style: [...] properties
+            for (const prop of arg.properties) {
+              if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
                 continue
 
-              processScriptOrStyleObject(element, tagType, pendingMinifications)
+              const tagType = prop.key.name
+              if (tagType !== 'script' && tagType !== 'style')
+                continue
+
+              if (tagType === 'script' && !doJS)
+                continue
+              if (tagType === 'style' && !doCSS)
+                continue
+
+              // handle both array and single object: script: [{ innerHTML: '...' }] or script: { innerHTML: '...' }
+              const elements = prop.value?.type === 'ArrayExpression'
+                ? prop.value.elements
+                : [prop.value]
+
+              for (const element of elements) {
+                if (!element || element.type !== 'ObjectExpression')
+                  continue
+
+                processScriptOrStyleObject(element, tagType, pendingMinifications)
+              }
             }
-          }
-        },
-      })
+          },
+        })
 
-      if (!pendingMinifications.length)
-        return
+        if (!pendingMinifications.length)
+          return
 
-      const minified = await Promise.all(pendingMinifications.map(pending => pending.minified))
-      const s = new MagicString(code)
+        const minified = await Promise.all(pendingMinifications.map(pending => pending.minified))
+        const s = new MagicString(code)
 
-      for (let i = 0; i < pendingMinifications.length; i++) {
-        const pending = pendingMinifications[i]
-        const result = minified[i]
-        if (result && result.length < pending.raw.length)
-          s.overwrite(pending.start, pending.end, JSON.stringify(result))
-      }
+        for (let i = 0; i < pendingMinifications.length; i++) {
+          const pending = pendingMinifications[i]
+          const result = minified[i]
+          if (result && result.length < pending.raw.length)
+            s.overwrite(pending.start, pending.end, JSON.stringify(result))
+        }
 
-      if (!s.hasChanged())
-        return
+        if (!s.hasChanged())
+          return
 
-      return {
-        code: s.toString(),
-        map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
-      }
+        return {
+          code: s.toString(),
+          map: s.generateMap({ includeContent: true, source: id }) as SourceMapInput,
+        }
+      },
     },
-  }, /\buse(?:Server)?Head\b/)
+  }
 
   function resolveHeadFunctionName(callee: any, scopeTracker: ScopeTracker): string | undefined {
     if (callee.type === 'Identifier') {

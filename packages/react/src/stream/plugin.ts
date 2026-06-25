@@ -5,9 +5,10 @@ import { buildStreamingPluginOptions } from 'unhead/stream/unplugin'
 import { createUnplugin } from 'unplugin'
 
 const FILTER_RE = /\.[jt]sx$/
+const HEAD_COMPOSABLE_RE = /\b(?:useHead|useHeadSafe|useSeoMeta)\b/
 
 function hasHeadComposable(code: string): boolean {
-  return code.includes('useHead') || code.includes('useSeoMeta') || code.includes('useHeadSafe')
+  return HEAD_COMPOSABLE_RE.test(code)
 }
 
 /**
@@ -130,6 +131,7 @@ export const unheadReactStreamingPlugin = createUnplugin<UnheadReactStreamingOpt
   buildStreamingPluginOptions({
     framework: '@unhead/react',
     filter: FILTER_RE,
+    codeFilter: HEAD_COMPOSABLE_RE,
     mode: options.mode,
     transform(code, id, opts) {
       if (!hasHeadComposable(code))

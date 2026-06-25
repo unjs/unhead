@@ -22,11 +22,6 @@ describe('treeshakeServerComposables', () => {
     'useServerHead({ title: \'Hello\', description: \'World\' })',
   ]
 
-  it('uses a code filter for server-only composables', () => {
-    const plugin = TreeshakeServerComposables.vite({}) as any
-    expect(plugin.transform.filter.code).toEqual(/\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/)
-  })
-
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
   })

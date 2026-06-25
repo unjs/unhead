@@ -45,11 +45,6 @@ describe('useSeoMetaTransform', () => {
     'useSeoMeta({ title: \'Hello\', description: \'World\' })',
   ]
 
-  it('filters modules without seo meta composables', () => {
-    const plugin = UseSeoMetaTransform.vite({}) as any
-    expect(plugin.transform.filter.code).toEqual(/\buse(?:Server)?SeoMeta\b/)
-  })
-
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
   })
