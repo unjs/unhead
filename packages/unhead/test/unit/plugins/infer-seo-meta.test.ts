@@ -357,6 +357,28 @@ describe('inferSeoMetaPlugin', () => {
     expect(result.headTags).toMatchInlineSnapshot(`"<meta name="twitter:card" content="summary">"`)
   })
 
+  it('does not push default meta entries when registered more than once', () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    head.use(InferSeoMetaPlugin())
+    head.push({
+      title: 'My Title',
+      meta: [{ name: 'description', content: 'My Description' }],
+    })
+
+    const result = renderSSRHead(head)
+    expect(result.headTags).toMatchInlineSnapshot(`
+      "<title>My Title</title>
+      <meta name="description" content="My Description">
+      <meta name="twitter:card" content="summary_large_image">
+      <meta property="og:title" data-infer="" content="My Title">
+      <meta property="og:description" data-infer="" content="My Description">"
+    `)
+  })
+
   it('plugin twitterCard: false disables twitter:card output (#555)', () => {
     const head = createHead({
       disableDefaults: true,

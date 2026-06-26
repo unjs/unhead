@@ -74,5 +74,5 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
         },
       },
     }
-  })
+  }, 'infer-seo-meta')
 }
