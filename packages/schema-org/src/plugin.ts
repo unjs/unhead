@@ -159,5 +159,5 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         },
       },
     }
-  })
+  }, 'schema-org')
 }

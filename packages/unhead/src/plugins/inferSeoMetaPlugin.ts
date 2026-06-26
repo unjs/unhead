@@ -23,11 +23,6 @@ export interface InferSeoMetaPluginOptions {
 
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
   return defineHeadPlugin((head) => {
-    if (head.plugins.has('infer-seo-meta')) {
-      return {
-        key: 'infer-seo-meta',
-      }
-    }
     if (options.twitterCard !== false) {
       head.push({
         meta: [
@@ -79,5 +74,5 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
         },
       },
     }
-  })
+  }, 'infer-seo-meta')
 }

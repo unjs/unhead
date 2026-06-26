@@ -1,6 +1,10 @@
 import type { ActiveHeadEntry, CreateHeadOptions, HeadEntry, HeadEntryOptions, HeadPlugin, HeadPluginInput, HeadRenderer, ResolvableHead, Unhead } from './types'
 
 export function registerPlugin(head: Unhead<any, any>, p: HeadPluginInput) {
+  // a function plugin can declare its key statically so we can bail before
+  // running its setup, which may push tags or wrap head methods as a side effect
+  if (typeof p === 'function' && p.key && head.plugins.has(p.key))
+    return
   const plugin = typeof p === 'function' ? p(head) : p
   const key = plugin.key || String(head.plugins.size + 1)
   if (!head.plugins.get(key)) {
