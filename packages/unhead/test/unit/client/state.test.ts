@@ -58,4 +58,21 @@ describe('state', () => {
     expect(onResize).toHaveBeenCalledOnce()
     expect(onResize.mock.contexts[0]).toBe(second.window.document.body)
   })
+
+  it('replays the SSR class-removal baseline across documents', () => {
+    const first = useDom({ bodyAttrs: 'class="ssr-class"' })
+    const second = useDom({ bodyAttrs: 'class="ssr-class"' })
+    const head = createClientHeadWithContext({ document: first.window.document })
+
+    // SSR delivered class="ssr-class"; the client entry declares it, then drops it
+    const entry = useHead(head, { bodyAttrs: { class: 'ssr-class' } })
+    renderDOMHead(head)
+    entry.patch({ bodyAttrs: {} })
+    renderDOMHead(head)
+    expect(first.window.document.body.classList.contains('ssr-class')).toBe(false)
+
+    // rendering the same head into a second pre-rendered document must still strip the baseline class
+    renderDOMHead(head, { document: second.window.document })
+    expect(second.window.document.body.classList.contains('ssr-class')).toBe(false)
+  })
 })

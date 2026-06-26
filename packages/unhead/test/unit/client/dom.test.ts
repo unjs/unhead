@@ -91,4 +91,26 @@ describe('dom', () => {
     expect(renders).toBe(2)
     expect(head.dirty).toBe(false)
   })
+
+  it('clears dropped attributes and content when a keyed element is reused', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+
+    const entry = head.push({
+      script: [{ 'key': 's1', 'id': 'reused-script', 'innerHTML': 'console.log(1)', 'data-foo': 'bar' }],
+    })
+
+    const el = document.querySelector('script#reused-script')!
+    expect(el).not.toBeNull()
+    expect(el.innerHTML).toBe('console.log(1)')
+    expect(el.getAttribute('data-foo')).toBe('bar')
+
+    // same key keeps the dedupe id stable, so the element is reused rather than recreated
+    entry.patch({ script: [{ key: 's1', id: 'reused-script' }] })
+
+    const after = document.querySelector('script#reused-script')!
+    expect(after).toBe(el)
+    expect(after.innerHTML).toBe('')
+    expect(after.getAttribute('data-foo')).toBeNull()
+  })
 })

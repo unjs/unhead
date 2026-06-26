@@ -81,7 +81,8 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
           }
         }
       }
-      delete entry._o
+      // keep entry._o intact: it is the SSR cleanup baseline and must be replayable
+      // when the same head is rendered into another pre-rendered document.
     }
   }
   return state
@@ -154,10 +155,27 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const isAttr = tag.tag.endsWith('Attrs')
       renderState._e.set(id, $el)
       if (!isAttr) {
-        if (tag.textContent && tag.textContent !== $el.textContent)
-          $el.textContent = tag.textContent
-        if (tag.innerHTML && tag.innerHTML !== $el.innerHTML)
-          $el.innerHTML = tag.innerHTML
+        // Content is tracked so a reused element (same dedupe id) that later drops its
+        // textContent/innerHTML has the stale value cleared. The value guard ensures we only
+        // clear what we set, never SSR-adopted or externally mutated content.
+        const text = tag.textContent
+        if (text != null && text !== '') {
+          if (text !== $el.textContent)
+            $el.textContent = text as string
+          track(id, 'text', () => {
+            if ($el.textContent === text)
+              $el.textContent = ''
+          })
+        }
+        const html = tag.innerHTML
+        if (html != null && html !== '') {
+          if (html !== $el.innerHTML)
+            $el.innerHTML = html as string
+          track(id, 'html', () => {
+            if ($el.innerHTML === html)
+              $el.innerHTML = ''
+          })
+        }
         track(id, 'el', () => {
           $el?.remove()
           renderState._e.delete(id)
@@ -175,8 +193,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         const ck = `attr:${k}`
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
-            if (isAttr)
-              track(id, `${ck}:${c}`, () => $el.classList.remove(c))
+            track(id, `${ck}:${c}`, () => $el.classList.remove(c))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
@@ -190,8 +207,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         else if (v !== false as any && v !== null) {
           if ($el.getAttribute(k) !== v as any)
             $el.setAttribute(k, v === true as any ? '' : String(v))
-          if (isAttr)
-            track(id, ck, () => $el.removeAttribute(k))
+          track(id, ck, () => $el.removeAttribute(k))
         }
       }
     }
