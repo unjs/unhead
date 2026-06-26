@@ -9,13 +9,8 @@ const WHITESPACE_RE = /\s+/
 
 type DomEventHandler = (this: Element, e: Event) => any
 
-interface DomEventSideEffect {
-  target: EventTarget
-  type: string
-  source: DomEventHandler
-  handler: EventListener
-  cleanup: () => void
-}
+// [target, type, source, boundHandler, cleanup] — tuple over object to keep the renderer small
+type DomEventSideEffect = [EventTarget, string, DomEventHandler, EventListener, () => void]
 
 type DomStateInternal = DomState & {
   _d: Document
@@ -135,24 +130,24 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const scope = `event:${k}`
       const key = `${id}:${scope}`
       const prev = renderState._l.get(key)
-      if (prev?.target === target && prev.type === ev && prev.source === source) {
-        track(id, scope, prev.cleanup)
-        if ($el.getAttribute(`data-${k}`) !== '')
-          $el.setAttribute(`data-${k}`, '')
+      // same target/type/source: keep the existing listener, just re-track its cleanup
+      if (prev && prev[0] === target && prev[1] === ev && prev[2] === source) {
+        track(id, scope, prev[4])
         return
       }
-      prev?.cleanup()
+      prev?.[4]()
+      const dk = `data-${k}`
       const handler = ((e: Event) => source.call($el, e)) as EventListener
       const cleanup = () => {
         target.removeEventListener(ev, handler)
-        if ($el.getAttribute(`data-${k}`) === '')
-          $el.removeAttribute(`data-${k}`)
-        if (renderState._l.get(key)?.handler === handler)
+        if ($el.getAttribute(dk) === '')
+          $el.removeAttribute(dk)
+        if (renderState._l.get(key)?.[3] === handler)
           renderState._l.delete(key)
       }
       target.addEventListener(ev, handler)
-      renderState._l.set(key, { target, type: ev, source, handler, cleanup })
-      $el.setAttribute(`data-${k}`, '')
+      renderState._l.set(key, [target, ev, source, handler, cleanup])
+      $el.setAttribute(dk, '')
       // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
       track(id, scope, cleanup, true)
     }
