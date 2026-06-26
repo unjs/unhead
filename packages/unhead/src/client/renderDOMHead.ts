@@ -114,15 +114,20 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       state = createDomState(head, activeDocument)
     }
     else {
-      state._p = { ...state._s }
+      // hand the previous render's side effects to _p (cleanup pool) by reference; track()
+      // reclaims the ones that are still live and the rest are disposed after this pass
+      state._p = state._s
     }
     state._s = {}
     state._l ||= new Map()
     const renderState = state
 
-    function track(id: string, scope: string, fn: () => void) {
+    function track(id: string, scope: string, fn: () => void, fresh?: boolean) {
       const k = `${id}:${scope}`
-      renderState._s[k] = fn
+      // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
+      // closure, so this avoids reallocating ~one closure per tracked prop every frame. `fresh` opts
+      // out for content closures, which capture a value that can change between renders.
+      renderState._s[k] = (!fresh && renderState._p[k]) || fn
       delete renderState._p[k]
     }
 
@@ -148,7 +153,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       target.addEventListener(ev, handler)
       renderState._l.set(key, { target, type: ev, source, handler, cleanup })
       $el.setAttribute(`data-${k}`, '')
-      track(id, scope, cleanup)
+      // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
+      track(id, scope, cleanup, true)
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
@@ -165,7 +171,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           track(id, 'text', () => {
             if ($el.textContent === text)
               $el.textContent = ''
-          })
+          }, true)
         }
         const html = tag.innerHTML
         if (html != null && html !== '') {
@@ -174,7 +180,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           track(id, 'html', () => {
             if ($el.innerHTML === html)
               $el.innerHTML = ''
-          })
+          }, true)
         }
         track(id, 'el', () => {
           $el?.remove()
