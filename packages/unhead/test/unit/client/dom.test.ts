@@ -105,8 +105,10 @@ describe('dom', () => {
     expect(el.innerHTML).toBe('console.log(1)')
     expect(el.getAttribute('data-foo')).toBe('bar')
 
-    // same key keeps the dedupe id stable, so the element is reused rather than recreated
-    entry.patch({ script: [{ key: 's1', id: 'reused-script' }] })
+    // same key keeps the dedupe id stable, so the element is reused rather than recreated;
+    // innerHTML and data-foo are dropped and must be cleared. Cast: the strict script type makes
+    // src/innerHTML mutually exclusive, so a content-less reused inline script isn't expressible.
+    entry.patch({ script: [{ key: 's1', id: 'reused-script' }] } as any)
 
     const after = document.querySelector('script#reused-script')!
     expect(after).toBe(el)
