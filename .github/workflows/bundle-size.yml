@@ -33,6 +33,9 @@ jobs:
 
       - name: Build base branch bundles
         run: |
+          # the PR's perf harness may not exist on the base ref; keep a copy so we can
+          # measure the base build with the same script (same runner cancels variance)
+          cp bench/perf-ci.mjs /tmp/perf-ci.mjs
           git checkout ${{ github.base_ref }}
           pnpm install
           pnpm build
@@ -43,9 +46,13 @@ jobs:
           pnpm test:vue-bundle-size || true
           pnpm test:react-bundle-size || true
           pnpm test:schema-org-bundle-size || true
-          # snapshot the whole base dist; analyze.ts diffs PR dist against it by path
+          # snapshot the whole base dist; report.ts diffs PR dist against it by path
           rm -rf /tmp/base-dist
           cp -r bench/bundle/dist /tmp/base-dist
+          # measure base perf against the base-built packages, then clean up
+          cp /tmp/perf-ci.mjs bench/perf-ci.mjs
+          node --expose-gc bench/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
+          rm -f bench/perf-ci.mjs
           git checkout -
 
       - name: Build PR bundles
@@ -56,6 +63,7 @@ jobs:
           pnpm test:vue-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
+          node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
@@ -65,12 +73,14 @@ jobs:
           date=$(git show -s --format=%cs "${{ github.event.pull_request.base.sha }}")
           echo "BASE_LABEL=${{ github.base_ref }} @ $sha · $date" >> "$GITHUB_ENV"
 
-      - name: Run analyze script
+      - name: Run report script
         id: analyze
         env:
           BASE_DIST: /tmp/base-dist
+          BASE_PERF: /tmp/base-perf.json
+          PR_PERF: /tmp/pr-perf.json
         run: |
-          output=$(bun bench/bundle/analyze.ts)
+          output=$(bun bench/bundle/report.ts)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT
