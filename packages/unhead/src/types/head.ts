@@ -70,7 +70,7 @@ export interface HeadPluginOptions extends CreateHeadOptions {
   hooks?: Record<string, (...args: any[]) => any>
 }
 
-export type HeadPluginInput = HeadPluginOptions & { key: string } | ((head: Unhead) => HeadPluginOptions & { key: string })
+export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
 export type HeadPlugin = HeadPluginOptions & { key: string }
 
 /**
