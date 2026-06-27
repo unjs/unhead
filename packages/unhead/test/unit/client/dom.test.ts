@@ -136,3 +136,54 @@ describe('dom', () => {
     expect(el.innerHTML).toBe('.c{color:green}')
   })
 })
+
+// The renderer reconciles by reusing the element behind a stable dedupe identity. When a
+// reused element DROPS a value across renders (rather than updating it), the stale value must
+// be cleared. The common patterns below already worked; the keyed-drop cases are what this
+// fixes — without a `key`, dropping a value usually changes the dedupe identity (fresh element,
+// no stale state), but a `key` forces reuse, so the drop has to be cleaned up explicitly.
+describe('reused element drop reconciliation', () => {
+  it('updates content in place (no stale value)', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ name: 'description', content: 'Page A' }] })
+    entry.patch({ meta: [{ name: 'description', content: 'Page B' }] })
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Page B')
+  })
+
+  it('removes a tag that is dropped entirely', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ name: 'robots', content: 'noindex' }] })
+    entry.patch({})
+    expect(document.querySelector('meta[name="robots"]')).toBeNull()
+  })
+
+  it('clears a dropped attribute on an unkeyed reused tag', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ property: 'og:image', content: '/old.png' }] })
+    entry.patch({ meta: [{ property: 'og:image' }] } as any)
+    // no key: a content-less meta is sanitized out entirely, so the stale value can't linger
+    const m = document.querySelector('meta[property="og:image"]')
+    expect(m?.getAttribute('content') ?? null).toBeNull()
+  })
+
+  it('clears dropped inline content on a keyed reused tag (stale structured data)', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ script: [{ key: 'ld', type: 'application/ld+json', innerHTML: '{"@type":"Product"}' }] })
+    expect(document.querySelector('script[type="application/ld+json"]')?.innerHTML).toBe('{"@type":"Product"}')
+    entry.patch({ script: [{ key: 'ld', type: 'application/ld+json' }] } as any)
+    const el = document.querySelector('script[type="application/ld+json"]')
+    expect(el == null || el.innerHTML === '').toBe(true)
+  })
+
+  it('clears a dropped data-* attribute on a keyed reused tag', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const entry = head.push({ meta: [{ 'key': 'x', 'name': 'theme-color', 'content': '#fff', 'data-flag': 'on' }] })
+    entry.patch({ meta: [{ key: 'x', name: 'theme-color', content: '#fff' }] })
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('data-flag')).toBeNull()
+  })
+})
