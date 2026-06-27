@@ -62,10 +62,11 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     significant = Math.abs(deltaPct) > threshold
   }
   else if (pr.kind === 'count') {
-    significant = Math.abs(deltaPct) > COUNT_FLOOR_PCT && Math.abs(delta) > COUNT_FLOOR_UNITS
+    // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
+    significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
   else {
-    significant = Math.abs(deltaPct) > ALLOC_FLOOR_PCT && Math.abs(delta) > ALLOC_FLOOR_BYTES
+    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > ALLOC_FLOOR_PCT)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
@@ -94,7 +95,7 @@ export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
 
   const out: string[] = ['## ⚡ Performance _(directional)_', '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} slower** · gated at \`|Δ| > max(10%, 2×RME)\``)
+    out.push(`⚠️ **${slower.length} slower** · past the per-metric noise gate`)
   else if (changed.length)
     out.push(`🟢 **${changed.length} faster**`)
   else

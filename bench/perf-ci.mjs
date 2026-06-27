@@ -104,8 +104,11 @@ async function csrBenches() {
     const req = createRequire(`${process.cwd()}/`)
     ;({ JSDOM } = await import(pathToFileURL(req.resolve('jsdom')).href))
   }
-  catch {
-    return []
+  catch (e) {
+    // skip CSR only when jsdom genuinely isn't installed; surface any other failure
+    if (e?.code === 'MODULE_NOT_FOUND' || e?.code === 'ERR_MODULE_NOT_FOUND')
+      return []
+    throw e
   }
   const { createHead } = await dist('client.mjs')
 
@@ -130,7 +133,8 @@ async function csrBenches() {
   let muts = 0
   const obs = new W.MutationObserver((records) => {
     for (const r of records)
-      muts += r.type === 'attributes' ? 1 : r.addedNodes.length + r.removedNodes.length
+      // childList counts each node touched; attribute and characterData (title/text) are one op each
+      muts += r.type === 'childList' ? r.addedNodes.length + r.removedNodes.length : 1
   })
   obs.observe(W.document.documentElement, { attributes: true, childList: true, subtree: true, characterData: true })
   const N = 200
