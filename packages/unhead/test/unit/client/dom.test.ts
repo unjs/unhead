@@ -115,4 +115,24 @@ describe('dom', () => {
     expect(after.innerHTML).toBe('')
     expect(after.getAttribute('data-foo')).toBeNull()
   })
+
+  it('switches a reused element between innerHTML and textContent without leaking stale content', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+
+    const entry = head.push({ style: [{ key: 's1', id: 'sw', innerHTML: '.a{color:red}' }] })
+    const el = document.querySelector('style#sw')!
+    expect(el.innerHTML).toBe('.a{color:red}')
+
+    // same key -> element reused. Switch html -> text: the dropped html cleanup must not
+    // clobber the freshly set textContent, and the new text must fully replace the old content.
+    entry.patch({ style: [{ key: 's1', id: 'sw', textContent: '.b{color:blue}' }] } as any)
+    expect(document.querySelector('style#sw')).toBe(el)
+    expect(el.textContent).toBe('.b{color:blue}')
+    expect(el.innerHTML).toBe('.b{color:blue}')
+
+    // switch back text -> html
+    entry.patch({ style: [{ key: 's1', id: 'sw', innerHTML: '.c{color:green}' }] } as any)
+    expect(el.innerHTML).toBe('.c{color:green}')
+  })
 })
