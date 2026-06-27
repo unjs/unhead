@@ -41,6 +41,11 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
   let enabled = false
   let plugin: Plugin | undefined
   let pluginPromise: Promise<Plugin> | undefined
+  // configResolved runs once and early; cache it so a late devtools.setup() (which enables
+  // devtools after configResolved already returned without forwarding) can replay it to the
+  // real plugin, initializing its root/bridgeCode/unheadVersion/_ctx before load/transform run
+  let resolvedConfig: any
+  let configForwarded = false
 
   async function resolvePlugin(): Promise<Plugin> {
     if (plugin)
@@ -69,9 +74,11 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
     apply: 'serve',
 
     async configResolved(config) {
+      resolvedConfig = config
       enabled = isViteDevtoolsEnabled(config)
       if (!enabled)
         return
+      configForwarded = true
       return callHook('configResolved', this, [config])
     },
 
@@ -105,6 +112,12 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
       async setup(ctx) {
         enabled = true
         const resolved = await resolvePlugin() as LazyDevtoolsPlugin
+        // if configResolved already ran while devtools looked disabled, the real plugin never
+        // received it; replay the cached config first so its state is initialized before setup
+        if (!configForwarded && resolvedConfig) {
+          configForwarded = true
+          await callHook('configResolved', this, [resolvedConfig])
+        }
         await resolved.devtools?.setup?.(ctx)
       },
     },
