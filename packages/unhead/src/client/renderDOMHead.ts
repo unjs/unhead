@@ -126,6 +126,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       delete renderState._p[k]
     }
 
+    // Reclaim the previous render's cleanup for a key (and remove it from the pool), or undefined.
+    // Used as `_s[key] = reclaim(key) || (() => ...)` so the cleanup closure sits on the right of
+    // `||` and is only allocated when the key is new — a stable re-render allocates no closures.
+    function reclaim(key: string): (() => void) | undefined {
+      const prev = renderState._p[key]
+      delete renderState._p[key]
+      return prev
+    }
+
     function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
       const scope = `event:${k}`
       const key = `${id}:${scope}`
@@ -177,7 +186,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               $el.innerHTML = ''
           }, true)
         }
-        track(id, 'el', () => {
+        const elKey = `${id}:el`
+        renderState._s[elKey] = reclaim(elKey) || (() => {
           $el?.remove()
           renderState._e.delete(id)
         })
@@ -191,24 +201,26 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && activeDocument.defaultView ? activeDocument.defaultView : $el)
           continue
         }
-        const ck = `attr:${k}`
+        const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
-            track(id, `${ck}:${c}`, () => $el.classList.remove(c))
+            const key = `${ck}:${c}`
+            renderState._s[key] = reclaim(key) || (() => $el.classList.remove(c))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
         }
         else if (k === 'style' && v) {
           for (const [sk, sv] of v as Iterable<[string, string]>) {
-            track(id, `${ck}:${sk}`, () => ($el as HTMLElement).style.removeProperty(sk))
+            const key = `${ck}:${sk}`
+            renderState._s[key] = reclaim(key) || (() => ($el as HTMLElement).style.removeProperty(sk))
             ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         else if (v !== false as any && v !== null) {
           if ($el.getAttribute(k) !== v as any)
             $el.setAttribute(k, v === true as any ? '' : String(v))
-          track(id, ck, () => $el.removeAttribute(k))
+          renderState._s[ck] = reclaim(ck) || (() => $el.removeAttribute(k))
         }
       }
     }
