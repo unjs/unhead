@@ -4,8 +4,13 @@
 //  - SSR retained heap over a fixed run (leak indicator, needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
-import { useHead, useSeoMeta } from '../packages/unhead/dist/index.mjs'
-import { createHead, renderSSRHead } from '../packages/unhead/dist/server.mjs'
+import { pathToFileURL } from 'node:url'
+
+// resolve built dist from the repo root (cwd) so this harness can run from anywhere
+// (e.g. /tmp during the base-branch measurement) without a relative path back to packages/
+const dist = name => import(pathToFileURL(`${process.cwd()}/packages/unhead/dist/${name}`).href)
+const { useHead, useSeoMeta } = await dist('index.mjs')
+const { createHead, renderSSRHead } = await dist('server.mjs')
 
 function renderMediumSsrHead() {
   const head = createHead({ disableDefaults: true })

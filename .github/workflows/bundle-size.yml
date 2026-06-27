@@ -49,10 +49,9 @@ jobs:
           # snapshot the whole base dist; report.ts diffs PR dist against it by path
           rm -rf /tmp/base-dist
           cp -r bench/bundle/dist /tmp/base-dist
-          # measure base perf against the base-built packages, then clean up
-          cp /tmp/perf-ci.mjs bench/perf-ci.mjs
-          node --expose-gc bench/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
-          rm -f bench/perf-ci.mjs
+          # measure base perf with the PR's harness against the base-built packages;
+          # run from /tmp so the working tree stays clean across the checkout back
+          node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
           git checkout -
 
       - name: Build PR bundles
