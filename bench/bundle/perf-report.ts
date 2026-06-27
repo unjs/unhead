@@ -72,7 +72,7 @@ function deltaCell(row: Row): string {
 }
 
 export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
-  const rows = pr.benches.map(b => classify(b, base?.benches.find(x => x.id === b.id)))
+  const rows = pr.benches.map(b => classify(b, base?.benches?.find(x => x.id === b.id)))
   const changed = rows.filter(r => r.status === 'slower' || r.status === 'faster')
   const slower = changed.filter(r => r.status === 'slower')
 

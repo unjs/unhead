@@ -12,8 +12,9 @@ function readPerf(p?: string) {
   return p && fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null
 }
 
+// guard on benches: a perf run that failed writes `{}`, which must skip the section, not crash
 const prPerf = readPerf(process.env.PR_PERF)
-if (prPerf)
+if (prPerf?.benches?.length)
   sections.push(renderPerfReport(readPerf(process.env.BASE_PERF), prPerf))
 
 let out = sections.join('\n\n---\n\n')
