@@ -36,18 +36,16 @@ jobs:
           git checkout ${{ github.base_ref }}
           pnpm install
           pnpm build
-          pnpm test:bundle-size
-          pnpm test:vue-bundle-size
-          # base ref may predate the schema-org bundle config; tolerate its absence so the
-          # other baselines are still produced and the new rows show as a fresh bundle
+          # the base ref may predate some bundle configs (react, full, schema-org);
+          # tolerate their absence so the other baselines are still produced and the
+          # new bundles surface as fresh rather than failing the run
+          pnpm test:bundle-size || true
+          pnpm test:vue-bundle-size || true
+          pnpm test:react-bundle-size || true
           pnpm test:schema-org-bundle-size || true
-          cp bench/bundle/dist/client/client/minimal.mjs /tmp/base-client.mjs
-          cp bench/bundle/dist/server/server/minimal.mjs /tmp/base-server.mjs
-          cp bench/bundle/dist/vue-server/vue-server/minimal.mjs /tmp/base-vue-server.mjs
-          cp bench/bundle/dist/vue-client/vue-client/minimal.mjs /tmp/base-vue-client.mjs
-          cp bench/bundle/dist/schema-org/schema-org/minimal.mjs /tmp/base-schema-org.mjs || true
-          cp bench/bundle/dist/schema-org/schema-org/imports.mjs /tmp/base-schema-org-imports.mjs || true
-          cp bench/bundle/dist/schema-org/schema-org/vue-meta.mjs /tmp/base-schema-org-vue-meta.mjs || true
+          # snapshot the whole base dist; analyze.ts diffs PR dist against it by path
+          rm -rf /tmp/base-dist
+          cp -r bench/bundle/dist /tmp/base-dist
           git checkout -
 
       - name: Build PR bundles
@@ -56,6 +54,7 @@ jobs:
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
+          pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -68,8 +67,10 @@ jobs:
 
       - name: Run analyze script
         id: analyze
+        env:
+          BASE_DIST: /tmp/base-dist
         run: |
-          output=$(bun bench/bundle/analyze.ts /tmp/base-client.mjs /tmp/base-server.mjs /tmp/base-vue-client.mjs /tmp/base-vue-server.mjs /tmp/base-schema-org.mjs /tmp/base-schema-org-imports.mjs /tmp/base-schema-org-vue-meta.mjs)
+          output=$(bun bench/bundle/analyze.ts)
           echo "$output"
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT
