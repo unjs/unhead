@@ -90,7 +90,23 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
     tag.innerHTML = JSON.stringify(tag.innerHTML)
     tag.props.type = tag.props.type || 'application/json'
   }
-  return Array.isArray(tag.props.content) ? tag.props.content.map(v => ({ ...tag, props: { ...tag.props, content: v } })) : tag
+  if (Array.isArray(tag.props.content)) {
+    const tags: HeadTag[] = []
+    for (const content of tag.props.content) {
+      tags.push({ ...tag, props: { ...tag.props, content } })
+    }
+    return tags
+  }
+  return tag
+}
+
+function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
+  if (Array.isArray(tag)) {
+    for (const t of tag) tags.push(t)
+  }
+  else {
+    tags.push(tag)
+  }
 }
 
 export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
@@ -112,12 +128,17 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     input = resolve(undefined, input)
   }
   input = walkResolver(input, resolve)
-  const tags: (HeadTag | HeadTag[])[] = []
+  const tags: HeadTag[] = []
   for (const key in input) {
     const value = input[key]
     if (value !== undefined) {
-      for (const v of (Array.isArray(value) ? value : [value])) tags.push(normalizeTag(key as keyof ResolvableHead, v))
+      if (Array.isArray(value)) {
+        for (const v of value) pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, v))
+      }
+      else {
+        pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, value))
+      }
     }
   }
-  return tags.flat()
+  return tags
 }
