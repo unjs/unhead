@@ -5,7 +5,11 @@ const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
 export function isMetaArrayDupeKey(v: string) {
-  return MetaTagsArrayable.has(v.split(':')[1])
+  const i = v.indexOf(':')
+  if (i === -1)
+    return false
+  const j = v.indexOf(':', i + 1)
+  return MetaTagsArrayable.has(v.slice(i + 1, j === -1 ? v.length : j))
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
