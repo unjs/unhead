@@ -35,9 +35,8 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 }
 
 function cleanupDomState(state: DomStateInternal) {
-  const cleanups = new Set([...Object.values(state._s), ...Object.values(state._p)])
-  for (const cleanup of cleanups)
-    cleanup()
+  for (const k in state._s) state._s[k]()
+  for (const k in state._p) state._p[k]()
   state._s = {}
   state._p = {}
   state._e.clear()
@@ -230,13 +229,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     head.dirty = false
     const rawTags = resolveTags(head, options.tagWeight ? { tagWeight: options.tagWeight } : undefined)
     const tags: DomRenderTagContext[] = []
-    const dupeKeyCounter = new Map<string, number>()
+    const dupeKeyCounter: Record<string, number> = {}
     for (const tag of rawTags) {
-      const count = dupeKeyCounter.get(tag._d!) || 0
+      const count = dupeKeyCounter[tag._d!] || 0
       const id = (count ? `${tag._d}:${count}` : tag._d) || tag._h!
       const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
       if (tag._d && isMetaArrayDupeKey(tag._d))
-        dupeKeyCounter.set(tag._d, count + 1)
+        dupeKeyCounter[tag._d] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {
         activeDocument.title = tag.textContent as string
