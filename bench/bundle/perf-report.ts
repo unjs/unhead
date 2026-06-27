@@ -5,6 +5,9 @@
 //           (~0 noise), so a tight gate surfaces the marginal gains time can't show.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
+// Wall time is `informational`: shown for reference but it never drives the verdict, because
+// it's the noisiest signal (GC/scheduling) and would false-alarm while CPU and the
+// deterministic metrics agree. CPU is the gated time authority.
 
 export interface PerfBench {
   id: string
@@ -13,6 +16,8 @@ export interface PerfBench {
   value: number
   rme?: number
   runs?: number
+  // reported for reference but excluded from the verdict (e.g. wall time)
+  informational?: boolean
 }
 
 export interface PerfRun {
@@ -77,6 +82,9 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
 function deltaCell(row: Row): string {
   if (row.status === 'new')
     return '🆕 new'
+  // informational metrics (wall time) report their delta neutrally, never as slower/faster
+  if (row.bench.informational)
+    return row.status === 'same' ? '~ noise' : `ℹ️ ${fmtPct(row.deltaPct)}`
   if (row.status === 'same')
     return '~ noise'
   const emoji = row.status === 'slower' ? '🔴' : '🟢'
@@ -90,7 +98,8 @@ function deltaCell(row: Row): string {
 
 export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
   const rows = pr.benches.map(b => classify(b, base?.benches?.find(x => x.id === b.id)))
-  const changed = rows.filter(r => r.status === 'slower' || r.status === 'faster')
+  // informational benches (wall time) are shown in the details but never drive the verdict
+  const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
   const slower = changed.filter(r => r.status === 'slower')
 
   const out: string[] = ['## ⚡ Performance _(directional)_', '']

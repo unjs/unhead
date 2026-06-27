@@ -146,7 +146,7 @@ async function csrBenches() {
   return [
     { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', value: muts / N },
     { id: 'csr-nav-cpu', name: 'CSR re-render (CPU)', kind: 'time', value: t.cpu.value, rme: t.cpu.rme },
-    { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme },
+    { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme, informational: true },
   ]
 }
 
@@ -156,7 +156,7 @@ const alloc = measureAlloc(renderMediumSsrHead)
 const result = {
   benches: [
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
-    { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme },
+    { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value },
     ...await csrBenches(),
   ],
