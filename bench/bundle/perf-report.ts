@@ -1,13 +1,13 @@
-// Renders the directional Performance section. CI noise on shared runners is real,
-// so a change is only surfaced when it clears a gate:
-//  - time:   |Δ| > max(10%, 2× combined relative margin of error)
-//  - memory: |Δ| > 512 KiB retained (a percentage gate is meaningless here because
-//            retained heap hovers around zero; only a genuine leak clears 512 KiB)
+// Renders the directional Performance section. A change is only surfaced past a gate:
+//  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
+//           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
+//  - alloc: |Δ| > max(2%, 1 KiB). Bytes allocated per render is near-deterministic
+//           (~0 noise), so a tight gate surfaces the marginal gains time can't show.
 
 export interface PerfBench {
   id: string
   name: string
-  kind: 'time' | 'memory'
+  kind: 'time' | 'alloc'
   value: number
   rme?: number
   runs?: number
@@ -17,8 +17,9 @@ export interface PerfRun {
   benches: PerfBench[]
 }
 
-const TIME_FLOOR_PCT = 10
-const MEM_FLOOR_BYTES = 512 * 1024
+const TIME_FLOOR_PCT = 5
+const ALLOC_FLOOR_PCT = 2
+const ALLOC_FLOOR_BYTES = 1024
 
 type Status = 'new' | 'slower' | 'faster' | 'same'
 
@@ -36,6 +37,10 @@ function fmtValue(b: PerfBench): string {
   return `${kib} KiB`
 }
 
+function fmtKib(bytes: number): string {
+  return `${Math.round((bytes / 1024) * 10) / 10} KiB`
+}
+
 function fmtPct(pct: number): string {
   return `${pct > 0 ? '+' : '-'}${Math.abs(pct).toFixed(1)}%`
 }
@@ -51,11 +56,11 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     significant = Math.abs(deltaPct) > threshold
   }
   else {
-    significant = Math.abs(delta) > MEM_FLOOR_BYTES
+    significant = Math.abs(deltaPct) > ALLOC_FLOOR_PCT && Math.abs(delta) > ALLOC_FLOOR_BYTES
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
-  // higher is worse for both wall-time and retained heap
+  // higher is worse for both time and allocation
   return { bench: pr, base, status: delta > 0 ? 'slower' : 'faster', deltaPct }
 }
 
@@ -67,8 +72,8 @@ function deltaCell(row: Row): string {
   const emoji = row.status === 'slower' ? '🔴' : '🟢'
   if (row.bench.kind === 'time')
     return `${emoji} ${fmtPct(row.deltaPct)}`
-  const deltaKib = Math.round(((row.bench.value - (row.base?.value ?? 0)) / 1024) * 10) / 10
-  return `${emoji} ${deltaKib > 0 ? '+' : ''}${deltaKib} KiB`
+  const delta = row.bench.value - (row.base?.value ?? 0)
+  return `${emoji} ${delta > 0 ? '+' : '-'}${fmtKib(Math.abs(delta))} (${fmtPct(row.deltaPct)})`
 }
 
 export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
