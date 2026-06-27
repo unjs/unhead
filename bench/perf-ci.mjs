@@ -72,18 +72,19 @@ function measureTimes(fn, { warmup = 50, reps = 40, runs = 250 } = {}) {
   return { wall: stats(wall), cpu: stats(cpu) }
 }
 
-// bytes allocated per render. The batch (`runs`) stays under new-space so no scavenge
-// fires mid-batch, making heapUsed delta == bytes allocated. Allocation is near
-// deterministic, so the median across reps has tiny variance — marginal wins (which
-// noisy wall-time hides) show up here.
-function measureAlloc(fn, { warmup = 50, reps = 25, runs = 60 } = {}) {
+// bytes allocated per render. Measure ONE render between forced GCs: a single render
+// stays well under young-gen, so no scavenge fires mid-measurement and the heapUsed
+// delta is the full allocation. (Batching many renders overflows young-gen, triggering
+// a scavenge that undercounts by a GC-timing-dependent amount — ~4% cross-process noise
+// that false-flagged unrelated PRs.) The median over reps is stable to ~1-2%.
+function measureAlloc(fn, { warmup = 50, reps = 60 } = {}) {
   for (let i = 0; i < warmup; i++) fn()
   const samples = []
   for (let r = 0; r < reps; r++) {
     forceGC()
     const before = process.memoryUsage().heapUsed
-    for (let i = 0; i < runs; i++) fn()
-    samples.push((process.memoryUsage().heapUsed - before) / runs)
+    fn()
+    samples.push(process.memoryUsage().heapUsed - before)
   }
   samples.sort((a, b) => a - b)
   return { value: samples[samples.length >> 1] }

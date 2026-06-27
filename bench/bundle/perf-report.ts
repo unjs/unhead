@@ -1,8 +1,9 @@
 // Renders the directional Performance section. A change is only surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
-//  - alloc: |Δ| > max(2%, 1 KiB). Bytes allocated per render is near-deterministic
-//           (~0 noise), so a tight gate surfaces the marginal gains time can't show.
+//  - alloc: |Δ| > max(3%, 1 KiB). Bytes allocated per render is measured one render at
+//           a time (no GC mid-measurement); residual cross-process noise is ~1-2%, so the
+//           gate sits at ~2x that to avoid flagging unrelated PRs while still catching wins.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
 // Wall time is `informational`: shown for reference but it never drives the verdict, because
@@ -25,7 +26,7 @@ export interface PerfRun {
 }
 
 const TIME_FLOOR_PCT = 5
-const ALLOC_FLOOR_PCT = 2
+const ALLOC_FLOOR_PCT = 3
 const ALLOC_FLOOR_BYTES = 1024
 const COUNT_FLOOR_PCT = 2
 const COUNT_FLOOR_UNITS = 0.5
