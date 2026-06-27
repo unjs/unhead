@@ -8,7 +8,7 @@
     "gz": 8129
   },
   "server": {
-    "size": 11629,
+    "size": 11623,
     "gz": 4655
   },
   "vueClient": {
@@ -20,8 +20,8 @@
     "gz": 8908
   },
   "vueServer": {
-    "size": 12644,
-    "gz": 5131
+    "size": 12638,
+    "gz": 5125
   },
   "reactClient": {
     "size": 12979,
@@ -32,12 +32,12 @@
     "gz": 8736
   },
   "reactServer": {
-    "size": 12319,
-    "gz": 4935
+    "size": 12313,
+    "gz": 4934
   },
   "schemaOrg": {
-    "size": 26897,
-    "gz": 9743
+    "size": 26890,
+    "gz": 9738
   },
   "schemaOrgImports": {
     "size": 98,
