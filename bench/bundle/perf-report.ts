@@ -3,11 +3,13 @@
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
 //  - alloc: |Δ| > max(2%, 1 KiB). Bytes allocated per render is near-deterministic
 //           (~0 noise), so a tight gate surfaces the marginal gains time can't show.
+//  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
+//           so a half-op change is real (a renderer touching more of the DOM).
 
 export interface PerfBench {
   id: string
   name: string
-  kind: 'time' | 'alloc'
+  kind: 'time' | 'alloc' | 'count'
   value: number
   rme?: number
   runs?: number
@@ -20,6 +22,8 @@ export interface PerfRun {
 const TIME_FLOOR_PCT = 5
 const ALLOC_FLOOR_PCT = 2
 const ALLOC_FLOOR_BYTES = 1024
+const COUNT_FLOOR_PCT = 2
+const COUNT_FLOOR_UNITS = 0.5
 
 type Status = 'new' | 'slower' | 'faster' | 'same'
 
@@ -33,6 +37,8 @@ interface Row {
 function fmtValue(b: PerfBench): string {
   if (b.kind === 'time')
     return `${b.value.toFixed(3)} ms`
+  if (b.kind === 'count')
+    return `${Math.round(b.value * 10) / 10}`
   const kib = Math.round((b.value / 1024) * 10) / 10
   return `${kib} KiB`
 }
@@ -55,12 +61,16 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     const threshold = Math.max(TIME_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
     significant = Math.abs(deltaPct) > threshold
   }
+  else if (pr.kind === 'count') {
+    // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
+    significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
+  }
   else {
-    significant = Math.abs(deltaPct) > ALLOC_FLOOR_PCT && Math.abs(delta) > ALLOC_FLOOR_BYTES
+    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > ALLOC_FLOOR_PCT)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
-  // higher is worse for both time and allocation
+  // higher is worse for time, allocation and DOM-mutation count
   return { bench: pr, base, status: delta > 0 ? 'slower' : 'faster', deltaPct }
 }
 
@@ -73,6 +83,8 @@ function deltaCell(row: Row): string {
   if (row.bench.kind === 'time')
     return `${emoji} ${fmtPct(row.deltaPct)}`
   const delta = row.bench.value - (row.base?.value ?? 0)
+  if (row.bench.kind === 'count')
+    return `${emoji} ${delta > 0 ? '+' : ''}${Math.round(delta * 10) / 10} (${fmtPct(row.deltaPct)})`
   return `${emoji} ${delta > 0 ? '+' : '-'}${fmtKib(Math.abs(delta))} (${fmtPct(row.deltaPct)})`
 }
 
@@ -83,7 +95,7 @@ export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
 
   const out: string[] = ['## ⚡ Performance _(directional)_', '']
   if (slower.length)
-    out.push(`⚠️ **${slower.length} slower** · gated at \`|Δ| > max(10%, 2×RME)\``)
+    out.push(`⚠️ **${slower.length} slower** · past the per-metric noise gate`)
   else if (changed.length)
     out.push(`🟢 **${changed.length} faster**`)
   else

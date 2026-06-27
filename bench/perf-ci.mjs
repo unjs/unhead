@@ -92,6 +92,64 @@ function measureAlloc(fn, { warmup = 50, reps = 25, runs = 60 } = {}) {
 if (typeof globalThis.gc !== 'function')
   throw new TypeError('Run with node --expose-gc so allocation can be measured.')
 
+// CSR: client re-render (SPA navigation) against a jsdom document. The faithful,
+// browser-agnostic signal is DOM mutation count (a good diff touches only what
+// changed); jsdom heap alloc is NOT measured here because it's dominated by jsdom
+// internals, not the renderer. Time is directional. Skipped if jsdom is absent.
+async function csrBenches() {
+  let JSDOM
+  try {
+    // resolve jsdom from cwd (repo root), not this script's dir — base perf runs it from /tmp
+    const { createRequire } = await import('node:module')
+    const req = createRequire(`${process.cwd()}/`)
+    ;({ JSDOM } = await import(pathToFileURL(req.resolve('jsdom')).href))
+  }
+  catch (e) {
+    // skip CSR only when jsdom genuinely isn't installed; surface any other failure
+    if (e?.code === 'MODULE_NOT_FOUND' || e?.code === 'ERR_MODULE_NOT_FOUND')
+      return []
+    throw e
+  }
+  const { createHead } = await dist('client.mjs')
+
+  const pageHead = i => ({
+    title: `Page ${i}`,
+    titleTemplate: '%s | Site',
+    htmlAttrs: { class: `theme-${i % 3} loaded` },
+    meta: Array.from({ length: 20 }, (_, j) => ({ name: `m${j}`, content: `v${i}-${j}` })),
+    link: Array.from({ length: 6 }, (_, j) => ({ rel: 'preload', as: 'script', href: `/_nuxt/c${i}-${j}.js` })),
+    script: [{ src: `/app-${i}.js`, defer: true }],
+  })
+
+  const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
+  const W = dom.window
+  const head = createHead({ document: W.document })
+  const entry = head.push(pageHead(0))
+  let i = 1
+  const nav = () => entry.patch(pageHead(i++))
+
+  // DOM mutations per navigation (deterministic): observe a fixed window of navs
+  for (let w = 0; w < 20; w++) nav()
+  let muts = 0
+  const obs = new W.MutationObserver((records) => {
+    for (const r of records)
+      // childList counts each node touched; attribute and characterData (title/text) are one op each
+      muts += r.type === 'childList' ? r.addedNodes.length + r.removedNodes.length : 1
+  })
+  obs.observe(W.document.documentElement, { attributes: true, childList: true, subtree: true, characterData: true })
+  const N = 200
+  for (let k = 0; k < N; k++) nav()
+  await new Promise(r => setTimeout(r, 0)) // flush the observer's microtask queue
+  obs.disconnect()
+
+  const t = measureTimes(nav, { warmup: 50, reps: 30, runs: 60 })
+  return [
+    { id: 'csr-nav-mutations', name: 'CSR DOM mutations / nav', kind: 'count', value: muts / N },
+    { id: 'csr-nav-cpu', name: 'CSR re-render (CPU)', kind: 'time', value: t.cpu.value, rme: t.cpu.rme },
+    { id: 'csr-nav-wall', name: 'CSR re-render (wall)', kind: 'time', value: t.wall.value, rme: t.wall.rme },
+  ]
+}
+
 const times = measureTimes(renderMediumSsrHead)
 const alloc = measureAlloc(renderMediumSsrHead)
 
@@ -100,6 +158,7 @@ const result = {
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value },
+    ...await csrBenches(),
   ],
 }
 
