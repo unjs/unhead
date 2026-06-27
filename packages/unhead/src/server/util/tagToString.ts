@@ -15,12 +15,16 @@ export function escapeHtml(str: string) {
 export function tagToString<T extends HeadTag>(tag: T) {
   const attrs = propsToString(tag.props)
   const openTag = `<${tag.tag}${attrs}>`
-  // get the encoding depending on the tag type
+  // self-closing (meta/link/base) is the common SSR tag: one Set lookup, no close tag.
+  // SelfClosingTags and TagsWithInnerContent are disjoint, so the second SelfClosingTags.has()
+  // the content branch used to do was provably dead.
+  if (SelfClosingTags.has(tag.tag))
+    return openTag
   if (!TagsWithInnerContent.has(tag.tag))
-    return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}</${tag.tag}>`
+    return `${openTag}</${tag.tag}>`
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent || tag.innerHTML || '')
   content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
-  return SelfClosingTags.has(tag.tag) ? openTag : `${openTag}${content}</${tag.tag}>`
+  return `${openTag}${content}</${tag.tag}>`
 }
