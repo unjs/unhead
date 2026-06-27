@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import zlib from 'node:zlib'
 
@@ -9,70 +10,110 @@ function formatSize(size: number): string {
   return `${Math.round(size / 102.4) / 10} kB`
 }
 
-function formatDiff(diffBytes: number): string {
-  // Round to see if it's effectively zero
-  const roundedKB = Math.round(Math.abs(diffBytes) / 102.4) / 10
-  if (roundedKB === 0)
-    return ''
-
-  const sign = diffBytes > 0 ? '+' : ''
-  const emoji = diffBytes > 0 ? '🔴' : '🟢'
-
-  return `${emoji} ${sign}${formatSize(Math.abs(diffBytes))}`
-}
-
 interface BundleData {
   name: string
   size: number
   gzippedSize: number
   baseSize: number
   baseGzippedSize: number
-  sizeDiffPercent?: number
-  gzDiffPercent?: number
 }
 
-function generateMarkdownTable(data: BundleData[]): string {
-  const headers = ['Bundle', 'Size', 'Gzipped']
-  const rows = data.map((item) => {
-    const sizeDiffBytes = item.size - item.baseSize
-    const sizeDiffPercent = item.baseSize > 0 ? ((sizeDiffBytes / item.baseSize) * 100) : 0
-    const gzDiffBytes = item.gzippedSize - item.baseGzippedSize
-    const gzDiffPercent = item.baseGzippedSize > 0 ? ((gzDiffBytes / item.baseGzippedSize) * 100) : 0
+type Status = 'new' | 'grew' | 'shrank' | 'same'
 
-    // Store percentages for summary
-    item.sizeDiffPercent = sizeDiffPercent
-    item.gzDiffPercent = gzDiffPercent
+// gzipped deltas below this are minifier jitter, not a real change
+const GZ_NOISE_BYTES = 16
 
-    // Format size column with change
-    const sizeChange = formatDiff(sizeDiffBytes)
-    const sizeCell = sizeChange
-      ? `${formatSize(item.baseSize)} → ${formatSize(item.size)} ${sizeChange}`
-      : `${formatSize(item.size)}`
+function categoryOf(name: string): string {
+  if (name.startsWith('Vue'))
+    return 'Vue'
+  if (name.startsWith('Schema.org'))
+    return 'Schema.org'
+  return 'Core'
+}
 
-    // Format gzipped column with change
-    const gzChange = formatDiff(gzDiffBytes)
-    const gzCell = gzChange
-      ? `${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)} ${gzChange}`
-      : `${formatSize(item.gzippedSize)}`
+function statusOf(item: BundleData): Status {
+  // a missing baseline (base ref predates the bundle) is a brand-new bundle, not a regression
+  if (item.baseSize === 0 && item.baseGzippedSize === 0)
+    return 'new'
+  const gzDiff = item.gzippedSize - item.baseGzippedSize
+  if (Math.abs(gzDiff) < GZ_NOISE_BYTES)
+    return 'same'
+  return gzDiff > 0 ? 'grew' : 'shrank'
+}
 
-    return [
-      `**${item.name}**`,
-      sizeCell,
-      gzCell,
-    ]
-  })
+function pct(diff: number, base: number): string {
+  if (base <= 0)
+    return ''
+  const v = (diff / base) * 100
+  return ` (${v > 0 ? '+' : '-'}${Math.abs(v).toFixed(1)}%)`
+}
 
-  const table = [
-    `| ${headers.join(' | ')} |`,
-    `| ${headers.map(() => '---').join(' | ')} |`,
-    ...rows.map(row => `| ${row.join(' | ')} |`),
-  ]
+// kB rounds sub-100-byte changes to "0 kB"; show those in bytes so a small but real delta still reads
+function formatDelta(bytes: number): string {
+  const abs = Math.abs(bytes)
+  const sign = bytes > 0 ? '+' : '-'
+  return abs < 100 ? `${sign}${abs} B` : `${sign}${formatSize(abs)}`
+}
 
-  return table.join('\n')
+function deltaCell(item: BundleData, status: Status): string {
+  if (status === 'new')
+    return '🆕 new'
+  if (status === 'same')
+    return '—'
+  const gzDiff = item.gzippedSize - item.baseGzippedSize
+  const emoji = gzDiff > 0 ? '🔴' : '🟢'
+  return `${emoji} ${formatDelta(gzDiff)}${pct(gzDiff, item.baseGzippedSize)}`
+}
+
+function render(data: BundleData[]): string {
+  const rows = data.map(item => ({ item, status: statusOf(item) }))
+  const changed = rows.filter(r => r.status === 'grew' || r.status === 'shrank')
+  const grew = changed.filter(r => r.status === 'grew')
+  const newly = rows.filter(r => r.status === 'new')
+  const netGz = changed.reduce((sum, r) => sum + (r.item.gzippedSize - r.item.baseGzippedSize), 0)
+
+  const verdict: string[] = []
+  if (grew.length)
+    verdict.push(`⚠️ **${grew.length} bundle${grew.length > 1 ? 's' : ''} grew** · net ${formatDelta(netGz)} gz`)
+  else if (changed.length)
+    verdict.push(`🟢 **${changed.length} smaller** · net ${formatDelta(netGz)} gz`)
+  else
+    verdict.push('✅ **No notable changes**')
+  if (newly.length)
+    verdict.push(`🆕 ${newly.length} new bundle${newly.length > 1 ? 's' : ''} tracked`)
+
+  const out: string[] = ['### 📦 Bundle Size', '', verdict.join(' · ')]
+
+  // surface only the bundles that actually moved
+  if (changed.length) {
+    out.push('', '| Bundle | Gzipped | Δ |', '|---|---|---|')
+    for (const { item, status } of changed)
+      out.push(`| **${item.name}** | ${formatSize(item.baseGzippedSize)} → ${formatSize(item.gzippedSize)} | ${deltaCell(item, status)} |`)
+  }
+
+  // full per-bundle breakdown, grouped by category, collapsed by default
+  out.push('', `<details><summary>All bundles (${data.length})</summary>`, '')
+  out.push('| Bundle | Gzipped | Raw | |', '|---|---|---|---|')
+  let lastCat = ''
+  for (const { item, status } of rows) {
+    const cat = categoryOf(item.name)
+    if (cat !== lastCat) {
+      out.push(`| **${cat}** | | | |`)
+      lastCat = cat
+    }
+    const mark = status === 'new' ? '🆕' : status === 'grew' ? '🔴' : status === 'shrank' ? '🟢' : '✅'
+    out.push(`| ${item.name} | ${formatSize(item.gzippedSize)} | ${formatSize(item.size)} | ${mark} |`)
+  }
+  out.push('', '</details>')
+
+  const baseline = process.env.BASE_LABEL
+  if (baseline)
+    out.push('', `<sub>Baseline: ${baseline} · gzipped is the headline metric</sub>`)
+
+  return out.join('\n')
 }
 
 // Support both CI (with args) and local usage (with last.json)
-// eslint-disable-next-line node/prefer-global/process
 const args = process.argv.slice(2)
 
 const client = fs.readFileSync(path.resolve(__dirname, 'dist/client/client/minimal.mjs'))
@@ -220,4 +261,4 @@ else {
 }
 
 // eslint-disable-next-line no-console
-console.log(generateMarkdownTable(data))
+console.log(render(data))

@@ -60,6 +60,12 @@ jobs:
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
+      - name: Resolve baseline label
+        run: |
+          sha=$(git rev-parse --short "${{ github.event.pull_request.base.sha }}")
+          date=$(git show -s --format=%cs "${{ github.event.pull_request.base.sha }}")
+          echo "BASE_LABEL=${{ github.base_ref }} @ $sha · $date" >> "$GITHUB_ENV"
+
       - name: Run analyze script
         id: analyze
         run: |
@@ -73,7 +79,4 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3
         with:
           header: Bundle Size Analysis
-          message: |
-            ### Bundle Size Analysis
-
-            ${{ steps.analyze.outputs.result }}
+          message: ${{ steps.analyze.outputs.result }}
