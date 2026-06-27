@@ -12,6 +12,12 @@ const vueServer = fs.readFileSync(path.resolve(__dirname, 'dist/vue-server/vue-s
 const schemaOrg = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
   ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
   : null
+const schemaOrgImports = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/imports.mjs'))
+  ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/imports.mjs'))
+  : null
+const schemaOrgVueMeta = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/vue-meta.mjs'))
+  ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/vue-meta.mjs'))
+  : null
 
 const newStats = {
   client: {
@@ -34,6 +40,18 @@ const newStats = {
     schemaOrg: {
       size: schemaOrg.length,
       gz: zlib.gzipSync(schemaOrg).length,
+    },
+  }),
+  ...(schemaOrgImports && {
+    schemaOrgImports: {
+      size: schemaOrgImports.length,
+      gz: zlib.gzipSync(schemaOrgImports).length,
+    },
+  }),
+  ...(schemaOrgVueMeta && {
+    schemaOrgVueMeta: {
+      size: schemaOrgVueMeta.length,
+      gz: zlib.gzipSync(schemaOrgVueMeta).length,
     },
   }),
 }

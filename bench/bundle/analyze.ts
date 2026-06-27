@@ -82,6 +82,12 @@ const vueServer = fs.readFileSync(path.resolve(__dirname, 'dist/vue-server/vue-s
 const schemaOrg = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
   ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/minimal.mjs'))
   : null
+const schemaOrgImports = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/imports.mjs'))
+  ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/imports.mjs'))
+  : null
+const schemaOrgVueMeta = fs.existsSync(path.resolve(__dirname, 'dist/schema-org/schema-org/vue-meta.mjs'))
+  ? fs.readFileSync(path.resolve(__dirname, 'dist/schema-org/schema-org/vue-meta.mjs'))
+  : null
 
 let data: Array<{
   name: string
@@ -97,6 +103,9 @@ if (args.length >= 4) {
   const baseServer = fs.readFileSync(args[1])
   const baseVueClient = fs.readFileSync(args[2])
   const baseVueServer = fs.readFileSync(args[3])
+  const baseSchemaOrg = args[4] && schemaOrg ? fs.readFileSync(args[4]) : null
+  const baseSchemaOrgImports = args[5] && schemaOrgImports ? fs.readFileSync(args[5]) : null
+  const baseSchemaOrgVueMeta = args[6] && schemaOrgVueMeta ? fs.readFileSync(args[6]) : null
 
   data = [
     {
@@ -127,6 +136,33 @@ if (args.length >= 4) {
       baseSize: baseVueServer.length,
       baseGzippedSize: zlib.gzipSync(baseVueServer).length,
     },
+    ...(schemaOrg && baseSchemaOrg
+      ? [{
+          name: 'Schema.org (Minimal)',
+          size: schemaOrg.length,
+          gzippedSize: zlib.gzipSync(schemaOrg).length,
+          baseSize: baseSchemaOrg.length,
+          baseGzippedSize: zlib.gzipSync(baseSchemaOrg).length,
+        }]
+      : []),
+    ...(schemaOrgImports && baseSchemaOrgImports
+      ? [{
+          name: 'Schema.org Imports',
+          size: schemaOrgImports.length,
+          gzippedSize: zlib.gzipSync(schemaOrgImports).length,
+          baseSize: baseSchemaOrgImports.length,
+          baseGzippedSize: zlib.gzipSync(baseSchemaOrgImports).length,
+        }]
+      : []),
+    ...(schemaOrgVueMeta && baseSchemaOrgVueMeta
+      ? [{
+          name: 'Schema.org Vue Meta',
+          size: schemaOrgVueMeta.length,
+          gzippedSize: zlib.gzipSync(schemaOrgVueMeta).length,
+          baseSize: baseSchemaOrgVueMeta.length,
+          baseGzippedSize: zlib.gzipSync(baseSchemaOrgVueMeta).length,
+        }]
+      : []),
   ]
 }
 else {
@@ -170,6 +206,24 @@ else {
           gzippedSize: zlib.gzipSync(schemaOrg).length,
           baseSize: lastStats.schemaOrg.size,
           baseGzippedSize: lastStats.schemaOrg.gz,
+        }]
+      : []),
+    ...(schemaOrgImports && lastStats.schemaOrgImports
+      ? [{
+          name: 'Schema.org Imports',
+          size: schemaOrgImports.length,
+          gzippedSize: zlib.gzipSync(schemaOrgImports).length,
+          baseSize: lastStats.schemaOrgImports.size,
+          baseGzippedSize: lastStats.schemaOrgImports.gz,
+        }]
+      : []),
+    ...(schemaOrgVueMeta && lastStats.schemaOrgVueMeta
+      ? [{
+          name: 'Schema.org Vue Meta',
+          size: schemaOrgVueMeta.length,
+          gzippedSize: zlib.gzipSync(schemaOrgVueMeta).length,
+          baseSize: lastStats.schemaOrgVueMeta.size,
+          baseGzippedSize: lastStats.schemaOrgVueMeta.gz,
         }]
       : []),
   ]
