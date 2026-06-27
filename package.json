@@ -22,7 +22,7 @@
     "build:aliases": "pnpm -r --filter='./packages-aliased/**' run build",
     "stub": "pnpm -r --parallel --filter='./packages/**' run stub",
     "test": "pnpm lint && vue-tsc --noEmit && vitest",
-    "test:memory": "vitest --expose-gc  run memory",
+    "test:memory": "pnpm --filter unhead run build && node --expose-gc bench/memory/ssr.mjs",
     "test:benchmark": "RUN_BENCHMARKS=1 vitest run packages/unhead/test/streaming/benchmark.test.ts",
     "bump": "bumpp package.json packages-aliased/*/package.json packages/*/package.json --commit --push --tag",
     "release": "pnpm build:all && pnpm build:aliases && pnpm bump",
