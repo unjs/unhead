@@ -83,7 +83,7 @@ describe('ssr e2e bench', () => {
     head.use({
       key: 'nuxt-seo-experiments',
       hooks: {
-        'tags:resolve': async ({ tags }) => {
+        'tags:resolve': ({ tags }) => {
           // iterate through tags that require absolute URLs and add the host base
           for (const tag of tags) {
             // og:image and twitter:image need to be absolute
