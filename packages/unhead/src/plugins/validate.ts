@@ -523,5 +523,5 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         },
       },
     }
-  })
+  }, 'validate')
 }
