@@ -1,23 +1,43 @@
 {
   "client": {
     "size": 11481,
-    "gz": 4685
+    "gz": 4661
+  },
+  "clientFull": {
+    "size": 20474,
+    "gz": 7958
   },
   "server": {
     "size": 11031,
-    "gz": 4538
+    "gz": 4515
   },
   "vueClient": {
     "size": 12608,
-    "gz": 5201
+    "gz": 5180
+  },
+  "vueClientFull": {
+    "size": 22475,
+    "gz": 8751
   },
   "vueServer": {
     "size": 12046,
-    "gz": 5009
+    "gz": 4986
+  },
+  "reactClient": {
+    "size": 12482,
+    "gz": 5069
+  },
+  "reactClientFull": {
+    "size": 22025,
+    "gz": 8568
+  },
+  "reactServer": {
+    "size": 11721,
+    "gz": 4795
   },
   "schemaOrg": {
-    "size": 26704,
-    "gz": 9598
+    "size": 26301,
+    "gz": 9546
   },
   "schemaOrgImports": {
     "size": 98,

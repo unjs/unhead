@@ -1,4 +1,4 @@
-import { SchemaOrgResolver, schemaOrgAutoImports, schemaOrgComponents } from '@unhead/schema-org/vue/meta'
+import { schemaOrgAutoImports, schemaOrgComponents, SchemaOrgResolver } from '@unhead/schema-org/vue/meta'
 
 export const autoImportCount = schemaOrgAutoImports.length
 export const componentCount = schemaOrgComponents.length
