@@ -27,10 +27,45 @@ export interface ResolveTagsOptions {
   tagWeight?: (tag: HeadTag) => number
 }
 
+function pushEntryTags(ctx: ResolveTagsContext, entries: HeadTag[][], needsClone: boolean) {
+  for (const tags of entries) {
+    for (const t of tags) {
+      if (needsClone) {
+        const props: Record<string, any> = { ...t.props }
+        // class/style are containers; copy them so hooks can't mutate the entry cache
+        if (props.class instanceof Set)
+          props.class = new Set(props.class)
+        if (props.style instanceof Map)
+          props.style = new Map(props.style)
+        ctx.tags.push({ ...t, props })
+      }
+      else {
+        ctx.tags.push(t)
+      }
+    }
+  }
+}
+
+function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
+  ctx.tags = []
+  for (const value of ctx.tagMap.values()) {
+    if (Array.isArray(value)) {
+      for (const tag of value) ctx.tags.push(tag)
+    }
+    else {
+      ctx.tags.push(value)
+    }
+  }
+  if (sortFlatMeta)
+    ctx.tags.sort(sortTags)
+}
+
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
   for (const next of ctx.tags.sort(sortTags)) {
     const k = next._d || hashTag(next)
+    if (!k)
+      continue
     const prev = ctx.tagMap.get(k)
     if (!prev) {
       ctx.tagMap.set(k, next)
@@ -122,22 +157,28 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     }
   }
   callHook(head, 'entries:resolve', { entries, ...ctx })
+  const entryTags: HeadTag[][] = []
   for (const e of entries) {
     if (!e._tags) {
+      const tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+      for (const t of tags)
+        Object.assign(t, e.options)
       const normalizeCtx = {
-        tags: normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || []).map(t => Object.assign(t, e.options)),
+        tags,
         entry: e,
       }
       callHook(head, 'entries:normalize', normalizeCtx)
-      e._tags = normalizeCtx.tags.map((t, i) => {
+      for (let i = 0; i < normalizeCtx.tags.length; i++) {
+        const t = normalizeCtx.tags[i]
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)
         if (!t._d)
           t._h = hashTag(t)
-        return t
-      })
+      }
+      e._tags = normalizeCtx.tags
     }
+    entryTags.push(e._tags)
   }
   let needsClone = false
   for (const k in hooks) {
@@ -146,22 +187,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       break
     }
   }
-  ctx.tags = needsClone
-    ? entries.flatMap(e => (e._tags || []).map((t) => {
-        const props: Record<string, any> = { ...t.props }
-        // class/style are containers; copy them so hooks can't mutate the entry cache
-        if (props.class instanceof Set)
-          props.class = new Set(props.class)
-        if (props.style instanceof Map)
-          props.style = new Map(props.style)
-        return { ...t, props }
-      }))
-    : entries.flatMap(e => e._tags || [])
+  pushEntryTags(ctx, entryTags, needsClone)
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
-  ctx.tags = [...ctx.tagMap.values()]
-  if (hasFlatMeta)
-    ctx.tags = ctx.tags.flat().sort(sortTags)
+  valuesToTags(ctx, hasFlatMeta)
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
