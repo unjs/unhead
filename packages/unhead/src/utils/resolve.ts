@@ -12,6 +12,14 @@ const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w 
 
 const DEFAULT_TAG_WEIGHT = () => 100
 
+// emptiness check without allocating an Object.keys array (runs per tag in sanitizeTags)
+function isEmptyProps(props: Record<string, any>): boolean {
+  // eslint-disable-next-line no-unreachable-loop -- intentional: any key means non-empty
+  for (const _ in props)
+    return false
+  return true
+}
+
 // matches the hooks that receive references to resolved tags and may mutate them in place
 // (tags:beforeResolve, tags:resolve, tags:afterResolve, ssr:render, ssr:rendered, dom:rendered
 // and deprecated dom:renderTag — but not *:beforeRender, entries:* or script:updated);
@@ -121,7 +129,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   const out: HeadTag[] = []
   for (let t of tags) {
     const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (!Object.keys(props).length && !innerHTML && !t.textContent))
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !innerHTML && !t.textContent))
       continue
     if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
       continue
