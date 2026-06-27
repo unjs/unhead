@@ -1,3 +1,5 @@
+import process from 'node:process'
+
 export interface MemoryStats {
   rss: number
   heapTotal: number

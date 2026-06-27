@@ -56,6 +56,7 @@ describe('ssr memory', () => {
       runs: 75,
     })
 
+    // eslint-disable-next-line no-console -- informational benchmark output
     console.table([{
       name: result.name,
       runs: result.runs,
