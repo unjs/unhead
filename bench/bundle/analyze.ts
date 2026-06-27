@@ -103,9 +103,23 @@ if (args.length >= 4) {
   const baseServer = fs.readFileSync(args[1])
   const baseVueClient = fs.readFileSync(args[2])
   const baseVueServer = fs.readFileSync(args[3])
-  const baseSchemaOrg = args[4] && schemaOrg ? fs.readFileSync(args[4]) : null
-  const baseSchemaOrgImports = args[5] && schemaOrgImports ? fs.readFileSync(args[5]) : null
-  const baseSchemaOrgVueMeta = args[6] && schemaOrgVueMeta ? fs.readFileSync(args[6]) : null
+  // base artifacts may be absent on the first PR that introduces a bundle (the base ref
+  // predates its build config), so read defensively and let the row fall back to a 0 baseline
+  const readBase = (p?: string) => (p && fs.existsSync(p) ? fs.readFileSync(p) : null)
+  const baseSchemaOrg = schemaOrg ? readBase(args[4]) : null
+  const baseSchemaOrgImports = schemaOrgImports ? readBase(args[5]) : null
+  const baseSchemaOrgVueMeta = schemaOrgVueMeta ? readBase(args[6]) : null
+
+  const schemaOrgRow = (name: string, current: Buffer | null, base: Buffer | null) =>
+    current
+      ? [{
+          name,
+          size: current.length,
+          gzippedSize: zlib.gzipSync(current).length,
+          baseSize: base?.length ?? 0,
+          baseGzippedSize: base ? zlib.gzipSync(base).length : 0,
+        }]
+      : []
 
   data = [
     {
@@ -136,33 +150,9 @@ if (args.length >= 4) {
       baseSize: baseVueServer.length,
       baseGzippedSize: zlib.gzipSync(baseVueServer).length,
     },
-    ...(schemaOrg && baseSchemaOrg
-      ? [{
-          name: 'Schema.org (Minimal)',
-          size: schemaOrg.length,
-          gzippedSize: zlib.gzipSync(schemaOrg).length,
-          baseSize: baseSchemaOrg.length,
-          baseGzippedSize: zlib.gzipSync(baseSchemaOrg).length,
-        }]
-      : []),
-    ...(schemaOrgImports && baseSchemaOrgImports
-      ? [{
-          name: 'Schema.org Imports',
-          size: schemaOrgImports.length,
-          gzippedSize: zlib.gzipSync(schemaOrgImports).length,
-          baseSize: baseSchemaOrgImports.length,
-          baseGzippedSize: zlib.gzipSync(baseSchemaOrgImports).length,
-        }]
-      : []),
-    ...(schemaOrgVueMeta && baseSchemaOrgVueMeta
-      ? [{
-          name: 'Schema.org Vue Meta',
-          size: schemaOrgVueMeta.length,
-          gzippedSize: zlib.gzipSync(schemaOrgVueMeta).length,
-          baseSize: baseSchemaOrgVueMeta.length,
-          baseGzippedSize: zlib.gzipSync(baseSchemaOrgVueMeta).length,
-        }]
-      : []),
+    ...schemaOrgRow('Schema.org (Minimal)', schemaOrg, baseSchemaOrg),
+    ...schemaOrgRow('Schema.org Imports', schemaOrgImports, baseSchemaOrgImports),
+    ...schemaOrgRow('Schema.org Vue Meta', schemaOrgVueMeta, baseSchemaOrgVueMeta),
   ]
 }
 else {
