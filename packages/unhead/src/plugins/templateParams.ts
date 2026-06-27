@@ -56,4 +56,4 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
       },
     },
   }
-})
+}, 'template-params')

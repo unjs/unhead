@@ -5,7 +5,11 @@ const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
 export function isMetaArrayDupeKey(v: string) {
-  return MetaTagsArrayable.has(v.split(':')[1])
+  const i = v.indexOf(':')
+  if (i === -1)
+    return false
+  const j = v.indexOf(':', i + 1)
+  return MetaTagsArrayable.has(v.slice(i + 1, j === -1 ? v.length : j))
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
@@ -40,6 +44,16 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 }
 
 export function hashTag(tag: HeadTag) {
-  return tag._h || tag._d || tag.textContent || tag.innerHTML
-    || `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join()}`
+  const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
+  if (identity)
+    return identity
+  let hash = `${tag.tag}:`
+  let separator = ''
+  for (const key in tag.props) {
+    if (Object.hasOwn(tag.props, key)) {
+      hash += `${separator}${key}:${String(tag.props[key])}`
+      separator = ','
+    }
+  }
+  return hash
 }
