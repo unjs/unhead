@@ -12,6 +12,9 @@ export default antfu(
     ignores: [
       'examples/*',
       '**/*.md',
+      // node benchmark harnesses: run standalone with --expose-gc, so they import
+      // built dist, use process/console, and top-level await by design
+      'bench/**/*.mjs',
     ],
   },
   ...harlanzw(),

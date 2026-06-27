@@ -8,9 +8,9 @@ const packagesDir = path.resolve(__dirname, '../../packages')
 
 export default defineBuildConfig({
   entries: [
-    'src/client/minimal',
+    'src/react-client/minimal',
   ],
-  outDir: 'dist/client',
+  outDir: 'dist/react-client',
   failOnWarn: false,
   rollup: {
     inlineDependencies: true,
@@ -20,13 +20,22 @@ export default defineBuildConfig({
     },
     alias: {
       entries: [
+        { find: '@unhead/react/client', replacement: path.join(packagesDir, 'react/dist/client.mjs') },
+        { find: '@unhead/react', replacement: path.join(packagesDir, 'react/dist/index.mjs') },
         { find: 'unhead/client', replacement: path.join(packagesDir, 'unhead/dist/client.mjs') },
+        { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
+        { find: 'unhead/plugins', replacement: path.join(packagesDir, 'unhead/dist/plugins.mjs') },
+        { find: 'unhead/scripts', replacement: path.join(packagesDir, 'unhead/dist/scripts.mjs') },
+        { find: 'unhead/utils', replacement: path.join(packagesDir, 'unhead/dist/utils.mjs') },
         { find: 'unhead', replacement: path.join(packagesDir, 'unhead/dist/index.mjs') },
       ],
     },
   },
   externals: [
     'hookable',
+    'react',
+    'react/jsx-runtime',
+    'react-dom',
   ],
   declaration: false,
   hooks: {
@@ -37,11 +46,11 @@ export default defineBuildConfig({
       }))
     },
     'build:done': () => {
-      const file = path.resolve(__dirname, 'dist/client/client/minimal.mjs')
+      const file = path.resolve(__dirname, 'dist/react-client/react-client/minimal.mjs')
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
-      console.log(`CLIENT Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
+      console.log(`REACT CLIENT Size: ${Math.round(size / 102.4) / 10} kB (gzipped: ${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },
 })
