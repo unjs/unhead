@@ -14,11 +14,22 @@ interface WorkspacePackage {
 interface PackageJson {
   exports?: Record<string, unknown>
   types?: string
+  typesVersions?: Record<string, Record<string, string[]>>
   typings?: string
 }
 
 function hasTypesExport(value: unknown): value is { types: string } {
   return !!value && typeof value === 'object' && !Array.isArray(value) && typeof (value as { types?: unknown }).types === 'string'
+}
+
+function hasTypeDeclaration(packagePath: string, typePath: string) {
+  const candidates = typePath.endsWith('.d.ts')
+    ? [typePath]
+    : [
+        `${typePath}.d.ts`,
+        join(typePath, 'index.d.ts'),
+      ]
+  return candidates.some(candidate => existsSync(join(packagePath, candidate)))
 }
 
 describe('exports-snapshot', async () => {
@@ -27,7 +38,7 @@ describe('exports-snapshot', async () => {
   )
 
   for (const pkg of packages) {
-    if (pkg.private || pkg.path.includes('packages-aliased') || pkg.path.includes('angular'))
+    if (pkg.private || pkg.path.includes('packages-aliased') || pkg.name === '@unhead/angular')
       continue
     it(`${pkg.name}`, async () => {
       const manifest = await getPackageExportsManifest({
@@ -62,8 +73,15 @@ describe('package type paths', async () => {
           typePaths.push({ label: `exports ${name}`, path: value.types })
       }
 
+      for (const [range, mappings] of Object.entries(packageJson.typesVersions || {})) {
+        for (const [specifier, mappedPaths] of Object.entries(mappings)) {
+          for (const mappedPath of mappedPaths)
+            typePaths.push({ label: `typesVersions ${range} ${specifier}`, path: mappedPath })
+        }
+      }
+
       const missing = typePaths
-        .filter(typePath => !existsSync(join(pkg.path, typePath.path)))
+        .filter(typePath => !hasTypeDeclaration(pkg.path, typePath.path))
         .map(typePath => `${typePath.label}: ${typePath.path}`)
       expect(missing).toEqual([])
     })
