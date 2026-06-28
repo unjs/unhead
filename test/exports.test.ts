@@ -23,11 +23,12 @@ function hasTypesExport(value: unknown): value is { types: string } {
 }
 
 function hasTypeDeclaration(packagePath: string, typePath: string) {
-  const candidates = [
-    typePath,
-    `${typePath}.d.ts`,
-    join(typePath, 'index.d.ts'),
-  ]
+  const candidates = typePath.endsWith('.d.ts')
+    ? [typePath]
+    : [
+        `${typePath}.d.ts`,
+        join(typePath, 'index.d.ts'),
+      ]
   return candidates.some(candidate => existsSync(join(packagePath, candidate)))
 }
 
