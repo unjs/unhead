@@ -93,15 +93,10 @@ export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOption
 export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
   const head = options.head || injectHead()
   head.use(FlatMetaPlugin)
-  const meta: Record<string, any> = {}
-  for (const key in input) {
-    if (!Object.hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
-      continue
-    meta[key] = input[key as keyof UseSeoMetaInput]
-  }
+  const { title, titleTemplate, ...meta } = input
   return useHead({
-    title: input.title,
-    titleTemplate: input.titleTemplate,
+    title,
+    titleTemplate,
     _flatMeta: meta,
   } as UseSeoMetaInput, options)
 }
