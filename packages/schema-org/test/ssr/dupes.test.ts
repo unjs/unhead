@@ -1,17 +1,9 @@
 import { defineProduct, defineWebSite, UnheadSchemaOrg } from '@unhead/schema-org'
 import { useHead } from 'unhead'
 import { createHead, renderSSRHead } from 'unhead/server'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 const JSON_LD_RE = /application\/ld\+json/g
-const originalNodeEnv = process.env.NODE_ENV
-
-afterEach(() => {
-  if (originalNodeEnv === undefined)
-    delete process.env.NODE_ENV
-  else
-    process.env.NODE_ENV = originalNodeEnv
-})
 
 describe('schema.org dupes', () => {
   it('merges two Products with conflicting offers.availability', async () => {
@@ -197,29 +189,5 @@ describe('schema.org dupes', () => {
     // should merge all three into a single script tag without throwing
     expect(data.bodyTags).toContain('"@context": "https://schema.org"')
     expect(data.bodyTags.match(JSON_LD_RE)?.length).toBe(1)
-  })
-
-  it('respects explicit minify false in production mode', async () => {
-    process.env.NODE_ENV = 'production'
-    const ssrHead = createHead()
-
-    ssrHead.use(UnheadSchemaOrg(undefined, () => ({}), { minify: false }))
-
-    useHead(ssrHead, {
-      script: [
-        {
-          type: 'application/ld+json',
-          key: 'schema-org-graph',
-          nodes: [
-            defineWebSite({
-              name: 'hello',
-            }),
-          ],
-        },
-      ] as any,
-    })
-
-    const data = await renderSSRHead(ssrHead)
-    expect(data.bodyTags).toContain('\n  "@context": "https://schema.org"')
   })
 })

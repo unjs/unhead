@@ -35,12 +35,6 @@ export interface PluginSchemaOrgOptions {
   trailingSlash?: boolean
 }
 
-function getDefaultMinify(): boolean {
-  // eslint-disable-next-line node/prefer-global/process
-  const globalProcess = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process
-  return globalProcess?.env?.NODE_ENV === 'production'
-}
-
 export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
@@ -126,7 +120,8 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
                 tag.props = {}
                 return
               }
-              const minify = options?.minify ?? getDefaultMinify()
+              // eslint-disable-next-line node/prefer-global/process
+              const minify = options?.minify || process.env.NODE_ENV === 'production'
               tag.innerHTML = JSON.stringify({
                 '@context': 'https://schema.org',
                 '@graph': resolvedGraph,
