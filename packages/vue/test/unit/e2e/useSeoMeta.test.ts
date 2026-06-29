@@ -8,6 +8,35 @@ import { useDom } from '../../../../unhead/test/fixtures'
 import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
 
 describe('unhead vue e2e useSeoMeta', () => {
+  it('normalizes flat meta patches', async () => {
+    const dom = useDom()
+    let entry: ReturnType<typeof useSeoMeta> | undefined
+    const head = csrVueAppWithUnhead(dom, () => {
+      entry = useSeoMeta({
+        title: 'Initial',
+        description: 'Initial description',
+      })
+    })
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.title).toBe('Initial')
+    expect(dom.window.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Initial description')
+
+    entry!.patch({
+      title: 'Updated',
+      titleTemplate: '%s - Site',
+      description: 'Updated description',
+      ogTitle: 'Updated OG title',
+    })
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.title).toBe('Updated - Site')
+    expect(dom.window.document.querySelectorAll('meta[name="description"]').length).toBe(1)
+    expect(dom.window.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Updated description')
+    expect(dom.window.document.querySelectorAll('meta[property="og:title"]').length).toBe(1)
+    expect(dom.window.document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Updated OG title')
+  })
+
   it('duplicate articleTag', async () => {
     const ssrHead = await ssrVueAppWithUnhead(() => {
       useSeoMeta({
