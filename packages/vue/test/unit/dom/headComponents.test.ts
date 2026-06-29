@@ -4,7 +4,7 @@ import { renderDOMHead } from '@unhead/dom'
 import { createHead } from '@unhead/vue/client'
 import { resolveTags } from 'unhead/utils'
 import { describe, expect, it } from 'vitest'
-import { defineComponent, h, nextTick, ref } from 'vue'
+import { defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
 import { useDom } from '../../../../unhead/test/fixtures'
 import { Head } from '../../../src/components'
 
@@ -159,5 +159,105 @@ describe('head component — Style inside Head (issue #517)', () => {
     const tags = resolveTags(head)
     const titleTag = tags.find(t => t.tag === 'title')
     expect(titleTag?.textContent).toBe('My Page Title')
+  })
+
+  it('does not keep slot watchers from previous renders', async () => {
+    const css = ref('body { color: blue }')
+    const tick = ref(0)
+    let entriesUpdated = 0
+    const head = createHead({
+      hooks: {
+        'entries:updated': () => {
+          entriesUpdated++
+        },
+      },
+    })
+    const App = defineComponent({
+      render() {
+        return h('div', [
+          h('span', tick.value),
+          h(Head, { 'data-render': tick.value }, {
+            default: () => [
+              h('style', null, [css.value]),
+            ],
+          }),
+        ])
+      },
+    })
+    const el = document.createElement('div')
+    const { createApp } = await import('vue')
+    const app = createApp(App)
+    app.use(head)
+    app.mount(el)
+    await nextTick()
+
+    for (let i = 0; i < 5; i++) {
+      tick.value++
+      await nextTick()
+    }
+
+    entriesUpdated = 0
+    css.value = 'body { color: green }'
+    await nextTick()
+
+    expect(entriesUpdated).toBe(1)
+    const tags = resolveTags(head)
+    const styleTag = tags.find(t => t.tag === 'style')
+    expect(styleTag?.textContent).toBe('body { color: green }')
+
+    app.unmount()
+  })
+
+  it('restores slot state after KeepAlive activation', async () => {
+    const active = ref<'home' | 'about'>('home')
+    const head = createHead()
+    const HomeHead = defineComponent({
+      render() {
+        return h(Head, null, {
+          default: () => [
+            h('title', null, 'Home'),
+          ],
+        })
+      },
+    })
+    const AboutHead = defineComponent({
+      render() {
+        return h(Head, null, {
+          default: () => [
+            h('title', null, 'About'),
+          ],
+        })
+      },
+    })
+    const App = defineComponent({
+      render() {
+        return h(KeepAlive, [
+          active.value === 'home'
+            ? h(HomeHead, { key: 'home' })
+            : h(AboutHead, { key: 'about' }),
+        ])
+      },
+    })
+    const el = document.createElement('div')
+    const { createApp } = await import('vue')
+    const app = createApp(App)
+    app.use(head)
+    app.mount(el)
+    await nextTick()
+
+    let titleTag = resolveTags(head).find(t => t.tag === 'title')
+    expect(titleTag?.textContent).toBe('Home')
+
+    active.value = 'about'
+    await nextTick()
+    titleTag = resolveTags(head).find(t => t.tag === 'title')
+    expect(titleTag?.textContent).toBe('About')
+
+    active.value = 'home'
+    await nextTick()
+    titleTag = resolveTags(head).find(t => t.tag === 'title')
+    expect(titleTag?.textContent).toBe('Home')
+
+    app.unmount()
   })
 })
