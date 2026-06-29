@@ -79,21 +79,24 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       const encoder = new TextEncoder()
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
       let readerReleased = false
-      let settled = false
+      let stopped = false
+      let terminalDelivered = false
       let pumpDone: Promise<void> = Promise.resolve()
       let cancelInner: (reason: unknown) => Promise<unknown> = async () => undefined
-      let resolveSettled = () => {}
-      const settledSignal = new Promise<void>((resolve) => {
-        resolveSettled = resolve
+      let resolveStopped = () => {}
+      const stoppedSignal = new Promise<void>((resolve) => {
+        resolveStopped = resolve
       })
 
-      const settle = () => {
-        if (settled)
+      const stop = () => {
+        if (stopped)
           return false
-        settled = true
-        resolveSettled()
+        stopped = true
+        resolveStopped()
         return true
       }
+
+      let flushOutput = () => {}
 
       return new ReadableStream<Uint8Array>({
         start(controller) {
@@ -103,11 +106,59 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
           let end = ''
           let shellState: SSRHeadPayload | undefined
           const bufferedChunks: Uint8Array[] = []
+          const outputChunks: Uint8Array[] = []
+          let outputChunkIndex = 0
+          let hasOutputError = false
+          let outputError: unknown
+          let outputClosed = false
+
+          flushOutput = () => {
+            if (terminalDelivered)
+              return
+            while (outputChunkIndex < outputChunks.length && (controller.desiredSize ?? 0) > 0) {
+              controller.enqueue(outputChunks[outputChunkIndex++]!)
+            }
+            if (outputChunkIndex === outputChunks.length) {
+              outputChunks.length = 0
+              outputChunkIndex = 0
+            }
+            if (outputChunks.length)
+              return
+            if (hasOutputError) {
+              if ((controller.desiredSize ?? 0) <= 0)
+                return
+              terminalDelivered = true
+              controller.error(outputError)
+              return
+            }
+            if (outputClosed) {
+              terminalDelivered = true
+              controller.close()
+            }
+          }
+
+          const enqueueOutput = (chunk: Uint8Array) => {
+            if (hasOutputError || outputClosed || terminalDelivered)
+              return
+            outputChunks.push(chunk)
+            flushOutput()
+          }
+
+          const closeOutput = () => {
+            if (hasOutputError || terminalDelivered)
+              return
+            outputClosed = true
+            stop()
+            flushOutput()
+          }
 
           const fail = (error: unknown) => {
-            if (!settle())
+            if (terminalDelivered)
               return
-            controller.error(error)
+            stop()
+            hasOutputError = true
+            outputError = error
+            flushOutput()
           }
 
           const releaseReader = () => {
@@ -129,25 +180,27 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
           }
 
           const flushShellAndChunks = () => {
-            if (settled || !shellResolved)
+            if (stopped || !shellResolved)
               return
 
             try {
               if (!shellFlushed) {
                 const prepared = prepareStreamingTemplate(head, template, shellState)
-                controller.enqueue(encoder.encode(prepared.shell))
+                enqueueOutput(encoder.encode(prepared.shell))
                 end = prepared.end
                 shellFlushed = true
               }
 
-              while (bufferedChunks.length) {
-                controller.enqueue(bufferedChunks.shift()!)
+              if (bufferedChunks.length) {
+                for (const chunk of bufferedChunks) {
+                  enqueueOutput(chunk)
+                }
+                bufferedChunks.length = 0
               }
 
               if (innerDone) {
-                controller.enqueue(encoder.encode(end))
-                settle()
-                controller.close()
+                enqueueOutput(encoder.encode(end))
+                closeOutput()
               }
             }
             catch (error) {
@@ -168,10 +221,10 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
           pumpDone = (async () => {
             try {
               while (true) {
-                if (settled)
+                if (stopped)
                   break
                 const { done, value } = await reader!.read()
-                if (settled)
+                if (stopped)
                   break
                 if (done) {
                   innerDone = true
@@ -179,7 +232,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
                   break
                 }
                 if (shellFlushed) {
-                  controller.enqueue(value)
+                  enqueueOutput(value)
                 }
                 else {
                   bufferedChunks.push(value)
@@ -199,7 +252,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
             try {
               const ready = await Promise.race([
                 shellReady.then(state => ({ state })),
-                settledSignal.then(() => undefined),
+                stoppedSignal.then(() => undefined),
               ])
               if (!ready)
                 return
@@ -213,8 +266,12 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
             }
           })()
         },
+        pull() {
+          flushOutput()
+        },
         async cancel(reason?: unknown) {
-          settle()
+          stop()
+          terminalDelivered = true
           const cancelError = await cancelInner(reason)
           await pumpDone
           if (cancelError)

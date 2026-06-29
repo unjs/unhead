@@ -88,6 +88,37 @@ describe('solid-js streaming SSR', () => {
       expect(appStream.locked).toBe(false)
     })
 
+    it('drains queued chunks before rejecting after an inner stream error', async () => {
+      const { head, onCompleteShell, wrapStream } = createStreamableHead()
+      const error = new Error('queued stream failure')
+      let appController!: ReadableStreamDefaultController<Uint8Array>
+      const appStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          appController = controller
+        },
+      })
+
+      head.push({ title: 'Queued Shell' })
+      const reader = wrapStream(appStream, STREAM_TEMPLATE).getReader()
+      onCompleteShell()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      appController.enqueue(encoder.encode('<main>queued app</main>'))
+      appController.error(error)
+
+      const shellChunk = await withTimeout(reader.read(), 'queued shell chunk was not emitted')
+      expect(shellChunk.done).toBe(false)
+      expect(decodeChunk(shellChunk.value)).toContain('<title>Queued Shell</title>')
+
+      const appChunk = await withTimeout(reader.read(), 'queued app chunk was not emitted')
+      expect(appChunk.done).toBe(false)
+      expect(decodeChunk(appChunk.value)).toBe('<main>queued app</main>')
+
+      await expect(withTimeout(reader.read(), 'queued stream error did not reject after chunks drained')).rejects.toBe(error)
+      expect(appStream.locked).toBe(false)
+    })
+
     it('cancels the inner reader when the outer reader is cancelled', async () => {
       const { wrapStream } = createStreamableHead()
       const reason = new Error('client aborted')
