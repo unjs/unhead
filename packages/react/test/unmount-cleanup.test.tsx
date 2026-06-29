@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render } from '@testing-library/react'
 import React, { StrictMode, useState } from 'react'
+import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { useHead, useScript } from '../src'
 import { createHead, renderDOMHead, UnheadProvider } from '../src/client'
 import { Head } from '../src/components'
-import { renderSSRHead } from '../src/server'
+import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
 /**
  * Reproduction of https://github.com/unjs/unhead/issues/558
@@ -240,6 +241,24 @@ describe('issue #558 - unmount cleanup', () => {
     expect(rendered.headTags).not.toContain('Component')
   })
 
+  it('head component pushes during React server rendering', async () => {
+    const head = createServerHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <title>Server Component</title>
+          <meta name="description" content="server description" />
+        </Head>
+      </UnheadProvider>,
+    )
+
+    expect(head.entries.size).toBe(1)
+    const rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>Server Component</title>')
+    expect(rendered.headTags).toContain('server description')
+  })
+
   it('head component patches the same StrictMode entry on prop updates', async () => {
     const head = createHead({
       init: [{
@@ -270,6 +289,7 @@ describe('issue #558 - unmount cleanup', () => {
     })
 
     expect(head.entries.size).toBe(2)
+    const entryKeys = [...head.entries.keys()]
     let rendered = await renderSSRHead(head)
     expect(rendered.headTags).toContain('<title>First</title>')
 
@@ -279,6 +299,7 @@ describe('issue #558 - unmount cleanup', () => {
     })
 
     expect(head.entries.size).toBe(2)
+    expect([...head.entries.keys()]).toEqual(entryKeys)
     rendered = await renderSSRHead(head)
     expect(rendered.headTags).toContain('<title>Second</title>')
     expect(rendered.headTags).not.toContain('<title>First</title>')
@@ -366,6 +387,62 @@ describe('issue #558 - unmount cleanup', () => {
 
     document
       .querySelector('script[src="//react-strict-callback.js"]')
+      ?.dispatchEvent(new Event('load'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(loaded).toBe(1)
+  })
+
+  it('keeps post-commit script callbacks registered across rerenders', async () => {
+    const head = createHead()
+    let loaded = 0
+
+    function PageWithScript({ label }: { label: string }) {
+      const script = useScript('//react-effect-callback.js', {
+        trigger: 'manual',
+        head,
+      })
+      React.useEffect(() => {
+        return script.onLoaded(() => {
+          loaded++
+        })
+      }, [script])
+      return <div>{label}</div>
+    }
+
+    const renderApp = (label: string) => (
+      <UnheadProvider head={head}>
+        <PageWithScript label={label} />
+      </UnheadProvider>
+    )
+
+    const { rerender } = render(renderApp('first'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    const script = (head as any)._scripts['//react-effect-callback.js']
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    rerender(renderApp('second'))
+    await act(async () => {
+      await wait()
+    })
+
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    script.load()
+    await act(async () => {
+      await renderDOMHead(head)
+      await wait()
+    })
+
+    document
+      .querySelector('script[src="//react-effect-callback.js"]')
       ?.dispatchEvent(new Event('load'))
 
     await act(async () => {

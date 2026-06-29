@@ -18,6 +18,7 @@ interface ScriptCallbackRecord {
   handler: any
   key: 'loaded' | 'error'
   registered: boolean
+  renderScoped: boolean
   renderId: number
   script: UseScriptReturn<any>
 }
@@ -134,12 +135,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   function reconcileScriptCallbacks(activeRenderId: number) {
     callbackRecords.current.forEach((record) => {
-      if (record.renderId !== activeRenderId) {
+      if (record.renderScoped && record.renderId !== activeRenderId) {
         record.active = false
         unregisterScriptCallback(record)
       }
     })
-    callbackRecords.current = callbackRecords.current.filter(record => record.active && record.renderId === activeRenderId)
+    callbackRecords.current = callbackRecords.current.filter(record => record.active && (!record.renderScoped || record.renderId === activeRenderId))
   }
 
   function registerScriptCallback(record: ScriptCallbackRecord) {
@@ -164,6 +165,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
 
   const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+    const renderScoped = !(isMounted.current && committedRenderId.current === currentRenderId)
     const record: ScriptCallbackRecord = {
       active: true,
       handler: (...args: any[]) => {
@@ -175,6 +177,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       },
       key,
       registered: false,
+      renderScoped,
       renderId: currentRenderId,
       script,
     }

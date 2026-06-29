@@ -64,12 +64,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     if (head.ssr) {
       return
     }
+    let uniqueKey: string | undefined
     if (options?.key) {
-      const key = `${options?.key}:${options.key}`
-      if (_uniqueCbs.has(key)) {
+      uniqueKey = `${key}:${options.key}`
+      if (_uniqueCbs.has(uniqueKey)) {
         return
       }
-      _uniqueCbs.add(key)
+      _uniqueCbs.add(uniqueKey)
     }
     if (_cbs[key]) {
       _cbs[key].push(cb)
@@ -77,12 +78,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         const idx = _cbs[key]?.indexOf(cb) ?? -1
         if (idx !== -1)
           _cbs[key]?.splice(idx, 1)
+        if (uniqueKey)
+          _uniqueCbs.delete(uniqueKey)
       }
     }
     // the event has already happened, run immediately
     // eslint-disable-next-line ts/no-use-before-define
     cb(script.instance)
-    return () => {}
+    return () => {
+      if (uniqueKey)
+        _uniqueCbs.delete(uniqueKey)
+    }
   }
   const loadPromise = new Promise<T | false>((resolve) => {
     // promise never resolves

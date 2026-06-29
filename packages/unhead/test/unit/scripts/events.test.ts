@@ -91,6 +91,34 @@ describe('useScript events', () => {
     `)
   })
 
+  it('releases keyed callback dedupe state when disposed', async () => {
+    const head = createHead()
+    const instance = useScript(head, '/script.js', {
+      trigger: 'server',
+    })
+    const calls: string[] = []
+
+    const offA = instance.onLoaded(() => {
+      calls.push('a')
+    }, {
+      key: 'once',
+    }) as unknown as (() => void) | undefined
+
+    offA?.()
+
+    instance.onLoaded(() => {
+      calls.push('b')
+    }, {
+      key: 'once',
+    })
+
+    expect(instance._cbs.loaded).toHaveLength(1)
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await instance._loadPromise
+
+    expect(calls).toEqual(['b'])
+  })
+
   it('cleans onLoaded callbacks by identity when disposed out of order', () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
