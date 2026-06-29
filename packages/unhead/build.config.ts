@@ -3,9 +3,70 @@ import { resolve } from 'node:path'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
+import { build as viteBuild } from 'vite'
 
 const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
 const WHITESPACE_RE = /\s+/g
+const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
+
+function minifyIifeCode(code: string) {
+  return code.replace(COMMENT_RE, '').replace(WHITESPACE_RE, ' ').trim()
+}
+
+function writeIifeArtifacts(rootDir: string, code: string) {
+  writeFileSync(resolve(rootDir, 'dist/stream/iife.global.js'), code)
+  writeFileSync(
+    resolve(rootDir, 'dist/stream/iife.mjs'),
+    `export const streamingIifeCode = ${JSON.stringify(code)};\nexport const streamingIifeSize = ${code.length};\n`,
+  )
+  writeFileSync(resolve(rootDir, 'dist/stream/iife.d.ts'), IIFE_TYPES)
+  writeFileSync(resolve(rootDir, 'dist/stream/iife.d.mts'), IIFE_TYPES)
+  writeFileSync(resolve(rootDir, 'dist/stream/iife.d.cts'), IIFE_TYPES)
+}
+
+async function buildIifeFromDist(rootDir: string) {
+  const bundle = await rollup({
+    input: resolve(rootDir, 'dist/stream/iife.mjs'),
+    plugins: [nodeResolve()],
+  })
+  try {
+    const { output } = await bundle.generate({ format: 'iife', name: '__unhead_iife__' })
+    const chunk = output.find(item => item.type === 'chunk')
+    if (!chunk)
+      throw new Error('[unhead] Failed to build streaming IIFE.')
+    return chunk.code
+  }
+  finally {
+    await bundle.close()
+  }
+}
+
+async function buildIifeFromSource(rootDir: string) {
+  const result = await viteBuild({
+    build: {
+      emptyOutDir: false,
+      lib: {
+        entry: resolve(rootDir, 'src/stream/iife.ts'),
+        formats: ['iife'],
+        name: '__unhead_iife__',
+      },
+      minify: false,
+      write: false,
+    },
+    configFile: false,
+    logLevel: 'silent',
+    root: rootDir,
+  })
+  const output = (Array.isArray(result) ? result : [result]).flatMap((item) => {
+    if (!('output' in item))
+      throw new Error('[unhead] Failed to build streaming IIFE.')
+    return item.output
+  })
+  const chunk = output.find(item => item.type === 'chunk')
+  if (!chunk)
+    throw new Error('[unhead] Failed to build streaming IIFE.')
+  return chunk.code
+}
 
 export default defineBuildConfig({
   clean: true,
@@ -15,42 +76,12 @@ export default defineBuildConfig({
       options.experimentalLogSideEffects = true
     },
     'build:done': async function (ctx) {
-      if (ctx.options.stub)
-        return
+      const code = minifyIifeCode(ctx.options.stub
+        ? await buildIifeFromSource(ctx.options.rootDir)
+        : await buildIifeFromDist(ctx.options.rootDir))
 
-      // Build the streaming IIFE with all dependencies bundled
-      const bundle = await rollup({
-        input: resolve(ctx.options.rootDir, 'dist/stream/iife.mjs'),
-        plugins: [nodeResolve()],
-      })
-
-      const { output } = await bundle.generate({ format: 'iife', name: '__unhead_iife__' })
-      let code = output[0].code
-
-      // Basic minification - remove comments and extra whitespace
-      code = code.replace(COMMENT_RE, '').replace(WHITESPACE_RE, ' ').trim()
-
-      // Write as standalone IIFE file
-      writeFileSync(resolve(ctx.options.rootDir, 'dist/stream/iife.global.js'), code)
-
-      // Write as ES module exporting the code string (for inlining in Vite plugin)
-      writeFileSync(
-        resolve(ctx.options.rootDir, 'dist/stream/iife.mjs'),
-        `export const streamingIifeCode = ${JSON.stringify(code)};\nexport const streamingIifeSize = ${code.length};\n`,
-      )
-
-      // Write correct type declarations for the post-build exports
-      writeFileSync(
-        resolve(ctx.options.rootDir, 'dist/stream/iife.d.ts'),
-        `export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n`,
-      )
-      writeFileSync(
-        resolve(ctx.options.rootDir, 'dist/stream/iife.d.mts'),
-        `export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n`,
-      )
-
+      writeIifeArtifacts(ctx.options.rootDir, code)
       console.log(`Built streaming IIFE: ${code.length} bytes`)
-      await bundle.close()
     },
   },
   entries: [
