@@ -24,13 +24,16 @@ describe('unhead vue e2e useSeoMeta', () => {
 
     entry!.patch({
       title: 'Updated',
+      titleTemplate: '%s - Site',
       description: 'Updated description',
       ogTitle: 'Updated OG title',
     })
     renderDOMHead(head, { document: dom.window.document })
 
-    expect(dom.window.document.title).toBe('Updated')
+    expect(dom.window.document.title).toBe('Updated - Site')
+    expect(dom.window.document.querySelectorAll('meta[name="description"]').length).toBe(1)
     expect(dom.window.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Updated description')
+    expect(dom.window.document.querySelectorAll('meta[property="og:title"]').length).toBe(1)
     expect(dom.window.document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Updated OG title')
   })
 
