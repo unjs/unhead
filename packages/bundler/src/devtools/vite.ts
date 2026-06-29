@@ -16,6 +16,14 @@ const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const LEADING_SLASH_RE = /^\//
 const UNHEAD_VERSION_RE = /__UNHEAD_VERSION__ = ['"]'?["']/
 
+function isViteDevtoolsPlugin(plugin: { name?: string }): boolean {
+  return !!plugin.name?.startsWith('vite:devtools')
+}
+
+function isViteDevtoolsEnabled(config: { devtools?: { enabled?: boolean }, plugins: readonly { name?: string }[] }): boolean {
+  return config.devtools?.enabled === true || config.plugins.some(isViteDevtoolsPlugin)
+}
+
 /**
  * Resolve the `@unhead/bundler` package root by walking up from this module.
  *
@@ -117,7 +125,7 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
 
     configResolved(config) {
       root = config.root
-      enabled = config.plugins.some(p => p.name?.startsWith('vite:devtools'))
+      enabled = isViteDevtoolsEnabled(config)
       if (!enabled)
         return
 

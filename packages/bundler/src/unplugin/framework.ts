@@ -1,7 +1,7 @@
 import type { UnpluginInstance } from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
-import { unheadDevtools } from '../devtools/vite'
+import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { MinifyTransform } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
@@ -149,7 +149,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
         }
         if (devtools !== false) {
           const devtoolsOpts = typeof devtools === 'object' ? devtools : {}
-          plugins.push(unheadDevtools({ ...devtoolsOpts, _ctx: ctx }))
+          plugins.push(lazyUnheadDevtools({ ...devtoolsOpts, _ctx: ctx }))
         }
         plugins.push(SSRStaticReplace.vite({}))
         plugins.push(CreateHeadTransform(ctx))
