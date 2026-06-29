@@ -91,11 +91,10 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
   setup(_, { slots }) {
     const obj: Ref<ReactiveHead> = ref({})
 
-    const entry = useHead(obj)
+    useHead(obj)
 
     return () => {
-      if (slots.default)
-        entry.patch(vnodesToHeadObj(slots.default()))
+      obj.value = slots.default ? vnodesToHeadObj(slots.default()) : {}
       return null
     }
   },
