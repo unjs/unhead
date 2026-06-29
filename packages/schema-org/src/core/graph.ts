@@ -1,5 +1,5 @@
 import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
-import { imageResolver } from '../nodes'
+import { imageResolver } from '../nodes/Image'
 import { asArray, resolveAsGraphKey, stripNullProperties } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 import { merge } from './util'

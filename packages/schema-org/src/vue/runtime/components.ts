@@ -24,7 +24,7 @@ import {
   defineWebPage,
   defineWebSite,
   useSchemaOrg,
-} from './index'
+} from './composables'
 
 const KEBAB_RE = /-./g
 
