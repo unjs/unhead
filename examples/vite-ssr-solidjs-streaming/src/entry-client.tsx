@@ -10,5 +10,5 @@ hydrate(
       <App url={window.location.pathname} />
     </UnheadContext.Provider>
   ),
-  document.getElementById('app')!
+  document.getElementById('root')!
 )
