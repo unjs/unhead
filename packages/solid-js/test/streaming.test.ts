@@ -6,6 +6,25 @@ import {
   renderSSRHeadSuspenseChunk,
 } from '../src/stream/server'
 
+const STREAM_TEMPLATE = '<html><head></head><body><!--app-html--></body></html>'
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+
+function decodeChunk(chunk: Uint8Array | undefined): string {
+  return chunk ? decoder.decode(chunk) : ''
+}
+
+function withTimeout<T>(promise: Promise<T>, message: string, ms = 1000): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(message)), ms)
+  })
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeout)
+      clearTimeout(timeout)
+  })
+}
+
 describe('solid-js streaming SSR', () => {
   describe('createStreamableHead', () => {
     it('uses custom stream key', async () => {
@@ -22,6 +41,127 @@ describe('solid-js streaming SSR', () => {
 
       const shell = await renderSSRHeadShell(head, '<html><head></head><body>')
       expect(shell).toContain('window.__unhead__')
+    })
+  })
+
+  describe('wrapStream', () => {
+    it('rejects when the inner stream errors before shell is ready', async () => {
+      const { wrapStream } = createStreamableHead()
+      const error = new Error('pre-shell stream failure')
+      const appStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(error)
+        },
+      })
+
+      const reader = wrapStream(appStream, STREAM_TEMPLATE).getReader()
+
+      await expect(withTimeout(reader.read(), 'pre-shell stream error did not reject')).rejects.toBe(error)
+      expect(appStream.locked).toBe(false)
+    })
+
+    it('rejects when the inner stream errors after shell is ready', async () => {
+      const { head, onCompleteShell, wrapStream } = createStreamableHead()
+      const error = new Error('post-shell stream failure')
+      let appController!: ReadableStreamDefaultController<Uint8Array>
+      const appStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          appController = controller
+        },
+      })
+
+      head.push({ title: 'Shell Ready' })
+      const reader = wrapStream(appStream, STREAM_TEMPLATE).getReader()
+      onCompleteShell()
+
+      const shellChunk = await withTimeout(reader.read(), 'shell chunk was not emitted')
+      expect(shellChunk.done).toBe(false)
+      expect(decodeChunk(shellChunk.value)).toContain('<title>Shell Ready</title>')
+
+      appController.enqueue(encoder.encode('<main>app</main>'))
+      const appChunk = await withTimeout(reader.read(), 'app chunk was not emitted')
+      expect(appChunk.done).toBe(false)
+      expect(decodeChunk(appChunk.value)).toBe('<main>app</main>')
+
+      appController.error(error)
+      await expect(withTimeout(reader.read(), 'post-shell stream error did not reject')).rejects.toBe(error)
+      expect(appStream.locked).toBe(false)
+    })
+
+    it('drains queued chunks before rejecting after an inner stream error', async () => {
+      const { head, onCompleteShell, wrapStream } = createStreamableHead()
+      const error = new Error('queued stream failure')
+      let appController!: ReadableStreamDefaultController<Uint8Array>
+      const appStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          appController = controller
+        },
+      })
+
+      head.push({ title: 'Queued Shell' })
+      const reader = wrapStream(appStream, STREAM_TEMPLATE).getReader()
+      onCompleteShell()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      appController.enqueue(encoder.encode('<main>queued app</main>'))
+      appController.error(error)
+
+      const shellChunk = await withTimeout(reader.read(), 'queued shell chunk was not emitted')
+      expect(shellChunk.done).toBe(false)
+      expect(decodeChunk(shellChunk.value)).toContain('<title>Queued Shell</title>')
+
+      const appChunk = await withTimeout(reader.read(), 'queued app chunk was not emitted')
+      expect(appChunk.done).toBe(false)
+      expect(decodeChunk(appChunk.value)).toBe('<main>queued app</main>')
+
+      await expect(withTimeout(reader.read(), 'queued stream error did not reject after chunks drained')).rejects.toBe(error)
+      expect(appStream.locked).toBe(false)
+    })
+
+    it('cancels the inner reader when the outer reader is cancelled', async () => {
+      const { wrapStream } = createStreamableHead()
+      const reason = new Error('client aborted')
+      let cancelReason: unknown
+      let cancelCount = 0
+      const appStream = new ReadableStream<Uint8Array>({
+        pull() {
+          return Promise.resolve()
+        },
+        cancel(cancelledReason) {
+          cancelCount++
+          cancelReason = cancelledReason
+        },
+      })
+
+      const reader = wrapStream(appStream, STREAM_TEMPLATE).getReader()
+
+      await withTimeout(reader.cancel(reason), 'outer stream cancel did not resolve')
+      expect(cancelCount).toBe(1)
+      expect(cancelReason).toBe(reason)
+      expect(appStream.locked).toBe(false)
+    })
+
+    it('flushes buffered chunks and releases the inner reader after normal completion', async () => {
+      const { head, onCompleteShell, wrapStream } = createStreamableHead()
+      const appStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode('<main>buffered app</main>'))
+          controller.close()
+        },
+      })
+
+      head.push({ title: 'Buffered Shell' })
+      const textPromise = new Response(wrapStream(appStream, STREAM_TEMPLATE)).text()
+
+      await Promise.resolve()
+      onCompleteShell()
+
+      const text = await withTimeout(textPromise, 'normal stream completion did not resolve')
+      expect(text).toContain('<title>Buffered Shell</title>')
+      expect(text).toContain('<main>buffered app</main>')
+      expect(text).toContain('</html>')
+      expect(appStream.locked).toBe(false)
     })
   })
 

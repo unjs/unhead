@@ -25,27 +25,27 @@
       "default": "./package.json"
     },
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/types/unhead-angular.d.ts",
       "default": "./dist/fesm2022/unhead-angular.mjs"
     },
     "./client": {
-      "types": "./dist/client/index.d.ts",
+      "types": "./dist/types/unhead-angular-client.d.ts",
       "default": "./dist/fesm2022/unhead-angular-client.mjs"
     },
     "./server": {
-      "types": "./dist/server/index.d.ts",
+      "types": "./dist/types/unhead-angular-server.d.ts",
       "default": "./dist/fesm2022/unhead-angular-server.mjs"
     }
   },
   "module": "dist/fesm2022/unhead-angular.mjs",
-  "types": "dist/index.d.ts",
+  "types": "dist/types/unhead-angular.d.ts",
   "typesVersions": {
     "*": {
       "server": [
-        "dist/server"
+        "dist/types/unhead-angular-server.d.ts"
       ],
       "client": [
-        "dist/client"
+        "dist/types/unhead-angular-client.d.ts"
       ]
     }
   },
@@ -62,7 +62,7 @@
     "test:attw": "true",
     "prepack": "pnpm run build"
   },
-  "typings": "./dist/index.d.ts",
+  "typings": "./dist/types/unhead-angular.d.ts",
   "peerDependencies": {
     "@angular/common": "^19.0.0 || ^20.0.0 || ^21.0.0",
     "@angular/core": "^19.0.0 || ^20.0.0 || ^21.0.0"

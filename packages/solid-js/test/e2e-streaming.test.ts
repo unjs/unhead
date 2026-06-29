@@ -1,12 +1,16 @@
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-} from 'unhead/stream/server'
-// @vitest-environment node
-import { describe, expect, it } from 'vitest'
+} from '../src/stream/server'
 
-const XSS_RE = /<title>.*<script>alert.*<\/title>/i
+const XSS_RE = /<script\b/i
+
+function extractTitleContent(html: string): string {
+  return html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || ''
+}
 
 describe('solid-js streaming SSR e2e', () => {
   describe('full streaming workflow', () => {
@@ -97,9 +101,10 @@ describe('solid-js streaming SSR e2e', () => {
       const [htmlStart] = template.split('<!--app-html-->')
 
       const shell = await renderSSRHeadShell(head, htmlStart)
+      const title = extractTitleContent(shell)
 
       expect(shell).toContain('<title>')
-      expect(shell).not.toMatch(XSS_RE)
+      expect(title).not.toMatch(XSS_RE)
     })
 
     it('handles nested suspense with head updates', async () => {
