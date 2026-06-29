@@ -160,4 +160,51 @@ describe('head component — Style inside Head (issue #517)', () => {
     const titleTag = tags.find(t => t.tag === 'title')
     expect(titleTag?.textContent).toBe('My Page Title')
   })
+
+  it('does not keep slot watchers from previous renders', async () => {
+    const css = ref('body { color: blue }')
+    const tick = ref(0)
+    let entriesUpdated = 0
+    const head = createHead({
+      hooks: {
+        'entries:updated': () => {
+          entriesUpdated++
+        },
+      },
+    })
+    const App = defineComponent({
+      render() {
+        return h('div', [
+          h('span', tick.value),
+          h(Head, { 'data-render': tick.value }, {
+            default: () => [
+              h('style', null, [css.value]),
+            ],
+          }),
+        ])
+      },
+    })
+    const el = document.createElement('div')
+    const { createApp } = await import('vue')
+    const app = createApp(App)
+    app.use(head)
+    app.mount(el)
+    await nextTick()
+
+    for (let i = 0; i < 5; i++) {
+      tick.value++
+      await nextTick()
+    }
+
+    entriesUpdated = 0
+    css.value = 'body { color: green }'
+    await nextTick()
+
+    expect(entriesUpdated).toBe(1)
+    const tags = resolveTags(head)
+    const styleTag = tags.find(t => t.tag === 'style')
+    expect(styleTag?.textContent).toBe('body { color: green }')
+
+    app.unmount()
+  })
 })
