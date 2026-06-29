@@ -90,20 +90,37 @@ export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOption
   return useHead<UseHeadSafeInput>(input as UseHeadInput, options)
 }
 
-export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
-  const head = options.head || injectHead()
-  head.use(FlatMetaPlugin)
+function normalizeSeoMetaInput(input: UseSeoMetaInput) {
+  // @ts-expect-error untyped
+  if (input._flatMeta)
+    return input
+
   const meta: Record<string, any> = {}
   for (const key in input) {
     if (!Object.hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
       continue
     meta[key] = input[key as keyof UseSeoMetaInput]
   }
-  return useHead({
+
+  return {
     title: input.title,
     titleTemplate: input.titleTemplate,
     _flatMeta: meta,
-  } as UseSeoMetaInput, options)
+  } as UseSeoMetaInput
+}
+
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
+  const head = options.head || injectHead()
+  head.use(FlatMetaPlugin)
+  const entry = useHead<UseSeoMetaInput>(normalizeSeoMetaInput(input), options)
+  const corePatch = entry.patch
+  // @ts-expect-error runtime
+  if (!entry.__patched) {
+    entry.patch = input => corePatch(normalizeSeoMetaInput(input))
+    // @ts-expect-error runtime
+    entry.__patched = true
+  }
+  return entry
 }
 
 export { useScript } from './scripts/useScript'
