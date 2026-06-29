@@ -1,1 +1,1 @@
-export * from './dist/client'
+export * from './dist/types/unhead-angular-client'

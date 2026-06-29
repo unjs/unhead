@@ -1,5 +1,5 @@
 import { renderToPipeableStream } from 'react-dom/server'
-import { StaticRouter } from 'react-router-dom/server'
+import { StaticRouter } from 'react-router-dom'
 import { createStreamableHead, UnheadProvider } from '@unhead/react/stream/server'
 import App from './App'
 

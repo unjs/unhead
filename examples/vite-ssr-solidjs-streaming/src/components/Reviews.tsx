@@ -20,20 +20,19 @@ export default function Reviews() {
 
   const avgStars = () => '★'.repeat(Math.floor(data()?.avgRating || 0))
 
-  // Only add progress style during loading, add JSON-LD when data is ready
   useHead({
     title: 'StreamShop 10/11 - Almost there...',
-    script: data() ? [
+    script: [
       {
         type: 'application/ld+json',
-        innerHTML: JSON.stringify({
+        textContent: JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'AggregateRating',
-          ratingValue: data()!.avgRating,
-          reviewCount: data()!.reviews.length,
+          ratingValue: DATA.avgRating,
+          reviewCount: DATA.reviews.length,
         }),
       },
-    ] : [],
+    ],
     style: [{ key: 'progress', innerHTML: '.stream-progress::after{width:91%}' }],
   })
 

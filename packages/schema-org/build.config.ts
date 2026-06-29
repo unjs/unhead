@@ -5,7 +5,9 @@ export default defineBuildConfig({
   declaration: true,
   entries: [
     { input: 'src/index' },
+    { input: 'src/imports', name: 'imports' },
     { input: 'src/vue/index', name: 'vue' }, // ships components
+    { input: 'src/vue/meta', name: 'vue/meta' },
     { input: 'src/svelte', name: 'svelte' },
     { input: 'src/react', name: 'react' },
     { input: 'src/solid-js', name: 'solid-js' },
