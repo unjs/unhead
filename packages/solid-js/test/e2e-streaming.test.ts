@@ -1,10 +1,10 @@
+// @vitest-environment node
+import { describe, expect, it } from 'vitest'
 import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
-} from 'unhead/stream/server'
-// @vitest-environment node
-import { describe, expect, it } from 'vitest'
+} from '../src/stream/server'
 
 const XSS_RE = /<title>.*<script>alert.*<\/title>/i
 
