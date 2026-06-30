@@ -15,7 +15,8 @@ const WhitelistAttributes = {
 
 const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
 
-const SafeAttrName = /^[a-z][a-z0-9\-]*[a-z0-9]$/i
+const SafeDataAttrName = /^[a-z][a-z0-9-]*[a-z0-9]$/i
+const AsciiWhitespace = /[\t\n\f\r ]+/
 
 const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
 const HtmlEntityDec = /&#(\d+);?/g
@@ -107,9 +108,22 @@ function stripProtoKeys(obj: any): any {
 }
 
 function acceptDataAttrs(value: Record<string, string>, allowId = true) {
-  return Object.fromEntries(
-    Object.entries(value || {}).filter(([key]) => ((allowId && key === 'id') || key.startsWith('data-')) && SafeAttrName.test(key)),
-  )
+  const next: Record<string, string> = {}
+  if (!value)
+    return next
+  const keys = Object.keys(value)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const isData = key.startsWith('data-')
+    if ((isData || (allowId && key === 'id')) && SafeDataAttrName.test(key))
+      next[key] = value[key]
+  }
+  return next
+}
+
+function hasBlockedRel(rel: string): boolean {
+  const tokens = rel.split(AsciiWhitespace)
+  return !tokens.some(Boolean) || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
 }
 
 function makeTagSafe(tag: HeadTag): HeadSafe | false {
@@ -161,7 +175,7 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
           return
         }
         // block bad rel types
-        if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase()))) {
+        if (key === 'rel' && (typeof val !== 'string' || hasBlockedRel(val))) {
           return
         }
         if (key === 'href' || key === 'imagesrcset') {
@@ -239,6 +253,22 @@ export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
           return acc
         }, [])
       }
+    },
+    'tags:afterResolve': (ctx) => {
+      ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
+        if (!(tag as any)._safe) {
+          acc.push(tag)
+          return acc
+        }
+        if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+          acc.push(tag)
+          return acc
+        }
+        const safeTag = makeTagSafe(tag)
+        if (safeTag)
+          acc.push(safeTag as HeadTag)
+        return acc
+      }, [])
     },
   },
 })

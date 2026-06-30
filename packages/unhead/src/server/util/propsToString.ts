@@ -1,3 +1,5 @@
+import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
+
 const DOUBLE_QUOTE_RE = /"/g
 
 /* @__PURE__ */
@@ -23,7 +25,7 @@ export function propsToString(props: Record<string, any>) {
   let attrs = ''
 
   for (const key in props) {
-    if (!Object.hasOwn(props, key))
+    if (!Object.hasOwn(props, key) || !key || INVALID_ATTR_NAME_RE.test(key))
       continue
 
     let value = props[key]

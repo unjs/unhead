@@ -424,6 +424,15 @@ describe('transformHtmlTemplate edge cases', () => {
       const result = await transformHtmlTemplate(head, html)
       expect(result).toContain('<title>Test Title</title>')
     })
+
+    it('preserves the first duplicate attribute value when extracting head tags', async () => {
+      const head = createServerHeadWithContext()
+      const html = '<html><head><script type="application/json" type="text/javascript">window.pwned=1</script></head><body></body></html>'
+
+      const result = await transformHtmlTemplate(head, html)
+      expect(result).toContain('<script type="application/json">window.pwned=1</script>')
+      expect(result).not.toContain('type="text/javascript"')
+    })
   })
 
   describe('transformHtmlTemplateRaw edge cases', () => {
