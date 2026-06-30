@@ -1,7 +1,9 @@
-import type { CreateServerHeadOptions, SSRHeadPayload } from 'unhead/types'
-import type { UseHeadInput, VueHeadClient } from './types'
+import type { ActiveHeadEntry, CreateServerHeadOptions, HeadEntryOptions, SSRHeadPayload } from 'unhead/types'
+import type { UseHeadInput, UseHeadOptions, UseHeadSafeInput, UseSeoMetaInput, VueHeadClient } from './types'
 import { createHead as _createServerHead } from 'unhead/server'
+import { useHead as _useHead, useHeadSafe as _useHeadSafe, useSeoMeta as _useSeoMeta } from 'unhead'
 import { vueInstall } from './install'
+import { injectHead } from './install'
 import { VueResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
@@ -16,6 +18,25 @@ export function createHead(options: Omit<CreateServerHeadOptions, 'propsResolver
   head.install = vueInstall(head)
   return head
 }
+
+export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
+  return _useHead(options.head || injectHead(), input, options as HeadEntryOptions) as ActiveHeadEntry<I>
+}
+
+export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseHeadSafeInput> {
+  return _useHeadSafe(options.head || injectHead(), input as any, options as HeadEntryOptions)
+}
+
+export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
+  return _useSeoMeta(options.head || injectHead(), input, options as HeadEntryOptions)
+}
+
+/** @deprecated Use `useHead` instead. */
+export const useServerHead = useHead
+/** @deprecated Use `useHeadSafe` instead. */
+export const useServerHeadSafe = useHeadSafe
+/** @deprecated Use `useSeoMeta` instead. */
+export const useServerSeoMeta = useSeoMeta
 
 export type {
   CreateServerHeadOptions,

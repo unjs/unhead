@@ -1,5 +1,4 @@
 import type {
-  HttpEventAttributes,
   RawInput,
   Unhead,
 } from '../types'
@@ -14,15 +13,8 @@ import type {
   UseScriptReturn,
   WarmupStrategy,
 } from './types'
-import { ScriptNetworkEvents } from '../utils'
 import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
-
-function resolveScriptKey(input: UseScriptResolvedInput): string {
-  return input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
-}
-
-const PreconnectServerModes = ['preconnect', 'dns-prefetch']
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -32,7 +24,7 @@ const PreconnectServerModes = ['preconnect', 'dns-prefetch']
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
-  const id = resolveScriptKey(input)
+  const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
   if (prevScript) {
     prevScript.setupTriggerHandler(options.trigger)
@@ -47,15 +39,16 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // eslint-disable-next-line ts/no-use-before-define
     callHook(head, 'script:updated', hookCtx)
   }
-  ScriptNetworkEvents
-    .forEach((fn) => {
-      const k = fn as keyof HttpEventAttributes
-      const _fn = typeof input[k] === 'function' ? input[k].bind(options.eventContext) : null
-      input[k] = (e: Event) => {
-        syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
-        _fn?.(e)
-      }
-    })
+  const onload = typeof input.onload === 'function' ? input.onload.bind(options.eventContext) : null
+  input.onload = (e: Event) => {
+    syncStatus('loaded')
+    onload?.(e)
+  }
+  const onerror = typeof input.onerror === 'function' ? input.onerror.bind(options.eventContext) : null
+  input.onerror = (e: Event) => {
+    syncStatus('error')
+    onerror?.(e)
+  }
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
   const _uniqueCbs: Set<string> = new Set<string>()
@@ -118,11 +111,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
             emit({} as T)
           }
         }
-        else if (status === 'error') {
+        else {
           resolve(false) // failed to load
-        }
-        else if (status === 'removed') {
-          resolve(false)
         }
         unhook?.()
       }
@@ -163,7 +153,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     warmup(rel: WarmupStrategy) {
       const { src } = input
       const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
-      const isPreconnect = rel && PreconnectServerModes.includes(rel)
+      const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
       if (!rel || (isPreconnect && !isCrossOrigin)) {
         return
@@ -306,6 +296,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script._warmupStrategy = options.warmupStrategy
     script.warmup(options.warmupStrategy)
   }
-  head._scripts = Object.assign(head._scripts || {}, { [id]: script })
+  ;(head._scripts ||= {})[id] = script
   return script
 }

@@ -11,28 +11,15 @@ import { walkResolver } from 'unhead/utils'
 import {
   getCurrentInstance,
   getCurrentScope,
-  hasInjectionContext,
-  inject,
   onActivated,
   onBeforeUnmount,
   onDeactivated,
   ref,
   watchEffect,
 } from 'vue'
-import { headSymbol } from './install'
+import { injectHead } from './install'
 import { VueResolver } from './resolver'
-
-/* @__NO_SIDE_EFFECTS__ */
-export function injectHead() {
-  if (hasInjectionContext()) {
-    // fallback to vue context
-    const instance = inject<VueHeadClient>(headSymbol)
-    if (instance) {
-      return instance
-    }
-  }
-  throw new Error('useHead() was called without provide context, ensure you call it through the setup() function.')
-}
+export { injectHead } from './install'
 
 export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
   const head = (options.head || injectHead()) as Unhead<I>

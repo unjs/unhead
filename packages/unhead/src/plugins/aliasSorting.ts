@@ -6,7 +6,7 @@ const sortTags = (a: HeadTag, b: HeadTag) => a._w === b._w ? a._p - b._p : a._w 
 
 const formatKey = (k: string) => !k.includes(':key') ? k.split(':').join(':key:') : k
 
-export const AliasSortingPlugin = defineHeadPlugin({
+export const AliasSortingPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'aliasSorting',
   hooks: {
     'tags:resolve': (ctx) => {

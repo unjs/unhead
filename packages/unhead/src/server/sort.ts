@@ -2,9 +2,6 @@ import type { HeadTag } from '../types'
 import { TagPriorityAliases } from '../utils/const'
 
 // Capo.js tag weights for optimal head ordering
-const TAG_WEIGHTS = { base: -10, title: 10 } as const
-const LINK_WEIGHTS = { 'preconnect': 20, 'stylesheet': 60, 'preload': 70, 'modulepreload': 70, 'prefetch': 90, 'dns-prefetch': 90, 'prerender': 90 } as const
-const ImportStyleRe = /@import/
 const isTruthy = (v?: string | boolean) => v === '' || v === true
 
 export function capoTagWeight(tag: HeadTag): number {
@@ -12,14 +9,26 @@ export function capoTagWeight(tag: HeadTag): number {
     return tag.tagPriority
   let weight = 100
   const offset = TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0
-  if (tag.tag in TAG_WEIGHTS) {
-    weight = TAG_WEIGHTS[tag.tag as keyof typeof TAG_WEIGHTS]
+  if (tag.tag === 'base') {
+    weight = -10
+  }
+  else if (tag.tag === 'title') {
+    weight = 10
   }
   else if (tag.tag === 'meta') {
     weight = tag.props['http-equiv'] === 'content-security-policy' ? -30 : tag.props.charset ? -20 : tag.props.name === 'viewport' ? -15 : weight
   }
   else if (tag.tag === 'link' && tag.props.rel) {
-    weight = LINK_WEIGHTS[tag.props.rel as keyof typeof LINK_WEIGHTS]
+    const rel = tag.props.rel
+    weight = rel === 'preconnect'
+      ? 20
+      : rel === 'stylesheet'
+        ? 60
+        : rel === 'preload' || rel === 'modulepreload'
+          ? 70
+          : rel === 'prefetch' || rel === 'dns-prefetch' || rel === 'prerender'
+            ? 90
+            : weight
   }
   else if (tag.tag === 'script') {
     const type = typeof tag.props.type === 'string' ? tag.props.type : ''
@@ -41,7 +50,7 @@ export function capoTagWeight(tag: HeadTag): number {
       weight = 80
   }
   else if (tag.tag === 'style') {
-    weight = tag.innerHTML && ImportStyleRe.test(tag.innerHTML) ? 40 : 60
+    weight = tag.innerHTML && /@import/.test(tag.innerHTML) ? 40 : 60
   }
   return (weight || 100) + offset
 }
