@@ -16,7 +16,6 @@ export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
 export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}): ClientUnhead<T> {
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
   const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
-  const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
   const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks>(options.hooks)
   let dirty = false
@@ -63,7 +62,6 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
     renderer(head)
   })
   options.plugins?.forEach(p => registerPlugin(head, p))
-  initialPayload && head.push(JSON.parse(initialPayload) as T)
   options.init?.forEach(e => e && head.push(e as T))
   return head
 }
