@@ -15,22 +15,22 @@ overrides:
   '@arethetypeswrong/core>fflate': 0.8.2
   chokidar: 5.0.0
 catalog:
-  '@angular-devkit/build-angular': ^21.2.16
-  '@angular/cli': ^22.0.3
-  '@angular/common': ^22.0.2
-  '@angular/compiler': ^22.0.2
-  '@angular/compiler-cli': ^22.0.2
-  '@angular/core': ^22.0.2
-  '@angular/platform-browser': ^22.0.2
+  '@angular-devkit/build-angular': ^21.2.17
+  '@angular/cli': ^22.0.4
+  '@angular/common': ^22.0.4
+  '@angular/compiler': ^22.0.4
+  '@angular/compiler-cli': ^22.0.4
+  '@angular/core': ^22.0.4
+  '@angular/platform-browser': ^22.0.4
   '@angular/platform-browser-dynamic': ^22.0.1
-  '@angular/platform-server': ^22.0.2
-  '@antfu/eslint-config': ^9.0.0
+  '@angular/platform-server': ^22.0.4
+  '@antfu/eslint-config': ^9.1.0
   '@arethetypeswrong/cli': ^0.18.4
   '@fast-check/vitest': ^0.4.1
   '@nuxt/ui': ^4.9.0
   '@rollup/plugin-node-resolve': ^16.0.3
-  '@shikijs/langs': ^4.2.0
-  '@shikijs/themes': ^4.2.0
+  '@shikijs/langs': ^4.3.0
+  '@shikijs/themes': ^4.3.0
   '@sveltejs/vite-plugin-svelte': ^7.1.2
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
@@ -41,15 +41,15 @@ catalog:
   '@types/react': ^19.2.17
   '@types/react-dom': ^19.2.3
   '@vitejs/devtools-kit': ^0.3.3
-  '@vue/server-renderer': ^3.5.38
+  '@vue/server-renderer': ^3.5.39
   '@vueuse/nuxt': ^14.3.0
   bumpp: ^11.1.0
   citty: ^0.2.2
   devalue: ^5.8.1
-  eslint: ^10.5.0
+  eslint: ^10.6.0
   eslint-plugin-harlanzw: ^0.17.0
   hookable: ^6.1.1
-  js-yaml: ^5.1.0
+  js-yaml: ^5.2.0
   jsdom: ^29.1.1
   magic-string: ^0.30.21
   nuxt: ^4.4.8
@@ -61,7 +61,7 @@ catalog:
   react-dom: ^19.2.7
   rollup: ^4.62.2
   rollup-plugin-visualizer: ^7.0.1
-  shiki: ^4.2.0
+  shiki: ^4.3.0
   solid-js: ^1.9.13
   svelte: ^5.56.4
   tailwindcss: ^4.3.1
@@ -71,12 +71,12 @@ catalog:
   typescript: 6.0.3
   ufo: ^1.6.4
   unbuild: ^3.6.1
-  unplugin: ^3.0.0
+  unplugin: ^3.2.0
   unplugin-vue-components: ^32.1.0
   vite: ^8.1.0
   vitest: ^4.1.9
   vitest-package-exports: ^1.2.0
-  vue: ^3.5.38
+  vue: ^3.5.39
   vue-tsc: ^3.3.5
   zone.js: ^0.16.2
 ignoredBuiltDependencies:

@@ -17,12 +17,12 @@
     "compression": "^1.8.1",
     "express": "^5.2.1",
     "sirv": "^3.0.2",
-    "vue": "^3.5.38",
+    "vue": "^3.5.39",
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "@unhead/bundler": "workspace:*",
     "@vitejs/devtools": "^0.3.3",
     "@vitejs/plugin-vue": "^6.0.7",
