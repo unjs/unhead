@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { useHeadSafe } from '../../../src'
+import { TemplateParamsPlugin } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
@@ -290,6 +291,15 @@ describe('useHeadSafe edge cases', () => {
       })
     }
 
+    it('blocks token-list rel values containing a blocked token', async () => {
+      for (const rel of ['canonical alternate', 'alternate\tpreconnect', 'stylesheet\npreload']) {
+        const ctx = await safeRender({
+          link: [{ rel, href: 'https://example.com/resource' }],
+        })
+        expect(ctx.headTags).toBe('')
+      }
+    })
+
     it('allows safe rel types', async () => {
       for (const rel of ['icon', 'stylesheet', 'alternate']) {
         const ctx = await safeRender({
@@ -310,6 +320,20 @@ describe('useHeadSafe edge cases', () => {
       const ctx = await safeRender({
         link: [{ rel: 'icon' }],
       })
+      expect(ctx.headTags).toBe('')
+    })
+
+    it('revalidates link href after template param substitution', async () => {
+      const head = createServerHeadWithContext({
+        plugins: [TemplateParamsPlugin],
+      })
+      useHeadSafe(head, {
+        link: [{ rel: 'stylesheet', href: '%href' }],
+        templateParams: {
+          href: 'data:text/css,body{display:none}',
+        },
+      })
+      const ctx = renderSSRHead(head)
       expect(ctx.headTags).toBe('')
     })
   })

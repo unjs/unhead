@@ -1,5 +1,6 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
+import { isValidAttributeName } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
@@ -72,6 +73,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
       const isData = prop.startsWith('data-')
       const key = isHtmlTag && !isData ? prop.toLowerCase() : prop
+      if (isHtmlTag && !isValidAttributeName(key))
+        continue
       const str = String(value)
       const isMeta = tag.tag === 'meta' && key === 'content'
       tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value

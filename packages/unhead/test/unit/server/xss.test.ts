@@ -218,12 +218,46 @@ describe('xss', () => {
     head.push({
       meta: [
         // @ts-expect-error untyped
-        { 'name': 'description', 'data-x': 'valid', '</meta><script>alert(1)</script>': 'invalid' },
+        { 'name': 'description', 'content': 'safe', 'data-x': 'valid', '</meta><script>alert(1)</script>': 'invalid' },
       ],
     })
 
     const ctx = renderSSRHead(head)
-    expect(ctx.headTags).toMatchInlineSnapshot(`""`)
+    expect(ctx.headTags).toMatchInlineSnapshot(`"<meta name="description" content="safe" data-x="valid">"`)
+  })
+
+  it('drops raw invalid attribute names across rendered tags', async () => {
+    const injectedKey = '\'><script>alert(1)</script><meta data-x'
+    const head = createServerHeadWithContext()
+
+    head.push({
+      meta: [
+        { name: 'description', content: 'safe', [injectedKey]: 'x' } as any,
+      ],
+      link: [
+        { rel: 'stylesheet', href: '/safe.css', [injectedKey]: 'x' } as any,
+      ],
+      script: [
+        { type: 'application/json', textContent: '{"safe":true}', [injectedKey]: 'x' } as any,
+      ],
+      htmlAttrs: {
+        lang: 'en',
+        [injectedKey]: 'x',
+      } as any,
+      bodyAttrs: {
+        'data-safe': 'ok',
+        [injectedKey]: 'x',
+      } as any,
+    })
+
+    const ctx = renderSSRHead(head)
+    expect(ctx.headTags).not.toContain('<script>alert(1)</script>')
+    expect(ctx.headTags).not.toContain(injectedKey)
+    expect(ctx.headTags).toContain('<meta name="description" content="safe">')
+    expect(ctx.headTags).toContain('<link rel="stylesheet" href="/safe.css">')
+    expect(ctx.headTags).toContain('<script type="application/json">{"safe":true}</script>')
+    expect(ctx.htmlAttrs).toBe(' lang="en"')
+    expect(ctx.bodyAttrs).toBe(' data-safe="ok"')
   })
 
   it('script with null byte insertion', async () => {

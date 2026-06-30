@@ -133,6 +133,12 @@ export function parseAttributes(attrStr: string): Record<string, string> {
     return {}
 
   const result: Record<string, string> = {}
+  const setAttr = (attrName: string, value: string) => {
+    // Browsers keep the first duplicate attribute. Preserve that behavior so
+    // template extraction cannot rewrite inert tags into active ones.
+    if (!Object.hasOwn(result, attrName))
+      result[attrName] = value
+  }
   const len = attrStr.length
   let i = 0
 
@@ -177,7 +183,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
           state = BEFORE_VALUE
         }
         else if (!isSpace) {
-          result[name] = ''
+          setAttr(name, '')
           state = NAME
           nameStart = i
           nameEnd = 0 // Reset nameEnd when starting a new attribute
@@ -201,14 +207,14 @@ export function parseAttributes(attrStr: string): Record<string, string> {
         // always terminates the value (matches browser parsing and the
         // tag-boundary scanner above).
         if (charCode === quoteChar) {
-          result[name] = attrStr.substring(valueStart, i)
+          setAttr(name, attrStr.substring(valueStart, i))
           state = WHITESPACE
         }
         break
 
       case UNQUOTED_VALUE:
         if (isSpace || charCode === GT_CHAR) {
-          result[name] = attrStr.substring(valueStart, i)
+          setAttr(name, attrStr.substring(valueStart, i))
           state = WHITESPACE
         }
         break
@@ -220,14 +226,14 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   // Handle the last attribute
   if (state === QUOTED_VALUE || state === UNQUOTED_VALUE) {
     if (name) {
-      result[name] = attrStr.substring(valueStart, i)
+      setAttr(name, attrStr.substring(valueStart, i))
     }
   }
   else if (state === NAME || state === AFTER_NAME || state === BEFORE_VALUE) {
     nameEnd = nameEnd || i
     const currentName = attrStr.substring(nameStart, nameEnd).toLowerCase()
     if (currentName) {
-      result[currentName] = ''
+      setAttr(currentName, '')
     }
   }
 

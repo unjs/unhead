@@ -266,6 +266,32 @@ describe('useSeoMetaTransform', () => {
     expect(code).toBeUndefined()
   })
 
+  it('statically replaces packed meta objects without evaluating source text', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { noindex: \'true\', unavailableAfter: \'tomorrow\' } })',
+    ])
+    expect(code).toContain('{ name: \'robots\', content: "noindex:true, unavailable-after:tomorrow" }')
+  })
+
+  it('does not evaluate computed packed meta object keys', async () => {
+    delete (globalThis as any).__unheadTransformPwned
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { [globalThis.__unheadTransformPwned = true]: \'x\' } })',
+    ])
+    expect(code).toBeUndefined()
+    expect((globalThis as any).__unheadTransformPwned).toBeUndefined()
+  })
+
+  it('bails packed meta objects with unsafe prototype keys', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { constructor: \'polluted\' } })',
+    ])
+    expect(code).toBeUndefined()
+  })
+
   it('handles @unhead/vue', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'@unhead/vue\'',

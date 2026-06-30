@@ -16,6 +16,7 @@ const WhitelistAttributes = {
 const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
 
 const SafeAttrName = /^[a-z][a-z0-9\-]*[a-z0-9]$/i
+const AsciiWhitespace = /[\t\n\f\r ]+/
 
 const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
 const HtmlEntityDec = /&#(\d+);?/g
@@ -112,6 +113,11 @@ function acceptDataAttrs(value: Record<string, string>, allowId = true) {
   )
 }
 
+function hasBlockedRel(rel: string): boolean {
+  const tokens = rel.split(AsciiWhitespace).filter(Boolean)
+  return !tokens.length || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
+}
+
 function makeTagSafe(tag: HeadTag): HeadSafe | false {
   let next: Record<string, any> = {}
   const { tag: type, props: prev } = tag
@@ -161,7 +167,7 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
           return
         }
         // block bad rel types
-        if (key === 'rel' && (typeof val !== 'string' || BlockedLinkRels.has(val.toLowerCase()))) {
+        if (key === 'rel' && (typeof val !== 'string' || hasBlockedRel(val))) {
           return
         }
         if (key === 'href' || key === 'imagesrcset') {
@@ -239,6 +245,18 @@ export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
           return acc
         }, [])
       }
+    },
+    'tags:afterResolve': (ctx) => {
+      ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
+        if (!(tag as any)._safe) {
+          acc.push(tag)
+          return acc
+        }
+        const safeTag = makeTagSafe(tag)
+        if (safeTag)
+          acc.push(safeTag as HeadTag)
+        return acc
+      }, [])
     },
   },
 })

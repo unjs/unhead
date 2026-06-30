@@ -1,6 +1,5 @@
 import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
-import { createContext, runInContext } from 'node:vm'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
@@ -33,6 +32,7 @@ const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
 // We can only reproduce this statically for object/array literals; any dynamic value (ref, computed,
 // getter, identifier) could resolve to an object and MUST be left to runtime `unpackMeta`.
 const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
+const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
 
 /**
  * useSeoMeta({
@@ -297,18 +297,13 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
                 return
               }
               else if (property.value.type === 'ObjectExpression') {
-                const isStatic = property.value.properties.every((p: any) => p.value.type === 'StringLiteral' && typeof p.value.value === 'string')
-                if (!isStatic) {
+                const staticValue = materializeStaticStringObject(property.value)
+                if (!staticValue) {
                   output = false
                   return
                 }
-                const context = createContext({
-                  resolvePackedMetaObjectValue,
-                })
-                const start = property.value.start as number
-                const end = property.value.end as number
                 try {
-                  value = JSON.stringify(runInContext(`resolvePackedMetaObjectValue(${code.slice(start, end)})`, context))
+                  value = JSON.stringify(resolvePackedMetaObjectValue(staticValue, propertyKey.name))
                 }
                 catch {
                   output = false
@@ -385,3 +380,31 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
     },
   }
 })
+
+function getStaticPropertyKey(prop: any): string | undefined {
+  if (prop.computed)
+    return undefined
+  if (prop.key?.type === 'Identifier')
+    return prop.key.name
+  if ((prop.key?.type === 'Literal' || prop.key?.type === 'StringLiteral') && typeof prop.key.value === 'string')
+    return prop.key.value
+}
+
+function getStaticStringValue(node: any): string | undefined {
+  if ((node?.type === 'Literal' || node?.type === 'StringLiteral') && typeof node.value === 'string')
+    return node.value
+}
+
+function materializeStaticStringObject(node: any): Record<string, string> | false {
+  const out: Record<string, string> = Object.create(null)
+  for (const prop of node.properties) {
+    if (prop.type === 'SpreadElement' || prop.computed || prop.method || prop.kind !== 'init')
+      return false
+    const key = getStaticPropertyKey(prop)
+    const value = getStaticStringValue(prop.value)
+    if (!key || UNSAFE_OBJECT_KEYS.has(key) || value === undefined)
+      return false
+    out[key] = value
+  }
+  return out
+}
