@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render } from '@testing-library/react'
-import React, { useState } from 'react'
+import React, { StrictMode, useState } from 'react'
+import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { useHead } from '../src'
+import { useHead, useScript } from '../src'
 import { createHead, renderDOMHead, UnheadProvider } from '../src/client'
+import { Head } from '../src/components'
+import { createHead as createServerHead, renderSSRHead } from '../src/server'
 
 /**
  * Reproduction of https://github.com/unjs/unhead/issues/558
@@ -190,5 +193,262 @@ describe('issue #558 - unmount cleanup', () => {
 
     // After unmount, back to 1 entry (init only)
     expect(head.entries.size).toBe(1)
+  })
+
+  it('head component keeps one entry in StrictMode and disposes on unmount', async () => {
+    const head = createHead({
+      init: [{
+        title: 'Init',
+      }],
+    })
+
+    function PageWithHead() {
+      return (
+        <Head>
+          <title>Component</title>
+          <meta name="description" content="component description" />
+        </Head>
+      )
+    }
+
+    expect(head.entries.size).toBe(1)
+
+    const { unmount } = render(
+      <StrictMode>
+        <UnheadProvider head={head}>
+          <PageWithHead />
+        </UnheadProvider>
+      </StrictMode>,
+    )
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(head.entries.size).toBe(2)
+    let rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>Component</title>')
+    expect(rendered.headTags).toContain('component description')
+
+    await act(async () => {
+      unmount()
+      await wait()
+    })
+
+    expect(head.entries.size).toBe(1)
+    rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>Init</title>')
+    expect(rendered.headTags).not.toContain('Component')
+  })
+
+  it('head component pushes during React server rendering', async () => {
+    const head = createServerHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <title>Server Component</title>
+          <meta name="description" content="server description" />
+        </Head>
+      </UnheadProvider>,
+    )
+
+    expect(head.entries.size).toBe(1)
+    const rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>Server Component</title>')
+    expect(rendered.headTags).toContain('server description')
+  })
+
+  it('head component patches the same StrictMode entry on prop updates', async () => {
+    const head = createHead({
+      init: [{
+        title: 'Init',
+      }],
+    })
+
+    function PageWithHead({ title }: { title: string }) {
+      return (
+        <Head>
+          <title>{title}</title>
+        </Head>
+      )
+    }
+
+    const renderApp = (title: string) => (
+      <StrictMode>
+        <UnheadProvider head={head}>
+          <PageWithHead title={title} />
+        </UnheadProvider>
+      </StrictMode>
+    )
+
+    const { rerender } = render(renderApp('First'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(head.entries.size).toBe(2)
+    const entryKeys = [...head.entries.keys()]
+    let rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>First</title>')
+
+    rerender(renderApp('Second'))
+    await act(async () => {
+      await wait()
+    })
+
+    expect(head.entries.size).toBe(2)
+    expect([...head.entries.keys()]).toEqual(entryKeys)
+    rendered = await renderSSRHead(head)
+    expect(rendered.headTags).toContain('<title>Second</title>')
+    expect(rendered.headTags).not.toContain('<title>First</title>')
+  })
+
+  it('does not load a promise-triggered script after StrictMode unmount', async () => {
+    const head = createHead()
+    let resolveTrigger!: () => void
+    const trigger = new Promise<void>((resolve) => {
+      resolveTrigger = resolve
+    })
+
+    function PageWithScript() {
+      useScript('//react-strict-script.js', {
+        trigger,
+        head,
+      })
+      return null
+    }
+
+    const { unmount } = render(
+      <StrictMode>
+        <UnheadProvider head={head}>
+          <PageWithScript />
+        </UnheadProvider>
+      </StrictMode>,
+    )
+
+    await act(async () => {
+      await wait()
+    })
+
+    const script = (head as any)._scripts['//react-strict-script.js']
+    expect(script.status).toBe('awaitingLoad')
+
+    await act(async () => {
+      unmount()
+      await wait()
+    })
+
+    resolveTrigger()
+    await act(async () => {
+      await wait()
+    })
+
+    expect(script.status).toBe('awaitingLoad')
+    expect(document.querySelector('script[src="//react-strict-script.js"]')).toBeNull()
+  })
+
+  it('keeps script callbacks registered through StrictMode effect replay', async () => {
+    const head = createHead()
+    let loaded = 0
+
+    function PageWithScript() {
+      const script = useScript('//react-strict-callback.js', {
+        trigger: 'manual',
+        head,
+      })
+      script.onLoaded(() => {
+        loaded++
+      })
+      return null
+    }
+
+    render(
+      <StrictMode>
+        <UnheadProvider head={head}>
+          <PageWithScript />
+        </UnheadProvider>
+      </StrictMode>,
+    )
+
+    await act(async () => {
+      await wait()
+    })
+
+    const script = (head as any)._scripts['//react-strict-callback.js']
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    script.load()
+    await act(async () => {
+      await renderDOMHead(head)
+      await wait()
+    })
+
+    document
+      .querySelector('script[src="//react-strict-callback.js"]')
+      ?.dispatchEvent(new Event('load'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(loaded).toBe(1)
+  })
+
+  it('keeps post-commit script callbacks registered across rerenders', async () => {
+    const head = createHead()
+    let loaded = 0
+
+    function PageWithScript({ label }: { label: string }) {
+      const script = useScript('//react-effect-callback.js', {
+        trigger: 'manual',
+        head,
+      })
+      React.useEffect(() => {
+        return script.onLoaded(() => {
+          loaded++
+        })
+      }, [script])
+      return <div>{label}</div>
+    }
+
+    const renderApp = (label: string) => (
+      <UnheadProvider head={head}>
+        <PageWithScript label={label} />
+      </UnheadProvider>
+    )
+
+    const { rerender } = render(renderApp('first'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    const script = (head as any)._scripts['//react-effect-callback.js']
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    rerender(renderApp('second'))
+    await act(async () => {
+      await wait()
+    })
+
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    script.load()
+    await act(async () => {
+      await renderDOMHead(head)
+      await wait()
+    })
+
+    document
+      .querySelector('script[src="//react-effect-callback.js"]')
+      ?.dispatchEvent(new Event('load'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(loaded).toBe(1)
   })
 })

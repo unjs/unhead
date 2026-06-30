@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ClientUnhead } from 'unhead/client'
 import type { CreateClientHeadOptions, Unhead } from 'unhead/types'
-import { createElement } from 'react'
+import { createElement, useRef } from 'react'
 import { createHead as _createHead, createDebouncedFn, createDomRenderer } from 'unhead/client'
 import { UnheadContext } from './context'
 
@@ -16,7 +16,10 @@ export function createHead(options: CreateClientHeadOptions = {}): ClientUnhead 
 }
 
 export function UnheadProvider({ children, head }: { children: ReactNode, head?: Unhead<any, any> }) {
-  return createElement(UnheadContext.Provider, { value: head || createHead() }, children)
+  const headRef = useRef<Unhead<any, any> | null>(null)
+  if (!head && !headRef.current)
+    headRef.current = createHead()
+  return createElement(UnheadContext.Provider, { value: head || headRef.current }, children)
 }
 
 export type {

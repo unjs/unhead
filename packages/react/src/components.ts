@@ -57,18 +57,20 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
     return input
   }, [processedElements, titleTemplate])
 
-  const headRef = useRef<ActiveHeadEntry<any> | null>(
-    head.push(getHeadChanges()),
-  )
+  const headRef = useRef<ActiveHeadEntry<any> | null>(null)
 
+  // Server: create entry during render since useEffect doesn't run in SSR.
+  if (head.ssr && !headRef.current)
+    headRef.current = head.push(getHeadChanges())
+
+  // Client: create entry in effect to avoid orphaned entries in React 18 StrictMode.
   useEffect(() => {
+    headRef.current = head.push(getHeadChanges())
     return () => {
-      if (headRef.current?.dispose) {
-        headRef.current.dispose()
-      }
+      headRef.current?.dispose()
       headRef.current = null
     }
-  }, [])
+  }, [head])
 
   useEffect(() => {
     headRef.current?.patch(getHeadChanges())
