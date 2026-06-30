@@ -907,10 +907,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
   it('preserves complex second argument', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'unhead\'',
-      'useSeoMeta({ description: \'Test\' }, { head, mode: \'server\' })',
+      'useSeoMeta({ description: \'Test\' }, { head, tagPriority: \'high\' })',
     ])
     expect(code).toBeDefined()
-    expect(code).toContain('{ head, mode: \'server\' }')
+    expect(code).toContain('{ head, tagPriority: \'high\' }')
   })
 
   it('handles #import', async () => {

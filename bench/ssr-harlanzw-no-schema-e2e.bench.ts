@@ -25,14 +25,13 @@ describe('ssr e2e bench', () => {
         },
       ],
     })
-    const options = { mode: 'server' } as const
     // 1. payload
     head.push({
       link: [
         // resource hints for vue chunks
         { rel: 'preload', as: 'fetch', href: '/payload.json' },
       ],
-    }, options)
+    })
     // 2. styles
     head.push({
       link: [
@@ -43,7 +42,7 @@ describe('ssr e2e bench', () => {
         { rel: 'stylesheet', href: '/page4.css' },
         { rel: 'stylesheet', href: '/page5.css' },
       ],
-    }, options)
+    })
     // 3. resource hints
     head.push({
       link: [
@@ -51,7 +50,7 @@ describe('ssr e2e bench', () => {
         { rel: 'preload', as: 'script', href: '/_nuxt/vendors.js' },
         { rel: 'preload', as: 'script', href: '/_nuxt/app.js' },
       ],
-    }, options)
+    })
     // 4. payloads
     head.push({
       script: [
@@ -59,7 +58,6 @@ describe('ssr e2e bench', () => {
         { innerHTML: { id: '__NUXT_DATA__', data: { initial: { bar: 'foo' }, payload: { foo: 'bar' } } } },
       ],
     }, {
-      ...options,
       tagPosition: 'bodyClose',
       tagPriority: 'high',
     })
@@ -79,7 +77,7 @@ describe('ssr e2e bench', () => {
           crossorigin: '',
         },
       ],
-    }, options)
+    })
     // start the vue rendererer
     // Nuxt SEO experiments
     head.use({
