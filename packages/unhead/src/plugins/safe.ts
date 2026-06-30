@@ -15,7 +15,7 @@ const WhitelistAttributes = {
 
 const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
 
-const SafeAttrName = /^[a-z][a-z0-9\-]*[a-z0-9]$/i
+const SafeDataAttrName = /^[a-z][a-z0-9-]*[a-z0-9]$/i
 const AsciiWhitespace = /[\t\n\f\r ]+/
 
 const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
@@ -109,7 +109,7 @@ function stripProtoKeys(obj: any): any {
 
 function acceptDataAttrs(value: Record<string, string>, allowId = true) {
   return Object.fromEntries(
-    Object.entries(value || {}).filter(([key]) => ((allowId && key === 'id') || key.startsWith('data-')) && SafeAttrName.test(key)),
+    Object.entries(value || {}).filter(([key]) => ((allowId && key === 'id') || key.startsWith('data-')) && SafeDataAttrName.test(key)),
   )
 }
 

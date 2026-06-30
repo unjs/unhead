@@ -32,7 +32,6 @@ const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
 // We can only reproduce this statically for object/array literals; any dynamic value (ref, computed,
 // getter, identifier) could resolve to an object and MUST be left to runtime `unpackMeta`.
 const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
-const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
 
 /**
  * useSeoMeta({
@@ -395,6 +394,10 @@ function getStaticStringValue(node: any): string | undefined {
     return node.value
 }
 
+function isUnsafeObjectKey(key: string): boolean {
+  return key === '__proto__' || key === 'constructor' || key === 'prototype'
+}
+
 function materializeStaticStringObject(node: any): Record<string, string> | false {
   const out: Record<string, string> = Object.create(null)
   for (const prop of node.properties) {
@@ -402,7 +405,7 @@ function materializeStaticStringObject(node: any): Record<string, string> | fals
       return false
     const key = getStaticPropertyKey(prop)
     const value = getStaticStringValue(prop.value)
-    if (!key || UNSAFE_OBJECT_KEYS.has(key) || value === undefined)
+    if (!key || isUnsafeObjectKey(key) || value === undefined)
       return false
     out[key] = value
   }

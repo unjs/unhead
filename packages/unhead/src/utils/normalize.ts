@@ -51,7 +51,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       continue
     const value = input[prop]
     const isData = prop.startsWith('data-')
-    const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
+    const isTagConfig = TagConfigKeys.has(prop)
+    const isHtmlAttr = isHtmlTag && !isTagConfig
     const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
     if (isHtmlAttr && !isValidAttributeName(key))
       continue
@@ -61,7 +62,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (prop === 'class' || prop === 'style') {
       tag.props[prop] = normalizeStyleClassProps(prop, value) as any
     }
-    else if (TagConfigKeys.has(prop)) {
+    else if (isTagConfig) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
         const type = input.type || 'application/json'
         if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
