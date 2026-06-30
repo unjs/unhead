@@ -108,9 +108,17 @@ function stripProtoKeys(obj: any): any {
 }
 
 function acceptDataAttrs(value: Record<string, string>, allowId = true) {
-  return Object.fromEntries(
-    Object.entries(value || {}).filter(([key]) => ((allowId && key === 'id') || key.startsWith('data-')) && SafeDataAttrName.test(key)),
-  )
+  const next: Record<string, string> = {}
+  if (!value)
+    return next
+  const keys = Object.keys(value)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const isData = key.startsWith('data-')
+    if ((isData || (allowId && key === 'id')) && SafeDataAttrName.test(key))
+      next[key] = value[key]
+  }
+  return next
 }
 
 function hasBlockedRel(rel: string): boolean {
