@@ -109,4 +109,21 @@ describe('onRendered option', () => {
     expect(onRendered1).toHaveBeenCalledTimes(2) // stopped
     expect(onRendered2).toHaveBeenCalledTimes(2) // still fires
   })
+
+  it('renders mutations made by onRendered in a follow-up pass', () => {
+    const head = useDOMHead()
+    let renders = 0
+
+    useHead(head, { title: 'Initial' }, {
+      onRendered() {
+        renders++
+        if (renders === 1)
+          head.push({ title: 'Updated' })
+      },
+    })
+
+    expect(head.resolvedOptions.document!.title).toBe('Updated')
+    expect(renders).toBe(2)
+    expect(head.dirty).toBe(false)
+  })
 })
