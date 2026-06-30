@@ -1,3 +1,4 @@
+import type { HeadTag } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
@@ -30,6 +31,10 @@ function mergeObjects(target: any, source: any): any {
   return result
 }
 
+function isSchemaOrgTag(tag: HeadTag) {
+  return (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph'
+}
+
 export interface PluginSchemaOrgOptions {
   minify?: boolean
   trailingSlash?: boolean
@@ -41,72 +46,79 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   let resolvedMeta = {} as ResolvedMeta
   return defineHeadPlugin((head) => {
     head.use(TemplateParamsPlugin)
+    function collectTag(tag: HeadTag) {
+      if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+        // this is a bit expensive, load in seperate chunk
+        const nodes = tag.props.nodes
+        for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
+          // malformed input - skip null/undefined but allow empty objects
+          if (typeof node !== 'object' || node === null) {
+            continue
+          }
+
+          const newNode = {
+            ...node,
+            _dedupeStrategy: tag.tagDuplicateStrategy,
+          }
+          // Push node (it already has _resolver if it came from a defineXXX function)
+          graph.push(newNode)
+        }
+        tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
+      }
+      if (tag.tag === 'htmlAttrs' && tag.props.lang) {
+        resolvedMeta.inLanguage = tag.props.lang
+      }
+      else if (tag.tag === 'title') {
+        resolvedMeta.title = tag.textContent
+      }
+      else if (tag.tag === 'meta' && tag.props.name === 'description') {
+        resolvedMeta.description = tag.props.content
+      }
+      else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
+        resolvedMeta.url = tag.props.href
+        // may be using template params that aren't resolved
+        if (resolvedMeta.url && !resolvedMeta.host) {
+          try {
+            resolvedMeta.host = new URL(resolvedMeta.url).origin
+          }
+          catch {
+            // Canonical URLs may contain unresolved template params; leave host unset.
+          }
+        }
+      }
+      else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
+        resolvedMeta.image = tag.props.content
+      }
+      // use template params
+      else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
+        resolvedMeta = {
+          ...resolvedMeta,
+          ...(tag.props.schemaOrg as unknown as Record<string, any>),
+        }
+      }
+    }
     return {
       key: 'schema-org',
       hooks: {
         'entries:resolve': (ctx) => {
           graph = graph || createSchemaOrgGraph()
           // Reset graph nodes each cycle so disposed entries don't leave stale nodes.
-          // Force all entries to re-normalize so their nodes are re-pushed to the graph.
           graph.nodes = []
           graph.nodeIndex = new Map()
           for (const entry of ctx.entries) {
-            delete entry._tags
+            if (entry._tags) {
+              if (entry._tags.some(isSchemaOrgTag)) {
+                delete entry._tags
+                continue
+              }
+              for (const tag of entry._tags)
+                collectTag(tag)
+            }
           }
         },
         'entries:normalize': ({ tags }) => {
-          for (const tag of tags) {
-            if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
-              // this is a bit expensive, load in seperate chunk
-              const nodes = tag.props.nodes
-              for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-                // malformed input - skip null/undefined but allow empty objects
-                if (typeof node !== 'object' || node === null) {
-                  continue
-                }
-
-                const newNode = {
-                  ...node,
-                  _dedupeStrategy: tag.tagDuplicateStrategy,
-                }
-                // Push node (it already has _resolver if it came from a defineXXX function)
-                graph.push(newNode)
-              }
-              tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
-            }
-            if (tag.tag === 'htmlAttrs' && tag.props.lang) {
-              resolvedMeta.inLanguage = tag.props.lang
-            }
-            else if (tag.tag === 'title') {
-              resolvedMeta.title = tag.textContent
-            }
-            else if (tag.tag === 'meta' && tag.props.name === 'description') {
-              resolvedMeta.description = tag.props.content
-            }
-            else if (tag.tag === 'link' && tag.props.rel === 'canonical') {
-              resolvedMeta.url = tag.props.href
-              // may be using template params that aren't resolved
-              if (resolvedMeta.url && !resolvedMeta.host) {
-                try {
-                  resolvedMeta.host = new URL(resolvedMeta.url).origin
-                }
-                catch {
-                  // Canonical URLs may contain unresolved template params; leave host unset.
-                }
-              }
-            }
-            else if (tag.tag === 'meta' && tag.props.property === 'og:image') {
-              resolvedMeta.image = tag.props.content
-            }
-            // use template params
-            else if (tag.tag === 'templateParams' && tag.props.schemaOrg) {
-              resolvedMeta = {
-                ...resolvedMeta,
-                ...(tag.props.schemaOrg as Record<string, any>),
-              }
-              delete tag.props.schemaOrg
-            }
-          }
+          for (const tag of tags)
+            collectTag(tag)
         },
         'tags:resolve': async (ctx) => {
           // find the schema.org node, should be a single instance
@@ -137,12 +149,12 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         },
         'tags:afterResolve': (ctx) => {
           let firstNodeIdx: number | undefined
-          const toRemove = new Set<number>()
+          let toRemove: Set<number> | undefined
           for (let i = 0; i < ctx.tags.length; i++) {
             const tag = ctx.tags[i]
             if (!tag?.props)
               continue
-            if ((tag.props.type === 'application/ld+json' && tag.props.nodes) || tag.key === 'schema-org-graph') {
+            if (isSchemaOrgTag(tag)) {
               delete tag.props.nodes
               if (typeof firstNodeIdx === 'undefined') {
                 firstNodeIdx = i
@@ -151,11 +163,12 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
               // merge props on to first node and delete
               ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
               delete ctx.tags[firstNodeIdx].props.nodes
-              toRemove.add(i)
+              ;(toRemove ||= new Set()).add(i)
             }
           }
           // there may be multiple script nodes within the same entry
-          ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
+          if (toRemove)
+            ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
         },
       },
     }

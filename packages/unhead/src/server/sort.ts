@@ -22,7 +22,7 @@ export function capoTagWeight(tag: HeadTag): number {
     weight = LINK_WEIGHTS[tag.props.rel as keyof typeof LINK_WEIGHTS]
   }
   else if (tag.tag === 'script') {
-    const type = String(tag.props.type)
+    const type = typeof tag.props.type === 'string' ? tag.props.type : ''
     const json = type.endsWith('json')
     if (type === 'importmap')
       // parse-time directive, not a loadable resource: placed between
