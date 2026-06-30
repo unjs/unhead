@@ -30,16 +30,23 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
   if (v?.constructor === Object) {
     let next: Record<string, any> | undefined
     for (const k in v) {
-      // never read/assign dangerous keys; the `continue` keeps us from ever doing
-      // `next['__proto__'] = …` (which would set a prototype). Object spread below is
-      // [[CreateDataProperty]], so it cannot pollute, and normalizeProps strips any
-      // dangerous key it carries through.
-      if (isUnsafeKey(k))
-        continue
-      const r = walkResolver(v[k], resolve, k)
-      // first changed child: shallow-clone once, then keep overwriting in place
-      if (r !== v[k])
-        (next ??= { ...v })[k] = r
+      const unsafe = isUnsafeKey(k)
+      const r = unsafe ? undefined : walkResolver(v[k], resolve, k)
+      // Diverge from `v` on the first unsafe key (which must be dropped) or changed
+      // child: clone the safe keys already visited. This keeps the walked result free
+      // of __proto__/constructor/prototype (matching the old deep-clone) while still
+      // sharing `v` untouched when every key is safe and unchanged — the common case.
+      if (!next && (unsafe || r !== v[k])) {
+        next = {}
+        for (const pk in v) {
+          if (pk === k)
+            break
+          next[pk] = v[pk] // every prior key was safe; we'd have diverged at the first unsafe one
+        }
+      }
+      // never assign an unsafe key (`next['__proto__'] = …` would set a prototype)
+      if (next && !unsafe)
+        next[k] = r
     }
     return next || v
   }
