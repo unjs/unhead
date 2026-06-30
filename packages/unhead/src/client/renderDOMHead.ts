@@ -90,6 +90,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     return false
   if (head._du)
     return false
+  const defaultView = dom.defaultView
   head._du = true
   let didRender = false
   try {
@@ -194,8 +195,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
-            (v as (e: Event) => any).call($el, new (dom.defaultView?.Event || Event)(ev))
-          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && dom.defaultView ? dom.defaultView : $el)
+            (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
+          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
           continue
         }
         const ck = `${id}:attr:${k}`

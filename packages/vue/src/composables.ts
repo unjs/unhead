@@ -4,7 +4,6 @@ import type {
   UseHeadOptions,
   UseHeadSafeInput,
   UseSeoMetaInput,
-  VueHeadClient,
 } from './types'
 import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
 import { walkResolver } from 'unhead/utils'
@@ -19,6 +18,7 @@ import {
 } from 'vue'
 import { injectHead } from './install'
 import { VueResolver } from './resolver'
+
 export { injectHead } from './install'
 
 export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHeadOptions = {}): ActiveHeadEntry<I> {
