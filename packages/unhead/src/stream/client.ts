@@ -105,12 +105,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   })
 
   // Push init entries
-  const initialPayload = rest.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
-  const initEntries = [
-    initialPayload ? JSON.parse(initialPayload) : false,
-    ...(rest.init || []),
-  ]
-  initEntries.forEach(e => e && head.push(e as T))
+  rest.init?.forEach(e => e && head.push(e as T))
 
   // Update the stream queue to use the wrapped head
   if (streamQueue)

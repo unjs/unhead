@@ -299,10 +299,6 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * @internal
    */
-  _ssrPayload?: ResolvableHead
-  /**
-   * @internal
-   */
   _rootStreamedTags?: Record<string, HeadTag>
 }
 

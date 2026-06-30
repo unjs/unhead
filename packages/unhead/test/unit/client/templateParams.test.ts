@@ -189,38 +189,6 @@ describe('templateParams', () => {
     `)
   })
 
-  it('payload', async () => {
-    const dom = useDom({
-      headTags: '<title>default</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>',
-    })
-    const head = createClientHeadWithContext({
-      document: dom.window.document,
-      plugins: [TemplateParamsPlugin],
-    })
-    useHead(head, {
-      title: 'test',
-    })
-
-    const html = await new Promise<string>((resolve) => {
-      setTimeout(() => resolve(dom!.serialize()), 250)
-    })
-
-    expect(html).toMatchInlineSnapshot(`
-      "<!DOCTYPE html><html><head>
-      <title>test | Test</title><script id="unhead:payload">{"templateParams": {"siteName": "Test"}, "titleTemplate": "%s %separator %siteName"}</script>
-      </head>
-      <body>
-
-      <div>
-      <h1>hello world</h1>
-      </div>
-
-
-
-      </body></html>"
-    `)
-  })
-
   it('edge case #561', async () => {
     const dom = useDom({
       headTags: '<title>Vite</title>',
