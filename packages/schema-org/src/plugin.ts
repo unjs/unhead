@@ -137,7 +137,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
         },
         'tags:afterResolve': (ctx) => {
           let firstNodeIdx: number | undefined
-          const toRemove = new Set<number>()
+          let toRemove: Set<number> | undefined
           for (let i = 0; i < ctx.tags.length; i++) {
             const tag = ctx.tags[i]
             if (!tag?.props)
@@ -151,11 +151,12 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
               // merge props on to first node and delete
               ctx.tags[firstNodeIdx].props = mergeObjects(ctx.tags[firstNodeIdx].props, tag.props)
               delete ctx.tags[firstNodeIdx].props.nodes
-              toRemove.add(i)
+              ;(toRemove ||= new Set()).add(i)
             }
           }
           // there may be multiple script nodes within the same entry
-          ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
+          if (toRemove)
+            ctx.tags = ctx.tags.filter((_: unknown, i: number) => !toRemove.has(i))
         },
       },
     }
