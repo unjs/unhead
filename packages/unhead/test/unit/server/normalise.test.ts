@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { renderSSRHead } from '../../../src/server'
+import { normalizeProps } from '../../../src/utils'
 import { createServerHeadWithContext } from '../../util'
 
 const TEST_RE = /a/
@@ -68,6 +69,19 @@ describe('normalise', () => {
         "htmlAttrs": "",
       }
     `)
+  })
+
+  it('skips invalid null attribute names during normalization', () => {
+    const tag = normalizeProps({ tag: 'meta', props: {} }, {
+      'name': 'description',
+      'content': 'safe',
+      '\'><script>alert(1)</script><meta data-x': null,
+    } as any)
+
+    expect(tag.props).toStrictEqual({
+      name: 'description',
+      content: 'safe',
+    })
   })
 
   it('handles script type attribute edge cases without throwing errors', async () => {

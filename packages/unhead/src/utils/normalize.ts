@@ -50,8 +50,13 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     if (isUnsafeKey(prop))
       continue
     const value = input[prop]
+    const isData = prop.startsWith('data-')
+    const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
+    const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
+    if (isHtmlAttr && !isValidAttributeName(key))
+      continue
     if (value === null) {
-      tag.props[prop] = null as any
+      tag.props[key] = null as any
     }
     else if (prop === 'class' || prop === 'style') {
       tag.props[prop] = normalizeStyleClassProps(prop, value) as any
@@ -71,10 +76,6 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     else if (value !== undefined) {
       // Normalize camelCase HTML attributes to lowercase (e.g. hrefLang -> hreflang)
       // Only for real HTML element tags, not internal virtual tags like _flatMeta
-      const isData = prop.startsWith('data-')
-      const key = isHtmlTag && !isData ? prop.toLowerCase() : prop
-      if (isHtmlTag && !isValidAttributeName(key))
-        continue
       const str = String(value)
       const isMeta = tag.tag === 'meta' && key === 'content'
       tag.props[key] = str === 'true' || str === '' ? (isData || isMeta ? str : true) : !value && isData && str === 'false' ? 'false' : value
