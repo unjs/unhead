@@ -5,6 +5,8 @@ import { defineProject } from 'vitest/config'
 
 export default defineProject({
   resolve: {
+    // resolve solid-js to its client build so the client composable path runs in tests
+    conditions: ['browser'],
     alias: {
       '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),

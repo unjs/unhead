@@ -212,6 +212,49 @@ describe('vue e2e scripts', () => {
     script.remove()
   })
 
+  it('disposes the correct onLoaded callback when handles are removed out of order', async () => {
+    const dom = useDom()
+    const head = createHead({
+      document: dom.window.document,
+    })
+
+    const calls: string[] = []
+    let offFirst!: () => void
+    let offSecond!: () => void
+
+    const el = dom.window.document.createElement('div')
+    const app = createApp({
+      setup() {
+        const script = useScript({
+          src: '//ordered-callbacks.js',
+        }, {
+          trigger: 'manual',
+          head,
+        })
+        offFirst = script.onLoaded(() => {
+          calls.push('first')
+        }) as unknown as () => void
+        offSecond = script.onLoaded(() => {
+          calls.push('second')
+        }) as unknown as () => void
+        return () => h('div')
+      },
+    })
+    app.mount(el)
+
+    // dispose out of order: index-based cleanup spliced a stale index here,
+    // removing `first` but leaving `second` registered
+    offFirst()
+    offSecond()
+
+    const script = (head as any)._scripts['//ordered-callbacks.js']
+    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    await script._loadPromise
+
+    // both handles disposed, so neither callback should fire
+    expect(calls).toEqual([])
+  })
+
   it('setupTriggerHandler race condition: old scope disposal should not abort new scope trigger', async () => {
     const dom = useDom()
     const head = createHead({

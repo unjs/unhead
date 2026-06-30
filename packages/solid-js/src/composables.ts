@@ -40,9 +40,9 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
     createEffect(() => {
       entrySignal().patch(input)
     })
-    createEffect(() => {
-      return () => entry.dispose()
-    })
+    // createEffect does not treat a returned function as cleanup, so the entry
+    // was never disposed; onCleanup runs when the owning root is disposed
+    onCleanup(() => entry.dispose())
   }
   return entry
 }
@@ -69,7 +69,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   let isMounted = false
   onMount(() => {
     isMounted = true
-    mountCbs.forEach(i => i())
+    // drain so callbacks registered before mount run exactly once
+    mountCbs.splice(0).forEach(i => i())
   })
 
   if (typeof options.trigger === 'undefined') {
@@ -84,34 +85,46 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
+  // capture the controller at registration time so cleanup aborts the controller
+  // that was active when this owner registered, not a newer one
+  const triggerAbortController = script._triggerAbortController
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   const sideEffects: (() => void)[] = []
   onCleanup(() => {
     isMounted = false
-    script._triggerAbortController?.abort()
+    triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    let i: number | null
-    const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
+  // core's onLoaded/onError register by identity and return an identity-based
+  // disposer; we defer registration to mount and tie the disposer to cleanup
+  // core returns an identity-based disposer at runtime although the type says void
+  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
+  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
+  const _registerCb = (register: () => (() => void) | undefined) => {
+    let disposed = false
+    let off: (() => void) | undefined
+    const run = () => {
+      if (disposed)
+        return
+      off = register() ?? (() => {})
+      sideEffects.push(off)
     }
-    mountCbs.push(() => {
-      if (!script._cbs[key]) {
-        cb(script.instance)
-        return () => {}
-      }
-      i = script._cbs[key].push(cb)
-      sideEffects.push(destroy)
-      return destroy
-    })
+    if (isMounted)
+      run()
+    else
+      mountCbs.push(run)
+    return () => {
+      if (disposed)
+        return
+      disposed = true
+      const idx = mountCbs.indexOf(run)
+      if (idx !== -1)
+        mountCbs.splice(idx, 1)
+      off?.()
+    }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb(() => baseOnLoaded(cb))
+  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb(() => baseOnError(cb))
   return script
 }
