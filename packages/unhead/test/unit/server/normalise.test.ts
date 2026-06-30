@@ -84,6 +84,26 @@ describe('normalise', () => {
     })
   })
 
+  it('does not read values for invalid attribute names', () => {
+    const input: Record<string, any> = { name: 'description' }
+    let read = false
+
+    Object.defineProperty(input, 'bad name', {
+      enumerable: true,
+      get() {
+        read = true
+        return 'unsafe'
+      },
+    })
+
+    const tag = normalizeProps({ tag: 'meta', props: {} }, input)
+
+    expect(read).toBe(false)
+    expect(tag.props).toStrictEqual({
+      name: 'description',
+    })
+  })
+
   it('handles script type attribute edge cases without throwing errors', async () => {
     const head = createServerHeadWithContext()
 

@@ -1,6 +1,6 @@
 import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
-import { isValidAttributeName } from './attrs'
+import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
@@ -49,12 +49,12 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   for (const prop in input) {
     if (isUnsafeKey(prop))
       continue
-    const value = input[prop]
     const isData = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)
     const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
-    if (isHtmlAttr && !isValidAttributeName(key))
+    if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
+    const value = input[prop]
     if (value === null) {
       tag.props[key] = null as any
     }

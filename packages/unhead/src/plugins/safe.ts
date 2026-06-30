@@ -122,8 +122,8 @@ function acceptDataAttrs(value: Record<string, string>, allowId = true) {
 }
 
 function hasBlockedRel(rel: string): boolean {
-  const tokens = rel.split(AsciiWhitespace).filter(Boolean)
-  return !tokens.length || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
+  const tokens = rel.split(AsciiWhitespace)
+  return !tokens.some(Boolean) || tokens.some(token => BlockedLinkRels.has(token.toLowerCase()))
 }
 
 function makeTagSafe(tag: HeadTag): HeadSafe | false {
