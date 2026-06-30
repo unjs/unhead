@@ -7,10 +7,20 @@ import { build as viteBuild } from 'vite'
 
 const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/.*/g
 const WHITESPACE_RE = /\s+/g
+const IIFE_GLOBAL_NAME = '__unhead_iife__'
+const IIFE_INIT_CALL = `${IIFE_GLOBAL_NAME}.init();`
 const IIFE_TYPES = 'export declare const streamingIifeCode: string;\nexport declare const streamingIifeSize: number;\n'
 
 function minifyIifeCode(code: string) {
   return code.replace(COMMENT_RE, '').replace(WHITESPACE_RE, ' ').trim()
+}
+
+function makeExecutableIifeCode(code: string) {
+  return `${code}${code.endsWith(';') ? '' : ';'}${IIFE_INIT_CALL}`
+}
+
+function isFirstSideEffectWarning(warning: { message?: string }) {
+  return warning.message?.startsWith('First side effect in ') === true
 }
 
 function writeIifeArtifacts(rootDir: string, code: string) {
@@ -30,7 +40,7 @@ async function buildIifeFromDist(rootDir: string) {
     plugins: [nodeResolve()],
   })
   try {
-    const { output } = await bundle.generate({ format: 'iife', name: '__unhead_iife__' })
+    const { output } = await bundle.generate({ format: 'iife', name: IIFE_GLOBAL_NAME })
     const chunk = output.find(item => item.type === 'chunk')
     if (!chunk)
       throw new Error('[unhead] Failed to build streaming IIFE.')
@@ -48,7 +58,7 @@ async function buildIifeFromSource(rootDir: string) {
       lib: {
         entry: resolve(rootDir, 'src/stream/iife.ts'),
         formats: ['iife'],
-        name: '__unhead_iife__',
+        name: IIFE_GLOBAL_NAME,
       },
       minify: false,
       write: false,
@@ -74,11 +84,19 @@ export default defineBuildConfig({
   hooks: {
     'rollup:options': (_, options) => {
       options.experimentalLogSideEffects = true
+      const onwarn = options.onwarn
+      options.onwarn = (warning, warn) => {
+        if (isFirstSideEffectWarning(warning))
+          throw new Error(warning.message)
+        if (onwarn)
+          return onwarn(warning, warn)
+        warn(warning)
+      }
     },
     'build:done': async function (ctx) {
-      const code = minifyIifeCode(ctx.options.stub
+      const code = makeExecutableIifeCode(minifyIifeCode(ctx.options.stub
         ? await buildIifeFromSource(ctx.options.rootDir)
-        : await buildIifeFromDist(ctx.options.rootDir))
+        : await buildIifeFromDist(ctx.options.rootDir)))
 
       writeIifeArtifacts(ctx.options.rootDir, code)
       console.log(`Built streaming IIFE: ${code.length} bytes`)
