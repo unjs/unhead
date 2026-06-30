@@ -10,9 +10,18 @@ import { pathToFileURL } from 'node:url'
 
 // resolve built dist from the repo root (cwd) so this harness can run from anywhere
 // (e.g. /tmp during the base-branch measurement) without a relative path back to packages/
-const dist = name => import(pathToFileURL(`${process.cwd()}/packages/unhead/dist/${name}`).href)
+const packageDist = (pkg, name) => import(pathToFileURL(`${process.cwd()}/packages/${pkg}/dist/${name}`).href)
+const dist = name => packageDist('unhead', name)
+const schemaOrgDist = name => packageDist('schema-org', name)
 const { useHead, useSeoMeta } = await dist('index.mjs')
 const { createHead, renderSSRHead } = await dist('server.mjs')
+const {
+  defineOrganization,
+  defineProduct,
+  defineWebPage,
+  defineWebSite,
+  useSchemaOrg,
+} = await schemaOrgDist('index.mjs')
 
 function renderMediumSsrHead() {
   const head = createHead({ disableDefaults: true })
@@ -39,6 +48,92 @@ function renderMediumSsrHead() {
     twitterCard: 'summary_large_image',
   })
   return renderSSRHead(head, { omitLineBreaks: true })
+}
+
+function createCachedSchemaOrgRenderer() {
+  const head = createHead({ disableDefaults: true })
+  head.push({
+    htmlAttrs: { lang: 'en-AU' },
+    title: 'Widget Pro | Example Store',
+    titleTemplate: '%s %separator %siteName',
+    templateParams: {
+      separator: '|',
+      siteName: 'Example Store',
+      schemaOrg: {
+        host: 'https://example.com',
+        url: 'https://example.com/products/widget-pro',
+        inLanguage: 'en-AU',
+        path: '/products/widget-pro',
+      },
+    },
+    meta: [
+      {
+        name: 'description',
+        content: 'A product page with enough head state to exercise schema.org metadata collection.',
+      },
+      { property: 'og:image', content: 'https://example.com/products/widget-pro/og.png' },
+    ],
+    link: [{ rel: 'canonical', href: 'https://example.com/products/widget-pro' }],
+  })
+  for (let i = 0; i < 32; i++) {
+    useHead(head, {
+      meta: [
+        { name: `product-detail-${i}`, content: `Detail ${i}` },
+        { property: `product:attribute:${i}`, content: `Attribute ${i}` },
+      ],
+      link: [
+        { rel: 'preload', as: 'image', href: `/products/widget-pro/gallery-${i}.webp` },
+      ],
+    })
+  }
+  useSeoMeta(head, {
+    title: 'Widget Pro',
+    description: 'A product page with enough head state to exercise schema.org metadata collection.',
+    ogTitle: 'Widget Pro',
+    ogImage: 'https://example.com/products/widget-pro/og.png',
+    twitterCard: 'summary_large_image',
+  })
+  useSchemaOrg(head, [
+    defineWebSite({
+      name: 'Example Store',
+      inLanguage: 'en-AU',
+      description: 'Benchmark storefront',
+    }),
+    defineWebPage({
+      '@type': 'ItemPage',
+    }),
+    defineOrganization({
+      name: 'Example Store',
+      url: 'https://example.com',
+      logo: 'https://example.com/logo.png',
+    }),
+    defineProduct({
+      name: 'Widget Pro',
+      description: 'A benchmark product with a realistic schema.org graph.',
+      sku: 'WIDGET-PRO-001',
+      brand: { '@type': 'Brand', name: 'WidgetCorp' },
+      image: [
+        'https://example.com/products/widget-pro/1.jpg',
+        'https://example.com/products/widget-pro/2.jpg',
+        'https://example.com/products/widget-pro/3.jpg',
+      ],
+      offers: {
+        '@type': 'Offer',
+        price: 129.99,
+        priceCurrency: 'AUD',
+        availability: 'https://schema.org/InStock',
+        url: 'https://example.com/products/widget-pro',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: 4.8,
+        reviewCount: 256,
+      },
+    }),
+  ])
+
+  renderSSRHead(head, { omitLineBreaks: true })
+  return () => renderSSRHead(head, { omitLineBreaks: true })
 }
 
 function forceGC() {
@@ -152,12 +247,18 @@ async function csrBenches() {
 
 const times = measureTimes(renderMediumSsrHead)
 const alloc = measureAlloc(renderMediumSsrHead)
+const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
+const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
+const schemaOrgAlloc = measureAlloc(renderCachedSchemaOrgHead, { reps: 20, runs: 40 })
 
 const result = {
   benches: [
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value },
+    { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
+    { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
+    { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value },
     ...await csrBenches(),
   ],
 }
