@@ -152,7 +152,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         script.entry.dispose()
         script.entry = undefined
       }
-      if (head._scripts?.[id])
+      // only delete if the registry still points at this script: a stale handle
+      // calling remove() again must not drop a newer same-id script
+      if (head._scripts?.[id] === script)
         delete head._scripts[id]
       if (script.status !== 'removed')
         syncStatus('removed')
@@ -254,6 +256,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
             res?.()
           })
           .finally(() => {
+            // a settled (non-aborted) trigger never fires its abort event, so drop
+            // its controller here to stop it lingering in the set
+            script._triggerAbortControllers?.delete(abortController)
             // remove the promise from the list
             const idx = script._triggerPromises?.indexOf(triggerPromise) ?? -1
             if (idx !== -1)

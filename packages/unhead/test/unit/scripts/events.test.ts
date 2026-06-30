@@ -206,4 +206,40 @@ describe('useScript events', () => {
     // status is 'removed', so the immediate-replay path must not fire either callback
     expect(calls).toEqual([])
   })
+
+  it('does not evict a newer same-id script when a stale handle calls remove again', async () => {
+    const head = createHead()
+    const first = useScript(head, '/script.js', {
+      trigger: 'manual',
+    })
+    first.remove()
+    await first._loadPromise
+
+    // a fresh script registers under the same id after the first was removed
+    const second = useScript(head, '/script.js', {
+      trigger: 'manual',
+    })
+    expect(head._scripts?.[second.id]).toBe(second)
+
+    // the stale handle removing again must not drop the new registration
+    first.remove()
+    expect(head._scripts?.[second.id]).toBe(second)
+  })
+
+  it('drops settled trigger abort controllers from the set', async () => {
+    const head = createHead()
+    let resolveTrigger!: (value: boolean) => void
+    const trigger = new Promise<boolean>(resolve => resolveTrigger = resolve)
+    const instance = useScript(head, '/script.js', {
+      trigger,
+    })
+
+    expect(instance._triggerAbortControllers?.size).toBe(1)
+    const triggerPromise = instance._triggerPromises![0]
+    resolveTrigger(false)
+    await triggerPromise
+    await Promise.resolve()
+
+    expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
 })
