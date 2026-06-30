@@ -63,7 +63,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           // Push node (it already has _resolver if it came from a defineXXX function)
           graph.push(newNode)
         }
-        tag.tagPosition = tag.tagPosition || config.tagPosition === 'head' ? 'head' : 'bodyClose'
+        tag.tagPosition = tag.tagPosition || (config.tagPosition === 'head' ? 'head' : 'bodyClose')
       }
       if (tag.tag === 'htmlAttrs' && tag.props.lang) {
         resolvedMeta.inLanguage = tag.props.lang
@@ -105,6 +105,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           // Reset graph nodes each cycle so disposed entries don't leave stale nodes.
           graph.nodes = []
           graph.nodeIndex = new Map()
+          resolvedMeta = {} as ResolvedMeta
           for (const entry of ctx.entries) {
             if (entry._tags) {
               if (entry._tags.some(isSchemaOrgTag)) {
