@@ -184,4 +184,26 @@ describe('useScript events', () => {
     expect(instance._cbs.error).toBeNull()
     expect(calls).toEqual([])
   })
+
+  it('does not replay onLoaded or onError after the script was removed', async () => {
+    const head = createHead()
+    const instance = useScript(head, '/script.js', {
+      trigger: 'manual',
+    })
+
+    instance.remove()
+    await instance._loadPromise
+
+    const calls: string[] = []
+    instance.onLoaded(() => {
+      calls.push('loaded')
+    })
+    instance.onError(() => {
+      calls.push('error')
+    })
+    await Promise.resolve()
+
+    // status is 'removed', so the immediate-replay path must not fire either callback
+    expect(calls).toEqual([])
+  })
 })
