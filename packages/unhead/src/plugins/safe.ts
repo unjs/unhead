@@ -252,6 +252,10 @@ export const SafeInputPlugin = /* @PURE */ defineHeadPlugin({
           acc.push(tag)
           return acc
         }
+        if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+          acc.push(tag)
+          return acc
+        }
         const safeTag = makeTagSafe(tag)
         if (safeTag)
           acc.push(safeTag as HeadTag)
