@@ -1,22 +1,10 @@
 import { renderSSRHead } from '@unhead/ssr'
-import { createHead, useHead } from '@unhead/vue/server'
+import { createHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
 
 const TEST_RE = /a/
 
 describe('normalise', () => {
-  it('supports useHead from the server subpath', async () => {
-    const head = createHead({
-      disableDefaults: true,
-    })
-
-    useHead({
-      title: 'Server subpath',
-    }, { head })
-
-    expect(renderSSRHead(head).headTags).toBe('<title>Server subpath</title>')
-  })
-
   it('handles booleans nicely', async () => {
     const head = createHead({
       disableDefaults: true,

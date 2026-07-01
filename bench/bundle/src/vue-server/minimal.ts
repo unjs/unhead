@@ -1,4 +1,5 @@
-import { createHead, renderSSRHead, useHead } from '@unhead/vue/server'
+import { useHead } from '@unhead/vue'
+import { createHead, renderSSRHead } from '@unhead/vue/server'
 
 async function doHead() {
 // Full usage with all core features

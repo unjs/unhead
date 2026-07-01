@@ -48,12 +48,6 @@
   propsToString: function
   renderSSRHead: function
   transformHtmlTemplate: function
-  useHead: function
-  useHeadSafe: function
-  useSeoMeta: function
-  useServerHead: function
-  useServerHeadSafe: function
-  useServerSeoMeta: function
   VueHeadMixin: object
 ./stream/client:
   createStreamableHead: function
