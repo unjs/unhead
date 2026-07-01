@@ -22,6 +22,7 @@ export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRende
   return (head: Unhead<any>) => _renderDOMHead(head, options)
 }
 
+/** @deprecated Use `head.render()` instead */
 export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   return _renderDOMHead(head, options)
 }
@@ -40,7 +41,7 @@ function cleanupDomState(state: DomStateInternal) {
   state._s = {}
   state._p = {}
   state._e.clear()
-  state._l?.clear()
+  state._l.clear()
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
@@ -55,7 +56,6 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
     const next = normalizeProps({ tag, props: {} } as HeadTag, props)
     next.key = el.getAttribute('data-hid') || undefined
     const dedupe = dedupeKey(next) || hashTag(next)
-    next._d = dedupe
     let k = dedupe
     let c = 1
     while (state._e.has(k))
@@ -88,9 +88,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   const documentChanged = !!activeState && activeState._d !== dom
   if (!dom || (!documentChanged && !head.dirty && !hasPendingEntries(head)))
     return false
-  const activeDocument = dom
   if (head._du)
     return false
+  const defaultView = dom.defaultView
   head._du = true
   let didRender = false
   try {
@@ -99,13 +99,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     if (!beforeRenderCtx.shouldRender)
       return false
     let state = head._dom as DomStateInternal | undefined
-    if (state?._d !== activeDocument) {
+    if (state?._d !== dom) {
       if (state)
         cleanupDomState(state)
       state = undefined
     }
     if (!state) {
-      state = createDomState(head, activeDocument)
+      state = createDomState(head, dom)
     }
     else {
       // hand the previous render's side effects to _p (cleanup pool) by reference; track()
@@ -113,7 +113,6 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       state._p = state._s
     }
     state._s = {}
-    state._l ||= new Map()
     const renderState = state
 
     function track(id: string, scope: string, fn: () => void, fresh?: boolean) {
@@ -196,8 +195,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
           const ev = k.slice(2)
           if (($el as HTMLScriptElement)?.dataset?.[`${k}fired`])
-            (v as (e: Event) => any).call($el, new (activeDocument.defaultView?.Event || Event)(ev))
-          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && activeDocument.defaultView ? activeDocument.defaultView : $el)
+            (v as (e: Event) => any).call($el, new (defaultView?.Event || Event)(ev))
+          trackEvent(id, k, ev, v as DomEventHandler, $el, tag.tag === 'bodyAttrs' && defaultView ? defaultView : $el)
           continue
         }
         const ck = `${id}:attr:${k}`
@@ -238,8 +237,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         dupeKeyCounter[tag._d] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {
-        activeDocument.title = tag.textContent as string
-        track('title', '', () => activeDocument.title = renderState._t)
+        dom.title = tag.textContent as string
+        track('title', '', () => dom.title = renderState._t)
         continue
       }
       ctx.$el = renderState._e.get(id)
@@ -249,16 +248,16 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         pending.push(ctx)
     }
     for (const ctx of pending) {
-      ctx.$el = activeDocument.createElement(ctx.tag.tag)
+      ctx.$el = dom.createElement(ctx.tag.tag)
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
-      ;(frag[ctx.tag.tagPosition || 'head'] ??= activeDocument.createDocumentFragment()).appendChild(ctx.$el)
+      ;(frag[ctx.tag.tagPosition || 'head'] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     if (frag.head)
-      activeDocument.head.appendChild(frag.head)
+      dom.head.appendChild(frag.head)
     if (frag.bodyOpen)
-      activeDocument.body.insertBefore(frag.bodyOpen, activeDocument.body.firstChild)
+      dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
-      activeDocument.body.appendChild(frag.bodyClose)
+      dom.body.appendChild(frag.bodyClose)
     for (const k in renderState._p)
       renderState._p[k]()
     head._dom = renderState

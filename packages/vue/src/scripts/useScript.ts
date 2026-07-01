@@ -9,7 +9,7 @@ import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
 import type { ResolvableProperties, VueHeadClient } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { injectHead } from '../composables'
+import { injectHead } from '../install'
 
 export type * from 'unhead/scripts'
 

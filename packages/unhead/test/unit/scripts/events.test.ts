@@ -185,6 +185,25 @@ describe('useScript events', () => {
     expect(calls).toEqual([])
   })
 
+  it('stores special script ids as own registry entries', () => {
+    const head = createHead()
+    useScript(head, '/script.js', {
+      trigger: 'manual',
+    })
+
+    for (const key of ['constructor', 'toString', '__proto__']) {
+      const instance = useScript(head, {
+        key,
+        src: `/${key}.js`,
+      }, {
+        trigger: 'manual',
+      })
+
+      expect(Object.hasOwn(head._scripts!, key)).toBe(true)
+      expect(head._scripts?.[key]).toBe(instance)
+    }
+  })
+
   it('does not replay onLoaded or onError after the script was removed', async () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
