@@ -25,7 +25,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
-  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+  const scripts = head._scripts || (head._scripts = Object.create(null))
+  const prevScript = Object.hasOwn(scripts, id)
+    ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+    : undefined
   if (prevScript) {
     prevScript.setupTriggerHandler(options.trigger)
     return prevScript
@@ -144,8 +147,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
       // only delete if the registry still points at this script: a stale handle
       // calling remove() again must not drop a newer same-id script
-      if (head._scripts?.[id] === script)
-        delete head._scripts[id]
+      if (scripts[id] === script)
+        delete scripts[id]
       if (script.status !== 'removed')
         syncStatus('removed')
       return hadEntry
@@ -296,6 +299,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script._warmupStrategy = options.warmupStrategy
     script.warmup(options.warmupStrategy)
   }
-  ;(head._scripts ||= {})[id] = script
+  scripts[id] = script
   return script
 }
