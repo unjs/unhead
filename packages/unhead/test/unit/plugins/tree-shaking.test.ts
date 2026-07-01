@@ -1,4 +1,3 @@
-import type { OutputChunk, RollupOutput } from 'rollup'
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
@@ -19,10 +18,36 @@ const unusedPluginMarkers = [
   'entries:resolve',
 ]
 
-function getOutputCode(output: RollupOutput | RollupOutput[]) {
+interface GeneratedChunk {
+  code: string
+  type: 'chunk'
+}
+
+interface GeneratedOutput {
+  output: unknown[]
+}
+
+function isGeneratedOutput(value: unknown): value is GeneratedOutput {
+  return typeof value === 'object'
+    && value !== null
+    && 'output' in value
+    && Array.isArray(value.output)
+}
+
+function isGeneratedChunk(value: unknown): value is GeneratedChunk {
+  return typeof value === 'object'
+    && value !== null
+    && 'type' in value
+    && value.type === 'chunk'
+    && 'code' in value
+    && typeof value.code === 'string'
+}
+
+function getOutputCode(output: unknown) {
   return (Array.isArray(output) ? output : [output])
+    .filter(isGeneratedOutput)
     .flatMap(result => result.output)
-    .filter((item): item is OutputChunk => item.type === 'chunk')
+    .filter(isGeneratedChunk)
     .map(chunk => chunk.code)
     .join('\n')
 }
@@ -56,7 +81,7 @@ async function bundlePluginConsumer(importName: string) {
           },
         },
       },
-    }) as RollupOutput | RollupOutput[]
+    })
 
     return getOutputCode(output)
   }
