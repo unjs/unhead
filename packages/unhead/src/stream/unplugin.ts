@@ -317,4 +317,4 @@ export function buildStreamingPluginOptions(options: StreamingPluginOptions, met
  * `@unhead/{vue,react,svelte,solid-js}/bundler`) rather than importing this
  * directly.
  */
-export const createStreamingPlugin = createUnplugin<StreamingPluginOptions>(buildStreamingPluginOptions)
+export const createStreamingPlugin = /* @__PURE__ */ createUnplugin<StreamingPluginOptions>(buildStreamingPluginOptions)

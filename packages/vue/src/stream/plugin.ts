@@ -12,7 +12,7 @@ export type UnheadVueStreamingOptions = Pick<StreamingPluginOptions, 'mode'>
  * This plugin exists to wire the client streaming bootstrap (virtual iife
  * module + `transformIndexHtml` head-prepend on vite).
  */
-export const unheadVueStreamingPlugin = createUnplugin<UnheadVueStreamingOptions | undefined>((options = {}) =>
+export const unheadVueStreamingPlugin = /* @__PURE__ */ createUnplugin<UnheadVueStreamingOptions | undefined>((options = {}) =>
   buildStreamingPluginOptions({
     framework: '@unhead/vue',
     mode: options.mode,

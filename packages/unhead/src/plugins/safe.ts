@@ -4,16 +4,16 @@ import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const WhitelistAttributes = {
-  htmlAttrs: new Set(['class', 'style', 'lang', 'dir']),
-  bodyAttrs: new Set(['class', 'style']),
-  meta: new Set(['name', 'property', 'charset', 'content', 'media']),
-  noscript: new Set([] as string[]),
-  style: new Set(['media', 'nonce', 'title', 'blocking']),
-  script: new Set(['type', 'textContent', 'nonce', 'blocking']),
-  link: new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type']),
+  htmlAttrs: /* @__PURE__ */ new Set(['class', 'style', 'lang', 'dir']),
+  bodyAttrs: /* @__PURE__ */ new Set(['class', 'style']),
+  meta: /* @__PURE__ */ new Set(['name', 'property', 'charset', 'content', 'media']),
+  noscript: /* @__PURE__ */ new Set([] as string[]),
+  style: /* @__PURE__ */ new Set(['media', 'nonce', 'title', 'blocking']),
+  script: /* @__PURE__ */ new Set(['type', 'textContent', 'nonce', 'blocking']),
+  link: /* @__PURE__ */ new Set(['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type']),
 } as const
 
-const BlockedLinkRels = new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+const BlockedLinkRels = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
 
 const SafeDataAttrName = /^[a-z][a-z0-9-]*[a-z0-9]$/i
 const AsciiWhitespace = /[\t\n\f\r ]+/

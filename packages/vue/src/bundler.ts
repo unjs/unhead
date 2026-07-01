@@ -20,7 +20,7 @@ export type UnheadVueOptions = UnheadFrameworkOptions<UnheadVueStreamingOptions>
  * addBuildPlugin(Unhead({ streaming: true }))
  * ```
  */
-export const Unhead = createFrameworkPlugin<UnheadVueStreamingOptions>({
+export const Unhead = /* @__PURE__ */ createFrameworkPlugin<UnheadVueStreamingOptions>({
   framework: '@unhead/vue',
   streamingPlugin: unheadVueStreamingPlugin,
 })

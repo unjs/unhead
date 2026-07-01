@@ -74,6 +74,4 @@ function init(options: { streamKey?: string } = {}) {
   return head
 }
 
-init()
-
 export { init }
