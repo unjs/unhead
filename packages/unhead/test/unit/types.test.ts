@@ -64,6 +64,29 @@ describe('types', () => {
       },
     })
   })
+  it('types link attributes valid on every `<link>`', () => {
+    // These are checked against the strict (non-resolvable) link union, which is
+    // what a Nuxt `app.head` config resolves to.
+    const head: SerializableHead = {
+      link: [
+        // Light / dark icons are selected with `media`
+        { rel: 'icon', href: '/light.ico', media: '(prefers-color-scheme: light)' },
+        { rel: 'shortcut icon', href: '/dark.ico', media: '(prefers-color-scheme: dark)' },
+        { rel: 'apple-touch-icon', href: '/dark.png', media: '(prefers-color-scheme: dark)' },
+        { rel: 'mask-icon', href: '/mask.svg', color: '#000', media: 'all' },
+        // Icons may be fetched cross-origin
+        { rel: 'icon', href: 'https://cdn.example.com/favicon.ico', crossorigin: 'anonymous' },
+        // Legacy but valid `type` hints
+        { rel: 'stylesheet', href: '/a.css', type: 'text/css' },
+        { rel: 'manifest', href: '/manifest.json', type: 'application/manifest+json' },
+      ],
+    }
+    void head
+
+    // @ts-expect-error media must be a string
+    const invalid: SerializableHead = { link: [{ rel: 'icon', href: '/f.ico', media: 123 }] }
+    void invalid
+  })
   it('types preload link enforces `as` via PreloadLink', () => {
     const head = createHead()
 

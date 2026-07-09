@@ -75,6 +75,13 @@ export interface StylesheetLink extends LinkBase, LinkHttpEvents {
    */
   title?: string
   /**
+   * This attribute is used to define the type of the content linked to.
+   * It can be omitted; `text/css` is assumed.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
+   */
+  type?: 'text/css' | (string & Record<never, never>)
+  /**
    * Whether the stylesheet is disabled.
    */
   disabled?: boolean
@@ -263,12 +270,32 @@ export interface PrefetchLink extends LinkBase {
 // ============================================================================
 
 /**
+ * Icon links may be scoped to a media query, most commonly to serve
+ * separate light and dark variants.
+ */
+interface IconLinkBase extends LinkBase {
+  /**
+   * This attribute specifies the media that the linked resource applies to,
+   * for example `(prefers-color-scheme: dark)`.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-media
+   */
+  media?: string
+  /**
+   * This enumerated attribute indicates whether CORS must be used when fetching the resource.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-crossorigin
+   */
+  crossorigin?: '' | 'anonymous' | 'use-credentials'
+}
+
+/**
  * Favicon link.
  *
  * Prefer `rel: 'icon'` over `'shortcut icon'` — the `shortcut` keyword is non-standard
  * and was only used by older versions of Internet Explorer.
  */
-export interface FaviconLink extends LinkBase {
+export interface FaviconLink extends IconLinkBase {
   rel: 'icon' | 'shortcut icon'
   /**
    * This attribute specifies the URL of the linked resource.
@@ -293,7 +320,7 @@ export interface FaviconLink extends LinkBase {
 /**
  * Apple touch icon link
  */
-export interface AppleTouchIconLink extends LinkBase {
+export interface AppleTouchIconLink extends IconLinkBase {
   rel: 'apple-touch-icon'
   /**
    * This attribute specifies the URL of the linked resource.
@@ -320,7 +347,7 @@ export interface AppleTouchIconLink extends LinkBase {
  *
  * @see https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/pinnedTabs/pinnedTabs.html
  */
-export interface MaskIconLink extends LinkBase {
+export interface MaskIconLink extends IconLinkBase {
   rel: 'mask-icon'
   /**
    * This attribute specifies the URL of the linked resource.
@@ -356,6 +383,12 @@ export interface ManifestLink extends LinkBase {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-href
    */
   href: string
+  /**
+   * This attribute is used to define the type of the content linked to.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#attr-type
+   */
+  type?: 'application/manifest+json' | (string & Record<never, never>)
   /**
    * This enumerated attribute indicates whether CORS must be used when fetching the resource.
    *
