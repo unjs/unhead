@@ -3,21 +3,23 @@ import type {
   DataKeys,
   GenericScript,
   HeadEntryOptions,
+  HeadEntryTarget,
   HttpEventAttributes,
   MaybeEventFnHandlers,
+  ResolvableHead,
   SchemaAugmentations,
   ScriptHttpEvents,
 } from '../types'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptInstance<T>
+export type UseScriptContext<T extends object> = ScriptInstance<T>
 /**
  * Either a string source for the script or full script properties.
  */
 export type UseScriptResolvedInput = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
 
-type BaseScriptApi = Record<symbol | string, any>
+type BaseScriptApi = object
 
 type HasDiscriminatedParameters<T>
   = T extends {
@@ -50,41 +52,43 @@ type IsOverloadedFunction<T>
       : false
 
 export type AsVoidFunctions<T extends BaseScriptApi> = {
-  [K in keyof T]: T[K] extends any[]
+  [K in keyof T]: T[K] extends unknown[]
     ? T[K]
-    : T[K] extends (...args: infer A) => any
+    : T[K] extends (...args: infer A) => unknown
       // we can't modify overloaded functions, so we need to check if the function is overloaded
       ? IsOverloadedFunction<T[K]> extends true ? T[K] : (...args: A) => void
-      : T[K] extends Record<any, any>
+      : T[K] extends object
         ? AsVoidFunctions<T[K]>
         : never;
 }
 
 export type UseScriptInput = string | UseScriptResolvedInput
 
-export type UseFunctionType<T, U> = T extends {
-  use: infer V
-} ? V extends (...args: any) => any ? ReturnType<V> : U : U
+export type UseFunctionType<T, U> = T extends { use?: infer V }
+  ? NonNullable<V> extends (...args: infer _Args) => infer Return
+    ? NonNullable<Return>
+    : U
+  : U
 
 export type WarmupStrategy = false | 'preload' | 'preconnect' | 'dns-prefetch'
 
 export interface ScriptInstance<T extends BaseScriptApi> {
   proxy: AsVoidFunctions<T>
-  instance?: T
+  instance: T | null
   id: string
-  status: Readonly<UseScriptStatus>
-  entry?: ActiveHeadEntry<any>
-  load: () => Promise<T>
-  warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
+  status: UseScriptStatus
+  entry?: ActiveHeadEntry<ResolvableHead>
+  load: (cb?: () => void | Promise<void>) => Promise<T | false>
+  warmup: (rel: WarmupStrategy) => ActiveHeadEntry<ResolvableHead> | undefined
   remove: () => boolean
-  setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
+  setupTriggerHandler: (trigger: UseScriptOptions<T>['trigger']) => void
   // cbs
-  onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => void
-  onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => void
+  onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => () => void
+  onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => () => void
   /**
    * @internal
    */
-  _warmupStrategy?: string
+  _warmupStrategy?: WarmupStrategy
   /**
    * @internal
    */
@@ -92,7 +96,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
-  _warmupEl: any
+  _warmupEl?: ActiveHeadEntry<ResolvableHead>
   /**
    * @internal
    */
@@ -121,11 +125,20 @@ export interface EventHandlerOptions {
   key?: string
 }
 
-export type RecordingEntry
-  = | { type: 'get', key: string | symbol, args?: any[], value?: any }
-    | { type: 'apply', key: string | symbol, args: any[] }
+/**
+ * Render-independent capabilities required by `useScript` when a head is
+ * supplied through framework options.
+ */
+export interface ScriptHeadTarget<Input = ResolvableHead> extends HeadEntryTarget<Input> {
+  _scripts?: Record<string, unknown>
+}
 
-export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
+export type RecordingEntry
+  = | { type: 'get', key: string | symbol, args?: unknown[], value?: unknown }
+    | { type: 'apply', key: string | symbol, args: unknown[] }
+
+export interface UseScriptOptions<T extends BaseScriptApi = Record<PropertyKey, unknown>> extends HeadEntryOptions {
+  head?: ScriptHeadTarget<ResolvableHead>
   /**
    * Resolve the script instance from the window.
    */
@@ -138,7 +151,7 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * - `Function` - Register a callback function to load the script, exists only on the client.
    * - `server` - Have the script injected on the server.
    */
-  trigger?: 'client' | 'server' | 'manual' | Promise<boolean | void> | ((fn: any) => any) | null
+  trigger?: 'client' | 'server' | 'manual' | Promise<boolean | void> | ((load: ScriptInstance<T>['load']) => unknown) | null
   /**
    * Add a preload or preconnect link tag before the script is loaded.
    */
@@ -147,7 +160,7 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Context to run events with. This is useful in Vue to attach the current instance context before
    * calling the event, allowing the event to be reactive.
    */
-  eventContext?: any
+  eventContext?: unknown
   /**
    * Called before the script is initialized. Will not be triggered when the script is already loaded. This means
    * this is guaranteed to be called only once, unless the script is removed and re-added.
@@ -155,4 +168,4 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
   beforeInit?: () => void
 }
 
-export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptReturn<T extends object> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>

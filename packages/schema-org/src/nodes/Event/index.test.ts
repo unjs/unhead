@@ -148,6 +148,27 @@ describe('defineEvent', () => {
     })
   })
 
+  it('detects plain physical locations', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'In person event',
+          location: {
+            name: 'Town Hall',
+            address: '1 Main Street',
+          },
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      expect(graphNodes[0].location).toEqual({
+        '@type': 'Place',
+        'name': 'Town Hall',
+        'address': '1 Main Street',
+      })
+    })
+  })
+
   it('replicate google example', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
@@ -216,8 +237,9 @@ describe('defineEvent', () => {
                 "url": "https://operaonline.stream5.com/",
               },
               {
-                "@type": "VirtualLocation",
+                "@type": "Place",
                 "address": {
+                  "@type": "PostalAddress",
                   "addressCountry": "US",
                   "addressLocality": "Snickertown",
                   "addressRegion": "PA",

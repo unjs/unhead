@@ -1,24 +1,26 @@
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptHeadTarget, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
 import type {
+  CompatibleHead,
   DataKeys,
   GenericScript,
   HeadEntryOptions,
+  ResolvableHead,
   SchemaAugmentations,
 } from 'unhead/types'
 import type { ComponentInternalInstance, Ref, WatchHandle } from 'vue'
-import type { ResolvableProperties, VueHeadClient } from '../types'
+import type { ReactiveHead, ResolvableProperties } from '../types'
 import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
 
 export type * from 'unhead/scripts'
 
-export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
+export interface VueScriptInstance<T extends object> extends Omit<ScriptInstance<T>, 'status'> {
   status: Ref<UseScriptStatus>
 }
 
 export type UseScriptInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'>> {
+export interface UseScriptOptions<T extends object = Record<PropertyKey, unknown>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'>> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -29,33 +31,38 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
    * - `Ref<boolean>` - Load the script when the ref becomes true.
    * - `() => boolean` - Getter function, load the script when return value becomes true.
    */
-  trigger?: BaseUseScriptOptions['trigger'] | Ref<boolean> | (() => boolean)
+  trigger?: BaseUseScriptOptions<T>['trigger'] | Ref<boolean> | (() => boolean)
   /**
    * Unhead instance.
    */
-  head?: VueHeadClient<any>
+  head?: ScriptHeadTarget<ReactiveHead>
 }
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = VueScriptInstance<T>
+type CompatibleUseScriptOptions<T extends object> = Omit<UseScriptOptions<T>, 'head'> & {
+  head?: ScriptHeadTarget<ReactiveHead>
+}
 
-function registerVueScopeHandlers<T extends Record<symbol | string, any> = Record<symbol | string, any>>(script: UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>, scope?: ComponentInternalInstance | null) {
+export type UseScriptContext<T extends object> = VueScriptInstance<T>
+
+function registerVueScopeHandlers<T extends object = Record<PropertyKey, unknown>>(script: ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>, scope?: ComponentInternalInstance | null) {
   if (!scope) {
     return
   }
   // core's onLoaded/onError already register the callback by identity and return
   // an identity-based disposer; we only tie that disposer to the Vue scope so the
   // callback is removed when the owning component unmounts
-  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
-    const off = base(cb) ?? (() => {})
+  const baseOnLoaded = script.onLoaded
+  const baseOnError = script.onError
+  script.onLoaded = (cb, options) => {
+    const off = baseOnLoaded(cb, options)
     onScopeDispose(off)
     return off
   }
-  // core returns an identity-based disposer at runtime although the type says void
-  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
-  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
-  // if we have a scope we should make these callbacks reactive
-  script.onLoaded = bind(baseOnLoaded)
-  script.onError = bind(baseOnError)
+  script.onError = (cb, options) => {
+    const off = baseOnError(cb, options)
+    onScopeDispose(off)
+    return off
+  }
   // capture the controller at registration time so this scope only aborts
   // the controller it was associated with, not a newer one created by a later scope
   const triggerAbortController = script._triggerAbortController
@@ -64,17 +71,20 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   })
 }
 
-export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptReturn<T extends object> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: CompatibleUseScriptOptions<T> = {}): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options || {} as UseScriptOptions<T>
+  const options = _options as UseScriptOptions<T>
   const head = options?.head || injectHead()
+  const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   options.head = head
   const scope = getCurrentInstance()
   options.eventContext = scope
   if (scope && typeof options.trigger === 'undefined') {
-    options.trigger = onMounted
+    options.trigger = load => onMounted(() => {
+      void load()
+    })
   }
   else if (isRef(options.trigger) || (typeof options.trigger === 'function' && options.trigger.length === 0)) {
     // Handle refs, computed refs, and getter functions (zero-arg functions that return boolean)
@@ -100,23 +110,19 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   // sync the status, need to register before useScript
   // @ts-expect-error untyped
   head._scriptStatusWatcher = head._scriptStatusWatcher || head.hooks.hook('script:updated', ({ script: s }) => {
-    // @ts-expect-error untyped
     if (s._statusRef) {
-      // @ts-expect-error untyped
       s._statusRef.value = s.status
     }
   })
-  // @ts-expect-error untyped
-  const script = _useScript(head, input as BaseUseScriptInput, options)
+  const script = _useScript(scriptHead, input as unknown as BaseUseScriptInput, options as unknown as BaseUseScriptOptions<T>)
   // @ts-expect-error untyped
   script._statusRef = script._statusRef || ref<UseScriptStatus>(script.status)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
-  // @ts-expect-error untyped
   registerVueScopeHandlers(script, scope)
   return new Proxy(script, {
     get(_, key, a) {
       // we can't override status as it will break the unhead useScript API
       return Reflect.get(_, key === 'status' ? '_statusRef' : key, a)
     },
-  }) as any as UseScriptReturn<T>
+  }) as unknown as UseScriptReturn<T>
 }

@@ -1,4 +1,9 @@
-import type { UnpluginInstance } from 'unplugin'
+import type {
+  RollupPlugin,
+  RspackPluginInstance,
+  UnpluginInstance,
+  WebpackPluginInstance,
+} from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
@@ -14,12 +19,12 @@ import { UseSeoMetaTransform } from './UseSeoMetaTransform'
  * plugins from the right path; `streamingPlugin` is the framework's
  * streaming unplugin instance (as returned by `createUnplugin`).
  */
-export interface FrameworkPluginConfig<S> {
+export interface FrameworkPluginConfig<S extends object> {
   framework: string
   streamingPlugin: UnpluginInstance<S | undefined, boolean>
 }
 
-export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
+export interface UnheadFrameworkOptions<S extends object> extends VitePluginOptions {
   /** Enable streaming SSR support. */
   streaming?: true | S | false
   /**
@@ -50,12 +55,26 @@ export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
  */
 export interface UnheadBundlerFactory {
   vite: () => VitePlugin[]
-  webpack: () => any[]
-  rspack: () => any[]
-  rollup: () => any[]
+  webpack: () => WebpackPluginInstance[]
+  rspack: () => RspackPluginInstance[]
+  rollup: () => RollupPlugin[]
 }
 
-interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
+interface CoreDef {
+  vite: () => VitePlugin
+  webpack: () => WebpackPluginInstance
+  rspack: () => RspackPluginInstance
+  rollup: () => RollupPlugin
+}
+
+function createCoreDef<O>(instance: UnpluginInstance<O, false>, options: O): CoreDef {
+  return {
+    vite: () => instance.vite(options),
+    webpack: () => instance.webpack(options),
+    rspack: () => instance.rspack(options),
+    rollup: () => instance.rollup(options),
+  }
+}
 
 function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
   const defs: CoreDef[] = []
@@ -63,39 +82,24 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
 
   if (options.treeshake !== false) {
     const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
-    defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
+    defs.push(createCoreDef(TreeshakeServerComposables, { ...common, ...treeshakeOpts }))
   }
   if (options.transformSeoMeta !== false) {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
+    defs.push(createCoreDef(UseSeoMetaTransform, { ...common, ...seoMetaOpts }))
   }
   if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object'
-      ? options.minify
-      : options.minify === true
-        ? { js: true, css: true }
-        : {}
+    const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
     if (minifyOpts.js || minifyOpts.css) {
-      defs.push({ instance: MinifyTransform, options: { ...common, ...minifyOpts } })
+      defs.push(createCoreDef(MinifyTransform, { ...common, ...minifyOpts }))
     }
   }
 
   return defs
 }
 
-function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
-  const out: any[] = []
-  for (const { instance, options } of defs) {
-    const plugin = (instance[bundler] as (opts: any) => any)(options)
-    if (Array.isArray(plugin))
-      out.push(...plugin)
-    else out.push(plugin)
-  }
-  return out
-}
-
-function resolveStreamingOpts<S>(streaming: true | S | false | undefined): S | undefined {
-  return streaming && typeof streaming === 'object' ? streaming as S : undefined
+function resolveStreamingOpts<S extends object>(streaming: true | S | false | undefined): S | undefined {
+  return streaming && typeof streaming === 'object' ? streaming : undefined
 }
 
 /**
@@ -129,7 +133,7 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
  * addBuildPlugin(Unhead({ streaming: true }))
  * ```
  */
-export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
+export function createFrameworkPlugin<S extends object>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
     const { streaming, validate, devtools, ...coreOpts } = options
     const defs = resolveCoreDefs(coreOpts)
@@ -138,7 +142,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
 
     return {
       vite: () => {
-        const plugins: VitePlugin[] = dispatch('vite', defs)
+        const plugins = defs.map(def => def.vite())
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
@@ -148,8 +152,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
           })
         }
         if (devtools !== false) {
-          const devtoolsOpts = typeof devtools === 'object' ? devtools : {}
-          plugins.push(lazyUnheadDevtools({ ...devtoolsOpts, _ctx: ctx }))
+          plugins.push(lazyUnheadDevtools({ _ctx: ctx }))
         }
         plugins.push(SSRStaticReplace.vite({}))
         plugins.push(CreateHeadTransform(ctx))
@@ -158,24 +161,24 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
         return plugins
       },
       webpack: () => {
-        const plugins = dispatch('webpack', defs)
+        const plugins = defs.map(def => def.webpack())
         plugins.push(SSRStaticReplace.webpack({}))
         if (wantStreaming)
           pushPlugin(plugins, streamingPlugin.webpack(streamOpts))
         return plugins
       },
       rspack: () => {
-        const plugins = dispatch('rspack', defs)
+        const plugins = defs.map(def => def.rspack())
         plugins.push(SSRStaticReplace.rspack({}))
         if (wantStreaming)
           pushPlugin(plugins, streamingPlugin.rspack(streamOpts))
         return plugins
       },
       rollup: () => {
-        const plugins = dispatch('rollup', defs)
+        const plugins = defs.map(def => def.rollup())
         plugins.push(SSRStaticReplace.rollup({}))
         if (wantStreaming)
-          pushPlugin(plugins, streamingPlugin.rollup(streamOpts) as any)
+          pushPlugin(plugins, streamingPlugin.rollup(streamOpts))
         return plugins
       },
     }

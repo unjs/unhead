@@ -29,7 +29,7 @@ export interface TagPosition {
   tagPosition?: ValidTagPositions
 }
 
-export type InnerContentVal = string | Record<string, any>
+export type InnerContentVal = string | object
 
 export interface InnerContent {
   /**
@@ -93,12 +93,64 @@ export interface HasTemplateParams {
   templateParams?: TemplateParams
 }
 
+/**
+ * A scalar value carried by a normalized head tag attribute.
+ *
+ * Values are intentionally not declared as strings: normalization preserves
+ * numbers and uses `false`/`null` as removal sentinels until the render phase.
+ */
+export type HeadTagAttributeValue = string | number | boolean | null
+
+/**
+ * An event listener carried by a normalized tag.
+ *
+ * `never[]` preserves concrete listener signatures without claiming that an
+ * arbitrary listener is safe to invoke outside the renderer that owns it.
+ */
+export type HeadTagEventHandler = (...args: never[]) => unknown
+
+/** A title-template callback retained until title resolution runs. */
+export type HeadTagTitleTemplate = (title?: string) => string | null
+
+/**
+ * Properties carried by a tag after input resolution and normalization.
+ *
+ * Common HTML attributes stay directly addressable, while extension/plugin
+ * properties remain `unknown` until narrowed. `class` and `style` use the
+ * containers produced by normalization so hooks can safely mutate them.
+ */
+export interface HeadTagProps {
+  [key: string]: unknown
+  [key: `data-${string}`]: HeadTagAttributeValue | undefined
+  [key: `on${string}`]: HeadTagAttributeValue | HeadTagEventHandler | undefined
+  'as'?: HeadTagAttributeValue
+  'async'?: HeadTagAttributeValue
+  'charset'?: HeadTagAttributeValue
+  'class'?: Set<string>
+  'content'?: HeadTagAttributeValue | HeadTagAttributeValue[]
+  'crossorigin'?: HeadTagAttributeValue
+  'defer'?: HeadTagAttributeValue
+  'fetchpriority'?: HeadTagAttributeValue
+  'href'?: HeadTagAttributeValue
+  'hreflang'?: HeadTagAttributeValue
+  'id'?: HeadTagAttributeValue
+  'media'?: HeadTagAttributeValue
+  'name'?: HeadTagAttributeValue
+  'nonce'?: HeadTagAttributeValue
+  'property'?: HeadTagAttributeValue
+  'rel'?: HeadTagAttributeValue
+  'src'?: HeadTagAttributeValue
+  'style'?: Map<string, string>
+  'type'?: HeadTagAttributeValue
+  'http-equiv'?: HeadTagAttributeValue
+}
+
 export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, HasTemplateParams {
   tag: TagKey
-  props: Record<string, string>
+  props: HeadTagProps
   processTemplateParams?: boolean
   innerHTML?: string
-  textContent?: string
+  textContent?: string | number | boolean | HeadTagTitleTemplate
   /**
    * @internal
    */

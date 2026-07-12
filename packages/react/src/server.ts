@@ -1,12 +1,17 @@
-import type { ReactNode } from 'react'
-import type { Unhead } from 'unhead/types'
+import type { ReactElement, ReactNode } from 'react'
+import type { CompatibleHead, ResolvableHead, UseHeadInput } from 'unhead/types'
 import { createElement } from 'react'
-import { UnheadContext } from './context'
+import { toUnheadContextValue, UnheadContext } from './context'
 
 export { createHead, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
-export function UnheadProvider({ children, value }: { children: ReactNode, value: Unhead }) {
-  return createElement(UnheadContext.Provider, { value }, children)
+export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
+  children: ReactNode
+  value: CompatibleHead<I, ResolvableHead, RenderResult>
+}
+
+export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ children, value }: UnheadProviderProps<I, RenderResult>): ReactElement {
+  return createElement(UnheadContext.Provider, { value: toUnheadContextValue(value) }, children)
 }
 
 export type {

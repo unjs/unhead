@@ -6,17 +6,23 @@ import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
 export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPayload> {
-  hooks: HookableCore<ServerHeadHooks>
+  hooks: HookableCore<ServerHeadHooks<T>>
 }
 
+type CreateServerHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateServerHeadOptions<Input, Input>]
+  : [options: CreateServerHeadOptions<Input, Input> & { disableDefaults: true }]
+
 /* @__NO_SIDE_EFFECTS__ */
-export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
+export function createHead(options?: CreateServerHeadOptions<ResolvableHead>): ServerUnhead<ResolvableHead>
+export function createHead<T>(options: CreateServerHeadOptions<T, T> & { disableDefaults: true }): ServerUnhead<T>
+export function createHead<T>(options: CreateServerHeadOptions<T, T | ResolvableHead>): ServerUnhead<T | ResolvableHead>
+export function createHead<T = ResolvableHead>(...args: CreateServerHeadArgs<T>): ServerUnhead<T>
+export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions<T, any> = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
   const render = createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
   const core = createUnhead<T, SSRHeadPayload>(render, {
     _tagWeight: tagWeight,
-    // @ts-expect-error untyped
-    document: false,
     experimentalStreamKey: options.experimentalStreamKey,
     propResolvers: [
       ...(options.propResolvers || []),
@@ -43,12 +49,12 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
                 content: 'width=device-width, initial-scale=1',
               },
             ],
-          },
+          } as T,
       ...(options.init || []),
     ],
   })
 
-  const hooks = createHooks<ServerHeadHooks>(options.hooks)
+  const hooks = createHooks<ServerHeadHooks<T>>(options.hooks)
   const head: ServerUnhead<T> = {
     ...core,
     hooks,

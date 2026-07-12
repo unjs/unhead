@@ -36,7 +36,7 @@ export interface HowToStepSimple extends Thing {
   /**
    * A list of detailed substeps, including directions or tips.
    */
-  itemListElement?: NodeRelations<HowToDirection | string>[]
+  itemListElement?: NodeRelations<HowToDirection | string>
 }
 
 export interface HowToStep extends HowToStepSimple {}
@@ -44,7 +44,7 @@ export interface HowToStep extends HowToStepSimple {}
 /**
  * Describes a HowTo guide, which contains a series of steps.
  */
-export const howToStepResolver = defineSchemaOrgResolver<HowToStep>({
+export const howToStepResolver = defineSchemaOrgResolver<HowToStep, HowToStep | string>({
   cast(node) {
     if (typeof node === 'string') {
       return {

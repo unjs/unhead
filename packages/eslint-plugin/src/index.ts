@@ -30,13 +30,13 @@ const rules = {
   'viewport-user-scalable': viewportUserScalable,
 } as const
 
-const plugin: ESLint.Plugin = {
+const plugin = {
   meta: {
     name: '@unhead/eslint-plugin',
     version: '3.0.5',
   },
   rules,
-}
+} satisfies ESLint.Plugin
 
 function withPlugin(config: Linter.Config): Linter.Config {
   return { ...config, plugins: { '@unhead': plugin } }

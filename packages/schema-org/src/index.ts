@@ -1,7 +1,15 @@
 export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './core'
-export type { SchemaOrgGraph } from './core'
+export type { Merge, SchemaOrgGraph } from './core'
+export type { ResolverOptions } from './core'
 export { schemaAutoImports } from './imports'
 export * from './nodes'
+export type { DefinedRegion } from './nodes/DefinedRegion'
+export type { MerchantReturnPolicy, MerchantReturnPolicySimple } from './nodes/MerchantReturnPolicy'
+export type { MonetaryAmount, MonetaryAmountSimple, QuantitativeSimple, QuantitativeValue } from './nodes/MonetaryAmount'
+export type { OfferShippingDetails } from './nodes/OfferShippingDetails'
+export type { Place, PlaceSimple } from './nodes/Place'
+export type { ShippingDeliveryTime } from './nodes/ShippingDeliveryTime'
+export type { VirtualLocation, VirtualLocationSimple } from './nodes/VirtualLocation'
 export { UnheadSchemaOrg } from './plugin'
 export type { PluginSchemaOrgOptions } from './plugin'
 export {
@@ -55,5 +63,5 @@ export {
   normalizeSchemaOrgInput,
   useSchemaOrg,
 } from './runtime'
-export type { UseSchemaOrgInput } from './runtime'
+export type { SchemaOrgHeadInput, UseSchemaOrgInput } from './runtime'
 export type { Arrayable, Id, Identity, IdReference, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'

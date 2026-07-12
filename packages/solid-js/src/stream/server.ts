@@ -1,5 +1,6 @@
+import type { JSX } from 'solid-js'
 import type { ServerUnhead } from 'unhead/server'
-import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
+import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
 import {
@@ -22,8 +23,8 @@ export {
 /**
  * Solid-js streaming context returned by createStreamableHead.
  */
-export interface SolidStreamableHeadContext {
-  head: ServerUnhead
+export interface SolidStreamableHeadContext<I = ResolvableHead> {
+  head: ServerUnhead<I>
   /**
    * Callback to pass to renderToStream's onCompleteShell option.
    * This captures head entries from shell components before streaming starts.
@@ -35,6 +36,10 @@ export interface SolidStreamableHeadContext {
    */
   wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => ReadableStream<Uint8Array>
 }
+
+type CreateStreamableHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateStreamableServerHeadOptions<Input>]
+  : [options: CreateStreamableServerHeadOptions<Input> & { disableDefaults: true }]
 
 /**
  * Creates a head instance configured for Solid-js streaming SSR.
@@ -52,8 +57,12 @@ export interface SolidStreamableHeadContext {
  * return wrapStream(stream, template)
  * ```
  */
-export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): SolidStreamableHeadContext {
-  const { head } = _createStreamableHead(options)
+export function createStreamableHead(options?: CreateStreamableServerHeadOptions<ResolvableHead>): SolidStreamableHeadContext<ResolvableHead>
+export function createStreamableHead<I>(options: CreateStreamableServerHeadOptions<I> & { disableDefaults: true }): SolidStreamableHeadContext<I>
+export function createStreamableHead<I>(options: CreateStreamableServerHeadOptions<I>): SolidStreamableHeadContext<I | ResolvableHead>
+export function createStreamableHead<I = ResolvableHead>(...args: CreateStreamableHeadArgs<I>): SolidStreamableHeadContext<I>
+export function createStreamableHead<I = ResolvableHead>(options: CreateStreamableServerHeadOptions<I> = {}): SolidStreamableHeadContext<I> {
+  const { head } = _createStreamableHead<I>(options as CreateStreamableServerHeadOptions<I> & { disableDefaults: true })
 
   // Promise that resolves when shell is ready with captured state
   let resolveShellReady: (state: SSRHeadPayload) => void
@@ -291,7 +300,7 @@ const scriptTemplate = ['<script>', '</script>'] as TemplateStringsArray & strin
  * Note: In SolidJS, this only outputs content AFTER the shell is complete.
  * During shell rendering, we accumulate entries which are captured by onCompleteShell.
  */
-export function HeadStream() {
+export function HeadStream(): JSX.Element {
   const head = useContext(UnheadContext)
   if (!head)
     return null
@@ -301,9 +310,9 @@ export function HeadStream() {
   if (!head._solidShellComplete)
     return null
 
-  const update = renderSSRHeadSuspenseChunk(head)
+  const update = renderSSRHeadSuspenseChunk(head as unknown as Unhead<ResolvableHead, unknown>)
   if (!update)
     return null
 
-  return ssr(scriptTemplate, update)
+  return ssr(scriptTemplate, update) as unknown as JSX.Element
 }

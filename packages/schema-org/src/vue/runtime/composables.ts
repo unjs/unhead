@@ -1,5 +1,6 @@
 import type { DeepResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
-import type { ActiveHeadEntry } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryTarget } from 'unhead/types'
+import type { MaybeRef, Ref } from 'vue'
 import type { AggregateOffer } from '../../nodes/AggregateOffer'
 import type { AggregateRating } from '../../nodes/AggregateRating'
 import type { Article } from '../../nodes/Article'
@@ -48,7 +49,7 @@ import type { WebSite } from '../../nodes/WebSite'
 import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { toValue } from 'vue'
+import { setVueRefResolver } from '@unhead/vue/utils'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -98,172 +99,184 @@ import { searchActionResolver } from '../../nodes/WebSite/SearchAction'
 import { UnheadSchemaOrg } from '../../plugin'
 import { normalizeSchemaOrgInput } from '../../runtime'
 
-function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>): any {
+type VueSchemaOrgDefinerInput<ResolvedInput, Input> = Input & (
+  Input extends object ? MaybeRef<DeepResolvableProperties<ResolvedInput>> : unknown
+)
+type VueSchemaOrgNode<ResolvedInput extends Thing, Input extends object | undefined> = Input extends Ref<unknown>
+  ? Input
+  : [Input] extends [undefined]
+      ? Partial<DeepResolvableProperties<ResolvedInput>>
+      : DeepResolvableProperties<ResolvedInput> & Exclude<Input, undefined>
+
+function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): VueSchemaOrgNode<ResolvedInput, Input> {
   if (!input)
-    input = {} as T
-  // Check if input is a Vue ref
+    input = {} as Input
   if (input && typeof input === 'object' && '__v_isRef' in input) {
-    // Attach resolver to the inner value so it survives toValue() unwrapping
-    const inner = toValue(input)
-    if (inner && typeof inner === 'object') {
-      (inner as any)._resolver = resolver
-    }
-    return input
+    // Keep resolver metadata out-of-band so readonly refs retain it without
+    // mutating Vue's readonly proxy.
+    setVueRefResolver(input, resolver)
+    return input as unknown as VueSchemaOrgNode<ResolvedInput, Input>
   }
   // For plain objects, spread and attach resolver
-  return { ...input, _resolver: resolver } as T & { _resolver?: SchemaOrgNodeDefinition<any> }
+  return { ...input, _resolver: resolver } as unknown as VueSchemaOrgNode<ResolvedInput, Input>
 }
 
-export function defineAddress<T extends Record<string, any>>(input?: DeepResolvableProperties<PostalAddress & T>) {
+export function defineAddress<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<PostalAddress, Input>) {
   return provideResolver(input, addressResolver)
 }
-export function defineAggregateOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateOffer & T>) {
+export function defineAggregateOffer<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<AggregateOffer, Input>) {
   return provideResolver(input, aggregateOfferResolver)
 }
-export function defineAggregateRating<T extends Record<string, any>>(input?: DeepResolvableProperties<AggregateRating & T>) {
+export function defineAggregateRating<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<AggregateRating, Input>) {
   return provideResolver(input, aggregateRatingResolver)
 }
-export function defineArticle<T extends Record<string, any>>(input?: DeepResolvableProperties<Article & T>) {
+export function defineArticle<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Article, Input>) {
   return provideResolver(input, articleResolver)
 }
-export function defineBreadcrumb<T extends Record<string, any>>(input?: DeepResolvableProperties<BreadcrumbList & T>) {
+export function defineBreadcrumb<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<BreadcrumbList, Input>) {
   return provideResolver(input, breadcrumbResolver)
 }
-export function defineComment<T extends Record<string, any>>(input?: DeepResolvableProperties<Comment & T>) {
+export function defineComment<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Comment, Input>) {
   return provideResolver(input, commentResolver)
 }
-export function defineEvent<T extends Record<string, any>>(input?: DeepResolvableProperties<Event & T>) {
+export function defineEvent<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Event, Input>) {
   return provideResolver(input, eventResolver)
 }
-export function defineFoodEstablishment<T extends Record<string, any>>(input?: DeepResolvableProperties<FoodEstablishment & T>) {
+export function defineFoodEstablishment<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<FoodEstablishment, Input>) {
   return provideResolver(input, foodEstablishmentResolver)
 }
-export function defineVirtualLocation<T extends Record<string, any>>(input?: DeepResolvableProperties<VirtualLocation & T>) {
+export function defineVirtualLocation<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<VirtualLocation, Input>) {
   return provideResolver(input, virtualLocationResolver)
 }
-export function definePlace<T extends Record<string, any>>(input?: DeepResolvableProperties<Place & T>) {
+export function definePlace<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Place, Input>) {
   return provideResolver(input, placeResolver)
 }
-export function defineHowTo<T extends Record<string, any>>(input?: DeepResolvableProperties<HowTo & T>) {
+export function defineHowTo<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<HowTo, Input>) {
   return provideResolver(input, howToResolver)
 }
-export function defineHowToStep<T extends Record<string, any>>(input?: DeepResolvableProperties<HowToStep & T>) {
+export function defineHowToStep<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<HowToStep, Input>) {
   return provideResolver(input, howToStepResolver)
 }
-export function defineImage<T extends Record<string, any>>(input?: DeepResolvableProperties<ImageObject & T>) {
+export function defineImage<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<ImageObject, Input>) {
   return provideResolver(input, imageResolver)
 }
-export function defineJobPosting<T extends Record<string, any>>(input?: DeepResolvableProperties<JobPosting & T>) {
+export function defineJobPosting<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<JobPosting, Input>) {
   return provideResolver(input, jobPostingResolver)
 }
-export function defineLocalBusiness<T extends Record<string, any>>(input?: DeepResolvableProperties<LocalBusiness & T>) {
+export function defineLocalBusiness<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<LocalBusiness, Input>) {
   return provideResolver(input, localBusinessResolver)
 }
-export function defineOffer<T extends Record<string, any>>(input?: DeepResolvableProperties<Offer & T>) {
+export function defineOffer<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Offer, Input>) {
   return provideResolver(input, offerResolver)
 }
-export function defineOpeningHours<T extends Record<string, any>>(input?: DeepResolvableProperties<OpeningHoursSpecification & T>) {
+export function defineOpeningHours<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<OpeningHoursSpecification, Input>) {
   return provideResolver(input, openingHoursResolver)
 }
-export function defineOrganization<T extends Record<string, any>>(input?: DeepResolvableProperties<Organization & T>) {
+export function defineOrganization<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Organization, Input>) {
   return provideResolver(input, organizationResolver)
 }
-export function definePerson<T extends Record<string, any>>(input?: DeepResolvableProperties<Person & T>) {
+export function definePerson<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Person, Input>) {
   return provideResolver(input, personResolver)
 }
-export function defineProduct<T extends Record<string, any>>(input?: DeepResolvableProperties<Product & T>) {
+export function defineProduct<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Product, Input>) {
   return provideResolver(input, productResolver)
 }
-export function defineQuestion<T extends Record<string, any>>(input?: DeepResolvableProperties<Question & T>) {
+export function defineQuestion<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Question, Input>) {
   return provideResolver(input, questionResolver)
 }
-export function defineRecipe<T extends Record<string, any>>(input?: DeepResolvableProperties<Recipe & T>) {
+export function defineRecipe<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Recipe, Input>) {
   return provideResolver(input, recipeResolver)
 }
-export function defineReview<T extends Record<string, any>>(input?: DeepResolvableProperties<Review & T>) {
+export function defineReview<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Review, Input>) {
   return provideResolver(input, reviewResolver)
 }
-export function defineVideo<T extends Record<string, any>>(input?: DeepResolvableProperties<VideoObject & T>) {
+export function defineVideo<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<VideoObject, Input>) {
   return provideResolver(input, videoResolver)
 }
-export function defineWebPage<T extends Record<string, any>>(input?: DeepResolvableProperties<WebPage & T>) {
+export function defineWebPage<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<WebPage, Input>) {
   return provideResolver(input, webPageResolver)
 }
-export function defineWebSite<T extends Record<string, any>>(input?: DeepResolvableProperties<WebSite & T>) {
+export function defineWebSite<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<WebSite, Input>) {
   return provideResolver(input, webSiteResolver)
 }
-export function defineBook<T extends Record<string, any>>(input?: DeepResolvableProperties<Book & T>) {
+export function defineBook<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Book, Input>) {
   return provideResolver(input, bookResolver)
 }
-export function defineCourse<T extends Record<string, any>>(input?: DeepResolvableProperties<Course & T>) {
+export function defineCourse<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Course, Input>) {
   return provideResolver(input, courseResolver)
 }
-export function defineItemList<T extends Record<string, any>>(input?: DeepResolvableProperties<ItemList & T>) {
+export function defineItemList<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<ItemList, Input>) {
   return provideResolver(input, itemListResolver)
 }
-export function defineListItem<T extends Record<string, any>>(input?: DeepResolvableProperties<ListItem & T>) {
+export function defineListItem<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<ListItem, Input>) {
   return provideResolver(input, listItemResolver)
 }
-export function defineMovie<T extends Record<string, any>>(input?: DeepResolvableProperties<Movie & T>) {
+export function defineMovie<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Movie, Input>) {
   return provideResolver(input, movieResolver)
 }
-export function defineSearchAction<T extends Record<string, any>>(input?: DeepResolvableProperties<SearchAction & T>) {
+export function defineSearchAction<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<SearchAction, Input>) {
   return provideResolver(input, searchActionResolver)
 }
-export function defineReadAction<T extends Record<string, any>>(input?: DeepResolvableProperties<ReadAction & T>) {
+export function defineReadAction<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<ReadAction, Input>) {
   return provideResolver(input, readActionResolver)
 }
-export function defineSoftwareApp<T extends Record<string, any>>(input?: DeepResolvableProperties<SoftwareApp & T>) {
+export function defineSoftwareApp<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<SoftwareApp, Input>) {
   return provideResolver(input, softwareAppResolver)
 }
-export function defineBookEdition<T extends Record<string, any>>(input?: DeepResolvableProperties<BookEdition & T>) {
+export function defineBookEdition<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<BookEdition, Input>) {
   return provideResolver(input, bookEditionResolver)
 }
-export function defineDataset<T extends Record<string, any>>(input?: DeepResolvableProperties<Dataset & T>) {
+export function defineDataset<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Dataset, Input>) {
   return provideResolver(input, datasetResolver)
 }
-export function defineMusicRecording<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicRecording & T>) {
+export function defineMusicRecording<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<MusicRecording, Input>) {
   return provideResolver(input, musicRecordingResolver)
 }
-export function defineMusicAlbum<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicAlbum & T>) {
+export function defineMusicAlbum<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<MusicAlbum, Input>) {
   return provideResolver(input, musicAlbumResolver)
 }
-export function defineMusicGroup<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicGroup & T>) {
+export function defineMusicGroup<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<MusicGroup, Input>) {
   return provideResolver(input, musicGroupResolver)
 }
-export function defineMusicPlaylist<T extends Record<string, any>>(input?: DeepResolvableProperties<MusicPlaylist & T>) {
+export function defineMusicPlaylist<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<MusicPlaylist, Input>) {
   return provideResolver(input, musicPlaylistResolver)
 }
-export function definePodcastSeries<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastSeries & T>) {
+export function definePodcastSeries<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<PodcastSeries, Input>) {
   return provideResolver(input, podcastSeriesResolver)
 }
-export function definePodcastEpisode<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastEpisode & T>) {
+export function definePodcastEpisode<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<PodcastEpisode, Input>) {
   return provideResolver(input, podcastEpisodeResolver)
 }
-export function definePodcastSeason<T extends Record<string, any>>(input?: DeepResolvableProperties<PodcastSeason & T>) {
+export function definePodcastSeason<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<PodcastSeason, Input>) {
   return provideResolver(input, podcastSeasonResolver)
 }
-export function defineTVSeries<T extends Record<string, any>>(input?: DeepResolvableProperties<TVSeries & T>) {
+export function defineTVSeries<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<TVSeries, Input>) {
   return provideResolver(input, tvSeriesResolver)
 }
-export function defineTVSeason<T extends Record<string, any>>(input?: DeepResolvableProperties<TVSeason & T>) {
+export function defineTVSeason<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<TVSeason, Input>) {
   return provideResolver(input, tvSeasonResolver)
 }
-export function defineTVEpisode<T extends Record<string, any>>(input?: DeepResolvableProperties<TVEpisode & T>) {
+export function defineTVEpisode<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<TVEpisode, Input>) {
   return provideResolver(input, tvEpisodeResolver)
 }
-export function defineService<T extends Record<string, any>>(input?: DeepResolvableProperties<Service & T>) {
+export function defineService<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<Service, Input>) {
   return provideResolver(input, serviceResolver)
 }
 
-export type UseSchemaOrgInput = Arrayable<DeepResolvableProperties<Thing | Record<string, any>>>
+export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>>>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
+type UseSchemaOrgOptions = Omit<UseHeadOptions, 'head'> & {
+  head?: HeadEntryTarget<UseHeadInput> & SchemaOrgPluginHost
+}
+
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseSchemaOrgOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())
-  const entry = useHead(normalizeSchemaOrgInput(input) as UseHeadInput, options) as ActiveHeadEntry<UseSchemaOrgInput>
+  const entry = useHead(normalizeSchemaOrgInput(input) as unknown as UseHeadInput, options as UseHeadOptions)
   const corePatch = entry.patch
-  entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
-  return entry
+  const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>
+  publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
+  return publicEntry
 }

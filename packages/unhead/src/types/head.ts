@@ -1,7 +1,7 @@
 import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks } from './hooks'
+import type { ClientHeadHooks, DomRenderTagContext, HeadHooks, ServerHeadHooks, SSRHeadPayload } from './hooks'
 import type { ResolvableHead } from './schema'
-import type { HeadTag, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
+import type { HeadTag, HeadTagTitleTemplate, ProcessesTemplateParams, ResolvesDuplicates, TagPosition, TagPriority, TemplateParams } from './tags'
 
 /**
  * Side effects are mapped with a key and their cleanup function.
@@ -15,30 +15,7 @@ export interface HeadEntry<Input> {
    * User provided input for the entry.
    */
   input: Input
-  options?: {
-    /**
-     * Default tag position.
-     *
-     * @internal
-     */
-    tagPosition?: TagPosition['tagPosition']
-    /**
-     * Default tag priority.
-     *
-     * @internal
-     */
-    tagPriority?: TagPriority['tagPriority']
-    /**
-     * Default tag duplicate strategy.
-     *
-     * @internal
-     */
-    tagDuplicateStrategy?: HeadTag['tagDuplicateStrategy']
-    /**
-     * @internal
-     */
-    _safe?: boolean
-  }
+  options?: Omit<HeadEntryOptions<Input>, 'head' | 'onRendered'>
   /**
    * Head entry index
    *
@@ -66,12 +43,14 @@ export interface HeadEntry<Input> {
   _promisesProcessed?: boolean
 }
 
-export interface HeadPluginOptions extends CreateHeadOptions {
-  hooks?: Record<string, (...args: any[]) => any>
+export interface HeadPluginOptions<Input = ResolvableHead, RenderResult = unknown> {
+  hooks?: Partial<HeadHooks<Input, RenderResult>>
 }
 
-export type HeadPluginInput = HeadPluginOptions & { key: string } | (((head: Unhead) => HeadPluginOptions & { key: string }) & { key?: string })
-export type HeadPlugin = HeadPluginOptions & { key: string }
+export type HeadPluginInput<Input = ResolvableHead, RenderResult = unknown>
+  = | HeadPlugin<Input, RenderResult>
+    | (((head: Unhead<Input, RenderResult>) => HeadPlugin<Input, RenderResult>) & { key?: string })
+export type HeadPlugin<Input = ResolvableHead, RenderResult = unknown> = HeadPluginOptions<Input, RenderResult> & { key: string }
 
 /**
  * An active head entry provides an API to manipulate it.
@@ -95,16 +74,16 @@ export interface ActiveHeadEntry<Input> {
   _i: number
 }
 
-export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
+export type PropResolver = (key: string | undefined, value: unknown, tag?: HeadTag) => unknown
 
-export interface CreateHeadOptions {
+export interface CreateHeadOptions<Input = ResolvableHead> {
   document?: Document
   /**
    * Initial head input that should be added.
    *
    * Any tags here are added with low priority.
    */
-  init?: (ResolvableHead | undefined | false)[]
+  init?: readonly (Input | undefined | false)[]
   /**
    * Prop resolvers for tags.
    */
@@ -122,9 +101,9 @@ export interface CreateHeadOptions {
   _tagWeight?: (tag: HeadTag) => number
 }
 
-export interface CreateServerHeadOptions extends CreateHeadOptions {
-  plugins?: HeadPluginInput[]
-  hooks?: Partial<ServerHeadHooks>
+export interface CreateServerHeadOptions<Input = ResolvableHead, HeadInput = Input> extends CreateHeadOptions<Input> {
+  plugins?: HeadPluginInput<HeadInput, SSRHeadPayload>[]
+  hooks?: Partial<ServerHeadHooks<HeadInput>>
   /**
    * Custom tag weight function for controlling `<head>` tag ordering.
    *
@@ -138,7 +117,7 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
    * createHead({
    *   tagWeight(tag) {
    *     // Promote SEO meta above styles for bots
-   *     if (isBot && tag.tag === 'meta' && tag.props.property?.startsWith('og:'))
+   *     if (isBot && tag.tag === 'meta' && typeof tag.props.property === 'string' && tag.props.property.startsWith('og:'))
    *       return 55 // just above styles (60)
    *     return capoTagWeight(tag)
    *   }
@@ -168,7 +147,7 @@ export interface CreateServerHeadOptions extends CreateHeadOptions {
   omitLineBreaks?: boolean
 }
 
-export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHeadOptions, 'experimentalStreamKey'> {
+export interface CreateStreamableServerHeadOptions<Input = ResolvableHead, HeadInput = Input> extends Omit<CreateServerHeadOptions<Input, HeadInput>, 'experimentalStreamKey'> {
   /**
    * Key used for window attachment during streaming SSR.
    * Allows multiple Unhead instances on the same page.
@@ -177,17 +156,37 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
   streamKey?: string
 }
 
-export interface CreateClientHeadOptions extends CreateHeadOptions {
-  plugins?: HeadPluginInput[]
-  hooks?: Partial<ClientHeadHooks>
+export interface CreateClientHeadOptions<Input = ResolvableHead, RenderResult = boolean> extends CreateHeadOptions<Input> {
+  plugins?: HeadPluginInput<Input, RenderResult>[]
+  hooks?: Partial<ClientHeadHooks<Input, RenderResult>>
   /**
    * Custom render function for DOM updates.
    */
-  render?: (head: Unhead<any>) => boolean | void
+  render?: HeadRenderer<RenderResult, Input>
 }
 
-export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
-  head?: Unhead
+/**
+ * The render-independent part of a head instance used when adding entries.
+ *
+ * Keeping entry options on this smaller surface lets client and server heads
+ * share the same option type without erasing their renderer result.
+ */
+export interface HeadEntryTarget<Input = ResolvableHead> {
+  push: (entry: Input) => ActiveHeadEntry<Input>
+  ssr: boolean
+}
+
+/**
+ * Render-neutral value suitable for framework dependency-injection contexts.
+ * It accepts standard entries while hiding renderer-specific hooks and plugins.
+ */
+export interface HeadContextTarget<Input = ResolvableHead> extends HeadEntryTarget<Input> {
+  render: () => unknown
+  use: (plugin: never) => void
+}
+
+export interface HeadEntryOptions<Input = ResolvableHead> extends TagPosition, TagPriority, ProcessesTemplateParams, ResolvesDuplicates {
+  head?: HeadEntryTarget<Input>
   /**
    * Called after unhead has finished applying DOM updates.
    *
@@ -218,7 +217,17 @@ export interface HeadEntryOptions extends TagPosition, TagPriority, ProcessesTem
   _source?: string
 }
 
-export type HeadRenderer<T = unknown> = (head: Unhead<any, any>) => T
+/**
+ * A head that can accept every entry from `BaseInput`.
+ *
+ * Composables that synthesize standard head entries use this constraint so a
+ * head with additional optional input is accepted, while a head that requires
+ * custom input on every entry is rejected.
+ */
+export type CompatibleHead<Input, BaseInput = ResolvableHead, RenderResult = unknown>
+  = Unhead<Input, RenderResult> & ([BaseInput] extends [NoInfer<Input>] ? unknown : never)
+
+export type HeadRenderer<RenderResult = unknown, Input = ResolvableHead> = (head: Unhead<Input, NoInfer<RenderResult>>) => RenderResult
 
 export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
@@ -228,7 +237,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * Registered plugins.
    */
-  plugins: Map<string, HeadPlugin>
+  plugins: Map<string, HeadPlugin<Input, RenderResult>>
   /**
    * The head entries.
    */
@@ -236,19 +245,19 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * Create a new head entry.
    */
-  push: (entry: Input, options?: HeadEntryOptions) => ActiveHeadEntry<Input>
+  push: (entry: Input, options?: HeadEntryOptions<Input>) => ActiveHeadEntry<Input>
   /**
    * Exposed hooks for easier extension.
    */
-  hooks?: HookableCore<HeadHooks>
+  hooks?: HookableCore<HeadHooks<Input, RenderResult>>
   /**
    * Resolved options
    */
-  resolvedOptions: CreateHeadOptions
+  resolvedOptions: CreateHeadOptions<Input>
   /**
    * Use a head plugin, loads the plugins hooks.
    */
-  use: (plugin: HeadPluginInput) => void
+  use: (plugin: HeadPluginInput<Input, RenderResult>) => void
   /**
    * Is it a server-side render context.
    */
@@ -279,7 +288,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * @internal
    */
-  _scripts?: Record<string, any>
+  _scripts?: Record<string, unknown>
   /**
    * @internal
    */
@@ -295,7 +304,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
   /**
    * @internal
    */
-  _titleTemplate?: string
+  _titleTemplate?: string | HeadTagTitleTemplate
   /**
    * @internal
    */

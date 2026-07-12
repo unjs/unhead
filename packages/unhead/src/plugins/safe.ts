@@ -1,5 +1,6 @@
+import type { HeadEntry } from '../types/head'
 import type { HeadSafe } from '../types/safeSchema'
-import type { HeadTag } from '../types/tags'
+import type { HeadTag, HeadTagProps } from '../types/tags'
 import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -107,8 +108,8 @@ function stripProtoKeys(obj: any): any {
   return obj
 }
 
-function acceptDataAttrs(value: Record<string, string>, allowId = true) {
-  const next: Record<string, string> = {}
+function acceptDataAttrs(value: HeadTagProps, allowId = true): HeadTagProps {
+  const next: HeadTagProps = {}
   if (!value)
     return next
   const keys = Object.keys(value)
@@ -244,7 +245,7 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
 export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'safe',
   hooks: {
-    'entries:normalize': (ctx) => {
+    'entries:normalize': <Input>(ctx: { tags: HeadTag[], entry: HeadEntry<Input> }) => {
       if (ctx.entry.options?._safe) {
         ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
           const safeTag = makeTagSafe(tag)

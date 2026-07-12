@@ -1,4 +1,4 @@
-import type { SSRHeadPayload, Unhead } from '../types'
+import type { ResolvableHead, SSRHeadPayload } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 
 /**
@@ -7,7 +7,7 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
  * Uses optimized parsing and index-based HTML construction for best performance.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: string) {
+export function transformHtmlTemplate(head: { push: (input: ResolvableHead, options?: { _index?: number }) => unknown, render: () => SSRHeadPayload }, html: string) {
   const template = parseHtmlForUnheadExtraction(html)
   head.push(template.input, { _index: 0 })
   return applyHeadToHtml(template, head.render())
@@ -23,7 +23,7 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
  * ordered incorrectly, so use with caution.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function transformHtmlTemplateRaw(head: Unhead<any, SSRHeadPayload>, html: string) {
+export function transformHtmlTemplateRaw(head: { render: () => SSRHeadPayload }, html: string) {
   // For raw mode, we only need indexes, not head extraction
   const template = parseHtmlForIndexes(html)
   return applyHeadToHtml(template, head.render())

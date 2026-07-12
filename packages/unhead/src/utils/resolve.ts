@@ -83,10 +83,12 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     if (strategy === 'merge') {
       const props = { ...prev.props }
       for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        if (p === 'style')
+          props.style = new Map([...(prev.props.style || []), ...(next.props.style || [])])
+        else if (p === 'class')
+          props.class = new Set([...(prev.props.class || []), ...(next.props.class || [])])
+        else
+          props[p] = next.props[p]
       }
       ctx.tagMap.set(k, { ...next, props })
     }
@@ -102,22 +104,29 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   return hasFlatMeta
 }
 
-export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>): void {
+export function resolveTitleTemplate<Input, RenderResult>(ctx: ResolveTagsContext, head: Unhead<Input, RenderResult>): void {
   const title = ctx.tagMap.get('title')
   const tpl = ctx.tagMap.get('titleTemplate')
-  head._title = title?.textContent
+  const rawTitle = title?.textContent
+  const titleContent = rawTitle == null || typeof rawTitle === 'function' ? undefined : String(rawTitle)
+  head._title = titleContent
+  head._titleTemplate = undefined
   if (!tpl)
     return
   const fn = tpl.textContent
+  if (typeof fn !== 'string' && typeof fn !== 'function')
+    return
   head._titleTemplate = fn
   if (!fn)
     return
-  // @ts-expect-error untyped
-  let v = typeof fn === 'function' ? fn(title?.textContent) : fn
+  let v = typeof fn === 'function' ? fn(titleContent) : fn
   if (typeof v === 'string' && !head.plugins.has('template-params'))
-    v = v.replace('%s', title?.textContent || '')
+    v = v.replace('%s', titleContent || '')
   if (title) {
     v === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: v })
+  }
+  else if (v === null) {
+    ctx.tagMap.delete('titleTemplate')
   }
   else {
     // create a new object instead of mutating the cached tpl tag
@@ -152,7 +161,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return out
 }
 
-export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+export function resolveTags<Input, RenderResult>(head: Unhead<Input, RenderResult>, options?: ResolveTagsOptions): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -177,7 +186,13 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       }
       callHook(head, 'entries:normalize', normalizeCtx)
       for (let i = 0; i < normalizeCtx.tags.length; i++) {
-        const t = normalizeCtx.tags[i]
+        const tagCtx = {
+          tag: normalizeCtx.tags[i],
+          entry: e,
+          resolvedOptions: head.resolvedOptions,
+        }
+        callHook(head, 'tag:normalise', tagCtx)
+        const t = normalizeCtx.tags[i] = tagCtx.tag
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)

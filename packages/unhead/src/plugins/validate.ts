@@ -91,6 +91,10 @@ function extractOrigin(url: string): string | undefined {
   return slash === -1 ? url : url.slice(0, slash)
 }
 
+function stringProp(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
 function resolveSeverity(config: RuleSeverity | [RuleSeverity, unknown] | undefined, fallback: RuleSeverity): RuleSeverity {
   if (config == null)
     return fallback
@@ -132,7 +136,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const root = options.root
   const stacks = new Map<number, string>()
 
-  return defineHeadPlugin((head: Unhead) => {
+  return defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
       if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
@@ -179,20 +183,20 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             if (tag.tag === 'meta') {
               // HTML `meta[name]` is case-insensitive; normalize for cross-tag lookups.
-              const key = tag.props.property || (tag.props.name ? String(tag.props.name).toLowerCase() : undefined)
+              const key = stringProp(tag.props.property) || stringProp(tag.props.name)?.toLowerCase()
               if (key) {
                 metaByKey.set(key, tag)
                 if (key.startsWith('og:'))
                   hasOgTags = true
                 if (key === 'description')
                   hasDescription = true
-                if (key === 'robots' && tag.props.content?.toLowerCase().includes('noindex'))
+                if (key === 'robots' && stringProp(tag.props.content)?.toLowerCase().includes('noindex'))
                   isIndexable = false
               }
             }
 
             if (tag.tag === 'link' && tag.props.rel === 'canonical')
-              canonicalHref = tag.props.href
+              canonicalHref = stringProp(tag.props.href)
           }
 
           // Predicate dispatch: per-tag rules whose logic is shared with the
@@ -211,7 +215,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Per-tag validation
           for (const tag of tags) {
             const { props } = tag
-            const metaKey = props.property || (props.name ? String(props.name).toLowerCase() : undefined)
+            const metaKey = stringProp(props.property) || stringProp(props.name)?.toLowerCase()
 
             // Shared predicates (covers: empty-meta-content, robots-conflict,
             // viewport-user-scalable, twitter-handle-missing-at, possible-typo,
@@ -250,7 +254,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 for (const diag of headInputPredicates['no-html-in-title'](titleInput))
                   report(diag.ruleId as ValidationRuleId, diag.message, 'warn', tag)
               }
-              const text = tag.textContent || ''
+              const text = tag.textContent == null || typeof tag.textContent === 'function' ? '' : String(tag.textContent)
               if (TEMPLATE_PARAM_RE.test(text))
                 report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
               if (!text.trim())
@@ -274,7 +278,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             // Inline style size check (14KB critical CSS budget)
             if (tag.tag === 'style' && (tag.innerHTML || tag.textContent)) {
-              const content = tag.innerHTML || tag.textContent || ''
+              const content = tag.innerHTML || (tag.textContent == null || typeof tag.textContent === 'function' ? '' : String(tag.textContent))
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: styleMaxKB } = resolveOptions(ruleConfig, 'inline-style-size', { maxKB: 14 })
               if (sizeKB > styleMaxKB)
@@ -283,7 +287,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
             // Inline script size check (2KB threshold)
             if (tag.tag === 'script' && !props.src && (tag.innerHTML || tag.textContent)) {
-              const content = tag.innerHTML || tag.textContent || ''
+              const content = tag.innerHTML || (tag.textContent == null || typeof tag.textContent === 'function' ? '' : String(tag.textContent))
               const sizeKB = new TextEncoder().encode(content).byteLength / 1024
               const { maxKB: scriptMaxKB } = resolveOptions(ruleConfig, 'inline-script-size', { maxKB: 2 })
               if (sizeKB > scriptMaxKB)
@@ -295,8 +299,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
           // Canonical vs og:url mismatch
           const ogUrl = metaByKey.get('og:url')
-          if (canonicalHref && ogUrl?.props.content && canonicalHref !== ogUrl.props.content)
-            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrl.props.content}".`, 'warn', ogUrl)
+          const ogUrlContent = stringProp(ogUrl?.props.content)
+          if (canonicalHref && ogUrlContent && canonicalHref !== ogUrlContent)
+            report('canonical-og-url-mismatch', `Canonical URL "${canonicalHref}" differs from og:url "${ogUrlContent}".`, 'warn', ogUrl)
 
           // og:image without dimensions
           if (metaByKey.has('og:image') && (!metaByKey.has('og:image:width') || !metaByKey.has('og:image:height')))
@@ -337,31 +342,35 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const preconnectOrigins = new Set<string>()
           const dnsPrefetchTags: HeadTag[] = []
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.href) {
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && href) {
               if (tag.props.rel === 'preconnect')
-                preconnectOrigins.add(tag.props.href)
+                preconnectOrigins.add(href)
               else if (tag.props.rel === 'dns-prefetch')
                 dnsPrefetchTags.push(tag)
             }
           }
           for (const tag of dnsPrefetchTags) {
-            if (preconnectOrigins.has(tag.props.href))
-              report('redundant-dns-prefetch', `dns-prefetch for "${tag.props.href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
+            const href = stringProp(tag.props.href)
+            if (href && preconnectOrigins.has(href))
+              report('redundant-dns-prefetch', `dns-prefetch for "${href}" is redundant — preconnect already includes DNS resolution.`, 'info', tag)
           }
 
           // Preload + async/defer script conflict (priority escalation anti-pattern)
           // Skip when the preload has fetchpriority="low" as this is a valid warmup pattern (used by useScript)
           const preloadScriptHrefs = new Map<string, HeadTag>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && tag.props.fetchpriority !== 'low')
-              preloadScriptHrefs.set(tag.props.href, tag)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && href && tag.props.fetchpriority !== 'low')
+              preloadScriptHrefs.set(href, tag)
           }
           for (const tag of tags) {
-            if (tag.tag === 'script' && tag.props.src && (tag.props.async || tag.props.defer)) {
-              const preloadTag = preloadScriptHrefs.get(tag.props.src)
+            const src = stringProp(tag.props.src)
+            if (tag.tag === 'script' && src && (tag.props.async || tag.props.defer)) {
+              const preloadTag = preloadScriptHrefs.get(src)
               if (preloadTag) {
                 const attr = tag.props.async ? 'async' : 'defer'
-                report('preload-async-defer-conflict', `Script "${tag.props.src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
+                report('preload-async-defer-conflict', `Script "${src}" is preloaded but has "${attr}" — preload escalates priority, defeating the purpose of ${attr}. Remove the preload or add fetchpriority="low" to the script.`, 'warn', preloadTag)
               }
             }
           }
@@ -369,12 +378,14 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // Prefetch + preload conflict (should be one or the other)
           const preloadHrefs = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.href)
-              preloadHrefs.add(tag.props.href)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && href)
+              preloadHrefs.add(href)
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'prefetch' && tag.props.href && preloadHrefs.has(tag.props.href))
-              report('prefetch-preload-conflict', `"${tag.props.href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'prefetch' && href && preloadHrefs.has(href))
+              report('prefetch-preload-conflict', `"${href}" has both preload and prefetch — use preload for current page resources, prefetch for future navigation.`, 'warn', tag)
           }
 
           // === v2 → v3 Migration Checks ===
@@ -434,7 +445,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             let charsetPosition = -1
             for (let i = 0; i < sortedHeadTags.length; i++) {
               const tag = sortedHeadTags[i]
-              if (tag.tag === 'meta' && ('charset' in tag.props || tag.props['http-equiv']?.toLowerCase() === 'content-type')) {
+              if (tag.tag === 'meta' && ('charset' in tag.props || stringProp(tag.props['http-equiv'])?.toLowerCase() === 'content-type')) {
                 charsetTag = tag
                 charsetPosition = i + 1
                 break
@@ -447,20 +458,23 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           // preload as="script" when the actual script is type="module" should use modulepreload
           const moduleScriptSrcs = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'script' && tag.props.type === 'module' && tag.props.src)
-              moduleScriptSrcs.add(tag.props.src)
+            const src = stringProp(tag.props.src)
+            if (tag.tag === 'script' && tag.props.type === 'module' && src)
+              moduleScriptSrcs.add(src)
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && tag.props.href && moduleScriptSrcs.has(tag.props.href))
-              report('preload-not-modulepreload', `"${tag.props.href}" is a module script but uses rel="preload". Use rel="modulepreload" instead to also trigger module parsing.`, 'warn', tag)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'preload' && tag.props.as === 'script' && href && moduleScriptSrcs.has(href))
+              report('preload-not-modulepreload', `"${href}" is a module script but uses rel="preload". Use rel="modulepreload" instead to also trigger module parsing.`, 'warn', tag)
           }
 
           // Preconnect missing crossorigin for origins that serve CORS resources
           const corsOrigins = new Set<string>()
           const preconnectCorsOrigins = new Set<string>()
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.href && 'crossorigin' in tag.props) {
-              const origin = extractOrigin(tag.props.href)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && href && 'crossorigin' in tag.props) {
+              const origin = extractOrigin(href)
               if (origin) {
                 corsOrigins.add(origin)
                 if (tag.props.rel === 'preconnect')
@@ -469,11 +483,12 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             }
           }
           for (const tag of tags) {
-            if (tag.tag === 'link' && tag.props.rel === 'preconnect' && tag.props.href && !('crossorigin' in tag.props)) {
-              const origin = extractOrigin(tag.props.href)
+            const href = stringProp(tag.props.href)
+            if (tag.tag === 'link' && tag.props.rel === 'preconnect' && href && !('crossorigin' in tag.props)) {
+              const origin = extractOrigin(href)
               // Skip if a CORS preconnect already exists for this origin (intentional dual connection pool)
               if (origin && corsOrigins.has(origin) && !preconnectCorsOrigins.has(origin))
-                report('preconnect-missing-crossorigin', `Preconnect to "${tag.props.href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
+                report('preconnect-missing-crossorigin', `Preconnect to "${href}" is missing "crossorigin" but CORS resources are loaded from this origin. Without it, the browser opens a separate connection for CORS requests.`, 'warn', tag)
             }
           }
 
@@ -487,10 +502,16 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               continue
             // Estimate rendered tag size
             const props = Object.entries(tag.props)
-              .filter(([, v]) => v !== false && v != null)
-              .map(([k, v]) => v === true || v === '' ? ` ${k}` : ` ${k}="${v}"`)
+              .filter(([, value]) => {
+                const resolvedValue: unknown = value
+                return resolvedValue !== false && resolvedValue != null
+              })
+              .map(([k, value]) => {
+                const resolvedValue: unknown = value
+                return resolvedValue === true || resolvedValue === '' ? ` ${k}` : ` ${k}="${resolvedValue}"`
+              })
               .join('')
-            const content = tag.innerHTML || tag.textContent || ''
+            const content = tag.innerHTML || (tag.textContent == null || typeof tag.textContent === 'function' ? '' : String(tag.textContent))
             // <tag props>content</tag> + newline
             const tagSize = `<${tag.tag}${props}>${content}</${tag.tag}>\n`.length
             byteOffset += tagSize

@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
-import type { ActiveHeadEntry, Unhead, ResolvableHead as UseHeadInput } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, RawInput, Unhead, ResolvableHead as UseHeadInput } from 'unhead/types'
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { createHead as _createHead, createDebouncedFn, createDomRenderer } from 'unhead/client'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { UnheadContext } from './context'
 
-let _singletonHead: Unhead | null = null
+let _singletonHead: Unhead<UseHeadInput, void> | null = null
 
-function useHelmetHead(): Unhead {
+function useHelmetHead(): Unhead<UseHeadInput> {
   const ctx = useContext<Unhead | null>(UnheadContext)
   if (ctx) {
     return ctx
@@ -18,9 +18,9 @@ function useHelmetHead(): Unhead {
       throw new TypeError('Helmet requires UnheadProvider on the server. Wrap your app with <UnheadProvider>.')
     }
     const domRenderer = createDomRenderer()
-    let head: ReturnType<typeof _createHead<UseHeadInput>>
+    let head: Unhead<UseHeadInput, void>
     const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(fn, 0))
-    head = _createHead<UseHeadInput>({ render: debouncedRenderer })
+    head = _createHead<UseHeadInput, void>({ render: debouncedRenderer })
     _singletonHead = head
   }
   return _singletonHead!
@@ -49,7 +49,7 @@ export interface HelmetProps {
    * @param addedTags - Always empty — unhead manages DOM diffing internally.
    * @param removedTags - Always empty — unhead manages DOM diffing internally.
    */
-  onChangeClientState?: (newState: Record<string, any>, addedTags: Record<string, HTMLElement[]>, removedTags: Record<string, HTMLElement[]>) => void
+  onChangeClientState?: (newState: HelmetState, addedTags: Record<string, HTMLElement[]>, removedTags: Record<string, HTMLElement[]>) => void
   /**
    * Whether to encode special characters in attributes.
    *
@@ -67,15 +67,18 @@ export interface HelmetProps {
 
   // Prop-based API (alternative to children)
   title?: string
-  base?: Record<string, any>
-  meta?: Array<Record<string, any>>
-  link?: Array<Record<string, any>>
-  script?: Array<Record<string, any>>
-  style?: Array<Record<string, any>>
-  noscript?: Array<Record<string, any>>
-  htmlAttributes?: Record<string, any>
-  bodyAttributes?: Record<string, any>
+  base?: HelmetTagProps
+  meta?: HelmetTagProps[]
+  link?: HelmetTagProps[]
+  script?: HelmetTagProps[]
+  style?: HelmetTagProps[]
+  noscript?: HelmetTagProps[]
+  htmlAttributes?: HelmetTagProps
+  bodyAttributes?: HelmetTagProps
 }
+
+export type HelmetTagProps = Record<string, unknown>
+export type HelmetState = { title: string } & Partial<Record<`${'base' | 'link' | 'meta' | 'script' | 'style'}Tags`, HTMLElement[]>>
 
 /**
  * A react-helmet compatible component powered by unhead.
@@ -131,28 +134,28 @@ const Helmet: React.FC<HelmetProps> = ({
       input.title = titleProp
     }
     if (baseProp) {
-      input.base = baseProp as any
+      input.base = baseProp as unknown as RawInput<'base'>
     }
     if (metaProp) {
-      input.meta = [...metaProp] as any
+      input.meta = [...metaProp] as unknown as RawInput<'meta'>[]
     }
     if (linkProp) {
-      input.link = [...linkProp] as any
+      input.link = [...linkProp] as unknown as RawInput<'link'>[]
     }
     if (scriptProp) {
-      input.script = [...scriptProp] as any
+      input.script = [...scriptProp] as unknown as RawInput<'script'>[]
     }
     if (styleProp) {
-      input.style = [...styleProp] as any
+      input.style = [...styleProp] as RawInput<'style'>[]
     }
     if (noscriptProp) {
-      input.noscript = [...noscriptProp] as any
+      input.noscript = [...noscriptProp] as RawInput<'noscript'>[]
     }
     if (htmlAttributes) {
-      input.htmlAttrs = htmlAttributes as any
+      input.htmlAttrs = htmlAttributes as RawInput<'htmlAttrs'>
     }
     if (bodyAttributes) {
-      input.bodyAttrs = bodyAttributes as any
+      input.bodyAttrs = bodyAttributes as RawInput<'bodyAttrs'>
     }
 
     let hasTitle = !!titleProp
@@ -171,7 +174,7 @@ const Helmet: React.FC<HelmetProps> = ({
         continue
       }
 
-      const data: Record<string, any> = { ...(typeof props === 'object' ? props : {}) }
+      const data: Record<string, unknown> = { ...(typeof props === 'object' ? props : {}) }
 
       if (TagsWithInnerContent.has(tagName) && data.children != null) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'
@@ -186,16 +189,14 @@ const Helmet: React.FC<HelmetProps> = ({
       }
 
       if (HasElementTags.has(tagName)) {
-        const key = tagName as keyof UseHeadInput
-        if (!Array.isArray(input[key])) {
-          // @ts-expect-error untyped
-          input[key] = []
-        }
-        (input[key] as any[])!.push(data)
+        const mutableInput = input as unknown as Record<string, unknown>
+        const currentValue = mutableInput[tagName]
+        const values: unknown[] = Array.isArray(currentValue) ? currentValue : []
+        values.push(data)
+        mutableInput[tagName] = values
       }
       else {
-        // @ts-expect-error untyped
-        input[tagName as keyof UseHeadInput] = data
+        (input as unknown as Record<string, unknown>)[tagName] = data
       }
     }
 
@@ -207,7 +208,7 @@ const Helmet: React.FC<HelmetProps> = ({
     // Pass defaultTitle through templateParams for titleTemplate support
     if (defaultTitle) {
       input.templateParams = {
-        ...input.templateParams as any,
+        ...input.templateParams,
         defaultTitle,
       }
     }
@@ -215,7 +216,7 @@ const Helmet: React.FC<HelmetProps> = ({
     return input
   }, [processedElements, titleTemplate, defaultTitle, titleProp, baseProp, metaProp, linkProp, scriptProp, styleProp, noscriptProp, htmlAttributes, bodyAttributes])
 
-  const headRef = useRef<ActiveHeadEntry<any> | null>(null)
+  const headRef = useRef<ActiveHeadEntry<UseHeadInput> | null>(null)
 
   // Map onChangeClientState to unhead's onRendered hook
   const onChangeClientStateRef = useRef(onChangeClientState)
@@ -228,14 +229,14 @@ const Helmet: React.FC<HelmetProps> = ({
 
   // Client: create entry in effect to avoid orphaned entries in React 18 StrictMode
   useEffect(() => {
-    const options: Record<string, any> = {
+    const options: HeadEntryOptions = {
       onRendered: () => {
         const cb = onChangeClientStateRef.current
         if (!cb)
           return
         // Build a state object similar to react-helmet's onChangeClientState
         const titleEl = document.querySelector('title')
-        const state: Record<string, any> = {
+        const state: HelmetState = {
           title: titleEl?.textContent || '',
         }
         // Collect current meta/link/script tags

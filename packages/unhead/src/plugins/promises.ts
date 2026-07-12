@@ -1,3 +1,4 @@
+import type { EntryResolveCtx } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 async function walkPromises(v: any): Promise<any> {
@@ -28,7 +29,7 @@ async function walkPromises(v: any): Promise<any> {
 export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'promises',
   hooks: {
-    'entries:resolve': async (ctx) => {
+    'entries:resolve': async <Input>(ctx: EntryResolveCtx<Input>) => {
       const promises = []
       for (const k in ctx.entries) {
         if (!ctx.entries[k]._promisesProcessed) {

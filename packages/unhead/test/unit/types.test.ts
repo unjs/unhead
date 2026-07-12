@@ -1,21 +1,305 @@
-import type { PreloadLink, SerializableHead } from '../../src/types'
-import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
+import type { ActiveHeadEntry, CreateClientHeadOptions, CreateHeadOptions, GenericScript, HeadRenderer, HeadTag, HeadTagAttributeValue, HeadTagTitleTemplate, PreloadLink, PropResolver, ResolvableHead, SerializableHead, UnheadMeta } from '../../src/types'
+import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
+import { expectTypeOf } from 'vitest'
+import { createHead as createClientHead } from '../../src/client'
+import { useHead, useHeadSafe, useScript, useSeoMeta } from '../../src/composables'
 import { defineLink, defineScript } from '../../src/define'
+import { defineHeadPlugin } from '../../src/plugins'
 import { createHead } from '../../src/server'
+import { createStreamableHead as createStreamableClientHead } from '../../src/stream/client'
+import { createStreamableHead } from '../../src/stream/server'
+import { normalizeEntryToTags, normalizeProps, resolvePackedMetaObjectValue, unpackMeta, walkResolver } from '../../src/utils'
 
 describe('types', () => {
+  it('ties useHead entries to the head input type', () => {
+    const head = createHead()
+    const entry = useHead(head, { title: 'Initial' })
+    expectTypeOf(entry).toEqualTypeOf<ActiveHeadEntry<ResolvableHead>>()
+
+    const customHead = createHead<{ custom: string }>({ disableDefaults: true })
+    const customEntry = useHead(customHead, { custom: 'initial' })
+    expectTypeOf(customEntry).toEqualTypeOf<ActiveHeadEntry<{ custom: string }>>()
+    customEntry.patch({ custom: 'updated' })
+
+    // @ts-expect-error the entry input must match the custom head
+    customEntry.patch({ title: 'not-custom-input' })
+    // @ts-expect-error an explicit generic cannot forge an entry type unrelated to the head
+    useHead<{ forged: boolean }>(head, { forged: true })
+    // @ts-expect-error custom heads with required fields need an initial input
+    useHead(customHead)
+    // @ts-expect-error custom server heads must opt out of the incompatible default entry
+    createHead<{ custom: string }>()
+    // @ts-expect-error omitting input and explicitly pushing undefined are distinct
+    useHead(head, undefined)
+  })
+  it('requires synthesized entries to be compatible with the head input', () => {
+    type RequiredExtension = ResolvableHead & { custom: string }
+    type OptionalExtension = ResolvableHead & { custom?: string }
+    type UnionInput = ResolvableHead | { custom: string }
+
+    const requiredHead = createClientHead<RequiredExtension>()
+    const customOnlyHead = createClientHead<{ custom: string }>()
+    const optionalHead = createClientHead<OptionalExtension>()
+    const unionHead = createClientHead<UnionInput>()
+
+    useHead(requiredHead, { title: 'exact', custom: 'required' })
+
+    // @ts-expect-error safe entries do not provide the required custom input
+    useHeadSafe(requiredHead, {})
+    // @ts-expect-error SEO entries do not provide the required custom input
+    useSeoMeta(requiredHead, {})
+    // @ts-expect-error script entries do not provide the required custom input
+    useScript(requiredHead, '/required.js')
+    // @ts-expect-error standard entries are unrelated to custom-only inputs
+    useHeadSafe(customOnlyHead, {})
+    // @ts-expect-error standard entries are unrelated to custom-only inputs
+    useSeoMeta(customOnlyHead, {})
+    // @ts-expect-error standard entries are unrelated to custom-only inputs
+    useScript(customOnlyHead, '/custom.js')
+
+    useHeadSafe(optionalHead, {})
+    useSeoMeta(optionalHead, {})
+    useScript(optionalHead, '/optional.js')
+    useHeadSafe(unionHead, {})
+    useSeoMeta(unionHead, {})
+    useScript(unionHead, '/union.js')
+  })
+  it('preserves custom renderer return types', () => {
+    const defaultHead = createClientHead()
+    expectTypeOf(defaultHead.render()).toBeBoolean()
+
+    const customHead = createClientHead({ render: head => void head.entries })
+    expectTypeOf(customHead.render()).toBeUndefined()
+
+    const literalHead = createClientHead({ render: head => head.ssr ? 'ssr' as const : 'client' as const })
+    expectTypeOf(literalHead.render()).toEqualTypeOf<'ssr' | 'client'>()
+
+    const initAndRendererHead = createClientHead({ init: [], render: head => head.ssr ? 'ssr' as const : 'client' as const })
+    expectTypeOf(initAndRendererHead.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+    expectTypeOf(initAndRendererHead.render()).toEqualTypeOf<'ssr' | 'client'>()
+
+    const annotatedRenderer: HeadRenderer<'annotated', ResolvableHead> = () => 'annotated'
+    expectTypeOf(createClientHead({ render: annotatedRenderer }).render()).toEqualTypeOf<'annotated'>()
+    expectTypeOf(createClientHead<ResolvableHead, void>({ render: () => undefined }).render()).toEqualTypeOf<void>()
+
+    const pretypedOptions: CreateClientHeadOptions<ResolvableHead, void> = {}
+    // @ts-expect-error void-typed hooks/plugins require an explicit void renderer
+    createClientHead(pretypedOptions)
+
+    // @ts-expect-error a non-boolean render result requires a matching renderer
+    createClientHead<ResolvableHead, string>()
+  })
+  it('ties initial entries to the head input type', () => {
+    const clientHead = createClientHead<{ custom: string }>({ init: [{ custom: 'client' }] })
+    clientHead.push({ custom: 'updated' })
+    // @ts-expect-error custom heads reject unrelated entries
+    clientHead.push({ title: 'not-custom-input' })
+
+    const serverHead = createHead<{ custom: string }>({ disableDefaults: true, init: [{ custom: 'server' }] })
+    serverHead.push({ custom: 'updated' })
+    // @ts-expect-error custom heads reject unrelated entries
+    serverHead.push({ title: 'not-custom-input' })
+
+    const emptyInitHead = createClientHead({ init: [] })
+    const sentinelClientHead = createClientHead({ init: [false, undefined] })
+    const sentinelInitHead = createHead({ init: [false, undefined] })
+    expectTypeOf(emptyInitHead.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+    expectTypeOf(sentinelClientHead.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+    expectTypeOf(sentinelInitHead.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+
+    const inferredClientHead = createClientHead({ init: [{ custom: 'client' }] })
+    expectTypeOf(inferredClientHead.push).parameter(0).toEqualTypeOf<{ custom: string }>()
+
+    const serverHeadWithDefaults = createHead({ init: [{ custom: 'server' }] })
+    expectTypeOf(serverHeadWithDefaults.push).parameter(0).toEqualTypeOf<ResolvableHead | { custom: string }>()
+
+    const streamHead = createStreamableHead({ init: [] })
+    const customStreamHead = createStreamableHead<{ custom: string }>({ disableDefaults: true })
+    expectTypeOf(streamHead.head.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+    expectTypeOf(customStreamHead.head.push).parameter(0).toEqualTypeOf<{ custom: string }>()
+    // @ts-expect-error custom streaming heads must opt out of the incompatible default entry
+    createStreamableHead<{ custom: string }>()
+
+    const falseHead = createClientHead<false>()
+    expectTypeOf(useHead(falseHead, false)).toEqualTypeOf<ActiveHeadEntry<false>>()
+    const undefinedHead = createClientHead<undefined>()
+    expectTypeOf(useHead(undefinedHead, undefined)).toEqualTypeOf<ActiveHeadEntry<undefined>>()
+
+    if (false) {
+      expectTypeOf(createStreamableClientHead({ init: [] })!.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+      expectTypeOf(createStreamableClientHead({ init: [false, undefined] })!.push).parameter(0).toEqualTypeOf<ResolvableHead>()
+      expectTypeOf(createStreamableClientHead<{ custom: string }>()!.push).parameter(0).toEqualTypeOf<ResolvableHead | { custom: string }>()
+    }
+  })
+  it('preserves properties validated by define helpers', () => {
+    const preload = defineLink({
+      rel: 'preload',
+      as: 'script',
+      href: '/entry.js',
+    })
+    expectTypeOf(preload.rel).toEqualTypeOf<'preload'>()
+
+    const link = defineLink({
+      'rel': 'openid2.provider',
+      'href': 'https://example.com/openid',
+      'data-provider': 'openid',
+    })
+    expectTypeOf(link['data-provider']).toEqualTypeOf<'openid'>()
+
+    const module = defineScript({
+      type: 'module',
+      src: '/entry.js',
+    })
+    expectTypeOf(module.type).toEqualTypeOf<'module'>()
+
+    const script = defineScript({
+      'type': 'text/plain',
+      'textContent': 'debug-token',
+      'data-purpose': 'debug',
+    })
+    expectTypeOf(script['data-purpose']).toEqualTypeOf<'debug'>()
+
+    createClientHead().push({ link: [link], script: [script] })
+
+    // Raw custom discriminants stay strict; the helpers apply the admission brand.
+    // @ts-expect-error custom rels must pass through defineLink
+    createClientHead().push({ link: [{ rel: 'openid2.provider', href: 'https://example.com/openid' }] })
+    // @ts-expect-error custom script types must pass through defineScript
+    createClientHead().push({ script: [{ type: 'text/plain', textContent: 'debug-token' }] })
+  })
+  it('types plugin hooks and utility results', () => {
+    defineHeadPlugin({
+      key: 'typed-hooks',
+      hooks: {
+        'tags:resolve': (ctx) => {
+          expectTypeOf(ctx.tags).toEqualTypeOf<HeadTag[]>()
+        },
+        'tag:normalise': ({ tag, entry, resolvedOptions }) => {
+          expectTypeOf(tag).toEqualTypeOf<HeadTag>()
+          expectTypeOf(entry.input).toEqualTypeOf<ResolvableHead>()
+          expectTypeOf(resolvedOptions).toEqualTypeOf<CreateHeadOptions<ResolvableHead>>()
+        },
+        'script:updated': ({ script }) => {
+          expectTypeOf(script.id).toBeString()
+          script.instance satisfies object | null
+          // @ts-expect-error heterogeneous script APIs stay existential at a global hook
+          void script.instance?.missing
+        },
+      },
+    })
+
+    defineHeadPlugin({
+      key: 'invalid-hook',
+      hooks: {
+        // @ts-expect-error plugin hook names are checked
+        'tags:unknown': () => {},
+      },
+    })
+
+    const options: ResolveTagsOptions = { tagWeight: () => 100 }
+    const metaKey: MetaKeyType = 'property'
+    expectTypeOf(unpackMeta({ description: 'typed' })).toEqualTypeOf<UnheadMeta[]>()
+    expectTypeOf(normalizeEntryToTags({}, [])).toEqualTypeOf<HeadTag[]>()
+    expectTypeOf(normalizeProps({ tag: 'meta', props: {} }, { name: 'description' })).toEqualTypeOf<HeadTag>()
+    expectTypeOf<HeadTag['props']['content']>().toEqualTypeOf<HeadTagAttributeValue | HeadTagAttributeValue[] | undefined>()
+    expectTypeOf<HeadTag['props']['class']>().toEqualTypeOf<Set<string> | undefined>()
+    expectTypeOf<HeadTag['props']['style']>().toEqualTypeOf<Map<string, string> | undefined>()
+    expectTypeOf<HeadTag['props']['plugin-extension']>().toEqualTypeOf<unknown>()
+    expectTypeOf<HeadTag['textContent']>().toEqualTypeOf<string | number | boolean | HeadTagTitleTemplate | undefined>()
+    const resolver: PropResolver = (_key, value) => {
+      expectTypeOf(value).toEqualTypeOf<unknown>()
+      // @ts-expect-error resolver values must be narrowed before use
+      void value.missing
+      return value
+    }
+    expectTypeOf(normalizeEntryToTags({}, [resolver])).toEqualTypeOf<HeadTag[]>()
+    expectTypeOf(resolvePackedMetaObjectValue({ seconds: 1, url: '/' }, 'refresh')).toBeString()
+    expectTypeOf(walkResolver({ title: 'typed' })).toEqualTypeOf<unknown>()
+    void options
+    void metaKey
+  })
+  it('propagates custom head input through hooks and plugins', () => {
+    interface CustomInput {
+      custom: { required: string }
+    }
+
+    const clientHead = createClientHead<CustomInput>({
+      init: [{ custom: { required: 'client' } }],
+      hooks: {
+        'entries:normalize': ({ entry }) => {
+          expectTypeOf(entry.input).toEqualTypeOf<CustomInput>()
+          entry.input.custom.required.toUpperCase()
+          // @ts-expect-error custom hook inputs must not fall back to `any`
+          void entry.input.missing
+        },
+      },
+      plugins: [
+        pluginHead => ({
+          key: 'custom-client-plugin',
+          hooks: {
+            'entries:resolve': ({ entries }) => {
+              expectTypeOf(entries[0].input).toEqualTypeOf<CustomInput>()
+              pluginHead.push({ custom: { required: 'plugin' } })
+              // @ts-expect-error plugin factories receive the same input contract as their head
+              pluginHead.push({ title: 'not-custom-input' })
+            },
+          },
+        }),
+      ],
+    })
+    clientHead.hooks.hook('entries:updated', (hookHead) => {
+      expectTypeOf(hookHead.render()).toBeBoolean()
+      expectTypeOf(hookHead.entries.values().next().value!.input).toEqualTypeOf<CustomInput>()
+    })
+
+    const typedPlugin = defineHeadPlugin<CustomInput, boolean>({
+      key: 'explicit-custom-plugin',
+      hooks: {
+        'entries:normalize': ({ entry }) => {
+          expectTypeOf(entry.input).toEqualTypeOf<CustomInput>()
+        },
+      },
+    })
+    createClientHead<CustomInput>({ plugins: [typedPlugin] })
+
+    if (false) {
+      // @ts-expect-error script entries cannot satisfy a custom-only head input
+      const script = useScript<{ lookup: (id: string) => number }>(clientHead, '/typed.js')
+      expectTypeOf(script.proxy.lookup).parameter(0).toBeString()
+    }
+
+    createHead<CustomInput>({
+      disableDefaults: true,
+      hooks: {
+        'entries:resolve': ({ entries }) => {
+          expectTypeOf(entries[0].input).toEqualTypeOf<CustomInput>()
+          // @ts-expect-error exact server heads preserve their custom input in hooks
+          void entries[0].input.title
+        },
+      },
+    })
+
+    createHead({
+      init: [{ custom: { required: 'with-defaults' } }],
+      hooks: {
+        'entries:resolve': ({ entries }) => {
+          expectTypeOf(entries[0].input).toEqualTypeOf<ResolvableHead | CustomInput>()
+        },
+      },
+    })
+  })
   it('types useHead', () => {
     const unhead = createHead()
+    // @ts-expect-error unknown html attributes are rejected
+    useHead(unhead, { htmlAttrs: { foo: 'bla' } })
+    // @ts-expect-error unknown base attributes are rejected
+    useHead(unhead, { base: { href: '/base', uuuu: '' } })
     useHead(unhead, {
       htmlAttrs: {
-        // @ts-expect-error expected
-        foo: 'bla',
         lang: () => false,
       },
       base: {
         href: '/base',
-        // @ts-expect-error expected
-        uuuu: '',
       },
       link: () => [],
       meta: [
@@ -320,6 +604,9 @@ describe('types', () => {
 
     const wideType = (cond ? 'text/javascript' : 'text/plain') as string
     defineScript({ type: wideType, src: '/a.js' })
+
+    const genericScript: GenericScript = { type: 'text/plain', textContent: 'debug-token' }
+    defineScript(genericScript)
 
     // ── Wrong field type still rejected on union input ───────────────────
 

@@ -1,4 +1,9 @@
-import type { InferLink, InferScript, Link, Script } from './types'
+import type { InferLink, InferScript } from './types'
+import type { DefinedGenericLink } from './types/schema/link'
+import type { DefinedGenericScript } from './types/schema/script'
+
+type DefinedLink<T extends { rel: string }> = T & InferLink<T> & DefinedGenericLink
+type DefinedScript<T extends object> = T & InferScript<T> & DefinedGenericScript
 
 /**
  * Typed helper for declaring a `<link>` element inside {@link useHead}.
@@ -25,8 +30,9 @@ import type { InferLink, InferScript, Link, Script } from './types'
  * })
  * ```
  */
-export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): Link {
-  return link as unknown as Link
+export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): DefinedLink<T>
+export function defineLink(link: object): object {
+  return link
 }
 
 /**
@@ -48,6 +54,7 @@ export function defineLink<const T extends { rel: string }>(link: T & InferLink<
  * })
  * ```
  */
-export function defineScript<const T extends object>(script: T & InferScript<T>): Script {
-  return script as unknown as Script
+export function defineScript<const T extends object>(script: T & InferScript<T>): DefinedScript<T>
+export function defineScript(script: object): object {
+  return script
 }

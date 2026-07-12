@@ -3,10 +3,12 @@ import { useHead } from '@unhead/vue'
 import { createHead as createClientHead, renderDOMHead } from '@unhead/vue/client'
 import { renderSSRHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
-import { computed, ref } from 'vue'
+import { computed, readonly, ref } from 'vue'
 import { useDom } from '../../../unhead/test/fixtures'
+import { VueResolver } from '../../../vue/src/resolver'
 import { createHead as createServerHead } from '../../../vue/src/server'
 import { ssrVueAppWithUnhead } from '../../../vue/test/util'
+import { webSiteResolver } from '../../src/nodes/WebSite'
 
 describe('schema.org e2e', () => {
   it('dates', async () => {
@@ -175,6 +177,25 @@ describe('schema.org e2e', () => {
         ]
       }</script>"
     `)
+  })
+
+  it('keeps resolvers on recomputed and frozen ref values', () => {
+    const name = ref('First')
+    const source = computed(() => Object.freeze({ name: name.value }))
+    const website = defineWebSite(source)
+
+    const first = VueResolver(undefined, website) as { _resolver?: unknown, name?: string }
+    expect(first).toMatchObject({ name: 'First', _resolver: webSiteResolver })
+
+    name.value = 'Second'
+    const second = VueResolver(undefined, website) as { _resolver?: unknown, name?: string }
+    expect(second).toMatchObject({ name: 'Second', _resolver: webSiteResolver })
+
+    const readonlyWebsite = defineWebSite(readonly(ref({ name: 'Readonly' })))
+    expect(VueResolver(undefined, readonlyWebsite)).toMatchObject({
+      name: 'Readonly',
+      _resolver: webSiteResolver,
+    })
   })
 
   it('refs', async () => {

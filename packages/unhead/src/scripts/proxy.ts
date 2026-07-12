@@ -1,10 +1,10 @@
 import type { AsVoidFunctions, RecordingEntry } from './types'
 
-export function createNoopedRecordingProxy<T extends Record<string, any>>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][] } {
+export function createNoopedRecordingProxy<T extends object>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][] } {
   const stack: RecordingEntry[][] = []
 
   let stackIdx = -1
-  const handler = (reuseStack = false) => ({
+  const handler = (reuseStack = false): ProxyHandler<object> => ({
     get(_, prop, receiver) {
       if (!reuseStack) {
         const v = Reflect.get(_, prop, receiver)
@@ -15,34 +15,33 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
         stack[stackIdx] = []
       }
       stack[stackIdx].push({ type: 'get', key: prop })
-      // @ts-expect-error untyped
       return new Proxy(() => {}, handler(true))
     },
     apply(_, __, args) {
       stack[stackIdx].push({ type: 'apply', key: '', args })
       return undefined
     },
-  } as ProxyHandler<T>)
+  })
 
   return {
-    proxy: new Proxy(instance || {}, handler()),
+    proxy: new Proxy(instance, handler()) as AsVoidFunctions<T>,
     stack,
   }
 }
 
-export function createForwardingProxy<T extends Record<string, any>>(target: T): AsVoidFunctions<T> {
-  const handler: ProxyHandler<T> = {
+export function createForwardingProxy<T extends object>(target: T): AsVoidFunctions<T> {
+  const handler: ProxyHandler<object> = {
     get(_, prop, receiver) {
       const v = Reflect.get(_, prop, receiver)
-      if (typeof v === 'object') {
+      if (v !== null && typeof v === 'object') {
         return new Proxy(v, handler)
       }
       return v
     },
     apply(_, __, args) {
       // does not return the apply output for consistency
-      // @ts-expect-error untyped
-      Reflect.apply(_, __, args)
+      if (typeof _ === 'function')
+        Reflect.apply(_, __, args)
       return undefined
     },
   }

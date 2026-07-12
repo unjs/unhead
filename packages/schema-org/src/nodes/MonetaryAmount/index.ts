@@ -10,7 +10,7 @@ export interface MonetaryAmountSimple extends Thing {
   /**
    * The value of the quantitative value or property value node.
    */
-  value: number | QuantitativeValue
+  value: number | `${number}` | QuantitativeValue
 }
 
 export interface MonetaryAmount extends MonetaryAmountSimple {}
@@ -25,7 +25,7 @@ export interface QuantitativeSimple extends Thing {
 
 export interface QuantitativeValue extends QuantitativeSimple {}
 
-export const quantitativeValueResolver = defineSchemaOrgResolver<QuantitativeValue>({
+export const quantitativeValueResolver = defineSchemaOrgResolver<QuantitativeValue, QuantitativeValue | number>({
   cast(node) {
     if (typeof node === 'number') {
       return {
@@ -44,7 +44,7 @@ export const monetaryAmountResolver = defineSchemaOrgResolver<MonetaryAmount>({
     '@type': 'MonetaryAmount',
   },
   resolve(node, ctx) {
-    if (typeof node.value !== 'number')
+    if (typeof node.value === 'object')
       node.value = resolveRelation(node.value, ctx, quantitativeValueResolver)
     return node
   },

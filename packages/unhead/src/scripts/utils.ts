@@ -1,6 +1,6 @@
 import type { RecordingEntry } from './types'
 
-export function createSpyProxy<T extends Record<string, any> | any[]>(target: T, onApply: (stack: RecordingEntry[][]) => void): T {
+export function createSpyProxy<T extends object>(target: T, onApply: (stack: RecordingEntry[][]) => void): T {
   const stack: RecordingEntry[][] = []
 
   let stackIdx = -1

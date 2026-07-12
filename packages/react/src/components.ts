@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'
 
-interface HeadProps {
-  children: ReactNode
-  titleTemplate?: string
+export interface HeadProps {
+  children?: ReactNode
+  titleTemplate?: UseHeadInput['titleTemplate']
 }
 
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
@@ -57,7 +57,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
     return input
   }, [processedElements, titleTemplate])
 
-  const headRef = useRef<ActiveHeadEntry<any> | null>(null)
+  const headRef = useRef<ActiveHeadEntry<UseHeadInput> | null>(null)
 
   // Server: create entry during render since useEffect doesn't run in SSR.
   if (head.ssr && !headRef.current)

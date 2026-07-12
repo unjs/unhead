@@ -1,11 +1,11 @@
-import type { HeadTag } from '../types'
+import type { HeadEntry, HeadTag, MetaFlat } from '../types'
 import { unpackMeta } from '../utils/meta'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'flatMeta',
   hooks: {
-    'entries:normalize': (ctx) => {
+    'entries:normalize': <Input>(ctx: { tags: HeadTag[], entry: HeadEntry<Input> }) => {
       let hasFlatMeta = false
       const tags: HeadTag[] = []
       const tagsToAdd: HeadTag[] = []
@@ -15,9 +15,11 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
           continue
         }
         hasFlatMeta = true
-        // @ts-expect-error untyped
-        for (const props of unpackMeta(t.props))
-          tagsToAdd.push({ ...t, tag: 'meta', props })
+        for (const props of unpackMeta(t.props as unknown as MetaFlat)) {
+          // Resolved tag props are stringified by the renderers; `UnheadMeta`
+          // still carries its public input types (notably number/null content).
+          tagsToAdd.push({ ...t, tag: 'meta', props: props as unknown as HeadTag['props'] })
+        }
       }
       if (!hasFlatMeta)
         return

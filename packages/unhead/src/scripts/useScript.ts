@@ -1,7 +1,10 @@
 import type {
   RawInput,
+  ResolvableHead,
+  ScriptHeadTarget,
   Unhead,
 } from '../types'
+import type { DefinedGenericScript } from '../types/schema/script'
 import type {
   EventHandlerOptions,
   ScriptInstance,
@@ -21,7 +24,13 @@ import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecording
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<
+  T extends object = Record<PropertyKey, unknown>,
+>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+  // useScript always pushes standard script/link entries. Keep that internal
+  // adaptation local while preserving the caller's concrete head type at the
+  // public boundary.
+  const scriptHead = head as unknown as Unhead<ResolvableHead, unknown>
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
@@ -40,7 +49,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script.status = s
     _events.push({ type: s, timestamp: Date.now() })
     // eslint-disable-next-line ts/no-use-before-define
-    callHook(head, 'script:updated', hookCtx)
+    callHook(scriptHead, 'script:updated', hookCtx)
   }
   const onload = typeof input.onload === 'function' ? input.onload.bind(options.eventContext) : null
   input.onload = (e: Event) => {
@@ -58,13 +67,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
-      return
+      return () => {}
     }
     let uniqueKey: string | undefined
     if (options?.key) {
       uniqueKey = `${key}:${options.key}`
       if (_uniqueCbs.has(uniqueKey)) {
-        return
+        return () => {}
       }
       _uniqueCbs.add(uniqueKey)
     }
@@ -99,7 +108,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // resolve on a microtask rather than requestAnimationFrame: rAF is suspended while the
     // tab is hidden, which would defer onLoaded() callbacks indefinitely (unjs/unhead#771)
     const emit = (api: T) => queueMicrotask(() => resolve(api))
-    const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
+    const unhook = scriptHead.hooks?.hook('script:updated', ({ script }) => {
       // vue augmentation... not ideal
       const status = script.status
       if (script.id === id && (status === 'loaded' || status === 'error' || status === 'removed')) {
@@ -125,7 +134,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const script = {
     _loadPromise: loadPromise,
     _events,
-    _warmupStrategy: undefined as string | undefined,
+    _warmupStrategy: undefined as WarmupStrategy | undefined,
     instance: (!head.ssr && options?.use?.()) || null,
     proxy: null,
     id,
@@ -176,7 +185,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
       } as RawInput<'link'>
-      script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
+      script._warmupEl = scriptHead.push({ link: [link] }, { head: scriptHead, tagPriority: 'high' })
       return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
@@ -196,8 +205,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           defaults.referrerpolicy = 'no-referrer'
         }
         // status should get updated from script events
-        script.entry = head.push({
-          script: [{ ...defaults, ...input }],
+        script.entry = scriptHead.push({
+          script: [{ ...defaults, ...input } as unknown as DefinedGenericScript],
         }, options)
       }
       if (cb)
@@ -210,7 +219,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     onError(cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) {
       return _registerCb('error', cb, options)
     },
-    setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
+    setupTriggerHandler(trigger: UseScriptOptions<T>['trigger']) {
       if (script.status !== 'awaitingLoad') {
         return
       }

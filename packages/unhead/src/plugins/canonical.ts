@@ -1,4 +1,4 @@
-import type { HeadPluginOptions, Unhead } from '../types'
+import type { HeadPlugin, Unhead } from '../types'
 
 export interface CanonicalPluginOptions {
   canonicalHost?: string
@@ -80,8 +80,8 @@ const META_CANONICAL_URL = new Set([
  * // to:
  * // <meta property="og:image" content="https://example.com/image.jpg">
  */
-export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead) => HeadPluginOptions & { key: string }) {
-  return (head) => {
+export function CanonicalPlugin(options: CanonicalPluginOptions): <Input, RenderResult>(head: Unhead<Input, RenderResult>) => HeadPlugin<Input, RenderResult> {
+  return <Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
     let host = options.canonicalHost || (!head.ssr ? (window.location.origin) : '')
     // handle https if not provided
     if (!host.startsWith('http') && !host.startsWith('//')) {
@@ -146,15 +146,17 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): ((head: Unhead
       hooks: {
         'tags:resolve': (ctx) => {
           for (const tag of ctx.tags) {
-            const metaKey = tag.props?.property || tag.props?.name
+            const property = tag.props.property
+            const name = tag.props.name
+            const metaKey = typeof property === 'string' ? property : typeof name === 'string' ? name : undefined
             // allow interchangable use of property and name for DX
-            if (tag.tag === 'meta' && META_TRANSFORMABLE_URL.includes(metaKey)) {
+            if (tag.tag === 'meta' && metaKey && META_TRANSFORMABLE_URL.includes(metaKey) && typeof tag.props.content === 'string') {
               tag.props.content = resolvePath(tag.props.content)
               if (META_CANONICAL_URL.has(metaKey)) {
                 tag.props.content = normalizeCanonicalUrl(tag.props.content)
               }
             }
-            else if (tag.tag === 'link' && LINK_REL_RESOLVABLE.has(tag.props.rel)) {
+            else if (tag.tag === 'link' && typeof tag.props.rel === 'string' && LINK_REL_RESOLVABLE.has(tag.props.rel) && typeof tag.props.href === 'string') {
               const isCanonical = tag.props.rel === 'canonical'
               tag.props.href = resolvePath(tag.props.href)
               if (isCanonical) {

@@ -1,7 +1,7 @@
-import type { MetaFlat, MetaGeneric, ResolvableHead, UnheadMeta } from '../types'
+import type { MetaFlat, MetaGeneric, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
 
-type MetaKeyType = 'name' | 'property' | 'http-equiv'
+export type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
 const NAMESPACES = /* @__PURE__ */ {
   META: new Set(['twitter', 'fediverse']),
@@ -159,6 +159,7 @@ export function resolveMetaKeyValue(key: string): string {
   return META_ALIASES[key] || fixKeyCase(key)
 }
 
+export function resolvePackedMetaObjectValue(value: Record<string, unknown>, key: string): string
 export function resolvePackedMetaObjectValue(value: any, key: string): string {
   if (key === 'refresh')
     return `${value.seconds};url=${value.url}`
@@ -171,7 +172,7 @@ export function resolvePackedMetaObjectValue(value: any, key: string): string {
   })
 }
 
-export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHead>['meta'] {
+export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   const extras: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
@@ -266,11 +267,11 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
       : { [metaKey]: keyValue, content: processedValue }) as MetaGeneric as UnheadMeta
   })
 
-  return [...extras, ...meta].map(m =>
+  return [...extras, ...meta].map((m): UnheadMeta =>
     !('content' in m)
       ? m
       : m.content === '_null'
         ? { ...m, content: null }
         : m,
-  ) as Required<ResolvableHead>['meta']
+  )
 }

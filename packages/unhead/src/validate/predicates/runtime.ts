@@ -7,9 +7,9 @@ import type { HeadInputView, TagInput } from './types'
  */
 export interface RuntimeHeadTag {
   tag: string
-  props: Record<string, any>
-  innerHTML?: string
-  textContent?: string
+  props: Record<string, unknown>
+  innerHTML?: unknown
+  textContent?: unknown
   /** Top-level priority field on resolved runtime tags. */
   tagPriority?: string | number
 }
@@ -90,7 +90,8 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
 export function titleInputFromRuntime(titleTag: RuntimeHeadTag): HeadInputView | undefined {
   if (titleTag.tag !== 'title')
     return undefined
-  const text = titleTag.textContent ?? titleTag.innerHTML ?? ''
+  const content = titleTag.textContent ?? titleTag.innerHTML
+  const text = content == null || typeof content === 'function' ? '' : String(content)
   return {
     callee: 'runtime',
     props: { title: text },

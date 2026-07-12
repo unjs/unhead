@@ -1,4 +1,4 @@
-import type { OptionalSchemaOrgPrefix, Thing } from '../../types'
+import type { NodeRelation, OptionalSchemaOrgPrefix, Thing } from '../../types'
 import type { MonetaryAmount } from '../MonetaryAmount'
 import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
@@ -42,7 +42,7 @@ export interface MerchantReturnPolicySimple extends Thing {
    * If the return is free, returnFees must be set to https://schema.org/FreeReturn.
    * If the consumer needs to handle, and pay for, the return shipping cost, returnFees must be set to https://schema.org/ReturnFeesCustomerResponsibility.
    */
-  'returnShippingFeesAmount'?: MonetaryAmount
+  'returnShippingFeesAmount'?: NodeRelation<MonetaryAmount>
 }
 
 export interface MerchantReturnPolicy extends MerchantReturnPolicySimple {}

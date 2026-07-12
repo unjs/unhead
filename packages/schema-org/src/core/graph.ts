@@ -1,4 +1,4 @@
-import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, Thing } from '../types'
+import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing } from '../types'
 import { imageResolver } from '../nodes/Image'
 import { asArray, resolveAsGraphKey, stripNullProperties } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
@@ -11,7 +11,10 @@ export interface SchemaOrgGraph {
   meta: ResolvedMeta
   push: <T extends Arrayable<Thing>>(node: T) => void
   resolveGraph: (meta: MetaInput) => SchemaOrgNode[]
-  find: <T extends Thing>(id: Id | string) => T | null
+  find: {
+    (id: Id | string): SchemaOrgNode | null
+    <T extends SchemaOrgNode>(id: Id | string, guard: (node: SchemaOrgNode) => node is T): T | null
+  }
 }
 
 const DOMAIN_RE = /(?:https?:)?\/\//
@@ -33,33 +36,38 @@ function indexNode(index: Map<Id, SchemaOrgNode>, node: SchemaOrgNode) {
 }
 
 export function createSchemaOrgGraph(): SchemaOrgGraph {
-  const ctx: SchemaOrgGraph = {
-    find<T extends Thing>(id: Id | string) {
-      // if it starts with # we can assume we match any fragment
-      // if it starts with / then we need to also match the path
-      // if it starts with http we need to match the full url
-      let resolver = (s: string) => s
-      if (id[0] === '#') {
-        // @ts-expect-error untyped
-        resolver = resolveAsGraphKey
-      }
-      else if (id[0] === '/') {
-        resolver = (s: string) => s
-          .replace(DOMAIN_RE, '')
-          .split('/')[0]
-      }
-      const key = resolver(id) as Id
+  let ctx: SchemaOrgGraph
 
-      // O(1) lookup using nodeIndex Map (if populated)
-      if (ctx.nodeIndex.size > 0) {
-        return ctx.nodeIndex.get(key) as unknown as T || null
-      }
+  function find(id: Id | string): SchemaOrgNode | null
+  function find<T extends SchemaOrgNode>(id: Id | string, guard: (node: SchemaOrgNode) => node is T): T | null
+  function find<T extends SchemaOrgNode>(id: Id | string, guard?: (node: SchemaOrgNode) => node is T): SchemaOrgNode | T | null {
+    // if it starts with # we can assume we match any fragment
+    // if it starts with / then we need to also match the path
+    // if it starts with http we need to match the full url
+    let resolver = (s: string) => s
+    if (id[0] === '#') {
+      resolver = (s: string) => resolveAsGraphKey(s)!
+    }
+    else if (id[0] === '/') {
+      resolver = (s: string) => s
+        .replace(DOMAIN_RE, '')
+        .split('/')[0]
+    }
+    const key = resolver(id) as Id
 
-      // Fallback to O(n) search during first pass before index is built
-      return ctx.nodes
-        .filter(n => !!n['@id'])
-        .find(n => resolver(n['@id'] as Id) === key) as unknown as T | null
-    },
+    const node = ctx.nodeIndex.size > 0
+      ? ctx.nodeIndex.get(key)
+      : ctx.nodes
+          .filter(n => !!n['@id'])
+          .find(n => resolver(n['@id'] as Id) === key)
+
+    if (!node || (guard && !guard(node)))
+      return null
+    return node
+  }
+
+  ctx = {
+    find,
     push(input: Arrayable<Thing>) {
       asArray(input).forEach((node) => {
         const registeredNode = node as SchemaOrgNode
@@ -78,7 +86,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
       // First pass: resolve nodes and IDs
       for (let i = 0; i < len; i++) {
         let node = ctx.nodes[i]
-        const resolver = node._resolver
+        const resolver = node._resolver as SchemaOrgNodeDefinition<any, any> | undefined
         node = resolveNode(node, ctx, resolver)
         node = resolveNodeId(node, ctx, resolver, true)
         ctx.nodes[i] = node
@@ -122,8 +130,9 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
         node.translationOfWork = resolveRelation(node.translationOfWork, ctx)
         node.workTranslation = resolveRelation(node.workTranslation, ctx)
 
-        if (node._resolver?.resolveRootNode)
-          node._resolver.resolveRootNode(node, ctx)
+        const resolver = node._resolver as SchemaOrgNodeDefinition<any, any> | undefined
+        if (resolver?.resolveRootNode)
+          resolver.resolveRootNode(node, ctx)
       }
 
       // Delete _resolver before stripping so stripNullProperties does not traverse resolver objects
@@ -184,7 +193,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
     nodes: [],
     nodeIndex: new Map(),
     nodeIdCounters: Object.create(null),
-    meta: {} as ResolvedMeta,
+    meta: resolveMeta({}),
   }
   return ctx
 }

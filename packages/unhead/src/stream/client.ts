@@ -8,36 +8,41 @@ export type { StreamingGlobal, UnheadStreamQueue }
 
 export const DEFAULT_STREAM_KEY = '__unhead__'
 
-export interface CreateStreamableClientHeadOptions extends Omit<CreateClientHeadOptions, 'render'> {
+export interface CreateStreamableClientHeadOptions<Input = never> extends Omit<CreateClientHeadOptions<Input | ResolvableHead, boolean>, 'render'> {
   streamKey?: string
 }
+
+type WrappedStreamHead<Input> = ClientUnhead<Input> & { _wrapped?: boolean }
 
 /**
  * Creates a client head by wrapping the core instance from the iife script.
  * Adds hooks, plugins, and dirty tracking without bundling createDomRenderer.
  */
-export function createStreamableHead<T = ResolvableHead>(options: CreateStreamableClientHeadOptions = {}): ClientUnhead<T> | undefined {
+export function createStreamableHead(options?: CreateStreamableClientHeadOptions): ClientUnhead<ResolvableHead> | undefined
+export function createStreamableHead<T = never>(options?: CreateStreamableClientHeadOptions<T>): ClientUnhead<T | ResolvableHead> | undefined
+export function createStreamableHead<T = never>(options: CreateStreamableClientHeadOptions<T> = {}): ClientUnhead<T | ResolvableHead> | undefined {
+  type Input = T | ResolvableHead
   const { streamKey = DEFAULT_STREAM_KEY, ...rest } = options
-  const win = typeof window !== 'undefined' ? window as any : undefined
+  const win = typeof window !== 'undefined' ? window as unknown as Window & Record<string, unknown> : undefined
   const streamQueue = win?.[streamKey] as UnheadStreamQueue & { _hydrationLocked?: () => boolean } | undefined
-  const core = streamQueue?._head as Unhead<T> | undefined
+  const core = streamQueue?._head as Unhead<Input, boolean> | undefined
 
   if (!core)
     return undefined
 
   // Check if already wrapped
-  if ((core as any)._wrapped)
-    return core as ClientUnhead<T>
+  if ((core as WrappedStreamHead<Input>)._wrapped)
+    return core as ClientUnhead<Input>
 
-  const hooks = createHooks<ClientHeadHooks>(rest.hooks)
+  const hooks = createHooks<ClientHeadHooks<Input, boolean>>(rest.hooks)
 
   // Cast core since iife adds dirty property dynamically
-  const coreWithDirty = core as Unhead<T> & { dirty: boolean }
+  const coreWithDirty = core as Unhead<Input, boolean> & { dirty: boolean }
 
   // Check if hydration is locked (client pushes should be skipped during hydration)
   const isHydrationLocked = () => streamQueue?._hydrationLocked?.() ?? false
 
-  const head: ClientUnhead<T> = {
+  const head: ClientUnhead<Input> = {
     ...coreWithDirty,
     hooks,
     use: p => registerPlugin(head, p),
@@ -50,7 +55,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
       coreWithDirty.dirty = true
       hooks.callHook('entries:updated', head)
     },
-    push(input: T, _options?: HeadEntryOptions) {
+    push(input: Input, _options?: HeadEntryOptions<Input>) {
       // Skip pushes during hydration to preserve SSR-streamed state
       // After hydration completes (microtask), pushes are allowed again
       if (isHydrationLocked()) {
@@ -59,7 +64,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
           _i: -1,
           patch: () => {},
           dispose: () => {},
-        } as ActiveHeadEntry<T>
+        } as ActiveHeadEntry<Input>
       }
 
       const active = core.push(input, _options)
@@ -73,7 +78,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
 
       return {
         _i: active._i,
-        patch(input: T) {
+        patch(input: Input) {
           if (isHydrationLocked())
             return
           active.patch(input)
@@ -91,7 +96,7 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   }
 
   // Mark as wrapped to avoid double-wrapping
-  ;(head as any)._wrapped = true
+  ;(head as WrappedStreamHead<Input>)._wrapped = true
 
   // Register plugins
   ;(rest.plugins || []).forEach(p => registerPlugin(head, p))
@@ -105,11 +110,11 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   })
 
   // Push init entries
-  rest.init?.forEach(e => e && head.push(e as T))
+  rest.init?.forEach(e => e && head.push(e))
 
   // Update the stream queue to use the wrapped head
   if (streamQueue)
-    streamQueue._head = head as Unhead<any>
+    streamQueue._head = head
 
   return head
 }

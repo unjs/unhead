@@ -1,7 +1,11 @@
 import type {
   ActiveHeadEntry,
+  CompatibleHead,
+  EventHandlerOptions,
   HeadEntryOptions,
+  HeadEntryTarget,
   HeadSafe,
+  ResolvableHead,
   Unhead,
   UseHeadInput,
   UseScriptInput,
@@ -15,13 +19,15 @@ import { UnheadContext } from './context'
 
 interface ScriptCallbackRecord {
   active: boolean
-  handler: any
-  key: 'loaded' | 'error'
+  off?: () => void
+  register: () => () => void
   registered: boolean
   renderScoped: boolean
   renderId: number
-  script: UseScriptReturn<any>
 }
+
+type ScriptEventRegistrars<T extends object> = Pick<UseScriptReturn<T>, 'onError' | 'onLoaded'>
+type ReactScript<T extends object> = UseScriptReturn<T> & { _reactRegistrars?: ScriptEventRegistrars<T> }
 
 export function useUnhead(): Unhead {
   // fallback to react context
@@ -32,22 +38,33 @@ export function useUnhead(): Unhead {
   return instance
 }
 
-function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: any, fn: any): T {
-  const head = options.head || useUnhead()
-  const entryRef = useRef<T | null>(null)
+type AdapterHeadEntryOptions<I> = Omit<HeadEntryOptions<I>, 'head'> & {
+  head?: HeadEntryTarget<I> | HeadEntryTarget<UseHeadInput>
+}
+type DefaultAdapterHeadEntryOptions = Omit<HeadEntryOptions<UseHeadInput>, 'head'> & { head?: undefined }
+type CompatibleAdapterHeadEntryOptions<I, RenderResult> = Omit<HeadEntryOptions<I>, 'head'> & {
+  head: CompatibleHead<I, ResolvableHead, RenderResult>
+}
+type HeadComposable<Input, HeadInput> = (head: Unhead<HeadInput>, input: Input, options: HeadEntryOptions<HeadInput>) => ActiveHeadEntry<Input>
+type PollableHeadEntry<I> = ActiveHeadEntry<I> & { _poll?: (remove?: boolean) => void }
+
+function withSideEffects<Input, HeadInput>(input: Input, options: AdapterHeadEntryOptions<HeadInput>, fn: HeadComposable<Input, HeadInput>): ActiveHeadEntry<Input> {
+  const head = (options.head || useUnhead()) as Unhead<HeadInput>
+  const entryOptions = options as HeadEntryOptions<HeadInput>
+  const entryRef = useRef<ActiveHeadEntry<Input> | null>(null)
   const inputRef = useRef(input)
   inputRef.current = input
 
   // Server: create entry during render since useEffect doesn't run in SSR
   if (head.ssr && !entryRef.current) {
-    entryRef.current = fn(head, input, options) as T
+    entryRef.current = fn(head, input, entryOptions)
   }
 
   // Client: create entry in effect to avoid orphaned entries in React 18 StrictMode.
   // StrictMode resets useRef between its double-render invocations,
   // so creating entries during render causes an orphaned entry that never gets disposed.
   useEffect(() => {
-    const entry = fn(head, inputRef.current, options) as T
+    const entry = fn(head, inputRef.current, entryOptions)
     entryRef.current = entry
     return () => {
       entry.dispose()
@@ -62,42 +79,50 @@ function withSideEffects<T extends ActiveHeadEntry<any>>(input: any, options: an
 
   // Return a stable proxy that delegates to the real entry once created
   if (head.ssr) {
-    return entryRef.current as T
+    return entryRef.current!
   }
-  const proxyRef = useRef<T | null>(null)
+  const proxyRef = useRef<PollableHeadEntry<Input> | null>(null)
   if (!proxyRef.current) {
     proxyRef.current = {
-      patch: (newInput: any) => { entryRef.current?.patch(newInput) },
+      get _i() { return entryRef.current?._i ?? -1 },
+      patch: (newInput: Input) => { entryRef.current?.patch(newInput) },
       dispose: () => {
         entryRef.current?.dispose()
         entryRef.current = null
       },
-      _poll: (rm?: boolean) => { (entryRef.current as any)?._poll(rm) },
-    } as unknown as T
+      _poll: (rm?: boolean) => { (entryRef.current as PollableHeadEntry<Input> | null)?._poll?.(rm) },
+    }
   }
   return proxyRef.current
 }
 
-export function useHead(input: UseHeadInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseHeadInput> {
-  return withSideEffects(input, options, baseHead)
+export function useHead<I = UseHeadInput>(input: NoInfer<I>, options?: AdapterHeadEntryOptions<I>): ActiveHeadEntry<I>
+export function useHead(input?: UseHeadInput, options?: HeadEntryOptions<UseHeadInput>): ActiveHeadEntry<UseHeadInput>
+export function useHead<I = UseHeadInput>(input: I = {} as I, options: AdapterHeadEntryOptions<I> = {}): ActiveHeadEntry<I> {
+  return withSideEffects(input, options, (head, value, entryOptions) => baseHead(head, value, entryOptions))
 }
 
-export function useHeadSafe(input: HeadSafe = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<HeadSafe> {
-  return withSideEffects<ActiveHeadEntry<HeadSafe>>(input, options, baseHeadSafe)
+export function useHeadSafe(input?: HeadSafe, options?: DefaultAdapterHeadEntryOptions): ActiveHeadEntry<HeadSafe>
+export function useHeadSafe<HeadInput, RenderResult>(input: HeadSafe, options: CompatibleAdapterHeadEntryOptions<HeadInput, RenderResult>): ActiveHeadEntry<HeadSafe>
+export function useHeadSafe<HeadInput = UseHeadInput>(input: HeadSafe = {}, options: AdapterHeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<HeadSafe> {
+  return withSideEffects<HeadSafe, HeadInput>(input, options, (head, value, entryOptions) => baseHeadSafe(head as unknown as CompatibleHead<HeadInput>, value, entryOptions))
 }
 
-export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
-  return withSideEffects<ActiveHeadEntry<UseSeoMetaInput>>(input, options, baseSeoMeta)
+export function useSeoMeta(input?: UseSeoMetaInput, options?: DefaultAdapterHeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput>
+export function useSeoMeta<HeadInput, RenderResult>(input: UseSeoMetaInput, options: CompatibleAdapterHeadEntryOptions<HeadInput, RenderResult>): ActiveHeadEntry<UseSeoMetaInput>
+export function useSeoMeta<HeadInput = UseHeadInput>(input: UseSeoMetaInput = {}, options: AdapterHeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<UseSeoMetaInput> {
+  return withSideEffects<UseSeoMetaInput, HeadInput>(input, options, (head, value, entryOptions) => baseSeoMeta(head as unknown as CompatibleHead<HeadInput>, value, entryOptions))
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> = {}): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options || {} as UseScriptOptions<T>
+  const options = _options as UseScriptOptions<T>
   const head = options.head || useUnhead()
+  const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   const trigger = options.trigger
   const resolvedOptions = {
     ...options,
-    head,
+    head: scriptHead,
     trigger: head.ssr && trigger === 'server' ? 'server' : 'manual',
   } as UseScriptOptions<T>
 
@@ -107,8 +132,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const committedRenderId = useRef(0)
   const currentRenderId = ++renderId.current
 
-  // @ts-expect-error untyped
-  const script = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+  const script = baseUseScript(scriptHead, input, resolvedOptions)
 
   useEffect(() => {
     isMounted.current = true
@@ -146,40 +170,38 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   function registerScriptCallback(record: ScriptCallbackRecord) {
     if (!record.active || record.registered)
       return
-    const cbs = record.script._cbs[record.key]
-    if (!cbs) {
-      record.handler(record.script.instance)
-      return
-    }
-    cbs.push(record.handler)
     record.registered = true
+    record.off = record.register()
   }
 
   function unregisterScriptCallback(record: ScriptCallbackRecord) {
     if (!record.registered)
       return
-    const idx = record.script._cbs[record.key]?.indexOf(record.handler) ?? -1
-    if (idx !== -1)
-      record.script._cbs[record.key]?.splice(idx, 1)
+    record.off?.()
+    record.off = undefined
     record.registered = false
   }
 
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+  const _registerCb = <Args extends unknown[]>(
+    register: (cb: (...args: Args) => void | Promise<void>, options?: EventHandlerOptions) => () => void,
+    cb: (...args: Args) => void | Promise<void>,
+    eventOptions?: EventHandlerOptions,
+  ) => {
     const renderScoped = !(isMounted.current && committedRenderId.current === currentRenderId)
-    const record: ScriptCallbackRecord = {
+    let record: ScriptCallbackRecord
+    const handler = (...args: Args) => {
+      if (!record.active)
+        return
+      record.active = false
+      record.registered = false
+      return cb(...args)
+    }
+    record = {
       active: true,
-      handler: (...args: any[]) => {
-        if (!record.active)
-          return
-        record.active = false
-        record.registered = false
-        cb(...args)
-      },
-      key,
+      register: () => register(handler, eventOptions),
       registered: false,
       renderScoped,
       renderId: currentRenderId,
-      script,
     }
     callbackRecords.current.push(record)
     if (isMounted.current && committedRenderId.current === currentRenderId)
@@ -197,7 +219,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  const reactScript = script as ReactScript<T>
+  const registrars = reactScript._reactRegistrars ||= {
+    onLoaded: script.onLoaded,
+    onError: script.onError,
+  }
+  script.onLoaded = (cb, eventOptions) => _registerCb(registrars.onLoaded, cb, eventOptions)
+  script.onError = (cb, eventOptions) => _registerCb(registrars.onError, cb, eventOptions)
   return script
 }

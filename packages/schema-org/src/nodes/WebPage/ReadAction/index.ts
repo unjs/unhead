@@ -1,10 +1,11 @@
+import type { Thing } from '../../../types'
 import { defineSchemaOrgResolver } from '../../../core'
 
 export interface ReadActionInput {
   target?: string[]
 }
 
-export interface ReadAction {
+export interface ReadAction extends Thing {
   '@type'?: 'ReadAction'
   /**
    * An array of string URLs which describes the URL pattern of the read action

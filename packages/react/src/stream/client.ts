@@ -1,10 +1,15 @@
-import type { ReactNode } from 'react'
-import type { Unhead } from 'unhead/types'
+import type { ReactElement, ReactNode } from 'react'
+import type { CompatibleHead, ResolvableHead, UseHeadInput } from 'unhead/types'
 import { createElement } from 'react'
-import { UnheadContext } from '../context'
+import { toUnheadContextValue, UnheadContext } from '../context'
 
-export function UnheadProvider({ value, children }: { value: Unhead, children: ReactNode }): ReactNode {
-  return createElement(UnheadContext.Provider, { value }, children)
+export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
+  value: CompatibleHead<I, ResolvableHead, RenderResult>
+  children: ReactNode
+}
+
+export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ value, children }: UnheadProviderProps<I, RenderResult>): ReactElement {
+  return createElement(UnheadContext.Provider, { value: toUnheadContextValue(value) }, children)
 }
 
 /**
@@ -18,5 +23,6 @@ export function HeadStream(): ReactNode {
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,
+  type StreamingGlobal,
   type UnheadStreamQueue,
 } from 'unhead/stream/client'
