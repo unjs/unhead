@@ -94,6 +94,6 @@ export function createServerHead<T extends Record<string, any> = ResolvableHead>
 }
 
 /**
- * @deprecated Will be removed in v4. Use `createHead` from `unhead` (or `createUnhead` from `unhead/unhead`) directly.
+ * @deprecated Will be removed in v4. Use `createUnhead` from `unhead` directly.
  */
 export const createHeadCore = createUnhead
