@@ -49,7 +49,7 @@ const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
  * })
  */
 export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
-  options.imports = options.imports || true
+  const rewriteImports = options.imports ?? true
   const importPaths = options.importPaths?.length ? new Set(options.importPaths) : undefined
 
   function isValidPackage(s: string) {
@@ -341,7 +341,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         })
 
         // Rewrite import specifiers
-        if (options.imports && importRewrites.size > 0) {
+        if (rewriteImports && importRewrites.size > 0) {
           for (const [importNode, transformedNames] of importRewrites) {
             const newSpecifiers = new Set<string>()
             for (const spec of importNode.specifiers) {
