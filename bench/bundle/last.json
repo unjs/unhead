@@ -46,5 +46,15 @@
   "schemaOrgVueMeta": {
     "size": 845,
     "gz": 443
+  },
+  "clientSelfContained": {
+    "size": 13830,
+    "gz": 5584,
+    "br": 5067
+  },
+  "serverSelfContained": {
+    "size": 12255,
+    "gz": 4971,
+    "br": 4480
   }
 }
