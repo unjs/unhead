@@ -167,17 +167,20 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
  */
 export function renderSSRHeadShell(head: Unhead<any>, template: string): string {
   const ssr = head.render() as SSRHeadPayload
-  head.entries.clear()
   const bootstrapScript = createBootstrapScript(getStreamKey(head))
 
   // Use parser utilities for consistent template handling
   const parsed = parseHtmlForIndexes(template)
-  return applyHeadToHtml(parsed, {
+  const result = applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
     headTags: bootstrapScript + ssr.headTags,
     bodyAttrs: ssr.bodyAttrs,
     bodyTags: ssr.bodyTags,
   })
+  // Only clear entries once the shell has been successfully produced so a
+  // template failure leaves them intact for retry.
+  head.entries.clear()
+  return result
 }
 
 /**
@@ -204,8 +207,11 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
 
   const streamKey = getStreamKey(head)
   const inputs = Array.from(head.entries.values(), e => e.input)
+  // Serialize before clearing so a failure (cyclic value, BigInt, ...) leaves
+  // the entries intact for retry.
+  const serialized = safeJsonStringify(inputs)
   head.entries.clear()
-  return `window.${streamKey}.push(${safeJsonStringify(inputs)})`
+  return `window.${streamKey}.push(${serialized})`
 }
 
 /**
@@ -248,31 +254,53 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+  let end = ''
 
   return new ReadableStream<Uint8Array>({
-    async start(controller) {
+    start(controller) {
+      // If template preparation throws, the stream errors and `head.entries`
+      // stays intact for retry (the upstream reader was never acquired).
+      let parts: StreamingTemplateParts
       try {
-        const { shell, end } = prepareStreamingTemplate(head, template, preRenderedState)
-        controller.enqueue(encoder.encode(shell))
-
-        const reader = stream.getReader()
-        try {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done)
-              break
-            controller.enqueue(value)
-          }
-        }
-        finally {
-          reader.releaseLock()
-        }
-
-        controller.enqueue(encoder.encode(end))
-        controller.close()
+        parts = prepareStreamingTemplate(head, template, preRenderedState)
       }
       catch (error) {
         controller.error(error)
+        return
+      }
+      end = parts.end
+      controller.enqueue(encoder.encode(parts.shell))
+      reader = stream.getReader()
+    },
+    // Read at most one upstream chunk per downstream request so backpressure
+    // propagates instead of eagerly draining the app stream.
+    async pull(controller) {
+      let result: ReadableStreamReadResult<Uint8Array>
+      try {
+        result = await reader!.read()
+      }
+      catch (error) {
+        reader!.releaseLock()
+        reader = undefined
+        controller.error(error)
+        return
+      }
+      if (result.done) {
+        reader!.releaseLock()
+        reader = undefined
+        controller.enqueue(encoder.encode(end))
+        controller.close()
+        return
+      }
+      controller.enqueue(result.value)
+    },
+    async cancel(reason) {
+      const activeReader = reader
+      reader = undefined
+      if (activeReader) {
+        await activeReader.cancel(reason)
+        activeReader.releaseLock()
       }
     },
   })
@@ -325,15 +353,13 @@ export function prepareStreamingTemplate(
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
-  if (!preRenderedState) {
-    head.entries.clear()
-  }
   const bootstrapScript = createBootstrapScript(getStreamKey(head))
 
   const parsed = parseHtmlForIndexes(template)
   const bodyEnd = parsed.indexes.bodyTagEnd
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart
 
+  let parts: StreamingTemplateParts
   if (bodyEnd >= 0 && bodyCloseStart >= 0) {
     const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
     // Prefer splitting at a Vite-style SSR outlet marker so the streamed
@@ -364,22 +390,30 @@ export function prepareStreamingTemplate(
       bodyTags: '',
     }).replace('</body></html>', '')
 
-    return {
+    parts = {
       shell,
       end: afterStream + ssr.bodyTags + endPart,
     }
   }
-
-  // Can't split, return full template as shell
-  return {
-    shell: applyHeadToHtml(parsed, {
-      htmlAttrs: ssr.htmlAttrs,
-      headTags: bootstrapScript + ssr.headTags,
-      bodyAttrs: ssr.bodyAttrs,
-      bodyTags: ssr.bodyTags,
-    }),
-    end: '',
+  else {
+    // Can't split, return full template as shell
+    parts = {
+      shell: applyHeadToHtml(parsed, {
+        htmlAttrs: ssr.htmlAttrs,
+        headTags: bootstrapScript + ssr.headTags,
+        bodyAttrs: ssr.bodyAttrs,
+        bodyTags: ssr.bodyTags,
+      }),
+      end: '',
+    }
   }
+
+  // Only clear entries once the shell/end parts have been successfully
+  // produced so a template failure leaves them intact for retry.
+  if (!preRenderedState) {
+    head.entries.clear()
+  }
+  return parts
 }
 
 export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
