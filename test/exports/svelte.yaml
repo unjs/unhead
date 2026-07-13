@@ -38,6 +38,7 @@
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContextKey: symbol

@@ -54,6 +54,45 @@ export interface PreparedHtmlTemplateWithIndexes {
 }
 
 /**
+ * A reusable parsed HTML template.
+ *
+ * The object owns the exact `html` string its indexes describe, so it can be
+ * safely reused across many renders/requests without re-parsing and without
+ * any risk of indexes drifting from the template they were computed for.
+ *
+ * Create one with {@link prepareTemplate}.
+ */
+export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
+  /**
+   * Lazily computed extraction parse used by `transformHtmlTemplate`.
+   * @internal
+   */
+  _extracted?: PreparedHtmlTemplateWithIndexes
+}
+
+/**
+ * Parse an HTML template once so it can be reused across many renders/requests.
+ *
+ * Server and streaming functions that accept an HTML `template` string
+ * (`transformHtmlTemplate`, `transformHtmlTemplateRaw`, `renderSSRHeadShell`,
+ * `prepareStreamingTemplate`, `wrapStream`) also accept the returned
+ * `PreparedTemplate`, skipping the per-request template parse.
+ *
+ * The caller owns the value's lifetime - there is no internal cache.
+ *
+ * @example
+ * ```ts
+ * const template = prepareTemplate(await readFile('index.html', 'utf-8'))
+ * // per request
+ * const html = transformHtmlTemplateRaw(head, template)
+ * ```
+ */
+/* @__PURE__ */
+export function prepareTemplate(html: string): PreparedTemplate {
+  return parseHtmlForIndexes(html)
+}
+
+/**
  * Fast whitespace check using direct character code comparison
  */
 function isWhitespace(charCode: number): boolean {

@@ -1,3 +1,4 @@
+import type { PreparedTemplate } from '../parser'
 import type { SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
 
@@ -5,10 +6,17 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
  * Transform an HTML template string by extracting any head tags and attributes from it, pushing them to Unhead,
  * and injecting the resulting head tags back into the HTML.
  * Uses optimized parsing and index-based HTML construction for best performance.
+ *
+ * Accepts either a raw HTML string (parsed per call) or a `PreparedTemplate`
+ * from `prepareTemplate()` for templates that are stable across requests.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: string) {
-  const template = parseHtmlForUnheadExtraction(html)
+export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: string | PreparedTemplate) {
+  const template = typeof html === 'string'
+    ? parseHtmlForUnheadExtraction(html)
+    // Memoize the extraction parse on the prepared value so repeated calls
+    // reuse it - it's a pure function of the owned html string.
+    : (html._extracted ||= parseHtmlForUnheadExtraction(html.html))
   head.push(template.input, { _index: 0 })
   return applyHeadToHtml(template, head.render())
 }
@@ -21,10 +29,13 @@ export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: s
  *
  * However, this also means that any head tags or attributes already present in the HTML may be duplicated or
  * ordered incorrectly, so use with caution.
+ *
+ * Accepts either a raw HTML string (parsed per call) or a `PreparedTemplate`
+ * from `prepareTemplate()` for templates that are stable across requests.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function transformHtmlTemplateRaw(head: Unhead<any, SSRHeadPayload>, html: string) {
+export function transformHtmlTemplateRaw(head: Unhead<any, SSRHeadPayload>, html: string | PreparedTemplate) {
   // For raw mode, we only need indexes, not head extraction
-  const template = parseHtmlForIndexes(html)
+  const template = typeof html === 'string' ? parseHtmlForIndexes(html) : html
   return applyHeadToHtml(template, head.render())
 }

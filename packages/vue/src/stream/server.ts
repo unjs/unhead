@@ -108,7 +108,9 @@ export function createStreamableHead(
 export {
   createBootstrapScript,
   type CreateStreamableServerHeadOptions,
+  type PreparedTemplate,
   prepareStreamingTemplate,
+  prepareTemplate,
   renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,

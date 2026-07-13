@@ -59,6 +59,7 @@
   createBootstrapScript: function
   createStreamableHead: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
