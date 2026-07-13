@@ -21,7 +21,7 @@ export function callHook(head: Unhead<any, any>, hook: string, ctx: any) {
   // awaited — later listeners run out of order and the result is dropped
   if (res?.then && !warnedAsyncHook) {
     warnedAsyncHook = true
-    console.warn(`[unhead] hook promise ignored: ${hook}`)
+    console.warn(`[unhead] promise ignored: ${hook}`)
   }
   return res
 }

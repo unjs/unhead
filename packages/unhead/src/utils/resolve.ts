@@ -123,8 +123,10 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
   }
 }
 
-// compacts in place: `tags` is always a freshly resolved array owned by the caller
-export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
+// compacts in place: `tags` must be owned by the caller (resolveTags owns its
+// freshly resolved array); deliberately not exported — the `unhead/utils`
+// subpath re-exports everything and this mutating variant is not public API
+function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
@@ -152,6 +154,11 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return tags
 }
 
+// public contract: returns a new array and leaves the input untouched
+export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
+  return sanitizeTagsInPlace([...tags])
+}
+
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
@@ -163,14 +170,17 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       delete e._tags
     }
   }
-  // snapshot the entries only when a listener will see the array; listeners
-  // may mutate it (push/splice) to change which entries resolve
+  // snapshot the entries whenever a listener can run inside the entry loop:
+  // a live Map iterator would feed entries pushed mid-resolve (e.g. by an
+  // entries:normalize listener) back into this same resolve — the snapshot
+  // defers them to the next resolve, matching the previous behavior. The
+  // entries:resolve array is also part of that hook's contract: listeners
+  // may mutate it (push/splice) to change which entries resolve.
   let entries: HeadEntry<any>[] | undefined
-  if (hooks['entries:resolve']?.length) {
+  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length) {
     entries = [...head.entries.values()]
-    callHook(head, 'entries:resolve', { entries, tagMap: ctx.tagMap, tags: ctx.tags })
+    callHook(head, 'entries:resolve', { entries, ...ctx })
   }
-  const outTags = ctx.tags
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     if (!tags) {
@@ -213,13 +223,13 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         e._tags = tags
       }
     }
-    outTags.push(...tags)
+    ctx.tags.push(...tags)
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
   for (const k in hooks) {
     if (hooks[k]?.length && TAG_MUTATING_HOOK_RE.test(k)) {
-      cloneTagsInPlace(outTags)
+      cloneTagsInPlace(ctx.tags)
       break
     }
   }
@@ -229,5 +239,5 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   callHook(head, 'tags:beforeResolve', ctx)
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
-  return sanitizeTags(ctx.tags)
+  return sanitizeTagsInPlace(ctx.tags)
 }
