@@ -3,10 +3,8 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { UnheadTransforms } from './createTransformPipeline'
 import { SSRStaticReplace } from './SSRStaticReplace'
-import { TreeshakeServerComposables } from './TreeshakeServerComposables'
-import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 /**
  * Per-framework factory config. `framework` is the package name (e.g.
@@ -59,29 +57,25 @@ export interface UnheadBundlerFactory {
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
 
 function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
-  const defs: CoreDef[] = []
   const common = { filter: options.filter, sourcemap: options.sourcemap }
 
-  if (options.treeshake !== false) {
-    const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
-    defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
-  }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
-  }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object'
-      ? options.minify
-      : options.minify === true
+  const treeshake = options.treeshake !== false
+    && { ...common, ...(typeof options.treeshake === 'object' ? options.treeshake : {}) }
+  const seoMeta = options.transformSeoMeta !== false
+    && { ...common, ...(typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}) }
+  const minifyOpts = typeof options.minify === 'object'
+    ? options.minify
+    : (options.minify as boolean | undefined) === true
         ? { js: true, css: true }
         : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      defs.push({ instance: MinifyTransform, options: { ...common, ...minifyOpts } })
-    }
-  }
+  const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
+    && { ...common, ...minifyOpts }
 
-  return defs
+  if (!treeshake && !seoMeta && !minify)
+    return []
+
+  // Single-parse pipeline for the treeshake, seoMeta and minify concerns.
+  return [{ instance: UnheadTransforms, options: { treeshake, seoMeta, minify } }]
 }
 
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
