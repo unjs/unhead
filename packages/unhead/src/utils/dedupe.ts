@@ -16,15 +16,17 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   const { props, tag: t, key } = tag
   if (UniqueTags.has(t))
     return t
-  if (t === 'link' && props.rel === 'canonical')
-    return 'canonical'
-  if (t === 'link' && props.rel === 'alternate') {
-    if (props.hreflang)
-      return `alternate:${props.hreflang}`
-    if (props.type)
-      return `alternate:${props.type}:${props.href || ''}`
+  // semantic link singletons; must win over an explicit `key`
+  if (t === 'link') {
+    if (props.rel === 'canonical')
+      return 'canonical'
+    if (props.rel === 'alternate') {
+      if (props.hreflang)
+        return `alternate:${props.hreflang}`
+      if (props.type)
+        return `alternate:${props.type}:${props.href || ''}`
+    }
   }
-
   if (props.charset)
     return 'charset'
   if (t === 'meta') {
@@ -38,12 +40,9 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return `${t}:key:${key}`
   if (props.id)
     return `${t}:id:${props.id}`
-  if (t === 'link') {
-    if (props.rel === 'alternate')
-      return `alternate:${props.href || ''}`
-    if (props.rel && props.href)
-      return `link:${props.rel}:${props.href}`
-  }
+  // after key/id so an explicit key still allows multiple links with the same rel + href
+  if (t === 'link' && props.rel && props.href)
+    return `link:${props.rel}:${props.href}`
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
