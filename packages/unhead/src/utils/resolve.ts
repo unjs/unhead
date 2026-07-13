@@ -1,4 +1,4 @@
-import type { HeadTag, Unhead } from '../types'
+import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
@@ -35,37 +35,35 @@ export interface ResolveTagsOptions {
   tagWeight?: (tag: HeadTag) => number
 }
 
-function pushEntryTags(ctx: ResolveTagsContext, entries: HeadTag[][], needsClone: boolean) {
-  for (const tags of entries) {
-    for (const t of tags) {
-      if (needsClone) {
-        const props: Record<string, any> = { ...t.props }
-        // class/style are containers; copy them so hooks can't mutate the entry cache
-        if (props.class instanceof Set)
-          props.class = new Set(props.class)
-        if (props.style instanceof Map)
-          props.style = new Map(props.style)
-        ctx.tags.push({ ...t, props })
-      }
-      else {
-        ctx.tags.push(t)
-      }
-    }
+// clone each resolved tag so hooks can't mutate the entry cache; class/style
+// are containers and need their own copies
+function cloneTagsInPlace(tags: HeadTag[]) {
+  for (let i = 0; i < tags.length; i++) {
+    const t = tags[i]
+    const props: Record<string, any> = { ...t.props }
+    if (props.class instanceof Set)
+      props.class = new Set(props.class)
+    if (props.style instanceof Map)
+      props.style = new Map(props.style)
+    tags[i] = { ...t, props }
   }
 }
 
 function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
-  ctx.tags = []
+  // reuse the pre-dedupe array; the map never holds more tags than went in
+  const tags = ctx.tags
+  let w = 0
   for (const value of ctx.tagMap.values()) {
     if (Array.isArray(value)) {
-      for (const tag of value) ctx.tags.push(tag)
+      for (const tag of value) tags[w++] = tag
     }
     else {
-      ctx.tags.push(value)
+      tags[w++] = value
     }
   }
+  tags.length = w
   if (sortFlatMeta)
-    ctx.tags.sort(sortTags)
+    tags.sort(sortTags)
 }
 
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
@@ -125,8 +123,9 @@ export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>)
   }
 }
 
+// compacts in place: `tags` is always a freshly resolved array owned by the caller
 export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
-  const out: HeadTag[] = []
+  let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
     if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !innerHTML && !t.textContent))
@@ -147,27 +146,34 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
         t.textContent = escape(t.textContent) as typeof t.textContent
       t._d = dedupeKey(t)
     }
-    out.push(t)
+    tags[w++] = t
   }
-  return out
+  tags.length = w
+  return tags
 }
 
 export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
-  const entries = [...head.entries.values()]
-  for (const e of entries) {
+  for (const e of head.entries.values()) {
     if (e._pending !== undefined) {
       e.input = e._pending
       delete e._pending
       delete e._tags
     }
   }
-  callHook(head, 'entries:resolve', { entries, ...ctx })
-  const entryTags: HeadTag[][] = []
-  for (const e of entries) {
-    if (!e._tags) {
+  // snapshot the entries only when a listener will see the array; listeners
+  // may mutate it (push/splice) to change which entries resolve
+  let entries: HeadEntry<any>[] | undefined
+  if (hooks['entries:resolve']?.length) {
+    entries = [...head.entries.values()]
+    callHook(head, 'entries:resolve', { entries, tagMap: ctx.tagMap, tags: ctx.tags })
+  }
+  const outTags = ctx.tags
+  for (const e of entries || head.entries.values()) {
+    let tags = e._tags
+    if (!tags) {
       // Precomputed shared tags (SSR default init entry, see server/createHead.ts).
       // Valid only while nothing can observe or alter normalization for this entry:
       // no per-resolve tagWeight override (the array was weighted with the head's
@@ -182,37 +188,41 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         && !hooks['entries:normalize']?.length
         && !hooks['entries:resolve']?.length
         && (!e.options || isEmptyProps(e.options))) {
-        entryTags.push(e._precomputedTags)
-        continue
+        tags = e._precomputedTags
       }
-      const tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
-      for (const t of tags)
-        Object.assign(t, e.options)
-      const normalizeCtx = {
-        tags,
-        entry: e,
+      else {
+        tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+        if (e.options && !isEmptyProps(e.options)) {
+          for (const t of tags)
+            Object.assign(t, e.options)
+        }
+        // re-read per entry: an earlier listener may have (un)registered hooks
+        if (hooks['entries:normalize']?.length) {
+          const normalizeCtx = { tags, entry: e }
+          callHook(head, 'entries:normalize', normalizeCtx)
+          tags = normalizeCtx.tags
+        }
+        for (let i = 0; i < tags.length; i++) {
+          const t = tags[i]
+          t._w = weightFn(t)
+          t._p = (e._i << 10) + i
+          t._d = dedupeKey(t)
+          if (!t._d)
+            t._h = hashTag(t)
+        }
+        e._tags = tags
       }
-      callHook(head, 'entries:normalize', normalizeCtx)
-      for (let i = 0; i < normalizeCtx.tags.length; i++) {
-        const t = normalizeCtx.tags[i]
-        t._w = weightFn(t)
-        t._p = (e._i << 10) + i
-        t._d = dedupeKey(t)
-        if (!t._d)
-          t._h = hashTag(t)
-      }
-      e._tags = normalizeCtx.tags
     }
-    entryTags.push(e._tags)
+    outTags.push(...tags)
   }
-  let needsClone = false
+  // scanned after the entry loop so hooks registered by listeners during this
+  // resolve are still honored for the defensive clone
   for (const k in hooks) {
-    if (TAG_MUTATING_HOOK_RE.test(k) && hooks[k]?.some((f: any) => !f._nonMutating)) {
-      needsClone = true
+    if (hooks[k]?.length && TAG_MUTATING_HOOK_RE.test(k)) {
+      cloneTagsInPlace(outTags)
       break
     }
   }
-  pushEntryTags(ctx, entryTags, needsClone)
   const hasFlatMeta = dedupeTags(ctx)
   resolveTitleTemplate(ctx, head)
   valuesToTags(ctx, hasFlatMeta)
