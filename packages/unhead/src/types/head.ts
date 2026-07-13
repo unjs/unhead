@@ -52,6 +52,14 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
+   * Precomputed normalized tags shared across head instances (SSR default init
+   * entry). Only used when no entry hooks, tag weight overrides or entry
+   * options could observe or alter normalization, see `resolveTags`.
+   *
+   * @internal
+   */
+  _precomputedTags?: HeadTag[]
+  /**
    * Pending patch to apply on next render (client-only)
    * @internal
    */

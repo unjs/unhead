@@ -168,6 +168,23 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   const entryTags: HeadTag[][] = []
   for (const e of entries) {
     if (!e._tags) {
+      // Precomputed shared tags (SSR default init entry, see server/createHead.ts).
+      // Valid only while nothing can observe or alter normalization for this entry:
+      // no per-resolve tagWeight override (the array was weighted with the head's
+      // default weight fn), no entries:normalize hook (it must see every entry's
+      // tags, e.g. the legacy DeprecationsPlugin), no entries:resolve hook (its
+      // listeners may reach and mutate `_tags`, and this array is SHARED across
+      // head instances), and no entry options (they get assigned onto each tag).
+      // Deliberately NOT cached on `e._tags` so a hook registered between renders
+      // takes the normalize path instead of reaching the shared array.
+      if (e._precomputedTags
+        && weightFn === head.resolvedOptions._tagWeight
+        && !hooks['entries:normalize']?.length
+        && !hooks['entries:resolve']?.length
+        && (!e.options || isEmptyProps(e.options))) {
+        entryTags.push(e._precomputedTags)
+        continue
+      }
       const tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
       for (const t of tags)
         Object.assign(t, e.options)
