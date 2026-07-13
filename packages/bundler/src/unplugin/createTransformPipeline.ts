@@ -7,6 +7,7 @@ import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import {
+  MetaTagsArrayable,
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
@@ -479,6 +480,126 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         // arg, spread properties). The original import must be preserved alongside the useHead rewrite.
         const untransformedCallees = new Set<string>()
 
+        // Lower one flat meta prop (`description: ...`, `robots: {...}`) into
+        // `{ name/property, content }` line(s). Returns `false` when the value
+        // needs runtime handling (dynamic media value, undecodable nested object).
+        //
+        // Runtime `unpackMeta` renders in two groups: structural expansions
+        // (media objects/arrays, array values) are collected into `extras` and
+        // rendered BEFORE the scalar/packed `primitives`, regardless of source
+        // order. Each lowered prop is therefore tagged with its group so the
+        // caller can reproduce `[...extras, ...primitives]`.
+        function lowerMetaProperty(property: any): { group: 'extras' | 'primitives', lines: string[] } | false {
+          const propertyKey = property.key
+          let key: string = resolveMetaKeyType(propertyKey.name)
+          const keyValue = resolveMetaKeyValue(propertyKey.name)
+          let valueKey = 'content'
+          if (keyValue === 'charset') {
+            valueKey = 'charset'
+            key = 'charset'
+          }
+          // `http-equiv` is not a valid identifier and must be emitted quoted
+          if (key === 'http-equiv')
+            key = '\'http-equiv\''
+          let value = code.substring(property.value.start as number, property.value.end as number)
+
+          if (MEDIA_KEYS.has(propertyKey.name)) {
+            // Expand an object literal `{ url, width, ... }` into `og:image`, `og:image:width`, ...
+            // matching runtime `unpackMeta`. Leaf values may be dynamic; only the structure must
+            // be statically known. Returns false when a prop key can't be resolved statically.
+            // Runtime emits `url` (then `secureUrl` for object values) before the other props.
+            const expandObject = (objNode: any, secureUrlFirst: boolean): string | false => {
+              const urlTags: string[] = []
+              const secureUrlTags: string[] = []
+              const otherTags: string[] = []
+              for (const p of objNode.properties) {
+                // Only plain `key: value` pairs can be reproduced statically. Spreads, getters,
+                // setters, methods, and computed/non-identifier keys bail to runtime.
+                if (p.type === 'SpreadElement' || p.computed || p.method || p.kind !== 'init' || p.key?.type !== 'Identifier')
+                  return false
+                // Match runtime `unpackMeta`: `url` -> bare property, `secureUrl` -> `:secure_url`.
+                const name = p.key.name
+                const suffix = name === 'url' ? '' : `:${name === 'secureUrl' ? 'secure_url' : name}`
+                const tag = `    { ${key}: '${keyValue}${suffix}', ${valueKey}: ${code.substring(p.value.start, p.value.end)} },`
+                if (name === 'url')
+                  urlTags.push(tag)
+                else if (name === 'secureUrl' && secureUrlFirst)
+                  secureUrlTags.push(tag)
+                else
+                  otherTags.push(tag)
+              }
+              return [...urlTags, ...secureUrlTags, ...otherTags].join('\n')
+            }
+            if (property.value.type === 'ObjectExpression') {
+              const expanded = expandObject(property.value, true)
+              if (expanded === false)
+                return false
+              return { group: 'extras', lines: [expanded] }
+            }
+            if (property.value.type === 'ArrayExpression') {
+              if (!property.value.elements.length)
+                return { group: 'extras', lines: [] }
+              const parts: string[] = []
+              for (const element of property.value.elements) {
+                if (!element || element.type !== 'ObjectExpression')
+                  return false
+                // The runtime array branch hoists only `url` per element.
+                const expanded = expandObject(element, false)
+                if (expanded === false)
+                  return false
+                parts.push(expanded)
+              }
+              return { group: 'extras', lines: [parts.join('\n')] }
+            }
+            // Primitive literals (string/number/boolean) and template literals always resolve to a
+            // scalar -> a single safe tag. Anything else (identifier, ref(), computed(), getter,
+            // or a non-primitive literal like a regexp) could resolve to an object/array, so bail
+            // to runtime `unpackMeta`.
+            const v = property.value
+            const primitive = typeof v.value === 'string' || typeof v.value === 'number' || typeof v.value === 'boolean'
+            const isScalar = v.type === 'TemplateLiteral'
+              || ((v.type === 'Literal' || v.type === 'StringLiteral' || v.type === 'NumericLiteral') && primitive)
+            if (!isScalar)
+              return false
+          }
+
+          if (property.value.type === 'ArrayExpression') {
+            const elements = property.value.elements
+            if (!elements.length)
+              return { group: 'extras', lines: [] }
+
+            const metaTags: string[] = []
+            for (const element of elements) {
+              if (!element || element.type === 'SpreadElement')
+                return false
+              if (element.type !== 'ObjectExpression') {
+                metaTags.push(`    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`)
+                continue
+              }
+              const propTags: string[] = []
+              for (const p of element.properties) {
+                if (p.type === 'SpreadElement' || p.computed || p.key?.type !== 'Identifier')
+                  return false
+                const propKey = p.key.name
+                const propValue = code.substring(p.value.start, p.value.end)
+                propTags.push(`    { ${key}: '${keyValue}:${propKey}', ${valueKey}: ${propValue} },`)
+              }
+              metaTags.push(propTags.join('\n'))
+            }
+
+            return { group: 'extras', lines: [metaTags.join('\n')] }
+          }
+          else if (property.value.type === 'ObjectExpression') {
+            const packed = lowerPackedMetaObject(property.value, propertyKey.name)
+            if (packed === false)
+              return false
+            value = packed
+          }
+          if (valueKey === 'charset')
+            return { group: 'primitives', lines: [`    { ${key}: ${value} },`] }
+          return { group: 'primitives', lines: [`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`] }
+        }
+
         function seoMetaEnter(node: any, parent: any): void {
           // Track value references to seoMeta identifiers (e.g., console.log(useSeoMeta))
           // Skip: call callees (handled below), import specifiers (definitions, not references)
@@ -527,7 +648,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             return
           }
 
-          let output: string[] | false = []
+          const output: string[] = []
           const title = properties.find((property: any) => property.key?.name === 'title')
           const titleTemplate = properties.find((property: any) => property.key?.name === 'titleTemplate')
           const meta = properties.filter((property: any) => property.key?.name !== 'title' && property.key?.name !== 'titleTemplate')
@@ -551,135 +672,58 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             output.push('useServerHead({')
           }
 
-          if (meta.length)
-            output.push('  meta: [')
-
-          meta.forEach((property: any) => {
-            if (property.type === 'SpreadElement') {
-              output = false
-              return
+          // Lower meta props in source order. A structural failure (spread,
+          // computed/non-identifier key) bails the whole call; a value-level
+          // failure (dynamic media value, undecodable nested object) may
+          // instead split the unsupported tail into a residual runtime call
+          // when that is provably render-identical (see `canEmitResidual`).
+          // Runtime `unpackMeta` renders structural expansions before scalar/
+          // packed props (`[...extras, ...meta]`); group lines accordingly.
+          const extraLines: string[] = []
+          const primitiveLines: string[] = []
+          let bail = false
+          let failedAt = -1
+          for (let i = 0; i < meta.length; i++) {
+            const property = meta[i]
+            if (property.type === 'SpreadElement' || property.key.type !== 'Identifier' || !property.value) {
+              bail = true
+              break
             }
-            if (property.key.type !== 'Identifier' || !property.value) {
-              output = false
-              return
+            const lowered = lowerMetaProperty(property)
+            if (lowered === false) {
+              failedAt = i
+              break
             }
-            if (output === false)
-              return
-            const propertyKey = property.key
-            let key: string = resolveMetaKeyType(propertyKey.name)
-            const keyValue = resolveMetaKeyValue(propertyKey.name)
-            let valueKey = 'content'
-            if (keyValue === 'charset') {
-              valueKey = 'charset'
-              key = 'charset'
-            }
-            let value = code.substring(property.value.start as number, property.value.end as number)
+            (lowered.group === 'extras' ? extraLines : primitiveLines).push(...lowered.lines)
+          }
+          const metaLines = [...extraLines, ...primitiveLines]
 
-            if (MEDIA_KEYS.has(propertyKey.name)) {
-              // Expand an object literal `{ url, width, ... }` into `og:image`, `og:image:width`, ...
-              // matching runtime `unpackMeta`. Leaf values may be dynamic; only the structure must
-              // be statically known. Returns false when a prop key can't be resolved statically.
-              const expandObject = (objNode: any): string | false => {
-                const tags: string[] = []
-                for (const p of objNode.properties) {
-                  // Only plain `key: value` pairs can be reproduced statically. Spreads, getters,
-                  // setters, methods, and computed/non-identifier keys bail to runtime.
-                  if (p.type === 'SpreadElement' || p.computed || p.method || p.kind !== 'init' || p.key?.type !== 'Identifier')
-                    return false
-                  // Match runtime `unpackMeta`: `url` -> bare property, `secureUrl` -> `:secure_url`.
-                  const name = p.key.name
-                  const suffix = name === 'url' ? '' : `:${name === 'secureUrl' ? 'secure_url' : name}`
-                  tags.push(`    { ${key}: '${keyValue}${suffix}', ${valueKey}: ${code.substring(p.value.start, p.value.end)} },`)
-                }
-                return tags.join('\n')
-              }
-              if (property.value.type === 'ObjectExpression') {
-                const expanded = expandObject(property.value)
-                if (expanded === false) {
-                  output = false
-                  return
-                }
-                output.push(expanded)
-                return
-              }
-              if (property.value.type === 'ArrayExpression') {
-                if (!property.value.elements.length)
-                  return
-                const parts: string[] = []
-                for (const element of property.value.elements) {
-                  if (!element || element.type !== 'ObjectExpression') {
-                    output = false
-                    return
-                  }
-                  const expanded = expandObject(element)
-                  if (expanded === false) {
-                    output = false
-                    return
-                  }
-                  parts.push(expanded)
-                }
-                output.push(parts.join('\n'))
-                return
-              }
-              // Primitive literals (string/number/boolean) and template literals always resolve to a
-              // scalar -> a single safe tag. Anything else (identifier, ref(), computed(), getter,
-              // or a non-primitive literal like a regexp) could resolve to an object/array, so bail
-              // to runtime `unpackMeta`.
-              const v = property.value
-              const primitive = typeof v.value === 'string' || typeof v.value === 'number' || typeof v.value === 'boolean'
-              const isScalar = v.type === 'TemplateLiteral'
-                || ((v.type === 'Literal' || v.type === 'StringLiteral' || v.type === 'NumericLiteral') && primitive)
-              if (!isScalar) {
-                output = false
-                return
-              }
-            }
-
-            if (property.value.type === 'ArrayExpression') {
-              const elements = property.value.elements
-              if (!elements.length)
-                return
-
-              const metaTags = elements.map((element: any) => {
-                if (element.type !== 'ObjectExpression')
-                  return `    { ${key}: '${keyValue}', ${valueKey}: ${code.substring(element.start, element.end)} },`
-
-                return element.properties.map((p: any) => {
-                  const propKey = p.key.name
-                  const propValue = code.substring(p.value.start, p.value.end)
-                  return `    { ${key}: '${keyValue}:${propKey}', ${valueKey}: ${propValue} },`
-                }).join('\n')
-              })
-
-              output.push(metaTags.join('\n'))
-              return
-            }
-            else if (property.value.type === 'ObjectExpression') {
-              const staticValue = materializeStaticStringObject(property.value)
-              if (!staticValue) {
-                output = false
-                return
-              }
-              try {
-                value = JSON.stringify(resolvePackedMetaObjectValue(staticValue, propertyKey.name))
-              }
-              catch {
-                output = false
-                return
-              }
-            }
-            if (valueKey === 'charset')
-              output.push(`    { ${key}: ${value} },`)
+          let residualProps: any[] | null = null
+          if (!bail && failedAt !== -1) {
+            if (canEmitResidual(node, parent, originalName, title, titleTemplate, meta, failedAt))
+              residualProps = meta.slice(failedAt)
             else
-              output.push(`    { ${key}: '${keyValue}', ${valueKey}: ${value} },`)
-          })
-          if (output) {
-            if (meta.length)
+              bail = true
+          }
+
+          if (!bail) {
+            const loweredMetaCount = failedAt === -1 ? meta.length : failedAt
+            if (loweredMetaCount) {
+              output.push('  meta: [')
+              output.push(...metaLines)
               output.push('  ]')
+            }
             // Preserve the second argument (options like { head }) if present
             if (node.arguments.length >= 2) {
               const optionsArg = code.substring(node.arguments[1].start, node.arguments[1].end)
               output.push(`}, ${optionsArg})`)
+            }
+            else if (residualProps) {
+              // Per-prop fallback: keep the unsupported tail props on the
+              // original composable, adjacent to the lowered entry, so runtime
+              // `unpackMeta` handles them (same source order, disjoint names).
+              output.push('});')
+              output.push(`${code.substring(node.callee.start, node.callee.end)}({ ${residualProps.map((p: any) => code.substring(p.start, p.end)).join(', ')} })`)
             }
             else {
               output.push('})')
@@ -691,6 +735,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               if (!importRewrites.has(importDecl))
                 importRewrites.set(importDecl, new Set())
               importRewrites.get(importDecl)!.add(originalName)
+              // The residual call still references the original composable.
+              if (residualProps)
+                untransformedCallees.add(originalName)
             }
           }
           else if (importDecl) {
@@ -867,25 +914,183 @@ function getStaticPropertyKey(prop: any): string | undefined {
     return prop.key.value
 }
 
-function getStaticStringValue(node: any): string | undefined {
-  if ((node?.type === 'Literal' || node?.type === 'StringLiteral') && typeof node.value === 'string')
-    return node.value
-}
-
 function isUnsafeObjectKey(key: string): boolean {
   return key === '__proto__' || key === 'constructor' || key === 'prototype'
 }
 
-function materializeStaticStringObject(node: any): Record<string, string> | false {
-  const out: Record<string, string> = Object.create(null)
-  for (const prop of node.properties) {
-    if (prop.type === 'SpreadElement' || prop.computed || prop.method || prop.kind !== 'init')
-      return false
-    const key = getStaticPropertyKey(prop)
-    const value = getStaticStringValue(prop.value)
-    if (!key || isUnsafeObjectKey(key) || value === undefined)
-      return false
-    out[key] = value
+const DECODE_BAIL = Symbol('unhead:decode-bail')
+
+type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[] | { [key: string]: DecodedStaticValue }
+
+const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
+
+/**
+ * Safe recursive AST-value decoder. Turns a statically-analyzable expression
+ * into the JS value it evaluates to, without ever evaluating source text:
+ *
+ * - string/number/boolean/`null` literals
+ * - unary `-`/`+` on a numeric literal (`-1`, `+1.5`)
+ * - template literals with zero expressions
+ * - arrays of supported values (source order preserved)
+ * - plain object literals with static identifier/string keys (source order preserved)
+ *
+ * Everything else (spreads, computed keys, getters/setters/methods, unsafe
+ * prototype keys, identifiers, calls, member expressions, regexp/bigint
+ * literals, array holes) returns the `DECODE_BAIL` sentinel; it never throws.
+ */
+function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
+  if (!node)
+    return DECODE_BAIL
+  if (LITERAL_TYPES.has(node.type)) {
+    // regexp literals carry a `regex` payload (their `value` may be a RegExp
+    // or null), bigint literals a `bigint` payload; neither is supported
+    if (node.regex !== undefined || node.bigint !== undefined)
+      return DECODE_BAIL
+    const value = node.value
+    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      return value
+    return DECODE_BAIL
   }
-  return out
+  if (node.type === 'UnaryExpression') {
+    // only numeric negation/plus on a plain numeric literal (`-1`, `+1.5`)
+    const arg = node.argument
+    if ((node.operator !== '-' && node.operator !== '+')
+      || !arg
+      || !LITERAL_TYPES.has(arg.type)
+      || arg.regex !== undefined
+      || arg.bigint !== undefined
+      || typeof arg.value !== 'number') {
+      return DECODE_BAIL
+    }
+    return node.operator === '-' ? -arg.value : arg.value
+  }
+  if (node.type === 'TemplateLiteral') {
+    if (node.expressions.length > 0)
+      return DECODE_BAIL
+    const cooked = node.quasis[0]?.value?.cooked
+    return typeof cooked === 'string' ? cooked : DECODE_BAIL
+  }
+  if (node.type === 'ArrayExpression') {
+    const out: DecodedStaticValue[] = []
+    for (const element of node.elements) {
+      // reject holes (`[1, , 2]`) and spreads
+      if (!element || element.type === 'SpreadElement')
+        return DECODE_BAIL
+      const value = decodeStaticValue(element)
+      if (value === DECODE_BAIL)
+        return DECODE_BAIL
+      out.push(value)
+    }
+    return out
+  }
+  if (node.type === 'ObjectExpression') {
+    const out: Record<string, DecodedStaticValue> = Object.create(null)
+    for (const prop of node.properties) {
+      if (prop.type === 'SpreadElement' || prop.computed || prop.method || prop.kind !== 'init')
+        return DECODE_BAIL
+      const key = getStaticPropertyKey(prop)
+      if (!key || isUnsafeObjectKey(key))
+        return DECODE_BAIL
+      const value = decodeStaticValue(prop.value)
+      if (value === DECODE_BAIL)
+        return DECODE_BAIL
+      out[key] = value
+    }
+    return out
+  }
+  return DECODE_BAIL
+}
+
+/**
+ * Mirrors runtime `String(value)` for decoded values, used to replicate
+ * `sanitizeObject` (which drops entries whose value stringifies to 'false').
+ * Decoded objects are built with a null prototype so `String()` can't be
+ * called on them directly; at runtime a plain object stringifies to
+ * '[object Object]', arrays join with ',' and null elements become ''.
+ */
+function runtimeString(value: DecodedStaticValue): string {
+  if (Array.isArray(value))
+    return value.map(v => v === null ? '' : runtimeString(v)).join(',')
+  if (value !== null && typeof value === 'object')
+    return '[object Object]'
+  return String(value)
+}
+
+/**
+ * Lower a nested plain-object meta value (`robots: { maxSnippet: -1 }`) to the
+ * exact content string runtime `unpackMeta` would produce, or `false` when the
+ * value must be left to runtime.
+ */
+function lowerPackedMetaObject(node: any, key: string): string | false {
+  // Arrayable meta keys (themeColor, author, googleSiteVerification, ...)
+  // route through runtime `handleObjectEntry`, which expands the object into
+  // sibling tags rather than packing it into one content string.
+  if (MetaTagsArrayable.has(resolveMetaKeyValue(key) as any))
+    return false
+  const decoded = decodeStaticValue(node)
+  if (decoded === DECODE_BAIL)
+    return false
+  // Runtime `unpackMeta` passes object values through `sanitizeObject` before
+  // packing: top-level entries whose value stringifies to 'false' are dropped.
+  const sanitized: Record<string, DecodedStaticValue> = Object.create(null)
+  for (const k of Object.keys(decoded as Record<string, DecodedStaticValue>)) {
+    const v = (decoded as Record<string, DecodedStaticValue>)[k]
+    if (runtimeString(v) !== 'false')
+      sanitized[k] = v
+  }
+  try {
+    return JSON.stringify(resolvePackedMetaObjectValue(sanitized, key))
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * Whether the unsupported tail of a `useSeoMeta` call may be split into a
+ * residual runtime call adjacent to the lowered `useHead` entry. Splitting
+ * creates a second head entry, so it is only allowed when rendering is
+ * provably identical to the original single entry:
+ *
+ * - the call result is unused (two statements are emitted in its place)
+ * - no options argument (it would have to be evaluated twice)
+ * - something is actually lowered, otherwise the call is left untouched;
+ *   `useServerSeoMeta` additionally requires at least one lowered meta prop
+ *   so an empty `useServerHead({})` entry is never emitted
+ * - `title`/`titleTemplate` are hoisted into the lowered entry regardless of
+ *   source position, so they must not appear after the failure point
+ * - residual props are plain `key: value` identifiers whose resolved meta
+ *   names are disjoint from the lowered props' names; a shared name would
+ *   dedupe across the two entries and could reorder rendered tags
+ * - runtime `unpackMeta` renders structural expansions (`extras`) before
+ *   scalar/packed props, per CALL. When meta props were lowered, a residual
+ *   prop that could produce extras at runtime (a dynamic media value, an
+ *   array, an arrayable-key object) would render before the lowered props in
+ *   the original but after them in the split output. So either nothing was
+ *   lowered into `meta` (`failedAt === 0`), or every residual prop must be
+ *   provably primitives-routed: a plain object literal on a non-media,
+ *   non-arrayable key
+ */
+function canEmitResidual(node: any, parent: any, originalName: string, title: any, titleTemplate: any, meta: any[], failedAt: number): boolean {
+  if (parent?.type !== 'ExpressionStatement' || node.arguments.length >= 2)
+    return false
+  if (failedAt === 0 && (originalName === 'useServerSeoMeta' || (!title && !titleTemplate)))
+    return false
+  const residual = meta.slice(failedAt)
+  const residualStart = residual[0].start
+  if ((title && title.start > residualStart) || (titleTemplate && titleTemplate.start > residualStart))
+    return false
+  for (const p of residual) {
+    if (p.type !== 'Property' || p.computed || p.key?.type !== 'Identifier' || !p.value)
+      return false
+    if (failedAt > 0 && (
+      p.value.type !== 'ObjectExpression'
+      || MEDIA_KEYS.has(p.key.name)
+      || MetaTagsArrayable.has(resolveMetaKeyValue(p.key.name) as any)
+    )) {
+      return false
+    }
+  }
+  const loweredNames = new Set(meta.slice(0, failedAt).map((p: any) => resolveMetaKeyValue(p.key.name)))
+  return residual.every((p: any) => !loweredNames.has(resolveMetaKeyValue(p.key.name)))
 }
