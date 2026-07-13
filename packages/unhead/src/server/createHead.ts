@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { CreateServerHeadOptions, HeadTag, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
@@ -27,6 +27,18 @@ const DEFAULT_INIT = {
     },
   ],
 }
+
+// identity for anything but `on*` function handlers, so `_static` for the
+// default init fast path (the default entry has no event handlers)
+const serverPropResolver: PropResolver = Object.assign(
+  (k?: string, v?: any) => {
+    if (k && k.startsWith('on') && typeof v === 'function') {
+      return `this.dataset.${k}fired = true`
+    }
+    return v
+  },
+  { _static: true },
+)
 
 let defaultInitTags: HeadTag[] | undefined
 
@@ -65,12 +77,7 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
     experimentalStreamKey: options.experimentalStreamKey,
     propResolvers: [
       ...(options.propResolvers || []),
-      (k, v) => {
-        if (k && k.startsWith('on') && typeof v === 'function') {
-          return `this.dataset.${k}fired = true`
-        }
-        return v
-      },
+      serverPropResolver,
     ],
     init: [
       options.disableDefaults ? undefined : DEFAULT_INIT,
@@ -80,9 +87,11 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
 
   // fast path: skip re-normalizing the default init entry per request.
   // Only when the entry is byte-for-byte the precomputed one: default tag
-  // weights (capo) and no custom propResolvers (the entry has no `on*`
-  // handlers, so the built-in server resolver is a no-op for it).
-  if (!options.disableDefaults && !options.tagWeight && !options.propResolvers?.length) {
+  // weights (capo) and every custom propResolver marked `_static`, i.e.
+  // identity for the entry's plain static values (e.g. VueResolver; the
+  // built-in server resolver is also a no-op as the entry has no `on*`
+  // handlers).
+  if (!options.disableDefaults && !options.tagWeight && !options.propResolvers?.some(r => !r._static)) {
     // the default entry is the first init push, so `_i === 1`
     const defaultEntry = core.entries.get(1)
     if (defaultEntry)

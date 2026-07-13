@@ -104,9 +104,18 @@ describe('default init precomputed tags', () => {
     expect(head.entries.get(1)!._tags).toBeDefined()
   })
 
-  it('custom propResolvers bypass the fast path', () => {
+  it('unmarked custom propResolvers bypass the fast path', () => {
     const head = createHead({ propResolvers: [(_, v) => v] })
     expect(head.entries.get(1)?._precomputedTags).toBeUndefined()
+  })
+
+  it('propResolvers marked _static keep the fast path', () => {
+    const staticResolver = Object.assign((_?: string, v?: any) => v, { _static: true })
+    const head = createHead({ propResolvers: [staticResolver] })
+    expect(head.entries.get(1)?._precomputedTags).toBeDefined()
+    // any unmarked resolver in the chain disables it
+    const mixed = createHead({ propResolvers: [staticResolver, (_, v) => v] })
+    expect(mixed.entries.get(1)?._precomputedTags).toBeUndefined()
   })
 
   it('disableDefaults renders no default tags', () => {
