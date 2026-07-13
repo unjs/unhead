@@ -1,7 +1,7 @@
 import { hashTag } from '../../src/utils/dedupe'
 
 describe('hashTag', () => {
-  it('serializes fallback tag props in insertion order', () => {
+  it('serializes fallback tag props in sorted order', () => {
     expect(hashTag({
       tag: 'link',
       props: {
@@ -9,7 +9,15 @@ describe('hashTag', () => {
         href: '/_nuxt/app.css',
         crossorigin: true as any,
       },
-    })).toBe('link:rel:stylesheet,href:/_nuxt/app.css,crossorigin:true')
+    })).toBe('link:crossorigin:true,href:/_nuxt/app.css,rel:stylesheet')
+    // prop order must not affect the hash (#823)
+    expect(hashTag({
+      tag: 'script',
+      props: { defer: true as any, src: '/app.js' },
+    })).toBe(hashTag({
+      tag: 'script',
+      props: { src: '/app.js', defer: true as any },
+    }))
   })
 
   it('ignores inherited props', () => {

@@ -38,8 +38,12 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return `${t}:key:${key}`
   if (props.id)
     return `${t}:id:${props.id}`
-  if (t === 'link' && props.rel === 'alternate')
-    return `alternate:${props.href || ''}`
+  if (t === 'link') {
+    if (props.rel === 'alternate')
+      return `alternate:${props.href || ''}`
+    if (props.rel && props.href)
+      return `link:${props.rel}:${props.href}`
+  }
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
@@ -47,13 +51,13 @@ export function hashTag(tag: HeadTag) {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   if (identity)
     return identity
+  // sort so the hash is stable across differing prop insertion orders (#823)
+  const keys = Object.keys(tag.props).sort()
   let hash = `${tag.tag}:`
   let separator = ''
-  for (const key in tag.props) {
-    if (Object.hasOwn(tag.props, key)) {
-      hash += `${separator}${key}:${String(tag.props[key])}`
-      separator = ','
-    }
+  for (const key of keys) {
+    hash += `${separator}${key}:${String(tag.props[key])}`
+    separator = ','
   }
   return hash
 }
