@@ -276,19 +276,28 @@ export function wrapStream(
     // Read at most one upstream chunk per downstream request so backpressure
     // propagates instead of eagerly draining the app stream.
     async pull(controller) {
+      const activeReader = reader
+      if (!activeReader)
+        return
       let result: ReadableStreamReadResult<Uint8Array>
       try {
-        result = await reader!.read()
+        result = await activeReader.read()
       }
       catch (error) {
-        reader!.releaseLock()
+        // cancel() won the race mid-read; it owns the reader teardown.
+        if (activeReader !== reader)
+          return
         reader = undefined
+        activeReader.releaseLock()
         controller.error(error)
         return
       }
+      // cancel() won the race mid-read; don't touch the cancelled controller.
+      if (activeReader !== reader)
+        return
       if (result.done) {
-        reader!.releaseLock()
         reader = undefined
+        activeReader.releaseLock()
         controller.enqueue(encoder.encode(end))
         controller.close()
         return

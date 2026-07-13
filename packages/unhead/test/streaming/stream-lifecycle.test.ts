@@ -95,6 +95,40 @@ describe('wrapStream lifecycle', () => {
     expect(cancelSpy).toHaveBeenCalledWith('user-abort')
   })
 
+  it('cancelling while a pull is in flight is safe and cancels upstream once', async () => {
+    const cancelSpy = vi.fn()
+    const upstream = new ReadableStream<Uint8Array>({
+      pull() {
+        // Never resolves: keeps the wrapped stream's pull() awaiting read().
+        return new Promise<void>(() => {})
+      },
+      cancel: cancelSpy,
+    })
+
+    const unhandled: unknown[] = []
+    const onUnhandled = (reason: unknown) => unhandled.push(reason)
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      const wrapped = wrapStream(makeHead(), upstream, TEMPLATE)
+      const reader = wrapped.getReader()
+      await reader.read() // shell
+      const inFlight = reader.read() // triggers pull(), which awaits upstream forever
+      await reader.cancel('mid-flight')
+
+      // The in-flight read resolves done after cancellation.
+      await expect(inFlight).resolves.toEqual({ done: true, value: undefined })
+      expect(cancelSpy).toHaveBeenCalledTimes(1)
+      expect(cancelSpy).toHaveBeenCalledWith('mid-flight')
+
+      // Let the raced pull() continuation run; it must not blow up.
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(unhandled).toEqual([])
+    }
+    finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
+
   it('upstream error propagates and the closing suffix is never emitted', async () => {
     const boom = new Error('upstream failed')
     let pulls = 0
