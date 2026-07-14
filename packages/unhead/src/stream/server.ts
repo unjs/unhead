@@ -8,7 +8,9 @@ const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
 
-const encoder = /* @__PURE__ */ new TextEncoder()
+// Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
+// stateless, so it can be shared across streams without import-time work.
+let encoder: TextEncoder | undefined
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -281,6 +283,7 @@ export function wrapStream(
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
   const flushChunk = options?.flushChunk
+  const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let end = ''
 
@@ -302,7 +305,7 @@ export function wrapStream(
       }
       reader = activeReader
       end = parts.end
-      controller.enqueue(encoder.encode(parts.shell))
+      controller.enqueue(enc.encode(parts.shell))
     },
     // Read at most one upstream chunk per downstream request so backpressure
     // propagates instead of eagerly draining the app stream.
@@ -329,16 +332,16 @@ export function wrapStream(
         activeReader.releaseLock()
         const extra = flushChunk?.()
         if (extra)
-          controller.enqueue(encoder.encode(extra))
+          controller.enqueue(enc.encode(extra))
         if (end)
-          controller.enqueue(encoder.encode(end))
+          controller.enqueue(enc.encode(end))
         controller.close()
         return
       }
       controller.enqueue(result.value.value)
       const extra = flushChunk?.()
       if (extra)
-        controller.enqueue(encoder.encode(extra))
+        controller.enqueue(enc.encode(extra))
     },
     async cancel(reason) {
       const activeReader = reader
