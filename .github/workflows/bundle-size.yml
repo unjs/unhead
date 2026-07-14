@@ -36,7 +36,11 @@ jobs:
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
-          git checkout ${{ github.base_ref }}
+          # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
+          # in this fresh checkout is precious, so surface the diff and discard it
+          git status --porcelain
+          git diff --stat
+          git checkout -f ${{ github.base_ref }}
           pnpm install
           pnpm build
           # the base ref may predate some bundle configs (react, full, schema-org);
@@ -52,7 +56,8 @@ jobs:
           # measure base perf with the PR's harness against the base-built packages;
           # run from /tmp so the working tree stays clean across the checkout back
           node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
-          git checkout -
+          # the base pnpm install may have rewritten the lockfile; discard before switching back
+          git checkout -f -
 
       - name: Build PR bundles
         run: |

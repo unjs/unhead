@@ -11,7 +11,7 @@ Importing any runtime module must execute nothing observable.
 - No top-level function calls.
 - No `globalThis`/`window` reads or writes at module scope.
 - No environment detection at module scope (defer to call time).
-- All packages declare `"sideEffects": false`; keep it true.
+- All packages declare `"sideEffects": false`; keep that declaration accurate.
 - Annotate factory functions with `/* @__NO_SIDE_EFFECTS__ */`.
 
 Top-level `const` literals and lazy `let` declarations are fine; bundlers do not treat inert declarations as side effects.

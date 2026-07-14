@@ -16,7 +16,7 @@
  * compilers to bundle; their runtime logic lives in unhead which is covered.
  */
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { isAbsolute, resolve } from 'node:path'
 import process from 'node:process'
 import { rolldown } from 'rolldown'
 
@@ -59,7 +59,7 @@ function collectEntries() {
 async function bundleBareImport(entry) {
   const bundle = await rolldown({
     input: 'virtual:entry',
-    external: id => !id.startsWith('.') && !id.startsWith('/') && id !== 'virtual:entry',
+    external: id => !id.startsWith('.') && !isAbsolute(id) && id !== 'virtual:entry',
     logLevel: 'silent',
     // 'no-external': analyze internal modules for real side effects instead of
     // trusting the package.json `sideEffects: false` claim (which would make
@@ -69,7 +69,7 @@ async function bundleBareImport(entry) {
     plugins: [{
       name: 'virtual-entry',
       resolveId: id => id === 'virtual:entry' ? id : null,
-      load: id => id === 'virtual:entry' ? `import '${entry.src}'` : null,
+      load: id => id === 'virtual:entry' ? `import '${entry.src.replace(/\\/g, '/')}'` : null,
     }],
   })
   const { output } = await bundle.generate({ format: 'esm' })
