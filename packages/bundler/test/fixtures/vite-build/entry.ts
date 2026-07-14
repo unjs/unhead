@@ -5,4 +5,5 @@ import { useSeoMeta } from 'unhead'
 // @ts-ignore
 useServerSeoMeta({ description: 'SERVER_ONLY_MARKER' })
 
+// @ts-ignore
 useSeoMeta({ title: 'CLIENT_MARKER' })
