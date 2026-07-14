@@ -17,7 +17,9 @@ export interface BundleSpec {
 export const BUNDLES: BundleSpec[] = [
   { id: 'client', name: 'Client (Minimal)', category: 'Core', file: 'client/client/minimal.mjs', required: true },
   { id: 'clientFull', name: 'Client (Full)', category: 'Core', file: 'client-full/client/full.mjs' },
+  { id: 'clientSelfContained', name: 'Client (Self-Contained)', category: 'Core', file: 'client-sc/client/minimal.mjs' },
   { id: 'server', name: 'Server (Minimal)', category: 'Core', file: 'server/server/minimal.mjs', required: true },
+  { id: 'serverSelfContained', name: 'Server (Self-Contained)', category: 'Core', file: 'server-sc/server/minimal.mjs' },
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
