@@ -20,4 +20,25 @@ describe('async hook listeners on the sync pipeline', () => {
     expect(warn).toHaveBeenCalledTimes(1)
     warn.mockRestore()
   })
+
+  it('warns per head instance, not per process', () => {
+    // Dedupe state lives on the instance (CONTRIBUTING module-state policy):
+    // a fresh head (e.g. next SSR request) warns again.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const asyncHooks = {
+      'tags:resolve': async () => {
+        await Promise.resolve()
+      },
+    }
+    const first = createHead({ hooks: asyncHooks })
+    first.push({ title: 'first' })
+    renderSSRHead(first)
+
+    const second = createHead({ hooks: asyncHooks })
+    second.push({ title: 'second' })
+    renderSSRHead(second)
+
+    expect(warn).toHaveBeenCalledTimes(2)
+    warn.mockRestore()
+  })
 })
