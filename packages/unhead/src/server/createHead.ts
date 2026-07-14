@@ -30,7 +30,7 @@ const DEFAULT_INIT = {
 
 // identity for anything but `on*` function handlers, so `_static` for the
 // default init fast path (the default entry has no event handlers)
-const serverPropResolver: PropResolver = Object.assign(
+const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
   (k?: string, v?: any) => {
     if (k && k.startsWith('on') && typeof v === 'function') {
       return `this.dataset.${k}fired = true`
