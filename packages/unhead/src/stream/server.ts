@@ -308,8 +308,14 @@ export function wrapStream(
       const activeReader = reader
       reader = undefined
       if (activeReader) {
-        await activeReader.cancel(reason)
-        activeReader.releaseLock()
+        // Release the lock even if the upstream cancel rejects so the
+        // upstream stream isn't left permanently locked.
+        try {
+          await activeReader.cancel(reason)
+        }
+        finally {
+          activeReader.releaseLock()
+        }
       }
     },
   })

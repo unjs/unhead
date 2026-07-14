@@ -95,6 +95,24 @@ describe('wrapStream lifecycle', () => {
     expect(cancelSpy).toHaveBeenCalledWith('user-abort')
   })
 
+  it('releases the upstream lock even when upstream cancel rejects', async () => {
+    const upstream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(encoder.encode('x'))
+      },
+      cancel() {
+        return Promise.reject(new Error('cancel failed'))
+      },
+    })
+
+    const wrapped = wrapStream(makeHead(), upstream, TEMPLATE)
+    const reader = wrapped.getReader()
+    await reader.read() // shell
+    await expect(reader.cancel('user-abort')).rejects.toThrow('cancel failed')
+
+    expect(upstream.locked).toBe(false)
+  })
+
   it('cancelling while a pull is in flight is safe and cancels upstream once', async () => {
     const cancelSpy = vi.fn()
     const upstream = new ReadableStream<Uint8Array>({
