@@ -14,8 +14,10 @@ export interface BundleData {
   category: string
   size: number
   gzippedSize: number
+  brotliSize: number
   baseSize: number
   baseGzippedSize: number
+  baseBrotliSize: number
 }
 
 type Status = 'new' | 'grew' | 'shrank' | 'same'
@@ -89,15 +91,15 @@ export function renderBundleReport(data: BundleData[]): string {
 
   // full per-bundle breakdown, grouped by category, collapsed by default
   out.push('', `<details><summary>All bundles (${data.length})</summary>`, '')
-  out.push('| Bundle | Gzipped | Raw | |', '|---|---|---|---|')
+  out.push('| Bundle | Gzipped | Brotli | Raw | |', '|---|---|---|---|---|')
   let lastCat = ''
   for (const { item, status } of rows) {
     if (item.category !== lastCat) {
-      out.push(`| **${item.category}** | | | |`)
+      out.push(`| **${item.category}** | | | | |`)
       lastCat = item.category
     }
     const mark = status === 'new' ? '🆕' : status === 'grew' ? '🔴' : status === 'shrank' ? '🟢' : '✅'
-    out.push(`| ${item.name} | ${formatSize(item.gzippedSize)} | ${formatSize(item.size)} | ${mark} |`)
+    out.push(`| ${item.name} | ${formatSize(item.gzippedSize)} | ${formatSize(item.brotliSize)} | ${formatSize(item.size)} | ${mark} |`)
   }
   out.push('', '</details>')
 
@@ -106,6 +108,10 @@ export function renderBundleReport(data: BundleData[]): string {
 
 function gz(buf: Buffer): number {
   return zlib.gzipSync(buf).length
+}
+
+function br(buf: Buffer): number {
+  return zlib.brotliCompressSync(buf).length
 }
 
 function readBundle(dir: string, file: string): Buffer | null {
@@ -117,7 +123,7 @@ function readBundle(dir: string, file: string): Buffer | null {
 // locally, fall back to the committed last.json baseline.
 export function collectBundleData(): BundleData[] {
   const baseDist = process.env.BASE_DIST
-  const lastStats: Record<string, { size: number, gz: number }> | null = baseDist
+  const lastStats: Record<string, { size: number, gz: number, br?: number }> | null = baseDist
     ? null
     : JSON.parse(fs.readFileSync(path.resolve(__dirname, 'last.json'), 'utf8'))
 
@@ -131,24 +137,30 @@ export function collectBundleData(): BundleData[] {
     }
     let baseSize = 0
     let baseGzippedSize = 0
+    let baseBrotliSize = 0
     if (baseDist) {
       const base = readBundle(baseDist, spec.file)
       if (base) {
         baseSize = base.length
         baseGzippedSize = gz(base)
+        baseBrotliSize = br(base)
       }
     }
     else if (lastStats?.[spec.id]) {
       baseSize = lastStats[spec.id].size
       baseGzippedSize = lastStats[spec.id].gz
+      // legacy last.json entries predate brotli tracking; 0 just means "unknown", not "new"
+      baseBrotliSize = lastStats[spec.id].br ?? 0
     }
     data.push({
       name: spec.name,
       category: spec.category,
       size: current.length,
       gzippedSize: gz(current),
+      brotliSize: br(current),
       baseSize,
       baseGzippedSize,
+      baseBrotliSize,
     })
   }
   return data
