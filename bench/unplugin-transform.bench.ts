@@ -1,6 +1,7 @@
 import type { MinifyFn } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { bench, describe } from 'vitest'
 import { CreateHeadTransform, createHeadTransformContext } from '../packages/bundler/src/unplugin/CreateHeadTransform'
+import { UnheadTransforms } from '../packages/bundler/src/unplugin/createTransformPipeline'
 import { MinifyTransform } from '../packages/bundler/src/unplugin/MinifyTransform'
 import { SSRStaticReplace } from '../packages/bundler/src/unplugin/SSRStaticReplace'
 import { TreeshakeServerComposables } from '../packages/bundler/src/unplugin/TreeshakeServerComposables'
@@ -170,5 +171,66 @@ describe('unplugin transform CPU', () => {
   bench('solid streaming skip JSX without head calls', async () => {
     const plugin = unheadSolidStreamingPlugin.vite({}) as any
     await plugin.transform.handler.call({ environment: { name: 'client' } }, jsxWithoutHeadCode, '/project/src/page.tsx')
+  })
+})
+
+// A transform-positive module hitting all three concerns (treeshake, seoMeta, minify).
+const combinedCode = [
+  `import { useSeoMeta, useServerSeoMeta, useServerHead, useHead } from 'unhead'`,
+  ...Array.from({ length: 40 }, (_, i) => [
+    `useServerHead({ script: [{ innerHTML: '// server comment ${i}\\nvar a${i} = ${i};  var b${i} = a${i} + 1;' }] });`,
+    `useServerSeoMeta({ description: 'Server ${i}' });`,
+    `useSeoMeta({ title: 'Page ${i}', description: 'Description ${i}', ogImage: { url: '/og-${i}.png', width: 1200 } });`,
+    `useHead({ script: [{ innerHTML: '// client comment ${i}\\nvar x${i} = ${i};  var y${i} = x${i} + 1;' }] });`,
+  ].join('\n')),
+].join('\n')
+
+const clientContext = { environment: { config: { consumer: 'client' } } }
+
+async function runComposedTransform(plugins: any[], code: string, id: string, context: any) {
+  let current = code
+  for (const plugin of plugins) {
+    const result = await runPluginTransform(plugin, current, id, context)
+    if (result?.code)
+      current = result.code
+  }
+  return current
+}
+
+describe('unplugin transform pipeline', () => {
+  bench('combined module: three-pass composition', async () => {
+    const plugins = [
+      TreeshakeServerComposables.vite({}) as any,
+      UseSeoMetaTransform.vite({}) as any,
+      MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any,
+    ]
+    await runComposedTransform(plugins, combinedCode, '/project/src/page.ts', clientContext)
+  })
+
+  bench('combined module: unified pipeline', async () => {
+    const plugin = UnheadTransforms.vite({
+      treeshake: {},
+      seoMeta: {},
+      minify: { js: mockJSMinifier, css: mockCSSMinifier },
+    }) as any
+    await runPluginTransform(plugin, combinedCode, '/project/src/page.ts', clientContext)
+  })
+
+  bench('prefiltered module: three-pass composition', async () => {
+    const plugins = [
+      TreeshakeServerComposables.vite({}) as any,
+      UseSeoMetaTransform.vite({}) as any,
+      MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any,
+    ]
+    await runComposedTransform(plugins, unrelatedCode, '/project/src/page.ts', clientContext)
+  })
+
+  bench('prefiltered module: unified pipeline', async () => {
+    const plugin = UnheadTransforms.vite({
+      treeshake: {},
+      seoMeta: {},
+      minify: { js: mockJSMinifier, css: mockCSSMinifier },
+    }) as any
+    await runPluginTransform(plugin, unrelatedCode, '/project/src/page.ts', clientContext)
   })
 })
