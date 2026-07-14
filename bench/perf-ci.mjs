@@ -184,6 +184,110 @@ function measureAlloc(fn, { warmup = 50, reps = 25, runs = 60 } = {}) {
   return { value: samples[samples.length >> 1] }
 }
 
+// async twins of measureTimes/measureAlloc for the streaming benches, which must be
+// awaited per run; kept separate so the sync render benches don't pay the microtask
+// overhead of a conditional await inside their hot loop
+async function measureTimesAsync(fn, { warmup = 20, reps = 25, runs = 40 } = {}) {
+  for (let i = 0; i < warmup; i++) await fn()
+  const wall = []
+  const cpu = []
+  for (let r = 0; r < reps; r++) {
+    forceGC()
+    const c0 = process.cpuUsage()
+    const t0 = performance.now()
+    for (let i = 0; i < runs; i++) await fn()
+    wall.push((performance.now() - t0) / runs)
+    const c = process.cpuUsage(c0)
+    cpu.push((c.user + c.system) / 1000 / runs)
+  }
+  return { wall: stats(wall), cpu: stats(cpu) }
+}
+
+async function measureAllocAsync(fn, { warmup = 20, reps = 15, runs = 25 } = {}) {
+  for (let i = 0; i < warmup; i++) await fn()
+  const samples = []
+  for (let r = 0; r < reps; r++) {
+    forceGC()
+    const before = process.memoryUsage().heapUsed
+    for (let i = 0; i < runs; i++) await fn()
+    samples.push((process.memoryUsage().heapUsed - before) / runs)
+  }
+  samples.sort((a, b) => a - b)
+  return { value: samples[samples.length >> 1] }
+}
+
+// Streaming SSR: an end-to-end wrapStream drain (shell + 50 app chunks + closing
+// HTML) and the per-suspense-boundary head patch render. Both import the same
+// shipped dist as the other benches. Tolerate absence on older base refs.
+async function streamingBenches() {
+  let streamServer
+  try {
+    streamServer = await dist('stream/server.mjs')
+  }
+  catch (e) {
+    // skip only when the base ref predates the streaming dist; surface anything else
+    if (e?.code === 'MODULE_NOT_FOUND' || e?.code === 'ERR_MODULE_NOT_FOUND')
+      return []
+    throw e
+  }
+  const { createStreamableHead, prepareStreamingTemplate, renderSSRHeadSuspenseChunk, wrapStream } = streamServer
+
+  const STREAM_TEMPLATE = '<!DOCTYPE html><html><head><title>Bench</title></head><body><div id="app"><!--app-html--></div></body></html>'
+  const STREAM_CHUNK = new TextEncoder().encode('<div class="product"><h2>Wireless Headphones</h2><p>Premium sound quality with noise cancellation.</p><span class="price">$79.99</span></div>')
+
+  const makeAppStream = (chunks) => {
+    let i = 0
+    return new ReadableStream({
+      pull(controller) {
+        if (i++ < chunks)
+          controller.enqueue(STREAM_CHUNK)
+        else
+          controller.close()
+      },
+    })
+  }
+
+  const drainWrappedStream = async () => {
+    const { head } = createStreamableHead()
+    head.push({
+      title: 'Streaming bench',
+      meta: [{ name: 'description', content: 'streaming perf' }],
+    })
+    const reader = wrapStream(head, makeAppStream(50), STREAM_TEMPLATE).getReader()
+    while (!(await reader.read()).done)
+      ;
+  }
+
+  // per-boundary head patch: 5 entries pushed then flushed, like a suspense chunk
+  const { head: chunkHead } = createStreamableHead()
+  chunkHead.push({ title: 'Shell' })
+  prepareStreamingTemplate(chunkHead, STREAM_TEMPLATE)
+  let boundary = 0
+  const renderSuspenseChunk = () => {
+    for (let j = 0; j < 5; j++) {
+      chunkHead.push({
+        title: `Chunk ${boundary}-${j}`,
+        meta: [{ name: 'description', content: `chunk ${boundary}-${j}` }],
+      })
+    }
+    boundary++
+    renderSSRHeadSuspenseChunk(chunkHead)
+  }
+
+  const wrapTimes = await measureTimesAsync(drainWrappedStream, { warmup: 50, reps: 30, runs: 100 })
+  const wrapAlloc = await measureAllocAsync(drainWrappedStream)
+  const chunkTimes = measureTimes(renderSuspenseChunk, { reps: 30, runs: 120 })
+  const chunkAlloc = measureAlloc(renderSuspenseChunk, { reps: 20, runs: 40 })
+
+  return [
+    { id: 'stream-wrap-cpu', name: 'Streaming wrapStream drain (CPU)', kind: 'time', value: wrapTimes.cpu.value, rme: wrapTimes.cpu.rme },
+    { id: 'stream-wrap-wall', name: 'Streaming wrapStream drain (wall)', kind: 'time', value: wrapTimes.wall.value, rme: wrapTimes.wall.rme, informational: true },
+    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value },
+    { id: 'stream-chunk-cpu', name: 'Streaming suspense chunk (CPU)', kind: 'time', value: chunkTimes.cpu.value, rme: chunkTimes.cpu.rme },
+    { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value },
+  ]
+}
+
 if (typeof globalThis.gc !== 'function')
   throw new TypeError('Run with node --expose-gc so allocation can be measured.')
 
@@ -259,6 +363,7 @@ const result = {
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value },
+    ...await streamingBenches(),
     ...await csrBenches(),
   ],
 }
