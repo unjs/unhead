@@ -206,6 +206,20 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
       ])).toBeUndefined()
     })
 
+    it('retains calls above a hoisted local declaration', async () => {
+      // Function declarations hoist: this call targets the local function
+      // below it, not an auto-import.
+      expect(await transform([
+        'useServerHead({ title: \'Hello\' })',
+        'function useServerHead(input) { return input }',
+      ])).toBeUndefined()
+
+      expect(await transform([
+        'useServerSeoMeta({ description: \'World\' })',
+        'var useServerSeoMeta = (input) => input',
+      ])).toBeUndefined()
+    })
+
     it('retains shadowed names in nested scopes', async () => {
       expect(await transform([
         'export function setup(useServerHead) {',

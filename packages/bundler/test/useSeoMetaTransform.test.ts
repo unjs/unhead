@@ -55,6 +55,15 @@ describe('useSeoMetaTransform', () => {
     expect(await transform(couldTransform, 'test.vue?type=template')).toBeUndefined()
   })
 
+  it('retains calls above a hoisted local declaration', async () => {
+    // Function declarations hoist: this call targets the local function
+    // below it, not an auto-import.
+    expect(await transform([
+      'useSeoMeta({ title: \'Hello\' })',
+      'function useSeoMeta(input) { return input }',
+    ])).toBeUndefined()
+  })
+
   it('preserves context for dynamic regexps', async () => {
     expect(
       await transform([

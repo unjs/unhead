@@ -105,9 +105,15 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         if (!shouldTransformCode(code))
           return
 
-        const scopeTracker = new ScopeTracker()
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseSync(id, code)
         const s = new MagicString(code)
+
+        // Pre-pass: collect all declarations first so hoisted locals
+        // (`function useSeoMeta() {}` below a call site) are visible when
+        // the rewrite walk visits earlier statements.
+        walk(ast.program, { scopeTracker })
+        scopeTracker.freeze()
 
         // Track which ImportDeclarations need specifier rewrites
         // Key: ImportDeclaration node, Value: set of original imported names that were transformed

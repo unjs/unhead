@@ -96,9 +96,15 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
           return
         }
 
-        const scopeTracker = new ScopeTracker()
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseSync(id, code)
         const s = new MagicString(code)
+
+        // Pre-pass: collect all declarations first so hoisted locals
+        // (`function useServerHead() {}` below a call site) are visible when
+        // the removal walk visits earlier statements.
+        walk(ast.program, { scopeTracker })
+        scopeTracker.freeze()
 
         walk(ast.program, {
           scopeTracker,
