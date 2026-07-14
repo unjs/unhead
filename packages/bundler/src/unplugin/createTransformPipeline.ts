@@ -412,7 +412,13 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           return
         }
 
-        const scopeTracker = new ScopeTracker()
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
+        // Pre-pass: collect all declarations first so hoisted locals
+        // (`function useServerHead() {}` below a call site) are visible when
+        // the phase walk visits earlier statements.
+        walk(ast.program, { scopeTracker })
+        scopeTracker.freeze()
+
         const edits: PipelineEdit[] = []
 
         // Ranges claimed by the treeshake phase. Statements removed on the
