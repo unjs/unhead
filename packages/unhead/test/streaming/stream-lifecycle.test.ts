@@ -95,7 +95,7 @@ describe('wrapStream lifecycle', () => {
     expect(cancelSpy).toHaveBeenCalledWith('user-abort')
   })
 
-  it('releases the upstream lock even when upstream cancel rejects', async () => {
+  it('swallows a rejecting upstream cancel and releases the lock', async () => {
     const upstream = new ReadableStream<Uint8Array>({
       pull(controller) {
         controller.enqueue(encoder.encode('x'))
@@ -108,9 +108,57 @@ describe('wrapStream lifecycle', () => {
     const wrapped = wrapStream(makeHead(), upstream, TEMPLATE)
     const reader = wrapped.getReader()
     await reader.read() // shell
-    await expect(reader.cancel('user-abort')).rejects.toThrow('cancel failed')
+    // A cancelling consumer has walked away; the upstream rejection must not
+    // surface (fire-and-forget cancel() would otherwise crash the process
+    // with an unhandled rejection) and the lock must still be released.
+    await expect(reader.cancel('user-abort')).resolves.toBeUndefined()
 
     expect(upstream.locked).toBe(false)
+  })
+
+  it('cancelling as the upstream errors mid-read resolves without an unhandled rejection', async () => {
+    const boom = new Error('upstream boom')
+    let upstreamController!: ReadableStreamDefaultController<Uint8Array>
+    const upstream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        upstreamController = controller
+      },
+      // Never resolves: keeps the wrapped stream's pull() awaiting read().
+      pull: () => new Promise<void>(() => {}),
+    })
+
+    const unhandled: unknown[] = []
+    const onUnhandled = (reason: unknown) => unhandled.push(reason)
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      const wrapped = wrapStream(makeHead(), upstream, TEMPLATE)
+      const reader = wrapped.getReader()
+      await reader.read() // shell
+      const inFlight = reader.read() // pull() awaits upstream
+      upstreamController.error(boom)
+      // cancel() lands before pull's rejection continuation: it hits the
+      // already-errored upstream, whose reader.cancel() rejects with `boom`.
+      // That rejection must be swallowed, not surfaced to the canceller.
+      await expect(reader.cancel('client-disconnect')).resolves.toBeUndefined()
+      await expect(inFlight).resolves.toEqual({ done: true, value: undefined })
+
+      await new Promise(resolve => setTimeout(resolve, 20))
+      expect(unhandled).toEqual([])
+    }
+    finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
+
+  it('returns an errored stream (no sync throw) when the upstream is already locked, entries retained', async () => {
+    const head = makeHead()
+    const sizeBefore = head.entries.size
+    const upstream = streamFrom(['x'])
+    upstream.getReader() // lock it before wrapping
+
+    const wrapped = wrapStream(head, upstream, TEMPLATE)
+    await expect(readAll(wrapped)).rejects.toThrow()
+    expect(head.entries.size).toBe(sizeBefore)
   })
 
   it('cancelling while a pull is in flight is safe and cancels upstream once', async () => {
@@ -187,24 +235,24 @@ describe('wrapStream lifecycle', () => {
 })
 
 describe('entry retention on failure', () => {
-  it('renderSSRHeadSuspenseChunk: cyclic input throws, entries retained, retry succeeds', async () => {
+  it('renderSSRHeadSuspenseChunk: cyclic input throws once, bad entry dropped, valid entries survive', async () => {
     const { head } = createStreamableHead()
     head.push({ title: 'Shell' })
     renderSSRHeadShell(head, '<html><head></head><body>')
 
     const cyclic: any = { title: 'Bad' }
     cyclic.self = cyclic
-    const badEntry = head.push(cyclic)
+    head.push(cyclic)
+    head.push({ title: 'Good' })
 
     expect(() => renderSSRHeadSuspenseChunk(head)).toThrow()
-    // Entries must survive the failed serialization for retry.
+    // The unserializable entry is dropped so it can't poison every later
+    // chunk; the valid entry survives and flushes on the next chunk.
     expect(head.entries.size).toBe(1)
 
-    // Remove the bad entry and retry.
-    badEntry.dispose()
-    head.push({ title: 'Good' })
     const result = renderSSRHeadSuspenseChunk(head)
     expect(result).toContain('Good')
+    expect(result).not.toContain('Bad')
     expect(head.entries.size).toBe(0)
   })
 
