@@ -3,8 +3,8 @@ import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload 
 import type { VueHeadClient } from '../types'
 import {
   createStreamableHead as _createStreamableHead,
-  prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
+  wrapStream,
 } from 'unhead/stream/server'
 import { vueInstall } from '../install'
 import { VueResolver } from '../resolver'
@@ -61,46 +61,15 @@ export function createStreamableHead(
   const vueHead = head as VueHeadClient<any, SSRHeadPayload>
   vueHead.install = vueInstall(vueHead)
 
-  const encoder = new TextEncoder()
-
-  const flushPatch = (controller: ReadableStreamDefaultController<Uint8Array>) => {
+  const flushPatch = () => {
     const patch = renderSSRHeadSuspenseChunk(vueHead)
-    if (patch)
-      controller.enqueue(encoder.encode(`<script>${patch};document.currentScript.remove()</script>`))
+    return patch ? `<script>${patch};document.currentScript.remove()</script>` : ''
   }
 
   return {
     head: vueHead,
     wrapStream: (stream, template) =>
-      new ReadableStream<Uint8Array>({
-        async start(controller) {
-          try {
-            const { shell, end } = prepareStreamingTemplate(vueHead, template)
-            controller.enqueue(encoder.encode(shell))
-
-            const reader = stream.getReader()
-            try {
-              while (true) {
-                const { done, value } = await reader.read()
-                if (done)
-                  break
-                controller.enqueue(value)
-                flushPatch(controller)
-              }
-            }
-            finally {
-              reader.releaseLock()
-            }
-
-            flushPatch(controller)
-            controller.enqueue(encoder.encode(end))
-            controller.close()
-          }
-          catch (error) {
-            controller.error(error)
-          }
-        },
-      }),
+      wrapStream(vueHead, stream, template, undefined, { flushChunk: flushPatch }),
   }
 }
 
