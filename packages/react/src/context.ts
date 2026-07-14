@@ -1,7 +1,7 @@
 import type { Unhead } from 'unhead/types'
 import { createContext } from 'react'
 
-export const UnheadContext = createContext<Unhead | null>(null)
+export const UnheadContext = /* @__PURE__ */ createContext<Unhead | null>(null)
 
 /**
  * React contexts cannot express the render-result type existentially. Keep the

@@ -12,6 +12,9 @@ import { createUnhead } from '../unhead'
  * v3 equivalents (`innerHTML`, `key`, `tagPosition`, `tagPriority`).
  *
  * Intended as a temporary migration aid. Remove once all call sites use the v3 API.
+ *
+ * @deprecated Will be removed in v4. Migrate tag props to their v3 equivalents
+ * (`innerHTML`, `key`, `tagPosition`, `tagPriority`) directly and drop this plugin.
  */
 export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'deprecations',
@@ -50,17 +53,31 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
 /**
  * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
  * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ *
+ * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
+ * `createHead`/`createServerHead` from `unhead/client`/`unhead/server` without this plugin set.
  */
 export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin] as const
 
-/** @deprecated Unsafe migration-only global; prefer passing a head explicitly. */
+/**
+ * @deprecated Will be removed in v4. This global singleton exists only to support the legacy
+ * `getActiveHead()` API; use the `Unhead` instance returned by `createHead`/`createServerHead` directly instead.
+ */
 export const activeHead: { value: unknown } = { value: null }
 
-/** @deprecated Unsafe migration-only lookup; the requested generics are caller assertions. */
+/**
+ * @deprecated Will be removed in v4. Store and use the `Unhead` instance returned by
+ * `createHead`/`createServerHead` directly instead of reading it from a global singleton.
+ * The requested generics are caller assertions.
+ */
 export function getActiveHead<T extends object = ResolvableHead, RenderResult = unknown>(): Unhead<T, RenderResult> | null {
   return activeHead.value as Unhead<T, RenderResult> | null
 }
 
+/**
+ * @deprecated Will be removed in v4. Use `createHead` from `unhead/client` instead; register
+ * `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility.
+ */
 export function createHead<T extends object = ResolvableHead>(options: CreateClientHeadOptions<T, boolean> = {}): Unhead<T, boolean> {
   const head = _createClientHead<T>({
     ...options,
@@ -74,9 +91,13 @@ type CreateLegacyServerHeadArgs<Input extends object> = ResolvableHead extends I
   ? [options?: Omit<CreateServerHeadOptions<Input>, 'propResolvers'>]
   : [options: Omit<CreateServerHeadOptions<Input>, 'propResolvers'> & { disableDefaults: true }]
 
+/** @deprecated Will be removed in v4. Use `createServerHead` from `unhead/server` instead; register `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility. */
 export function createServerHead(options?: Omit<CreateServerHeadOptions<ResolvableHead>, 'propResolvers'>): Unhead<ResolvableHead, SSRHeadPayload>
+/** @deprecated Will be removed in v4. Use `createServerHead` from `unhead/server` instead; register `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility. */
 export function createServerHead<T extends object>(options: Omit<CreateServerHeadOptions<T>, 'propResolvers'> & { disableDefaults: true }): Unhead<T, SSRHeadPayload>
+/** @deprecated Will be removed in v4. Use `createServerHead` from `unhead/server` instead; register `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility. */
 export function createServerHead<T extends object>(options: Omit<CreateServerHeadOptions<T>, 'propResolvers'>): Unhead<T | ResolvableHead, SSRHeadPayload>
+/** @deprecated Will be removed in v4. Use `createServerHead` from `unhead/server` instead; register `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility. */
 export function createServerHead<T extends object = ResolvableHead>(...args: CreateLegacyServerHeadArgs<T>): Unhead<T, SSRHeadPayload>
 export function createServerHead<T extends object = ResolvableHead>(options: Omit<CreateServerHeadOptions<T>, 'propResolvers'> = {}): Unhead<T, SSRHeadPayload> {
   const head = _createServerHead<T>({
@@ -87,4 +108,7 @@ export function createServerHead<T extends object = ResolvableHead>(options: Omi
   return head
 }
 
+/**
+ * @deprecated Will be removed in v4. Use `createUnhead` from `unhead` directly.
+ */
 export const createHeadCore = createUnhead

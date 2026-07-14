@@ -1,7 +1,7 @@
 {
   "name": "unhead-monorepo",
   "type": "module",
-  "version": "3.1.7",
+  "version": "3.1.8",
   "private": "true",
   "packageManager": "pnpm@11.11.0",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
@@ -13,7 +13,7 @@
   },
   "scripts": {
     "bundle-size:sync": "pnpm run build && pnpm run test:bundle-size && pnpm run test:vue-bundle-size && pnpm run test:react-bundle-size && pnpm run test:schema-org-bundle-size && bun bench/bundle/analyze.ts && bun bench/bundle/update.ts",
-    "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts",
+    "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/client-sc-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts && unbuild bench/bundle --config bench/bundle/server-sc-build.config.ts",
     "test:vue-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-server-build.config.ts",
     "test:react-bundle-size": "unbuild bench/bundle --config bench/bundle/react-client-build.config.ts && unbuild bench/bundle --config bench/bundle/react-client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/react-server-build.config.ts",
     "test:schema-org-bundle-size": "unbuild bench/bundle --config bench/bundle/schema-org-build.config.ts",
@@ -31,6 +31,7 @@
     "lint": "eslint . --fix",
     "benchmark": "vitest bench",
     "test:attw": "pnpm --filter './packages/**' test:attw",
+    "test:import-inert": "node scripts/check-import-inert.mjs",
     "typecheck": "vue-tsc --noEmit",
     "lint:docs": "pnpx markdownlint-cli ./docs && pnpx case-police 'docs/**/*.md' *.md",
     "lint:docs:fix": "pnpx markdownlint-cli ./docs --fix && pnpx case-police 'docs/**/*.md' *.md --fix",
@@ -51,6 +52,7 @@
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
+    "rolldown": "catalog:",
     "rollup-plugin-visualizer": "catalog:",
     "tinyexec": "catalog:",
     "typescript": "catalog:",
