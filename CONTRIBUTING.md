@@ -1,6 +1,50 @@
 # Contributing to Unhead
 
-## Side Effects & Module State Policy
+Thanks for taking the time to contribute. Issues and pull requests are welcome.
+
+## Setup
+
+Unhead is a pnpm monorepo. You'll need Node 20+ and [pnpm](https://pnpm.io) (the version is pinned via `packageManager`, so `corepack enable` is enough).
+
+```bash
+git clone https://github.com/unjs/unhead.git
+cd unhead
+pnpm install
+pnpm build
+```
+
+`pnpm stub` links packages in dev mode so cross-package changes are picked up without rebuilding.
+
+## Project structure
+
+- `packages/unhead` is the core: SSR/DOM rendering, tag normalization, dedupe, plugins.
+- `packages/{vue,react,svelte,solid-js,angular}` are the framework bindings.
+- `packages/schema-org` provides Schema.org graph support across frameworks.
+- `packages/bundler`, `packages/addons` hold build-time tooling (unplugin/vite).
+- `bench/` contains vitest benchmarks and the CI perf/bundle-size harnesses.
+- `docs/` is the documentation site content.
+
+## Development
+
+```bash
+pnpm test               # lint + vue-tsc + full vitest suite
+pnpm lint               # eslint with autofix
+vitest packages/unhead  # focused test runs
+pnpm test:import-inert  # side-effects check (see policy below)
+pnpm bundle-size:sync   # rebuild bundle-size baselines
+```
+
+For bug fixes, write the failing test first. Tests live in each package's `test/` directory; unit tests should not require a build, they run against `src`.
+
+## Pull requests
+
+- Target `main`.
+- Use conventional commit titles (`fix(vue): ...`, `feat: ...`, `chore: ...`). Scope by package where it makes sense.
+- Keep PRs focused; unrelated refactors make review slower.
+- CI runs lint, typecheck, tests, export snapshots, bundle-size analysis, and the import-inert check. All must be green.
+- Public API changes need a strong justification; export snapshots will flag them.
+
+## Side effects & module state policy
 
 Unhead runs in environments where module scope outlives the request: Cloudflare Workers isolates, warm AWS Lambda containers, long-lived Node/Bun/Deno servers. Module state is a process-global cache with unbounded lifetime. These rules are binding for all runtime packages and enforced in PR review.
 
@@ -35,10 +79,10 @@ The head instance is always explicit: created per request on the server, passed 
 - No `activeHead`-style singleton. v1 had one; it leaked heads between concurrent SSR requests and was removed in v2. Do not reintroduce it.
 - No unctx-style `globalThis` registries. The non-ALS mode is the v1 bug with a dependency; the AsyncLocalStorage mode adds `nodejs_compat` coupling and per-call overhead to buy back implicitness the API deliberately gave up. Unhead can always thread the instance, so ambient context is pure liability here.
 
-### Enforcement
-
-Rule 1 is enforced in CI: `pnpm test:import-inert` (`scripts/check-import-inert.mjs`) bundles a bare `import 'pkg/entry'` of every runtime entry from source with tree-shaking analysis forced on (the `sideEffects: false` claim is deliberately not trusted) and fails if the bundle is non-empty. Top-level factory calls that are pure but not provably so to a bundler must be annotated: `/* @__PURE__ */` at the call site (e.g. `createContext`, `createUnplugin`, `createFrameworkPlugin`) or `/* @__NO_SIDE_EFFECTS__ */` on the function declaration when every call is pure (e.g. `defineSchemaOrgResolver`, `createHead`).
-
 ### 4. Client singletons
 
 A lazily created client-only singleton (e.g. the react Helmet fallback head) is acceptable only when it throws on the server (`typeof window === 'undefined'`) and exists purely as a browser convenience where no provider is present.
+
+### Enforcement
+
+Rule 1 is enforced in CI: `pnpm test:import-inert` (`scripts/check-import-inert.mjs`) bundles a bare `import 'pkg/entry'` of every runtime entry from source with tree-shaking analysis forced on (the `sideEffects: false` claim is deliberately not trusted) and fails if the bundle is non-empty. Top-level factory calls that are pure but not provably so to a bundler must be annotated: `/* @__PURE__ */` at the call site (e.g. `createContext`, `createUnplugin`, `createFrameworkPlugin`) or `/* @__NO_SIDE_EFFECTS__ */` on the function declaration when every call is pure (e.g. `defineSchemaOrgResolver`, `createHead`).
