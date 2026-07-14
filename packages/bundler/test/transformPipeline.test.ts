@@ -80,6 +80,21 @@ const fixtures: Record<string, string> = {
     'import { useSeoMeta } from \'unhead\'',
     'useSeoMeta({ ogImage: { url: \'/og.png\', width: 800 }, twitterImage: [{ url: \'/t.png\', alt: \'hi\' }] })',
   ].join('\n'),
+  'seoMeta packed robots object': [
+    'import { useSeoMeta } from \'unhead\'',
+    'useSeoMeta({ title: \'Hello\', robots: { noindex: false, nofollow: true, maxSnippet: -1 } })',
+  ].join('\n'),
+  'seoMeta residual split': [
+    'import { useSeoMeta } from \'unhead\'',
+    'const flag = true',
+    'useSeoMeta({ title: \'Hello\', description: \'World\', robots: { noindex: flag } })',
+  ].join('\n'),
+  'seoMeta server residual split': [
+    'import { useServerSeoMeta } from \'unhead\'',
+    'const flag = true',
+    'useServerSeoMeta({ title: \'Hello\', description: \'World\', robots: { noindex: flag } })',
+    'console.log(\'kept\')',
+  ].join('\n'),
   'seoMeta server variant': [
     'import { useServerSeoMeta } from \'unhead\'',
     'const keep = useServerSeoMeta',
