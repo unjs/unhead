@@ -127,7 +127,7 @@ export type UnheadReactStreamingOptions = Pick<StreamingPluginOptions, 'mode'>
  * via unplugin. Consumers should prefer the unified per-bundler entries
  * at `@unhead/react/{vite,webpack,rspack,rollup}`.
  */
-export const unheadReactStreamingPlugin = createUnplugin<UnheadReactStreamingOptions | undefined>((options = {}) =>
+export const unheadReactStreamingPlugin = /* @__PURE__ */ createUnplugin<UnheadReactStreamingOptions | undefined>((options = {}) =>
   buildStreamingPluginOptions({
     framework: '@unhead/react',
     filter: FILTER_RE,
