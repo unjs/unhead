@@ -15,7 +15,7 @@ export type UnheadReactOptions = UnheadFrameworkOptions<UnheadReactStreamingOpti
  * export default defineConfig({ plugins: [react(), ...Unhead({ streaming: true }).vite()] })
  * ```
  */
-export const Unhead = createFrameworkPlugin<UnheadReactStreamingOptions>({
+export const Unhead = /* @__PURE__ */ createFrameworkPlugin<UnheadReactStreamingOptions>({
   framework: '@unhead/react',
   streamingPlugin: unheadReactStreamingPlugin,
 })
