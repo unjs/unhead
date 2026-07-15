@@ -6,6 +6,7 @@ export { FlatMetaPlugin } from './flatMeta' // optional
 export { InferSeoMetaPlugin } from './inferSeoMetaPlugin' // optional
 export { MinifyPlugin } from './minify' // optional
 export type { MinifyPluginOptions } from './minify'
+export { PromisesPlugin } from './promises' // optional
 export { SafeInputPlugin } from './safe' // optional
 export { TemplateParamsPlugin } from './templateParams' // optional
 export { ValidatePlugin } from './validate' // optional

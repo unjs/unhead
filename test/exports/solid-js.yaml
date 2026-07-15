@@ -20,6 +20,7 @@
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
+  PromisesPlugin: function
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
