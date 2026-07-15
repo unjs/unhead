@@ -257,6 +257,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _entryCount: number
+  /**
+   * Dedupes the async-hook-listener warning per instance.
+   * @internal
+   */
+  _warnedAsyncHook?: boolean
   // client-specific (optional)
   /**
    * @internal
