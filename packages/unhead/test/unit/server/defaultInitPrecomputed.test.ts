@@ -56,6 +56,15 @@ describe('default init precomputed tags', () => {
     expect(head.entries.get(1)!._tags).toBeUndefined()
   })
 
+  it('pending updates discard precomputed tags', () => {
+    const head = createHead()
+    const entry = head.entries.get(1)!
+    entry._pending = { htmlAttrs: { lang: 'fr' } }
+
+    expect(renderSSRHead(head).htmlAttrs).toBe(' lang="fr"')
+    expect(entry._precomputedTags).toBeUndefined()
+  })
+
   it('entries:normalize hook registered before first render still sees the default entry tags', () => {
     const head = createHead()
     const seen: string[] = []

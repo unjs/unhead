@@ -162,6 +162,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       e.input = e._pending
       delete e._pending
       delete e._tags
+      delete e._precomputedTags
     }
   }
   callHook(head, 'entries:resolve', { entries, ...ctx })
