@@ -33,8 +33,7 @@ export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
     // callHook never awaited this). Deliberately returns nothing: a returned
     // promise would defer any later-registered listeners past the render.
     'entries:resolve': (ctx) => {
-      for (const k in ctx.entries) {
-        const entry = ctx.entries[k]
+      for (const entry of ctx.entries) {
         if (!entry._promisesProcessed) {
           void walkPromises(entry.input).then(
             (val) => {
