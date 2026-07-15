@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { PromisesPlugin } from '../../../src/plugins/promises'
 import { createHead, renderSSRHead } from '../../../src/server'
 
-describe('PromisesPlugin', () => {
+describe('promisesPlugin', () => {
   it('does not defer later entries:resolve listeners', () => {
     const head = createHead({
       disableDefaults: true,
@@ -26,7 +26,7 @@ describe('PromisesPlugin', () => {
     head.push({ title: rejected } as any)
 
     renderSSRHead(head)
-    await rejected.catch(() => {})
+    await expect(rejected).rejects.toThrow('failed')
     await Promise.resolve()
 
     const entry = head.entries.values().next().value
