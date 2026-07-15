@@ -28,19 +28,19 @@ async function walkPromises(v: any): Promise<any> {
 export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'promises',
   hooks: {
-    // fire-and-forget: the resolve pipeline is synchronous, so resolved input
-    // is applied to the entry for the NEXT render (same behavior as before —
-    // callHook never awaited this). Deliberately returns nothing: a returned
-    // promise would defer any later-registered listeners past the render.
-    'entries:resolve': (ctx) => {
+    'entries:resolve': async (ctx) => {
+      const promises = []
       for (const k in ctx.entries) {
         if (!ctx.entries[k]._promisesProcessed) {
-          walkPromises(ctx.entries[k].input).then((val) => {
-            ctx.entries[k].input = val
-            ctx.entries[k]._promisesProcessed = true
-          })
+          promises.push(
+            walkPromises(ctx.entries[k].input).then((val) => {
+              ctx.entries[k].input = val
+              ctx.entries[k]._promisesProcessed = true
+            }),
+          )
         }
       }
+      await Promise.all(promises)
     },
   },
 })

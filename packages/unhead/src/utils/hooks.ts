@@ -10,18 +10,9 @@ export function createHooks<T extends CoreHeadHooks>(hooks?: Partial<T>): Hookab
   return instance
 }
 
-let warnedAsyncHook = false
-
 export function callHook(head: Unhead<any, any>, hook: string, ctx: any) {
   const hooks = (head.hooks as any)?._hooks?.[hook]
   if (!hooks?.length)
     return
-  const res: any = head.hooks?.callHook(hook as any, ctx)
-  // this is a synchronous pipeline: a listener returning a thenable is not
-  // awaited — later listeners run out of order and the result is dropped
-  if (res?.then && !warnedAsyncHook) {
-    warnedAsyncHook = true
-    console.warn(`[unhead] promise ignored: ${hook}`)
-  }
-  return res
+  return head.hooks?.callHook(hook as any, ctx)
 }

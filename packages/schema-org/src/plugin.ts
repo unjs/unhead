@@ -121,9 +121,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           for (const tag of tags)
             collectTag(tag)
         },
-        // must stay synchronous: a listener returning a promise defers any
-        // later-registered listeners past the render (see utils/hooks.ts)
-        'tags:resolve': (ctx) => {
+        'tags:resolve': async (ctx) => {
           // find the schema.org node, should be a single instance
           for (const k in ctx.tags) {
             const tag = ctx.tags[k]
