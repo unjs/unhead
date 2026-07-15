@@ -40,7 +40,7 @@ export interface PluginSchemaOrgOptions {
   trailingSlash?: boolean
 }
 
-export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> | Promise<Partial<MetaInput>> = () => ({}), options?: PluginSchemaOrgOptions) {
+export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta = {} as ResolvedMeta
@@ -121,8 +121,6 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           for (const tag of tags)
             collectTag(tag)
         },
-        // must stay synchronous: a listener returning a promise defers any
-        // later-registered listeners past the render (see utils/hooks.ts)
         'tags:resolve': (ctx) => {
           // find the schema.org node, should be a single instance
           for (const k in ctx.tags) {

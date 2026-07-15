@@ -2,7 +2,6 @@ import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput,
 import { createHead as _createClientHead } from '../client'
 import { AliasSortingPlugin } from '../plugins/aliasSorting'
 import { defineHeadPlugin } from '../plugins/defineHeadPlugin'
-import { PromisesPlugin } from '../plugins/promises'
 import { TemplateParamsPlugin } from '../plugins/templateParams'
 import { createHead as _createServerHead } from '../server'
 import { createUnhead } from '../unhead'
@@ -55,7 +54,7 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `unhead/client`/`unhead/server` without this plugin set.
  */
-export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, TemplateParamsPlugin, AliasSortingPlugin]
 
 /**
  * @deprecated Will be removed in v4. This global singleton exists only to support the legacy
