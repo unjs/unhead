@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseScriptInput, UseScriptOptions, UseScriptReturn, UseSeoMetaInput } from 'unhead/types'
+import type { ActiveHeadEntry, EventHandlerOptions, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseScriptInput, UseScriptOptions, UseScriptReturn, UseSeoMetaInput } from 'unhead/types'
 import { DestroyRef, effect, inject } from '@angular/core'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadInjectionToken } from './context'
@@ -108,7 +108,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb(() => baseOnLoaded(cb))
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb(() => baseOnError(cb))
+  script.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnLoaded(cb, options))
+  script.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnError(cb, options))
   return script
 }

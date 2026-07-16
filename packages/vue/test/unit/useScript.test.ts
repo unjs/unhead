@@ -255,6 +255,33 @@ describe('vue e2e scripts', () => {
     expect(calls).toEqual([])
   })
 
+  it('forwards keyed callback options to core', async () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const calls: string[] = []
+    const el = dom.window.document.createElement('div')
+    const app = createApp({
+      setup() {
+        const script = useScript({ src: '//vue-keyed.js' }, { trigger: 'manual', head })
+        script.onLoaded(() => {
+          calls.push('first')
+        }, { key: 'shared' })
+        script.onLoaded(() => {
+          calls.push('second')
+        }, { key: 'shared' })
+        return () => h('div')
+      },
+    })
+    app.mount(el)
+
+    const script = (head as any)._scripts['//vue-keyed.js']
+    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    await script._loadPromise
+
+    expect(calls).toEqual(['first'])
+    app.unmount()
+  })
+
   it('setupTriggerHandler race condition: old scope disposal should not abort new scope trigger', async () => {
     const dom = useDom()
     const head = createHead({

@@ -1,5 +1,6 @@
 import type {
   ActiveHeadEntry,
+  EventHandlerOptions,
   HeadEntryOptions,
   HeadSafe,
   Unhead,
@@ -63,8 +64,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const sideEffects: (() => void)[] = []
   // core's onLoaded/onError register by identity and return an identity-based
   // disposer; we only tie that disposer to the component lifecycle
-  const bind = (base: (cb: any) => () => void) => (cb: any) => {
-    const off = base(cb)
+  const bind = (base: (cb: any, options?: EventHandlerOptions) => () => void) => (cb: any, options?: EventHandlerOptions) => {
+    const off = base(cb, options)
     sideEffects.push(off)
     return () => {
       const idx = sideEffects.indexOf(off)

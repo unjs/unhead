@@ -1,4 +1,4 @@
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptOptions as BaseUseScriptOptions, EventHandlerOptions, ScriptInstance, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
   GenericScript,
@@ -45,8 +45,8 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   // core's onLoaded/onError already register the callback by identity and return
   // an identity-based disposer; we only tie that disposer to the Vue scope so the
   // callback is removed when the owning component unmounts
-  const bind = (base: (cb: any) => () => void) => (cb: any) => {
-    const off = base(cb)
+  const bind = (base: (cb: any, options?: EventHandlerOptions) => () => void) => (cb: any, options?: EventHandlerOptions) => {
+    const off = base(cb, options)
     onScopeDispose(off)
     return off
   }
