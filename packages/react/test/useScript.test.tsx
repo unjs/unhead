@@ -253,4 +253,34 @@ describe('react useScript', () => {
     expect(spread.load).toBe(sharedScript.load)
     expect(spread.onLoaded).toBe(facade!.onLoaded)
   })
+
+  it('preserves an async callback result', async () => {
+    const head = createHead()
+    let called = false
+
+    function Page() {
+      const script = useScript('//react-async-callback.js', { trigger: 'manual', head })
+      script.onLoaded(async () => {
+        await Promise.resolve()
+        called = true
+      })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const sharedScript = getScript(head, '//react-async-callback.js')
+    const result = sharedScript._cbs.loaded![0]({})
+
+    expect(result).toBeInstanceOf(Promise)
+    await result
+    expect(called).toBe(true)
+  })
 })

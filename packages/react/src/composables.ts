@@ -218,7 +218,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         if (!record.active)
           return
         record.active = false
-        cb(...args)
+        return cb(...args)
       },
       key,
       options,

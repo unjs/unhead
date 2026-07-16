@@ -367,14 +367,16 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         let cleanup: void | (() => void)
         abortController.signal.addEventListener('abort', () => {
           script._triggerAbortControllers?.delete(abortController)
-          cleanup?.()
+          if (typeof cleanup === 'function')
+            cleanup()
           cleanup = undefined
         }, { once: true })
         try {
           cleanup = trigger(script.load)
           // A trigger may call load synchronously before returning its disposer.
           if (abortController.signal.aborted) {
-            cleanup?.()
+            if (typeof cleanup === 'function')
+              cleanup()
             cleanup = undefined
           }
         }

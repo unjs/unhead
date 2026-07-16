@@ -307,6 +307,19 @@ describe('useScript events', () => {
     expect(instance._triggerAbortControllers?.size).toBe(0)
   })
 
+  it('ignores non-callable function trigger cleanup values', () => {
+    const head = createHead()
+
+    expect(() => useScript(head, '/invalid-function-cleanup.js', {
+      trigger: ((load: () => void) => {
+        load()
+        return Promise.resolve()
+      }) as any,
+    })).not.toThrow()
+
+    expect(head._scripts?.['/invalid-function-cleanup.js']?.status).toBe('loading')
+  })
+
   it('removes partial lifecycle state when a function trigger throws', () => {
     const head = createHead()
     let signal!: AbortSignal
