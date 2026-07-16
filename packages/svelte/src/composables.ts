@@ -63,14 +63,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const sideEffects: (() => void)[] = []
   // core's onLoaded/onError register by identity and return an identity-based
   // disposer; we only tie that disposer to the component lifecycle
-  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
-    const off = base(cb) ?? (() => {})
+  const bind = (base: (cb: any) => () => void) => (cb: any) => {
+    const off = base(cb)
     sideEffects.push(off)
     return off
   }
-  // core returns an identity-based disposer at runtime although the type says void
-  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
-  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
+  const baseOnLoaded = script.onLoaded
+  const baseOnError = script.onError
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = bind(baseOnLoaded)
   script.onError = bind(baseOnError)

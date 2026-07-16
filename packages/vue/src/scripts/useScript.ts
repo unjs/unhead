@@ -45,14 +45,13 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   // core's onLoaded/onError already register the callback by identity and return
   // an identity-based disposer; we only tie that disposer to the Vue scope so the
   // callback is removed when the owning component unmounts
-  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
-    const off = base(cb) ?? (() => {})
+  const bind = (base: (cb: any) => () => void) => (cb: any) => {
+    const off = base(cb)
     onScopeDispose(off)
     return off
   }
-  // core returns an identity-based disposer at runtime although the type says void
-  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
-  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
+  const baseOnLoaded = script.onLoaded
+  const baseOnError = script.onError
   // if we have a scope we should make these callbacks reactive
   script.onLoaded = bind(baseOnLoaded)
   script.onError = bind(baseOnError)

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
@@ -102,9 +102,9 @@ describe('useScript events', () => {
       calls.push('a')
     }, {
       key: 'once',
-    }) as unknown as (() => void) | undefined
+    })
 
-    offA?.()
+    offA()
 
     instance.onLoaded(() => {
       calls.push('b')
@@ -125,11 +125,11 @@ describe('useScript events', () => {
       trigger: 'manual',
     })
 
-    const offA = instance.onLoaded(() => {}) as unknown as (() => void) | undefined
-    const offB = instance.onLoaded(() => {}) as unknown as (() => void) | undefined
+    const offA = instance.onLoaded(() => {})
+    const offB = instance.onLoaded(() => {})
 
-    offA?.()
-    offB?.()
+    offA()
+    offB()
 
     expect(instance._cbs.loaded).toHaveLength(0)
   })
@@ -260,5 +260,135 @@ describe('useScript events', () => {
     await Promise.resolve()
 
     expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('cleans function triggers when loading starts', () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    let load!: () => void
+    const instance = useScript(head, '/function-trigger.js', {
+      trigger: (fn) => {
+        load = fn
+        return cleanup
+      },
+    })
+
+    expect(instance._triggerAbortController?.signal.aborted).toBe(false)
+    load()
+
+    expect(cleanup).toHaveBeenCalledOnce()
+    expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('cleans function triggers that load synchronously', () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    const instance = useScript(head, '/sync-function-trigger.js', {
+      trigger: (load) => {
+        load()
+        return cleanup
+      },
+    })
+
+    expect(cleanup).toHaveBeenCalledOnce()
+    expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('waits for an async use() result before resolving load and firing onLoaded', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
+    const instance = useScript(head, '/async-script.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const onLoaded = vi.fn()
+    instance.onLoaded(onLoaded)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await Promise.resolve()
+    expect(onLoaded).not.toHaveBeenCalled()
+
+    const api = { ready: true as const }
+    resolve(api)
+    await expect(instance._loadPromise).resolves.toBe(api)
+    expect(onLoaded).toHaveBeenCalledOnce()
+    expect(onLoaded).toHaveBeenCalledWith(api)
+  })
+
+  it('aborts async use() and ignores late readiness when removed', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
+    let signal!: AbortSignal
+    const instance = useScript(head, '/removed-async-script.js', {
+      trigger: 'server',
+      use: (ctx) => {
+        signal = ctx.signal
+        return promise
+      },
+    })
+    const onLoaded = vi.fn()
+    instance.onLoaded(onLoaded)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    instance.remove()
+
+    expect(signal.aborted).toBe(true)
+    await expect(instance._loadPromise).resolves.toBe(false)
+    resolve({ ready: true })
+    await Promise.resolve()
+    expect(onLoaded).not.toHaveBeenCalled()
+  })
+
+  it('routes async use() rejection through the script error lifecycle', async () => {
+    const head = createHead()
+    const error = new Error('SDK readiness failed')
+    const instance = useScript(head, '/failed-async-script.js', {
+      trigger: 'server',
+      use: async () => {
+        throw error
+      },
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(error)
+  })
+
+  it('routes falsy async rejection reasons through the script error lifecycle', async () => {
+    const head = createHead()
+    const { promise, reject } = Promise.withResolvers<Record<string, never>>()
+    const instance = useScript(head, '/failed-falsy-script.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    reject(undefined)
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'undefined' }))
+  })
+
+  it('routes synchronous use() failures through the script error lifecycle', async () => {
+    const head = createHead()
+    const error = new Error('SDK adapter failed')
+    const instance = useScript(head, '/failed-sync-script.js', {
+      trigger: 'server',
+      use: () => {
+        throw error
+      },
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(error)
   })
 })

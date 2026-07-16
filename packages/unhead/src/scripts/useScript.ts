@@ -33,8 +33,32 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     prevScript.setupTriggerHandler(options.trigger)
     return prevScript
   }
+  const lifecycleController = new AbortController()
   options.beforeInit?.()
+  let initialUseResult: ReturnType<NonNullable<typeof options.use>>
+  let initialUseError: unknown
+  let initialUseFailed = false
+  try {
+    initialUseResult = !head.ssr && options.use
+      ? options.use({ signal: lifecycleController.signal })
+      : undefined
+  }
+  catch (error) {
+    initialUseFailed = true
+    initialUseError = error
+  }
+  const initialUseIsAsync = !!initialUseResult && typeof (initialUseResult as PromiseLike<T>).then === 'function'
+  const initialInstance = initialUseIsAsync ? null : (initialUseResult as T | null | undefined) || null
+  const initialUseOutcome = initialUseFailed
+    ? Promise.resolve({ error: initialUseError })
+    : initialUseIsAsync
+      ? Promise.resolve(initialUseResult).then(
+          api => ({ api }),
+          error => ({ error }),
+        )
+      : undefined
   const _events: { type: string, timestamp: number }[] = []
+  let loadError: Error | undefined
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
@@ -49,6 +73,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   const onerror = typeof input.onerror === 'function' ? input.onerror.bind(options.eventContext) : null
   input.onerror = (e: Event) => {
+    lifecycleController.abort()
     syncStatus('error')
     onerror?.(e)
   }
@@ -58,7 +83,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
-      return
+      return () => {}
     }
     let uniqueKey: string | undefined
     if (options?.key) {
@@ -98,26 +123,57 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return
     // resolve on a microtask rather than requestAnimationFrame: rAF is suspended while the
     // tab is hidden, which would defer onLoaded() callbacks indefinitely (unjs/unhead#771)
-    const emit = (api: T) => queueMicrotask(() => resolve(api))
+    const emit = (api: T) => queueMicrotask(() => {
+      // eslint-disable-next-line ts/no-use-before-define
+      if (lifecycleController.signal.aborted || script.status === 'removed')
+        resolve(false)
+      else
+        resolve(api)
+    })
+    let resolvingApi = false
     const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       // vue augmentation... not ideal
       const status = script.status
       if (script.id === id && (status === 'loaded' || status === 'error' || status === 'removed')) {
         if (status === 'loaded') {
-          if (typeof options.use === 'function') {
-            const api = options.use()
-            if (api) {
-              emit(api)
-            }
-          }
-          else {
+          if (resolvingApi)
+            return
+          resolvingApi = true
+          if (typeof options.use !== 'function') {
             emit({} as T)
+            unhook?.()
+            return
           }
+
+          const useOutcome = initialUseOutcome || (() => {
+            try {
+              return Promise.resolve(options.use!({ signal: lifecycleController.signal })).then(
+                api => ({ api }),
+                error => ({ error }),
+              )
+            }
+            catch (error) {
+              return Promise.resolve({ error })
+            }
+          })()
+          void useOutcome.then((outcome) => {
+            if (lifecycleController.signal.aborted || script.status === 'removed')
+              return
+            if ('error' in outcome) {
+              loadError = outcome.error instanceof Error ? outcome.error : new Error(String(outcome.error))
+              lifecycleController.abort(loadError)
+              syncStatus('error')
+            }
+            else if (outcome.api) {
+              emit(outcome.api)
+              unhook?.()
+            }
+          })
         }
         else {
           resolve(false) // failed to load
+          unhook?.()
         }
-        unhook?.()
       }
     })
   })
@@ -126,15 +182,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     _loadPromise: loadPromise,
     _events,
     _warmupStrategy: undefined as string | undefined,
-    instance: (!head.ssr && options?.use?.()) || null,
+    instance: initialInstance,
     proxy: null,
     id,
+    signal: lifecycleController.signal,
     src: input.src,
     input,
     status: 'awaitingLoad',
 
     remove() {
       const hadEntry = !!script.entry
+      lifecycleController.abort()
       // cancel all pending triggers
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
@@ -260,7 +318,32 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         script._triggerPromises.push(triggerPromise)
       }
       else if (typeof trigger === 'function') {
-        trigger(script.load)
+        // function triggers only work client side
+        if (head.ssr) {
+          return
+        }
+        const abortController = new AbortController()
+        script._triggerAbortControllers = script._triggerAbortControllers || new Set()
+        script._triggerAbortControllers.add(abortController)
+        script._triggerAbortController = abortController
+        let cleanup: void | (() => void)
+        abortController.signal.addEventListener('abort', () => {
+          script._triggerAbortControllers?.delete(abortController)
+          cleanup?.()
+          cleanup = undefined
+        }, { once: true })
+        try {
+          cleanup = trigger(script.load)
+          // A trigger may call load synchronously before returning its disposer.
+          if (abortController.signal.aborted) {
+            cleanup?.()
+            cleanup = undefined
+          }
+        }
+        catch (error) {
+          abortController.abort()
+          throw error
+        }
       }
     },
     _cbs,
@@ -275,7 +358,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       }
       else {
         if (script.status === 'error')
-          _cbs.error?.forEach(cb => cb())
+          _cbs.error?.forEach(cb => cb(loadError))
         _cbs.loaded = null
         _cbs.error = null
       }
@@ -284,7 +367,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   script.setupTriggerHandler(options.trigger)
   if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
+    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)

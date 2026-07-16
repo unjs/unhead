@@ -19,4 +19,21 @@ describe('useScript', () => {
     expectTypeOf(instance.proxy.test).parameter(0).toBeString()
     expectTypeOf(instance.proxy.test).returns.toBeVoid()
   })
+
+  it('types: inferred async use() context', () => {
+    const head = createServerHead()
+    const instance = useScript(head, '/script.js', {
+      async use({ signal }) {
+        expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
+        return {
+          test: (foo: string) => foo,
+        }
+      },
+    })
+
+    expectTypeOf(instance.proxy.test).toBeFunction()
+    expectTypeOf(instance.proxy.test).parameter(0).toBeString()
+    expectTypeOf(instance.signal).toEqualTypeOf<AbortSignal>()
+    expectTypeOf(instance.onLoaded(() => {})).toEqualTypeOf<() => void>()
+  })
 })

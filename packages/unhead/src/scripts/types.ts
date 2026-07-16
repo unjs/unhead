@@ -64,14 +64,27 @@ export type UseScriptInput = string | UseScriptResolvedInput
 
 export type UseFunctionType<T, U> = T extends {
   use: infer V
-} ? V extends (...args: any) => any ? ReturnType<V> : U : U
+} ? V extends (...args: any) => any ? Awaited<NonNullable<ReturnType<V>>> : U : U
 
 export type WarmupStrategy = false | 'preload' | 'preconnect' | 'dns-prefetch'
+
+export interface UseScriptContextOptions {
+  /**
+   * Aborted when the script is removed or fails to load.
+   */
+  signal: AbortSignal
+}
+
+export type UseScriptTrigger = (load: () => void) => void | (() => void)
 
 export interface ScriptInstance<T extends BaseScriptApi> {
   proxy: AsVoidFunctions<T>
   instance?: T
   id: string
+  /**
+   * Aborted when the script is removed or fails to load.
+   */
+  signal: AbortSignal
   status: Readonly<UseScriptStatus>
   entry?: ActiveHeadEntry<any>
   load: () => Promise<T>
@@ -79,8 +92,8 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   remove: () => boolean
   setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
   // cbs
-  onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => void
-  onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => void
+  onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => () => void
+  onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => () => void
   /**
    * @internal
    */
@@ -127,18 +140,19 @@ export type RecordingEntry
 
 export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**
-   * Resolve the script instance from the window.
+   * Resolve the script instance from the window. `load()` and `onLoaded()` wait
+   * for an async result, and the signal aborts if the script fails or is removed.
    */
-  use?: () => T | undefined | null
+  use?: (ctx: UseScriptContextOptions) => T | PromiseLike<T | undefined | null> | undefined | null
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
    * - `manual` - Load the script manually by calling `$script.load()`, exists only on the client.
    * - `Promise` - Load the script when the promise resolves, exists only on the client.
-   * - `Function` - Register a callback function to load the script, exists only on the client.
+   * - `Function` - Register a callback function to load the script, exists only on the client. It may return a cleanup function.
    * - `server` - Have the script injected on the server.
    */
-  trigger?: 'client' | 'server' | 'manual' | Promise<boolean | void> | ((fn: any) => any) | null
+  trigger?: 'client' | 'server' | 'manual' | Promise<boolean | void> | UseScriptTrigger | null
   /**
    * Add a preload or preconnect link tag before the script is loaded.
    */
