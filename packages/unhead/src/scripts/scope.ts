@@ -10,6 +10,20 @@ import type {
 type BaseScriptApi = Record<symbol | string, any>
 type Disposer = () => void
 
+/** Report cleanup failures without interrupting framework teardown. */
+function reportScopeError(error: unknown) {
+  const reportError = (globalThis as typeof globalThis & { reportError?: (error: unknown) => void }).reportError
+  if (reportError) {
+    reportError(error)
+  }
+  else {
+    queueMicrotask(() => {
+      throw error
+    })
+  }
+}
+
+/** Create an independently disposable consumer view of a shared script. */
 export function createScriptScope<T extends BaseScriptApi>(script: ScriptInstance<T>): ScriptScope<T> {
   const controller = new AbortController()
   const disposers = new Set<Disposer>()
@@ -46,9 +60,9 @@ export function createScriptScope<T extends BaseScriptApi>(script: ScriptInstanc
       }
     }
     if (errors.length === 1)
-      throw errors[0]
+      reportScopeError(errors[0])
     if (errors.length > 1)
-      throw new AggregateError(errors, 'Failed to dispose script scope')
+      reportScopeError(new AggregateError(errors, 'Failed to dispose script scope'))
   }
 
   const onScriptAbort = () => {
@@ -122,9 +136,7 @@ export function createScriptScope<T extends BaseScriptApi>(script: ScriptInstanc
             options.onError(error)
           }
           else {
-            queueMicrotask(() => {
-              throw error
-            })
+            reportScopeError(error)
           }
         }
         const runCleanup = () => {

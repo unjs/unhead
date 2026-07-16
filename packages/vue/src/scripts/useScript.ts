@@ -90,7 +90,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   return new Proxy(script, {
     get(_, key, a) {
       // we can't override status as it will break the unhead useScript API
-      return Reflect.get(_, key === 'status' ? '_statusRef' : key, a)
+      if (key === 'status') {
+        // @ts-expect-error internal shared status ref
+        return script.script._statusRef
+      }
+      return Reflect.get(_, key, a)
     },
   }) as any as UseScriptReturn<T>
 }

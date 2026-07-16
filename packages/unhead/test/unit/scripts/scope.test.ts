@@ -98,6 +98,34 @@ describe('script scope', () => {
     expect(cleanup).toHaveBeenCalledOnce()
   })
 
+  it('reports disposer errors without throwing from teardown', () => {
+    const head = createHead()
+    const script = useScript(head, '/cleanup-error.js', { trigger: 'manual' })
+    const scope = script.createScope()
+    const error = new Error('cleanup failed')
+    const reportError = vi.fn()
+    const errorGlobal = globalThis as unknown as { reportError?: (error: unknown) => void }
+    const originalReportError = errorGlobal.reportError
+    const hadOwnReportError = Object.hasOwn(globalThis, 'reportError')
+    errorGlobal.reportError = reportError
+
+    try {
+      script._setupTriggerHandler = () => () => {
+        throw error
+      }
+      scope.setupTriggerHandler('manual')
+
+      expect(() => scope.dispose()).not.toThrow()
+      expect(reportError).toHaveBeenCalledWith(error)
+    }
+    finally {
+      if (hadOwnReportError)
+        errorGlobal.reportError = originalReportError
+      else
+        delete errorGlobal.reportError
+    }
+  })
+
   it('adopts late async effect cleanup after disposal', async () => {
     const head = createHead()
     const script = useScript(head, '/async-effect.js', { trigger: 'manual' })

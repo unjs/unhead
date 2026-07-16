@@ -226,4 +226,31 @@ describe('react useScript', () => {
 
     expect(calls).toEqual(['first'])
   })
+
+  it('keeps the shared script API enumerable on the local facade', async () => {
+    const head = createHead()
+    let facade: ReturnType<typeof useScript> | undefined
+
+    function Page() {
+      facade = useScript('//react-enumerable.js', { trigger: 'manual', head })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const sharedScript = getScript(head, '//react-enumerable.js')
+    const spread = { ...facade! }
+
+    expect(facade).not.toBe(sharedScript)
+    expect(Object.keys(facade!)).toContain('load')
+    expect(spread.load).toBe(sharedScript.load)
+    expect(spread.onLoaded).toBe(facade!.onLoaded)
+  })
 })

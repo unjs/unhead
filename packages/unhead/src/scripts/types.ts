@@ -118,6 +118,11 @@ export interface ScriptScope<T extends BaseScriptApi> extends ScriptInstance<T> 
   readonly disposed: boolean
   onLoadedEffect: (fn: ScriptScopeEffect<T>, options?: ScriptScopeEffectOptions) => () => void
   dispose: () => void
+  /**
+   * Remove the shared script for every consumer. Use `dispose()` to release
+   * only the registrations and resources owned by this scope.
+   */
+  remove: () => boolean
 }
 
 export interface ScriptInstance<T extends BaseScriptApi> {

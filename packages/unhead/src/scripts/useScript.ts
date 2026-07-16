@@ -35,6 +35,7 @@ export function useScriptScope<T extends Record<symbol | string, any> = Record<s
   return _useScript(head, _input, _options, true) as UseScriptScopeReturn<T>
 }
 
+/** Resolve the shared script and optionally attach a consumer scope. */
 function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}

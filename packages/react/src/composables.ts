@@ -26,6 +26,43 @@ interface ScriptCallbackRecord {
   script: UseScriptReturn<any>
 }
 
+interface ScriptFacade {
+  onError: UseScriptReturn<any>['onError']
+  onLoaded: UseScriptReturn<any>['onLoaded']
+  script: UseScriptReturn<any>
+  value: UseScriptReturn<any>
+}
+
+/** Create a local callback facade while preserving the shared enumerable API. */
+function createScriptFacade(script: UseScriptReturn<any>): ScriptFacade {
+  const facade = {
+    onError: script.onError,
+    onLoaded: script.onLoaded,
+    script,
+  } as ScriptFacade
+  facade.value = new Proxy(script, {
+    get(target, key, receiver) {
+      if (key === 'onLoaded' || key === 'onError')
+        return facade[key]
+      return Reflect.get(target, key, receiver)
+    },
+    getOwnPropertyDescriptor(target, key) {
+      const descriptor = Reflect.getOwnPropertyDescriptor(target, key)
+      if (descriptor && (key === 'onLoaded' || key === 'onError'))
+        return { ...descriptor, value: facade[key] }
+      return descriptor
+    },
+    set(target, key, value, receiver) {
+      if (key === 'onLoaded' || key === 'onError') {
+        facade[key] = value
+        return true
+      }
+      return Reflect.set(target, key, value, receiver)
+    },
+  })
+  return facade
+}
+
 export function useUnhead(): Unhead {
   // fallback to react context
   const instance = useContext<Unhead | null>(UnheadContext)
@@ -105,7 +142,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   } as UseScriptOptions<T>
 
   const callbackRecords = useRef<ScriptCallbackRecord[]>([])
-  const scriptFacade = useRef<{ script: UseScriptReturn<any>, value: UseScriptReturn<any> } | null>(null)
+  const scriptFacade = useRef<ScriptFacade | null>(null)
   const isMounted = useRef(false)
   const renderId = useRef(0)
   const committedRenderId = useRef(0)
@@ -113,14 +150,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   // @ts-expect-error untyped
   const sharedScript = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
-  if (!scriptFacade.current || scriptFacade.current.script !== sharedScript) {
-    scriptFacade.current = {
-      script: sharedScript,
-      // Callback methods below are render-scoped. Keep them off the shared
-      // registry instance so sibling consumers cannot overwrite each other.
-      value: Object.create(sharedScript),
-    }
-  }
+  if (!scriptFacade.current || scriptFacade.current.script !== sharedScript)
+    scriptFacade.current = createScriptFacade(sharedScript)
   const script = scriptFacade.current.value
 
   useEffect(() => {
@@ -212,7 +243,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('loaded', cb, options)
-  script.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('error', cb, options)
+  scriptFacade.current.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('loaded', cb, options)
+  scriptFacade.current.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('error', cb, options)
   return script
 }
