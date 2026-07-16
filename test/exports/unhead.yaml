@@ -5,6 +5,7 @@
   useHead: function
   useHeadSafe: function
   useScript: function
+  useScriptScope: function
   useSeoMeta: function
 ./client:
   createDebouncedFn: function
@@ -43,6 +44,7 @@
 ./scripts:
   createSpyProxy: function
   useScript: function
+  useScriptScope: function
 ./server:
   capoTagWeight: function
   createHead: function
