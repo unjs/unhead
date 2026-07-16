@@ -1,5 +1,6 @@
 import type {
   ActiveHeadEntry,
+  EventHandlerOptions,
   HeadEntryOptions,
   HeadSafe,
   Unhead,
@@ -17,6 +18,8 @@ interface ScriptCallbackRecord {
   active: boolean
   handler: any
   key: 'loaded' | 'error'
+  off?: () => void
+  options?: EventHandlerOptions
   registered: boolean
   renderScoped: boolean
   renderId: number
@@ -156,25 +159,27 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   function registerScriptCallback(record: ScriptCallbackRecord) {
     if (!record.active || record.registered)
       return
-    const cbs = record.script._cbs[record.key]
-    if (!cbs) {
-      record.handler(record.script.instance)
-      return
+    const off = record.key === 'loaded'
+      ? record.script.onLoaded(record.handler, record.options)
+      : record.script.onError(record.handler, record.options)
+    if (record.active) {
+      record.off = off
+      record.registered = true
     }
-    cbs.push(record.handler)
-    record.registered = true
+    else {
+      off()
+    }
   }
 
   function unregisterScriptCallback(record: ScriptCallbackRecord) {
     if (!record.registered)
       return
-    const idx = record.script._cbs[record.key]?.indexOf(record.handler) ?? -1
-    if (idx !== -1)
-      record.script._cbs[record.key]?.splice(idx, 1)
+    record.off?.()
+    record.off = undefined
     record.registered = false
   }
 
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+  const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     const renderScoped = !(isMounted.current && committedRenderId.current === currentRenderId)
     const record: ScriptCallbackRecord = {
       active: true,
@@ -182,14 +187,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         if (!record.active)
           return
         record.active = false
-        record.registered = false
         cb(...args)
       },
       key,
+      options,
       registered: false,
       renderScoped,
       renderId: currentRenderId,
-      script,
+      script: sharedScript,
     }
     callbackRecords.current.push(record)
     if (isMounted.current && committedRenderId.current === currentRenderId)
@@ -207,7 +212,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  script.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('loaded', cb, options)
+  script.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('error', cb, options)
   return script
 }

@@ -195,4 +195,35 @@ describe('react useScript', () => {
 
     expect(initCalls).toBe(1)
   })
+
+  it('forwards keyed callback options to the shared script', async () => {
+    const head = createHead()
+    const calls: string[] = []
+
+    function Page() {
+      const script = useScript('//react-keyed.js', { trigger: 'manual', head })
+      script.onLoaded(() => {
+        calls.push('first')
+      }, { key: 'shared' })
+      script.onLoaded(() => {
+        calls.push('second')
+      }, { key: 'shared' })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const script = getScript(head, '//react-keyed.js')
+    script.load()
+    await flushLoad(head, '//react-keyed.js')
+
+    expect(calls).toEqual(['first'])
+  })
 })
