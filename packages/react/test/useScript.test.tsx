@@ -227,6 +227,41 @@ describe('react useScript', () => {
     expect(calls).toEqual(['first'])
   })
 
+  it('releases a keyed callback after it fires and is disposed', async () => {
+    const head = createHead()
+    const calls: string[] = []
+    let facade!: ReturnType<typeof useScript>
+
+    function Page() {
+      facade = useScript('//react-keyed-dispose.js', { trigger: 'manual', head })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const offFirst = facade.onLoaded(() => {
+      calls.push('first')
+    }, { key: 'shared' })
+    const script = getScript(head, '//react-keyed-dispose.js')
+    script.load()
+    await flushLoad(head, '//react-keyed-dispose.js')
+
+    offFirst()
+    const offSecond = facade.onLoaded(() => {
+      calls.push('second')
+    }, { key: 'shared' })
+
+    expect(calls).toEqual(['first', 'second'])
+    offSecond()
+  })
+
   it('keeps the shared script API enumerable on the local facade', async () => {
     const head = createHead()
     let facade: ReturnType<typeof useScript> | undefined

@@ -17,6 +17,7 @@ import { UnheadContext } from './context'
 interface ScriptCallbackRecord {
   active: boolean
   handler: any
+  invoked: boolean
   key: 'loaded' | 'error'
   off?: () => void
   options?: EventHandlerOptions
@@ -188,7 +189,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
 
   function registerScriptCallback(record: ScriptCallbackRecord) {
-    if (!record.active || record.registered)
+    if (!record.active || record.invoked || record.registered)
       return
     const off = record.key === 'loaded'
       ? record.script.onLoaded(record.handler, record.options)
@@ -215,11 +216,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     const record: ScriptCallbackRecord = {
       active: true,
       handler: (...args: any[]) => {
-        if (!record.active)
+        if (!record.active || record.invoked)
           return
-        record.active = false
+        record.invoked = true
         return cb(...args)
       },
+      invoked: false,
       key,
       options,
       registered: false,
