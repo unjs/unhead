@@ -82,13 +82,11 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
       const props = { ...prev.props }
+      const target = props as Record<string, unknown>
       for (const p in next.props) {
-        if (p === 'style')
-          props.style = new Map([...(prev.props.style || []), ...(next.props.style || [])])
-        else if (p === 'class')
-          props.class = new Set([...(prev.props.class || []), ...(next.props.class || [])])
-        else
-          props[p] = next.props[p]
+        target[p] = p === 'style'
+          ? new Map([...(prev.props.style || []), ...(next.props.style || [])])
+          : p === 'class' ? new Set([...(prev.props.class || []), ...(next.props.class || [])]) : next.props[p]
       }
       ctx.tagMap.set(k, { ...next, props })
     }
@@ -186,13 +184,16 @@ export function resolveTags<Input, RenderResult>(head: Unhead<Input, RenderResul
       }
       callHook(head, 'entries:normalize', normalizeCtx)
       for (let i = 0; i < normalizeCtx.tags.length; i++) {
-        const tagCtx = {
-          tag: normalizeCtx.tags[i],
-          entry: e,
-          resolvedOptions: head.resolvedOptions,
+        let t = normalizeCtx.tags[i]
+        if (hooks['tag:normalise']?.length) {
+          const tagCtx = {
+            tag: t,
+            entry: e,
+            resolvedOptions: head.resolvedOptions,
+          }
+          callHook(head, 'tag:normalise', tagCtx)
+          t = normalizeCtx.tags[i] = tagCtx.tag
         }
-        callHook(head, 'tag:normalise', tagCtx)
-        const t = normalizeCtx.tags[i] = tagCtx.tag
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
         t._d = dedupeKey(t)

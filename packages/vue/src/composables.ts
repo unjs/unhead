@@ -32,11 +32,9 @@ export function useHead(input?: UseHeadInput, options?: UseHeadOptions): ActiveH
 export function useHead<I = UseHeadInput>(input?: I, options: UseHeadOptions<I> = {}): ActiveHeadEntry<I> {
   const resolvedInput = arguments.length ? input as I : {} as I
   const head = (options.head || injectHead()) as Unhead<I>
-  const entryOptions = options as HeadEntryOptions<I>
-  const entry = head.ssr
-    ? head.push(resolvedInput, entryOptions)
-    : clientUseHead(head, resolvedInput, entryOptions)
-  return entry
+  return head.ssr
+    ? head.push(resolvedInput, options as HeadEntryOptions<I>)
+    : clientUseHead(head, resolvedInput, options as HeadEntryOptions<I>)
 }
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input: I, options: HeadEntryOptions<I> = {}): ActiveHeadEntry<I> {

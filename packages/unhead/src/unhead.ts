@@ -9,12 +9,9 @@ export function registerPlugin<Input, RenderResult>(head: Unhead<Input, RenderRe
   const key = plugin.key || String(head.plugins.size + 1)
   if (!head.plugins.get(key)) {
     head.plugins.set(key, plugin)
-    for (const k in plugin.hooks || {}) {
-      const key = k as keyof HeadHooks<Input, RenderResult>
-      const hook = plugin.hooks?.[key]
-      if (hook)
-        head.hooks?.hook(key, hook)
-    }
+    // Plugin hooks have already been checked against HeadHooks at the public boundary.
+    for (const k in plugin.hooks || {})
+      head.hooks?.hook(k as keyof HeadHooks<Input, RenderResult>, plugin.hooks![k as keyof HeadHooks<Input, RenderResult>]!)
   }
 }
 

@@ -22,12 +22,12 @@ export function propsToString(props: Record<string, unknown>) {
     if (typeof value !== 'string') {
       if (key === 'class') {
         let out = ''
-        for (const c of value as Iterable<unknown>) out += out ? ` ${String(c)}` : String(c)
+        for (const c of value as Iterable<string>) out += out ? ` ${c}` : c
         value = out
       }
       else if (key === 'style') {
         let out = ''
-        for (const [k, v] of value as Iterable<readonly [unknown, unknown]>) out += out ? `;${String(k)}:${String(v)}` : `${String(k)}:${String(v)}`
+        for (const [k, v] of value as Iterable<readonly [string, string]>) out += out ? `;${k}:${v}` : `${k}:${v}`
         value = out
       }
     }

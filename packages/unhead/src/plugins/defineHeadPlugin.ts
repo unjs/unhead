@@ -16,6 +16,6 @@ export function defineHeadPlugin<const Plugin>(plugin: Plugin, key?: string): Pl
   // expose the key statically so registerPlugin can dedupe a function plugin
   // before invoking its (potentially side-effecting) setup
   if (key && typeof plugin === 'function')
-    Object.assign(plugin, { key })
+    (plugin as unknown as { key: string }).key = key
   return plugin
 }

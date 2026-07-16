@@ -84,14 +84,13 @@ function withSideEffects<Input, HeadInput>(input: Input, options: AdapterHeadEnt
   const proxyRef = useRef<PollableHeadEntry<Input> | null>(null)
   if (!proxyRef.current) {
     proxyRef.current = {
-      get _i() { return entryRef.current?._i ?? -1 },
       patch: (newInput: Input) => { entryRef.current?.patch(newInput) },
       dispose: () => {
         entryRef.current?.dispose()
         entryRef.current = null
       },
       _poll: (rm?: boolean) => { (entryRef.current as PollableHeadEntry<Input> | null)?._poll?.(rm) },
-    }
+    } as PollableHeadEntry<Input>
   }
   return proxyRef.current
 }
@@ -99,19 +98,19 @@ function withSideEffects<Input, HeadInput>(input: Input, options: AdapterHeadEnt
 export function useHead<I = UseHeadInput>(input: NoInfer<I>, options?: AdapterHeadEntryOptions<I>): ActiveHeadEntry<I>
 export function useHead(input?: UseHeadInput, options?: HeadEntryOptions<UseHeadInput>): ActiveHeadEntry<UseHeadInput>
 export function useHead<I = UseHeadInput>(input: I = {} as I, options: AdapterHeadEntryOptions<I> = {}): ActiveHeadEntry<I> {
-  return withSideEffects(input, options, (head, value, entryOptions) => baseHead(head, value, entryOptions))
+  return withSideEffects(input, options, baseHead as HeadComposable<I, I>)
 }
 
 export function useHeadSafe(input?: HeadSafe, options?: DefaultAdapterHeadEntryOptions): ActiveHeadEntry<HeadSafe>
 export function useHeadSafe<HeadInput, RenderResult>(input: HeadSafe, options: CompatibleAdapterHeadEntryOptions<HeadInput, RenderResult>): ActiveHeadEntry<HeadSafe>
 export function useHeadSafe<HeadInput = UseHeadInput>(input: HeadSafe = {}, options: AdapterHeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<HeadSafe> {
-  return withSideEffects<HeadSafe, HeadInput>(input, options, (head, value, entryOptions) => baseHeadSafe(head as unknown as CompatibleHead<HeadInput>, value, entryOptions))
+  return withSideEffects<HeadSafe, HeadInput>(input, options, baseHeadSafe as unknown as HeadComposable<HeadSafe, HeadInput>)
 }
 
 export function useSeoMeta(input?: UseSeoMetaInput, options?: DefaultAdapterHeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput>
 export function useSeoMeta<HeadInput, RenderResult>(input: UseSeoMetaInput, options: CompatibleAdapterHeadEntryOptions<HeadInput, RenderResult>): ActiveHeadEntry<UseSeoMetaInput>
 export function useSeoMeta<HeadInput = UseHeadInput>(input: UseSeoMetaInput = {}, options: AdapterHeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<UseSeoMetaInput> {
-  return withSideEffects<UseSeoMetaInput, HeadInput>(input, options, (head, value, entryOptions) => baseSeoMeta(head as unknown as CompatibleHead<HeadInput>, value, entryOptions))
+  return withSideEffects<UseSeoMetaInput, HeadInput>(input, options, baseSeoMeta as unknown as HeadComposable<UseSeoMetaInput, HeadInput>)
 }
 
 export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> = {}): UseScriptReturn<T> {

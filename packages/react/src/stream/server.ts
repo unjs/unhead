@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream'
 import type { ReactElement, ReactNode } from 'react'
 import type { CreateStreamableServerHeadOptions, StreamableHeadContext } from 'unhead/stream/server'
-import type { CompatibleHead, ResolvableHead, UseHeadInput } from 'unhead/types'
+import type { CompatibleHead, ResolvableHead, Unhead, UseHeadInput } from 'unhead/types'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
 import {
@@ -9,7 +9,7 @@ import {
   prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
 } from 'unhead/stream/server'
-import { toUnheadContextValue, UnheadContext } from '../context'
+import { UnheadContext } from '../context'
 
 export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
   value: CompatibleHead<I, ResolvableHead, RenderResult>
@@ -17,7 +17,7 @@ export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
 }
 
 export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ value, children }: UnheadProviderProps<I, RenderResult>): ReactElement {
-  return createElement(UnheadContext.Provider, { value: toUnheadContextValue(value) }, children)
+  return createElement(UnheadContext.Provider, { value: value as unknown as Unhead }, children)
 }
 
 /**

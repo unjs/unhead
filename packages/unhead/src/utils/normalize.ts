@@ -6,23 +6,23 @@ import { isUnsafeKey } from './unsafeKey'
 
 function normalizeStyleClassProps(key: 'class', value: unknown): Set<string>
 function normalizeStyleClassProps(key: 'style', value: unknown): Map<string, string>
+function normalizeStyleClassProps(key: 'class' | 'style', value: unknown): Map<string, string> | Set<string>
 function normalizeStyleClassProps(
   key: 'class' | 'style',
   value: unknown,
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
-  const styles = new Map<string, string>()
-  const classes = new Set<string>()
+  const store = isStyle ? new Map<string, string>() : new Set<string>()
   const add = (v: unknown) => {
     if (!v)
       return
     const normalized = String(v)
     if (isStyle) {
       const i = normalized.indexOf(':')
-      i > 0 && styles.set(normalized.slice(0, i).trim(), normalized.slice(i + 1).trim())
+      i > 0 && (store as Map<string, string>).set(normalized.slice(0, i).trim(), normalized.slice(i + 1).trim())
     }
     else {
-      normalized.split(' ').forEach(c => c && classes.add(c))
+      normalized.split(' ').forEach(c => c && (store as Set<string>).add(c))
     }
   }
   if (typeof value === 'string') {
@@ -34,10 +34,10 @@ function normalizeStyleClassProps(
   else if (value && typeof value === 'object') {
     for (const k in value as Record<string, unknown>) {
       const v = (value as Record<string, unknown>)[k]
-      v && v !== 'false' && (isStyle ? styles.set(k.trim(), String(v)) : add(k))
+      v && v !== 'false' && (isStyle ? (store as Map<string, string>).set(k.trim(), String(v)) : add(k))
     }
   }
-  return isStyle ? styles : classes
+  return store
 }
 
 export function normalizeProps(tag: HeadTag, input: Record<string, unknown>): HeadTag
@@ -63,11 +63,8 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     if (value === null) {
       tag.props[key] = null
     }
-    else if (prop === 'class') {
-      tag.props.class = normalizeStyleClassProps('class', value)
-    }
-    else if (prop === 'style') {
-      tag.props.style = normalizeStyleClassProps('style', value)
+    else if (prop === 'class' || prop === 'style') {
+      (tag.props as Record<string, unknown>)[prop] = normalizeStyleClassProps(prop, value)
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {

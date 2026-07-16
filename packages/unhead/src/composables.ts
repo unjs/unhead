@@ -14,8 +14,7 @@ export function useHead<Input, RenderResult>(unhead: Unhead<Input, RenderResult>
 export function useHead<RenderResult>(unhead: Unhead<ResolvableHead, RenderResult>): ActiveHeadEntry<ResolvableHead>
 export function useHead<Input, RenderResult>(unhead: Record<never, never> extends Input ? Unhead<Input, RenderResult> : never): ActiveHeadEntry<Input>
 export function useHead<Input = ResolvableHead, RenderResult = unknown>(unhead: Unhead<Input, RenderResult>, input?: Input, options: HeadEntryOptions<Input> = {}): ActiveHeadEntry<Input> {
-  input = arguments.length > 1 ? input as Input : {} as Input
-  return unhead.push(input, options)
+  return unhead.push(arguments.length > 1 ? input as Input : {} as Input, options)
 }
 
 export function useHeadSafe<HeadInput, RenderResult>(unhead: CompatibleHead<HeadInput, ResolvableHead, RenderResult>, input: HeadSafe = {}, options: HeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<HeadSafe> {

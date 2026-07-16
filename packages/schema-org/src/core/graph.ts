@@ -46,7 +46,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
     // if it starts with http we need to match the full url
     let resolver = (s: string) => s
     if (id[0] === '#') {
-      resolver = (s: string) => resolveAsGraphKey(s)!
+      resolver = resolveAsGraphKey as (s: string) => string
     }
     else if (id[0] === '/') {
       resolver = (s: string) => s

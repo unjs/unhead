@@ -16,7 +16,9 @@ type InferableHeadRenderer<I, RenderResult = unknown> = (head: HeadRendererConte
 const createCoreHead: <I, RenderResult>(options: CustomClientHeadOptions<I, RenderResult>) => ClientUnhead<I, RenderResult> = _createHead
 
 function withVueInstall<I, RenderResult>(head: ClientUnhead<I, RenderResult>): VueHeadClient<I, RenderResult> {
-  return Object.assign(head, { install: vueInstall(head) })
+  const vueHead = head as VueHeadClient<I, RenderResult>
+  vueHead.install = vueInstall(head)
+  return vueHead
 }
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -28,12 +30,7 @@ export function createHead<I = UseHeadInput>(options?: DefaultClientHeadOptions<
 export function createHead<I = UseHeadInput>(options: CreateClientHeadOptions<I, void>): VueHeadClient<I, void>
 export function createHead<I = UseHeadInput, RenderResult = unknown>(options: CustomClientHeadOptions<I, RenderResult> | DefaultClientHeadOptions<I> = {}): VueHeadClient<I, RenderResult> | VueHeadClient<I, void> {
   const domRenderer = createDomRenderer()
-  if (options.render) {
-    return withVueInstall(createCoreHead(options))
-  }
-
-  const { render: _, ...rest } = options
-  let head: VueHeadClient<I, void>
+  let head: VueHeadClient<I, RenderResult>
   let renderId = 0
   const debouncedRenderer = () => {
     const id = ++renderId
@@ -42,7 +39,8 @@ export function createHead<I = UseHeadInput, RenderResult = unknown>(options: Cu
         domRenderer(head)
     }, 0)
   }
-  head = withVueInstall(createCoreHead<I, void>({ ...rest, render: debouncedRenderer }))
+  // `options.render` intentionally wins, matching the pre-generic runtime path.
+  head = withVueInstall(createCoreHead<I, RenderResult>({ render: debouncedRenderer, ...options } as CustomClientHeadOptions<I, RenderResult>))
   return head
 }
 

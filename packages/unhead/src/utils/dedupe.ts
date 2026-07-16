@@ -30,7 +30,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   if (t === 'meta') {
     for (const n of META_KEY_ATTRS) {
       const v = props[n]
-      if (typeof v === 'string' || typeof v === 'number') {
+      if (v !== undefined) {
         const value = String(v)
         return `meta:${value}${!value.includes(':') && !META_NOREWRITE_RE.test(value) && key ? `:key:${key}` : ''}`
       }
@@ -48,7 +48,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
 export function hashTag(tag: HeadTag): string {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   if (identity)
-    return typeof identity === 'string' ? identity : String(identity)
+    return String(identity)
   let hash = `${tag.tag}:`
   let separator = ''
   for (const key in tag.props) {

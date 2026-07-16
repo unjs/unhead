@@ -1,8 +1,8 @@
 // Renders the directional Performance section. A change is only surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
-//  - alloc: |Δ| > max(2%, 1 KiB). Bytes allocated per render is near-deterministic
-//           (~0 noise), so a tight gate surfaces the marginal gains time can't show.
+//  - alloc: |Δ| > max(2%, 1 KiB, 2× combined RME). Allocation-profiler samples
+//           are low-noise, and the RME gate prevents a marginal wobble from alarming.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
 // Wall time is `informational`: shown for reference but it never drives the verdict, because
@@ -71,7 +71,8 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
   else {
-    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > ALLOC_FLOOR_PCT)
+    const threshold = Math.max(ALLOC_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
+    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > threshold)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }

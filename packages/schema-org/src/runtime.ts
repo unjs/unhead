@@ -281,27 +281,22 @@ interface PotentialSchemaOrgHeadInput {
   }[]
 }
 
-function isSchemaOrgHeadInput(input: unknown): input is ReadonlySchemaOrgHeadInput<unknown> {
-  if (!input || typeof input !== 'object')
-    return false
-  const script = (input as { script?: unknown }).script
-  if (!Array.isArray(script) || script.length !== 1)
-    return false
-  const graph = script[0]
-  return !!graph
-    && typeof graph === 'object'
-    && graph.type === 'application/ld+json'
-    && graph.key === 'schema-org-graph'
-    && 'nodes' in graph
-}
-
 export function normalizeSchemaOrgInput<const Input extends ReadonlySchemaOrgHeadInput<unknown>>(input: Input): Input
 export function normalizeSchemaOrgInput<const Input extends PotentialSchemaOrgHeadInput>(input: Input): Input | SchemaOrgHeadInput<Input>
 export function normalizeSchemaOrgInput<T>(input: T): SchemaOrgHeadInput<T>
 export function normalizeSchemaOrgInput(input: unknown): SchemaOrgHeadInput<unknown> {
   // avoid over normalizing
-  if (isSchemaOrgHeadInput(input))
+  const script = (input as PotentialSchemaOrgHeadInput | null)?.script
+  const graph = script?.[0]
+  if (Array.isArray(script)
+    && script.length === 1
+    && graph
+    && typeof graph === 'object'
+    && graph.type === 'application/ld+json'
+    && graph.key === 'schema-org-graph'
+    && 'nodes' in graph) {
     return input as SchemaOrgHeadInput<unknown>
+  }
   return {
     script: [
       {

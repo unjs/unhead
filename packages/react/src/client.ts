@@ -3,7 +3,7 @@ import type { ClientUnhead } from 'unhead/client'
 import type { CompatibleHead, CreateClientHeadOptions as CoreCreateClientHeadOptions, HeadRenderer, ResolvableHead, Unhead, UseHeadInput } from 'unhead/types'
 import { createElement, useRef } from 'react'
 import { createHead as _createHead, createDebouncedFn, createDomRenderer } from 'unhead/client'
-import { toUnheadContextValue, UnheadContext } from './context'
+import { UnheadContext } from './context'
 
 export { renderDOMHead } from 'unhead/client'
 
@@ -23,14 +23,10 @@ export function createHead<I = UseHeadInput>(options?: DefaultClientHeadOptions<
 export function createHead<I = UseHeadInput>(options: CreateClientHeadOptions<I, void>): ClientUnhead<I, void>
 export function createHead<I = UseHeadInput, RenderResult = unknown>(options: CustomClientHeadOptions<I, RenderResult> | DefaultClientHeadOptions<I> = {}): ClientUnhead<I, RenderResult> | ClientUnhead<I, void> {
   const domRenderer = createDomRenderer()
-  if (options.render) {
-    return createCoreHead(options)
-  }
-
-  const { render: _, ...rest } = options
-  let head: ClientUnhead<I, void>
+  let head: ClientUnhead<I, RenderResult>
   const debouncedRenderer = createDebouncedFn(() => domRenderer(head), fn => setTimeout(fn, 0))
-  head = createCoreHead<I, void>({ ...rest, render: debouncedRenderer })
+  // `options.render` intentionally wins, matching the pre-generic runtime path.
+  head = createCoreHead<I, RenderResult>({ render: debouncedRenderer, ...options } as CustomClientHeadOptions<I, RenderResult>)
   return head
 }
 
@@ -43,9 +39,8 @@ export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ child
   const headRef = useRef<ClientUnhead<I, void> | null>(null)
   if (!head && !headRef.current)
     headRef.current = createHead<I>()
-  const contextHead = head
-    ? toUnheadContextValue(head)
-    : toUnheadContextValue(headRef.current!)
+  // React context is the deliberate generic-erasure boundary.
+  const contextHead = (head || headRef.current!) as unknown as Unhead
   return createElement(UnheadContext.Provider, { value: contextHead }, children)
 }
 
