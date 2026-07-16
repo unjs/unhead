@@ -90,6 +90,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     // eslint-disable-next-line ts/no-use-before-define
     callHook(head, 'script:updated', hookCtx)
   }
+  const failReadiness = (reason: unknown) => {
+    loadError = reason instanceof Error ? reason : new Error(String(reason))
+    lifecycleController.abort(loadError)
+    syncStatus('error')
+  }
   const onload = typeof input.onload === 'function' ? input.onload.bind(options.eventContext) : null
   input.onload = (e: Event) => {
     syncStatus('loaded')
@@ -184,18 +189,14 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
             if (lifecycleController.signal.aborted || script.status === 'removed')
               return
             if ('error' in outcome) {
-              loadError = outcome.error instanceof Error ? outcome.error : new Error(String(outcome.error))
-              lifecycleController.abort(loadError)
-              syncStatus('error')
+              failReadiness(outcome.error)
             }
             else if (outcome.api) {
               emit(outcome.api)
               unhook?.()
             }
             else {
-              loadError = new Error('use() resolved without a script API')
-              lifecycleController.abort(loadError)
-              syncStatus('error')
+              failReadiness(new Error('use() resolved without a script API'))
             }
           })
         }
@@ -301,7 +302,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       return createScriptScope(script)
     },
     setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
-      script._setupTriggerHandler(trigger)
+      return script._setupTriggerHandler(trigger)
     },
     _setupTriggerHandler(trigger: UseScriptOptions['trigger'], removeOnError = true) {
       const noop = () => {}

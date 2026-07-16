@@ -138,7 +138,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   load: () => Promise<T>
   warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
   remove: () => boolean
-  setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
+  setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => () => void
   createScope: () => ScriptScope<T>
   // cbs
   onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => () => void

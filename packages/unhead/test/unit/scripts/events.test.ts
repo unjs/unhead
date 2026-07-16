@@ -275,6 +275,26 @@ describe('useScript events', () => {
     expect(instance._triggerAbortControllers?.size).toBe(0)
   })
 
+  it('returns a disposer for an individual trigger registration', async () => {
+    const head = createHead()
+    const first = Promise.withResolvers<void>()
+    const second = Promise.withResolvers<void>()
+    const instance = useScript(head, '/disposable-trigger.js', {
+      trigger: 'manual',
+    })
+
+    const offFirst = instance.setupTriggerHandler(first.promise)
+    instance.setupTriggerHandler(second.promise)
+    offFirst()
+    first.resolve()
+    await new Promise(resolve => setTimeout(resolve))
+
+    expect(instance.status).toBe('awaitingLoad')
+
+    second.resolve()
+    await vi.waitFor(() => expect(instance.status).toBe('loading'))
+  })
+
   it('cleans function triggers when loading starts', () => {
     const head = createHead()
     const cleanup = vi.fn()

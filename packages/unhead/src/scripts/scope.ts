@@ -88,9 +88,9 @@ export function createScriptScope<T extends BaseScriptApi>(script: ScriptInstanc
     setupTriggerHandler: {
       value: (trigger: UseScriptOptions['trigger']) => {
         if (disposed)
-          return
+          return () => {}
         try {
-          track(script._setupTriggerHandler(trigger, false))
+          return track(script._setupTriggerHandler(trigger, false))
         }
         catch (error) {
           dispose()

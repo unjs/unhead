@@ -167,15 +167,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   })
 
   useEffect(() => {
-    const existingControllers = new Set(script._triggerAbortControllers)
-    script.setupTriggerHandler(trigger)
-    const triggerAbortControllers = script._triggerAbortControllers
-      ? [...script._triggerAbortControllers].filter(controller => !existingControllers.has(controller))
-      : []
-
-    return () => {
-      triggerAbortControllers.forEach(controller => controller.abort())
-    }
+    return script.setupTriggerHandler(trigger)
   }, [script, trigger])
 
   function reconcileScriptCallbacks(activeRenderId: number) {
