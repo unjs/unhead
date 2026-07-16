@@ -309,11 +309,10 @@ describe('useScript events', () => {
 
   it('removes partial lifecycle state when a function trigger throws', () => {
     const head = createHead()
-    let instance: ReturnType<typeof useScript> | undefined
     let signal!: AbortSignal
 
     expect(() => {
-      instance = useScript(head, '/failed-function-trigger.js', {
+      useScript(head, '/failed-function-trigger.js', {
         use: (ctx) => {
           signal = ctx.signal
           return new Promise<Record<string, never>>(() => {})
@@ -325,7 +324,6 @@ describe('useScript events', () => {
       })
     }).toThrow('trigger setup failed')
 
-    expect(instance).toBeUndefined()
     expect(signal.aborted).toBe(true)
     expect(head._scripts?.['/failed-function-trigger.js']).toBeUndefined()
     expect(document.querySelector('script[src="/failed-function-trigger.js"]')).toBeNull()
