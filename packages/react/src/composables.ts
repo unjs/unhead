@@ -1,5 +1,6 @@
 import type {
   ActiveHeadEntry,
+  EventHandlerOptions,
   HeadEntryOptions,
   HeadSafe,
   Unhead,
@@ -17,10 +18,49 @@ interface ScriptCallbackRecord {
   active: boolean
   handler: any
   key: 'loaded' | 'error'
+  off?: () => void
+  options?: EventHandlerOptions
   registered: boolean
   renderScoped: boolean
   renderId: number
   script: UseScriptReturn<any>
+}
+
+interface ScriptFacade {
+  onError: UseScriptReturn<any>['onError']
+  onLoaded: UseScriptReturn<any>['onLoaded']
+  script: UseScriptReturn<any>
+  value: UseScriptReturn<any>
+}
+
+/** Create a local callback facade while preserving the shared enumerable API. */
+function createScriptFacade(script: UseScriptReturn<any>): ScriptFacade {
+  const facade = {
+    onError: script.onError,
+    onLoaded: script.onLoaded,
+    script,
+  } as ScriptFacade
+  facade.value = new Proxy(script, {
+    get(target, key, receiver) {
+      if (key === 'onLoaded' || key === 'onError')
+        return facade[key]
+      return Reflect.get(target, key, receiver)
+    },
+    getOwnPropertyDescriptor(target, key) {
+      const descriptor = Reflect.getOwnPropertyDescriptor(target, key)
+      if (descriptor && (key === 'onLoaded' || key === 'onError'))
+        return { ...descriptor, value: facade[key] }
+      return descriptor
+    },
+    set(target, key, value, receiver) {
+      if (key === 'onLoaded' || key === 'onError') {
+        facade[key] = value
+        return true
+      }
+      return Reflect.set(target, key, value, receiver)
+    },
+  })
+  return facade
 }
 
 export function useUnhead(): Unhead {
@@ -102,13 +142,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   } as UseScriptOptions<T>
 
   const callbackRecords = useRef<ScriptCallbackRecord[]>([])
+  const scriptFacade = useRef<ScriptFacade | null>(null)
   const isMounted = useRef(false)
   const renderId = useRef(0)
   const committedRenderId = useRef(0)
   const currentRenderId = ++renderId.current
 
   // @ts-expect-error untyped
-  const script = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+  const sharedScript = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+  if (!scriptFacade.current || scriptFacade.current.script !== sharedScript)
+    scriptFacade.current = createScriptFacade(sharedScript)
+  const script = scriptFacade.current.value
 
   useEffect(() => {
     isMounted.current = true
@@ -146,25 +190,27 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   function registerScriptCallback(record: ScriptCallbackRecord) {
     if (!record.active || record.registered)
       return
-    const cbs = record.script._cbs[record.key]
-    if (!cbs) {
-      record.handler(record.script.instance)
-      return
+    const off = record.key === 'loaded'
+      ? record.script.onLoaded(record.handler, record.options)
+      : record.script.onError(record.handler, record.options)
+    if (record.active) {
+      record.off = off
+      record.registered = true
     }
-    cbs.push(record.handler)
-    record.registered = true
+    else {
+      off()
+    }
   }
 
   function unregisterScriptCallback(record: ScriptCallbackRecord) {
     if (!record.registered)
       return
-    const idx = record.script._cbs[record.key]?.indexOf(record.handler) ?? -1
-    if (idx !== -1)
-      record.script._cbs[record.key]?.splice(idx, 1)
+    record.off?.()
+    record.off = undefined
     record.registered = false
   }
 
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
+  const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     const renderScoped = !(isMounted.current && committedRenderId.current === currentRenderId)
     const record: ScriptCallbackRecord = {
       active: true,
@@ -172,14 +218,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         if (!record.active)
           return
         record.active = false
-        record.registered = false
-        cb(...args)
+        return cb(...args)
       },
       key,
+      options,
       registered: false,
       renderScoped,
       renderId: currentRenderId,
-      script,
+      script: sharedScript,
     }
     callbackRecords.current.push(record)
     if (isMounted.current && committedRenderId.current === currentRenderId)
@@ -197,7 +243,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  scriptFacade.current.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('loaded', cb, options)
+  scriptFacade.current.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb('error', cb, options)
   return script
 }

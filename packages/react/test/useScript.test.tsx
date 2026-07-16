@@ -195,4 +195,92 @@ describe('react useScript', () => {
 
     expect(initCalls).toBe(1)
   })
+
+  it('forwards keyed callback options to the shared script', async () => {
+    const head = createHead()
+    const calls: string[] = []
+
+    function Page() {
+      const script = useScript('//react-keyed.js', { trigger: 'manual', head })
+      script.onLoaded(() => {
+        calls.push('first')
+      }, { key: 'shared' })
+      script.onLoaded(() => {
+        calls.push('second')
+      }, { key: 'shared' })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const script = getScript(head, '//react-keyed.js')
+    script.load()
+    await flushLoad(head, '//react-keyed.js')
+
+    expect(calls).toEqual(['first'])
+  })
+
+  it('keeps the shared script API enumerable on the local facade', async () => {
+    const head = createHead()
+    let facade: ReturnType<typeof useScript> | undefined
+
+    function Page() {
+      facade = useScript('//react-enumerable.js', { trigger: 'manual', head })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const sharedScript = getScript(head, '//react-enumerable.js')
+    const spread = { ...facade! }
+
+    expect(facade).not.toBe(sharedScript)
+    expect(Object.keys(facade!)).toContain('load')
+    expect(spread.load).toBe(sharedScript.load)
+    expect(spread.onLoaded).toBe(facade!.onLoaded)
+  })
+
+  it('preserves an async callback result', async () => {
+    const head = createHead()
+    let called = false
+
+    function Page() {
+      const script = useScript('//react-async-callback.js', { trigger: 'manual', head })
+      script.onLoaded(async () => {
+        await Promise.resolve()
+        called = true
+      })
+      return null
+    }
+
+    render(
+      <UnheadProvider head={head}>
+        <Page />
+      </UnheadProvider>,
+    )
+    await act(async () => {
+      await wait()
+    })
+
+    const sharedScript = getScript(head, '//react-async-callback.js')
+    const result = sharedScript._cbs.loaded![0]({})
+
+    expect(result).toBeInstanceOf(Promise)
+    await result
+    expect(called).toBe(true)
+  })
 })

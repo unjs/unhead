@@ -87,6 +87,44 @@ export interface UseScriptContextOptions {
 
 export type UseScriptTrigger = (load: () => void) => void | (() => void)
 
+export type ScriptScopeCleanup = () => void | PromiseLike<void>
+
+export interface ScriptScopeEffectContext {
+  /**
+   * Aborted when the effect is disposed, its scope is disposed, or the shared
+   * script fails or is removed.
+   */
+  signal: AbortSignal
+}
+
+export interface ScriptScopeEffectOptions extends EventHandlerOptions {
+  /**
+   * Handle errors thrown while setting up or cleaning up the effect.
+   */
+  onError?: (error: unknown) => void
+}
+
+export type ScriptScopeEffect<T extends BaseScriptApi> = (
+  instance: T,
+  context: ScriptScopeEffectContext,
+) => void | ScriptScopeCleanup | PromiseLike<void | ScriptScopeCleanup>
+
+/**
+ * A consumer-owned view of a shared script. Disposing it only releases the
+ * callbacks, triggers, and effects registered through this scope.
+ */
+export interface ScriptScope<T extends BaseScriptApi> extends ScriptInstance<T> {
+  readonly script: ScriptInstance<T>
+  readonly disposed: boolean
+  onLoadedEffect: (fn: ScriptScopeEffect<T>, options?: ScriptScopeEffectOptions) => () => void
+  dispose: () => void
+  /**
+   * Remove the shared script for every consumer. Use `dispose()` to release
+   * only the registrations and resources owned by this scope.
+   */
+  remove: () => boolean
+}
+
 export interface ScriptInstance<T extends BaseScriptApi> {
   proxy: AsVoidFunctions<T>
   instance?: T
@@ -101,6 +139,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
   remove: () => boolean
   setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => void
+  createScope: () => ScriptScope<T>
   // cbs
   onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => () => void
   onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => () => void
@@ -128,6 +167,10 @@ export interface ScriptInstance<T extends BaseScriptApi> {
    * @internal
    */
   _triggerPromises?: Promise<void>[]
+  /**
+   * @internal
+   */
+  _setupTriggerHandler: (trigger: UseScriptOptions['trigger'], removeOnError?: boolean) => () => void
   /**
    * @internal
    */
@@ -180,3 +223,5 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
 }
 
 export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+
+export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = ScriptScope<UseFunctionType<UseScriptOptions<T>, T>>

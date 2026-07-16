@@ -49,4 +49,4 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
   return entry
 }
 
-export { useScript } from './scripts'
+export { useScript, useScriptScope } from './scripts'

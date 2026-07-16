@@ -11,10 +11,12 @@ import type {
   UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptReturn,
+  UseScriptScopeReturn,
   WarmupStrategy,
 } from './types'
 import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'
 
 /**
@@ -23,6 +25,18 @@ import { createScriptWaitFor } from './waitFor'
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+  return _useScript(head, _input, _options, false) as UseScriptReturn<T>
+}
+
+/**
+ * Load a shared third-party script through a consumer-owned lifecycle scope.
+ */
+export function useScriptScope<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptScopeReturn<T> {
+  return _useScript(head, _input, _options, true) as UseScriptScopeReturn<T>
+}
+
+/** Resolve the shared script and optionally attach a consumer scope. */
+function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
@@ -31,6 +45,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
     : undefined
   if (prevScript) {
+    if (scoped) {
+      const scope = prevScript.createScope()
+      scope.setupTriggerHandler(options.trigger)
+      return scope
+    }
     prevScript.setupTriggerHandler(options.trigger)
     return prevScript
   }
@@ -278,17 +297,25 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     onError(cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) {
       return _registerCb('error', cb, options)
     },
+    createScope() {
+      return createScriptScope(script)
+    },
     setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
+      script._setupTriggerHandler(trigger)
+    },
+    _setupTriggerHandler(trigger: UseScriptOptions['trigger'], removeOnError = true) {
+      const noop = () => {}
       if (script.status !== 'awaitingLoad') {
-        return
+        return noop
       }
       if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
         script.load()
+        return noop
       }
       else if (trigger instanceof Promise) {
         // promise triggers only work client side
         if (head.ssr) {
-          return
+          return noop
         }
         // each trigger gets its own abort controller so that disposing one scope
         // does not cancel triggers from other scopes
@@ -326,11 +353,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
               script._triggerPromises?.splice(idx, 1)
           })
         script._triggerPromises.push(triggerPromise)
+        return () => abortController.abort()
       }
       else if (typeof trigger === 'function') {
         // function triggers only work client side
         if (head.ssr) {
-          return
+          return noop
         }
         const abortController = new AbortController()
         script._triggerAbortControllers = script._triggerAbortControllers || new Set()
@@ -339,22 +367,28 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         let cleanup: void | (() => void)
         abortController.signal.addEventListener('abort', () => {
           script._triggerAbortControllers?.delete(abortController)
-          cleanup?.()
+          if (typeof cleanup === 'function')
+            cleanup()
           cleanup = undefined
         }, { once: true })
         try {
           cleanup = trigger(script.load)
           // A trigger may call load synchronously before returning its disposer.
           if (abortController.signal.aborted) {
-            cleanup?.()
+            if (typeof cleanup === 'function')
+              cleanup()
             cleanup = undefined
           }
         }
         catch (error) {
-          script.remove()
+          abortController.abort()
+          if (removeOnError)
+            script.remove()
           throw error
         }
+        return () => abortController.abort()
       }
+      return noop
     },
     _cbs,
   } as any as UseScriptContext<T>
@@ -375,7 +409,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
   const hookCtx = { script }
 
-  script.setupTriggerHandler(options.trigger)
+  const result = scoped ? script.createScope() : script
+  try {
+    result.setupTriggerHandler(options.trigger)
+  }
+  catch (error) {
+    // A new scoped script is not in the registry yet, so there is no shared
+    // lifecycle to preserve when its initial trigger registration fails.
+    if (scoped)
+      script.remove()
+    throw error
+  }
   if (options.use) {
     const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
@@ -393,5 +437,5 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     script.warmup(options.warmupStrategy)
   }
   scripts[id] = script
-  return script
+  return result
 }
