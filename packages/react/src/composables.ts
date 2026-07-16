@@ -102,13 +102,23 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   } as UseScriptOptions<T>
 
   const callbackRecords = useRef<ScriptCallbackRecord[]>([])
+  const scriptFacade = useRef<{ script: UseScriptReturn<any>, value: UseScriptReturn<any> } | null>(null)
   const isMounted = useRef(false)
   const renderId = useRef(0)
   const committedRenderId = useRef(0)
   const currentRenderId = ++renderId.current
 
   // @ts-expect-error untyped
-  const script = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+  const sharedScript = baseUseScript(head, input as BaseUseScriptInput, resolvedOptions)
+  if (!scriptFacade.current || scriptFacade.current.script !== sharedScript) {
+    scriptFacade.current = {
+      script: sharedScript,
+      // Callback methods below are render-scoped. Keep them off the shared
+      // registry instance so sibling consumers cannot overwrite each other.
+      value: Object.create(sharedScript),
+    }
+  }
+  const script = scriptFacade.current.value
 
   useEffect(() => {
     isMounted.current = true
