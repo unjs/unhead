@@ -23,8 +23,9 @@ describe('useScript', () => {
   it('types: inferred async use() context', () => {
     const head = createServerHead()
     const instance = useScript(head, '/script.js', {
-      async use({ signal }) {
+      async use({ signal, waitFor }) {
         expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
+        expectTypeOf(waitFor<{ ready: true }>(resolve => resolve({ ready: true }))).toEqualTypeOf<Promise<{ ready: true }>>()
         return {
           test: (foo: string) => foo,
         }

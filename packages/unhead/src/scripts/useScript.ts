@@ -15,6 +15,7 @@ import type {
 } from './types'
 import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptWaitFor } from './waitFor'
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
@@ -34,13 +35,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     return prevScript
   }
   const lifecycleController = new AbortController()
+  const useContext = {
+    signal: lifecycleController.signal,
+    waitFor: createScriptWaitFor(lifecycleController.signal),
+  }
   options.beforeInit?.()
   let initialUseResult: ReturnType<NonNullable<typeof options.use>>
   let initialUseError: unknown
   let initialUseFailed = false
   try {
     initialUseResult = !head.ssr && options.use
-      ? options.use({ signal: lifecycleController.signal })
+      ? options.use(useContext)
       : undefined
   }
   catch (error) {
@@ -147,7 +152,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
           const useOutcome = initialUseOutcome || (() => {
             try {
-              return Promise.resolve(options.use!({ signal: lifecycleController.signal })).then(
+              return Promise.resolve(options.use!(useContext)).then(
                 api => ({ api }),
                 error => ({ error }),
               )

@@ -68,11 +68,21 @@ export type UseFunctionType<T, U> = T extends {
 
 export type WarmupStrategy = false | 'preload' | 'preconnect' | 'dns-prefetch'
 
+export type UseScriptWaitForSetup<T> = (
+  resolve: (value: T | PromiseLike<T>) => void,
+  reject: (reason?: unknown) => void,
+) => void | (() => void)
+
 export interface UseScriptContextOptions {
   /**
    * Aborted when the script is removed or fails to load.
    */
   signal: AbortSignal
+  /**
+   * Wait for an SDK-specific readiness callback. Abort rejection and returned
+   * cleanup are tied to the script lifecycle.
+   */
+  waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
 }
 
 export type UseScriptTrigger = (load: () => void) => void | (() => void)

@@ -350,6 +350,48 @@ describe('useScript events', () => {
     expect(onLoaded).toHaveBeenCalledWith(api)
   })
 
+  it('owns waitFor readiness cleanup', async () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    let resolveReady!: (api: { ready: true }) => void
+    const instance = useScript(head, '/wait-for-script.js', {
+      trigger: 'server',
+      use: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+        resolveReady = resolve
+        return cleanup
+      }),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    const api = { ready: true as const }
+    resolveReady(api)
+
+    await expect(instance._loadPromise).resolves.toBe(api)
+    expect(cleanup).toHaveBeenCalledOnce()
+  })
+
+  it('aborts waitFor while it adopts a pending promise', async () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    const readiness = Promise.withResolvers<{ ready: true }>()
+    const instance = useScript(head, '/aborted-wait-for-script.js', {
+      trigger: 'server',
+      use: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+        resolve(readiness.promise)
+        return cleanup
+      }),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    instance.remove()
+
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(cleanup).toHaveBeenCalledOnce()
+    readiness.resolve({ ready: true })
+    await readiness.promise
+    expect(instance.status).toBe('removed')
+  })
+
   it('aborts async use() and ignores late readiness when removed', async () => {
     const head = createHead()
     const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
