@@ -66,7 +66,12 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const bind = (base: (cb: any) => () => void) => (cb: any) => {
     const off = base(cb)
     sideEffects.push(off)
-    return off
+    return () => {
+      const idx = sideEffects.indexOf(off)
+      if (idx !== -1)
+        sideEffects.splice(idx, 1)
+      off()
+    }
   }
   const baseOnLoaded = script.onLoaded
   const baseOnError = script.onError

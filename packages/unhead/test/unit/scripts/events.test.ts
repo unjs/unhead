@@ -119,6 +119,19 @@ describe('useScript events', () => {
     expect(calls).toEqual(['b'])
   })
 
+  it('returns a safe disposer for duplicate keyed callbacks', () => {
+    const head = createHead()
+    const instance = useScript(head, '/duplicate-key.js', {
+      trigger: 'manual',
+    })
+
+    instance.onLoaded(() => {}, { key: 'once' })
+    const offDuplicate = instance.onLoaded(() => {}, { key: 'once' })
+
+    expect(offDuplicate).toBeTypeOf('function')
+    expect(() => offDuplicate()).not.toThrow()
+  })
+
   it('cleans onLoaded callbacks by identity when disposed out of order', () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
@@ -294,6 +307,30 @@ describe('useScript events', () => {
     expect(instance._triggerAbortControllers?.size).toBe(0)
   })
 
+  it('removes partial lifecycle state when a function trigger throws', () => {
+    const head = createHead()
+    let instance: ReturnType<typeof useScript> | undefined
+    let signal!: AbortSignal
+
+    expect(() => {
+      instance = useScript(head, '/failed-function-trigger.js', {
+        use: (ctx) => {
+          signal = ctx.signal
+          return new Promise<Record<string, never>>(() => {})
+        },
+        trigger: (load) => {
+          load()
+          throw new Error('trigger setup failed')
+        },
+      })
+    }).toThrow('trigger setup failed')
+
+    expect(instance).toBeUndefined()
+    expect(signal.aborted).toBe(true)
+    expect(head._scripts?.['/failed-function-trigger.js']).toBeUndefined()
+    expect(document.querySelector('script[src="/failed-function-trigger.js"]')).toBeNull()
+  })
+
   it('waits for an async use() result before resolving load and firing onLoaded', async () => {
     const head = createHead()
     const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
@@ -372,6 +409,23 @@ describe('useScript events', () => {
     await expect(instance._loadPromise).resolves.toBe(false)
     expect(instance.status).toBe('error')
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'undefined' }))
+  })
+
+  it('fails when async use() resolves without an API and replays the error', async () => {
+    const head = createHead()
+    const instance = useScript(head, '/missing-async-api.js', {
+      trigger: 'server',
+      use: async () => undefined,
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+
+    const onError = vi.fn()
+    instance.onError(onError)
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'use() resolved without a script API',
+    }))
   })
 
   it('routes synchronous use() failures through the script error lifecycle', async () => {

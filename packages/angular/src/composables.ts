@@ -94,6 +94,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       const idx = mountCbs.indexOf(run)
       if (idx !== -1)
         mountCbs.splice(idx, 1)
+      if (off) {
+        const sideEffectIdx = sideEffects.indexOf(off)
+        if (sideEffectIdx !== -1)
+          sideEffects.splice(sideEffectIdx, 1)
+      }
       off?.()
     }
   }

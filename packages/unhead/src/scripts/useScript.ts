@@ -89,7 +89,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     if (options?.key) {
       uniqueKey = `${key}:${options.key}`
       if (_uniqueCbs.has(uniqueKey)) {
-        return
+        return () => {}
       }
       _uniqueCbs.add(uniqueKey)
     }
@@ -111,7 +111,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       cb(script.instance)
     // eslint-disable-next-line ts/no-use-before-define
     else if (key === 'error' && script.status === 'error')
-      cb()
+      cb(loadError)
     return () => {
       if (uniqueKey)
         _uniqueCbs.delete(uniqueKey)
@@ -167,6 +167,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
             else if (outcome.api) {
               emit(outcome.api)
               unhook?.()
+            }
+            else {
+              loadError = new Error('use() resolved without a script API')
+              lifecycleController.abort(loadError)
+              syncStatus('error')
             }
           })
         }
@@ -341,7 +346,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           }
         }
         catch (error) {
-          abortController.abort()
+          script.remove()
           throw error
         }
       }

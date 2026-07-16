@@ -64,7 +64,7 @@ export type UseScriptInput = string | UseScriptResolvedInput
 
 export type UseFunctionType<T, U> = T extends {
   use: infer V
-} ? V extends (...args: any) => any ? Awaited<NonNullable<ReturnType<V>>> : U : U
+} ? V extends (...args: any) => any ? NonNullable<Awaited<ReturnType<V>>> : U : U
 
 export type WarmupStrategy = false | 'preload' | 'preconnect' | 'dns-prefetch'
 
