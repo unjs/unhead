@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
+import { createScriptWaitFor } from '../../../src/scripts/waitFor'
 
 describe('useScript events', () => {
   it('keeps invoking legacy use() callbacks without arguments', () => {
@@ -449,6 +450,14 @@ describe('useScript events', () => {
     head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
 
     await expect(instance._loadPromise).resolves.toBe(api)
+  })
+
+  it('does not invoke a resolved function as cleanup', async () => {
+    const api = vi.fn()
+    const waitFor = createScriptWaitFor(new AbortController().signal)
+
+    await expect(waitFor<typeof api>(resolve => resolve(api))).resolves.toBe(api)
+    expect(api).not.toHaveBeenCalled()
   })
 
   it('aborts waitFor while it adopts a pending promise', async () => {
