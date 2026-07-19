@@ -85,6 +85,10 @@ export interface UseScriptContextOptions {
   waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
 }
 
+export type UseScriptResolver<T extends BaseScriptApi> =
+  | (() => T | PromiseLike<T | undefined | null> | undefined | null)
+  | ((ctx: UseScriptContextOptions) => T | PromiseLike<T | undefined | null> | undefined | null)
+
 /**
  * Register a script load trigger. A returned function is treated as cleanup;
  * other return values are ignored for backwards compatibility.
@@ -182,9 +186,10 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
   scope?: boolean
   /**
    * Resolve the script instance from the window. `load()` and `onLoaded()` wait
-   * for an async result, and the signal aborts if the script fails or is removed.
+   * for an async result. Callbacks that declare a context receive a signal that
+   * aborts if the script fails or is removed; legacy callbacks receive no args.
    */
-  use?: (ctx: UseScriptContextOptions) => T | PromiseLike<T | undefined | null> | undefined | null
+  use?: UseScriptResolver<T>
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
