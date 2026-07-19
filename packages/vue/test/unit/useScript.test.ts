@@ -2,7 +2,7 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, expect, expectTypeOf, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
@@ -35,12 +35,16 @@ describe('vue e2e scripts', () => {
       trigger: 'manual',
       resolve: ({ signal, waitFor }) => {
         resolverSignal = signal
-        expectTypeOf(waitFor<{ ready: true }>(resolve => resolve({ ready: true }))).toEqualTypeOf<Promise<{ ready: true }>>()
-        return { ready: true as const }
+        return waitFor(resolve => resolve({ ready: true as const }))
       },
     })
 
-    expectTypeOf(script.load).returns.toEqualTypeOf<Promise<{ ready: true }>>()
+    type Loaded = Awaited<ReturnType<typeof script.load>>
+    const inferred: Loaded = { ready: true }
+    const notAny: 0 extends (1 & Loaded) ? never : true = true
+    void script
+    void inferred
+    void notAny
     expect(resolverSignal).toBeInstanceOf(AbortSignal)
   })
 

@@ -27,9 +27,15 @@ import { createScriptWaitFor } from './waitFor'
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
+type ResolveScriptOptions<O extends UseScriptOptions<any>> = O & Required<Pick<UseScriptOptions<any>, 'resolve'>> & { use?: never }
+type ResolvedScriptApi<O extends UseScriptOptions<any>> = UseFunctionType<O, Record<string, any>>
+
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T>): ScriptInstance<T> | ScriptScope<T>
+export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope: true }): ScriptScope<ResolvedScriptApi<O>>
+export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope?: false }): ScriptInstance<ResolvedScriptApi<O>>
+export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O>): ScriptInstance<ResolvedScriptApi<O>> | ScriptScope<ResolvedScriptApi<O>>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
