@@ -43,6 +43,35 @@ describe('ssrStaticReplace', () => {
     expect(result?.code).toContain('if (true)')
   })
 
+  it('preserves head.ssr mutation targets while replacing reads', () => {
+    const plugin = createPlugin({ isSsrBuild: false, command: 'build' })
+    const code = [
+      'head.ssr = false;',
+      'head.ssr ||= true;',
+      'head.ssr++;',
+      'delete head.ssr;',
+      'for (head.ssr in source) {}',
+      'if (head.ssr) use(head.ssr);',
+    ].join('\n')
+    const result = transform(plugin, code, UNHEAD_MODULE_ID)
+
+    expect(result?.code).toBe([
+      'head.ssr = false;',
+      'head.ssr ||= true;',
+      'head.ssr++;',
+      'delete head.ssr;',
+      'for (head.ssr in source) {}',
+      'if (false) use(false);',
+    ].join('\n'))
+  })
+
+  it('preserves head.ssr reads nested inside mutation targets', () => {
+    const plugin = createPlugin({ isSsrBuild: true, command: 'build' })
+    const result = transform(plugin, 'head.ssr.value = 1; use(head.ssr);', UNHEAD_MODULE_ID)
+
+    expect(result?.code).toBe('head.ssr.value = 1; use(true);')
+  })
+
   it('should not apply in dev mode (vite serve)', () => {
     // in dev mode, head.ssr should NOT be statically replaced because both
     // SSR and client environments share the same vite dev server. The plugin
