@@ -41,6 +41,17 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./precompiled:
+  precompiledHeadInput: function
+./precompiled/server:
+  capoTagWeight: function
+  createHead: function
+  createServerRenderer: function
+  precompiledHeadInput: function
+  renderSSRHead: function
+  resolveTags: function
+  useHead: function
+  useSeoMeta: function
 ./scripts:
   createSpyProxy: function
   useScript: function

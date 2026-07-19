@@ -29,6 +29,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
+    "./precompiled": {
+      "types": "./dist/precompiled.d.ts",
+      "default": "./dist/precompiled.mjs"
+    },
+    "./precompiled/server": {
+      "types": "./dist/precompiled/server.d.ts",
+      "default": "./dist/precompiled/server.mjs"
+    },
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
@@ -98,6 +106,12 @@
       "plugins": [
         "dist/plugins.d.ts"
       ],
+      "precompiled": [
+        "dist/precompiled.d.ts"
+      ],
+      "precompiled/server": [
+        "dist/precompiled/server.d.ts"
+      ],
       "legacy": [
         "dist/legacy.d.ts"
       ],
@@ -147,8 +161,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild",
-    "stub": "unbuild --stub",
+    "build": "unbuild --config precompiled.build.config.ts && UNHEAD_PRESERVE_PRECOMPILED=true unbuild",
+    "stub": "unbuild --stub --config precompiled.build.config.ts && UNHEAD_PRESERVE_PRECOMPILED=true unbuild --stub",
     "test:attw": "attw --pack",
     "prepack": "pnpm run build"
   },

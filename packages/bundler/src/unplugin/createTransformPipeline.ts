@@ -3,9 +3,10 @@ import type { UnpluginOptions as UnpluginRawOptions } from 'unplugin'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
+import { fileURLToPath } from 'node:url'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
-import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { ScopeTracker, ScopeTrackerImport, ScopeTrackerVariable, walk } from 'oxc-walker'
 import {
   MetaTagsArrayable,
   normalizeEntryToTags,
@@ -68,6 +69,7 @@ const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
 const MINIFY_CACHE_MAX = 100
 const DECODE_BAIL = Symbol('unhead:decode-bail')
 const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
+const PRECOMPILED_RUNTIME_ID = 'virtual:unhead-precompiled-runtime'
 
 type TagType = 'script' | 'style'
 type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[] | { [key: string]: DecodedStaticValue }
@@ -130,6 +132,8 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
 }
 
 export interface TransformPipelineOptions {
+  /** @internal */
+  consumer?: BuildConsumer
   treeshake?: TreeshakeServerComposablesOptions | false
   seoMeta?: UseSeoMetaTransformOptions | false
   precompile?: BaseTransformerTypes | false
@@ -347,7 +351,6 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     await Promise.all(contentMinifications)
 
     const encodedTags = tags.map((tag) => {
-      const tagName = tag.tag === 'meta' ? 'm' : tag.tag === 'title' ? 't' : tag.tag === 'titleTemplate' ? 'T' : tag.tag
       const props: Record<string, any> = { ...tag.props }
       if (props.class instanceof Set)
         props.class = [...props.class]
@@ -370,18 +373,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         extra.processTemplateParams = tag.processTemplateParams
       if (tag._h !== undefined)
         extra._h = tag._h
-      if (tag.tag === 'meta' && !Object.keys(extra).length && Object.keys(props).length === 2 && props.content !== undefined) {
-        const keyIndex = ['name', 'property', 'http-equiv'].findIndex(key => props[key] !== undefined)
-        if (keyIndex !== -1)
-          return [tagName, [keyIndex, props[['name', 'property', 'http-equiv'][keyIndex]], props.content]]
-      }
-      if (Object.keys(extra).length === 1 && typeof extra.textContent === 'string')
-        return [tagName, props, extra.textContent]
       return Object.keys(extra).length
-        ? [tagName, props, extra]
-        : [tagName, props]
+        ? { tag: tag.tag, props, ...extra }
+        : { tag: tag.tag, props }
     })
-    return JSON.stringify({ _c: 1, t: encodedTags })
+    return JSON.stringify(encodedTags)
   }
 
   function resolveHeadFunctionName(callee: any, scopeTracker: ScopeTracker): string | undefined {
@@ -471,7 +467,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   // Environment API (`this.environment`) the target is resolved per transform
   // call instead, since a single plugin instance can serve both the client
   // and server environments in one pipeline.
-  let fallbackConsumer: BuildConsumer | undefined
+  let fallbackConsumer: BuildConsumer | undefined = config.consumer
   // Treeshaking is a build-only optimization: the dev server shares one module
   // graph between client and SSR renders. Set to false by `vite.apply()` on
   // serve; the pipeline itself still installs when other concerns are active.
@@ -506,6 +502,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   return {
     name: config.name,
     enforce: 'post',
+    resolveId(id) {
+      if (id === PRECOMPILED_RUNTIME_ID)
+        return fileURLToPath(import.meta.resolve('unhead/precompiled'))
+    },
     transformInclude: (id: string) => idPredicates.some(predicate => predicate(id)),
 
     transform: {
@@ -530,6 +530,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         const runPrecompile = !!precompileOpts
           && shouldTransformId(precompileOpts, id)
           && (HEAD_RE.test(code) || (!!seoMetaOpts && SEO_META_RE.test(code)))
+          && resolveBuildConsumer(this, fallbackConsumer) !== 'client'
         // Escaped identifiers still need parsing because their source does not
         // contain the decoded property name.
         const minifyEligible = !!minifyOpts && shouldTransformId(minifyOpts, id)
@@ -556,6 +557,12 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         scopeTracker.freeze()
 
         const edits: PipelineEdit[] = []
+        let precompileHelper = '__unhead_precompiled'
+        while (code.includes(precompileHelper))
+          precompileHelper += '_'
+        const precompileRuntimeId = ast.program.body.some((node: any) => node.type === 'ImportDeclaration' && node.source.value === 'unhead/precompiled/server')
+          ? 'unhead/precompiled/server'
+          : PRECOMPILED_RUNTIME_ID
 
         // Ranges claimed by the treeshake phase. Statements removed on the
         // client build must not be seoMeta-rewritten or minified, previously
@@ -788,6 +795,15 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (!SEO_META_NAMES.has(originalName))
             return
 
+          // The composable return value wraps `.patch()` so future flat-meta
+          // inputs keep being normalized. Lowering an observed call to
+          // `useHead()` would silently lose that behavior.
+          if (parent?.type !== 'ExpressionStatement') {
+            if (importDecl)
+              untransformedCallees.add(originalName)
+            return
+          }
+
           const properties = node.arguments[0]?.properties
           if (!properties) {
             if (importDecl)
@@ -930,13 +946,48 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         // -- precompile phase ------------------------------------------------
         const pendingPrecompilations: PendingPrecompilation[] = []
+        const precompiledEntryBindings = new Set<any>()
 
-        function precompileEnter(node: any): boolean {
+        function precompileEnter(node: any, parent: any): boolean {
           if (node.type !== 'CallExpression')
             return false
 
+          // A static patch on the ActiveHeadEntry returned by a transformed
+          // `const entry = useHead(...)` must use the carrier too. Otherwise
+          // the strict runtime would correctly reject the raw patch input.
+          if (
+            node.callee.type === 'MemberExpression'
+            && !node.callee.computed
+            && node.callee.object.type === 'Identifier'
+            && node.callee.property.type === 'Identifier'
+            && node.callee.property.name === 'patch'
+          ) {
+            const declaration = scopeTracker.getDeclaration(node.callee.object.name)
+            if (
+              declaration instanceof ScopeTrackerVariable
+              && declaration.variableNode.kind === 'const'
+              && precompiledEntryBindings.has(declaration.node)
+            ) {
+              const arg = node.arguments[0]
+              if (!arg || arg.type !== 'ObjectExpression')
+                return false
+              const decoded = decodeStaticValue(arg)
+              if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
+                return false
+              const marker = compileStaticInput(decoded as Record<string, DecodedStaticValue>, 'useHead', minifyEligible)
+              pendingPrecompilations.push({ start: arg.start, end: arg.end, content: marker.then(compiled => `${precompileHelper}(${compiled})`) })
+              precompiledRanges.push([arg.start, arg.end])
+              return true
+            }
+          }
+
           const kind = resolvePrecompileFunctionName(node.callee, scopeTracker)
           if (!kind || (kind === 'useSeoMeta' && !runSeoMeta))
+            return false
+          // `useSeoMeta()` returns a patch wrapper that preserves flat-meta
+          // semantics. Rewriting an observed result to `useHead()` would make a
+          // later `.patch({ description: ... })` behave differently.
+          if (kind === 'useSeoMeta' && parent?.type !== 'ExpressionStatement')
             return false
 
           const arg = node.arguments[0]
@@ -948,7 +999,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
           const marker = compileStaticInput(decoded as Record<string, DecodedStaticValue>, kind, minifyEligible)
           if (kind === 'useHead') {
-            pendingPrecompilations.push({ start: arg.start, end: arg.end, content: marker })
+            if (parent?.type === 'VariableDeclarator' && parent.id.type === 'Identifier')
+              precompiledEntryBindings.add(parent.id)
+            pendingPrecompilations.push({ start: arg.start, end: arg.end, content: marker.then(compiled => `${precompileHelper}(${compiled})`) })
             precompiledRanges.push([arg.start, arg.end])
             return true
           }
@@ -975,7 +1028,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           pendingPrecompilations.push({
             start: node.start,
             end: node.end,
-            content: marker.then(compiled => `${headCallee}(${compiled}${trailingArgs})`),
+            content: marker.then(compiled => `${headCallee}(${precompileHelper}(${compiled})${trailingArgs})`),
           })
           precompiledRanges.push([node.start, node.end])
           return true
@@ -1040,7 +1093,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             // directly into the precompiled marker.
             if (runTreeshake && treeshakeEnter(node, parent))
               return
-            if (runPrecompile && precompileEnter(node))
+            if (runPrecompile && precompileEnter(node, parent))
               return
             if (runSeoMeta)
               seoMetaEnter(node, parent)
@@ -1075,6 +1128,12 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const s = new MagicString(code)
         applyEdits(s, edits, id)
+        if (pendingPrecompilations.length) {
+          const directives = ast.program.body.filter((node: any) => node.type === 'ExpressionStatement' && node.directive)
+          const directiveEnd = directives.at(-1)?.end
+          const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)
+          s.appendLeft(importOffset, `${directiveEnd === undefined ? '' : '\n'}import { precompiledHeadInput as ${precompileHelper} } from '${precompileRuntimeId}'\n`)
+        }
 
         if (!s.hasChanged())
           return
@@ -1118,6 +1177,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 export const UnheadTransforms = createUnplugin<TransformPipelineOptions, false>((options: TransformPipelineOptions = {}) =>
   createTransformPipeline({
     name: 'unhead:transforms',
+    consumer: options.consumer,
     treeshake: options.treeshake ?? false,
     seoMeta: options.seoMeta ?? false,
     precompile: options.precompile ?? false,

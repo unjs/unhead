@@ -20,36 +20,6 @@ function isEmptyProps(props: Record<string, any>): boolean {
   return true
 }
 
-interface PrecompiledHeadInput {
-  _c: 1
-  t: [HeadTag['tag'] | 'm' | 't' | 'T', Record<string, any> | [0 | 1 | 2, any, any], (Record<string, any> | string)?][]
-}
-
-function revivePrecompiledTags(input: PrecompiledHeadInput): HeadTag[] {
-  const tags: HeadTag[] = []
-  for (const tuple of input.t) {
-    if (!Array.isArray(tuple) || typeof tuple[0] !== 'string')
-      continue
-    const [encodedTagName, encodedProps, extra] = tuple
-    const tagName = encodedTagName === 'm' ? 'meta' : encodedTagName === 't' ? 'title' : encodedTagName === 'T' ? 'titleTemplate' : encodedTagName
-    const props: Record<string, any> = Array.isArray(encodedProps)
-      ? { [encodedProps[0] ? encodedProps[0] === 1 ? 'property' : 'http-equiv' : 'name']: encodedProps[1], content: encodedProps[2] }
-      : { ...encodedProps }
-    if (tagName !== 'templateParams') {
-      if (props.class != null)
-        props.class = new Set(Array.isArray(props.class) ? props.class : [])
-      if (props.style != null)
-        props.style = new Map((Array.isArray(props.style) ? props.style.filter(Array.isArray) : []) as [string, string][])
-    }
-    tags.push({
-      ...(typeof extra === 'string' ? { textContent: extra } : extra),
-      tag: tagName,
-      props,
-    } as HeadTag)
-  }
-  return tags
-}
-
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
@@ -195,7 +165,12 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return sanitizeTagsInPlace([...tags])
 }
 
-export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+/** @internal */
+export function resolveTagsWithNormalizer(
+  head: Unhead<any>,
+  options: ResolveTagsOptions | undefined,
+  normalizeRuntimeEntry: typeof normalizeEntryToTags,
+): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -240,21 +215,16 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         tags = e._precomputedTags
       }
       else {
-        const input = e.input as PrecompiledHeadInput
-        const precompiled = input?._c === 1
-          && Array.isArray(input.t)
-          && Object.keys(input).length === 2
+        const input = e.input as { _r?: (materialize: boolean, propResolvers: any[]) => HeadTag[] }
+        const precompiled = head.ssr
+          && Array.isArray((input as any)?._t)
+          && typeof input?._r === 'function'
+          && !Object.hasOwn(input, '_r')
         const propResolvers = head.resolvedOptions.propResolvers || []
-        // eslint-disable-next-line node/prefer-global/process -- left as a direct expression so downstream Vite/Webpack/Rspack builds can replace NODE_ENV
-        if (precompiled && typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-          const resolver = propResolvers.find(resolver => !resolver._static)
-          if (resolver)
-            throw new Error(`[unhead] ${resolver.name || 'anonymous'} is not static`)
-        }
-        tags = precompiled
-          ? revivePrecompiledTags(input)
-          : normalizeEntryToTags(e.input, propResolvers)
         const hasOptions = !!(e.options && !isEmptyProps(e.options))
+        tags = precompiled
+          ? input._r!(hasOptions || !!hooks['entries:normalize']?.length, propResolvers)
+          : normalizeRuntimeEntry(e.input, propResolvers)
         if (hasOptions) {
           for (const t of tags)
             Object.assign(t, e.options)
@@ -293,4 +263,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
   return sanitizeTagsInPlace(ctx.tags)
+}
+
+export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+  return resolveTagsWithNormalizer(head, options, normalizeEntryToTags)
 }

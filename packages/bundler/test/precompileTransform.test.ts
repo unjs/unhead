@@ -1,11 +1,12 @@
 import { fc } from '@fast-check/vitest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { precompiledHeadInput } from '../../unhead/src/precompiled'
 import { createHead, renderSSRHead } from '../../unhead/src/server'
 import { resolveTags, unpackMeta } from '../../unhead/src/utils'
 import { UnheadTransforms } from '../src/unplugin/createTransformPipeline'
 import { Unhead } from '../src/unplugin/vite'
 
-async function transform(code: string, options: any = {}) {
+async function transform(code: string, options: any = {}, context: any = {}) {
   const plugin = UnheadTransforms.vite({
     treeshake: false,
     seoMeta: {},
@@ -13,7 +14,7 @@ async function transform(code: string, options: any = {}) {
     minify: false,
     ...options,
   }) as any
-  const result = await plugin.transform.handler.call({}, code, '/app/page.ts')
+  const result = await plugin.transform.handler.call(context, code, '/app/page.ts')
   return result?.code as string | undefined
 }
 
@@ -21,7 +22,7 @@ function execute(code: string, names: string[] = ['useHead']) {
   const body = code.replace(/^import[^\n]*\n?/gm, '')
   const spies = Object.fromEntries(names.map(name => [name, vi.fn()]))
   // eslint-disable-next-line no-new-func -- transformed fixtures are local static source strings
-  new Function(...names, body)(...names.map(name => spies[name]))
+  new Function(...names, '__unhead_precompiled', body)(...names.map(name => spies[name]), precompiledHeadInput)
   return spies
 }
 
@@ -47,7 +48,34 @@ describe('static precompile transform', () => {
     const plugin = plugins.find(candidate => candidate.name === 'unhead:transforms')
     expect(plugin).toBeDefined()
     const result = await plugin.transform.handler.call({}, 'useHead({ title: \'static\' })', '/app/page.ts')
-    expect(result.code).toContain('useHead({"_c":1,"t":[')
+    expect(result.code).toContain('from \'virtual:unhead-precompiled-runtime\'')
+    expect(result.code).toContain('useHead(__unhead_precompiled([')
+    const resolveId = typeof plugin.resolveId === 'function' ? plugin.resolveId : plugin.resolveId.handler
+    expect(resolveId('virtual:unhead-precompiled-runtime')).toMatch(/precompiled\.mjs$/)
+  })
+
+  it('does not ship the carrier in client-targeted modules', async () => {
+    const code = 'useHead({ title: \'client\' })'
+    expect(await transform(code, { seoMeta: false }, { environment: { config: { consumer: 'client' } } })).toBeUndefined()
+    expect(await transform(code, { seoMeta: false }, { environment: { config: { consumer: 'server' } } })).toContain('__unhead_precompiled([')
+  })
+
+  it.each(['use client', 'use server'])('keeps the %s directive first', async (directive) => {
+    const code = await transform([
+      `'${directive}';`,
+      'useHead({ title: \'static\' })',
+    ].join('\n'))
+    expect(code).toBeDefined()
+    expect(code!.trimStart().startsWith(`'${directive}';`)).toBe(true)
+    expect(code!.indexOf(`'${directive}';`)).toBeLessThan(code!.indexOf('from \'virtual:unhead-precompiled-runtime\''))
+  })
+
+  it('reuses the strict runtime entry for its carrier', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: \'strict\' }, { head })',
+    ].join('\n'))
+    expect(code).toContain('import { precompiledHeadInput as __unhead_precompiled } from \'unhead/precompiled/server\'')
   })
 
   it('precompiles normalized tags without build-specific weights or positions', async () => {
@@ -60,10 +88,10 @@ describe('static precompile transform', () => {
     ].join('\n'))
     expect(code).toBeDefined()
     const marker = execute(code!).useHead.mock.calls[0][0]
-    expect(marker).toMatchObject({ _c: 1, t: expect.any(Array) })
-    expect(marker.t[0][1].class).toEqual(['page', 'dark'])
-    expect(marker.t[0][1].style).toEqual([['color', 'red'], ['display', 'block']])
-    expect(marker.t[1]).toEqual(['m', [0, 'description', 'Static']])
+    const tags = marker._r(true, [])
+    expect(tags[0].props.class).toEqual(new Set(['page', 'dark']))
+    expect(tags[0].props.style).toEqual(new Map([['color', 'red'], ['display', 'block']]))
+    expect(tags[1]).toMatchObject({ tag: 'meta', props: { name: 'description', content: 'Static' } })
     expect(JSON.stringify(marker)).not.toMatch(/"_(?:w|p)"/)
   })
 
@@ -75,7 +103,7 @@ describe('static precompile transform', () => {
     ].join('\n'))
     expect(code).toContain('import { useHead } from \'unhead\'')
     const call = execute(code!).useHead.mock.calls[0]
-    expect(call[0]._c).toBe(1)
+    expect(call[0]._r).toBeTypeOf('function')
     expect(call[1]).toEqual({ tagPriority: 5 })
 
     const baseline = createHead({ disableDefaults: true })
@@ -103,7 +131,8 @@ describe('static precompile transform', () => {
       'useHead({ __proto__: { polluted: true } })',
       'useHead({ title: 1e999 })',
     ].join('\n'))
-    expect(code?.match(/"_c":1/g)).toHaveLength(1)
+    expect(code?.match(/__unhead_precompiled\(\[/g)).toHaveLength(1)
+    expect(code?.match(/from 'virtual:unhead-precompiled-runtime'/g)).toHaveLength(1)
     expect(code).toContain('useHead({ title: value })')
     expect(code).toContain('useHead({ [\'title\']: \'computed\' })')
     expect(code).toContain('useHead({ title: 1e999 })')
@@ -141,6 +170,31 @@ describe('static precompile transform', () => {
     expect(code).toContain('{ onRendered: useSeoMeta }')
   })
 
+  it('preserves useSeoMeta when its patch-aware return value is observed', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const entry = useSeoMeta({ description: \'initial\' })',
+      'entry.patch({ description: \'patched\' })',
+    ].join('\n'))
+    expect(code).toBeUndefined()
+  })
+
+  it('precompiles static patches on a transformed const useHead entry', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'const entry = useHead({ title: \'initial\' }, { head })',
+      'entry.patch({ title: \'patched\' })',
+    ].join('\n'), { seoMeta: false })
+    expect(code?.match(/__unhead_precompiled\(\[/g)).toHaveLength(2)
+
+    const patch = vi.fn()
+    const useHead = vi.fn(() => ({ patch }))
+    const body = code!.replace(/^import[^\n]*\n?/gm, '').replace(', { head }', '')
+    // eslint-disable-next-line no-new-func -- transformed fixture is local static source
+    new Function('useHead', '__unhead_precompiled', body)(useHead, precompiledHeadInput)
+    expect(patch.mock.calls[0][0]._r(true, [])[0]).toMatchObject({ tag: 'title', textContent: 'patched' })
+  })
+
   it('leaves server-only and safe composables out of scope', async () => {
     expect(await transform('useServerHead({ title: \'server\' })', { seoMeta: false })).toBeUndefined()
     expect(await transform('useHeadSafe({ title: \'safe\' })', { seoMeta: false })).toBeUndefined()
@@ -154,8 +208,8 @@ describe('static precompile transform', () => {
     )
     const marker = execute(code!).useHead.mock.calls[0][0]
     expect(js).toHaveBeenCalledTimes(1)
-    expect(marker.t[0][2].innerHTML).toBe('var answer = 40 + 2; console.log(answer);')
-    expect(code?.match(/"_c":1/g)).toHaveLength(1)
+    expect(marker._r(true, [])[0].innerHTML).toBe('var answer = 40 + 2; console.log(answer);')
+    expect(code?.match(/__unhead_precompiled\(\[/g)).toHaveLength(1)
   })
 
   it('respects the minifier filter while precompiling', async () => {
@@ -164,7 +218,7 @@ describe('static precompile transform', () => {
       'useHead({ script: [{ innerHTML: \'    console.log("static content");    \' }] })',
       { seoMeta: false, minify: { filter: { exclude: [/page/] }, js } },
     )
-    expect(code).toContain('"_c":1')
+    expect(code).toContain('__unhead_precompiled([')
     expect(js).not.toHaveBeenCalled()
   })
 
@@ -175,7 +229,7 @@ describe('static precompile transform', () => {
       `useHead({ script: [{ type: 'application/ld+json', innerHTML: ${JSON.stringify(content)} }] })`,
       { seoMeta: false, minify: { js } },
     )
-    expect(execute(code!).useHead.mock.calls[0][0].t[0][2].innerHTML).toBe(content)
+    expect(execute(code!).useHead.mock.calls[0][0]._r(true, [])[0].innerHTML).toBe(content)
     expect(js).not.toHaveBeenCalled()
   })
 
@@ -208,7 +262,7 @@ describe('static precompile transform', () => {
       'useHead({ htmlAttrs: { \'data-number\': -0 } })',
       'useHead({ title: \'compiled sibling\' })',
     ].join('\n'), { seoMeta: false })
-    expect(code?.match(/"_c":1/g)).toHaveLength(1)
+    expect(code?.match(/__unhead_precompiled\(\[/g)).toHaveLength(1)
     expect(code).toContain('\'data-number\': -0')
   })
 

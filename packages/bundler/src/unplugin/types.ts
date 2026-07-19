@@ -17,7 +17,8 @@ export interface UnpluginOptions extends BaseTransformerTypes {
   experimental?: {
     /**
      * Precompile fully static `useHead()` / `useSeoMeta()` inputs into
-     * normalized tag arrays. Experimental in v3 and disabled by default.
+     * normalized tag arrays during server builds. Client builds skip the
+     * carrier. Experimental in v3 and disabled by default.
      */
     precompile?: boolean
   }

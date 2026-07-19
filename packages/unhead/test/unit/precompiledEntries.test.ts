@@ -1,13 +1,13 @@
 import type { ResolvableHead } from '../../src/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TemplateParamsPlugin } from '../../src/plugins'
+import { precompiledHeadInput } from '../../src/precompiled'
 import { createHead, renderSSRHead } from '../../src/server'
 import { renderSSRHeadSuspenseChunk } from '../../src/stream/server'
-import { normalizeEntryToTags, resolveTags } from '../../src/utils'
+import { normalizeEntryToTags, resolveTags, walkResolver } from '../../src/utils'
 
 function precompile(input: ResolvableHead) {
   const tags = normalizeEntryToTags(input, []).map((tag) => {
-    const tagName = tag.tag === 'meta' ? 'm' : tag.tag === 'title' ? 't' : tag.tag === 'titleTemplate' ? 'T' : tag.tag
     const props: Record<string, any> = { ...tag.props }
     if (props.class instanceof Set)
       props.class = [...props.class]
@@ -20,18 +20,11 @@ function precompile(input: ResolvableHead) {
     }
     if (tag._h !== undefined)
       extra._h = tag._h
-    if (tag.tag === 'meta' && !Object.keys(extra).length && Object.keys(props).length === 2 && props.content !== undefined) {
-      const keyIndex = ['name', 'property', 'http-equiv'].findIndex(key => props[key] !== undefined)
-      if (keyIndex !== -1)
-        return [tagName, [keyIndex, props[['name', 'property', 'http-equiv'][keyIndex]], props.content]]
-    }
-    if (Object.keys(extra).length === 1 && typeof extra.textContent === 'string')
-      return [tagName, props, extra.textContent]
     return Object.keys(extra).length
-      ? [tagName, props, extra]
-      : [tagName, props]
+      ? { tag: tag.tag, props, ...extra }
+      : { tag: tag.tag, props }
   })
-  return JSON.parse(JSON.stringify({ _c: 1, t: tags }))
+  return precompiledHeadInput(JSON.parse(JSON.stringify(tags)) as any)
 }
 
 function render(input: any) {
@@ -45,6 +38,14 @@ afterEach(() => {
 })
 
 describe('precompiled head entries', () => {
+  it('survives framework resolver walks without invoking the reviver', () => {
+    const marker = precompile({ title: 'walked' }) as any
+    const revive = vi.spyOn(Object.getPrototypeOf(marker), '_r')
+    expect(marker.constructor).not.toBe(Object)
+    expect(walkResolver(marker, (_key, value) => value)).toBe(marker)
+    expect(revive).not.toHaveBeenCalled()
+  })
+
   it('revives JSON class/style containers and renders identically', () => {
     const input: ResolvableHead = {
       htmlAttrs: {
@@ -55,8 +56,9 @@ describe('precompiled head entries', () => {
       meta: [{ name: 'description', content: 'Static description' }],
     }
     const marker = precompile(input)
-    expect(marker.t[0][1].class).toEqual(['light', 'page'])
-    expect(marker.t[0][1].style).toEqual([['color', 'red'], ['display', 'block']])
+    const tags = (marker as any)._r(true, [])
+    expect(tags[0].props.class).toEqual(new Set(['light', 'page']))
+    expect(tags[0].props.style).toEqual(new Map([['color', 'red'], ['display', 'block']]))
     expect(render(marker)).toEqual(render(input))
   })
 
@@ -77,8 +79,18 @@ describe('precompiled head entries', () => {
     const second = createHead({ disableDefaults: true })
     second.push(marker)
     expect(renderSSRHead(second).htmlAttrs).not.toContain('hooked')
-    expect(marker.t[0][1].class).toEqual(['base'])
-    expect(marker.t[0][1].style).toEqual([['color', 'red']])
+    expect(JSON.parse(JSON.stringify(marker)).htmlAttrs).toEqual({ class: ['base'], style: { color: 'red' } })
+  })
+
+  it('does not expose carrier backing tags through public resolution', () => {
+    const marker = precompile({ meta: [{ name: 'description', content: 'original' }] })
+    const first = createHead({ disableDefaults: true })
+    first.push(marker)
+    resolveTags(first)[0].props.content = 'mutated'
+
+    const second = createHead({ disableDefaults: true })
+    second.push(marker)
+    expect(renderSSRHead(second).headTags).toContain('content="original"')
   })
 
   it('coexists with precomputed default-init tags and shared hook invalidation', () => {
@@ -129,6 +141,11 @@ describe('precompiled head entries', () => {
 
   it('hides synthetic identity from normalization hooks like the runtime path', () => {
     const input: ResolvableHead = { meta: [{ name: 'description', content: 'one' }] }
+    const marker = precompile(input)
+    const first = createHead({ disableDefaults: true })
+    first.push(marker)
+    resolveTags(first)
+
     const compiled = createHead({ disableDefaults: true })
     const runtime = createHead({ disableDefaults: true })
     for (const head of [compiled, runtime]) {
@@ -137,7 +154,7 @@ describe('precompiled head entries', () => {
         tags[0]._h = 'hook-identity'
       })
     }
-    compiled.push(precompile(input))
+    compiled.push(marker)
     runtime.push(input)
     expect(resolveTags(compiled)).toEqual(resolveTags(runtime))
     expect(compiled.entries.get(1)?._tags?.[0]._h).toBe('hook-identity')
@@ -171,9 +188,11 @@ describe('precompiled head entries', () => {
   it('keeps the marker JSON-serializable for suspense chunks', () => {
     const head = createHead({ disableDefaults: true })
     head.push(precompile({ title: 'streamed' }))
+    // Exercise serialization after first resolve has added runtime weights and
+    // materialized any JSON-safe containers.
+    expect(renderSSRHead(head).headTags).toBe('<title>streamed</title>')
     const chunk = renderSSRHeadSuspenseChunk(head)
-    expect(chunk).toContain('"_c":1')
-    expect(chunk).toContain('"t":[')
+    expect(chunk).toContain('"title":"streamed"')
 
     const serialized = chunk.slice(chunk.indexOf('.push(') + 6, -1)
     const streamedEntries = JSON.parse(serialized)
@@ -181,6 +200,17 @@ describe('precompiled head entries', () => {
     for (const entry of streamedEntries)
       client.push(entry)
     expect(renderSSRHead(client).headTags).toBe('<title>streamed</title>')
+  })
+
+  it('preserves configured title priority through streaming serialization', () => {
+    const marker = precompile({ title: { textContent: 'priority', tagPriority: -20 } } as any)
+    expect(JSON.parse(JSON.stringify(marker))).toEqual({ title: { textContent: 'priority', tagPriority: -20 } })
+
+    const compiled = createHead({ disableDefaults: true })
+    const runtime = createHead({ disableDefaults: true })
+    compiled.push(marker)
+    runtime.push({ title: { textContent: 'priority', tagPriority: -20 } } as any)
+    expect(renderSSRHead(compiled)).toEqual(renderSSRHead(runtime))
   })
 
   it('keeps templateParams class and style values as ordinary parameters', () => {
@@ -198,58 +228,44 @@ describe('precompiled head entries', () => {
     expect(renderSSRHead(compiled)).toEqual(renderSSRHead(runtime))
   })
 
-  it('does not mistake colliding or malformed user input for a marker', () => {
+  it('does not mistake ordinary private-looking input for a marker', () => {
     const withHeadInput = createHead({ disableDefaults: true })
-    withHeadInput.push({ _c: 1, t: [], title: 'not a marker' } as any)
+    withHeadInput.push({ _c: [], title: 'not a marker' } as any)
     expect(renderSSRHead(withHeadInput).headTags).toBe('<title>not a marker</title>')
 
     const malformed = createHead({ disableDefaults: true })
-    malformed.push({ _c: 1, t: [null], title: 'still safe' } as any)
+    malformed.push({ _c: [null], title: 'still safe' } as any)
     expect(() => renderSSRHead(malformed)).not.toThrow()
     expect(renderSSRHead(malformed).headTags).toBe('<title>still safe</title>')
 
     const markerShaped = createHead({ disableDefaults: true })
-    markerShaped.push({ _c: 1, t: [null] } as any)
-    expect(() => renderSSRHead(markerShaped)).not.toThrow()
+    markerShaped.push({ _r: 'not callable', title: 'ordinary' } as any)
+    expect(renderSSRHead(markerShaped).headTags).toBe('<title>ordinary</title>')
 
-    const invalidStyle = createHead({ disableDefaults: true })
-    invalidStyle.push({ _c: 1, t: [['htmlAttrs', { style: [1] }]] } as any)
-    expect(() => renderSSRHead(invalidStyle)).not.toThrow()
+    const callable = vi.fn(() => undefined)
+    const callableInput = createHead({ disableDefaults: true })
+    callableInput.push({ _r: callable, title: 'also ordinary' } as any)
+    expect(renderSSRHead(callableInput).headTags).toBe('<title>also ordinary</title>')
+    expect(callable).toHaveBeenCalledWith()
 
-    const invalidStyleObject = createHead({ disableDefaults: true })
-    invalidStyleObject.push({ _c: 1, t: [['htmlAttrs', { style: { filter: 1 } }]] } as any)
-    expect(renderSSRHead(invalidStyleObject).htmlAttrs).toBe(' style=""')
-
-    const invalidClass = createHead({ disableDefaults: true })
-    invalidClass.push({ _c: 1, t: [['htmlAttrs', { class: false }]] } as any)
-    expect(() => renderSSRHead(invalidClass)).not.toThrow()
-
-    const invalidTag = createHead({ disableDefaults: true })
-    invalidTag.push({ _c: 1, t: [[Symbol('tag'), {}]] } as any)
-    expect(() => renderSSRHead(invalidTag)).not.toThrow()
+    const colliding = createHead({ disableDefaults: true })
+    colliding.push({ _t: [], _r() {}, title: 'own method' } as any)
+    expect(renderSSRHead(colliding).headTags).toBe('<title>own method</title>')
   })
 
-  it('accepts static resolvers and names incompatible resolvers in development', () => {
-    vi.stubEnv('NODE_ENV', 'development')
+  it('keeps the fast path for explicitly static resolvers', () => {
     const staticResolver = Object.assign((_key?: string, value?: any) => value, { _static: true })
     const valid = createHead({ disableDefaults: true, propResolvers: [staticResolver] })
     valid.push(precompile({ title: 'valid' }))
     expect(renderSSRHead(valid).headTags).toBe('<title>valid</title>')
-
-    function reactiveResolver(_key?: string, value?: any) {
-      return value
-    }
-    const invalid = createHead({ disableDefaults: true, propResolvers: [reactiveResolver] })
-    invalid.push(precompile({ title: 'invalid' }))
-    expect(() => renderSSRHead(invalid)).toThrow(/reactiveResolver is not static/)
   })
 
-  it('treats revived tags as final for incompatible resolvers in production', () => {
-    vi.stubEnv('NODE_ENV', 'production')
-    const resolver = vi.fn((_key?: string, value?: any) => value)
-    const head = createHead({ disableDefaults: true, propResolvers: [resolver] })
+  it('rejects custom resolvers that are not explicitly static', () => {
+    function customResolver(_key?: string, value?: any) {
+      return value
+    }
+    const head = createHead({ disableDefaults: true, propResolvers: [customResolver] })
     head.push(precompile({ title: 'production' }))
-    expect(renderSSRHead(head).headTags).toBe('<title>production</title>')
-    expect(resolver).not.toHaveBeenCalled()
+    expect(() => renderSSRHead(head)).toThrow(/Non-static prop resolver: customResolver/)
   })
 })

@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import process from 'node:process'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 import { defineBuildConfig } from 'unbuild'
@@ -90,7 +91,9 @@ async function buildIifeFromSource(rootDir: string) {
 }
 
 export default defineBuildConfig({
-  clean: true,
+  // The package script builds the standalone strict runtime first. Preserve it
+  // while the ordinary multi-entry build emits the rest of the package.
+  clean: process.env.UNHEAD_PRESERVE_PRECOMPILED !== 'true',
   declaration: true,
   hooks: {
     'rollup:options': (_, options) => {
@@ -115,6 +118,7 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
+    { input: 'src/precompiled', name: 'precompiled' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },

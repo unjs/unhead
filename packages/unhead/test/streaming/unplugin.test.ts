@@ -23,6 +23,31 @@ function callLoad(plugin: any, id: string) {
 }
 
 describe('streaming unplugin', () => {
+  it('replays every entry in queued and future module-mode batches', () => {
+    const plugin = createStreamingPlugin.raw({
+      framework: '@unhead/test',
+      mode: 'module',
+      warnOnMissingServerBootstrap: false,
+    }, { framework: 'rollup' } as any) as any
+    const loaded = callLoad(plugin, RESOLVED_CLIENT_ID)
+    const code = loaded.code.replace(/^import[^\n]+\n/, '')
+    const pushed: any[] = []
+    const stream = {
+      _q: [[{ title: 'queued' }, { meta: [{ name: 'description', content: 'queued' }] }]],
+      push: (_batch: any[]) => 0,
+    }
+    // eslint-disable-next-line no-new-func -- execute the generated local fixture
+    new Function('window', 'document', 'createHead', code)(
+      { __unhead__: stream },
+      {},
+      () => ({ push: (entry: any) => pushed.push(entry) }),
+    )
+    expect(pushed).toEqual([{ title: 'queued' }, { meta: [{ name: 'description', content: 'queued' }] }])
+
+    stream.push([{ title: 'future' }, { htmlAttrs: { lang: 'en' } }])
+    expect(pushed.slice(2)).toEqual([{ title: 'future' }, { htmlAttrs: { lang: 'en' } }])
+  })
+
   it('resolves the Vite-only IIFE virtual module in the Vite adapter', () => {
     const plugin = createStreamingPlugin.vite({
       framework: '@unhead/test',
