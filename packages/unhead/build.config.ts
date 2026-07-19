@@ -118,7 +118,6 @@ export default defineBuildConfig({
   },
   entries: [
     { input: 'src/index', name: 'index' },
-    { input: 'src/precompiled', name: 'precompiled' },
     { input: 'src/types/index', name: 'types' },
     { input: 'src/server/index', name: 'server' },
     { input: 'src/client/index', name: 'client' },

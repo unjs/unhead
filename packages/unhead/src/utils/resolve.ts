@@ -215,16 +215,9 @@ export function resolveTagsWithNormalizer(
         tags = e._precomputedTags
       }
       else {
-        const input = e.input as { _r?: (materialize: boolean, propResolvers: any[]) => HeadTag[] }
-        const precompiled = head.ssr
-          && Array.isArray((input as any)?._t)
-          && typeof input?._r === 'function'
-          && !Object.hasOwn(input, '_r')
         const propResolvers = head.resolvedOptions.propResolvers || []
         const hasOptions = !!(e.options && !isEmptyProps(e.options))
-        tags = precompiled
-          ? input._r!(hasOptions || !!hooks['entries:normalize']?.length, propResolvers)
-          : normalizeRuntimeEntry(e.input, propResolvers)
+        tags = normalizeRuntimeEntry(e.input, propResolvers)
         if (hasOptions) {
           for (const t of tags)
             Object.assign(t, e.options)

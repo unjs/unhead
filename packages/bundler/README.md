@@ -58,7 +58,9 @@ interface UnpluginOptions {
   minify?: MinifyTransformOptions | false
 
   experimental?: {
-    precompile?: boolean
+    precompile?: boolean | {
+      consumer?: 'server'
+    }
   }
 }
 ```
@@ -99,9 +101,23 @@ useHead({
 
 ### Static Head Precompilation
 
-With `experimental.precompile` enabled, fully static `useHead()` and `useSeoMeta()` object literals are normalized during server builds. Client-targeted builds skip this phase so the carrier never becomes additive browser code. Transformed mixed-runtime modules import the opt-in `unhead/precompiled` entry, keeping its carrier and serialization code out of ordinary application bundles. Dynamic calls are left untouched, so they continue through the normal runtime path. When a precompiled entry crosses an SSR streaming boundary it serializes as an ordinary head input, so the standard streaming client remains compatible without shipping an experimental decoder.
+`experimental.precompile` targets the sealed `unhead/precompiled/server` entry. During a server build it replaces each eligible call with a module-hoisted render plan. The plan already contains normalized attributes, CAPO priority, dedupe identity, sanitized content, tag position, and final HTML. Runtime work is limited to collecting plans, resolving execution-order duplicates, and joining strings.
 
-For an all-static core SSR graph, `unhead/precompiled/server` is a strict alternative to `unhead/server`. It excludes the dynamic input normalizer and throws if an uncompiled entry reaches resolution. It is not currently a drop-in replacement for framework server entries. Raw `init` entries, plugins or hooks that push raw entries, observed `useSeoMeta()` results, and dynamic patches require the mixed runtime. Direct static patches on `const entry = useHead(...)` are precompiled. Use the regular server entry whenever any entry can be created or replaced at runtime.
+```ts
+import { createHead, renderSSRHead, useHead } from 'unhead/precompiled/server'
+
+const head = createHead()
+useHead({ title: 'Product' }, { head })
+const html = renderSSRHead(head)
+```
+
+This is a compile-or-error target. It supports JSON-compatible object literals, static `useSeoMeta()`, package defaults, `disableDefaults`, `omitLineBreaks`, static priorities/positions, plain HTML/body attributes, and contiguous arrayable SEO metadata grouped atomically per call.
+
+The build fails with a file and line number for dynamic values, spreads, getters, computed keys, observed return values, patches, entry options other than `{ head }`, title templates, explicit tag keys, class/style attributes, invalid tag positions, `templateParams`, `processTemplateParams`, custom duplicate strategies, or repeated arrayable identities separated by another tag. Structured media arrays that interleave fields fall into that last category; split them into contiguous calls or use the normal server entry. The sealed head does not expose hooks, plugins, custom weights/resolvers, raw `init`, framework adapters, or streaming replay.
+
+Imports from `unhead`, `unhead/server`, and framework packages are left alone. Client-targeted builds also skip the phase. As a result, ordinary and browser bundles do not contain the sealed runtime.
+
+Vite detects SSR builds automatically. With plain Rollup or another bundler that cannot expose its target, use `experimental: { precompile: { consumer: 'server' } }`.
 
 ## Documentation
 

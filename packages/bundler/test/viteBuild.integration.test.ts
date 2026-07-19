@@ -49,4 +49,25 @@ describe('vite build integration', () => {
     expect(code).toContain('SERVER_ONLY_MARKER')
     expect(code).toContain('CLIENT_MARKER')
   })
+
+  it('does not change an ordinary SSR graph when sealed precompile is enabled', async () => {
+    const compile = async (precompile: boolean) => outputCode(await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({
+        devtools: false,
+        validate: false,
+        experimental: { precompile },
+      }) as any,
+      build: {
+        write: false,
+        minify: false,
+        ssr: entry,
+      },
+    }))
+    const [disabled, enabled] = await Promise.all([compile(false), compile(true)])
+    expect(enabled).toBe(disabled)
+    expect(enabled).not.toContain('[unhead:pc]')
+  })
 })

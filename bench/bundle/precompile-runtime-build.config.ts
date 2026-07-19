@@ -30,7 +30,6 @@ export default defineBuildConfig({
         { find: '@unhead/vue/server', replacement: path.join(packagesDir, 'vue/dist/server.mjs') },
         { find: '@unhead/vue', replacement: path.join(packagesDir, 'vue/dist/index.mjs') },
         { find: 'unhead/precompiled/server', replacement: withPrecompile ? path.join(packagesDir, 'unhead/dist/precompiled/server.mjs') : path.resolve(__dirname, 'src/vue-server/precompile-runtime-off.ts') },
-        { find: 'unhead/precompiled', replacement: path.join(packagesDir, 'unhead/dist/precompiled.mjs') },
         { find: 'unhead/server', replacement: path.join(packagesDir, 'unhead/dist/server.mjs') },
         { find: 'unhead/plugins', replacement: path.join(packagesDir, 'unhead/dist/plugins.mjs') },
         { find: 'unhead/utils', replacement: path.join(packagesDir, 'unhead/dist/utils.mjs') },
@@ -47,6 +46,7 @@ export default defineBuildConfig({
     'rollup:options': (_ctx, config) => {
       config.plugins.unshift(
         UnheadTransforms.rollup({
+          consumer: 'server',
           treeshake: {},
           seoMeta: {},
           precompile: withPrecompile ? {} : false,
@@ -58,10 +58,9 @@ export default defineBuildConfig({
           transform(code, id) {
             if (!id.endsWith('/precompile-runtime.ts'))
               return
-            const imports = code.match(/precompiledHeadInput as __unhead_precompiled/g)?.length || 0
-            const calls = code.match(/__unhead_precompiled\(/g)?.length || 0
-            if (imports !== (withPrecompile ? 1 : 0) || calls !== (withPrecompile ? 4 : 0))
-              throw new Error(`Expected precompile ${withPrecompile ? 'ON' : 'OFF'} fixture to contain ${withPrecompile ? 'one helper import and four calls' : 'no helper imports or calls'}, found ${imports} import(s) and ${calls} call(s).`)
+            const plans = code.match(/const __unhead_precompiled_plan_/g)?.length || 0
+            if (plans !== (withPrecompile ? 4 : 0))
+              throw new Error(`Expected precompile ${withPrecompile ? 'ON' : 'OFF'} fixture to contain ${withPrecompile ? 'four hoisted plans' : 'no hoisted plans'}, found ${plans}.`)
           },
         },
       )
@@ -71,12 +70,12 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const compressed = zlib.gzipSync(contents).length
       const output = contents.toString()
-      const strictRuntime = output.includes('precompiled-only runtime')
+      const strictRuntime = output.includes('static server runtime received')
       const dynamicNormalizer = output.includes('__proto__')
       if (strictRuntime !== withPrecompile || dynamicNormalizer === withPrecompile)
         throw new Error(`Precompile ${withPrecompile ? 'ON' : 'OFF'} graph was invalid: strict runtime ${strictRuntime ? 'present' : 'absent'}, dynamic normalizer ${dynamicNormalizer ? 'present' : 'absent'}.`)
       if (output.includes('[unhead:pc]') !== withPrecompile)
-        throw new Error(`The streaming-safe carrier was ${withPrecompile ? 'missing from' : 'unexpectedly present in'} the precompile ${withPrecompile ? 'ON' : 'OFF'} graph.`)
+        throw new Error(`The sealed runtime marker was ${withPrecompile ? 'missing from' : 'unexpectedly present in'} the precompile ${withPrecompile ? 'ON' : 'OFF'} graph.`)
       console.log(`PRECOMPILE RUNTIME (${withPrecompile ? 'on' : 'off'}) Size: ${contents.length} bytes, gzip: ${compressed} bytes`)
     },
   },

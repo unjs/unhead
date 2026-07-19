@@ -4,14 +4,12 @@ import { createHead, renderSSRHead, resolveTags, useHead, useSeoMeta } from 'unh
 // head input literal so the ON build can move normalization to build time while
 // the OFF build remains the exact runtime baseline.
 export function createStaticHead() {
-  const head = createHead({ disableDefaults: true })
+  const head = createHead()
 
   useHead({
-    htmlAttrs: { lang: 'en-AU', class: ['theme-light', 'page-product'] },
-    bodyAttrs: { class: 'product-page' },
-    title: 'Widget Pro',
-    titleTemplate: '%s | Example Store',
-    templateParams: { separator: '|', siteName: 'Example Store' },
+    htmlAttrs: { lang: 'en-AU', dir: 'ltr' },
+    bodyAttrs: { 'data-page': 'product' },
+    title: 'Widget Pro | Example Store',
   }, { head })
 
   useSeoMeta({

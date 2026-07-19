@@ -1,50 +1,64 @@
+import type { PrecompiledHeadInput } from '../../src/precompiled/server'
 import { describe, expect, it } from 'vitest'
-import { createHead, precompiledHeadInput, renderSSRHead } from '../../src/precompiled/server'
+import { createHead, renderSSRHead, resolveTags } from '../../src/precompiled/server'
+import { createHead as createNormalHead, renderSSRHead as renderNormalSSRHead } from '../../src/server'
 
-describe('precompiled-only server runtime', () => {
-  it('renders build-normalized entries without the dynamic normalizer', () => {
+describe('sealed precompiled server runtime', () => {
+  it('renders build-finalized plans', () => {
     const head = createHead({ disableDefaults: true })
-    head.push(precompiledHeadInput([
-      { tag: 'title', props: {}, textContent: 'strict' },
-      { tag: 'meta', props: { name: 'description', content: 'compiled' } },
-    ]))
+    head.push([
+      [10, 'title', '<title>strict</title>'],
+      [100, 'meta:description', '<meta name="description" content="compiled">'],
+    ])
     expect(renderSSRHead(head).headTags).toBe('<title>strict</title>\n<meta name="description" content="compiled">')
   })
 
-  it('rejects dynamic entries instead of silently dropping them', () => {
+  it('rejects raw entries instead of carrying a fallback runtime', () => {
     const head = createHead({ disableDefaults: true })
-    head.push({ title: 'dynamic' })
-    expect(() => renderSSRHead(head)).toThrow(/precompiled-only runtime received a dynamic head entry/)
+    expect(() => head.push({ title: 'dynamic' } as any)).toThrow(/uncompiled head entry/)
   })
 
-  it('uses pre-normalized defaults with normalization hooks', () => {
-    const head = createHead()
-    const entries: number[] = []
-    head.hooks.hook('entries:normalize', ({ entry, tags }) => {
-      entries.push(entry._i)
-      if (tags[0].tag === 'htmlAttrs')
-        tags[0].props.lang = 'fr'
-    })
-    expect(renderSSRHead(head).htmlAttrs).toBe(' lang="fr"')
-    expect(entries).toEqual([1])
-  })
-
-  it('reweights pre-normalized defaults with a custom tag weight', () => {
-    const head = createHead({ tagWeight: () => 0 })
-    head.push(precompiledHeadInput([
-      { tag: 'title', props: {}, textContent: 'weighted' },
-    ]))
-    const rendered = renderSSRHead(head)
+  it('uses the package-owned precompiled defaults', () => {
+    const rendered = renderSSRHead(createHead())
+    expect(rendered).toEqual(renderNormalSSRHead(createNormalHead()))
     expect(rendered.htmlAttrs).toBe(' lang="en"')
-    expect(rendered.headTags).toContain('<title>weighted</title>')
-    expect(rendered.headTags).toContain('<meta charset="utf-8">')
+    expect(rendered.headTags).toBe('<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">')
   })
 
-  it('accepts carrier-wrapped static patches', () => {
+  it('dedupes by priority and same-priority execution order', () => {
     const head = createHead({ disableDefaults: true })
-    const entry = head.push(precompiledHeadInput([{ tag: 'title', props: {}, textContent: 'initial' }]))
-    expect(renderSSRHead(head).headTags).toBe('<title>initial</title>')
-    entry.patch(precompiledHeadInput([{ tag: 'title', props: {}, textContent: 'patched' }]))
-    expect(renderSSRHead(head).headTags).toBe('<title>patched</title>')
+    head.push([
+      [100, 'meta:description', '<meta name="description" content="first">'],
+      [20, 'canonical', '<link rel="canonical" href="/best">'],
+    ])
+    head.push([
+      [100, 'meta:description', '<meta name="description" content="last">'],
+      [100, 'canonical', '<link rel="canonical" href="/ignored">'],
+    ])
+    expect(renderSSRHead(head).headTags).toBe('<link rel="canonical" href="/best">\n<meta name="description" content="last">')
+  })
+
+  it('routes pre-rendered fragments without a runtime serializer', () => {
+    const head = createHead({ disableDefaults: true, omitLineBreaks: true })
+    head.push([
+      [100, 'htmlAttrs:lang', ' lang="en-AU"', 3],
+      [100, 'bodyAttrs:class', ' class="page"', 4],
+      [100, 'script:open', '<script src="/open.js"></script>', 1],
+      [100, 'script:close', '<script src="/close.js"></script>', 2],
+    ])
+    expect(renderSSRHead(head)).toEqual({
+      headTags: '',
+      bodyTags: '<script src="/close.js"></script>',
+      bodyTagsOpen: '<script src="/open.js"></script>',
+      htmlAttrs: ' lang="en-AU"',
+      bodyAttrs: ' class="page"',
+    })
+  })
+
+  it('exposes only build-plan resolution', () => {
+    const head = createHead({ disableDefaults: true })
+    const plan: PrecompiledHeadInput = [[10, 'title', '<title>resolved</title>']]
+    head.push(plan)
+    expect(resolveTags(head)).toEqual(plan)
   })
 })

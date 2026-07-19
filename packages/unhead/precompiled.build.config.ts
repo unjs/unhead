@@ -12,7 +12,7 @@ export default defineBuildConfig({
   entries: [
     { input: 'src/precompiled/server', name: 'precompiled/server' },
   ],
-  externals: ['hookable', /^unhead\//],
+  externals: [/^unhead\//],
   rollup: {
     dts: { respectExternal: true },
     inlineDependencies: true,

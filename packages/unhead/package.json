@@ -29,10 +29,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
-    "./precompiled": {
-      "types": "./dist/precompiled.d.ts",
-      "default": "./dist/precompiled.mjs"
-    },
     "./precompiled/server": {
       "types": "./dist/precompiled/server.d.ts",
       "default": "./dist/precompiled/server.mjs"
@@ -105,9 +101,6 @@
     "*": {
       "plugins": [
         "dist/plugins.d.ts"
-      ],
-      "precompiled": [
-        "dist/precompiled.d.ts"
       ],
       "precompiled/server": [
         "dist/precompiled/server.d.ts"

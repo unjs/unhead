@@ -1,71 +1,142 @@
-import type { ServerUnhead } from 'unhead/server'
-import type { ActiveHeadEntry, CreateServerHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, RenderSSRHeadOptions, ResolvableHead, SSRHeadPayload, Unhead, UseSeoMetaInput } from 'unhead/types'
-import { precompiledHeadInput as createPrecompiledHeadInput } from '../precompiled'
-import { createHeadWithRenderer, DEFAULT_INIT_TAGS } from '../server/createHead'
-import { createServerRendererWithResolver } from '../server/renderSSRHead'
-import { capoTagWeight as resolveCapoTagWeight } from '../server/sort'
-import { resolvePrecompiledTags } from './resolve'
+import type { ResolvableHead, SSRHeadPayload, UseSeoMetaInput } from 'unhead/types'
+import { DEFAULT_STATIC_PLAN } from '../server/defaults'
 
-const createPrecompiledRenderer = (options?: RenderSSRHeadOptions) => createServerRendererWithResolver(resolvePrecompiledTags, options)
+/** @internal */
+export type PrecompiledTag = readonly [
+  weight: number,
+  identity: string,
+  html: string | readonly string[],
+  position?: 1 | 2 | 3 | 4,
+]
+
+/** @internal */
+export type PrecompiledHeadInput = readonly PrecompiledTag[]
+
+export interface PrecompiledHeadOptions {
+  disableDefaults?: boolean
+  omitLineBreaks?: boolean
+}
+
+export interface PrecompiledServerHead {
+  /** @internal */
+  _p: PrecompiledHeadInput[]
+  /** @internal */
+  _o: boolean
+  push: (input: PrecompiledHeadInput) => void
+  render: () => SSRHeadPayload
+}
+
+function push(this: PrecompiledServerHead, input: PrecompiledHeadInput): void {
+  if (!Array.isArray(input))
+    throw new Error('[unhead:pc] The static server runtime received an uncompiled head entry.')
+  this._p.push(input)
+}
+
+function render(this: PrecompiledServerHead): SSRHeadPayload {
+  return renderSSRHead(this)
+}
 
 /**
- * Create an SSR head that accepts only build-precompiled entries.
+ * Create a sealed static SSR head.
  *
- * This strict entry lets bundlers remove the dynamic input normalizer. A
- * dynamic entry throws during resolution instead of silently disappearing.
+ * This compile-or-error runtime intentionally excludes dynamic input, hooks,
+ * plugins, entry handles, custom weights, framework adapters and streaming.
  *
  * @experimental
  */
-export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
-  // The ordinary default fast path is already preweighted with capo. A custom
-  // weight needs the same normalized shapes but must run through weighting.
-  if (!options.disableDefaults && options.tagWeight) {
-    const defaults = DEFAULT_INIT_TAGS.map(tag => ({ ...tag, props: { ...tag.props } }))
-    return createHeadWithRenderer<T>({
-      ...options,
-      disableDefaults: true,
-      init: [precompiledHeadInput(defaults), ...(options.init || [])],
-    }, createPrecompiledRenderer)
+export function createHead(options: PrecompiledHeadOptions = {}): PrecompiledServerHead {
+  return {
+    _p: options.disableDefaults ? [] : [DEFAULT_STATIC_PLAN],
+    _o: options.omitLineBreaks === true,
+    push,
+    render,
   }
-  return createHeadWithRenderer<T>(options, createPrecompiledRenderer)
 }
 
-/** @experimental */
-export function createServerRenderer(options?: RenderSSRHeadOptions): HeadRenderer<SSRHeadPayload> {
-  return createPrecompiledRenderer(options)
+/** Resolve build-finalized plans using only runtime execution order. @experimental */
+export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
+  const tags: PrecompiledTag[] = []
+  let hasArray = false
+  for (const plan of head._p) {
+    for (const tag of plan) {
+      tags.push(tag)
+      hasArray ||= typeof tag[2] !== 'string'
+    }
+  }
+  tags.sort((a, b) => a[0] - b[0])
+
+  // The normal resolver re-sorts final winners by execution position whenever
+  // a repeated arrayable group survives dedupe. A lower-weight earlier winner
+  // can mask a compiled array, so structural presence alone is not enough.
+  const resolved = new Map<string, PrecompiledTag>()
+  let hasFlatMeta = false
+  if (hasArray) {
+    for (const tag of tags) {
+      const previous = resolved.get(tag[1])
+      if (!previous)
+        resolved.set(tag[1], tag)
+      if (typeof tag[2] !== 'string' && (!previous || previous[0] === tag[0])) {
+        hasFlatMeta = true
+        break
+      }
+    }
+    resolved.clear()
+  }
+
+  for (const tag of tags) {
+    const previous = resolved.get(tag[1])
+    // Sorted priorities mean the first tag wins across different weights;
+    // stable execution order means the last tag wins at the same weight.
+    // Attribute tags use merge semantics in the normal runtime: after sorting,
+    // the later value wins regardless of priority. Other identities retain the
+    // highest priority, with later execution winning ties.
+    // Reinsert same-weight winners in flat-meta mode so Map order tracks the
+    // selected execution occurrence, matching the normal resolver's final sort.
+    if (hasFlatMeta && previous && previous[0] === tag[0] && tag[3] !== 3 && tag[3] !== 4)
+      resolved.delete(tag[1])
+    if (!previous || tag[3] === 3 || tag[3] === 4 || previous[0] === tag[0])
+      resolved.set(tag[1], tag)
+  }
+  return [...resolved.values()]
 }
 
-/** @experimental */
-export function renderSSRHead(head: Unhead<any>, options?: RenderSSRHeadOptions): SSRHeadPayload {
-  return createPrecompiledRenderer(options)(head)
+/** Render a sealed static SSR head. @experimental */
+export function renderSSRHead(head: PrecompiledServerHead, options: { omitLineBreaks?: boolean } = {}): SSRHeadPayload {
+  const output = ['', '', '', '', '']
+  const lineBreak = (options.omitLineBreaks ?? head._o) ? '' : '\n'
+  for (const tag of resolveTags(head)) {
+    const position = tag[3] || 0
+    const html = tag[2]
+    if (typeof html === 'string') {
+      if (html)
+        output[position] += position < 3 && output[position] ? `${lineBreak}${html}` : html
+      continue
+    }
+    for (const fragment of html) {
+      if (fragment)
+        output[position] += position < 3 && output[position] ? `${lineBreak}${fragment}` : fragment
+    }
+  }
+  return {
+    headTags: output[0],
+    bodyTags: output[2],
+    bodyTagsOpen: output[1],
+    htmlAttrs: output[3],
+    bodyAttrs: output[4],
+  }
 }
 
-type PrecompiledEntryOptions = HeadEntryOptions & { head: Unhead<any> }
-
-/** SSR composable for transformed calls using this strict entry. @experimental */
-export function useHead<I = ResolvableHead>(input: ResolvableHead, options: PrecompiledEntryOptions): ActiveHeadEntry<I> {
-  return options.head.push(input || {}, options) as ActiveHeadEntry<I>
+/** Create a renderer for a sealed static SSR head. @experimental */
+export function createServerRenderer(options?: { omitLineBreaks?: boolean }) {
+  return (head: PrecompiledServerHead): SSRHeadPayload => renderSSRHead(head, options)
 }
 
-/**
- * Preserved only for untransformed calls, which the strict resolver rejects.
- * Static calls are lowered to {@link useHead} by the bundler plugin.
- * @experimental
- */
-export function useSeoMeta(input: UseSeoMetaInput, options: PrecompiledEntryOptions): ActiveHeadEntry<UseSeoMetaInput> {
-  return useHead(input as ResolvableHead, options)
+/** SSR composable for build-finalized plans. @experimental */
+export function useHead(input: ResolvableHead, options: { head: PrecompiledServerHead }): void {
+  options.head.push(input as unknown as PrecompiledHeadInput)
 }
 
-/** Resolve the default server tag weight. */
-export function capoTagWeight(tag: HeadTag): number {
-  return resolveCapoTagWeight(tag)
+/** Static SEO input is lowered to the same plan format by the bundler. @experimental */
+export function useSeoMeta(input: UseSeoMetaInput, options: { head: PrecompiledServerHead }): void {
+  options.head.push(input as unknown as PrecompiledHeadInput)
 }
-
-type PrecompiledHeadTag = Omit<HeadTag, 'props'> & { props: Record<string, any> }
-
-/** Wrap build-normalized tags for the experimental precompile runtime. @experimental */
-export function precompiledHeadInput(source: PrecompiledHeadTag[]): ResolvableHead {
-  return createPrecompiledHeadInput(source)
-}
-
-export { resolvePrecompiledTags as resolveTags }

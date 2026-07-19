@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -95,11 +96,14 @@ jobs:
           echo "$output" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Assert experimental precompile budgets
+        run: |
+          pnpm vitest run packages/bundler/test/viteBuild.integration.test.ts
+          node bench/precompile-gate.mjs /tmp/precompile-perf.json
+
       - name: Post comment on PR
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3
         with:
           header: Bundle Size Analysis
           message: ${{ steps.analyze.outputs.result }}
-
-      - name: Assert experimental precompile budgets
-        run: node bench/precompile-gate.mjs /tmp/precompile-perf.json

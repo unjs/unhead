@@ -10,17 +10,25 @@ export interface BaseTransformerTypes {
   }
 }
 
+export interface PrecompileOptions extends BaseTransformerTypes {
+  /**
+   * Force the server target for bundlers that cannot expose their build
+   * consumer to plugins (notably plain Rollup).
+   */
+  consumer?: 'server'
+}
+
 export interface UnpluginOptions extends BaseTransformerTypes {
   treeshake?: TreeshakeServerComposablesOptions | false
   transformSeoMeta?: UseSeoMetaTransformOptions | false
   minify?: MinifyTransformOptions | false
   experimental?: {
     /**
-     * Precompile fully static `useHead()` / `useSeoMeta()` inputs into
-     * normalized tag arrays during server builds. Client builds skip the
-     * carrier. Experimental in v3 and disabled by default.
+     * Compile static calls imported from `unhead/precompiled/server` into
+     * module-hoisted render plans. This is a capability-limited,
+     * compile-or-error core SSR target. Client builds skip it.
      */
-    precompile?: boolean
+    precompile?: boolean | PrecompileOptions
   }
 }
 

@@ -1,7 +1,6 @@
-// With Unhead Vite plugin: same source as `vue-client-seo-build.config.ts` but
-// runs the unified transform pipeline (including experimental precompile) and
-// SSRStaticReplace via unplugin's rollup adapter before bundling. Measures the
-// bundle savings the unified `@unhead/{framework}/vite` plugin delivers.
+// Same ordinary client source with experimental precompile disabled and enabled.
+// Since only the explicit sealed server entry is eligible, both outputs must be
+// byte-identical and neither may contain the sealed runtime.
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -67,7 +66,12 @@ export default defineBuildConfig({
       const compressed = zlib.gzipSync(contents).length
       const markerPresent = contents.toString().includes('[unhead:pc]')
       if (markerPresent)
-        throw new Error('The server-only precompile carrier leaked into a client bundle.')
+        throw new Error('The sealed static server runtime leaked into a client bundle.')
+      if (withPrecompile) {
+        const baseline = fs.readFileSync(path.resolve(__dirname, 'dist/vue-client-seo-plugin-base/vue-client/minimal-seo.mjs'))
+        if (!contents.equals(baseline))
+          throw new Error('Enabling sealed precompile changed an ordinary client bundle.')
+      }
       console.log(`VUE CLIENT SEO (${withPrecompile ? 'precompile on' : 'precompile off'}) Size: ${size} bytes (${Math.round(size / 102.4) / 10} kB) gzipped: ${compressed} bytes (${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },
