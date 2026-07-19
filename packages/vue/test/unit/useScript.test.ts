@@ -2,12 +2,34 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('does not mutate caller-owned options', () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const options = {
+      eventContext: { caller: true },
+      head,
+      trigger: 'manual' as const,
+    }
+    const original = { ...options }
+    const app = createApp({
+      setup() {
+        useScript('//immutable-options.js', options)
+        return () => h('div')
+      },
+    })
+
+    app.mount(dom.window.document.createElement('div'))
+
+    expect(options).toEqual(original)
+    app.unmount()
+  })
+
   it('multiple active promise handles', async () => {
     const dom = useDom()
     const head = createHead({

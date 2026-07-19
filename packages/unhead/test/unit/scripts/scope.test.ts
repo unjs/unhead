@@ -118,4 +118,19 @@ describe('script scope', () => {
     expect(script.status).toBe('awaitingLoad')
     expect(script._triggerAbortControllers?.size).toBe(0)
   })
+
+  it('does not remove a shared script when an unscoped cached trigger throws', () => {
+    const head = createHead()
+    const script = useScript(head, '/shared-unscoped-trigger.js', { trigger: 'manual' })
+
+    expect(() => useScript(head, '/shared-unscoped-trigger.js', {
+      trigger: () => {
+        throw new Error('consumer trigger failed')
+      },
+    })).toThrow('consumer trigger failed')
+
+    expect(head._scripts?.['/shared-unscoped-trigger.js']).toBe(script)
+    expect(script.signal.aborted).toBe(false)
+    expect(script.status).toBe('awaitingLoad')
+  })
 })
