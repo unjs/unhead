@@ -1,9 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
+import { createScriptWaitFor } from '../../../src/scripts/waitFor'
 
 describe('useScript events', () => {
+  it('keeps invoking legacy use() callbacks without arguments', () => {
+    const head = createHead()
+    const fallback = { ready: true }
+    const use = vi.fn((root?: typeof fallback) => root || fallback)
+
+    useScript(head, '/legacy-use.js', { use, trigger: 'manual' })
+
+    expect(use).toHaveBeenCalledWith()
+  })
+
   it('simple', async () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
@@ -102,9 +113,9 @@ describe('useScript events', () => {
       calls.push('a')
     }, {
       key: 'once',
-    }) as unknown as (() => void) | undefined
+    })
 
-    offA?.()
+    offA()
 
     instance.onLoaded(() => {
       calls.push('b')
@@ -119,17 +130,30 @@ describe('useScript events', () => {
     expect(calls).toEqual(['b'])
   })
 
+  it('returns a safe disposer for duplicate keyed callbacks', () => {
+    const head = createHead()
+    const instance = useScript(head, '/duplicate-key.js', {
+      trigger: 'manual',
+    })
+
+    instance.onLoaded(() => {}, { key: 'once' })
+    const offDuplicate = instance.onLoaded(() => {}, { key: 'once' })
+
+    expect(offDuplicate).toBeTypeOf('function')
+    expect(() => offDuplicate()).not.toThrow()
+  })
+
   it('cleans onLoaded callbacks by identity when disposed out of order', () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
       trigger: 'manual',
     })
 
-    const offA = instance.onLoaded(() => {}) as unknown as (() => void) | undefined
-    const offB = instance.onLoaded(() => {}) as unknown as (() => void) | undefined
+    const offA = instance.onLoaded(() => {})
+    const offB = instance.onLoaded(() => {})
 
-    offA?.()
-    offB?.()
+    offA()
+    offB()
 
     expect(instance._cbs.loaded).toHaveLength(0)
   })
@@ -260,5 +284,295 @@ describe('useScript events', () => {
     await Promise.resolve()
 
     expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('returns a disposer for an individual trigger registration', async () => {
+    const head = createHead()
+    const first = Promise.withResolvers<void>()
+    const second = Promise.withResolvers<void>()
+    const instance = useScript(head, '/disposable-trigger.js', {
+      trigger: 'manual',
+    })
+
+    const offFirst = instance.setupTriggerHandler(first.promise)
+    instance.setupTriggerHandler(second.promise)
+    offFirst()
+    first.resolve()
+    await new Promise(resolve => setTimeout(resolve))
+
+    expect(instance.status).toBe('awaitingLoad')
+
+    second.resolve()
+    await vi.waitFor(() => expect(instance.status).toBe('loading'))
+  })
+
+  it('cleans function triggers when loading starts', () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    let load!: () => void
+    const instance = useScript(head, '/function-trigger.js', {
+      trigger: (fn) => {
+        load = fn
+        return cleanup
+      },
+    })
+
+    expect(instance._triggerAbortController?.signal.aborted).toBe(false)
+    load()
+
+    expect(cleanup).toHaveBeenCalledOnce()
+    expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('cleans function triggers that load synchronously', () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    const instance = useScript(head, '/sync-function-trigger.js', {
+      trigger: (load) => {
+        load()
+        return cleanup
+      },
+    })
+
+    expect(cleanup).toHaveBeenCalledOnce()
+    expect(instance._triggerAbortControllers?.size).toBe(0)
+  })
+
+  it('ignores non-callable function trigger cleanup values', () => {
+    const head = createHead()
+
+    expect(() => useScript(head, '/invalid-function-cleanup.js', {
+      trigger: ((load: () => void) => {
+        load()
+        return Promise.resolve()
+      }) as any,
+    })).not.toThrow()
+
+    expect(head._scripts?.['/invalid-function-cleanup.js']?.status).toBe('loading')
+  })
+
+  it('removes partial lifecycle state when a function trigger throws', () => {
+    const head = createHead()
+    let signal!: AbortSignal
+
+    expect(() => {
+      useScript(head, '/failed-function-trigger.js', {
+        resolve: (ctx) => {
+          signal = ctx.signal
+          return new Promise<Record<string, never>>(() => {})
+        },
+        trigger: (load) => {
+          load()
+          throw new Error('trigger setup failed')
+        },
+      })
+    }).toThrow('trigger setup failed')
+
+    expect(signal.aborted).toBe(true)
+    expect(head._scripts?.['/failed-function-trigger.js']).toBeUndefined()
+    expect(document.querySelector('script[src="/failed-function-trigger.js"]')).toBeNull()
+  })
+
+  it('waits for an async use() result before resolving load and firing onLoaded', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
+    const instance = useScript(head, '/async-script.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const onLoaded = vi.fn()
+    instance.onLoaded(onLoaded)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await Promise.resolve()
+    expect(onLoaded).not.toHaveBeenCalled()
+
+    const api = { ready: true as const }
+    resolve(api)
+    await expect(instance._loadPromise).resolves.toBe(api)
+    expect(onLoaded).toHaveBeenCalledOnce()
+    expect(onLoaded).toHaveBeenCalledWith(api)
+  })
+
+  it('isolates callback errors and releases terminal callbacks', async () => {
+    const head = createHead()
+    const error = new Error('callback failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const instance = useScript(head, '/callback-error.js', {
+      trigger: 'server',
+      use: () => ({ ready: true }),
+    })
+    const afterError = vi.fn()
+    instance.onLoaded(() => {
+      throw error
+    })
+    instance.onLoaded(afterError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await instance._loadPromise
+    await Promise.resolve()
+
+    expect(consoleError).toHaveBeenCalledWith(error)
+    expect(afterError).toHaveBeenCalledOnce()
+    expect(instance._cbs.loaded).toBeNull()
+    expect(instance._cbs.error).toBeNull()
+    consoleError.mockRestore()
+  })
+
+  it('owns waitFor readiness cleanup', async () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    let resolveReady!: (api: { ready: true }) => void
+    const instance = useScript(head, '/wait-for-script.js', {
+      trigger: 'server',
+      resolve: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+        resolveReady = resolve
+        return cleanup
+      }),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    const api = { ready: true as const }
+    resolveReady(api)
+
+    await expect(instance._loadPromise).resolves.toBe(api)
+    expect(cleanup).toHaveBeenCalledOnce()
+  })
+
+  it('resolves when waitFor setup returns the resolved API', async () => {
+    const head = createHead()
+    const api = { ready: true as const }
+    const instance = useScript(head, '/returned-wait-for-script.js', {
+      trigger: 'server',
+      resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+
+    await expect(instance._loadPromise).resolves.toBe(api)
+  })
+
+  it('does not invoke a resolved function as cleanup', async () => {
+    const api = vi.fn()
+    const waitFor = createScriptWaitFor(new AbortController().signal)
+
+    await expect(waitFor<typeof api>(resolve => resolve(api))).resolves.toBe(api)
+    expect(api).not.toHaveBeenCalled()
+  })
+
+  it('aborts waitFor while it adopts a pending promise', async () => {
+    const head = createHead()
+    const cleanup = vi.fn()
+    const readiness = Promise.withResolvers<{ ready: true }>()
+    const instance = useScript(head, '/aborted-wait-for-script.js', {
+      trigger: 'server',
+      resolve: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+        resolve(readiness.promise)
+        return cleanup
+      }),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    instance.remove()
+
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(cleanup).toHaveBeenCalledOnce()
+    readiness.resolve({ ready: true })
+    await readiness.promise
+    expect(instance.status).toBe('removed')
+  })
+
+  it('aborts async use() and ignores late readiness when removed', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ ready: true }>()
+    let signal!: AbortSignal
+    const instance = useScript(head, '/removed-async-script.js', {
+      trigger: 'server',
+      resolve: (ctx) => {
+        signal = ctx.signal
+        return promise
+      },
+    })
+    const onLoaded = vi.fn()
+    instance.onLoaded(onLoaded)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    instance.remove()
+
+    expect(signal.aborted).toBe(true)
+    await expect(instance._loadPromise).resolves.toBe(false)
+    resolve({ ready: true })
+    await Promise.resolve()
+    expect(onLoaded).not.toHaveBeenCalled()
+  })
+
+  it('routes async use() rejection through the script error lifecycle', async () => {
+    const head = createHead()
+    const error = new Error('SDK readiness failed')
+    const instance = useScript(head, '/failed-async-script.js', {
+      trigger: 'server',
+      use: async () => {
+        throw error
+      },
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(error)
+  })
+
+  it('routes falsy async rejection reasons through the script error lifecycle', async () => {
+    const head = createHead()
+    const { promise, reject } = Promise.withResolvers<Record<string, never>>()
+    const instance = useScript(head, '/failed-falsy-script.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    reject(undefined)
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'undefined' }))
+  })
+
+  it('fails when async use() resolves without an API and replays the error', async () => {
+    const head = createHead()
+    const instance = useScript(head, '/missing-async-api.js', {
+      trigger: 'server',
+      use: async () => undefined,
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+
+    const onError = vi.fn()
+    instance.onError(onError)
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'use() resolved without a script API',
+    }))
+  })
+
+  it('routes synchronous use() failures through the script error lifecycle', async () => {
+    const head = createHead()
+    const error = new Error('SDK adapter failed')
+    const instance = useScript(head, '/failed-sync-script.js', {
+      trigger: 'server',
+      use: () => {
+        throw error
+      },
+    })
+    const onError = vi.fn()
+    instance.onError(onError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await expect(instance._loadPromise).resolves.toBe(false)
+    expect(instance.status).toBe('error')
+    expect(onError).toHaveBeenCalledWith(error)
   })
 })

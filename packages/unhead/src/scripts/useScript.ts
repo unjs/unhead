@@ -5,36 +5,100 @@ import type {
 import type {
   EventHandlerOptions,
   ScriptInstance,
+  ScriptScope,
   UseFunctionType,
   UseScriptContext,
+  UseScriptContextOptions,
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptReturn,
+  UseScriptScopeReturn,
   WarmupStrategy,
 } from './types'
 import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptScope } from './scope'
+import { createScriptWaitFor } from './waitFor'
 
 /**
  * Load third-party scripts with SSR support and a proxied API.
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
-  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
-  const options = _options || {}
+type ScriptApi = Record<symbol | string, any>
+type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
+type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
+
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): ScriptScope<ResolvedScriptApi<R>>
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): ScriptInstance<ResolvedScriptApi<R>>
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R>): ScriptInstance<ResolvedScriptApi<R>> | ScriptScope<ResolvedScriptApi<R>>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  return _useScript(head, _input, _options, !!_options?.scope)
+}
+
+/** Resolve the shared script and optionally attach a consumer scope. */
+function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  // Event handlers below capture this head, so never mutate an input object that
+  // may be reused by another SSR request or client app.
+  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : { ..._input }
+  const {
+    beforeInit,
+    eventContext: _eventContext,
+    resolve: resolveApi,
+    scope: _scope,
+    trigger,
+    use,
+    warmupStrategy: _warmupStrategy,
+    ...entryOptions
+  } = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
   const prevScript = Object.hasOwn(scripts, id)
     ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
     : undefined
   if (prevScript) {
-    prevScript.setupTriggerHandler(options.trigger)
-    return prevScript
+    const result = scoped ? createScriptScope(prevScript) : prevScript
+    if (scoped)
+      result.setupTriggerHandler(trigger)
+    else
+      prevScript._setupTriggerHandler(trigger, false)
+    return result
   }
-  options.beforeInit?.()
+  const lifecycleController = new AbortController()
+  const useContext = {
+    signal: lifecycleController.signal,
+    waitFor: createScriptWaitFor(lifecycleController.signal),
+  }
+  const resolveUse = () => resolveApi ? resolveApi(useContext) : use?.()
+  beforeInit?.()
+  let initialUseResult: T | PromiseLike<T | undefined | null> | undefined | null
+  let initialUseError: unknown
+  let initialUseFailed = false
+  try {
+    initialUseResult = !head.ssr && (resolveApi || use)
+      ? resolveUse()
+      : undefined
+  }
+  catch (error) {
+    initialUseFailed = true
+    initialUseError = error
+  }
+  const initialUseIsAsync = !!initialUseResult && typeof (initialUseResult as PromiseLike<T>).then === 'function'
+  const initialInstance = initialUseIsAsync ? null : (initialUseResult as T | null | undefined) || null
+  const initialUseOutcome = initialUseFailed
+    ? Promise.resolve([false, initialUseError] as const)
+    : initialUseIsAsync
+      ? Promise.resolve(initialUseResult).then(
+          api => [true, api] as const,
+          error => [false, error] as const,
+        )
+      : undefined
   const _events: { type: string, timestamp: number }[] = []
+  let loadError: Error | undefined
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
@@ -42,29 +106,57 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     // eslint-disable-next-line ts/no-use-before-define
     callHook(head, 'script:updated', hookCtx)
   }
-  const onload = typeof input.onload === 'function' ? input.onload.bind(options.eventContext) : null
-  input.onload = (e: Event) => {
-    syncStatus('loaded')
-    onload?.(e)
-  }
-  const onerror = typeof input.onerror === 'function' ? input.onerror.bind(options.eventContext) : null
-  input.onerror = (e: Event) => {
+  const failReadiness = (reason: unknown) => {
+    loadError = reason instanceof Error ? reason : new Error(String(reason))
+    lifecycleController.abort(loadError)
     syncStatus('error')
-    onerror?.(e)
+  }
+  let onload = typeof input.onload === 'function' ? input.onload.bind(_eventContext) : null
+  let onerror = typeof input.onerror === 'function' ? input.onerror.bind(_eventContext) : null
+  const releaseEventHandlers = () => {
+    onload = null
+    onerror = null
+  }
+  input.onload = (e: Event) => {
+    try {
+      syncStatus('loaded')
+      onload?.(e)
+    }
+    finally {
+      releaseEventHandlers()
+    }
+  }
+  input.onerror = (e: Event) => {
+    try {
+      lifecycleController.abort()
+      syncStatus('error')
+      onerror?.(e)
+    }
+    finally {
+      releaseEventHandlers()
+    }
   }
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
   const _uniqueCbs: Set<string> = new Set<string>()
+  const callCbs = (cbs: null | ((value: any) => void | Promise<void>)[], value: any) => cbs?.forEach((cb) => {
+    try {
+      void Promise.resolve(cb(value)).catch(error => console.error(error))
+    }
+    catch (error) {
+      console.error(error)
+    }
+  })
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
-      return
+      return () => {}
     }
     let uniqueKey: string | undefined
     if (options?.key) {
       uniqueKey = `${key}:${options.key}`
       if (_uniqueCbs.has(uniqueKey)) {
-        return
+        return () => {}
       }
       _uniqueCbs.add(uniqueKey)
     }
@@ -86,7 +178,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       cb(script.instance)
     // eslint-disable-next-line ts/no-use-before-define
     else if (key === 'error' && script.status === 'error')
-      cb()
+      cb(loadError)
     return () => {
       if (uniqueKey)
         _uniqueCbs.delete(uniqueKey)
@@ -98,26 +190,58 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return
     // resolve on a microtask rather than requestAnimationFrame: rAF is suspended while the
     // tab is hidden, which would defer onLoaded() callbacks indefinitely (unjs/unhead#771)
-    const emit = (api: T) => queueMicrotask(() => resolve(api))
+    const emit = (api: T) => queueMicrotask(() => {
+      // eslint-disable-next-line ts/no-use-before-define
+      if (lifecycleController.signal.aborted || script.status === 'removed')
+        resolve(false)
+      else
+        resolve(api)
+    })
+    let resolvingApi = false
     const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
       // vue augmentation... not ideal
       const status = script.status
       if (script.id === id && (status === 'loaded' || status === 'error' || status === 'removed')) {
         if (status === 'loaded') {
-          if (typeof options.use === 'function') {
-            const api = options.use()
-            if (api) {
-              emit(api)
-            }
-          }
-          else {
+          if (resolvingApi)
+            return
+          resolvingApi = true
+          if (!resolveApi && !use) {
             emit({} as T)
+            unhook?.()
+            return
           }
+
+          const useOutcome = initialUseOutcome || (() => {
+            try {
+              return Promise.resolve(resolveUse()).then(
+                api => [true, api] as const,
+                error => [false, error] as const,
+              )
+            }
+            catch (error) {
+              return Promise.resolve([false, error] as const)
+            }
+          })()
+          void useOutcome.then((outcome) => {
+            if (lifecycleController.signal.aborted || script.status === 'removed')
+              return
+            if (!outcome[0]) {
+              failReadiness(outcome[1])
+            }
+            else if (outcome[1]) {
+              emit(outcome[1])
+              unhook?.()
+            }
+            else {
+              failReadiness(new Error('use() resolved without a script API'))
+            }
+          })
         }
         else {
           resolve(false) // failed to load
+          unhook?.()
         }
-        unhook?.()
       }
     })
   })
@@ -126,15 +250,18 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     _loadPromise: loadPromise,
     _events,
     _warmupStrategy: undefined as string | undefined,
-    instance: (!head.ssr && options?.use?.()) || null,
+    instance: initialInstance,
     proxy: null,
     id,
+    signal: lifecycleController.signal,
     src: input.src,
     input,
     status: 'awaitingLoad',
 
     remove() {
       const hadEntry = !!script.entry
+      lifecycleController.abort()
+      releaseEventHandlers()
       // cancel all pending triggers
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
@@ -198,7 +325,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         // status should get updated from script events
         script.entry = head.push({
           script: [{ ...defaults, ...input }],
-        }, options)
+        }, entryOptions)
       }
       if (cb)
         _registerCb('loaded', cb)
@@ -211,16 +338,21 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return _registerCb('error', cb, options)
     },
     setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
+      return script._setupTriggerHandler(trigger)
+    },
+    _setupTriggerHandler(trigger: UseScriptOptions['trigger'], removeOnError = true) {
+      const noop = () => {}
       if (script.status !== 'awaitingLoad') {
-        return
+        return noop
       }
       if (((typeof trigger === 'undefined' || trigger === 'client') && !head.ssr) || trigger === 'server') {
         script.load()
+        return noop
       }
       else if (trigger instanceof Promise) {
         // promise triggers only work client side
         if (head.ssr) {
-          return
+          return noop
         }
         // each trigger gets its own abort controller so that disposing one scope
         // does not cancel triggers from other scopes
@@ -258,10 +390,42 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
               script._triggerPromises?.splice(idx, 1)
           })
         script._triggerPromises.push(triggerPromise)
+        return () => abortController.abort()
       }
       else if (typeof trigger === 'function') {
-        trigger(script.load)
+        // function triggers only work client side
+        if (head.ssr) {
+          return noop
+        }
+        const abortController = new AbortController()
+        script._triggerAbortControllers = script._triggerAbortControllers || new Set()
+        script._triggerAbortControllers.add(abortController)
+        script._triggerAbortController = abortController
+        let cleanup: void | (() => void)
+        abortController.signal.addEventListener('abort', () => {
+          script._triggerAbortControllers?.delete(abortController)
+          if (typeof cleanup === 'function')
+            cleanup()
+          cleanup = undefined
+        }, { once: true })
+        try {
+          cleanup = trigger(script.load)
+          // A trigger may call load synchronously before returning its disposer.
+          if (abortController.signal.aborted) {
+            if (typeof cleanup === 'function')
+              cleanup()
+            cleanup = undefined
+          }
+        }
+        catch (error) {
+          abortController.abort()
+          if (removeOnError)
+            script.remove()
+          throw error
+        }
+        return () => abortController.abort()
       }
+      return noop
     },
     _cbs,
   } as any as UseScriptContext<T>
@@ -270,21 +434,30 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     .then((api) => {
       if (api !== false) {
         script.instance = api
-        _cbs.loaded?.forEach(cb => cb(api))
-        _cbs.loaded = null
-      }
-      else {
-        if (script.status === 'error')
-          _cbs.error?.forEach(cb => cb())
+        const cbs = _cbs.loaded
         _cbs.loaded = null
         _cbs.error = null
+        callCbs(cbs, api)
+      }
+      else {
+        const cbs = script.status === 'error' ? _cbs.error : null
+        _cbs.loaded = null
+        _cbs.error = null
+        callCbs(cbs, loadError)
       }
     })
   const hookCtx = { script }
 
-  script.setupTriggerHandler(options.trigger)
-  if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
+  const result = scoped ? createScriptScope(script) : script
+  try {
+    result.setupTriggerHandler(trigger)
+  }
+  catch (error) {
+    script.remove()
+    throw error
+  }
+  if (resolveApi || use) {
+    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
@@ -292,13 +465,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     })
   }
   // need to make sure it's not already registered
-  if (!options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
-    options.warmupStrategy = 'preload'
-  }
-  if (options.warmupStrategy) {
-    script._warmupStrategy = options.warmupStrategy
-    script.warmup(options.warmupStrategy)
+  const warmupStrategy = _warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false)
+  if (warmupStrategy) {
+    script._warmupStrategy = warmupStrategy
+    script.warmup(warmupStrategy)
   }
   scripts[id] = script
-  return script
+  return result
 }
