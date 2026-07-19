@@ -28,6 +28,27 @@ interface PendingTransform {
 
 export type MinifyFn = (code: string) => Promise<string | null>
 type InlineScriptTranspiler = (code: string, target: BuildOptions['target']) => Promise<string | null>
+type ViteTransformApi = Pick<typeof import('vite'), 'transformWithEsbuild'> & Partial<Pick<typeof import('vite'), 'transformWithOxc'>>
+
+export async function transformInlineScriptWithVite(vite: ViteTransformApi, code: string, target: BuildOptions['target']): Promise<string> {
+  if (target === false)
+    return code
+
+  if (typeof vite.transformWithOxc === 'function') {
+    const result = await vite.transformWithOxc(code, 'unhead-inline-script.js', {
+      lang: 'js',
+      sourcemap: false,
+      target,
+    })
+    return result.code.trim()
+  }
+
+  const result = await vite.transformWithEsbuild(code, 'unhead-inline-script.js', {
+    loader: 'js',
+    target,
+  })
+  return result.code.trim()
+}
 
 export interface InlineScriptTransformOptions {
   /**
@@ -96,24 +117,8 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   let resolvedViteTarget: BuildOptions['target']
   const jsTranspiler: InlineScriptTranspiler | undefined = shouldTranspile && meta.framework === 'vite'
     ? async (code, target) => {
-      if (target === false)
-        return code
-
-      const vite = await import('vite') as typeof import('vite')
-      if ('transformWithOxc' in vite && typeof vite.transformWithOxc === 'function') {
-        const result = await vite.transformWithOxc(code, 'unhead-inline-script.js', {
-          lang: 'js',
-          sourcemap: false,
-          target,
-        })
-        return result.code.trim()
-      }
-
-      const result = await vite.transformWithEsbuild(code, 'unhead-inline-script.js', {
-        loader: 'js',
-        target,
-      })
-      return result.code.trim()
+      const vite = await import('vite')
+      return transformInlineScriptWithVite(vite, code, target)
     }
     : undefined
   const doJS = !!jsMinifier || !!jsTranspiler

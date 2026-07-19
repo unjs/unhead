@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { transformInlineScriptWithVite } from '../src/unplugin/MinifyTransform'
 import { Unhead } from '../src/unplugin/vite'
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.url))
@@ -109,5 +110,34 @@ describe('vite build integration', () => {
 
     expect(code).not.toContain('payload?.value')
     expect(code).not.toContain('?? "fallback"')
+  })
+})
+
+describe('vite inline script transform backend', () => {
+  it('uses Oxc when Vite exposes it', async () => {
+    const transformWithOxc = vi.fn(async () => ({ code: '  oxc output  ' }))
+    const transformWithEsbuild = vi.fn(async () => ({ code: 'esbuild output' }))
+
+    const result = await transformInlineScriptWithVite({ transformWithOxc, transformWithEsbuild } as any, 'source', 'chrome77')
+
+    expect(result).toBe('oxc output')
+    expect(transformWithOxc).toHaveBeenCalledWith('source', 'unhead-inline-script.js', {
+      lang: 'js',
+      sourcemap: false,
+      target: 'chrome77',
+    })
+    expect(transformWithEsbuild).not.toHaveBeenCalled()
+  })
+
+  it('falls back to esbuild for Vite 6 and 7', async () => {
+    const transformWithEsbuild = vi.fn(async () => ({ code: '  esbuild output  ' }))
+
+    const result = await transformInlineScriptWithVite({ transformWithEsbuild } as any, 'source', 'chrome77')
+
+    expect(result).toBe('esbuild output')
+    expect(transformWithEsbuild).toHaveBeenCalledWith('source', 'unhead-inline-script.js', {
+      loader: 'js',
+      target: 'chrome77',
+    })
   })
 })
