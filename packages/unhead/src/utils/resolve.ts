@@ -24,7 +24,9 @@ function isEmptyProps(props: Record<string, any>): boolean {
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
 function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
-  const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
+  const count = (hooks['entries:resolve']?.length || 0)
+    + (hooks['entries:normalize']?.length || 0)
+    + (hooks['tag:normalise']?.length || 0)
   if (head._h !== count) {
     head._h = count
     for (const entry of head.entries.values())
@@ -185,7 +187,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   // entries:resolve array is also part of that hook's contract: listeners
   // may mutate it (push/splice) to change which entries resolve.
   let entries: HeadEntry<any>[] | undefined
-  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length) {
+  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length || hooks['tag:normalise']?.length) {
     entries = [...head.entries.values()]
     if (hooks['entries:resolve']?.length)
       callHook(head, 'entries:resolve', { entries, ...ctx })
@@ -207,6 +209,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         && weightFn === head.resolvedOptions._tagWeight
         && !hooks['entries:normalize']?.length
         && !hooks['entries:resolve']?.length
+        && !hooks['tag:normalise']?.length
         && (!e.options || isEmptyProps(e.options))) {
         tags = e._precomputedTags
       }
@@ -223,7 +226,12 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
           tags = normalizeCtx.tags
         }
         for (let i = 0; i < tags.length; i++) {
-          const t = tags[i]
+          let t = tags[i]
+          if (hooks['tag:normalise']?.length) {
+            const tagCtx = { tag: t, entry: e, resolvedOptions: head.resolvedOptions }
+            callHook(head, 'tag:normalise', tagCtx)
+            t = tags[i] = tagCtx.tag
+          }
           t._w = weightFn(t)
           t._p = (e._i << 10) + i
           t._d = dedupeKey(t)
