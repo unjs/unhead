@@ -3,7 +3,12 @@ import type { Unhead } from 'unhead/types'
 import { createElement } from 'react'
 import { UnheadContext } from '../context'
 
-export function UnheadProvider({ value, children }: { value: Unhead, children: ReactNode }): ReactNode {
+export interface UnheadProviderProps {
+  children: ReactNode
+  value: Unhead
+}
+
+export function UnheadProvider({ value, children }: UnheadProviderProps): ReactNode {
   return createElement(UnheadContext.Provider, { value }, children)
 }
 
