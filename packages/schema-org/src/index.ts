@@ -2,6 +2,13 @@ export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, reso
 export type { ResolverOptions, SchemaOrgGraph } from './core'
 export { schemaAutoImports } from './imports'
 export * from './nodes'
+export type { DefinedRegion } from './nodes/DefinedRegion'
+export type { MerchantReturnPolicy, MerchantReturnPolicySimple } from './nodes/MerchantReturnPolicy'
+export type { MonetaryAmount, MonetaryAmountSimple, QuantitativeSimple, QuantitativeValue } from './nodes/MonetaryAmount'
+export type { OfferShippingDetails } from './nodes/OfferShippingDetails'
+export type { Place, PlaceSimple } from './nodes/Place'
+export type { ShippingDeliveryTime } from './nodes/ShippingDeliveryTime'
+export type { VirtualLocation, VirtualLocationSimple } from './nodes/VirtualLocation'
 export { UnheadSchemaOrg } from './plugin'
 export type { PluginSchemaOrgOptions } from './plugin'
 export {
