@@ -25,18 +25,12 @@ interface PrecompiledHeadInput {
   t: [HeadTag['tag'] | 'm' | 't' | 'T', Record<string, any> | [0 | 1 | 2, any, any], (Record<string, any> | string)?][]
 }
 
-function isPrecompiledHeadInput(input: unknown): input is PrecompiledHeadInput {
-  return !!input
-    && typeof input === 'object'
-    && (input as PrecompiledHeadInput)._c === 1
-    && Array.isArray((input as PrecompiledHeadInput).t)
-    && Object.keys(input).length === 2
-    && (input as PrecompiledHeadInput).t.every(tuple => Array.isArray(tuple) && tuple.length >= 2 && typeof tuple[0] === 'string')
-}
-
 function revivePrecompiledTags(input: PrecompiledHeadInput): HeadTag[] {
   const tags: HeadTag[] = []
-  for (const [encodedTagName, encodedProps, extra] of input.t) {
+  for (const tuple of input.t) {
+    if (!Array.isArray(tuple) || typeof tuple[0] !== 'string')
+      continue
+    const [encodedTagName, encodedProps, extra] = tuple
     const tagName = encodedTagName === 'm' ? 'meta' : encodedTagName === 't' ? 'title' : encodedTagName === 'T' ? 'titleTemplate' : encodedTagName
     const props: Record<string, any> = Array.isArray(encodedProps)
       ? { [encodedProps[0] ? encodedProps[0] === 1 ? 'property' : 'http-equiv' : 'name']: encodedProps[1], content: encodedProps[2] }
@@ -45,7 +39,7 @@ function revivePrecompiledTags(input: PrecompiledHeadInput): HeadTag[] {
       if (props.class != null)
         props.class = new Set(Array.isArray(props.class) ? props.class : [])
       if (props.style != null)
-        props.style = new Map((Array.isArray(props.style) ? props.style.filter(entry => Array.isArray(entry) && entry.length >= 2) : []) as [string, string][])
+        props.style = new Map((Array.isArray(props.style) ? props.style.filter(Array.isArray) : []) as [string, string][])
     }
     tags.push({
       ...(typeof extra === 'string' ? { textContent: extra } : extra),
@@ -246,7 +240,10 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         tags = e._precomputedTags
       }
       else {
-        const precompiled = isPrecompiledHeadInput(e.input)
+        const input = e.input as PrecompiledHeadInput
+        const precompiled = input?._c === 1
+          && Array.isArray(input.t)
+          && Object.keys(input).length === 2
         const propResolvers = head.resolvedOptions.propResolvers || []
         // eslint-disable-next-line node/prefer-global/process -- left as a direct expression so downstream Vite/Webpack/Rspack builds can replace NODE_ENV
         if (precompiled && typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -255,7 +252,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
             throw new Error(`[unhead] ${resolver.name || 'anonymous'} is not static`)
         }
         tags = precompiled
-          ? revivePrecompiledTags(e.input)
+          ? revivePrecompiledTags(input)
           : normalizeEntryToTags(e.input, propResolvers)
         const hasOptions = !!(e.options && !isEmptyProps(e.options))
         if (hasOptions) {
