@@ -1,9 +1,11 @@
 import type { InferLink, InferScript, Link, Script } from './types'
 
 type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
-type DefinedLink<T extends { rel: string }> = IsUnion<T['rel']> extends false
-  ? T extends Link ? T : Link & Omit<T, 'rel'>
-  : Link & Omit<T, 'rel'>
+type DefinedLink<T extends { rel: string }> = T extends { rel: infer U }
+  ? IsUnion<U> extends false
+    ? T extends Link ? T : Link & Omit<T, 'rel'>
+    : Link & Omit<T, 'rel'>
+  : never
 type DefinedScript<T extends object> = T extends { type: infer U }
   ? IsUnion<U> extends false
     ? T extends Script ? T : Script & Omit<T, 'type'>

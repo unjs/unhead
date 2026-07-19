@@ -21,6 +21,12 @@ describe('types', () => {
     expectTypeOf(preload.rel).toEqualTypeOf<'preload'>()
     expectTypeOf(preload.href).toEqualTypeOf<'/entry.js'>()
 
+    const linkUnion = defineLink(Math.random() > 0.5
+      ? { rel: 'preload', as: 'script', href: '/entry.js' }
+      : { rel: 'prefetch', href: '/next.js' })
+    if (linkUnion.rel === 'preload')
+      expectTypeOf(linkUnion.as).toEqualTypeOf<'script'>()
+
     const customLink = defineLink({
       'rel': 'openid2.provider',
       'href': 'https://example.com/openid',
