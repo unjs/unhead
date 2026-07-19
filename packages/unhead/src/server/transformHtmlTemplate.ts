@@ -9,6 +9,9 @@ function extractPreparedTemplate(template: PreparedTemplate): PreparedHtmlTempla
   let extracted = cache.get(template)
   if (!extracted) {
     extracted = parseHtmlForUnheadExtraction(template.html)
+    Object.freeze(extracted.input)
+    Object.freeze(extracted.indexes)
+    Object.freeze(extracted)
     cache.set(template, extracted)
   }
   return extracted
