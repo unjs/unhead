@@ -49,6 +49,10 @@ describe('prepareTemplate', () => {
     const prepared = prepareTemplate(templates['well-formed'])
     expect(prepared.html).toBe(templates['well-formed'])
     expect(prepared.indexes.headTagEnd).toBeGreaterThan(0)
+    expect(Object.isFrozen(prepared)).toBe(true)
+    expect(Object.isFrozen(prepared.input)).toBe(true)
+    expect(Object.isFrozen(prepared.indexes)).toBe(true)
+    expect(Reflect.set(prepared, 'html', '')).toBe(false)
   })
 
   describe('string and prepared inputs produce byte-identical output', () => {
@@ -94,17 +98,14 @@ describe('prepareTemplate', () => {
       expect(prepared.indexes).toEqual(indexesBefore)
     })
 
-    it('transformHtmlTemplate reuses the memoized extraction parse across heads', () => {
+    it('transformHtmlTemplate reuses a prepared template without mutating it', () => {
       const template = '<html data-template="1"><head><title>From Template</title><meta name="existing" content="yes"></head><body>App</body></html>'
       const prepared = prepareTemplate(template)
+      const keys = Reflect.ownKeys(prepared)
 
       const first = transformHtmlTemplate(serverHead(), prepared)
-      expect(prepared._extracted).toBeDefined()
-      const extracted = prepared._extracted
-
       const second = transformHtmlTemplate(serverHead(), prepared)
-      // memoized, not re-parsed
-      expect(prepared._extracted).toBe(extracted)
+      expect(Reflect.ownKeys(prepared)).toEqual(keys)
       expect(second).toBe(first)
       expect(second).toBe(transformHtmlTemplate(serverHead(), template))
     })

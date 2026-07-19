@@ -29,6 +29,7 @@
   ValidatePlugin: function
 ./server:
   createHead: function
+  prepareTemplate: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadProvider: function

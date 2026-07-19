@@ -447,7 +447,7 @@ export function prepareStreamingTemplate(
     // `</body></html>` suffix contains '</body>' (at +0) but neither '<html'
     // nor '</head>', and none of the searched needles can straddle the
     // prefix/suffix boundary.
-    let shellParsed: PreparedTemplate
+    let shellParsed: ReturnType<typeof parseHtmlForIndexes>
     if (bodyCloseStart >= bodyEnd) {
       const shellLen = shellPart.length
       const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes

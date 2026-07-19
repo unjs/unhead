@@ -45,6 +45,7 @@
   useScript: function
 ./server:
   createHead: function
+  prepareTemplate: function
   propsToString: function
   renderSSRHead: function
   transformHtmlTemplate: function

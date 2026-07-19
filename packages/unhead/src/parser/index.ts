@@ -53,6 +53,8 @@ export interface PreparedHtmlTemplateWithIndexes {
   }
 }
 
+declare const PreparedTemplateBrand: unique symbol
+
 /**
  * A reusable parsed HTML template.
  *
@@ -63,11 +65,10 @@ export interface PreparedHtmlTemplateWithIndexes {
  * Create one with {@link prepareTemplate}.
  */
 export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
-  /**
-   * Lazily computed extraction parse used by `transformHtmlTemplate`.
-   * @internal
-   */
-  _extracted?: PreparedHtmlTemplateWithIndexes
+  readonly [PreparedTemplateBrand]: true
+  readonly html: string
+  readonly input: SerializableHead
+  readonly indexes: Readonly<PreparedHtmlTemplateWithIndexes['indexes']>
 }
 
 /**
@@ -78,7 +79,8 @@ export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
  * `prepareStreamingTemplate`, `wrapStream`) also accept the returned
  * `PreparedTemplate`, skipping the per-request template parse.
  *
- * The caller owns the value's lifetime - there is no internal cache.
+ * The returned value is immutable. Unhead does not cache templates by their
+ * HTML string, so the caller controls the value's lifetime.
  *
  * @example
  * ```ts
@@ -89,7 +91,10 @@ export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
  */
 /* @__PURE__ */
 export function prepareTemplate(html: string): PreparedTemplate {
-  return parseHtmlForIndexes(html)
+  const template = parseHtmlForIndexes(html)
+  Object.freeze(template.input)
+  Object.freeze(template.indexes)
+  return Object.freeze(template) as PreparedTemplate
 }
 
 /**

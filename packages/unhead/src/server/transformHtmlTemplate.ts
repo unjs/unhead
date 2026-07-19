@@ -1,6 +1,18 @@
-import type { PreparedTemplate } from '../parser'
+import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } from '../parser'
+
+let extractedTemplates: WeakMap<PreparedTemplate, PreparedHtmlTemplateWithIndexes> | undefined
+
+function extractPreparedTemplate(template: PreparedTemplate): PreparedHtmlTemplateWithIndexes {
+  const cache = extractedTemplates ||= new WeakMap()
+  let extracted = cache.get(template)
+  if (!extracted) {
+    extracted = parseHtmlForUnheadExtraction(template.html)
+    cache.set(template, extracted)
+  }
+  return extracted
+}
 
 /**
  * Transform an HTML template string by extracting any head tags and attributes from it, pushing them to Unhead,
@@ -14,9 +26,7 @@ import { applyHeadToHtml, parseHtmlForIndexes, parseHtmlForUnheadExtraction } fr
 export function transformHtmlTemplate(head: Unhead<any, SSRHeadPayload>, html: string | PreparedTemplate) {
   const template = typeof html === 'string'
     ? parseHtmlForUnheadExtraction(html)
-    // Memoize the extraction parse on the prepared value so repeated calls
-    // reuse it - it's a pure function of the owned html string.
-    : (html._extracted ||= parseHtmlForUnheadExtraction(html.html))
+    : extractPreparedTemplate(html)
   head.push(template.input, { _index: 0 })
   return applyHeadToHtml(template, head.render())
 }
