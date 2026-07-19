@@ -20,10 +20,12 @@ type UseScriptInputBase = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & 
 export type UseScriptResolvedInput = UseScriptInputBase & { src: string }
 
 /** A logical client-side script resource without a DOM script tag. */
-export type UseScriptSourceLessInput = Omit<UseScriptInputBase, 'innerHTML' | 'textContent'> & {
+export interface UseScriptSourceLessInput {
   key: string
   src?: never
   innerHTML?: never
+  onerror?: never
+  onload?: never
   textContent?: never
 }
 
@@ -70,7 +72,7 @@ export type AsVoidFunctions<T extends BaseScriptApi> = {
         : never;
 }
 
-export type UseScriptInput = string | UseScriptResolvedInput | UseScriptSourceLessInput
+export type UseScriptInput = string | UseScriptResolvedInput
 
 export type UseFunctionType<T, U> = T extends {
   use: infer V
@@ -95,9 +97,13 @@ export interface UseScriptContextOptions {
   waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
 }
 
-export type UseScriptTrigger = (load: () => void) => void | (() => void)
+/**
+ * Register a script load trigger. A returned function is treated as cleanup;
+ * other return values are ignored for backwards compatibility.
+ */
+export type UseScriptTrigger = (load: () => void) => any
 
-export type UseScriptLoader = (ctx: UseScriptContextOptions) => void | PromiseLike<void>
+export type UseScriptLoader<T extends BaseScriptApi = BaseScriptApi> = (ctx: UseScriptContextOptions) => T | PromiseLike<T>
 
 /**
  * A consumer-owned view of a shared script. Disposing it only releases the
@@ -188,11 +194,8 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Existing callers receive the cached shared script unless this is enabled.
    */
   scope?: boolean
-  /**
-   * Client-only transport for a source-less script. Runs once when its trigger
-   * starts loading; `use()` resolves the API after it completes.
-   */
-  loader?: UseScriptLoader
+  /** Reserved for source-less script overloads. */
+  loader?: never
   /**
    * Resolve the script instance from the window. `load()` and `onLoaded()` wait
    * for an async result, and the signal aborts if the script fails or is removed.
@@ -221,6 +224,13 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * this is guaranteed to be called only once, unless the script is removed and re-added.
    */
   beforeInit?: () => void
+}
+
+/** Options for a keyed, client-only resource that does not render a script tag. */
+export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'loader' | 'use' | 'warmupStrategy'> & {
+  loader: UseScriptLoader<T>
+  use?: never
+  warmupStrategy?: never
 }
 
 export type UseScriptReturn<T extends Record<symbol | string, any>> = ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>

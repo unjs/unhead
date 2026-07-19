@@ -22,8 +22,8 @@ export interface VueScriptScope<T extends Record<symbol | string, any>> extends 
 }
 
 type VueScriptSrcInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export type UseScriptInput = VueScriptSrcInput | UseScriptSourceLessInput
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'loader' | 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
+export type UseScriptInput = VueScriptSrcInput
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -41,19 +41,26 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   head?: VueHeadClient<any>
 }
 
+export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'use'> & {
+  loader: UseScriptLoader<T>
+  use?: never
+}
+
 export type UseScriptContext<T extends Record<symbol | string, any>> = VueScriptInstance<T>
 
 export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
 
 export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = VueScriptScope<UseFunctionType<UseScriptOptions<T>, T>>
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader, scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader }): UseScriptReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: VueScriptSrcInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: VueScriptSrcInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options || {} as UseScriptOptions<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope: true }): VueScriptScope<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope?: false }): VueScriptInstance<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T>): VueScriptInstance<T> | VueScriptScope<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput | UseScriptSourceLessInput, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput | UseScriptSourceLessInput
+  const options = { ..._options } as UseScriptOptions<T> | UseScriptLoaderOptions<T>
   const head = options?.head || injectHead()
   options.head = head
   const scope = getCurrentInstance()

@@ -2,7 +2,7 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
@@ -10,19 +10,38 @@ import { useScript } from '../../src/scripts/useScript'
 describe('vue e2e scripts', () => {
   it('loads a source-less SDK', async () => {
     const head = createHead()
-    let api: { ready: true } | undefined
+    const api = { ready: true as const }
     const script = useScript({ key: 'module-sdk' }, {
       head,
       trigger: 'manual',
-      loader: async () => {
-        api = { ready: true }
-      },
-      use: () => api,
+      loader: async () => api,
     })
 
     expect(await script.load()).toBe(api)
     expect(script.status.value).toBe('loaded')
     expect(script.entry).toBeUndefined()
+  })
+
+  it('does not mutate caller-owned options', () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const options = {
+      eventContext: { caller: true },
+      head,
+      trigger: 'manual' as const,
+    }
+    const original = { ...options }
+    const app = createApp({
+      setup() {
+        useScript('//immutable-options.js', options)
+        return () => h('div')
+      },
+    })
+
+    app.mount(dom.window.document.createElement('div'))
+
+    expect(options).toEqual(original)
+    app.unmount()
   })
 
   it('multiple active promise handles', async () => {

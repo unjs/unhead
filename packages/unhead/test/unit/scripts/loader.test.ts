@@ -1,4 +1,4 @@
-import type { UseScriptContextOptions } from '../../../src/scripts'
+import type { UseScriptInput, UseScriptOptions } from '../../../src/scripts'
 import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
@@ -8,15 +8,14 @@ import { createHead as createServerHead } from '../../../src/server'
 describe('source-less script loader', () => {
   it('coalesces loads and keeps a stable recording proxy', async () => {
     const greet = vi.fn()
-    let api: { greet: (message: string) => void } | undefined
-    const loader = vi.fn(async ({ signal }: UseScriptContextOptions) => {
+    const api = { greet }
+    const loader = vi.fn(async ({ signal }) => {
       expect(signal).toBeInstanceOf(AbortSignal)
-      api = { greet }
+      return api
     })
     const script = useScript(createHead(), { key: 'module-sdk' }, {
       trigger: 'manual',
       loader,
-      use: () => api,
     })
     const proxy = script.proxy
     proxy.greet('queued')
@@ -41,7 +40,6 @@ describe('source-less script loader', () => {
     const script = useScript(createHead(), { key: 'failed-module' }, {
       trigger: 'manual',
       loader: () => Promise.reject(error),
-      use: () => ({ ready: true }),
     })
     const onError = vi.fn()
     script.onError(onError)
@@ -54,44 +52,96 @@ describe('source-less script loader', () => {
   })
 
   it('ignores a loader that settles after removal', async () => {
-    const deferred = Promise.withResolvers<void>()
-    const use = vi.fn(() => ({ ready: true }))
+    const deferred = Promise.withResolvers<{ ready: true }>()
     const script = useScript(createHead(), { key: 'removed-module' }, {
       trigger: 'manual',
       loader: () => deferred.promise,
-      use,
     })
 
     const loaded = script.load()
     script.remove()
-    deferred.resolve()
+    deferred.resolve({ ready: true })
 
     await expect(loaded).resolves.toBe(false)
     expect(script.status).toBe('removed')
-    expect(use).toHaveBeenCalledOnce()
   })
 
   it('does not run or render source-less resources during SSR', () => {
-    const loader = vi.fn()
-    const use = vi.fn(() => ({ ready: true }))
+    const loader = vi.fn(() => ({ ready: true }))
     const head = createServerHead()
     const script = useScript(head, { key: 'server-module' }, {
       trigger: 'server',
       loader,
-      use,
     })
 
     expect(loader).not.toHaveBeenCalled()
-    expect(use).not.toHaveBeenCalled()
     expect(script.entry).toBeUndefined()
     expect(script.status).toBe('awaitingLoad')
   })
 
+  it('forwards proxy operations to the loaded SDK with the correct receiver', async () => {
+    class Sdk {
+      #count = 0
+      label = 'sdk'
+
+      increment() {
+        this.#count++
+      }
+
+      count() {
+        return this.#count
+      }
+    }
+    const api = new Sdk()
+    const script = useScript(createHead(), { key: 'stateful-sdk' }, {
+      trigger: 'manual',
+      loader: () => api,
+    })
+    const proxy = script.proxy as any
+
+    proxy.increment()
+    await script.load()
+    proxy.increment()
+    proxy.label = 'updated'
+    Object.defineProperty(proxy, 'extra', { configurable: true, enumerable: true, value: 1 })
+
+    expect(api.count()).toBe(2)
+    expect(api.label).toBe('updated')
+    expect('label' in proxy).toBe(true)
+    expect(Object.keys(proxy)).toContain('extra')
+    expect(delete proxy.extra).toBe(true)
+    expect('extra' in api).toBe(false)
+    expect(script.proxy).toBe(proxy)
+  })
+
+  it('uses DOM transport when a loader is passed with a URL at runtime', () => {
+    const loader = vi.fn(() => ({ ready: true }))
+    const script = useScript(createHead(), '/url-script.js', {
+      loader,
+      trigger: 'manual',
+    } as any)
+
+    script.load()
+
+    expect(loader).not.toHaveBeenCalled()
+    expect(script.entry).toBeDefined()
+  })
+
   it('types: requires a loader for source-less input', () => {
     const head = createServerHead()
+    const wrap = (input: UseScriptInput, options?: UseScriptOptions) => useScript(head, input, options)
+
+    wrap('/wrapped.js')
     if (false) {
       // @ts-expect-error source-less scripts require a loader
       useScript(head, { key: 'missing-loader' })
+      // @ts-expect-error the loader owns source-less API resolution
+      useScript(head, { key: 'duplicate-readiness' }, { loader: () => ({ ready: true }), use: () => ({ ready: true }) })
+      // @ts-expect-error loaders are only valid with source-less input
+      useScript(head, '/loader-with-url.js', { loader: () => ({ ready: true }) })
+      // @ts-expect-error the released input alias remains source-based
+      const input: UseScriptInput = { key: 'source-less' }
+      void input
     }
   })
 })
