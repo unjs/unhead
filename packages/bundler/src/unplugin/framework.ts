@@ -3,7 +3,7 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -70,16 +70,11 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
   }
-  const minifyOpts = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
-  const inlineScriptOpts = options.transformInlineScripts === false
-    ? false
-    : typeof options.transformInlineScripts === 'object'
-      ? options.transformInlineScripts
-      : true
-  if (minifyOpts.js || minifyOpts.css || inlineScriptOpts) {
+  const minifyTransformOptions = resolveMinifyTransformOptions(options)
+  if (minifyTransformOptions) {
     defs.push({
       instance: MinifyTransform,
-      options: { ...common, ...minifyOpts, transpile: inlineScriptOpts },
+      options: { ...common, ...minifyTransformOptions },
     })
   }
 

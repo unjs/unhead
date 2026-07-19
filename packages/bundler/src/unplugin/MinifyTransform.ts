@@ -61,6 +61,25 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
   transpile?: boolean | InlineScriptTransformOptions
 }
 
+interface MinifyTransformPluginOptions {
+  minify?: MinifyTransformOptions | false
+  transformInlineScripts?: InlineScriptTransformOptions | false
+}
+
+export function resolveMinifyTransformOptions(options: MinifyTransformPluginOptions): MinifyTransformOptions | undefined {
+  const minifyOptions = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
+  const transpile = options.transformInlineScripts === false
+    ? false
+    : typeof options.transformInlineScripts === 'object'
+      ? options.transformInlineScripts
+      : true
+
+  if (!minifyOptions.js && !minifyOptions.css && !transpile)
+    return
+
+  return { ...minifyOptions, transpile }
+}
+
 /**
  * Vite/Webpack transform plugin that processes static string literals inside
  * `useHead()` / `useServerHead()` calls at build time.

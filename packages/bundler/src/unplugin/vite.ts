@@ -2,7 +2,7 @@ import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -31,18 +31,12 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
   }
-  const minifyOpts = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
-  const inlineScriptOpts = options.transformInlineScripts === false
-    ? false
-    : typeof options.transformInlineScripts === 'object'
-      ? options.transformInlineScripts
-      : true
-  if (minifyOpts.js || minifyOpts.css || inlineScriptOpts) {
+  const minifyTransformOptions = resolveMinifyTransformOptions(options)
+  if (minifyTransformOptions) {
     plugins.push(MinifyTransform.vite({
       filter: options.filter,
       sourcemap: options.sourcemap,
-      ...minifyOpts,
-      transpile: inlineScriptOpts,
+      ...minifyTransformOptions,
     }))
   }
 
