@@ -29,9 +29,11 @@ describe('tag-mutating hooks', () => {
 
   it('invalidates cached tags when tag:normalise is registered', async () => {
     const head = createHead({ disableDefaults: true })
+    const removeNormalizeHook = head.hooks.hook('entries:normalize', () => {})
     head.push({ meta: [{ name: 'description', content: 'before-hook' }] })
     await head.render()
 
+    removeNormalizeHook()
     head.hooks.hook('tag:normalise', ({ tag }) => {
       tag.props.content = 'after-hook'
     })

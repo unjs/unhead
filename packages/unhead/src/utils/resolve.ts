@@ -25,8 +25,8 @@ const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
 function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
   const count = (hooks['entries:resolve']?.length || 0)
-    + (hooks['entries:normalize']?.length || 0)
-    + (hooks['tag:normalise']?.length || 0)
+    + ((hooks['entries:normalize']?.length || 0) << 10)
+    + ((hooks['tag:normalise']?.length || 0) << 20)
   if (head._h !== count) {
     head._h = count
     for (const entry of head.entries.values())
