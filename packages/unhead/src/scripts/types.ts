@@ -75,8 +75,10 @@ export type AsVoidFunctions<T extends BaseScriptApi> = {
 export type UseScriptInput = string | UseScriptResolvedInput
 
 export type UseFunctionType<T, U> = T extends {
-  use: infer V
-} ? V extends (...args: any) => any ? NonNullable<Awaited<ReturnType<V>>> : U : U
+  resolve: infer V
+} ? V extends (...args: any) => any ? NonNullable<Awaited<ReturnType<V>>> : U : T extends {
+    use: infer V
+  } ? V extends (...args: any) => any ? NonNullable<Awaited<ReturnType<V>>> : U : U
 
 export type WarmupStrategy = false | 'preload' | 'preconnect' | 'dns-prefetch'
 
@@ -97,9 +99,8 @@ export interface UseScriptContextOptions {
   waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
 }
 
-export type UseScriptResolver<T extends BaseScriptApi> =
-  | (() => T | PromiseLike<T | undefined | null> | undefined | null)
-  | ((ctx: UseScriptContextOptions) => T | PromiseLike<T | undefined | null> | undefined | null)
+export type UseScriptResolver<T extends BaseScriptApi>
+  = (ctx: UseScriptContextOptions) => T | PromiseLike<T | undefined | null> | undefined | null
 
 /**
  * Register a script load trigger. A returned function is treated as cleanup;
@@ -201,11 +202,15 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
   /** Reserved for source-less script overloads. */
   loader?: never
   /**
-   * Resolve the script instance from the window. `load()` and `onLoaded()` wait
-   * for an async result. Callbacks that declare a context receive a signal that
-   * aborts if the script fails or is removed; legacy callbacks receive no args.
+   * Resolve the script instance from the window. This legacy callback is always
+   * called without arguments. It may return the API asynchronously.
    */
-  use?: UseScriptResolver<T>
+  use?: () => T | PromiseLike<T | undefined | null> | undefined | null
+  /**
+   * Resolve the script API with lifecycle helpers. Prefer this over `use` when
+   * readiness needs an abort signal or `waitFor()` callback bridge.
+   */
+  resolve?: UseScriptResolver<T>
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -232,8 +237,9 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
 }
 
 /** Options for a keyed, client-only resource that does not render a script tag. */
-export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'loader' | 'use' | 'warmupStrategy'> & {
+export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'loader' | 'resolve' | 'use' | 'warmupStrategy'> & {
   loader: UseScriptLoader<T>
+  resolve?: never
   use?: never
   warmupStrategy?: never
 }
