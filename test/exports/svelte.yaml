@@ -27,6 +27,7 @@
   ValidatePlugin: function
 ./server:
   createHead: function
+  prepareTemplate: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadContextKey: symbol
@@ -38,6 +39,7 @@
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContextKey: symbol

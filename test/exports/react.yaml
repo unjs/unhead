@@ -29,6 +29,7 @@
   ValidatePlugin: function
 ./server:
   createHead: function
+  prepareTemplate: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadProvider: function
@@ -40,6 +41,7 @@
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadProvider: function
