@@ -70,7 +70,8 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
   else {
-    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > ALLOC_FLOOR_PCT)
+    const threshold = Math.max(ALLOC_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
+    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > threshold)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
