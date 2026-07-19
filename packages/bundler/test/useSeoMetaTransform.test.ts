@@ -55,6 +55,15 @@ describe('useSeoMetaTransform', () => {
     expect(await transform(couldTransform, 'test.vue?type=template')).toBeUndefined()
   })
 
+  it('retains calls above a hoisted local declaration', async () => {
+    // Function declarations hoist: this call targets the local function
+    // below it, not an auto-import.
+    expect(await transform([
+      'useSeoMeta({ title: \'Hello\' })',
+      'function useSeoMeta(input) { return input }',
+    ])).toBeUndefined()
+  })
+
   it('preserves context for dynamic regexps', async () => {
     expect(
       await transform([
@@ -961,5 +970,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ]
       })"
     `)
+  })
+
+  it('respects imports: false', async () => {
+    const opts = { imports: false }
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ title: \'Hello\', description: \'World\' })',
+    ], 'some-id.js', opts)
+    expect(code).toBeDefined()
+    // the call is still transformed, but the import specifier is untouched
+    expect(code).toContain('import { useSeoMeta } from \'unhead\'')
+    expect(code).toContain('useHead({')
+    expect(code).not.toContain('import { useHead }')
+    // the user-supplied options object must not be mutated
+    expect(opts.imports).toBe(false)
   })
 })

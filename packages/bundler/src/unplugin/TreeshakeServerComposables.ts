@@ -1,21 +1,27 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
+import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
-import { walk } from 'oxc-walker'
+import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
-import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/
 
-const functionNames = [
+const functionNames = new Set([
   'useServerHead',
   'useServerHeadSafe',
   'useServerSeoMeta',
   // plugins
   'useSchemaOrg',
-]
+])
+
+function isUnheadPackage(source: unknown): boolean {
+  return typeof source === 'string'
+    && (source === 'unhead' || source.startsWith('unhead/') || source.startsWith('@unhead/'))
+}
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
   /**
@@ -25,11 +31,17 @@ export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes 
 }
 
 export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposablesOptions, false>((options: TreeshakeServerComposablesOptions = {}) => {
-  options.enabled = options.enabled !== undefined ? options.enabled : true
+  const enabled = options.enabled ?? true
+  // Fallback build target for bundlers without a per-transform environment
+  // (webpack, rspack, Vite <6). Those bundlers create a separate plugin
+  // instance per build, so instance-local state is safe there. Under the Vite
+  // Environment API (`this.environment`) the target is resolved per transform
+  // call instead, since a single plugin instance can serve both the client
+  // and server environments in one pipeline.
+  let fallbackConsumer: BuildConsumer | undefined
 
   function shouldTransformId(id: string): boolean {
-    // should only run on client builds
-    if (!options.enabled)
+    if (!enabled)
       return false
 
     const { pathname, query } = splitTransformId(id)
@@ -71,6 +83,12 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         id: createJsVueTransformIdFilter(options.filter?.include),
       },
       handler(code, id) {
+        // Server-only composables are treeshaken from client builds only. On
+        // an unknown target (plain rollup, no environment info) we must
+        // retain the code, removing it would break SSR output.
+        if (resolveBuildConsumer(this, fallbackConsumer) !== 'client')
+          return
+
         if (!shouldTransformId(id))
           return
 
@@ -78,19 +96,54 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
           return
         }
 
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseSync(id, code)
         const s = new MagicString(code)
 
+        // Pre-pass: collect all declarations first so hoisted locals
+        // (`function useServerHead() {}` below a call site) are visible when
+        // the removal walk visits earlier statements.
+        walk(ast.program, { scopeTracker })
+        scopeTracker.freeze()
+
         walk(ast.program, {
-          enter(node: any) {
+          scopeTracker,
+          enter(node: any, parent: any) {
+            // Only remove statement-level calls: `useServerHead(...)` as its
+            // own expression statement. Nested usage (assignments, arguments)
+            // is left untouched.
             if (
-              node.type === 'ExpressionStatement'
-              && node.expression.type === 'CallExpression'
-              && node.expression.callee.type === 'Identifier'
-              && functionNames.includes(node.expression.callee.name)
+              parent?.type !== 'ExpressionStatement'
+              || node.type !== 'CallExpression'
+              || node.callee.type !== 'Identifier'
             ) {
-              s.remove(node.start, node.end)
+              return
             }
+
+            const decl = scopeTracker.getDeclaration(node.callee.name)
+
+            if (decl instanceof ScopeTrackerImport) {
+              // Proven unhead import (supports aliases: `import { useServerHead as x }`).
+              if (
+                decl.node.type === 'ImportSpecifier'
+                && decl.node.imported.type === 'Identifier'
+                && functionNames.has(decl.node.imported.name)
+                && isUnheadPackage(decl.importNode.source.value)
+              ) {
+                s.remove(parent.start, parent.end)
+              }
+              return
+            }
+
+            // Any local declaration (function/var/param) shadows the
+            // composable name: retain the call.
+            if (decl)
+              return
+
+            // No declaration in scope: treat a known name as an auto-import
+            // (e.g. Nuxt) and remove it.
+            if (functionNames.has(node.callee.name))
+              s.remove(parent.start, parent.end)
           },
         })
 
@@ -103,16 +156,19 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
       },
     },
     webpack(ctx) {
-      if (ctx.name === 'server')
-        options.enabled = false
+      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
     },
     vite: {
-      apply(config: UserConfig, env: ConfigEnv) {
-        if (env.isSsrBuild) {
-          options.enabled = false
-          return true
-        }
-        return false
+      // Per-call target resolution via `this.environment` makes the plugin
+      // safe to share across environments in a single build pipeline.
+      sharedDuringBuild: true,
+      apply(_config: UserConfig, env: ConfigEnv) {
+        // Dev server shares one module graph between client and SSR renders;
+        // treeshaking is a build-only optimization.
+        if (env.command === 'serve')
+          return false
+        fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
+        return true
       },
     },
   }
