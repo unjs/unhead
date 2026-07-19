@@ -1,4 +1,4 @@
-name: Release
+name: Release v2
 
 permissions:
   contents: write
@@ -7,7 +7,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
+      - 'v2.*'
 
 jobs:
   release:
@@ -26,6 +26,11 @@ jobs:
           node-version: latest
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify release version
+        run: |
+          PACKAGE_VERSION=$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")
+          test "$GITHUB_REF_NAME" = "v$PACKAGE_VERSION"
 
       - name: Force Set pnpm Registry
         run: pnpm config set registry https://registry.npmjs.org
