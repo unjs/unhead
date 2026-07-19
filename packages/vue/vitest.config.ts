@@ -25,7 +25,7 @@ export default defineProject({
       'unhead/utils': resolve(__dirname, '../unhead/src/utils/index.ts'),
       'unhead/scripts': resolve(__dirname, '../unhead/src/scripts/index.ts'),
       'unhead/parser': resolve(__dirname, '../unhead/src/parser/index.ts'),
-      'unhead/legacy': resolve(__dirname, '../unhead/src/legacy.ts'),
+      'unhead/legacy': resolve(__dirname, '../unhead/src/legacy/index.ts'),
       'unhead': resolve(__dirname, '../unhead/src/index.ts'),
     },
   },

@@ -15,7 +15,12 @@ export function createHead(options: CreateClientHeadOptions = {}): ClientUnhead 
   return head
 }
 
-export function UnheadProvider({ children, head }: { children: ReactNode, head?: Unhead<any, any> }) {
+export interface UnheadProviderProps {
+  children: ReactNode
+  head?: Unhead<any, any>
+}
+
+export function UnheadProvider({ children, head }: UnheadProviderProps) {
   const headRef = useRef<Unhead<any, any> | null>(null)
   if (!head && !headRef.current)
     headRef.current = createHead()

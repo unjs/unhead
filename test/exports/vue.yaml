@@ -36,7 +36,7 @@
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
-  PromisesPlugin: object
+  PromisesPlugin: function
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
@@ -45,6 +45,7 @@
   useScript: function
 ./server:
   createHead: function
+  prepareTemplate: function
   propsToString: function
   renderSSRHead: function
   transformHtmlTemplate: function
@@ -59,6 +60,7 @@
   createBootstrapScript: function
   createStreamableHead: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
