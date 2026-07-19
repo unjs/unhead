@@ -75,6 +75,8 @@ describe('useScript', () => {
       async resolve({ signal, waitFor }) {
         expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
         expectTypeOf(waitFor<{ ready: true }>(resolve => resolve({ ready: true }))).toEqualTypeOf<Promise<{ ready: true }>>()
+        const readyOrPromise = { ready: true } as { ready: true } | PromiseLike<{ ready: true }>
+        expectTypeOf(waitFor<{ ready: true }>(resolve => resolve(readyOrPromise))).toEqualTypeOf<Promise<{ ready: true }>>()
         return {
           test: (foo: string) => foo,
         }
