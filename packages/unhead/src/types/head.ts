@@ -45,10 +45,6 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
-  /**
-   * @internal
-   */
-  _promisesProcessed?: boolean
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {

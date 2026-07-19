@@ -49,8 +49,8 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
 })
 
 /**
- * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
- * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ * The v2 migration plugins applied by the legacy `createHead`/`createServerHead`, including
+ * Promise input resolution. Modern entrypoints require `PromisesPlugin` to be registered explicitly.
  *
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `unhead/client`/`unhead/server` without this plugin set.
