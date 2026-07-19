@@ -1,9 +1,17 @@
-import type { PreloadLink, SerializableHead } from '../../src/types'
+import type { HeadEntry, HeadEntryOptions, PreloadLink, SerializableHead } from '../../src/types'
+import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
+import { expectTypeOf } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { defineLink, defineScript } from '../../src/define'
 import { createHead } from '../../src/server'
 
 describe('types', () => {
+  it('exports extension types without narrowing existing entries', () => {
+    expectTypeOf<MetaKeyType>().toEqualTypeOf<'name' | 'property' | 'http-equiv'>()
+    expectTypeOf<ResolveTagsOptions>().toHaveProperty('tagWeight')
+    expectTypeOf<NonNullable<HeadEntry<unknown>['options']>>()
+      .toEqualTypeOf<Omit<HeadEntryOptions, 'head' | 'onRendered'>>()
+  })
   it('types useHead', () => {
     const unhead = createHead()
     useHead(unhead, {

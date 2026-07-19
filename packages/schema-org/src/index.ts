@@ -1,5 +1,5 @@
 export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './core'
-export type { SchemaOrgGraph } from './core'
+export type { ResolverOptions, SchemaOrgGraph } from './core'
 export { schemaAutoImports } from './imports'
 export * from './nodes'
 export { UnheadSchemaOrg } from './plugin'

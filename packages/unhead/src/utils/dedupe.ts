@@ -16,15 +16,13 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   const { props, tag: t, key } = tag
   if (UniqueTags.has(t))
     return t
-  if (t === 'link' && props.rel === 'canonical')
-    return 'canonical'
-  if (t === 'link' && props.rel === 'alternate') {
-    if (props.hreflang)
+  // semantic link singletons; must win over an explicit `key`
+  if (t === 'link') {
+    if (props.rel === 'canonical')
+      return 'canonical'
+    if (props.rel === 'alternate' && props.hreflang)
       return `alternate:${props.hreflang}`
-    if (props.type)
-      return `alternate:${props.type}:${props.href || ''}`
   }
-
   if (props.charset)
     return 'charset'
   if (t === 'meta') {
@@ -38,8 +36,9 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return `${t}:key:${key}`
   if (props.id)
     return `${t}:id:${props.id}`
-  if (t === 'link' && props.rel === 'alternate')
-    return `alternate:${props.href || ''}`
+  // after key/id so an explicit key still allows multiple links with the same rel + href
+  if (t === 'link' && props.rel && props.href)
+    return `link:${props.rel}:${props.href}`
   return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
@@ -47,13 +46,13 @@ export function hashTag(tag: HeadTag) {
   const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   if (identity)
     return identity
+  // sort so the hash is stable across differing prop insertion orders (#823)
+  const keys = Object.keys(tag.props).sort()
   let hash = `${tag.tag}:`
   let separator = ''
-  for (const key in tag.props) {
-    if (Object.hasOwn(tag.props, key)) {
-      hash += `${separator}${key}:${String(tag.props[key])}`
-      separator = ','
-    }
+  for (const key of keys) {
+    hash += `${separator}${key}:${String(tag.props[key])}`
+    separator = ','
   }
   return hash
 }

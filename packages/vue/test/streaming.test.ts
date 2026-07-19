@@ -185,6 +185,52 @@ describe('vue streaming SSR', () => {
       expect(text).not.toContain('</script><script>alert')
       expect(text).toContain('\\u003c')
     })
+
+    it('propagates cancellation to the app stream', async () => {
+      const { head, wrapStream } = createStreamableHead()
+      head.push({ title: 'Initial' })
+
+      const encoder = new TextEncoder()
+      let cancelled: unknown
+      const appStream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          c.enqueue(encoder.encode('<div>chunk</div>'))
+        },
+        cancel(reason) {
+          cancelled = reason
+        },
+      })
+
+      const reader = wrapStream(appStream, TEMPLATE).getReader()
+      await reader.read() // shell
+      await reader.cancel('client-disconnect')
+
+      expect(cancelled).toBe('client-disconnect')
+      expect(appStream.locked).toBe(false)
+    })
+
+    it('does not eagerly drain the app stream when downstream is not reading', async () => {
+      const { head, wrapStream } = createStreamableHead()
+      head.push({ title: 'Initial' })
+
+      const encoder = new TextEncoder()
+      let pulls = 0
+      const appStream = new ReadableStream<Uint8Array>({
+        pull(c) {
+          pulls++
+          if (pulls > 100)
+            c.close()
+          else
+            c.enqueue(encoder.encode(`chunk-${pulls}`))
+        },
+      })
+
+      const reader = wrapStream(appStream, TEMPLATE).getReader()
+      await reader.read() // shell only
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      expect(pulls).toBeLessThan(5)
+    })
   })
 
   describe('xSS prevention', () => {

@@ -72,6 +72,58 @@ describe('dedupe', () => {
     ).toBeTruthy()
   })
 
+  // https://github.com/unjs/unhead/issues/823
+  it('dedupes icon links by rel + href regardless of prop order', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
+    })
+    head.push({
+      link: [
+        { sizes: '32x32', href: '/favicon.ico', rel: 'icon' },
+        { href: '/apple-touch-icon.png', rel: 'apple-touch-icon' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    // last entry wins, rendered with its own prop order
+    expect(headTags).toMatchInlineSnapshot(`
+      "<link sizes="32x32" href="/favicon.ico" rel="icon">
+      <link href="/apple-touch-icon.png" rel="apple-touch-icon">"
+    `)
+  })
+
+  it('dedupes links by rel + href when other props differ', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [{ rel: 'icon', href: '/favicon.png', sizes: '16x16' }],
+    })
+    head.push({
+      link: [{ rel: 'icon', href: '/favicon.png', sizes: '32x32' }],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`"<link rel="icon" href="/favicon.png" sizes="32x32">"`)
+  })
+
+  it('does not dedupe links with unique keys or different hrefs', async () => {
+    const head = createServerHeadWithContext()
+    head.push({
+      link: [
+        { rel: 'icon', href: '/favicon-16.png', key: 'icon-16' },
+        { rel: 'icon', href: '/favicon-16.png', key: 'icon-16-alt' },
+        { rel: 'icon', href: '/favicon-32.png' },
+      ],
+    })
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<link rel="icon" href="/favicon-16.png" data-hid="icon-16">
+      <link rel="icon" href="/favicon-16.png" data-hid="icon-16-alt">
+      <link rel="icon" href="/favicon-32.png">"
+    `)
+  })
+
   it('dedupes key', async () => {
     const head = createServerHeadWithContext()
     head.push({

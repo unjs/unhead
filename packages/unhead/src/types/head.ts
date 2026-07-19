@@ -15,30 +15,7 @@ export interface HeadEntry<Input> {
    * User provided input for the entry.
    */
   input: Input
-  options?: {
-    /**
-     * Default tag position.
-     *
-     * @internal
-     */
-    tagPosition?: TagPosition['tagPosition']
-    /**
-     * Default tag priority.
-     *
-     * @internal
-     */
-    tagPriority?: TagPriority['tagPriority']
-    /**
-     * Default tag duplicate strategy.
-     *
-     * @internal
-     */
-    tagDuplicateStrategy?: HeadTag['tagDuplicateStrategy']
-    /**
-     * @internal
-     */
-    _safe?: boolean
-  }
+  options?: Omit<HeadEntryOptions, 'head' | 'onRendered'>
   /**
    * Head entry index
    *
@@ -51,6 +28,14 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _tags?: HeadTag[]
+  /**
+   * Precomputed normalized tags shared across head instances (SSR default init
+   * entry). Only used when no entry hooks, tag weight overrides or entry
+   * options could observe or alter normalization, see `resolveTags`.
+   *
+   * @internal
+   */
+  _precomputedTags?: HeadTag[]
   /**
    * Pending patch to apply on next render (client-only)
    * @internal
@@ -95,7 +80,17 @@ export interface ActiveHeadEntry<Input> {
   _i: number
 }
 
-export type PropResolver = (key?: string, value?: any, tag?: HeadTag) => any
+export type PropResolver = ((key?: string, value?: any, tag?: HeadTag) => any) & {
+  /**
+   * Marks the resolver as the identity function for plain non-reactive JSON
+   * values (strings/numbers/booleans/plain objects/arrays). When every
+   * configured resolver is static, the SSR default init entry can use the
+   * precomputed fast path (see `server/createHead.ts`).
+   *
+   * @internal
+   */
+  _static?: boolean
+}
 
 export interface CreateHeadOptions {
   document?: Document

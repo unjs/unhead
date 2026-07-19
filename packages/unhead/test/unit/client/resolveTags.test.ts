@@ -89,8 +89,7 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
-          "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_d": "link:icon:https://cdn.example.com/favicon.ico",
           "_p": 1028,
           "_w": 100,
           "props": {
@@ -196,8 +195,7 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
-          "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_d": "link:icon:https://cdn.example.com/favicon.ico",
           "_p": 1028,
           "_w": 100,
           "props": {
