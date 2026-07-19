@@ -186,7 +186,8 @@ function measureAlloc(fn, { warmup = 50, reps = 25, runs = 60 } = {}) {
 
 // async twins of measureTimes/measureAlloc for the streaming benches, which must be
 // awaited per run; kept separate so the sync render benches don't pay the microtask
-// overhead of a conditional await inside their hot loop
+// overhead of a conditional await inside their hot loop. Async heap deltas are only
+// informational: ReadableStream cleanup makes them bimodal even without code changes.
 async function measureTimesAsync(fn, { warmup = 20, reps = 25, runs = 40 } = {}) {
   for (let i = 0; i < warmup; i++) await fn()
   const wall = []
@@ -282,7 +283,7 @@ async function streamingBenches() {
   return [
     { id: 'stream-wrap-cpu', name: 'Streaming wrapStream drain (CPU)', kind: 'time', value: wrapTimes.cpu.value, rme: wrapTimes.cpu.rme },
     { id: 'stream-wrap-wall', name: 'Streaming wrapStream drain (wall)', kind: 'time', value: wrapTimes.wall.value, rme: wrapTimes.wall.rme, informational: true },
-    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value },
+    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value, informational: true },
     { id: 'stream-chunk-cpu', name: 'Streaming suspense chunk (CPU)', kind: 'time', value: chunkTimes.cpu.value, rme: chunkTimes.cpu.rme },
     { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value },
   ]
