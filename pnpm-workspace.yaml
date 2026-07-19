@@ -52,7 +52,7 @@ catalog:
   '@types/jsdom': ^28.0.3
   '@types/react': ^19.2.17
   '@types/react-dom': ^19.2.3
-  '@vitejs/devtools-kit': ^0.4.1
+  '@vitejs/devtools-kit': ^0.3.4
   '@vue/server-renderer': ^3.5.40
   '@vueuse/nuxt': ^14.3.0
   bumpp: ^11.1.0
