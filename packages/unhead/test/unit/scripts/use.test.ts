@@ -89,6 +89,14 @@ describe('useScript', () => {
     expectTypeOf(instance.onLoaded(() => {})).toEqualTypeOf<() => void>()
   })
 
+  it('types: accepts legacy default-parameter use() callbacks', () => {
+    const options: UseScriptOptions = {
+      use: (root = window) => ({ root }),
+    }
+
+    expectTypeOf(options.use!).toBeFunction()
+  })
+
   it('types: preserves permissive triggers and dynamic scope returns', () => {
     const head = createServerHead()
     const trigger: UseScriptTrigger = async (load) => {
