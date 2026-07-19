@@ -2,7 +2,7 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
@@ -29,21 +29,25 @@ describe('vue e2e scripts', () => {
 
   it('supports lifecycle-aware API resolution', () => {
     const head = createHead()
+    const api = { ready: true as const, method: (value: string) => value.length }
     let resolverSignal!: AbortSignal
     const script = useScript('//resolve-api.js', {
       head,
       trigger: 'manual',
       resolve: ({ signal, waitFor }) => {
         resolverSignal = signal
-        return waitFor(resolve => resolve({ ready: true as const }))
+        return waitFor(resolve => resolve(api))
       },
     })
 
+    const checkInference = async () => {
+      const inferred: typeof api = await script.load()
+      inferred.method('ok')
+    }
     type Loaded = Awaited<ReturnType<typeof script.load>>
-    const inferred: Loaded = { ready: true }
+    expectTypeOf<Loaded>().toEqualTypeOf<typeof api>()
     const notAny: 0 extends (1 & Loaded) ? never : true = true
-    void script
-    void inferred
+    void checkInference
     void notAny
     expect(resolverSignal).toBeInstanceOf(AbortSignal)
   })
