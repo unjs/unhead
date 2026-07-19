@@ -179,6 +179,10 @@ function sampledBytes(profile) {
   return bytes
 }
 
+// Fine-grained sampling catches small per-render deltas. Five short repetitions
+// keep the extra profiler work bounded in the bundle-size job.
+const ALLOCATION_SAMPLING_INTERVAL = 64
+
 // A heapUsed batch delta silently resets whenever V8 scavenges the young
 // generation. Profile total allocations instead, across several independent
 // samples so the report can gate on the profiler's measured variance.
@@ -190,8 +194,9 @@ async function measureAlloc(fn, { warmup = 50, reps = 5, runs = 200 } = {}) {
     const session = new Session()
     session.connect()
     try {
+      await session.post('HeapProfiler.enable')
       await session.post('HeapProfiler.startSampling', {
-        samplingInterval: 64,
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
         includeObjectsCollectedByMajorGC: true,
         includeObjectsCollectedByMinorGC: true,
       })
@@ -234,8 +239,9 @@ async function measureAllocAsync(fn, { warmup = 20, reps = 5, runs = 50 } = {}) 
     const session = new Session()
     session.connect()
     try {
+      await session.post('HeapProfiler.enable')
       await session.post('HeapProfiler.startSampling', {
-        samplingInterval: 64,
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
         includeObjectsCollectedByMajorGC: true,
         includeObjectsCollectedByMinorGC: true,
       })
