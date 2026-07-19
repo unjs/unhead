@@ -2,12 +2,29 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('supports lifecycle-aware API resolution', () => {
+    const head = createHead()
+    let resolverSignal!: AbortSignal
+    const script = useScript('//resolve-api.js', {
+      head,
+      trigger: 'manual',
+      resolve: ({ signal, waitFor }) => {
+        resolverSignal = signal
+        expectTypeOf(waitFor<{ ready: true }>(resolve => resolve({ ready: true }))).toEqualTypeOf<Promise<{ ready: true }>>()
+        return { ready: true as const }
+      },
+    })
+
+    expectTypeOf(script.load).returns.toEqualTypeOf<Promise<{ ready: true }>>()
+    expect(resolverSignal).toBeInstanceOf(AbortSignal)
+  })
+
   it('does not mutate caller-owned options', () => {
     const dom = useDom()
     const head = createHead({ document: dom.window.document })
