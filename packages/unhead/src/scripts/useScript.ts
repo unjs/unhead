@@ -8,14 +8,16 @@ import type {
   UseFunctionType,
   UseScriptContext,
   UseScriptInput,
+  UseScriptLoader,
   UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptReturn,
   UseScriptScopeReturn,
+  UseScriptSourceLessInput,
   WarmupStrategy,
 } from './types'
 import { callHook } from '../utils/hooks'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'
 
@@ -24,8 +26,10 @@ import { createScriptWaitFor } from './waitFor'
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader, scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader }): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: string | UseScriptResolvedInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: string | UseScriptResolvedInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   return _useScript(head, _input, _options, !!_options?.scope)
 }
@@ -34,7 +38,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   // Event handlers below capture this head, so never mutate an input object that
   // may be reused by another SSR request or client app.
-  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : { ..._input }
+  const input: UseScriptResolvedInput | UseScriptSourceLessInput = typeof _input === 'string' ? { src: _input } : { ..._input }
   const options = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
@@ -236,6 +240,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     },
     warmup(rel: WarmupStrategy) {
       const { src } = input
+      if (!src)
+        return
       const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
@@ -265,7 +271,19 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
-      if (!script.entry) {
+      if (options.loader) {
+        if (!head.ssr && script.status === 'awaitingLoad') {
+          syncStatus('loading')
+          void Promise.resolve().then(() => options.loader!(useContext)).then(
+            () => {
+              if (!lifecycleController.signal.aborted && script.status !== 'removed')
+                syncStatus('loaded')
+            },
+            error => !lifecycleController.signal.aborted && failReadiness(error),
+          )
+        }
+      }
+      else if (!script.entry) {
         syncStatus('loading')
         const defaults: Partial<RawInput<'script'>> = {
           defer: true,
@@ -410,15 +428,15 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     throw error
   }
   if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
+    const { proxy, stack, resolve } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
       replayProxyRecordings(instance, stack)
-      script.proxy = createForwardingProxy(instance)
+      resolve(instance)
     })
   }
   // need to make sure it's not already registered
-  if (!options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
+  if (!options.loader && !options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
     options.warmupStrategy = 'preload'
   }
   if (options.warmupStrategy) {

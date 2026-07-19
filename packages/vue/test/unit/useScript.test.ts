@@ -8,6 +8,23 @@ import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('loads a source-less SDK', async () => {
+    const head = createHead()
+    let api: { ready: true } | undefined
+    const script = useScript({ key: 'module-sdk' }, {
+      head,
+      trigger: 'manual',
+      loader: async () => {
+        api = { ready: true }
+      },
+      use: () => api,
+    })
+
+    expect(await script.load()).toBe(api)
+    expect(script.status.value).toBe('loaded')
+    expect(script.entry).toBeUndefined()
+  })
+
   it('multiple active promise handles', async () => {
     const dom = useDom()
     const head = createHead({

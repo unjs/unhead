@@ -1,4 +1,4 @@
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, ScriptScope, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptInstance, ScriptScope, UseFunctionType, UseScriptLoader, UseScriptSourceLessInput, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
   GenericScript,
@@ -21,8 +21,9 @@ export interface VueScriptScope<T extends Record<symbol | string, any>> extends 
   status: Ref<UseScriptStatus>
 }
 
-export type UseScriptInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
+type VueScriptSrcInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
+export type UseScriptInput = VueScriptSrcInput | UseScriptSourceLessInput
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'loader' | 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -46,8 +47,10 @@ export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptC
 
 export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = VueScriptScope<UseFunctionType<UseScriptOptions<T>, T>>
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader, scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptOptions<T> & { loader: UseScriptLoader }): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: VueScriptSrcInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: VueScriptSrcInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>

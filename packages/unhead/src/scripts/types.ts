@@ -15,7 +15,17 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptIns
 /**
  * Either a string source for the script or full script properties.
  */
-export type UseScriptResolvedInput = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
+type UseScriptInputBase = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
+
+export type UseScriptResolvedInput = UseScriptInputBase & { src: string }
+
+/** A logical client-side script resource without a DOM script tag. */
+export type UseScriptSourceLessInput = Omit<UseScriptInputBase, 'innerHTML' | 'textContent'> & {
+  key: string
+  src?: never
+  innerHTML?: never
+  textContent?: never
+}
 
 type BaseScriptApi = Record<symbol | string, any>
 
@@ -60,7 +70,7 @@ export type AsVoidFunctions<T extends BaseScriptApi> = {
         : never;
 }
 
-export type UseScriptInput = string | UseScriptResolvedInput
+export type UseScriptInput = string | UseScriptResolvedInput | UseScriptSourceLessInput
 
 export type UseFunctionType<T, U> = T extends {
   use: infer V
@@ -86,6 +96,8 @@ export interface UseScriptContextOptions {
 }
 
 export type UseScriptTrigger = (load: () => void) => void | (() => void)
+
+export type UseScriptLoader = (ctx: UseScriptContextOptions) => void | PromiseLike<void>
 
 /**
  * A consumer-owned view of a shared script. Disposing it only releases the
@@ -176,6 +188,11 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Existing callers receive the cached shared script unless this is enabled.
    */
   scope?: boolean
+  /**
+   * Client-only transport for a source-less script. Runs once when its trigger
+   * starts loading; `use()` resolves the API after it completes.
+   */
+  loader?: UseScriptLoader
   /**
    * Resolve the script instance from the window. `load()` and `onLoaded()` wait
    * for an async result, and the signal aborts if the script fails or is removed.

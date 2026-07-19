@@ -1,11 +1,16 @@
 import type { AsVoidFunctions, RecordingEntry } from './types'
 
-export function createNoopedRecordingProxy<T extends Record<string, any>>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][] } {
+export function createNoopedRecordingProxy<T extends Record<string, any>>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][], resolve: (target: T) => void } {
   const stack: RecordingEntry[][] = []
+  let resolved: T | undefined
 
   let stackIdx = -1
   const handler = (reuseStack = false) => ({
     get(_, prop, receiver) {
+      if (!reuseStack && resolved) {
+        const value = Reflect.get(resolved, prop, resolved)
+        return value && typeof value === 'object' ? createForwardingProxy(value) : value
+      }
       if (!reuseStack) {
         const v = Reflect.get(_, prop, receiver)
         if (typeof v !== 'undefined') {
@@ -27,6 +32,7 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
   return {
     proxy: new Proxy(instance || {}, handler()),
     stack,
+    resolve: target => resolved = target,
   }
 }
 
