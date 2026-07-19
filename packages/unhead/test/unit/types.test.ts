@@ -1,4 +1,4 @@
-import type { HeadEntry, HeadEntryOptions, PreloadLink, SerializableHead } from '../../src/types'
+import type { HeadEntry, HeadEntryOptions, Link, PreloadLink, Script, SerializableHead } from '../../src/types'
 import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
 import { expectTypeOf } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
@@ -11,6 +11,44 @@ describe('types', () => {
     expectTypeOf<ResolveTagsOptions>().toHaveProperty('tagWeight')
     expectTypeOf<NonNullable<HeadEntry<unknown>['options']>>()
       .toEqualTypeOf<Omit<HeadEntryOptions, 'head' | 'onRendered'>>()
+  })
+  it('preserves properties validated by define helpers', () => {
+    const preload = defineLink({
+      rel: 'preload',
+      as: 'script',
+      href: '/entry.js',
+    })
+    expectTypeOf(preload.rel).toEqualTypeOf<'preload'>()
+    expectTypeOf(preload.href).toEqualTypeOf<'/entry.js'>()
+
+    const linkUnion = defineLink(Math.random() > 0.5
+      ? { rel: 'preload', as: 'script', href: '/entry.js' }
+      : { rel: 'prefetch', href: '/next.js' })
+    if (linkUnion.rel === 'preload')
+      expectTypeOf(linkUnion.as).toEqualTypeOf<'script'>()
+
+    const customLink = defineLink({
+      'rel': 'openid2.provider',
+      'href': 'https://example.com/openid',
+      'data-provider': 'openid',
+    })
+    expectTypeOf(customLink['data-provider']).toEqualTypeOf<'openid'>()
+    customLink satisfies Link
+
+    const module = defineScript({
+      type: 'module',
+      src: '/entry.js',
+    })
+    expectTypeOf(module.type).toEqualTypeOf<'module'>()
+    expectTypeOf(module.src).toEqualTypeOf<'/entry.js'>()
+
+    const customScript = defineScript({
+      'type': 'text/plain',
+      'textContent': 'debug-token',
+      'data-purpose': 'debug',
+    })
+    expectTypeOf(customScript['data-purpose']).toEqualTypeOf<'debug'>()
+    customScript satisfies Script
   })
   it('types useHead', () => {
     const unhead = createHead()
