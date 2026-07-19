@@ -6,4 +6,4 @@ export {
   useScript,
 }
 
-export type { AsVoidFunctions, EventHandlerOptions, RecordingEntry, ScriptInstance, UseFunctionType, UseScriptContext, UseScriptInput, UseScriptOptions, UseScriptResolvedInput, UseScriptReturn, UseScriptStatus, VueScriptInstance, WarmupStrategy } from './useScript'
+export type { AsVoidFunctions, EventHandlerOptions, RecordingEntry, ScriptInstance, UseFunctionType, UseScriptContext, UseScriptContextOptions, UseScriptInput, UseScriptOptions, UseScriptResolvedInput, UseScriptResolver, UseScriptReturn, UseScriptScopeReturn, UseScriptStatus, UseScriptTrigger, VueScriptInstance, VueScriptScope, WarmupStrategy } from './useScript'

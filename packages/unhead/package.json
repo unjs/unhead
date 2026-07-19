@@ -73,6 +73,10 @@
       "types": "./dist/scripts.d.ts",
       "default": "./dist/scripts.mjs"
     },
+    "./scripts/triggers": {
+      "types": "./dist/scripts/triggers.d.ts",
+      "default": "./dist/scripts/triggers.mjs"
+    },
     "./parser": {
       "types": "./dist/parser.d.ts",
       "default": "./dist/parser.mjs"
@@ -131,6 +135,9 @@
       ],
       "scripts": [
         "dist/scripts.d.ts"
+      ],
+      "scripts/triggers": [
+        "dist/scripts/triggers.d.ts"
       ],
       "parser": [
         "dist/parser.d.ts"

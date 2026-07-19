@@ -146,6 +146,23 @@ describe('proxy chain', () => {
     instance.proxy.greet('hello-world')
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
   })
+
+  it('replays calls after async use() resolves', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ greet: (foo: string) => string }>()
+    const instance = useScript(head, '/async-proxy.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const greet = vi.fn((foo: string) => foo)
+
+    instance.proxy.greet('hello-world')
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    resolve({ greet })
+    await instance._loadPromise
+
+    expect(greet).toHaveBeenCalledWith('hello-world')
+  })
 })
 
 describe('types: AsVoidFunctions', () => {

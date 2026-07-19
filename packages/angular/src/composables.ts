@@ -1,6 +1,8 @@
-import type { ActiveHeadEntry, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseScriptInput, UseScriptOptions, UseScriptReturn, UseSeoMetaInput } from 'unhead/types'
+import type { UseScriptReturn } from 'unhead/scripts'
+import type { ActiveHeadEntry, EventHandlerOptions, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseScriptInput, UseScriptOptions, UseSeoMetaInput } from 'unhead/types'
 import { DestroyRef, effect, inject } from '@angular/core'
-import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadInjectionToken } from './context'
 
 export function useUnhead() {
@@ -35,7 +37,7 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
   return withSideEffects<ActiveHeadEntry<UseSeoMetaInput>>(input, options, baseSeoMeta)
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || useUnhead()
@@ -61,27 +63,31 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       else {
         mountCbs.push(load)
       }
+      return () => {
+        const idx = mountCbs.indexOf(load)
+        if (idx !== -1)
+          mountCbs.splice(idx, 1)
+      }
     }
   }
 
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
-  // capture the controller at registration time so destroy aborts the controller
-  // that was active when this component registered, not a newer one
+  // Capture the controller created for this caller's trigger so teardown does
+  // not abort a newer trigger registered by another consumer.
   const triggerAbortController = script._triggerAbortController
 
   // core's onLoaded/onError register by identity and return an identity-based
   // disposer; we defer registration to mount and tie the disposer to destroy
-  // core returns an identity-based disposer at runtime although the type says void
-  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
-  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
-  const _registerCb = (register: () => (() => void) | undefined) => {
+  const baseOnLoaded = script.onLoaded
+  const baseOnError = script.onError
+  const _registerCb = (register: () => () => void) => {
     let disposed = false
     let off: (() => void) | undefined
     const run = () => {
       if (disposed)
         return
-      off = register() ?? (() => {})
+      off = register()
       sideEffects.push(off)
     }
     if (isMounted)
@@ -101,10 +107,11 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   destroyRef.onDestroy(() => {
     isMounted = false
+    mountCbs.splice(0)
     triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb(() => baseOnLoaded(cb))
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb(() => baseOnError(cb))
+  script.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnLoaded(cb, options))
+  script.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnError(cb, options))
   return script
 }
