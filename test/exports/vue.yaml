@@ -25,6 +25,7 @@
   createHeadCore: function
   createServerHead: function
   injectHead: function
+  legacyPlugins: object
   resolveUnrefHeadInput: function
   setHeadInjectionHandler: function
   useHead: function

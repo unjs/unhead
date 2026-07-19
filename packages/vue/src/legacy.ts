@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions } from 'unhead/types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, HeadEntryOptions, HeadPluginInput } from 'unhead/types'
 import type {
   Ref,
 } from 'vue'
@@ -40,17 +40,17 @@ export function CapoPlugin() {
   })
 }
 
+/**
+ * The v2 compatibility plugins applied by the legacy `createHead` and
+ * `createServerHead` entrypoints.
+ */
+export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+
 export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient {
   return createVueHead({
     disableCapoSorting: true,
     ...options,
-    plugins: [
-      DeprecationsPlugin,
-      PromisesPlugin,
-      TemplateParamsPlugin,
-      AliasSortingPlugin,
-      ...(options.plugins || []),
-    ],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   }) as VueHeadClient
 }
 
@@ -58,13 +58,7 @@ export function createServerHead(options: CreateClientHeadOptions = {}): VueHead
   return createVueServerHead({
     disableCapoSorting: true,
     ...options,
-    plugins: [
-      DeprecationsPlugin,
-      PromisesPlugin,
-      TemplateParamsPlugin,
-      AliasSortingPlugin,
-      ...(options.plugins || []),
-    ],
+    plugins: [...legacyPlugins, ...(options.plugins || [])],
   })
 }
 
