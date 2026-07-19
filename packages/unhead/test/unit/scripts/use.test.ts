@@ -91,16 +91,19 @@ describe('useScript', () => {
 
   it('types: infers resolve() API through waitFor()', () => {
     const head = createServerHead()
-    const api = { ready: true as const }
+    const api = { ready: true as const, method: (value: string) => value.length }
     const instance = useScript(head, '/inferred-ready-script.js', {
       resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
     })
 
+    const checkInference = async () => {
+      const inferred: typeof api = await instance.load()
+      inferred.method('ok')
+    }
     type Loaded = Awaited<ReturnType<typeof instance.load>>
-    const inferred: Loaded = api
+    expectTypeOf<Loaded>().toEqualTypeOf<typeof api>()
     const notAny: 0 extends (1 & Loaded) ? never : true = true
-    void instance
-    void inferred
+    void checkInference
     void notAny
   })
 

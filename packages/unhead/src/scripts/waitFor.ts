@@ -1,7 +1,7 @@
-import type { UseScriptWaitForSetup } from './types'
+import type { UseScriptWaitFor, UseScriptWaitForSetup } from './types'
 
-export function createScriptWaitFor(signal: AbortSignal) {
-  return <T>(setup: UseScriptWaitForSetup<T>): Promise<T> => new Promise<T>((outerResolve, outerReject) => {
+export function createScriptWaitFor(signal: AbortSignal): UseScriptWaitFor {
+  return (<T>(setup: UseScriptWaitForSetup<T>): Promise<T> => new Promise<T>((outerResolve, outerReject) => {
     let settled = false
     let resolving = false
     let cleanup: (() => void) | undefined
@@ -25,13 +25,14 @@ export function createScriptWaitFor(signal: AbortSignal) {
     }
     const reject = (reason?: unknown) => queueMicrotask(() => finish(outerReject, reason))
     const resolve = (value: T | PromiseLike<T>) => {
-      if (settled || resolving)
-        return
-      resolving = true
-      Promise.resolve(value).then(
-        resolved => finish(outerResolve, resolved),
-        reject,
-      )
+      if (!settled && !resolving) {
+        resolving = true
+        Promise.resolve(value).then(
+          resolved => finish(outerResolve, resolved),
+          reject,
+        )
+      }
+      return value
     }
     onAbort = () => {
       const error = new Error('Script lifecycle aborted')
@@ -46,10 +47,11 @@ export function createScriptWaitFor(signal: AbortSignal) {
 
     signal.addEventListener('abort', onAbort, { once: true })
     try {
-      cleanup = setup(resolve, reject) || undefined
+      const result = setup(resolve, reject)
+      cleanup = typeof result === 'function' ? result : undefined
     }
     catch (error) {
       reject(error)
     }
-  })
+  })) as UseScriptWaitFor
 }
