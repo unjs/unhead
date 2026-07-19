@@ -20,11 +20,18 @@ function isEmptyProps(props: Record<string, any>): boolean {
   return true
 }
 
-// matches the hooks that receive references to resolved tags and may mutate them in place
-// (tags:beforeResolve, tags:resolve, tags:afterResolve, ssr:render, ssr:rendered, dom:rendered
-// and deprecated dom:renderTag — but not *:beforeRender, entries:* or script:updated);
-// when none are registered the per-render defensive clone can be skipped
+// matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
+
+function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
+  const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
+  if (head._h !== count) {
+    head._h = count
+    for (const entry of head.entries.values())
+      delete entry._tags
+  }
+}
+
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
   tags: HeadTag[]
@@ -162,6 +169,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
+  syncEntryHookCache(head, hooks)
   for (const e of head.entries.values()) {
     if (e._pending !== undefined) {
       e.input = e._pending
@@ -182,6 +190,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
     if (hooks['entries:resolve']?.length)
       callHook(head, 'entries:resolve', { entries, ...ctx })
   }
+  syncEntryHookCache(head, hooks)
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
     if (!tags) {
@@ -228,8 +237,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone
-  for (const k in hooks) {
-    if (hooks[k]?.length && TAG_MUTATING_HOOK_RE.test(k)) {
+  for (const name in hooks) {
+    if (hooks[name]?.length && TAG_MUTATING_HOOK_RE.test(name)) {
       cloneTagsInPlace(ctx.tags)
       break
     }

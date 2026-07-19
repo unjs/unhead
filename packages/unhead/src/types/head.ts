@@ -275,6 +275,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _entryCount: number
+  /**
+   * Number of entry hooks included in cached normalization.
+   *
+   * @internal
+   */
+  _h: number
   // client-specific (optional)
   /**
    * @internal

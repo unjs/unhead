@@ -1,7 +1,7 @@
-import type { ClientUnhead } from '../client/createHead'
-import type { ActiveHeadEntry, ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, ResolvableHead, Unhead } from '../types'
+import type { ClientUnhead } from '../client/adapter'
+import type { ClientHeadHooks, CreateClientHeadOptions, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
-import { registerPlugin } from '../unhead'
+import { createStreamClientHeadAdapter } from '../client/adapter'
 import { createHooks } from '../utils/hooks'
 
 export type { StreamingGlobal, UnheadStreamQueue }
@@ -29,80 +29,17 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   if ((core as any)._wrapped)
     return core as ClientUnhead<T>
 
-  const hooks = createHooks<ClientHeadHooks>(rest.hooks)
-
-  // Cast core since iife adds dirty property dynamically
-  const coreWithDirty = core as Unhead<T> & { dirty: boolean }
-
   // Check if hydration is locked (client pushes should be skipped during hydration)
   const isHydrationLocked = () => streamQueue?._hydrationLocked?.() ?? false
-
-  const head: ClientUnhead<T> = {
-    ...coreWithDirty,
-    hooks,
-    use: p => registerPlugin(head, p),
-    render(): boolean {
-      return core.render() as boolean
-    },
-    invalidate() {
-      for (const entry of core.entries.values())
-        delete entry._tags
-      coreWithDirty.dirty = true
-      hooks.callHook('entries:updated', head)
-    },
-    push(input: T, _options?: HeadEntryOptions) {
-      // Skip pushes during hydration to preserve SSR-streamed state
-      // After hydration completes (microtask), pushes are allowed again
-      if (isHydrationLocked()) {
-        // Return a no-op entry during hydration
-        return {
-          _i: -1,
-          patch: () => {},
-          dispose: () => {},
-        } as ActiveHeadEntry<T>
-      }
-
-      const active = core.push(input, _options)
-      const entry = core.entries.get(active._i)
-      if (entry)
-        entry._o = input
-      coreWithDirty.dirty = true
-      hooks.callHook('entries:updated', head)
-
-      const coreDispose = active.dispose
-
-      return {
-        _i: active._i,
-        patch(input: T) {
-          if (isHydrationLocked())
-            return
-          active.patch(input)
-          coreWithDirty.dirty = true
-          hooks.callHook('entries:updated', head)
-        },
-        dispose() {
-          if (core.entries.has(active._i)) {
-            coreDispose()
-            head.invalidate()
-          }
-        },
-      }
-    },
-  }
+  const coreRender = core.render
+  const hooks = createHooks<ClientHeadHooks>(rest.hooks)
+  const head = createStreamClientHeadAdapter(core as Unhead<T, boolean>, hooks, () => coreRender() as boolean, isHydrationLocked)
 
   // Mark as wrapped to avoid double-wrapping
   ;(head as any)._wrapped = true
 
   // Register plugins
-  ;(rest.plugins || []).forEach(p => registerPlugin(head, p))
-
-  // Auto-render on entries:updated
-  registerPlugin(head, {
-    key: 'client',
-    hooks: {
-      'entries:updated': () => { head.render() },
-    },
-  })
+  ;(rest.plugins || []).forEach(p => head.use(p))
 
   // Push init entries
   rest.init?.forEach(e => e && head.push(e as T))
