@@ -961,7 +961,6 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData1?: string
@@ -970,7 +969,6 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel1?: string
@@ -979,7 +977,6 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData2?: string
@@ -988,7 +985,6 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel2?: string
