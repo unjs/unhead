@@ -15,7 +15,19 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptIns
 /**
  * Either a string source for the script or full script properties.
  */
-export type UseScriptResolvedInput = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & { src: string } & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
+type UseScriptInputBase = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & DataKeys & MaybeEventFnHandlers<HttpEventAttributes> & SchemaAugmentations['script']
+
+export type UseScriptResolvedInput = UseScriptInputBase & { src: string }
+
+/** A logical client-side script resource without a DOM script tag. */
+export interface UseScriptSourceLessInput {
+  key: string
+  src?: never
+  innerHTML?: never
+  onerror?: never
+  onload?: never
+  textContent?: never
+}
 
 type BaseScriptApi = Record<symbol | string, any>
 
@@ -117,6 +129,8 @@ export type UseScriptResolver<T extends BaseScriptApi>
  */
 export type UseScriptTrigger = (load: () => void) => any
 
+export type UseScriptLoader<T extends BaseScriptApi = BaseScriptApi> = (ctx: UseScriptContextOptions) => T | PromiseLike<T>
+
 /**
  * A consumer-owned view of a shared script. Disposing it only releases the
  * callbacks and triggers registered through this scope.
@@ -206,6 +220,8 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Existing callers receive the cached shared script unless this is enabled.
    */
   scope?: boolean
+  /** Reserved for source-less script overloads. */
+  loader?: never
   /**
    * Resolve the script instance from the window. This legacy callback is always
    * called without arguments. It may return the API asynchronously.
@@ -239,6 +255,14 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * this is guaranteed to be called only once, unless the script is removed and re-added.
    */
   beforeInit?: () => void
+}
+
+/** Options for a keyed, client-only resource that does not render a script tag. */
+export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'loader' | 'resolve' | 'use' | 'warmupStrategy'> & {
+  loader: UseScriptLoader<T>
+  resolve?: never
+  use?: never
+  warmupStrategy?: never
 }
 
 export type UseScriptReturn<T extends Record<symbol | string, any>> = ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>

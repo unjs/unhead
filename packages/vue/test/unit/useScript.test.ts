@@ -8,6 +8,25 @@ import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('loads a source-less SDK', async () => {
+    const head = createHead()
+    const api = { ready: true as const }
+    const script = useScript({ key: 'module-sdk' }, {
+      head,
+      trigger: 'manual',
+      loader: async () => api,
+    })
+
+    expect(await script.load()).toBe(api)
+    expect(script.status.value).toBe('loaded')
+    expect(script.entry).toBeUndefined()
+
+    if (false) {
+      // @ts-expect-error source-less loaders own API resolution
+      useScript({ key: 'invalid-module-sdk' }, { head, loader: () => api, resolve: () => api })
+    }
+  })
+
   it('supports lifecycle-aware API resolution', () => {
     const head = createHead()
     const api = { ready: true as const, method: (value: string) => value.length }
