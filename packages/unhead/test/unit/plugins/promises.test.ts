@@ -35,6 +35,30 @@ describe('promisesPlugin', () => {
     expect(renderSSRHead(head).headTags).toContain('<title>resolved</title>')
   })
 
+  it('retries rejected thenables on a later server render', async () => {
+    const head = createServerHead({
+      disableDefaults: true,
+      plugins: [PromisesPlugin],
+    })
+    let attempts = 0
+    const retryingThenable = {
+      then(resolve: (value: string) => void, reject: (reason: Error) => void) {
+        attempts++
+        attempts === 1 ? reject(new Error('failed')) : resolve('recovered')
+      },
+    }
+    head.push({ title: retryingThenable } as any)
+
+    expect(renderSSRHead(head).headTags).not.toContain('<title>')
+    await flushPromises()
+    expect(attempts).toBe(1)
+
+    expect(renderSSRHead(head).headTags).not.toContain('<title>')
+    await flushPromises()
+    expect(attempts).toBe(2)
+    expect(renderSSRHead(head).headTags).toContain('<title>recovered</title>')
+  })
+
   it('invalidates the client after promises resolve', async () => {
     const dom = useDom()
     const head = createClientHead({

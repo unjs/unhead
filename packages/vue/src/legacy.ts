@@ -12,8 +12,9 @@ export * from './client'
 export { createHead as createClientHead } from './client'
 
 /**
- * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
- * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ * The v2 property, template parameter, and alias sorting migration plugins applied by the
+ * legacy `createHead`/`createServerHead`. Promise inputs are not included; register
+ * `PromisesPlugin` separately when needed.
  *
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `@unhead/vue/client`/`@unhead/vue/server` without this plugin set.
