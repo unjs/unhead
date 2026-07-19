@@ -90,6 +90,7 @@ export type UseScriptWaitForSetup<T> = (
 export interface UseScriptWaitForResolve<T = unknown> {
   <V extends T>(value: V): V
   <V extends T>(value: PromiseLike<V>): PromiseLike<V>
+  (value: T | PromiseLike<T>): T | PromiseLike<T>
 }
 
 type UseScriptWaitForInferredResult<T> = [T] extends [void | (() => void)]
