@@ -1,7 +1,7 @@
 {
   "name": "@unhead/ssr",
   "type": "module",
-  "version": "2.1.15",
+  "version": "2.1.16",
   "author": "Harlan Wilton <harlan@harlanzw.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/harlan-zw",
