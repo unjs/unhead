@@ -119,8 +119,8 @@ catalogs:
       specifier: ^29.1.1
       version: 29.1.1
     magic-string:
-      specifier: ^0.30.21
-      version: 0.30.21
+      specifier: ^1.0.0
+      version: 1.0.0
     nuxt:
       specifier: ^4.4.8
       version: 4.4.8
@@ -242,7 +242,7 @@ importers:
         version: 29.1.1
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.139.0
@@ -846,7 +846,7 @@ importers:
         version: 1.32.0
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.139.0
@@ -883,7 +883,7 @@ importers:
         version: 0.2.2
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.139.0
@@ -966,7 +966,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.139.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.4)(webpack@5.105.2(esbuild@0.28.1))
@@ -1031,7 +1031,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.139.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.4)(webpack@5.105.2(esbuild@0.28.1))
@@ -1065,7 +1065,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 0.30.21
+        version: 1.0.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.139.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.4)(webpack@5.105.2(esbuild@0.28.1))
