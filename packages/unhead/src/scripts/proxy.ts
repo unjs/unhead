@@ -1,8 +1,9 @@
 import type { AsVoidFunctions, RecordingEntry } from './types'
 
-export function createNoopedRecordingProxy<T extends Record<string, any>>(instance: T = {} as T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][], resolve: (target: T) => void } {
+export function createNoopedRecordingProxy<T extends Record<string, any>>(instance?: T): { proxy: AsVoidFunctions<T>, stack: RecordingEntry[][], resolve: (target: T) => void } {
   const stack: RecordingEntry[][] = []
-  let resolved: T | undefined
+  const backing = {} as T
+  let resolved = instance
   const forward = (value: any, owner: any) => value && (typeof value === 'object' || typeof value === 'function')
     ? createForwardingProxy(value, owner)
     : value
@@ -65,7 +66,10 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
   } as ProxyHandler<T>)
 
   return {
-    proxy: new Proxy(instance || {}, handler()),
+    // Keep the physical target empty and extensible. SDK stubs are often frozen
+    // or contain non-configurable properties, which cannot safely be swapped as
+    // a Proxy target once the real API resolves.
+    proxy: new Proxy(backing, handler()),
     stack,
     resolve: target => resolved = target,
   }

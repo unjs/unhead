@@ -35,6 +35,75 @@ describe('source-less script loader', () => {
     expect(greet).toHaveBeenCalledWith('forwarded')
   })
 
+  it('forwards re-entrant calls made while recordings replay', async () => {
+    const calls: string[] = []
+    const script = useScript(createHead(), { key: 'reentrant-sdk' }, {
+      trigger: 'manual',
+      loader: () => ({
+        init: (cb: () => void) => {
+          calls.push('init')
+          cb()
+        },
+        track: () => calls.push('track'),
+      }),
+    })
+
+    script.proxy.init(() => script.proxy.track())
+    await script.load()
+
+    expect(calls).toEqual(['init', 'track'])
+  })
+
+  it('does not use a synchronous SDK stub as the stable proxy target', async () => {
+    let loaded = false
+    const script = useScript(createHead(), '/frozen-stub.js', {
+      trigger: 'manual',
+      use: () => loaded ? { ready: true } : Object.freeze({ ready: false }),
+    })
+    const proxy = script.proxy
+
+    loaded = true
+    const loading = script.load()
+    script.input.onload?.(new Event('load'))
+    await loading
+
+    expect(proxy.ready).toBe(true)
+    expect(script.proxy).toBe(proxy)
+  })
+
+  it('uses the loader when an optional src is undefined', async () => {
+    const loader = vi.fn(() => ({ ready: true }))
+    const script = useScript(createHead(), { key: 'undefined-src', src: undefined }, {
+      trigger: 'manual',
+      loader,
+    })
+
+    await script.load()
+
+    expect(loader).toHaveBeenCalledOnce()
+    expect(script.entry).toBeUndefined()
+  })
+
+  it('continues loaded callbacks when a recorded SDK call throws', async () => {
+    const error = new Error('queued call failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const script = useScript(createHead(), { key: 'throwing-sdk' }, {
+      trigger: 'manual',
+      loader: () => ({ boom: () => { throw error } }),
+    })
+    const onLoaded = vi.fn()
+    script.proxy.boom()
+    script.onLoaded(onLoaded)
+
+    await script.load()
+    await Promise.resolve()
+
+    expect(consoleError).toHaveBeenCalledWith(error)
+    expect(onLoaded).toHaveBeenCalledOnce()
+    expect(script._cbs.loaded).toBeNull()
+    consoleError.mockRestore()
+  })
+
   it('reports loader failures and aborts readiness', async () => {
     const error = new Error('module failed')
     const script = useScript(createHead(), { key: 'failed-module' }, {

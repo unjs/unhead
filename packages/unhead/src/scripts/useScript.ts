@@ -52,7 +52,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     warmupStrategy: _warmupStrategy,
     ...entryOptions
   } = _options || {}
-  const sourceLess = !('src' in input)
+  const sourceLess = typeof input.src !== 'string'
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
   const prevScript = Object.hasOwn(scripts, id)
@@ -491,16 +491,15 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     throw error
   }
   if (use || (sourceLess && loader)) {
-    const { proxy, stack, resolve } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
+    const { proxy, stack, resolve } = createNoopedRecordingProxy<T>(head.ssr ? undefined : initialInstance || undefined)
     script.proxy = proxy
+    script.signal.addEventListener('abort', () => stack.length = 0, { once: true })
     script.onLoaded((instance) => {
-      try {
-        replayProxyRecordings(instance, stack)
-      }
-      finally {
-        resolve(instance)
-        stack.length = 0
-      }
+      // Detach the queue and switch to forwarding before replay. SDK callbacks
+      // can synchronously re-enter this proxy and must reach the live API.
+      const recordings = stack.splice(0)
+      resolve(instance)
+      replayProxyRecordings(instance, recordings)
     })
   }
   // need to make sure it's not already registered
