@@ -43,6 +43,10 @@
 ./scripts:
   createSpyProxy: function
   useScript: function
+./scripts/triggers:
+  createScriptTriggerInteraction: function
+  createScriptTriggerServiceWorker: function
+  createScriptTriggerTimeout: function
 ./server:
   capoTagWeight: function
   createHead: function

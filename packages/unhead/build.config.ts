@@ -111,6 +111,7 @@ export default defineBuildConfig({
     { input: 'src/stream/client', name: 'stream/client' },
     { input: 'src/stream/iife', name: 'stream/iife' },
     { input: 'src/scripts/index', name: 'scripts' },
+    { input: 'src/scripts/triggers', name: 'scripts/triggers' },
     { input: 'src/utils', name: 'utils' },
     { input: 'src/plugins/index', name: 'plugins' },
     { input: 'src/legacy/index', name: 'legacy' },
