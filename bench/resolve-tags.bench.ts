@@ -1,9 +1,13 @@
-import { TemplateParamsPlugin } from 'unhead/plugins'
+import { FlatMetaPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
 
 // Resolve-heavy first and cached renders with many entries per head.
 // Covers Nuxt-style per-request creation and tag-mutating plugin hooks.
+const benchPlugins = {
+  flatMeta: FlatMetaPlugin,
+  templateParams: TemplateParamsPlugin,
+}
 
 function pushEntries(head: ReturnType<typeof createHead>, count: number) {
   head.push({
@@ -27,9 +31,9 @@ function pushEntries(head: ReturnType<typeof createHead>, count: number) {
   }
 }
 
-function createBenchHead(count: number, templateParams = false) {
+function createBenchHead(count: number, plugin?: keyof typeof benchPlugins) {
   const head = createHead({
-    plugins: templateParams ? [TemplateParamsPlugin] : [],
+    plugins: plugin ? [benchPlugins[plugin]] : [],
   })
   pushEntries(head, count)
   return head
@@ -41,7 +45,11 @@ describe('resolveTags many entries, first render', () => {
   })
 
   bench('20 entries, templateParams plugin', () => {
-    createBenchHead(20, true).render()
+    createBenchHead(20, 'templateParams').render()
+  })
+
+  bench('20 entries, flatMeta plugin', () => {
+    createBenchHead(20, 'flatMeta').render()
   })
 
   bench('5 entries, no plugins', () => {
@@ -51,9 +59,11 @@ describe('resolveTags many entries, first render', () => {
 
 describe('resolveTags many entries, cached render', () => {
   const noPlugins = createBenchHead(20)
-  const templateParams = createBenchHead(20, true)
+  const templateParams = createBenchHead(20, 'templateParams')
+  const flatMeta = createBenchHead(20, 'flatMeta')
   noPlugins.render()
   templateParams.render()
+  flatMeta.render()
 
   bench('20 entries, no plugins', () => {
     noPlugins.render()
@@ -61,5 +71,9 @@ describe('resolveTags many entries, cached render', () => {
 
   bench('20 entries, templateParams plugin', () => {
     templateParams.render()
+  })
+
+  bench('20 entries, flatMeta plugin', () => {
+    flatMeta.render()
   })
 })

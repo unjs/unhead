@@ -182,7 +182,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   let entries: HeadEntry<any>[] | undefined
   if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length) {
     entries = [...head.entries.values()]
-    callHook(head, 'entries:resolve', { entries, ...ctx })
+    if (hooks['entries:resolve']?.length)
+      callHook(head, 'entries:resolve', { entries, ...ctx })
   }
   for (const e of entries || head.entries.values()) {
     let tags = e._tags
