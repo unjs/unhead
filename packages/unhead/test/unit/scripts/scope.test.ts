@@ -1,9 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
-import { useScript, useScriptScope } from '../../../src/scripts'
+import { useScript } from '../../../src/scripts'
 
 describe('script scope', () => {
+  it('preserves the cached instance unless consumer ownership is requested', () => {
+    const head = createHead()
+    const first = useScript(head, '/identity.js', { trigger: 'manual' })
+    ;(first as any).reload = vi.fn()
+    const second = useScript(head, '/identity.js', { trigger: 'manual' })
+
+    expect(second).toBe(first)
+    expect((second as any).reload).toBe((first as any).reload)
+  })
+
   it('keeps the shared script while owning callbacks and triggers per consumer', async () => {
     const head = createHead()
     const cleanupA = vi.fn()
@@ -11,10 +21,12 @@ describe('script scope', () => {
     const loadedA = vi.fn()
     const loadedB = vi.fn()
 
-    const scopeA = useScriptScope(head, '/shared.js', {
+    const scopeA = useScript(head, '/shared.js', {
+      scope: true,
       trigger: () => cleanupA,
     })
-    const scopeB = useScriptScope(head, '/shared.js', {
+    const scopeB = useScript(head, '/shared.js', {
+      scope: true,
       trigger: () => cleanupB,
     })
     scopeA.onLoaded(loadedA)
@@ -43,23 +55,21 @@ describe('script scope', () => {
 
   it('disposes all scopes when the shared script is removed', async () => {
     const head = createHead()
-    const script = useScript(head, '/shared.js', { trigger: 'manual' })
-    const scopeA = script.createScope()
-    const scopeB = script.createScope()
+    const scopeA = useScript(head, '/shared.js', { scope: true, trigger: 'manual' })
+    const scopeB = useScript(head, '/shared.js', { scope: true, trigger: 'manual' })
+    const script = scopeA.script
 
     script.remove()
     await script._loadPromise
     await Promise.resolve()
 
-    expect(scopeA.disposed).toBe(true)
-    expect(scopeB.disposed).toBe(true)
     expect(scopeA.signal.aborted).toBe(true)
     expect(scopeB.signal.aborted).toBe(true)
   })
 
   it('emits scoped errors before releasing an aborted script scope', async () => {
     const head = createHead()
-    const scope = useScriptScope(head, '/failed.js', { trigger: 'manual' })
+    const scope = useScript(head, '/failed.js', { scope: true, trigger: 'manual' })
     const onError = vi.fn()
     scope.onError(onError)
 
@@ -71,109 +81,13 @@ describe('script scope', () => {
     await Promise.resolve()
 
     expect(onError).toHaveBeenCalledOnce()
-    expect(scope.disposed).toBe(true)
-  })
-
-  it('runs effect cleanup once when its scope is disposed', async () => {
-    const head = createHead()
-    const script = useScript(head, '/effect.js', { trigger: 'manual' })
-    const scope = script.createScope()
-    const cleanup = vi.fn()
-    let effectSignal!: AbortSignal
-
-    scope.onLoadedEffect((_api, { signal }) => {
-      effectSignal = signal
-      return cleanup
-    })
-
-    script.load()
-    head.hooks.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
-    await script._loadPromise
-    await Promise.resolve()
-
-    scope.dispose()
-    scope.dispose()
-
-    expect(effectSignal.aborted).toBe(true)
-    expect(cleanup).toHaveBeenCalledOnce()
-  })
-
-  it('reports disposer errors without throwing from teardown', () => {
-    const head = createHead()
-    const script = useScript(head, '/cleanup-error.js', { trigger: 'manual' })
-    const scope = script.createScope()
-    const error = new Error('cleanup failed')
-    const reportError = vi.fn()
-    const errorGlobal = globalThis as unknown as { reportError?: (error: unknown) => void }
-    const originalReportError = errorGlobal.reportError
-    const hadOwnReportError = Object.hasOwn(globalThis, 'reportError')
-    errorGlobal.reportError = reportError
-
-    try {
-      script._setupTriggerHandler = () => () => {
-        throw error
-      }
-      scope.setupTriggerHandler('manual')
-
-      expect(() => scope.dispose()).not.toThrow()
-      expect(reportError).toHaveBeenCalledWith(error)
-    }
-    finally {
-      if (hadOwnReportError)
-        errorGlobal.reportError = originalReportError
-      else
-        delete errorGlobal.reportError
-    }
-  })
-
-  it('adopts late async effect cleanup after disposal', async () => {
-    const head = createHead()
-    const script = useScript(head, '/async-effect.js', { trigger: 'manual' })
-    const scope = script.createScope()
-    const cleanup = vi.fn()
-    const started = Promise.withResolvers<void>()
-    const setup = Promise.withResolvers<() => void>()
-
-    scope.onLoadedEffect(async (_api, { signal }) => {
-      started.resolve()
-      expect(signal.aborted).toBe(false)
-      return setup.promise
-    })
-
-    script.load()
-    head.hooks.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
-    await started.promise
-
-    scope.dispose()
-    setup.resolve(cleanup)
-    await vi.waitFor(() => expect(cleanup).toHaveBeenCalledOnce())
-  })
-
-  it('treats abort rejection as expected effect cancellation', async () => {
-    const head = createHead()
-    const script = useScript(head, '/cancelled-effect.js', { trigger: 'manual' })
-    const scope = script.createScope()
-    const started = Promise.withResolvers<void>()
-    const onError = vi.fn()
-
-    scope.onLoadedEffect((_api, { signal }) => new Promise<void>((_resolve, reject) => {
-      started.resolve()
-      signal.addEventListener('abort', () => reject(new Error('cancelled')), { once: true })
-    }), { onError })
-
-    script.load()
-    head.hooks.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
-    await started.promise
-    scope.dispose()
-    await Promise.resolve()
-
-    expect(onError).not.toHaveBeenCalled()
+    expect(scope.signal.aborted).toBe(true)
   })
 
   it('does not replay callbacks registered after disposal', async () => {
     const head = createHead()
-    const script = useScript(head, '/loaded.js', { trigger: 'manual' })
-    const scope = script.createScope()
+    const scope = useScript(head, '/loaded.js', { scope: true, trigger: 'manual' })
+    const script = scope.script
 
     script.load()
     head.hooks.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
@@ -189,9 +103,11 @@ describe('script scope', () => {
 
   it('does not remove a shared script when one scope trigger throws', () => {
     const head = createHead()
-    const script = useScript(head, '/shared-trigger.js', { trigger: 'manual' })
+    const scope = useScript(head, '/shared-trigger.js', { scope: true, trigger: 'manual' })
+    const script = scope.script
 
-    expect(() => useScriptScope(head, '/shared-trigger.js', {
+    expect(() => useScript(head, '/shared-trigger.js', {
+      scope: true,
       trigger: () => {
         throw new Error('scope trigger failed')
       },

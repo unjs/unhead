@@ -1,4 +1,4 @@
-import type { UseScriptScopeReturn } from 'unhead/scripts'
+import type { UseScriptReturn } from 'unhead/scripts'
 import type {
   ActiveHeadEntry,
   HeadEntryOptions,
@@ -11,7 +11,7 @@ import type {
 } from 'unhead/types'
 import { getContext, onDestroy, onMount } from 'svelte'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
-import { useScriptScope as baseUseScriptScope } from 'unhead/scripts'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadContextKey } from './context'
 
 export function useUnhead(): Unhead {
@@ -45,7 +45,7 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
   return withSideEffects(baseSeoMeta(options.head || useUnhead(), input, options))
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptScopeReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || useUnhead()
@@ -56,8 +56,20 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     options.trigger = onMount
   }
   // @ts-expect-error untyped
-  const script = baseUseScriptScope(head, input as BaseUseScriptInput, options)
+  const script = baseUseScript(head, input as BaseUseScriptInput, options)
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
-  onDestroy(script.dispose)
+  const sideEffects: (() => void)[] = []
+  const bind = <A extends any[]>(base: (...args: A) => () => void) => (...args: A) => {
+    const off = base(...args)
+    sideEffects.push(off)
+    return off
+  }
+  script.onLoaded = bind(script.onLoaded)
+  script.onError = bind(script.onError)
+  const triggerAbortController = script._triggerAbortController
+  onDestroy(() => {
+    triggerAbortController?.abort()
+    sideEffects.forEach(i => i())
+  })
   return script
 }

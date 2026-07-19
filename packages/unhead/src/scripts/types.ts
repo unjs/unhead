@@ -87,36 +87,16 @@ export interface UseScriptContextOptions {
 
 export type UseScriptTrigger = (load: () => void) => void | (() => void)
 
-export type ScriptScopeCleanup = () => void | PromiseLike<void>
-
-export interface ScriptScopeEffectContext {
-  /**
-   * Aborted when the effect is disposed, its scope is disposed, or the shared
-   * script fails or is removed.
-   */
-  signal: AbortSignal
-}
-
-export interface ScriptScopeEffectOptions extends EventHandlerOptions {
-  /**
-   * Handle errors thrown while setting up or cleaning up the effect.
-   */
-  onError?: (error: unknown) => void
-}
-
-export type ScriptScopeEffect<T extends BaseScriptApi> = (
-  instance: T,
-  context: ScriptScopeEffectContext,
-) => void | ScriptScopeCleanup | PromiseLike<void | ScriptScopeCleanup>
-
 /**
  * A consumer-owned view of a shared script. Disposing it only releases the
- * callbacks, triggers, and effects registered through this scope.
+ * callbacks and triggers registered through this scope.
  */
 export interface ScriptScope<T extends BaseScriptApi> extends ScriptInstance<T> {
   readonly script: ScriptInstance<T>
-  readonly disposed: boolean
-  onLoadedEffect: (fn: ScriptScopeEffect<T>, options?: ScriptScopeEffectOptions) => () => void
+  /**
+   * Aborted when this consumer is disposed or the shared script fails or is removed.
+   */
+  readonly signal: AbortSignal
   dispose: () => void
   /**
    * Remove the shared script for every consumer. Use `dispose()` to release
@@ -139,7 +119,6 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
   remove: () => boolean
   setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => () => void
-  createScope: () => ScriptScope<T>
   // cbs
   onLoaded: (fn: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => () => void
   onError: (fn: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => () => void
@@ -193,6 +172,11 @@ export type RecordingEntry
 
 export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
   /**
+   * Create a consumer-owned handle without changing the shared script lifecycle.
+   * Existing callers receive the cached shared script unless this is enabled.
+   */
+  scope?: boolean
+  /**
    * Resolve the script instance from the window. `load()` and `onLoaded()` wait
    * for an async result, and the signal aborts if the script fails or is removed.
    */
@@ -222,6 +206,6 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
   beforeInit?: () => void
 }
 
-export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptReturn<T extends Record<symbol | string, any>> = ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>
 
 export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = ScriptScope<UseFunctionType<UseScriptOptions<T>, T>>

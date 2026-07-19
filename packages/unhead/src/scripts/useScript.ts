@@ -24,20 +24,17 @@ import { createScriptWaitFor } from './waitFor'
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
-  return _useScript(head, _input, _options, false) as UseScriptReturn<T>
-}
-
-/**
- * Load a shared third-party script through a consumer-owned lifecycle scope.
- */
-export function useScriptScope<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptScopeReturn<T> {
-  return _useScript(head, _input, _options, true) as UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  return _useScript(head, _input, _options, !!_options?.scope)
 }
 
 /** Resolve the shared script and optionally attach a consumer scope. */
 function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
-  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
+  // Event handlers below capture this head, so never mutate an input object that
+  // may be reused by another SSR request or client app.
+  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : { ..._input }
   const options = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
@@ -45,13 +42,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
     : undefined
   if (prevScript) {
-    if (scoped) {
-      const scope = prevScript.createScope()
-      scope.setupTriggerHandler(options.trigger)
-      return scope
-    }
-    prevScript.setupTriggerHandler(options.trigger)
-    return prevScript
+    const result = scoped ? createScriptScope(prevScript) : prevScript
+    result.setupTriggerHandler(options.trigger)
+    return result
   }
   const lifecycleController = new AbortController()
   const useContext = {
@@ -74,11 +67,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   const initialUseIsAsync = !!initialUseResult && typeof (initialUseResult as PromiseLike<T>).then === 'function'
   const initialInstance = initialUseIsAsync ? null : (initialUseResult as T | null | undefined) || null
   const initialUseOutcome = initialUseFailed
-    ? Promise.resolve({ error: initialUseError })
+    ? Promise.resolve([false, initialUseError] as const)
     : initialUseIsAsync
       ? Promise.resolve(initialUseResult).then(
-          api => ({ api }),
-          error => ({ error }),
+          api => [true, api] as const,
+          error => [false, error] as const,
         )
       : undefined
   const _events: { type: string, timestamp: number }[] = []
@@ -177,22 +170,22 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           const useOutcome = initialUseOutcome || (() => {
             try {
               return Promise.resolve(options.use!(useContext)).then(
-                api => ({ api }),
-                error => ({ error }),
+                api => [true, api] as const,
+                error => [false, error] as const,
               )
             }
             catch (error) {
-              return Promise.resolve({ error })
+              return Promise.resolve([false, error] as const)
             }
           })()
           void useOutcome.then((outcome) => {
             if (lifecycleController.signal.aborted || script.status === 'removed')
               return
-            if ('error' in outcome) {
-              failReadiness(outcome.error)
+            if (!outcome[0]) {
+              failReadiness(outcome[1])
             }
-            else if (outcome.api) {
-              emit(outcome.api)
+            else if (outcome[1]) {
+              emit(outcome[1])
               unhook?.()
             }
             else {
@@ -297,9 +290,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     },
     onError(cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) {
       return _registerCb('error', cb, options)
-    },
-    createScope() {
-      return createScriptScope(script)
     },
     setupTriggerHandler(trigger: UseScriptOptions['trigger']) {
       return script._setupTriggerHandler(trigger)
@@ -410,13 +400,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     })
   const hookCtx = { script }
 
-  const result = scoped ? script.createScope() : script
+  const result = scoped ? createScriptScope(script) : script
   try {
     result.setupTriggerHandler(options.trigger)
   }
   catch (error) {
-    // A new scoped script is not in the registry yet, so there is no shared
-    // lifecycle to preserve when its initial trigger registration fails.
     if (scoped)
       script.remove()
     throw error

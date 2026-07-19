@@ -1,4 +1,4 @@
-import type { UseScriptOptions as BaseUseScriptOptions, ScriptScope, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptOptions as BaseUseScriptOptions, ScriptInstance, ScriptScope, UseFunctionType, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
   GenericScript,
@@ -7,18 +7,22 @@ import type {
 } from 'unhead/types'
 import type { Ref, WatchHandle } from 'vue'
 import type { ResolvableProperties, VueHeadClient } from '../types'
-import { useScriptScope as _useScriptScope } from 'unhead/scripts'
+import { useScript as _useScript } from 'unhead/scripts'
 import { getCurrentInstance, isRef, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { injectHead } from '../install'
 
 export type * from 'unhead/scripts'
 
-export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptScope<T>, 'status'> {
+export interface VueScriptInstance<T extends Record<symbol | string, any>> extends Omit<ScriptInstance<T>, 'status'> {
+  status: Ref<UseScriptStatus>
+}
+
+export interface VueScriptScope<T extends Record<symbol | string, any>> extends Omit<ScriptScope<T>, 'status'> {
   status: Ref<UseScriptStatus>
 }
 
 export type UseScriptInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit'>> {
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -40,7 +44,11 @@ export type UseScriptContext<T extends Record<symbol | string, any>> = VueScript
 
 export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = VueScriptScope<UseFunctionType<UseScriptOptions<T>, T>>
+
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || injectHead()
@@ -81,20 +89,41 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   })
   // @ts-expect-error untyped
-  const script = _useScriptScope(head, input as BaseUseScriptInput, options)
+  const script = _useScript(head, input as BaseUseScriptInput, options) as ScriptInstance<T> | ScriptScope<T>
+  const scoped = options.scope === true
+  const sharedScript = (scoped ? (script as ScriptScope<T>).script : script) as ScriptInstance<T>
   // @ts-expect-error untyped
-  script.script._statusRef = script.script._statusRef || ref<UseScriptStatus>(script.status)
+  sharedScript._statusRef = sharedScript._statusRef || ref<UseScriptStatus>(sharedScript.status)
+
+  let onLoaded = script.onLoaded
+  let onError = script.onError
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
-  if (scope)
-    onScopeDispose(script.dispose)
+  if (scope) {
+    if (scoped) {
+      onScopeDispose((script as ScriptScope<T>).dispose)
+    }
+    else {
+      const bind = <A extends any[]>(base: (...args: A) => () => void) => (...args: A) => {
+        const off = base(...args)
+        onScopeDispose(off)
+        return off
+      }
+      onLoaded = bind(script.onLoaded)
+      onError = bind(script.onError)
+      const triggerAbortController = script._triggerAbortController
+      onScopeDispose(() => triggerAbortController?.abort())
+    }
+  }
   return new Proxy(script, {
     get(_, key, a) {
       // we can't override status as it will break the unhead useScript API
-      if (key === 'status') {
-        // @ts-expect-error internal shared status ref
-        return script.script._statusRef
-      }
+      if (key === 'status')
+        return (sharedScript as any)._statusRef
+      if (key === 'onLoaded')
+        return onLoaded
+      if (key === 'onError')
+        return onError
       return Reflect.get(_, key, a)
     },
-  }) as any as UseScriptReturn<T>
+  }) as any as UseScriptReturn<T> | UseScriptScopeReturn<T>
 }

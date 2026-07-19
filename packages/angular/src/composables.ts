@@ -1,8 +1,8 @@
-import type { UseScriptScopeReturn } from 'unhead/scripts'
+import type { UseScriptReturn } from 'unhead/scripts'
 import type { ActiveHeadEntry, EventHandlerOptions, HeadEntryOptions, HeadSafe, Unhead, UseHeadInput, UseScriptInput, UseScriptOptions, UseSeoMetaInput } from 'unhead/types'
 import { DestroyRef, effect, inject } from '@angular/core'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
-import { useScriptScope as baseUseScriptScope } from 'unhead/scripts'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadInjectionToken } from './context'
 
 export function useUnhead() {
@@ -37,13 +37,14 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
   return withSideEffects<ActiveHeadEntry<UseSeoMetaInput>>(input, options, baseSeoMeta)
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptScopeReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || useUnhead()
   options.head = head
 
   const mountCbs: (() => void)[] = []
+  const sideEffects: (() => void)[] = []
   let isMounted = false
 
   const destroyRef = inject(DestroyRef)
@@ -71,7 +72,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
 
   // @ts-expect-error untyped
-  const script = baseUseScriptScope(head, input as BaseUseScriptInput, options)
+  const script = baseUseScript(head, input as BaseUseScriptInput, options)
+  // Capture the controller created for this caller's trigger so teardown does
+  // not abort a newer trigger registered by another consumer.
+  const triggerAbortController = script._triggerAbortController
 
   // core's onLoaded/onError register by identity and return an identity-based
   // disposer; we defer registration to mount and tie the disposer to destroy
@@ -84,6 +88,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       if (disposed)
         return
       off = register()
+      sideEffects.push(off)
     }
     if (isMounted)
       run()
@@ -103,7 +108,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   destroyRef.onDestroy(() => {
     isMounted = false
     mountCbs.splice(0)
-    script.dispose()
+    triggerAbortController?.abort()
+    sideEffects.forEach(i => i())
   })
   script.onLoaded = (cb: (instance: T) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnLoaded(cb, options))
   script.onError = (cb: (err?: Error) => void | Promise<void>, options?: EventHandlerOptions) => _registerCb(() => baseOnError(cb, options))
