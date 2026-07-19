@@ -25,7 +25,8 @@ import { createScriptWaitFor } from './waitFor'
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   return _useScript(head, _input, _options, !!_options?.scope)
 }
@@ -35,7 +36,15 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   // Event handlers below capture this head, so never mutate an input object that
   // may be reused by another SSR request or client app.
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : { ..._input }
-  const options = _options || {}
+  const {
+    beforeInit,
+    eventContext: _eventContext,
+    scope: _scope,
+    trigger,
+    use,
+    warmupStrategy: _warmupStrategy,
+    ...entryOptions
+  } = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
   const prevScript = Object.hasOwn(scripts, id)
@@ -43,7 +52,10 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     : undefined
   if (prevScript) {
     const result = scoped ? createScriptScope(prevScript) : prevScript
-    result.setupTriggerHandler(options.trigger)
+    if (scoped)
+      result.setupTriggerHandler(trigger)
+    else
+      prevScript._setupTriggerHandler(trigger, false)
     return result
   }
   const lifecycleController = new AbortController()
@@ -51,13 +63,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     signal: lifecycleController.signal,
     waitFor: createScriptWaitFor(lifecycleController.signal),
   }
-  options.beforeInit?.()
-  let initialUseResult: ReturnType<NonNullable<typeof options.use>>
+  beforeInit?.()
+  let initialUseResult: ReturnType<NonNullable<typeof use>>
   let initialUseError: unknown
   let initialUseFailed = false
   try {
-    initialUseResult = !head.ssr && options.use
-      ? options.use(useContext)
+    initialUseResult = !head.ssr && use
+      ? use(useContext)
       : undefined
   }
   catch (error) {
@@ -88,16 +100,30 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     lifecycleController.abort(loadError)
     syncStatus('error')
   }
-  const onload = typeof input.onload === 'function' ? input.onload.bind(options.eventContext) : null
-  input.onload = (e: Event) => {
-    syncStatus('loaded')
-    onload?.(e)
+  let onload = typeof input.onload === 'function' ? input.onload.bind(_eventContext) : null
+  let onerror = typeof input.onerror === 'function' ? input.onerror.bind(_eventContext) : null
+  const releaseEventHandlers = () => {
+    onload = null
+    onerror = null
   }
-  const onerror = typeof input.onerror === 'function' ? input.onerror.bind(options.eventContext) : null
+  input.onload = (e: Event) => {
+    try {
+      syncStatus('loaded')
+      onload?.(e)
+    }
+    finally {
+      releaseEventHandlers()
+    }
+  }
   input.onerror = (e: Event) => {
-    lifecycleController.abort()
-    syncStatus('error')
-    onerror?.(e)
+    try {
+      lifecycleController.abort()
+      syncStatus('error')
+      onerror?.(e)
+    }
+    finally {
+      releaseEventHandlers()
+    }
   }
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
@@ -161,7 +187,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           if (resolvingApi)
             return
           resolvingApi = true
-          if (typeof options.use !== 'function') {
+          if (typeof use !== 'function') {
             emit({} as T)
             unhook?.()
             return
@@ -169,7 +195,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
 
           const useOutcome = initialUseOutcome || (() => {
             try {
-              return Promise.resolve(options.use!(useContext)).then(
+              return Promise.resolve(use(useContext)).then(
                 api => [true, api] as const,
                 error => [false, error] as const,
               )
@@ -216,6 +242,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     remove() {
       const hadEntry = !!script.entry
       lifecycleController.abort()
+      releaseEventHandlers()
       // cancel all pending triggers
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
@@ -279,7 +306,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         // status should get updated from script events
         script.entry = head.push({
           script: [{ ...defaults, ...input }],
-        }, options)
+        }, entryOptions)
       }
       if (cb)
         _registerCb('loaded', cb)
@@ -402,14 +429,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
 
   const result = scoped ? createScriptScope(script) : script
   try {
-    result.setupTriggerHandler(options.trigger)
+    result.setupTriggerHandler(trigger)
   }
   catch (error) {
-    if (scoped)
-      script.remove()
+    script.remove()
     throw error
   }
-  if (options.use) {
+  if (use) {
     const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {
@@ -418,12 +444,10 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     })
   }
   // need to make sure it's not already registered
-  if (!options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
-    options.warmupStrategy = 'preload'
-  }
-  if (options.warmupStrategy) {
-    script._warmupStrategy = options.warmupStrategy
-    script.warmup(options.warmupStrategy)
+  const warmupStrategy = _warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false)
+  if (warmupStrategy) {
+    script._warmupStrategy = warmupStrategy
+    script.warmup(warmupStrategy)
   }
   scripts[id] = script
   return result

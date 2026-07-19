@@ -1,4 +1,5 @@
-import { describe, expect, expectTypeOf, it } from 'vitest'
+import type { UseScriptOptions, UseScriptTrigger } from '../../../src/scripts'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { useScript } from '../../../src/composables'
 import { createHead as createServerHead } from '../../../src/server'
 
@@ -24,6 +25,30 @@ describe('useScript', () => {
     useScript(createServerHead(), input, { trigger: 'server' })
 
     expect(input.onload).toBe(onload)
+  })
+
+  it('keeps script-only options out of the head entry without mutating the caller', () => {
+    const head = createServerHead()
+    const beforeInit = vi.fn()
+    const use = () => ({ ready: true })
+    const options = {
+      beforeInit,
+      eventContext: { request: true },
+      scope: false as const,
+      tagPriority: 'high' as const,
+      trigger: 'server' as const,
+      use,
+    }
+    const original = { ...options }
+    const push = vi.spyOn(head, 'push')
+
+    useScript(head, '/entry-options.js', options)
+
+    expect(options).toEqual(original)
+    expect(beforeInit).toHaveBeenCalledOnce()
+    expect(push).toHaveBeenCalledWith(expect.anything(), {
+      tagPriority: 'high',
+    })
   })
 
   it('types: inferred use()', async () => {
@@ -62,5 +87,20 @@ describe('useScript', () => {
     expectTypeOf(instance.script.signal).toEqualTypeOf<AbortSignal>()
     expectTypeOf(instance.dispose).returns.toBeVoid()
     expectTypeOf(instance.onLoaded(() => {})).toEqualTypeOf<() => void>()
+  })
+
+  it('types: preserves permissive triggers and dynamic scope returns', () => {
+    const head = createServerHead()
+    const trigger: UseScriptTrigger = async (load) => {
+      load()
+      return true
+    }
+    const options: UseScriptOptions = {
+      scope: Math.random() > 0.5,
+      trigger,
+    }
+    const instance = useScript(head, '/dynamic-scope.js', options)
+
+    expectTypeOf(instance.load).toBeFunction()
   })
 })

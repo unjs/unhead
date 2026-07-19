@@ -85,7 +85,11 @@ export interface UseScriptContextOptions {
   waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
 }
 
-export type UseScriptTrigger = (load: () => void) => void | (() => void)
+/**
+ * Register a script load trigger. A returned function is treated as cleanup;
+ * other return values are ignored for backwards compatibility.
+ */
+export type UseScriptTrigger = (load: () => void) => any
 
 /**
  * A consumer-owned view of a shared script. Disposing it only releases the
