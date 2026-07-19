@@ -99,15 +99,13 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   }
 
   const hooks = createHooks<ServerHeadHooks>(options.hooks)
-  const head: ServerUnhead<T> = {
-    ...core,
-    hooks,
-    render: () => render(head),
-    use: p => registerPlugin(head, p),
-  }
+  const head = core as ServerUnhead<T>
+  head.hooks = hooks
+  head.render = () => render(head)
+  head.use = p => registerPlugin(head, p)
 
   // Register plugins
-  options.plugins?.forEach(p => registerPlugin(head, p))
+  options.plugins?.forEach(p => head.use(p))
 
   return head
 }
