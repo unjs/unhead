@@ -11,7 +11,8 @@ export type { VitePluginOptions }
 
 /**
  * Vite plugin factory that composes the core Unhead build-time transforms
- * (tree-shake, seo-meta, minify, SSR static replace, devtools).
+ * (tree-shake, seo-meta, inline-script transform, minify, SSR static replace,
+ * devtools).
  *
  * Framework packages (e.g. `@unhead/vue/vite`) should not call this directly;
  * use the `createFrameworkVitePlugin` helper in `./framework` which threads
@@ -30,11 +31,19 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
   }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      plugins.push(MinifyTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
-    }
+  const minifyOpts = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
+  const inlineScriptOpts = options.transformInlineScripts === false
+    ? false
+    : typeof options.transformInlineScripts === 'object'
+      ? options.transformInlineScripts
+      : true
+  if (minifyOpts.js || minifyOpts.css || inlineScriptOpts) {
+    plugins.push(MinifyTransform.vite({
+      filter: options.filter,
+      sourcemap: options.sourcemap,
+      ...minifyOpts,
+      transpile: inlineScriptOpts,
+    }))
   }
 
   // Register runtime plugins into the shared context

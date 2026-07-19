@@ -49,4 +49,65 @@ describe('vite build integration', () => {
     expect(code).toContain('SERVER_ONLY_MARKER')
     expect(code).toContain('CLIENT_MARKER')
   })
+
+  it('transpiles inline scripts to the resolved Vite build target', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false }) as any,
+      build: {
+        target: 'chrome77',
+        write: false,
+        minify: false,
+        lib: { entry, formats: ['es'], fileName: 'entry' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).toContain('INLINE_MARKER')
+    expect(code).not.toContain('payload?.value')
+    expect(code).not.toContain('?? "fallback"')
+  })
+
+  it('allows inline script transpilation to opt out', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false, transformInlineScripts: false }) as any,
+      build: {
+        target: 'chrome77',
+        write: false,
+        minify: false,
+        lib: { entry, formats: ['es'], fileName: 'entry' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).toContain('payload?.value')
+    expect(code).toContain('??')
+  })
+
+  it('lets an explicit inline script target override Vite', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({
+        devtools: false,
+        transformInlineScripts: { target: 'chrome77' },
+      }) as any,
+      build: {
+        target: 'es2020',
+        write: false,
+        minify: false,
+        lib: { entry, formats: ['es'], fileName: 'entry' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).not.toContain('payload?.value')
+    expect(code).not.toContain('?? "fallback"')
+  })
 })

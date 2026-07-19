@@ -70,15 +70,17 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
   }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object'
-      ? options.minify
-      : options.minify === true
-        ? { js: true, css: true }
-        : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      defs.push({ instance: MinifyTransform, options: { ...common, ...minifyOpts } })
-    }
+  const minifyOpts = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
+  const inlineScriptOpts = options.transformInlineScripts === false
+    ? false
+    : typeof options.transformInlineScripts === 'object'
+      ? options.transformInlineScripts
+      : true
+  if (minifyOpts.js || minifyOpts.css || inlineScriptOpts) {
+    defs.push({
+      instance: MinifyTransform,
+      options: { ...common, ...minifyOpts, transpile: inlineScriptOpts },
+    })
   }
 
   return defs
@@ -87,7 +89,13 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
   const out: any[] = []
   for (const { instance, options } of defs) {
-    const plugin = (instance[bundler] as (opts: any) => any)(options)
+    // Only Vite exposes a resolved browser target and a compatible transform
+    // API. Other bundlers still receive explicitly configured minifiers, but
+    // should not pay for an inert inline-script transform.
+    if (bundler !== 'vite' && options.transpile && !options.js && !options.css)
+      continue
+    const bundlerOptions = bundler === 'vite' ? options : { ...options, transpile: false }
+    const plugin = (instance[bundler] as (opts: any) => any)(bundlerOptions)
     if (Array.isArray(plugin))
       out.push(...plugin)
     else out.push(plugin)
