@@ -1,4 +1,10 @@
 catalogMode: prefer
+minimumReleaseAgeExclude:
+  - '@nuxt/kit@4.5.0'
+  - '@nuxt/nitro-server@4.5.0'
+  - '@nuxt/schema@4.5.0'
+  - '@nuxt/vite-builder@4.5.0'
+  - nuxt@4.5.0
 shellEmulator: true
 
 trustPolicy: no-downgrade
@@ -8,6 +14,7 @@ packages:
   - packages/*
   - packages-aliased/*
   - integrations/*
+  - test/fixtures/nuxt-cloudflare-module
   - '!examples/vue-2'
   - examples/*
   - docs
@@ -18,6 +25,7 @@ overrides:
   # workspace; otherwise @unhead/bundler (rolldown@1.0.3) and the framework packages
   # (rolldown@1.1.2) produce incompatible plugin types and vue-tsc fails on bundler.ts
   rolldown: 1.1.2
+  unhead@3.1.8: workspace:*
 catalog:
   '@angular-devkit/build-angular': ^21.2.19
   '@angular/cli': ^22.0.6
@@ -56,6 +64,8 @@ catalog:
   js-yaml: ^5.2.1
   jsdom: ^29.1.1
   magic-string: ^0.30.21
+  # Nuxt 4.5.0 is pinned separately to reproduce nuxt/nuxt#35670.
+  # eslint-disable-next-line pnpm/yaml-no-duplicate-catalog-item
   nuxt: ^4.4.8
 
   oxc-parser: ^0.139.0
@@ -84,6 +94,9 @@ catalog:
   vue: ^3.5.39
   vue-tsc: ^3.3.7
   zone.js: ^0.16.2
+catalogs:
+  conflicts_nuxt_4_5_0:
+    nuxt: 4.5.0
 ignoredBuiltDependencies:
   - lmdb
   - msgpackr-extract
