@@ -39,6 +39,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   const {
     beforeInit,
     eventContext: _eventContext,
+    resolve: resolveApi,
     scope: _scope,
     trigger,
     use,
@@ -63,18 +64,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     signal: lifecycleController.signal,
     waitFor: createScriptWaitFor(lifecycleController.signal),
   }
-  // Released use() callbacks were invoked without arguments. Only pass the new
-  // lifecycle context when a callback explicitly declares it so callbacks with
-  // default parameters keep their existing behavior.
-  const resolveUse = () => use!.length
-    ? use!(useContext)
-    : (use as () => ReturnType<NonNullable<typeof use>>)()
+  const resolveUse = () => resolveApi ? resolveApi(useContext) : use?.()
   beforeInit?.()
-  let initialUseResult: ReturnType<NonNullable<typeof use>>
+  let initialUseResult: T | PromiseLike<T | undefined | null> | undefined | null
   let initialUseError: unknown
   let initialUseFailed = false
   try {
-    initialUseResult = !head.ssr && use
+    initialUseResult = !head.ssr && (resolveApi || use)
       ? resolveUse()
       : undefined
   }
@@ -201,7 +197,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           if (resolvingApi)
             return
           resolvingApi = true
-          if (typeof use !== 'function') {
+          if (!resolveApi && !use) {
             emit({} as T)
             unhook?.()
             return
@@ -451,7 +447,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     script.remove()
     throw error
   }
-  if (use) {
+  if (resolveApi || use) {
     const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
     script.onLoaded((instance) => {

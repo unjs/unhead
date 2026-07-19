@@ -7,7 +7,7 @@ describe('useScript events', () => {
   it('keeps invoking legacy use() callbacks without arguments', () => {
     const head = createHead()
     const fallback = { ready: true }
-    const use = vi.fn((root = fallback) => root)
+    const use = vi.fn((root?: typeof fallback) => root || fallback)
 
     useScript(head, '/legacy-use.js', { use, trigger: 'manual' })
 
@@ -356,7 +356,7 @@ describe('useScript events', () => {
 
     expect(() => {
       useScript(head, '/failed-function-trigger.js', {
-        use: (ctx) => {
+        resolve: (ctx) => {
           signal = ctx.signal
           return new Promise<Record<string, never>>(() => {})
         },
@@ -424,7 +424,7 @@ describe('useScript events', () => {
     let resolveReady!: (api: { ready: true }) => void
     const instance = useScript(head, '/wait-for-script.js', {
       trigger: 'server',
-      use: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+      resolve: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
         resolveReady = resolve
         return cleanup
       }),
@@ -444,7 +444,7 @@ describe('useScript events', () => {
     const readiness = Promise.withResolvers<{ ready: true }>()
     const instance = useScript(head, '/aborted-wait-for-script.js', {
       trigger: 'server',
-      use: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
+      resolve: ({ waitFor }) => waitFor<{ ready: true }>((resolve) => {
         resolve(readiness.promise)
         return cleanup
       }),
@@ -466,7 +466,7 @@ describe('useScript events', () => {
     let signal!: AbortSignal
     const instance = useScript(head, '/removed-async-script.js', {
       trigger: 'server',
-      use: (ctx) => {
+      resolve: (ctx) => {
         signal = ctx.signal
         return promise
       },
