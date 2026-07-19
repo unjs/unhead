@@ -1,7 +1,7 @@
 import type { MetaFlat, MetaGeneric, ResolvableHead, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
 
-type MetaKeyType = 'name' | 'property' | 'http-equiv'
+export type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
 const NAMESPACES = /* @__PURE__ */ {
   META: new Set(['twitter', 'fediverse']),

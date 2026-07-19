@@ -30,7 +30,11 @@ const rules = {
   'viewport-user-scalable': viewportUserScalable,
 } as const
 
-const plugin: ESLint.Plugin = {
+interface UnheadEslintPlugin extends ESLint.Plugin {
+  rules: typeof rules
+}
+
+const plugin: UnheadEslintPlugin = {
   meta: {
     name: '@unhead/eslint-plugin',
     version: '3.0.5',

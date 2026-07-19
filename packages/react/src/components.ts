@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'
 
-interface HeadProps {
+export interface HeadProps {
   children: ReactNode
   titleTemplate?: string
 }
