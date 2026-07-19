@@ -23,7 +23,7 @@ export interface VueScriptScope<T extends Record<symbol | string, any>> extends 
 
 type VueScriptSrcInput = string | (ResolvableProperties<Omit<GenericScript & DataKeys & SchemaAugmentations['script'], 'src'>> & { src: string })
 export type UseScriptInput = VueScriptSrcInput
-export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'eventContext' | 'beforeInit' | 'scope'>> {
+export interface UseScriptOptions<T extends Record<symbol | string, any> = Record<string, any>> extends Omit<HeadEntryOptions, 'head'>, Partial<Pick<BaseUseScriptOptions<T>, 'use' | 'resolve' | 'eventContext' | 'beforeInit' | 'scope'>> {
   /**
    * The trigger to load the script:
    * - `undefined` | `client` - (Default) Load the script on the client when this js is loaded.
@@ -41,8 +41,9 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
   head?: VueHeadClient<any>
 }
 
-export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'use'> & {
+export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'resolve' | 'use'> & {
   loader: UseScriptLoader<T>
+  resolve?: never
   use?: never
 }
 
