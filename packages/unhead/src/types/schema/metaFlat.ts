@@ -681,6 +681,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with all cards
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player'
@@ -691,6 +692,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:title`
    *
+   * @deprecated Use `ogTitle` instead.
    * @maxLength 70
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
@@ -702,6 +704,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:description`
    *
+   * @deprecated Use `ogDescription` instead.
    * @maxLength 200
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
@@ -716,6 +719,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:image`.
    *
+   * @deprecated Use `ogImage` instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterImage?: string | Arrayable<{
@@ -726,19 +730,19 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
 
     /**
      * MIME type of the image.
-     * @deprecated Twitter removed this property from their card specification.
+     * @deprecated Twitter removed this property from its card specification. Use the corresponding `ogImage` field instead.
      */
     type?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
 
     /**
      * Width of image in pixels. Specify height and width for your image to ensure that the image loads properly the first time it's shared.
-     * @deprecated Twitter removed this property from their card specification.
+     * @deprecated Twitter removed this property from its card specification. Use the corresponding `ogImage` field instead.
      */
     width?: '1200' | string | number
 
     /**
      * Height of image in pixels. Specify height and width for your image to ensure that the image loads properly the first time it's shared.
-     * @deprecated Twitter removed this property from their card specification.
+     * @deprecated Twitter removed this property from its card specification. Use the corresponding `ogImage` field instead.
      */
     height?: '630' | string | number
 
@@ -755,7 +759,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:image:width`
    *
-   * @deprecated Twitter removed this property from their card specification.
+   * @deprecated Use `ogImageWidth` instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterImageWidth?: string | number
@@ -766,7 +770,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:image:height`
    *
-   * @deprecated Twitter removed this property from their card specification.
+   * @deprecated Use `ogImageHeight` instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterImageHeight?: string | number
@@ -777,7 +781,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:image:type`
    *
-   * @deprecated Twitter removed this property from their card specification.
+   * @deprecated Use `ogImageType` instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterImageType?: 'image/jpeg' | 'image/gif' | 'image/png' | 'image/webp' | 'image/avif'
@@ -790,6 +794,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Same as `og:image:alt`.
    *
+   * @deprecated Use `ogImageAlt` instead.
    * @maxLength 420
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
@@ -799,6 +804,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image, app, player cards
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @example @harlan_zw
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -808,6 +814,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image, player cards
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @example 1296047337022742529
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -817,6 +824,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary_large_image cards
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @example harlan_zw
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -826,6 +834,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image cards
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterCreatorId?: string | number
@@ -834,6 +843,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayer?: string
@@ -843,6 +853,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerWidth?: string | number
@@ -851,6 +862,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerHeight?: string | number
@@ -859,6 +871,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerStream?: string
@@ -867,6 +880,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameIphone?: string
@@ -875,6 +889,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdIphone?: string
@@ -883,6 +898,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlIphone?: string
@@ -891,6 +907,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameIpad?: string
@@ -899,6 +916,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdIpad?: string
@@ -907,6 +925,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlIpad?: string
@@ -915,6 +934,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameGoogleplay?: string
@@ -923,12 +943,14 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdGoogleplay?: string
   /**
    * Your app’s custom URL scheme
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlGoogleplay?: string
@@ -937,6 +959,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData1?: string
@@ -945,6 +968,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel1?: string
@@ -953,6 +977,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData2?: string
@@ -961,6 +986,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel2?: string
