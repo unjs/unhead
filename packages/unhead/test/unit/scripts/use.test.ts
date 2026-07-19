@@ -97,15 +97,24 @@ describe('useScript', () => {
     const instance = useScript(head, '/inferred-ready-script.js', {
       resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
     })
+    const instanceWithCleanup = useScript(head, '/cleanup-ready-script.js', {
+      resolve: ({ waitFor }) => waitFor<typeof api>((resolve) => {
+        void resolve
+        return () => {}
+      }),
+    })
 
     const checkInference = async () => {
       const inferred: typeof api = await instance.load()
       inferred.method('ok')
     }
     type Loaded = Awaited<ReturnType<typeof instance.load>>
+    type LoadedWithCleanup = Awaited<ReturnType<typeof instanceWithCleanup.load>>
     expectTypeOf<Loaded>().toEqualTypeOf<typeof api>()
+    expectTypeOf<LoadedWithCleanup>().toEqualTypeOf<typeof api>()
     const notAny: 0 extends (1 & Loaded) ? never : true = true
     void checkInference
+    void instanceWithCleanup
     void notAny
   })
 

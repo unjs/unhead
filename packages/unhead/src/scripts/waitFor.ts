@@ -4,6 +4,7 @@ export function createScriptWaitFor(signal: AbortSignal): UseScriptWaitFor {
   return (<T>(setup: UseScriptWaitForSetup<T>): Promise<T> => new Promise<T>((outerResolve, outerReject) => {
     let settled = false
     let resolving = false
+    let resolution: unknown
     let cleanup: (() => void) | undefined
     let onAbort: () => void
 
@@ -25,6 +26,7 @@ export function createScriptWaitFor(signal: AbortSignal): UseScriptWaitFor {
     }
     const reject = (reason?: unknown) => queueMicrotask(() => finish(outerReject, reason))
     const resolve = (value: T | PromiseLike<T>) => {
+      resolution = value
       if (!settled && !resolving) {
         resolving = true
         Promise.resolve(value).then(
@@ -48,7 +50,7 @@ export function createScriptWaitFor(signal: AbortSignal): UseScriptWaitFor {
     signal.addEventListener('abort', onAbort, { once: true })
     try {
       const result = setup(resolve, reject)
-      cleanup = typeof result === 'function' ? result : undefined
+      cleanup = result !== resolution && typeof result === 'function' ? result : undefined
     }
     catch (error) {
       reject(error)
