@@ -63,6 +63,8 @@ declare const PreparedTemplateBrand: unique symbol
  * any risk of indexes drifting from the template they were computed for.
  *
  * Create one with {@link prepareTemplate}.
+ *
+ * @experimental The prepared-template API may change in a future minor release.
  */
 export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
   readonly [PreparedTemplateBrand]: true
@@ -83,6 +85,8 @@ export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
  * HTML string, so the caller controls the value's lifetime. It contains no
  * request or head state: keep it at process scope and create a new head for
  * each request.
+ *
+ * @experimental The prepared-template API may change in a future minor release.
  *
  * @example
  * ```ts
