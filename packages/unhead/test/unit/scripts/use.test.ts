@@ -89,6 +89,21 @@ describe('useScript', () => {
     expectTypeOf(instance.onLoaded(() => {})).toEqualTypeOf<() => void>()
   })
 
+  it('types: infers resolve() API through waitFor()', () => {
+    const head = createServerHead()
+    const api = { ready: true as const }
+    const instance = useScript(head, '/inferred-ready-script.js', {
+      resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
+    })
+
+    type Loaded = Awaited<ReturnType<typeof instance.load>>
+    const inferred: Loaded = api
+    const notAny: 0 extends (1 & Loaded) ? never : true = true
+    void instance
+    void inferred
+    void notAny
+  })
+
   it('types: accepts legacy default-parameter use() callbacks', () => {
     const options: UseScriptOptions = {
       use: (root = window) => ({ root }),
