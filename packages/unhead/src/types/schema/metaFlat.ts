@@ -681,7 +681,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with all cards
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
    */
   twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player'
@@ -725,6 +725,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
   twitterImage?: string | Arrayable<{
     /**
      * Equivalent to twitter:image
+     * @deprecated Use the corresponding `ogImage.url` field instead.
      */
     url?: string
 
@@ -748,6 +749,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
 
     /**
      * A description of what is in the image (not a caption). If the page specifies an og:image, it should specify og:image:alt.
+     * @deprecated Use the corresponding `ogImage.alt` field instead.
      */
     alt?: string
   }>
@@ -804,7 +806,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image, app, player cards
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @example @harlan_zw
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -814,7 +816,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image, player cards
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @example 1296047337022742529
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -824,7 +826,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary_large_image cards
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @example harlan_zw
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
@@ -834,7 +836,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with summary, summary_large_image cards
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterCreatorId?: string | number
@@ -843,7 +845,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayer?: string
@@ -853,7 +855,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerWidth?: string | number
@@ -862,7 +864,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerHeight?: string | number
@@ -871,7 +873,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with player card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterPlayerStream?: string
@@ -880,7 +882,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameIphone?: string
@@ -889,7 +891,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdIphone?: string
@@ -898,7 +900,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlIphone?: string
@@ -907,7 +909,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameIpad?: string
@@ -916,7 +918,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdIpad?: string
@@ -925,7 +927,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlIpad?: string
@@ -934,7 +936,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppNameGoogleplay?: string
@@ -943,14 +945,14 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used with app card
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppIdGoogleplay?: string
   /**
    * Your app’s custom URL scheme
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
    */
   twitterAppUrlGoogleplay?: string
@@ -959,7 +961,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData1?: string
@@ -968,7 +970,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel1?: string
@@ -977,7 +979,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterData2?: string
@@ -986,7 +988,7 @@ export interface MetaFlat extends MetaFlatArticle, MetaFlatBook, MetaFlatProfile
    *
    * Used by Slack.
    *
-   * @deprecated Twitter/X renders link previews from Open Graph metadata. Prefer `og*` properties instead.
+   * @deprecated No direct Open Graph equivalent exists for this field.
    * @see https://api.slack.com/reference/messaging/link-unfurling#classic_unfurl
    */
   twitterLabel2?: string
