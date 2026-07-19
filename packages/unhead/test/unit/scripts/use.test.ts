@@ -68,11 +68,11 @@ describe('useScript', () => {
     expectTypeOf(instance.proxy.test).returns.toBeVoid()
   })
 
-  it('types: inferred async use() context', () => {
+  it('types: inferred async resolve() context', () => {
     const head = createServerHead()
     const instance = useScript(head, '/script.js', {
       scope: true,
-      async use({ signal, waitFor }) {
+      async resolve({ signal, waitFor }) {
         expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
         expectTypeOf(waitFor<{ ready: true }>(resolve => resolve({ ready: true }))).toEqualTypeOf<Promise<{ ready: true }>>()
         return {
