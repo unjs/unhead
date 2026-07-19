@@ -28,9 +28,10 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
   const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
     && { ...common, ...minifyOpts }
-  if (treeshake || seoMeta || minify) {
-    // Single-parse pipeline for the treeshake, seoMeta and minify concerns.
-    plugins.push(UnheadTransforms.vite({ treeshake, seoMeta, minify }))
+  const precompile = options.experimental?.precompile && common
+  if (treeshake || seoMeta || precompile || minify) {
+    // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
+    plugins.push(UnheadTransforms.vite({ treeshake, seoMeta, precompile, minify }))
   }
 
   // Register runtime plugins into the shared context

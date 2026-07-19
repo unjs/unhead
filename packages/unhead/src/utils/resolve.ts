@@ -20,6 +20,24 @@ function isEmptyProps(props: Record<string, any>): boolean {
   return true
 }
 
+interface PrecompiledHeadInput {
+  _c: 1
+  t: [HeadTag['tag'], Record<string, any>, string | 0, Partial<HeadTag>?][]
+}
+
+function revivePrecompiledTags(input: PrecompiledHeadInput): HeadTag[] {
+  const tags: HeadTag[] = []
+  for (const [tagName, encodedProps, d, extra] of input.t) {
+    const props: Record<string, any> = { ...encodedProps }
+    if (props.class)
+      props.class = new Set(props.class)
+    if (props.style)
+      props.style = new Map(props.style)
+    tags.push(Object.assign({ tag: tagName, props, _d: d || undefined }, extra) as HeadTag)
+  }
+  return tags
+}
+
 // matches the hooks that receive references to resolved tags and may mutate them in place
 // (tags:beforeResolve, tags:resolve, tags:afterResolve, ssr:render, ssr:rendered, dom:rendered
 // and deprecated dom:renderTag — but not *:beforeRender, entries:* or script:updated);
@@ -186,7 +204,18 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         entryTags.push(e._precomputedTags)
         continue
       }
-      const tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+      const precompiled = e.input?._c === 1 && Array.isArray(e.input.t)
+      const propResolvers = head.resolvedOptions.propResolvers || []
+      // eslint-disable-next-line node/prefer-global/process, dot-notation -- optional lookup keeps browser bundles free of a node:process import
+      const nodeEnv = (globalThis as any)['process']?.env?.NODE_ENV
+      if (precompiled && (nodeEnv ? nodeEnv === 'development' : (import.meta as any).env?.DEV)) {
+        const resolver = propResolvers.find(resolver => !resolver._static)
+        if (resolver)
+          throw new Error(`[unhead] ${resolver.name || 'anonymous'} is not static`)
+      }
+      const tags = precompiled
+        ? revivePrecompiledTags(e.input as PrecompiledHeadInput)
+        : normalizeEntryToTags(e.input, propResolvers)
       for (const t of tags)
         Object.assign(t, e.options)
       const normalizeCtx = {
@@ -194,13 +223,23 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         entry: e,
       }
       callHook(head, 'entries:normalize', normalizeCtx)
+      const recomputePrecompiledIdentity = precompiled
+        && (!!hooks['entries:normalize']?.length || !!(e.options && !isEmptyProps(e.options)))
       for (let i = 0; i < normalizeCtx.tags.length; i++) {
         const t = normalizeCtx.tags[i]
         t._w = weightFn(t)
         t._p = (e._i << 10) + i
-        t._d = dedupeKey(t)
-        if (!t._d)
-          t._h = hashTag(t)
+        if (!precompiled || recomputePrecompiledIdentity) {
+          t._d = dedupeKey(t)
+          if (!t._d) {
+            if (precompiled)
+              delete t._h
+            t._h = hashTag(t)
+          }
+          else if (precompiled && t._h !== t.key) {
+            delete t._h
+          }
+        }
       }
       e._tags = normalizeCtx.tags
     }
