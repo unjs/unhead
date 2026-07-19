@@ -218,7 +218,7 @@ describe('precompiled head entries', () => {
 
     const invalidStyleObject = createHead({ disableDefaults: true })
     invalidStyleObject.push({ _c: 1, t: [['htmlAttrs', { style: { filter: 1 } }]] } as any)
-    expect(() => renderSSRHead(invalidStyleObject)).not.toThrow()
+    expect(renderSSRHead(invalidStyleObject).htmlAttrs).toBe(' style=""')
 
     const invalidClass = createHead({ disableDefaults: true })
     invalidClass.push({ _c: 1, t: [['htmlAttrs', { class: false }]] } as any)
