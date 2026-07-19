@@ -42,11 +42,12 @@ export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
  * call site can forward the factory object directly.
  *
  * Note: `rollup()` is provided for completeness (e.g. SSG static builds)
- * but does **not** detect SSR context. `SSRStaticReplace` always sees
- * `ssr=false` here because rollup has no equivalent of vite's
- * `env.isSsrBuild` or webpack's `compiler.options.name === 'server'` hook;
- * `head.ssr` references will always be statically rewritten to `false`.
- * Use `.vite()` or `.webpack()` for SSR builds.
+ * but does **not** detect SSR context: rollup has no equivalent of vite's
+ * `env.isSsrBuild` or webpack's `compiler.options.name === 'server'` hook.
+ * With an unknown build target, `SSRStaticReplace` retains `head.ssr` as-is
+ * and `TreeshakeServerComposables` retains server composables, so the output
+ * stays correct but unoptimized. Use `.vite()` or `.webpack()` for
+ * target-aware builds.
  */
 export interface UnheadBundlerFactory {
   vite: () => VitePlugin[]

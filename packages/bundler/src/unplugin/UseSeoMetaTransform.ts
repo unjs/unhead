@@ -49,7 +49,7 @@ const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
  * })
  */
 export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, false>((options: UseSeoMetaTransformOptions = {}) => {
-  options.imports = options.imports || true
+  const rewriteImports = options.imports ?? true
   const importPaths = options.importPaths?.length ? new Set(options.importPaths) : undefined
 
   function isValidPackage(s: string) {
@@ -105,9 +105,15 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         if (!shouldTransformCode(code))
           return
 
-        const scopeTracker = new ScopeTracker()
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseSync(id, code)
         const s = new MagicString(code)
+
+        // Pre-pass: collect all declarations first so hoisted locals
+        // (`function useSeoMeta() {}` below a call site) are visible when
+        // the rewrite walk visits earlier statements.
+        walk(ast.program, { scopeTracker })
+        scopeTracker.freeze()
 
         // Track which ImportDeclarations need specifier rewrites
         // Key: ImportDeclaration node, Value: set of original imported names that were transformed
@@ -341,7 +347,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         })
 
         // Rewrite import specifiers
-        if (options.imports && importRewrites.size > 0) {
+        if (rewriteImports && importRewrites.size > 0) {
           for (const [importNode, transformedNames] of importRewrites) {
             const newSpecifiers = new Set<string>()
             for (const spec of importNode.specifiers) {
