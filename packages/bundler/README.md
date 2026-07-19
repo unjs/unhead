@@ -11,6 +11,7 @@
 - 🛠️ Build-time optimizations for Unhead
 - 🌲 Tree-shake server composables from client bundles
 - ⚡ Transform `useSeoMeta` calls for better performance
+- 🧊 Precompile static head entries at build time (experimental)
 - 📦 Support for Vite, Webpack, and other bundlers
 
 ## Installation
@@ -38,7 +39,9 @@ import { Unhead } from '@unhead/bundler/vite'
 export default defineConfig({
   plugins: [
     Unhead({
-      // Options
+      experimental: {
+        precompile: true,
+      },
     })
   ]
 })
@@ -48,11 +51,15 @@ export default defineConfig({
 
 ```ts
 interface UnpluginOptions {
-  // Tree-shake server-only composables from client bundles
-  treeshakeServerComposables?: boolean | TreeshakeServerComposablesOptions
+  treeshake?: TreeshakeServerComposablesOptions | false
 
-  // Transform useSeoMeta calls for better performance
-  useSeoMetaTransform?: boolean | UseSeoMetaTransformOptions
+  transformSeoMeta?: UseSeoMetaTransformOptions | false
+
+  minify?: MinifyTransformOptions | false
+
+  experimental?: {
+    precompile?: boolean
+  }
 }
 ```
 
@@ -89,6 +96,10 @@ useHead({
   meta: [{ name: 'description', content: 'Page description' }]
 })
 ```
+
+### Static Head Precompilation
+
+With `experimental.precompile` enabled, fully static `useHead()` and `useSeoMeta()` object literals are normalized during the build. Dynamic calls are left untouched, so they continue through the normal runtime path.
 
 ## Documentation
 

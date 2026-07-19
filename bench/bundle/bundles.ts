@@ -23,6 +23,8 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
+  { id: 'vueClientSeoTransform', name: 'Vue SEO Transform', category: 'Vue', file: 'vue-client-seo-plugin-base/vue-client/minimal-seo.mjs' },
+  { id: 'vueClientSeoPrecompile', name: 'Vue SEO Precompiled', category: 'Vue', file: 'vue-client-seo-plugin/vue-client/minimal-seo.mjs' },
   { id: 'reactClient', name: 'React Client (Minimal)', category: 'React', file: 'react-client/react-client/minimal.mjs' },
   { id: 'reactClientFull', name: 'React Client (Full)', category: 'React', file: 'react-client-full/react-client/full.mjs' },
   { id: 'reactServer', name: 'React Server (Minimal)', category: 'React', file: 'react-server/react-server/minimal.mjs' },

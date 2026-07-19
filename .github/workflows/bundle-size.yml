@@ -48,6 +48,7 @@ jobs:
           # new bundles surface as fresh rather than failing the run
           pnpm test:bundle-size || true
           pnpm test:vue-bundle-size || true
+          pnpm test:vue-seo-bundle-size || true
           pnpm test:react-bundle-size || true
           pnpm test:schema-org-bundle-size || true
           # snapshot the whole base dist; report.ts diffs PR dist against it by path
@@ -65,6 +66,7 @@ jobs:
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
+          pnpm test:vue-seo-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
           node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json

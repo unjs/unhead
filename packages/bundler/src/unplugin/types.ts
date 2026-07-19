@@ -14,6 +14,13 @@ export interface UnpluginOptions extends BaseTransformerTypes {
   treeshake?: TreeshakeServerComposablesOptions | false
   transformSeoMeta?: UseSeoMetaTransformOptions | false
   minify?: MinifyTransformOptions | false
+  experimental?: {
+    /**
+     * Precompile fully static `useHead()` / `useSeoMeta()` inputs into
+     * normalized tag arrays. Experimental in v3 and disabled by default.
+     */
+    precompile?: boolean
+  }
 }
 
 export interface VitePluginOptions extends UnpluginOptions {

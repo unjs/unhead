@@ -12,9 +12,10 @@
     "url": "git+https://github.com/unjs/unhead.git"
   },
   "scripts": {
-    "bundle-size:sync": "pnpm run build && pnpm run test:bundle-size && pnpm run test:vue-bundle-size && pnpm run test:react-bundle-size && pnpm run test:schema-org-bundle-size && bun bench/bundle/analyze.ts && bun bench/bundle/update.ts",
+    "bundle-size:sync": "pnpm run build && pnpm run test:bundle-size && pnpm run test:vue-bundle-size && pnpm run test:vue-seo-bundle-size && pnpm run test:react-bundle-size && pnpm run test:schema-org-bundle-size && bun bench/bundle/analyze.ts && bun bench/bundle/update.ts",
     "test:bundle-size": "unbuild bench/bundle --config bench/bundle/client-build.config.ts && unbuild bench/bundle --config bench/bundle/client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/client-sc-build.config.ts && unbuild bench/bundle --config bench/bundle/server-build.config.ts && unbuild bench/bundle --config bench/bundle/server-sc-build.config.ts",
     "test:vue-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/vue-server-build.config.ts",
+    "test:vue-seo-bundle-size": "unbuild bench/bundle --config bench/bundle/vue-client-seo-build.config.ts && UNHEAD_BUNDLE_PRECOMPILE=false unbuild bench/bundle --config bench/bundle/vue-client-seo-plugin-build.config.ts && UNHEAD_BUNDLE_PRECOMPILE=true unbuild bench/bundle --config bench/bundle/vue-client-seo-plugin-build.config.ts",
     "test:react-bundle-size": "unbuild bench/bundle --config bench/bundle/react-client-build.config.ts && unbuild bench/bundle --config bench/bundle/react-client-full-build.config.ts && unbuild bench/bundle --config bench/bundle/react-server-build.config.ts",
     "test:schema-org-bundle-size": "unbuild bench/bundle --config bench/bundle/schema-org-build.config.ts",
     "build": "pnpm -r --filter='./packages/**' --filter='!@unhead/devtools-app' run build",

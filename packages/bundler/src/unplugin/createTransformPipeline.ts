@@ -8,9 +8,11 @@ import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import {
   MetaTagsArrayable,
+  normalizeEntryToTags,
   resolveMetaKeyType,
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
+  unpackMeta,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
@@ -51,6 +53,7 @@ const SERVER_COMPOSABLE_NAMES = new Set([
 ])
 
 const SEO_META_NAMES = new Set(['useSeoMeta', 'useServerSeoMeta'])
+const PRECOMPILE_FN_NAMES = new Set(['useHead', 'useSeoMeta'])
 
 // Keys whose runtime value is structurally expanded into multiple meta tags based on its shape
 // (e.g. `ogImage: { url, width }` -> `og:image` + `og:image:width`). See `unpackMeta` MEDIA branch.
@@ -63,13 +66,22 @@ const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
 const MINIFY_CACHE_MAX = 100
+const DECODE_BAIL = Symbol('unhead:decode-bail')
+const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
 
 type TagType = 'script' | 'style'
+type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[] | { [key: string]: DecodedStaticValue }
 
 interface PendingMinification {
   end: number
   minified: Promise<string | null>
   raw: string
+  start: number
+}
+
+interface PendingPrecompilation {
+  content: Promise<string>
+  end: number
   start: number
 }
 
@@ -120,6 +132,7 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
 export interface TransformPipelineOptions {
   treeshake?: TreeshakeServerComposablesOptions | false
   seoMeta?: UseSeoMetaTransformOptions | false
+  precompile?: BaseTransformerTypes | false
   minify?: MinifyTransformOptions | false
 }
 
@@ -138,7 +151,7 @@ interface PipelineEdit {
   end: number
   /** `null` means remove the range (sourcemap-identical to `MagicString#remove`). */
   content: string | null
-  phase: 'treeshake' | 'seoMeta' | 'minify'
+  phase: 'treeshake' | 'seoMeta' | 'precompile' | 'minify'
 }
 
 function shouldTransformId(options: BaseTransformerTypes, id: string): boolean {
@@ -190,6 +203,7 @@ function applyEdits(s: MagicString, edits: PipelineEdit[], id: string): void {
 export function createTransformPipeline(config: TransformPipelineConfig): UnpluginRawOptions {
   const treeshakeOpts = config.treeshake === false ? undefined : config.treeshake
   const seoMetaOpts = config.seoMeta === false ? undefined : config.seoMeta
+  const precompileOpts = config.precompile === false ? undefined : config.precompile
   const minifyOpts = config.minify === false ? undefined : config.minify
 
   // -- treeshake concern -----------------------------------------------------
@@ -210,7 +224,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   const seoMetaImportPaths = seoMetaOpts?.importPaths?.length ? new Set(seoMetaOpts.importPaths) : undefined
 
   function isValidSeoMetaPackage(s: string) {
-    if (s === 'unhead' || s.startsWith('@unhead')) {
+    if (s === 'unhead' || s.startsWith('unhead/') || s.startsWith('@unhead/')) {
       return true
     }
     return seoMetaImportPaths?.has(s) === true
@@ -256,6 +270,118 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     }
 
     return pending
+  }
+
+  function resolvePrecompileFunctionName(callee: any, scopeTracker: ScopeTracker): 'useHead' | 'useSeoMeta' | undefined {
+    if (callee.type === 'Identifier') {
+      const decl = scopeTracker.getDeclaration(callee.name)
+      if (decl instanceof ScopeTrackerImport) {
+        if (decl.node.type === 'ImportSpecifier'
+          && decl.node.imported.type === 'Identifier'
+          && PRECOMPILE_FN_NAMES.has(decl.node.imported.name)
+          && isValidSeoMetaPackage(decl.importNode.source.value)) {
+          return decl.node.imported.name as 'useHead' | 'useSeoMeta'
+        }
+      }
+      else if (!decl && PRECOMPILE_FN_NAMES.has(callee.name)) {
+        return callee.name as 'useHead' | 'useSeoMeta'
+      }
+      return
+    }
+
+    if (callee.type !== 'MemberExpression'
+      || callee.computed
+      || callee.object.type !== 'Identifier'
+      || callee.property.type !== 'Identifier'
+      || !PRECOMPILE_FN_NAMES.has(callee.property.name)) {
+      return
+    }
+
+    const decl = scopeTracker.getDeclaration(callee.object.name)
+    if (decl instanceof ScopeTrackerImport
+      && decl.node.type === 'ImportNamespaceSpecifier'
+      && isValidSeoMetaPackage(decl.importNode.source.value)) {
+      return callee.property.name as 'useHead' | 'useSeoMeta'
+    }
+  }
+
+  function normalizeStaticSeoMetaInput(input: Record<string, DecodedStaticValue>): Record<string, any> {
+    const headInput: Record<string, any> = Object.create(null)
+    const flatMeta: Record<string, any> = Object.create(null)
+    for (const key of Object.keys(input)) {
+      if (key === 'title' || key === 'titleTemplate')
+        headInput[key] = input[key]
+      else
+        flatMeta[key] = input[key]
+    }
+    if (Object.keys(flatMeta).length)
+      headInput.meta = unpackMeta(flatMeta)
+    return headInput
+  }
+
+  async function compileStaticInput(
+    input: Record<string, DecodedStaticValue>,
+    kind: 'useHead' | 'useSeoMeta',
+    minifyContents: boolean,
+  ): Promise<string> {
+    const normalizedInput = kind === 'useSeoMeta' ? normalizeStaticSeoMetaInput(input) : input
+    const tags = normalizeEntryToTags(normalizedInput, [])
+
+    const contentMinifications: Promise<void>[] = []
+    for (const tag of minifyContents ? tags : []) {
+      const tagType = tag.tag === 'script' || tag.tag === 'style' ? tag.tag : undefined
+      if (!tagType || (tagType === 'script' ? !doJS : !doCSS))
+        continue
+      if (tagType === 'script' && SKIP_JS_TYPES.has(tag.props.type))
+        continue
+      for (const key of CONTENT_PROP_NAMES) {
+        const raw = tag[key as 'innerHTML' | 'textContent']
+        if (typeof raw !== 'string' || raw.length < 20)
+          continue
+        contentMinifications.push(minifyStringContent(raw, tagType).then((result) => {
+          if (result && result.length < raw.length)
+            tag[key as 'innerHTML' | 'textContent'] = result
+        }))
+      }
+    }
+    await Promise.all(contentMinifications)
+
+    const encodedTags = tags.map((tag) => {
+      const tagName = tag.tag === 'meta' ? 'm' : tag.tag === 'title' ? 't' : tag.tag === 'titleTemplate' ? 'T' : tag.tag
+      const props: Record<string, any> = { ...tag.props }
+      if (props.class instanceof Set)
+        props.class = [...props.class]
+      if (props.style instanceof Map)
+        props.style = [...props.style]
+      const extra: Record<string, any> = {}
+      if (tag.key !== undefined)
+        extra.key = tag.key
+      if (tag.tagPosition !== undefined)
+        extra.tagPosition = tag.tagPosition
+      if (tag.tagPriority !== undefined)
+        extra.tagPriority = tag.tagPriority
+      if (tag.tagDuplicateStrategy !== undefined)
+        extra.tagDuplicateStrategy = tag.tagDuplicateStrategy
+      if (tag.innerHTML !== undefined)
+        extra.innerHTML = tag.innerHTML
+      if (tag.textContent !== undefined)
+        extra.textContent = tag.textContent
+      if (tag.processTemplateParams !== undefined)
+        extra.processTemplateParams = tag.processTemplateParams
+      if (tag._h !== undefined)
+        extra._h = tag._h
+      if (tag.tag === 'meta' && !Object.keys(extra).length && Object.keys(props).length === 2 && props.content !== undefined) {
+        const keyIndex = ['name', 'property', 'http-equiv'].findIndex(key => props[key] !== undefined)
+        if (keyIndex !== -1)
+          return [tagName, [keyIndex, props[['name', 'property', 'http-equiv'][keyIndex]], props.content]]
+      }
+      if (Object.keys(extra).length === 1 && typeof extra.textContent === 'string')
+        return [tagName, props, extra.textContent]
+      return Object.keys(extra).length
+        ? [tagName, props, extra]
+        : [tagName, props]
+    })
+    return JSON.stringify({ _c: 1, t: encodedTags })
   }
 
   function resolveHeadFunctionName(callee: any, scopeTracker: ScopeTracker): string | undefined {
@@ -364,6 +490,13 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     codeFilterSources.push(SEO_META_RE.source)
     idFilterIncludes.push(...(seoMetaOpts.filter?.include || []))
   }
+  if (precompileOpts) {
+    idPredicates.push(id => shouldTransformId(precompileOpts, id))
+    codeFilterSources.push(HEAD_RE.source)
+    if (seoMetaOpts)
+      codeFilterSources.push(SEO_META_RE.source)
+    idFilterIncludes.push(...(precompileOpts.filter?.include || []))
+  }
   if (minifyOpts) {
     idPredicates.push(id => shouldTransformId(minifyOpts, id))
     codeFilterSources.push(HEAD_RE.source)
@@ -394,14 +527,17 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         const runSeoMeta = !!seoMetaOpts
           && shouldTransformId(seoMetaOpts, id)
           && SEO_META_RE.test(code)
+        const runPrecompile = !!precompileOpts
+          && shouldTransformId(precompileOpts, id)
+          && (HEAD_RE.test(code) || (!!seoMetaOpts && SEO_META_RE.test(code)))
         // Escaped identifiers still need parsing because their source does not
         // contain the decoded property name.
-        const runMinify = !!minifyOpts
-          && shouldTransformId(minifyOpts, id)
+        const minifyEligible = !!minifyOpts && shouldTransformId(minifyOpts, id)
+        const runMinify = minifyEligible
           && HEAD_RE.test(code)
           && (CONTENT_PROP_NAMES.some(name => code.includes(name)) || code.includes('\\u'))
 
-        if (!runTreeshake && !runSeoMeta && !runMinify)
+        if (!runTreeshake && !runSeoMeta && !runPrecompile && !runMinify)
           return
 
         let ast
@@ -426,9 +562,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         // guaranteed by plugin registration order (treeshake ran first over
         // the whole module), here enforced per node.
         const removedRanges: [number, number][] = []
+        const precompiledRanges: [number, number][] = []
 
         function inRemovedRange(node: any): boolean {
           return removedRanges.some(([start, end]) => node.start >= start && node.end <= end)
+        }
+
+        function inPrecompiledRange(node: any): boolean {
+          return precompiledRanges.some(([start, end]) => node.start >= start && node.end <= end)
         }
 
         // -- treeshake phase -------------------------------------------------
@@ -756,31 +897,88 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (rewriteImports && importRewrites.size > 0) {
             for (const [importNode, transformedNames] of importRewrites) {
               const newSpecifiers = new Set<string>()
-              for (const spec of importNode.specifiers) {
-                if (spec.type !== 'ImportSpecifier')
+              const namedSpecifiers = importNode.specifiers.filter((spec: any) => spec.type === 'ImportSpecifier')
+              for (const spec of namedSpecifiers) {
+                const rawSpecifier = code.substring(spec.start, spec.end)
+                const importedName = spec.imported.type === 'Identifier' ? spec.imported.name : undefined
+                if (!importedName) {
+                  newSpecifiers.add(rawSpecifier)
                   continue
-                const importedName = spec.imported.name
-                // Preserve the local alias (`useSeoMeta as usm`) so kept call sites stay bound.
-                const keepOriginal = importedName === spec.local.name ? importedName : `${importedName} as ${spec.local.name}`
+                }
                 if (transformedNames.has(importedName)) {
                   newSpecifiers.add(importedName.includes('Server') ? 'useServerHead' : 'useHead')
                   // Keep original import if it's still referenced as a value or called in a form we
                   // couldn't statically transform (dynamic first arg, spread properties, etc.).
                   if (valueReferenced.has(importedName) || untransformedCallees.has(importedName))
-                    newSpecifiers.add(keepOriginal)
+                    newSpecifiers.add(rawSpecifier)
                 }
                 else {
-                  newSpecifiers.add(keepOriginal)
+                  newSpecifiers.add(rawSpecifier)
                 }
               }
+              if (!namedSpecifiers.length)
+                continue
               edits.push({
-                start: importNode.specifiers[0].start,
-                end: importNode.specifiers.at(-1).end,
+                start: namedSpecifiers[0].start,
+                end: namedSpecifiers.at(-1).end,
                 content: [...newSpecifiers].join(', '),
                 phase: 'seoMeta',
               })
             }
           }
+        }
+
+        // -- precompile phase ------------------------------------------------
+        const pendingPrecompilations: PendingPrecompilation[] = []
+
+        function precompileEnter(node: any): boolean {
+          if (node.type !== 'CallExpression')
+            return false
+
+          const kind = resolvePrecompileFunctionName(node.callee, scopeTracker)
+          if (!kind || (kind === 'useSeoMeta' && !runSeoMeta))
+            return false
+
+          const arg = node.arguments[0]
+          if (!arg || arg.type !== 'ObjectExpression')
+            return false
+          const decoded = decodeStaticValue(arg)
+          if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
+            return false
+
+          const marker = compileStaticInput(decoded as Record<string, DecodedStaticValue>, kind, minifyEligible)
+          if (kind === 'useHead') {
+            pendingPrecompilations.push({ start: arg.start, end: arg.end, content: marker })
+            precompiledRanges.push([arg.start, arg.end])
+            return true
+          }
+
+          let headCallee = 'useHead'
+          if (node.callee.type === 'MemberExpression') {
+            headCallee = `${code.substring(node.callee.object.start, node.callee.object.end)}.useHead`
+          }
+          else if (node.callee.type === 'Identifier') {
+            const decl = scopeTracker.getDeclaration(node.callee.name)
+            if (decl instanceof ScopeTrackerImport) {
+              const importDecl = decl.importNode
+              if (!importRewrites.has(importDecl))
+                importRewrites.set(importDecl, new Set())
+              importRewrites.get(importDecl)!.add('useSeoMeta')
+              if (node.arguments.slice(1).some((argument: any) => containsIdentifier(argument, node.callee.name)))
+                valueReferenced.add('useSeoMeta')
+            }
+          }
+
+          const trailingArgs = node.arguments.length > 1
+            ? `, ${code.substring(node.arguments[1].start, node.arguments.at(-1).end)}`
+            : ''
+          pendingPrecompilations.push({
+            start: node.start,
+            end: node.end,
+            content: marker.then(compiled => `${headCallee}(${compiled}${trailingArgs})`),
+          })
+          precompiledRanges.push([node.start, node.end])
+          return true
         }
 
         // -- minify phase ----------------------------------------------------
@@ -829,14 +1027,20 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         walk(ast.program, {
           scopeTracker,
           enter(node: any, parent: any) {
-            // Anything inside a treeshake-claimed range is dead code on this
-            // build target: none of the phases may touch it.
+            // Anything inside a claimed range has already been handled by an
+            // earlier phase and must not receive nested edits.
             if (removedRanges.length && inRemovedRange(node))
+              return
+            if (precompiledRanges.length && inPrecompiledRange(node))
               return
 
             // Phase order per call site is load-bearing: server-composable
-            // removal first, then seoMeta lowering, then static minification.
+            // removal first, then seoMeta lowering/precompile, then static
+            // minification. A fully static useSeoMeta call folds its lowering
+            // directly into the precompiled marker.
             if (runTreeshake && treeshakeEnter(node, parent))
+              return
+            if (runPrecompile && precompileEnter(node))
               return
             if (runSeoMeta)
               seoMetaEnter(node, parent)
@@ -847,6 +1051,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         if (runSeoMeta)
           seoMetaFinalize()
+
+        if (pendingPrecompilations.length) {
+          const compiled = await Promise.all(pendingPrecompilations.map(pending => pending.content))
+          for (let i = 0; i < pendingPrecompilations.length; i++) {
+            const pending = pendingPrecompilations[i]
+            edits.push({ start: pending.start, end: pending.end, content: compiled[i], phase: 'precompile' })
+          }
+        }
 
         if (runMinify && pendingMinifications.length) {
           const minified = await Promise.all(pendingMinifications.map(pending => pending.minified))
@@ -886,7 +1098,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           // treeshaking is a build-only optimization. The pipeline itself only
           // installs on serve when other concerns are active.
           treeshakeAllowed = false
-          return !!seoMetaOpts || !!minifyOpts
+          return !!seoMetaOpts || !!precompileOpts || !!minifyOpts
         }
         fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
         return true
@@ -908,6 +1120,7 @@ export const UnheadTransforms = createUnplugin<TransformPipelineOptions, false>(
     name: 'unhead:transforms',
     treeshake: options.treeshake ?? false,
     seoMeta: options.seoMeta ?? false,
+    precompile: options.precompile ?? false,
     minify: options.minify ?? false,
   }))
 
@@ -923,12 +1136,6 @@ function getStaticPropertyKey(prop: any): string | undefined {
 function isUnsafeObjectKey(key: string): boolean {
   return key === '__proto__' || key === 'constructor' || key === 'prototype'
 }
-
-const DECODE_BAIL = Symbol('unhead:decode-bail')
-
-type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[] | { [key: string]: DecodedStaticValue }
-
-const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
 
 /**
  * Safe recursive AST-value decoder. Turns a statically-analyzable expression
@@ -953,7 +1160,7 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
     if (node.regex !== undefined || node.bigint !== undefined)
       return DECODE_BAIL
     const value = node.value
-    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    if (value === null || typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value)))
       return value
     return DECODE_BAIL
   }
@@ -965,10 +1172,12 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
       || !LITERAL_TYPES.has(arg.type)
       || arg.regex !== undefined
       || arg.bigint !== undefined
-      || typeof arg.value !== 'number') {
+      || typeof arg.value !== 'number'
+      || !Number.isFinite(arg.value)) {
       return DECODE_BAIL
     }
-    return node.operator === '-' ? -arg.value : arg.value
+    const value = node.operator === '-' ? -arg.value : arg.value
+    return Object.is(value, -0) ? DECODE_BAIL : value
   }
   if (node.type === 'TemplateLiteral') {
     if (node.expressions.length > 0)
@@ -990,7 +1199,9 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
     return out
   }
   if (node.type === 'ObjectExpression') {
-    const out: Record<string, DecodedStaticValue> = Object.create(null)
+    // Unsafe prototype keys are rejected below, so ordinary objects are safe
+    // here and retain runtime String(value) behavior for nested attribute values.
+    const out: Record<string, DecodedStaticValue> = {}
     for (const prop of node.properties) {
       if (prop.type === 'SpreadElement' || prop.computed || prop.method || prop.kind !== 'init')
         return DECODE_BAIL
@@ -1005,6 +1216,27 @@ function decodeStaticValue(node: any): DecodedStaticValue | typeof DECODE_BAIL {
     return out
   }
   return DECODE_BAIL
+}
+
+function containsIdentifier(root: any, name: string): boolean {
+  const stack = [root]
+  while (stack.length) {
+    const value = stack.pop()
+    if (!value || typeof value !== 'object')
+      continue
+    if (value.type === 'Identifier' && value.name === name)
+      return true
+    for (const key of Object.keys(value)) {
+      if (key === 'parent')
+        continue
+      const child = value[key]
+      if (Array.isArray(child))
+        stack.push(...child)
+      else if (child && typeof child === 'object')
+        stack.push(child)
+    }
+  }
+  return false
 }
 
 /**

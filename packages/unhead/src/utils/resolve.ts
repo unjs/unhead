@@ -20,6 +20,42 @@ function isEmptyProps(props: Record<string, any>): boolean {
   return true
 }
 
+interface PrecompiledHeadInput {
+  _c: 1
+  t: [HeadTag['tag'] | 'm' | 't' | 'T', Record<string, any> | [0 | 1 | 2, any, any], (Record<string, any> | string)?][]
+}
+
+function isPrecompiledHeadInput(input: unknown): input is PrecompiledHeadInput {
+  return !!input
+    && typeof input === 'object'
+    && (input as PrecompiledHeadInput)._c === 1
+    && Array.isArray((input as PrecompiledHeadInput).t)
+    && Object.keys(input).length === 2
+    && (input as PrecompiledHeadInput).t.every(tuple => Array.isArray(tuple) && tuple.length >= 2 && typeof tuple[0] === 'string')
+}
+
+function revivePrecompiledTags(input: PrecompiledHeadInput): HeadTag[] {
+  const tags: HeadTag[] = []
+  for (const [encodedTagName, encodedProps, extra] of input.t) {
+    const tagName = encodedTagName === 'm' ? 'meta' : encodedTagName === 't' ? 'title' : encodedTagName === 'T' ? 'titleTemplate' : encodedTagName
+    const props: Record<string, any> = Array.isArray(encodedProps)
+      ? { [encodedProps[0] ? encodedProps[0] === 1 ? 'property' : 'http-equiv' : 'name']: encodedProps[1], content: encodedProps[2] }
+      : { ...encodedProps }
+    if (tagName !== 'templateParams') {
+      if (props.class != null)
+        props.class = new Set(Array.isArray(props.class) ? props.class : [])
+      if (props.style != null)
+        props.style = new Map((Array.isArray(props.style) ? props.style.filter(entry => Array.isArray(entry) && entry.length >= 2) : []) as [string, string][])
+    }
+    tags.push({
+      ...(typeof extra === 'string' ? { textContent: extra } : extra),
+      tag: tagName,
+      props,
+    } as HeadTag)
+  }
+  return tags
+}
+
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
@@ -205,14 +241,24 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       // takes the normalize path instead of reaching the shared array.
       if (e._precomputedTags
         && weightFn === head.resolvedOptions._tagWeight
-        && !hooks['entries:normalize']?.length
-        && !hooks['entries:resolve']?.length
+        && !entries
         && (!e.options || isEmptyProps(e.options))) {
         tags = e._precomputedTags
       }
       else {
-        tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
-        if (e.options && !isEmptyProps(e.options)) {
+        const precompiled = isPrecompiledHeadInput(e.input)
+        const propResolvers = head.resolvedOptions.propResolvers || []
+        // eslint-disable-next-line node/prefer-global/process -- left as a direct expression so downstream Vite/Webpack/Rspack builds can replace NODE_ENV
+        if (precompiled && typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+          const resolver = propResolvers.find(resolver => !resolver._static)
+          if (resolver)
+            throw new Error(`[unhead] ${resolver.name || 'anonymous'} is not static`)
+        }
+        tags = precompiled
+          ? revivePrecompiledTags(e.input)
+          : normalizeEntryToTags(e.input, propResolvers)
+        const hasOptions = !!(e.options && !isEmptyProps(e.options))
+        if (hasOptions) {
           for (const t of tags)
             Object.assign(t, e.options)
         }

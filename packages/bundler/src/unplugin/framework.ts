@@ -70,12 +70,13 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
         : {}
   const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
     && { ...common, ...minifyOpts }
+  const precompile = options.experimental?.precompile && common
 
-  if (!treeshake && !seoMeta && !minify)
+  if (!treeshake && !seoMeta && !precompile && !minify)
     return []
 
-  // Single-parse pipeline for the treeshake, seoMeta and minify concerns.
-  return [{ instance: UnheadTransforms, options: { treeshake, seoMeta, minify } }]
+  // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
+  return [{ instance: UnheadTransforms, options: { treeshake, seoMeta, precompile, minify } }]
 }
 
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {

@@ -37,7 +37,15 @@ function writeIifeArtifacts(rootDir: string, code: string) {
 async function buildIifeFromDist(rootDir: string) {
   const bundle = await rollup({
     input: resolve(rootDir, 'dist/stream/iife.mjs'),
-    plugins: [nodeResolve()],
+    plugins: [
+      {
+        name: 'unhead:production-env',
+        transform: code => code.includes('process.env.NODE_ENV')
+          ? code.replaceAll('process.env.NODE_ENV', JSON.stringify('production'))
+          : null,
+      },
+      nodeResolve(),
+    ],
   })
   try {
     const { output } = await bundle.generate({ format: 'iife', name: IIFE_GLOBAL_NAME })
@@ -53,6 +61,9 @@ async function buildIifeFromDist(rootDir: string) {
 
 async function buildIifeFromSource(rootDir: string) {
   const result = await viteBuild({
+    define: {
+      'process.env.NODE_ENV': JSON.stringify('production'),
+    },
     build: {
       emptyOutDir: false,
       lib: {
