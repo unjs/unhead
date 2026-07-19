@@ -8,6 +8,7 @@ import type {
   ScriptScope,
   UseFunctionType,
   UseScriptContext,
+  UseScriptContextOptions,
   UseScriptInput,
   UseScriptOptions,
   UseScriptResolvedInput,
@@ -25,12 +26,13 @@ import { createScriptWaitFor } from './waitFor'
  *
  * @see https://unhead.unjs.io/usage/composables/use-script
  */
-type ResolveScriptOptions<O extends UseScriptOptions<any>> = O & Required<Pick<UseScriptOptions<any>, 'resolve'>> & { use?: never }
-type ResolvedScriptApi<O extends UseScriptOptions<any>> = UseFunctionType<O, Record<string, any>>
+type ScriptApi = Record<symbol | string, any>
+type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
+type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
 
-export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope: true }): ScriptScope<ResolvedScriptApi<O>>
-export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope?: false }): ScriptInstance<ResolvedScriptApi<O>>
-export function useScript<O extends UseScriptOptions<any>>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<O>): ScriptInstance<ResolvedScriptApi<O>> | ScriptScope<ResolvedScriptApi<O>>
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): ScriptScope<ResolvedScriptApi<R>>
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): ScriptInstance<ResolvedScriptApi<R>>
+export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R>): ScriptInstance<ResolvedScriptApi<R>> | ScriptScope<ResolvedScriptApi<R>>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>

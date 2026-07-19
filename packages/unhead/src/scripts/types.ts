@@ -75,6 +75,26 @@ export type UseScriptWaitForSetup<T> = (
   reject: (reason?: unknown) => void,
 ) => void | (() => void)
 
+export interface UseScriptWaitForResolve<T = unknown> {
+  <V extends T>(value: V): V
+  <V extends T>(value: PromiseLike<V>): PromiseLike<V>
+}
+
+type UseScriptWaitForInferredResult<T> = [T] extends [void | (() => void)]
+  ? unknown
+  : NonNullable<Awaited<T>>
+
+export interface UseScriptWaitFor {
+  /**
+   * With an explicit result type, setup may use callback-style registration and
+   * return cleanup. Without one, `waitFor(resolve => resolve(value))` infers it.
+   */
+  <T = never, R = void>(setup: (
+    resolve: UseScriptWaitForResolve<[T] extends [never] ? unknown : T>,
+    reject: (reason?: unknown) => void,
+  ) => R): Promise<[T] extends [never] ? UseScriptWaitForInferredResult<R> : T>
+}
+
 export interface UseScriptContextOptions {
   /**
    * Aborted when the script is removed or fails to load.
@@ -84,7 +104,7 @@ export interface UseScriptContextOptions {
    * Wait for an SDK-specific readiness callback. Abort rejection and returned
    * cleanup are tied to the script lifecycle.
    */
-  waitFor: <T>(setup: UseScriptWaitForSetup<T>) => Promise<T>
+  waitFor: UseScriptWaitFor
 }
 
 export type UseScriptResolver<T extends BaseScriptApi>
