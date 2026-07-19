@@ -1,4 +1,4 @@
-import type { PreparedTemplate } from '../parser'
+import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
@@ -8,10 +8,12 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
+let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -379,6 +381,97 @@ export interface StreamingTemplateParts {
   end: string
 }
 
+interface StreamingTemplateLayout {
+  shellTemplate: PreparedHtmlTemplateWithIndexes
+  endBeforeBodyTags: string
+  endAfterBodyTags: string
+}
+
+function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
+  const html = parsed.html
+  const bodyEnd = parsed.indexes.bodyTagEnd
+  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
+  if (bodyEnd < 0 || bodyCloseStart < 0)
+    return
+
+  const bodyInterior = html.substring(bodyEnd, bodyCloseStart)
+  // Prefer splitting at a Vite-style SSR outlet marker so the streamed app
+  // content lands inside the container (e.g. `<div id="app">`) that the
+  // client mounts onto. Falls back to splitting at the <body> tag, which
+  // preserves any static body interior after the stream.
+  const markerMatch = bodyInterior.match(SSR_OUTLET_RE)
+
+  let beforeStream: string
+  let afterStream: string
+  if (markerMatch) {
+    beforeStream = bodyInterior.substring(0, markerMatch.index!)
+    afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
+  }
+  else {
+    beforeStream = ''
+    afterStream = bodyInterior
+  }
+
+  const shellPart = html.substring(0, bodyEnd) + beforeStream
+  const endPart = html.substring(bodyCloseStart)
+
+  // Derive the indexes that parsing the synthetic shell would produce without
+  // re-scanning the template. When `bodyCloseStart >= bodyEnd` (any sane
+  // template), `shellPart` is a prefix of `html`, so a first
+  // occurrence that fits entirely inside it carries over unchanged.
+  let shellTemplate: PreparedHtmlTemplateWithIndexes
+  if (bodyCloseStart >= bodyEnd) {
+    const shellLen = shellPart.length
+    const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes
+    const shellHtmlTagStart = (htmlTagStart >= 0 && htmlTagStart + 5 <= shellLen) ? htmlTagStart : -1
+    let shellHtmlTagEnd = -1
+    if (shellHtmlTagStart >= 0) {
+      const gt = shellPart.indexOf('>', shellHtmlTagStart)
+      // No '>' before the suffix: the first one is the '>' closing '</body>'.
+      shellHtmlTagEnd = gt >= 0 ? gt + 1 : shellLen + 7
+    }
+    shellTemplate = {
+      html: `${shellPart}</body></html>`,
+      input: parsed.input,
+      indexes: {
+        htmlTagStart: shellHtmlTagStart,
+        htmlTagEnd: shellHtmlTagEnd,
+        headTagEnd: (headTagEnd >= 0 && headTagEnd + 7 <= shellLen) ? headTagEnd : -1,
+        // <body> is always fully inside the prefix in this branch.
+        bodyTagStart,
+        bodyTagEnd: bodyEnd,
+        bodyCloseTagStart: (bodyCloseStart + 7 <= shellLen) ? bodyCloseStart : shellLen,
+      },
+    }
+  }
+  else {
+    // Degenerate template ('</body>' before '<body>'): `substring` swapped
+    // its arguments so `shellPart` is not a prefix of `html`.
+    shellTemplate = parseHtmlForIndexes(`${shellPart}</body></html>`)
+  }
+
+  return {
+    shellTemplate,
+    endBeforeBodyTags: afterStream,
+    endAfterBodyTags: endPart,
+  }
+}
+
+function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTemplateLayout | undefined {
+  const cache = preparedStreamingLayouts ||= new WeakMap()
+  let layout = cache.get(template)
+  if (layout === undefined) {
+    layout = createStreamingTemplateLayout(template) || null
+    if (layout) {
+      Object.freeze(layout.shellTemplate.indexes)
+      Object.freeze(layout.shellTemplate)
+      Object.freeze(layout)
+    }
+    cache.set(template, layout)
+  }
+  return layout || undefined
+}
+
 /**
  * @experimental
  *
@@ -412,73 +505,13 @@ export function prepareStreamingTemplate(
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
 
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-  const html = parsed.html
-  const bodyEnd = parsed.indexes.bodyTagEnd
-  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
+  const layout = typeof template === 'string'
+    ? createStreamingTemplateLayout(parsed)
+    : getPreparedStreamingLayout(template)
 
   let parts: StreamingTemplateParts
-  if (bodyEnd >= 0 && bodyCloseStart >= 0) {
-    const bodyInterior = html.substring(bodyEnd, bodyCloseStart)
-    // Prefer splitting at a Vite-style SSR outlet marker so the streamed
-    // app content lands inside the container (e.g. `<div id="app">`) that
-    // the client mounts onto. Falls back to splitting at the <body> tag,
-    // which preserves any static body interior in `end`.
-    const markerMatch = bodyInterior.match(/<!--\s*(?:app-html|ssr-outlet)\s*-->/)
-
-    let beforeStream: string
-    let afterStream: string
-    if (markerMatch) {
-      beforeStream = bodyInterior.substring(0, markerMatch.index!)
-      afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
-    }
-    else {
-      beforeStream = ''
-      afterStream = bodyInterior
-    }
-
-    const shellPart = html.substring(0, bodyEnd) + beforeStream
-    const endPart = html.substring(bodyCloseStart)
-
-    // Derive the indexes that `parseHtmlForIndexes(`${shellPart}</body></html>`)`
-    // would produce without re-scanning the template. When `bodyCloseStart >=
-    // bodyEnd` (any sane template), `shellPart` is a prefix of `html` (the two
-    // `substring` calls cover one contiguous range), so a first occurrence
-    // that fits entirely inside it carries over unchanged. The appended
-    // `</body></html>` suffix contains '</body>' (at +0) but neither '<html'
-    // nor '</head>', and none of the searched needles can straddle the
-    // prefix/suffix boundary.
-    let shellParsed: ReturnType<typeof parseHtmlForIndexes>
-    if (bodyCloseStart >= bodyEnd) {
-      const shellLen = shellPart.length
-      const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes
-      const shellHtmlTagStart = (htmlTagStart >= 0 && htmlTagStart + 5 <= shellLen) ? htmlTagStart : -1
-      let shellHtmlTagEnd = -1
-      if (shellHtmlTagStart >= 0) {
-        const gt = shellPart.indexOf('>', shellHtmlTagStart)
-        // No '>' before the suffix: the first one is the '>' closing '</body>'.
-        shellHtmlTagEnd = gt >= 0 ? gt + 1 : shellLen + 7
-      }
-      shellParsed = {
-        html: `${shellPart}</body></html>`,
-        input: parsed.input,
-        indexes: {
-          htmlTagStart: shellHtmlTagStart,
-          htmlTagEnd: shellHtmlTagEnd,
-          headTagEnd: (headTagEnd >= 0 && headTagEnd + 7 <= shellLen) ? headTagEnd : -1,
-          // <body> is always fully inside the prefix in this branch.
-          bodyTagStart,
-          bodyTagEnd: bodyEnd,
-          bodyCloseTagStart: (bodyCloseStart + 7 <= shellLen) ? bodyCloseStart : shellLen,
-        },
-      }
-    }
-    else {
-      // Degenerate template ('</body>' before '<body>'): `substring` swapped
-      // its arguments so `shellPart` is not a prefix of `html`. Fall back to
-      // parsing the synthetic shell to keep behavior identical.
-      shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
-    }
-    const shell = applyHeadToHtml(shellParsed, {
+  if (layout) {
+    const shell = applyHeadToHtml(layout.shellTemplate, {
       htmlAttrs: ssr.htmlAttrs,
       headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
@@ -487,7 +520,7 @@ export function prepareStreamingTemplate(
 
     parts = {
       shell,
-      end: afterStream + ssr.bodyTags + endPart,
+      end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
     }
   }
   else {

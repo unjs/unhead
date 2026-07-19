@@ -1,4 +1,4 @@
-import { createHead, prepareTemplate, transformHtmlTemplateRaw } from 'unhead/server'
+import { createHead, prepareTemplate, transformHtmlTemplate, transformHtmlTemplateRaw } from 'unhead/server'
 import { prepareStreamingTemplate } from 'unhead/stream/server'
 import { bench, describe } from 'vitest'
 
@@ -61,6 +61,18 @@ describe('transformHtmlTemplateRaw (~100KB template)', () => {
 
   bench('prepared once', () => {
     transformHtmlTemplateRaw(makeHead(), prepared)
+  })
+})
+
+describe('transformHtmlTemplate (~100KB template)', () => {
+  const prepared = prepareTemplate(template)
+
+  bench('string per request', () => {
+    transformHtmlTemplate(makeHead(), template)
+  })
+
+  bench('prepared once', () => {
+    transformHtmlTemplate(makeHead(), prepared)
   })
 })
 

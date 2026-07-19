@@ -110,12 +110,58 @@ describe('prepareTemplate', () => {
       expect(second).toBe(transformHtmlTemplate(serverHead(), template))
     })
 
+    it('isolates extracted template input between request heads', () => {
+      const prepared = prepareTemplate('<html><head><meta name="shared" content="original"></head><body></body></html>')
+      const mutatingHead = createServerHeadWithContext({
+        hooks: {
+          'entries:resolve': ({ entries }) => {
+            const templateEntry = entries.find(entry => entry._i === 0)
+            templateEntry!.input.meta[0].content = 'request-one'
+          },
+        },
+      })
+
+      const first = transformHtmlTemplate(mutatingHead, prepared)
+      const second = transformHtmlTemplate(createServerHeadWithContext(), prepared)
+      expect(first).toContain('content="request-one"')
+      expect(second).toContain('content="original"')
+      expect(second).not.toContain('content="request-one"')
+    })
+
+    it('uses precomputed tags only when request hooks and resolvers cannot change them', () => {
+      const prepared = prepareTemplate('<html><head><meta name="shared" content="original"></head><body></body></html>')
+      const staticHead = createServerHeadWithContext()
+      expect(transformHtmlTemplate(staticHead, prepared)).toContain('content="original"')
+      expect(staticHead.entries.get(0)?._precomputedTags).toBeDefined()
+      expect(Object.isFrozen(staticHead.entries.get(0)?._precomputedTags)).toBe(true)
+      expect(staticHead.entries.get(0)?.options).toEqual({})
+
+      const dynamicHead = createServerHeadWithContext({
+        propResolvers: [Object.assign(
+          (_key?: string, value?: unknown) => {
+            if (value && typeof value === 'object' && 'content' in value)
+              (value as { content: string }).content = 'request-value'
+            return value
+          },
+          { _static: false },
+        )],
+      })
+      expect(transformHtmlTemplate(dynamicHead, prepared)).toContain('content="request-value"')
+      expect(dynamicHead.entries.get(0)?._precomputedTags).toBeUndefined()
+      expect(transformHtmlTemplate(createServerHeadWithContext(), prepared)).toContain('content="original"')
+    })
+
     it('prepareStreamingTemplate reused across requests', () => {
       const prepared = prepareTemplate(templates['with ssr outlet marker'])
       const fromString = prepareStreamingTemplate(streamHead(), templates['with ssr outlet marker'])
       for (let i = 0; i < 3; i++) {
-        expect(prepareStreamingTemplate(streamHead(), prepared)).toEqual(fromString)
+        const head = createStreamableServerHead()
+        head.push({ title: `Request ${i}` })
+        const result = prepareStreamingTemplate(head, prepared)
+        expect(result.shell).toContain(`<title>Request ${i}</title>`)
+        expect(result.shell).not.toContain(`<title>Request ${(i + 1) % 3}</title>`)
       }
+      expect(prepareStreamingTemplate(streamHead(), prepared)).toEqual(fromString)
     })
   })
 

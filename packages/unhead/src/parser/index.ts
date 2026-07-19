@@ -80,7 +80,9 @@ export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
  * `PreparedTemplate`, skipping the per-request template parse.
  *
  * The returned value is immutable. Unhead does not cache templates by their
- * HTML string, so the caller controls the value's lifetime.
+ * HTML string, so the caller controls the value's lifetime. It contains no
+ * request or head state: keep it at process scope and create a new head for
+ * each request.
  *
  * @example
  * ```ts
