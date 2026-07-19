@@ -46,6 +46,12 @@ export type UseScriptReturn<T extends Record<symbol | string, any>> = UseScriptC
 
 export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = VueScriptScope<UseFunctionType<UseScriptOptions<T>, T>>
 
+type ResolveScriptOptions<O extends UseScriptOptions<any>> = O & Required<Pick<UseScriptOptions<any>, 'resolve'>> & { use?: never }
+type ResolvedScriptApi<O extends UseScriptOptions<any>> = UseFunctionType<O, Record<string, any>>
+
+export function useScript<O extends UseScriptOptions<any>>(_input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope: true }): VueScriptScope<ResolvedScriptApi<O>>
+export function useScript<O extends UseScriptOptions<any>>(_input: UseScriptInput, _options: ResolveScriptOptions<O> & { scope?: false }): VueScriptInstance<ResolvedScriptApi<O>>
+export function useScript<O extends UseScriptOptions<any>>(_input: UseScriptInput, _options: ResolveScriptOptions<O>): VueScriptInstance<ResolvedScriptApi<O>> | VueScriptScope<ResolvedScriptApi<O>>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
