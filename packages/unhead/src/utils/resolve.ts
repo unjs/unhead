@@ -25,6 +25,8 @@ function isEmptyProps(props: Record<string, any>): boolean {
 // and deprecated dom:renderTag — but not *:beforeRender, entries:* or script:updated);
 // when none are registered the per-render defensive clone can be skipped
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
+// Keep the fast spread path below engine argument-count limits.
+const MAX_SPREAD_ARGS = 32_768
 
 export interface ResolveTagsContext {
   tagMap: Map<string, HeadTag>
@@ -224,7 +226,14 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         e._tags = tags
       }
     }
-    ctx.tags.push(...tags)
+    if (tags.length < MAX_SPREAD_ARGS) {
+      ctx.tags.push(...tags)
+    }
+    else {
+      const offset = ctx.tags.length
+      for (let i = 0; i < tags.length; i++)
+        ctx.tags[offset + i] = tags[i]
+    }
   }
   // scanned after the entry loop so hooks registered by listeners during this
   // resolve are still honored for the defensive clone

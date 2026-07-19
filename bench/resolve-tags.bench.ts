@@ -1,9 +1,9 @@
 import { TemplateParamsPlugin } from 'unhead/plugins'
-import { createHead, renderSSRHead } from 'unhead/server'
+import { createHead } from 'unhead/server'
 import { bench, describe } from 'vitest'
 
-// resolve-heavy: many entries per head, per-request head creation (Nuxt-style).
-// Isolates resolveTags allocation behavior with and without tag-mutating hooks.
+// Resolve-heavy first and cached renders with many entries per head.
+// Covers Nuxt-style per-request creation and tag-mutating plugin hooks.
 
 function pushEntries(head: ReturnType<typeof createHead>, count: number) {
   head.push({
@@ -27,22 +27,39 @@ function pushEntries(head: ReturnType<typeof createHead>, count: number) {
   }
 }
 
-describe('resolveTags many entries', () => {
+function createBenchHead(count: number, templateParams = false) {
+  const head = createHead({
+    plugins: templateParams ? [TemplateParamsPlugin] : [],
+  })
+  pushEntries(head, count)
+  return head
+}
+
+describe('resolveTags many entries, first render', () => {
   bench('20 entries, no plugins', () => {
-    const head = createHead()
-    pushEntries(head, 20)
-    renderSSRHead(head)
+    createBenchHead(20).render()
   })
 
   bench('20 entries, templateParams plugin', () => {
-    const head = createHead({ plugins: [TemplateParamsPlugin] })
-    pushEntries(head, 20)
-    renderSSRHead(head)
+    createBenchHead(20, true).render()
   })
 
   bench('5 entries, no plugins', () => {
-    const head = createHead()
-    pushEntries(head, 5)
-    renderSSRHead(head)
+    createBenchHead(5).render()
+  })
+})
+
+describe('resolveTags many entries, cached render', () => {
+  const noPlugins = createBenchHead(20)
+  const templateParams = createBenchHead(20, true)
+  noPlugins.render()
+  templateParams.render()
+
+  bench('20 entries, no plugins', () => {
+    noPlugins.render()
+  })
+
+  bench('20 entries, templateParams plugin', () => {
+    templateParams.render()
   })
 })

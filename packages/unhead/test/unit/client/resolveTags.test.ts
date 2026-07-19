@@ -335,4 +335,19 @@ describe('resolveTags', () => {
       ]
     `)
   })
+
+  it('handles a large cached tag array without exceeding the argument limit', () => {
+    const head = createClientHeadWithContext()
+    head.push({})
+    const tag = {
+      tag: 'meta' as const,
+      props: { name: 'description', content: 'test' },
+      _d: 'meta:description',
+      _p: 1024,
+      _w: 100,
+    }
+    head.entries.get(1)!._tags = Array.from({ length: 130_000 }).fill(tag) as typeof tag[]
+
+    expect(resolveTags(head)).toEqual([tag])
+  })
 })
