@@ -7,10 +7,12 @@ function toResolvableHead(tags: EncodedHeadTag[]): ResolvableHead {
   const input: Record<string, any> = {}
   for (const tag of tags) {
     const props: Record<string, any> = { ...tag.props }
-    if (props.class instanceof Set)
-      props.class = [...props.class]
-    if (props.style instanceof Map || Array.isArray(props.style))
-      props.style = Object.fromEntries(props.style)
+    if (tag.tag !== 'templateParams') {
+      if (props.class instanceof Set)
+        props.class = [...props.class]
+      if (props.style instanceof Map || Array.isArray(props.style))
+        props.style = Object.fromEntries(props.style)
+    }
     for (const key of TagConfigKeys as Set<keyof EncodedHeadTag>) {
       if (tag[key] !== undefined)
         props[key] = tag[key]

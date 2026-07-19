@@ -75,7 +75,7 @@ export default defineBuildConfig({
       const dynamicNormalizer = output.includes('__proto__')
       if (strictRuntime !== withPrecompile || dynamicNormalizer === withPrecompile)
         throw new Error(`Precompile ${withPrecompile ? 'ON' : 'OFF'} graph was invalid: strict runtime ${strictRuntime ? 'present' : 'absent'}, dynamic normalizer ${dynamicNormalizer ? 'present' : 'absent'}.`)
-      if (output.includes('toJSON') !== withPrecompile)
+      if (output.includes('[unhead:pc]') !== withPrecompile)
         throw new Error(`The streaming-safe carrier was ${withPrecompile ? 'missing from' : 'unexpectedly present in'} the precompile ${withPrecompile ? 'ON' : 'OFF'} graph.`)
       console.log(`PRECOMPILE RUNTIME (${withPrecompile ? 'on' : 'off'}) Size: ${contents.length} bytes, gzip: ${compressed} bytes`)
     },

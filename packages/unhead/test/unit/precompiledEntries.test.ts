@@ -34,6 +34,7 @@ function render(input: any) {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllEnvs()
 })
 
@@ -211,6 +212,21 @@ describe('precompiled head entries', () => {
     compiled.push(marker)
     runtime.push({ title: { textContent: 'priority', tagPriority: -20 } } as any)
     expect(renderSSRHead(compiled)).toEqual(renderSSRHead(runtime))
+  })
+
+  it('preserves flat template parameter arrays through streaming serialization', () => {
+    const marker = precompiledHeadInput([
+      { tag: 'templateParams', props: { class: ['site', 'dark'], style: ['compact', 'print'] } },
+    ] as any)
+
+    expect(JSON.parse(JSON.stringify(marker))).toEqual({
+      templateParams: { class: ['site', 'dark'], style: ['compact', 'print'] },
+    })
+
+    const head = createHead({ disableDefaults: true })
+    head.push(marker)
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    expect(chunk).toContain('"style":["compact","print"]')
   })
 
   it('keeps templateParams class and style values as ordinary parameters', () => {

@@ -65,7 +65,7 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
-      const markerPresent = contents.toString().includes('toJSON')
+      const markerPresent = contents.toString().includes('[unhead:pc]')
       if (markerPresent)
         throw new Error('The server-only precompile carrier leaked into a client bundle.')
       console.log(`VUE CLIENT SEO (${withPrecompile ? 'precompile on' : 'precompile off'}) Size: ${size} bytes (${Math.round(size / 102.4) / 10} kB) gzipped: ${compressed} bytes (${Math.round(compressed / 102.4) / 10} kB)`)

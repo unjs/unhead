@@ -34,7 +34,7 @@ const ordinaryBundles = [
   'server/server/minimal.mjs',
   'server-sc/server/minimal.mjs',
 ]
-const strictMarkers = ['precompiled-only runtime', 'Non-static prop resolver', 'toJSON', 'precompiledHeadInput']
+const strictMarkers = ['precompiled-only runtime', '[unhead:pc]']
 
 for (const relativePath of ordinaryBundles) {
   const file = path.join(dist, relativePath)

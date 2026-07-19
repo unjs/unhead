@@ -26,7 +26,7 @@ export class PrecompiledHeadInputBase {
   _r(_materialize: boolean, propResolvers: PropResolver[]): HeadTag[] {
     const resolver = propResolvers.find(resolver => !resolver._static)
     if (resolver)
-      throw new Error(`[unhead] Non-static prop resolver: ${resolver.name || 'anonymous'}`)
+      throw new Error(`[unhead:pc] Non-static prop resolver: ${resolver.name || 'anonymous'}`)
     return this._t.map(cloneTag)
   }
 }
