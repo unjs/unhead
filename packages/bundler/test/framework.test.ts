@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RollupPlugin, RspackPluginInstance, WebpackPluginInstance } from 'unplugin'
+import type { Plugin as VitePlugin } from 'vite'
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { createFrameworkPlugin } from '../src/unplugin/framework'
 
 const devtoolsState = vi.hoisted(() => ({
@@ -72,6 +74,15 @@ function names(plugins: any[]): string[] {
 }
 
 describe('createFrameworkPlugin devtools loading', () => {
+  it('exposes concrete plugin types for every bundler', () => {
+    const plugin = Unhead()
+
+    expectTypeOf(plugin.vite()).toEqualTypeOf<VitePlugin[]>()
+    expectTypeOf(plugin.webpack()).toEqualTypeOf<WebpackPluginInstance[]>()
+    expectTypeOf(plugin.rspack()).toEqualTypeOf<RspackPluginInstance[]>()
+    expectTypeOf(plugin.rollup()).toEqualTypeOf<RollupPlugin[]>()
+  })
+
   it('does not import the Vite devtools module for non-Vite bundlers', () => {
     const plugin = Unhead()
 

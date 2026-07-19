@@ -15,30 +15,7 @@ export interface HeadEntry<Input> {
    * User provided input for the entry.
    */
   input: Input
-  options?: {
-    /**
-     * Default tag position.
-     *
-     * @internal
-     */
-    tagPosition?: TagPosition['tagPosition']
-    /**
-     * Default tag priority.
-     *
-     * @internal
-     */
-    tagPriority?: TagPriority['tagPriority']
-    /**
-     * Default tag duplicate strategy.
-     *
-     * @internal
-     */
-    tagDuplicateStrategy?: HeadTag['tagDuplicateStrategy']
-    /**
-     * @internal
-     */
-    _safe?: boolean
-  }
+  options?: Omit<HeadEntryOptions, 'head' | 'onRendered'>
   /**
    * Head entry index
    *
@@ -68,10 +45,6 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
-  /**
-   * @internal
-   */
-  _promisesProcessed?: boolean
 }
 
 export interface HeadPluginOptions extends CreateHeadOptions {
@@ -275,6 +248,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _entryCount: number
+  /**
+   * Number of entry hooks included in cached normalization.
+   *
+   * @internal
+   */
+  _h: number
   // client-specific (optional)
   /**
    * @internal

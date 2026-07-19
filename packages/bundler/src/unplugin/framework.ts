@@ -1,4 +1,4 @@
-import type { UnpluginInstance } from 'unplugin'
+import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPluginInstance } from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
@@ -51,9 +51,9 @@ export interface UnheadFrameworkOptions<S> extends VitePluginOptions {
  */
 export interface UnheadBundlerFactory {
   vite: () => VitePlugin[]
-  webpack: () => any[]
-  rspack: () => any[]
-  rollup: () => any[]
+  webpack: () => WebpackPluginInstance[]
+  rspack: () => RspackPluginInstance[]
+  rollup: () => RollupPlugin[]
 }
 
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }

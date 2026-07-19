@@ -1,3 +1,4 @@
+import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
@@ -7,10 +8,12 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
 // stateless, so it can be shared across streams without import-time work.
 let encoder: TextEncoder | undefined
+let preparedStreamingLayouts: WeakMap<PreparedTemplate, StreamingTemplateLayout | null> | undefined
 
 // Conservative ASCII identifier: must be a safe `window.<name>` accessor.
 // Disallows anything that could break out of the dot-notation sink used by
@@ -62,10 +65,10 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
   /**
    * Wrap a web ReadableStream to handle head injection automatically.
    * @param stream - The app's ReadableStream
-   * @param template - The HTML template
+   * @param template - The HTML template (string or `prepareTemplate()` result)
    * @returns A new ReadableStream with shell and closing HTML included
    */
-  wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => ReadableStream<Uint8Array>
+  wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => ReadableStream<Uint8Array>
 }
 
 /**
@@ -161,7 +164,7 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
  * script and streaming client via `transformIndexHtml`.
  *
  * @param head - The Unhead instance
- * @param template - HTML template string containing <html>, <head>, </head>, <body>
+ * @param template - HTML template containing <html>, <head>, </head>, <body> (string or `prepareTemplate()` result)
  * @returns Rendered shell with head tags injected
  *
  * @example
@@ -169,8 +172,9 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
  * const shell = renderSSRHeadShell(head, template)
  * ```
  */
-export function renderSSRHeadShell(head: Unhead<any>, template: string): string {
-  const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parseHtmlForIndexes(template))
+export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
+  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
+  const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
   // Only clear entries once the shell has been successfully produced so a
   // template failure leaves them intact for retry.
   head.entries.clear()
@@ -260,7 +264,7 @@ function safeJsonStringify(obj: any): string {
  *
  * @param head - The Unhead instance
  * @param stream - The app's ReadableStream (from renderToWebStream, etc.)
- * @param template - Full HTML template
+ * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @param preRenderedState - Optional pre-rendered head payload to use for the shell
  * @param options - Optional streaming hooks
  * @param options.flushChunk - Returns extra HTML to emit after each app
@@ -278,7 +282,7 @@ function safeJsonStringify(obj: any): string {
 export function wrapStream(
   head: Unhead<any>,
   stream: ReadableStream<Uint8Array>,
-  template: string,
+  template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
@@ -377,6 +381,97 @@ export interface StreamingTemplateParts {
   end: string
 }
 
+interface StreamingTemplateLayout {
+  shellTemplate: PreparedHtmlTemplateWithIndexes
+  endBeforeBodyTags: string
+  endAfterBodyTags: string
+}
+
+function createStreamingTemplateLayout(parsed: PreparedHtmlTemplateWithIndexes): StreamingTemplateLayout | undefined {
+  const html = parsed.html
+  const bodyEnd = parsed.indexes.bodyTagEnd
+  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
+  if (bodyEnd < 0 || bodyCloseStart < 0)
+    return
+
+  const bodyInterior = html.substring(bodyEnd, bodyCloseStart)
+  // Prefer splitting at a Vite-style SSR outlet marker so the streamed app
+  // content lands inside the container (e.g. `<div id="app">`) that the
+  // client mounts onto. Falls back to splitting at the <body> tag, which
+  // preserves any static body interior after the stream.
+  const markerMatch = bodyInterior.match(SSR_OUTLET_RE)
+
+  let beforeStream: string
+  let afterStream: string
+  if (markerMatch) {
+    beforeStream = bodyInterior.substring(0, markerMatch.index!)
+    afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
+  }
+  else {
+    beforeStream = ''
+    afterStream = bodyInterior
+  }
+
+  const shellPart = html.substring(0, bodyEnd) + beforeStream
+  const endPart = html.substring(bodyCloseStart)
+
+  // Derive the indexes that parsing the synthetic shell would produce without
+  // re-scanning the template. When `bodyCloseStart >= bodyEnd` (any sane
+  // template), `shellPart` is a prefix of `html`, so a first
+  // occurrence that fits entirely inside it carries over unchanged.
+  let shellTemplate: PreparedHtmlTemplateWithIndexes
+  if (bodyCloseStart >= bodyEnd) {
+    const shellLen = shellPart.length
+    const { htmlTagStart, headTagEnd, bodyTagStart } = parsed.indexes
+    const shellHtmlTagStart = (htmlTagStart >= 0 && htmlTagStart + 5 <= shellLen) ? htmlTagStart : -1
+    let shellHtmlTagEnd = -1
+    if (shellHtmlTagStart >= 0) {
+      const gt = shellPart.indexOf('>', shellHtmlTagStart)
+      // No '>' before the suffix: the first one is the '>' closing '</body>'.
+      shellHtmlTagEnd = gt >= 0 ? gt + 1 : shellLen + 7
+    }
+    shellTemplate = {
+      html: `${shellPart}</body></html>`,
+      input: parsed.input,
+      indexes: {
+        htmlTagStart: shellHtmlTagStart,
+        htmlTagEnd: shellHtmlTagEnd,
+        headTagEnd: (headTagEnd >= 0 && headTagEnd + 7 <= shellLen) ? headTagEnd : -1,
+        // <body> is always fully inside the prefix in this branch.
+        bodyTagStart,
+        bodyTagEnd: bodyEnd,
+        bodyCloseTagStart: (bodyCloseStart + 7 <= shellLen) ? bodyCloseStart : shellLen,
+      },
+    }
+  }
+  else {
+    // Degenerate template ('</body>' before '<body>'): `substring` swapped
+    // its arguments so `shellPart` is not a prefix of `html`.
+    shellTemplate = parseHtmlForIndexes(`${shellPart}</body></html>`)
+  }
+
+  return {
+    shellTemplate,
+    endBeforeBodyTags: afterStream,
+    endAfterBodyTags: endPart,
+  }
+}
+
+function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTemplateLayout | undefined {
+  const cache = preparedStreamingLayouts ||= new WeakMap()
+  let layout = cache.get(template)
+  if (layout === undefined) {
+    layout = createStreamingTemplateLayout(template) || null
+    if (layout) {
+      Object.freeze(layout.shellTemplate.indexes)
+      Object.freeze(layout.shellTemplate)
+      Object.freeze(layout)
+    }
+    cache.set(template, layout)
+  }
+  return layout || undefined
+}
+
 /**
  * @experimental
  *
@@ -391,7 +486,7 @@ export interface StreamingTemplateParts {
  * - Injects body tags (scripts at end of body) into the closing part
  *
  * @param head - The Unhead instance
- * @param template - Full HTML template
+ * @param template - Full HTML template (string or `prepareTemplate()` result)
  * @returns Object with `shell` (before app) and `end` (after app) parts
  *
  * @example
@@ -404,40 +499,19 @@ export interface StreamingTemplateParts {
  */
 export function prepareStreamingTemplate(
   head: Unhead<any>,
-  template: string,
+  template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
   const ssr = preRenderedState ?? head.render() as SSRHeadPayload
 
-  const parsed = parseHtmlForIndexes(template)
-  const bodyEnd = parsed.indexes.bodyTagEnd
-  const bodyCloseStart = parsed.indexes.bodyCloseTagStart
+  const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
+  const layout = typeof template === 'string'
+    ? createStreamingTemplateLayout(parsed)
+    : getPreparedStreamingLayout(template)
 
   let parts: StreamingTemplateParts
-  if (bodyEnd >= 0 && bodyCloseStart >= 0) {
-    const bodyInterior = template.substring(bodyEnd, bodyCloseStart)
-    // Prefer splitting at a Vite-style SSR outlet marker so the streamed
-    // app content lands inside the container (e.g. `<div id="app">`) that
-    // the client mounts onto. Falls back to splitting at the <body> tag,
-    // which preserves any static body interior in `end`.
-    const markerMatch = bodyInterior.match(/<!--\s*(?:app-html|ssr-outlet)\s*-->/)
-
-    let beforeStream: string
-    let afterStream: string
-    if (markerMatch) {
-      beforeStream = bodyInterior.substring(0, markerMatch.index!)
-      afterStream = bodyInterior.substring(markerMatch.index! + markerMatch[0].length)
-    }
-    else {
-      beforeStream = ''
-      afterStream = bodyInterior
-    }
-
-    const shellPart = template.substring(0, bodyEnd) + beforeStream
-    const endPart = template.substring(bodyCloseStart)
-
-    const shellParsed = parseHtmlForIndexes(`${shellPart}</body></html>`)
-    const shell = applyHeadToHtml(shellParsed, {
+  if (layout) {
+    const shell = applyHeadToHtml(layout.shellTemplate, {
       htmlAttrs: ssr.htmlAttrs,
       headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
       bodyAttrs: ssr.bodyAttrs,
@@ -446,7 +520,7 @@ export function prepareStreamingTemplate(
 
     parts = {
       shell,
-      end: afterStream + ssr.bodyTags + endPart,
+      end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
     }
   }
   else {
@@ -465,4 +539,6 @@ export function prepareStreamingTemplate(
   return parts
 }
 
+export { prepareTemplate } from '../parser'
+export type { PreparedTemplate } from '../parser'
 export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'

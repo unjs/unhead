@@ -28,6 +28,7 @@
   parseAttributes: function
   parseHtmlForIndexes: function
   parseHtmlForUnheadExtraction: function
+  prepareTemplate: function
   TagIdMap: object
 ./plugins:
   AliasSortingPlugin: object
@@ -36,7 +37,7 @@
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
-  PromisesPlugin: object
+  PromisesPlugin: function
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
@@ -52,6 +53,7 @@
   createHead: function
   createServerRenderer: function
   escapeHtml: function
+  prepareTemplate: function
   propsToString: function
   renderSSRHead: function
   ssrRenderTags: function
@@ -68,6 +70,7 @@
   createBootstrapScript: function
   createStreamableHead: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
