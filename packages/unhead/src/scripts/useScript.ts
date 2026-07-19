@@ -71,13 +71,19 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     signal: lifecycleController.signal,
     waitFor: createScriptWaitFor(lifecycleController.signal),
   }
+  // Released use() callbacks were invoked without arguments. Only pass the new
+  // lifecycle context when a callback explicitly declares it so callbacks with
+  // default parameters keep their existing behavior.
+  const resolveUse = () => use!.length
+    ? use!(useContext)
+    : (use as () => ReturnType<NonNullable<typeof use>>)()
   beforeInit?.()
   let initialUseResult: ReturnType<NonNullable<typeof use>>
   let initialUseError: unknown
   let initialUseFailed = false
   try {
     initialUseResult = !head.ssr && use
-      ? use(useContext)
+      ? resolveUse()
       : undefined
   }
   catch (error) {
@@ -137,6 +143,14 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
 
   const _cbs: ScriptInstance<T>['_cbs'] = { loaded: [], error: [] }
   const _uniqueCbs: Set<string> = new Set<string>()
+  const callCbs = (cbs: null | ((value: any) => void | Promise<void>)[], value: any) => cbs?.forEach((cb) => {
+    try {
+      void Promise.resolve(cb(value)).catch(error => console.error(error))
+    }
+    catch (error) {
+      console.error(error)
+    }
+  })
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
@@ -209,7 +223,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
 
           const useOutcome = initialUseOutcome || (() => {
             try {
-              return Promise.resolve(use(useContext)).then(
+              return Promise.resolve(resolveUse()).then(
                 api => [true, api] as const,
                 error => [false, error] as const,
               )
@@ -454,14 +468,16 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     .then((api) => {
       if (api !== false) {
         script.instance = api
-        _cbs.loaded?.forEach(cb => cb(api))
-        _cbs.loaded = null
-      }
-      else {
-        if (script.status === 'error')
-          _cbs.error?.forEach(cb => cb(loadError))
+        const cbs = _cbs.loaded
         _cbs.loaded = null
         _cbs.error = null
+        callCbs(cbs, api)
+      }
+      else {
+        const cbs = script.status === 'error' ? _cbs.error : null
+        _cbs.loaded = null
+        _cbs.error = null
+        callCbs(cbs, loadError)
       }
     })
   const hookCtx = { script }

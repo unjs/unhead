@@ -4,6 +4,16 @@ import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
 
 describe('useScript events', () => {
+  it('keeps invoking legacy use() callbacks without arguments', () => {
+    const head = createHead()
+    const fallback = { ready: true }
+    const use = vi.fn((root = fallback) => root)
+
+    useScript(head, '/legacy-use.js', { use, trigger: 'manual' })
+
+    expect(use).toHaveBeenCalledWith()
+  })
+
   it('simple', async () => {
     const head = createHead()
     const instance = useScript(head, '/script.js', {
@@ -381,6 +391,31 @@ describe('useScript events', () => {
     await expect(instance._loadPromise).resolves.toBe(api)
     expect(onLoaded).toHaveBeenCalledOnce()
     expect(onLoaded).toHaveBeenCalledWith(api)
+  })
+
+  it('isolates callback errors and releases terminal callbacks', async () => {
+    const head = createHead()
+    const error = new Error('callback failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const instance = useScript(head, '/callback-error.js', {
+      trigger: 'server',
+      use: () => ({ ready: true }),
+    })
+    const afterError = vi.fn()
+    instance.onLoaded(() => {
+      throw error
+    })
+    instance.onLoaded(afterError)
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    await instance._loadPromise
+    await Promise.resolve()
+
+    expect(consoleError).toHaveBeenCalledWith(error)
+    expect(afterError).toHaveBeenCalledOnce()
+    expect(instance._cbs.loaded).toBeNull()
+    expect(instance._cbs.error).toBeNull()
+    consoleError.mockRestore()
   })
 
   it('owns waitFor readiness cleanup', async () => {
