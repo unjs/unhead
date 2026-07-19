@@ -64,7 +64,7 @@ describe('source-less script loader', () => {
 
     loaded = true
     const loading = script.load()
-    script.input.onload?.(new Event('load'))
+    ;(script as any).input.onload?.(new Event('load'))
     await loading
 
     expect(proxy.ready).toBe(true)
