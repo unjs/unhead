@@ -1,7 +1,7 @@
 import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput, SSRHeadPayload } from 'unhead/types'
 import type { UseHeadInput, VueHeadClient } from './types'
 import { DeprecationsPlugin } from 'unhead/legacy'
-import { AliasSortingPlugin, TemplateParamsPlugin } from 'unhead/plugins'
+import { AliasSortingPlugin, PromisesPlugin, TemplateParamsPlugin } from 'unhead/plugins'
 import { createHead as _createClientHead } from './client'
 import { createHead as _createServerHead } from './server'
 
@@ -12,19 +12,18 @@ export * from './client'
 export { createHead as createClientHead } from './client'
 
 /**
- * The v2 property, template parameter, and alias sorting migration plugins applied by the
- * legacy `createHead`/`createServerHead`. Promise inputs are not included; register
- * `PromisesPlugin` separately when needed.
+ * The v2 migration plugins applied by the legacy `createHead`/`createServerHead`, including
+ * Promise input resolution. Modern entrypoints require `PromisesPlugin` to be registered explicitly.
  *
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `@unhead/vue/client`/`@unhead/vue/server` without this plugin set.
  */
-export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
 
 /**
  * Creates a client `VueHeadClient` with the v2 migration plugin set pre-registered so that
- * tag props (`children`, `hid`, `vmid`, `body`), template params, and alias sorting
- * continue to work during the migration to v3.
+ * tag props (`children`, `hid`, `vmid`, `body`), Promise inputs, template params, and
+ * alias sorting continue to work during the migration to v3.
  *
  * @deprecated Will be removed in v4. Use `createHead` from `@unhead/vue/client` instead; register
  * `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility.

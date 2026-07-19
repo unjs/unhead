@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createHead as createClientHead } from '../../../src/client'
+import { createServerHead as createLegacyServerHead, legacyPlugins } from '../../../src/legacy'
 import { PromisesPlugin } from '../../../src/plugins/promises'
 import { createHead as createServerHead, renderSSRHead } from '../../../src/server'
 import { useDom } from '../../util'
@@ -9,6 +10,16 @@ async function flushPromises() {
 }
 
 describe('promisesPlugin', () => {
+  it('remains enabled by the legacy entrypoints', async () => {
+    expect(legacyPlugins).toContain(PromisesPlugin)
+    const head = createLegacyServerHead({ disableDefaults: true })
+    head.push({ title: Promise.resolve('legacy') } as any)
+
+    expect(renderSSRHead(head).headTags).not.toContain('<title>')
+    await flushPromises()
+    expect(renderSSRHead(head).headTags).toContain('<title>legacy</title>')
+  })
+
   it('keeps later resolve listeners synchronous', () => {
     const head = createServerHead({
       disableDefaults: true,
