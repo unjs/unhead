@@ -1,4 +1,44 @@
-import { hashTag } from '../../src/utils/dedupe'
+import { dedupeKey, hashTag } from '../../src/utils/dedupe'
+
+describe('dedupeKey', () => {
+  it('uses rel + href for link identity regardless of other props', () => {
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'alternate', href: '/feed.xml' },
+    })).toBe('link:alternate:/feed.xml')
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml' },
+    })).toBe('link:alternate:/feed.xml')
+  })
+
+  it('respects explicit keys on typed alternate links', () => {
+    expect(dedupeKey({
+      tag: 'link',
+      key: 'rss-feed',
+      props: { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml' },
+    })).toBe('link:key:rss-feed')
+  })
+
+  it('keeps semantic link singleton identities', () => {
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'canonical', href: '/one' },
+    })).toBe('canonical')
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'canonical', href: '/two' },
+    })).toBe('canonical')
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'alternate', hreflang: 'en', href: '/one' },
+    })).toBe('alternate:en')
+    expect(dedupeKey({
+      tag: 'link',
+      props: { rel: 'alternate', hreflang: 'en', href: '/two' },
+    })).toBe('alternate:en')
+  })
+})
 
 describe('hashTag', () => {
   it('serializes fallback tag props in sorted order', () => {
