@@ -67,6 +67,7 @@
     },
     "./scripts": {
       "types": "./dist/scripts.d.ts",
+      "node": "./dist/scripts.node.mjs",
       "default": "./dist/scripts.mjs"
     },
     "./scripts/triggers": {

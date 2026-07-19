@@ -87,3 +87,15 @@ describe('package type paths', async () => {
     })
   }
 })
+
+describe('node compatibility exports', () => {
+  it('keeps the server entry traceable from unhead/scripts', () => {
+    const packagePath = join(import.meta.dirname, '../packages/unhead')
+    const packageJson = JSON.parse(readFileSync(join(packagePath, 'package.json'), 'utf8'))
+    const scriptsExport = packageJson.exports['./scripts']
+
+    expect(scriptsExport.node).toBe('./dist/scripts.node.mjs')
+    expect(scriptsExport.default).toBe('./dist/scripts.mjs')
+    expect(readFileSync(join(packagePath, scriptsExport.node), 'utf8')).toContain('import \'unhead/server\';')
+  })
+})

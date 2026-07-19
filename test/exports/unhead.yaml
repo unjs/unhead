@@ -34,6 +34,7 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
