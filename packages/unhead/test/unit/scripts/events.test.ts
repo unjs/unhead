@@ -438,6 +438,19 @@ describe('useScript events', () => {
     expect(cleanup).toHaveBeenCalledOnce()
   })
 
+  it('resolves when waitFor setup returns the resolved API', async () => {
+    const head = createHead()
+    const api = { ready: true as const }
+    const instance = useScript(head, '/returned-wait-for-script.js', {
+      trigger: 'server',
+      resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
+    })
+
+    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+
+    await expect(instance._loadPromise).resolves.toBe(api)
+  })
+
   it('aborts waitFor while it adopts a pending promise', async () => {
     const head = createHead()
     const cleanup = vi.fn()
