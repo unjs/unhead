@@ -1,5 +1,15 @@
 import type { InferLink, InferScript, Link, Script } from './types'
 
+type IsUnion<T, U = T> = T extends U ? ([U] extends [T] ? false : true) : never
+type DefinedLink<T extends { rel: string }> = IsUnion<T['rel']> extends false
+  ? T extends Link ? T : Link & Omit<T, 'rel'>
+  : Link & Omit<T, 'rel'>
+type DefinedScript<T extends object> = T extends { type: infer U }
+  ? IsUnion<U> extends false
+    ? T extends Script ? T : Script & Omit<T, 'type'>
+    : Script & Omit<T, 'type'>
+  : T extends Script ? T : Script & Omit<T, 'type'>
+
 /**
  * Typed helper for declaring a `<link>` element inside {@link useHead}.
  *
@@ -25,8 +35,8 @@ import type { InferLink, InferScript, Link, Script } from './types'
  * })
  * ```
  */
-export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): Link {
-  return link as unknown as Link
+export function defineLink<const T extends { rel: string }>(link: T & InferLink<T>): DefinedLink<T> {
+  return link as unknown as DefinedLink<T>
 }
 
 /**
@@ -48,6 +58,6 @@ export function defineLink<const T extends { rel: string }>(link: T & InferLink<
  * })
  * ```
  */
-export function defineScript<const T extends object>(script: T & InferScript<T>): Script {
-  return script as unknown as Script
+export function defineScript<const T extends object>(script: T & InferScript<T>): DefinedScript<T> {
+  return script as unknown as DefinedScript<T>
 }
