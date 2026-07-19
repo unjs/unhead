@@ -51,6 +51,7 @@ export default defineBuildConfig({
     'rollup:options': (ctx, config) => {
       config.plugins.unshift(
         UnheadTransforms.rollup({
+          consumer: 'client',
           treeshake: {},
           seoMeta: {},
           precompile: withPrecompile ? {} : false,
@@ -64,15 +65,9 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
-      const markerPresent = contents.toString().includes('_c:1')
-      if (markerPresent !== withPrecompile)
-        throw new Error(`Precompile marker was ${markerPresent ? 'unexpectedly emitted' : 'not emitted'} with precompile ${withPrecompile ? 'enabled' : 'disabled'}.`)
-      if (withPrecompile) {
-        const baselineFile = path.resolve(__dirname, 'dist/vue-client-seo-plugin-base/vue-client/minimal-seo.mjs')
-        const baselineCompressed = zlib.gzipSync(fs.readFileSync(baselineFile)).length
-        if (compressed > baselineCompressed)
-          throw new Error(`Precompiled Vue SEO bundle regressed: ${compressed} B > ${baselineCompressed} B with precompile disabled (gzip).`)
-      }
+      const markerPresent = contents.toString().includes('toJSON')
+      if (markerPresent)
+        throw new Error('The server-only precompile carrier leaked into a client bundle.')
       console.log(`VUE CLIENT SEO (${withPrecompile ? 'precompile on' : 'precompile off'}) Size: ${size} bytes (${Math.round(size / 102.4) / 10} kB) gzipped: ${compressed} bytes (${Math.round(compressed / 102.4) / 10} kB)`)
     },
   },
