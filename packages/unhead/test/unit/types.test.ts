@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, CreateClientHeadOptions, CreateHeadOptions, GenericScript, HeadRenderer, HeadTag, HeadTagAttributeValue, HeadTagTitleTemplate, PreloadLink, PropResolver, ResolvableHead, SerializableHead, UnheadMeta } from '../../src/types'
+import type { ActiveHeadEntry, CreateClientHeadOptions, CreateHeadOptions, GenericScript, HeadEntry, HeadEntryOptions, HeadRenderer, HeadTag, HeadTagAttributeValue, HeadTagTitleTemplate, PreloadLink, PropResolver, ResolvableHead, SerializableHead, UnheadMeta } from '../../src/types'
 import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
 import { expectTypeOf } from 'vitest'
 import { createHead as createClientHead } from '../../src/client'
@@ -131,6 +131,12 @@ describe('types', () => {
       expectTypeOf(createStreamableClientHead<{ custom: string }>()!.push).parameter(0).toEqualTypeOf<ResolvableHead | { custom: string }>()
     }
   })
+  it('exports extension types without narrowing existing entries', () => {
+    expectTypeOf<MetaKeyType>().toEqualTypeOf<'name' | 'property' | 'http-equiv'>()
+    expectTypeOf<ResolveTagsOptions>().toHaveProperty('tagWeight')
+    expectTypeOf<NonNullable<HeadEntry<unknown>['options']>>()
+      .toEqualTypeOf<Omit<HeadEntryOptions<unknown>, 'head' | 'onRendered'>>()
+  })
   it('preserves properties validated by define helpers', () => {
     const preload = defineLink({
       rel: 'preload',
@@ -138,6 +144,7 @@ describe('types', () => {
       href: '/entry.js',
     })
     expectTypeOf(preload.rel).toEqualTypeOf<'preload'>()
+    expectTypeOf(preload.href).toEqualTypeOf<'/entry.js'>()
 
     const link = defineLink({
       'rel': 'openid2.provider',
@@ -151,6 +158,7 @@ describe('types', () => {
       src: '/entry.js',
     })
     expectTypeOf(module.type).toEqualTypeOf<'module'>()
+    expectTypeOf(module.src).toEqualTypeOf<'/entry.js'>()
 
     const script = defineScript({
       'type': 'text/plain',

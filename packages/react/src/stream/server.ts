@@ -1,6 +1,6 @@
 import type { Writable } from 'node:stream'
 import type { ReactElement, ReactNode } from 'react'
-import type { CreateStreamableServerHeadOptions, StreamableHeadContext } from 'unhead/stream/server'
+import type { CreateStreamableServerHeadOptions, PreparedTemplate, StreamableHeadContext } from 'unhead/stream/server'
 import type { CompatibleHead, ResolvableHead, Unhead, UseHeadInput } from 'unhead/types'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
@@ -52,10 +52,10 @@ export interface ReactStreamableHeadContext<T = ResolvableHead>
   /**
    * Wrap React's pipe function to handle head injection automatically
    * @param pipe - The pipe function from renderToPipeableStream
-   * @param template - The HTML template (from Vite's transformIndexHtml)
+   * @param template - The HTML template (from Vite's transformIndexHtml), or a `prepareTemplate()` result
    * @returns A new pipe function that handles shell rendering
    */
-  wrap: (pipe: ReactPipeFunction, template: string) => (writable: Writable) => void
+  wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => (writable: Writable) => void
 }
 
 type CreateStreamableHeadArgs<Input> = ResolvableHead extends Input
@@ -94,7 +94,7 @@ export function createStreamableHead<T = ResolvableHead>(
   return {
     head,
     onShellReady,
-    wrap: (pipe: ReactPipeFunction, template: string) => {
+    wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
       return (writable: Writable) => {
         shellReady.then(async () => {
           try {
@@ -127,7 +127,9 @@ export function createStreamableHead<T = ResolvableHead>(
 export {
   type BaseStreamableHeadContext,
   type CreateStreamableServerHeadOptions,
+  type PreparedTemplate,
   prepareStreamingTemplate,
+  prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   type StreamableHeadContext,

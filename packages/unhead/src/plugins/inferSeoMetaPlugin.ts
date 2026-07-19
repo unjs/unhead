@@ -16,6 +16,7 @@ export interface InferSeoMetaPluginOptions {
   /**
    * The twitter card to use.
    *
+   * @deprecated Twitter/X renders link previews from Open Graph metadata. Set this to `false` and rely on Open Graph metadata instead.
    * @default 'summary_large_image'
    */
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'

@@ -29,6 +29,14 @@ export interface HeadEntry<Input> {
    */
   _tags?: HeadTag[]
   /**
+   * Precomputed normalized tags shared across head instances (SSR default init
+   * entry). Only used when no entry hooks, tag weight overrides or entry
+   * options could observe or alter normalization, see `resolveTags`.
+   *
+   * @internal
+   */
+  _precomputedTags?: HeadTag[]
+  /**
    * Pending patch to apply on next render (client-only)
    * @internal
    */
@@ -37,10 +45,6 @@ export interface HeadEntry<Input> {
    * @internal
    */
   _o?: Input
-  /**
-   * @internal
-   */
-  _promisesProcessed?: boolean
 }
 
 export interface HeadPluginOptions<Input = ResolvableHead, RenderResult = unknown> {
@@ -74,7 +78,17 @@ export interface ActiveHeadEntry<Input> {
   _i: number
 }
 
-export type PropResolver = (key: string | undefined, value: unknown, tag?: HeadTag) => unknown
+export type PropResolver = ((key: string | undefined, value: unknown, tag?: HeadTag) => unknown) & {
+  /**
+   * Marks the resolver as the identity function for plain non-reactive JSON
+   * values (strings/numbers/booleans/plain objects/arrays). When every
+   * configured resolver is static, the SSR default init entry can use the
+   * precomputed fast path (see `server/createHead.ts`).
+   *
+   * @internal
+   */
+  _static?: boolean
+}
 
 export interface CreateHeadOptions<Input = ResolvableHead> {
   document?: Document
@@ -266,6 +280,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    * @internal
    */
   _entryCount: number
+  /**
+   * Number of entry hooks included in cached normalization.
+   *
+   * @internal
+   */
+  _h: number
   // client-specific (optional)
   /**
    * @internal

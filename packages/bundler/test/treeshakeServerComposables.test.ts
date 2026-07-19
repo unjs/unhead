@@ -3,17 +3,24 @@ import { TreeshakeServerComposables } from '../src/unplugin/TreeshakeServerCompo
 
 const USE_SERVER_HEAD_RE = /useServerHead/
 
-async function transform(code: string | string[], id = 'some-id.js') {
-  const plugin = TreeshakeServerComposables.vite({}) as any
+function environmentContext(consumer: 'client' | 'server') {
+  return { environment: { config: { consumer } } }
+}
+
+async function transformWith(plugin: any, code: string | string[], id = 'some-id.js', ctx: any = environmentContext('client')) {
   if (plugin.transformInclude && !plugin.transformInclude(id))
     return
   const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
   const res = await handler.call(
-    {},
+    ctx,
     Array.isArray(code) ? code.join('\n') : code,
     id,
   )
   return res?.code
+}
+
+async function transform(code: string | string[], id = 'some-id.js', ctx?: any) {
+  return transformWith(TreeshakeServerComposables.vite({}) as any, code, id, ctx)
 }
 
 describe('treeshakeServerComposables', () => {
@@ -152,5 +159,121 @@ export default /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], 
     `)
 
     expect(code).not.toMatch(USE_SERVER_HEAD_RE)
+  })
+
+  describe('scope tracking', () => {
+    it('removes calls proven to be unhead imports', async () => {
+      const code = await transform([
+        'import { useServerHead } from \'unhead\'',
+        'useServerHead({ title: \'Hello\' })',
+        'console.log(\'kept\')',
+      ])
+      expect(code).toBeDefined()
+      expect(code).not.toMatch(/useServerHead\(/)
+      expect(code).toContain('console.log(\'kept\')')
+    })
+
+    it('removes aliased unhead imports', async () => {
+      const code = await transform([
+        'import { useServerHead as x } from \'@unhead/vue\'',
+        'x({ title: \'Hello\' })',
+        'console.log(\'kept\')',
+      ])
+      expect(code).toBeDefined()
+      expect(code).not.toMatch(/x\(\{/)
+      expect(code).toContain('console.log(\'kept\')')
+    })
+
+    it('removes undeclared bare names (auto-import)', async () => {
+      const code = await transform([
+        'useServerSeoMeta({ description: \'World\' })',
+        'console.log(\'kept\')',
+      ])
+      expect(code).toBeDefined()
+      expect(code).not.toMatch(/useServerSeoMeta/)
+      expect(code).toContain('console.log(\'kept\')')
+    })
+
+    it('retains locally declared functions with matching names', async () => {
+      expect(await transform([
+        'function useServerHead(input) { return input }',
+        'useServerHead({ title: \'Hello\' })',
+      ])).toBeUndefined()
+
+      expect(await transform([
+        'const useServerSeoMeta = (input) => input',
+        'useServerSeoMeta({ description: \'World\' })',
+      ])).toBeUndefined()
+    })
+
+    it('retains calls above a hoisted local declaration', async () => {
+      // Function declarations hoist: this call targets the local function
+      // below it, not an auto-import.
+      expect(await transform([
+        'useServerHead({ title: \'Hello\' })',
+        'function useServerHead(input) { return input }',
+      ])).toBeUndefined()
+
+      expect(await transform([
+        'useServerSeoMeta({ description: \'World\' })',
+        'var useServerSeoMeta = (input) => input',
+      ])).toBeUndefined()
+    })
+
+    it('retains shadowed names in nested scopes', async () => {
+      expect(await transform([
+        'export function setup(useServerHead) {',
+        '  useServerHead({ title: \'Hello\' })',
+        '}',
+      ])).toBeUndefined()
+    })
+
+    it('retains imports from non-unhead packages', async () => {
+      expect(await transform([
+        'import { useServerHead } from \'other-lib\'',
+        'useServerHead({ title: \'Hello\' })',
+      ])).toBeUndefined()
+    })
+  })
+
+  describe('build target', () => {
+    it('retains server composables in server environments', async () => {
+      expect(await transform(couldTransform, 'some-id.js', environmentContext('server'))).toBeUndefined()
+    })
+
+    it('retains server composables when the target is unknown', async () => {
+      expect(await transform(couldTransform, 'some-id.js', {})).toBeUndefined()
+    })
+
+    it('handles client and server environments independently on one plugin instance', async () => {
+      const plugin = TreeshakeServerComposables.vite({}) as any
+      expect(plugin.sharedDuringBuild).toBe(true)
+
+      const client = await transformWith(plugin, couldTransform, 'some-id.js', environmentContext('client'))
+      const server = await transformWith(plugin, couldTransform, 'some-id.js', environmentContext('server'))
+      const clientAgain = await transformWith(plugin, couldTransform, 'some-id.js', environmentContext('client'))
+
+      expect(client).toBeDefined()
+      expect(client).not.toMatch(/useServerHead\(/)
+      expect(server).toBeUndefined()
+      expect(clientAgain).toEqual(client)
+    })
+
+    it('vite apply installs for client and SSR builds but not serve', () => {
+      const plugin = TreeshakeServerComposables.vite({}) as any
+      expect(plugin.apply({}, { command: 'build', isSsrBuild: false })).toBe(true)
+      expect(plugin.apply({}, { command: 'build', isSsrBuild: true })).toBe(true)
+      expect(plugin.apply({}, { command: 'serve', isSsrBuild: false })).toBe(false)
+    })
+
+    it('uses the apply() fallback when no environment is available', async () => {
+      const clientPlugin = TreeshakeServerComposables.vite({}) as any
+      clientPlugin.apply({}, { command: 'build', isSsrBuild: false })
+      expect(await transformWith(clientPlugin, couldTransform, 'some-id.js', {})).toBeDefined()
+
+      const ssrPlugin = TreeshakeServerComposables.vite({}) as any
+      ssrPlugin.apply({}, { command: 'build', isSsrBuild: true })
+      expect(await transformWith(ssrPlugin, couldTransform, 'some-id.js', {})).toBeUndefined()
+    })
   })
 })

@@ -5,7 +5,7 @@ import { vueInstall } from './install'
 import { VueResolver } from './resolver'
 
 export { VueHeadMixin } from './VueHeadMixin'
-export { propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
+export { type PreparedTemplate, prepareTemplate, propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
 
 export type CreateServerHeadOptions<I extends UseHeadInput = UseHeadInput> = Omit<CoreCreateServerHeadOptions<I>, 'propResolvers'>
 type CreateServerHeadArgs<Input extends UseHeadInput> = UseHeadInput extends Input

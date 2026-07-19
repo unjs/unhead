@@ -137,6 +137,20 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const stacks = new Map<number, string>()
 
   return defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
+    const hooks = head.hooks as any
+    if (hooks) {
+      const _callHook = hooks.callHook.bind(hooks)
+      let warnedAsyncHook = false
+      hooks.callHook = (name: string, ...args: any[]) => {
+        const result = _callHook(name, ...args)
+        if (result?.then && !warnedAsyncHook) {
+          warnedAsyncHook = true
+          console.warn(`[unhead] promise ignored: ${name}`)
+        }
+        return result
+      }
+    }
+
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
       if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {

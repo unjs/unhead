@@ -3,7 +3,7 @@ import type { CompatibleHead, ResolvableHead, Unhead, UseHeadInput } from 'unhea
 import { createElement } from 'react'
 import { UnheadContext } from './context'
 
-export { createHead, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
+export { createHead, type PreparedTemplate, prepareTemplate, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
 export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
   children: ReactNode

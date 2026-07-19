@@ -53,6 +53,56 @@ export interface PreparedHtmlTemplateWithIndexes {
   }
 }
 
+declare const PreparedTemplateBrand: unique symbol
+
+/**
+ * A reusable parsed HTML template.
+ *
+ * The object owns the exact `html` string its indexes describe, so it can be
+ * safely reused across many renders/requests without re-parsing and without
+ * any risk of indexes drifting from the template they were computed for.
+ *
+ * Create one with {@link prepareTemplate}.
+ *
+ * @experimental The prepared-template API may change in a future minor release.
+ */
+export interface PreparedTemplate extends PreparedHtmlTemplateWithIndexes {
+  readonly [PreparedTemplateBrand]: true
+  readonly html: string
+  readonly input: SerializableHead
+  readonly indexes: Readonly<PreparedHtmlTemplateWithIndexes['indexes']>
+}
+
+/**
+ * Parse an HTML template once so it can be reused across many renders/requests.
+ *
+ * Server and streaming functions that accept an HTML `template` string
+ * (`transformHtmlTemplate`, `transformHtmlTemplateRaw`, `renderSSRHeadShell`,
+ * `prepareStreamingTemplate`, `wrapStream`) also accept the returned
+ * `PreparedTemplate`, skipping the per-request template parse.
+ *
+ * The returned value is immutable. Unhead does not cache templates by their
+ * HTML string, so the caller controls the value's lifetime. It contains no
+ * request or head state: keep it at process scope and create a new head for
+ * each request.
+ *
+ * @experimental The prepared-template API may change in a future minor release.
+ *
+ * @example
+ * ```ts
+ * const template = prepareTemplate(await readFile('index.html', 'utf-8'))
+ * // per request
+ * const html = transformHtmlTemplateRaw(head, template)
+ * ```
+ */
+/* @__PURE__ */
+export function prepareTemplate(html: string): PreparedTemplate {
+  const template = parseHtmlForIndexes(html)
+  Object.freeze(template.input)
+  Object.freeze(template.indexes)
+  return Object.freeze(template) as PreparedTemplate
+}
+
 /**
  * Fast whitespace check using direct character code comparison
  */

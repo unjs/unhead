@@ -12,8 +12,8 @@ export * from './client'
 export { createHead as createClientHead } from './client'
 
 /**
- * The full v2 migration plugin set applied by the legacy `createHead`/`createServerHead`.
- * Export so users with a custom `createHead` can opt into one-line v2 compatibility.
+ * The v2 migration plugins applied by the legacy `createHead`/`createServerHead`, including
+ * Promise input resolution. Modern entrypoints require `PromisesPlugin` to be registered explicitly.
  *
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `@unhead/vue/client`/`@unhead/vue/server` without this plugin set.
@@ -22,7 +22,7 @@ export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParams
 
 /**
  * Creates a client `VueHeadClient` with the v2 migration plugin set pre-registered so that
- * tag props (`children`, `hid`, `vmid`, `body`), promise resolution, template params, and
+ * tag props (`children`, `hid`, `vmid`, `body`), Promise inputs, template params, and
  * alias sorting continue to work during the migration to v3.
  *
  * @deprecated Will be removed in v4. Use `createHead` from `@unhead/vue/client` instead; register

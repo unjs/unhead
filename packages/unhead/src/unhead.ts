@@ -22,10 +22,13 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
   const plugins: Map<string, HeadPlugin<T, R>> = new Map()
   const head: Unhead<T, R> = {
     _entryCount: 1,
+    _h: 0,
     plugins,
     resolvedOptions,
     ssr,
     entries,
+    // adapters decorate this same object; reserve the slot to keep its shape stable
+    hooks: undefined,
     render: () => renderer(head),
     use: (p: HeadPluginInput<T, R>) => registerPlugin(head, p),
     push(input: T, _options?: HeadEntryOptions<T>) {
@@ -33,6 +36,7 @@ export function createUnhead<T = ResolvableHead, R = unknown>(renderer: HeadRend
       const options = _options ? { ..._options } : {}
       delete options.head
       delete options.onRendered
+      delete options._index
       const entry: HeadEntry<T> = { _i, input, options }
       entries.set(_i, entry)
       const active: ActiveHeadEntry<T> = {

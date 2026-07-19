@@ -1,13 +1,12 @@
 // Renders the directional Performance section. A change is only surfaced past a gate:
 //  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
 //           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
-//  - alloc: |Δ| > max(2%, 1 KiB, 2× combined RME). Allocation-profiler samples
-//           are low-noise, and the RME gate prevents a marginal wobble from alarming.
+//  - alloc: |Δ| > max(2%, 1 KiB). Synchronous bytes allocated per render is
+//           near-deterministic, so a tight gate surfaces gains time can't show.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
-// Wall time is `informational`: shown for reference but it never drives the verdict, because
-// it's the noisiest signal (GC/scheduling) and would false-alarm while CPU and the
-// deterministic metrics agree. CPU is the gated time authority.
+// Noisy metrics are `informational`: shown for reference but excluded from the verdict.
+// This includes wall time and async heap deltas, where GC/scheduling can false-alarm.
 
 export interface PerfBench {
   id: string
@@ -16,7 +15,7 @@ export interface PerfBench {
   value: number
   rme?: number
   runs?: number
-  // reported for reference but excluded from the verdict (e.g. wall time)
+  // reported for reference but excluded from the verdict (e.g. wall time or async allocation)
   informational?: boolean
 }
 
@@ -83,7 +82,7 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
 function deltaCell(row: Row): string {
   if (row.status === 'new')
     return '🆕 new'
-  // informational metrics (wall time) report their delta neutrally, never as slower/faster
+  // informational metrics report their delta neutrally, never as slower/faster
   if (row.bench.informational)
     return row.status === 'same' ? '~ noise' : `ℹ️ ${fmtPct(row.deltaPct)}`
   if (row.status === 'same')
@@ -99,7 +98,7 @@ function deltaCell(row: Row): string {
 
 export function renderPerfReport(base: PerfRun | null, pr: PerfRun): string {
   const rows = pr.benches.map(b => classify(b, base?.benches?.find(x => x.id === b.id)))
-  // informational benches (wall time) are shown in the details but never drive the verdict
+  // informational benches are shown in the details but never drive the verdict
   const changed = rows.filter(r => !r.bench.informational && (r.status === 'slower' || r.status === 'faster'))
   const slower = changed.filter(r => r.status === 'slower')
 

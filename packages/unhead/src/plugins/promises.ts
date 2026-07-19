@@ -1,47 +1,78 @@
-import type { EntryResolveCtx } from '../types'
+import type { HeadEntry } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
-async function walkPromises(v: any): Promise<any> {
-  const type = typeof v
-  if (type === 'function') {
+function isThenable(v: any): v is PromiseLike<any> {
+  return typeof v?.then === 'function'
+}
+
+function walkPromises(v: any): any {
+  if (typeof v === 'function')
     return v
-  }
-  // Combined primitive type check
-  if (v instanceof Promise) {
-    return await v
-  }
+
+  if (isThenable(v))
+    return Promise.resolve(v).then(walkPromises)
 
   if (Array.isArray(v)) {
-    return await Promise.all(v.map(r => walkPromises(r)))
+    const values = v.map(walkPromises)
+    return values.some(isThenable) ? Promise.all(values) : v
   }
 
   if (v?.constructor === Object) {
-    const next: Record<string, any> = {}
-    for (const key of Object.keys(v)) {
-      next[key] = await walkPromises(v[key])
+    const keys = Object.keys(v)
+    const values = keys.map(key => walkPromises(v[key]))
+    if (values.some(isThenable)) {
+      return Promise.all(values).then(resolved => Object.fromEntries(
+        keys.map((key, index) => [key, resolved[index]]),
+      ))
     }
-    return next
   }
 
   return v
 }
 
-export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin({
-  key: 'promises',
-  hooks: {
-    'entries:resolve': async <Input>(ctx: EntryResolveCtx<Input>) => {
-      const promises = []
-      for (const k in ctx.entries) {
-        if (!ctx.entries[k]._promisesProcessed) {
-          promises.push(
-            walkPromises(ctx.entries[k].input).then((val) => {
-              ctx.entries[k].input = val
-              ctx.entries[k]._promisesProcessed = true
-            }),
+/**
+ * Resolves Promise values outside the synchronous tag pipeline. Pending entries
+ * are omitted from the current render and become available on the next render.
+ */
+export const PromisesPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
+  const pending = new WeakMap<HeadEntry<unknown>, unknown>()
+
+  return {
+    key: 'promises',
+    hooks: {
+      'entries:resolve': (ctx) => {
+        for (let index = ctx.entries.length - 1; index >= 0; index--) {
+          const entry = ctx.entries[index]
+          const input = entry.input
+          if (pending.get(entry) === input) {
+            ctx.entries.splice(index, 1)
+            continue
+          }
+
+          const result = walkPromises(input)
+          if (!isThenable(result)) {
+            pending.delete(entry)
+            continue
+          }
+
+          pending.set(entry, input)
+          ctx.entries.splice(index, 1)
+          void Promise.resolve(result).then(
+            (resolved) => {
+              if (pending.get(entry) !== input)
+                return
+              pending.delete(entry)
+              entry.input = resolved
+              delete entry._tags
+              head.invalidate?.()
+            },
+            () => {
+              if (pending.get(entry) === input)
+                pending.delete(entry)
+            },
           )
         }
-      }
-      await Promise.all(promises)
+      },
     },
-  },
-})
+  }
+}, 'promises')

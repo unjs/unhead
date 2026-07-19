@@ -1,17 +1,14 @@
-import type { HookableCore } from 'hookable'
-import type { ClientHeadHooks, CreateClientHeadOptions, HeadEntryOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
-import { createUnhead, registerPlugin } from '../unhead'
+import type { ClientHeadHooks, CreateClientHeadOptions, HeadRenderer, HeadTag, ResolvableHead, Unhead } from '../types'
+import type { ClientUnhead } from './adapter'
+import { createUnhead } from '../unhead'
 import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
+import { createClientHeadAdapter } from './adapter'
 import { createDomRenderer } from './renderDOMHead'
 
-const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
+export type { ClientUnhead } from './adapter'
 
-export interface ClientUnhead<T = ResolvableHead, RenderResult = boolean> extends Unhead<T, RenderResult> {
-  hooks: HookableCore<ClientHeadHooks<T, RenderResult>>
-  dirty: boolean
-  invalidate: () => void
-}
+const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + ((TagPriorityAliases as Record<string, number>)[tag.tagPriority as string] || 0)
 
 type ClientHeadOptionsWithRenderer<Input, RenderResult> = Omit<CreateClientHeadOptions<Input, RenderResult>, 'render'> & {
   render: HeadRenderer<RenderResult, Input>
@@ -31,50 +28,8 @@ export function createHead(options: object = {}): unknown {
   const renderer = resolvedOptions.render || createDomRenderer({ document: resolvedOptions.document })
   const core = createUnhead<unknown, unknown>(renderer, { document: resolvedOptions.document, propResolvers: resolvedOptions.propResolvers, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks<unknown, unknown>>(resolvedOptions.hooks)
-  let dirty = false
-  const head: ClientUnhead<unknown, unknown> = {
-    ...core,
-    ssr: false,
-    hooks,
-    use: p => registerPlugin(head, p),
-    get dirty() { return dirty },
-    set dirty(v) { dirty = v },
-    render: () => renderer(head),
-    invalidate() {
-      for (const e of core.entries.values()) delete e._tags
-      dirty = true
-      hooks.callHook('entries:updated', head)
-    },
-    push(input: unknown, _options?: HeadEntryOptions<unknown>) {
-      const onRendered = _options?.onRendered
-      const unhook = onRendered
-        ? hooks.hook('dom:rendered', onRendered as any)
-        : undefined
-      const active = core.push(input, _options)
-      core.entries.get(active._i)!._o = input
-      dirty = true
-      hooks.callHook('entries:updated', head)
-      return {
-        _i: active._i,
-        patch(input: unknown) {
-          active.patch(input)
-          dirty = true
-          hooks.callHook('entries:updated', head)
-        },
-        dispose() {
-          unhook?.()
-          if (core.entries.has(active._i)) {
-            active.dispose()
-            head.invalidate()
-          }
-        },
-      }
-    },
-  }
-  hooks.hook('entries:updated', () => {
-    renderer(head)
-  })
-  resolvedOptions.plugins?.forEach(p => registerPlugin(head, p))
+  const head = createClientHeadAdapter(core, hooks, renderer)
+  resolvedOptions.plugins?.forEach(p => head.use(p))
   resolvedOptions.init?.forEach(e => e && head.push(e))
   return head
 }

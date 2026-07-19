@@ -40,7 +40,7 @@ export interface PluginSchemaOrgOptions {
   trailingSlash?: boolean
 }
 
-export function UnheadSchemaOrg(config: MetaInput = {}, meta: () => Partial<MetaInput> = () => ({}), options?: PluginSchemaOrgOptions) {
+export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () => Partial<MetaInput> = () => ({}), options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta: Partial<ResolvedMeta> = {}
