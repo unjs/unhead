@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { PrecompiledHeadInput, PrecompiledHeadOptions, PrecompiledServerHead } from 'unhead/precompiled/server'
 import type { UseHeadInput, UseSeoMetaInput } from 'unhead/types'
-import { createContext, createElement, useContext, useRef } from 'react'
+import { createContext, createElement, useContext } from 'react'
 import { createHead as createCoreHead } from 'unhead/precompiled/server'
 
 export { createServerRenderer, renderSSRHead, resolveTags } from 'unhead/precompiled/server'
@@ -31,11 +31,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactServerEntr
   const head = options.head || (context && '_p' in context ? context : undefined)
   if (!head)
     throw new Error('useHead() was called without a precompiled React server provider.')
-  const registered = useRef(false)
-  if (!registered.current) {
-    head._p.push(input as unknown as PrecompiledHeadInput)
-    registered.current = true
-  }
+  head._p.push(input as unknown as PrecompiledHeadInput)
 }
 
 export const useSeoMeta = useHead as (

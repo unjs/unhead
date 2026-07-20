@@ -13,6 +13,12 @@ export default defineBuildConfig({
   failOnWarn: false,
   rollup: {
     inlineDependencies: true,
+    output: {
+      manualChunks(id) {
+        if (/[\\/]precompiled[\\/]client\.mjs$/.test(id))
+          return 'client'
+      },
+    },
     esbuild: {
       define: { 'process.env.NODE_ENV': JSON.stringify('production') },
       treeShaking: true,
@@ -45,7 +51,7 @@ export default defineBuildConfig({
       const chunks = path.join(root, 'chunks')
       const asyncFiles = fs.existsSync(chunks) ? fs.readdirSync(chunks).filter(file => file.endsWith('.mjs')) : []
       const asyncSize = asyncFiles.reduce((total, file) => total + fs.readFileSync(path.join(chunks, file)).length, 0)
-      if (!asyncFiles.length || !initial.toString().includes('import('))
+      if (!asyncFiles.includes('client.mjs') || !initial.toString().includes('import('))
         throw new Error('Deferred client precompile did not produce an async runtime chunk.')
       console.log(`PRECOMPILE CLIENT DEFERRED Initial: ${initial.length} bytes, gzip: ${zlib.gzipSync(initial).length} bytes; async: ${asyncSize} bytes`)
     },

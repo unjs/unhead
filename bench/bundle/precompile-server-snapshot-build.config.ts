@@ -29,6 +29,9 @@ export default defineBuildConfig({
     'build:done': () => {
       const file = path.resolve(__dirname, 'dist/precompile-runtime-snapshot/vue-server/precompile-snapshot.mjs')
       const contents = fs.readFileSync(file)
+      const output = contents.toString()
+      if (output.includes('meta:description') || output.includes('new Map'))
+        throw new Error('Snapshot server bundle retained runtime tag identities or winner maps.')
       console.log(`PRECOMPILE SERVER SNAPSHOT Size: ${contents.length} bytes, gzip: ${zlib.gzipSync(contents).length} bytes`)
     },
   },

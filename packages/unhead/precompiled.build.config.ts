@@ -5,9 +5,9 @@ import { defineBuildConfig } from 'unbuild'
 export default defineBuildConfig({
   clean: true,
   declaration: true,
-  // This first pass intentionally emits one export before the rest of the
-  // package exists; the ordinary build immediately follows and validates the
-  // complete package surface.
+  // This first pass intentionally emits the precompiled entries before the
+  // rest of the package exists; the ordinary build immediately follows and
+  // validates the complete package surface.
   failOnWarn: false,
   entries: [
     { input: 'src/precompiled/client', name: 'precompiled/client' },

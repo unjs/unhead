@@ -210,7 +210,7 @@ function measureHeapGrowth(id, name, offFn, onFn, consume, { warmup = 100, reps 
   }
   const samples = { off: [], on: [] }
   const measure = (fn) => {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       forceGC()
       const before = process.memoryUsage().heapUsed
       for (let i = 0; i < runs; i++)
