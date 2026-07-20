@@ -3,10 +3,8 @@ import type { Plugin as VitePlugin } from 'vite'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { UnheadTransforms } from './createTransformPipeline'
 import { SSRStaticReplace } from './SSRStaticReplace'
-import { TreeshakeServerComposables } from './TreeshakeServerComposables'
-import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 /**
  * Per-framework factory config. `framework` is the package name (e.g.
@@ -59,29 +57,29 @@ export interface UnheadBundlerFactory {
 interface CoreDef { instance: UnpluginInstance<any, false>, options: any }
 
 function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
-  const defs: CoreDef[] = []
   const common = { filter: options.filter, sourcemap: options.sourcemap }
 
-  if (options.treeshake !== false) {
-    const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
-    defs.push({ instance: TreeshakeServerComposables, options: { ...common, ...treeshakeOpts } })
-  }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    defs.push({ instance: UseSeoMetaTransform, options: { ...common, ...seoMetaOpts } })
-  }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object'
-      ? options.minify
-      : options.minify === true
+  const treeshake = options.treeshake !== false
+    && { ...common, ...(typeof options.treeshake === 'object' ? options.treeshake : {}) }
+  const seoMeta = options.transformSeoMeta !== false
+    && { ...common, ...(typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}) }
+  const minifyOpts = typeof options.minify === 'object'
+    ? options.minify
+    : (options.minify as boolean | undefined) === true
         ? { js: true, css: true }
         : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      defs.push({ instance: MinifyTransform, options: { ...common, ...minifyOpts } })
-    }
-  }
+  const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
+    && { ...common, ...minifyOpts }
+  const precompileOptions = options.experimental?.precompile
+  const precompile = precompileOptions
+    && { ...common, ...(typeof precompileOptions === 'object' ? precompileOptions : {}) }
+  const consumer = typeof precompileOptions === 'object' ? precompileOptions.consumer : undefined
 
-  return defs
+  if (!treeshake && !seoMeta && !precompile && !minify)
+    return []
+
+  // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
+  return [{ instance: UnheadTransforms, options: { consumer, treeshake, seoMeta, precompile, minify } }]
 }
 
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
@@ -133,6 +131,11 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
     const { streaming, validate, devtools, ...coreOpts } = options
+    if (streaming && options.experimental?.precompile) {
+      throw new Error(
+        '[@unhead/bundler] framework streaming cannot be combined with experimental precompile because the sealed runtime excludes streaming hooks and replay',
+      )
+    }
     const defs = resolveCoreDefs(coreOpts)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming

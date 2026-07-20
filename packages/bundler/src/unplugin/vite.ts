@@ -2,10 +2,8 @@ import type { Plugin } from 'vite'
 import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { UnheadTransforms } from './createTransformPipeline'
 import { SSRStaticReplace } from './SSRStaticReplace'
-import { TreeshakeServerComposables } from './TreeshakeServerComposables'
-import { UseSeoMetaTransform } from './UseSeoMetaTransform'
 
 export type { VitePluginOptions }
 
@@ -22,19 +20,21 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
   const ctx = createHeadTransformContext()
   const framework = internal.framework ?? options._framework
 
-  if (options.treeshake !== false) {
-    const treeshakeOpts = typeof options.treeshake === 'object' ? options.treeshake : {}
-    plugins.push(TreeshakeServerComposables.vite({ filter: options.filter, sourcemap: options.sourcemap, ...treeshakeOpts }))
-  }
-  if (options.transformSeoMeta !== false) {
-    const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
-    plugins.push(UseSeoMetaTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...seoMetaOpts }))
-  }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      plugins.push(MinifyTransform.vite({ filter: options.filter, sourcemap: options.sourcemap, ...minifyOpts }))
-    }
+  const common = { filter: options.filter, sourcemap: options.sourcemap }
+  const treeshake = options.treeshake !== false
+    && { ...common, ...(typeof options.treeshake === 'object' ? options.treeshake : {}) }
+  const seoMeta = options.transformSeoMeta !== false
+    && { ...common, ...(typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}) }
+  const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
+  const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
+    && { ...common, ...minifyOpts }
+  const precompileOptions = options.experimental?.precompile
+  const precompile = precompileOptions
+    && { ...common, ...(typeof precompileOptions === 'object' ? precompileOptions : {}) }
+  const precompileConsumer = typeof precompileOptions === 'object' ? precompileOptions.consumer : undefined
+  if (treeshake || seoMeta || precompile || minify) {
+    // Single-parse pipeline for the treeshake, seoMeta, precompile and minify concerns.
+    plugins.push(UnheadTransforms.vite({ consumer: precompileConsumer, treeshake, seoMeta, precompile, minify }))
   }
 
   // Register runtime plugins into the shared context

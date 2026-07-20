@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createHead, renderSSRHead } from '../../../src/server'
+import { resolveTags } from '../../../src/utils'
 
 describe('default init precomputed tags', () => {
   it('attaches precomputed tags to the default init entry only', () => {
@@ -104,6 +105,12 @@ describe('default init precomputed tags', () => {
     expect(renderSSRHead(head).headTags).toContain('content="mutated"')
     const fresh = createHead()
     expect(renderSSRHead(fresh).headTags).toContain('content="width=device-width, initial-scale=1"')
+  })
+
+  it('public resolved tags cannot contaminate defaults in another head', () => {
+    const tags = resolveTags(createHead())
+    tags.find(tag => tag.tag === 'htmlAttrs')!.props.lang = 'mutated'
+    expect(renderSSRHead(createHead()).htmlAttrs).toBe(' lang="en"')
   })
 
   it('custom tagWeight bypasses the fast path', () => {

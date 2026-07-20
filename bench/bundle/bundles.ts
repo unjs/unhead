@@ -7,11 +7,13 @@ export interface BundleSpec {
   id: string
   /** display name in the report */
   name: string
-  category: 'Core' | 'Vue' | 'React' | 'Schema.org'
+  category: 'Core' | 'Experimental' | 'Vue' | 'React' | 'Schema.org'
   /** path under bench/bundle/dist */
   file: string
   /** build must emit it; throw if missing (catches a broken build instead of hiding it) */
   required?: boolean
+  /** same-commit feature comparison; omitted from the base-vs-PR bundle table */
+  comparison?: 'precompile'
 }
 
 export const BUNDLES: BundleSpec[] = [
@@ -20,9 +22,21 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'clientSelfContained', name: 'Client (Self-Contained)', category: 'Core', file: 'client-sc/client/minimal.mjs' },
   { id: 'server', name: 'Server (Minimal)', category: 'Core', file: 'server/server/minimal.mjs', required: true },
   { id: 'serverSelfContained', name: 'Server (Self-Contained)', category: 'Core', file: 'server-sc/server/minimal.mjs' },
+  { id: 'precompileRuntimeOff', name: 'Precompile Server Runtime (Off)', category: 'Experimental', file: 'precompile-runtime-off/vue-server/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileRuntimeOn', name: 'Precompile Server Runtime (On)', category: 'Experimental', file: 'precompile-runtime-on/vue-server/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileRuntimeUnique', name: 'Precompile Server Unique', category: 'Experimental', file: 'precompile-runtime-unique/vue-server/precompile-unique.mjs', comparison: 'precompile' },
+  { id: 'precompileClientRuntimeOff', name: 'Precompile Client Runtime (Off)', category: 'Experimental', file: 'precompile-client-runtime-off/client/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileClientRuntimeOn', name: 'Precompile Client Runtime (On)', category: 'Experimental', file: 'precompile-client-runtime-on/client/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileClientDeferredInitial', name: 'Precompile Client Deferred (Initial)', category: 'Experimental', file: 'precompile-client-runtime-deferred/client/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileClientDeferredAsync', name: 'Precompile Client Deferred (Async)', category: 'Experimental', file: 'precompile-client-runtime-deferred/chunks/client.mjs', comparison: 'precompile' },
+  { id: 'precompileClientCsr', name: 'Precompile Client CSR', category: 'Experimental', file: 'precompile-client-runtime-csr/client/precompile-runtime.mjs', comparison: 'precompile' },
+  { id: 'precompileClientSnapshot', name: 'Precompile Client Snapshot', category: 'Experimental', file: 'precompile-client-runtime-snapshot/client/precompile-snapshot.mjs', comparison: 'precompile' },
+  { id: 'precompileServerSnapshot', name: 'Precompile Server Snapshot', category: 'Experimental', file: 'precompile-runtime-snapshot/vue-server/precompile-snapshot.mjs', comparison: 'precompile' },
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },
   { id: 'vueServer', name: 'Vue Server (Minimal)', category: 'Vue', file: 'vue-server/vue-server/minimal.mjs', required: true },
+  { id: 'vueClientSeoTransform', name: 'Vue SEO Transform', category: 'Vue', file: 'vue-client-seo-plugin-base/vue-client/minimal-seo.mjs' },
+  { id: 'vueClientSeoPrecompile', name: 'Vue SEO Precompiled', category: 'Vue', file: 'vue-client-seo-plugin/vue-client/minimal-seo.mjs' },
   { id: 'reactClient', name: 'React Client (Minimal)', category: 'React', file: 'react-client/react-client/minimal.mjs' },
   { id: 'reactClientFull', name: 'React Client (Full)', category: 'React', file: 'react-client-full/react-client/full.mjs' },
   { id: 'reactServer', name: 'React Server (Minimal)', category: 'React', file: 'react-server/react-server/minimal.mjs' },

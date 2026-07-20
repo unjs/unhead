@@ -29,6 +29,34 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
+    "./precompiled/client": {
+      "types": "./dist/precompiled/client.d.ts",
+      "default": "./dist/precompiled/client.mjs"
+    },
+    "./precompiled/client-csr": {
+      "types": "./dist/precompiled/client-csr.d.ts",
+      "default": "./dist/precompiled/client-csr.mjs"
+    },
+    "./precompiled/client-deferred": {
+      "types": "./dist/precompiled/client-deferred.d.ts",
+      "default": "./dist/precompiled/client-deferred.mjs"
+    },
+    "./precompiled/client-snapshot": {
+      "types": "./dist/precompiled/client-snapshot.d.ts",
+      "default": "./dist/precompiled/client-snapshot.mjs"
+    },
+    "./precompiled/server": {
+      "types": "./dist/precompiled/server.d.ts",
+      "default": "./dist/precompiled/server.mjs"
+    },
+    "./precompiled/server-snapshot": {
+      "types": "./dist/precompiled/server-snapshot.d.ts",
+      "default": "./dist/precompiled/server-snapshot.mjs"
+    },
+    "./precompiled/server-unique": {
+      "types": "./dist/precompiled/server-unique.d.ts",
+      "default": "./dist/precompiled/server-unique.mjs"
+    },
     "./plugins": {
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.mjs"
@@ -100,8 +128,29 @@
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "precompiled/client": [
+        "dist/precompiled/client.d.ts"
+      ],
+      "precompiled/client-csr": [
+        "dist/precompiled/client-csr.d.ts"
+      ],
+      "precompiled/client-deferred": [
+        "dist/precompiled/client-deferred.d.ts"
+      ],
+      "precompiled/client-snapshot": [
+        "dist/precompiled/client-snapshot.d.ts"
+      ],
       "plugins": [
         "dist/plugins.d.ts"
+      ],
+      "precompiled/server": [
+        "dist/precompiled/server.d.ts"
+      ],
+      "precompiled/server-snapshot": [
+        "dist/precompiled/server-snapshot.d.ts"
+      ],
+      "precompiled/server-unique": [
+        "dist/precompiled/server-unique.d.ts"
       ],
       "legacy": [
         "dist/legacy.d.ts"
@@ -155,8 +204,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild",
-    "stub": "unbuild --stub",
+    "build": "unbuild --config precompiled.build.config.ts && UNHEAD_PRESERVE_PRECOMPILED=true unbuild",
+    "stub": "unbuild --stub --config precompiled.build.config.ts && UNHEAD_PRESERVE_PRECOMPILED=true unbuild --stub",
     "test:attw": "attw --pack",
     "prepack": "pnpm run build"
   },

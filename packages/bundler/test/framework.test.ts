@@ -92,6 +92,36 @@ describe('createFrameworkPlugin devtools loading', () => {
     expect(devtoolsState.loads).toBe(0)
   })
 
+  it('precompiles an explicitly targeted public Rollup build', async () => {
+    const plugins = Unhead({
+      devtools: false,
+      experimental: { precompile: { consumer: 'server' } },
+      transformSeoMeta: false,
+      treeshake: false,
+      validate: false,
+    }).rollup() as any[]
+    const plugin = plugins.find(candidate => candidate.name === 'unhead:transforms')
+    const result = await plugin.transform.handler.call({}, [
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: \'static\' }, { head })',
+    ].join('\n'), '/app/page.ts')
+
+    expect(result.code).toContain('const __unhead_precompiled_plan_0 = [[')
+    expect(result.code).toContain('<title>static</title>')
+  })
+
+  it.each([
+    true,
+    { consumer: 'server' as const },
+  ])('rejects framework streaming combined with experimental precompile (%j)', (precompile) => {
+    expect(() => Unhead({
+      experimental: { precompile },
+      streaming: true,
+    })).toThrow(
+      /framework streaming cannot be combined with experimental precompile because the sealed runtime excludes streaming hooks and replay/,
+    )
+  })
+
   it('does not import or include devtools when disabled for Vite', () => {
     const plugins = Unhead({ devtools: false }).vite() as any[]
 

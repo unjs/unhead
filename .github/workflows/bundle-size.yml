@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
@@ -41,13 +42,14 @@ jobs:
           git status --porcelain
           git diff --stat
           git checkout -f ${{ github.base_ref }}
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm build
           # the base ref may predate some bundle configs (react, full, schema-org);
           # tolerate their absence so the other baselines are still produced and the
           # new bundles surface as fresh rather than failing the run
           pnpm test:bundle-size || true
           pnpm test:vue-bundle-size || true
+          pnpm test:vue-seo-bundle-size || true
           pnpm test:react-bundle-size || true
           pnpm test:schema-org-bundle-size || true
           # snapshot the whole base dist; report.ts diffs PR dist against it by path
@@ -61,13 +63,16 @@ jobs:
 
       - name: Build PR bundles
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
+          pnpm test:vue-seo-bundle-size
+          pnpm test:precompile-runtime-bundle-size
           pnpm test:react-bundle-size
           pnpm test:schema-org-bundle-size
           node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
+          node --expose-gc --max-semi-space-size=64 bench/precompile-perf-ci.mjs > /tmp/precompile-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
@@ -83,6 +88,7 @@ jobs:
           BASE_DIST: /tmp/base-dist
           BASE_PERF: /tmp/base-perf.json
           PR_PERF: /tmp/pr-perf.json
+          PRECOMPILE_PERF: /tmp/precompile-perf.json
         run: |
           output=$(bun bench/bundle/report.ts)
           echo "$output"
@@ -90,7 +96,13 @@ jobs:
           echo "$output" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Assert experimental precompile budgets
+        run: |
+          pnpm vitest run packages/bundler/test/viteBuild.integration.test.ts
+          node bench/precompile-gate.mjs /tmp/precompile-perf.json
+
       - name: Post comment on PR
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3
         with:
           header: Bundle Size Analysis

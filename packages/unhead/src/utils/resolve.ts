@@ -205,8 +205,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
       // takes the normalize path instead of reaching the shared array.
       if (e._precomputedTags
         && weightFn === head.resolvedOptions._tagWeight
-        && !hooks['entries:normalize']?.length
-        && !hooks['entries:resolve']?.length
+        && !entries
         && (!e.options || isEmptyProps(e.options))) {
         tags = e._precomputedTags
       }
