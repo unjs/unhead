@@ -4,23 +4,28 @@ description: "Minify inline script and style tag content during SSR rendering. Z
 navigation.title: "Minify"
 ---
 
-**Quick Answer:** The Minify plugin strips comments, collapses whitespace, and minifies inline `<script>` and `<style>` content during SSR rendering. It uses lightweight pure-JS minifiers by default — zero native dependencies, safe for edge and serverless.
+The Minify plugin strips comments and collapses whitespace in inline `<script>` and `<style>` content during SSR rendering. Its built-in minifiers have no native dependencies.
 
-## What Does This Plugin Do?
+## Runtime behavior
 
-The Minify plugin hooks into the SSR render pipeline and minifies:
+The Minify plugin hooks into the SSR render pipeline and minifies `innerHTML` content that is at least 20 characters long:
 
-- **Inline scripts** — strips comments, collapses whitespace, preserves string literals and ASI safety
-- **Inline styles** — strips comments, collapses whitespace, removes trailing semicolons, strips leading zeros
-- **JSON-LD / application/json** — re-serializes to remove pretty-printing whitespace
+- **Inline scripts**: Strips comments, preserves string literals, and retains line breaks in common automatic-semicolon-insertion cases
+- **Inline styles**: Strips comments, collapses whitespace, removes trailing semicolons, and strips leading zeros
+- **JSON-LD / application/json**: Re-serializes the value without pretty-printing whitespace
 
 It automatically skips `speculationrules` and `importmap` script types, and never increases content length.
 
-## How Do I Set Up the Plugin?
+Content stored in `textContent` is not minified. Use `innerHTML` or the string shorthand for trusted static code when you want this plugin to process it.
+
+The built-in JavaScript minifier is a lightweight scanner, not a full parser. Use a custom parser-based minifier for complex syntax or code that has not been covered by your tests.
+
+## Setup
 
 Register the plugin when creating your head instance:
 
 ::code-block
+
 ```ts [Input]
 import { MinifyPlugin } from '@unhead/dynamic-import/plugins'
 
@@ -30,11 +35,13 @@ const head = createHead({
   ]
 })
 ```
+
 ::
 
-## What Options Can I Configure?
+## Options
 
 ::code-block
+
 ```ts [Input]
 export interface MinifyPluginOptions {
   /**
@@ -61,6 +68,7 @@ export interface MinifyPluginOptions {
   omitLineBreaks?: boolean
 }
 ```
+
 ::
 
 ### Omit Line Breaks
@@ -68,22 +76,26 @@ export interface MinifyPluginOptions {
 By default tags render one per line. Set `omitLineBreaks` to render them on a single line. This only drops the separators between tags, so newlines inside inline `<script>`/`<style>`/JSON-LD content are preserved (the minifiers handle those):
 
 ::code-block
+
 ```ts [Input]
 MinifyPlugin({
   omitLineBreaks: true,
 })
 ```
+
 ::
 
 ### Disable Specific Minifiers
 
 ::code-block
+
 ```ts [Input]
 MinifyPlugin({
   js: false,   // skip script minification
   json: false, // skip JSON-LD minification
 })
 ```
+
 ::
 
 ### Custom Minifiers
@@ -91,21 +103,24 @@ MinifyPlugin({
 Provide your own synchronous minifier function for heavier optimization:
 
 ::code-block
+
 ```ts [Input]
 MinifyPlugin({
   js: (code) => myCustomJSMinify(code),
   css: (code) => myCustomCSSMinify(code),
 })
 ```
+
 ::
 
-Note: The `ssr:render` hook runs synchronously, so custom minifiers must be synchronous.
+The `ssr:render` hook runs synchronously, so custom minifiers must be synchronous.
 
 ## Build-Time Minification
 
 For build-time minification of static string literals inside `useHead()` / `useServerHead()` calls, enable the `minify` option on the [unified Vite plugin](/docs/head/guides/build-plugins/minify-transform). This runs at build time using heavier tools (rolldown/esbuild for JS, lightningcss for CSS) that never enter your SSR runtime bundle.
 
 ::code-block
+
 ```ts [vite.config.ts]
 import vue from '@vitejs/plugin-vue'
 import { Unhead } from '@unhead/vue/vite'
@@ -124,12 +139,13 @@ export default defineConfig({
   ],
 })
 ```
+
 ::
 
 Available minifier backends:
 
 | Package | Function | Use case |
-|---------|----------|----------|
+| --------- | ---------- | ---------- |
 | `@unhead/bundler/minify/rolldown` | `createJSMinifier()` | JS minification (Vite 8+) |
 | `@unhead/bundler/minify/esbuild` | `createJSMinifier()` | JS minification (Vite 7) |
 | `@unhead/bundler/minify/lightningcss` | `createCSSMinifier()` | CSS minification |
@@ -139,6 +155,7 @@ Available minifier backends:
 The built-in minifiers are also available as standalone functions for use in custom build pipelines:
 
 ::code-block
+
 ```ts [Input]
 import { minifyCSS, minifyJS, minifyJSON } from '@unhead/dynamic-import/minify'
 
@@ -146,10 +163,11 @@ const minifiedJS = minifyJS('// comment\nvar x = 1;')
 const minifiedCSS = minifyCSS('body { margin: 0; }')
 const minifiedJSON = minifyJSON('{ "name": "test" }')
 ```
+
 ::
 
 ## Related
 
-- [Build Plugins](/docs/head/guides/build-plugins/overview) - Vite and Webpack build optimizations
-- [Validate Plugin](/docs/head/guides/plugins/validate) - Catch common SEO and head tag mistakes
-- [Inner Content](/docs/head/guides/core-concepts/inner-content) - Working with innerHTML and textContent
+- [Build Plugins](/docs/head/guides/build-plugins/overview): Vite and webpack build optimizations
+- [Validate Plugin](/docs/head/guides/plugins/validate): Catch common SEO and head tag mistakes
+- [Inner Content](/docs/head/guides/core-concepts/inner-content): Work with `innerHTML` and `textContent`

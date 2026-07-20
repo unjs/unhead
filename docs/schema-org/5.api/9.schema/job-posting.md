@@ -5,9 +5,9 @@ navigation:
   title: JobPosting
 ---
 
-JobPosting schema enables your job listings to appear in Google Jobs search results with salary, location, and application details. It's required for Google Jobs integration.
+[JobPosting structured data](https://developers.google.com/search/docs/appearance/structured-data/job-posting) can make a job listing eligible for Google's job search experience. Eligibility also depends on the page content and Google's job posting guidelines.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -15,8 +15,8 @@ JobPosting schema enables your job listings to appear in Google Jobs search resu
   "@type": "JobPosting",
   "title": "Software Engineer",
   "description": "We are looking for a Software Engineer to join our team.",
-  "datePosted": "2026-01-15",
-  "validThrough": "2026-04-15",
+  "datePosted": "2026-07-15",
+  "validThrough": "2027-01-15",
   "employmentType": "FULL_TIME",
   "hiringOrganization": {
     "@type": "Organization",
@@ -44,15 +44,13 @@ JobPosting schema enables your job listings to appear in Google Jobs search resu
 }
 ```
 
-With Unhead, generate this using the `defineJobPosting()` composable — see the [API reference](#schema-org-job-posting) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org Job Posting
 
-- **Type**: `defineJobPosting(input: JobPosting)`{lang="ts"}
+- **Type**: `defineJobPosting<T extends Record<string, any>>(input?: JobPosting & T)`{lang="ts"}
 
   Describes a `JobPosting` on a `WebPage`.
 
@@ -65,7 +63,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 - **title** `string`
 
-  The title of the job (not the title of the posting). For example, "Software Engineer" or "Barista"
+  The title of the job, not the title of the posting, such as `Software Engineer` or `Barista`.
 
 - **description**  `string`
 
@@ -77,7 +75,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 - **jobLocation** `Place`
 
-  The location(s) where the job is available.
+  The physical location where the employee reports to work. Google permits this field to be omitted for a fully remote job when `jobLocationType: 'TELECOMMUTE'` and `applicantLocationRequirements` describe where the employee may work. The current Unhead input type still marks `jobLocation` as required.
 
 - **datePosted** `ResolvableDate`
 
@@ -87,48 +85,48 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 - **employmentType** `string`
 
-  Type of employment (e.g. full-time, part-time, contract, temporary, seasonal, internship).
+  Type of employment (e.g., full-time, part-time, contract, temporary, seasonal, internship).
 
 - **validThrough** `ResolvableDate`
 
-  The date after when the item is not valid. For example the end of an offer, salary period, or a period of opening hours.
+  The date after which the job posting is no longer valid.
 
-- **applicantLocationRequirements** - `AdministrativeArea`
+- **applicantLocationRequirements:** `AdministrativeArea`
 
-  The region(s) of the organization where the job is available.
+  The geographic area in which applicants may be located.
 
-- **baseSalary** - `MonetaryAmount`
+- **baseSalary:** `MonetaryAmount`
 
   The base salary of the job or of an employee in an EmployeeRole.
 
-- **directApply** - `boolean`
+- **directApply:** `boolean`
 
   Indicates whether direct application is allowed.
 
-- **identifier** - `string`
+- **identifier:** `string`
 
   An identifier for the job posting, unique within the hiring organization.
 
-- **jobLocationType** - `string`
+- **jobLocationType:** `string`
 
-  A description of the job location (e.g TELECOMMUTE for telecommute jobs).
+  For fully remote jobs, set this to `TELECOMMUTE`.
 
 ## Defaults
 
 - **@type**: `JobPosting`
 - **@id**: `${canonicalUrl}#job-posting`
 - **hiringOrganization**: id reference of the identity
-- **mainEntityOfPage** id reference of the web page
+- **mainEntityOfPage**: ID reference of the WebPage
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `datePosted` - Date
-- `hiringOrganization` - Organization
-- `jobLocation` - Place
-- `baseSalary` - MonetaryAmount
-- `validThrough` - Date
+- `datePosted`: Date
+- `hiringOrganization`: Organization
+- `jobLocation`: Place
+- `baseSalary`: MonetaryAmount
+- `validThrough`: Date
 
 ## Examples
 
@@ -158,8 +156,8 @@ defineJobPosting({
     },
   },
   employmentType: 'FULL_TIME',
-  validThrough: '2022-02-01',
-  datePosted: '2022-01-01',
+  validThrough: '2027-01-15',
+  datePosted: '2026-07-15',
 })
 ```
 
@@ -220,7 +218,7 @@ export interface JobPostingSimple extends Thing {
   validThrough?: ResolvableDate
 
   /**
-   * A description of the job location (e.g. TELECOMMUTE for telecommute jobs).
+   * For fully remote jobs, set this to `TELECOMMUTE`.
    */
   jobLocationType?: 'TELECOMMUTE'
 
@@ -228,10 +226,26 @@ export interface JobPostingSimple extends Thing {
    * Indicates whether the URL that's associated with this job posting enables direct application for the job.
    */
   directApply?: boolean
+  /**
+   * Description of benefits associated with the job.
+   */
+  jobBenefits?: string
+  /**
+   * Educational credentials or qualifications required for the job.
+   */
+  educationRequirements?: string
+  /**
+   * Description of the level of experience required for the job.
+   */
+  experienceRequirements?: string
+  /**
+   * Skills, abilities, or knowledge needed for the job.
+   */
+  qualifications?: string
 }
 ```
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Hiring organization
-- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Job location
+- [Organization](/docs/schema-org/api/schema/organization): Hiring organization
+- [LocalBusiness](/docs/schema-org/api/schema/local-business): Job location

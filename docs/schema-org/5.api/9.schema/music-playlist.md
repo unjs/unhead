@@ -1,11 +1,11 @@
 ---
 title: Music Playlist Schema
-description: Use defineMusicPlaylist() to add MusicPlaylist structured data. Display playlist info with track count, creator, and song list in search.
+description: Use defineMusicPlaylist() to describe a playlist, including its track count, creator, dates, ratings, artwork, and song list.
 ---
 
 ## Schema.org MusicPlaylist
 
-**Type**: `defineMusicPlaylist(input?: MusicPlaylist)`{lang="ts"}
+**Type**: `defineMusicPlaylist<T extends Record<string, any>>(input?: MusicPlaylist & T)`{lang="ts"}
 
   Describes a curated music playlist.
 
@@ -21,13 +21,13 @@ description: Use defineMusicPlaylist() to add MusicPlaylist structured data. Dis
 
 ## Recommended Properties
 
-- **track** `NodeRelations<MusicRecording>`
+- **track** `NodeRelations<string>`
 
-  Array of music recordings in the playlist.
+  Names or URLs of music recordings in the playlist. This field is currently passed through without a MusicRecording resolver.
 
-- **creator** `NodeRelations<Person | MusicGroup | string>`
+- **creator** `NodeRelation<Person | string>`
 
-  The person or group who created the playlist. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
+  The person who created the playlist. Plain objects and strings resolve as [Person](/docs/schema-org/api/schema/person).
 
 - **numTracks** `number`
 
@@ -36,7 +36,7 @@ description: Use defineMusicPlaylist() to add MusicPlaylist structured data. Dis
 ## Defaults
 
 - **@type**: `MusicPlaylist`
-- **@id**: `${canonicalHost}#music-playlist`
+- **@id**: `${canonicalHost}#/schema/music-playlist/{n}`
 
 ## Examples
 
@@ -49,7 +49,7 @@ defineMusicPlaylist({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineMusicPlaylist({
@@ -61,8 +61,8 @@ defineMusicPlaylist({
   },
   numTracks: 25,
   track: [
-    { name: 'Song Title 1', byArtist: 'Artist 1' },
-    { name: 'Song Title 2', byArtist: 'Artist 2' },
+    'Song Title 1',
+    'Song Title 2',
   ],
   datePublished: new Date(2024, 0, 1),
   dateModified: new Date(2024, 11, 31),
@@ -89,5 +89,5 @@ export interface MusicPlaylistSimple extends Thing {
 
 ## Related Schemas
 
-- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Playlist tracks
-- [Person](/docs/schema-org/api/schema/person) - Playlist creator
+- [MusicRecording](/docs/schema-org/api/schema/music-recording): Playlist tracks
+- [Person](/docs/schema-org/api/schema/person): Playlist creator

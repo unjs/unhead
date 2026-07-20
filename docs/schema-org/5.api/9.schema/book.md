@@ -1,18 +1,27 @@
 ---
 title: Book Schema
-description: Use defineBook() to add Book structured data. Enable rich results with book editions, ISBN, author, and purchase actions in Google search.
+description: Use defineBook() and defineBookEdition() to describe a book work, its editions, ISBN, author, and read actions.
 ---
 
 ## Schema.org Book
 
-- **Type**: `defineBook(input?: Book)`{lang="ts"}
+- **Type**: `defineBook<T extends Record<string, any>>(input?: Book & T)`{lang="ts"}
 
   Describes a Book.
 
 ## Useful Links
 
 - [Schema.org Book](https://schema.org/Book)
-- [Book Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/book)
+- [Book Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/book)
+
+[Google's Book actions feature](https://developers.google.com/search/docs/appearance/structured-data/book) is limited to participating book providers and requires a submitted feed. Adding a Book node to an ordinary page does not enroll the site in that feature.
+
+## Defaults and resolves
+
+- `@type` defaults to `Book`, and `@id` defaults to `${canonicalUrl}#book`.
+- `name`, `description`, and `url` can be inherited from resolved page metadata.
+- `workExample` values use the BookEdition resolver, and a root Book uses the primary identity as its author when no author is supplied.
+- BookEdition values expand `bookFormat` to a full Schema.org URL and serialize Date objects as calendar dates.
 
 ## Types
 
@@ -102,11 +111,7 @@ export interface BookEditionSimple extends Thing {
 }
 ```
 
-::alert{type="warning"}
-🔨 Schema in development
-::
-
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Book author
-- [Organization](/docs/schema-org/api/schema/organization) - Publisher
+- [Person](/docs/schema-org/api/schema/person): Book author
+- [Organization](/docs/schema-org/api/schema/organization): Publisher

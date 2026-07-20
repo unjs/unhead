@@ -1,15 +1,15 @@
 ---
 title: LocalBusiness Schema - JSON-LD Guide & Examples
-description: Implement LocalBusiness structured data with Unhead. JSON-LD examples, required properties, subtypes (Dentist, Restaurant, Store), and Google rich result setup.
+description: Implement LocalBusiness structured data with Unhead. See JSON-LD examples, core properties, and subtypes such as Dentist, Restaurant, and Store.
 navigation:
   title: LocalBusiness
 ---
 
-LocalBusiness schema tells search engines about a physical business location — its name, address, opening hours, and services. It powers Google's local business panels, Maps listings, and "near me" search results.
+[LocalBusiness structured data](https://developers.google.com/search/docs/appearance/structured-data/local-business) tells Google about a physical business location, including its name, address, opening hours, and services. A Google Business Profile is managed separately.
 
-For better visibility, use a specific subtype like `Dentist`, `Restaurant`, or `ProfessionalService` rather than the generic `LocalBusiness` type.
+Use the most specific accurate subtype, such as `Dentist`, `Restaurant`, or `ProfessionalService`, rather than the generic `LocalBusiness` type.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -36,38 +36,37 @@ For better visibility, use a specific subtype like `Dentist`, `Restaurant`, or `
 }
 ```
 
-With Unhead, generate this using the `defineLocalBusiness()` composable — see the [API reference](#schema-org-localbusiness) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org LocalBusiness
 
-**Type**: `defineLocalBusiness(input?: LocalBusiness)`{lang="ts"}
+**Type**: `defineLocalBusiness<T extends Record<string, any>>(input?: LocalBusiness & T)`{lang="ts"}
 
-  Describes a business which allows public visitation. Typically used to represent the business 'behind' the website, or on a page about a specific business.
+  Describes a business that customers can visit. Use it for the business behind a website or on a page about a specific location.
 
 ## Useful Links
 
 - [LocalBusiness - Schema.org](https://schema.org/LocalBusiness)
-- [Local Business Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/local-business)
-- [LocalBusiness - Yoast](https://developer.yoast.com/features/schema/pieces/localBusiness)
-- [Choose an Identity - Local Business](/docs/schema-org/guides/recipes/identity#local-business)
+- [Local Business Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/local-business)
+- [Choose an Identity - LocalBusiness](/docs/schema-org/guides/recipes/identity#localbusiness)
 
-## Required properties
+## Google requirements
+
+Google requires both `name` and `address` for a LocalBusiness rich result. The Unhead input type inherits `name` from Organization but leaves `address` optional, so the helper does not enforce this requirement.
 
 - **name** `string`
 
   The name of the business.
 
-- **address** `AddressInput` - [PostalAddress](https://schema.org/PostalAddress)
+- **address** `NodeRelations<PostalAddress>`: [PostalAddress](https://schema.org/PostalAddress)
 
-  Physical postal address of the business.
+  The physical address of the business.
 
 ## Recommended Properties
 
-- **openingHoursSpecification**  `OpeningHoursInput[]` - [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
+- **openingHoursSpecification**  `NodeRelations<OpeningHoursSpecification>`: [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
 
   The specification for when the business is open.
 
@@ -79,7 +78,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 ```ts
 defineLocalBusiness({
-  name: 'test',
+  name: 'Harbor Dental',
   logo: '/logo.png',
   address: {
     addressCountry: 'Australia',
@@ -106,7 +105,7 @@ defineLocalBusiness({
 - **@type**: `['Organization', 'LocalBusiness']`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}`
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/docs/schema-org/guides/core-concepts/params)
+- **currenciesAccepted**: `currency` from resolved page metadata. See [global options](/docs/schema-org/guides/core-concepts/params)
 
 ## Sub-Types
 
@@ -143,9 +142,9 @@ defineLocalBusiness({
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `logo` will be resolved from a string into an ImageObject and added to `image`
+- for the primary identity, a string `logo` creates a root ImageObject with the `#logo` ID and a compact Organization node with the absolute logo URL
 
 - `@type` resolve: `Dentist` -> `['Organization', 'LocalBusiness', 'Dentist']`
 
@@ -234,6 +233,6 @@ export interface LocalBusinessSimple extends Organization {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Parent organization
-- [Event](/docs/schema-org/api/schema/event) - Business events
-- [Product](/docs/schema-org/api/schema/product) - Products/services offered
+- [Organization](/docs/schema-org/api/schema/organization): Parent organization
+- [Event](/docs/schema-org/api/schema/event): Business events
+- [Product](/docs/schema-org/api/schema/product): Products/services offered

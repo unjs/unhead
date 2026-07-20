@@ -1,13 +1,13 @@
 ---
 title: SoftwareApplication Schema - JSON-LD Guide & Examples
-description: Implement SoftwareApplication structured data with Unhead. JSON-LD examples for app listings, ratings, pricing, and Google rich results.
+description: Implement SoftwareApplication structured data with Unhead. See JSON-LD examples for app listings, ratings, pricing, and platform compatibility.
 navigation:
   title: SoftwareApplication
 ---
 
-SoftwareApplication schema describes a software product with its features, pricing, ratings, and platform compatibility. It enables rich result display in Google Search with star ratings and pricing information.
+SoftwareApplication schema describes a software product with its features, pricing, ratings, and platform compatibility. Supported markup can make an app page eligible for a [Google software app rich result](https://developers.google.com/search/docs/appearance/structured-data/software-app).
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -29,26 +29,28 @@ SoftwareApplication schema describes a software product with its features, prici
 }
 ```
 
-With Unhead, generate this using the `defineSoftwareApp()` composable — see the [API reference](#schema-org-softwareapp) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org SoftwareApp
 
-- **Type**: `defineSoftwareApp(input?: SoftwareApp)`{lang="ts"}
+- **Type**: `defineSoftwareApp<T extends Record<string, any>>(input?: SoftwareApp & T)`{lang="ts"}
 
   Describes a SoftwareApp.
 
 ## Useful Links
 
-- [Schema.org SoftwareApp](https://schema.org/SoftwareApp)
-- [SoftwareApp Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/software-app)
+- [SoftwareApplication - Schema.org](https://schema.org/SoftwareApplication)
+- [SoftwareApp Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/software-app)
 
-::alert{type="warning"}
-🔨 Documentation in development
-::
+## Defaults and resolves
+
+- `@type` defaults to `SoftwareApplication`; a different supported string type is augmented with `SoftwareApplication`.
+- A root app receives an ID such as `${canonicalUrl}#/schema/software-application/{n}`.
+- `offers`, `aggregateRating`, and `review` are resolved with their corresponding nested resolvers.
+
+Google's software app result has stricter requirements than the helper type: the rendered node needs `name`, `offers.price`, and either `aggregateRating` or `review`. A free app still needs `offers.price: 0`. Unhead does not validate those conditions; see [Google's SoftwareApplication property table](https://developers.google.com/search/docs/appearance/structured-data/software-app#structured-data-type-definitions).
 
 ## Example
 
@@ -144,5 +146,5 @@ export interface SoftwareAppSimple extends Thing {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - App developer/publisher
-- [Person](/docs/schema-org/api/schema/person) - App author
+- [Organization](/docs/schema-org/api/schema/organization): App developer/publisher
+- [Person](/docs/schema-org/api/schema/person): App author

@@ -1,18 +1,20 @@
 ---
 title: Movie Schema
-description: Use defineMovie() to add Movie structured data. Enable rich results with ratings, cast, director, and release date in Google search.
+description: Use defineMovie() to add Movie structured data with ratings, cast, director, and release date.
 ---
 
 ## Schema.org Movie
 
-**Type**: `defineMovie(input?: Movie)`{lang="ts"}
+**Type**: `defineMovie<T extends Record<string, any>>(input?: Movie & T)`{lang="ts"}
 
   Describes a movie.
 
 ## Useful Links
 
 - [Movie - Schema.org](https://schema.org/Movie)
-- [Movie Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/movie)
+- [Movie Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/movie)
+
+Google's movie feature is a carousel. Eligibility requires the surrounding [Carousel ItemList markup](https://developers.google.com/search/docs/appearance/structured-data/movie#structured-data-type-definitions) as well as each Movie's `name` and `image`.
 
 ### Example
 
@@ -22,9 +24,11 @@ defineMovie({
   url: '/2019-best-picture-noms#black-panther',
   image: '/photos/6x9/photo.jpg',
   dateCreated: '2018-02-16',
-  director: 'Ryan Coogle',
+  director: 'Ryan Coogler',
   review: {
-    reviewRating: 2,
+    reviewRating: {
+      ratingValue: 2,
+    },
     author: 'Trevor R',
     reviewBody: 'I didn\'t like the lighting and CGI in this movie.',
   },
@@ -35,6 +39,12 @@ defineMovie({
   },
 })
 ```
+
+## Defaults and resolves
+
+- `@type` defaults to `Movie`, and a root Movie receives an ID such as `${canonicalUrl}#/schema/movie/{n}`.
+- `aggregateRating`, `review`, `director`, `actor`, `trailer`, and `productionCompany` use their corresponding nested resolvers.
+- `dateCreated` accepts a JavaScript Date object and is serialized as a calendar date.
 
 ## Types
 
@@ -93,6 +103,6 @@ export interface MovieSimple extends Thing {
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Director, actors
-- [Organization](/docs/schema-org/api/schema/organization) - Production company
-- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Soundtrack
+- [Person](/docs/schema-org/api/schema/person): Director, actors
+- [Organization](/docs/schema-org/api/schema/organization): Production company
+- [MusicRecording](/docs/schema-org/api/schema/music-recording): Soundtrack

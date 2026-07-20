@@ -1,13 +1,13 @@
 ---
 title: HowTo Schema - JSON-LD Guide & Examples
-description: Add HowTo structured data to your site with Unhead. Step-by-step JSON-LD examples, required properties, and Google rich result guidance.
+description: Add HowTo structured data with Unhead, including step-by-step JSON-LD, images, supplies, tools, and time estimates.
 navigation:
   title: HowTo
 ---
 
-HowTo schema marks up step-by-step instructions so Google can display them as rich results with expandable steps. Use it for tutorials, guides, DIY instructions, and how-to content.
+HowTo schema marks up step-by-step instructions for tutorials, guides, DIY instructions, and other how-to content. Google deprecated How-to rich results in September 2023.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -30,35 +30,34 @@ HowTo schema marks up step-by-step instructions so Google can display them as ri
 }
 ```
 
-With Unhead, generate this using the `defineHowTo()` composable — see the [API reference](#schema-org-howto) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org HowTo
 
-- **Type**: `defineHowTo(input?: HowTo)`{lang="ts"}
+- **Type**: `defineHowTo<T extends Record<string, any>>(input?: HowTo & T)`{lang="ts"}
 
   Describes a HowTo guide, which contains a series of steps.
 
 ## Useful Links
 
 - [HowTo - Schema.org](https://schema.org/HowTo)
-- [How-To Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/how-to)
-- [HowTo - Yoast](https://developer.yoast.com/features/schema/pieces/howto)
+- [How-to rich result deprecation - Google Search Central](https://developers.google.com/search/blog/2023/08/howto-faq-changes)
 
 ## Required properties
 
 - **name** `string`
 
-  A string describing the guide. This can be provided using route meta on the `title` key, see [defaults](#defaults).
+  A string describing the guide. Route metadata on the `title` key can provide this value; see [Defaults](#defaults).
 
-- **step** `HowToStep[]`.
+- **step** `NodeRelations<HowToStep | string>[]`
 
-  An array of objects describing the steps in the guide. Appends the [HowToStep](https://developers.google.com/search/docs/advanced/structured-data/how-to#how-to-step) entries on to the HowTo. Completes `@type` and resolves `url` and `image`.
+  An array of objects or strings describing the steps in the guide. Unhead adds the `HowToStep` type and resolves supported `url`, `image`, and `itemListElement` fields.
 
-- **step.text** The full instruction text of this step.
+- **step.text** `string`
+
+  The full instruction text for an object step. A string step is converted to `{ text: value }`.
 
 ## Examples
 
@@ -70,7 +69,7 @@ defineHowTo({
   step: [
     {
       url: '#step-one',
-      text: 'Button your shirt how you\'d like to wear it, then drape the tie around your neck. Make the thick end about 1/3rd longer than the short end. For formal button down shirts, it usually works best with the small end of the tie between 4th and 5th button.',
+      text: 'Button your shirt, then drape the tie around your neck. Let the wide end hang about one-third lower than the narrow end.',
       image: '/1x1/photo.jpg',
     },
     {
@@ -80,15 +79,15 @@ defineHowTo({
     },
     {
       url: '#step-three',
-      text: 'Bring the long end back under the short end, then throw it back over the top of the short end in the other direction. ',
+      text: 'Bring the wide end under the narrow end, then pass it across the front in the other direction.',
       image: '/1x1/photo.jpg',
     },
     {
-      text: 'Now pull the long and through the loop near your neck, forming another loop near your neck.',
+      text: 'Pull the wide end up through the loop around your neck.',
       image: '/1x1/photo.jpg',
     },
     {
-      text: 'Pull the long end through that new loop and tighten to fit! ',
+      text: 'Pull the wide end through the front loop, then tighten the knot.',
       image: '/1x1/photo.jpg',
     },
   ]
@@ -98,11 +97,11 @@ defineHowTo({
 ## Defaults
 
 - **@type**: `HowTo`
-- **@id**: `${canonicalUrl}#howTo`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
+- **@id**: `${canonicalUrl}#howto`
+- **name**: `title` from resolved page metadata _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `image` from resolved page metadata
+- **description**: `description` from resolved page metadata
+- **inLanguage**: `inLanguage` from resolved page metadata
 - **mainEntityOfPage**: WebPage Reference
 
 ## Types
@@ -203,6 +202,6 @@ export interface HowToStepSimple extends Thing {
 
 ## Related Schemas
 
-- [Recipe](/docs/schema-org/api/schema/recipe) - Cooking instructions
-- [Article](/docs/schema-org/api/schema/article) - Tutorial articles
-- [Person](/docs/schema-org/api/schema/person) - Instruction author
+- [Recipe](/docs/schema-org/api/schema/recipe): Cooking instructions
+- [Article](/docs/schema-org/api/schema/article): Tutorial articles
+- [Person](/docs/schema-org/api/schema/person): Instruction author
