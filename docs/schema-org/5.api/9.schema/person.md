@@ -5,9 +5,9 @@ description: Use definePerson() to add Person structured data. Establish author 
 
 ## Schema.org Person
 
-- **Type**: `definePerson(input?: Person)`{lang="ts"}
+- **Type**: `definePerson<T extends Record<string, any>>(input?: Person & T)`{lang="ts"}
 
-  Describes an individual person. Most commonly used to identify the author of a piece of content (such as an Article or Comment).
+  Describes an individual person. It is most commonly used to identify the author of a piece of content, such as an Article or Comment.
 
 ## Useful Links
 
@@ -22,11 +22,11 @@ description: Use definePerson() to add Person structured data. Establish author 
 
 ## Recommended Properties
 
-- **image**  `ImageInput`
+- **image**  `NodeRelations<ImageObject | string>`
 
-  Avatar image url of the person
+  The URL of the person's avatar image.
 
-- **link** `string` or **sameAs** `string[]`
+- **url** `string` or **sameAs** `Arrayable<string>`
 
   Links that describe the person, for example their website or social accounts.
 
@@ -49,11 +49,10 @@ definePerson({
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- resolves relative string urls of `image`
-- omitting the `@id` attribute, will automatically set up the person to be the identity of the WebSite and author
-  of any content.
+- resolves relative string URLs in `image`
+- when `@id` is omitted, uses the primary `#identity` ID and links the Person as the WebSite publisher and default Article author when those nodes exist
 
 ## Types
 
@@ -67,7 +66,7 @@ export interface PersonSimple extends Thing {
    */
   name: string
   /**
-   * The user bio, truncated to 250 characters.
+   * The user bio.
    */
   description?: string
   /**
@@ -80,7 +79,7 @@ export interface PersonSimple extends Thing {
    */
   image?: NodeRelations<ImageObject | string>
   /**
-   * The URL of the users' profile page (if they're affiliated with the site in question),
+   * The URL of the user's profile page (if they're affiliated with the site in question),
    * or to their personal homepage/website.
    */
   url?: string
@@ -89,5 +88,5 @@ export interface PersonSimple extends Thing {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Person's employer
-- [Article](/docs/schema-org/api/schema/article) - Articles by person
+- [Organization](/docs/schema-org/api/schema/organization): Person's employer
+- [Article](/docs/schema-org/api/schema/article): Articles by person

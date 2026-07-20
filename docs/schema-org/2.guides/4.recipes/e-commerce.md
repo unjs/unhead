@@ -1,27 +1,25 @@
 ---
-title: Schema.org for eCommerce Sites
-description: 'Add Product structured data with defineProduct(). Enable rich results with prices, ratings, stock status, and reviews in search.'
+title: Schema.org for E-commerce Sites
+description: 'Add Product structured data with defineProduct() so product pages can become eligible for search features showing prices, ratings, availability, and reviews.'
 navigation:
-  title: eCommerce
+  title: E-commerce
 ---
 
-Use `defineProduct()` with `offers`, `aggregateRating`, and `review` properties to enable product rich results. Google can display price, availability, ratings, and review counts directly in search results.
-
-::note
-Product structured data enables rich snippets showing prices, star ratings, stock status, and reviews - significantly improving visibility and click-through rates for eCommerce pages.
-::
+Use `defineProduct()` with `offers`, `aggregateRating`, and `review` properties to make a product page eligible for product search features. Google may display price, availability, ratings, and review counts in search results.
 
 ## Useful Links
 
 - [defineProduct](/docs/schema-org/api/schema/product)
-- [Product | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
-- [Product | Yoast](https://developer.yoast.com/features/schema/pieces/product)
+- [Product - Schema.org](https://schema.org/Product)
+- [Product | Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/product)
 
-## How do I mark up a product?
+Google separates product snippets from merchant listings. Product rich results are intended for pages focused on one product or variants of that product, not category pages; see the [product snippet eligibility guidelines](https://developers.google.com/search/docs/appearance/structured-data/product-snippet#technical-guidelines).
 
-[defineProduct](/docs/schema-org/api/schema/product) creates Product Schemas whilst handling relations for you.
+## Product pages
 
-Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
+[defineProduct](/docs/schema-org/api/schema/product) creates a Product node and handles its supported relationships.
+
+Some fields may already be inferred. See [Schema.org Params](/docs/schema-org/guides/core-concepts/params).
 
 ```ts
 import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -40,17 +38,17 @@ useSchemaOrg([
 ])
 ```
 
-## What does a complete product schema look like?
+## A detailed product
 
-For optimal product markup, include as much information as possible:
+Include the properties that apply to the product and appear on the page:
 
 ```ts
-import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
+import { defineOrganization, defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
 
 useSchemaOrg([
   defineProduct({
     name: 'Premium Ergonomic Office Chair',
-    description: 'High-quality office chair with lumbar support and adjustable height.',
+    description: 'Office chair with lumbar support and adjustable height.',
     image: [
       'https://example.com/images/chair-front.jpg',
       'https://example.com/images/chair-side.jpg',
@@ -59,13 +57,12 @@ useSchemaOrg([
     sku: 'CHAIR-123',
     mpn: 'ERGO-2023-BLK',
     gtin13: '9780123456789',
-    brand: {
+    brand: defineOrganization({
       name: 'ErgoComfort'
-    },
+    }),
     offers: {
       price: 299.99,
       priceCurrency: 'USD',
-      priceValidUntil: '2023-12-31',
       url: 'https://example.com/chair-ergonomic',
       availability: 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition'
@@ -96,9 +93,11 @@ useSchemaOrg([
 ])
 ```
 
-## How do I mark up product variants?
+If you provide `priceValidUntil`, keep it current. Google warns that a [product snippet may not display after that date](https://developers.google.com/search/docs/appearance/structured-data/product-snippet#offer-properties).
 
-For products with multiple variants (color, size, etc.), use the following approach:
+## Multiple offers and product variants
+
+The following approach associates several offers with one Product. It does not create Google's ProductGroup variant markup; use custom nodes if you need `ProductGroup` and `hasVariant`.
 
 ```ts
 import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -106,7 +105,7 @@ import { defineProduct, useSchemaOrg } from '@unhead/schema-org/@framework'
 useSchemaOrg([
   defineProduct({
     name: 'Cotton T-Shirt',
-    description: 'Comfortable 100% cotton t-shirt, available in multiple colors and sizes.',
+    description: '100% cotton T-shirt available in several colors and sizes.',
     image: [
       'https://example.com/images/tshirt-main.jpg',
       'https://example.com/images/tshirt-red.jpg',
@@ -142,9 +141,9 @@ useSchemaOrg([
 ])
 ```
 
-## What are the product availability values?
+## Availability values
 
-For the `availability` property, use one of these Schema.org values:
+For the `availability` property, common Schema.org values include:
 
 - `https://schema.org/InStock`: Item is in stock
 - `https://schema.org/OutOfStock`: Item is out of stock
@@ -152,10 +151,12 @@ For the `availability` property, use one of these Schema.org values:
 - `https://schema.org/Discontinued`: Item has been discontinued
 - `https://schema.org/BackOrder`: Item is on backorder and will be available later
 - `https://schema.org/InStoreOnly`: Item is available only in physical stores
+- `https://schema.org/LimitedAvailability`: Item has limited availability
 - `https://schema.org/OnlineOnly`: Item is available only online
+- `https://schema.org/PreSale`: Item is available in a presale
 - `https://schema.org/SoldOut`: Item is sold out
 
-## How do I mark up a product collection page?
+## Collection pages
 
 For category or collection pages that list multiple products, use the CollectionPage type:
 
@@ -166,14 +167,14 @@ useSchemaOrg([
   defineWebPage({
     '@type': 'CollectionPage',
     'name': 'Office Furniture Collection',
-    'description': 'Browse our collection of high-quality office furniture.'
+    'description': 'Browse desks, chairs, and other office furniture.'
   })
 ])
 ```
 
-## How do I mark up shopping cart and checkout pages?
+## Cart and checkout pages
 
-For shopping cart and checkout pages, you can use specific page types:
+Use a plain WebPage for a shopping cart and `CheckoutPage` for the checkout flow:
 
 ```ts
 import { defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -181,7 +182,6 @@ import { defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
 // For a shopping cart page
 useSchemaOrg([
   defineWebPage({
-    '@type': 'CheckoutPage',
     'name': 'Your Shopping Cart',
     'description': 'Review and edit your shopping cart items before checkout.'
   })
@@ -197,9 +197,9 @@ useSchemaOrg([
 ])
 ```
 
-## How do I set up a store's identity?
+## Store identity
 
-For eCommerce sites, it's important to establish your brand's identity. This can be done using [Organization](/docs/schema-org/api/schema/organization) or [LocalBusiness](/docs/schema-org/api/schema/local-business) depending on whether your store has a physical location.
+For ecommerce sites, establish the brand identity with [Organization](/docs/schema-org/api/schema/organization) or [LocalBusiness](/docs/schema-org/api/schema/local-business), depending on whether the store has a physical location.
 
 See the [Identity](/docs/schema-org/guides/recipes/identity) guide for more details.
 
@@ -209,7 +209,7 @@ import { defineOrganization, useSchemaOrg } from '@unhead/schema-org/@framework'
 
 useSchemaOrg([
   defineOrganization({
-    name: 'My eCommerce Store',
+    name: 'My E-commerce Store',
     logo: 'https://example.com/logo.png',
     sameAs: [
       'https://facebook.com/mystore',
@@ -269,56 +269,38 @@ useSchemaOrg([
 ])
 ```
 
-## What are the best practices for eCommerce schema?
+## Keep product data accurate
 
-1. **Include all product details**: Provide complete information including prices, SKUs, availability, and images.
-
-2. **Update availability regularly**: Keep product availability status up-to-date to avoid misleading users.
-
-3. **Add multiple images**: Include several high-quality product images from different angles.
-
-4. **Include reviews**: Genuine customer reviews and aggregate ratings improve trust signals.
-
-5. **Use structured data testing**: Regularly test your schema with [Google's Rich Results Test](https://search.google.com/test/rich-results).
-
-6. **Keep pricing accurate**: Ensure pricing information matches what's displayed on your website.
-
-7. **Include breadcrumbs**: Add [breadcrumb navigation](/docs/schema-org/guides/recipes/breadcrumbs) to help users understand your site structure.
-
-8. **Ensure consistency**: Make sure your schema markup matches the visible content on your page.
-
-9. **Add brand information**: Clearly identify the brand of each product to help with brand recognition.
-
-10. **Link to product URLs**: Each product variant should link to its specific URL for direct access.
+- Keep prices and availability in sync with the visible product page.
+- Include only genuine review and aggregate-rating data.
+- Give each product or offer the URL that identifies it on your site.
+- Test the rendered output with [Google's Rich Results Test](https://search.google.com/test/rich-results).
 
 ::tip
-For comprehensive eCommerce SEO, combine product schema with other relevant schemas like breadcrumbs, FAQ (for product questions), and organization/local business schemas.
+Combine Product markup with relevant structured data such as breadcrumbs and an Organization or LocalBusiness identity.
 ::
 
-## What schema should I use on different eCommerce pages?
+## Schema by page type
 
-For a typical eCommerce site, consider implementing this schema structure:
+A typical ecommerce site can use this structure:
 
 1. **Site-wide schema** (on all pages):
    - Organization or LocalBusiness
-   - WebSite with SearchAction
+   - WebSite
 
 2. **Product listing/category pages**:
-   - WebPage (CollectionPage)
+   - WebPage (`CollectionPage`)
    - Breadcrumb
 
 3. **Product detail pages**:
    - Product with all details
    - Breadcrumb
-   - Optional: FAQPage (for product Q&A)
 
 4. **Checkout pages**:
-   - WebPage (CheckoutPage)
-
-This comprehensive structure helps search engines understand your eCommerce site and can improve visibility for your products in search results.
+   - WebPage (`CheckoutPage`)
 
 ## Related Recipes
 
-- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization
-- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Navigation for product pages
-- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Product FAQs
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs): Navigation for product pages
+- [FAQ Page](/docs/schema-org/guides/recipes/faq): Product FAQs

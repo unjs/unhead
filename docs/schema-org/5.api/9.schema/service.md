@@ -1,11 +1,11 @@
 ---
 title: Service Schema
-description: Use defineService() to add Service structured data. Display service offerings with pricing, provider info, and reviews in search results.
+description: Use defineService() to describe a service offering, including pricing, provider, service area, channels, ratings, and reviews.
 ---
 
 ## Schema.org Service
 
-**Type**: `defineService(input?: Service)`{lang="ts"}
+**Type**: `defineService<T extends Record<string, any>>(input?: Service & T)`{lang="ts"}
 
   Describes a service offering (distinct from physical products).
 
@@ -25,9 +25,9 @@ description: Use defineService() to add Service structured data. Display service
 
   The type of service (e.g., "web design", "plumbing", "consulting", "legal advice").
 
-- **provider** `NodeRelations<Person | Organization | string>`
+- **provider** `NodeRelation<Person | Organization>`
 
-  Who provides the service. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
+  Who provides the service. If omitted, Unhead references the primary identity. An explicitly supplied provider is passed through, so include its `@type` or use a nested `definePerson()` or `defineOrganization()` helper.
 
 - **areaServed** `string`
 
@@ -35,14 +35,18 @@ description: Use defineService() to add Service structured data. Display service
 
 - **offers** `NodeRelations<Offer>`
 
-  Pricing information for the service. Resolves to Offer.
+  Unhead resolves the pricing information as an Offer.
 
 ## Defaults
 
 - **@type**: `Service`
 - **@id**: `${canonicalUrl}#service`
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **name**: page title from resolved metadata
+- **description**: resolved page description
+- **image**: resolved page image
+- **provider**: ID reference to the primary identity, when one exists
+- **brand**: ID reference to the primary identity, when one exists
+- **mainEntityOfPage**: ID reference to the WebPage, when one exists
 
 ## Sub-Types
 
@@ -75,6 +79,7 @@ defineService({
   serviceType: 'Web Design',
   description: 'Custom website design and development services',
   provider: {
+    '@type': 'Organization',
     name: 'Design Studio Inc.',
   },
   areaServed: 'United States',
@@ -86,7 +91,7 @@ defineService({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineService({
@@ -96,6 +101,7 @@ defineService({
   'description': 'Expert financial advisory and consulting for businesses',
   'url': 'https://example.com/services/consulting',
   'provider': {
+    '@type': 'Organization',
     name: 'Expert Consultants LLC',
     url: 'https://example.com',
   },
@@ -114,7 +120,9 @@ defineService({
   'review': [
     {
       author: 'Jane Smith',
-      reviewRating: 5,
+      reviewRating: {
+        ratingValue: 5,
+      },
       reviewBody: 'Excellent service, highly recommended!',
     },
   ],
@@ -150,8 +158,8 @@ export interface ServiceSimple extends Thing {
   'offers'?: NodeRelations<Offer>
   'aggregateRating'?: NodeRelation<AggregateRating>
   'review'?: NodeRelations<Review>
-  'image'?: NodeRelations<string | ImageObject>
-  'logo'?: NodeRelations<string | ImageObject>
+  'image'?: NodeRelations<ImageObject | string>
+  'logo'?: NodeRelations<ImageObject | string>
   'url'?: string
   'termsOfService'?: string
   'slogan'?: string
@@ -161,6 +169,6 @@ export interface ServiceSimple extends Thing {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Service provider
-- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Service location
-- [Product](/docs/schema-org/api/schema/product) - Related products
+- [Organization](/docs/schema-org/api/schema/organization): Service provider
+- [LocalBusiness](/docs/schema-org/api/schema/local-business): Service location
+- [Product](/docs/schema-org/api/schema/product): Related products

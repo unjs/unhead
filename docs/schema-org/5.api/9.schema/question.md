@@ -1,26 +1,26 @@
 ---
 title: Question Schema
-description: Use defineQuestion() to add FAQ structured data. Enable FAQ rich snippets with expandable Q&A directly in Google search results.
+description: Use defineQuestion() to add Question and Answer structured data and connect FAQPage mainEntity references.
 ---
 
 ## Schema.org Question
 
-- **Type**: `defineQuestion(input?: Question)`{lang="ts"}
+- **Type**: `defineQuestion<T extends Record<string, any>>(input?: Question & T)`{lang="ts"}
 
-  Describes an individual question. Most commonly used for creating an FAQ type page.
+  Describes an individual question. It is commonly used on an `FAQPage`.
 
 ## Useful Links
 
 - [Schema.org Question](https://schema.org/Question)
 - [Recipe: FAQ](/docs/schema-org/guides/recipes/faq)
 
-## Required properties
+## Question and answer properties
 
-- **name** `string`
+- **name** `string` or **question** `string`
 
   The text content of the question.
 
-- **acceptedAnswer** `string|Answer`
+- **acceptedAnswer** `string | Answer` or **answer** `string`
 
   The text content of the answer.
 
@@ -38,37 +38,39 @@ defineQuestion({
 ## Defaults
 
 - **@type**: `Question`
-- **@id**: `${canonicalUrl}#/schema/question/${questionId}`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
+- **@id**: `${canonicalUrl}#/schema/question/{n}`
+- **inLanguage**: `inLanguage` from resolved page metadata _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- will convert a string answer to an [Answer](https://schema.org/Answer) object.
-- `@id` is resolved using a hash of the question name if not provided
+- converts the `question` alias to `name` and the `answer` alias to `acceptedAnswer`
+- converts a string answer to an [Answer](https://schema.org/Answer) object
+- assigns numbered IDs in registration order when `@id` is not provided
+- serializes `dateCreated` Date objects as ISO 8601 strings
 
 ## Relation Transforms
 
 [WebPage](/docs/schema-org/api/schema/webpage)
 
-- Each question will append an entry on to `mainEntity`
+- Each question appends an entry to `mainEntity` when the WebPage includes the `FAQPage` type
 
 ## Types
 
 ```ts
 /**
- * A specific question - e.g. from a user seeking answers online, or collected in a Frequently Asked Questions (FAQ) document.
+ * A specific question, e.g., from a user seeking answers online or collected in a Frequently Asked Questions (FAQ) document.
  */
 export interface QuestionSimple extends Thing {
   /**
    * The text content of the question.
    */
-  name: string
+  name?: string
   /**
    * An answer object, with a text property which contains the answer to the question.
    */
-  acceptedAnswer: NodeRelation<Answer | string>
+  acceptedAnswer?: NodeRelation<Answer | string>
   /**
    * The language code for the question; e.g., en-GB.
    */
@@ -80,7 +82,7 @@ export interface QuestionSimple extends Thing {
   /**
    * The date and time the question was created.
    */
-  dateCreated?: string
+  dateCreated?: ResolvableDate
   /**
    * Alias for `name`
    */
@@ -94,12 +96,14 @@ export interface QuestionSimple extends Thing {
 /**
  * An answer offered to a question; perhaps correct, perhaps opinionated or wrong.
  */
-export interface Answer extends Optional<Thing, '@id'> {
+export interface AnswerSimple extends Thing {
   text: string
 }
+
+export interface Answer extends AnswerSimple {}
 ```
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Question author
-- [Article](/docs/schema-org/api/schema/article) - Related article
+- [Person](/docs/schema-org/api/schema/person): Question author
+- [Article](/docs/schema-org/api/schema/article): Related article

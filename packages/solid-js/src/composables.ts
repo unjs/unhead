@@ -1,3 +1,4 @@
+import type { UseScriptReturn } from 'unhead/scripts'
 import type {
   ActiveHeadEntry,
   CompatibleHead,
@@ -9,12 +10,12 @@ import type {
   UseHeadInput,
   UseScriptInput,
   UseScriptOptions,
-  UseScriptReturn,
   UseSeoMetaInput,
 } from 'unhead/types'
 import { createEffect, createSignal, getOwner, onCleanup, onMount, runWithOwner, useContext } from 'solid-js'
 import { isServer } from 'solid-js/web'
-import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadContext } from './context'
 
 export function useUnhead(): Unhead {
@@ -77,9 +78,9 @@ export function useSeoMeta<HeadInput = UseHeadInput>(input: UseSeoMetaInput = {}
   return withSideEffects<UseSeoMetaInput, HeadInput>(input, options, (head, value, entryOptions) => baseSeoMeta(head as unknown as CompatibleHead<HeadInput>, value, entryOptions))
 }
 
-export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> = {}): UseScriptReturn<T> {
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options as UseScriptOptions<T>
+  const options = (_options || {}) as UseScriptOptions<T>
   const head = options.head || useUnhead()
   const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   options.head = scriptHead
@@ -100,6 +101,11 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
       else {
         mountCbs.push(load)
       }
+      return () => {
+        const idx = mountCbs.indexOf(load)
+        if (idx !== -1)
+          mountCbs.splice(idx, 1)
+      }
     }
   }
   const script = baseUseScript(scriptHead, input, options)
@@ -110,6 +116,7 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
   const sideEffects: (() => void)[] = []
   onCleanup(() => {
     isMounted = false
+    mountCbs.splice(0)
     triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })

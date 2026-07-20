@@ -5,11 +5,9 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 
 ## Schema.org WebPage
 
-- **Type**: `defineWebPage(input?: WebPage)`{lang="ts"}
+- **Type**: `defineWebPage<T extends Record<string, any>>(input?: WebPage & T)`{lang="ts"}
 
-  Describes a single page on a WebSite. Acts as a container for sub-page elements (such as Article).
-
-  Acts as a connector from a page's content to the parent WebSite (and in turn, to the Organization).
+  Describes a single page, connects its content to the parent WebSite, and can contain nodes such as Article.
 
 ## Useful Links
 
@@ -21,20 +19,18 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 
   The title of the page.
 
-  A name can be provided using route meta on the `title` key, see [defaults](#defaults).
+  Route metadata on the `title` key can provide this value; see [Defaults](#defaults).
 
 ## Defaults
 
-- **@type**: inferred from path, fallbacks to `WebPage`, see [resolves](#resolves)
+- **@type**: inferred from the final path segment; falls back to `WebPage`, see [resolves](#resolves)
 - **@id**: `${canonicalUrl}#webpage`
 - **url**: `canonicalUrl`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **name**: page title from resolved metadata
 - **isPartOf**: WebSite reference
 
-Home page only
-
-- **about**: Identity Reference
-- **primaryImageOfPage**: Logo reference
+- **about**: Identity reference on the homepage when an identity is registered
+- **primaryImageOfPage**: Logo reference when an Organization logo is registered
 
 ## Sub-Types
 
@@ -54,9 +50,8 @@ Home page only
 
 [WebPage](/docs/schema-org/api/schema/webpage)
 
-- sets `potentialAction` to `ReadAction`
-- sets `dateModified` to articles `dateModified`
-- sets `datePublished` to articles `datePublished`
+- sets `potentialAction` to `ReadAction` for a plain WebPage; Article also adds a ReadAction when connected
+- copies an Article's `dateModified` and `datePublished` values to the WebPage when those page fields are empty
 
 ## Resolves
 
@@ -69,7 +64,7 @@ defineWebPage({
 })
 ```
 
-- providing a single string of `@type` which isn't `WebPage` will convert it to an array `TechArticle` -> `['WebPage', 'AboutPage']`
+- providing a single `@type` other than `WebPage` converts it to an array: `AboutPage` becomes `['WebPage', 'AboutPage']`
 
 ```ts
 defineWebPage({
@@ -78,24 +73,22 @@ defineWebPage({
 })
 ```
 
-- @type based on last URL path
+### Types inferred from paths
 
-  -- `/about`, `/about-us` -> `AboutPage`
+Unhead can infer a page subtype from the final URL path segment:
 
-  -- `/search` -> `SearchResultsPage`
-
-  -- `/checkout` -> `CheckoutPage`
-
-  -- `/contact`, `/get-in-touch`, `/contact-us` -> `ContactPage`
-
-  -- `/faq` -> `FAQPage`
+- `/about`, `/about-us` → `AboutPage`
+- `/search` → `SearchResultsPage`
+- `/checkout` → `CheckoutPage`
+- `/contact`, `/get-in-touch`, `/contact-us` → `ContactPage`
+- `/faq` → `FAQPage`
 
 ## Example
 
 ```ts
 defineWebPage({
   name: 'Page Title',
-  image: '/image.jpg',
+  primaryImageOfPage: '/image.jpg',
 })
 ```
 
@@ -133,8 +126,7 @@ export interface WebPageSimple extends Thing {
    */
   isPartOf?: NodeRelation<WebSite>
   /**
-   * A reference-by-ID to the Organisation node.
-   * Note: Only for the home page.
+   * A reference-by-ID to the Organization node.
    */
   about?: NodeRelation<Organization>
   /**
@@ -158,7 +150,7 @@ export interface WebPageSimple extends Thing {
    */
   primaryImageOfPage?: NodeRelation<ImageObject | string>
   /**
-   * A reference-by-ID to a node representing the page's breadrumb structure.
+   * A reference-by-ID to a node representing the page's breadcrumb structure.
    */
   breadcrumb?: NodeRelation<BreadcrumbList>
   /**

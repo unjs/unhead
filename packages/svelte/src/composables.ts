@@ -1,3 +1,4 @@
+import type { UseScriptReturn } from 'unhead/scripts'
 import type {
   ActiveHeadEntry,
   CompatibleHead,
@@ -9,11 +10,11 @@ import type {
   UseHeadInput,
   UseScriptInput,
   UseScriptOptions,
-  UseScriptReturn,
   UseSeoMetaInput,
 } from 'unhead/types'
 import { getContext, onDestroy, onMount } from 'svelte'
-import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadContextKey } from './context'
 
 export function useUnhead(): Unhead {
@@ -64,9 +65,9 @@ export function useSeoMeta<HeadInput = UseHeadInput>(input: UseSeoMetaInput = {}
   return withSideEffects(baseSeoMeta(head as unknown as CompatibleHead<HeadInput>, input, options as HeadEntryOptions<HeadInput>))
 }
 
-export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> = {}): UseScriptReturn<T> {
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options as UseScriptOptions<T>
+  const options = (_options || {}) as UseScriptOptions<T>
   const head = options.head || useUnhead()
   const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   options.head = scriptHead
@@ -98,7 +99,6 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
     return off
   }
   onDestroy(() => {
-    // stop any trigger promises
     triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })

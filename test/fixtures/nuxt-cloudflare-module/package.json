@@ -1,0 +1,9 @@
+{
+  "name": "@unhead-test/nuxt-cloudflare-module",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "nuxt": "catalog:conflicts_nuxt_4_5_0",
+    "unhead": "workspace:*"
+  }
+}

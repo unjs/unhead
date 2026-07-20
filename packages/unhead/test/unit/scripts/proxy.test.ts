@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { AsVoidFunctions } from '../../../src/scripts/types'
+import type { AsVoidFunctions, ScriptInstance } from '../../../src/scripts/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
@@ -145,6 +145,24 @@ describe('proxy chain', () => {
     expectTypeOf(instance.proxy.greet).toBeFunction()
     instance.proxy.greet('hello-world')
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
+  })
+
+  it('replays calls after async use() resolves', async () => {
+    const head = createHead()
+    const { promise, resolve } = Promise.withResolvers<{ greet: (foo: string) => string }>()
+    const instance = useScript(head, '/async-proxy.js', {
+      trigger: 'server',
+      use: () => promise,
+    })
+    const greet = vi.fn((foo: string) => foo)
+
+    instance.proxy.greet('hello-world')
+    instance.status = 'loaded'
+    head.hooks.callHook('script:updated', { script: instance as unknown as ScriptInstance<object> })
+    resolve({ greet })
+    await instance._loadPromise
+
+    expect(greet).toHaveBeenCalledWith('hello-world')
   })
 })
 

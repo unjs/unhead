@@ -113,9 +113,9 @@ export function useSeoMeta<HeadInput = UseHeadInput>(input: UseSeoMetaInput = {}
   return withSideEffects<UseSeoMetaInput, HeadInput>(input, options, baseSeoMeta as unknown as HeadComposable<UseSeoMetaInput, HeadInput>)
 }
 
-export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> = {}): UseScriptReturn<T> {
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = _options as UseScriptOptions<T>
+  const options = (_options || {}) as UseScriptOptions<T>
   const head = options.head || useUnhead()
   const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   const trigger = options.trigger
@@ -145,15 +145,7 @@ export function useScript<T extends object = Record<PropertyKey, unknown>>(_inpu
   })
 
   useEffect(() => {
-    const existingControllers = new Set(script._triggerAbortControllers)
-    script.setupTriggerHandler(trigger)
-    const triggerAbortControllers = script._triggerAbortControllers
-      ? [...script._triggerAbortControllers].filter(controller => !existingControllers.has(controller))
-      : []
-
-    return () => {
-      triggerAbortControllers.forEach(controller => controller.abort())
-    }
+    return script.setupTriggerHandler(trigger)
   }, [script, trigger])
 
   function reconcileScriptCallbacks(activeRenderId: number) {

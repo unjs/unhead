@@ -2,12 +2,60 @@
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead, renderSSRHead } from '@unhead/vue/server'
 
-import { describe, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createApp, h, ref, watch } from 'vue'
 import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('supports lifecycle-aware API resolution', () => {
+    const head = createHead()
+    const api = { ready: true as const, method: (value: string) => value.length }
+    let resolverSignal!: AbortSignal
+    const script = useScript('//resolve-api.js', {
+      head,
+      trigger: 'manual',
+      resolve: ({ signal, waitFor }) => {
+        resolverSignal = signal
+        return waitFor(resolve => resolve(api))
+      },
+    })
+
+    const checkInference = async () => {
+      const inferred = await script.load()
+      if (inferred)
+        inferred.method('ok')
+    }
+    type Loaded = Awaited<ReturnType<typeof script.load>>
+    expectTypeOf<Loaded>().toEqualTypeOf<typeof api | false>()
+    const notAny: 0 extends (1 & Loaded) ? never : true = true
+    void checkInference
+    void notAny
+    expect(resolverSignal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('does not mutate caller-owned options', () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const options = {
+      eventContext: { caller: true },
+      head,
+      trigger: 'manual' as const,
+    }
+    const original = { ...options }
+    const app = createApp({
+      setup() {
+        useScript('//immutable-options.js', options)
+        return () => h('div')
+      },
+    })
+
+    app.mount(dom.window.document.createElement('div'))
+
+    expect(options).toEqual(original)
+    app.unmount()
+  })
+
   it('multiple active promise handles', async () => {
     const dom = useDom()
     const head = createHead({
@@ -248,11 +296,40 @@ describe('vue e2e scripts', () => {
     offSecond()
 
     const script = (head as any)._scripts['//ordered-callbacks.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
     expect(calls).toEqual([])
+  })
+
+  it('forwards keyed callback options to core', async () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const calls: string[] = []
+    const el = dom.window.document.createElement('div')
+    const app = createApp({
+      setup() {
+        const script = useScript({ src: '//vue-keyed.js' }, { trigger: 'manual', head })
+        script.onLoaded(() => {
+          calls.push('first')
+        }, { key: 'shared' })
+        script.onLoaded(() => {
+          calls.push('second')
+        }, { key: 'shared' })
+        return () => h('div')
+      },
+    })
+    app.mount(el)
+
+    const script = (head as any)._scripts['//vue-keyed.js']
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
+    await script._loadPromise
+
+    expect(calls).toEqual(['first'])
+    app.unmount()
   })
 
   it('setupTriggerHandler race condition: old scope disposal should not abort new scope trigger', async () => {

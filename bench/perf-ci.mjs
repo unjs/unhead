@@ -179,6 +179,10 @@ function sampledBytes(profile) {
   return bytes
 }
 
+// Fine-grained sampling catches small per-render deltas. Five short repetitions
+// keep the extra profiler work bounded in the bundle-size job.
+const ALLOCATION_SAMPLING_INTERVAL = 64
+
 // A heapUsed batch delta silently resets whenever V8 scavenges the young
 // generation. Profile total allocations instead, across several independent
 // samples so the report can gate on the profiler's measured variance.
@@ -190,8 +194,9 @@ async function measureAlloc(fn, { warmup = 50, reps = 5, runs = 200 } = {}) {
     const session = new Session()
     session.connect()
     try {
+      await session.post('HeapProfiler.enable')
       await session.post('HeapProfiler.startSampling', {
-        samplingInterval: 64,
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
         includeObjectsCollectedByMajorGC: true,
         includeObjectsCollectedByMinorGC: true,
       })
@@ -234,8 +239,9 @@ async function measureAllocAsync(fn, { warmup = 20, reps = 5, runs = 50 } = {}) 
     const session = new Session()
     session.connect()
     try {
+      await session.post('HeapProfiler.enable')
       await session.post('HeapProfiler.startSampling', {
-        samplingInterval: 64,
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
         includeObjectsCollectedByMajorGC: true,
         includeObjectsCollectedByMinorGC: true,
       })
@@ -316,7 +322,7 @@ async function streamingBenches() {
   return [
     { id: 'stream-wrap-cpu', name: 'Streaming wrapStream drain (CPU)', kind: 'time', value: wrapTimes.cpu.value, rme: wrapTimes.cpu.rme },
     { id: 'stream-wrap-wall', name: 'Streaming wrapStream drain (wall)', kind: 'time', value: wrapTimes.wall.value, rme: wrapTimes.wall.rme, informational: true },
-    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value, informational: true },
+    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value, rme: wrapAlloc.rme, informational: true },
     { id: 'stream-chunk-cpu', name: 'Streaming suspense chunk (CPU)', kind: 'time', value: chunkTimes.cpu.value, rme: chunkTimes.cpu.rme },
     { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value, rme: chunkAlloc.rme },
   ]

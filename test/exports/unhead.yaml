@@ -34,6 +34,7 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
@@ -44,6 +45,10 @@
 ./scripts:
   createSpyProxy: function
   useScript: function
+./scripts/triggers:
+  createScriptTriggerInteraction: function
+  createScriptTriggerServiceWorker: function
+  createScriptTriggerTimeout: function
 ./server:
   capoTagWeight: function
   createHead: function

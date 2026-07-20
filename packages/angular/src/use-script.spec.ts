@@ -23,7 +23,8 @@ describe('angular useScript callback disposal', () => {
     TestBed.flushEffects()
 
     const script = (head as any)._scripts['//angular-loaded.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     expect(calls).toEqual(['only'])
@@ -53,10 +54,34 @@ describe('angular useScript callback disposal', () => {
     offSecond()
 
     const script = (head as any)._scripts['//angular-ordered.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
     expect(calls).toEqual([])
+  })
+
+  it('forwards keyed callback options to core', async () => {
+    const head = createHead({ document })
+    const calls: string[] = []
+
+    TestBed.runInInjectionContext(() => {
+      const script = useScript({ src: '//angular-keyed.js' }, { trigger: 'manual', head })
+      script.onLoaded(() => {
+        calls.push('first')
+      }, { key: 'shared' })
+      script.onLoaded(() => {
+        calls.push('second')
+      }, { key: 'shared' })
+    })
+    TestBed.flushEffects()
+
+    const script = (head as any)._scripts['//angular-keyed.js']
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
+    await script._loadPromise
+
+    expect(calls).toEqual(['first'])
   })
 })
