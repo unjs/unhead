@@ -1,6 +1,6 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { DEFAULT_STREAM_KEY } from './client'
@@ -87,9 +87,17 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
  * const { head, onShellReady, shellReady } = createStreamableHead()
  * ```
  */
+type CreateStreamableHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateStreamableServerHeadOptions<Input, Input>]
+  : [options: CreateStreamableServerHeadOptions<Input, Input> & { disableDefaults: true }]
+
 /* @__NO_SIDE_EFFECTS__ */
+export function createStreamableHead(options?: CreateStreamableServerHeadOptions<ResolvableHead>): StreamableHeadContext<ResolvableHead>
+export function createStreamableHead<T>(options: CreateStreamableServerHeadOptions<T, T> & { disableDefaults: true }): StreamableHeadContext<T>
+export function createStreamableHead<T>(options: CreateStreamableServerHeadOptions<T, T | ResolvableHead>): StreamableHeadContext<T | ResolvableHead>
+export function createStreamableHead<T = ResolvableHead>(...args: CreateStreamableHeadArgs<T>): StreamableHeadContext<T>
 export function createStreamableHead<T = ResolvableHead>(
-  options: CreateStreamableServerHeadOptions = {},
+  options: CreateStreamableServerHeadOptions<T, any> = {},
 ): StreamableHeadContext<T> {
   const { streamKey, ...rest } = options
   if (streamKey !== undefined)
@@ -97,7 +105,7 @@ export function createStreamableHead<T = ResolvableHead>(
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
-  })
+  } as CreateServerHeadOptions<T> & { disableDefaults: true })
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -110,7 +118,7 @@ export function createStreamableHead<T = ResolvableHead>(
     shellReady,
   }
 }
-function getStreamKey(head: Unhead<any>): string {
+function getStreamKey<Input, RenderResult>(head: Unhead<Input, RenderResult>): string {
   const key = head.resolvedOptions.experimentalStreamKey || DEFAULT_STREAM_KEY
   assertValidStreamKey(key)
   return key
@@ -148,7 +156,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  * ```
  */
-export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
+export function renderShell<Input>(head: Unhead<Input, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
   head.entries.clear()
   return result
@@ -172,9 +180,9 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
  * const shell = renderSSRHeadShell(head, template)
  * ```
  */
-export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
+export function renderSSRHeadShell<Input>(head: Unhead<Input, SSRHeadPayload>, template: string | PreparedTemplate): string {
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
-  const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
+  const result = applyShellToTemplate(head, head.render(), parsed)
   // Only clear entries once the shell has been successfully produced so a
   // template failure leaves them intact for retry.
   head.entries.clear()
@@ -185,7 +193,7 @@ export function renderSSRHeadShell(head: Unhead<any>, template: string | Prepare
  * Injects the bootstrap script and full head payload into a whole template.
  * Shared by renderSSRHeadShell and prepareStreamingTemplate's no-split fallback.
  */
-function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
+function applyShellToTemplate<Input>(head: Unhead<Input, SSRHeadPayload>, ssr: SSRHeadPayload, parsed: ReturnType<typeof parseHtmlForIndexes>): string {
   return applyHeadToHtml(parsed, {
     htmlAttrs: ssr.htmlAttrs,
     headTags: createBootstrapScript(getStreamKey(head)) + ssr.headTags,
@@ -212,7 +220,7 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  * }
  * ```
  */
-export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
+export function renderSSRHeadSuspenseChunk<Input, RenderResult>(head: Unhead<Input, RenderResult>): string {
   if (!head.entries.size)
     return ''
 
@@ -244,7 +252,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
 /**
  * Safe JSON stringify that escapes characters that could break script context
  */
-function safeJsonStringify(obj: any): string {
+function safeJsonStringify(obj: unknown): string {
   return JSON.stringify(obj)
     .replace(LT_RE, '\\u003c')
     .replace(GT_RE, '\\u003e')
@@ -279,8 +287,8 @@ function safeJsonStringify(obj: any): string {
  * return new Response(fullStream)
  * ```
  */
-export function wrapStream(
-  head: Unhead<any>,
+export function wrapStream<Input>(
+  head: Unhead<Input, SSRHeadPayload>,
   stream: ReadableStream<Uint8Array>,
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
@@ -497,12 +505,12 @@ function getPreparedStreamingLayout(template: PreparedTemplate): StreamingTempla
  * response.write(end)
  * ```
  */
-export function prepareStreamingTemplate(
-  head: Unhead<any>,
+export function prepareStreamingTemplate<Input>(
+  head: Unhead<Input, SSRHeadPayload>,
   template: string | PreparedTemplate,
   preRenderedState?: SSRHeadPayload,
 ): StreamingTemplateParts {
-  const ssr = preRenderedState ?? head.render() as SSRHeadPayload
+  const ssr = preRenderedState ?? head.render()
 
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const layout = typeof template === 'string'

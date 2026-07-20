@@ -4,21 +4,25 @@ import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
 import { isUnsafeKey } from './unsafeKey'
 
+function normalizeStyleClassProps(key: 'class', value: unknown): Set<string>
+function normalizeStyleClassProps(key: 'style', value: unknown): Map<string, string>
+function normalizeStyleClassProps(key: 'class' | 'style', value: unknown): Map<string, string> | Set<string>
 function normalizeStyleClassProps(
   key: 'class' | 'style',
-  value: any,
+  value: unknown,
 ): Map<string, string> | Set<string> {
   const isStyle = key === 'style'
-  const store: any = isStyle ? new Map() : new Set()
-  const add = (v: string) => {
+  const store = isStyle ? new Map<string, string>() : new Set<string>()
+  const add = (v: unknown) => {
     if (!v)
       return
+    const normalized = String(v)
     if (isStyle) {
-      const i = v.indexOf(':')
-      i > 0 && store.set(v.slice(0, i).trim(), v.slice(i + 1).trim())
+      const i = normalized.indexOf(':')
+      i > 0 && (store as Map<string, string>).set(normalized.slice(0, i).trim(), normalized.slice(i + 1).trim())
     }
     else {
-      v.split(' ').forEach(c => c && store.add(c))
+      normalized.split(' ').forEach(c => c && (store as Set<string>).add(c))
     }
   }
   if (typeof value === 'string') {
@@ -28,14 +32,15 @@ function normalizeStyleClassProps(
     value.forEach(add)
   }
   else if (value && typeof value === 'object') {
-    for (const k in value) {
-      const v = value[k]
-      v && v !== 'false' && (isStyle ? store.set(k.trim(), String(v)) : add(k))
+    for (const k in value as Record<string, unknown>) {
+      const v = (value as Record<string, unknown>)[k]
+      v && v !== 'false' && (isStyle ? (store as Map<string, string>).set(k.trim(), String(v)) : add(k))
     }
   }
   return store
 }
 
+export function normalizeProps(tag: HeadTag, input: Record<string, unknown>): HeadTag
 export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
   tag.props = tag.props || {}
   if (!input)
@@ -56,10 +61,10 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
       continue
     const value = input[prop]
     if (value === null) {
-      tag.props[key] = null as any
+      tag.props[key] = null
     }
     else if (prop === 'class' || prop === 'style') {
-      tag.props[prop] = normalizeStyleClassProps(prop, value) as any
+      (tag.props as Record<string, unknown>)[prop] = normalizeStyleClassProps(prop, value)
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
@@ -114,6 +119,7 @@ function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
   }
 }
 
+export function normalizeEntryToTags(input: unknown, propResolvers: PropResolver[]): HeadTag[]
 export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
   if (!input)
     return []

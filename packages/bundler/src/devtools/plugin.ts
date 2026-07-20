@@ -1,4 +1,4 @@
-import type { HeadPluginInput } from 'unhead/types'
+import type { HeadPlugin, Unhead } from 'unhead/types'
 
 /**
  * Unhead plugin that propagates source location metadata from entry options to tags.
@@ -7,12 +7,12 @@ import type { HeadPluginInput } from 'unhead/types'
  * `<script id="unhead:devtools">` payload so the client bridge can display
  * server-only entries.
  */
-export function devtoolsPlugin(): HeadPluginInput {
-  return (head: any) => {
+export function devtoolsPlugin() {
+  return Object.assign(<Input, RenderResult>(head: Unhead<Input, RenderResult>): HeadPlugin<Input, RenderResult> => {
     return {
       key: 'devtools',
       hooks: {
-        'entries:normalize': function ({ tags, entry }: { tags: any[], entry: any }) {
+        'entries:normalize': function ({ tags, entry }) {
           const source = entry.options?._source
           if (!source)
             return
@@ -21,13 +21,13 @@ export function devtoolsPlugin(): HeadPluginInput {
               tag._source = source
           }
         },
-        'tags:resolve': function (ctx: any) {
+        'tags:resolve': function (ctx) {
           if (!head.ssr)
             return
           // Serialize SSR entries into a payload for the client bridge
-          const entries: any[] = []
+          const entries = []
           for (const [id, entry] of head.entries) {
-            let input: Record<string, any> = {}
+            let input: unknown = {}
             try {
               input = JSON.parse(JSON.stringify(entry.input || {}, (_k, v) => {
                 if (typeof v === 'function')
@@ -49,7 +49,7 @@ export function devtoolsPlugin(): HeadPluginInput {
             })
           }
           // Serialize resolved tags (exclude the devtools payload script itself)
-          const tags: any[] = []
+          const tags = []
           for (const tag of ctx.tags) {
             if (tag.props?.id === 'unhead:devtools' || tag.props?.id === 'unhead:payload')
               continue
@@ -74,5 +74,5 @@ export function devtoolsPlugin(): HeadPluginInput {
         },
       },
     }
-  }
+  }, { key: 'devtools' as const })
 }

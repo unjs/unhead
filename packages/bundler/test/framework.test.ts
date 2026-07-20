@@ -76,11 +76,13 @@ function names(plugins: any[]): string[] {
 describe('createFrameworkPlugin devtools loading', () => {
   it('exposes concrete plugin types for every bundler', () => {
     const plugin = Unhead()
+    type Options = NonNullable<Parameters<typeof Unhead>[0]>
 
     expectTypeOf(plugin.vite()).toEqualTypeOf<VitePlugin[]>()
     expectTypeOf(plugin.webpack()).toEqualTypeOf<WebpackPluginInstance[]>()
     expectTypeOf(plugin.rspack()).toEqualTypeOf<RspackPluginInstance[]>()
     expectTypeOf(plugin.rollup()).toEqualTypeOf<RollupPlugin[]>()
+    expectTypeOf<Options['devtools']>().toEqualTypeOf<boolean | undefined>()
   })
 
   it('does not import the Vite devtools module for non-Vite bundlers', () => {

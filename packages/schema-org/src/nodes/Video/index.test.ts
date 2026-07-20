@@ -30,4 +30,31 @@ describe('defineVideo', () => {
       `)
     })
   })
+
+  it('resolves thumbnail independently from thumbnailUrl', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineVideo({
+          name: 'My cool video',
+          url: '/video.mp4',
+          thumbnail: {
+            name: 'Poster image',
+            url: '/poster.jpg',
+          },
+          thumbnailUrl: '/fallback.jpg',
+        }),
+      ])
+
+      const [video] = await injectSchemaOrg(head)
+
+      expect(video.thumbnail).toEqual({
+        '@type': 'ImageObject',
+        'contentUrl': 'https://example.com/poster.jpg',
+        'inLanguage': 'en-AU',
+        'name': 'Poster image',
+        'url': 'https://example.com/poster.jpg',
+      })
+      expect(video.thumbnailUrl).toBe('https://example.com/fallback.jpg')
+    })
+  })
 })

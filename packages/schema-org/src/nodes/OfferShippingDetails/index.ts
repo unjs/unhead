@@ -1,4 +1,4 @@
-import type { Thing } from '../../types'
+import type { NodeRelation, Thing } from '../../types'
 import type { DefinedRegion } from '../DefinedRegion'
 import type { MonetaryAmount } from '../MonetaryAmount'
 import type { ShippingDeliveryTime } from '../ShippingDeliveryTime'
@@ -12,14 +12,14 @@ export interface OfferShippingDetails extends Thing {
   /**
    * The total delay between the receipt of the order and the goods reaching the final customer.
    */
-  'deliveryTime': ShippingDeliveryTime
-  'shippingDestination': DefinedRegion
+  'deliveryTime': NodeRelation<ShippingDeliveryTime>
+  'shippingDestination': NodeRelation<DefinedRegion>
   /**
    * Information about the cost of shipping to the specified destination. At least one of shippingRate.value or shippingRate.maxValue must be specified, along with shippingRate.currency.
    *
    * You can only specify one shippingRate per OfferShippingDetails property. To indicate multiple rates for your product, specify multiple OfferShippingDetail properties.
    */
-  'shippingRate': MonetaryAmount
+  'shippingRate': NodeRelation<MonetaryAmount>
 }
 
 export const offerShippingDetailsResolver = defineSchemaOrgResolver<OfferShippingDetails>({

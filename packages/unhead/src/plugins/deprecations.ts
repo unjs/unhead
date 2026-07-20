@@ -1,3 +1,4 @@
+import type { HeadEntry, HeadTag } from '../types'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 /**
@@ -12,18 +13,18 @@ import { defineHeadPlugin } from './defineHeadPlugin'
 export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'deprecations',
   hooks: {
-    'entries:normalize': ({ tags }) => {
+    'entries:normalize': <Input>({ tags }: { tags: HeadTag[], entry: HeadEntry<Input> }) => {
       for (const tag of tags) {
         if (tag.props.children) {
-          tag.innerHTML = tag.props.children
+          tag.innerHTML = String(tag.props.children)
           delete tag.props.children
         }
         if (tag.props.hid) {
-          tag.key = tag.props.hid
+          tag.key = String(tag.props.hid)
           delete tag.props.hid
         }
         if (tag.props.vmid) {
-          tag.key = tag.props.vmid
+          tag.key = String(tag.props.vmid)
           delete tag.props.vmid
         }
         if ('body' in tag.props) {
@@ -33,7 +34,7 @@ export const DeprecationsPlugin = /* @__PURE__ */ defineHeadPlugin({
           delete tag.props.body
         }
         if (tag.props.renderPriority != null) {
-          tag.tagPriority = tag.props.renderPriority
+          tag.tagPriority = tag.props.renderPriority as HeadTag['tagPriority']
           delete tag.props.renderPriority
         }
       }

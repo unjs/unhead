@@ -54,22 +54,21 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
       key: 'infer-seo-meta',
       hooks: {
         'tags:beforeResolve': ({ tagMap }) => {
-          let title = head._titleTemplate || head._title
+          const titleSource = head._titleTemplate || head._title
+          const title = typeof titleSource === 'function' ? titleSource(head._title) : titleSource
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            if (typeof title === 'function') {
-              // @ts-expect-error untyped
-              title = title(head._title)
-            }
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            const resolvedTitle = typeof title === 'string' ? title : undefined
+            ogTitle.props!.content = options.ogTitle ? options.ogTitle(resolvedTitle) : resolvedTitle || ''
             ogTitle.processTemplateParams = true
           }
 
           const description = tagMap.get('meta:description')?.props?.content
           const ogDescription = tagMap.get('meta:og:description')
           if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
+            const resolvedDescription = description == null || description === false ? undefined : String(description)
+            ogDescription.props!.content = options.ogDescription ? options.ogDescription(resolvedDescription) : resolvedDescription || ''
             ogDescription.processTemplateParams = true
           }
         },

@@ -89,7 +89,7 @@ export interface WebPageSimple extends Thing {
   /**
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
-  speakable?: unknown
+  speakable?: Thing
   /**
    * The time at which the page was last reviewed, in ISO 8601 format.
    */
@@ -103,7 +103,7 @@ export interface WebPageSimple extends Thing {
    *
    * Note it's on by default for most page types.
    */
-  potentialAction?: Arrayable<(ReadAction | unknown)>
+  potentialAction?: Arrayable<ReadAction | Thing>
 }
 
 export interface WebPage extends WebPageSimple {}
@@ -159,7 +159,20 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     node.author = resolveRelation(node.author, ctx, personResolver)
     node.primaryImageOfPage = resolveRelation(node.primaryImageOfPage, ctx, imageResolver)
     // actions may be a function that need resolving
-    node.potentialAction = resolveRelation(node.potentialAction, ctx, readActionResolver)
+    if (node.potentialAction) {
+      const resolveAction = (action: ReadAction | Thing) => {
+        const type = action['@type']
+        const isReadAction = type === 'ReadAction'
+          || (Array.isArray(type) && type.includes('ReadAction'))
+          || 'target' in action
+        return isReadAction
+          ? resolveRelation(action as ReadAction, ctx, readActionResolver)
+          : resolveRelation(action, ctx)
+      }
+      node.potentialAction = Array.isArray(node.potentialAction)
+        ? node.potentialAction.map(resolveAction)
+        : resolveAction(node.potentialAction)
+    }
 
     if (node['@type'] === 'WebPage' && ctx.meta.url) {
       // if the type hasn't been augmented
@@ -173,9 +186,9 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     return node
   },
   resolveRootNode(webPage, { find, meta }) {
-    const identity = find<Person | Organization>(IdentityId)
-    const webSite = find<WebSite>(PrimaryWebSiteId)
-    const logo = find<ImageObject>('#logo')
+    const identity = find(IdentityId)
+    const webSite = find(PrimaryWebSiteId)
+    const logo = find('#logo')
 
     /*
      * When it's a homepage, add additional about property which references the identity of the site.
@@ -190,7 +203,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
       setIfEmpty(webPage, 'isPartOf', idReference(webSite))
 
     // it's possible that adding a new web page will revert the breadcrumb data
-    const breadcrumb = find<BreadcrumbList>(PrimaryBreadcrumbId)
+    const breadcrumb = find(PrimaryBreadcrumbId)
     if (breadcrumb)
       setIfEmpty(webPage, 'breadcrumb', idReference(breadcrumb))
 

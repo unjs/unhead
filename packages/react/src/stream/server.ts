@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream'
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import type { CreateStreamableServerHeadOptions, PreparedTemplate, StreamableHeadContext } from 'unhead/stream/server'
-import type { ResolvableHead, Unhead } from 'unhead/types'
+import type { CompatibleHead, ResolvableHead, Unhead, UseHeadInput } from 'unhead/types'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
 import {
@@ -11,13 +11,13 @@ import {
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
-export interface UnheadProviderProps {
+export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
+  value: CompatibleHead<I, ResolvableHead, RenderResult>
   children: ReactNode
-  value: Unhead
 }
 
-export function UnheadProvider({ value, children }: UnheadProviderProps): ReactNode {
-  return createElement(UnheadContext.Provider, { value }, children)
+export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ value, children }: UnheadProviderProps<I, RenderResult>): ReactElement {
+  return createElement(UnheadContext.Provider, { value: value as unknown as Unhead }, children)
 }
 
 /**
@@ -58,6 +58,10 @@ export interface ReactStreamableHeadContext<T = ResolvableHead>
   wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => (writable: Writable) => void
 }
 
+type CreateStreamableHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateStreamableServerHeadOptions<Input>]
+  : [options: CreateStreamableServerHeadOptions<Input> & { disableDefaults: true }]
+
 /**
  * Creates a head instance configured for React streaming SSR.
  *
@@ -78,10 +82,14 @@ export interface ReactStreamableHeadContext<T = ResolvableHead>
  * return { pipe: wrap(pipe, template) }
  * ```
  */
+export function createStreamableHead(options?: CreateStreamableServerHeadOptions<ResolvableHead>): ReactStreamableHeadContext<ResolvableHead>
+export function createStreamableHead<T>(options: CreateStreamableServerHeadOptions<T> & { disableDefaults: true }): ReactStreamableHeadContext<T>
+export function createStreamableHead<T>(options: CreateStreamableServerHeadOptions<T>): ReactStreamableHeadContext<T | ResolvableHead>
+export function createStreamableHead<T = ResolvableHead>(...args: CreateStreamableHeadArgs<T>): ReactStreamableHeadContext<T>
 export function createStreamableHead<T = ResolvableHead>(
-  options: CreateStreamableServerHeadOptions = {},
+  options: CreateStreamableServerHeadOptions<T> = {},
 ): ReactStreamableHeadContext<T> {
-  const { head, onShellReady, shellReady } = createCoreStreamableHead<T>(options)
+  const { head, onShellReady, shellReady } = createCoreStreamableHead<T>(options as CreateStreamableServerHeadOptions<T> & { disableDefaults: true })
 
   return {
     head,

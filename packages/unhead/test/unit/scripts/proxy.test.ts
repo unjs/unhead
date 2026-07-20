@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { AsVoidFunctions } from '../../../src/scripts/types'
+import type { AsVoidFunctions, ScriptInstance } from '../../../src/scripts/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
@@ -158,7 +158,7 @@ describe('proxy chain', () => {
 
     instance.proxy.greet('hello-world')
     instance.status = 'loaded'
-    head.hooks.callHook('script:updated', { script: instance })
+    head.hooks.callHook('script:updated', { script: instance as unknown as ScriptInstance<object> })
     resolve({ greet })
     await instance._loadPromise
 

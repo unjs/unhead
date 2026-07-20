@@ -17,6 +17,7 @@ import type {
   BareAlternateLink,
   CanonicalLink,
   CompressionDictionaryLink,
+  DefinedGenericLink,
   DnsPrefetchLink,
   ExpectLink,
   FaviconLink,
@@ -69,6 +70,7 @@ import type { MetaFlat } from './metaFlat'
 import type { Noscript } from './noscript'
 import type {
   ApplicationJsonScript,
+  DefinedGenericScript,
   // Narrowed script types for re-export
   ExternalScript,
   GenericScript,
@@ -80,6 +82,7 @@ import type {
   JsonLdScript,
   KnownScriptType,
   ModuleScript,
+  NoLoadableScriptProps,
   Script,
   ScriptBase,
   ScriptHttpEvents,
@@ -157,10 +160,10 @@ type DistributeResolvableWithEvents<T, Aug, Events> = T extends any
     ? ResolvableProperties<Omit<T, keyof Events> & Aug> & MaybeEventFnHandlers<Events>
     : ResolvableProperties<T & Aug>
   : never
-export type ResolvableLink = DistributeResolvableWithEvents<Link, SchemaAugmentations['link'], LinkHttpEvents>
+export type ResolvableLink = DistributeResolvableWithEvents<Link | DefinedGenericLink, SchemaAugmentations['link'], LinkHttpEvents>
 export type ResolvableMeta = DistributeResolvable<UnheadMeta, SchemaAugmentations['meta']>
 export type ResolvableStyle = ResolvableProperties<Style & DataKeys & SchemaAugmentations['style']> | string
-export type ResolvableScript = DistributeResolvableWithEvents<Script, SchemaAugmentations['script'], ScriptHttpEvents> | string
+export type ResolvableScript = DistributeResolvableWithEvents<Script | DefinedGenericScript, SchemaAugmentations['script'], ScriptHttpEvents> | string
 export type ResolvableNoscript = ResolvableProperties<Noscript & DataKeys & SchemaAugmentations['noscript']> | string
 export type ResolvableHtmlAttributes = ResolvableProperties<UnheadHtmlAttributes & DataKeys & SchemaAugmentations['htmlAttrs']>
 export type ResolvableBodyAttributes = ResolvableProperties<UnheadBodyAttributesWithoutEvents & DataKeys & SchemaAugmentations['bodyAttrs']> & MaybeEventFnHandlers<BodyEvents>
@@ -243,7 +246,7 @@ export interface SerializableHead {
   title?: string
   titleTemplate?: string
   base?: Base & DataKeys & SchemaAugmentations['base']
-  templateParams?: Record<string, any>
+  templateParams?: ResolvableTemplateParams
   link?: (Link & SchemaAugmentations['link'])[]
   meta?: (Meta & SchemaAugmentations['meta'])[]
   style?: (Style & DataKeys & SchemaAugmentations['style'])[]
@@ -337,6 +340,7 @@ export type {
   JsonLdScript,
   KnownScriptType,
   ModuleScript,
+  NoLoadableScriptProps,
   Script,
   ScriptBase,
   ScriptHttpEvents,

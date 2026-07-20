@@ -1,4 +1,4 @@
-import type { NodeRelations } from '../../types'
+import type { Arrayable, NodeRelations, Thing } from '../../types'
 import type { OpeningHoursSpecification } from '../OpeningHours'
 import type { Organization } from '../Organization'
 import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
@@ -62,11 +62,11 @@ export interface LocalBusinessSimple extends Organization {
   /**
    * An array of GeoShape, Place or string definitions.
    */
-  'areaServed'?: unknown
+  'areaServed'?: Arrayable<string | Thing>
   /**
    * A GeoCoordinates object.
    */
-  'geo'?: unknown
+  'geo'?: Thing
   /**
    * The VAT ID of the business.
    */

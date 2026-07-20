@@ -259,7 +259,10 @@ describe('defineArticle', () => {
         }
       `)
 
-      const id = client[2].author['@id']
+      const author = client[2].author
+      if (!author || typeof author !== 'object' || !('@id' in author))
+        throw new TypeError('Expected the resolved article author to be an ID reference.')
+      const id = author['@id']
 
       expect(id).toEqual('https://example.com/#/schema/person/1')
 

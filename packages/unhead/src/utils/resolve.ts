@@ -23,8 +23,10 @@ function isEmptyProps(props: Record<string, any>): boolean {
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
-function syncEntryHookCache(head: Unhead<any>, hooks: Record<string, any>) {
-  const count = (hooks['entries:resolve']?.length || 0) + (hooks['entries:normalize']?.length || 0)
+function syncEntryHookCache<Input, RenderResult>(head: Unhead<Input, RenderResult>, hooks: Record<string, any>) {
+  const count = (hooks['entries:resolve']?.length || 0)
+    + (hooks['entries:normalize']?.length || 0)
+    + (hooks['tag:normalise']?.length || 0)
   if (head._h !== count) {
     head._h = count
     for (const entry of head.entries.values())
@@ -86,11 +88,11 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
       const props = { ...prev.props }
+      const target = props as Record<string, unknown>
       for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        target[p] = p === 'style'
+          ? new Map([...(prev.props.style || []), ...(next.props.style || [])])
+          : p === 'class' ? new Set([...(prev.props.class || []), ...(next.props.class || [])]) : next.props[p]
       }
       ctx.tagMap.set(k, { ...next, props })
     }
@@ -106,22 +108,29 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   return hasFlatMeta
 }
 
-export function resolveTitleTemplate(ctx: ResolveTagsContext, head: Unhead<any>): void {
+export function resolveTitleTemplate<Input, RenderResult>(ctx: ResolveTagsContext, head: Unhead<Input, RenderResult>): void {
   const title = ctx.tagMap.get('title')
   const tpl = ctx.tagMap.get('titleTemplate')
-  head._title = title?.textContent
+  const rawTitle = title?.textContent
+  const titleContent = rawTitle == null || typeof rawTitle === 'function' ? undefined : String(rawTitle)
+  head._title = titleContent
+  head._titleTemplate = undefined
   if (!tpl)
     return
   const fn = tpl.textContent
+  if (typeof fn !== 'string' && typeof fn !== 'function')
+    return
   head._titleTemplate = fn
   if (!fn)
     return
-  // @ts-expect-error untyped
-  let v = typeof fn === 'function' ? fn(title?.textContent) : fn
+  let v = typeof fn === 'function' ? fn(titleContent) : fn
   if (typeof v === 'string' && !head.plugins.has('template-params'))
-    v = v.replace('%s', title?.textContent || '')
+    v = v.replace('%s', titleContent || '')
   if (title) {
     v === null ? ctx.tagMap.delete('title') : ctx.tagMap.set('title', { ...title, textContent: v })
+  }
+  else if (v === null) {
+    ctx.tagMap.delete('titleTemplate')
   }
   else {
     // create a new object instead of mutating the cached tpl tag
@@ -165,7 +174,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return sanitizeTagsInPlace([...tags])
 }
 
-export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
+export function resolveTags<Input, RenderResult>(head: Unhead<Input, RenderResult>, options?: ResolveTagsOptions): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -184,8 +193,8 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
   // defers them to the next resolve, matching the previous behavior. The
   // entries:resolve array is also part of that hook's contract: listeners
   // may mutate it (push/splice) to change which entries resolve.
-  let entries: HeadEntry<any>[] | undefined
-  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length) {
+  let entries: HeadEntry<Input>[] | undefined
+  if (hooks['entries:resolve']?.length || hooks['entries:normalize']?.length || hooks['tag:normalise']?.length) {
     entries = [...head.entries.values()]
     if (hooks['entries:resolve']?.length)
       callHook(head, 'entries:resolve', { entries, ...ctx })
@@ -207,6 +216,7 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         && weightFn === head.resolvedOptions._tagWeight
         && !hooks['entries:normalize']?.length
         && !hooks['entries:resolve']?.length
+        && !hooks['tag:normalise']?.length
         && (!e.options || isEmptyProps(e.options))) {
         tags = e._precomputedTags
       }
@@ -223,7 +233,12 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
           tags = normalizeCtx.tags
         }
         for (let i = 0; i < tags.length; i++) {
-          const t = tags[i]
+          let t = tags[i]
+          if (hooks['tag:normalise']?.length) {
+            const tagCtx = { tag: t, entry: e, resolvedOptions: head.resolvedOptions }
+            callHook(head, 'tag:normalise', tagCtx)
+            t = tags[i] = tagCtx.tag
+          }
           t._w = weightFn(t)
           t._p = (e._i << 10) + i
           t._d = dedupeKey(t)

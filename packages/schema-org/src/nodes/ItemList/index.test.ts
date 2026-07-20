@@ -75,6 +75,7 @@ describe('defineItemList', () => {
                     "reviewRating": {
                       "@type": "Rating",
                       "bestRating": 5,
+                      "ratingValue": 5,
                       "worstRating": 1,
                     },
                   },

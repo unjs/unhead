@@ -1,6 +1,7 @@
 import type { PropResolver } from '../types'
 import { isUnsafeKey } from './unsafeKey'
 
+export function walkResolver(val: unknown, resolve?: PropResolver, key?: string): unknown
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
   if (key === '_resolver')
     return val

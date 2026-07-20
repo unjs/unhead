@@ -1,4 +1,4 @@
-import type { CreateClientHeadOptions, CreateServerHeadOptions, HeadPluginInput, SSRHeadPayload } from 'unhead/types'
+import type { CreateClientHeadOptions, CreateServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import type { UseHeadInput, VueHeadClient } from './types'
 import { DeprecationsPlugin } from 'unhead/legacy'
 import { AliasSortingPlugin, PromisesPlugin, TemplateParamsPlugin } from 'unhead/plugins'
@@ -18,7 +18,7 @@ export { createHead as createClientHead } from './client'
  * @deprecated Will be removed in v4. Migrate call sites to the v3 API and construct
  * `createHead`/`createServerHead` from `@unhead/vue/client`/`@unhead/vue/server` without this plugin set.
  */
-export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin]
+export const legacyPlugins = [DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin] as const
 
 /**
  * Creates a client `VueHeadClient` with the v2 migration plugin set pre-registered so that
@@ -29,7 +29,7 @@ export const legacyPlugins: HeadPluginInput[] = [DeprecationsPlugin, PromisesPlu
  * `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient<UseHeadInput, boolean> {
+export function createHead(options: CreateClientHeadOptions<UseHeadInput, void> = {}): VueHeadClient<UseHeadInput, void> {
   return _createClientHead({
     ...options,
     plugins: [...legacyPlugins, ...(options.plugins || [])],
@@ -43,8 +43,8 @@ export function createHead(options: CreateClientHeadOptions = {}): VueHeadClient
  * `legacyPlugins` yourself if you still need v1/v2 tag prop compatibility.
  */
 /* @__NO_SIDE_EFFECTS__ */
-export function createServerHead(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): VueHeadClient<UseHeadInput, SSRHeadPayload> {
-  return _createServerHead({
+export function createServerHead(options: Omit<CreateServerHeadOptions<UseHeadInput>, 'propResolvers'> = {}): VueHeadClient<UseHeadInput, SSRHeadPayload> {
+  return _createServerHead<UseHeadInput>({
     ...options,
     plugins: [...legacyPlugins, ...(options.plugins || [])],
   })

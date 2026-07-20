@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadEntryTarget, UseHeadInput } from 'unhead/types'
 import type { UseSchemaOrgInput } from './index'
 import { useHead, useUnhead } from '@unhead/svelte'
 import { schemaAutoImports } from './imports'
@@ -7,15 +7,20 @@ import {
 } from './index'
 import { UnheadSchemaOrg } from './plugin'
 
-export function useSchemaOrg(input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
+type UseSchemaOrgOptions = Omit<HeadEntryOptions<UseHeadInput>, 'head'> & {
+  head?: HeadEntryTarget<UseHeadInput> & SchemaOrgPluginHost
+}
+
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseSchemaOrgOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || useUnhead()
   unhead.use(UnheadSchemaOrg())
-  // @ts-expect-error untyped
-  const entry = useHead(normalizeSchemaOrgInput(input), options) as ActiveHeadEntry<UseSchemaOrgInput>
+  const entry = useHead(normalizeSchemaOrgInput(input) as unknown as UseHeadInput, options)
   const corePatch = entry.patch
-  entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
-  return entry
+  const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>
+  publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
+  return publicEntry
 }
 
 export type { MetaInput, UserConfig } from './index'

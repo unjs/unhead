@@ -1,11 +1,10 @@
 import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
-import type { UnheadDevtoolsOptions } from '../unplugin/types'
 
 const HEAD_COMPOSABLE_RE = /\b(?:useHead|useSeoMeta|useHeadSafe|useScript)\b/
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 
-interface LazyUnheadDevtoolsOptions extends UnheadDevtoolsOptions {
+interface LazyUnheadDevtoolsOptions {
   _ctx?: HeadTransformContext
 }
 

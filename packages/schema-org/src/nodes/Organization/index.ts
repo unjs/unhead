@@ -1,8 +1,6 @@
 import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
 import type { ImageObject } from '../Image'
 import type { PostalAddress } from '../PostalAddress'
-import type { WebPage } from '../WebPage'
-import type { WebSite } from '../WebSite'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -75,7 +73,15 @@ export interface Organization extends OrganizationSimple {}
  * (such as Corporation or LocalBusiness) if the required conditions are met.
  */
 export const organizationResolver
-  = defineSchemaOrgResolver<Organization>({
+  = defineSchemaOrgResolver<Organization, Organization | string>({
+    cast(node) {
+      if (typeof node === 'string') {
+        return {
+          name: node,
+        }
+      }
+      return node
+    },
     defaults: {
       '@type': 'Organization',
     },
@@ -90,7 +96,7 @@ export const organizationResolver
     },
     resolveRootNode(node, ctx) {
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
-      const webPage = ctx.find<WebPage>(PrimaryWebPageId)
+      const webPage = ctx.find(PrimaryWebPageId)
       if (node.logo && isIdentity) {
         // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
         if (!ctx.find('#organization')) {
@@ -117,7 +123,7 @@ export const organizationResolver
             // 'image': idReference(logoNode),
             'address': node.address,
             // needs to be a URL
-            'logo': resolveRelation(node.logo, ctx, imageResolver, { root: false }).url,
+            'logo': (resolveRelation(node.logo, ctx, imageResolver, { root: false }) as ImageObject).url,
             '_priority': -1,
             '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
           })
@@ -128,7 +134,7 @@ export const organizationResolver
       if (isIdentity && webPage)
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 
-      const webSite = ctx.find<WebSite>(PrimaryWebSiteId)
+      const webSite = ctx.find(PrimaryWebSiteId)
       if (webSite)
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },

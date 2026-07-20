@@ -2,7 +2,7 @@ import type { HookableCore } from 'hookable'
 import type { CoreHeadHooks, Unhead } from '../types'
 import { HookableCore as Hookable } from 'hookable'
 
-export function createHooks<T extends CoreHeadHooks>(hooks?: Partial<T>): HookableCore<T> {
+export function createHooks<T extends CoreHeadHooks<any, any>>(hooks?: Partial<T>): HookableCore<T> {
   const instance = new Hookable<T>()
   for (const key in hooks || {}) {
     instance.hook(key as any, hooks![key as keyof typeof hooks] as any)
