@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, UseHeadInput } from 'unhead/types'
 import type { UseSchemaOrgInput } from './index'
 import { useHead, useUnhead } from '@unhead/react'
 import { schemaAutoImports } from './imports'
@@ -54,18 +54,18 @@ export {
   defineWebSite,
 } from './runtime'
 
+type PatchedSchemaOrgEntry = ActiveHeadEntry<UseHeadInput> & { __patched?: boolean }
+type PublicSchemaOrgEntry = ActiveHeadEntry<UseSchemaOrgInput> & { __patched?: boolean }
 export function useSchemaOrg(input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || useUnhead()
   unhead.use(UnheadSchemaOrg())
-  // @ts-expect-error untyped
-  const entry = useHead(normalizeSchemaOrgInput(input), options) as ActiveHeadEntry<UseSchemaOrgInput>
+  const entry = useHead(normalizeSchemaOrgInput(input) as unknown as UseHeadInput, options) as PatchedSchemaOrgEntry
   const corePatch = entry.patch
-  // @ts-expect-error runtime
-  if (!entry.__patched) {
-    entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
-    // @ts-expect-error runtime
-    entry.__patched = true
+  const publicEntry = entry as unknown as PublicSchemaOrgEntry
+  if (!publicEntry.__patched) {
+    publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input) as unknown as UseHeadInput)
+    publicEntry.__patched = true
   }
-  return entry
+  return publicEntry
 }

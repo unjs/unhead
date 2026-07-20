@@ -1,7 +1,4 @@
 import type { Arrayable, Identity, NodeRelations, ResolvableDate, Thing } from '../../types'
-import type { Organization } from '../Organization'
-import type { Person } from '../Person'
-import type { WebPage } from '../WebPage'
 import type { SearchAction } from './SearchAction'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -46,7 +43,7 @@ export interface WebSiteSimple extends Thing {
   /**
    * A SearchAction object describing the site's internal search.
    */
-  potentialAction?: Arrayable<(SearchAction | unknown)>
+  potentialAction?: NodeRelations<SearchAction>
   /**
    * The language code for the WebSite; e.g., en-GB.
    * If the website is available in multiple languages, then output an array of inLanguage values.
@@ -80,11 +77,11 @@ export const webSiteResolver = defineSchemaOrgResolver<WebSite>({
   resolveRootNode(node, { find }) {
     // if this person is the identity
     if (resolveAsGraphKey(node['@id']) === PrimaryWebSiteId) {
-      const identity = find<Person | Organization>(IdentityId)
+      const identity = find(IdentityId)
       if (identity)
         setIfEmpty(node, 'publisher', idReference(identity))
 
-      const webPage = find<WebPage>(PrimaryWebPageId)
+      const webPage = find(PrimaryWebPageId)
 
       if (webPage)
         setIfEmpty(webPage, 'isPartOf', idReference(node))

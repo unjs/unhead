@@ -7,7 +7,7 @@ import {
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
-import { imageResolver } from '../Image'
+import { imageResolver, isImageObject } from '../Image'
 
 export interface VideoSimple extends Thing {
   /**
@@ -21,7 +21,7 @@ export interface VideoSimple extends Thing {
   /**
    * A reference-by-ID to an imageObject.
    */
-  thumbnail?: NodeRelation<ImageObject>
+  thumbnail?: Arrayable<NodeRelation<ImageObject>>
   /**
    * A URL pointing to the video thumbnail image file. Follow the [thumbnail image guidelines](https://developers.google.com/search/docs/appearance/video#provide-a-high-quality-thumbnail).
    */
@@ -86,7 +86,7 @@ export interface VideoObject extends VideoSimple {}
 /**
  * Describes an individual video (usually in the context of an embedded media object).
  */
-export const videoResolver = defineSchemaOrgResolver<VideoObject>({
+export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | string>({
   cast(input) {
     if (typeof input === 'string') {
       input = {
@@ -123,14 +123,14 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject>({
     }
 
     if (video.thumbnail)
-      video.thumbnail = resolveRelation(video.thumbnailUrl, ctx, imageResolver)
+      video.thumbnail = resolveRelation(video.thumbnail, ctx, imageResolver)
 
     return video
   },
   resolveRootNode(video, { find }) {
     if (video.image && !video.thumbnail) {
       const firstImage = asArray(video.image)[0] as ImageObject
-      setIfEmpty(video, 'thumbnail', find<ImageObject>(firstImage['@id'] as Id)?.url)
+      setIfEmpty(video, 'thumbnail', find(firstImage['@id'] as Id, isImageObject)?.url)
     }
   },
 })

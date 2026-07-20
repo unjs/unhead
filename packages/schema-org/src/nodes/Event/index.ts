@@ -8,7 +8,6 @@ import type {
 } from '../../types'
 import type { ImageObject } from '../Image'
 import type { Offer } from '../Offer'
-import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Place } from '../Place'
 import type { VirtualLocation } from '../VirtualLocation'
@@ -123,9 +122,20 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
   idPrefix: ['url', PrimaryEventId],
   resolve(node, ctx) {
     if (node.location) {
-      // @ts-expect-error untyped
-      const isVirtual = node.location === 'string' || node.location?.url !== 'undefined'
-      node.location = resolveRelation(node.location, ctx, isVirtual ? virtualLocationResolver : placeResolver)
+      const resolveLocation = (location: NodeRelation<Place | VirtualLocation | string>) => {
+        const isVirtual = typeof location === 'string'
+          || (typeof location === 'object' && location !== null && typeof (location as { url?: unknown }).url !== 'undefined')
+        return isVirtual
+          ? resolveRelation(location as NodeRelation<VirtualLocation | string>, ctx, virtualLocationResolver)
+          : resolveRelation(location as NodeRelation<Place>, ctx, placeResolver)
+      }
+      if (Array.isArray(node.location)) {
+        const locations = node.location.map(resolveLocation)
+        node.location = locations.length === 1 ? locations[0] : locations
+      }
+      else {
+        node.location = resolveLocation(node.location)
+      }
     }
 
     node.performer = resolveRelation(node.performer, ctx, personResolver, {
@@ -137,15 +147,14 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
     node.offers = resolveRelation(node.offers, ctx, offerResolver)
 
     if (node.eventAttendanceMode)
-      node.eventAttendanceMode = withBase(node.eventAttendanceMode, 'https://schema.org/') as EventAttendanceModeTypes
+      node.eventAttendanceMode = withBase(node.eventAttendanceMode, 'https://schema.org/') as OptionalSchemaOrgPrefix<EventAttendanceModeTypes>
     if (node.eventStatus)
-      node.eventStatus = withBase(node.eventStatus, 'https://schema.org/') as EventStatusTypes
+      node.eventStatus = withBase(node.eventStatus, 'https://schema.org/') as OptionalSchemaOrgPrefix<EventStatusTypes>
 
-    // @ts-expect-error untyped
     const isOnline = node.eventStatus === 'https://schema.org/EventMovedOnline'
 
     // dates
-    const dates = ['startDate', 'previousStartDate', 'endDate']
+    const dates = ['startDate', 'previousStartDate', 'endDate'] as const
     // offline events can be passed as simple date strings because it will use the event location
     dates.forEach((date) => {
       if (!isOnline) {
@@ -160,7 +169,7 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
     return node
   },
   resolveRootNode(node, { find }) {
-    const identity = find<Organization | Person>(IdentityId)
+    const identity = find(IdentityId)
     if (identity)
       setIfEmpty(node, 'organizer', idReference(identity))
   },

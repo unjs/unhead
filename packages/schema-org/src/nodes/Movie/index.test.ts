@@ -58,6 +58,7 @@ describe('defineMovie', () => {
               "reviewRating": {
                 "@type": "Rating",
                 "bestRating": 5,
+                "ratingValue": 2,
                 "worstRating": 1,
               },
             },
