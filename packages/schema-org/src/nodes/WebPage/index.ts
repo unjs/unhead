@@ -161,6 +161,9 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     // actions may be a function that need resolving
     if (node.potentialAction) {
       const resolveAction = (action: ReadAction | Thing) => {
+        if (!action || typeof action !== 'object')
+          return action
+
         const type = action['@type']
         const isReadAction = type === 'ReadAction'
           || (Array.isArray(type) && type.includes('ReadAction'))

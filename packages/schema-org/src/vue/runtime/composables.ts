@@ -50,6 +50,7 @@ import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
 import { setVueRefResolver } from '@unhead/vue/utils'
+import { isRef } from 'vue'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -111,7 +112,7 @@ type VueSchemaOrgNode<ResolvedInput extends Thing, Input extends object | undefi
 function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): VueSchemaOrgNode<ResolvedInput, Input> {
   if (!input)
     input = {} as Input
-  if (input && typeof input === 'object' && '__v_isRef' in input) {
+  if (isRef(input)) {
     // Keep resolver metadata out-of-band so readonly refs retain it without
     // mutating Vue's readonly proxy.
     setVueRefResolver(input, resolver)

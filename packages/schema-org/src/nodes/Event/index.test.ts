@@ -117,6 +117,24 @@ describe('defineEvent', () => {
     })
   })
 
+  it('preserves time data for online events', async () => {
+    await useSetup(async (head) => {
+      const startDate = new Date(2021, 10, 10, 0)
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Online event',
+          eventAttendanceMode: 'OnlineEventAttendanceMode',
+          startDate,
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+
+      expect(event.startDate).toBe(startDate.toISOString())
+      expect(event.endDate).toBe(startDate.toISOString())
+    })
+  })
+
   it('handles virtual', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

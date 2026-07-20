@@ -123,8 +123,13 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
   resolve(node, ctx) {
     if (node.location) {
       const resolveLocation = (location: NodeRelation<Place | VirtualLocation | string>) => {
+        const type = typeof location === 'object' && location !== null ? location['@type'] : undefined
         const isVirtual = typeof location === 'string'
-          || (typeof location === 'object' && location !== null && typeof (location as { url?: unknown }).url !== 'undefined')
+          || (typeof location === 'object' && location !== null && (
+            type === 'VirtualLocation'
+            || (Array.isArray(type) && type.includes('VirtualLocation'))
+            || typeof (location as { url?: unknown }).url !== 'undefined'
+          ))
         return isVirtual
           ? resolveRelation(location as NodeRelation<VirtualLocation | string>, ctx, virtualLocationResolver)
           : resolveRelation(location as NodeRelation<Place>, ctx, placeResolver)
@@ -152,6 +157,7 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
       node.eventStatus = withBase(node.eventStatus, 'https://schema.org/') as OptionalSchemaOrgPrefix<EventStatusTypes>
 
     const isOnline = node.eventStatus === 'https://schema.org/EventMovedOnline'
+      || node.eventAttendanceMode === 'https://schema.org/OnlineEventAttendanceMode'
 
     // dates
     const dates = ['startDate', 'previousStartDate', 'endDate'] as const

@@ -57,4 +57,21 @@ describe('defineVideo', () => {
       expect(video.thumbnailUrl).toBe('https://example.com/fallback.jpg')
     })
   })
+
+  it('uses the first image URL as the thumbnailUrl fallback', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineVideo({
+          name: 'My cool video',
+          url: '/video.mp4',
+          image: ['/poster.jpg', '/alternate.jpg'],
+        }),
+      ])
+
+      const [video] = await injectSchemaOrg(head)
+
+      expect(video.thumbnail).toBeUndefined()
+      expect(video.thumbnailUrl).toBe('https://example.com/poster.jpg')
+    })
+  })
 })
