@@ -64,7 +64,7 @@ export default defineBuildConfig({
       const contents = fs.readFileSync(file)
       const size = contents.length
       const compressed = zlib.gzipSync(contents).length
-      const markerPresent = contents.toString().includes('[unhead:pc]')
+      const markerPresent = contents.toString().includes('._p.push(')
       if (markerPresent)
         throw new Error('The sealed static server runtime leaked into a client bundle.')
       if (withPrecompile) {

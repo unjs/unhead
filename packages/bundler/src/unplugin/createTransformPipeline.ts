@@ -104,10 +104,25 @@ interface PendingMinification {
 
 interface PendingPrecompilation {
   end: number
+  head: string
   name: string
   source: Promise<string>
   start: number
 }
+
+interface PendingHeadCreation {
+  disableDefaults: boolean
+  end: number
+  start: number
+}
+
+// Kept build-side so transformed createHead() calls can tree-shake the runtime
+// factory. Runtime/default equivalence is covered by precompile transform tests.
+const PRECOMPILED_DEFAULT_PLAN = [
+  [-20, 'charset', '<meta charset="utf-8">'],
+  [-15, 'meta:viewport', '<meta name="viewport" content="width=device-width, initial-scale=1">'],
+  [100, 'htmlAttrs:lang', ' lang="en"', 3],
+] as const
 
 export type MinifyFn = (code: string) => Promise<string | null>
 
@@ -403,7 +418,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         tag._h = hashTag(tag)
     }
 
-    type CompiledRecord = [number, string, string | string[], (1 | 2 | 3 | 4)?]
+    type CompiledRecord = [number, string, string, (0 | 1 | 2 | 3 | 4)?, 1?]
     const arrayableGroups = new Map<string, CompiledRecord>()
     const plan: CompiledRecord[] = []
     let lastArrayableIdentity: string | undefined
@@ -434,16 +449,15 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         if (group) {
           if (lastArrayableIdentity !== identity)
             fail('repeated arrayable meta identities must be contiguous within one call')
-          if (group[0] !== weight || group[3] !== position)
+          if (group[0] !== weight || (group[3] || undefined) !== position)
             fail('arrayable meta values in one call must share tagPriority and tagPosition')
-          if (typeof group[2] === 'string')
-            group[2] = [group[2], html]
-          else
-            group[2].push(html)
+          group[2] += html
+          group[3] ||= 0
+          group[4] = 1
         }
         else {
-          // Keep the common scalar case on the renderer's string fast path;
-          // only allocate an atomic group when the identity repeats.
+          // Keep the common scalar tuple short. If the identity repeats, its
+          // compact fragments are joined and marked as one atomic winner.
           const record: CompiledRecord = position ? [weight, identity, html, position] : [weight, identity, html]
           arrayableGroups.set(identity, record)
           plan.push(record)
@@ -1015,6 +1029,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         // -- precompile phase ------------------------------------------------
         const pendingPrecompilations: PendingPrecompilation[] = []
+        const pendingHeadCreations: PendingHeadCreation[] = []
         const safeStrictReferences = new WeakSet<object>()
 
         function precompileFailure(node: any, reason: string): never {
@@ -1102,17 +1117,24 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             if (node.arguments.length > 1)
               precompileFailure(node, 'createHead accepts at most one static options object')
             const options = node.arguments[0]
-            if (!options)
+            if (!options) {
+              pendingHeadCreations.push({ start: node.start, end: node.end, disableDefaults: false })
               return true
+            }
             if (options.type !== 'ObjectExpression')
               precompileFailure(options, 'createHead options must be a static object literal')
             const decoded = decodeStaticValue(options)
             if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
               precompileFailure(options, 'createHead options contain a dynamic or unsupported value')
             for (const [key, value] of Object.entries(decoded)) {
-              if ((key !== 'disableDefaults' && key !== 'omitLineBreaks') || typeof value !== 'boolean')
+              if (key !== 'disableDefaults' || typeof value !== 'boolean')
                 precompileFailure(options, `unsupported createHead option: ${key}`)
             }
+            pendingHeadCreations.push({
+              start: node.start,
+              end: node.end,
+              disableDefaults: decoded.disableDefaults === true,
+            })
             return true
           }
 
@@ -1129,8 +1151,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           const headKey = headProperty?.key?.type === 'Identifier' || headProperty?.key?.type === 'Literal'
             ? headProperty.key.name ?? headProperty.key.value
             : undefined
-          if (headProperty?.type !== 'Property' || headProperty.computed || headKey !== 'head')
+          if (headProperty?.type !== 'Property'
+            || headProperty.computed
+            || !headProperty.shorthand
+            || headKey !== 'head'
+            || headProperty.value?.type !== 'Identifier'
+            || headProperty.value.name !== 'head') {
             precompileFailure(options, 'the second argument must be exactly { head }')
+          }
 
           const arg = node.arguments[0]
           if (!arg || arg.type !== 'ObjectExpression')
@@ -1141,8 +1169,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
           const name = `${precompilePrefix}_plan_${pendingPrecompilations.length}`
           pendingPrecompilations.push({
-            start: arg.start,
-            end: arg.end,
+            start: node.start,
+            end: node.end,
+            head: headProperty.value.name,
             name,
             source: compileStaticInput(
               decoded as Record<string, DecodedStaticValue>,
@@ -1151,7 +1180,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               reason => precompileFailure(arg, reason),
             ),
           })
-          precompiledRanges.push([arg.start, arg.end])
+          precompiledRanges.push([node.start, node.end])
           return true
         }
 
@@ -1231,12 +1260,36 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         if (runSeoMeta)
           seoMetaFinalize()
 
+        const defaultPlanName = `${precompilePrefix}_defaults`
+        for (const pending of pendingHeadCreations) {
+          edits.push({
+            start: pending.start,
+            end: pending.end,
+            content: pending.disableDefaults ? '({_p:[]})' : `({_p:[${defaultPlanName}]})`,
+            phase: 'precompile',
+          })
+        }
+
         let compiledPlans: string[] = []
         if (pendingPrecompilations.length) {
           compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
-          for (let i = 0; i < pendingPrecompilations.length; i++) {
-            const pending = pendingPrecompilations[i]
-            edits.push({ start: pending.start, end: pending.end, content: pending.name, phase: 'precompile' })
+          for (let i = 0; i < pendingPrecompilations.length;) {
+            const first = pendingPrecompilations[i]
+            let last = first
+            const names = [first.name]
+            while (++i < pendingPrecompilations.length) {
+              const next = pendingPrecompilations[i]
+              if (next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
+                break
+              last = next
+              names.push(next.name)
+            }
+            edits.push({
+              start: first.start,
+              end: last.end,
+              content: `${first.head}._p.push(${names.join(',')})`,
+              phase: 'precompile',
+            })
           }
         }
 
@@ -1255,13 +1308,17 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const s = new MagicString(code)
         applyEdits(s, edits, id)
-        if (pendingPrecompilations.length) {
+        if (pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
           const directives = ast.program.body.filter((node: any) => node.type === 'ExpressionStatement' && node.directive)
           const directiveEnd = directives.at(-1)?.end
           const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)
-          const declarations = pendingPrecompilations
-            .map((pending, index) => `const ${pending.name} = ${compiledPlans[index]}`)
-            .join('\n')
+          const declarations = [
+            ...(pendingHeadCreations.some(pending => !pending.disableDefaults)
+              ? [`const ${defaultPlanName} = ${JSON.stringify(PRECOMPILED_DEFAULT_PLAN)}`]
+              : []),
+            ...pendingPrecompilations
+              .map((pending, index) => `const ${pending.name} = ${compiledPlans[index]}`),
+          ].join('\n')
           s.appendLeft(importOffset, `${directiveEnd === undefined ? '' : '\n'}${declarations}\n`)
         }
 

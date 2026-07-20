@@ -68,6 +68,6 @@ describe('vite build integration', () => {
     }))
     const [disabled, enabled] = await Promise.all([compile(false), compile(true)])
     expect(enabled).toBe(disabled)
-    expect(enabled).not.toContain('[unhead:pc]')
+    expect(enabled).not.toContain('._p.push(')
   })
 })

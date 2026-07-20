@@ -5,8 +5,9 @@ import { DEFAULT_STATIC_PLAN } from '../server/defaults'
 export type PrecompiledTag = readonly [
   weight: number,
   identity: string,
-  html: string | readonly string[],
-  position?: 1 | 2 | 3 | 4,
+  html: string,
+  position?: 0 | 1 | 2 | 3 | 4,
+  atomic?: 1,
 ]
 
 /** @internal */
@@ -14,26 +15,11 @@ export type PrecompiledHeadInput = readonly PrecompiledTag[]
 
 export interface PrecompiledHeadOptions {
   disableDefaults?: boolean
-  omitLineBreaks?: boolean
 }
 
 export interface PrecompiledServerHead {
   /** @internal */
   _p: PrecompiledHeadInput[]
-  /** @internal */
-  _o: boolean
-  push: (input: PrecompiledHeadInput) => void
-  render: () => SSRHeadPayload
-}
-
-function push(this: PrecompiledServerHead, input: PrecompiledHeadInput): void {
-  if (!Array.isArray(input))
-    throw new Error('[unhead:pc] The static server runtime received an uncompiled head entry.')
-  this._p.push(input)
-}
-
-function render(this: PrecompiledServerHead): SSRHeadPayload {
-  return renderSSRHead(this)
 }
 
 /**
@@ -47,20 +33,17 @@ function render(this: PrecompiledServerHead): SSRHeadPayload {
 export function createHead(options: PrecompiledHeadOptions = {}): PrecompiledServerHead {
   return {
     _p: options.disableDefaults ? [] : [DEFAULT_STATIC_PLAN],
-    _o: options.omitLineBreaks === true,
-    push,
-    render,
   }
 }
 
 /** Resolve build-finalized plans using only runtime execution order. @experimental */
 export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
   const tags: PrecompiledTag[] = []
-  let hasArray = false
+  let hasAtomicGroup = false
   for (const plan of head._p) {
     for (const tag of plan) {
       tags.push(tag)
-      hasArray ||= typeof tag[2] !== 'string'
+      hasAtomicGroup ||= tag[4] === 1
     }
   }
   tags.sort((a, b) => a[0] - b[0])
@@ -70,12 +53,12 @@ export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
   // can mask a compiled array, so structural presence alone is not enough.
   const resolved = new Map<string, PrecompiledTag>()
   let hasFlatMeta = false
-  if (hasArray) {
+  if (hasAtomicGroup) {
     for (const tag of tags) {
       const previous = resolved.get(tag[1])
       if (!previous)
         resolved.set(tag[1], tag)
-      if (typeof tag[2] !== 'string' && (!previous || previous[0] === tag[0])) {
+      if (tag[4] === 1 && (!previous || previous[0] === tag[0])) {
         hasFlatMeta = true
         break
       }
@@ -101,21 +84,13 @@ export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
 }
 
 /** Render a sealed static SSR head. @experimental */
-export function renderSSRHead(head: PrecompiledServerHead, options: { omitLineBreaks?: boolean } = {}): SSRHeadPayload {
+export function renderSSRHead(head: PrecompiledServerHead): SSRHeadPayload {
   const output = ['', '', '', '', '']
-  const lineBreak = (options.omitLineBreaks ?? head._o) ? '' : '\n'
   for (const tag of resolveTags(head)) {
     const position = tag[3] || 0
     const html = tag[2]
-    if (typeof html === 'string') {
-      if (html)
-        output[position] += position < 3 && output[position] ? `${lineBreak}${html}` : html
-      continue
-    }
-    for (const fragment of html) {
-      if (fragment)
-        output[position] += position < 3 && output[position] ? `${lineBreak}${fragment}` : fragment
-    }
+    if (html)
+      output[position] += html
   }
   return {
     headTags: output[0],
@@ -127,16 +102,16 @@ export function renderSSRHead(head: PrecompiledServerHead, options: { omitLineBr
 }
 
 /** Create a renderer for a sealed static SSR head. @experimental */
-export function createServerRenderer(options?: { omitLineBreaks?: boolean }) {
-  return (head: PrecompiledServerHead): SSRHeadPayload => renderSSRHead(head, options)
+export function createServerRenderer() {
+  return (head: PrecompiledServerHead): SSRHeadPayload => renderSSRHead(head)
 }
 
 /** SSR composable for build-finalized plans. @experimental */
 export function useHead(input: ResolvableHead, options: { head: PrecompiledServerHead }): void {
-  options.head.push(input as unknown as PrecompiledHeadInput)
+  options.head._p.push(input as unknown as PrecompiledHeadInput)
 }
 
 /** Static SEO input is lowered to the same plan format by the bundler. @experimental */
 export function useSeoMeta(input: UseSeoMetaInput, options: { head: PrecompiledServerHead }): void {
-  options.head.push(input as unknown as PrecompiledHeadInput)
+  options.head._p.push(input as unknown as PrecompiledHeadInput)
 }

@@ -67,7 +67,7 @@ export function createStaticHead() {
 }
 
 export function renderStaticHead() {
-  return renderSSRHead(createStaticHead(), { omitLineBreaks: true })
+  return renderSSRHead(createStaticHead())
 }
 
 export function resolveStaticHead() {

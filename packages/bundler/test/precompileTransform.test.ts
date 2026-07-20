@@ -21,20 +21,21 @@ async function transform(code: string, options: any = {}, context: any = { envir
 function execute(code: string, names: string[] = ['useHead']) {
   const body = code.replace(/^import[^\n]*\n?/gm, '')
   const spies = Object.fromEntries(names.map(name => [name, vi.fn()]))
+  const collect = spies[names[0]]
   // eslint-disable-next-line no-new-func -- transformed fixtures are local static source strings
-  new Function(...names, 'head', body)(...names.map(name => spies[name]), {})
+  new Function(...names, 'head', body)(...names.map(name => spies[name]), { _p: { push: (...plans: any[]) => plans.forEach(collect) } })
   return spies
 }
 
 function baseline(input: any) {
   const head = createHead({ disableDefaults: true })
   head.push(input)
-  return renderSSRHead(head)
+  return renderSSRHead(head, { omitLineBreaks: true })
 }
 
 function compiled(plan: any) {
   const head = createStaticHead({ disableDefaults: true })
-  head.push(plan)
+  head._p.push(plan)
   return renderStaticHead(head)
 }
 
@@ -144,6 +145,26 @@ describe('sealed static precompile transform', () => {
       'import { createHead } from \'unhead/precompiled/server\'',
       'const head = createHead({ plugins: [] })',
     ].join('\n'))).rejects.toThrow(/unsupported createHead option: plugins/)
+    await expect(transform([
+      'import { createHead } from \'unhead/precompiled/server\'',
+      'const head = createHead({ omitLineBreaks: false })',
+    ].join('\n'))).rejects.toThrow(/unsupported createHead option: omitLineBreaks/)
+  })
+
+  it('compiles static head creation into its minimal state object', async () => {
+    const withDefaults = await transform([
+      'import { createHead } from \'unhead/precompiled/server\'',
+      'const head = createHead()',
+    ].join('\n'))
+    expect(withDefaults).toContain('const __unhead_precompiled_defaults = [[')
+    expect(withDefaults).toContain('const head = ({_p:[__unhead_precompiled_defaults]})')
+
+    const withoutDefaults = await transform([
+      'import { createHead } from \'unhead/precompiled/server\'',
+      'const head = createHead({ disableDefaults: true })',
+    ].join('\n'))
+    expect(withoutDefaults).not.toContain('__unhead_precompiled_defaults')
+    expect(withoutDefaults).toContain('const head = ({_p:[]})')
   })
 
   it('rejects aliased strict composables and reports their source location', async () => {
@@ -167,7 +188,7 @@ describe('sealed static precompile transform', () => {
       'uh.renderSSRHead(head)',
     ].join('\n'))
     expect(code).toContain('const __unhead_precompiled_plan_0 = [[')
-    expect(code).toContain('uh.useHead(__unhead_precompiled_plan_0, { head })')
+    expect(code).toContain('head._p.push(__unhead_precompiled_plan_0)')
     expect(code).toContain('uh.renderSSRHead(head)')
   })
 
@@ -176,14 +197,14 @@ describe('sealed static precompile transform', () => {
       'import { "useHead" as addHead } from \'unhead/precompiled/server\'',
       'addHead({ title: \'quoted\' }, { head })',
     ].join('\n'))
-    expect(quoted).toContain('addHead(__unhead_precompiled_plan_0, { head })')
+    expect(quoted).toContain('head._p.push(__unhead_precompiled_plan_0)')
 
     const computed = await transform([
       'import * as uh from \'unhead/precompiled/server\'',
       'uh[\'useHead\']({ title: \'computed\' }, { head })',
       'uh[\'renderSSRHead\'](head)',
     ].join('\n'))
-    expect(computed).toContain('uh[\'useHead\'](__unhead_precompiled_plan_0, { head })')
+    expect(computed).toContain('head._p.push(__unhead_precompiled_plan_0)')
     expect(computed).toContain('uh[\'renderSSRHead\'](head)')
   })
 
@@ -291,13 +312,13 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))
     const calls = execute(code!).useHead.mock.calls
     const head = createStaticHead({ disableDefaults: true })
-    head.push(calls[0][0])
-    head.push(calls[1][0])
+    head._p.push(calls[0][0])
+    head._p.push(calls[1][0])
     expect(renderStaticHead(head).headTags).toBe([
       '<link rel="preconnect" href="https://cdn.example.com">',
       '<link rel="stylesheet" href="/style.css">',
       '<meta name="description" content="last">',
-    ].join('\n'))
+    ].join(''))
   })
 
   it('keeps pre-sanitize identities for distinct script bodies', async () => {
@@ -310,14 +331,14 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))
     const calls = execute(code!).useHead.mock.calls
     const sealed = createStaticHead({ disableDefaults: true })
-    sealed.push(calls[0][0])
-    sealed.push(calls[1][0])
+    sealed._p.push(calls[0][0])
+    sealed._p.push(calls[1][0])
     const normal = createHead({ disableDefaults: true })
     normal.push(first)
     normal.push(second)
 
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal))
-    expect(renderStaticHead(sealed).headTags).toBe('<script><\\/script></script>\n<script><\\/script></script>')
+    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
+    expect(renderStaticHead(sealed).headTags).toBe('<script><\\/script></script><script><\\/script></script>')
   })
 
   it('replaces arrayable meta as one atomic cross-plan group', async () => {
@@ -330,13 +351,15 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))
     const calls = execute(code!).useHead.mock.calls
     const sealed = createStaticHead({ disableDefaults: true })
-    sealed.push(calls[0][0])
-    sealed.push(calls[1][0])
+    sealed._p.push(calls[0][0])
+    sealed._p.push(calls[1][0])
     const normal = createHead({ disableDefaults: true })
     normal.push(first)
     normal.push(second)
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal))
+    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
     expect(renderStaticHead(sealed).headTags).toBe('<meta property="og:image" content="/c.png">')
+    expect(typeof calls[0][0][0][2]).toBe('string')
+    expect(calls[0][0][0][4]).toBe(1)
     expect(typeof calls[1][0][0][2]).toBe('string')
   })
 
@@ -356,18 +379,18 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))
     const calls = execute(code!).useHead.mock.calls
     const sealed = createStaticHead({ disableDefaults: true })
-    sealed.push(calls[0][0])
-    sealed.push(calls[1][0])
+    sealed._p.push(calls[0][0])
+    sealed._p.push(calls[1][0])
     const normal = createHead({ disableDefaults: true })
     normal.push(first)
     normal.push(second)
 
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal))
+    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
     expect(renderStaticHead(sealed).headTags).toBe([
       '<meta name="theme-color" content="red">',
       '<meta name="theme-color" content="blue">',
       '<meta name="description" content="last">',
-    ].join('\n'))
+    ].join(''))
   })
 
   it('does not reorder winners for an atomic group masked by higher priority', async () => {
@@ -390,18 +413,18 @@ describe('sealed static precompile transform', () => {
     ].join('\n'))
     const calls = execute(code!).useHead.mock.calls
     const sealed = createStaticHead({ disableDefaults: true })
-    sealed.push(calls[0][0])
-    sealed.push(calls[1][0])
+    sealed._p.push(calls[0][0])
+    sealed._p.push(calls[1][0])
     const normal = createHead({ disableDefaults: true })
     normal.push(first)
     normal.push(second)
 
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal))
+    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
     expect(renderStaticHead(sealed).headTags).toBe([
       '<meta name="theme-color" content="winner">',
       '<title>last</title>',
       '<meta property="og:image" content="/x.png">',
-    ].join('\n'))
+    ].join(''))
   })
 
   it('rejects interleaved repeated arrayable identities', async () => {
@@ -419,10 +442,10 @@ describe('sealed static precompile transform', () => {
     const code = await transform(strictCall(input))
     const plan = execute(code!).useHead.mock.calls[0][0]
     const sealed = createStaticHead()
-    sealed.push(plan)
+    sealed._p.push(plan)
     const normal = createHead()
     normal.push(input)
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal))
+    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
   })
 
   it('property: every supported generated head input is output-identical', async () => {

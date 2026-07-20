@@ -36,7 +36,7 @@ const ordinaryBundles = [
   'server/server/minimal.mjs',
   'server-sc/server/minimal.mjs',
 ]
-const strictMarkers = ['static server runtime', '[unhead:pc]']
+const strictMarkers = ['._p.push(']
 
 for (const relativePath of ordinaryBundles) {
   const file = path.join(dist, relativePath)

@@ -111,7 +111,7 @@ useHead({ title: 'Product' }, { head })
 const html = renderSSRHead(head)
 ```
 
-This is a compile-or-error target. It supports JSON-compatible object literals, static `useSeoMeta()`, package defaults, `disableDefaults`, `omitLineBreaks`, static priorities/positions, plain HTML/body attributes, and contiguous arrayable SEO metadata grouped atomically per call.
+This is a compile-or-error target. It supports JSON-compatible object literals, static `useSeoMeta()`, package defaults, `disableDefaults`, static priorities/positions, plain HTML/body attributes, and contiguous arrayable SEO metadata grouped atomically per call. Rendering is always compact: formatting line breaks and their runtime branch are excluded.
 
 The build fails with a file and line number for dynamic values, spreads, getters, computed keys, observed return values, patches, entry options other than `{ head }`, title templates, explicit tag keys, class/style attributes, invalid tag positions, `templateParams`, `processTemplateParams`, custom duplicate strategies, or repeated arrayable identities separated by another tag. Structured media arrays that interleave fields fall into that last category; split them into contiguous calls or use the normal server entry. The sealed head does not expose hooks, plugins, custom weights/resolvers, raw `init`, framework adapters, or streaming replay.
 
