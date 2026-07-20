@@ -118,6 +118,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     onerror = null
   }
   input.onload = (e: Event) => {
+    if (lifecycleController.signal.aborted)
+      return
     try {
       syncStatus('loaded')
       onload?.(e)
@@ -127,6 +129,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     }
   }
   input.onerror = (e: Event) => {
+    if (lifecycleController.signal.aborted)
+      return
     try {
       lifecycleController.abort()
       syncStatus('error')
@@ -198,10 +202,14 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         resolve(api)
     })
     let resolvingApi = false
-    const unhook = head.hooks?.hook('script:updated', ({ script }: { script: ScriptInstance<T> }) => {
+    const unhook = head.hooks?.hook('script:updated', ({ script: updatedScript }: { script: ScriptInstance<T> }) => {
+      // Same-id scripts can overlap while a removed entry finishes dispatching DOM events.
+      // eslint-disable-next-line ts/no-use-before-define
+      if (updatedScript !== script)
+        return
       // vue augmentation... not ideal
-      const status = script.status
-      if (script.id === id && (status === 'loaded' || status === 'error' || status === 'removed')) {
+      const status = updatedScript.status
+      if (status === 'loaded' || status === 'error' || status === 'removed') {
         if (status === 'loaded') {
           if (resolvingApi)
             return
@@ -224,7 +232,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
             }
           })()
           void useOutcome.then((outcome) => {
-            if (lifecycleController.signal.aborted || script.status === 'removed')
+            if (lifecycleController.signal.aborted || updatedScript.status === 'removed')
               return
             if (!outcome[0]) {
               failReadiness(outcome[1])
@@ -307,6 +315,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
+      // remove() aborts this instance's one-shot signal and load promise.
+      if (script.status === 'removed')
+        return loadPromise
       // cancel all pending triggers as we've started loading
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()

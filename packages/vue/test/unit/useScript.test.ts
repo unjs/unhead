@@ -295,7 +295,8 @@ describe('vue e2e scripts', () => {
     offSecond()
 
     const script = (head as any)._scripts['//ordered-callbacks.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
@@ -322,7 +323,8 @@ describe('vue e2e scripts', () => {
     app.mount(el)
 
     const script = (head as any)._scripts['//vue-keyed.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     expect(calls).toEqual(['first'])
