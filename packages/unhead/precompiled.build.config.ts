@@ -10,6 +10,7 @@ export default defineBuildConfig({
   // complete package surface.
   failOnWarn: false,
   entries: [
+    { input: 'src/precompiled/client', name: 'precompiled/client' },
     { input: 'src/precompiled/server', name: 'precompiled/server' },
   ],
   externals: [/^unhead\//],

@@ -2,9 +2,12 @@
 // come from one source fixture and differ only by the precompile transform.
 // Output is one JSON line for the bundle-size PR report.
 import { pathToFileURL } from 'node:url'
+import { JSDOM } from 'jsdom'
 
 const bundle = variant => import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-runtime-${variant}/vue-server/precompile-runtime.mjs`).href)
+const clientBundle = variant => import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-client-runtime-${variant}/client/precompile-runtime.mjs`).href)
 const [off, on] = await Promise.all([bundle('off'), bundle('on')])
+const [clientOff, clientOn] = await Promise.all([clientBundle('off'), clientBundle('on')])
 
 if (typeof globalThis.gc !== 'function')
   throw new TypeError('Run with node --expose-gc so heap growth can be measured.')
@@ -17,8 +20,8 @@ const consumeCreate = head => Array.isArray(head._p) ? head._p.length : head.ent
 const consumeResolve = tags => tags.length
 const consumeRender = payload => payload.headTags.length + payload.bodyTags.length + payload.bodyTagsOpen.length + payload.htmlAttrs.length + payload.bodyAttrs.length
 
-if (consumeCreate(off.createStaticHead()) !== consumeCreate(on.createStaticHead()))
-  throw new Error('Experimental precompile runtime did not collect the same number of entries.')
+if (consumeCreate(off.createStaticHead()) <= consumeCreate(on.createStaticHead()))
+  throw new Error('Experimental precompile runtime did not coalesce static entries.')
 
 function forceGC() {
   globalThis.gc()
@@ -47,6 +50,51 @@ function median(samples) {
   const sorted = [...samples].sort((a, b) => a - b)
   return sorted[sorted.length >> 1]
 }
+
+function useDocument(dom) {
+  globalThis.window = dom.window
+  globalThis.document = dom.window.document
+}
+
+function clientCycle(runtime, dom) {
+  useDocument(dom)
+  const mounted = runtime.mountStaticHead()
+  const value = document.head.children.length + document.body.children.length + document.documentElement.attributes.length
+  for (let i = mounted.entries.length - 1; i >= 0; i--)
+    mounted.entries[i].dispose()
+  return value
+}
+
+function clientSnapshot(runtime) {
+  const dom = new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>')
+  useDocument(dom)
+  const mounted = runtime.mountStaticHead()
+  const description = document.head.querySelector('meta[name="description"]')
+  const snapshot = {
+    bodyPage: document.body.getAttribute('data-page'),
+    description: description?.getAttribute('content'),
+    dir: document.documentElement.getAttribute('dir'),
+    lang: document.documentElement.getAttribute('lang'),
+    links: document.head.querySelectorAll('link').length,
+    metas: document.head.querySelectorAll('meta').length,
+    scripts: document.head.querySelectorAll('script').length,
+    styles: document.head.querySelectorAll('style').length,
+    title: document.title,
+  }
+  for (let i = mounted.entries.length - 1; i >= 0; i--)
+    mounted.entries[i].dispose()
+  return snapshot
+}
+
+if (JSON.stringify(clientSnapshot(clientOff)) !== JSON.stringify(clientSnapshot(clientOn)))
+  throw new Error('Experimental client precompile DOM output did not match the disabled mode.')
+
+const clientDoms = {
+  off: new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>'),
+  on: new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>'),
+}
+const clientOffCycle = () => clientCycle(clientOff, clientDoms.off)
+const clientOnCycle = () => clientCycle(clientOn, clientDoms.on)
 
 // Deterministic paired bootstrap: resample each OFF/ON repetition together,
 // then compare the two medians. The fixed generator keeps CI reproducible.
@@ -122,7 +170,7 @@ function measureCpu(id, name, offFn, onFn, consume, { warmup = 150, reps = 28, m
   }
 }
 
-function measureHeapGrowth(offFn, onFn, consume, { warmup = 100, reps = 25, runs = 10 } = {}) {
+function measureHeapGrowth(id, name, offFn, onFn, consume, { warmup = 100, reps = 25, runs = 10 } = {}) {
   for (let i = 0; i < warmup; i++) {
     benchmarkSink = (benchmarkSink + consume(offFn()) + consume(onFn())) | 0
   }
@@ -148,12 +196,12 @@ function measureHeapGrowth(offFn, onFn, consume, { warmup = 100, reps = 25, runs
   const onValue = median(samples.on)
   return {
     comparison: {
-      id: 'precompile-static-e2e-heap',
+      id,
       deltaPct: ((onValue - offValue) / offValue) * 100,
       ...pairedMedianInterval(samples.off, samples.on),
     },
-    off: { id: 'precompile-static-e2e-heap', name: 'Static SSR transient heap growth / render', kind: 'alloc', value: offValue },
-    on: { id: 'precompile-static-e2e-heap', name: 'Static SSR transient heap growth / render', kind: 'alloc', value: onValue },
+    off: { id, name, kind: 'alloc', value: offValue },
+    on: { id, name, kind: 'alloc', value: onValue },
   }
 }
 
@@ -161,14 +209,18 @@ const stages = [
   measureCpu('precompile-static-create-cpu', 'Static SSR create (CPU)', off.createStaticHead, on.createStaticHead, consumeCreate, { minRuns: 300 }),
   measureCpu('precompile-static-resolve-cpu', 'Static SSR create + resolve (CPU)', off.resolveStaticHead, on.resolveStaticHead, consumeResolve),
   measureCpu('precompile-static-e2e-cpu', 'Static SSR create + render (CPU)', off.renderStaticHead, on.renderStaticHead, consumeRender),
+  measureCpu('precompile-client-e2e-cpu', 'Static client mount + dispose (CPU)', clientOffCycle, clientOnCycle, value => value, { warmup: 20, minRuns: 20 }),
 ]
-const heap = measureHeapGrowth(off.renderStaticHead, on.renderStaticHead, consumeRender)
+const heaps = [
+  measureHeapGrowth('precompile-static-e2e-heap', 'Static SSR transient heap growth / render', off.renderStaticHead, on.renderStaticHead, consumeRender),
+  measureHeapGrowth('precompile-client-e2e-heap', 'Static client transient heap growth / mount + dispose', clientOffCycle, clientOnCycle, value => value, { warmup: 20, reps: 20, runs: 3 }),
+]
 
 console.log(JSON.stringify({
   schemaVersion: 1,
   fixture: 'static-product-page',
   benchmarkSink,
-  comparisons: [...stages.map(stage => stage.comparison), heap.comparison],
-  off: { benches: [...stages.map(stage => stage.off), heap.off] },
-  on: { benches: [...stages.map(stage => stage.on), heap.on] },
+  comparisons: [...stages.map(stage => stage.comparison), ...heaps.map(heap => heap.comparison)],
+  off: { benches: [...stages.map(stage => stage.off), ...heaps.map(heap => heap.off)] },
+  on: { benches: [...stages.map(stage => stage.on), ...heaps.map(heap => heap.on)] },
 }))

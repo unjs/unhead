@@ -17,6 +17,7 @@ import {
   resolveMetaKeyValue,
   resolvePackedMetaObjectValue,
   sanitizeTags,
+  TagPriorityAliases,
   unpackMeta,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
@@ -49,7 +50,7 @@ const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoM
 const SEO_META_RE = /\buse(?:Server)?SeoMeta\b/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 const PRECOMPILE_RE = /\b(?:createHead|useHead|useSeoMeta)\b/
-const STRICT_PRECOMPILE_SOURCE_RE = /unhead\/precompiled\/server/
+const STRICT_PRECOMPILE_SOURCE_RE = /unhead\/precompiled\/(?:client|server)/
 
 const SERVER_COMPOSABLE_NAMES = new Set([
   'useServerHead',
@@ -103,6 +104,7 @@ interface PendingMinification {
 }
 
 interface PendingPrecompilation {
+  consumer: BuildConsumer
   end: number
   head: string
   name: string
@@ -313,7 +315,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     return pending
   }
 
-  function resolvePrecompileFunction(callee: any, scopeTracker: ScopeTracker): { kind: 'createHead' | 'useHead' | 'useSeoMeta', strict: boolean } | undefined {
+  function resolvePrecompileFunction(callee: any, scopeTracker: ScopeTracker): { consumer?: BuildConsumer, kind: 'createHead' | 'useHead' | 'useSeoMeta', strict: boolean } | undefined {
     if (callee.type === 'Identifier') {
       const decl = scopeTracker.getDeclaration(callee.name)
       if (decl instanceof ScopeTrackerImport) {
@@ -325,8 +327,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           && PRECOMPILE_FN_NAMES.has(importedName)
           && isValidSeoMetaPackage(decl.importNode.source.value)) {
           return {
+            consumer: decl.importNode.source.value.endsWith('/client') ? 'client' : decl.importNode.source.value.endsWith('/server') ? 'server' : undefined,
             kind: importedName as 'createHead' | 'useHead' | 'useSeoMeta',
-            strict: decl.importNode.source.value === 'unhead/precompiled/server',
+            strict: decl.importNode.source.value === 'unhead/precompiled/client' || decl.importNode.source.value === 'unhead/precompiled/server',
           }
         }
       }
@@ -348,8 +351,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       && decl.node.type === 'ImportNamespaceSpecifier'
       && isValidSeoMetaPackage(decl.importNode.source.value)) {
       return {
+        consumer: decl.importNode.source.value.endsWith('/client') ? 'client' : decl.importNode.source.value.endsWith('/server') ? 'server' : undefined,
         kind: memberName as 'createHead' | 'useHead' | 'useSeoMeta',
-        strict: decl.importNode.source.value === 'unhead/precompiled/server',
+        strict: decl.importNode.source.value === 'unhead/precompiled/client' || decl.importNode.source.value === 'unhead/precompiled/server',
       }
     }
   }
@@ -418,10 +422,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         tag._h = hashTag(tag)
     }
 
-    type CompiledRecord = [number, string, string, (0 | 1 | 2 | 3 | 4)?, 1?]
-    const arrayableGroups = new Map<string, CompiledRecord>()
+    type CompiledRecord = [number, string, string, (0 | 1 | 2 | 3 | 4)?]
     const plan: CompiledRecord[] = []
-    let lastArrayableIdentity: string | undefined
+    const arrayableIdentities = new Set<string>()
     for (const originalTag of tags) {
       // Generic resolution dedupes before sanitizing. Keep an empty rendered
       // record as a tombstone so a later invalid duplicate still removes an
@@ -430,7 +433,6 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       const tag = sanitizedTag || originalTag
       const weight = tag._w!
       if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
-        lastArrayableIdentity = undefined
         const position = tag.tag === 'htmlAttrs' ? 3 : 4
         for (const key in tag.props) {
           const html = propsToString({ [key]: tag.props[key] })
@@ -445,28 +447,99 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       const position = tag.tagPosition === 'bodyOpen' ? 1 : tag.tagPosition === 'bodyClose' ? 2 : undefined
       const html = sanitizedTag ? tagToString(tag) : ''
       if (tag.tag === 'meta' && isMetaArrayDupeKey(identity)) {
-        const group = arrayableGroups.get(identity)
-        if (group) {
-          if (lastArrayableIdentity !== identity)
-            fail('repeated arrayable meta identities must be contiguous within one call')
-          if (group[0] !== weight || (group[3] || undefined) !== position)
-            fail('arrayable meta values in one call must share tagPriority and tagPosition')
-          group[2] += html
-          group[3] ||= 0
-          group[4] = 1
-        }
-        else {
-          // Keep the common scalar tuple short. If the identity repeats, its
-          // compact fragments are joined and marked as one atomic winner.
-          const record: CompiledRecord = position ? [weight, identity, html, position] : [weight, identity, html]
-          arrayableGroups.set(identity, record)
-          plan.push(record)
-        }
-        lastArrayableIdentity = identity
+        if (arrayableIdentities.has(identity))
+          fail('arrayable meta identities may occur only once per call')
+        arrayableIdentities.add(identity)
+        plan.push(position ? [weight, identity, html, position] : [weight, identity, html])
         continue
       }
-      lastArrayableIdentity = undefined
       plan.push(position ? [weight, identity, html, position] : [weight, identity, html])
+    }
+    return JSON.stringify(plan)
+  }
+
+  async function compileStaticClientInput(
+    input: Record<string, DecodedStaticValue>,
+    kind: 'useHead' | 'useSeoMeta',
+    minifyContents: boolean,
+    fail: (reason: string) => never,
+  ): Promise<string> {
+    const normalizedInput = kind === 'useSeoMeta' ? normalizeStaticSeoMetaInput(input) : input
+    const tags = normalizeEntryToTags(normalizedInput, [])
+
+    const contentMinifications: Promise<void>[] = []
+    for (const tag of minifyContents ? tags : []) {
+      const tagType = tag.tag === 'script' || tag.tag === 'style' ? tag.tag : undefined
+      if (!tagType || (tagType === 'script' ? !doJS : !doCSS))
+        continue
+      if (tagType === 'script' && SKIP_JS_TYPES.has(tag.props.type))
+        continue
+      for (const key of CONTENT_PROP_NAMES) {
+        const raw = tag[key as 'innerHTML' | 'textContent']
+        if (typeof raw !== 'string' || raw.length < 20)
+          continue
+        contentMinifications.push(minifyStringContent(raw, tagType).then((result) => {
+          if (result && result.length < raw.length)
+            tag[key as 'innerHTML' | 'textContent'] = result
+        }))
+      }
+    }
+    await Promise.all(contentMinifications)
+
+    if (tags.some(tag => tag.tag === 'templateParams'))
+      fail('templateParams require runtime plugin processing')
+    if (tags.some(tag => tag.processTemplateParams !== undefined))
+      fail('processTemplateParams requires runtime plugin processing')
+    if (tags.some(tag => tag.tagDuplicateStrategy !== undefined))
+      fail('tagDuplicateStrategy is not supported by the sealed runtime')
+    if (tags.some(tag => tag.tag === 'titleTemplate'))
+      fail('titleTemplate has cross-entry runtime semantics and is not supported')
+    if (tags.some(tag => tag.key !== undefined))
+      fail('explicit tag keys are not supported by the sealed runtime')
+    if (tags.some(tag => (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') && (tag.props.class !== undefined || tag.props.style !== undefined)))
+      fail('class and style attributes require runtime merge tracking and are not supported')
+    if (tags.some(tag => tag.tagPosition && tag.tagPosition !== 'head' && tag.tagPosition !== 'bodyOpen' && tag.tagPosition !== 'bodyClose'))
+      fail('tagPosition must be head, bodyOpen, or bodyClose')
+
+    for (const tag of tags) {
+      tag._d = dedupeKey(tag)
+      if (!tag._d)
+        tag._h = hashTag(tag)
+    }
+
+    type ClientRecord = [number, string, string, Record<string, any>, string?, (1 | 2)?, 1?]
+    const plan: ClientRecord[] = []
+    const arrayableIdentities = new Set<string>()
+    for (const originalTag of tags) {
+      const sanitizedTag = sanitizeTags([originalTag])[0]
+      const tag = sanitizedTag || originalTag
+      const identity = originalTag._d || originalTag._h || hashTag(originalTag)
+      if (originalTag.tag === 'meta' && isMetaArrayDupeKey(identity)) {
+        if (arrayableIdentities.has(identity))
+          fail('arrayable meta identities may occur only once per call')
+        arrayableIdentities.add(identity)
+      }
+      const weight = typeof tag.tagPriority === 'number' ? tag.tagPriority : 100 + (TagPriorityAliases[tag.tagPriority as keyof typeof TagPriorityAliases] || 0)
+      if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+        for (const key in tag.props)
+          plan.push([weight, `${tag.tag}:${key}`, tag.tag, { [key]: tag.props[key] }])
+        continue
+      }
+      if (!sanitizedTag) {
+        plan.push([weight, identity, '', {}])
+        continue
+      }
+      const position = tag.tagPosition === 'bodyOpen' ? 1 : tag.tagPosition === 'bodyClose' ? 2 : undefined
+      const content = tag.innerHTML ?? tag.textContent
+      const record: ClientRecord = [weight, identity, tag.tag, tag.props]
+      if (content !== undefined || position || tag.innerHTML !== undefined) {
+        record[4] = content === undefined ? '' : String(content)
+        if (position || tag.innerHTML !== undefined)
+          record[5] = position
+        if (tag.innerHTML !== undefined)
+          record[6] = 1
+      }
+      plan.push(record)
     }
     return JSON.stringify(plan)
   }
@@ -613,10 +686,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         const runSeoMeta = !!seoMetaOpts
           && shouldTransformId(seoMetaOpts, id)
           && SEO_META_RE.test(code)
+        const precompileConsumer = resolveBuildConsumer(this, fallbackConsumer)
         const runPrecompile = !!precompileOpts
           && shouldTransformId(precompileOpts, id)
           && (PRECOMPILE_RE.test(code) || STRICT_PRECOMPILE_SOURCE_RE.test(code))
-          && resolveBuildConsumer(this, fallbackConsumer) === 'server'
+          && (precompileConsumer === 'client' || precompileConsumer === 'server')
         // Escaped identifiers still need parsing because their source does not
         // contain the decoded property name.
         const minifyEligible = !!minifyOpts && shouldTransformId(minifyOpts, id)
@@ -1053,8 +1127,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (node.type !== 'Identifier' || safeStrictReferences.has(node))
             return
           const declaration = scopeTracker.getDeclaration(node.name)
-          if (!(declaration instanceof ScopeTrackerImport) || declaration.importNode.source.value !== 'unhead/precompiled/server')
+          if (!(declaration instanceof ScopeTrackerImport)
+            || (declaration.importNode.source.value !== 'unhead/precompiled/client'
+              && declaration.importNode.source.value !== 'unhead/precompiled/server')) {
             return
+          }
           if (declaration.importNode.importKind === 'type'
             || (declaration.node.type === 'ImportSpecifier' && declaration.node.importKind === 'type')) {
             return
@@ -1076,30 +1153,31 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         }
 
         function validateStrictModuleAccess(node: any): void {
+          const isStrictSource = (source: unknown) => source === 'unhead/precompiled/client' || source === 'unhead/precompiled/server'
           if (node.type === 'ExportAllDeclaration'
             && node.exportKind !== 'type'
-            && node.source?.value === 'unhead/precompiled/server') {
+            && isStrictSource(node.source?.value)) {
             precompileFailure(node, 'the sealed createHead/useHead/useSeoMeta exports cannot be re-exported')
           }
           if (node.type === 'ExportNamedDeclaration'
             && node.exportKind !== 'type'
-            && node.source?.value === 'unhead/precompiled/server'
+            && isStrictSource(node.source?.value)
             && node.specifiers.some((specifier: any) =>
               specifier.exportKind !== 'type'
               && PRECOMPILE_FN_NAMES.has(getModuleExportName(specifier.local) || ''),
             )) {
             precompileFailure(node, 'the sealed createHead/useHead/useSeoMeta exports cannot be re-exported')
           }
-          if (node.type === 'ImportExpression' && node.source?.value === 'unhead/precompiled/server')
+          if (node.type === 'ImportExpression' && isStrictSource(node.source?.value))
             precompileFailure(node, 'the sealed server entry must use a static import so every head call can be compiled')
           if (node.type === 'TSImportEqualsDeclaration'
             && node.moduleReference?.type === 'TSExternalModuleReference'
-            && node.moduleReference.expression?.value === 'unhead/precompiled/server') {
+            && isStrictSource(node.moduleReference.expression?.value)) {
             precompileFailure(node, 'the sealed server entry must use a static ESM import so every head call can be compiled')
           }
           if (node.type === 'CallExpression'
             && (node.callee?.type === 'Identifier' ? node.callee.name === 'require' : getMemberName(node.callee) === 'require')
-            && node.arguments[0]?.value === 'unhead/precompiled/server') {
+            && isStrictSource(node.arguments[0]?.value)) {
             precompileFailure(node, 'the sealed server entry must use a static ESM import so every head call can be compiled')
           }
         }
@@ -1112,13 +1190,22 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (!resolved?.strict)
             return false
           markStrictCallee(node.callee)
+          if (resolved.consumer !== precompileConsumer) {
+            precompileFailure(node, `the sealed ${resolved.consumer} entry cannot be used in a ${precompileConsumer} build`)
+          }
 
           if (resolved.kind === 'createHead') {
+            if (precompileConsumer === 'client') {
+              if (node.arguments.length)
+                precompileFailure(node, 'sealed client createHead does not accept options')
+              return true
+            }
             if (node.arguments.length > 1)
               precompileFailure(node, 'createHead accepts at most one static options object')
             const options = node.arguments[0]
             if (!options) {
-              pendingHeadCreations.push({ start: node.start, end: node.end, disableDefaults: false })
+              if (precompileConsumer === 'server')
+                pendingHeadCreations.push({ start: node.start, end: node.end, disableDefaults: false })
               return true
             }
             if (options.type !== 'ObjectExpression')
@@ -1130,15 +1217,17 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               if (key !== 'disableDefaults' || typeof value !== 'boolean')
                 precompileFailure(options, `unsupported createHead option: ${key}`)
             }
-            pendingHeadCreations.push({
-              start: node.start,
-              end: node.end,
-              disableDefaults: decoded.disableDefaults === true,
-            })
+            if (precompileConsumer === 'server') {
+              pendingHeadCreations.push({
+                start: node.start,
+                end: node.end,
+                disableDefaults: decoded.disableDefaults === true,
+              })
+            }
             return true
           }
 
-          if (parent?.type !== 'ExpressionStatement')
+          if (precompileConsumer === 'server' && parent?.type !== 'ExpressionStatement')
             precompileFailure(node, 'the return value cannot be observed; entry patch/dispose handles are not supported')
 
           const options = node.arguments[1]
@@ -1169,11 +1258,12 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
           const name = `${precompilePrefix}_plan_${pendingPrecompilations.length}`
           pendingPrecompilations.push({
+            consumer: precompileConsumer!,
             start: node.start,
             end: node.end,
             head: headProperty.value.name,
             name,
-            source: compileStaticInput(
+            source: (precompileConsumer === 'server' ? compileStaticInput : compileStaticClientInput)(
               decoded as Record<string, DecodedStaticValue>,
               resolved.kind,
               minifyEligible,
@@ -1275,19 +1365,37 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
           for (let i = 0; i < pendingPrecompilations.length;) {
             const first = pendingPrecompilations[i]
+            if (first.consumer === 'client') {
+              edits.push({
+                start: first.start,
+                end: first.end,
+                content: `${first.head}.push(${first.name})`,
+                phase: 'precompile',
+              })
+              i++
+              continue
+            }
             let last = first
-            const names = [first.name]
+            const indexes = [i]
             while (++i < pendingPrecompilations.length) {
               const next = pendingPrecompilations[i]
-              if (next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
+              if (next.consumer !== 'server' || next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
                 break
               last = next
-              names.push(next.name)
+              indexes.push(i)
+            }
+            if (indexes.length > 1) {
+              compiledPlans[indexes[0]] = `[${indexes
+                .map(index => compiledPlans[index].slice(1, -1))
+                .filter(Boolean)
+                .join(',')}]`
+              for (const index of indexes.slice(1))
+                compiledPlans[index] = ''
             }
             edits.push({
               start: first.start,
               end: last.end,
-              content: `${first.head}._p.push(${names.join(',')})`,
+              content: `${first.head}._p.push(${first.name})`,
               phase: 'precompile',
             })
           }
@@ -1317,7 +1425,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               ? [`const ${defaultPlanName} = ${JSON.stringify(PRECOMPILED_DEFAULT_PLAN)}`]
               : []),
             ...pendingPrecompilations
-              .map((pending, index) => `const ${pending.name} = ${compiledPlans[index]}`),
+              .flatMap((pending, index) => compiledPlans[index] ? [`const ${pending.name} = ${compiledPlans[index]}`] : []),
           ].join('\n')
           s.appendLeft(importOffset, `${directiveEnd === undefined ? '' : '\n'}${declarations}\n`)
         }

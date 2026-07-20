@@ -12,10 +12,10 @@ export interface BaseTransformerTypes {
 
 export interface PrecompileOptions extends BaseTransformerTypes {
   /**
-   * Force the server target for bundlers that cannot expose their build
+   * Force the build target for bundlers that cannot expose their build
    * consumer to plugins (notably plain Rollup).
    */
-  consumer?: 'server'
+  consumer?: 'client' | 'server'
 }
 
 export interface UnpluginOptions extends BaseTransformerTypes {
@@ -24,9 +24,9 @@ export interface UnpluginOptions extends BaseTransformerTypes {
   minify?: MinifyTransformOptions | false
   experimental?: {
     /**
-     * Compile static calls imported from `unhead/precompiled/server` into
-     * module-hoisted render plans. This is a capability-limited,
-     * compile-or-error core SSR target. Client builds skip it.
+     * Compile static calls imported from `unhead/precompiled/client` or
+     * `unhead/precompiled/server` into module-hoisted render plans. These are
+     * capability-limited, compile-or-error targets with separate runtimes.
      */
     precompile?: boolean | PrecompileOptions
   }

@@ -59,8 +59,8 @@ export default defineBuildConfig({
             if (!id.endsWith('/precompile-runtime.ts'))
               return
             const plans = code.match(/const __unhead_precompiled_plan_/g)?.length || 0
-            if (plans !== (withPrecompile ? 4 : 0))
-              throw new Error(`Expected precompile ${withPrecompile ? 'ON' : 'OFF'} fixture to contain ${withPrecompile ? 'four hoisted plans' : 'no hoisted plans'}, found ${plans}.`)
+            if (plans !== (withPrecompile ? 1 : 0))
+              throw new Error(`Expected precompile ${withPrecompile ? 'ON' : 'OFF'} fixture to contain ${withPrecompile ? 'one merged hoisted plan' : 'no hoisted plans'}, found ${plans}.`)
           },
         },
       )

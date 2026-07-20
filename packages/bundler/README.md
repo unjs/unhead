@@ -59,7 +59,7 @@ interface UnpluginOptions {
 
   experimental?: {
     precompile?: boolean | {
-      consumer?: 'server'
+      consumer?: 'client' | 'server'
     }
   }
 }
@@ -101,7 +101,7 @@ useHead({
 
 ### Static Head Precompilation
 
-`experimental.precompile` targets the sealed `unhead/precompiled/server` entry. During a server build it replaces each eligible call with a module-hoisted render plan. The plan already contains normalized attributes, CAPO priority, dedupe identity, sanitized content, tag position, and final HTML. Runtime work is limited to collecting plans, resolving execution-order duplicates, and joining strings.
+`experimental.precompile` targets the sealed `unhead/precompiled/client` and `unhead/precompiled/server` entries. It replaces eligible inputs with module-hoisted plans containing normalized attributes, priority, dedupe identity, sanitized content, and tag position. Server plans contain final HTML; client plans contain DOM-ready records and keep entry disposal for navigation.
 
 ```ts
 import { createHead, renderSSRHead, useHead } from 'unhead/precompiled/server'
@@ -111,13 +111,21 @@ useHead({ title: 'Product' }, { head })
 const html = renderSSRHead(head)
 ```
 
-This is a compile-or-error target. It supports JSON-compatible object literals, static `useSeoMeta()`, package defaults, `disableDefaults`, static priorities/positions, plain HTML/body attributes, and contiguous arrayable SEO metadata grouped atomically per call. Rendering is always compact: formatting line breaks and their runtime branch are excluded.
+```ts
+import { createHead, useHead } from 'unhead/precompiled/client'
 
-The build fails with a file and line number for dynamic values, spreads, getters, computed keys, observed return values, patches, entry options other than `{ head }`, title templates, explicit tag keys, class/style attributes, invalid tag positions, `templateParams`, `processTemplateParams`, custom duplicate strategies, or repeated arrayable identities separated by another tag. Structured media arrays that interleave fields fall into that last category; split them into contiguous calls or use the normal server entry. The sealed head does not expose hooks, plugins, custom weights/resolvers, raw `init`, framework adapters, or streaming replay.
+const head = createHead()
+const entry = useHead({ title: 'Product' }, { head })
+entry.dispose()
+```
 
-Imports from `unhead`, `unhead/server`, and framework packages are left alone. Client-targeted builds also skip the phase. As a result, ordinary and browser bundles do not contain the sealed runtime.
+These are compile-or-error targets. They support JSON-compatible object literals, static `useSeoMeta()`, static priorities/positions, plain HTML/body attributes, and scalar arrayable SEO metadata. Server rendering is always compact.
 
-Vite detects SSR builds automatically. With plain Rollup or another bundler that cannot expose its target, use `experimental: { precompile: { consumer: 'server' } }`.
+The build fails with a file and line number for dynamic values, spreads, getters, computed keys, patches, entry options other than `{ head }`, title templates, explicit tag keys, class/style attributes, invalid tag positions, `templateParams`, `processTemplateParams`, custom duplicate strategies, or repeated arrayable identities. Server entry handles cannot be observed; client entries expose `dispose()` only. The sealed heads do not expose hooks, plugins, custom weights/resolvers, raw `init`, framework adapters, or streaming replay.
+
+Imports from `unhead`, `unhead/client`, `unhead/server`, and framework packages are left alone. A client/server sealed-entry mismatch fails the build, so one target cannot silently ship the other target's runtime.
+
+Vite detects client and SSR builds automatically. With plain Rollup or another target-opaque bundler, set `experimental: { precompile: { consumer: 'client' } }` or `consumer: 'server'`.
 
 ## Documentation
 

@@ -46,6 +46,13 @@ function strictCall(input: unknown, name = 'useHead') {
   ].join('\n')
 }
 
+function strictClientCall(input: unknown, name = 'useHead') {
+  return [
+    `import { ${name} } from 'unhead/precompiled/client'`,
+    `${name}(${JSON.stringify(input)}, { head })`,
+  ].join('\n')
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
 })
@@ -73,11 +80,35 @@ describe('sealed static precompile transform', () => {
     ].join('\n'), { seoMeta: false })).toBeUndefined()
   })
 
-  it('does not emit static plans in client-targeted modules', async () => {
+  it('keeps the sealed client and server targets isolated', async () => {
     const code = strictCall({ title: 'client' })
-    expect(await transform(code, { seoMeta: false }, { environment: { config: { consumer: 'client' } } })).toBeUndefined()
+    await expect(transform(code, { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/sealed server entry cannot be used in a client build/)
     expect(await transform(code, { seoMeta: false }, {})).toBeUndefined()
     expect(await transform(code, { seoMeta: false }, { environment: { config: { consumer: 'server' } } })).toContain('__unhead_precompiled_plan_0')
+
+    const client = await transform(strictClientCall({ title: 'client' }), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(client).toContain('head.push(__unhead_precompiled_plan_0)')
+    expect(client).toContain('[100,"title","title",{},"client"]')
+    await expect(transform(strictClientCall({ title: 'client' }), { seoMeta: false }))
+      .rejects
+      .toThrow(/sealed client entry cannot be used in a server build/)
+  })
+
+  it('keeps client entry handles while rejecting dynamic client inputs', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'const entry = useHead({ meta: [{ name: \'description\', content: \'static\' }] }, { head })',
+      'entry.dispose()',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain('const entry = head.push(__unhead_precompiled_plan_0)')
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'useHead({ title: getTitle() }, { head })',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/dynamic or unsupported value/)
   })
 
   it.each(['use client', 'use server'])('keeps the %s directive first', async (directive) => {
@@ -291,7 +322,7 @@ describe('sealed static precompile transform', () => {
       { title: 42 },
       { title: true },
       { htmlAttrs: { lang: 'en', dir: 'ltr' } },
-      { meta: [{ charset: 'utf-8' }, { name: 'description', content: 'hello' }, { name: 'theme-color', content: ['red', 'blue'] }] },
+      { meta: [{ charset: 'utf-8' }, { name: 'description', content: 'hello' }, { name: 'theme-color', content: 'red' }] },
       { link: [{ rel: 'canonical', href: '/canonical' }, { rel: 'stylesheet', href: '/style.css' }] },
       { script: [{ type: 'application/json', innerHTML: { value: '<unsafe>' } }], style: [{ textContent: 'body { color: red; }' }] },
       { script: [{ id: 'app', src: '/app.js' }] },
@@ -313,7 +344,6 @@ describe('sealed static precompile transform', () => {
     const calls = execute(code!).useHead.mock.calls
     const head = createStaticHead({ disableDefaults: true })
     head._p.push(calls[0][0])
-    head._p.push(calls[1][0])
     expect(renderStaticHead(head).headTags).toBe([
       '<link rel="preconnect" href="https://cdn.example.com">',
       '<link rel="stylesheet" href="/style.css">',
@@ -332,7 +362,6 @@ describe('sealed static precompile transform', () => {
     const calls = execute(code!).useHead.mock.calls
     const sealed = createStaticHead({ disableDefaults: true })
     sealed._p.push(calls[0][0])
-    sealed._p.push(calls[1][0])
     const normal = createHead({ disableDefaults: true })
     normal.push(first)
     normal.push(second)
@@ -341,100 +370,14 @@ describe('sealed static precompile transform', () => {
     expect(renderStaticHead(sealed).headTags).toBe('<script><\\/script></script><script><\\/script></script>')
   })
 
-  it('replaces arrayable meta as one atomic cross-plan group', async () => {
-    const first = { meta: [{ property: 'og:image', content: '/a.png' }, { property: 'og:image', content: '/b.png' }] }
-    const second = { meta: [{ property: 'og:image', content: '/c.png' }] }
-    const code = await transform([
-      'import { useHead } from \'unhead/precompiled/server\'',
-      `useHead(${JSON.stringify(first)}, { head })`,
-      `useHead(${JSON.stringify(second)}, { head })`,
-    ].join('\n'))
-    const calls = execute(code!).useHead.mock.calls
-    const sealed = createStaticHead({ disableDefaults: true })
-    sealed._p.push(calls[0][0])
-    sealed._p.push(calls[1][0])
-    const normal = createHead({ disableDefaults: true })
-    normal.push(first)
-    normal.push(second)
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
-    expect(renderStaticHead(sealed).headTags).toBe('<meta property="og:image" content="/c.png">')
-    expect(typeof calls[0][0][0][2]).toBe('string')
-    expect(calls[0][0][0][4]).toBe(1)
-    expect(typeof calls[1][0][0][2]).toBe('string')
-  })
-
-  it('orders scalar winners by their selected occurrence when an atomic group exists', async () => {
-    const first = {
-      meta: [
-        { name: 'description', content: 'first' },
-        { name: 'theme-color', content: 'red' },
-        { name: 'theme-color', content: 'blue' },
-      ],
-    }
-    const second = { meta: [{ name: 'description', content: 'last' }] }
-    const code = await transform([
-      'import { useHead } from \'unhead/precompiled/server\'',
-      `useHead(${JSON.stringify(first)}, { head })`,
-      `useHead(${JSON.stringify(second)}, { head })`,
-    ].join('\n'))
-    const calls = execute(code!).useHead.mock.calls
-    const sealed = createStaticHead({ disableDefaults: true })
-    sealed._p.push(calls[0][0])
-    sealed._p.push(calls[1][0])
-    const normal = createHead({ disableDefaults: true })
-    normal.push(first)
-    normal.push(second)
-
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
-    expect(renderStaticHead(sealed).headTags).toBe([
-      '<meta name="theme-color" content="red">',
-      '<meta name="theme-color" content="blue">',
-      '<meta name="description" content="last">',
-    ].join(''))
-  })
-
-  it('does not reorder winners for an atomic group masked by higher priority', async () => {
-    const first = {
-      meta: [{ name: 'theme-color', content: 'winner', tagPriority: 10 }],
-      title: 'first',
-    }
-    const second = {
-      meta: [
-        { property: 'og:image', content: '/x.png', tagPriority: 10 },
-        { name: 'theme-color', content: 'masked-a', tagPriority: 50 },
-        { name: 'theme-color', content: 'masked-b', tagPriority: 50 },
-      ],
-      title: 'last',
-    }
-    const code = await transform([
-      'import { useHead } from \'unhead/precompiled/server\'',
-      `useHead(${JSON.stringify(first)}, { head })`,
-      `useHead(${JSON.stringify(second)}, { head })`,
-    ].join('\n'))
-    const calls = execute(code!).useHead.mock.calls
-    const sealed = createStaticHead({ disableDefaults: true })
-    sealed._p.push(calls[0][0])
-    sealed._p.push(calls[1][0])
-    const normal = createHead({ disableDefaults: true })
-    normal.push(first)
-    normal.push(second)
-
-    expect(renderStaticHead(sealed)).toEqual(renderSSRHead(normal, { omitLineBreaks: true }))
-    expect(renderStaticHead(sealed).headTags).toBe([
-      '<meta name="theme-color" content="winner">',
-      '<title>last</title>',
-      '<meta property="og:image" content="/x.png">',
-    ].join(''))
-  })
-
-  it('rejects interleaved repeated arrayable identities', async () => {
+  it('rejects repeated arrayable identities', async () => {
     await expect(transform(strictCall({
       meta: [
         { property: 'og:image', content: '/a.png' },
         { property: 'og:image:width', content: 1200 },
         { property: 'og:image', content: '/b.png' },
       ],
-    }))).rejects.toThrow(/repeated arrayable meta identities must be contiguous within one call/)
+    }))).rejects.toThrow(/arrayable meta identities may occur only once per call/)
   })
 
   it('matches attribute merge ordering across defaults and priorities', async () => {

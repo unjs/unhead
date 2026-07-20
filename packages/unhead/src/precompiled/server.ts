@@ -7,7 +7,6 @@ export type PrecompiledTag = readonly [
   identity: string,
   html: string,
   position?: 0 | 1 | 2 | 3 | 4,
-  atomic?: 1,
 ]
 
 /** @internal */
@@ -39,33 +38,13 @@ export function createHead(options: PrecompiledHeadOptions = {}): PrecompiledSer
 /** Resolve build-finalized plans using only runtime execution order. @experimental */
 export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
   const tags: PrecompiledTag[] = []
-  let hasAtomicGroup = false
   for (const plan of head._p) {
-    for (const tag of plan) {
+    for (const tag of plan)
       tags.push(tag)
-      hasAtomicGroup ||= tag[4] === 1
-    }
   }
   tags.sort((a, b) => a[0] - b[0])
 
-  // The normal resolver re-sorts final winners by execution position whenever
-  // a repeated arrayable group survives dedupe. A lower-weight earlier winner
-  // can mask a compiled array, so structural presence alone is not enough.
   const resolved = new Map<string, PrecompiledTag>()
-  let hasFlatMeta = false
-  if (hasAtomicGroup) {
-    for (const tag of tags) {
-      const previous = resolved.get(tag[1])
-      if (!previous)
-        resolved.set(tag[1], tag)
-      if (tag[4] === 1 && (!previous || previous[0] === tag[0])) {
-        hasFlatMeta = true
-        break
-      }
-    }
-    resolved.clear()
-  }
-
   for (const tag of tags) {
     const previous = resolved.get(tag[1])
     // Sorted priorities mean the first tag wins across different weights;
@@ -73,10 +52,6 @@ export function resolveTags(head: PrecompiledServerHead): PrecompiledTag[] {
     // Attribute tags use merge semantics in the normal runtime: after sorting,
     // the later value wins regardless of priority. Other identities retain the
     // highest priority, with later execution winning ties.
-    // Reinsert same-weight winners in flat-meta mode so Map order tracks the
-    // selected execution occurrence, matching the normal resolver's final sort.
-    if (hasFlatMeta && previous && previous[0] === tag[0] && tag[3] !== 3 && tag[3] !== 4)
-      resolved.delete(tag[1])
     if (!previous || tag[3] === 3 || tag[3] === 4 || previous[0] === tag[0])
       resolved.set(tag[1], tag)
   }

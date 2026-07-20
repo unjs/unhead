@@ -46,10 +46,12 @@ function comparison(run: PrecompilePerfRun, id: string) {
 }
 
 export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePerfRun): string {
-  const offBundle = bundles.find(item => item.name === 'Precompile Runtime (Off)')
-  const onBundle = bundles.find(item => item.name === 'Precompile Runtime (On)')
-  if (!offBundle || !onBundle)
-    throw new Error('Missing experimental precompile runtime bundle pair.')
+  const offBundle = bundles.find(item => item.name === 'Precompile Server Runtime (Off)')
+  const onBundle = bundles.find(item => item.name === 'Precompile Server Runtime (On)')
+  const clientOffBundle = bundles.find(item => item.name === 'Precompile Client Runtime (Off)')
+  const clientOnBundle = bundles.find(item => item.name === 'Precompile Client Runtime (On)')
+  if (!offBundle || !onBundle || !clientOffBundle || !clientOnBundle)
+    throw new Error('Missing experimental precompile client/server runtime bundle pairs.')
 
   const offCreate = bench(perf.off, 'precompile-static-create-cpu')
   const onCreate = bench(perf.on, 'precompile-static-create-cpu')
@@ -63,6 +65,12 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const offAlloc = bench(perf.off, 'precompile-static-e2e-heap')
   const onAlloc = bench(perf.on, 'precompile-static-e2e-heap')
   const allocComparison = comparison(perf, 'precompile-static-e2e-heap')
+  const clientOffCpu = bench(perf.off, 'precompile-client-e2e-cpu')
+  const clientOnCpu = bench(perf.on, 'precompile-client-e2e-cpu')
+  const clientCpuComparison = comparison(perf, 'precompile-client-e2e-cpu')
+  const clientOffAlloc = bench(perf.off, 'precompile-client-e2e-heap')
+  const clientOnAlloc = bench(perf.on, 'precompile-client-e2e-heap')
+  const clientAllocComparison = comparison(perf, 'precompile-client-e2e-heap')
 
   const gzipDelta = onBundle.gzippedSize - offBundle.gzippedSize
   const cpuPct = cpuComparison.deltaPct
@@ -76,19 +84,28 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const resolveCpuMeaningful = resolveCpuPct + resolveCpuCi < 0 || resolveCpuPct - resolveCpuCi > 0
   const cpuMeaningful = cpuPct + cpuCi < 0 || cpuPct - cpuCi > 0
   const allocMeaningful = Math.abs(allocDelta) > 1024 && Math.abs(allocPct) > 2
+  const clientGzipDelta = clientOnBundle.gzippedSize - clientOffBundle.gzippedSize
+  const clientCpuCi = clientCpuComparison.pairedCi95Pct || 0
+  const clientCpuMeaningful = clientCpuComparison.deltaPct + clientCpuCi < 0 || clientCpuComparison.deltaPct - clientCpuCi > 0
+  const clientAllocDelta = clientOnAlloc.value - clientOffAlloc.value
+  const clientAllocPct = pct(clientOffAlloc.value, clientOnAlloc.value)
+  const clientAllocMeaningful = Math.abs(clientAllocDelta) > 1024 && Math.abs(clientAllocPct) > 2
 
   const out = [
-    '## 🧪 Experimental sealed precompile _(same commit)_',
+    '## 🧪 Experimental sealed precompile: client and server _(same commit)_',
     '',
-    'The same static core SSR source, including package defaults, is bundled and executed in two configurations. Disabled uses the normal runtime; enabled applies `experimental.precompile` and selects the sealed `unhead/precompiled/server` entry. The compiler hoists build-finalized render plans, so the enabled runtime only collects, dedupes/orders, and joins fragments. This compile-or-error mode deliberately excludes dynamic inputs, hooks/plugins, custom weights, observed entry handles, framework adapters, and streaming replay. Ordinary bundles above do not import any sealed runtime code. CPU samples alternate OFF/ON order and consume every result; memory is paired-bootstrap median transient heap growth per complete create + render.',
+    'The same static product metadata is built independently for `unhead/precompiled/client` and `unhead/precompiled/server`. Disabled uses the normal target runtime; enabled hoists build-finalized DOM or HTML plans. The client keeps disposal and DOM reconciliation but removes normalization, hooks, plugins, event handlers, patches, and dynamic inputs. The server collects merged plans, resolves execution-order duplicates, and joins serialized fragments. CPU samples alternate OFF/ON order and consume every result; memory is paired-bootstrap median transient heap growth.',
     '',
     '| Metric | Disabled | Enabled | Δ |',
     '|---|---:|---:|---:|',
-    `| Static SSR benchmark bundle (gzip) | ${offBundle.gzippedSize.toLocaleString()} B | ${onBundle.gzippedSize.toLocaleString()} B | ${mark(gzipDelta)} ${gzipDelta > 0 ? '+' : ''}${gzipDelta} B (${signed(pct(offBundle.gzippedSize, onBundle.gzippedSize), '%')}) |`,
+    `| Server benchmark bundle (gzip) | ${offBundle.gzippedSize.toLocaleString()} B | ${onBundle.gzippedSize.toLocaleString()} B | ${mark(gzipDelta)} ${gzipDelta > 0 ? '+' : ''}${gzipDelta} B (${signed(pct(offBundle.gzippedSize, onBundle.gzippedSize), '%')}) |`,
     `| Static SSR create + collect (CPU) | ${duration(offCreate.value)} | ${duration(onCreate.value)} | ${mark(createComparison.deltaPct, createCpuMeaningful)} ${signed(createComparison.deltaPct, '%')} ±${createCpuCi.toFixed(1)} pp |`,
     `| Static SSR create + resolve (CPU) | ${duration(offResolve.value)} | ${duration(onResolve.value)} | ${mark(resolveCpuPct, resolveCpuMeaningful)} ${signed(resolveCpuPct, '%')} ±${resolveCpuCi.toFixed(1)} pp |`,
     `| Static SSR create + resolve + render (CPU) | ${duration(offCpu.value)} | ${duration(onCpu.value)} | ${mark(cpuPct, cpuMeaningful)} ${signed(cpuPct, '%')} ±${cpuCi.toFixed(1)} pp |`,
     `| Transient heap growth / render | ${(offAlloc.value / 1024).toFixed(1)} KiB | ${(onAlloc.value / 1024).toFixed(1)} KiB | ${mark(allocDelta, allocMeaningful)} ${allocMeaningful ? `${signed(allocPct, '%')} (95% upper ${signed(allocComparison.pairedCi95UpperPct || 0, '%')})` : `${signed(allocPct, '%')} (within noise gate)`} |`,
+    `| Client benchmark bundle (gzip) | ${clientOffBundle.gzippedSize.toLocaleString()} B | ${clientOnBundle.gzippedSize.toLocaleString()} B | ${mark(clientGzipDelta)} ${clientGzipDelta > 0 ? '+' : ''}${clientGzipDelta} B (${signed(pct(clientOffBundle.gzippedSize, clientOnBundle.gzippedSize), '%')}) |`,
+    `| Client mount + dispose (CPU) | ${duration(clientOffCpu.value)} | ${duration(clientOnCpu.value)} | ${mark(clientCpuComparison.deltaPct, clientCpuMeaningful)} ${signed(clientCpuComparison.deltaPct, '%')} ±${clientCpuCi.toFixed(1)} pp |`,
+    `| Client transient heap / mount + dispose | ${(clientOffAlloc.value / 1024).toFixed(1)} KiB | ${(clientOnAlloc.value / 1024).toFixed(1)} KiB | ${mark(clientAllocDelta, clientAllocMeaningful)} ${clientAllocMeaningful ? `${signed(clientAllocPct, '%')} (95% upper ${signed(clientAllocComparison.pairedCi95UpperPct || 0, '%')})` : `${signed(clientAllocPct, '%')} (within noise gate)`} |`,
     '',
     '<details><summary>Phase detail</summary>',
     '',
@@ -99,7 +116,9 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
     '',
     '</details>',
     '',
-    `<sub>Raw bundle: ${offBundle.size.toLocaleString()} B → ${onBundle.size.toLocaleString()} B · Brotli: ${offBundle.brotliSize.toLocaleString()} B → ${onBundle.brotliSize.toLocaleString()} B · CPU RME: ±${(offCpu.rme || 0).toFixed(1)}% / ±${(onCpu.rme || 0).toFixed(1)}%</sub>`,
+    `<sub>Server raw: ${offBundle.size.toLocaleString()} B → ${onBundle.size.toLocaleString()} B · Brotli: ${offBundle.brotliSize.toLocaleString()} B → ${onBundle.brotliSize.toLocaleString()} B · CPU RME: ±${(offCpu.rme || 0).toFixed(1)}% / ±${(onCpu.rme || 0).toFixed(1)}%</sub>`,
+    '',
+    `<sub>Client raw: ${clientOffBundle.size.toLocaleString()} B → ${clientOnBundle.size.toLocaleString()} B · Brotli: ${clientOffBundle.brotliSize.toLocaleString()} B → ${clientOnBundle.brotliSize.toLocaleString()} B · CPU RME: ±${(clientOffCpu.rme || 0).toFixed(1)}% / ±${(clientOnCpu.rme || 0).toFixed(1)}%</sub>`,
   ]
   return out.join('\n')
 }

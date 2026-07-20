@@ -42,6 +42,11 @@
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
+./precompiled/client:
+  createHead: function
+  renderDOMHead: function
+  useHead: function
+  useSeoMeta: function
 ./precompiled/server:
   createHead: function
   createServerRenderer: function

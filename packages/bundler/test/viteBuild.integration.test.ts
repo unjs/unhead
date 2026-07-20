@@ -5,6 +5,7 @@ import { Unhead } from '../src/unplugin/vite'
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.url))
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
+const precompiledClientEntry = fileURLToPath(new URL('./fixtures/vite-build/precompiled-client.ts', import.meta.url))
 
 function outputCode(result: any): string {
   const outputs = Array.isArray(result) ? result : [result]
@@ -69,5 +70,27 @@ describe('vite build integration', () => {
     const [disabled, enabled] = await Promise.all([compile(false), compile(true)])
     expect(enabled).toBe(disabled)
     expect(enabled).not.toContain('._p.push(')
+  })
+
+  it('builds the sealed client entry without the dynamic normalizer', async () => {
+    const code = outputCode(await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({
+        devtools: false,
+        validate: false,
+        experimental: { precompile: true },
+      }) as any,
+      build: {
+        write: false,
+        minify: false,
+        lib: { entry: precompiledClientEntry, formats: ['es'], fileName: 'precompiled-client' },
+      },
+    }))
+    expect(code).toContain('CLIENT_PRECOMPILE_MARKER')
+    expect(code).toContain('createHead().push([[')
+    expect(code).not.toContain('function useHead')
+    expect(code).not.toContain('__proto__')
   })
 })

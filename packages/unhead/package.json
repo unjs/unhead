@@ -29,6 +29,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.mjs"
     },
+    "./precompiled/client": {
+      "types": "./dist/precompiled/client.d.ts",
+      "default": "./dist/precompiled/client.mjs"
+    },
     "./precompiled/server": {
       "types": "./dist/precompiled/server.d.ts",
       "default": "./dist/precompiled/server.mjs"
@@ -104,6 +108,9 @@
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "precompiled/client": [
+        "dist/precompiled/client.d.ts"
+      ],
       "plugins": [
         "dist/plugins.d.ts"
       ],

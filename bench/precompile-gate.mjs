@@ -16,9 +16,13 @@ const cpu = comparison('precompile-static-e2e-cpu')
 const heap = comparison('precompile-static-e2e-heap')
 const offHeap = bench('off', 'precompile-static-e2e-heap')
 const onHeap = bench('on', 'precompile-static-e2e-heap')
-if (!createCpu || !resolveCpu || !cpu || !heap || !offHeap || !onHeap)
+const clientCpu = comparison('precompile-client-e2e-cpu')
+const clientHeap = comparison('precompile-client-e2e-heap')
+const clientOffHeap = bench('off', 'precompile-client-e2e-heap')
+const clientOnHeap = bench('on', 'precompile-client-e2e-heap')
+if (!createCpu || !resolveCpu || !cpu || !heap || !offHeap || !onHeap || !clientCpu || !clientHeap || !clientOffHeap || !clientOnHeap)
   throw new Error('Experimental precompile result is missing required comparisons.')
-for (const [name, value] of Object.entries({ createCpu: createCpu.deltaPct, createCpuCi: createCpu.pairedCi95Pct, resolveCpu: resolveCpu.deltaPct, resolveCpuCi: resolveCpu.pairedCi95Pct, cpu: cpu.deltaPct, cpuCi: cpu.pairedCi95Pct, heap: heap.deltaPct, heapCiUpper: heap.pairedCi95UpperPct, offHeap: offHeap.value, onHeap: onHeap.value })) {
+for (const [name, value] of Object.entries({ createCpu: createCpu.deltaPct, createCpuCi: createCpu.pairedCi95Pct, resolveCpu: resolveCpu.deltaPct, resolveCpuCi: resolveCpu.pairedCi95Pct, cpu: cpu.deltaPct, cpuCi: cpu.pairedCi95Pct, heap: heap.deltaPct, heapCiUpper: heap.pairedCi95UpperPct, offHeap: offHeap.value, onHeap: onHeap.value, clientCpu: clientCpu.deltaPct, clientCpuCi: clientCpu.pairedCi95Pct, clientHeap: clientHeap.deltaPct, clientHeapCiUpper: clientHeap.pairedCi95UpperPct, clientOffHeap: clientOffHeap.value, clientOnHeap: clientOnHeap.value })) {
   if (!Number.isFinite(value))
     throw new Error(`Experimental precompile result has an invalid ${name} metric.`)
 }
@@ -29,6 +33,11 @@ const offGzip = gzip('off')
 const onGzip = gzip('on')
 const gzipOverhead = onGzip - offGzip
 const gzipDeltaPct = (gzipOverhead / offGzip) * 100
+const clientGzip = variant => zlib.gzipSync(fs.readFileSync(path.join(dist, `precompile-client-runtime-${variant}/client/precompile-runtime.mjs`))).length
+const clientOffGzip = clientGzip('off')
+const clientOnGzip = clientGzip('on')
+const clientGzipOverhead = clientOnGzip - clientOffGzip
+const clientGzipDeltaPct = (clientGzipOverhead / clientOffGzip) * 100
 const failures = []
 const ordinaryBundles = [
   'client/client/minimal.mjs',
@@ -61,7 +70,14 @@ if (heap.pairedCi95UpperPct > -50 || heapSavings <= 8192)
   failures.push(`transient heap improvement missed the dramatic gate (${heap.deltaPct.toFixed(1)}%, 95% upper ${heap.pairedCi95UpperPct.toFixed(1)}%, ${Math.round(heapSavings)} B)`)
 if (gzipDeltaPct > -30 || gzipOverhead > -1024)
   failures.push(`sealed entry missed the dramatic bundle gate (${gzipOverhead > 0 ? '+' : ''}${gzipOverhead} B, ${gzipDeltaPct.toFixed(1)}% gzip)`)
+if (clientCpu.deltaPct + clientCpu.pairedCi95Pct > -30)
+  failures.push(`client mount + dispose CPU improvement missed the gate (${clientCpu.deltaPct.toFixed(1)}% ±${clientCpu.pairedCi95Pct.toFixed(1)} pp)`)
+const clientHeapSavings = clientOffHeap.value - clientOnHeap.value
+if (clientHeap.pairedCi95UpperPct > -15 || clientHeapSavings <= 1024)
+  failures.push(`client transient heap improvement missed the gate (${clientHeap.deltaPct.toFixed(1)}%, 95% upper ${clientHeap.pairedCi95UpperPct.toFixed(1)}%, ${Math.round(clientHeapSavings)} B)`)
+if (clientGzipDeltaPct > -30 || clientGzipOverhead > -1024)
+  failures.push(`sealed client entry missed the bundle gate (${clientGzipOverhead > 0 ? '+' : ''}${clientGzipOverhead} B, ${clientGzipDeltaPct.toFixed(1)}% gzip)`)
 
-console.log(`Precompile gate: bundle ${gzipOverhead} B (${gzipDeltaPct.toFixed(1)}%) gzip, create CPU ${createCpu.deltaPct.toFixed(1)}%, resolve CPU ${resolveCpu.deltaPct.toFixed(1)}% ±${resolveCpu.pairedCi95Pct.toFixed(1)} pp, e2e CPU ${cpu.deltaPct.toFixed(1)}%, heap ${heap.deltaPct.toFixed(1)}% (95% upper ${heap.pairedCi95UpperPct.toFixed(1)}%)`)
+console.log(`Precompile gate: server bundle ${gzipOverhead} B (${gzipDeltaPct.toFixed(1)}%) gzip, create CPU ${createCpu.deltaPct.toFixed(1)}%, resolve CPU ${resolveCpu.deltaPct.toFixed(1)}% ±${resolveCpu.pairedCi95Pct.toFixed(1)} pp, e2e CPU ${cpu.deltaPct.toFixed(1)}%, heap ${heap.deltaPct.toFixed(1)}% (95% upper ${heap.pairedCi95UpperPct.toFixed(1)}%); client bundle ${clientGzipOverhead} B (${clientGzipDeltaPct.toFixed(1)}%), CPU ${clientCpu.deltaPct.toFixed(1)}%, heap ${clientHeap.deltaPct.toFixed(1)}%`)
 if (failures.length)
   throw new Error(failures.join('; '))
