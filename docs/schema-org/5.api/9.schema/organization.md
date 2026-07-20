@@ -1,13 +1,13 @@
 ---
 title: Organization Schema - JSON-LD Guide & Examples
-description: Add Organization structured data with Unhead. JSON-LD examples for company identity, logo, sameAs social profiles, and Google Knowledge Panel setup.
+description: Add Organization structured data with Unhead. Describe a company identity, logo, address, contact details, and sameAs profiles.
 navigation:
   title: Organization
 ---
 
-Organization schema establishes your company or brand identity for search engines. It powers Google's Knowledge Panel, connects social profiles via `sameAs`, and serves as the publisher/author identity for other schema types like Article and LocalBusiness.
+[Organization structured data](https://developers.google.com/search/docs/appearance/structured-data/organization) can help Google understand administrative details and disambiguate a company or brand. Unhead also references the identity from related nodes such as Article, WebSite, and Product.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -29,25 +29,25 @@ Organization schema establishes your company or brand identity for search engine
 }
 ```
 
-With Unhead, generate this using the `defineOrganization()` composable — see the [API reference](#schema-org-organization) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org Organization
 
-- **Type**: `defineOrganization(input?: Organization)`{lang="ts"}
+- **Type**: `defineOrganization<T extends Record<string, any>>(input?: Organization & T)`{lang="ts"}
 
-  Describes an organization (a company, business or institution). Most commonly used to identify the publisher of a WebSite.
+  Describes an organization (a company, business, or institution). It is most commonly used to identify the publisher of a WebSite.
 
 ## Useful Links
 
 - [Organization - Schema.org](https://schema.org/Organization)
-- [Organization - Yoast](https://developer.yoast.com/features/schema/pieces/organization)
+- [Organization Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/organization)
 - [Choose an Identity - Organization](/docs/schema-org/guides/recipes/identity#organization)
 
-## Required properties
+## Unhead input property
+
+The Unhead `Organization` interface requires `name` when you pass an object. Google has no required Organization properties and instead recommends supplying every relevant property.
 
 - **name** `string`
 
@@ -55,13 +55,13 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 ## Recommended Properties
 
-- **logo** `SingleImageInput`
+- **logo** `NodeRelation<ImageObject | string>`
 
-  Logo image url, can be relative to your site root.
+  A logo image URL, which may be relative to the site root.
 
 - **sameAs**  `string[]`
 
-  An array of URLs that also belong to the Organization
+  An array of URLs for other profiles or pages that identify the Organization.
 
 - **telephone** `string`
 
@@ -100,11 +100,11 @@ defineOrganization({
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
 - address as `PostalAddress` object
 
-- resolves string urls of `logo` into a `ImageObject` with the id of `#logo`
+- resolves a string `logo` URL into an ImageObject with the ID `#logo`
 
 For example:
 
@@ -115,24 +115,31 @@ defineOrganization({
 })
 ```
 
-Will resolve the logo url into an ImageObject with the id of `#logo`
+The logo URL resolves into an ImageObject with the ID `#logo`. The primary identity references related content, while a compact Organization node at `#organization` carries the absolute logo URL for Google's organization markup.
 
 ```json
 {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@id": "https://nuxtjs.org/#logo",
-      "@type": "ImageObject",
-      "url": "https://nuxtjs.org/img/logo.png"
-    },
-    {
       "@id": "https://nuxtjs.org/#identity",
       "@type": "Organization",
       "name": "Nuxt.js",
-      "logo": {
-        "@id": "https://nuxtjs.org/#logo"
-      }
+      "url": "https://nuxtjs.org/"
+    },
+    {
+      "@id": "https://nuxtjs.org/#logo",
+      "@type": "ImageObject",
+      "caption": "Nuxt.js",
+      "contentUrl": "https://nuxtjs.org/img/logo.png",
+      "url": "https://nuxtjs.org/img/logo.png"
+    },
+    {
+      "@id": "https://nuxtjs.org/#organization",
+      "@type": "Organization",
+      "logo": "https://nuxtjs.org/img/logo.png",
+      "name": "Nuxt.js",
+      "url": "https://nuxtjs.org/"
     }
   ]
 }
@@ -144,7 +151,7 @@ Will resolve the logo url into an ImageObject with the id of `#logo`
 /**
  * An organization such as a school, NGO, corporation, club, etc.
  */
-export interface Organization extends Thing {
+export interface OrganizationSimple extends Thing {
   /**
    * A reference-by-ID to an image of the organization's logo.
    *
@@ -168,11 +175,11 @@ export interface Organization extends Thing {
    */
   sameAs?: Arrayable<string>
   /**
-   * An array of images which represent the organization (including the logo ), referenced by ID.
+   * An array of images which represent the organization (including the logo), referenced by ID.
    */
   image?: NodeRelations<ImageObject | string>
   /**
-   * A reference-by-ID to an PostalAddress piece.
+   * A reference-by-ID to a PostalAddress piece.
    */
   address?: NodeRelations<PostalAddress>
   /**
@@ -188,9 +195,11 @@ export interface Organization extends Thing {
    */
   foundingDate?: string
 }
+
+export interface Organization extends OrganizationSimple {}
 ```
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Organization members
-- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Physical locations
+- [Person](/docs/schema-org/api/schema/person): Organization members
+- [LocalBusiness](/docs/schema-org/api/schema/local-business): Physical locations

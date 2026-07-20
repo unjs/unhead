@@ -1,11 +1,11 @@
 ---
 title: Music Album Schema
-description: Use defineMusicAlbum() to add MusicAlbum structured data. Display album info with artist, tracks, and release date in search results.
+description: Use defineMusicAlbum() to describe an album, including its artist, tracks, release date, genre, ratings, and artwork.
 ---
 
 ## Schema.org MusicAlbum
 
-**Type**: `defineMusicAlbum(input?: MusicAlbum)`{lang="ts"}
+**Type**: `defineMusicAlbum<T extends Record<string, any>>(input?: MusicAlbum & T)`{lang="ts"}
 
   Describes a music album collection.
 
@@ -21,9 +21,9 @@ description: Use defineMusicAlbum() to add MusicAlbum structured data. Display a
 
 ## Recommended Properties
 
-- **byArtist** `NodeRelations<Person | MusicGroup | string>`
+- **byArtist** `NodeRelations<Person | string>`
 
-  The artist(s) of the album. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
+  The artist or artists on the album. Plain nested objects are resolved as [Person](/docs/schema-org/api/schema/person) nodes. Use a nested `defineMusicGroup()` value when the artist is a group.
 
 - **albumProductionType** `string`
 
@@ -33,14 +33,14 @@ description: Use defineMusicAlbum() to add MusicAlbum structured data. Display a
 
   The release type: "AlbumRelease", "SingleRelease", "EPRelease", etc.
 
-- **track** `NodeRelations<MusicRecording>`
+- **track** `NodeRelations<string>`
 
-  Array of music recordings on the album.
+  Names or URLs of music recordings on the album. This field is currently passed through without a MusicRecording resolver.
 
 ## Defaults
 
 - **@type**: `MusicAlbum`
-- **@id**: `${canonicalHost}#music-album`
+- **@id**: `${canonicalHost}#/schema/music-album/{n}`
 
 ## Examples
 
@@ -53,7 +53,7 @@ defineMusicAlbum({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineMusicAlbum({
@@ -70,8 +70,8 @@ defineMusicAlbum({
   numTracks: 17,
   image: 'https://example.com/albums/abbey-road-cover.jpg',
   track: [
-    { name: 'Come Together' },
-    { name: 'Something' },
+    'Come Together',
+    'Something',
     // ... more tracks
   ],
 })
@@ -84,7 +84,7 @@ export interface MusicAlbumSimple extends Thing {
   name: string
   description?: string
   url?: string
-  byArtist?: NodeRelations<Person | MusicGroup | string>
+  byArtist?: NodeRelations<Person | string>
   track?: NodeRelations<string>
   albumProductionType?: string
   albumReleaseType?: string
@@ -99,6 +99,6 @@ export interface MusicAlbumSimple extends Thing {
 
 ## Related Schemas
 
-- [MusicGroup](/docs/schema-org/api/schema/music-group) - Artist/band
-- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Album tracks
-- [Person](/docs/schema-org/api/schema/person) - Artist
+- [MusicGroup](/docs/schema-org/api/schema/music-group): Artist/band
+- [MusicRecording](/docs/schema-org/api/schema/music-recording): Album tracks
+- [Person](/docs/schema-org/api/schema/person): Artist

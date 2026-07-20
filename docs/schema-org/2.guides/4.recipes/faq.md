@@ -1,25 +1,26 @@
 ---
 title: FAQ
-description: 'Add FAQPage structured data with defineQuestion(). Enable expandable Q&A rich snippets directly in Google search results.'
+description: 'Add FAQPage structured data with defineQuestion() and connect each Question to the page mainEntity graph.'
 ---
 
-Use `defineQuestion()` with `defineWebPage({ '@type': 'FAQPage' })` to mark up FAQ content. Google can display your questions and answers directly in search results as expandable rich snippets.
+Use `defineQuestion()` with `defineWebPage({ '@type': 'FAQPage' })` to mark up FAQ content and connect each Question to the page's `mainEntity` property.
 
 ::note
-FAQ structured data enables rich results where users can see and expand your Q&A directly in Google search, increasing visibility and click-through rates.
+[Google stopped showing FAQ rich results on May 7, 2026](https://developers.google.com/search/updates#removing-faq-rich-result). FAQPage markup remains valid Schema.org structured data, but it no longer creates a Google Search rich result.
 ::
 
 ## Useful Links
 
 - [defineQuestion](/docs/schema-org/api/schema/question)
-- [FAQ Page | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/faqpage)
-- [Question Schema | Yoast](https://developer.yoast.com/features/schema/pieces/question)
+- [FAQPage - Schema.org](https://schema.org/FAQPage)
+- [Question - Schema.org](https://schema.org/Question)
+- [FAQ rich result removal | Google Search Central](https://developers.google.com/search/updates#removing-faq-rich-result)
 
 ## How do I mark up FAQs?
 
-[defineQuestion](/docs/schema-org/api/schema/question) creates Question Schema whilst handling relations for you.
+[defineQuestion](/docs/schema-org/api/schema/question) creates a Question node and resolves a string answer to an Answer object.
 
-Note: When using a page with the path `/faq`, the page type will be automatically set for you.
+When the configured page path ends in `/faq`, `defineWebPage()` infers the `FAQPage` subtype.
 
 Tips:
 
@@ -33,51 +34,39 @@ useSchemaOrg([
     '@type': 'FAQPage',
   }),
   defineQuestion({
-    name: 'How long is a piece of string?',
-    acceptedAnswer: 'The length of a piece of string is the number of characters in the string.',
+    name: 'How long does delivery take?',
+    acceptedAnswer: 'Most orders arrive within three to five business days.',
   }),
   defineQuestion({
-    name: 'How big is a giraffe?',
-    acceptedAnswer: 'A giraffe is 12 feet tall',
+    name: 'Can I return an item?',
+    acceptedAnswer: 'You can return an unused item within 30 days of delivery.',
   }),
 ])
 ```
 
 ## How should I structure FAQ content in HTML?
 
-For the best user experience, it's good to structure your FAQ content in a way that matches your schema markup:
+Keep the visible questions and answers consistent with the schema markup:
 
 ```html
 <div>
   <h1>Frequently Asked Questions</h1>
 
   <div>
-    <h2>How long is a piece of string?</h2>
-    <div>The length of a piece of string is the number of characters in the string.</div>
+    <h2>How long does delivery take?</h2>
+    <div>Most orders arrive within three to five business days.</div>
   </div>
 
   <div>
-    <h2>How big is a giraffe?</h2>
-    <div>A giraffe is 12 feet tall</div>
-  </div>
-
-  <div>
-    <h2>What is quantum mechanics?</h2>
-    <div>
-      <p>Quantum mechanics is the study of the nature of matter.</p>
-      <p>It is the study of the nature of the interaction between particles and the nature of the universe.</p>
-      <p>Particles are the smallest particles in the universe.</p>
-      <p>The universe is made up of particles.</p>
-      <p>Particles are made up of matter.</p>
-      <p>Matter is made up of energy.</p>
-    </div>
+    <h2>Can I return an item?</h2>
+    <div>You can return an unused item within 30 days of delivery.</div>
   </div>
 </div>
 ```
 
 ## Can I use HTML in FAQ answers?
 
-You can include HTML content in your answers to provide a richer experience:
+Answer strings may contain HTML, including paragraphs, links, and lists:
 
 ```ts
 import { defineQuestion, defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -87,20 +76,18 @@ useSchemaOrg([
     '@type': 'FAQPage',
   }),
   defineQuestion({
-    name: 'What is quantum mechanics?',
+    name: 'How do I start a return?',
     acceptedAnswer: `
-      <p>Quantum mechanics is the study of the nature of matter.</p>
-      <p>It is the study of the nature of the interaction between particles and the nature of the universe.</p>
-      <p>Particles are the smallest particles in the universe.</p>
-      <p>The universe is made up of particles.</p>
-      <p>Particles are made up of matter.</p>
-      <p>Matter is made up of energy.</p>
+      <p>Open the order in your account and select “Start a return.”</p>
+      <p><a href="/returns">Read the return policy</a> before sending the item.</p>
     `,
   }),
 ])
 ```
 
-## Expected JSON-LD Output
+## Abridged JSON-LD Output
+
+With a host of `https://example.com`, a path of `/faq`, and a page title of `FAQ`, the output for the first question looks like this:
 
 ```json
 {
@@ -108,15 +95,20 @@ useSchemaOrg([
   "@graph": [
     {
       "@type": ["WebPage", "FAQPage"],
-      "@id": "https://example.com/faq/",
-      "name": "FAQ"
+      "@id": "https://example.com/faq#webpage",
+      "name": "FAQ",
+      "url": "https://example.com/faq",
+      "mainEntity": [
+        { "@id": "https://example.com/faq#/schema/question/1" }
+      ]
     },
     {
+      "@id": "https://example.com/faq#/schema/question/1",
       "@type": "Question",
-      "name": "How long is a piece of string?",
+      "name": "How long does delivery take?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The length of a piece of string is the number of characters."
+        "text": "Most orders arrive within three to five business days."
       }
     }
   ]
@@ -125,19 +117,19 @@ useSchemaOrg([
 
 ## Common Issues
 
-### FAQ not showing in search results
+### FAQ not showing as a rich result
 
-Google only shows FAQ rich results for authoritative, high-quality content. Ensure your site has good E-E-A-T signals.
+Google no longer shows FAQ rich results. This is expected even when the markup is valid.
 
 ### Questions not appearing
 
-You must include both `defineWebPage({ '@type': 'FAQPage' })` AND `defineQuestion()` calls.
+Include both `defineWebPage({ '@type': 'FAQPage' })` and `defineQuestion()` to have Unhead add Question references to the page's `mainEntity` property.
 
-### HTML in answers stripped
+### Is HTML in answers stripped?
 
-Only basic HTML (links, lists, paragraphs) is supported. Complex HTML may be sanitized.
+Unhead preserves the answer string and escapes it safely inside the JSON-LD script. It does not sanitize HTML supplied in the answer.
 
 ## Related Recipes
 
-- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
-- [How-To Guide](/docs/schema-org/guides/recipes/how-to) - Step-by-step instructions
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization/person
+- [How-To Guide](/docs/schema-org/guides/recipes/how-to): Step-by-step instructions

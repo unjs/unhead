@@ -5,7 +5,7 @@ description: Use defineDataset() to add Dataset structured data. Make research d
 
 ## Schema.org Dataset
 
-**Type**: `defineDataset(input?: Dataset)`{lang="ts"}
+**Type**: `defineDataset<T extends Record<string, any>>(input?: Dataset & T)`{lang="ts"}
 
   Describes a research dataset for scientific, academic, or data science purposes.
 
@@ -15,35 +15,37 @@ description: Use defineDataset() to add Dataset structured data. Make research d
 - [Dataset Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/dataset)
 - [Google Dataset Search](https://datasetsearch.research.google.com/)
 
+Google uses Dataset markup for [Dataset Search discovery](https://developers.google.com/search/docs/appearance/structured-data/dataset), not as a rich-result feature in Google Search.
+
 ## Required properties
 
 - **name** `string`
 
-  The name of the dataset. This is a required field for valid Dataset structured data.
+  The name of the dataset. Google requires it in the rendered Dataset markup. If you omit it from `defineDataset()`, Unhead uses the resolved page title.
 
 - **description** `string`
 
-  A short summary describing the dataset. This is a required field for valid Dataset structured data.
+  A summary describing the dataset. Google requires 50 to 5,000 characters in the rendered Dataset markup. If you omit it from `defineDataset()`, Unhead uses the resolved page description; make sure that inherited description also meets the [Dataset guidelines](https://developers.google.com/search/docs/appearance/structured-data/dataset#dataset).
 
 ## Recommended Properties
 
-- **creator** `NodeRelations<Person | Organization | string>`
+- **creator** `NodeRelations<Identity>`
 
-  The person or organization who created the dataset. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
+  The person or organization that created the dataset. A plain nested object resolves as a Person; wrap an organization with `defineOrganization()` to select the Organization resolver.
 
 - **distribution** `NodeRelations<DataDownload>`
 
-  Information about how to access/download the dataset.
+  Information about how to access or download the dataset. This field is passed through without a DataDownload resolver, so include `@type: 'DataDownload'` in a nested object.
 
 - **temporalCoverage** `string`
 
   The time period the dataset covers (ISO 8601 format, e.g., "2020-01-01/2024-12-31").
 
-- **spatialCoverage** `string`
+- **spatialCoverage** `Arrayable<string | Thing>`
 
   The geographic area the dataset covers.
 
-- **keywords** `string[]`
+- **keywords** `Arrayable<string>`
 
   Keywords describing the dataset.
 
@@ -55,10 +57,11 @@ description: Use defineDataset() to add Dataset structured data. Make research d
 
 - **@type**: `Dataset`
 - **@id**: `${canonicalUrl}#dataset`
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **url**: `currentRouteMeta.url` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **name**: page title from resolved metadata
+- **description**: resolved page description
+- **url**: resolved page URL
+- **dateModified**: resolved page modification date
+- **datePublished**: resolved page publication date
 
 ## Examples
 
@@ -67,21 +70,21 @@ description: Use defineDataset() to add Dataset structured data. Make research d
 ```ts
 defineDataset({
   name: 'Global Temperature Data 2000-2024',
-  description: 'Comprehensive global temperature measurements from weather stations worldwide',
+  description: 'Daily temperature measurements from weather stations worldwide',
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineDataset({
   name: 'Global Temperature Data 2000-2024',
-  description: 'Comprehensive global temperature measurements from weather stations worldwide, including daily readings and anomaly calculations',
+  description: 'Daily temperature readings and anomaly calculations from weather stations worldwide',
   url: 'https://example.com/datasets/global-temp-2000-2024',
-  creator: {
+  creator: defineOrganization({
     name: 'Climate Research Institute',
     url: 'https://example.com/about',
-  },
+  }),
   datePublished: new Date(2024, 0, 1),
   dateModified: new Date(2024, 11, 1),
   version: '2.0',
@@ -90,6 +93,7 @@ defineDataset({
   temporalCoverage: '2000-01-01/2024-12-31',
   spatialCoverage: 'Global',
   distribution: {
+    '@type': 'DataDownload',
     contentUrl: 'https://example.com/downloads/global-temp-data.csv',
     encodingFormat: 'CSV',
     contentSize: '125 MB',
@@ -121,25 +125,25 @@ export interface DatasetSimple extends Thing {
   'name': string
   'description': string
   'url'?: string
-  'keywords'?: string[]
+  'keywords'?: Arrayable<string>
   'creator'?: NodeRelations<Identity>
-  'citation'?: string | string[]
+  'citation'?: Arrayable<string>
   'license'?: string
   'temporalCoverage'?: string
-  'spatialCoverage'?: string
+  'spatialCoverage'?: Arrayable<string | Thing>
   'distribution'?: NodeRelations<DataDownload>
-  'variableMeasured'?: string | string[]
+  'variableMeasured'?: Arrayable<string | Thing>
   'includedInDataCatalog'?: NodeRelation<DataCatalog>
   'isAccessibleForFree'?: boolean
   'datePublished'?: ResolvableDate
   'dateModified'?: ResolvableDate
-  'version'?: string | number
-  'sameAs'?: string[]
-  'identifier'?: string | string[]
+  'version'?: string
+  'sameAs'?: Arrayable<string>
+  'identifier'?: Arrayable<string>
 }
 ```
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Dataset publisher
-- [Person](/docs/schema-org/api/schema/person) - Dataset creator
+- [Organization](/docs/schema-org/api/schema/organization): Dataset publisher
+- [Person](/docs/schema-org/api/schema/person): Dataset creator

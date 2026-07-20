@@ -1,32 +1,27 @@
 ---
 title: Migrating from React Helmet to Unhead
-description: 'Replace React Helmet with Unhead - 60% smaller bundle (4.5kb gzipped), automatic Capo.js tag sorting, TypeScript support, and modern head management.'
+description: 'Replace React Helmet with Unhead using its Helmet compatibility component, Head component, or useHead() hook.'
 navigation:
   title: 'Migrate React Helmet'
 ---
 
-**Quick Answer:** For the fastest migration, swap your import to `@unhead/react/helmet` — it provides a drop-in `<Helmet>` component with the same API. Or replace `<Helmet>` with `useHead()` or `<Head>` for the full Unhead experience.
+For the smallest initial change, swap your import to `@unhead/react/helmet`. Its compatibility component supports common React Helmet props such as `defaultTitle`, `titleTemplate`, and `onChangeClientState`. You can later replace `<Helmet>` with `useHead()` or `<Head>`.
 
-## Why Migrate from React Helmet?
+## Why migrate
 
-[React Helmet](https://github.com/nfl/react-helmet) was the go-to solution for managing `<head>` tags in React applications for years. However, its last major release was in 2020 and the project is now in maintenance mode.
+[React Helmet](https://github.com/nfl/react-helmet) has long provided `<head>` management for React applications. Its [latest tagged release, v6.1.0, was published in 2020](https://github.com/nfl/react-helmet/releases/tag/6.1.0).
 
-::tip{icon="i-heroicons-scale"}
-**Bundle size:** React Helmet 26.6 kB (9.2 kB gzipped) → Unhead 10.7 kB (4.5 kB gzipped) — **60% smaller**
-::
+[Unhead](/) adds:
 
-[Unhead](/) offers a modern alternative with:
-
-- Full TypeScript safety
+- Typed head input
 - DOM event handlers
-- Advanced DOM patching algorithm built for reactive frameworks
-- Automatic [Capo.js-based tag sorting](/docs/head/guides/core-concepts/positions) for optimal page load performance
-- Ecosystem of extras: `useSchemaOrg()`{lang="ts"}, `useScript()`{lang="ts"}, and more
+- DOM patching for reactive updates
+- [Capo.js-based sorting during SSR](/docs/head/guides/core-concepts/positions)
+- `useSchemaOrg()`{lang="ts"} and `useScript()`{lang="ts"} integrations
 
-## What's the Difference Between React Helmet and Unhead?
+## React Helmet vs Unhead
 
-React Helmet uses a `<Helmet>` component to manage head tags. Unhead provides a `<Head>` component, offering a similar
-API.
+React Helmet manages tags through `<Helmet>`. Unhead's `<Head>` component provides a similar JSX API.
 
 ```tsx [React Helmet]
 import { Helmet } from 'react-helmet'
@@ -54,11 +49,11 @@ function App() {
 }
 ```
 
-## How Do I Migrate from React Helmet to Unhead?
+## Migration
 
 ### Quick Migration with `@unhead/react/helmet`
 
-For the fastest migration path, Unhead provides a drop-in `<Helmet>` component that supports the same API as react-helmet — including `defaultTitle`, `titleTemplate`, and `onChangeClientState`.
+Unhead provides a `<Helmet>` compatibility component for common React Helmet usage, including `defaultTitle`, `titleTemplate`, and `onChangeClientState`.
 
 #### 1. Swap Your Dependencies
 
@@ -74,7 +69,7 @@ npm install @unhead/react
 +import { Helmet } from '@unhead/react/helmet'
 ```
 
-That's it — your existing `<Helmet>` usage will work as-is. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. The `defaultTitle`, `titleTemplate`, and `onChangeClientState` props are all supported.
+For the supported props, your existing `<Helmet>` usage can remain unchanged. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. Check custom or less common React Helmet props before treating the component as a complete API replacement.
 
 ::note
 For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#4-update-server-rendering) below.
@@ -98,12 +93,12 @@ function App() {
 ```
 
 ::note
-The `encodeSpecialCharacters` and `defer` props are accepted for compatibility but have no effect — Unhead handles these automatically.
+The `encodeSpecialCharacters` and `defer` props are accepted for compatibility but have no effect. Unhead handles both behaviors internally.
 ::
 
 ### 3. Full Migration to `<Head>` (Optional)
 
-If you'd prefer to adopt the Unhead API directly, replace `<Helmet>` with `<Head>`:
+To adopt the Unhead API directly, replace `<Helmet>` with `<Head>`:
 
 ```diff
 -import { Helmet } from 'react-helmet'
@@ -147,19 +142,13 @@ export function render(_url: string) {
 }
 ```
 
-### 5. What's Next?
-
-You've successfully migrated from React Helmet to Unhead.
-
-Check out some of the Unhead concepts:
+## Next Steps
 
 - [Tag Placement](/docs/head/guides/core-concepts/positions)
 - [DOM Event Handling](/docs/head/guides/core-concepts/dom-event-handling)
 - [Handling Duplicates](/docs/head/guides/core-concepts/handling-duplicates)
 
-## Need Help?
-
-If you run into issues during migration:
+## Migration Support
 
 - File an issue on [GitHub](https://github.com/unjs/unhead)
 - Join our [Discord community](https://discord.gg/unjs)
