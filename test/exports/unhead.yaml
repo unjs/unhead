@@ -47,11 +47,38 @@
   renderDOMHead: function
   useHead: function
   useSeoMeta: function
+./precompiled/client-csr:
+  createHead: function
+  renderDOMHead: function
+  useHead: function
+  useSeoMeta: function
+./precompiled/client-deferred:
+  createHead: function
+  renderDOMHead: function
+  useHead: function
+  useSeoMeta: function
+./precompiled/client-snapshot:
+  createHead: function
+  renderDOMHead: function
+  useHead: function
+  useSeoMeta: function
 ./precompiled/server:
   createHead: function
   createServerRenderer: function
   renderSSRHead: function
   resolveTags: function
+  useHead: function
+  useSeoMeta: function
+./precompiled/server-snapshot:
+  createHead: function
+  createServerRenderer: function
+  renderSSRHead: function
+  useHead: function
+  useSeoMeta: function
+./precompiled/server-unique:
+  createHead: function
+  createServerRenderer: function
+  renderSSRHead: function
   useHead: function
   useSeoMeta: function
 ./scripts:

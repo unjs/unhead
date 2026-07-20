@@ -165,12 +165,7 @@ export function sanitizeTags(tags: HeadTag[]): HeadTag[] {
   return sanitizeTagsInPlace([...tags])
 }
 
-/** @internal */
-export function resolveTagsWithNormalizer(
-  head: Unhead<any>,
-  options: ResolveTagsOptions | undefined,
-  normalizeRuntimeEntry: typeof normalizeEntryToTags,
-): HeadTag[] {
+export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
   const weightFn = options?.tagWeight ?? head.resolvedOptions._tagWeight ?? DEFAULT_TAG_WEIGHT
   const ctx: ResolveTagsContext = { tagMap: new Map(), tags: [] }
   const hooks = (head.hooks as any)?._hooks || {}
@@ -215,10 +210,8 @@ export function resolveTagsWithNormalizer(
         tags = e._precomputedTags
       }
       else {
-        const propResolvers = head.resolvedOptions.propResolvers || []
-        const hasOptions = !!(e.options && !isEmptyProps(e.options))
-        tags = normalizeRuntimeEntry(e.input, propResolvers)
-        if (hasOptions) {
+        tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+        if (e.options && !isEmptyProps(e.options)) {
           for (const t of tags)
             Object.assign(t, e.options)
         }
@@ -256,8 +249,4 @@ export function resolveTagsWithNormalizer(
   callHook(head, 'tags:resolve', ctx)
   callHook(head, 'tags:afterResolve', ctx)
   return sanitizeTagsInPlace(ctx.tags)
-}
-
-export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): HeadTag[] {
-  return resolveTagsWithNormalizer(head, options, normalizeEntryToTags)
 }

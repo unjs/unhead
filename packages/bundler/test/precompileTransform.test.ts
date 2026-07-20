@@ -85,7 +85,9 @@ describe('sealed static precompile transform', () => {
     await expect(transform(code, { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
       .rejects
       .toThrow(/sealed server entry cannot be used in a client build/)
-    expect(await transform(code, { seoMeta: false }, {})).toBeUndefined()
+    await expect(transform(code, { seoMeta: false }, {}))
+      .rejects
+      .toThrow(/build target is unknown/)
     expect(await transform(code, { seoMeta: false }, { environment: { config: { consumer: 'server' } } })).toContain('__unhead_precompiled_plan_0')
 
     const client = await transform(strictClientCall({ title: 'client' }), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
@@ -94,6 +96,145 @@ describe('sealed static precompile transform', () => {
     await expect(transform(strictClientCall({ title: 'client' }), { seoMeta: false }))
       .rejects
       .toThrow(/sealed client entry cannot be used in a server build/)
+  })
+
+  it('selects the deferred SSR client facade only when requested', async () => {
+    const eager = await transform(strictClientCall({ title: 'client' }), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(eager).toContain('from \'unhead/precompiled/client\'')
+    expect(eager).not.toContain('client-deferred')
+
+    const deferred = await transform(strictClientCall({ title: 'client' }), {
+      seoMeta: false,
+      precompile: { client: 'deferred' },
+    }, { environment: { config: { consumer: 'client' } } })
+    expect(deferred).toContain('from "unhead/precompiled/client-deferred"')
+    expect(deferred).toContain('head.push(__unhead_precompiled_plan_0)')
+  })
+
+  it('uses sanitized inline content as the client adoption identity', async () => {
+    const code = await transform(strictClientCall({
+      script: [{ type: 'application/ld+json', innerHTML: { value: '</script><unsafe>' } }],
+    }), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    const declaration = code!.split('\n').find(line => line.startsWith('const __unhead_precompiled_plan_0 = '))
+    expect(declaration).toBeTruthy()
+    const plan = JSON.parse(declaration!.slice(declaration!.indexOf(' = ') + 3).replace(/;$/, ''))
+    expect(plan[0][1]).not.toBe(`script:content:${plan[0][4]}`)
+    expect(plan[0][7]).toBe(`script:content:${plan[0][4]}`)
+    expect(plan[0][4]).not.toContain('</script>')
+  })
+
+  it('matches DOM adoption identities when special attributes are omitted or empty', async () => {
+    const code = await transform(strictClientCall({
+      link: [
+        { rel: 'stylesheet', href: '' },
+        { rel: 'alternate', href: '/alternate', hreflang: false },
+      ],
+      script: [{ id: false, src: '/app.js' }],
+    }), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    const declaration = code!.split('\n').find(line => line.startsWith('const __unhead_precompiled_plan_0 = '))!
+    const plan = JSON.parse(declaration.slice(declaration.indexOf(' = ') + 3).replace(/;$/, ''))
+
+    expect(plan.find((tag: any[]) => tag[3].src === '/app.js')[7]).toBe('script:src:/app.js')
+    const alternate = plan.find((tag: any[]) => tag[3].href === '/alternate')
+    expect(alternate[1]).toBe('link:alternate:/alternate')
+    expect(alternate[7]).toBeUndefined()
+  })
+
+  it.each([
+    ['unhead/precompiled/client-csr', {}, { environment: { config: { consumer: 'client' } } }],
+    ['unhead/precompiled/client-deferred', {}, { environment: { config: { consumer: 'client' } } }],
+    ['unhead/precompiled/client-snapshot', {}, { environment: { config: { consumer: 'client' } } }],
+    ['unhead/precompiled/server-snapshot', {}, undefined],
+    ['unhead/precompiled/server-unique', {}, undefined],
+  ])('rejects a direct %s import without its matching profile option', async (source, precompile, context) => {
+    await expect(transform(`import { createHead } from '${source}'\ncreateHead()`, {
+      seoMeta: false,
+      precompile,
+    }, context as any)).rejects.toThrow(/requires the matching precompile option/)
+  })
+
+  it.each(['vue', 'react', 'solid-js', 'svelte'])('precompiles the %s lifecycle adapter without bypassing it', async (framework) => {
+    const code = await transform([
+      `import { useHead } from '@unhead/${framework}/precompiled'`,
+      `useHead({ title: 'framework', meta: [{ name: 'description', content: 'static' }] }${framework === 'solid-js' || framework === 'svelte' ? ', { head }' : ''})`,
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain(`from "@unhead/${framework}/precompiled/client"`)
+    expect(code).toContain(framework === 'solid-js' || framework === 'svelte'
+      ? 'useHead(__unhead_precompiled_plan_0, { head })'
+      : 'useHead(__unhead_precompiled_plan_0)')
+    expect(code).not.toContain('head.push(')
+  })
+
+  it.each(['vue', 'react', 'solid-js', 'svelte'])('selects constrained %s client lifecycle adapters', async (framework) => {
+    for (const client of ['csr', 'deferred'] as const) {
+      const code = await transform([
+        `import { createHead, useHead } from '@unhead/${framework}/precompiled'`,
+        'const head = createHead()',
+        `useHead({ title: 'profile' }${framework === 'solid-js' || framework === 'svelte' ? ', { head }' : ''})`,
+      ].join('\n'), {
+        seoMeta: false,
+        precompile: { client },
+      }, { environment: { config: { consumer: 'client' } } })
+      expect(code).toContain(`from "@unhead/${framework}/precompiled/client-${client}"`)
+      expect(code).toContain(framework === 'solid-js' || framework === 'svelte'
+        ? 'useHead(__unhead_precompiled_plan_0, { head })'
+        : 'useHead(__unhead_precompiled_plan_0)')
+    }
+  })
+
+  it.each(['solid-js', 'svelte'])('requires an explicit head for the %s lifecycle adapter', async (framework) => {
+    await expect(transform([
+      `import { useHead } from '@unhead/${framework}/precompiled'`,
+      'useHead({ title: \'missing head\' })',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/second argument must be exactly \{ head \}/)
+  })
+
+  it('rejects unique identity mode for client profiles that retain winner resolution', async () => {
+    for (const client of ['csr', 'deferred'] as const) {
+      await expect(transform(strictClientCall({ title: 'unique' }), {
+        seoMeta: false,
+        precompile: { client, duplicates: 'error' },
+      }, { environment: { config: { consumer: 'client' } } }))
+        .rejects
+        .toThrow(/requires the eager core client/)
+    }
+  })
+
+  it('rejects unique identity mode for framework-only composable modules', async () => {
+    await expect(transform([
+      'import { useHead } from \'@unhead/vue/precompiled\'',
+      'useHead({ title: \'framework\' })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/not available through framework adapters/)
+  })
+
+  it('targets the framework server adapter and rejects observed lifecycle handles', async () => {
+    const server = await transform([
+      'import { useSeoMeta } from \'@unhead/vue/precompiled\'',
+      'useSeoMeta({ title: \'server\', description: \'static\' })',
+    ].join('\n'), { seoMeta: false })
+    expect(server).toContain('from "@unhead/vue/precompiled/server"')
+    expect(server).toContain('useSeoMeta(__unhead_precompiled_plan_0)')
+
+    await expect(transform([
+      'import { useHead } from \'@unhead/react/precompiled\'',
+      'const entry = useHead({ title: \'observed\' })',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/return value cannot be observed/)
+  })
+
+  it('requires a known target for neutral framework adapters', async () => {
+    await expect(transform([
+      'import { useHead } from \'@unhead/svelte/precompiled\'',
+      'useHead({ title: \'unknown\' })',
+    ].join('\n'), { seoMeta: false }, {})).rejects.toThrow(/build target is unknown/)
   })
 
   it('keeps client entry handles while rejecting dynamic client inputs', async () => {
@@ -109,6 +250,221 @@ describe('sealed static precompile transform', () => {
     ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } }))
       .rejects
       .toThrow(/dynamic or unsupported value/)
+  })
+
+  it('merges adjacent unobserved client calls into one render plan', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'useHead({ title: \'one\' }, { head })',
+      'useHead({ meta: [{ name: \'description\', content: \'two\' }] }, { head })',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(code?.match(/head\.push\(/g)).toHaveLength(1)
+    expect(code?.match(/__unhead_precompiled_plan_/g)).toHaveLength(2)
+    expect(code).toContain('[100,"title","title",{},"one"],[100,"meta:description"')
+  })
+
+  it('does not merge an observed client entry with adjacent calls', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'const entry = useHead({ title: \'one\' }, { head })',
+      'useHead({ meta: [{ name: \'description\', content: \'two\' }] }, { head })',
+      'entry.dispose()',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(code?.match(/head\.push\(/g)).toHaveLength(2)
+  })
+
+  it('batches an array of observed client entries into one render pass', async () => {
+    const code = await transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'const entries = [',
+      '  useHead({ title: \'one\' }, { head }),',
+      '  useHead({ meta: [{ name: \'description\', content: \'two\' }] }, { head }),',
+      ']',
+      'entries.forEach(entry => entry.dispose())',
+    ].join('\n'), { seoMeta: false }, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain('const entries = [head.push(__unhead_precompiled_plan_0,0),head.push(__unhead_precompiled_plan_1)]')
+  })
+
+  it('marks unique clients and emits identity-free server plans', async () => {
+    const client = await transform([
+      'import { createHead, useHead } from \'unhead/precompiled/client\'',
+      'const head = createHead()',
+      'useHead({ title: \'unique\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    }, { environment: { config: { consumer: 'client' } } })
+    expect(client).toContain('const head = createHead(1)')
+
+    const server = await transform([
+      'import { createHead, useHead } from \'unhead/precompiled/server\'',
+      'const head = createHead({ disableDefaults: true })',
+      'useHead({ title: \'unique\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })
+    expect(server).toContain('from "unhead/precompiled/server-unique"')
+    expect(server).toContain('const head = ({_p:[]})')
+    expect(server).toContain('const __unhead_precompiled_plan_0 = [[10,"<title>unique</title>"]]')
+    expect(server).not.toContain('"title","<title>')
+  })
+
+  it('emits identity-free server defaults and rejects resolved tag observation', async () => {
+    const defaults = await transform([
+      'import { createHead, renderSSRHead } from \'unhead/precompiled/server\'',
+      'const head = createHead()',
+      'export const payload = renderSSRHead(head)',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })
+    expect(defaults).toContain('from "unhead/precompiled/server-unique"')
+    expect(defaults).toContain('const __unhead_precompiled_defaults = [[-20,"<meta charset=')
+    expect(defaults).not.toContain('"charset","<meta')
+
+    const rendererExport = await transform('export { renderSSRHead } from \'unhead/precompiled/server\'', {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })
+    expect(rendererExport).toContain('from "unhead/precompiled/server-unique"')
+
+    await expect(transform([
+      'import { createHead, resolveTags } from \'unhead/precompiled/server\'',
+      'const head = createHead({ disableDefaults: true })',
+      'resolveTags(head)',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })).rejects.toThrow(/resolveTags.*unavailable/)
+
+    await expect(transform('export { resolveTags } from \'unhead/precompiled/server\'', {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })).rejects.toThrow(/resolveTags.*unavailable/)
+  })
+
+  it('rejects duplicate identities across modules in unique mode', async () => {
+    const plugin = UnheadTransforms.vite({
+      consumer: 'server',
+      treeshake: false,
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+      minify: false,
+    }) as any
+    const context = { environment: { config: { consumer: 'server' } } }
+    await plugin.transform.handler.call(context, [
+      'import { createHead, useHead } from \'unhead/precompiled/server\'',
+      'const head = createHead({ disableDefaults: true })',
+      'useHead({ meta: [{ name: \'description\', content: \'one\' }] }, { head })',
+    ].join('\n'), '/app/one.ts')
+
+    await expect(plugin.transform.handler.call(context, [
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ meta: [{ name: \'description\', content: \'two\' }] }, { head })',
+    ].join('\n'), '/app/two.ts')).rejects.toThrow(/duplicate identity "meta:description" in unique mode; first seen at \/app\/one\.ts/)
+  })
+
+  it('drops unique identity state when a watched module changes out of the transform', async () => {
+    const plugin = UnheadTransforms.vite({
+      consumer: 'client',
+      treeshake: false,
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+      minify: false,
+    }) as any
+    const context = { environment: { config: { consumer: 'client' } } }
+    await plugin.transform.handler.call(context, strictClientCall({ title: 'first' }), '/app/first.ts')
+    plugin.watchChange('/app/first.ts', { event: 'update' })
+    await expect(plugin.transform.handler.call(context, strictClientCall({ title: 'second' }), '/app/second.ts'))
+      .resolves
+      .toBeTruthy()
+  })
+
+  it('rejects duplicate identities within one unique module', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: \'one\' }, { head })',
+      'useHead({ title: \'two\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { duplicates: 'error' },
+    })).rejects.toThrow(/duplicate identity "title" in unique mode/)
+  })
+
+  it('finalizes a server snapshot into one build-time SSR payload', async () => {
+    const code = await transform([
+      'import { createHead, renderSSRHead, useHead } from \'unhead/precompiled/server\'',
+      'const head = createHead({ disableDefaults: true })',
+      'useHead({ title: \'first\', meta: [{ name: \'description\', content: \'one\' }] }, { head })',
+      'useHead({ title: \'last\' }, { head })',
+      'export const output = renderSSRHead(head)',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { mode: 'snapshot' },
+    })
+    expect(code).toContain('from "unhead/precompiled/server-snapshot"')
+    expect(code).toContain('const __unhead_precompiled_snapshot = {"headTags":"<title>last</title><meta name=')
+    expect(code).toContain('const head = createHead(__unhead_precompiled_snapshot)')
+    expect(code).not.toContain('._p.push(')
+    expect(code).not.toContain('__unhead_precompiled_plan_')
+  })
+
+  it('finalizes a client snapshot into one pre-resolved DOM plan', async () => {
+    const code = await transform([
+      'import { createHead, useHead } from \'unhead/precompiled/client\'',
+      'const head = createHead()',
+      'useHead({ title: \'first\' }, { head })',
+      'useHead({ title: \'last\', meta: [{ name: \'description\', content: \'client\' }] }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { mode: 'snapshot' },
+    }, { environment: { config: { consumer: 'client' } } })
+    expect(code).toContain('from "unhead/precompiled/client-snapshot"')
+    expect(code).toContain('const __unhead_precompiled_snapshot = [[100,"title","title",{},"last"],[100,"meta:description"')
+    expect(code).toContain('const head = createHead(__unhead_precompiled_snapshot)')
+    expect(code).not.toContain('head.push(')
+  })
+
+  it('accepts the matching renderer from an explicit snapshot subpath', async () => {
+    const code = await transform([
+      'import { createHead, renderSSRHead, useHead } from \'unhead/precompiled/server-snapshot\'',
+      'const head = createHead()',
+      'useHead({ title: \'snapshot\' }, { head })',
+      'export const output = renderSSRHead(head)',
+    ].join('\n'), { seoMeta: false, precompile: { mode: 'snapshot' } })
+    expect(code).toContain('createHead(__unhead_precompiled_snapshot)')
+  })
+
+  it('fails loudly when a strict source cannot be parsed', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/server\'',
+      'useHead({ title: )',
+    ].join('\n'), { seoMeta: false }))
+      .rejects
+      .toThrow(/strict precompile failed.*could not be parsed/)
+  })
+
+  it('rejects snapshot heads that escape an adjacent static block', async () => {
+    await expect(transform([
+      'import { createHead, useHead } from \'unhead/precompiled/server\'',
+      'const head = createHead()',
+      'observe(head)',
+      'useHead({ title: \'late\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { mode: 'snapshot' },
+    })).rejects.toThrow(/snapshot calls must be adjacent to createHead/)
+
+    await expect(transform([
+      'import { createHead, useHead } from \'unhead/precompiled/server\'',
+      'const head = createHead()',
+      'useHead({ title: \'static\' }, { head })',
+      'observe(head)',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { mode: 'snapshot' },
+    })).rejects.toThrow(/snapshot head cannot escape its static block/)
   })
 
   it.each(['use client', 'use server'])('keeps the %s directive first', async (directive) => {

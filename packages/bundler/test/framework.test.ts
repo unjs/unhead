@@ -110,6 +110,18 @@ describe('createFrameworkPlugin devtools loading', () => {
     expect(result.code).toContain('<title>static</title>')
   })
 
+  it.each([
+    true,
+    { consumer: 'server' as const },
+  ])('rejects framework streaming combined with experimental precompile (%j)', (precompile) => {
+    expect(() => Unhead({
+      experimental: { precompile },
+      streaming: true,
+    })).toThrow(
+      /framework streaming cannot be combined with experimental precompile because the sealed runtime excludes streaming hooks and replay/,
+    )
+  })
+
   it('does not import or include devtools when disabled for Vite', () => {
     const plugins = Unhead({ devtools: false }).vite() as any[]
 

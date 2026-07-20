@@ -50,8 +50,14 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const onBundle = bundles.find(item => item.name === 'Precompile Server Runtime (On)')
   const clientOffBundle = bundles.find(item => item.name === 'Precompile Client Runtime (Off)')
   const clientOnBundle = bundles.find(item => item.name === 'Precompile Client Runtime (On)')
-  if (!offBundle || !onBundle || !clientOffBundle || !clientOnBundle)
-    throw new Error('Missing experimental precompile client/server runtime bundle pairs.')
+  const clientDeferredInitial = bundles.find(item => item.name === 'Precompile Client Deferred (Initial)')
+  const clientDeferredAsync = bundles.find(item => item.name === 'Precompile Client Deferred (Async)')
+  const clientCsr = bundles.find(item => item.name === 'Precompile Client CSR')
+  const clientSnapshot = bundles.find(item => item.name === 'Precompile Client Snapshot')
+  const serverSnapshot = bundles.find(item => item.name === 'Precompile Server Snapshot')
+  const serverUnique = bundles.find(item => item.name === 'Precompile Server Unique')
+  if (!offBundle || !onBundle || !clientOffBundle || !clientOnBundle || !clientDeferredInitial || !clientDeferredAsync || !clientCsr || !clientSnapshot || !serverSnapshot || !serverUnique)
+    throw new Error('Missing experimental precompile runtime or profile bundles.')
 
   const offCreate = bench(perf.off, 'precompile-static-create-cpu')
   const onCreate = bench(perf.on, 'precompile-static-create-cpu')
@@ -106,6 +112,19 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
     `| Client benchmark bundle (gzip) | ${clientOffBundle.gzippedSize.toLocaleString()} B | ${clientOnBundle.gzippedSize.toLocaleString()} B | ${mark(clientGzipDelta)} ${clientGzipDelta > 0 ? '+' : ''}${clientGzipDelta} B (${signed(pct(clientOffBundle.gzippedSize, clientOnBundle.gzippedSize), '%')}) |`,
     `| Client mount + dispose (CPU) | ${duration(clientOffCpu.value)} | ${duration(clientOnCpu.value)} | ${mark(clientCpuComparison.deltaPct, clientCpuMeaningful)} ${signed(clientCpuComparison.deltaPct, '%')} ±${clientCpuCi.toFixed(1)} pp |`,
     `| Client transient heap / mount + dispose | ${(clientOffAlloc.value / 1024).toFixed(1)} KiB | ${(clientOnAlloc.value / 1024).toFixed(1)} KiB | ${mark(clientAllocDelta, clientAllocMeaningful)} ${clientAllocMeaningful ? `${signed(clientAllocPct, '%')} (95% upper ${signed(clientAllocComparison.pairedCi95UpperPct || 0, '%')})` : `${signed(clientAllocPct, '%')} (within noise gate)`} |`,
+    '',
+    '<details><summary>Stricter profile bundle detail</summary>',
+    '',
+    '| Profile | Raw | Gzip | Brotli | Change from lifecycle runtime |',
+    '|---|---:|---:|---:|---:|',
+    `| Server unique | ${serverUnique.size.toLocaleString()} B | ${serverUnique.gzippedSize.toLocaleString()} B | ${serverUnique.brotliSize.toLocaleString()} B | ${signed(pct(onBundle.gzippedSize, serverUnique.gzippedSize), '%')} gzip |`,
+    `| Server snapshot | ${serverSnapshot.size.toLocaleString()} B | ${serverSnapshot.gzippedSize.toLocaleString()} B | ${serverSnapshot.brotliSize.toLocaleString()} B | ${signed(pct(onBundle.gzippedSize, serverSnapshot.gzippedSize), '%')} gzip |`,
+    `| Client CSR | ${clientCsr.size.toLocaleString()} B | ${clientCsr.gzippedSize.toLocaleString()} B | ${clientCsr.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientCsr.gzippedSize), '%')} gzip |`,
+    `| Client snapshot | ${clientSnapshot.size.toLocaleString()} B | ${clientSnapshot.gzippedSize.toLocaleString()} B | ${clientSnapshot.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientSnapshot.gzippedSize), '%')} gzip |`,
+    `| Client deferred initial | ${clientDeferredInitial.size.toLocaleString()} B | ${clientDeferredInitial.gzippedSize.toLocaleString()} B | ${clientDeferredInitial.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientDeferredInitial.gzippedSize), '%')} initial gzip |`,
+    `| Client deferred async | ${clientDeferredAsync.size.toLocaleString()} B | ${clientDeferredAsync.gzippedSize.toLocaleString()} B | ${clientDeferredAsync.brotliSize.toLocaleString()} B | loaded after hydration starts |`,
+    '',
+    '</details>',
     '',
     '<details><summary>Phase detail</summary>',
     '',

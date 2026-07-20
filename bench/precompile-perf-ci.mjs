@@ -6,14 +6,26 @@ import { JSDOM } from 'jsdom'
 
 const bundle = variant => import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-runtime-${variant}/vue-server/precompile-runtime.mjs`).href)
 const clientBundle = variant => import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-client-runtime-${variant}/client/precompile-runtime.mjs`).href)
+const profileBundle = (profile, file = 'precompile-runtime') => import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-client-runtime-${profile}/client/${file}.mjs`).href)
 const [off, on] = await Promise.all([bundle('off'), bundle('on')])
 const [clientOff, clientOn] = await Promise.all([clientBundle('off'), clientBundle('on')])
+const [serverSnapshot, serverUnique, clientCsr, clientSnapshotRuntime, clientDeferred] = await Promise.all([
+  import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-runtime-snapshot/vue-server/precompile-snapshot.mjs`).href),
+  import(pathToFileURL(`${process.cwd()}/bench/bundle/dist/precompile-runtime-unique/vue-server/precompile-unique.mjs`).href),
+  profileBundle('csr'),
+  profileBundle('snapshot', 'precompile-snapshot'),
+  profileBundle('deferred'),
+])
 
 if (typeof globalThis.gc !== 'function')
   throw new TypeError('Run with node --expose-gc so heap growth can be measured.')
 
 if (JSON.stringify(off.renderStaticHead()) !== JSON.stringify(on.renderStaticHead()))
   throw new Error('Experimental precompile runtime output did not match the disabled mode.')
+if (JSON.stringify(serverSnapshot.renderStaticHead()) !== JSON.stringify(on.renderStaticHead()))
+  throw new Error('Server snapshot output did not match the lifecycle precompile runtime.')
+if (JSON.stringify(serverUnique.renderStaticHead()) !== JSON.stringify(on.renderStaticHead()))
+  throw new Error('Server unique output did not match the lifecycle precompile runtime.')
 
 let benchmarkSink = 0
 const consumeCreate = head => Array.isArray(head._p) ? head._p.length : head.entries.size
@@ -65,12 +77,9 @@ function clientCycle(runtime, dom) {
   return value
 }
 
-function clientSnapshot(runtime) {
-  const dom = new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>')
-  useDocument(dom)
-  const mounted = runtime.mountStaticHead()
+function readClientSnapshot() {
   const description = document.head.querySelector('meta[name="description"]')
-  const snapshot = {
+  return {
     bodyPage: document.body.getAttribute('data-page'),
     description: description?.getAttribute('content'),
     dir: document.documentElement.getAttribute('dir'),
@@ -81,6 +90,13 @@ function clientSnapshot(runtime) {
     styles: document.head.querySelectorAll('style').length,
     title: document.title,
   }
+}
+
+function clientSnapshot(runtime) {
+  const dom = new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>')
+  useDocument(dom)
+  const mounted = runtime.mountStaticHead()
+  const snapshot = readClientSnapshot()
   for (let i = mounted.entries.length - 1; i >= 0; i--)
     mounted.entries[i].dispose()
   return snapshot
@@ -88,6 +104,24 @@ function clientSnapshot(runtime) {
 
 if (JSON.stringify(clientSnapshot(clientOff)) !== JSON.stringify(clientSnapshot(clientOn)))
   throw new Error('Experimental client precompile DOM output did not match the disabled mode.')
+if (JSON.stringify(clientSnapshot(clientCsr)) !== JSON.stringify(clientSnapshot(clientOn)))
+  throw new Error('Client CSR output did not match the lifecycle precompile runtime on an empty SPA document.')
+
+const snapshotDom = new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>')
+useDocument(snapshotDom)
+clientSnapshotRuntime.mountStaticHead()
+if (JSON.stringify(readClientSnapshot()) !== JSON.stringify(clientSnapshot(clientOn)))
+  throw new Error('Client snapshot output did not match the lifecycle precompile runtime.')
+
+const deferredDom = new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>')
+useDocument(deferredDom)
+const deferredMounted = clientDeferred.mountStaticHead()
+await deferredMounted.head.ready
+const deferredResult = readClientSnapshot()
+for (let i = deferredMounted.entries.length - 1; i >= 0; i--)
+  deferredMounted.entries[i].dispose()
+if (JSON.stringify(deferredResult) !== JSON.stringify(clientSnapshot(clientOn)))
+  throw new Error('Deferred client replay output did not match the eager lifecycle runtime.')
 
 const clientDoms = {
   off: new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>'),

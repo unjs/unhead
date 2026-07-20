@@ -38,6 +38,12 @@ const clientOffGzip = clientGzip('off')
 const clientOnGzip = clientGzip('on')
 const clientGzipOverhead = clientOnGzip - clientOffGzip
 const clientGzipDeltaPct = (clientGzipOverhead / clientOffGzip) * 100
+const profileGzip = relative => zlib.gzipSync(fs.readFileSync(path.join(dist, relative))).length
+const serverSnapshotGzip = profileGzip('precompile-runtime-snapshot/vue-server/precompile-snapshot.mjs')
+const serverUniqueGzip = profileGzip('precompile-runtime-unique/vue-server/precompile-unique.mjs')
+const clientCsrGzip = profileGzip('precompile-client-runtime-csr/client/precompile-runtime.mjs')
+const clientSnapshotGzip = profileGzip('precompile-client-runtime-snapshot/client/precompile-snapshot.mjs')
+const clientDeferredInitialGzip = profileGzip('precompile-client-runtime-deferred/client/precompile-runtime.mjs')
 const failures = []
 const ordinaryBundles = [
   'client/client/minimal.mjs',
@@ -77,6 +83,16 @@ if (clientHeap.pairedCi95UpperPct > -15 || clientHeapSavings <= 1024)
   failures.push(`client transient heap improvement missed the gate (${clientHeap.deltaPct.toFixed(1)}%, 95% upper ${clientHeap.pairedCi95UpperPct.toFixed(1)}%, ${Math.round(clientHeapSavings)} B)`)
 if (clientGzipDeltaPct > -30 || clientGzipOverhead > -1024)
   failures.push(`sealed client entry missed the bundle gate (${clientGzipOverhead > 0 ? '+' : ''}${clientGzipOverhead} B, ${clientGzipDeltaPct.toFixed(1)}% gzip)`)
+if (serverSnapshotGzip / onGzip > 0.8)
+  failures.push(`server snapshot did not beat the lifecycle runtime by 20% gzip (${serverSnapshotGzip} B vs ${onGzip} B)`)
+if (serverUniqueGzip >= onGzip)
+  failures.push(`server unique profile did not beat the lifecycle runtime (${serverUniqueGzip} B vs ${onGzip} B)`)
+if (clientCsrGzip / clientOnGzip > 0.9)
+  failures.push(`client CSR profile did not beat the adopting runtime by 10% gzip (${clientCsrGzip} B vs ${clientOnGzip} B)`)
+if (clientSnapshotGzip / clientOnGzip > 0.9)
+  failures.push(`client snapshot did not beat the lifecycle runtime by 10% gzip (${clientSnapshotGzip} B vs ${clientOnGzip} B)`)
+if (clientDeferredInitialGzip / clientOnGzip > 0.75)
+  failures.push(`deferred client initial chunk did not beat eager by 25% gzip (${clientDeferredInitialGzip} B vs ${clientOnGzip} B)`)
 
 console.log(`Precompile gate: server bundle ${gzipOverhead} B (${gzipDeltaPct.toFixed(1)}%) gzip, create CPU ${createCpu.deltaPct.toFixed(1)}%, resolve CPU ${resolveCpu.deltaPct.toFixed(1)}% ±${resolveCpu.pairedCi95Pct.toFixed(1)} pp, e2e CPU ${cpu.deltaPct.toFixed(1)}%, heap ${heap.deltaPct.toFixed(1)}% (95% upper ${heap.pairedCi95UpperPct.toFixed(1)}%); client bundle ${clientGzipOverhead} B (${clientGzipDeltaPct.toFixed(1)}%), CPU ${clientCpu.deltaPct.toFixed(1)}%, heap ${clientHeap.deltaPct.toFixed(1)}%`)
 if (failures.length)

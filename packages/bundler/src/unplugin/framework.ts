@@ -131,6 +131,11 @@ function pushPlugin<T>(out: T[], value: T | T[]): void {
 export function createFrameworkPlugin<S>({ framework, streamingPlugin }: FrameworkPluginConfig<S>) {
   return (options: UnheadFrameworkOptions<S> = {}): UnheadBundlerFactory => {
     const { streaming, validate, devtools, ...coreOpts } = options
+    if (streaming && options.experimental?.precompile) {
+      throw new Error(
+        '[@unhead/bundler] framework streaming cannot be combined with experimental precompile because the sealed runtime excludes streaming hooks and replay',
+      )
+    }
     const defs = resolveCoreDefs(coreOpts)
     const streamOpts = resolveStreamingOpts(streaming)
     const wantStreaming = !!streaming

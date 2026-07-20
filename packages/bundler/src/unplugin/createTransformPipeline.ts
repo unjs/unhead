@@ -1,7 +1,7 @@
 import type { SourceMapInput } from 'rollup'
 import type { UnpluginOptions as UnpluginRawOptions } from 'unplugin'
 import type { ConfigEnv, UserConfig } from 'vite'
-import type { BaseTransformerTypes } from './types'
+import type { BaseTransformerTypes, PrecompileOptions } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
@@ -50,7 +50,7 @@ const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoM
 const SEO_META_RE = /\buse(?:Server)?SeoMeta\b/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 const PRECOMPILE_RE = /\b(?:createHead|useHead|useSeoMeta)\b/
-const STRICT_PRECOMPILE_SOURCE_RE = /unhead\/precompiled\/(?:client|server)/
+const STRICT_PRECOMPILE_SOURCE_RE = /(?:^|['"])(?:unhead|@unhead\/(?:vue|react|solid-js|svelte))\/precompiled(?:\/(?:client(?:-(?:csr|deferred|snapshot))?|server(?:-(?:snapshot|unique))?))?/
 
 const SERVER_COMPOSABLE_NAMES = new Set([
   'useServerHead',
@@ -76,6 +76,46 @@ const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
 const MINIFY_CACHE_MAX = 100
 const DECODE_BAIL = Symbol('unhead:decode-bail')
 const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
+
+function clientDomIdentity(tag: any): string {
+  const { props } = tag
+  if (tag.tag === 'base' || tag.tag === 'title')
+    return tag.tag
+  if (props.charset !== undefined && props.charset !== false && props.charset !== null)
+    return 'charset'
+  const present = (key: string) => props[key] !== undefined && props[key] !== false && props[key] !== null
+  const rendered = (key: string) => props[key] === true ? '' : String(props[key])
+  if (tag.tag === 'meta') {
+    for (const key of ['name', 'property', 'http-equiv']) {
+      if (present(key))
+        return `meta:${rendered(key)}`
+    }
+  }
+  if (present('data-hid') && rendered('data-hid'))
+    return rendered('data-hid')
+  if (present('id') && rendered('id'))
+    return `${tag.tag}:id:${rendered('id')}`
+  if (tag.tag === 'link') {
+    const rel = present('rel') ? rendered('rel') : ''
+    if (rel === 'canonical')
+      return 'canonical'
+    if (rel === 'alternate' && present('hreflang'))
+      return `alternate:${rendered('hreflang')}`
+    if (rel && present('href') && rendered('href'))
+      return `link:${rel}:${rendered('href')}`
+  }
+  const content = tag.innerHTML ?? tag.textContent
+  if (content && (tag.tag === 'script' || tag.tag === 'style' || tag.tag === 'noscript'))
+    return `${tag.tag}:content:${content}`
+  const names = Object.keys(props).filter(key => props[key] !== false && props[key] !== null).sort()
+  let identity = `${tag.tag}:`
+  for (let i = 0; i < names.length; i++) {
+    const key = names[i]
+    const value = rendered(key)
+    identity += `${i ? ',' : ''}${key}:${value === '' && !key.startsWith('data-') ? 'true' : value}`
+  }
+  return identity
+}
 
 function getModuleExportName(node: any): string | undefined {
   if (node?.type === 'Identifier')
@@ -104,15 +144,51 @@ interface PendingMinification {
 }
 
 interface PendingPrecompilation {
+  batchEnd?: number
+  batchSize?: number
+  batchStart?: number
   consumer: BuildConsumer
   end: number
+  framework?: string
   head: string
+  inputEnd: number
+  inputStart: number
   name: string
+  standalone: boolean
   source: Promise<string>
   start: number
 }
 
+interface StrictPrecompileSource {
+  consumer?: BuildConsumer
+  framework?: string
+  profile?: 'csr' | 'deferred' | 'snapshot' | 'unique'
+}
+
+function resolveStrictPrecompileSource(source: unknown): StrictPrecompileSource | undefined {
+  if (typeof source !== 'string')
+    return
+  const client = source.match(/^unhead\/precompiled\/client(?:-(csr|deferred|snapshot))?$/)
+  if (client)
+    return { consumer: 'client', profile: client[1] as StrictPrecompileSource['profile'] }
+  const server = source.match(/^unhead\/precompiled\/server(?:-(snapshot|unique))?$/)
+  if (server)
+    return { consumer: 'server', profile: server[1] as StrictPrecompileSource['profile'] }
+  const match = source.match(/^@unhead\/(vue|react|solid-js|svelte)\/precompiled(?:\/(client(?:-(?:csr|deferred))?|server))?$/)
+  if (match) {
+    const profile = match[2]?.match(/^client-(csr|deferred)$/)?.[1]
+    return {
+      framework: match[1],
+      consumer: match[2]?.startsWith('client') ? 'client' : match[2] as BuildConsumer | undefined,
+      profile: profile as StrictPrecompileSource['profile'],
+    }
+  }
+}
+
 interface PendingHeadCreation {
+  binding?: string
+  consumer: BuildConsumer
+  declaration?: unknown
   disableDefaults: boolean
   end: number
   start: number
@@ -175,7 +251,7 @@ export interface TransformPipelineOptions {
   consumer?: BuildConsumer
   treeshake?: TreeshakeServerComposablesOptions | false
   seoMeta?: UseSeoMetaTransformOptions | false
-  precompile?: BaseTransformerTypes | false
+  precompile?: PrecompileOptions | false
   minify?: MinifyTransformOptions | false
 }
 
@@ -222,6 +298,10 @@ function shouldTransformId(options: BaseTransformerTypes, id: string): boolean {
   return false
 }
 
+function shouldTransformPrecompileId(options: BaseTransformerTypes, id: string): boolean {
+  return shouldTransformId(options, id) || splitTransformId(id).pathname.endsWith('.svelte')
+}
+
 function applyEdits(s: MagicString, edits: PipelineEdit[], id: string): void {
   edits.sort((a, b) => a.start - b.start || a.end - b.end)
   for (let i = 1; i < edits.length; i++) {
@@ -248,6 +328,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   const seoMetaOpts = config.seoMeta === false ? undefined : config.seoMeta
   const precompileOpts = config.precompile === false ? undefined : config.precompile
   const minifyOpts = config.minify === false ? undefined : config.minify
+
+  // Strict unique mode is build-wide, including lazy chunks. Keep each
+  // module's latest identity set so repeated transforms replace stale state
+  // instead of reporting themselves as collisions during watch mode.
+  const uniqueIdentityModules = new Map<BuildConsumer, Map<string, Map<string, string>>>()
 
   // -- treeshake concern -----------------------------------------------------
   const treeshakeEnabled = !!treeshakeOpts && (treeshakeOpts.enabled ?? true)
@@ -315,7 +400,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     return pending
   }
 
-  function resolvePrecompileFunction(callee: any, scopeTracker: ScopeTracker): { consumer?: BuildConsumer, kind: 'createHead' | 'useHead' | 'useSeoMeta', strict: boolean } | undefined {
+  function resolvePrecompileFunction(callee: any, scopeTracker: ScopeTracker): { consumer?: BuildConsumer, framework?: string, kind: 'createHead' | 'useHead' | 'useSeoMeta', strict: boolean } | undefined {
     if (callee.type === 'Identifier') {
       const decl = scopeTracker.getDeclaration(callee.name)
       if (decl instanceof ScopeTrackerImport) {
@@ -326,10 +411,12 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           && decl.node.importKind !== 'type'
           && PRECOMPILE_FN_NAMES.has(importedName)
           && isValidSeoMetaPackage(decl.importNode.source.value)) {
+          const strictSource = resolveStrictPrecompileSource(decl.importNode.source.value)
           return {
-            consumer: decl.importNode.source.value.endsWith('/client') ? 'client' : decl.importNode.source.value.endsWith('/server') ? 'server' : undefined,
+            consumer: strictSource?.consumer,
+            framework: strictSource?.framework,
             kind: importedName as 'createHead' | 'useHead' | 'useSeoMeta',
-            strict: decl.importNode.source.value === 'unhead/precompiled/client' || decl.importNode.source.value === 'unhead/precompiled/server',
+            strict: !!strictSource,
           }
         }
       }
@@ -350,10 +437,12 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     if (decl instanceof ScopeTrackerImport
       && decl.node.type === 'ImportNamespaceSpecifier'
       && isValidSeoMetaPackage(decl.importNode.source.value)) {
+      const strictSource = resolveStrictPrecompileSource(decl.importNode.source.value)
       return {
-        consumer: decl.importNode.source.value.endsWith('/client') ? 'client' : decl.importNode.source.value.endsWith('/server') ? 'server' : undefined,
+        consumer: strictSource?.consumer,
+        framework: strictSource?.framework,
         kind: memberName as 'createHead' | 'useHead' | 'useSeoMeta',
-        strict: decl.importNode.source.value === 'unhead/precompiled/client' || decl.importNode.source.value === 'unhead/precompiled/server',
+        strict: !!strictSource,
       }
     }
   }
@@ -507,7 +596,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         tag._h = hashTag(tag)
     }
 
-    type ClientRecord = [number, string, string, Record<string, any>, string?, (1 | 2)?, 1?]
+    type ClientRecord = [number, string, string, Record<string, any>, string?, (1 | 2)?, 1?, string?]
     const plan: ClientRecord[] = []
     const arrayableIdentities = new Set<string>()
     for (const originalTag of tags) {
@@ -539,6 +628,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         if (tag.innerHTML !== undefined)
           record[6] = 1
       }
+      const domIdentity = clientDomIdentity(tag)
+      if (domIdentity !== identity)
+        record[7] = domIdentity
       plan.push(record)
     }
     return JSON.stringify(plan)
@@ -651,10 +743,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     idFilterIncludes.push(...(seoMetaOpts.filter?.include || []))
   }
   if (precompileOpts) {
-    idPredicates.push(id => shouldTransformId(precompileOpts, id))
+    idPredicates.push(id => shouldTransformPrecompileId(precompileOpts, id))
     codeFilterSources.push(PRECOMPILE_RE.source)
     codeFilterSources.push(STRICT_PRECOMPILE_SOURCE_RE.source)
     idFilterIncludes.push(...(precompileOpts.filter?.include || []))
+    idFilterIncludes.push(/\.svelte(?:\?|$)/)
   }
   if (minifyOpts) {
     idPredicates.push(id => shouldTransformId(minifyOpts, id))
@@ -665,6 +758,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   return {
     name: config.name,
     enforce: 'post',
+    watchChange(id) {
+      for (const modules of uniqueIdentityModules.values())
+        modules.delete(id)
+    },
     transformInclude: (id: string) => idPredicates.some(predicate => predicate(id)),
 
     transform: {
@@ -688,9 +785,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           && SEO_META_RE.test(code)
         const precompileConsumer = resolveBuildConsumer(this, fallbackConsumer)
         const runPrecompile = !!precompileOpts
-          && shouldTransformId(precompileOpts, id)
+          && shouldTransformPrecompileId(precompileOpts, id)
           && (PRECOMPILE_RE.test(code) || STRICT_PRECOMPILE_SOURCE_RE.test(code))
-          && (precompileConsumer === 'client' || precompileConsumer === 'server')
         // Escaped identifiers still need parsing because their source does not
         // contain the decoded property name.
         const minifyEligible = !!minifyOpts && shouldTransformId(minifyOpts, id)
@@ -705,9 +801,13 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         try {
           ast = parseSync(id, code)
         }
-        catch {
+        catch (error) {
+          if (runPrecompile && STRICT_PRECOMPILE_SOURCE_RE.test(code))
+            throw new Error(`[@unhead/bundler] strict precompile failed in ${id}: source could not be parsed`, { cause: error })
           return
         }
+        if (ast.errors?.length && runPrecompile && STRICT_PRECOMPILE_SOURCE_RE.test(code))
+          throw new Error(`[@unhead/bundler] strict precompile failed in ${id}: source could not be parsed (${ast.errors[0].message})`)
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         // Pre-pass: collect all declarations first so hoisted locals
@@ -1128,8 +1228,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             return
           const declaration = scopeTracker.getDeclaration(node.name)
           if (!(declaration instanceof ScopeTrackerImport)
-            || (declaration.importNode.source.value !== 'unhead/precompiled/client'
-              && declaration.importNode.source.value !== 'unhead/precompiled/server')) {
+            || !resolveStrictPrecompileSource(declaration.importNode.source.value)) {
             return
           }
           if (declaration.importNode.importKind === 'type'
@@ -1153,7 +1252,84 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         }
 
         function validateStrictModuleAccess(node: any): void {
-          const isStrictSource = (source: unknown) => source === 'unhead/precompiled/client' || source === 'unhead/precompiled/server'
+          const isStrictSource = (source: unknown) => !!resolveStrictPrecompileSource(source)
+          const strictSource = resolveStrictPrecompileSource(node.source?.value)
+          const staticModule = (node.type === 'ImportDeclaration'
+            && node.importKind !== 'type'
+            && (!node.specifiers.length || node.specifiers.some((specifier: any) => specifier.importKind !== 'type')))
+          || (node.type === 'ExportNamedDeclaration'
+            && node.exportKind !== 'type'
+            && (!node.specifiers.length || node.specifiers.some((specifier: any) => specifier.exportKind !== 'type')))
+          if (staticModule && strictSource?.profile) {
+            const selected = strictSource.profile === 'snapshot'
+              ? precompileOpts?.mode === 'snapshot'
+              : strictSource.profile === 'unique'
+                ? precompileOpts?.duplicates === 'error'
+                : precompileOpts?.client === strictSource.profile
+            if (!selected)
+              precompileFailure(node, `the ${strictSource.profile} entry requires the matching precompile option`)
+          }
+          if (staticModule
+            && precompileConsumer === 'server'
+            && precompileOpts?.duplicates === 'error'
+            && strictSource?.consumer === 'server'
+            && !strictSource.framework
+            && node.specifiers.some((specifier: any) => specifier.type === 'ImportNamespaceSpecifier'
+              || specifier.type === 'ExportNamespaceSpecifier'
+              || (specifier.type === 'ImportSpecifier' && getModuleExportName(specifier.imported) === 'resolveTags')
+              || (specifier.type === 'ExportSpecifier' && getModuleExportName(specifier.local) === 'resolveTags'))) {
+            precompileFailure(node, 'resolveTags and namespace imports are unavailable when server identities are removed')
+          }
+          if (staticModule && strictSource && precompileOpts?.mode === 'snapshot') {
+            if (strictSource.framework)
+              precompileFailure(node, 'snapshot mode does not support framework lifecycle adapters')
+            if (precompileConsumer === 'client' && precompileOpts.client && precompileOpts.client !== 'eager')
+              precompileFailure(node, 'snapshot mode currently requires the eager SSR-adopting client; csr and deferred client modes are separate profiles')
+            edits.push({
+              start: node.source.start,
+              end: node.source.end,
+              content: JSON.stringify(`unhead/precompiled/${precompileConsumer}-snapshot`),
+              phase: 'precompile',
+            })
+          }
+          else if (staticModule
+            && precompileConsumer === 'client'
+            && (precompileOpts?.client === 'deferred' || precompileOpts?.client === 'csr')
+            && strictSource?.consumer === 'client') {
+            edits.push({
+              start: node.source.start,
+              end: node.source.end,
+              content: JSON.stringify(strictSource.framework
+                ? `@unhead/${strictSource.framework}/precompiled/client-${precompileOpts.client}`
+                : `unhead/precompiled/client-${precompileOpts.client}`),
+              phase: 'precompile',
+            })
+          }
+          else if (staticModule
+            && precompileConsumer === 'server'
+            && precompileOpts?.duplicates === 'error'
+            && strictSource?.consumer === 'server'
+            && !strictSource.framework) {
+            edits.push({
+              start: node.source.start,
+              end: node.source.end,
+              content: JSON.stringify('unhead/precompiled/server-unique'),
+              phase: 'precompile',
+            })
+          }
+          else if (staticModule
+            && precompileConsumer
+            && strictSource?.framework
+            && !strictSource.consumer) {
+            edits.push({
+              start: node.source.start,
+              end: node.source.end,
+              content: JSON.stringify(precompileConsumer === 'client' && precompileOpts?.client && precompileOpts.client !== 'eager'
+                ? `${node.source.value}/client-${precompileOpts.client}`
+                : `${node.source.value}/${precompileConsumer}`),
+              phase: 'precompile',
+            })
+          }
           if (node.type === 'ExportAllDeclaration'
             && node.exportKind !== 'type'
             && isStrictSource(node.source?.value)) {
@@ -1190,22 +1366,75 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (!resolved?.strict)
             return false
           markStrictCallee(node.callee)
-          if (resolved.consumer !== precompileConsumer) {
+          if (precompileConsumer !== 'client' && precompileConsumer !== 'server')
+            precompileFailure(node, 'the build target is unknown; set precompile.consumer to client or server')
+          if (resolved.consumer && resolved.consumer !== precompileConsumer) {
             precompileFailure(node, `the sealed ${resolved.consumer} entry cannot be used in a ${precompileConsumer} build`)
+          }
+          if (precompileOpts?.duplicates === 'error' && resolved.framework)
+            precompileFailure(node, 'unique identity mode is not available through framework adapters')
+          if (precompileConsumer === 'client'
+            && precompileOpts?.duplicates === 'error'
+            && (precompileOpts.client === 'csr' || precompileOpts.client === 'deferred')) {
+            precompileFailure(node, 'unique identity mode currently requires the eager core client; csr and deferred retain runtime winner resolution')
           }
 
           if (resolved.kind === 'createHead') {
+            if (resolved.framework) {
+              if (precompileConsumer === 'client' && node.arguments.length)
+                precompileFailure(node, 'sealed framework createHead does not accept options')
+              if (precompileConsumer === 'server' && node.arguments.length > 1)
+                precompileFailure(node, 'createHead accepts at most one static options object')
+              const frameworkOptions = node.arguments[0]
+              if (frameworkOptions) {
+                if (frameworkOptions.type !== 'ObjectExpression')
+                  precompileFailure(frameworkOptions, 'createHead options must be a static object literal')
+                const decoded = decodeStaticValue(frameworkOptions)
+                if (decoded === DECODE_BAIL || Array.isArray(decoded) || decoded === null || typeof decoded !== 'object')
+                  precompileFailure(frameworkOptions, 'createHead options contain a dynamic or unsupported value')
+                for (const [key, value] of Object.entries(decoded)) {
+                  if (key !== 'disableDefaults' || typeof value !== 'boolean')
+                    precompileFailure(frameworkOptions, `unsupported createHead option: ${key}`)
+                }
+              }
+              return true
+            }
+            if (precompileOpts?.mode === 'snapshot'
+              && (parent?.type !== 'VariableDeclarator' || parent.id?.type !== 'Identifier' || parent.id.name !== 'head')) {
+              precompileFailure(node, 'snapshot createHead must initialize the local `head` binding directly')
+            }
+            const creationBinding = parent?.type === 'VariableDeclarator' && parent.id?.type === 'Identifier'
+              ? parent.id.name
+              : undefined
             if (precompileConsumer === 'client') {
               if (node.arguments.length)
                 precompileFailure(node, 'sealed client createHead does not accept options')
+              if (precompileOpts?.duplicates === 'error' || precompileOpts?.mode === 'snapshot') {
+                pendingHeadCreations.push({
+                  consumer: 'client',
+                  binding: creationBinding,
+                  declaration: creationBinding ? scopeTracker.getDeclaration(creationBinding) : undefined,
+                  start: node.start,
+                  end: node.end,
+                  disableDefaults: true,
+                })
+              }
               return true
             }
             if (node.arguments.length > 1)
               precompileFailure(node, 'createHead accepts at most one static options object')
             const options = node.arguments[0]
             if (!options) {
-              if (precompileConsumer === 'server')
-                pendingHeadCreations.push({ start: node.start, end: node.end, disableDefaults: false })
+              if (precompileConsumer === 'server') {
+                pendingHeadCreations.push({
+                  consumer: 'server',
+                  binding: creationBinding,
+                  declaration: creationBinding ? scopeTracker.getDeclaration(creationBinding) : undefined,
+                  start: node.start,
+                  end: node.end,
+                  disableDefaults: false,
+                })
+              }
               return true
             }
             if (options.type !== 'ObjectExpression')
@@ -1219,6 +1448,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             }
             if (precompileConsumer === 'server') {
               pendingHeadCreations.push({
+                consumer: 'server',
+                binding: creationBinding,
+                declaration: creationBinding ? scopeTracker.getDeclaration(creationBinding) : undefined,
                 start: node.start,
                 end: node.end,
                 disableDefaults: decoded.disableDefaults === true,
@@ -1227,25 +1459,31 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             return true
           }
 
-          if (precompileConsumer === 'server' && parent?.type !== 'ExpressionStatement')
+          if ((resolved.framework || precompileConsumer === 'server' || precompileOpts?.mode === 'snapshot') && parent?.type !== 'ExpressionStatement')
             precompileFailure(node, 'the return value cannot be observed; entry patch/dispose handles are not supported')
 
           const options = node.arguments[1]
-          if (!options || options.type !== 'ObjectExpression' || node.arguments.length !== 2)
+          const frameworkNeedsHead = resolved.framework === 'solid-js' || resolved.framework === 'svelte'
+          if ((!resolved.framework && (!options || node.arguments.length !== 2))
+            || (frameworkNeedsHead && (!options || node.arguments.length !== 2))
+            || (resolved.framework && node.arguments.length > 2)) {
             precompileFailure(node, 'the second argument must be exactly { head }')
-          if (options.properties.length !== 1) {
+          }
+          if (options && options.type !== 'ObjectExpression')
+            precompileFailure(node, 'the second argument must be exactly { head }')
+          if (options && options.properties.length !== 1) {
             precompileFailure(options, 'entry options are not supported; pass only { head }')
           }
-          const headProperty = options.properties[0]
+          const headProperty = options?.properties[0]
           const headKey = headProperty?.key?.type === 'Identifier' || headProperty?.key?.type === 'Literal'
             ? headProperty.key.name ?? headProperty.key.value
             : undefined
-          if (headProperty?.type !== 'Property'
+          if (options && (headProperty?.type !== 'Property'
             || headProperty.computed
             || !headProperty.shorthand
             || headKey !== 'head'
             || headProperty.value?.type !== 'Identifier'
-            || headProperty.value.name !== 'head') {
+            || headProperty.value.name !== 'head')) {
             precompileFailure(options, 'the second argument must be exactly { head }')
           }
 
@@ -1258,11 +1496,18 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
           const name = `${precompilePrefix}_plan_${pendingPrecompilations.length}`
           pendingPrecompilations.push({
+            batchEnd: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.end : undefined,
+            batchSize: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.elements.length : undefined,
+            batchStart: !resolved.framework && precompileConsumer === 'client' && parent?.type === 'ArrayExpression' ? parent.start : undefined,
             consumer: precompileConsumer!,
             start: node.start,
             end: node.end,
-            head: headProperty.value.name,
+            framework: resolved.framework,
+            head: headProperty?.value.name || 'head',
+            inputStart: arg.start,
+            inputEnd: arg.end,
             name,
+            standalone: parent?.type === 'ExpressionStatement',
             source: (precompileConsumer === 'server' ? compileStaticInput : compileStaticClientInput)(
               decoded as Record<string, DecodedStaticValue>,
               resolved.kind,
@@ -1351,21 +1596,198 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           seoMetaFinalize()
 
         const defaultPlanName = `${precompilePrefix}_defaults`
-        for (const pending of pendingHeadCreations) {
-          edits.push({
-            start: pending.start,
-            end: pending.end,
-            content: pending.disableDefaults ? '({_p:[]})' : `({_p:[${defaultPlanName}]})`,
-            phase: 'precompile',
-          })
+        let compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
+
+        if (precompileOpts?.duplicates === 'error') {
+          const moduleIdentities = new Map<string, string>()
+          const locate = (start: number) => {
+            const preceding = code.slice(0, start)
+            const line = preceding.split('\n').length
+            const column = start - preceding.lastIndexOf('\n')
+            return `${id}:${line}:${column}`
+          }
+          const addIdentity = (identity: string, start: number) => {
+            const location = locate(start)
+            const local = moduleIdentities.get(identity)
+            if (local) {
+              throw new Error(`[@unhead/bundler] strict precompile failed at ${location}: duplicate identity ${JSON.stringify(identity)} in unique mode; first seen at ${local}`)
+            }
+            moduleIdentities.set(identity, location)
+          }
+          for (let i = 0; i < compiledPlans.length; i++) {
+            const plan = JSON.parse(compiledPlans[i]) as [number, string][]
+            for (const tag of plan)
+              addIdentity(tag[1], pendingPrecompilations[i].start)
+          }
+          for (const creation of pendingHeadCreations) {
+            if (!creation.disableDefaults) {
+              for (const tag of PRECOMPILED_DEFAULT_PLAN)
+                addIdentity(tag[1], creation.start)
+            }
+          }
+
+          const consumerModules = uniqueIdentityModules.get(precompileConsumer!) || new Map<string, Map<string, string>>()
+          for (const [otherId, identities] of consumerModules) {
+            if (otherId === id)
+              continue
+            for (const [identity, location] of moduleIdentities) {
+              const first = identities.get(identity)
+              if (first) {
+                throw new Error(`[@unhead/bundler] strict precompile failed at ${location}: duplicate identity ${JSON.stringify(identity)} in unique mode; first seen at ${first}`)
+              }
+            }
+          }
+          consumerModules.set(id, moduleIdentities)
+          uniqueIdentityModules.set(precompileConsumer!, consumerModules)
+          if (precompileConsumer === 'server' && precompileOpts.mode !== 'snapshot') {
+            compiledPlans = compiledPlans.map(plan => JSON.stringify((JSON.parse(plan) as any[]).map(tag =>
+              tag[3] === undefined ? [tag[0], tag[2]] : [tag[0], tag[2], tag[3]],
+            )))
+          }
         }
 
-        let compiledPlans: string[] = []
-        if (pendingPrecompilations.length) {
-          compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
+        let snapshotDeclaration: string | undefined
+        if (precompileOpts?.mode === 'snapshot' && (pendingHeadCreations.length || pendingPrecompilations.length)) {
+          const creation = pendingHeadCreations[0]
+          const failureNode = creation || pendingPrecompilations[0] || ast.program
+          if (pendingHeadCreations.length !== 1)
+            precompileFailure(failureNode, 'snapshot mode requires exactly one createHead call in the same module')
+          if (pendingPrecompilations.some(pending => !pending.standalone))
+            precompileFailure(failureNode, 'snapshot mode does not expose entry handles')
+          if (!creation.declaration)
+            precompileFailure(creation, 'snapshot createHead must initialize a traceable local `head` binding')
+          const first = pendingPrecompilations[0]
+          if (first && (creation.end > first.start || !/^[;\s]*$/.test(code.slice(creation.end, first.start))))
+            precompileFailure(first, 'snapshot calls must be adjacent to createHead with no intervening runtime statements')
+          for (let i = 1; i < pendingPrecompilations.length; i++) {
+            const previous = pendingPrecompilations[i - 1]
+            const pending = pendingPrecompilations[i]
+            if (pending.head !== first.head || !/^[;\s]*$/.test(code.slice(previous.end, pending.start)))
+              precompileFailure(pending, 'all snapshot calls must be adjacent and target the same head')
+          }
+
+          let escapedHead: any
+          walk(ast.program, {
+            scopeTracker,
+            enter(node: any, parent: any) {
+              if (escapedHead || node.type !== 'Identifier' || node.name !== creation.binding)
+                return
+              if (scopeTracker.getDeclaration(node.name) !== creation.declaration)
+                return
+              if (parent?.type === 'VariableDeclarator' && parent.id === node)
+                return
+              if (pendingPrecompilations.some(pending => node.start >= pending.start && node.end <= pending.end))
+                return
+              if (parent?.type === 'CallExpression' && parent.arguments.includes(node)) {
+                const callee = parent.callee
+                const binding = callee.type === 'Identifier'
+                  ? scopeTracker.getDeclaration(callee.name)
+                  : callee.type === 'MemberExpression' && callee.object.type === 'Identifier'
+                    ? scopeTracker.getDeclaration(callee.object.name)
+                    : undefined
+                const imported = binding instanceof ScopeTrackerImport
+                  && (binding.node.type === 'ImportSpecifier'
+                    ? getModuleExportName(binding.node.imported)
+                    : binding.node.type === 'ImportNamespaceSpecifier'
+                      ? getMemberName(callee)
+                      : undefined)
+                const rendererSource = binding instanceof ScopeTrackerImport ? binding.importNode.source.value : undefined
+                if ((imported === 'renderSSRHead' || imported === 'renderDOMHead')
+                  && (rendererSource === `unhead/precompiled/${precompileConsumer}`
+                    || rendererSource === `unhead/precompiled/${precompileConsumer}-snapshot`)) {
+                  return
+                }
+              }
+              escapedHead = node
+            },
+          })
+          if (escapedHead)
+            precompileFailure(escapedHead, 'snapshot head cannot escape its static block; only the matching renderer may observe it')
+
+          const tags: any[] = [
+            ...(!creation.disableDefaults ? PRECOMPILED_DEFAULT_PLAN : []),
+            ...compiledPlans.flatMap(plan => JSON.parse(plan)),
+          ]
+          tags.sort((a, b) => a[0] - b[0])
+          const winners = new Map<string, any>()
+          for (const tag of tags) {
+            const previous = winners.get(tag[1])
+            const attribute = precompileConsumer === 'server'
+              ? tag[3] === 3 || tag[3] === 4
+              : String(tag[2]).endsWith('Attrs')
+            if (!previous || attribute || previous[0] === tag[0])
+              winners.set(tag[1], tag)
+          }
+          const resolved = [...winners.values()]
+          const snapshot = precompileConsumer === 'server'
+            ? (() => {
+                const output = ['', '', '', '', '']
+                for (const tag of resolved) {
+                  if (tag[2])
+                    output[tag[3] || 0] += tag[2]
+                }
+                return { headTags: output[0], bodyTags: output[2], bodyTagsOpen: output[1], htmlAttrs: output[3], bodyAttrs: output[4] }
+              })()
+            : resolved
+          const snapshotName = `${precompilePrefix}_snapshot`
+          snapshotDeclaration = `const ${snapshotName} = ${JSON.stringify(snapshot)}`
+          edits.push({ start: creation.start, end: creation.end, content: `createHead(${snapshotName})`, phase: 'precompile' })
+          if (first) {
+            edits.push({
+              start: first.start,
+              end: pendingPrecompilations.at(-1)!.end,
+              content: '',
+              phase: 'precompile',
+            })
+          }
+          compiledPlans = []
+        }
+        else {
+          for (const pending of pendingHeadCreations) {
+            edits.push({
+              start: pending.start,
+              end: pending.end,
+              content: pending.consumer === 'client'
+                ? 'createHead(1)'
+                : pending.disableDefaults
+                  ? '({_p:[]})'
+                  : `({_p:[${defaultPlanName}]})`,
+              phase: 'precompile',
+            })
+          }
+
           for (let i = 0; i < pendingPrecompilations.length;) {
             const first = pendingPrecompilations[i]
-            if (first.consumer === 'client') {
+            if (first.batchStart !== undefined) {
+              const indexes: number[] = []
+              let cursor = i
+              while (cursor < pendingPrecompilations.length
+                && pendingPrecompilations[cursor].batchStart === first.batchStart
+                && pendingPrecompilations[cursor].head === first.head) {
+                indexes.push(cursor++)
+              }
+              if (indexes.length === first.batchSize) {
+                edits.push({
+                  start: first.batchStart,
+                  end: first.batchEnd!,
+                  content: `[${indexes.map((index, position) => `${first.head}.push(${pendingPrecompilations[index].name}${position === indexes.length - 1 ? '' : ',0'})`).join(',')}]`,
+                  phase: 'precompile',
+                })
+                i = cursor
+                continue
+              }
+            }
+            if (first.framework) {
+              edits.push({
+                start: first.inputStart,
+                end: first.inputEnd,
+                content: first.name,
+                phase: 'precompile',
+              })
+              i++
+              continue
+            }
+            if (!first.standalone) {
               edits.push({
                 start: first.start,
                 end: first.end,
@@ -1379,7 +1801,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             const indexes = [i]
             while (++i < pendingPrecompilations.length) {
               const next = pendingPrecompilations[i]
-              if (next.consumer !== 'server' || next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
+              if (!next.standalone || next.consumer !== first.consumer || next.head !== first.head || !/^[;\s]*$/.test(code.slice(last.end, next.start)))
                 break
               last = next
               indexes.push(i)
@@ -1395,7 +1817,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             edits.push({
               start: first.start,
               end: last.end,
-              content: `${first.head}._p.push(${first.name})`,
+              content: first.consumer === 'client'
+                ? `${first.head}.push(${first.name})`
+                : `${first.head}._p.push(${first.name})`,
               phase: 'precompile',
             })
           }
@@ -1416,15 +1840,18 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const s = new MagicString(code)
         applyEdits(s, edits, id)
-        if (pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
+        if (snapshotDeclaration || pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
           const directives = ast.program.body.filter((node: any) => node.type === 'ExpressionStatement' && node.directive)
           const directiveEnd = directives.at(-1)?.end
           const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)
           const declarations = [
-            ...(pendingHeadCreations.some(pending => !pending.disableDefaults)
-              ? [`const ${defaultPlanName} = ${JSON.stringify(PRECOMPILED_DEFAULT_PLAN)}`]
+            ...(snapshotDeclaration ? [snapshotDeclaration] : []),
+            ...(!snapshotDeclaration && pendingHeadCreations.some(pending => !pending.disableDefaults)
+              ? [`const ${defaultPlanName} = ${JSON.stringify(precompileOpts?.duplicates === 'error' && precompileConsumer === 'server'
+                  ? PRECOMPILED_DEFAULT_PLAN.map(tag => tag[3] === undefined ? [tag[0], tag[2]] : [tag[0], tag[2], tag[3]])
+                  : PRECOMPILED_DEFAULT_PLAN)}`]
               : []),
-            ...pendingPrecompilations
+            ...(!snapshotDeclaration ? pendingPrecompilations : [])
               .flatMap((pending, index) => compiledPlans[index] ? [`const ${pending.name} = ${compiledPlans[index]}`] : []),
           ].join('\n')
           s.appendLeft(importOffset, `${directiveEnd === undefined ? '' : '\n'}${declarations}\n`)

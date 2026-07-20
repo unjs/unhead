@@ -11,7 +11,12 @@ export default defineBuildConfig({
   failOnWarn: false,
   entries: [
     { input: 'src/precompiled/client', name: 'precompiled/client' },
+    { input: 'src/precompiled/client-csr', name: 'precompiled/client-csr' },
+    { input: 'src/precompiled/client-deferred', name: 'precompiled/client-deferred' },
+    { input: 'src/precompiled/client-snapshot', name: 'precompiled/client-snapshot' },
     { input: 'src/precompiled/server', name: 'precompiled/server' },
+    { input: 'src/precompiled/server-snapshot', name: 'precompiled/server-snapshot' },
+    { input: 'src/precompiled/server-unique', name: 'precompiled/server-unique' },
   ],
   externals: [/^unhead\//],
   rollup: {

@@ -2,13 +2,23 @@ import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead, registerPlugin } from '../unhead'
 import { createHooks } from '../utils/hooks'
-import { DEFAULT_INIT, DEFAULT_INIT_TAGS } from './defaults'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
 export interface ServerUnhead<T = ResolvableHead> extends Unhead<T, SSRHeadPayload> {
   hooks: HookableCore<ServerHeadHooks>
 }
+
+const DEFAULT_HTML_ATTRS = { lang: 'en' }
+const DEFAULT_CHARSET = { charset: 'utf-8' }
+const DEFAULT_VIEWPORT = { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+const DEFAULT_INIT = { htmlAttrs: DEFAULT_HTML_ATTRS, meta: [DEFAULT_CHARSET, DEFAULT_VIEWPORT] }
+
+const DEFAULT_INIT_TAGS = [
+  { props: DEFAULT_HTML_ATTRS, _w: 100, _d: 'htmlAttrs' },
+  { props: DEFAULT_CHARSET, _w: -20, _d: 'charset' },
+  { props: DEFAULT_VIEWPORT, _w: -15, _d: 'meta:viewport' },
+]
 
 // identity for anything but `on*` function handlers, so `_static` for the
 // default init fast path (the default entry has no event handlers)
@@ -22,13 +32,10 @@ const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
   { _static: true },
 )
 
-/** @internal */
-export function createHeadWithRenderer<T = ResolvableHead>(
-  options: CreateServerHeadOptions,
-  renderer: typeof createServerRenderer,
-): ServerUnhead<T> {
+/* @__NO_SIDE_EFFECTS__ */
+export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
-  const render = renderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
+  const render = createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
   const core = createUnhead<T, SSRHeadPayload>(render, {
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
@@ -47,7 +54,7 @@ export function createHeadWithRenderer<T = ResolvableHead>(
   if (!options.disableDefaults && !options.tagWeight && !options.propResolvers?.some(r => !r._static)) {
     const defaultEntry = core.entries.get(1)
     if (defaultEntry)
-      defaultEntry._precomputedTags = DEFAULT_INIT_TAGS.map(tag => ({ ...tag, props: { ...tag.props } }))
+      defaultEntry._precomputedTags = DEFAULT_INIT_TAGS.map((tag, i) => ({ ...tag, tag: i ? 'meta' : 'htmlAttrs', props: { ...tag.props }, _p: 1024 + i }))
   }
 
   const hooks = createHooks<ServerHeadHooks>(options.hooks)
@@ -57,9 +64,4 @@ export function createHeadWithRenderer<T = ResolvableHead>(
   head.use = p => registerPlugin(head, p)
   options.plugins?.forEach(p => head.use(p))
   return head
-}
-
-/* @__NO_SIDE_EFFECTS__ */
-export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
-  return createHeadWithRenderer(options, createServerRenderer)
 }

@@ -16,6 +16,26 @@ export interface PrecompileOptions extends BaseTransformerTypes {
    * consumer to plugins (notably plain Rollup).
    */
   consumer?: 'client' | 'server'
+  /**
+   * Load the sealed client DOM runtime in a separate async chunk and replay
+   * queued plans after it resolves. Use `csr` for SPA-only pages because they
+   * do not have an SSR head to preserve before the chunk loads.
+   * @default 'eager'
+   */
+  client?: 'csr' | 'deferred' | 'eager'
+  /**
+   * Reject duplicate tag identities across every transformed module and let
+   * the sealed runtimes skip winner maps. This is intentionally stricter than
+   * normal Unhead deduplication, including across lazy route chunks.
+   * @default 'runtime'
+   */
+  duplicates?: 'error' | 'runtime'
+  /**
+   * Finalize one non-escaping head at build time. Snapshot mode has a smaller
+   * contract and runtime than the lifecycle-capable default.
+   * @default 'runtime'
+   */
+  mode?: 'runtime' | 'snapshot'
 }
 
 export interface UnpluginOptions extends BaseTransformerTypes {
