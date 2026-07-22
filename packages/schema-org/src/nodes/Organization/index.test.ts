@@ -68,4 +68,27 @@ describe('defineOrganization', () => {
       expect(graph.filter(node => node['@type'] === 'ImageObject')).toHaveLength(1)
     })
   })
+
+  it('retains a compact node for specialized organizations', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          '@type': 'Corporation',
+          'name': 'test',
+          'logo': '/logo.png',
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
+      const organization = graph.find(node => node['@id'] === 'https://example.com/#organization')
+
+      expect(identity).toMatchObject({ '@type': ['Organization', 'Corporation'] })
+      expect(identity).not.toHaveProperty('logo')
+      expect(organization).toMatchObject({
+        '@type': 'Organization',
+        'logo': 'https://example.com/logo.png',
+      })
+    })
+  })
 })
