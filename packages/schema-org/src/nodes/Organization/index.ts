@@ -98,21 +98,26 @@ export const organizationResolver
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
       const webPage = ctx.find(PrimaryWebPageId)
       if (node.logo && isIdentity) {
+        const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
+        // Google expects a single logo, so use the first configured image.
+        const logoNode = resolveRelation(logoInput, ctx, imageResolver, {
+          root: true,
+          afterResolve(logo) {
+            logo['@id'] = prefixId(ctx.meta.host, '#logo')
+            setIfEmpty(logo, 'caption', node.name)
+          },
+        })
+
+        if (webPage && logoNode)
+          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
+
+        if (node['@type'] === 'Organization') {
+          node.logo = logoNode
+        }
+        // Specialized organizations retain a compact Organization node for
+        // Google's Organization rich result.
         // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
-        if (!ctx.find('#organization')) {
-          const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
-          // Google expects a single logo, so use the first configured image.
-          const logoNode = resolveRelation(logoInput, ctx, imageResolver, {
-            root: true,
-            afterResolve(logo) {
-              logo['@id'] = prefixId(ctx.meta.host, '#logo')
-              setIfEmpty(logo, 'caption', node.name)
-            },
-          })
-
-          if (webPage && logoNode)
-            setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
-
+        else if (!ctx.find('#organization')) {
           const resolvedLogo = logoNode && typeof logoNode === 'object' && logoNode['@id']
             ? ctx.find(logoNode['@id'], isImageObject)
             : null
@@ -133,7 +138,8 @@ export const organizationResolver
             '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
           })
         }
-        delete node.logo
+        if (node['@type'] !== 'Organization')
+          delete node.logo
       }
 
       if (isIdentity && webPage)

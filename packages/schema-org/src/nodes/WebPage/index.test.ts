@@ -325,6 +325,9 @@ describe('defineWebPage', () => {
           {
             "@id": "https://example.com/#identity",
             "@type": "Organization",
+            "logo": {
+              "@id": "https://example.com/#logo",
+            },
             "name": "Harlan Wilton",
             "url": "https://example.com/",
           },
@@ -345,13 +348,6 @@ describe('defineWebPage', () => {
             "contentUrl": "https://example.com/logo.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/logo.png",
-          },
-          {
-            "@id": "https://example.com/#organization",
-            "@type": "Organization",
-            "logo": "https://example.com/logo.png",
-            "name": "Harlan Wilton",
-            "url": "https://example.com/",
           },
         ]
       `)
