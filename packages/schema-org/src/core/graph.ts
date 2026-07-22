@@ -42,7 +42,7 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
   function find<T extends SchemaOrgNode>(id: Id | string, guard: (node: SchemaOrgNode) => node is T): T | null
   function find<T extends SchemaOrgNode>(id: Id | string, guard?: (node: SchemaOrgNode) => node is T): SchemaOrgNode | T | null {
     const matchFragment = id[0] === '#'
-    const matchDomain = id[0] === '/'
+    const matchDomain = id[0] === '/' && id[1] === '/'
     const key = (matchFragment
       ? resolveAsGraphKey(id)
       : matchDomain

@@ -102,6 +102,16 @@ describe('public types', () => {
     expect(person?.name).toBe('Ada')
     expect(graph.find('#person', (node): node is Person => typeof node.name === 'string' && node.name === 'Grace')).toBeNull()
 
+    const pathGraph = createSchemaOrgGraph()
+    pathGraph.push([
+      { '@id': '/first' },
+      { '@id': '/second' },
+    ])
+    expect(pathGraph.find('/second')?.['@id']).toBe('/second')
+
+    pathGraph.push({ '@id': '//cdn.example.com/first' })
+    expect(pathGraph.find('//cdn.example.com/second')?.['@id']).toBe('//cdn.example.com/first')
+
     const plugin = UnheadSchemaOrg({ trailingSlash: true })
     expectTypeOf(plugin).toMatchTypeOf<HeadPluginInput>()
     // @ts-expect-error schema tag resolution is synchronous, so metadata cannot be async
