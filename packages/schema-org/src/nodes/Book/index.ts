@@ -7,13 +7,13 @@ import type {
   Thing,
 } from '../../types'
 import type { ReadAction } from '../WebPage'
-import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
   resolvableDateToDate,
   setIfEmpty,
+  withBase,
 } from '../../utils'
 
 export interface BookSimple extends Thing {

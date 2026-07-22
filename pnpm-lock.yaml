@@ -1004,9 +1004,6 @@ importers:
 
   packages/schema-org:
     dependencies:
-      ufo:
-        specifier: 'catalog:'
-        version: 1.6.4
       unhead:
         specifier: workspace:*
         version: link:../unhead
