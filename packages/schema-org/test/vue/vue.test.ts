@@ -5,10 +5,8 @@ import { renderSSRHead } from '@unhead/vue/server'
 import { describe, expect, it } from 'vitest'
 import { computed, readonly, ref } from 'vue'
 import { useDom } from '../../../unhead/test/fixtures'
-import { VueResolver } from '../../../vue/src/resolver'
 import { createHead as createServerHead } from '../../../vue/src/server'
 import { ssrVueAppWithUnhead } from '../../../vue/test/util'
-import { webSiteResolver } from '../../src/nodes/WebSite'
 
 describe('schema.org e2e', () => {
   it('dates', async () => {
@@ -180,22 +178,40 @@ describe('schema.org e2e', () => {
   })
 
   it('keeps resolvers on recomputed and frozen ref values', () => {
+    const head = createServerHead({
+      disableDefaults: true,
+    })
     const name = ref('First')
     const source = computed(() => Object.freeze({ name: name.value }))
     const website = defineWebSite(source)
+    const article = defineArticle(readonly(ref({ headline: 'Readonly' })))
 
-    const first = VueResolver(undefined, website) as { _resolver?: unknown, name?: string }
-    expect(first).toMatchObject({ name: 'First', _resolver: webSiteResolver })
+    useSchemaOrg([website, article], { head })
+
+    const firstRender = renderSSRHead(head).bodyTags
+    expect(firstRender).toContain('"@type": "WebSite"')
+    expect(firstRender).toContain('"name": "First"')
+    expect(firstRender).toContain('"@type": "Article"')
+    expect(firstRender).toContain('"headline": "Readonly"')
 
     name.value = 'Second'
-    const second = VueResolver(undefined, website) as { _resolver?: unknown, name?: string }
-    expect(second).toMatchObject({ name: 'Second', _resolver: webSiteResolver })
+    expect(renderSSRHead(head).bodyTags).toContain('"name": "Second"')
+  })
 
-    const readonlyWebsite = defineWebSite(readonly(ref({ name: 'Readonly' })))
-    expect(VueResolver(undefined, readonlyWebsite)).toMatchObject({
-      name: 'Readonly',
-      _resolver: webSiteResolver,
+  it('keeps resolver ownership when schema helpers share a ref', () => {
+    const head = createServerHead({
+      disableDefaults: true,
     })
+    const source = ref({ headline: 'Shared', name: 'Shared' })
+
+    useSchemaOrg([
+      defineWebSite(source),
+      defineArticle(source),
+    ], { head })
+
+    const bodyTags = renderSSRHead(head).bodyTags
+    expect(bodyTags).toContain('"@type": "WebSite"')
+    expect(bodyTags).toContain('"@type": "Article"')
   })
 
   it('refs', async () => {

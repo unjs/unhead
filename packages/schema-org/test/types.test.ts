@@ -23,6 +23,7 @@ import type {
 import type { SchemaOrgArticle } from '@unhead/schema-org/vue'
 import type { DeepResolvableProperties } from '@unhead/vue'
 import type { HeadPluginInput } from 'unhead/types'
+import type { ComputedRef } from 'vue'
 import {
   createSchemaOrgGraph,
   defineArticle,
@@ -158,8 +159,9 @@ describe('public types', () => {
 
     const website = ref({ name: 'Typed site' })
     const definedWebsite = defineVueWebSite(website)
-    const preservedWebsiteRef: typeof website = definedWebsite
-    expect(preservedWebsiteRef).toBe(website)
+    expectTypeOf(definedWebsite).toMatchTypeOf<ComputedRef<{ name: string }>>()
+    expectTypeOf(definedWebsite.value.name).toEqualTypeOf<string>()
+    expect(definedWebsite).not.toBe(website)
     expectTypeOf<IsAny<typeof SchemaOrgArticle>>().toEqualTypeOf<false>()
 
     type ArticleComponentProps = InstanceType<typeof SchemaOrgArticle>['$props']

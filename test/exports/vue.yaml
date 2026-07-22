@@ -91,7 +91,6 @@
   sanitizeTags: function
   ScriptNetworkEvents: object
   SelfClosingTags: object
-  setVueRefResolver: function
   TagConfigKeys: object
   TagPriorityAliases: object
   TagsWithInnerContent: object

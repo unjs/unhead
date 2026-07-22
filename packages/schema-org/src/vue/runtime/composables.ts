@@ -1,6 +1,6 @@
 import type { DeepResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
 import type { ActiveHeadEntry } from 'unhead/types'
-import type { MaybeRef, Ref } from 'vue'
+import type { ComputedRef, MaybeRef, Ref } from 'vue'
 import type { AggregateOffer } from '../../nodes/AggregateOffer'
 import type { AggregateRating } from '../../nodes/AggregateRating'
 import type { Article } from '../../nodes/Article'
@@ -49,8 +49,7 @@ import type { WebSite } from '../../nodes/WebSite'
 import type { SearchAction } from '../../nodes/WebSite/SearchAction'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from '../../types'
 import { injectHead, useHead } from '@unhead/vue'
-import { setVueRefResolver } from '@unhead/vue/utils'
-import { isRef } from 'vue'
+import { computed, isRef } from 'vue'
 import { aggregateOfferResolver } from '../../nodes/AggregateOffer'
 import { aggregateRatingResolver } from '../../nodes/AggregateRating'
 import { articleResolver } from '../../nodes/Article'
@@ -103,23 +102,27 @@ import { normalizeSchemaOrgInput } from '../../runtime'
 type VueSchemaOrgDefinerInput<ResolvedInput, Input> = Input & (
   Input extends object ? MaybeRef<DeepResolvableProperties<ResolvedInput>> : unknown
 )
-type VueSchemaOrgNode<ResolvedInput extends Thing, Input extends object | undefined> = Input extends Ref<unknown>
-  ? Input
+type VueSchemaOrgNode<ResolvedInput extends Thing, Input extends object | undefined> = [Input] extends [Ref<infer Value>]
+  ? ComputedRef<Value>
   : [Input] extends [undefined]
       ? Partial<DeepResolvableProperties<ResolvedInput>>
       : DeepResolvableProperties<ResolvedInput> & Exclude<Input, undefined>
 
-function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): VueSchemaOrgNode<ResolvedInput, Input> {
-  if (!input)
-    input = {} as Input
-  if (isRef(input)) {
-    // Keep resolver metadata out-of-band so readonly refs retain it without
-    // mutating Vue's readonly proxy.
-    setVueRefResolver(input, resolver)
-    return input as unknown as VueSchemaOrgNode<ResolvedInput, Input>
+function withResolver<ResolvedInput extends Thing, CastInput>(input: object, resolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput>) {
+  return { ...input, _resolver: resolver }
+}
+
+function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): VueSchemaOrgNode<ResolvedInput, Input> {
+  const resolvedInput = input || {}
+  if (isRef(resolvedInput)) {
+    return computed(() => {
+      const value = resolvedInput.value
+      return value && typeof value === 'object'
+        ? withResolver(value, resolver)
+        : value
+    }) as unknown as VueSchemaOrgNode<ResolvedInput, Input>
   }
-  // For plain objects, spread and attach resolver
-  return { ...input, _resolver: resolver } as unknown as VueSchemaOrgNode<ResolvedInput, Input>
+  return withResolver(resolvedInput, resolver) as unknown as VueSchemaOrgNode<ResolvedInput, Input>
 }
 
 export function defineAddress<Input extends object | undefined = undefined>(input?: VueSchemaOrgDefinerInput<PostalAddress, Input>) {
