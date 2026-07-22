@@ -12,7 +12,6 @@ import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Place } from '../Place'
 import type { VirtualLocation } from '../VirtualLocation'
-import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -20,6 +19,7 @@ import {
   resolvableDateToDate,
   resolvableDateToIso,
   setIfEmpty,
+  withBase,
 } from '../../utils'
 import { offerResolver } from '../Offer'
 import { organizationResolver } from '../Organization'

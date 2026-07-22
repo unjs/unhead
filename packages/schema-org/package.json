@@ -112,7 +112,6 @@
     }
   },
   "dependencies": {
-    "ufo": "catalog:",
     "unhead": "workspace:*"
   },
   "devDependencies": {

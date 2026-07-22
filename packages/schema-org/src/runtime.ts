@@ -98,9 +98,7 @@ import { searchActionResolver } from './nodes/WebSite/SearchAction'
 import { UnheadSchemaOrg } from './plugin'
 
 function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>): T & { _resolver?: SchemaOrgNodeDefinition<any> } {
-  if (!input)
-    input = {} as T
-  return { ...input, _resolver: resolver } as T & { _resolver?: SchemaOrgNodeDefinition<any> }
+  return { ...(input || {} as T), _resolver: resolver } as T & { _resolver?: SchemaOrgNodeDefinition<any> }
 }
 
 export function defineAddress<T extends Record<string, any>>(input?: PostalAddress & T) {

@@ -1,12 +1,12 @@
 import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import type { OfferShippingDetails } from '../OfferShippingDetails'
 import type { OpeningHoursSpecification } from '../OpeningHours'
-import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   resolvableDateToIso,
   resolveWithBase,
   setIfEmpty,
+  withBase,
 } from '../../utils'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { offerShippingDetailsResolver } from '../OfferShippingDetails'

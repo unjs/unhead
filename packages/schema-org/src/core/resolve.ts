@@ -7,8 +7,7 @@ import type {
 } from '../types'
 import type { ResolverOptions } from '../utils'
 import type { SchemaOrgGraph } from './graph'
-import { hasTrailingSlash, joinURL, withoutTrailingSlash, withTrailingSlash } from 'ufo'
-import { asArray, idReference, prefixId, setIfEmpty, stripEmptyProperties } from '../utils'
+import { asArray, idReference, joinURL, prefixId, setIfEmpty, stripEmptyProperties, withoutTrailingSlash, withTrailingSlash } from '../utils'
 
 const ALIAS_RE = /([a-z])([A-Z])/g
 
@@ -25,26 +24,15 @@ export function resolveMeta(meta: Partial<MetaInput>) {
     meta.host = document.location.host
 
   if (meta.path !== '/') {
-    if (meta.trailingSlash && !hasTrailingSlash(meta.path))
+    if (meta.trailingSlash && !meta.path.endsWith('/'))
       meta.path = withTrailingSlash(meta.path)
-    else if (!meta.trailingSlash && hasTrailingSlash(meta.path))
+    else if (!meta.trailingSlash && meta.path.endsWith('/'))
       meta.path = withoutTrailingSlash(meta.path)
   }
 
   meta.url = joinURL(meta.host || '', meta.path)
 
-  return <ResolvedMeta> {
-    ...meta,
-    host: meta.host,
-    url: meta.url,
-    currency: meta.currency,
-    image: meta.image,
-    inLanguage: meta.inLanguage,
-    title: meta.title,
-    description: meta.description,
-    datePublished: meta.datePublished,
-    dateModified: meta.dateModified,
-  }
+  return meta as ResolvedMeta
 }
 
 export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>) {

@@ -1,11 +1,9 @@
-const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-
 export function merge(target: any, source: any): any {
   if (!source)
     return target
 
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || UNSAFE_KEYS.has(key))
+    if (!Object.hasOwn(source, key) || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const value = source[key]

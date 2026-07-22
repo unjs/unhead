@@ -8,13 +8,11 @@ import {
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
 
-const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
+    if (!Object.hasOwn(source, key) || source[key] === undefined || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const isNestedObject = result[key]
@@ -104,7 +102,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           graph = graph || createSchemaOrgGraph()
           // Reset graph nodes each cycle so disposed entries don't leave stale nodes.
           graph.nodes = []
-          graph.nodeIndex = new Map()
+          graph.nodeIndex.clear()
           resolvedMeta = {} as ResolvedMeta
           for (const entry of ctx.entries) {
             if (entry._tags) {
@@ -140,7 +138,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
                 '@graph': resolvedGraph,
               }, (_, value) => {
                 // process template params here
-                if (typeof value !== 'object')
+                if (typeof value === 'string')
                   return processTemplateParams(value, head._templateParams!, head._separator!)
                 return value
               }, minify ? 0 : 2)
