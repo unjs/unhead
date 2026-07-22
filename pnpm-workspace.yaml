@@ -29,7 +29,7 @@ overrides:
   rolldown: 1.1.2
   unhead@3.1.8: workspace:*
 catalog:
-  '@angular-devkit/build-angular': ^21.2.19
+  '@angular-devkit/build-angular': ^22.0.7
   '@angular/cli': ^22.0.7
   '@angular/common': ^22.0.7
   '@angular/compiler': ^22.0.7
