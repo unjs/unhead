@@ -842,7 +842,7 @@ importers:
         specifier: 'catalog:'
         version: 0.4.1(@modelcontextprotocol/sdk@1.29.0(supports-color@10.2.2)(zod@4.4.2))(srvx@0.11.22)(typescript@7.0.2)(vite@8.1.5)
       esbuild:
-        specifier: '>=0.17.0'
+        specifier: '>=0.28.1'
         version: 0.28.1
       lightningcss:
         specifier: '>=1.20.0'
