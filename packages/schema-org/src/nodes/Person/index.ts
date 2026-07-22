@@ -1,8 +1,5 @@
 import type { Arrayable, NodeRelations, Thing } from '../../types'
-import type { Article } from '../Article'
 import type { ImageObject } from '../Image'
-import type { WebPage } from '../WebPage'
-import type { WebSite } from '../WebSite'
 import { defineSchemaOrgResolver } from '../../core'
 import {
   IdentityId,
@@ -48,7 +45,7 @@ export interface Person extends PersonSimple { }
 /**
  * Describes an individual person. Most commonly used to identify the author of a piece of content (such as an Article or Comment).
  */
-export const personResolver = defineSchemaOrgResolver<Person>({
+export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
   cast(node) {
     if (typeof node === 'string') {
       return {
@@ -71,16 +68,16 @@ export const personResolver = defineSchemaOrgResolver<Person>({
     if (resolveAsGraphKey(node['@id']) === IdentityId) {
       setIfEmpty(node, 'url', meta.host)
 
-      const webPage = find<WebPage>(PrimaryWebPageId)
+      const webPage = find(PrimaryWebPageId)
       if (webPage)
         setIfEmpty(webPage, 'about', idReference(node as Person))
 
-      const webSite = find<WebSite>(PrimaryWebSiteId)
+      const webSite = find(PrimaryWebSiteId)
       if (webSite)
         setIfEmpty(webSite, 'publisher', idReference(node))
     }
     // add ourselves as the author
-    const article = find<Article>(PrimaryArticleId)
+    const article = find(PrimaryArticleId)
     if (article)
       setIfEmpty(article, 'author', idReference(node))
   },

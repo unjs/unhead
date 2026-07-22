@@ -75,7 +75,7 @@ export interface BookEditionSimple extends Thing {
   /**
    * The action to be triggered for users to purchase or download the book.
    */
-  potentialAction?: Arrayable<ReadAction | any>
+  potentialAction?: Arrayable<ReadAction>
   /**
    * The author(s) of the edition.
    */
@@ -91,7 +91,7 @@ export interface BookEditionSimple extends Thing {
   /**
    * The external or other ID that unambiguously identifies this edition. Multiple identifiers are allowed. For more details, refer to PropertyValue (identifier).
    */
-  identifier?: unknown
+  identifier?: string | Thing
   /**
    * The URL of a reference web page that unambiguously indicates the edition. For example, a Wikipedia page for this specific edition. Don't reuse the sameAs of the Work.
    */
@@ -121,7 +121,7 @@ export const bookEditionResolver = defineSchemaOrgResolver<BookEdition>({
     return node
   },
   resolveRootNode(node, { find }) {
-    const identity = find<Identity>(IdentityId)
+    const identity = find(IdentityId)
 
     if (identity)
       setIfEmpty(node, 'provider', idReference(identity))
@@ -148,12 +148,12 @@ export const bookResolver = defineSchemaOrgResolver<Book>({
 
     node.author = resolveRelation(node.author, ctx)
 
-    if (node.url)
-      withBase(node.url, ctx.meta.host)
+    if (node.url && ctx.meta.host)
+      node.url = withBase(node.url, ctx.meta.host)
     return node
   },
   resolveRootNode(node, { find }) {
-    const identity = find<Identity>(IdentityId)
+    const identity = find(IdentityId)
 
     if (identity)
       setIfEmpty(node, 'author', idReference(identity))

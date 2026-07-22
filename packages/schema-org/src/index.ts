@@ -1,5 +1,6 @@
 export { createSchemaOrgGraph, defineSchemaOrgResolver, merge, resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './core'
-export type { ResolverOptions, SchemaOrgGraph } from './core'
+export type { Merge, SchemaOrgGraph } from './core'
+export type { ResolverOptions } from './core'
 export { schemaAutoImports } from './imports'
 export * from './nodes'
 export type { DefinedRegion } from './nodes/DefinedRegion'
@@ -62,5 +63,5 @@ export {
   normalizeSchemaOrgInput,
   useSchemaOrg,
 } from './runtime'
-export type { UseSchemaOrgInput } from './runtime'
+export type { SchemaOrgHeadInput, UseSchemaOrgInput } from './runtime'
 export type { Arrayable, Id, Identity, IdReference, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'

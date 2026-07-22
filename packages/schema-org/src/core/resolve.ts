@@ -1,6 +1,7 @@
 import type {
   Arrayable,
   MetaInput,
+  NodeRelation,
   ResolvedMeta,
   SchemaOrgNodeDefinition,
   Thing,
@@ -17,7 +18,7 @@ function nextNodeId(ctx: SchemaOrgGraph, alias: string) {
   return ctx.nodeIdCounters[alias].toString()
 }
 
-export function resolveMeta(meta: Partial<MetaInput>) {
+export function resolveMeta(meta: Partial<MetaInput>): ResolvedMeta {
   if (!meta.path)
     meta.path = '/'
 
@@ -33,21 +34,16 @@ export function resolveMeta(meta: Partial<MetaInput>) {
 
   meta.url = joinURL(meta.host || '', meta.path)
 
-  return <ResolvedMeta> {
+  return {
     ...meta,
-    host: meta.host,
+    path: meta.path,
     url: meta.url,
-    currency: meta.currency,
-    image: meta.image,
-    inLanguage: meta.inLanguage,
-    title: meta.title,
-    description: meta.description,
-    datePublished: meta.datePublished,
-    dateModified: meta.dateModified,
   }
 }
 
-export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>) {
+export function resolveNode<ResolvedInput extends Thing, CastInput>(node: CastInput, ctx: SchemaOrgGraph, resolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): ResolvedInput
+export function resolveNode<T extends Thing>(node: T, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<T>): T
+export function resolveNode(node: any, ctx: SchemaOrgGraph, resolver?: SchemaOrgNodeDefinition<any, any>): any {
   // allow casting from a primitive to an object
   if (resolver?.cast)
     node = resolver.cast(node, ctx)
@@ -124,7 +120,52 @@ export function resolveNodeId<T extends Thing>(node: T, ctx: SchemaOrgGraph, res
   return node
 }
 
-export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fallbackResolver?: SchemaOrgNodeDefinition<any>, options: ResolverOptions = {}) {
+type FalsyRelationInput = '' | 0 | false | null | undefined
+type RelationValue<Input> = Exclude<Input extends readonly (infer Value)[] ? Value : Input, FalsyRelationInput>
+type ResolverInput<ResolvedInput extends Thing, CastInput> = CastInput | NodeRelation<ResolvedInput>
+type RelationInputValue<Input> = Input extends readonly (infer Value)[] ? Value : Input
+type PossibleFalsy<Input> = ('' extends Input ? '' : never)
+  | (0 extends Input ? 0 : never)
+  | (false extends Input ? false : never)
+  | (null extends Input ? null : never)
+  | (undefined extends Input ? undefined : never)
+type RelationItemResult<Input, ResolvedInput> = [Exclude<Input, FalsyRelationInput>] extends [never]
+  ? Input
+  : NodeRelation<ResolvedInput> | PossibleFalsy<Input>
+type NaturalRelationResult<Input, ResolvedInput> = Input extends readonly []
+  ? []
+  : Input extends readonly [infer Value]
+    ? RelationItemResult<Value, ResolvedInput>
+    : Input extends readonly [unknown, unknown, ...unknown[]]
+      ? RelationItemResult<RelationInputValue<Input>, ResolvedInput>[]
+      : Input extends readonly (infer Value)[]
+        ? RelationItemResult<Value, ResolvedInput> | RelationItemResult<Value, ResolvedInput>[]
+        : RelationItemResult<Input, ResolvedInput>
+type ArrayRelationResult<Input, ResolvedInput> = RelationItemResult<RelationInputValue<Input>, ResolvedInput>[]
+type ResolveRelationResult<Input, ResolvedInput, Options> = Input extends FalsyRelationInput
+  ? Input
+  : PossibleFalsy<Input>
+    | (Options extends undefined
+      ? NaturalRelationResult<Input, ResolvedInput>
+      : 'array' extends keyof Options
+        ? Options extends { array: true }
+          ? ArrayRelationResult<Input, ResolvedInput>
+          : Options extends { array?: false | undefined }
+            ? NaturalRelationResult<Input, ResolvedInput>
+            : NaturalRelationResult<Input, ResolvedInput> | ArrayRelationResult<Input, ResolvedInput>
+        : NaturalRelationResult<Input, ResolvedInput>)
+
+type ConstrainedResolverInput<ResolvedInput extends Thing, CastInput> = ResolverInput<ResolvedInput, CastInput>
+  | readonly (ResolverInput<ResolvedInput, CastInput> | FalsyRelationInput)[]
+  | FalsyRelationInput
+
+export function resolveRelation<ResolvedInput extends Thing, CastInput, Input, const Options extends ResolverOptions<ResolvedInput>>(input: Input & ConstrainedResolverInput<NoInfer<ResolvedInput>, NoInfer<CastInput>>, ctx: SchemaOrgGraph, fallbackResolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput>, options: Options): ResolveRelationResult<Input, ResolvedInput, Options>
+export function resolveRelation<ResolvedInput extends Thing, CastInput, Input>(input: Input & ConstrainedResolverInput<NoInfer<ResolvedInput>, NoInfer<CastInput>>, ctx: SchemaOrgGraph, fallbackResolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): ResolveRelationResult<Input, ResolvedInput, undefined>
+export function resolveRelation<ResolvedInput extends Thing, CastInput, Input, const Options extends ResolverOptions<ResolvedInput>>(input: Input & ConstrainedResolverInput<NoInfer<ResolvedInput>, NoInfer<CastInput>>, ctx: SchemaOrgGraph, fallbackResolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput> | undefined, options: Options): ResolveRelationResult<Input, ResolvedInput | RelationValue<Input>, Options>
+export function resolveRelation<ResolvedInput extends Thing, CastInput, Input>(input: Input & ConstrainedResolverInput<NoInfer<ResolvedInput>, NoInfer<CastInput>>, ctx: SchemaOrgGraph, fallbackResolver: SchemaOrgNodeDefinition<ResolvedInput, CastInput> | undefined): ResolveRelationResult<Input, ResolvedInput | RelationValue<Input>, undefined>
+export function resolveRelation<Input, const Options extends ResolverOptions>(input: Input, ctx: SchemaOrgGraph, fallbackResolver: undefined, options: Options): ResolveRelationResult<Input, RelationValue<Input>, Options>
+export function resolveRelation<Input>(input: Input, ctx: SchemaOrgGraph, fallbackResolver?: undefined): ResolveRelationResult<Input, RelationValue<Input>, undefined>
+export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fallbackResolver?: SchemaOrgNodeDefinition<any>, options: ResolverOptions<any> = {}) {
   if (!input)
     return input
 
@@ -133,6 +174,10 @@ export function resolveRelation(input: Arrayable<any>, ctx: SchemaOrgGraph, fall
 
   for (let i = 0; i < items.length; i++) {
     const a = items[i]
+    if (!a) {
+      ids.push(a)
+      continue
+    }
     // Count keys without creating array
     let keyCount = 0
     for (const _ in a) keyCount++

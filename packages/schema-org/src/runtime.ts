@@ -27,7 +27,6 @@ import type {
   OpeningHoursSpecification,
   Organization,
   Person,
-  Place,
   PodcastEpisode,
   PodcastSeason,
   PodcastSeries,
@@ -44,10 +43,11 @@ import type {
   TVSeason,
   TVSeries,
   VideoObject,
-  VirtualLocation,
   WebPage,
   WebSite,
 } from './nodes'
+import type { Place } from './nodes/Place'
+import type { VirtualLocation } from './nodes/VirtualLocation'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from './types'
 import { aggregateOfferResolver } from './nodes/AggregateOffer'
 import { aggregateRatingResolver } from './nodes/AggregateRating'
@@ -97,164 +97,205 @@ import { webSiteResolver } from './nodes/WebSite'
 import { searchActionResolver } from './nodes/WebSite/SearchAction'
 import { UnheadSchemaOrg } from './plugin'
 
-function provideResolver<T>(input?: T, resolver?: SchemaOrgNodeDefinition<any>): T & { _resolver?: SchemaOrgNodeDefinition<any> } {
+type SchemaOrgDefinerInput<ResolvedInput, Input> = Input & (Input extends object ? ResolvedInput : unknown)
+type DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> = (
+  [Input] extends [undefined]
+    ? Partial<ResolvedInput>
+    : ResolvedInput & Exclude<Input, undefined>
+) & { _resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput> }
+
+function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> {
   if (!input)
-    input = {} as T
-  return { ...input, _resolver: resolver } as T & { _resolver?: SchemaOrgNodeDefinition<any> }
+    input = {} as Input
+  return { ...input, _resolver: resolver } as DefinedSchemaOrgNode<ResolvedInput, CastInput, Input>
 }
 
-export function defineAddress<T extends Record<string, any>>(input?: PostalAddress & T) {
+export function defineAddress<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PostalAddress, Input>) {
   return provideResolver(input, addressResolver)
 }
-export function defineAggregateOffer<T extends Record<string, any>>(input?: AggregateOffer & T) {
+export function defineAggregateOffer<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<AggregateOffer, Input>) {
   return provideResolver(input, aggregateOfferResolver)
 }
-export function defineAggregateRating<T extends Record<string, any>>(input?: AggregateRating & T) {
+export function defineAggregateRating<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<AggregateRating, Input>) {
   return provideResolver(input, aggregateRatingResolver)
 }
-export function defineArticle<T extends Record<string, any>>(input?: Article & T) {
+export function defineArticle<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Article, Input>) {
   return provideResolver(input, articleResolver)
 }
-export function defineBreadcrumb<T extends Record<string, any>>(input?: BreadcrumbList & T) {
+export function defineBreadcrumb<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<BreadcrumbList, Input>) {
   return provideResolver(input, breadcrumbResolver)
 }
-export function defineComment<T extends Record<string, any>>(input?: Comment & T) {
+export function defineComment<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Comment, Input>) {
   return provideResolver(input, commentResolver)
 }
-export function defineEvent<T extends Record<string, any>>(input?: Event & T) {
+export function defineEvent<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Event, Input>) {
   return provideResolver(input, eventResolver)
 }
-export function defineFoodEstablishment<T extends Record<string, any>>(input?: FoodEstablishment & T) {
+export function defineFoodEstablishment<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<FoodEstablishment, Input>) {
   return provideResolver(input, foodEstablishmentResolver)
 }
-export function defineVirtualLocation<T extends Record<string, any>>(input?: VirtualLocation & T) {
+export function defineVirtualLocation<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<VirtualLocation, Input>) {
   return provideResolver(input, virtualLocationResolver)
 }
-export function definePlace<T extends Record<string, any>>(input?: Place & T) {
+export function definePlace<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Place, Input>) {
   return provideResolver(input, placeResolver)
 }
-export function defineHowTo<T extends Record<string, any>>(input?: HowTo & T) {
+export function defineHowTo<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<HowTo, Input>) {
   return provideResolver(input, howToResolver)
 }
-export function defineHowToStep<T extends Record<string, any>>(input?: HowToStep & T) {
+export function defineHowToStep<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<HowToStep, Input>) {
   return provideResolver(input, howToStepResolver)
 }
-export function defineImage<T extends Record<string, any>>(input?: ImageObject & T) {
+export function defineImage<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<ImageObject, Input>) {
   return provideResolver(input, imageResolver)
 }
-export function defineJobPosting<T extends Record<string, any>>(input?: JobPosting & T) {
+export function defineJobPosting<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<JobPosting, Input>) {
   return provideResolver(input, jobPostingResolver)
 }
-export function defineLocalBusiness<T extends Record<string, any>>(input?: LocalBusiness & T) {
+export function defineLocalBusiness<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<LocalBusiness, Input>) {
   return provideResolver(input, localBusinessResolver)
 }
-export function defineOffer<T extends Record<string, any>>(input?: Offer & T) {
+export function defineOffer<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Offer, Input>) {
   return provideResolver(input, offerResolver)
 }
-export function defineOpeningHours<T extends Record<string, any>>(input?: OpeningHoursSpecification & T) {
+export function defineOpeningHours<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<OpeningHoursSpecification, Input>) {
   return provideResolver(input, openingHoursResolver)
 }
-export function defineOrganization<T extends Record<string, any>>(input?: Organization & T) {
+export function defineOrganization<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Organization, Input>) {
   return provideResolver(input, organizationResolver)
 }
-export function definePerson<T extends Record<string, any>>(input?: Person & T) {
+export function definePerson<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Person, Input>) {
   return provideResolver(input, personResolver)
 }
-export function defineProduct<T extends Record<string, any>>(input?: Product & T) {
+export function defineProduct<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Product, Input>) {
   return provideResolver(input, productResolver)
 }
-export function defineQuestion<T extends Record<string, any>>(input?: Question & T) {
+export function defineQuestion<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Question, Input>) {
   return provideResolver(input, questionResolver)
 }
-export function defineRecipe<T extends Record<string, any>>(input?: Recipe & T) {
+export function defineRecipe<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Recipe, Input>) {
   return provideResolver(input, recipeResolver)
 }
-export function defineReview<T extends Record<string, any>>(input?: Review & T) {
+export function defineReview<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Review, Input>) {
   return provideResolver(input, reviewResolver)
 }
-export function defineVideo<T extends Record<string, any>>(input?: VideoObject & T) {
+export function defineVideo<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<VideoObject, Input>) {
   return provideResolver(input, videoResolver)
 }
-export function defineWebPage<T extends Record<string, any>>(input?: WebPage & T) {
+export function defineWebPage<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<WebPage, Input>) {
   return provideResolver(input, webPageResolver)
 }
-export function defineWebSite<T extends Record<string, any>>(input?: WebSite & T) {
+export function defineWebSite<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<WebSite, Input>) {
   return provideResolver(input, webSiteResolver)
 }
-export function defineBook<T extends Record<string, any>>(input?: Book & T) {
+export function defineBook<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Book, Input>) {
   return provideResolver(input, bookResolver)
 }
-export function defineCourse<T extends Record<string, any>>(input?: Course & T) {
+export function defineCourse<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Course, Input>) {
   return provideResolver(input, courseResolver)
 }
-export function defineItemList<T extends Record<string, any>>(input?: ItemList & T) {
+export function defineItemList<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<ItemList, Input>) {
   return provideResolver(input, itemListResolver)
 }
-export function defineListItem<T extends Record<string, any>>(input?: ListItem & T) {
+export function defineListItem<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<ListItem, Input>) {
   return provideResolver(input, listItemResolver)
 }
-export function defineMovie<T extends Record<string, any>>(input?: Movie & T) {
+export function defineMovie<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Movie, Input>) {
   return provideResolver(input, movieResolver)
 }
-export function defineSearchAction<T extends Record<string, any>>(input?: SearchAction & T) {
+export function defineSearchAction<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<SearchAction, Input>) {
   return provideResolver(input, searchActionResolver)
 }
-export function defineReadAction<T extends Record<string, any>>(input?: ReadAction & T) {
+export function defineReadAction<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<ReadAction, Input>) {
   return provideResolver(input, readActionResolver)
 }
-export function defineDataset<T extends Record<string, any>>(input?: Dataset & T) {
+export function defineDataset<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Dataset, Input>) {
   return provideResolver(input, datasetResolver)
 }
-export function defineMusicRecording<T extends Record<string, any>>(input?: MusicRecording & T) {
+export function defineMusicRecording<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<MusicRecording, Input>) {
   return provideResolver(input, musicRecordingResolver)
 }
-export function defineMusicAlbum<T extends Record<string, any>>(input?: MusicAlbum & T) {
+export function defineMusicAlbum<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<MusicAlbum, Input>) {
   return provideResolver(input, musicAlbumResolver)
 }
-export function defineMusicGroup<T extends Record<string, any>>(input?: MusicGroup & T) {
+export function defineMusicGroup<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<MusicGroup, Input>) {
   return provideResolver(input, musicGroupResolver)
 }
-export function defineMusicPlaylist<T extends Record<string, any>>(input?: MusicPlaylist & T) {
+export function defineMusicPlaylist<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<MusicPlaylist, Input>) {
   return provideResolver(input, musicPlaylistResolver)
 }
-export function definePodcastSeries<T extends Record<string, any>>(input?: PodcastSeries & T) {
+export function definePodcastSeries<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PodcastSeries, Input>) {
   return provideResolver(input, podcastSeriesResolver)
 }
-export function definePodcastEpisode<T extends Record<string, any>>(input?: PodcastEpisode & T) {
+export function definePodcastEpisode<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PodcastEpisode, Input>) {
   return provideResolver(input, podcastEpisodeResolver)
 }
-export function definePodcastSeason<T extends Record<string, any>>(input?: PodcastSeason & T) {
+export function definePodcastSeason<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PodcastSeason, Input>) {
   return provideResolver(input, podcastSeasonResolver)
 }
-export function defineTVSeries<T extends Record<string, any>>(input?: TVSeries & T) {
+export function defineTVSeries<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<TVSeries, Input>) {
   return provideResolver(input, tvSeriesResolver)
 }
-export function defineTVSeason<T extends Record<string, any>>(input?: TVSeason & T) {
+export function defineTVSeason<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<TVSeason, Input>) {
   return provideResolver(input, tvSeasonResolver)
 }
-export function defineTVEpisode<T extends Record<string, any>>(input?: TVEpisode & T) {
+export function defineTVEpisode<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<TVEpisode, Input>) {
   return provideResolver(input, tvEpisodeResolver)
 }
-export function defineService<T extends Record<string, any>>(input?: Service & T) {
+export function defineService<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Service, Input>) {
   return provideResolver(input, serviceResolver)
 }
 
 /* simple-only */
-export function defineSoftwareApp<T extends Record<string, any>>(input?: SoftwareApp & T) {
+export function defineSoftwareApp<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<SoftwareApp, Input>) {
   return provideResolver(input, softwareAppResolver)
 }
-export function defineBookEdition<T extends Record<string, any>>(input?: BookEdition & T) {
+export function defineBookEdition<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<BookEdition, Input>) {
   return provideResolver(input, bookEditionResolver)
 }
 /* end-simple-only */
 
-export type UseSchemaOrgInput = Arrayable<Thing | Record<string, any>>
+export type UseSchemaOrgInput = Arrayable<Thing | Record<string, unknown>>
 
-export function normalizeSchemaOrgInput<T extends UseSchemaOrgInput>(input: T): T {
+export interface SchemaOrgHeadInput<T = UseSchemaOrgInput> {
+  script: [{
+    type: 'application/ld+json'
+    key: 'schema-org-graph'
+    nodes: T
+  }]
+}
+
+interface ReadonlySchemaOrgHeadInput<T> {
+  readonly script: readonly [{
+    readonly type: 'application/ld+json'
+    readonly key: 'schema-org-graph'
+    readonly nodes: T
+  }]
+}
+
+interface PotentialSchemaOrgHeadInput {
+  readonly script: readonly {
+    readonly type: string
+    readonly key: string
+    readonly nodes: unknown
+  }[]
+}
+
+export function normalizeSchemaOrgInput<const Input extends ReadonlySchemaOrgHeadInput<unknown>>(input: Input): Input
+export function normalizeSchemaOrgInput<const Input extends PotentialSchemaOrgHeadInput>(input: Input): Input | SchemaOrgHeadInput<Input>
+export function normalizeSchemaOrgInput<T>(input: T): SchemaOrgHeadInput<T>
+export function normalizeSchemaOrgInput(input: unknown): SchemaOrgHeadInput<unknown> {
   // avoid over normalizing
-  // @ts-expect-error untyped
-  if (input.script) {
-    return input as T
+  const script = (input as PotentialSchemaOrgHeadInput | null)?.script
+  const graph = script?.[0]
+  if (Array.isArray(script)
+    && script.length === 1
+    && graph
+    && typeof graph === 'object'
+    && graph.type === 'application/ld+json'
+    && graph.key === 'schema-org-graph'
+    && 'nodes' in graph) {
+    return input as SchemaOrgHeadInput<unknown>
   }
   return {
     script: [
@@ -264,13 +305,17 @@ export function normalizeSchemaOrgInput<T extends UseSchemaOrgInput>(input: T): 
         nodes: input,
       },
     ],
-  } as any as T
+  }
 }
 
-export function useSchemaOrg(unhead: Unhead<any>, input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+export function useSchemaOrg<HeadInput, RenderResult>(unhead: Unhead<HeadInput, RenderResult>, input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   unhead.use(UnheadSchemaOrg())
-  const entry = unhead.push(normalizeSchemaOrgInput(input), options)
+  const entry = (unhead as unknown as Unhead<SchemaOrgHeadInput<UseSchemaOrgInput>>).push(
+    normalizeSchemaOrgInput(input),
+    options,
+  )
   const corePatch = entry.patch
-  entry.patch = input => corePatch(normalizeSchemaOrgInput(input))
-  return entry
+  const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>
+  publicEntry.patch = input => corePatch(normalizeSchemaOrgInput(input))
+  return publicEntry
 }

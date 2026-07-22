@@ -1,5 +1,4 @@
 import type { ItemList } from '../ItemList'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
@@ -43,7 +42,7 @@ export const breadcrumbResolver = defineSchemaOrgResolver<BreadcrumbList>({
   },
   resolveRootNode(node, { find }) {
     // merge breadcrumbs reference into the webpage
-    const webPage = find<WebPage>(PrimaryWebPageId)
+    const webPage = find(PrimaryWebPageId)
     if (webPage)
       setIfEmpty(webPage, 'breadcrumb', idReference(node))
   },

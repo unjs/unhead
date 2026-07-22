@@ -312,6 +312,7 @@ describe('schema.org e2e', () => {
         UnheadSchemaOrg(),
       ],
     })
+    // @ts-expect-error malformed primitive nodes are ignored at runtime
     useSchemaOrg(ssrHead, ['test'])
     useSchemaOrg(ssrHead, [])
     // @ts-expect-error intentional
