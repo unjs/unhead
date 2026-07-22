@@ -1,3 +1,22 @@
+type MergeValue<T, U> = U extends undefined
+  ? T
+  : T extends readonly (infer TargetItem)[]
+    ? U extends readonly (infer SourceItem)[]
+      ? (TargetItem | SourceItem)[]
+      : (TargetItem | U)[]
+    : T extends object
+      ? U extends object
+        ? U extends readonly unknown[]
+          ? U
+          : Merge<T, U>
+        : U
+      : U
+
+export type Merge<T extends object, U extends object> = Omit<T, keyof U> & {
+  [Key in keyof U]: Key extends keyof T ? MergeValue<T[Key], U[Key]> : U[Key]
+}
+
+export function merge<T extends object, U extends object>(target: T, source: U): Merge<T, U>
 export function merge(target: any, source: any): any {
   if (!source)
     return target

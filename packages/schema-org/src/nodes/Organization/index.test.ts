@@ -58,4 +58,21 @@ describe('defineOrganization', () => {
       `)
     })
   })
+
+  it('uses the first logo when multiple images are provided', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'test',
+          logo: ['/primary-logo.png', '/alternate-logo.png'],
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const organization = graph.find(node => node['@id'] === 'https://example.com/#organization')
+
+      expect(organization?.logo).toBe('https://example.com/primary-logo.png')
+      expect(graph.filter(node => node['@type'] === 'ImageObject')).toHaveLength(1)
+    })
+  })
 })

@@ -94,7 +94,7 @@ export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any)
     node[field] = value
 }
 
-export interface ResolverOptions {
+export interface ResolverOptions<ResolvedInput = Thing> {
   /**
    * Return single images as an object.
    */
@@ -107,7 +107,7 @@ export interface ResolverOptions {
    * Generates ids for nodes.
    */
   generateId?: boolean
-  afterResolve?: (node: any) => void
+  afterResolve?: (node: ResolvedInput) => void
 }
 
 export function asArray(input: any) {
@@ -121,7 +121,7 @@ export function dedupeMerge<T extends Thing>(node: T, field: keyof T, value: any
   node[field] = [...data].filter(Boolean)
 }
 
-export function prefixId(url: string, id: Id | string) {
+export function prefixId(url: string | undefined, id: Id | string) {
   // already prefixed
   if (hasProtocol(id))
     return id as Id
@@ -158,9 +158,9 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
   node['@type'] = types.size === 1 ? val : [...types]
 }
 
-export function resolveWithBase(base: string, urlOrPath: string) {
+export function resolveWithBase(base: string | undefined, urlOrPath: string) {
   // can't apply base if there's a protocol
-  if (!urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
+  if (!base || !urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
     return urlOrPath
   return withBase(urlOrPath, base)
 }

@@ -9,6 +9,8 @@ import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
+import type { PodcastEpisode } from '../PodcastEpisode'
+import type { PodcastSeason } from '../PodcastSeason'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
 import { aggregateRatingResolver } from '../AggregateRating'
@@ -42,11 +44,11 @@ export interface PodcastSeriesSimple extends Thing {
   /**
    * The episodes that are part of this podcast series.
    */
-  episode?: NodeRelations<any>
+  episode?: NodeRelations<PodcastEpisode>
   /**
    * The seasons that are part of this podcast series.
    */
-  containsSeason?: NodeRelations<any>
+  containsSeason?: NodeRelations<PodcastSeason>
   /**
    * The number of episodes in the podcast series.
    */

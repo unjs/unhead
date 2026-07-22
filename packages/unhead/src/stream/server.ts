@@ -3,6 +3,7 @@ import type { ServerUnhead } from '../server/createHead'
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
+import { resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -217,19 +218,20 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     return ''
 
   const streamKey = getStreamKey(head)
-  const inputs = Array.from(head.entries.values(), e => e.input)
-  // Serialize before clearing so a failure (cyclic value, BigInt, ...) leaves
-  // the valid entries intact for the next chunk.
+  const propResolvers = head.resolvedOptions.propResolvers || []
+  // Resolve and serialize before clearing so a failure leaves the valid
+  // entries intact for the next chunk.
   let serialized: string
   try {
+    const inputs = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
     serialized = safeJsonStringify(inputs)
   }
   catch (error) {
-    // Drop only the entries that can't serialize: keeping them would poison
-    // every subsequent chunk render with the same error.
+    // Drop only entries that cannot resolve or serialize. Keeping one would
+    // poison every subsequent chunk render with the same error.
     for (const [key, entry] of head.entries) {
       try {
-        safeJsonStringify(entry.input)
+        safeJsonStringify(resolveHeadInput(entry.input, propResolvers))
       }
       catch {
         head.entries.delete(key)

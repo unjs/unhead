@@ -1,6 +1,6 @@
-import type { NodeRelation, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import type { NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
+import type { MerchantReturnPolicy } from '../MerchantReturnPolicy'
 import type { OfferShippingDetails } from '../OfferShippingDetails'
-import type { OpeningHoursSpecification } from '../OpeningHours'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   resolvableDateToIso,
@@ -49,7 +49,7 @@ export interface OfferSimple extends Thing {
   /**
    * @todo A PriceSpecification object, including a valueAddedTaxIncluded property (of either true or false).
    */
-  'priceSpecification'?: unknown
+  'priceSpecification'?: Thing
   /**
    * The date after which the price is no longer available.
    */
@@ -59,16 +59,16 @@ export interface OfferSimple extends Thing {
   /**
    * Nested information about the return policies associated with an Offer. If you decide to add hasMerchantReturnPolicy, add the required and recommended MerchantReturnPolicy properties.
    */
-  'hasMerchantReturnPolicy'?: NodeRelation<OpeningHoursSpecification>
+  'hasMerchantReturnPolicy'?: NodeRelation<MerchantReturnPolicy>
   /**
    * Nested information about the shipping policies and options associated with an Offer. If you decide to add shippingDetails, add the required and recommended OfferShippingDetails properties.
    */
-  'shippingDetails'?: OfferShippingDetails
+  'shippingDetails'?: NodeRelations<OfferShippingDetails>
 }
 
 export interface Offer extends OfferSimple {}
 
-export const offerResolver = defineSchemaOrgResolver<Offer>({
+export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | string>({
   cast(node) {
     if (typeof node === 'number' || typeof node === 'string') {
       return {
