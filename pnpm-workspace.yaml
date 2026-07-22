@@ -44,7 +44,7 @@ catalog:
   '@shikijs/langs': ^4.3.1
   '@shikijs/themes': ^4.3.1
   '@sveltejs/vite-plugin-svelte': ^7.2.0
-  '@testing-library/jest-dom': ^6.9.1
+  '@testing-library/jest-dom': ^7.0.0
   '@testing-library/react': ^16.3.2
   '@testing-library/svelte': ^5.4.2
   '@testing-library/user-event': 14.6.1
@@ -52,13 +52,13 @@ catalog:
   '@types/jsdom': ^28.0.3
   '@types/react': ^19.2.17
   '@types/react-dom': ^19.2.3
-  '@vitejs/devtools': ^0.3.4
-  '@vitejs/devtools-kit': ^0.3.4
+  '@vitejs/devtools': ^0.4.1
+  '@vitejs/devtools-kit': ^0.4.1
   '@vue/server-renderer': ^3.5.40
   '@vueuse/nuxt': ^14.3.0
-  bumpp: ^11.1.0
+  bumpp: ^12.0.0
   citty: ^0.2.2
-  devalue: ^5.8.1
+  devalue: ^5.8.2
   eslint: ^10.7.0
   eslint-plugin-harlanzw: ^0.17.0
   hookable: ^6.1.1
@@ -79,7 +79,7 @@ catalog:
   rollup-plugin-visualizer: ^7.0.1
   shiki: ^4.3.1
   solid-js: ^1.9.14
-  svelte: ^5.56.6
+  svelte: ^5.56.7
   tailwindcss: ^4.3.3
   tinyexec: ^1.2.4
   tinyglobby: ^0.2.17
