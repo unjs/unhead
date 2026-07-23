@@ -1,3 +1,4 @@
+import type { SpeculationRule, SpeculationRules } from '../../src/types'
 import { useHead } from '../../src/composables'
 import { defineLink, defineScript } from '../../src/define'
 import { createHead } from '../../src/server'
@@ -174,6 +175,55 @@ describe('defineScript', () => {
         },
       }],
     })
+  })
+
+  it('accepts Nuxt noScripts document rules without a cast', () => {
+    const head = createHead()
+    const patterns = ['/about', '/products/*']
+    const rules = patterns.map(href_matches => ({
+      where: { href_matches },
+      eagerness: 'moderate',
+    }))
+    const innerHTML: SpeculationRules = {
+      prefetch: rules,
+      prerender: rules,
+    }
+    head.push({
+      script: [{
+        type: 'speculationrules',
+        innerHTML,
+      }],
+    })
+  })
+
+  it('models the current speculation rules grammar', () => {
+    const rules: SpeculationRules = {
+      tag: 'navigation',
+      prefetch: [{
+        urls: ['/products'],
+        relative_to: 'document',
+        eagerness: 'eager',
+        expects_no_vary_search: 'params=("id")',
+        tag: 'products',
+      }],
+      prerender: [{
+        source: 'document',
+        where: {
+          and: [
+            {
+              href_matches: [{ pathname: '/products/*' }],
+              relative_to: 'document',
+            },
+            { not: { selector_matches: ['[rel~=nofollow]', '.no-prerender'] } },
+          ],
+        },
+      }],
+    }
+    defineScript({ type: 'speculationrules', textContent: rules })
+
+    const acceptRule = (rule: SpeculationRule) => rule
+    // @ts-expect-error list and document selectors are mutually exclusive
+    acceptRule({ urls: ['/'], where: { href_matches: '/*' } })
   })
 
   // Nuxt importmap: structured innerHTML with imports object

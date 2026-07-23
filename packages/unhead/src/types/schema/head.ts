@@ -357,7 +357,16 @@ export type {
 
 // Other types
 export type { MetaFlat } from './metaFlat'
-export type { SpeculationRules } from './struct/speculationRules'
+export type {
+  SpeculationRule,
+  SpeculationRuleDocument,
+  SpeculationRuleEagerness,
+  SpeculationRuleList,
+  SpeculationRuleRequirement,
+  SpeculationRules,
+  SpeculationRuleUrlPattern,
+  SpeculationRuleWhere,
+} from './struct/speculationRules'
 
 // ============================================================================
 // Utility Types for Internal Use
