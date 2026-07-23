@@ -11,7 +11,7 @@ describe('vue head.push reactivity', () => {
     const title = ref('Initial')
     const head = createHead({ document: dom.window.document })
 
-    head.push(computed(() => ({ title: title.value })))
+    const entry = head.push(computed(() => ({ title: title.value })))
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.title).toBe('Initial')
 
@@ -19,6 +19,30 @@ describe('vue head.push reactivity', () => {
     await nextTick()
     renderDOMHead(head, { document: dom.window.document })
     expect(dom.window.document.title).toBe('Updated')
+
+    entry.dispose()
+  })
+
+  it('resolves, updates, and disposes a getter input', async () => {
+    const dom = useDom()
+    const title = ref('Initial')
+    const getter = vi.fn(() => ({ title: title.value }))
+    const head = createHead({ document: dom.window.document })
+    const entry = head.push(getter)
+
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toBe('Initial')
+
+    title.value = 'Updated'
+    await nextTick()
+    renderDOMHead(head, { document: dom.window.document })
+    expect(dom.window.document.title).toBe('Updated')
+
+    entry.dispose()
+    title.value = 'Ignored'
+    await nextTick()
+
+    expect(getter).toHaveBeenCalledTimes(2)
   })
 
   it('stops watching the computed input on dispose', async () => {
