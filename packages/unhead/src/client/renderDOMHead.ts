@@ -86,7 +86,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   const documentChanged = !!activeState && activeState._d !== dom
-  if (!dom || (!documentChanged && !head.dirty && !hasPendingEntries(head)))
+  if (!dom || (activeState && !documentChanged && !head.dirty && !hasPendingEntries(head)))
     return false
   if (head._du)
     return false
