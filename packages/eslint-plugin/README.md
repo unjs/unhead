@@ -32,6 +32,7 @@ For projects migrating from unhead v2, swap in `configs.migration` to also wrap 
 | `no-deprecated-props` | error | ✓ | v2 props: `children`, `hid`, `vmid`, `body: true` |
 | `no-html-in-title` | warn |   | HTML chars in `title` (will be escaped, not rendered) |
 | `no-unknown-meta` | warn | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
+| `nested-head-properties` | warn |   | top-level head properties nested inside `htmlAttrs` / `bodyAttrs` |
 | `non-absolute-canonical` | warn |   | relative URLs in `<link rel="canonical">` |
 | `numeric-tag-priority` | warn | suggestion | numeric `tagPriority` (suggests `'critical'`, `'high'`, or `'low'`) |
 | `prefer-define-helpers` | off (migration only) | ✓ | wraps `link` / `script` tag object literals in `defineLink` / `defineScript` |
@@ -44,7 +45,7 @@ For projects migrating from unhead v2, swap in `configs.migration` to also wrap 
 
 ## Coverage
 
-These rules walk source-level calls into the unhead API: `useHead`, `useHeadSafe`, `useServerHead`, `useServerHeadSafe`, `useSeoMeta`, `useServerSeoMeta`, and the tag helpers `defineLink` / `defineScript`. Tag arrays inside `meta` / `link` / `script` / `noscript` / `style` keys are descended automatically.
+These rules walk source-level calls into the unhead API: `useHead`, `useHeadSafe`, `useServerHead`, `useServerHeadSafe`, `useSeoMeta`, `useServerSeoMeta`, and the tag helpers `defineLink` / `defineScript`. Tag arrays inside `meta` / `link` / `script` / `noscript` / `style` and object literals inside `htmlAttrs` / `bodyAttrs` are descended automatically.
 
 Rules can only see what's expressible in the AST. Cross-tag and rendered-output checks (e.g. `canonical-og-url-mismatch`, `meta-beyond-1mb`, `charset-not-early`, `too-many-preloads`) live in the runtime `ValidatePlugin` and are surfaced by the `unhead validate-url` / `unhead validate-html` CLI commands.
 

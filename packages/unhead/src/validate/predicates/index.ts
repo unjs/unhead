@@ -1,5 +1,6 @@
 import type { HeadInputPredicate, TagPredicate } from './types'
 import { emptyMetaContent } from './empty-meta-content'
+import { nestedHeadProperties } from './nested-head-properties'
 import { noDeprecatedProps } from './no-deprecated-props'
 import { noHtmlInTitle } from './no-html-in-title'
 import { noUnknownMeta } from './no-unknown-meta'
@@ -20,6 +21,7 @@ export const tagPredicates = {
   'empty-meta-content': emptyMetaContent,
   'no-deprecated-props': noDeprecatedProps,
   'no-unknown-meta': noUnknownMeta,
+  'nested-head-properties': nestedHeadProperties,
   'non-absolute-canonical': nonAbsoluteCanonical,
   'numeric-tag-priority': numericTagPriority,
   'preload-font-crossorigin': preloadFontCrossorigin,
@@ -42,6 +44,7 @@ export const headInputPredicates = {
 export {
   deferOnModuleScript,
   emptyMetaContent,
+  nestedHeadProperties,
   noDeprecatedProps,
   noHtmlInTitle,
   nonAbsoluteCanonical,

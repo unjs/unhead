@@ -14,7 +14,7 @@ export interface RuntimeHeadTag {
   tagPriority?: string | number
 }
 
-const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style'])
+const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style', 'htmlAttrs', 'bodyAttrs'])
 
 /**
  * Adapt a runtime tag (post-resolve `HeadTag`) into a {@link TagInput} that
@@ -22,8 +22,8 @@ const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style'])
  * `meta[name]` to mirror HTML's case-insensitive `name=` semantics, matching
  * the runtime `ValidatePlugin`'s pre-existing behaviour.
  *
- * Returns `undefined` when the tag is not one of the validated tag types
- * (`title`, `base`, etc. are handled separately).
+ * Returns `undefined` when the tag is not one of the validated tag or
+ * attribute-object types (`title`, `base`, etc. are handled separately).
  */
 export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   if (!TAG_TYPES.has(tag.tag))

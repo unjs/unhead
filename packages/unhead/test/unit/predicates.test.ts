@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   deferOnModuleScript,
   emptyMetaContent,
+  nestedHeadProperties,
   noDeprecatedProps,
   noHtmlInTitle,
   nonAbsoluteCanonical,
@@ -212,6 +213,39 @@ describe('no-html-in-title', () => {
   it('flags HTML in title', () => {
     const [d] = noHtmlInTitle(input({ title: 'Hello <b>World</b>' }))
     expect(d.ruleId).toBe('html-in-title')
+  })
+})
+
+describe('nested-head-properties', () => {
+  it('flags top-level head properties nested in bodyAttrs', () => {
+    const [d] = nestedHeadProperties(tag(
+      { title: 'Home', titleTemplate: '%s | Site', meta: '[object Object]' },
+      'bodyAttrs',
+    ))
+    expect(d.ruleId).toBe('nested-head-properties')
+    expect(d.message).toContain('"titleTemplate", "meta"')
+    expect(d.at).toEqual({ kind: 'prop-key', key: 'titleTemplate' })
+  })
+
+  it('flags top-level head properties nested in htmlAttrs', () => {
+    expect(nestedHeadProperties(tag(
+      { lang: 'en', script: '[object Object]' },
+      'htmlAttrs',
+    ))).toHaveLength(1)
+  })
+
+  it('allows valid global and data attributes', () => {
+    expect(nestedHeadProperties(tag(
+      { 'title': 'Tooltip', 'style': 'color: red', 'data-theme': 'dark' },
+      'bodyAttrs',
+    ))).toEqual([])
+  })
+
+  it('ignores ordinary head tags', () => {
+    expect(nestedHeadProperties(tag(
+      { name: 'description', content: 'Hello' },
+      'meta',
+    ))).toEqual([])
   })
 })
 

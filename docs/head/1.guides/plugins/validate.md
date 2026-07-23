@@ -107,6 +107,7 @@ Google recommends [absolute canonical URLs](https://developers.google.com/search
 | `deprecated-prop-hid-vmid` | Removed `hid` or `vmid` keys |
 | `missing-alias-sorting-plugin` | A `before:` or `after:` priority is used without `AliasSortingPlugin` |
 | `missing-template-params-plugin` | `templateParams` is used without `TemplateParamsPlugin` |
+| `nested-head-properties` | Top-level head properties such as `meta` or `titleTemplate` are nested inside `htmlAttrs` or `bodyAttrs` |
 | `numeric-tag-priority` | A numeric `tagPriority` is used instead of a named priority |
 
 ### Missing Companion Tags

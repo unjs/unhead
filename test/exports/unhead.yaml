@@ -124,6 +124,7 @@
   KNOWN_META_PROPERTIES: object
   levenshtein: function
   migrationTagPredicates: object
+  nestedHeadProperties: function
   noDeprecatedProps: function
   noHtmlInTitle: function
   nonAbsoluteCanonical: function

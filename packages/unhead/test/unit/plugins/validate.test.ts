@@ -17,6 +17,61 @@ function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
 }
 
 describe('validatePlugin', () => {
+  describe('nested head properties', () => {
+    it('warns for resolver-returned head properties inside bodyAttrs', () => {
+      const { head, rules } = createValidationHead()
+      head.push((() => ({
+        bodyAttrs: {
+          title: 'Home',
+          titleTemplate: '%s | Site',
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      })) as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toMatchObject({
+        message: expect.stringContaining('"titleTemplate", "meta"'),
+      })
+    })
+
+    it('warns for head properties inside htmlAttrs', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        htmlAttrs: {
+          lang: 'en',
+          script: [{ src: '/analytics.js' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeTruthy()
+    })
+
+    it('allows valid title, style, and data attributes', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          'title': 'Tooltip',
+          'style': 'color: red',
+          'data-theme': 'dark',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+
+    it('respects rule severity configuration', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'nested-head-properties': 'off' },
+      })
+      head.push({
+        bodyAttrs: {
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+  })
+
   describe('url validity', () => {
     it('warns on non-absolute canonical', () => {
       const { head, rules } = createValidationHead()

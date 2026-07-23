@@ -84,6 +84,7 @@ const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'deprecated-prop-hid-vmid': 'error',
   'deprecated-prop-body': 'error',
   'html-in-title': 'warning',
+  'nested-head-properties': 'warning',
   'possible-typo': 'warning',
   'non-absolute-canonical': 'warning',
   'numeric-tag-priority': 'warning',

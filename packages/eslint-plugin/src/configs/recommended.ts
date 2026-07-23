@@ -6,6 +6,7 @@ const recommendedRules: Linter.RulesRecord = {
   '@unhead/no-deprecated-props': 'error',
   '@unhead/no-html-in-title': 'warn',
   '@unhead/no-unknown-meta': 'warn',
+  '@unhead/nested-head-properties': 'warn',
   '@unhead/non-absolute-canonical': 'warn',
   '@unhead/numeric-tag-priority': 'warn',
   '@unhead/preload-font-crossorigin': 'error',

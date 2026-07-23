@@ -69,6 +69,7 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'deprecated-prop-hid-vmid': 'warn',
   'empty-meta-content': 'warn',
   'html-in-title': 'warn',
+  'nested-head-properties': 'warn',
   'non-absolute-canonical': 'warn',
   'numeric-tag-priority': 'info',
   'possible-typo': 'warn',
