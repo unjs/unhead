@@ -40,6 +40,7 @@ export interface ValidatePluginOptions {
    * rules: {
    *   'missing-description': 'off',
    *   'too-many-preloads': ['warn', { max: 10 }],
+   *   'too-many-prefetches': ['info', { max: 100 }],
    *   'inline-style-size': ['info', { maxKB: 20 }],
    * }
    * ```
@@ -340,6 +341,12 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const preloadCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'preload').length
           if (preloadCount > maxPreloads)
             report('too-many-preloads', `Found ${preloadCount} preload links — more than ${maxPreloads} preloads compete for bandwidth and can hurt performance.`, 'warn')
+
+          // Large prefetch sets may consume speculative bandwidth and cache capacity
+          const { max: maxPrefetches } = resolveOptions(ruleConfig, 'too-many-prefetches', { max: 50 })
+          const prefetchCount = tags.filter((t: HeadTag) => t.tag === 'link' && t.props.rel === 'prefetch').length
+          if (prefetchCount > maxPrefetches)
+            report('too-many-prefetches', `Found ${prefetchCount} prefetch links. The configured maximum of ${maxPrefetches} is an advisory guardrail, not a standards limit. Large speculative fetch sets can consume bandwidth and cache capacity.`, 'info')
 
           // Too many preconnects waste connections
           const { max: maxPreconnects } = resolveOptions(ruleConfig, 'too-many-preconnects', { max: 4 })

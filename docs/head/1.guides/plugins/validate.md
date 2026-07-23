@@ -153,6 +153,7 @@ These rules encode conservative heuristics rather than universal browser limits.
 | `preconnect-missing-crossorigin` | `warn` | `<link rel="preconnect">` is missing `crossorigin` but CORS resources are loaded from that origin, causing a separate connection |
 | `preload-fetchpriority-conflict` | `warn` | A non-script preload has `fetchpriority="low"`; script preloads are exempt because `useScript()` uses that combination for warmup |
 | `too-many-preloads` | `warn` | More than 6 `<link rel="preload">` tags compete for bandwidth and hurt performance |
+| `too-many-prefetches` | `info` | More than 50 `<link rel="prefetch">` tags may consume speculative bandwidth and cache capacity. This advisory guardrail is not a browser or standards limit |
 | `too-many-preconnects` | `warn` | More than 4 `<link rel="preconnect">` tags; each starts connection work that can compete with critical resources |
 | `redundant-dns-prefetch` | `info` | Same origin has both `<link rel="preconnect">` and `<link rel="dns-prefetch">`; preconnect already includes DNS resolution |
 | `preload-async-defer-conflict` | `warn` | A preloaded script also has `async` or `defer` and the preload is not marked `fetchpriority="low"`. Browsers allow this combination; the warning is the plugin's priority heuristic |
@@ -187,6 +188,7 @@ Some rules accept an options object as an ESLint-style `[severity, options]` tup
 ValidatePlugin({
   rules: {
     'too-many-preloads': ['warn', { max: 10 }],
+    'too-many-prefetches': ['info', { max: 100 }],
     'too-many-preconnects': ['warn', { max: 6 }],
     'too-many-fetchpriority-high': ['warn', { max: 3 }],
     'charset-not-early': ['warn', { maxPosition: 5 }],
