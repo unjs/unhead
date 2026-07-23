@@ -84,6 +84,20 @@ describe('minifyPlugin', () => {
     expect(headTags).not.toContain(json)
   })
 
+  it('preserves encoded closing tags in rendered JSON scripts', () => {
+    const head = createServerHeadWithContext({
+      plugins: [MinifyPlugin()],
+    })
+    head.push({
+      script: [{
+        type: 'importmap',
+        innerHTML: '{\n  "imports": {\n    "x": "\\u003C/script>"\n  }\n}',
+      }],
+    })
+
+    expect(head.render().headTags).toBe('<script type="importmap">{"imports":{"x":"\\u003C/script>"}}</script>')
+  })
+
   it('skips content shorter than threshold', () => {
     const head = createServerHeadWithContext({
       plugins: [MinifyPlugin()],

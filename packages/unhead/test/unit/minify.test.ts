@@ -1,3 +1,4 @@
+import { fc, it as fcIt } from '@fast-check/vitest'
 import { describe, expect, it } from 'vitest'
 import { minifyCSS, minifyJS, minifyJSON } from '../../src/minify'
 
@@ -134,5 +135,17 @@ describe('minifyJSON', () => {
 
   it('preserves whitespace inside strings', () => {
     expect(minifyJSON('{ "value": "a  b\\tc" }')).toBe('{"value":"a  b\\tc"}')
+  })
+
+  fcIt.prop([fc.jsonValue()])('preserves arbitrary valid JSON', (value) => {
+    const compact = JSON.stringify(value)
+    const pretty = JSON.stringify(value, null, 2)
+    expect(minifyJSON(compact)).toBe(compact)
+    expect(minifyJSON(pretty)).toBe(compact)
+  })
+
+  fcIt.prop([fc.jsonValue()])('returns arbitrary invalid JSON unchanged', (value) => {
+    const invalid = ` \n${JSON.stringify(value)} trailing`
+    expect(minifyJSON(invalid)).toBe(invalid)
   })
 })
