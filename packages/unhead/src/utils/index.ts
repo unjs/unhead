@@ -1,5 +1,6 @@
 export * from './const'
 export { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
+export { hasOwn } from './hasOwn'
 export { resolveMetaKeyType, resolveMetaKeyValue, resolvePackedMetaObjectValue, unpackMeta } from './meta'
 export type { MetaKeyType } from './meta'
 export { normalizeEntryToTags, normalizeProps } from './normalize'

@@ -1,3 +1,5 @@
+import { hasOwn } from 'unhead/utils'
+
 type MergeValue<T, U> = U extends undefined
   ? T
   : T extends readonly (infer TargetItem)[]
@@ -22,7 +24,7 @@ export function merge(target: any, source: any): any {
     return target
 
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || key === '__proto__' || key === 'constructor' || key === 'prototype')
+    if (!hasOwn(source, key) || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const value = source[key]

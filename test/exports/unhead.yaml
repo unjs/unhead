@@ -93,6 +93,7 @@
   DupeableTags: object
   HasElementTags: object
   hashTag: function
+  hasOwn: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function
