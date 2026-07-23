@@ -1,28 +1,51 @@
-name: Release
+name: Release v1
 
 permissions:
   contents: write
+  id-token: write
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v1.*'
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
-      - name: Set node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 22.x
+          node-version: 24.x
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
 
-      - run: npx changelogithub
+      - name: Verify release versions
+        run: |
+          EXPECTED_VERSION="${GITHUB_REF_NAME#v}"
+          for MANIFEST in package.json packages/*/package.json; do
+            PACKAGE_VERSION=$(node -p "require('./$MANIFEST').version")
+            test "$PACKAGE_VERSION" = "$EXPECTED_VERSION"
+          done
+
+      - name: Force Set pnpm Registry
+        run: pnpm config set registry https://registry.npmjs.org
+
+      - name: Changelog
+        run: npx changelogithub
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish
+        run: pnpm publish -r --access public --no-git-checks --provenance --tag 1x
