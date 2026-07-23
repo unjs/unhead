@@ -54,6 +54,60 @@ describe('dom useHeadSafe', () => {
     `)
   })
 
+  it('drops malformed data attribute names', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      meta: [
+        {
+          'name': 'description',
+          'content': 'safe',
+          'data-safe': 'preserved',
+          'data-x onload=alert(1)': 'injected',
+        },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('data-safe="preserved"')
+    expect(headTags).not.toContain('injected')
+    expect(headTags).not.toContain('onload')
+  })
+
+  it('blocks mixed-case dangerous link protocols', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      link: [
+        { rel: 'icon', href: 'JaVaScRiPt:alert(1)' },
+        { rel: 'stylesheet', href: 'DaTa:text/css,body{display:none}' },
+        { rel: 'icon', href: 'https://example.com/favicon.ico' },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).not.toContain('JaVaScRiPt')
+    expect(headTags).not.toContain('DaTa:')
+    expect(headTags).toContain('href="https://example.com/favicon.ico"')
+  })
+
+  it('blocks entity-obfuscated dangerous link protocols', async () => {
+    const head = createHead()
+
+    useHeadSafe({
+      link: [
+        { rel: 'icon', href: 'javascript&#0000000058;alert(1)' },
+        { rel: 'icon', href: 'data&#x000003A;text/html,unsafe' },
+        { rel: 'icon', href: '/safe-icon.png' },
+      ],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).not.toContain('&#0000000058;')
+    expect(headTags).not.toContain('&#x000003A;')
+    expect(headTags).toContain('href="/safe-icon.png"')
+  })
+
   it('meta charset allows safe', async () => {
     const head = createHead()
 

@@ -9,11 +9,31 @@ const WhitelistAttributes = {
   link: ['id', 'color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'],
 }
 
+const SafeAttrName = /^[a-z][a-z0-9-]*[a-z0-9]$/i
+const HtmlEntityHex = /&#x([0-9a-f]+);?/gi
+const HtmlEntityDec = /&#(\d+);?/g
+
+function safeFromCodePoint(codePoint: number): string {
+  if (codePoint > 0x10FFFF || codePoint < 0 || Number.isNaN(codePoint))
+    return ''
+  return String.fromCodePoint(codePoint)
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value.replace(HtmlEntityHex, (_, hex) => safeFromCodePoint(Number.parseInt(hex, 16)))
+    .replace(HtmlEntityDec, (_, decimal) => safeFromCodePoint(Number(decimal)))
+}
+
+function hasDangerousProtocol(value: string): boolean {
+  const normalized = decodeHtmlEntities(value).toLowerCase()
+  return normalized.includes('javascript:') || normalized.includes('data:')
+}
+
 function acceptDataAttrs(value: Record<string, string>) {
   const filtered: Record<string, string> = {}
   // add any data attributes
   Object.keys(value || {})
-    .filter(a => a.startsWith('data-'))
+    .filter(a => a.startsWith('data-') && SafeAttrName.test(a))
     .forEach((a) => {
       filtered[a] = value[a]
     })
@@ -73,7 +93,7 @@ export function whitelistSafeInput(input: Record<string, MaybeArray<Record<strin
                   return
 
                 if (key === 'href') {
-                  if (val.includes('javascript:') || val.includes('data:'))
+                  if (hasDangerousProtocol(val))
                     return
                   link[key] = val
                 }
