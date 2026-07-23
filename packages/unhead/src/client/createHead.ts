@@ -7,7 +7,7 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
   const initialPayload = options.document?.head.querySelector('script[id="unhead:payload"]')?.innerHTML || false
   // restore initial entry from payload (titleTemplate and templateParams)
-  return createUnhead<T>({
+  const head = createUnhead<T>({
     ...options,
     plugins: [
       ...(options.plugins || []),
@@ -23,4 +23,6 @@ export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions 
       ...(options.init || []),
     ],
   })
+  head.ssr = false
+  return head
 }
