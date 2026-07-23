@@ -1,6 +1,6 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey, MetaKeyAttrs } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
@@ -162,6 +162,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       const isAttr = tag.tag.endsWith('Attrs')
       renderState._e.set(id, $el)
+      if (tag.tag === 'meta') {
+        for (const k of MetaKeyAttrs) {
+          const v = tag.props[k]
+          if ((v === undefined || v === null) && $el.hasAttribute(k))
+            $el.removeAttribute(k)
+        }
+      }
       if (!isAttr) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
