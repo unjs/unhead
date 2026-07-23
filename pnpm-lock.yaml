@@ -119,8 +119,8 @@ catalogs:
       specifier: ^29.1.1
       version: 29.1.1
     magic-string:
-      specifier: ^1.0.0
-      version: 1.0.0
+      specifier: ^1.1.0
+      version: 1.1.0
     nuxt:
       specifier: ^4.5.0
       version: 4.5.0
@@ -243,7 +243,7 @@ importers:
         version: 29.1.1
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.140.0
@@ -847,7 +847,7 @@ importers:
         version: 1.32.0
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.140.0
@@ -884,7 +884,7 @@ importers:
         version: 0.2.2
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-parser:
         specifier: 'catalog:'
         version: 0.140.0
@@ -967,7 +967,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))
@@ -1029,7 +1029,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))
@@ -1063,7 +1063,7 @@ importers:
         version: link:../bundler
       magic-string:
         specifier: 'catalog:'
-        version: 1.0.0
+        version: 1.1.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))
@@ -8364,6 +8364,9 @@ packages:
 
   magic-string@1.0.0:
     resolution: {integrity: sha512-CGvjzMN08iv6w1mm4/x3Gh1hLb4VnyRUA15FFpl6CsCIGGoe36k7kY5KNz9QDbSBN5I/fWHM6ZlIkUTa5xdUEA==}
+
+  magic-string@1.1.0:
+    resolution: {integrity: sha512-kS3VHe0nEPST2saQV4Rbkchcd3UBRkVTQHo1D3h/ZTwFDhai/mfKkmtPAtD129EOI7K3HlHIsFOt0WrI2/oU9g==}
 
   magicast@0.5.2:
     resolution: {integrity: sha512-E3ZJh4J3S9KfwdjZhe2afj6R9lGIN5Pher1pF39UGrXRqq/VDaGVIGN13BjHd2u8B61hArAGOnso7nBOouW3TQ==}
@@ -20225,6 +20228,10 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   magic-string@1.0.0:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
+
+  magic-string@1.1.0:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 

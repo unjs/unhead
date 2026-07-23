@@ -5,6 +5,7 @@ minimumReleaseAgeExclude:
   - '@nuxt/schema@4.5.0'
   - '@nuxt/vite-builder@4.5.0'
   - nuxt@4.5.0
+  - magic-string@1.1.0
 shellEmulator: true
 
 trustPolicy: no-downgrade
@@ -66,7 +67,7 @@ catalog:
   hookable: ^6.1.1
   js-yaml: ^5.2.1
   jsdom: ^29.1.1
-  magic-string: ^1.0.0
+  magic-string: ^1.1.0
   # Nuxt 4.5.0 is pinned separately to reproduce nuxt/nuxt#35670.
   # eslint-disable-next-line pnpm/yaml-no-duplicate-catalog-item
   nuxt: ^4.5.0
