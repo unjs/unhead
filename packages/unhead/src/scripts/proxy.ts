@@ -31,22 +31,62 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
 }
 
 export function createForwardingProxy<T extends Record<string, any>>(target: T): AsVoidFunctions<T> {
-  const handler: ProxyHandler<T> = {
-    get(_, prop, receiver) {
-      const v = Reflect.get(_, prop, receiver)
-      if (typeof v === 'object') {
-        return new Proxy(v, handler)
-      }
-      return v
-    },
-    apply(_, __, args) {
-      // does not return the apply output for consistency
-      // @ts-expect-error untyped
-      Reflect.apply(_, __, args)
-      return undefined
-    },
+  type Method = (...args: any[]) => any
+
+  const proxyCache = new WeakMap<object, object>()
+  const methodCache = new WeakMap<object, WeakMap<Method, Method>>()
+
+  function createMethodProxy(owner: object, method: Method): Method {
+    let ownerMethods = methodCache.get(owner)
+    if (!ownerMethods) {
+      ownerMethods = new WeakMap()
+      methodCache.set(owner, ownerMethods)
+    }
+    const cached = ownerMethods.get(method)
+    if (cached) {
+      return cached
+    }
+    const proxy = new Proxy(method, {
+      apply(_, __, args) {
+        Reflect.apply(_, owner, args)
+        return undefined
+      },
+    })
+    ownerMethods.set(method, proxy)
+    return proxy
   }
-  return new Proxy(target, handler) as AsVoidFunctions<T>
+
+  function createProxy<V extends object>(value: V): V {
+    const cached = proxyCache.get(value)
+    if (cached) {
+      return cached as V
+    }
+    const proxy = new Proxy(value, {
+      get(_, prop) {
+        const v = Reflect.get(_, prop, _)
+        if (typeof v === 'function') {
+          return createMethodProxy(_, v as Method)
+        }
+        if (v !== null && typeof v === 'object') {
+          return createProxy(v)
+        }
+        return v
+      },
+      set(_, prop, value) {
+        return Reflect.set(_, prop, value, _)
+      },
+      apply(_, __, args) {
+        // does not return the apply output for consistency
+        // @ts-expect-error untyped
+        Reflect.apply(_, __, args)
+        return undefined
+      },
+    })
+    proxyCache.set(value, proxy)
+    return proxy
+  }
+
+  return createProxy(target) as AsVoidFunctions<T>
 }
 
 export function replayProxyRecordings<T extends object>(target: T, stack: RecordingEntry[][]) {

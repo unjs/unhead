@@ -147,6 +147,29 @@ describe('proxy chain', () => {
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
   })
 
+  it('preserves the receiver for nested vendor methods', () => {
+    const brandedCanvas = new WeakSet<object>()
+    const canvas = {
+      getBoundingClientRect() {
+        if (!brandedCanvas.has(this)) {
+          throw new TypeError('Illegal invocation')
+        }
+        return { width: 120 }
+      },
+    }
+    brandedCanvas.add(canvas)
+    const api = {
+      canvas,
+      addConfetti() {
+        return this.canvas.getBoundingClientRect().width
+      },
+    }
+
+    const proxy = createForwardingProxy(api)
+
+    expect(() => proxy.addConfetti()).not.toThrow()
+  })
+
   it('replays calls after async use() resolves', async () => {
     const head = createHead()
     const { promise, resolve } = Promise.withResolvers<{ greet: (foo: string) => string }>()
