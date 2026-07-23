@@ -4,6 +4,7 @@ import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { computed } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
+import { createStreamableHead } from '../../src/stream/server'
 
 describe('types', () => {
   it('types useHead', () => {
@@ -136,6 +137,12 @@ describe('types', () => {
 
     // @ts-expect-error server render() should not be assignable to boolean
     serverHead.render() satisfies boolean
+  })
+  it('does not accept custom server prop resolvers', () => {
+    // @ts-expect-error Vue installs its own prop resolver
+    createServerHead({ propResolvers: [] })
+    // @ts-expect-error Vue installs its own prop resolver
+    createStreamableHead({ propResolvers: [] })
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'
