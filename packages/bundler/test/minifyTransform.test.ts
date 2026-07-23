@@ -98,33 +98,28 @@ describe('minifyTransform', () => {
     expect(code).toBeUndefined()
   })
 
-  it('skips application/ld+json script types', async () => {
+  it.each([
+    ['application/ld+json', '{ "name":  "test",  "value":   123 }', '{"name":"test","value":123}'],
+    ['speculationrules', '{ "prerender":  [{ "where": {} }] }', '{"prerender":[{"where":{}}]}'],
+    ['importmap', '{ "imports":  { "lodash":  "/lodash.js" } }', '{"imports":{"lodash":"/lodash.js"}}'],
+  ])('minifies %s scripts as JSON', async (type, input, output) => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
-      `  script: [{ type: 'application/ld+json', innerHTML: '{ "name":  "test",  "value":   123 }' }]`,
+      `  script: [{ type: '${type}', innerHTML: '${input}' }]`,
       `})`,
     ], { js: mockJSMinifier })
 
-    expect(code).toBeUndefined()
+    expect(code).toBeDefined()
+    expect(code).toContain(JSON.stringify(output))
+    expect(code).not.toContain(input)
   })
 
-  it('skips speculationrules script types', async () => {
+  it('leaves invalid declarative JSON untouched', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
-      `  script: [{ type: 'speculationrules', innerHTML: '{ "prerender":  [{ "where": {} }] }' }]`,
-      `})`,
-    ], { js: mockJSMinifier })
-
-    expect(code).toBeUndefined()
-  })
-
-  it('skips importmap script types', async () => {
-    const code = await transform([
-      `import { useHead } from 'unhead'`,
-      `useHead({`,
-      `  script: [{ type: 'importmap', innerHTML: '{ "imports":  { "lodash":  "/lodash.js" } }' }]`,
+      `  script: [{ type: 'speculationrules', innerHTML: '{ invalid:  JSON with padding }' }]`,
       `})`,
     ], { js: mockJSMinifier })
 

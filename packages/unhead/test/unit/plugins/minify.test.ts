@@ -65,22 +65,23 @@ describe('minifyPlugin', () => {
     expect(headTags).toContain('{"@context":"https://schema.org","@type":"Organization","name":"Example Inc"}')
   })
 
-  it('skips speculationrules and importmap types', () => {
+  it.each([
+    ['speculationrules', { prerender: [{ where: { href_matches: '/*' } }] }],
+    ['importmap', { imports: { lodash: '/lodash.js' } }],
+  ] as const)('minifies %s scripts as JSON', (type, value) => {
     const head = createServerHeadWithContext({
       plugins: [MinifyPlugin()],
     })
-    const speculationContent = JSON.stringify({
-      prerender: [{ where: { href_matches: '/*' } }],
-    }, null, 2)
+    const json = JSON.stringify(value, null, 2)
     head.push({
-      script: [{
-        type: 'speculationrules',
-        innerHTML: speculationContent,
-      }],
+      script: type === 'speculationrules'
+        ? [{ type: 'speculationrules', innerHTML: json }]
+        : [{ type: 'importmap', innerHTML: json }],
     })
 
     const { headTags } = head.render()
-    expect(headTags).toContain(speculationContent)
+    expect(headTags).toContain(JSON.stringify(value))
+    expect(headTags).not.toContain(json)
   })
 
   it('skips content shorter than threshold', () => {
@@ -181,13 +182,13 @@ describe('minifyPlugin', () => {
 
   it('omitLineBreaks drops inter-tag separators surgically', () => {
     const head = createServerHeadWithContext({
-      plugins: [MinifyPlugin({ omitLineBreaks: true })],
+      plugins: [MinifyPlugin({ js: false, css: false, json: false, omitLineBreaks: true })],
     })
     head.push({
       script: [
         { innerHTML: 'const a = 1;\nconst b = 2;' },
-        // content minify never touches: its internal newlines must survive,
-        // proving this is a renderer-level join change and not a blanket strip
+        // disabled content minifiers preserve internal newlines, proving this
+        // is a renderer-level join change and not a blanket strip
         { type: 'speculationrules', innerHTML: '{\n  "prerender": []\n}' },
         { type: 'importmap', innerHTML: '{\n  "imports": {}\n}' },
         { innerHTML: 'a =\n1' }, // under the 20-char minify threshold
