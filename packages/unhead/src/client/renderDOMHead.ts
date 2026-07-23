@@ -7,7 +7,7 @@ import type {
   Unhead,
 } from '../types'
 import { HasElementTags } from '../utils/const'
-import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey, MetaKeyAttrs } from '../utils/dedupe'
 import { normalizeProps } from '../utils/normalize'
 
 /**
@@ -107,6 +107,13 @@ export async function renderDOMHead<T extends Unhead<any>>(head: T, options: Ren
     function trackCtx({ id, $el, tag }: DomRenderTagContext) {
       const isAttrTag = tag.tag.endsWith('Attrs')
       state.elMap.set(id, $el)
+      if (tag.tag === 'meta') {
+        for (const k of MetaKeyAttrs) {
+          const value = tag.props[k]
+          if ((value === undefined || value === null) && $el.hasAttribute(k))
+            $el.removeAttribute(k)
+        }
+      }
       if (!isAttrTag) {
         if (tag.textContent && tag.textContent !== $el.textContent) {
           $el.textContent = tag.textContent
