@@ -196,8 +196,11 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
         if (Object.keys(props).length === 0 && !t.innerHTML && !t.textContent) {
           continue
         }
-        if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset) {
-          continue
+        if (tag === 'meta') {
+          const content = props.content as unknown
+          if (!content && content !== 0 && !props['http-equiv'] && !props.charset) {
+            continue
+          }
         }
         // final XSS
         if (tag === 'script' && innerHTML) {
