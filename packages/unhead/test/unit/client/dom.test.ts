@@ -4,6 +4,16 @@ import { useHead } from '../../../src'
 import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
+  it('renders numeric zero meta content', () => {
+    const head = useDOMHead()
+
+    head.push({
+      meta: [{ name: 'numeric-zero', content: 0 }],
+    })
+
+    expect(head.resolvedOptions.document?.querySelector('meta[name="numeric-zero"]')?.getAttribute('content')).toBe('0')
+  })
+
   it('basic', async () => {
     const head = useDOMHead()
 

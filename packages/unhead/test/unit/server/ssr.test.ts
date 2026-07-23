@@ -5,6 +5,16 @@ import { transformHtmlTemplate } from '../../../src/server/transformHtmlTemplate
 import { basicSchema, createServerHeadWithContext } from '../../util'
 
 describe('ssr', () => {
+  it('renders numeric zero meta content', () => {
+    const head = createServerHeadWithContext()
+
+    head.push({
+      meta: [{ name: 'numeric-zero', content: 0 }],
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="numeric-zero" content="0">')
+  })
+
   it('basic', async () => {
     const head = createServerHeadWithContext()
 

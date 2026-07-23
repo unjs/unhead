@@ -138,8 +138,11 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
     const { innerHTML, tag, props } = t
     if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !innerHTML && !t.textContent))
       continue
-    if (tag === 'meta' && !props.content && !props['http-equiv'] && !props.charset)
-      continue
+    if (tag === 'meta') {
+      const content = props.content as unknown
+      if (!content && content !== 0 && !props['http-equiv'] && !props.charset)
+        continue
+    }
     if (tag === 'script' && (innerHTML || t.textContent)) {
       const type = String(props.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'

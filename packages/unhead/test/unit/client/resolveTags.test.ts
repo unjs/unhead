@@ -3,6 +3,30 @@ import { resolveTags } from '../../../src/utils/resolve'
 import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
+  it('preserves numeric zero meta content and drops empty values', () => {
+    const head = createClientHeadWithContext()
+
+    head.push({
+      meta: [
+        { name: 'numeric-zero', content: 0 },
+        { name: 'string-zero', content: '0' },
+        { name: 'value', content: 'value' },
+        { name: 'empty-string', content: '' },
+        { name: 'null', content: null },
+        // @ts-expect-error missing content exercises the runtime sanitizer boundary
+        { name: 'absent' },
+        { name: 'false', content: false },
+        { name: 'nan', content: Number.NaN },
+      ],
+    })
+
+    expect(resolveTags(head).map(tag => tag.props)).toEqual([
+      { name: 'numeric-zero', content: 0 },
+      { name: 'string-zero', content: '0' },
+      { name: 'value', content: 'value' },
+    ])
+  })
+
   it('docs example', async () => {
     const head = createClientHeadWithContext()
 
