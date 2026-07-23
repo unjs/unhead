@@ -1,11 +1,14 @@
 import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
 
+const AMPERSAND_RE = /&/g
 const DOUBLE_QUOTE_RE = /"/g
 
 /* @__PURE__ */
 function encodeAttribute(value: string) {
   const s = typeof value === 'string' ? value : String(value)
-  return s.includes('"') ? s.replace(DOUBLE_QUOTE_RE, '&quot;') : s
+  return s.includes('&') || s.includes('"')
+    ? s.replace(AMPERSAND_RE, '&amp;').replace(DOUBLE_QUOTE_RE, '&quot;')
+    : s
 }
 
 /* @__PURE__ */

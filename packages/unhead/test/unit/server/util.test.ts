@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { propsToString } from '../../../src/server'
+import { propsToString, tagToString } from '../../../src/server'
 
 describe('propsToString', () => {
   it('prepends a space only when there are props', async () => {
@@ -7,6 +7,42 @@ describe('propsToString', () => {
       a: 'b',
     })).toStrictEqual(' a="b"')
     expect(propsToString({})).toStrictEqual('')
+  })
+  it('escapes ampersands in URL attributes', () => {
+    expect(tagToString({
+      tag: 'link',
+      props: {
+        rel: 'preload',
+        as: 'image',
+        href: '/_ipx/w_200&q_10/image.png',
+        imagesrcset: '/_ipx/w_200&q_10/image.png 1x, /_ipx/w_400&q_10/image.png 2x',
+      },
+    })).toStrictEqual('<link rel="preload" as="image" href="/_ipx/w_200&amp;q_10/image.png" imagesrcset="/_ipx/w_200&amp;q_10/image.png 1x, /_ipx/w_400&amp;q_10/image.png 2x">')
+  })
+  it('escapes ampersands in metadata content', () => {
+    expect(tagToString({
+      tag: 'meta',
+      props: {
+        name: 'description',
+        content: 'Research & Development',
+      },
+    })).toStrictEqual('<meta name="description" content="Research &amp; Development">')
+    expect(tagToString({
+      tag: 'meta',
+      props: {
+        name: 'description',
+        content: 'a&copy;b',
+      },
+    })).toStrictEqual('<meta name="description" content="a&amp;copy;b">')
+  })
+  it('treats already encoded attributes as literal input', () => {
+    expect(tagToString({
+      tag: 'meta',
+      props: {
+        name: 'description',
+        content: 'a&amp;b &quot;quoted&quot;',
+      },
+    })).toStrictEqual('<meta name="description" content="a&amp;amp;b &amp;quot;quoted&amp;quot;">')
   })
   it ('class / style strings', () => {
     expect(propsToString({
