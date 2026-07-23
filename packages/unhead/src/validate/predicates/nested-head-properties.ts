@@ -29,7 +29,7 @@ export function nestedHeadProperties(tag: TagInput): Diagnostic[] {
   const noun = nested.length === 1 ? 'property' : 'properties'
   return [{
     ruleId: 'nested-head-properties',
-    message: `${tag.tagType} contains head configuration ${noun} ${quotedList(nested.map(key => key.canonical))}. Move ${nested.length === 1 ? 'it' : 'them'}, and any related title or description, alongside ${tag.tagType} in the head input.`,
+    message: `${tag.tagType} contains head configuration ${noun} ${quotedList(nested.map(key => key.canonical))}. Move ${nested.length === 1 ? 'it' : 'them'} alongside ${tag.tagType} in the head input.`,
     at: { kind: 'prop-key', key: nested[0].input },
   }]
 }
