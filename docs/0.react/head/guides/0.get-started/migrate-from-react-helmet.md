@@ -71,6 +71,8 @@ npm install @unhead/react
 
 For the supported props, your existing `<Helmet>` usage can remain unchanged. On the client, `<Helmet>` automatically creates and manages a head instance, so no provider is needed. Check custom or less common React Helmet props before treating the component as a complete API replacement.
 
+`titleTemplate` applies to a page title. When no title exists, `defaultTitle` is emitted unchanged.
+
 ::note
 For SSR, you still need to wrap your app with `<UnheadProvider>` so you can pass the head instance to `renderSSRHead()`. See [Update Server Rendering](#4-update-server-rendering) below.
 ::
