@@ -9,7 +9,10 @@ export function isMetaArrayDupeKey(v: string) {
   if (i === -1)
     return false
   const j = v.indexOf(':', i + 1)
-  return MetaTagsArrayable.has(v.slice(i + 1, j === -1 ? v.length : j))
+  const namespace = v.slice(i + 1, j === -1 ? v.length : j)
+  if (namespace === 'twitter')
+    return v === 'meta:twitter:image' || v.startsWith('meta:twitter:image:')
+  return MetaTagsArrayable.has(namespace)
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
