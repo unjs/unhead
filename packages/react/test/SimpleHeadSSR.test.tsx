@@ -2,8 +2,9 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { Head } from '../src'
 import { UnheadProvider } from '../src/client'
-import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
+import { createHead, renderSSRHead, UnheadProvider as ServerUnheadProvider, transformHtmlTemplate } from '../src/server'
 import { SimpleHead } from './fixtures/SimpleHead'
 
 describe('simpleHead component in ssr', () => {
@@ -72,5 +73,94 @@ describe('simpleHead component in ssr', () => {
       <link rel="icon" href="favicon.ico">
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://www.example.com"}</script>"
     `)
+  })
+
+  it('renders nested fragment children', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <ServerUnheadProvider value={head}>
+        <Head>
+          <>
+            {[
+              <meta key="meta" name="fragment-meta" content="nested" />,
+              <React.Fragment key="script">
+                {false}
+                <meta name="fragment-meta-2" content="nested-2" />
+                <script>window.__FRAGMENT_TEST__ = true</script>
+              </React.Fragment>,
+            ]}
+          </>
+        </Head>
+      </ServerUnheadProvider>,
+    )
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<script>window.__FRAGMENT_TEST__ = true</script>
+      <meta name="fragment-meta" content="nested">
+      <meta name="fragment-meta-2" content="nested-2">"
+    `)
+  })
+
+  it('normalizes React head prop names during SSR', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <ServerUnheadProvider value={head}>
+        <Head>
+          <meta
+            ref={React.createRef<HTMLMetaElement>()}
+            httpEquiv="refresh"
+            content="0;url=/next"
+            className="refresh metadata"
+            style={{ color: 'red' }}
+            itemProp="refresh"
+            suppressContentEditableWarning
+            suppressHydrationWarning
+          />
+          <link
+            rel="preload"
+            href="/hero.png"
+            as="image"
+            crossOrigin="anonymous"
+            fetchPriority="high"
+            hrefLang="en"
+            imageSrcSet="/hero.png 1x, /hero-2x.png 2x"
+            imageSizes="100vw"
+            referrerPolicy="no-referrer"
+          />
+          <script
+            src="/legacy.js"
+            charSet="utf-8"
+            crossOrigin="use-credentials"
+            fetchPriority="low"
+            noModule
+            referrerPolicy="origin"
+          />
+        </Head>
+      </ServerUnheadProvider>,
+    )
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('http-equiv="refresh"')
+    expect(headTags).not.toContain('httpequiv=')
+    expect(headTags).toContain('class="refresh metadata"')
+    expect(headTags).toContain('style="color:red"')
+    expect(headTags).toContain('itemprop="refresh"')
+    expect(headTags).not.toContain(' ref=')
+    expect(headTags).not.toContain('suppresscontenteditablewarning')
+    expect(headTags).not.toContain('suppresshydrationwarning')
+    expect(headTags).toContain('crossorigin="anonymous"')
+    expect(headTags).toContain('fetchpriority="high"')
+    expect(headTags).toContain('hreflang="en"')
+    expect(headTags).toContain('imagesrcset="/hero.png 1x, /hero-2x.png 2x"')
+    expect(headTags).toContain('imagesizes="100vw"')
+    expect(headTags).toContain('referrerpolicy="no-referrer"')
+    expect(headTags).toContain('charset="utf-8"')
+    expect(headTags).toContain('crossorigin="use-credentials"')
+    expect(headTags).toContain('fetchpriority="low"')
+    expect(headTags).toContain('nomodule')
+    expect(headTags).toContain('referrerpolicy="origin"')
   })
 })
