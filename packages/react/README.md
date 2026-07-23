@@ -45,12 +45,14 @@ const head = createHead({ /* config */ })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <UnheadProvider head={head}>
+    <UnheadProvider value={head}>
       <App />
     </UnheadProvider>
   </StrictMode>
 )
 ```
+
+Use the `value` prop with client and server providers. The client provider still accepts the deprecated `head` prop for compatibility.
 
 #### Server-side (SSR)
 
@@ -86,7 +88,7 @@ const head = createHead({ /* config */ })
 hydrateRoot(
   document.getElementById('root'),
   <StrictMode>
-    <UnheadProvider head={head}>
+    <UnheadProvider value={head}>
       <App />
     </UnheadProvider>
   </StrictMode>

@@ -73,6 +73,31 @@ describe('useHead hook', () => {
     expect(headTags).toContain('<title>Updated Title</title>')
   })
 
+  it('uses the head instance supplied through the value prop', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider value={head}>
+        <TestComponent />
+      </UnheadProvider>,
+    )
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('<title>Initial Title</title>')
+  })
+
+  it('rejects conflicting value and head props', () => {
+    const value = createHead()
+    const head = createHead()
+
+    expect(() => render(
+      // @ts-expect-error provider instances must be supplied through one prop
+      <UnheadProvider value={value} head={head}>
+        <TestComponent />
+      </UnheadProvider>,
+    )).toThrowError('UnheadProvider received both value and head props')
+  })
+
   it('initializes input value with state', () => {
     const head = createHead()
 
