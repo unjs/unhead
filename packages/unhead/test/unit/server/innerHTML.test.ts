@@ -55,6 +55,25 @@ describe('ssr innerHTML', () => {
     `)
   })
 
+  it('serializes Nuxt noScripts speculation rules', () => {
+    const head = createServerHeadWithContext()
+    const rules = ['/about', '/products/*'].map(href_matches => ({
+      where: { href_matches },
+      eagerness: 'moderate',
+    }))
+    head.push({
+      script: [{
+        type: 'speculationrules',
+        innerHTML: {
+          prefetch: rules,
+          prerender: rules,
+        },
+      }],
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/about"},"eagerness":"moderate"},{"where":{"href_matches":"/products/*"},"eagerness":"moderate"}],"prerender":[{"where":{"href_matches":"/about"},"eagerness":"moderate"},{"where":{"href_matches":"/products/*"},"eagerness":"moderate"}]}</script>')
+  })
+
   it('noscript', async () => {
     const head = createServerHeadWithContext()
     head.push({
