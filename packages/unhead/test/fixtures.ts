@@ -13,7 +13,10 @@ export function withoutObjectHasOwn<T>(fn: () => T): T {
     return fn()
   }
   finally {
-    Object.defineProperty(Object, 'hasOwn', descriptor!)
+    if (descriptor)
+      Object.defineProperty(Object, 'hasOwn', descriptor)
+    else
+      Reflect.deleteProperty(Object, 'hasOwn')
   }
 }
 
