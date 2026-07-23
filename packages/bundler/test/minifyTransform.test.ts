@@ -126,6 +126,31 @@ describe('minifyTransform', () => {
     expect(code).toBeUndefined()
   })
 
+  it('minifies declarative JSON with a quoted type key when JS minification is disabled', async () => {
+    const code = await transform([
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ 'type': 'speculationrules', innerHTML: '{ "prefetch":  [{ "urls": [] }] }' }]`,
+      `})`,
+    ], { js: false })
+
+    expect(code).toBeDefined()
+    expect(code).toContain(JSON.stringify('{"prefetch":[{"urls":[]}]}'))
+  })
+
+  it('preserves encoded closing tags in declarative JSON', async () => {
+    const code = await transform([
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ type: 'importmap', innerHTML: '{ "imports": { "x": "\\\\u003C/script>" } }' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).toContain('\\\\u003C/script>')
+    expect(code).not.toContain('<\/script>')
+  })
+
   it('skips short strings below default threshold', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,

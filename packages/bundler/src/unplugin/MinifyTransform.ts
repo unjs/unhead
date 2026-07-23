@@ -3,6 +3,7 @@ import type { BaseTransformerTypes } from './types'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { minifyJSON } from 'unhead/minify'
 import { createUnplugin } from 'unplugin'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
@@ -27,15 +28,7 @@ interface PendingMinification {
 
 export type MinifyFn = (code: string) => Promise<string | null>
 
-const jsonMinifier: MinifyFn = async (code) => {
-  try {
-    return JSON.stringify(JSON.parse(code))
-  }
-  catch {
-    // Invalid declarative JSON stays untouched instead of being interpreted as JavaScript.
-    return code
-  }
-}
+const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
 export interface MinifyTransformOptions extends BaseTransformerTypes {
   /**
@@ -235,7 +228,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     let contentType: ContentType = tagType
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
-        (p: any) => p.type === 'Property' && p.key?.type === 'Identifier' && p.key.name === 'type',
+        (p: any) => p.type === 'Property'
+          && !p.computed
+          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
+            || (p.key?.type === 'Literal' && p.key.value === 'type')),
       )
       if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
         contentType = 'json'

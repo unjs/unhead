@@ -12,7 +12,7 @@ The Minify plugin hooks into the SSR render pipeline and minifies `innerHTML` co
 
 - **Inline scripts**: Strips comments, preserves string literals, and retains line breaks in common automatic-semicolon-insertion cases
 - **Inline styles**: Strips comments, collapses whitespace, removes trailing semicolons, and strips leading zeros
-- **JSON scripts**: Re-serializes `application/ld+json`, `application/json`, `speculationrules`, and `importmap` values without pretty-printing whitespace
+- **JSON scripts**: Strips insignificant whitespace from `application/ld+json`, `application/json`, `speculationrules`, and `importmap` values without changing their tokens
 
 It never increases content length.
 
