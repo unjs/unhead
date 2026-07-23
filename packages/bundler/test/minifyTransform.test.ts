@@ -98,37 +98,57 @@ describe('minifyTransform', () => {
     expect(code).toBeUndefined()
   })
 
-  it('skips application/ld+json script types', async () => {
+  it.each([
+    ['application/ld+json', '{ "name":  "test",  "value":   123 }', '{"name":"test","value":123}'],
+    ['speculationrules', '{ "prerender":  [{ "where": {} }] }', '{"prerender":[{"where":{}}]}'],
+    ['importmap', '{ "imports":  { "lodash":  "/lodash.js" } }', '{"imports":{"lodash":"/lodash.js"}}'],
+  ])('minifies %s scripts as JSON', async (type, input, output) => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
-      `  script: [{ type: 'application/ld+json', innerHTML: '{ "name":  "test",  "value":   123 }' }]`,
+      `  script: [{ type: '${type}', innerHTML: '${input}' }]`,
+      `})`,
+    ], { js: mockJSMinifier })
+
+    expect(code).toBeDefined()
+    expect(code).toContain(JSON.stringify(output))
+    expect(code).not.toContain(input)
+  })
+
+  it('leaves invalid declarative JSON untouched', async () => {
+    const code = await transform([
+      `import { useHead } from 'unhead'`,
+      `useHead({`,
+      `  script: [{ type: 'speculationrules', innerHTML: '{ invalid:  JSON with padding }' }]`,
       `})`,
     ], { js: mockJSMinifier })
 
     expect(code).toBeUndefined()
   })
 
-  it('skips speculationrules script types', async () => {
+  it('minifies declarative JSON with a quoted type key when JS minification is disabled', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
-      `  script: [{ type: 'speculationrules', innerHTML: '{ "prerender":  [{ "where": {} }] }' }]`,
+      `  script: [{ 'type': 'speculationrules', innerHTML: '{ "prefetch":  [{ "urls": [] }] }' }]`,
       `})`,
-    ], { js: mockJSMinifier })
+    ], { js: false })
 
-    expect(code).toBeUndefined()
+    expect(code).toBeDefined()
+    expect(code).toContain(JSON.stringify('{"prefetch":[{"urls":[]}]}'))
   })
 
-  it('skips importmap script types', async () => {
+  it('preserves encoded closing tags in declarative JSON', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,
       `useHead({`,
-      `  script: [{ type: 'importmap', innerHTML: '{ "imports":  { "lodash":  "/lodash.js" } }' }]`,
+      `  script: [{ type: 'importmap', innerHTML: '{ "imports": { "x": "\\\\u003C/script>" } }' }]`,
       `})`,
     ], { js: mockJSMinifier })
 
-    expect(code).toBeUndefined()
+    expect(code).toBeDefined()
+    expect(code).toContain('\\\\u003C/script>')
+    expect(code).not.toContain('<\/script>')
   })
 
   it('skips short strings below default threshold', async () => {
