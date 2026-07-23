@@ -1,7 +1,7 @@
 import type { HeadTag } from '../types'
 import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 
-const allowedMetaProperties = ['name', 'property', 'http-equiv']
+export const MetaKeyAttrs = ['name', 'property', 'http-equiv'] as const
 
 // Standard single-value meta tags that should always deduplicate
 // Tags not included here can be duped by using content: ['one', 'two']
@@ -41,7 +41,7 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
     return 'charset'
 
   if (tag.tag === 'meta') {
-    for (const n of allowedMetaProperties) {
+    for (const n of MetaKeyAttrs) {
       // open graph props can have multiple tags with the same property
       if (props[n] !== undefined) {
         const propValue = props[n]

@@ -52,4 +52,20 @@ describe('dom', () => {
       </body></html>"
     `)
   })
+
+  it('reconciles identity attributes on an adopted meta tag', async () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<meta name="og:title" content="Default" data-origin="external">'
+    const adopted = document.head.querySelector('meta')!
+
+    head.push({ meta: [{ property: 'og:title', content: 'Page' }] })
+    await useDelayedSerializedDom()
+
+    const meta = document.head.querySelector('meta[property="og:title"]')!
+    expect(meta).toBe(adopted)
+    expect(meta.getAttribute('name')).toBeNull()
+    expect(meta.getAttribute('content')).toBe('Page')
+    expect(meta.getAttribute('data-origin')).toBe('external')
+  })
 })
