@@ -2,6 +2,7 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { Head } from '../src'
 import { UnheadProvider } from '../src/client'
 import { createHead, renderSSRHead, transformHtmlTemplate } from '../src/server'
 import { SimpleHead } from './fixtures/SimpleHead'
@@ -71,6 +72,34 @@ describe('simpleHead component in ssr', () => {
       <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
       <link rel="icon" href="favicon.ico">
       <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Example","url":"https://www.example.com"}</script>"
+    `)
+  })
+
+  it('renders nested fragment children', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <>
+            {[
+              <meta key="meta" name="fragment-meta" content="nested" />,
+              <React.Fragment key="script">
+                {false}
+                <meta name="fragment-meta-2" content="nested-2" />
+                <script>window.__FRAGMENT_TEST__ = true</script>
+              </React.Fragment>,
+            ]}
+          </>
+        </Head>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<script>window.__FRAGMENT_TEST__ = true</script>
+      <meta name="fragment-meta" content="nested">
+      <meta name="fragment-meta-2" content="nested-2">"
     `)
   })
 })

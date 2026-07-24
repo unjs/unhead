@@ -1,9 +1,10 @@
-import type { HeadEntry, HeadEntryOptions, Link, PreloadLink, Script, SerializableHead } from '../../src/types'
+import type { HeadEntry, HeadEntryOptions, Link, PreloadLink, Script, SerializableHead, UnheadMeta } from '../../src/types'
 import type { MetaKeyType, ResolveTagsOptions } from '../../src/utils'
 import { expectTypeOf } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { defineLink, defineScript } from '../../src/define'
 import { createHead } from '../../src/server'
+import { unpackMeta } from '../../src/utils'
 
 describe('types', () => {
   it('exports extension types without narrowing existing entries', () => {
@@ -11,6 +12,10 @@ describe('types', () => {
     expectTypeOf<ResolveTagsOptions>().toHaveProperty('tagWeight')
     expectTypeOf<NonNullable<HeadEntry<unknown>['options']>>()
       .toEqualTypeOf<Omit<HeadEntryOptions, 'head' | 'onRendered'>>()
+  })
+  it('types unpackMeta output as concrete meta tags', () => {
+    const meta = unpackMeta({ description: 'Page description' })
+    expectTypeOf(meta).toEqualTypeOf<UnheadMeta[]>()
   })
   it('preserves properties validated by define helpers', () => {
     const preload = defineLink({
