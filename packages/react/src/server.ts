@@ -1,14 +1,10 @@
-import type { ReactNode } from 'react'
-import type { Unhead } from 'unhead/types'
+import type { UniversalUnheadProviderProps } from './context'
 import { createElement } from 'react'
 import { UnheadContext } from './context'
 
 export { createHead, type PreparedTemplate, prepareTemplate, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
-export interface UnheadProviderProps {
-  children: ReactNode
-  value: Unhead
-}
+export type UnheadProviderProps = UniversalUnheadProviderProps
 
 export function UnheadProvider({ children, value }: UnheadProviderProps) {
   return createElement(UnheadContext.Provider, { value }, children)

@@ -9,8 +9,8 @@ const head = createHead({ /* config */ })
 hydrateRoot(
   document.getElementById('root') as HTMLElement,
   <StrictMode>
-    <UnheadProvider head={head}>
-    <App />
+    <UnheadProvider value={head}>
+      <App />
     </UnheadProvider>
   </StrictMode>,
 )
