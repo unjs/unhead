@@ -39,13 +39,17 @@ describe('dedupe', () => {
 
     expect(contents('property', 'og:title')).toEqual(['New Open Graph title'])
     expect(contents('property', 'og:description')).toEqual(['New Open Graph description'])
-    expect(contents('property', 'og:image')).toEqual(['/first-og.png', '/second-og.png'])
-    expect(contents('property', 'og:image:alt')).toEqual(['First Open Graph image', 'Second Open Graph image'])
+    expect(headTags).toContain(`<meta property="og:image" content="/first-og.png">
+<meta property="og:image:alt" content="First Open Graph image">
+<meta property="og:image" content="/second-og.png">
+<meta property="og:image:alt" content="Second Open Graph image">`)
     expect(contents('name', 'twitter:card')).toEqual(['summary_large_image'])
     expect(contents('name', 'twitter:title')).toEqual(['New title'])
     expect(contents('name', 'twitter:description')).toEqual(['New description'])
-    expect(contents('name', 'twitter:image')).toEqual(['/first.png', '/second.png'])
-    expect(contents('name', 'twitter:image:alt')).toEqual(['First image', 'Second image'])
+    expect(headTags).toContain(`<meta name="twitter:image" content="/first.png">
+<meta name="twitter:image:alt" content="First image">
+<meta name="twitter:image" content="/second.png">
+<meta name="twitter:image:alt" content="Second image">`)
   })
 
   it('arrays', async () => {
