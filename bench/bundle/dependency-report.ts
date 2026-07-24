@@ -9,6 +9,7 @@ export interface PackageDependencyStats {
   dependencyCount: number
   dependencySize: number
   dependencies: RuntimeDependency[]
+  skippedOptionalDependencies: string[]
 }
 
 export interface DependencyAnalysis {
@@ -40,6 +41,8 @@ function formatDelta(bytes: number): string {
 }
 
 function formatDependencyDelta(count: number): string {
+  if (count === 0)
+    return '0 dependencies'
   const sign = count > 0 ? '+' : '-'
   const absolute = Math.abs(count)
   return `${sign}${absolute} dependenc${absolute === 1 ? 'y' : 'ies'}`
@@ -149,14 +152,26 @@ export function renderDependencyReport(base: DependencyAnalysis | null, current:
   }
 
   out.push('', `<details><summary>All packages (${current.packages.length})</summary>`, '')
-  out.push('| Package | External deps | Install size | Largest dependency |', '|---|---|---|---|')
+  out.push('| Package | External deps | Install size | Largest dependency | Skipped optional |', '|---|---|---|---|---|')
   for (const pkg of [...current.packages].sort((a, b) => a.name.localeCompare(b.name))) {
     const largest = [...pkg.dependencies].sort((a, b) => b.size - a.size)[0]
     const largestLabel = largest ? `${largest.name} ${formatSize(largest.size)}` : 'none'
-    out.push(`| ${pkg.name} | ${pkg.dependencyCount} | ${formatSize(pkg.dependencySize)} | ${largestLabel} |`)
+    out.push(`| ${pkg.name} | ${pkg.dependencyCount} | ${formatSize(pkg.dependencySize)} | ${largestLabel} | ${pkg.skippedOptionalDependencies.length} |`)
   }
   out.push('', '</details>', '')
-  out.push('<sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded.</sub>')
+  const skippedCount = current.packages.reduce(
+    (total, pkg) => total + pkg.skippedOptionalDependencies.length,
+    0,
+  )
+  if (skippedCount > 0) {
+    out.push(`<details><summary>Skipped optional dependencies (${skippedCount})</summary>`, '')
+    for (const pkg of current.packages.filter(pkg => pkg.skippedOptionalDependencies.length > 0)) {
+      const skipped = pkg.skippedOptionalDependencies.map(dependency => `\`${dependency}\``).join(', ')
+      out.push(`- ${pkg.name}: ${skipped}`)
+    }
+    out.push('', '</details>', '')
+  }
+  out.push('<sub>Production dependencies only. Peer dependencies and Unhead workspace packages are excluded. Skipped optional dependencies are unavailable on the CI platform.</sub>')
 
   return out.join('\n')
 }
