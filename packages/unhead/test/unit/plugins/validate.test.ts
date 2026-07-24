@@ -29,7 +29,7 @@ describe('validatePlugin', () => {
       })) as any)
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'nested-head-properties')).toMatchObject({
-        message: expect.stringContaining('"titleTemplate", "meta"'),
+        message: expect.stringContaining('"title", "titleTemplate", "meta"'),
       })
     })
 
@@ -56,6 +56,32 @@ describe('validatePlugin', () => {
       } as any)
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+
+    it('does not classify head-named scalar attributes as a nested head input', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          meta: 'custom-value',
+          script: 'module',
+          link: '/feed',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+
+    it('does not run head-tag predicates against attribute objects', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          children: 'label',
+          hid: 'page',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-children')).toBeFalsy()
+      expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeFalsy()
     })
 
     it('respects rule severity configuration', () => {

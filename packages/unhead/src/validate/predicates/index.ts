@@ -21,7 +21,6 @@ export const tagPredicates = {
   'empty-meta-content': emptyMetaContent,
   'no-deprecated-props': noDeprecatedProps,
   'no-unknown-meta': noUnknownMeta,
-  'nested-head-properties': nestedHeadProperties,
   'non-absolute-canonical': nonAbsoluteCanonical,
   'numeric-tag-priority': numericTagPriority,
   'preload-font-crossorigin': preloadFontCrossorigin,
@@ -30,6 +29,11 @@ export const tagPredicates = {
   'script-src-with-content': scriptSrcWithContent,
   'twitter-handle-missing-at': twitterHandleMissingAt,
   'viewport-user-scalable': viewportUserScalable,
+} satisfies Record<string, TagPredicate>
+
+/** Predicates for the `htmlAttrs` and `bodyAttrs` object shapes. */
+export const attributeInputPredicates = {
+  'nested-head-properties': nestedHeadProperties,
 } satisfies Record<string, TagPredicate>
 
 /** Migration-only tag predicates — opt-in via the `migration` config preset. */

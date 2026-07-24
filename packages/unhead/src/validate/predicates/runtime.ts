@@ -1,4 +1,4 @@
-import type { HeadInputView, TagInput } from './types'
+import type { HeadInputView, InputValueKind, TagInput } from './types'
 
 /**
  * Subset of the runtime `HeadTag` shape this adapter needs. We don't import
@@ -16,6 +16,17 @@ export interface RuntimeHeadTag {
 
 const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style', 'htmlAttrs', 'bodyAttrs'])
 
+function valueKind(value: unknown): InputValueKind {
+  if (value === null)
+    return 'null'
+  if (Array.isArray(value))
+    return 'array'
+  const kind = typeof value
+  if (kind === 'boolean' || kind === 'function' || kind === 'number' || kind === 'object' || kind === 'string')
+    return kind
+  return 'unknown'
+}
+
 /**
  * Adapt a runtime tag (post-resolve `HeadTag`) into a {@link TagInput} that
  * predicates can read. Coerces `props.content` to a string and lowercases
@@ -31,8 +42,10 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
 
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
   for (const [k, v] of Object.entries(tag.props)) {
     keys.add(k)
+    valueKinds.set(k, valueKind(v))
     if (v == null) {
       // Mirror the runtime ValidatePlugin convention of coercing null `content`
       // to an empty string so the empty-meta-content predicate fires when a
@@ -50,9 +63,8 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
         props[k] = v
     }
     else {
-      // Fallback to `String(v)` for anything coerceable; predicates only consume
-      // primitives, so non-coerceable values become `[object Object]` and miss
-      // every check (which is the safe outcome — runtime warnings are best-effort).
+      // Primitive predicates consume `props`; structural predicates use the
+      // original shape retained in `valueKinds`.
       props[k] = String(v)
     }
   }
@@ -61,16 +73,21 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   // textContent on the tag itself, not in `props`. Surface their presence via
   // `keys` so the predicate's `keys.has('innerHTML')` check works.
   if (tag.tag === 'script' || tag.tag === 'style' || tag.tag === 'noscript') {
-    if (tag.innerHTML != null && tag.innerHTML !== '')
+    if (tag.innerHTML != null && tag.innerHTML !== '') {
       keys.add('innerHTML')
-    if (tag.textContent != null && tag.textContent !== '')
+      valueKinds.set('innerHTML', valueKind(tag.innerHTML))
+    }
+    if (tag.textContent != null && tag.textContent !== '') {
       keys.add('textContent')
+      valueKinds.set('textContent', valueKind(tag.textContent))
+    }
   }
 
   // Surface the top-level `tagPriority` field so the `numeric-tag-priority`
   // predicate (which inspects `props.tagPriority`) fires for runtime tags.
   if (tag.tagPriority != null) {
     keys.add('tagPriority')
+    valueKinds.set('tagPriority', valueKind(tag.tagPriority))
     if (typeof tag.tagPriority === 'string' || typeof tag.tagPriority === 'number')
       props.tagPriority = tag.tagPriority
   }
@@ -79,6 +96,7 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
     tagType: tag.tag as TagInput['tagType'],
     props,
     keys,
+    valueKinds,
   }
 }
 

@@ -1,6 +1,28 @@
 import type * as ESTree from 'estree'
-import type { HeadInputView, TagInput } from 'unhead/validate'
+import type { HeadInputView, InputValueKind, TagInput } from 'unhead/validate'
 import { findProperty, getStringValue, unwrapTS } from './visitor'
+
+function valueKind(node: ESTree.Node | undefined): InputValueKind {
+  const value = unwrapTS(node)
+  if (!value)
+    return 'unknown'
+  if (value.type === 'ArrayExpression')
+    return 'array'
+  if (value.type === 'ObjectExpression')
+    return 'object'
+  if (value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+    return 'function'
+  if (value.type === 'TemplateLiteral')
+    return 'string'
+  if (value.type !== 'Literal')
+    return 'unknown'
+  if (value.value === null)
+    return 'null'
+  const kind = typeof value.value
+  if (kind === 'boolean' || kind === 'number' || kind === 'string')
+    return kind
+  return 'unknown'
+}
 
 /**
  * Build a parser-agnostic {@link TagInput} from an ESTree object literal so a
@@ -17,6 +39,7 @@ export function materializeTag(
 ): TagInput {
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
   const propLocs: Record<string, ESTree.Property> = {}
 
   for (const p of node.properties) {
@@ -31,6 +54,7 @@ export function materializeTag(
     if (!name)
       continue
     keys.add(name)
+    valueKinds.set(name, valueKind(p.value))
     propLocs[name] = p
 
     const value = unwrapTS(p.value)
@@ -47,7 +71,7 @@ export function materializeTag(
       props[name] = str
   }
 
-  return { tagType, props, keys, loc: node, propLocs, inArray }
+  return { tagType, props, keys, valueKinds, loc: node, propLocs, inArray }
 }
 
 /**

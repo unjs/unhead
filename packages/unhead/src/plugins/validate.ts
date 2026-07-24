@@ -1,6 +1,7 @@
 import type { HeadTag, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
 import {
+  attributeInputPredicates,
   headInputPredicates,
   tagInputFromRuntime,
   tagPredicates,
@@ -235,7 +236,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             // deprecated-prop-* via no-deprecated-props).
             const tagInput = tagInputFromRuntime(tag)
             if (tagInput) {
-              for (const predicate of Object.values(tagPredicates))
+              const predicates = tagInput.tagType === 'htmlAttrs' || tagInput.tagType === 'bodyAttrs'
+                ? attributeInputPredicates
+                : tagPredicates
+              for (const predicate of Object.values(predicates))
                 emitFromPredicates(predicate(tagInput), tag)
             }
 

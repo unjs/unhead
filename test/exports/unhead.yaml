@@ -115,6 +115,7 @@
   ValidHeadTags: object
   walkResolver: function
 ./validate:
+  attributeInputPredicates: object
   deferOnModuleScript: function
   DEPRECATED_PROPS: object
   emptyMetaContent: function

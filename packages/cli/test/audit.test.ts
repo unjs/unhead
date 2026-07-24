@@ -150,8 +150,29 @@ useHead({
     expect(results).toHaveLength(1)
     expect(results[0].diagnostics).toContainEqual(expect.objectContaining({
       ruleId: 'nested-head-properties',
-      message: expect.stringContaining('"titleTemplate", "meta"'),
+      message: expect.stringContaining('"title", "titleTemplate", "meta"'),
     }))
+  })
+
+  it('uses value shape and attribute-specific predicates for bodyAttrs', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-attrs-shape-'))
+    await writeFile(join(tmp, 'app.ts'), `
+useHead({
+  bodyAttrs: {
+    title: 'Tooltip',
+    meta: 'custom-value',
+    script: 'module',
+    children: 'label',
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['app.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    expect(results[0].diagnostics).toHaveLength(0)
   })
 
   it('surfaces parse errors as a diagnostic instead of silently skipping', async () => {
