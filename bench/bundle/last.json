@@ -30,19 +30,19 @@
     "br": 4923
   },
   "reactClient": {
-    "size": 14719,
-    "gz": 5867,
-    "br": 5310
+    "size": 14854,
+    "gz": 5924,
+    "br": 5363
   },
   "reactClientFull": {
-    "size": 28317,
-    "gz": 10732,
-    "br": 9727
+    "size": 28452,
+    "gz": 10789,
+    "br": 9782
   },
   "reactServer": {
     "size": 13108,
     "gz": 5242,
-    "br": 4740
+    "br": 4739
   },
   "schemaOrg": {
     "size": 28385,
