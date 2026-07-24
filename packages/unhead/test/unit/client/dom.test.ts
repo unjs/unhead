@@ -1,7 +1,7 @@
 import { renderDOMHead } from '@unhead/dom'
 import { describe, expect, it } from 'vitest'
 import { useHead } from '../../../src'
-import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
+import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
   it('renders numeric zero meta content', () => {
@@ -12,6 +12,20 @@ describe('dom', () => {
     })
 
     expect(head.resolvedOptions.document?.querySelector('meta[name="numeric-zero"]')?.getAttribute('content')).toBe('0')
+  })
+
+  it('renders a fresh server head into an explicit document once', () => {
+    const document = useDom().window.document
+    const head = createServerHeadWithContext()
+    head.push({
+      title: 'Server title',
+      meta: [{ name: 'description', content: 'Server description' }],
+    })
+
+    expect(renderDOMHead(head, { document })).toBe(true)
+    expect(document.title).toBe('Server title')
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Server description')
+    expect(renderDOMHead(head, { document })).toBe(false)
   })
 
   it('basic', async () => {

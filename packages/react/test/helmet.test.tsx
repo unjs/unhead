@@ -73,7 +73,7 @@ describe('helmet compat', () => {
     expect(headTags).not.toContain('My Site')
   })
 
-  it('uses defaultTitle with titleTemplate', async () => {
+  it('does not apply titleTemplate to defaultTitle', async () => {
     const head = createHead()
 
     render(
@@ -85,7 +85,26 @@ describe('helmet compat', () => {
     )
 
     const { headTags } = renderSSRHead(head)
-    expect(headTags).toContain('<title>Home | My Site</title>')
+    expect(headTags).toContain('<title>Home</title>')
+    expect(headTags).not.toContain('Home | My Site')
+  })
+
+  it('does not let a later root fallback override a sibling page title', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <>
+          <Helmet>
+            <title>Explore</title>
+          </Helmet>
+          <Helmet defaultTitle="Mastodon" titleTemplate="%s | Mastodon" />
+        </>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>Explore | Mastodon</title>')
   })
 
   it('calls onChangeClientState after DOM render', async () => {
