@@ -54,6 +54,25 @@ describe('inferSeoMetaPlugin', () => {
     ].join('\n'))
   })
 
+  it('passes numeric zero to custom transformers as strings', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({
+        ogTitle: title => title!.trim(),
+        ogDescription: description => description!.trim(),
+      })],
+    })
+
+    head.push({
+      title: 0,
+      meta: [{ name: 'description', content: 0 }],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('<meta property="og:title" data-infer="" content="0">')
+    expect(headTags).toContain('<meta property="og:description" data-infer="" content="0">')
+  })
+
   it('conflicts', async () => {
     const head = createHead({
       disableDefaults: true,
