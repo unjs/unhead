@@ -322,6 +322,44 @@ describe('validatePlugin', () => {
     })
   })
 
+  describe('deprecated Twitter metadata', () => {
+    it('warns on non-Slack twitter metadata without removing it', () => {
+      const { head, rules } = createValidationHead()
+      head.push({ meta: [{ name: 'twitter:title', content: 'Title' }] })
+
+      expect(renderSSRHead(head).headTags).toContain('name="twitter:title"')
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toMatchObject({
+        message: 'twitter:title is deprecated. Use Open Graph metadata instead.',
+        severity: 'warn',
+      })
+    })
+
+    it('allows Twitter metadata used by Slack unfurls', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [
+          { name: 'twitter:label1', content: 'Price' },
+          { name: 'twitter:data1', content: '$9.99' },
+          { name: 'twitter:label2', content: 'Availability' },
+          { name: 'twitter:data2', content: 'In stock' },
+        ],
+      })
+
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toBeFalsy()
+    })
+
+    it('respects the deprecated-twitter-meta rule config', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'deprecated-twitter-meta': 'off' },
+      })
+      head.push({ meta: [{ name: 'twitter:description', content: 'Description' }] })
+
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toBeFalsy()
+    })
+  })
+
   describe('typo detection', () => {
     it('suggests correction for og:titl typo', () => {
       const { head, rules } = createValidationHead()

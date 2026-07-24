@@ -54,6 +54,12 @@ export interface ValidatePluginOptions {
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 const AT_PREFIX_RE = /^at\s+/
+const SLACK_TWITTER_META_NAMES = new Set([
+  'twitter:data1',
+  'twitter:data2',
+  'twitter:label1',
+  'twitter:label2',
+])
 
 /**
  * Per-rule severity used by the runtime ValidatePlugin path that runs through
@@ -237,6 +243,12 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tagInput) {
               for (const predicate of Object.values(tagPredicates))
                 emitFromPredicates(predicate(tagInput), tag)
+            }
+
+            if (tag.tag === 'meta' && typeof metaKey === 'string') {
+              const normalizedMetaKey = metaKey.toLowerCase()
+              if (normalizedMetaKey.startsWith('twitter:') && !SLACK_TWITTER_META_NAMES.has(normalizedMetaKey))
+                report('deprecated-twitter-meta', `${normalizedMetaKey} is deprecated. Use Open Graph metadata instead.`, 'warn', tag)
             }
 
             // === URL Validity (runtime-only: depends on URL_META_KEYS lookup) ===

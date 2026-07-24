@@ -13,6 +13,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'deprecated-prop-body',
   'deprecated-prop-children',
   'deprecated-prop-hid-vmid',
+  'deprecated-twitter-meta',
   'duplicate-resource-hint',
   'empty-meta-content',
   'empty-title',
