@@ -12,12 +12,9 @@ import type {
 } from './types'
 import { createHooks } from 'hookable'
 import { isMetaArrayDupeKey, sortTags, tagWeight, UsesMergeStrategy, ValidHeadTags } from './utils'
+import { hasContent } from './utils/const'
 import { dedupeKey, hashTag } from './utils/dedupe'
 import { normalizeEntryToTags } from './utils/normalize'
-
-function isEmptyContent(value: unknown): boolean {
-  return !value && value !== 0
-}
 
 function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
@@ -197,11 +194,11 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
           continue
         }
         // avoid rendering empty tags
-        if (Object.keys(props).length === 0 && isEmptyContent(t.innerHTML) && isEmptyContent(t.textContent)) {
+        if (Object.keys(props).length === 0 && !hasContent(t.innerHTML) && !hasContent(t.textContent)) {
           continue
         }
         if (tag === 'meta') {
-          if (isEmptyContent(props.content) && !props['http-equiv'] && !props.charset) {
+          if (!hasContent(props.content) && !props['http-equiv'] && !props.charset) {
             continue
           }
         }
