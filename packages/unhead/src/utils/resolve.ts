@@ -1,5 +1,5 @@
 import type { HeadEntry, HeadTag, Unhead } from '../types'
-import { UsesMergeStrategy, ValidHeadTags } from './const'
+import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
@@ -18,10 +18,6 @@ function isEmptyProps(props: Record<string, any>): boolean {
   for (const _ in props)
     return false
   return true
-}
-
-function isEmptyContent(value: unknown): boolean {
-  return !value && value !== 0
 }
 
 // matches hooks that receive references to resolved tags and may mutate them in place
@@ -140,10 +136,10 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && isEmptyContent(innerHTML) && isEmptyContent(t.textContent)))
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !hasContent(innerHTML) && !hasContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      if (isEmptyContent(props.content) && !props['http-equiv'] && !props.charset)
+      if (!hasContent(props.content) && !props['http-equiv'] && !props.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {
