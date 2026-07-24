@@ -9,6 +9,23 @@ export interface HeadProps {
   titleTemplate?: string
 }
 
+function normalizeReactPropAliases(props: unknown): Record<string, any> {
+  if (!props || typeof props !== 'object')
+    return {}
+
+  const normalized: Record<string, any> = {}
+  for (const [prop, value] of Object.entries(props)) {
+    if (prop === 'ref' || prop === 'suppressContentEditableWarning' || prop === 'suppressHydrationWarning')
+      continue
+
+    const name = prop === 'className'
+      ? 'class'
+      : prop === 'httpEquiv' ? 'http-equiv' : prop
+    normalized[name] = value
+  }
+  return normalized
+}
+
 function flattenHeadElements(children: ReactNode): React.ReactElement[] {
   const elements: React.ReactElement[] = []
   React.Children.forEach(children, (child) => {
@@ -45,7 +62,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
         continue
       }
 
-      const data: Record<string, any> = { ...(typeof props === 'object' ? props : {}) }
+      const data = normalizeReactPropAliases(props)
 
       if (TagsWithInnerContent.has(tagName) && data.children) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'

@@ -75,6 +75,67 @@ describe('simpleHead component in ssr', () => {
     `)
   })
 
+  it('normalizes React head prop names during SSR', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <meta
+            ref={React.createRef<HTMLMetaElement>()}
+            httpEquiv="refresh"
+            content="0;url=/next"
+            className="refresh metadata"
+            style={{ color: 'red' }}
+            itemProp="refresh"
+            suppressContentEditableWarning
+            suppressHydrationWarning
+          />
+          <link
+            rel="preload"
+            href="/hero.png"
+            as="image"
+            crossOrigin="anonymous"
+            fetchPriority="high"
+            hrefLang="en"
+            imageSrcSet="/hero.png 1x, /hero-2x.png 2x"
+            imageSizes="100vw"
+            referrerPolicy="no-referrer"
+          />
+          <script
+            src="/legacy.js"
+            charSet="utf-8"
+            crossOrigin="use-credentials"
+            fetchPriority="low"
+            noModule
+            referrerPolicy="origin"
+          />
+        </Head>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('http-equiv="refresh"')
+    expect(headTags).not.toContain('httpequiv=')
+    expect(headTags).toContain('class="refresh metadata"')
+    expect(headTags).toContain('style="color:red"')
+    expect(headTags).toContain('itemprop="refresh"')
+    expect(headTags).not.toContain(' ref=')
+    expect(headTags).not.toContain('suppresscontenteditablewarning')
+    expect(headTags).not.toContain('suppresshydrationwarning')
+    expect(headTags).toContain('crossorigin="anonymous"')
+    expect(headTags).toContain('fetchpriority="high"')
+    expect(headTags).toContain('hreflang="en"')
+    expect(headTags).toContain('imagesrcset="/hero.png 1x, /hero-2x.png 2x"')
+    expect(headTags).toContain('imagesizes="100vw"')
+    expect(headTags).toContain('referrerpolicy="no-referrer"')
+    expect(headTags).toContain('charset="utf-8"')
+    expect(headTags).toContain('crossorigin="use-credentials"')
+    expect(headTags).toContain('fetchpriority="low"')
+    expect(headTags).toContain('nomodule')
+    expect(headTags).toContain('referrerpolicy="origin"')
+  })
+
   it('renders nested fragment children', async () => {
     const head = createHead({ disableDefaults: true })
 
