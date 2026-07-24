@@ -76,6 +76,7 @@ export default [
 | `no-deprecated-props` | `error` | ✓ | v2 props: `children`, `hid`, `vmid`, `body: true` |
 | `no-html-in-title` | `warn` | | HTML chars in `title` (will be escaped, not rendered) |
 | `no-unknown-meta` | `warn` | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
+| `nested-head-properties` | `warn` | | top-level head properties nested inside `htmlAttrs` / `bodyAttrs` |
 | `non-absolute-canonical` | `warn` | | relative URLs in `<link rel="canonical">` |
 | `numeric-tag-priority` | `warn` | suggestion | numeric `tagPriority` (suggests `'critical'`, `'high'`, or `'low'`) |
 | `prefer-define-helpers` | off (migration only) | conditional | wraps `link` / `script` literals in `defineLink` / `defineScript`; autofixes when the helper is imported |

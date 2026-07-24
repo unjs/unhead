@@ -24,6 +24,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'missing-description',
   'missing-template-params-plugin',
   'missing-title',
+  'nested-head-properties',
   'non-absolute-canonical',
   'non-absolute-og-url',
   'numeric-tag-priority',

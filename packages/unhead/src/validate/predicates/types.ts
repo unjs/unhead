@@ -1,5 +1,7 @@
 import type { ValidationRuleId } from '../rules'
 
+export type InputValueKind = 'array' | 'boolean' | 'function' | 'null' | 'number' | 'object' | 'string' | 'unknown'
+
 /**
  * Materialized view of a single head tag (`<meta>`, `<link>`, `<script>`, etc.)
  * suitable for parser-agnostic predicate checks. Adapters in the eslint-plugin
@@ -12,12 +14,14 @@ import type { ValidationRuleId } from '../rules'
  * read `keys`; predicates that need the value read `props`.
  */
 export interface TagInput {
-  /** Tag list this came from in the head input (`meta` / `link` / `script` / `noscript` / `style`). */
-  tagType: 'meta' | 'link' | 'script' | 'noscript' | 'style'
+  /** Tag or attribute object this came from in the head input. */
+  tagType: 'meta' | 'link' | 'script' | 'noscript' | 'style' | 'htmlAttrs' | 'bodyAttrs'
   /** Statically-resolvable props. */
   props: Record<string, string | number | boolean>
   /** Every prop name that appeared in source, resolvable or not. */
   keys: Set<string>
+  /** Parser-independent value shape for every key. */
+  valueKinds: Map<string, InputValueKind>
   /** Adapter-supplied opaque marker for the whole tag literal. */
   loc?: unknown
   /** Adapter-supplied opaque marker for individual prop values. */

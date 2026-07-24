@@ -1,5 +1,6 @@
 import type { HeadInputPredicate, TagPredicate } from './types'
 import { emptyMetaContent } from './empty-meta-content'
+import { nestedHeadProperties } from './nested-head-properties'
 import { noDeprecatedProps } from './no-deprecated-props'
 import { noHtmlInTitle } from './no-html-in-title'
 import { noUnknownMeta } from './no-unknown-meta'
@@ -30,6 +31,11 @@ export const tagPredicates = {
   'viewport-user-scalable': viewportUserScalable,
 } satisfies Record<string, TagPredicate>
 
+/** Predicates for the `htmlAttrs` and `bodyAttrs` object shapes. */
+export const attributeInputPredicates = {
+  'nested-head-properties': nestedHeadProperties,
+} satisfies Record<string, TagPredicate>
+
 /** Migration-only tag predicates — opt-in via the `migration` config preset. */
 export const migrationTagPredicates = {
   'prefer-define-helpers': preferDefineHelpers,
@@ -42,6 +48,7 @@ export const headInputPredicates = {
 export {
   deferOnModuleScript,
   emptyMetaContent,
+  nestedHeadProperties,
   noDeprecatedProps,
   noHtmlInTitle,
   nonAbsoluteCanonical,

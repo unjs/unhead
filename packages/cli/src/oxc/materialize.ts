@@ -1,4 +1,4 @@
-import type { HeadInputView, TagInput } from 'unhead/validate'
+import type { HeadInputView, InputValueKind, TagInput } from 'unhead/validate'
 
 // oxc-parser AST is ESTree-shaped: Property/Literal/Identifier/ObjectExpression
 // share the same node names as ESTree, so we work against a loose any-typed
@@ -36,6 +36,28 @@ function getKeyName(prop: Node): string | undefined {
   return undefined
 }
 
+function valueKind(node: Node | undefined): InputValueKind {
+  const value = unwrapTS(node)
+  if (!value)
+    return 'unknown'
+  if (value.type === 'ArrayExpression')
+    return 'array'
+  if (value.type === 'ObjectExpression')
+    return 'object'
+  if (value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+    return 'function'
+  if (value.type === 'TemplateLiteral')
+    return 'string'
+  if (value.type !== 'Literal')
+    return 'unknown'
+  if (value.value === null)
+    return 'null'
+  const kind = typeof value.value
+  if (kind === 'boolean' || kind === 'number' || kind === 'string')
+    return kind
+  return 'unknown'
+}
+
 /**
  * Iterate object expression properties latest-to-first and return the *last*
  * matching property. Mirrors runtime JS semantics where a duplicate key is
@@ -63,6 +85,7 @@ export function materializeTag(
 ): TagInput {
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
   const propLocs: Record<string, OxcLoc> = {}
 
   for (const p of obj.properties) {
@@ -70,6 +93,7 @@ export function materializeTag(
     if (!name)
       continue
     keys.add(name)
+    valueKinds.set(name, valueKind(p.value))
     propLocs[name] = { start: p.start, end: p.end }
     const value = unwrapTS(p.value)
     if (!value)
@@ -89,6 +113,7 @@ export function materializeTag(
     tagType,
     props,
     keys,
+    valueKinds,
     loc: { start: obj.start, end: obj.end },
     propLocs,
     inArray,

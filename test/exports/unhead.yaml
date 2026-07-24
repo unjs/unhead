@@ -115,6 +115,7 @@
   ValidHeadTags: object
   walkResolver: function
 ./validate:
+  attributeInputPredicates: object
   deferOnModuleScript: function
   DEPRECATED_PROPS: object
   emptyMetaContent: function
@@ -124,6 +125,7 @@
   KNOWN_META_PROPERTIES: object
   levenshtein: function
   migrationTagPredicates: object
+  nestedHeadProperties: function
   noDeprecatedProps: function
   noHtmlInTitle: function
   nonAbsoluteCanonical: function

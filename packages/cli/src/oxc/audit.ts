@@ -7,6 +7,7 @@ import { parseSync } from 'oxc-parser'
 import { extname } from 'pathe'
 import { glob } from 'tinyglobby'
 import {
+  attributeInputPredicates,
   headInputPredicates,
   migrationTagPredicates,
   tagPredicates,
@@ -84,6 +85,7 @@ const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'deprecated-prop-hid-vmid': 'error',
   'deprecated-prop-body': 'error',
   'html-in-title': 'warning',
+  'nested-head-properties': 'warning',
   'possible-typo': 'warning',
   'non-absolute-canonical': 'warning',
   'numeric-tag-priority': 'warning',
@@ -292,6 +294,7 @@ async function auditFile(
       },
       onTag(tag, tagType, info) {
         const view: TagInput = materializeTag(tag, tagType as TagInput['tagType'], info.inArray)
+        const isAttributeInput = view.tagType === 'htmlAttrs' || view.tagType === 'bodyAttrs'
         const ctx: PredicateContext = {
           get importedHelpers() {
             if (!importedHelpers)
@@ -300,8 +303,10 @@ async function auditFile(
           },
         }
         for (const name of predicateNames) {
-          const pred = (tagPredicates as Record<string, any>)[name]
-            ?? (migrationTagPredicates as Record<string, any>)[name]
+          const pred = isAttributeInput
+            ? (attributeInputPredicates as Record<string, any>)[name]
+            : (tagPredicates as Record<string, any>)[name]
+              ?? (migrationTagPredicates as Record<string, any>)[name]
           if (!pred)
             continue
           for (const diag of pred(view, ctx) as Diagnostic[])
@@ -376,9 +381,14 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
   })
 
   const shouldFix = opts.mode === 'migrate'
+  const recommendedPredicates = [
+    ...Object.keys(tagPredicates),
+    ...Object.keys(attributeInputPredicates),
+    ...Object.keys(headInputPredicates),
+  ]
   const predicateNames = opts.mode === 'migrate'
-    ? [...Object.keys(tagPredicates), ...Object.keys(headInputPredicates), ...Object.keys(migrationTagPredicates)]
-    : [...Object.keys(tagPredicates), ...Object.keys(headInputPredicates)]
+    ? [...recommendedPredicates, ...Object.keys(migrationTagPredicates)]
+    : recommendedPredicates
 
   const results: AuditFileResult[] = []
   const allGraphs: CallGraph[] = []

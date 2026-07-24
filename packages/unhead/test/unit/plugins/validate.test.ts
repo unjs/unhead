@@ -17,6 +17,87 @@ function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
 }
 
 describe('validatePlugin', () => {
+  describe('nested head properties', () => {
+    it('warns for resolver-returned head properties inside bodyAttrs', () => {
+      const { head, rules } = createValidationHead()
+      head.push((() => ({
+        bodyAttrs: {
+          title: 'Home',
+          titleTemplate: '%s | Site',
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      })) as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toMatchObject({
+        message: expect.stringContaining('"title", "titleTemplate", "meta"'),
+      })
+    })
+
+    it('warns for head properties inside htmlAttrs', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        htmlAttrs: {
+          lang: 'en',
+          script: [{ src: '/analytics.js' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeTruthy()
+    })
+
+    it('allows valid title, style, and data attributes', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          'title': 'Tooltip',
+          'style': 'color: red',
+          'data-theme': 'dark',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+
+    it('does not classify head-named scalar attributes as a nested head input', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          meta: 'custom-value',
+          script: 'module',
+          link: '/feed',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+
+    it('does not run head-tag predicates against attribute objects', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          children: 'label',
+          hid: 'page',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-children')).toBeFalsy()
+      expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeFalsy()
+    })
+
+    it('respects rule severity configuration', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'nested-head-properties': 'off' },
+      })
+      head.push({
+        bodyAttrs: {
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+    })
+  })
+
   describe('url validity', () => {
     it('warns on non-absolute canonical', () => {
       const { head, rules } = createValidationHead()

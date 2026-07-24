@@ -131,6 +131,50 @@ export default defineNuxtConfig({
     expect(results[0].headCalls.map(c => c.name)).toEqual(['defineNuxtConfig'])
   })
 
+  it('reports top-level head properties nested in bodyAttrs', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-nested-head-'))
+    await writeFile(join(tmp, 'app.ts'), `
+useHead({
+  bodyAttrs: {
+    title: 'Home',
+    titleTemplate: '%s | Site',
+    meta: [{ name: 'description', content: 'Hello' }],
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['app.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    expect(results[0].diagnostics).toContainEqual(expect.objectContaining({
+      ruleId: 'nested-head-properties',
+      message: expect.stringContaining('"title", "titleTemplate", "meta"'),
+    }))
+  })
+
+  it('uses value shape and attribute-specific predicates for bodyAttrs', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-attrs-shape-'))
+    await writeFile(join(tmp, 'app.ts'), `
+useHead({
+  bodyAttrs: {
+    title: 'Tooltip',
+    meta: 'custom-value',
+    script: 'module',
+    children: 'label',
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['app.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    expect(results[0].diagnostics).toHaveLength(0)
+  })
+
   it('surfaces parse errors as a diagnostic instead of silently skipping', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-parse-'))
     await writeFile(join(tmp, 'broken.ts'), 'useHead({ title: \'oops\' )) // unbalanced\n')

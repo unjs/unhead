@@ -1,8 +1,9 @@
-import type { HeadInputView, TagInput } from '../../src/validate'
+import type { HeadInputView, InputValueKind, TagInput } from '../../src/validate'
 import { describe, expect, it } from 'vitest'
 import {
   deferOnModuleScript,
   emptyMetaContent,
+  nestedHeadProperties,
   noDeprecatedProps,
   noHtmlInTitle,
   nonAbsoluteCanonical,
@@ -18,10 +19,25 @@ import {
 } from '../../src/validate'
 
 function tag(props: Record<string, string | number | boolean>, tagType: TagInput['tagType'] = 'meta', extra: Partial<TagInput> = {}): TagInput {
+  const keys = extra.keys ?? new Set(Object.keys(props))
+  const valueKinds = new Map<string, InputValueKind>(
+    [...keys].map((key) => {
+      const value = props[key]
+      let kind: InputValueKind = 'unknown'
+      if (typeof value === 'boolean')
+        kind = 'boolean'
+      else if (typeof value === 'number')
+        kind = 'number'
+      else if (typeof value === 'string')
+        kind = 'string'
+      return [key, kind]
+    }),
+  )
   return {
     tagType,
     props,
-    keys: new Set(Object.keys(props)),
+    keys,
+    valueKinds,
     ...extra,
   }
 }
@@ -135,7 +151,12 @@ describe('script-src-with-content', () => {
     expect(scriptSrcWithContent(t)).toHaveLength(1)
   })
   it('detects content via keys even if value not statically resolvable', () => {
-    const t: TagInput = { tagType: 'script', props: { src: '/x.js' }, keys: new Set(['src', 'innerHTML']) }
+    const t: TagInput = {
+      tagType: 'script',
+      props: { src: '/x.js' },
+      keys: new Set(['src', 'innerHTML']),
+      valueKinds: new Map([['src', 'string'], ['innerHTML', 'unknown']]),
+    }
     expect(scriptSrcWithContent(t)).toHaveLength(1)
   })
 })
@@ -212,6 +233,81 @@ describe('no-html-in-title', () => {
   it('flags HTML in title', () => {
     const [d] = noHtmlInTitle(input({ title: 'Hello <b>World</b>' }))
     expect(d.ruleId).toBe('html-in-title')
+  })
+})
+
+describe('nested-head-properties', () => {
+  it('flags top-level head properties nested in bodyAttrs', () => {
+    const [d] = nestedHeadProperties(tag(
+      { title: 'Home', titleTemplate: '%s | Site', meta: '[object Object]' },
+      'bodyAttrs',
+      { valueKinds: new Map([['title', 'string'], ['titleTemplate', 'string'], ['meta', 'array']]) },
+    ))
+    expect(d.ruleId).toBe('nested-head-properties')
+    expect(d.message).toContain('"title", "titleTemplate", "meta"')
+    expect(d.at).toEqual({ kind: 'tag' })
+  })
+
+  it('flags top-level head properties nested in htmlAttrs', () => {
+    expect(nestedHeadProperties(tag(
+      { lang: 'en', script: '[object Object]' },
+      'htmlAttrs',
+      { valueKinds: new Map([['lang', 'string'], ['script', 'array']]) },
+    ))).toHaveLength(1)
+  })
+
+  it('allows valid global and data attributes', () => {
+    expect(nestedHeadProperties(tag(
+      { 'title': 'Tooltip', 'style': 'color: red', 'data-theme': 'dark' },
+      'bodyAttrs',
+    ))).toEqual([])
+  })
+
+  it('does not classify head-named scalar attributes as a nested head input', () => {
+    expect(nestedHeadProperties(tag(
+      { meta: 'custom-value', script: 'module', link: '/feed' },
+      'bodyAttrs',
+    ))).toEqual([])
+  })
+
+  it('does not use unresolved values as structural evidence', () => {
+    expect(nestedHeadProperties(tag(
+      { title: 'Tooltip' },
+      'bodyAttrs',
+      {
+        keys: new Set(['title', 'meta']),
+        valueKinds: new Map([['title', 'string'], ['meta', 'unknown']]),
+      },
+    ))).toEqual([])
+  })
+
+  it('does not treat null titleTemplate as a nested head input', () => {
+    expect(nestedHeadProperties(tag(
+      {},
+      'htmlAttrs',
+      {
+        keys: new Set(['titleTemplate']),
+        valueKinds: new Map([['titleTemplate', 'null']]),
+      },
+    ))).toEqual([])
+  })
+
+  it('recognises object-shaped singleton head fields', () => {
+    expect(nestedHeadProperties(tag(
+      {},
+      'bodyAttrs',
+      {
+        keys: new Set(['base', 'templateParams']),
+        valueKinds: new Map([['base', 'object'], ['templateParams', 'object']]),
+      },
+    ))).toHaveLength(1)
+  })
+
+  it('ignores ordinary head tags', () => {
+    expect(nestedHeadProperties(tag(
+      { name: 'description', content: 'Hello' },
+      'meta',
+    ))).toEqual([])
   })
 })
 

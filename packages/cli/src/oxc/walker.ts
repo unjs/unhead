@@ -34,6 +34,11 @@ export const HEAD_INPUT_TAG_KEYS = new Set([
   'style',
 ])
 
+export const HEAD_INPUT_ATTR_KEYS = new Set([
+  'htmlAttrs',
+  'bodyAttrs',
+])
+
 const TS_WRAPPERS = new Set(['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSTypeAssertion', 'TSInstantiationExpression'])
 
 function unwrapTS(node: Node | undefined): Node | undefined {
@@ -332,9 +337,16 @@ function descendHeadInput(arg: Node, name: string, visitor: HeadCallVisitor): vo
 
   for (const prop of arg.properties) {
     const key = getKeyName(prop)
-    if (!key || !HEAD_INPUT_TAG_KEYS.has(key))
+    if (!key)
       continue
     const value = unwrapTS(prop.value)
+    if (HEAD_INPUT_ATTR_KEYS.has(key)) {
+      if (value?.type === 'ObjectExpression')
+        visitor.onTag?.(value, key, { inArray: false })
+      continue
+    }
+    if (!HEAD_INPUT_TAG_KEYS.has(key))
+      continue
     if (value?.type === 'ArrayExpression') {
       for (const el of value.elements) {
         const inner = unwrapTS(el)
