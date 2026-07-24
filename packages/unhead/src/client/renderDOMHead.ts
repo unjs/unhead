@@ -1,6 +1,6 @@
 import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
-import { dedupeKey, hashTag, isMetaArrayDupeKey, MetaKeyAttrs } from '../utils/dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
@@ -13,6 +13,7 @@ type DomEventHandler = (this: Element, e: Event) => any
 type DomEventSideEffect = [EventTarget, string, DomEventHandler, EventListener, () => void]
 
 type DomStateInternal = DomState & {
+  _a: WeakSet<Element>
   _d: Document
   _l: Map<string, DomEventSideEffect>
 }
@@ -45,7 +46,7 @@ function cleanupDomState(state: DomStateInternal) {
 }
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+  const state: DomStateInternal = { _a: new WeakSet([dom.documentElement, dom.body]), _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
   for (const el of [...dom.body.children, ...dom.head.children]) {
     const tag = el.tagName.toLowerCase() as HeadTag['tag']
     if (!HasElementTags.has(tag))
@@ -61,6 +62,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
     while (state._e.has(k))
       k = `${dedupe}:${c++}`
     state._e.set(k, el)
+    state._a.add(el)
   }
   for (const entry of head.entries.values()) {
     if (entry._o !== undefined) {
@@ -133,6 +135,33 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       return prev
     }
 
+    function seedAttrCleanups(id: string, $el: Element) {
+      for (const k of $el.getAttributeNames()) {
+        const ck = `${id}:attr:${k}`
+        renderState._p[ck] ||= () => $el.removeAttribute(k)
+        if (k === 'class') {
+          for (const c of $el.classList) {
+            renderState._p[`${ck}:${c}`] ||= () => {
+              $el.classList.remove(c)
+              if (!$el.classList.length)
+                $el.removeAttribute(k)
+            }
+          }
+        }
+        else if (k === 'style') {
+          const style = ($el as HTMLElement).style
+          for (let i = 0; i < style.length; i++) {
+            const sk = style.item(i)
+            renderState._p[`${ck}:${sk}`] ||= () => {
+              style.removeProperty(sk)
+              if (!style.length)
+                $el.removeAttribute(k)
+            }
+          }
+        }
+      }
+    }
+
     function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
       const scope = `event:${k}`
       const key = `${id}:${scope}`
@@ -162,14 +191,9 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
       const isAttr = tag.tag.endsWith('Attrs')
       renderState._e.set(id, $el)
-      if (tag.tag === 'meta') {
-        for (const k of MetaKeyAttrs) {
-          if ($el.hasAttribute(k)) {
-            const ck = `${id}:attr:${k}`
-            renderState._p[ck] ||= () => $el.removeAttribute(k)
-          }
-        }
-      }
+      const adopted = renderState._a.delete($el)
+      if (adopted)
+        seedAttrCleanups(id, $el)
       if (!isAttr) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
@@ -192,6 +216,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               $el.innerHTML = ''
           }, true)
         }
+        if (adopted && (text == null || text === '') && (html == null || html === '') && $el.textContent)
+          renderState._p[`${id}:text`] ||= () => { $el.textContent = '' }
         const elKey = `${id}:el`
         renderState._s[elKey] = reclaim(elKey) || (() => {
           $el?.remove()
@@ -209,18 +235,29 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         }
         const ck = `${id}:attr:${k}`
         if (k === 'class' && v) {
+          delete renderState._p[ck]
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
-            renderState._s[key] = reclaim(key) || (() => $el.classList.remove(c))
+            renderState._s[key] = reclaim(key) || (() => {
+              $el.classList.remove(c)
+              if (!$el.classList.length)
+                $el.removeAttribute(k)
+            })
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
         }
         else if (k === 'style' && v) {
+          delete renderState._p[ck]
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
-            renderState._s[key] = reclaim(key) || (() => ($el as HTMLElement).style.removeProperty(sk))
-            ;($el as HTMLElement).style.setProperty(sk, sv)
+            const style = ($el as HTMLElement).style
+            renderState._s[key] = reclaim(key) || (() => {
+              style.removeProperty(sk)
+              if (!style.length)
+                $el.removeAttribute(k)
+            })
+            style.setProperty(sk, sv)
           }
         }
         else if (v !== false as any && v !== null) {

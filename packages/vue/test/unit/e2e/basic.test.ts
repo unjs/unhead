@@ -222,7 +222,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default" lang="en"><head>
+      "<html class="layout-default" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -262,7 +262,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default page-home" lang="en" style="background-color: red;"><head>
+      "<html class="layout-default page-home" lang="en" style="background-color: red;"><head>
       <meta charset="utf-8">
       <title>Home</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -280,7 +280,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default" lang="en" style=""><head>
+      "<html class="layout-default" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -322,7 +322,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default page-about" lang="en" style=""><head>
+      "<html class="layout-default page-about" lang="en"><head>
       <meta charset="utf-8">
       <title>About</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -332,14 +332,14 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       <script src="https://my-app.com/about.js"></script></head>
-      <body class="test overflow-hidden"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body class="overflow-hidden"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
 
     aboutPage.dispose()
 
     renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html data-my-app="" class="layout-default" lang="en" style=""><head>
+      "<html class="layout-default" lang="en"><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -349,7 +349,7 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       </head>
-      <body class="test"><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 

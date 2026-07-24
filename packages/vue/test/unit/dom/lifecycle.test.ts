@@ -160,7 +160,7 @@ describe('vue dom', () => {
       "<html><head>
 
       </head>
-      <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 })
