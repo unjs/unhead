@@ -402,7 +402,7 @@ describe('unhead e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       </head>
-      <body><div>
+      <body class=""><div>
       <h1>hello world</h1>
       </div></body></html>"
     `)

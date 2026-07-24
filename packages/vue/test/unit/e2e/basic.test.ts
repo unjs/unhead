@@ -280,7 +280,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="layout-default" lang="en"><head>
+      "<html class="layout-default" lang="en" style=""><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -322,7 +322,7 @@ describe('vue e2e', () => {
     renderDOMHead(csrHead, { document: dom.window.document })
 
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="layout-default page-about" lang="en"><head>
+      "<html class="layout-default page-about" lang="en" style=""><head>
       <meta charset="utf-8">
       <title>About</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -339,7 +339,7 @@ describe('vue e2e', () => {
 
     renderDOMHead(csrHead, { document: dom.window.document })
     expect(dom.serialize()).toMatchInlineSnapshot(`
-      "<html class="layout-default" lang="en"><head>
+      "<html class="layout-default" lang="en" style=""><head>
       <meta charset="utf-8">
       <title>My amazing site</title>
       <script src="https://analytics.example.com/script.js" defer="" async=""></script>
@@ -349,7 +349,7 @@ describe('vue e2e', () => {
       <meta property="og:image" content="https://cdn.example.com/image.jpg">
       <meta property="og:image" content="https://cdn.example.com/image2.jpg">
       </head>
-      <body><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
+      <body class=""><div id="app" data-v-app=""><div>hello world</div></div></body></html>"
     `)
   })
 

@@ -141,22 +141,14 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         renderState._p[ck] ||= () => $el.removeAttribute(k)
         if (k === 'class') {
           for (const c of $el.classList) {
-            renderState._p[`${ck}:${c}`] ||= () => {
-              $el.classList.remove(c)
-              if (!$el.classList.length)
-                $el.removeAttribute(k)
-            }
+            renderState._p[`${ck}:${c}`] ||= () => $el.classList.remove(c)
           }
         }
         else if (k === 'style') {
           const style = ($el as HTMLElement).style
           for (let i = 0; i < style.length; i++) {
             const sk = style.item(i)
-            renderState._p[`${ck}:${sk}`] ||= () => {
-              style.removeProperty(sk)
-              if (!style.length)
-                $el.removeAttribute(k)
-            }
+            renderState._p[`${ck}:${sk}`] ||= () => style.removeProperty(sk)
           }
         }
       }
@@ -238,11 +230,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           delete renderState._p[ck]
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
-            renderState._s[key] = reclaim(key) || (() => {
-              $el.classList.remove(c)
-              if (!$el.classList.length)
-                $el.removeAttribute(k)
-            })
+            renderState._s[key] = reclaim(key) || (() => $el.classList.remove(c))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
@@ -252,11 +240,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
             const style = ($el as HTMLElement).style
-            renderState._s[key] = reclaim(key) || (() => {
-              style.removeProperty(sk)
-              if (!style.length)
-                $el.removeAttribute(k)
-            })
+            renderState._s[key] = reclaim(key) || (() => style.removeProperty(sk))
             style.setProperty(sk, sv)
           }
         }
