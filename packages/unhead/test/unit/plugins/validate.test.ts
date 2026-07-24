@@ -162,11 +162,12 @@ describe('validatePlugin', () => {
     })
 
     it('handles numeric zero robots content', async () => {
-      const { head } = createValidationHead()
+      const { head, rules } = createValidationHead()
       head.push({ meta: [{ name: 'robots', content: 0 }] })
 
       expect(renderSSRHead(head).headTags).toBe('<meta name="robots" content="0">')
       await Promise.resolve()
+      expect(rules.find(r => r.id === 'missing-description')).toBeTruthy()
     })
   })
 
