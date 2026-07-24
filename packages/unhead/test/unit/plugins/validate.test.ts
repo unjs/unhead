@@ -103,6 +103,15 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'html-in-title')).toBeFalsy()
     })
 
+    it('accepts a numeric zero title', () => {
+      const { head, rules } = createValidationHead()
+      head.push({ title: 0 })
+
+      expect(renderSSRHead(head).headTags).toBe('<title>0</title>')
+      expect(rules.find(r => r.id === 'empty-title')).toBeFalsy()
+      expect(rules.find(r => r.id === 'missing-title')).toBeFalsy()
+    })
+
     it('warns on unresolved template params in title', () => {
       const { head, rules } = createValidationHead()
       // Push a title that will literally contain %siteName% after resolution
@@ -150,6 +159,15 @@ describe('validatePlugin', () => {
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
+    })
+
+    it('handles numeric zero robots content', async () => {
+      const { head, rules } = createValidationHead()
+      head.push({ meta: [{ name: 'robots', content: 0 }] })
+
+      expect(renderSSRHead(head).headTags).toBe('<meta name="robots" content="0">')
+      await Promise.resolve()
+      expect(rules.find(r => r.id === 'missing-description')).toBeTruthy()
     })
   })
 

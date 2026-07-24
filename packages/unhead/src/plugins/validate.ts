@@ -201,7 +201,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                   hasOgTags = true
                 if (key === 'description')
                   hasDescription = true
-                if (key === 'robots' && tag.props.content?.toLowerCase().includes('noindex'))
+                if (key === 'robots' && String(tag.props.content ?? '').toLowerCase().includes('noindex'))
                   isIndexable = false
               }
             }
@@ -265,7 +265,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 for (const diag of headInputPredicates['no-html-in-title'](titleInput))
                   report(diag.ruleId as ValidationRuleId, diag.message, 'warn', tag)
               }
-              const text = tag.textContent || ''
+              const text = String(tag.textContent ?? '')
               if (TEMPLATE_PARAM_RE.test(text))
                 report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
               if (!text.trim())

@@ -28,3 +28,5 @@ export const MetaTagsArrayable = /* @__PURE__ */ new Set([
 ])
 
 export const TagPriorityAliases = /* @__PURE__ */ { critical: -8, high: -1, low: 2 } as const
+
+export const hasContent = (value: unknown) => typeof value === 'number' ? Number.isFinite(value) : value
