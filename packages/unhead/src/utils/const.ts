@@ -15,12 +15,16 @@ export const UsesMergeStrategy = /* @__PURE__ */ new Set(['templateParams', 'htm
 export const MetaTagsArrayable = /* @__PURE__ */ new Set([
   'theme-color',
   'google-site-verification',
-  'og',
-  'article',
-  'book',
-  'profile',
-  'twitter',
   'author',
+  'og:locale:alternate',
+  'og:image',
+  'og:video',
+  'og:audio',
+  'article:author',
+  'article:tag',
+  'book:author',
+  'book:tag',
+  'twitter:image',
 ])
 
 export const TagPriorityAliases = /* @__PURE__ */ { critical: -8, high: -1, low: 2 } as const

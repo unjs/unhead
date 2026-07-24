@@ -8,11 +8,12 @@ export function isMetaArrayDupeKey(v: string) {
   const i = v.indexOf(':')
   if (i === -1)
     return false
-  const j = v.indexOf(':', i + 1)
-  const namespace = v.slice(i + 1, j === -1 ? v.length : j)
-  if (namespace === 'twitter')
-    return v === 'meta:twitter:image' || v.startsWith('meta:twitter:image:')
-  return MetaTagsArrayable.has(namespace)
+  const key = v.slice(i + 1)
+  return MetaTagsArrayable.has(key)
+    || key.startsWith('og:image:')
+    || key.startsWith('og:video:')
+    || key.startsWith('og:audio:')
+    || key.startsWith('twitter:image:')
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {

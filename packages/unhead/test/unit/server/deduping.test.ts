@@ -4,11 +4,15 @@ import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('dedupe', () => {
-  it('dedupes scalar Twitter metadata and preserves structured images', () => {
+  it('dedupes scalar social metadata and preserves structured images', () => {
     const head = createServerHeadWithContext()
 
     useHead(head, {
       meta: [
+        { property: 'og:title', content: 'Old Open Graph title' },
+        { property: 'og:title', content: 'New Open Graph title' },
+        { property: 'og:description', content: 'Old Open Graph description' },
+        { property: 'og:description', content: 'New Open Graph description' },
         { name: 'twitter:card', content: 'summary' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:title', content: 'Old title' },
@@ -18,6 +22,10 @@ describe('dedupe', () => {
       ],
     })
     useSeoMeta(head, {
+      ogImage: [
+        { url: '/first-og.png', alt: 'First Open Graph image' },
+        { url: '/second-og.png', alt: 'Second Open Graph image' },
+      ],
       twitterImage: [
         { url: '/first.png', alt: 'First image' },
         { url: '/second.png', alt: 'Second image' },
@@ -25,15 +33,19 @@ describe('dedupe', () => {
     })
 
     const { headTags } = renderSSRHead(head)
-    const contents = (name: string) =>
-      [...headTags.matchAll(new RegExp(`<meta name="${name}" content="([^"]+)">`, 'g'))]
+    const contents = (attribute: 'name' | 'property', name: string) =>
+      [...headTags.matchAll(new RegExp(`<meta ${attribute}="${name}" content="([^"]+)">`, 'g'))]
         .map(match => match[1])
 
-    expect(contents('twitter:card')).toEqual(['summary_large_image'])
-    expect(contents('twitter:title')).toEqual(['New title'])
-    expect(contents('twitter:description')).toEqual(['New description'])
-    expect(contents('twitter:image')).toEqual(['/first.png', '/second.png'])
-    expect(contents('twitter:image:alt')).toEqual(['First image', 'Second image'])
+    expect(contents('property', 'og:title')).toEqual(['New Open Graph title'])
+    expect(contents('property', 'og:description')).toEqual(['New Open Graph description'])
+    expect(contents('property', 'og:image')).toEqual(['/first-og.png', '/second-og.png'])
+    expect(contents('property', 'og:image:alt')).toEqual(['First Open Graph image', 'Second Open Graph image'])
+    expect(contents('name', 'twitter:card')).toEqual(['summary_large_image'])
+    expect(contents('name', 'twitter:title')).toEqual(['New title'])
+    expect(contents('name', 'twitter:description')).toEqual(['New description'])
+    expect(contents('name', 'twitter:image')).toEqual(['/first.png', '/second.png'])
+    expect(contents('name', 'twitter:image:alt')).toEqual(['First image', 'Second image'])
   })
 
   it('arrays', async () => {
