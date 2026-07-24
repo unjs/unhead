@@ -24,7 +24,8 @@ export function tagToString<T extends HeadTag>(tag: T) {
     return `${openTag}</${tag.tag}>`
 
   // dangerously using innerHTML, we don't encode this
-  let content = String(tag.textContent || tag.innerHTML || '')
+  const textContent = tag.textContent as unknown
+  let content = String(textContent === 0 ? textContent : tag.textContent || tag.innerHTML || '')
   content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
   return `${openTag}${content}</${tag.tag}>`
 }

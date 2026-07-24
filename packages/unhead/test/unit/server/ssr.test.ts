@@ -66,6 +66,16 @@ describe('ssr', () => {
     `)
   })
 
+  it('numeric zero title', () => {
+    const head = createServerHeadWithContext()
+
+    head.push({
+      title: 0,
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<title>0</title>')
+  })
+
   it('object title', async () => {
     const head = createServerHeadWithContext()
 

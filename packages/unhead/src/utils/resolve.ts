@@ -20,6 +20,10 @@ function isEmptyProps(props: Record<string, any>): boolean {
   return true
 }
 
+function isEmptyContent(value: unknown): boolean {
+  return !value && value !== 0
+}
+
 // matches hooks that receive references to resolved tags and may mutate them in place
 const TAG_MUTATING_HOOK_RE = /^tags:|:render/
 
@@ -136,11 +140,10 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
   let w = 0
   for (let t of tags) {
     const { innerHTML, tag, props } = t
-    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && !innerHTML && !t.textContent))
+    if (!ValidHeadTags.has(tag) || (isEmptyProps(props) && isEmptyContent(innerHTML) && isEmptyContent(t.textContent)))
       continue
     if (tag === 'meta') {
-      const content = props.content as unknown
-      if (!content && content !== 0 && !props['http-equiv'] && !props.charset)
+      if (isEmptyContent(props.content) && !props['http-equiv'] && !props.charset)
         continue
     }
     if (tag === 'script' && (innerHTML || t.textContent)) {

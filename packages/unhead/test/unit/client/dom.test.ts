@@ -14,6 +14,16 @@ describe('dom', () => {
     expect(head.resolvedOptions.document?.querySelector('meta[name="numeric-zero"]')?.getAttribute('content')).toBe('0')
   })
 
+  it('renders a numeric zero title', () => {
+    const head = useDOMHead()
+
+    head.push({
+      title: 0,
+    })
+
+    expect(head.resolvedOptions.document?.title).toBe('0')
+  })
+
   it('renders a fresh server head into an explicit document once', () => {
     const document = useDom().window.document
     const head = createServerHeadWithContext()
