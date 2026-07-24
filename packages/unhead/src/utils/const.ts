@@ -40,4 +40,4 @@ export const MetaTagsArrayable = /* @__PURE__ */ new Set([
   'author',
 ])
 
-export const hasContent = (value: unknown) => value || Number.isFinite(value)
+export const hasContent = (value: unknown) => typeof value === 'number' ? Number.isFinite(value) : value

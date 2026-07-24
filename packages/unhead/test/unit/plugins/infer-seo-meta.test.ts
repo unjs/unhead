@@ -73,6 +73,24 @@ describe('inferSeoMetaPlugin', () => {
     expect(headTags).toContain('<meta property="og:description" data-infer="" content="0">')
   })
 
+  it.each([false, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('does not infer invalid content: %s', async (content) => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({ twitterCard: false })],
+    })
+
+    head.push({
+      title: content,
+      meta: [{ name: 'description', content }],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).not.toContain('<title')
+    expect(headTags).not.toContain('name="description"')
+    expect(headTags).not.toContain('property="og:title"')
+    expect(headTags).not.toContain('property="og:description"')
+  })
+
   it('conflicts', async () => {
     const head = createHead({
       disableDefaults: true,
