@@ -33,6 +33,64 @@ describe('inferSeoMetaPlugin', () => {
       <meta property="og:description" data-infer="" content="My Description">"
     `)
   })
+
+  it('infers numeric zero title and description', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    head.push({
+      title: 0,
+      meta: [{ name: 'description', content: 0 }],
+    })
+
+    expect((await renderSSRHead(head)).headTags).toBe([
+      '<title>0</title>',
+      '<meta name="description" content="0">',
+      '<meta name="twitter:card" content="summary_large_image">',
+      '<meta property="og:title" data-infer="" content="0">',
+      '<meta property="og:description" data-infer="" content="0">',
+    ].join('\n'))
+  })
+
+  it('passes numeric zero to custom transformers as strings', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({
+        ogTitle: title => title!.trim(),
+        ogDescription: description => description!.trim(),
+      })],
+    })
+
+    head.push({
+      title: 0,
+      meta: [{ name: 'description', content: 0 }],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('<meta property="og:title" data-infer="" content="0">')
+    expect(headTags).toContain('<meta property="og:description" data-infer="" content="0">')
+  })
+
+  it.each([false, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as const)('does not infer invalid content: %s', async (content) => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin({ twitterCard: false })],
+    })
+
+    head.push({
+      title: content,
+      meta: [{ name: 'description', content }],
+    })
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).not.toContain('<title')
+    expect(headTags).not.toContain('name="description"')
+    expect(headTags).not.toContain('property="og:title"')
+    expect(headTags).not.toContain('property="og:description"')
+  })
+
   it('conflicts', async () => {
     const head = createHead({
       disableDefaults: true,

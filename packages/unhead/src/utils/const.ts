@@ -39,3 +39,5 @@ export const MetaTagsArrayable = /* @__PURE__ */ new Set([
   'twitter',
   'author',
 ])
+
+export const hasContent = (value: unknown) => typeof value === 'number' ? Number.isFinite(value) : value
