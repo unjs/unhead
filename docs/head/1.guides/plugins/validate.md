@@ -105,9 +105,12 @@ Google recommends [absolute canonical URLs](https://developers.google.com/search
 | `deprecated-prop-body` | Removed `body: true` tag property |
 | `deprecated-prop-children` | Removed `children` content property |
 | `deprecated-prop-hid-vmid` | Removed `hid` or `vmid` keys |
+| `deprecated-twitter-meta` | Non-Slack `twitter:*` metadata; use Open Graph metadata instead |
 | `missing-alias-sorting-plugin` | A `before:` or `after:` priority is used without `AliasSortingPlugin` |
 | `missing-template-params-plugin` | `templateParams` is used without `TemplateParamsPlugin` |
 | `numeric-tag-priority` | A numeric `tagPriority` is used instead of a named priority |
+
+`twitter:label1`, `twitter:label2`, `twitter:data1`, and `twitter:data2` remain supported for Slack link unfurls.
 
 ### Missing Companion Tags
 
