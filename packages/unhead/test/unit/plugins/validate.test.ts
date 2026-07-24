@@ -668,6 +668,32 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
     })
 
+    it('reports more than 50 prefetches as an advisory info finding', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 51 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      const rule = rules.find(r => r.id === 'too-many-prefetches')
+      expect(rule?.severity).toBe('info')
+      expect(rule?.message).toContain('advisory guardrail, not a standards limit')
+    })
+
+    it('does not report 50 or fewer prefetches', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 50 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-prefetches')).toBeFalsy()
+    })
+
     it('warns on redundant dns-prefetch when preconnect exists', () => {
       const { head, rules } = createValidationHead()
       head.push({
@@ -839,6 +865,18 @@ describe('validatePlugin', () => {
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
+    })
+
+    it('respects custom max and severity for too-many-prefetches', () => {
+      const { head, rules } = createValidationHead({ rules: { 'too-many-prefetches': ['warn', { max: 2 }] } })
+      head.push({
+        link: Array.from({ length: 3 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-prefetches')?.severity).toBe('warn')
     })
 
     it('respects custom max for too-many-preconnects', () => {
