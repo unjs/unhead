@@ -2,7 +2,7 @@ import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { processTemplateParams } from 'unhead/utils'
+import { hasOwn, processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
@@ -12,7 +12,7 @@ import { resolveMeta } from './core/resolve'
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || source[key] === undefined || key === '__proto__' || key === 'constructor' || key === 'prototype')
+    if (!hasOwn(source, key) || source[key] === undefined || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const isNestedObject = result[key]

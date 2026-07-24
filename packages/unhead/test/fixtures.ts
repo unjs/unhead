@@ -2,6 +2,24 @@ import type { SSRHeadPayload } from '@unhead/ssr'
 import type { ResolvableHead } from '../src/types'
 import { JSDOM } from 'jsdom'
 
+export function withoutObjectHasOwn<T>(fn: () => T): T {
+  const descriptor = Object.getOwnPropertyDescriptor(Object, 'hasOwn')
+  Object.defineProperty(Object, 'hasOwn', {
+    configurable: true,
+    value: undefined,
+    writable: true,
+  })
+  try {
+    return fn()
+  }
+  finally {
+    if (descriptor)
+      Object.defineProperty(Object, 'hasOwn', descriptor)
+    else
+      Reflect.deleteProperty(Object, 'hasOwn')
+  }
+}
+
 export function useDom(payload?: Partial<SSRHeadPayload>, extra?: Partial<SSRHeadPayload>) {
   if (typeof window !== 'undefined') {
     // reset all window.document.documentElement attributes
