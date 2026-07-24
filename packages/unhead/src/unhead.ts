@@ -15,6 +15,10 @@ import { isMetaArrayDupeKey, sortTags, tagWeight, UsesMergeStrategy, ValidHeadTa
 import { dedupeKey, hashTag } from './utils/dedupe'
 import { normalizeEntryToTags } from './utils/normalize'
 
+function isEmptyContent(value: unknown): boolean {
+  return !value && value !== 0
+}
+
 function registerPlugin(head: Unhead<any>, p: HeadPluginInput) {
   const plugin = (typeof p === 'function' ? p(head) : p)
   // key is required in types but we avoid breaking changes
@@ -193,12 +197,11 @@ export function createUnhead<T = ResolvableHead>(resolvedOptions: CreateHeadOpti
           continue
         }
         // avoid rendering empty tags
-        if (Object.keys(props).length === 0 && !t.innerHTML && !t.textContent) {
+        if (Object.keys(props).length === 0 && isEmptyContent(t.innerHTML) && isEmptyContent(t.textContent)) {
           continue
         }
         if (tag === 'meta') {
-          const content = props.content as unknown
-          if (!content && content !== 0 && !props['http-equiv'] && !props.charset) {
+          if (isEmptyContent(props.content) && !props['http-equiv'] && !props.charset) {
             continue
           }
         }

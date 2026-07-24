@@ -54,14 +54,14 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
               // @ts-expect-error untyped
               title = title(head._title)
             }
-            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title || ''
+            ogTitle.props!.content = options.ogTitle ? options.ogTitle(title) : title ?? ''
             ogTitle.processTemplateParams = true
           }
 
           const description = tagMap.get('meta:description')?.props?.content
           const ogDescription = tagMap.get('meta:og:description')
           if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
+            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description ?? ''
             ogDescription.processTemplateParams = true
           }
         },

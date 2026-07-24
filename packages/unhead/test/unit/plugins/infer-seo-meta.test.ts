@@ -33,6 +33,27 @@ describe('inferSeoMetaPlugin', () => {
       <meta property="og:description" data-infer="" content="My Description">"
     `)
   })
+
+  it('infers numeric zero title and description', async () => {
+    const head = createHead({
+      disableDefaults: true,
+      plugins: [InferSeoMetaPlugin()],
+    })
+
+    head.push({
+      title: 0,
+      meta: [{ name: 'description', content: 0 }],
+    })
+
+    expect((await renderSSRHead(head)).headTags).toBe([
+      '<title>0</title>',
+      '<meta name="description" content="0">',
+      '<meta name="twitter:card" content="summary_large_image">',
+      '<meta property="og:title" data-infer="" content="0">',
+      '<meta property="og:description" data-infer="" content="0">',
+    ].join('\n'))
+  })
+
   it('conflicts', async () => {
     const head = createHead({
       disableDefaults: true,

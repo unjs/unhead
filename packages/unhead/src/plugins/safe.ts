@@ -148,8 +148,9 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
     // meta is safe, except for http-equiv
     case 'meta':
       WhitelistAttributes.meta.forEach((key) => {
-        if (prev[key]) {
-          next[key] = prev[key]
+        const value = prev[key]
+        if (value || (value as unknown) === 0) {
+          next[key] = value
         }
       })
       break
