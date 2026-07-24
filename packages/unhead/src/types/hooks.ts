@@ -1,5 +1,5 @@
 import type { ScriptInstance } from '../scripts'
-import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
+import type { CreateClientHeadOptions, HeadEntry, HeadEntryOptions, Unhead } from './head'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -21,6 +21,17 @@ export interface RenderSSRHeadOptions {
 
 export interface EntryResolveCtx<T> { tags: HeadTag[], entries: HeadEntry<T>[] }
 
+export interface EntriesBeforePushCtx<T> {
+  readonly input: T
+  readonly options: Readonly<HeadEntryOptions>
+  shouldPush: boolean
+}
+
+export interface EntriesBeforeDisposeCtx<T> {
+  readonly entry: HeadEntry<T>
+  defer: (promise: PromiseLike<unknown>) => void
+}
+
 export interface DomBeforeRenderCtx extends ShouldRenderContext { tags: HeadTag[] }
 export interface ShouldRenderContext { shouldRender: boolean }
 
@@ -35,6 +46,7 @@ export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
 
 export interface CoreHeadHooks {
+  'entries:beforePush': (ctx: EntriesBeforePushCtx<any>) => SyncHookResult
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
   'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
@@ -43,6 +55,10 @@ export interface CoreHeadHooks {
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
   'script:updated': (ctx: { script: ScriptInstance<any> }) => void | Promise<void>
+}
+
+export interface ClientEntryHooks {
+  'entries:beforeDispose': (ctx: EntriesBeforeDisposeCtx<any>) => SyncHookResult
 }
 
 export interface DOMHeadHooks {
@@ -59,6 +75,6 @@ export interface SSRHeadHooks {
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }
 
-export type ClientHeadHooks = CoreHeadHooks & DOMHeadHooks
+export type ClientHeadHooks = CoreHeadHooks & ClientEntryHooks & DOMHeadHooks
 export type ServerHeadHooks = CoreHeadHooks & SSRHeadHooks
-export type HeadHooks = CoreHeadHooks & DOMHeadHooks & SSRHeadHooks
+export type HeadHooks = CoreHeadHooks & ClientEntryHooks & DOMHeadHooks & SSRHeadHooks

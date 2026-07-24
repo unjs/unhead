@@ -154,7 +154,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       }
       const source = captureSource(root)
       const active = _push(input, opts)
-      if (source)
+      if (source && active._i !== -1)
         stacks.set(active._i, source)
       const _dispose = active.dispose
       active.dispose = () => {
