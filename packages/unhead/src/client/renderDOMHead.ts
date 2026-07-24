@@ -164,9 +164,10 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       renderState._e.set(id, $el)
       if (tag.tag === 'meta') {
         for (const k of MetaKeyAttrs) {
-          const v = tag.props[k]
-          if ((v === undefined || v === null) && $el.hasAttribute(k))
-            $el.removeAttribute(k)
+          if ($el.hasAttribute(k)) {
+            const ck = `${id}:attr:${k}`
+            renderState._p[ck] ||= () => $el.removeAttribute(k)
+          }
         }
       }
       if (!isAttr) {
