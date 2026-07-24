@@ -100,7 +100,7 @@ export function nestedHeadProperties(tag: TagInput): Diagnostic[] {
 
   return [{
     ruleId: 'nested-head-properties',
-    message: `${tag.tagType} looks like a nested head input because it contains ${quotedList(match.fields.map(field => field.canonical))}. Move those head properties alongside ${tag.tagType}.`,
+    message: `${tag.tagType} looks like a nested head input because its shape includes ${quotedList(match.fields.map(field => field.canonical))}. Move misplaced head configuration alongside ${tag.tagType}; keep intentional element attributes nested.`,
     at: { kind: 'tag' },
   }]
 }
