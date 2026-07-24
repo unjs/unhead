@@ -1,7 +1,8 @@
 import type { Writable } from 'node:stream'
 import type { ReactNode } from 'react'
 import type { CreateStreamableServerHeadOptions, PreparedTemplate, StreamableHeadContext } from 'unhead/stream/server'
-import type { ResolvableHead, Unhead } from 'unhead/types'
+import type { ResolvableHead } from 'unhead/types'
+import type { UniversalUnheadProviderProps } from '../context'
 import { PassThrough } from 'node:stream'
 import { createElement, useContext } from 'react'
 import {
@@ -11,10 +12,7 @@ import {
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
-export interface UnheadProviderProps {
-  children: ReactNode
-  value: Unhead
-}
+export type UnheadProviderProps = UniversalUnheadProviderProps
 
 export function UnheadProvider({ value, children }: UnheadProviderProps): ReactNode {
   return createElement(UnheadContext.Provider, { value }, children)
