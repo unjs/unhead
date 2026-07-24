@@ -17,6 +17,8 @@ describe('resolveTags', () => {
         { name: 'absent' },
         { name: 'false', content: false },
         { name: 'nan', content: Number.NaN },
+        { name: 'positive-infinity', content: Number.POSITIVE_INFINITY },
+        { name: 'negative-infinity', content: Number.NEGATIVE_INFINITY },
       ],
     })
 
