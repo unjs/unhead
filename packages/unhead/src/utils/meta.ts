@@ -1,4 +1,4 @@
-import type { MetaFlat, MetaGeneric, ResolvableHead, UnheadMeta } from '../types'
+import type { MetaFlat, MetaGeneric, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
 
 export type MetaKeyType = 'name' | 'property' | 'http-equiv'
@@ -137,7 +137,7 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
     Object.entries(sanitizedValue)
       .map(([k, v]) => [`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`, v]),
   )
-  return (unpackMeta(input || {}) as UnheadMeta[])
+  return unpackMeta(input || {})
     .sort((a: any, b: any) => ((a[attr]?.length || 0) - (b[attr]?.length || 0)))
 }
 
@@ -171,7 +171,7 @@ export function resolvePackedMetaObjectValue(value: any, key: string): string {
   })
 }
 
-export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHead>['meta'] {
+export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   const extras: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
@@ -193,14 +193,14 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
 
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
-            const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
+            const meta = unpackMeta({ [metaKey]: propValue })
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
           }
           extras.push(...urlProps, ...otherProps)
         }
         else {
           extras.push(...(typeof v === 'string'
-            ? unpackMeta({ [key]: v }) as UnheadMeta[]
+            ? unpackMeta({ [key]: v })
             : handleObjectEntry(key, v)))
         }
       }
@@ -272,5 +272,5 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
       : m.content === '_null'
         ? { ...m, content: null }
         : m,
-  ) as Required<ResolvableHead>['meta']
+  )
 }

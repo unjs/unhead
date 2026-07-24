@@ -26,12 +26,27 @@ function normalizeReactPropAliases(props: unknown): Record<string, any> {
   return normalized
 }
 
+function flattenHeadElements(children: ReactNode): React.ReactElement[] {
+  const elements: React.ReactElement[] = []
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child))
+      return
+
+    if (child.type === React.Fragment) {
+      elements.push(...flattenHeadElements((child.props as { children?: ReactNode }).children))
+      return
+    }
+
+    elements.push(child)
+  })
+  return elements
+}
+
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   const head = useUnhead()
 
   // Process children only when they change
-  const processedElements = useMemo(() =>
-    React.Children.toArray(children).filter(React.isValidElement), [children])
+  const processedElements = useMemo(() => flattenHeadElements(children), [children])
 
   const getHeadChanges = useCallback(() => {
     const input: UseHeadInput = {

@@ -135,4 +135,32 @@ describe('simpleHead component in ssr', () => {
     expect(headTags).toContain('nomodule')
     expect(headTags).toContain('referrerpolicy="origin"')
   })
+
+  it('renders nested fragment children', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <>
+            {[
+              <meta key="meta" name="fragment-meta" content="nested" />,
+              <React.Fragment key="script">
+                {false}
+                <meta name="fragment-meta-2" content="nested-2" />
+                <script>window.__FRAGMENT_TEST__ = true</script>
+              </React.Fragment>,
+            ]}
+          </>
+        </Head>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<script>window.__FRAGMENT_TEST__ = true</script>
+      <meta name="fragment-meta" content="nested">
+      <meta name="fragment-meta-2" content="nested-2">"
+    `)
+  })
 })

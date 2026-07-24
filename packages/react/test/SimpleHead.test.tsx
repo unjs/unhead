@@ -122,4 +122,32 @@ describe('simpleHead component', () => {
     script?.dispatchEvent(new Event('load'))
     expect(onLoad).toHaveBeenCalledOnce()
   })
+
+  it('renders nested fragment children', async () => {
+    const head = createHead()
+
+    render(
+      <UnheadProvider head={head}>
+        <Head>
+          <>
+            {[
+              <meta key="meta" name="fragment-meta" content="nested" />,
+              <React.Fragment key="script">
+                {null}
+                <meta name="fragment-meta-2" content="nested-2" />
+                <script>window.__FRAGMENT_TEST__ = true</script>
+              </React.Fragment>,
+            ]}
+          </>
+        </Head>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toMatchInlineSnapshot(`
+      "<script>window.__FRAGMENT_TEST__ = true</script>
+      <meta name="fragment-meta" content="nested">
+      <meta name="fragment-meta-2" content="nested-2">"
+    `)
+  })
 })
