@@ -19,14 +19,14 @@ packages:
   - examples/*
   - docs
 overrides:
-  '@arethetypeswrong/core>fflate': 0.8.2
+  '@arethetypeswrong/core>fflate': 0.8.3
   # Keep Vite on one peer variant so plugin types share the same module identity.
-  '@vitejs/devtools': 0.4.1
+  '@vitejs/devtools': 0.4.2
   chokidar: 5.0.0
   # dedupe rolldown so unplugin resolves a single UnpluginInstance type across the
   # workspace; otherwise @unhead/bundler (rolldown@1.0.3) and the framework packages
   # (rolldown@1.1.2) produce incompatible plugin types and vue-tsc fails on bundler.ts
-  rolldown: 1.1.2
+  rolldown: 1.2.0
   unhead@3.1.8: workspace:*
 catalog:
   '@angular-devkit/build-angular': ^21.2.19
@@ -36,7 +36,7 @@ catalog:
   '@angular/compiler-cli': ^22.0.7
   '@angular/core': ^22.0.7
   '@angular/platform-browser': ^22.0.7
-  '@angular/platform-browser-dynamic': ^22.0.1
+  '@angular/platform-browser-dynamic': ^22.0.7
   '@angular/platform-server': ^22.0.7
   '@antfu/eslint-config': ^9.1.0
   '@arethetypeswrong/cli': ^0.18.5
@@ -54,8 +54,8 @@ catalog:
   '@types/jsdom': ^28.0.3
   '@types/react': ^19.2.17
   '@types/react-dom': ^19.2.3
-  '@vitejs/devtools': ^0.4.1
-  '@vitejs/devtools-kit': ^0.4.1
+  '@vitejs/devtools': ^0.4.2
+  '@vitejs/devtools-kit': ^0.4.2
   '@vue/server-renderer': ^3.5.40
   '@vueuse/nuxt': ^14.3.0
   bumpp: ^12.0.0
@@ -76,7 +76,7 @@ catalog:
   pathe: ^2.0.3
   react: ^19.2.7
   react-dom: ^19.2.7
-  rolldown: 1.1.2
+  rolldown: 1.2.0
   rollup: ^4.62.2
   rollup-plugin-visualizer: ^7.0.1
   shiki: ^4.3.1

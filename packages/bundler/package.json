@@ -81,11 +81,11 @@
   "peerDependencies": {
     "@unhead/cli": "workspace:^",
     "esbuild": ">=0.17.0",
-    "lightningcss": ">=1.20.0",
-    "rolldown": ">=1.0.0-beta.0",
+    "lightningcss": ">=1.33.0",
+    "rolldown": ">=1.2.0",
     "unhead": "workspace:^",
-    "vite": ">=6.4.2",
-    "webpack": ">=5.0.0"
+    "vite": ">=6.4.3",
+    "webpack": ">=5.108.4"
   },
   "peerDependenciesMeta": {
     "@unhead/cli": {

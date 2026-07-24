@@ -104,9 +104,9 @@
     "prepack": "pnpm run build"
   },
   "peerDependencies": {
-    "svelte": ">=5.38.0",
-    "vite": ">=6.4.2",
-    "webpack": ">=5.0.0"
+    "svelte": ">=5.56.7",
+    "vite": ">=6.4.3",
+    "webpack": ">=5.108.4"
   },
   "peerDependenciesMeta": {
     "vite": {
