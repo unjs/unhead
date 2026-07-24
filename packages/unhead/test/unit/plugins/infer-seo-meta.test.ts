@@ -73,7 +73,7 @@ describe('inferSeoMetaPlugin', () => {
     expect(headTags).toContain('<meta property="og:description" data-infer="" content="0">')
   })
 
-  it.each([false, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])('does not infer invalid content: %s', async (content) => {
+  it.each([false, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as const)('does not infer invalid content: %s', async (content) => {
     const head = createHead({
       disableDefaults: true,
       plugins: [InferSeoMetaPlugin({ twitterCard: false })],
