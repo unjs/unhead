@@ -26,4 +26,8 @@ describe('@unhead/bundler package', () => {
     expect(packageJson.peerDependenciesMeta?.['@vitejs/devtools-kit']).toEqual({ optional: true })
     expect(packageJson.devDependencies?.['@vitejs/devtools-kit']).toBeDefined()
   })
+
+  it('does not ship unused runtime dependencies', () => {
+    expect(packageJson.dependencies).not.toHaveProperty('ufo')
+  })
 })

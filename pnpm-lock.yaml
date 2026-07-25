@@ -169,9 +169,6 @@ catalogs:
     typescript:
       specifier: 6.0.3
       version: 6.0.3
-    ufo:
-      specifier: ^1.6.4
-      version: 1.6.4
     unbuild:
       specifier: ^3.6.1
       version: 3.6.1
@@ -854,9 +851,6 @@ importers:
       rolldown:
         specifier: 1.1.2
         version: 1.1.2
-      ufo:
-        specifier: 'catalog:'
-        version: 1.6.4
       unplugin:
         specifier: 'catalog:'
         version: 3.3.0(esbuild@0.28.1)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))

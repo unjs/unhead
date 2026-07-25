@@ -115,7 +115,6 @@
     "magic-string": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
-    "ufo": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
