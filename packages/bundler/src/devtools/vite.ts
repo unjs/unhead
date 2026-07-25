@@ -7,7 +7,7 @@ import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import MagicString from 'magic-string'
-import { parseAndWalk } from 'oxc-walker'
+import { parseAndWalkSource } from '../unplugin/parser'
 import { getConfigRpc, runLintRpc } from './rpc'
 
 const HEAD_COMPOSABLES = ['useHead', 'useSeoMeta', 'useHeadSafe', 'useScript']
@@ -60,7 +60,7 @@ function transformSourceLocations(code: string, id: string, root: string): { cod
     ? id.slice(root.length).replace(LEADING_SLASH_RE, '')
     : id
 
-  parseAndWalk(code, id, {
+  parseAndWalkSource(code, id, {
     parseOptions: { lang: 'ts' },
     enter(node: any) {
       if (node.type !== 'CallExpression')

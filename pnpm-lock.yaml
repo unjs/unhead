@@ -848,9 +848,6 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 1.0.0
-      oxc-parser:
-        specifier: 'catalog:'
-        version: 0.140.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))
@@ -867,6 +864,9 @@ importers:
         specifier: '>=5.0.0'
         version: 5.105.2(esbuild@0.28.1)
     devDependencies:
+      oxc-parser:
+        specifier: 'catalog:'
+        version: 0.140.0
       rollup:
         specifier: 'catalog:'
         version: 4.62.2
