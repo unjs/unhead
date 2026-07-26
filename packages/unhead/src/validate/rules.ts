@@ -13,6 +13,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'deprecated-prop-body',
   'deprecated-prop-children',
   'deprecated-prop-hid-vmid',
+  'deprecated-twitter-meta',
   'duplicate-resource-hint',
   'empty-meta-content',
   'empty-title',
@@ -46,6 +47,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'script-src-with-content',
   'too-many-fetchpriority-high',
   'too-many-preconnects',
+  'too-many-prefetches',
   'too-many-preloads',
   'twitter-handle-missing-at',
   'unresolved-template-param',
@@ -60,6 +62,7 @@ export interface ValidationRuleOptions {
   'inline-style-size': { maxKB: number }
   'meta-beyond-1mb': { maxBytes: number }
   'too-many-fetchpriority-high': { max: number }
+  'too-many-prefetches': { max: number }
   'too-many-preloads': { max: number }
   'too-many-preconnects': { max: number }
 }
