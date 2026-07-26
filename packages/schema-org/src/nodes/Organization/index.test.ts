@@ -3,7 +3,7 @@ import { defineOrganization, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
-  it('can be registered', async () => {
+  it('keeps a logo on the identity organization', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
         defineOrganization({
@@ -30,6 +30,9 @@ describe('defineOrganization', () => {
               "postalCode": "2000",
               "streetAddress": "123 st",
             },
+            "logo": {
+              "@id": "https://example.com/#logo",
+            },
             "name": "test",
             "url": "https://example.com/",
           },
@@ -41,21 +44,51 @@ describe('defineOrganization', () => {
             "inLanguage": "en-AU",
             "url": "https://example.com/logo.png",
           },
-          {
-            "@id": "https://example.com/#organization",
-            "@type": "Organization",
-            "address": {
-              "@type": "PostalAddress",
-              "addressCountry": "Australia",
-              "postalCode": "2000",
-              "streetAddress": "123 st",
-            },
-            "logo": "https://example.com/logo.png",
-            "name": "test",
-            "url": "https://example.com/",
-          },
         ]
       `)
+    })
+  })
+
+  it('uses the first logo when multiple images are provided', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'test',
+          logo: ['/primary-logo.png', '/alternate-logo.png'],
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const organization = graph.find(node => node['@id'] === 'https://example.com/#identity')
+      const logo = graph.find(node => node['@id'] === 'https://example.com/#logo')
+
+      expect(organization?.logo).toEqual({ '@id': 'https://example.com/#logo' })
+      expect(logo?.contentUrl).toBe('https://example.com/primary-logo.png')
+      expect(graph.filter(node => node['@type'] === 'Organization')).toHaveLength(1)
+      expect(graph.filter(node => node['@type'] === 'ImageObject')).toHaveLength(1)
+    })
+  })
+
+  it('retains a compact node for specialized organizations', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          '@type': 'Corporation',
+          'name': 'test',
+          'logo': '/logo.png',
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
+      const organization = graph.find(node => node['@id'] === 'https://example.com/#organization')
+
+      expect(identity).toMatchObject({ '@type': ['Organization', 'Corporation'] })
+      expect(identity).not.toHaveProperty('logo')
+      expect(organization).toMatchObject({
+        '@type': 'Organization',
+        'logo': 'https://example.com/logo.png',
+      })
     })
   })
 })

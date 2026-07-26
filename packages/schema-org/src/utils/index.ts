@@ -3,7 +3,42 @@ import type {
   Id,
   Thing,
 } from '../types'
-import { hasProtocol, withBase } from 'ufo'
+import { hasOwn } from 'unhead/utils'
+
+const PROTOCOL_RE = /^[\s\w\0+.-]{2,}:(?:[/\\]{2})?/
+const JOIN_LEADING_SLASH_RE = /^\.?\//
+
+export function hasProtocol(input: string) {
+  return PROTOCOL_RE.test(input)
+}
+
+export function withoutTrailingSlash(input = '') {
+  return (input.endsWith('/') ? input.slice(0, -1) : input) || '/'
+}
+
+export function withTrailingSlash(input = '') {
+  return input.endsWith('/') ? input : `${input}/`
+}
+
+export function joinURL(base: string, input: string) {
+  if (!input || input === '/')
+    return base || ''
+  return base
+    ? withTrailingSlash(base) + input.replace(JOIN_LEADING_SLASH_RE, '')
+    : input
+}
+
+export function withBase(input: string, base: string) {
+  if (!base || base === '/' || hasProtocol(input))
+    return input
+  const normalizedBase = withoutTrailingSlash(base)
+  if (input.startsWith(normalizedBase)) {
+    const nextChar = input[normalizedBase.length]
+    if (!nextChar || nextChar === '/' || nextChar === '?')
+      return input
+  }
+  return joinURL(normalizedBase, input)
+}
 
 export function idReference<T extends Thing>(node: T | string) {
   return {
@@ -60,7 +95,7 @@ export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any)
     node[field] = value
 }
 
-export interface ResolverOptions {
+export interface ResolverOptions<ResolvedInput = Thing> {
   /**
    * Return single images as an object.
    */
@@ -73,7 +108,7 @@ export interface ResolverOptions {
    * Generates ids for nodes.
    */
   generateId?: boolean
-  afterResolve?: (node: any) => void
+  afterResolve?: (node: ResolvedInput) => void
 }
 
 export function asArray(input: any) {
@@ -87,7 +122,7 @@ export function dedupeMerge<T extends Thing>(node: T, field: keyof T, value: any
   node[field] = [...data].filter(Boolean)
 }
 
-export function prefixId(url: string, id: Id | string) {
+export function prefixId(url: string | undefined, id: Id | string) {
   // already prefixed
   if (hasProtocol(id))
     return id as Id
@@ -124,9 +159,9 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
   node['@type'] = types.size === 1 ? val : [...types]
 }
 
-export function resolveWithBase(base: string, urlOrPath: string) {
+export function resolveWithBase(base: string | undefined, urlOrPath: string) {
   // can't apply base if there's a protocol
-  if (!urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
+  if (!base || !urlOrPath || hasProtocol(urlOrPath) || ((urlOrPath[0] !== '/') && (urlOrPath[0] !== '#')))
     return urlOrPath
   return withBase(urlOrPath, base)
 }
@@ -143,7 +178,7 @@ export function resolveAsGraphKey(key?: Id | string) {
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
-    if (!Object.hasOwn(obj, k))
+    if (!hasOwn(obj, k))
       continue
 
     const v = obj[k]
@@ -167,18 +202,21 @@ export function stripEmptyProperties(obj: any) {
  */
 export function stripNullProperties(obj: any) {
   if (Array.isArray(obj)) {
-    for (let i = obj.length - 1; i >= 0; i--) {
+    let next = 0
+    for (let i = 0; i < obj.length; i++) {
       const v = obj[i]
       if (v === null)
-        obj.splice(i, 1)
-      else if (typeof v === 'object' && v !== null)
+        continue
+      if (typeof v === 'object' && v !== null)
         stripNullProperties(v)
+      obj[next++] = v
     }
+    obj.length = next
     return obj
   }
 
   for (const k in obj) {
-    if (!Object.hasOwn(obj, k))
+    if (!hasOwn(obj, k))
       continue
 
     const v = obj[k]

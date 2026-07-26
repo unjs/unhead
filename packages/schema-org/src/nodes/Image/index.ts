@@ -1,4 +1,4 @@
-import type { Thing } from '../../types'
+import type { SchemaOrgNode, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
 import {
   resolveWithBase,
@@ -51,10 +51,15 @@ export interface ImageSimple extends Thing {
 
 export interface ImageObject extends ImageSimple {}
 
+/** Narrow an arbitrary graph node to an image with its required URL. */
+export function isImageObject(node: SchemaOrgNode): node is ImageObject {
+  return typeof node.url === 'string'
+}
+
 /**
  * Describes an individual image (usually in the context of an embedded media object).
  */
-export const imageResolver = defineSchemaOrgResolver<ImageObject>({
+export const imageResolver = defineSchemaOrgResolver<ImageObject, ImageObject | string>({
   alias: 'image',
   cast(input) {
     if (typeof input === 'string') {

@@ -1,19 +1,18 @@
 ---
 title: Breadcrumb Schema
-description: Use defineBreadcrumb() to add BreadcrumbList structured data. Display clickable navigation paths in Google search results for better user experience.
+description: Use defineBreadcrumb() to add BreadcrumbList structured data that describes a page's position in the site hierarchy.
 ---
 
 ## Schema.org Breadcrumb
 
-- **Type**: `defineBreadcrumb(input?: Breadcrumb)`{lang="ts"}
+- **Type**: `defineBreadcrumb<T extends Record<string, any>>(input?: BreadcrumbList & T)`{lang="ts"}
 
-  Describes an `Breadcrumb` on a `WebPage`.
+  Describes a `BreadcrumbList` on a WebPage.
 
 ## Useful Links
 
 - [BreadcrumbList - Schema.org](https://schema.org/BreadcrumbList)
-- [Breadcrumb Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/breadcrumb)
-- [Breadcrumb - Yoast](https://developer.yoast.com/features/schema/pieces/breadcrumb)
+- [Breadcrumb Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb)
 - [Recipe: Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs)
 
 ## Required properties
@@ -58,11 +57,13 @@ defineBreadcrumb({
  * A BreadcrumbList is an ItemList consisting of a chain of linked Web pages,
  * typically described using at least their URL and their name, and typically ending with the current page.
  */
-export interface BreadcrumbSimple extends ItemList {}
+export interface BreadcrumbSimple extends ItemList {
+  '@type'?: 'BreadcrumbList'
+}
 ```
 
 ## Related Schemas
 
-- [ItemList](/docs/schema-org/api/schema/item-list) - List structure
-- [Article](/docs/schema-org/api/schema/article) - Article navigation
-- [Product](/docs/schema-org/api/schema/product) - Product navigation
+- [ItemList](/docs/schema-org/api/schema/item-list): List structure
+- [Article](/docs/schema-org/api/schema/article): Article navigation
+- [Product](/docs/schema-org/api/schema/product): Product navigation

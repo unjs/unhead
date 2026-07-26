@@ -51,6 +51,7 @@
   "exclude": [
     "examples",
     "bench",
+    "test/fixtures/nuxt-cloudflare-module",
     "packages/angular",
     "packages/devtools-app"
   ]

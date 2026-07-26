@@ -1,4 +1,3 @@
-import type { SpeculationRules } from '../../../src/types'
 import { describe, it } from 'vitest'
 import { useHead } from '../../../src'
 import { useDelayedSerializedDom, useDOMHead } from '../../util'
@@ -19,7 +18,7 @@ describe('dom innerHTML', () => {
         },
         {
           type: 'speculationrules',
-          innerHTML: <SpeculationRules> {
+          innerHTML: {
             prefetch: [
               {
                 source: 'list',

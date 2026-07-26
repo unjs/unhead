@@ -24,9 +24,9 @@ export interface RatingSimple extends Thing {
 
 export interface Rating extends RatingSimple {}
 
-export const ratingResolver = defineSchemaOrgResolver<Rating>({
+export const ratingResolver = defineSchemaOrgResolver<Rating, Rating | number>({
   cast(node) {
-    if (node === 'number') {
+    if (typeof node === 'number') {
       return {
         ratingValue: node,
       }

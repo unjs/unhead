@@ -4,9 +4,7 @@ import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Offer } from '../Offer'
 import type { Organization } from '../Organization'
-import type { Person } from '../Person'
 import type { Review } from '../Review'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -107,8 +105,8 @@ export const productResolver = defineSchemaOrgResolver<Product>({
     return node
   },
   resolveRootNode(product, { find }) {
-    const webPage = find<WebPage>(PrimaryWebPageId)
-    const identity = find<Person | Organization>(IdentityId)
+    const webPage = find(PrimaryWebPageId)
+    const identity = find(IdentityId)
 
     if (identity)
       setIfEmpty(product, 'brand', idReference(identity))

@@ -7,20 +7,6 @@ export type NodeRelations<T> = Arrayable<NodeRelation<T>>
 export type Identity = Person | Organization
 export type ResolvableDate = string | Date
 export type OptionalSchemaOrgPrefix<T extends string> = T | `https://schema.org/${T}`
-export interface ResolvedMeta {
-  host: string
-  url: string
-  currency?: string
-  inLanguage?: string
-  image?: string
-  title?: string
-  description?: string
-  datePublished?: string
-  dateModified?: string
-
-  trailingSlash?: boolean
-}
-
 export interface MetaInput {
   /**
    * Whether to inject the scripts at the end of the body or in the head.
@@ -28,7 +14,7 @@ export interface MetaInput {
   tagPosition?: 'body' | 'head'
 
   trailingSlash?: boolean
-  host: string
+  host?: string
   url?: string
   path?: string
   currency?: string
@@ -40,18 +26,29 @@ export interface MetaInput {
   dateModified?: string
 }
 
+/** Metadata after URL and path defaults have been applied. */
+export interface ResolvedMeta extends MetaInput {
+  path: string
+  url: string
+}
+
 export interface UserConfig extends MetaInput {}
 
-export interface SchemaOrgNodeDefinition<ResolvedInput> {
+interface SchemaOrgNodeDefinitionBase<ResolvedInput> {
   alias?: string
-  cast?: (node: any, ctx: SchemaOrgGraph) => ResolvedInput
   idPrefix?: 'host' | 'url' | ['host' | 'url', string ]
   inheritMeta?: (keyof ResolvedMeta | { key: keyof ResolvedInput, meta: keyof ResolvedMeta })[]
-  defaults?: Partial<ResolvedInput> | ((ctx: SchemaOrgGraph) => Partial<any>)
+  defaults?: Partial<ResolvedInput> | ((ctx: SchemaOrgGraph) => Partial<ResolvedInput>)
   required?: (keyof ResolvedInput)[]
   resolve?: (node: ResolvedInput, ctx: SchemaOrgGraph) => ResolvedInput
   resolveRootNode?: (node: ResolvedInput, ctx: SchemaOrgGraph) => void
 }
+
+export type SchemaOrgNodeDefinition<ResolvedInput = Thing, CastInput = ResolvedInput>
+  = SchemaOrgNodeDefinitionBase<ResolvedInput>
+    & ([CastInput] extends [ResolvedInput]
+      ? { cast?: (node: CastInput, ctx: SchemaOrgGraph) => ResolvedInput }
+      : { cast: (node: CastInput, ctx: SchemaOrgGraph) => ResolvedInput })
 
 export interface Thing {
   '@type'?: Arrayable<string>
@@ -83,11 +80,15 @@ export interface Thing {
   /**
    * Allow any arbitrary keys
    */
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface SchemaOrgNode extends Thing {
-  _resolver?: SchemaOrgNodeDefinition<any>
+  /**
+   * Resolver metadata is intentionally opaque on heterogeneous graph nodes.
+   * @internal
+   */
+  _resolver?: unknown
   _dedupeStrategy?: 'replace' | 'merge'
 }
 
@@ -95,7 +96,14 @@ export type WithResolver<T> = T & {
   _resolver?: SchemaOrgNodeDefinition<T>
 }
 
-export interface IdReference {
+/**
+ * A minimal JSON-LD node that refers to another graph node by ID.
+ *
+ * References are still valid Things. Modelling that relationship keeps
+ * resolved relation values assignable to the schema properties they replace
+ * without weakening Thing's arbitrary-property boundary back to `any`.
+ */
+export interface IdReference extends Thing {
   /** IRI identifying the canonical address of this object. */
   '@id': string
 }

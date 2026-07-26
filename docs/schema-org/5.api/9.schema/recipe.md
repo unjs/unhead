@@ -1,38 +1,40 @@
 ---
 title: Recipe Schema
-description: Use defineRecipe() to add Recipe structured data. Enable rich snippets with cooking time, ingredients, nutrition, and step-by-step instructions in search.
+description: Use defineRecipe() to add Recipe structured data with cooking time, ingredients, nutrition, and step-by-step instructions.
 ---
 
 ## Schema.org Recipe
 
-- **Type**: `defineRecipe(input?: Recipe)`{lang="ts"}
+- **Type**: `defineRecipe<T extends Record<string, any>>(input?: Recipe & T)`{lang="ts"}
 
   Describes a Recipe, which contains a series of instructions, ingredients, and optional fields.
 
 ## Useful Links
 
 - [Schema.org Recipe](https://schema.org/Recipe)
-- [Recipe Structured Data](https://developers.google.com/search/docs/advanced/structured-data/recipe)
+- [Recipe Structured Data](https://developers.google.com/search/docs/appearance/structured-data/recipe)
 
-## Required properties
+## Google and Unhead requirements
+
+Google requires `name` and `image` for a Recipe rich result. Unhead can inherit those fields from page metadata. Separately, the `Recipe` TypeScript input requires `recipeIngredient` and `recipeInstructions`; Google recommends those two properties but does not require them for basic eligibility. Unhead performs no runtime validation of either set of rules.
 
 - **name** `string`
 
   A string describing the recipe.
 
-  A name can be provided using route meta on the `title` key, see [defaults](#defaults).
+  Route metadata on the `title` key can provide this value; see [Defaults](#defaults).
 
 - **image** `string|ImageObject`
 
   An image representing the completed recipe, referenced by ID.
 
-  A single image URL can be provided using route meta on the `image` key, see [defaults](#defaults).
+  Route metadata on the `image` key can provide a single image URL; see [Defaults](#defaults).
 
 - **recipeIngredient** `string[]`
 
   An array of strings representing each ingredient and quantity (e.g., "3 apples").
 
-- **recipeInstructions** `Arrayable<HowToStepInput>`
+- **recipeInstructions** `NodeRelations<HowToStep | string>`
 
   An array of instructions for how to prepare the recipe.
 
@@ -40,17 +42,16 @@ description: Use defineRecipe() to add Recipe structured data. Enable rich snipp
 
 - **@type**: `Recipe`
 - **@id**: `${canonicalUrl}#recipe`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **name**: page title from resolved metadata
+- **image**: resolved page image
+- **description**: resolved page description
+- **datePublished**: resolved page publication date
 - **author**: (conditional) set to the current page article's author if one exists
-- **mainEntityOfPage**: WebPage Reference
+- **mainEntityOfPage**: Article reference when an Article exists; otherwise, WebPage reference
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
 - `datePublished` can be resolved from Date objects
 
@@ -136,7 +137,7 @@ export interface RecipeSimple extends Thing {
   /**
    * The category of the recipe.
    */
-  recipeCategory?: 'Appetizer' | 'Breakfast' | 'Brunch' | 'Dessert' | 'Dinner' | 'Drink' | 'Lunch' | 'Main course' | 'Sauce' | 'Side dish' | 'Snack' | 'Starter'
+  recipeCategory?: 'Appetizer' | 'Breakfast' | 'Brunch' | 'Dessert' | 'Dinner' | 'Drink' | 'Lunch' | 'Main course' | 'Sauce' | 'Side dish' | 'Snack' | 'Starter' | (string & Record<never, never>)
   /**
    * A RestrictedDiet node, with a value (or array of values
    */
@@ -170,6 +171,6 @@ export interface NutritionInformation extends Thing {
 
 ## Related Schemas
 
-- [HowTo](/docs/schema-org/api/schema/how-to) - Step-by-step instructions
-- [Person](/docs/schema-org/api/schema/person) - Recipe author
-- [Organization](/docs/schema-org/api/schema/organization) - Recipe publisher
+- [HowTo](/docs/schema-org/api/schema/how-to): Step-by-step instructions
+- [Person](/docs/schema-org/api/schema/person): Recipe author
+- [Organization](/docs/schema-org/api/schema/organization): Recipe publisher

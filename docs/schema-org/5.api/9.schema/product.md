@@ -1,34 +1,37 @@
 ---
 title: Product Schema
-description: Use defineProduct() to add Product structured data for e-commerce. Enable rich snippets with pricing, reviews, and availability in Google search results.
+description: Use defineProduct() to add Product structured data for e-commerce pages with pricing, reviews, and availability.
 ---
 
 ## Schema.org Product
 
-- **Type**: `defineProduct(input?: Product)`{lang="ts"}
+- **Type**: `defineProduct<T extends Record<string, any>>(input?: Product & T)`{lang="ts"}
 
-  Describes an `Product` on a `WebPage`.
+  Describes a Product on a WebPage.
 
 ## Useful Links
 
 - [Product - Schema.org](https://schema.org/Product)
-- [Product Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/product)
-- [Product - Yoast](https://developer.yoast.com/features/schema/pieces/product)
-- [Recipe: eCommerce](/docs/schema-org/guides/recipes/e-commerce)
+- [Product Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/product)
+- [Recipe: E-commerce](/docs/schema-org/guides/recipes/e-commerce)
 
-## Required properties
+For a Google product snippet, `name` and at least one of `review`, `aggregateRating`, or `offers` are required. Google supports product rich results on pages focused on one product or variants of that product; see the [product snippet requirements](https://developers.google.com/search/docs/appearance/structured-data/product-snippet#structured-data-type-definitions).
+
+## Unhead input properties
+
+The `Product` TypeScript interface requires `name` and `image` when you pass an object. `defineProduct()` itself accepts no argument, and the resolver can inherit both values from page metadata. Unhead does not check Google's eligibility requirements at runtime.
 
 - **name** `string`
 
-  The name of the product. Provided via route meta key `title` or `name` manually.
+  Provide the product name through the `title` route metadata or set `name` explicitly.
 
-- **image**  `Arrayable<ImageInput>`
+- **image**  `NodeRelations<ImageObject | string>`
 
-  Link a primary image or a collection of images to used to the product
+  Link a primary image or a collection of images to the product.
 
 ## Recommended Properties
 
-- **offers** `OfferInput[]`
+- **offers** `NodeRelations<Offer | number>`
 
   Add [Offer](https://schema.org/Offer) properties.
 
@@ -36,17 +39,17 @@ description: Use defineProduct() to add Product structured data for e-commerce. 
 
 - **@type**: `Product`
 - **@id**: `${canonicalUrl}#product`
-- **name**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **name**: page title from resolved metadata
+- **image**: resolved page image
+- **description**: resolved page description
 - **brand**: id reference of the identity
-- **mainEntityOfPage** id reference of the web page
+- **mainEntityOfPage**: ID reference of the WebPage
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `image`'s are resolved to absolute
+- when `image` is a single string, it is resolved to a root ImageObject node with an absolute URL; arrays are left as the supplied image values
 
 ## Examples
 
@@ -59,11 +62,11 @@ defineProduct({
 })
 ```
 
-### Other Example
+### Product with an offer, rating, and review
 
 ```ts
 defineProduct({
-  name: 'test',
+  name: 'Ergonomic Desk Chair',
   image: '/product.png',
   offers: [
     { price: 50 },
@@ -75,7 +78,7 @@ defineProduct({
   },
   review: [
     {
-      name: 'Awesome product!',
+      name: 'Comfortable and easy to assemble.',
       author: {
         name: 'Harlan Wilton',
       },
@@ -101,9 +104,8 @@ export interface ProductSimple extends Thing {
    */
   name: string
   /**
-   * A reference-by-ID to one or more imageObject's which represent the product.
-   * - Must be at least 696 pixels wide.
-   * - Must be of the following formats+file extensions: .jpg, .png, .gif ,or .webp.
+   * A reference-by-ID to one or more ImageObjects which represent the product.
+   * Google eligibility has separate image guidelines; see the Product guide above.
    */
   image: NodeRelations<ImageObject | string>
   /**
@@ -111,7 +113,7 @@ export interface ProductSimple extends Thing {
    */
   offers?: NodeRelations<Offer | number>
   /**
-   *  A reference to an Organization piece, representing brand associated with the Product.
+   *  A reference to an Organization piece, representing the brand associated with the Product.
    */
   brand?: NodeRelation<Organization>
   /**
@@ -159,6 +161,6 @@ export interface ProductSimple extends Thing {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Product brand/manufacturer
-- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Product navigation
-- [ItemList](/docs/schema-org/api/schema/item-list) - Product lists
+- [Organization](/docs/schema-org/api/schema/organization): Product brand/manufacturer
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb): Product navigation
+- [ItemList](/docs/schema-org/api/schema/item-list): Product lists

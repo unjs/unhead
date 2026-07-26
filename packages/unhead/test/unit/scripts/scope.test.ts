@@ -45,7 +45,8 @@ describe('script scope', () => {
     expect(cleanupB).not.toHaveBeenCalled()
 
     scopeB.load()
-    head.hooks.callHook('script:updated', { script: { id: scopeB.id, status: 'loaded' } as any })
+    scopeB.script.status = 'loaded'
+    head.hooks.callHook('script:updated', { script: scopeB.script })
     await scopeB.script._loadPromise
 
     expect(loadedA).not.toHaveBeenCalled()
@@ -90,7 +91,8 @@ describe('script scope', () => {
     const script = scope.script
 
     script.load()
-    head.hooks.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks.callHook('script:updated', { script })
     await script._loadPromise
     scope.dispose()
 

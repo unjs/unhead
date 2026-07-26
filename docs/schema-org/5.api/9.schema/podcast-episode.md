@@ -1,18 +1,17 @@
 ---
 title: Podcast Episode Schema
-description: Use definePodcastEpisode() to add PodcastEpisode structured data. Enable podcast rich results with episode title, audio, and description.
+description: Use definePodcastEpisode() to describe a podcast episode, including its title, audio, dates, duration, transcript, and parent series.
 ---
 
 ## Schema.org PodcastEpisode
 
-**Type**: `definePodcastEpisode(input?: PodcastEpisode)`{lang="ts"}
+**Type**: `definePodcastEpisode<T extends Record<string, any>>(input?: PodcastEpisode & T)`{lang="ts"}
 
   Describes an individual podcast episode.
 
 ## Useful Links
 
 - [PodcastEpisode - Schema.org](https://schema.org/PodcastEpisode)
-- [Podcast Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/podcast)
 
 ## Required properties
 
@@ -20,11 +19,11 @@ description: Use definePodcastEpisode() to add PodcastEpisode structured data. E
 
   The name/title of the podcast episode.
 
+## Recommended properties
+
 - **url** `string`
 
   The URL of the episode page.
-
-## Recommended Properties
 
 - **audio** `string`
 
@@ -44,12 +43,13 @@ description: Use definePodcastEpisode() to add PodcastEpisode structured data. E
 
 - **partOfSeries** `NodeRelation<any>`
 
-  Reference to the podcast series this episode belongs to.
+  Reference to the podcast series this episode belongs to. Use `definePodcastSeries()` for a nested object if you want Unhead to attach the `PodcastSeries` resolver.
 
 ## Defaults
 
 - **@type**: `PodcastEpisode`
-- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **@id**: `${canonicalUrl}#/schema/podcast-episode/{n}`
+- **inLanguage**: `inLanguage` from resolved page metadata _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 
 ## Examples
 
@@ -63,7 +63,7 @@ definePodcastEpisode({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 definePodcastEpisode({
@@ -76,9 +76,9 @@ definePodcastEpisode({
   datePublished: new Date(2024, 5, 15),
   image: 'https://example.com/episode-42-cover.jpg',
   transcript: 'https://example.com/podcast/ep42-transcript',
-  partOfSeries: {
+  partOfSeries: definePodcastSeries({
     name: 'The Example Podcast',
-  },
+  }),
   author: {
     name: 'Jane Doe',
   },
@@ -112,5 +112,5 @@ export interface PodcastEpisodeSimple extends Thing {
 
 ## Related Schemas
 
-- [PodcastSeries](/docs/schema-org/api/schema/podcast-series) - Parent series
-- [Person](/docs/schema-org/api/schema/person) - Host, guests
+- [PodcastSeries](/docs/schema-org/api/schema/podcast-series): Parent series
+- [Person](/docs/schema-org/api/schema/person): Host, guests

@@ -1,12 +1,23 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
+import { parseAndWalk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
 import { resolveBuildConsumer } from './utils'
 
 const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
 const HEAD_SSR_FILTER_RE = /\bhead\.ssr\b/
-const HEAD_SSR_RE = new RegExp(HEAD_SSR_FILTER_RE.source, 'g')
+
+function isMutationTarget(parent: any, key: string | number | symbol | null | undefined): boolean {
+  if (key === 'left') {
+    return parent?.type === 'AssignmentExpression'
+      || parent?.type === 'ForInStatement'
+      || parent?.type === 'ForOfStatement'
+  }
+  return key === 'argument'
+    && (parent?.type === 'UpdateExpression'
+      || (parent?.type === 'UnaryExpression' && parent.operator === 'delete'))
+}
 
 export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() => {
   // Fallback build target for bundlers without a per-transform environment
@@ -51,9 +62,29 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
 
         const ssr = consumer === 'server'
         const s = new MagicString(code)
-        for (const match of code.matchAll(HEAD_SSR_RE)) {
-          s.overwrite(match.index!, match.index! + match[0].length, String(ssr))
-        }
+        let mutationTargetDepth = 0
+        parseAndWalk(code, id, {
+          parseOptions: { lang: 'js' },
+          enter(node: any, parent: any, { key }: any) {
+            if (isMutationTarget(parent, key))
+              mutationTargetDepth++
+            if (mutationTargetDepth
+              || node.type !== 'MemberExpression'
+              || node.computed
+              || node.object?.type !== 'Identifier'
+              || node.object.name !== 'head'
+              || node.property?.type !== 'Identifier'
+              || node.property.name !== 'ssr'
+              || code.slice(node.start, node.end) !== 'head.ssr') {
+              return
+            }
+            s.overwrite(node.start, node.end, String(ssr))
+          },
+          leave(_node: any, parent: any, { key }: any) {
+            if (isMutationTarget(parent, key))
+              mutationTargetDepth--
+          },
+        })
 
         if (s.hasChanged()) {
           return {

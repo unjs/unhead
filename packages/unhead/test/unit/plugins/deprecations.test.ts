@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { DeprecationsPlugin } from '../../../src/legacy'
+import { DeprecationsPlugin as DeprecationsPluginFromPlugins } from '../../../src/plugins'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('deprecationsPlugin', () => {
+  it('is available from the plugins compatibility entry', () => {
+    expect(DeprecationsPluginFromPlugins).toBe(DeprecationsPlugin)
+  })
+
   it('maps v1/v2 tag props to v3 equivalents', async () => {
     const head = createServerHeadWithContext({ plugins: [DeprecationsPlugin] })
     head.push({

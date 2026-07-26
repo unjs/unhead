@@ -1,20 +1,19 @@
 ---
 title: "Canonical Plugin"
-description: "Auto-generate canonical URLs and convert relative paths to absolute. Required for og:image, twitter:image, and SEO canonical links."
+description: "Normalize existing canonical, Open Graph, Twitter, pagination, and related URLs against a configured host."
 navigation.title: "Canonical Plugin"
 ---
 
-**Quick Answer:** The Canonical plugin automatically generates `<link rel="canonical">` tags and converts relative URLs to absolute URLs in your meta tags. Enable it with `CanonicalPlugin({ canonicalHost: 'https://mysite.com' })` in your head configuration.
+The Canonical plugin converts relative URLs in supported existing tags to absolute URLs. It does not create a canonical tag. Enable it with `CanonicalPlugin({ canonicalHost: 'https://mysite.com' })` in your head configuration.
 
-## Why Do I Need Absolute URLs in Meta Tags?
+## Why absolute URLs matter
 
-The Canonical Plugin automatically converts relative URLs to absolute URLs in your meta tags, which is essential for:
+The Canonical Plugin converts relative URLs to absolute URLs in supported meta and link tags. This matches the URL guidance for the two main standards it targets:
 
-- [Google SEO](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls): Requires absolute URLs for canonical links
-- [Facebook](https://developers.facebook.com/docs/sharing/webmasters/getting-started): Ignores relative image paths in Open Graph tags
-- [Twitter](https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup): Requires absolute URLs for Twitter Card images
+- [Google Search canonicalization](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls): Relative canonical paths are supported, but Google recommends absolute paths to avoid long-term configuration mistakes
+- [The Open Graph protocol](https://ogp.me/): Its URL type uses `http://` or `https://`, including `og:url`, image, audio, and video properties
 
-## What Tags Does the Plugin Transform?
+## Transformed tags
 
 The plugin resolves relative URLs to absolute URLs in all of these tags:
 
@@ -28,9 +27,9 @@ The plugin resolves relative URLs to absolute URLs in all of these tags:
 
 ### Link Tags
 
-- `rel="canonical"` — with query filtering, hash stripping, and trailing slash normalization
-- `rel="next"` / `rel="prev"` — pagination links
-- `rel="alternate"` — hreflang and feed links (critical for international SEO)
+- `rel="canonical"`: Query filtering, hash stripping, and trailing slash normalization
+- `rel="next"` / `rel="prev"`: Pagination links
+- `rel="alternate"`: `hreflang` and feed links
 - `rel="author"`, `rel="license"`, `rel="help"`, `rel="search"`, `rel="pingback"`
 
 ::code-block
@@ -47,9 +46,9 @@ The plugin resolves relative URLs to absolute URLs in all of these tags:
 
 ::
 
-## How Do I Set Up the Canonical Plugin?
+## Setup
 
-Install the plugin in both your server & client entries:
+Install the plugin in both your server and client entries:
 
 ::code-block
 
@@ -67,9 +66,9 @@ const head = createHead({
 
 ::
 
-## How Does Query Parameter Filtering Work?
+## Query parameter filtering
 
-Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate URLs that dilute your SEO. The plugin automatically strips **all** query parameters from canonical and `og:url` tags by default.
+Tracking parameters such as `utm_source`, `fbclid`, and `gclid` can expose the same content at many URLs. Google recommends [trimming parameters that do not change page content](https://developers.google.com/search/docs/crawling-indexing/url-structure#best-practices). The plugin strips **all** query parameters from canonical and `og:url` tags by default, so whitelist every parameter that identifies distinct content.
 
 ::code-block
 
@@ -83,9 +82,9 @@ Tracking parameters like `utm_source`, `fbclid`, and `gclid` create duplicate UR
 
 ::
 
-### How Do I Preserve Specific Query Parameters?
+### Preserving specific parameters
 
-If your site uses query parameters that affect content (e.g. pagination, filters), pass them via `queryWhitelist`:
+If your site uses query parameters that affect content (e.g., pagination, filters), pass them via `queryWhitelist`:
 
 ::code-block
 
@@ -100,14 +99,14 @@ CanonicalPlugin({
 
 Common parameters you may want to whitelist:
 
-- `page` - Pagination
-- `sort` - Sort order
-- `filter` - Content filters
-- `search`, `q` - Search queries
-- `category`, `tag` - Category/tag filters
-- `lang`, `locale` - Language variants
+- `page`: Pagination
+- `sort`: Sort order
+- `filter`: Content filters
+- `search`, `q`: Search queries
+- `category`, `tag`: Category/tag filters
+- `lang`, `locale`: Language variants
 
-### How Do I Disable Query Filtering?
+### Disabling query filtering
 
 Set `queryWhitelist` to `false` to keep all query parameters:
 
@@ -126,9 +125,9 @@ CanonicalPlugin({
 Query filtering only applies to `rel="canonical"` and `og:url` tags. Image and video URLs (`og:image`, `twitter:image`, etc.) are never filtered, since their query parameters often control dimensions and formats.
 ::
 
-## How Does Trailing Slash Normalization Work?
+## Trailing slash normalization
 
-Inconsistent trailing slashes (`/about` vs `/about/`) create duplicate canonical URLs. Use the `trailingSlash` option to enforce consistency:
+If your server exposes `/about` and `/about/` as separate URLs for the same content, use `trailingSlash` to emit one consistent canonical form:
 
 ::code-block
 
@@ -152,21 +151,21 @@ CanonicalPlugin({
 The root path `/` is never stripped of its trailing slash, even when `trailingSlash` is `false`.
 ::
 
-## Does the Plugin Strip URL Fragments?
+## URL fragments
 
-Yes. Hash fragments (e.g. `#section`) are automatically removed from canonical and `og:url` tags. Search engines ignore fragments, and leaving them in can create unnecessary URL variations.
+Hash fragments (e.g., `#section`) are automatically removed from canonical and `og:url` tags. Google [generally does not support fragments in canonical URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls#best-practices).
 
-## What Are the Configuration Options?
+## Configuration options
 
 ::code-block
 
 ```ts [Input]
 interface CanonicalPluginOptions {
-  // Your site's domain (required)
+  // Your site's domain; required during SSR
   canonicalHost?: string
   // Optional: Custom function to transform URLs
   customResolver?: (path: string) => string
-  // Query parameters to preserve (default: [] — strips all)
+  // Query parameters to preserve (default: []; strips all)
   // Set to false to disable filtering
   queryWhitelist?: string[] | false
   // Normalize trailing slashes (true = add, false = remove, undefined = leave as-is)
@@ -176,17 +175,17 @@ interface CanonicalPluginOptions {
 
 ::
 
-### What Happens If I Don't Set canonicalHost?
+### Omitting `canonicalHost`
 
 - If no `canonicalHost` is provided:
   - Client-side: Uses `window.location.origin`
-  - SSR: Leaves URLs as-is (relative)
+  - SSR: Throws while initializing the plugin because no valid base URL is available
 
 ::tip
 Always set `canonicalHost` explicitly for consistent behavior across environments.
 ::
 
-### How Do I Customize URL Resolution?
+### Custom URL resolution
 
 Use `customResolver` to implement custom URL transformation logic:
 
@@ -195,7 +194,9 @@ Use `customResolver` to implement custom URL transformation logic:
 ```ts [Input]
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
-  customResolver: path => new URL(`/cdn${path}`, 'https://example.com').toString()
+  customResolver: path => /^https?:\/\//i.test(path) || path.startsWith('//')
+    ? path
+    : new URL(`/cdn/${path.replace(/^\/+/, '')}`, 'https://example.com').toString()
 })
 ```
 
@@ -210,14 +211,14 @@ Example transformation:
 ```
 
 ```html [After]
-<meta property="og:image" content="https://mysite.com/cdn/hero.jpg">
+<meta property="og:image" content="https://example.com/cdn/hero.jpg">
 ```
 
 ::
 
-## How Do I Integrate with a CDN?
+## CDN integration
 
-Point image assets to your CDN domain:
+The custom resolver receives every supported URL, including URLs that are already absolute. Preserve those before routing relative image paths to a CDN:
 
 ::code-block
 
@@ -225,10 +226,12 @@ Point image assets to your CDN domain:
 CanonicalPlugin({
   canonicalHost: 'https://mysite.com',
   customResolver: (path) => {
+    if (/^https?:\/\//i.test(path) || path.startsWith('//'))
+      return path
     // Send image paths to CDN, keep other URLs on main domain
     if (path.match(/\.(jpg|png|webp|gif|svg)$/i))
-      return `https://cdn.mysite.com${path}`
-    return `https://mysite.com${path}`
+      return new URL(path, 'https://cdn.mysite.com').toString()
+    return new URL(path, 'https://mysite.com').toString()
   }
 })
 ```
@@ -286,7 +289,7 @@ const head = createHead({
 
 #svelte
 ```ts [src/entry-client.ts]
-import { createHead, UnheadContextKey } from '@unhead/svelte/client'
+import { createHead } from '@unhead/svelte/client'
 import { CanonicalPlugin } from 'unhead/plugins'
 
 const head = createHead()
@@ -297,7 +300,7 @@ head.use(CanonicalPlugin({
 
 #angular
 ```ts [app.config.ts]
-import { provideClientHead } from '@unhead/angular'
+import { provideClientHead } from '@unhead/angular/client'
 import { CanonicalPlugin } from 'unhead/plugins'
 
 export const appConfig: ApplicationConfig = {
@@ -317,5 +320,5 @@ export const appConfig: ApplicationConfig = {
 
 ## Related
 
-- [Template Params](/docs/head/guides/plugins/template-params) - Dynamic template parameters
-- [Infer SEO Meta](/docs/head/guides/plugins/infer-seo-meta-tags) - Auto-generate SEO tags
+- [Template Params](/docs/head/guides/plugins/template-params): Dynamic template parameters
+- [Infer SEO Meta](/docs/head/guides/plugins/infer-seo-meta-tags): Auto-generate SEO tags

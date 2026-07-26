@@ -1,7 +1,7 @@
 {
   "name": "unhead",
   "type": "module",
-  "version": "3.1.8",
+  "version": "3.2.3",
   "description": "Full-stack <head> manager built for any framework.",
   "author": {
     "name": "Harlan Wilton",
@@ -67,6 +67,7 @@
     },
     "./scripts": {
       "types": "./dist/scripts.d.ts",
+      "node": "./dist/scripts.node.mjs",
       "default": "./dist/scripts.mjs"
     },
     "./scripts/triggers": {

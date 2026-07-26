@@ -1,18 +1,20 @@
 ---
 title: TV Series Schema
-description: Use defineTVSeries() to add TVSeries structured data. Enable rich results for TV shows with cast, creator, ratings, and season info.
+description: Use defineTVSeries() to describe a TV show, including its cast, creator, ratings, seasons, episodes, dates, and trailer.
 ---
 
 ## Schema.org TVSeries
 
-**Type**: `defineTVSeries(input?: TVSeries)`{lang="ts"}
+**Type**: `defineTVSeries<T extends Record<string, any>>(input?: TVSeries & T)`{lang="ts"}
 
-  Describes a TV show series.
+  Describes a TV series.
 
 ## Useful Links
 
 - [TVSeries - Schema.org](https://schema.org/TVSeries)
 - [Video Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/video)
+
+TVSeries is a general Schema.org type, not Google's VideoObject result type. A nested trailer must meet Google's VideoObject requirements independently.
 
 ## Required properties
 
@@ -24,15 +26,15 @@ description: Use defineTVSeries() to add TVSeries structured data. Enable rich r
 
 - **actor** `NodeRelations<Person | string>`
 
-  Array of actors in the series. Resolves to [Person](/docs/schema-org/api/schema/person).
+  An array of actors in the series, resolved as [Person](/docs/schema-org/api/schema/person) nodes.
 
 - **director** `NodeRelations<Person | string>`
 
-  Array of directors of the series. Resolves to [Person](/docs/schema-org/api/schema/person).
+  An array of directors of the series, resolved as [Person](/docs/schema-org/api/schema/person) nodes.
 
 - **creator** `NodeRelations<Person | Organization | string>`
 
-  The creator of the series. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
+  The creator of the series. Plain objects and strings resolve as [Person](/docs/schema-org/api/schema/person); wrap an organization with `defineOrganization()` to select the Organization resolver.
 
 - **numberOfSeasons** `number`
 
@@ -45,7 +47,7 @@ description: Use defineTVSeries() to add TVSeries structured data. Enable rich r
 ## Defaults
 
 - **@type**: `TVSeries`
-- **@id**: `${canonicalHost}#tv-series`
+- **@id**: `${canonicalUrl}#/schema/tv-series/{n}`
 
 ## Examples
 
@@ -57,7 +59,7 @@ defineTVSeries({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineTVSeries({

@@ -1,27 +1,30 @@
 ---
 title: Food Establishment Schema
-description: Use defineFoodEstablishment() to add Restaurant structured data. Display menu, reservations, and cuisine info in Google Maps and local search.
+description: Use defineFoodEstablishment() to describe a food-related business, including its menu, reservations, cuisine, address, and opening hours.
 ---
 
 ## Schema.org FoodEstablishment
 
-**Type**: `defineFoodEstablishment(input?: FoodEstablishment)`{lang="ts"}
+**Type**: `defineFoodEstablishment<T extends Record<string, any>>(input?: FoodEstablishment & T)`{lang="ts"}
 
   Describes a food-related business.
 
 ## Useful Links
 
 - [FoodEstablishment - Schema.org](https://schema.org/FoodEstablishment)
+- [Local Business - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/local-business)
 
-## Required properties
+## Google requirements
+
+For [Google's LocalBusiness feature](https://developers.google.com/search/docs/appearance/structured-data/local-business#local-business-properties), a FoodEstablishment needs both `name` and a physical `address`. Unhead resolves the address but does not require or validate it.
 
 - **name** `string`
 
   The name of the business.
 
-- **address** `AddressInput` - [PostalAddress](https://schema.org/PostalAddress)
+- **address** `NodeRelations<PostalAddress>`: [PostalAddress](https://schema.org/PostalAddress)
 
-  Physical postal address of the business.
+  The physical address of the business.
 
 ## Recommended Properties
 
@@ -33,7 +36,7 @@ description: Use defineFoodEstablishment() to add Restaurant structured data. Di
 
   URL of the menu.
 
-- **openingHoursSpecification**  `OpeningHoursInput[]` - [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
+- **openingHoursSpecification**  `NodeRelations<OpeningHoursSpecification>`: [OpeningHoursSpecification](https://schema.org/OpeningHoursSpecification)
 
   The specification for when the business is open.
 
@@ -45,7 +48,7 @@ description: Use defineFoodEstablishment() to add Restaurant structured data. Di
 
 ```ts
 defineFoodEstablishment({
-  name: 'test',
+  name: 'Harbor Cafe',
   logo: '/logo.png',
   address: {
     addressCountry: 'Australia',
@@ -72,7 +75,7 @@ defineFoodEstablishment({
 - **@type**: `FoodEstablishment`
 - **@id**: `${canonicalHost}#identity`
 - **url**: `${canonicalHost}`
-- **currenciesAccepted**: `${options.defaultCurrency}` See [global options](/docs/schema-org/guides/core-concepts/params)
+- **currenciesAccepted**: `currency` from resolved page metadata. See [global options](/docs/schema-org/guides/core-concepts/params)
 
 ## Sub-Types
 
@@ -89,9 +92,9 @@ defineFoodEstablishment({
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `logo` will be resolved from a string into an ImageObject and added to `image`
+- for the primary identity, a string `logo` creates a root ImageObject with the `#logo` ID and a compact Organization node with the absolute logo URL
 
 - `@type` resolve: `Restaurant` -> `['Organization', 'LocalBusiness', 'FoodEstablishment', 'Restaurant']`
 
@@ -138,6 +141,6 @@ export interface FoodEstablishmentSimple extends Omit<LocalBusiness, '@type'> {
 
 ## Related Schemas
 
-- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Parent type
-- [Organization](/docs/schema-org/api/schema/organization) - Parent organization
-- [Event](/docs/schema-org/api/schema/event) - Restaurant events
+- [LocalBusiness](/docs/schema-org/api/schema/local-business): Parent type
+- [Organization](/docs/schema-org/api/schema/organization): Parent organization
+- [Event](/docs/schema-org/api/schema/event): Restaurant events

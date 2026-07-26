@@ -1,22 +1,18 @@
 ---
 title: Course Schema
-description: Use defineCourse() to add Course structured data. Enable rich results for educational courses with provider, description, and course details.
+description: Use defineCourse() to add Course structured data with a provider, description, and course details.
 ---
 
 ## Schema.org Course
 
-- **Type**: `defineCourse(input?: Course)`{lang="ts"}
+- **Type**: `defineCourse<T extends Record<string, any>>(input?: Course & T)`{lang="ts"}
 
   Describes a Course.
 
 ## Useful Links
 
 - [Schema.org Course](https://schema.org/Course)
-- [Course Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/course)
-
-::alert{type="warning"}
-🔨 Documentation in progress
-::
+- [Course List Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/course)
 
 ## Examples
 
@@ -30,6 +26,14 @@ defineCourse({
   },
 })
 ```
+
+For [Google's course list feature](https://developers.google.com/search/docs/appearance/structured-data/course), mark up at least three courses and add the required ItemList carousel properties. Each Course needs `name` and `description`, together with valid provider information.
+
+## Defaults and resolves
+
+- `@type` defaults to `Course`.
+- A root Course receives an ID such as `${canonicalUrl}#/schema/course/{n}`.
+- `provider` is resolved as a root Organization. When it is omitted, Unhead references the primary identity if one exists.
 
 ## Types
 
@@ -65,12 +69,8 @@ export interface CourseSimple extends Thing {
 }
 ```
 
-::alert{type="warning"}
-🔨 Schema in development
-::
-
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Course provider
-- [Person](/docs/schema-org/api/schema/person) - Instructor
-- [Event](/docs/schema-org/api/schema/event) - Course sessions
+- [Organization](/docs/schema-org/api/schema/organization): Course provider
+- [Person](/docs/schema-org/api/schema/person): Instructor
+- [Event](/docs/schema-org/api/schema/event): Course sessions
