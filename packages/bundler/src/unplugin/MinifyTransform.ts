@@ -3,19 +3,21 @@ import type { BaseTransformerTypes } from './types'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { minifyJSON } from 'unhead/minify'
 import { createUnplugin } from 'unplugin'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 
-const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
 const MINIFY_CACHE_MAX = 100
 
-type TagType = 'script' | 'style'
+type ContentType = 'script' | 'style' | 'json'
+type TagType = Exclude<ContentType, 'json'>
 
 interface PendingMinification {
   end: number
@@ -25,6 +27,8 @@ interface PendingMinification {
 }
 
 export type MinifyFn = (code: string) => Promise<string | null>
+
+const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
 export interface MinifyTransformOptions extends BaseTransformerTypes {
   /**
@@ -56,7 +60,8 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   const doJS = !!jsMinifier
   const doCSS = !!cssMinifier
 
-  const minifyCache: Record<TagType, Map<string, Promise<string | null>>> = {
+  const minifyCache: Record<ContentType, Map<string, Promise<string | null>>> = {
+    json: new Map(),
     script: new Map(),
     style: new Map(),
   }
@@ -143,8 +148,6 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
               if (tagType !== 'script' && tagType !== 'style')
                 continue
 
-              if (tagType === 'script' && !doJS)
-                continue
               if (tagType === 'style' && !doCSS)
                 continue
 
@@ -222,12 +225,17 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     tagType: TagType,
     pendingMinifications: PendingMinification[],
   ) {
-    // for scripts, check if it's a skippable type
+    let contentType: ContentType = tagType
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
-        (p: any) => p.type === 'Property' && p.key?.type === 'Identifier' && p.key.name === 'type',
+        (p: any) => p.type === 'Property'
+          && !p.computed
+          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
+            || (p.key?.type === 'Literal' && p.key.value === 'type')),
       )
-      if (typeProp?.value?.type === 'Literal' && SKIP_JS_TYPES.has(typeProp.value.value))
+      if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
+        contentType = 'json'
+      else if (!doJS)
         return
     }
 
@@ -247,7 +255,7 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, tagType),
+          minified: minifyStringContent(raw, contentType),
           raw,
           start: prop.value.start,
         })
@@ -259,7 +267,7 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, tagType),
+          minified: minifyStringContent(raw, contentType),
           raw,
           start: prop.value.start,
         })
@@ -267,12 +275,12 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     }
   }
 
-  function minifyStringContent(content: string, tagType: TagType): Promise<string | null> {
-    const minifier = tagType === 'script' ? jsMinifier : cssMinifier
+  function minifyStringContent(content: string, contentType: ContentType): Promise<string | null> {
+    const minifier = contentType === 'json' ? jsonMinifier : contentType === 'script' ? jsMinifier : cssMinifier
     if (!minifier)
       return Promise.resolve(null)
 
-    const cache = minifyCache[tagType]
+    const cache = minifyCache[contentType]
     const cached = cache.get(content)
     if (cached) {
       cache.delete(content)
