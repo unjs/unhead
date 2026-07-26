@@ -5,12 +5,10 @@ import type {
   ResolvableDate,
   Thing,
 } from '../../types'
-import type { Article } from '../Article'
 import type { HowToStep } from '../HowTo'
 import type { ImageObject } from '../Image'
 import type { Person } from '../Person'
 import type { VideoObject } from '../Video'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   idReference,
@@ -132,8 +130,8 @@ export const recipeResolver = defineSchemaOrgResolver<Recipe>({
     return node
   },
   resolveRootNode(node, { find }) {
-    const article = find<Article>(PrimaryArticleId)
-    const webPage = find<WebPage>(PrimaryWebPageId)
+    const article = find(PrimaryArticleId)
+    const webPage = find(PrimaryWebPageId)
     if (article)
       setIfEmpty(node, 'mainEntityOfPage', idReference(article))
     else if (webPage)

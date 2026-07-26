@@ -108,7 +108,8 @@ describe('svelte useScript', () => {
     })
 
     const script = (head as any)._scripts['//svelte-keyed.js']
-    head.hooks?.callHook('script:updated', { script: { id: script.id, status: 'loaded' } as any })
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
     await script._loadPromise
 
     expect(onCall).toHaveBeenCalledOnce()

@@ -1,5 +1,6 @@
 import type { NodeRelations, Thing } from '../../types'
 import type { ImageObject } from '../Image'
+import type { MonetaryAmount } from '../MonetaryAmount'
 import type { VideoObject } from '../Video'
 import type { HowToStep } from './HowToStep'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
@@ -21,7 +22,7 @@ export interface HowToSimple extends Thing {
   /**
    * An array of howToStep objects
    */
-  step: NodeRelations<HowToStep | string>[]
+  step: NodeRelations<HowToStep | string>
   /**
    * The total time required to perform all instructions or directions (including time to prepare the supplies),
    * in ISO 8601 duration format.
@@ -38,7 +39,7 @@ export interface HowToSimple extends Thing {
   /**
    * The estimated cost of the supplies consumed when performing instructions.
    */
-  estimatedCost?: string | unknown
+  estimatedCost?: string | MonetaryAmount
   /**
    * Image of the completed how-to.
    */
@@ -46,11 +47,11 @@ export interface HowToSimple extends Thing {
   /**
    * A supply consumed when performing instructions or a direction.
    */
-  supply?: string | unknown
+  supply?: string | Thing
   /**
    * An object used (but not consumed) when performing instructions or a direction.
    */
-  tool?: string | unknown
+  tool?: string | Thing
   /**
    * A video of the how-to. Follow the list of required and recommended Video properties.
    * Mark steps of the video with hasPart.

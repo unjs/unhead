@@ -1,6 +1,8 @@
 // @vitest-environment node
 import type { SSRHeadPayload } from 'unhead/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { computed } from 'vue'
+import { useHead } from '../src/composables'
 import {
   createBootstrapScript,
   createStreamableHead,
@@ -103,6 +105,19 @@ describe('vue streaming SSR', () => {
       expect(result).toContain('window.__unhead__.push')
       expect(result).toContain('Updated Title')
       expect(result).toContain('New description')
+    })
+
+    it('resolves computed values before serializing entries', () => {
+      const { head } = createStreamableHead()
+      renderSSRHeadShell(head, '<html><head></head><body>')
+
+      useHead({
+        style: [{ innerHTML: computed(() => 'body{background:red}') }],
+      }, { head })
+
+      const result = renderSSRHeadSuspenseChunk(head)
+
+      expect(result).toContain('body{background:red}')
     })
 
     it('clears entries after rendering chunk', async () => {

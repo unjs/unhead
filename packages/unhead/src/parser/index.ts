@@ -1,4 +1,5 @@
 import type { SerializableHead } from '../types'
+import { hasOwn } from '../utils/hasOwn'
 
 const TAG_HTML = 0
 const TAG_HEAD = 1
@@ -186,7 +187,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   const setAttr = (attrName: string, value: string) => {
     // Browsers keep the first duplicate attribute. Preserve that behavior so
     // template extraction cannot rewrite inert tags into active ones.
-    if (!Object.hasOwn(result, attrName))
+    if (!hasOwn(result, attrName))
       result[attrName] = value
   }
   const len = attrStr.length

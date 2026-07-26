@@ -9,6 +9,8 @@ import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
+import type { PodcastSeason } from '../PodcastSeason'
+import type { PodcastSeries } from '../PodcastSeries'
 import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
@@ -32,11 +34,11 @@ export interface PodcastEpisodeSimple extends Thing {
   /**
    * The season that this episode is part of.
    */
-  partOfSeason?: NodeRelation<any>
+  partOfSeason?: NodeRelation<PodcastSeason>
   /**
    * The podcast series that this episode is part of.
    */
-  partOfSeries?: NodeRelation<any>
+  partOfSeries?: NodeRelation<PodcastSeries>
   /**
    * The creator/host of the episode.
    */
@@ -56,7 +58,7 @@ export interface PodcastEpisodeSimple extends Thing {
   /**
    * The audio file URL or MediaObject for the episode.
    */
-  audio?: NodeRelation<any | string>
+  audio?: NodeRelation<Thing | string>
   /**
    * An image that represents the episode.
    */

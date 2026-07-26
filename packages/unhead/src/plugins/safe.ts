@@ -1,5 +1,6 @@
 import type { HeadSafe } from '../types/safeSchema'
 import type { HeadTag } from '../types/tags'
+import { hasContent } from '../utils/const'
 import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
@@ -162,7 +163,7 @@ function makeTagSafe(tag: HeadTag): HeadSafe | false {
     // meta is safe, except for http-equiv
     case 'meta':
       WhitelistAttributes.meta.forEach((key) => {
-        if (prev[key]) {
+        if (hasContent(prev[key])) {
           next[key] = prev[key]
         }
       })

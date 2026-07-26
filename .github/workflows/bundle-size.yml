@@ -37,12 +37,14 @@ jobs:
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
+          cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
           git diff --stat
           git checkout -f ${{ github.base_ref }}
           pnpm install --frozen-lockfile
+          node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json
           pnpm build
           # the base ref may predate some bundle configs (react, full, schema-org);
           # tolerate their absence so the other baselines are still produced and the
@@ -64,6 +66,7 @@ jobs:
       - name: Build PR bundles
         run: |
           pnpm install --frozen-lockfile
+          node bench/bundle/dependency-analyze.mjs > /tmp/pr-dependencies.json
           pnpm build
           pnpm test:bundle-size
           pnpm test:vue-bundle-size
@@ -86,7 +89,9 @@ jobs:
         id: analyze
         env:
           BASE_DIST: /tmp/base-dist
+          BASE_DEPENDENCIES: /tmp/base-dependencies.json
           BASE_PERF: /tmp/base-perf.json
+          PR_DEPENDENCIES: /tmp/pr-dependencies.json
           PR_PERF: /tmp/pr-perf.json
           PRECOMPILE_PERF: /tmp/precompile-perf.json
         run: |

@@ -663,12 +663,12 @@ describe('sealed static precompile transform', () => {
     expect(compiled(plan).headTags).toContain('var answer = 40 + 2; console.log(answer);')
   })
 
-  it('skips JSON-like scripts during configured JS minification', async () => {
+  it('uses built-in minification for JSON-like scripts', async () => {
     const js = vi.fn(async (value: string) => value.trim())
     const content = '{  "name": "example",  "value": true  }'
     const code = await transform(strictCall({ script: [{ type: 'application/ld+json', innerHTML: content }] }), { seoMeta: false, minify: { js } })
     const plan = execute(code!).useHead.mock.calls[0][0]
-    expect(compiled(plan).headTags).toContain(content)
+    expect(compiled(plan).headTags).toContain('{"name":"example","value":true}')
     expect(js).not.toHaveBeenCalled()
   })
 

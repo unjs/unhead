@@ -6,6 +6,7 @@ import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { minifyJSON } from 'unhead/minify'
 import { capoTagWeight, propsToString, tagToString } from 'unhead/server'
 import {
   dedupeKey,
@@ -69,7 +70,7 @@ const PRECOMPILE_FN_NAMES = new Set(['createHead', 'useHead', 'useSeoMeta'])
 // getter, identifier) could resolve to an object and MUST be left to runtime `unpackMeta`.
 const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
 
-const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
@@ -133,7 +134,8 @@ function getMemberName(node: any): string | undefined {
     return node.property.value
 }
 
-type TagType = 'script' | 'style'
+type ContentType = 'script' | 'style' | 'json'
+type TagType = Exclude<ContentType, 'json'>
 type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[] | { [key: string]: DecodedStaticValue }
 
 interface PendingMinification {
@@ -203,6 +205,7 @@ const PRECOMPILED_DEFAULT_PLAN = [
 ] as const
 
 export type MinifyFn = (code: string) => Promise<string | null>
+const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
   /**
@@ -364,17 +367,18 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   const doJS = !!jsMinifier
   const doCSS = !!cssMinifier
 
-  const minifyCache: Record<TagType, Map<string, Promise<string | null>>> = {
+  const minifyCache: Record<ContentType, Map<string, Promise<string | null>>> = {
+    json: new Map(),
     script: new Map(),
     style: new Map(),
   }
 
-  function minifyStringContent(content: string, tagType: TagType): Promise<string | null> {
-    const minifier = tagType === 'script' ? jsMinifier : cssMinifier
+  function minifyStringContent(content: string, contentType: ContentType): Promise<string | null> {
+    const minifier = contentType === 'json' ? jsonMinifier : contentType === 'script' ? jsMinifier : cssMinifier
     if (!minifier)
       return Promise.resolve(null)
 
-    const cache = minifyCache[tagType]
+    const cache = minifyCache[contentType]
     const cached = cache.get(content)
     if (cached) {
       cache.delete(content)
@@ -473,15 +477,16 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     const contentMinifications: Promise<void>[] = []
     for (const tag of minifyContents ? tags : []) {
       const tagType = tag.tag === 'script' || tag.tag === 'style' ? tag.tag : undefined
-      if (!tagType || (tagType === 'script' ? !doJS : !doCSS))
+      if (!tagType)
         continue
-      if (tagType === 'script' && SKIP_JS_TYPES.has(tag.props.type))
+      const contentType: ContentType = tagType === 'script' && JSON_TYPES.has(tag.props.type) ? 'json' : tagType
+      if (contentType === 'script' ? !doJS : contentType === 'style' ? !doCSS : false)
         continue
       for (const key of CONTENT_PROP_NAMES) {
         const raw = tag[key as 'innerHTML' | 'textContent']
         if (typeof raw !== 'string' || raw.length < 20)
           continue
-        contentMinifications.push(minifyStringContent(raw, tagType).then((result) => {
+        contentMinifications.push(minifyStringContent(raw, contentType).then((result) => {
           if (result && result.length < raw.length)
             tag[key as 'innerHTML' | 'textContent'] = result
         }))
@@ -559,15 +564,16 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     const contentMinifications: Promise<void>[] = []
     for (const tag of minifyContents ? tags : []) {
       const tagType = tag.tag === 'script' || tag.tag === 'style' ? tag.tag : undefined
-      if (!tagType || (tagType === 'script' ? !doJS : !doCSS))
+      if (!tagType)
         continue
-      if (tagType === 'script' && SKIP_JS_TYPES.has(tag.props.type))
+      const contentType: ContentType = tagType === 'script' && JSON_TYPES.has(tag.props.type) ? 'json' : tagType
+      if (contentType === 'script' ? !doJS : contentType === 'style' ? !doCSS : false)
         continue
       for (const key of CONTENT_PROP_NAMES) {
         const raw = tag[key as 'innerHTML' | 'textContent']
         if (typeof raw !== 'string' || raw.length < 20)
           continue
-        contentMinifications.push(minifyStringContent(raw, tagType).then((result) => {
+        contentMinifications.push(minifyStringContent(raw, contentType).then((result) => {
           if (result && result.length < raw.length)
             tag[key as 'innerHTML' | 'textContent'] = result
         }))
@@ -671,12 +677,17 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     tagType: TagType,
     pendingMinifications: PendingMinification[],
   ) {
-    // for scripts, check if it's a skippable type
+    let contentType: ContentType = tagType
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
-        (p: any) => p.type === 'Property' && p.key?.type === 'Identifier' && p.key.name === 'type',
+        (p: any) => p.type === 'Property'
+          && !p.computed
+          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
+            || (p.key?.type === 'Literal' && p.key.value === 'type')),
       )
-      if (typeProp?.value?.type === 'Literal' && SKIP_JS_TYPES.has(typeProp.value.value))
+      if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
+        contentType = 'json'
+      else if (!doJS)
         return
     }
 
@@ -696,7 +707,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, tagType),
+          minified: minifyStringContent(raw, contentType),
           raw,
           start: prop.value.start,
         })
@@ -708,7 +719,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, tagType),
+          minified: minifyStringContent(raw, contentType),
           raw,
           start: prop.value.start,
         })
@@ -1542,8 +1553,6 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             if (tagType !== 'script' && tagType !== 'style')
               continue
 
-            if (tagType === 'script' && !doJS)
-              continue
             if (tagType === 'style' && !doCSS)
               continue
 

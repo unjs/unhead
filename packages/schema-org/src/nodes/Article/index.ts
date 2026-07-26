@@ -8,7 +8,6 @@ import type {
 } from '../../types'
 import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   asArray,
@@ -20,6 +19,7 @@ import {
   setIfEmpty,
   trimLength,
 } from '../../utils'
+import { isImageObject } from '../Image'
 import { personResolver } from '../Person'
 import { PrimaryWebPageId } from '../WebPage'
 
@@ -99,7 +99,7 @@ export interface ArticleSimple extends Thing {
   /**
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
-  speakable?: unknown
+  speakable?: Thing
   /**
    * The year from which the article holds copyright status.
    */
@@ -152,15 +152,15 @@ export const articleResolver = defineSchemaOrgResolver<Article>({
     return node
   },
   resolveRootNode(node, { find, meta }) {
-    const webPage = find<WebPage>(PrimaryWebPageId)
-    const identity = find<Identity>(IdentityId)
+    const webPage = find(PrimaryWebPageId)
+    const identity = find(IdentityId)
 
     if (node.image && !node.thumbnailUrl) {
       const firstImage = asArray(node.image)[0] as ImageObject
       if (typeof firstImage === 'string')
         setIfEmpty(node, 'thumbnailUrl', resolveWithBase(meta.host, firstImage))
       else if (firstImage?.['@id'])
-        setIfEmpty(node, 'thumbnailUrl', find<ImageObject>(firstImage['@id'])?.url)
+        setIfEmpty(node, 'thumbnailUrl', find(firstImage['@id'], isImageObject)?.url)
     }
 
     if (identity) {

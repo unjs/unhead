@@ -117,6 +117,24 @@ describe('defineEvent', () => {
     })
   })
 
+  it('preserves time data for online events', async () => {
+    await useSetup(async (head) => {
+      const startDate = new Date(2021, 10, 10, 0)
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Online event',
+          eventAttendanceMode: 'OnlineEventAttendanceMode',
+          startDate,
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+
+      expect(event.startDate).toBe(startDate.toISOString())
+      expect(event.endDate).toBe(startDate.toISOString())
+    })
+  })
+
   it('handles virtual', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
@@ -145,6 +163,27 @@ describe('defineEvent', () => {
           },
         ]
       `)
+    })
+  })
+
+  it('detects plain physical locations', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'In person event',
+          location: {
+            name: 'Town Hall',
+            address: '1 Main Street',
+          },
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      expect(graphNodes[0].location).toEqual({
+        '@type': 'Place',
+        'name': 'Town Hall',
+        'address': '1 Main Street',
+      })
     })
   })
 
@@ -216,8 +255,9 @@ describe('defineEvent', () => {
                 "url": "https://operaonline.stream5.com/",
               },
               {
-                "@type": "VirtualLocation",
+                "@type": "Place",
                 "address": {
+                  "@type": "PostalAddress",
                   "addressCountry": "US",
                   "addressLocality": "Snickertown",
                   "addressRegion": "PA",
