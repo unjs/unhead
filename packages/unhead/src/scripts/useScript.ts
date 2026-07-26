@@ -16,6 +16,7 @@ import type {
   UseScriptScopeReturn,
   WarmupStrategy,
 } from './types'
+import { hasOwn } from '../utils/hasOwn'
 import { callHook } from '../utils/hooks'
 import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
 import { createScriptScope } from './scope'
@@ -57,7 +58,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   } = _options || {}
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
-  const prevScript = Object.hasOwn(scripts, id)
+  const prevScript = hasOwn(scripts, id)
     ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
     : undefined
   if (prevScript) {

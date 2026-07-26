@@ -15,7 +15,6 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
           continue
         }
         hasFlatMeta = true
-        // @ts-expect-error untyped
         for (const props of unpackMeta(t.props))
           tagsToAdd.push({ ...t, tag: 'meta', props })
       }

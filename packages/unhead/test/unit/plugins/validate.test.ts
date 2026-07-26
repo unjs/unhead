@@ -103,6 +103,15 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'html-in-title')).toBeFalsy()
     })
 
+    it('accepts a numeric zero title', () => {
+      const { head, rules } = createValidationHead()
+      head.push({ title: 0 })
+
+      expect(renderSSRHead(head).headTags).toBe('<title>0</title>')
+      expect(rules.find(r => r.id === 'empty-title')).toBeFalsy()
+      expect(rules.find(r => r.id === 'missing-title')).toBeFalsy()
+    })
+
     it('warns on unresolved template params in title', () => {
       const { head, rules } = createValidationHead()
       // Push a title that will literally contain %siteName% after resolution
@@ -150,6 +159,15 @@ describe('validatePlugin', () => {
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'missing-description')).toBeFalsy()
+    })
+
+    it('handles numeric zero robots content', async () => {
+      const { head, rules } = createValidationHead()
+      head.push({ meta: [{ name: 'robots', content: 0 }] })
+
+      expect(renderSSRHead(head).headTags).toBe('<meta name="robots" content="0">')
+      await Promise.resolve()
+      expect(rules.find(r => r.id === 'missing-description')).toBeTruthy()
     })
   })
 
@@ -301,6 +319,44 @@ describe('validatePlugin', () => {
       head.push({ meta: [{ name: 'twitter:site', content: '123456' }] })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'twitter-handle-missing-at')).toBeFalsy()
+    })
+  })
+
+  describe('deprecated Twitter metadata', () => {
+    it('warns on non-Slack twitter metadata without removing it', () => {
+      const { head, rules } = createValidationHead()
+      head.push({ meta: [{ name: 'twitter:title', content: 'Title' }] })
+
+      expect(renderSSRHead(head).headTags).toContain('name="twitter:title"')
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toMatchObject({
+        message: 'twitter:title is deprecated. Use Open Graph metadata instead.',
+        severity: 'warn',
+      })
+    })
+
+    it('allows Twitter metadata used by Slack unfurls', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        meta: [
+          { name: 'twitter:label1', content: 'Price' },
+          { name: 'twitter:data1', content: '$9.99' },
+          { name: 'twitter:label2', content: 'Availability' },
+          { name: 'twitter:data2', content: 'In stock' },
+        ],
+      })
+
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toBeFalsy()
+    })
+
+    it('respects the deprecated-twitter-meta rule config', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'deprecated-twitter-meta': 'off' },
+      })
+      head.push({ meta: [{ name: 'twitter:description', content: 'Description' }] })
+
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-twitter-meta')).toBeFalsy()
     })
   })
 
@@ -668,6 +724,32 @@ describe('validatePlugin', () => {
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeFalsy()
     })
 
+    it('reports more than 50 prefetches as an advisory info finding', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 51 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      const rule = rules.find(r => r.id === 'too-many-prefetches')
+      expect(rule?.severity).toBe('info')
+      expect(rule?.message).toContain('advisory guardrail, not a standards limit')
+    })
+
+    it('does not report 50 or fewer prefetches', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        link: Array.from({ length: 50 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-prefetches')).toBeFalsy()
+    })
+
     it('warns on redundant dns-prefetch when preconnect exists', () => {
       const { head, rules } = createValidationHead()
       head.push({
@@ -839,6 +921,18 @@ describe('validatePlugin', () => {
       })
       renderSSRHead(head)
       expect(rules.find(r => r.id === 'too-many-preloads')).toBeTruthy()
+    })
+
+    it('respects custom max and severity for too-many-prefetches', () => {
+      const { head, rules } = createValidationHead({ rules: { 'too-many-prefetches': ['warn', { max: 2 }] } })
+      head.push({
+        link: Array.from({ length: 3 }, (_, i) => ({
+          rel: 'prefetch' as const,
+          href: `/future-resource-${i}.js`,
+        })),
+      })
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'too-many-prefetches')?.severity).toBe('warn')
     })
 
     it('respects custom max for too-many-preconnects', () => {

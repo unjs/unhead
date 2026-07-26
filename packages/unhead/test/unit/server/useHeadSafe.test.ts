@@ -77,6 +77,16 @@ describe('dom useHeadSafe', () => {
     `)
   })
 
+  it('preserves numeric zero meta content', () => {
+    const head = createServerHeadWithContext()
+
+    useHeadSafe(head, {
+      meta: [{ name: 'numeric-zero', content: 0 }],
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="numeric-zero" content="0">')
+  })
+
   it('blocks XSS via data-* attribute name injection', async () => {
     const head = createServerHeadWithContext()
 

@@ -1,9 +1,57 @@
 import { describe, it } from 'vitest'
-import { useHead } from '../../../src'
+import { useHead, useSeoMeta } from '../../../src'
 import { renderSSRHead } from '../../../src/server'
 import { createServerHeadWithContext } from '../../util'
 
 describe('dedupe', () => {
+  it('dedupes scalar social metadata and preserves structured images', () => {
+    const head = createServerHeadWithContext()
+
+    useHead(head, {
+      meta: [
+        { property: 'og:title', content: 'Old Open Graph title' },
+        { property: 'og:title', content: 'New Open Graph title' },
+        { property: 'og:description', content: 'Old Open Graph description' },
+        { property: 'og:description', content: 'New Open Graph description' },
+        { name: 'twitter:card', content: 'summary' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Old title' },
+        { name: 'twitter:title', content: 'New title' },
+        { name: 'twitter:description', content: 'Old description' },
+        { name: 'twitter:description', content: 'New description' },
+      ],
+    })
+    useSeoMeta(head, {
+      ogImage: [
+        { url: '/first-og.png', alt: 'First Open Graph image' },
+        { url: '/second-og.png', alt: 'Second Open Graph image' },
+      ],
+      twitterImage: [
+        { url: '/first.png', alt: 'First image' },
+        { url: '/second.png', alt: 'Second image' },
+      ],
+    })
+
+    const { headTags } = renderSSRHead(head)
+    const contents = (attribute: 'name' | 'property', name: string) =>
+      [...headTags.matchAll(new RegExp(`<meta ${attribute}="${name}" content="([^"]+)">`, 'g'))]
+        .map(match => match[1])
+
+    expect(contents('property', 'og:title')).toEqual(['New Open Graph title'])
+    expect(contents('property', 'og:description')).toEqual(['New Open Graph description'])
+    expect(headTags).toContain(`<meta property="og:image" content="/first-og.png">
+<meta property="og:image:alt" content="First Open Graph image">
+<meta property="og:image" content="/second-og.png">
+<meta property="og:image:alt" content="Second Open Graph image">`)
+    expect(contents('name', 'twitter:card')).toEqual(['summary_large_image'])
+    expect(contents('name', 'twitter:title')).toEqual(['New title'])
+    expect(contents('name', 'twitter:description')).toEqual(['New description'])
+    expect(headTags).toContain(`<meta name="twitter:image" content="/first.png">
+<meta name="twitter:image:alt" content="First image">
+<meta name="twitter:image" content="/second.png">
+<meta name="twitter:image:alt" content="Second image">`)
+  })
+
   it('arrays', async () => {
     const head = createServerHeadWithContext()
 
