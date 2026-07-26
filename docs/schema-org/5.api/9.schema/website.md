@@ -1,13 +1,13 @@
 ---
 title: WebSite Schema
-description: Use defineWebSite() to add WebSite structured data. Establish your site identity and enable sitelinks search box in Google search results.
+description: Use defineWebSite() to add WebSite structured data and connect the site to its publisher, pages, language, and internal search action.
 ---
 
 ## Schema.org WebSite
 
-- **Type**: `defineWebSite(input?: WebSite)`{lang="ts"}
+- **Type**: `defineWebSite<T extends Record<string, any>>(input?: WebSite & T)`{lang="ts"}
 
-  Describes a WebSite. Parent to WebPage.
+  Describes a website and its relationship to its WebPage nodes.
 
 ## Useful Links
 
@@ -17,16 +17,14 @@ description: Use defineWebSite() to add WebSite structured data. Establish your 
 
 - **name** `string`
 
-  The title of the page.
-
-  A name can be provided using route meta on the `title` key, see [defaults](#defaults).
+  The name of the website. Supply it directly; the WebSite resolver does not inherit the page title.
 
 ## Defaults
 
 - **@type**: `WebSite`
 - **@id**: `${canonicalHost}#website`
 - **url**: `canonicalHost`
-- **inLanguage**: `options.defaultLanguage` _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
+- **inLanguage**: `inLanguage` from resolved page metadata _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
 - **publisher**: Identity reference
 
 ## Example
@@ -59,11 +57,11 @@ export interface WebSiteSimple extends Thing {
   /**
    * The date the website was first published.
    */
-  datePublished?: string
+  datePublished?: ResolvableDate
   /**
    * The date the website was last modified.
    */
-  dateModified?: string
+  dateModified?: ResolvableDate
   /**
    * A reference-by-ID to the Organization which publishes the WebSite
    * (or an array of Organization and Person in the case that the website represents an individual).

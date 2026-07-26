@@ -4,6 +4,11 @@ import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
 import { createScriptWaitFor } from '../../../src/scripts/waitFor'
 
+function markLoaded(head: any, script: any) {
+  script.status = 'loaded'
+  return head.hooks.callHook('script:updated', { script })
+}
+
 describe('useScript events', () => {
   it('keeps invoking legacy use() callbacks without arguments', () => {
     const head = createHead()
@@ -25,7 +30,7 @@ describe('useScript events', () => {
         resolve(true)
       })
       // Trigger the hook to simulate the script being loaded
-      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+      markLoaded(head, instance)
     })).toBeTruthy()
   })
   it('fires onLoaded when requestAnimationFrame is suspended (hidden tab) - #771', async () => {
@@ -41,7 +46,7 @@ describe('useScript events', () => {
         instance.onLoaded(() => {
           resolve(true)
         })
-        head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+        markLoaded(head, instance)
       })).resolves.toBeTruthy()
     }
     finally {
@@ -58,7 +63,7 @@ describe('useScript events', () => {
       const instance = useScript(head, '/script.js', {
         trigger: 'server',
       })
-      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+      markLoaded(head, instance)
       // register after the load hook already fired
       await expect(new Promise<true>((resolve) => {
         instance.onLoaded(() => {
@@ -92,7 +97,7 @@ describe('useScript events', () => {
         resolve()
       })
       // Trigger the hook to simulate the script being loaded
-      head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+      markLoaded(head, instance)
     })
     expect(calls).toMatchInlineSnapshot(`
       [
@@ -124,7 +129,7 @@ describe('useScript events', () => {
     })
 
     expect(instance._cbs.loaded).toHaveLength(1)
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await instance._loadPromise
 
     expect(calls).toEqual(['b'])
@@ -269,6 +274,39 @@ describe('useScript events', () => {
     expect(head._scripts?.[second.id]).toBe(second)
   })
 
+  it('ignores late lifecycle updates from a removed same-id script', async () => {
+    const head = createHead()
+    const first = useScript(head, '/same-id.js', { trigger: 'manual' })
+    first.load()
+    const firstInput = (first as any).input
+    first.remove()
+    await first._loadPromise
+
+    const api = { ready: true }
+    const second = useScript(head, '/same-id.js', {
+      trigger: 'manual',
+      use: () => api,
+    })
+    const onLoaded = vi.fn()
+    second.onLoaded(onLoaded)
+    second.load()
+
+    firstInput.onload(new Event('load'))
+    await Promise.resolve()
+    expect(first.status).toBe('removed')
+    expect(second.status).toBe('loading')
+    expect(onLoaded).not.toHaveBeenCalled()
+
+    first.status = 'loaded'
+    await head.hooks.callHook('script:updated', { script: first })
+    expect(second.status).toBe('loading')
+    expect(onLoaded).not.toHaveBeenCalled()
+
+    ;(second as any).input.onload(new Event('load'))
+    await expect(second._loadPromise).resolves.toBe(api)
+    expect(onLoaded).toHaveBeenCalledWith(api)
+  })
+
   it('drops settled trigger abort controllers from the set', async () => {
     const head = createHead()
     let resolveTrigger!: (value: boolean) => void
@@ -383,7 +421,7 @@ describe('useScript events', () => {
     const onLoaded = vi.fn()
     instance.onLoaded(onLoaded)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await Promise.resolve()
     expect(onLoaded).not.toHaveBeenCalled()
 
@@ -408,7 +446,7 @@ describe('useScript events', () => {
     })
     instance.onLoaded(afterError)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await instance._loadPromise
     await Promise.resolve()
 
@@ -431,7 +469,7 @@ describe('useScript events', () => {
       }),
     })
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     const api = { ready: true as const }
     resolveReady(api)
 
@@ -447,7 +485,7 @@ describe('useScript events', () => {
       resolve: ({ waitFor }) => waitFor(resolve => resolve(api)),
     })
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
 
     await expect(instance._loadPromise).resolves.toBe(api)
   })
@@ -472,7 +510,7 @@ describe('useScript events', () => {
       }),
     })
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     instance.remove()
 
     await expect(instance._loadPromise).resolves.toBe(false)
@@ -496,7 +534,7 @@ describe('useScript events', () => {
     const onLoaded = vi.fn()
     instance.onLoaded(onLoaded)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     instance.remove()
 
     expect(signal.aborted).toBe(true)
@@ -518,7 +556,7 @@ describe('useScript events', () => {
     const onError = vi.fn()
     instance.onError(onError)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await expect(instance._loadPromise).resolves.toBe(false)
     expect(instance.status).toBe('error')
     expect(onError).toHaveBeenCalledWith(error)
@@ -534,7 +572,7 @@ describe('useScript events', () => {
     const onError = vi.fn()
     instance.onError(onError)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     reject(undefined)
     await expect(instance._loadPromise).resolves.toBe(false)
     expect(instance.status).toBe('error')
@@ -548,7 +586,7 @@ describe('useScript events', () => {
       use: async () => undefined,
     })
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await expect(instance._loadPromise).resolves.toBe(false)
 
     const onError = vi.fn()
@@ -570,7 +608,7 @@ describe('useScript events', () => {
     const onError = vi.fn()
     instance.onError(onError)
 
-    head.hooks.callHook('script:updated', { script: { id: instance.id, status: 'loaded' } as any })
+    markLoaded(head, instance)
     await expect(instance._loadPromise).resolves.toBe(false)
     expect(instance.status).toBe('error')
     expect(onError).toHaveBeenCalledWith(error)

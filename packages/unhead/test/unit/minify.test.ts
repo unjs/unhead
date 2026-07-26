@@ -1,3 +1,4 @@
+import { fc, it as fcIt } from '@fast-check/vitest'
 import { describe, expect, it } from 'vitest'
 import { minifyCSS, minifyJS, minifyJSON } from '../../src/minify'
 
@@ -118,7 +119,33 @@ describe('minifyJSON', () => {
     expect(minifyJSON(input)).toBe('{"a":1,"b":[1,2,3]}')
   })
 
+  it('returns compact JSON unchanged', () => {
+    const input = '{"value":"spaces stay inside strings"}'
+    expect(minifyJSON(input)).toBe(input)
+  })
+
   it('returns invalid JSON unchanged', () => {
     expect(minifyJSON('not json')).toBe('not json')
+  })
+
+  it('preserves numeric tokens and encoded closing tags', () => {
+    const input = '{\n  "id": 9007199254740993,\n  "close": "\\u003C/script>"\n}'
+    expect(minifyJSON(input)).toBe('{"id":9007199254740993,"close":"\\u003C/script>"}')
+  })
+
+  it('preserves whitespace inside strings', () => {
+    expect(minifyJSON('{ "value": "a  b\\tc" }')).toBe('{"value":"a  b\\tc"}')
+  })
+
+  fcIt.prop([fc.jsonValue()])('preserves arbitrary valid JSON', (value) => {
+    const compact = JSON.stringify(value)
+    const pretty = JSON.stringify(value, null, 2)
+    expect(minifyJSON(compact)).toBe(compact)
+    expect(minifyJSON(pretty)).toBe(compact)
+  })
+
+  fcIt.prop([fc.jsonValue()])('returns arbitrary invalid JSON unchanged', (value) => {
+    const invalid = ` \n${JSON.stringify(value)} trailing`
+    expect(minifyJSON(invalid)).toBe(invalid)
   })
 })

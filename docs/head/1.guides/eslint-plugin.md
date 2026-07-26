@@ -4,9 +4,9 @@ description: "Catch unhead misuse, type-narrowing gaps, and v2-to-v3 migration p
 navigation.title: "ESLint Plugin"
 ---
 
-**Quick Answer:** `@unhead/eslint-plugin` lints calls into `useHead`, `useSeoMeta`, and friends for issues TypeScript can't catch. The recommended config wires up 13 rules and an autofix-driven migration mode.
+`@unhead/eslint-plugin` checks `useHead`, `useSeoMeta`, and related calls for problems that TypeScript cannot detect. The recommended config enables 13 rules; the migration config also enables `prefer-define-helpers`.
 
-## What Does This Plugin Do?
+## Reported problems
 
 Type narrowing catches a lot of broken `useHead()` / `useSeoMeta()` calls, but not everything. The ESLint plugin walks tag literals at lint time and surfaces issues like:
 
@@ -19,7 +19,7 @@ Type narrowing catches a lot of broken `useHead()` / `useSeoMeta()` calls, but n
 
 These overlap with the runtime [Validate Plugin](/docs/head/guides/plugins/validate) and the `unhead` CLI by design: the same rule IDs flow through static lint, runtime warnings, and CLI reports.
 
-## How Do I Set Up the Plugin?
+## Setup
 
 Install:
 
@@ -45,9 +45,9 @@ export default [
 
 ::
 
-That's it. The config registers the `@unhead` plugin namespace and enables every recommended rule. No `files` glob is needed: the rules only fire on calls into the unhead API, so non-head code is silently ignored.
+The config registers the `@unhead` plugin namespace and enables every recommended rule. No `files` glob is needed because the rules inspect only calls into the Unhead API.
 
-## How Do I Migrate from v2?
+## The migration config
 
 Swap `recommended` for `migration`:
 
@@ -63,30 +63,30 @@ export default [
 
 ::
 
-`configs.migration` enables everything in `recommended` plus `prefer-define-helpers`, which wraps `link` / `script` tag object literals in `defineLink` / `defineScript` via autofix. Combined with `no-deprecated-props` (also autofixable), `eslint --fix` handles the bulk of a v2-to-v3 migration mechanically.
+`configs.migration` enables everything in `recommended` plus `prefer-define-helpers`, which wraps `link` and `script` tag object literals in `defineLink` and `defineScript`. The rule can autofix when the corresponding helper is already imported; otherwise, it offers a suggestion. Combined with the autofixable `no-deprecated-props` rule, this handles much of a v2-to-v3 migration mechanically.
 
-> Don't want to wire ESLint? `@unhead/cli` ships the same rules as a standalone command (`unhead audit` / `unhead migrate`) running on a native oxc parser, no parser configuration, works out-of-the-box on `.ts` / `.tsx` / `.vue` / `.svelte`.
+> `@unhead/cli` exposes the same rules through `unhead audit` and `unhead migrate`. It uses the oxc parser directly for `.ts`, `.tsx`, `.vue`, and `.svelte` files, without an ESLint parser configuration.
 
-## What Rules Are Included?
+## Rules
 
 | Rule | Default | Autofix | What it catches |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `defer-on-module-script` | `warn` | ✓ | `<script type="module" defer>` (defer is redundant) |
-| `empty-meta-content` | `warn` |   | `<meta name="description" content="">` |
+| `empty-meta-content` | `warn` | | `<meta name="description" content="">` |
 | `no-deprecated-props` | `error` | ✓ | v2 props: `children`, `hid`, `vmid`, `body: true` |
-| `no-html-in-title` | `warn` |   | HTML chars in `title` (will be escaped, not rendered) |
+| `no-html-in-title` | `warn` | | HTML chars in `title` (will be escaped, not rendered) |
 | `no-unknown-meta` | `warn` | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
-| `non-absolute-canonical` | `warn` |   | relative URLs in `<link rel="canonical">` |
+| `non-absolute-canonical` | `warn` | | relative URLs in `<link rel="canonical">` |
 | `numeric-tag-priority` | `warn` | suggestion | numeric `tagPriority` (suggests `'critical'`, `'high'`, or `'low'`) |
-| `prefer-define-helpers` | off (migration only) | ✓ | wraps `link` / `script` literals in `defineLink` / `defineScript` |
+| `prefer-define-helpers` | off (migration only) | conditional | wraps `link` / `script` literals in `defineLink` / `defineScript`; autofixes when the helper is imported |
 | `preload-font-crossorigin` | `error` | ✓ | font preloads missing `crossorigin` (would refetch) |
-| `preload-missing-as` | `error` |   | `<link rel="preload">` missing required `as` |
-| `robots-conflict` | `error` |   | `index, noindex` or `follow, nofollow` in robots meta |
-| `script-src-with-content` | `error` |   | a script with both `src` and inline content |
+| `preload-missing-as` | `error` | | `<link rel="preload">` missing required `as` |
+| `robots-conflict` | `error` | | `index, noindex` or `follow, nofollow` in robots meta |
+| `script-src-with-content` | `error` | | a script with both `src` and inline content |
 | `twitter-handle-missing-at` | `warn` | ✓ | `twitter:site` / `twitter:creator` missing `@` |
-| `viewport-user-scalable` | `warn` |   | `user-scalable=no` or `maximum-scale=1` (accessibility) |
+| `viewport-user-scalable` | `warn` | | `user-scalable=no` or `maximum-scale=1` (accessibility) |
 
-## What Calls Does It Walk?
+## Inspected calls
 
 Rules apply to source-level calls into the unhead API:
 
@@ -96,7 +96,7 @@ Rules apply to source-level calls into the unhead API:
 
 Tag arrays inside `meta` / `link` / `script` / `noscript` / `style` keys are descended automatically, so a typo inside a `link[3]` literal still gets caught.
 
-## What Can't It Catch?
+## Runtime-only checks
 
 ESLint rules can only see what's expressible in the AST. Cross-tag and rendered-output checks live in the runtime [Validate Plugin](/docs/head/guides/plugins/validate) and are surfaced by the `unhead validate-url` / `unhead validate-html` CLI commands. Examples that need rendered output:
 
@@ -109,6 +109,6 @@ The plugin imports its rule IDs and known-meta sets from `unhead/validate`, the 
 
 ## Related
 
-- [Validate Plugin](/docs/head/guides/plugins/validate) - Runtime equivalent that catches cross-tag and rendered-output issues
-- [useHead()](/docs/head/api/composables/use-head) - Type-safe head tag management
-- [useSeoMeta()](/docs/head/api/composables/use-seo-meta) - Type-safe SEO meta management
+- [Validate Plugin](/docs/head/guides/plugins/validate): Runtime validation for cross-tag and rendered-output issues
+- [useHead()](/docs/head/api/composables/use-head): Typed head tag management
+- [useSeoMeta()](/docs/head/api/composables/use-seo-meta): Typed SEO metadata

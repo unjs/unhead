@@ -1,18 +1,17 @@
 ---
 title: Image Schema
-description: Use defineImage() to add ImageObject structured data. Provide image metadata with captions, dimensions, and alt text for rich results.
+description: Use defineImage() to add ImageObject structured data with captions, dimensions, content URLs, and language metadata.
 ---
 
 ## Schema.org Image
 
-- **Type**: `defineImage(input?: Image)`{lang="ts"}
+- **Type**: `defineImage<T extends Record<string, any>>(input?: ImageObject & T)`{lang="ts"}
 
 Describes an individual image (usually in the context of an embedded media object).
 
 ## Useful Links
 
 - [ImageObject - Schema.org](https://schema.org/ImageObject)
-- [Image - Yoast](https://developer.yoast.com/features/schema/pieces/image)
 
 ## Required properties
 
@@ -23,13 +22,13 @@ Describes an individual image (usually in the context of an embedded media objec
 ## Defaults
 
 - **@type**: `ImageObject`
-- **@id**: `${canonicalUrl}#/schema/image/${hash(image.url)}`
-- **inLanguage**: `options.defaultLanguage` (only when caption is provided) _(see: [user Config](/docs/schema-org/guides/core-concepts/params))_
-- **contentUrl**: is set to `url`
+- **@id**: `${canonicalHost}#/schema/image/{n}`
+- **inLanguage**: `inLanguage` from resolved page metadata
+- **contentUrl**: `url`
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
 - `width` and `height` must be provided for either to be included
 
@@ -52,7 +51,7 @@ export interface ImageSimple extends Thing {
    */
   url: string
   /**
-   * The fully-qualified, absolute URL of the image file (e.g., https://www.example.com/images/cat.jpg).
+   * The fully qualified, absolute URL of the image file (e.g., https://www.example.com/images/cat.jpg).
    * Note: The contentUrl and url properties are intentionally duplicated.
    */
   contentUrl?: string

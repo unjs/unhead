@@ -10,7 +10,7 @@ export interface AnswerSimple extends Thing {
 
 export interface Answer extends AnswerSimple {}
 
-export const answerResolver = defineSchemaOrgResolver<Answer>({
+export const answerResolver = defineSchemaOrgResolver<Answer, Answer | string>({
   cast(node) {
     if (typeof node === 'string') {
       return {

@@ -8,6 +8,8 @@ import type { AggregateRating } from '../AggregateRating'
 import type { ImageObject } from '../Image'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
+import type { TVEpisode } from '../TVEpisode'
+import type { TVSeason } from '../TVSeason'
 import type { VideoObject } from '../Video'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
@@ -56,11 +58,11 @@ export interface TVSeriesSimple extends Thing {
   /**
    * The seasons that are part of this TV series.
    */
-  containsSeason?: NodeRelations<any>
+  containsSeason?: NodeRelations<TVSeason>
   /**
    * The episodes that are part of this TV series.
    */
-  episode?: NodeRelations<any>
+  episode?: NodeRelations<TVEpisode>
   /**
    * The genre of the TV series.
    */

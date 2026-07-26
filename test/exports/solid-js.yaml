@@ -17,6 +17,7 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
@@ -53,6 +54,7 @@
   DupeableTags: object
   HasElementTags: object
   hashTag: function
+  hasOwn: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function

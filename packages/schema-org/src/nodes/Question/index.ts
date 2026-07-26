@@ -1,5 +1,4 @@
 import type { NodeRelation, ResolvableDate, Thing } from '../../types'
-import type { WebPage } from '../WebPage'
 import type { Answer } from './Answer'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -72,7 +71,7 @@ export const questionResolver = defineSchemaOrgResolver<Question>({
     return question
   },
   resolveRootNode(question, { find }) {
-    const webPage = find<WebPage>(PrimaryWebPageId)
+    const webPage = find(PrimaryWebPageId)
 
     // merge in nodes to the FAQPage
     if (webPage && asArray(webPage['@type']).includes('FAQPage'))

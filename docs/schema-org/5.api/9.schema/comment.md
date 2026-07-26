@@ -5,37 +5,35 @@ description: Use defineComment() to add Comment structured data. Connect user co
 
 ## Schema.org Comment
 
-- **Type**: `defineComment(input?: Comment)`{lang="ts"}
+- **Type**: `defineComment<T extends Record<string, any>>(input?: Comment & T)`{lang="ts"}
 
-  Describes a comment. Usually in the context of an Article or a WebPage.
+  Describes a comment, usually in the context of an Article or WebPage.
 
 ## Useful Links
 
 - [Comment - Schema.org](https://schema.org/Comment)
-- [Comment - Yoast](https://developer.yoast.com/features/schema/pieces/comment)
 - [Recipe: Blog](/docs/schema-org/guides/recipes/blog)
 
 ## Required properties
 
 - **text** `string`
 
-  Content of the comment
-
-## Recommended Properties
+  Content of the comment.
 
 - **author** `Person`
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/docs/schema-org/api/schema/person).
+  The registered author is moved to a root Schema node, resolving the field as an `@id` reference to a [Person](/docs/schema-org/api/schema/person).
 
 ## Defaults
 
 - **@type**: `Comment`
-- **@id**: `${canonicalUrl}#/schema/comment/${hash(node)}`
+- **@id**: `${canonicalUrl}#/schema/comment/{n}`
 - **about**: Article reference
 
 ## Resolves
 
-- `author` will be resolved as root nodes and referenced
+- `author` is resolved as a root Person node and replaced with an ID reference
+- `dateCreated` and `dateModified` accept Date objects and are serialized as ISO 8601 strings
 
 ## Examples
 
@@ -45,7 +43,7 @@ See the [blog](/docs/schema-org/guides/recipes/blog) recipe for more examples.
 
 ```ts
 defineComment({
-  text: 'This is really cool!',
+  text: 'The setup guide answered my question.',
   author: {
     name: 'Harlan Wilton',
     url: 'https://harlanzw.com',
@@ -72,11 +70,11 @@ export interface CommentSimple extends Thing {
   /**
    * The date and time the comment was created.
    */
-  dateCreated?: string
+  dateCreated?: ResolvableDate
   /**
    * The date and time the comment was last modified.
    */
-  dateModified?: string
+  dateModified?: ResolvableDate
   /**
    * The number of upvotes the comment has received.
    */
@@ -90,5 +88,5 @@ export interface CommentSimple extends Thing {
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Comment author
-- [Article](/docs/schema-org/api/schema/article) - Commented content
+- [Person](/docs/schema-org/api/schema/person): Comment author
+- [Article](/docs/schema-org/api/schema/article): Commented content

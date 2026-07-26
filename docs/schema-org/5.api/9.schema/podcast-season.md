@@ -5,14 +5,13 @@ description: Use definePodcastSeason() to add PodcastSeason structured data. Org
 
 ## Schema.org PodcastSeason
 
-**Type**: `definePodcastSeason(input?: PodcastSeason)`{lang="ts"}
+**Type**: `definePodcastSeason<T extends Record<string, any>>(input?: PodcastSeason & T)`{lang="ts"}
 
   Describes a season of a podcast series.
 
 ## Useful Links
 
 - [PodcastSeason - Schema.org](https://schema.org/PodcastSeason)
-- [Podcast Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/podcast)
 
 ## Recommended Properties
 
@@ -26,7 +25,7 @@ description: Use definePodcastSeason() to add PodcastSeason structured data. Org
 
 - **partOfSeries** `NodeRelation<any>`
 
-  Reference to the podcast series this season belongs to.
+  Reference to the podcast series this season belongs to. Use `definePodcastSeries()` for a nested object if you want Unhead to attach the `PodcastSeries` resolver.
 
 - **numberOfEpisodes** `number`
 
@@ -35,6 +34,7 @@ description: Use definePodcastSeason() to add PodcastSeason structured data. Org
 ## Defaults
 
 - **@type**: `PodcastSeason`
+- **@id**: `${canonicalUrl}#/schema/podcast-season/{n}`
 
 ## Examples
 
@@ -43,13 +43,13 @@ description: Use definePodcastSeason() to add PodcastSeason structured data. Org
 ```ts
 definePodcastSeason({
   seasonNumber: 2,
-  partOfSeries: {
+  partOfSeries: definePodcastSeries({
     name: 'The Example Podcast',
-  },
+  }),
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 definePodcastSeason({
@@ -57,9 +57,9 @@ definePodcastSeason({
   seasonNumber: 2,
   description: 'In season 2, we dive deeper into advanced concepts',
   numberOfEpisodes: 12,
-  partOfSeries: {
+  partOfSeries: definePodcastSeries({
     name: 'The Example Podcast',
-  },
+  }),
   image: 'https://example.com/season-2-cover.jpg',
   datePublished: new Date(2024, 0, 1),
   startDate: new Date(2024, 0, 1),

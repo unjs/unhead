@@ -5,7 +5,7 @@ description: Use defineTVSeason() to add TVSeason structured data. Organize TV e
 
 ## Schema.org TVSeason
 
-**Type**: `defineTVSeason(input?: TVSeason)`{lang="ts"}
+**Type**: `defineTVSeason<T extends Record<string, any>>(input?: TVSeason & T)`{lang="ts"}
 
   Describes a season of a TV series.
 
@@ -25,7 +25,7 @@ description: Use defineTVSeason() to add TVSeason structured data. Organize TV e
 
 - **partOfSeries** `NodeRelation<TVSeries>`
 
-  Reference to the TV series this season belongs to.
+  Reference to the TV series this season belongs to. Use `defineTVSeries()` for a nested object if you want Unhead to attach the TVSeries resolver.
 
 - **numberOfEpisodes** `number`
 
@@ -34,6 +34,7 @@ description: Use defineTVSeason() to add TVSeason structured data. Organize TV e
 ## Defaults
 
 - **@type**: `TVSeason`
+- **@id**: `${canonicalUrl}#/schema/tv-season/{n}`
 
 ## Examples
 
@@ -42,13 +43,13 @@ description: Use defineTVSeason() to add TVSeason structured data. Organize TV e
 ```ts
 defineTVSeason({
   seasonNumber: 2,
-  partOfSeries: {
+  partOfSeries: defineTVSeries({
     name: 'Breaking Bad',
-  },
+  }),
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineTVSeason({
@@ -56,9 +57,9 @@ defineTVSeason({
   seasonNumber: 2,
   description: 'The second season of Breaking Bad',
   numberOfEpisodes: 13,
-  partOfSeries: {
+  partOfSeries: defineTVSeries({
     name: 'Breaking Bad',
-  },
+  }),
   image: 'https://example.com/shows/breaking-bad-season-2.jpg',
   datePublished: new Date(2009, 2, 8),
   startDate: new Date(2009, 2, 8),
@@ -92,6 +93,6 @@ export interface TVSeasonSimple extends Thing {
 
 ## Related Schemas
 
-- [TVEpisode](/docs/schema-org/api/schema/tv-episode) - Season episodes
-- [Person](/docs/schema-org/api/schema/person) - Director, actors
-- [Organization](/docs/schema-org/api/schema/organization) - Production company
+- [TVEpisode](/docs/schema-org/api/schema/tv-episode): Season episodes
+- [Person](/docs/schema-org/api/schema/person): Director, actors
+- [Organization](/docs/schema-org/api/schema/organization): Production company

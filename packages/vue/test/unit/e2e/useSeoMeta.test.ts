@@ -3,11 +3,23 @@
 import { renderDOMHead } from '@unhead/dom'
 import { renderSSRHead } from '@unhead/ssr'
 import { useSeoMeta } from '@unhead/vue'
+import { createHead } from '@unhead/vue/client'
 import { describe, it } from 'vitest'
-import { useDom } from '../../../../unhead/test/fixtures'
+import { useDom, withoutObjectHasOwn } from '../../../../unhead/test/fixtures'
 import { csrVueAppWithUnhead, ssrVueAppWithUnhead } from '../../util'
 
 describe('unhead vue e2e useSeoMeta', () => {
+  it('normalizes flat meta without Object.hasOwn', () => {
+    const dom = useDom()
+    const head = createHead()
+    withoutObjectHasOwn(() => {
+      useSeoMeta({ description: 'Compatible' }, { head })
+    })
+    renderDOMHead(head, { document: dom.window.document })
+
+    expect(dom.window.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Compatible')
+  })
+
   it('normalizes flat meta patches', async () => {
     const dom = useDom()
     let entry: ReturnType<typeof useSeoMeta> | undefined

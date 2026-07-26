@@ -25,7 +25,7 @@ export interface ListItemSimple extends Thing {
 
 export interface ListItem extends ListItemSimple {}
 
-export const listItemResolver = defineSchemaOrgResolver<ListItem>({
+export const listItemResolver = defineSchemaOrgResolver<ListItem, ListItem | string>({
   cast(node) {
     if (typeof node === 'string') {
       node = {

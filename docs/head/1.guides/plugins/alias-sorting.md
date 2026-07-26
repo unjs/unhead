@@ -4,13 +4,9 @@ description: "Order head tags with before: and after: prefixes. More readable th
 navigation.title: "Alias Sorting"
 ---
 
-**Quick Answer:** The Alias Sorting plugin lets you control head tag order using readable `before:` and `after:` prefixes instead of arbitrary numbers. Use `tagPriority: 'before:script:analytics'` to place a script before another.
+The Alias Sorting plugin orders same-weight tags with readable `before:` and `after:` relationships. For example, `tagPriority: 'before:script:analytics'` places one script before a keyed analytics script.
 
-## What Is Alias Sorting?
-
-The Alias Sorting plugin lets you control tag order using descriptive `before:` and `after:` prefixes instead of numerical priorities.
-
-## Why Use Aliases Instead of Numbers?
+## Relative ordering
 
 Numerical priorities become hard to maintain as your application grows:
 
@@ -18,28 +14,28 @@ Numerical priorities become hard to maintain as your application grows:
 - You need to know all existing priorities to insert a new tag
 - Changing one priority might require updating many others
 
-Aliases make tag ordering more intuitive and maintainable with declarative relationships between tags.
+Aliases express the relationship between two tags directly. Keep chains in dependency order because the plugin resolves each alias in a single pass.
 
-## How Do I Set Up Alias Sorting?
+## Setup
 
 Add the plugin to your Unhead configuration:
 
 ::code-block
 
 ```ts [Input]
-import { createHead } from '@unhead/dynamic-import'
+import { createHead } from '@unhead/dynamic-import/client'
 import { AliasSortingPlugin } from '@unhead/dynamic-import/plugins'
 
 const head = createHead({
   plugins: [
-    AliasSortingPlugin()
+    AliasSortingPlugin
   ]
 })
 ```
 
 ::
 
-## How Do I Use Alias Sorting?
+## Usage
 
 ### Basic Ordering
 
@@ -67,20 +63,19 @@ useHead({
 
 ```html [Output]
 <script src="/critical.js"></script>
-<script src="/analytics.js"></script>
+<script src="/analytics.js" data-hid="analytics"></script>
 ```
 
 ::
 
-### What Is the Alias Format?
+### Alias format
 
 The format is: `{before|after}:{tagName}:{key}`
 
-For example:
+Targets normally use the tag type and an explicit `key`. For example:
 
-- `before:script:analytics`{lang="ts"} - Place before the analytics script
-- `after:meta:description`{lang="ts"} - Place after the description meta tag
-- `before:link:styles`{lang="ts"} - Place before the styles link tag
+- `before:script:analytics`{lang="ts"}: Place before the analytics script
+- `before:link:styles`{lang="ts"}: Place before the styles link tag
 
 ### Multiple Dependencies
 
@@ -92,9 +87,8 @@ You can order multiple tags relative to each other:
 useHead({
   script: [
     {
-      key: 'third',
-      src: '/c.js',
-      tagPriority: 'after:script:second'
+      key: 'first',
+      src: '/a.js'
     },
     {
       key: 'second',
@@ -102,49 +96,29 @@ useHead({
       tagPriority: 'after:script:first'
     },
     {
-      key: 'first',
-      src: '/a.js'
+      key: 'third',
+      src: '/c.js',
+      tagPriority: 'after:script:second'
     }
   ]
 })
 ```
 
 ```html [Output]
-<script src="/a.js"></script>
-<script src="/b.js"></script>
-<script src="/c.js"></script>
+<script src="/a.js" data-hid="first"></script>
+<script src="/b.js" data-hid="second"></script>
+<script src="/c.js" data-hid="third"></script>
 ```
 
 ::
 
-### Can I Combine Aliases with Numeric Priorities?
+### Weight boundaries
 
-Yes. Alias sorting works alongside numeric priorities. The plugin will preserve the numeric priority of the referenced tag:
-
-::code-block
-
-```ts [Input]
-useHead({
-  script: [
-    {
-      key: 'high-priority',
-      src: '/important.js',
-      tagPriority: 0
-    },
-    {
-      src: '/also-important.js',
-      tagPriority: 'before:script:high-priority'
-      // Will inherit priority 0 and render first
-    }
-  ]
-})
-```
-
-::
+Aliases adjust registration order after Unhead has calculated each tag's weight. They do not recalculate the aliasing tag's weight during the current resolution. Use aliases between tags that already share a weight, such as two ordinary scripts or two stylesheets; use numeric or named priorities when a tag must move to another weight group.
 
 ## Common Use Cases
 
-### How Do I Load Critical CSS First?
+### Critical CSS first
 
 Ensure critical CSS is loaded before other stylesheets:
 
@@ -170,9 +144,9 @@ useHead({
 
 ::
 
-### How Do I Control Script Loading Order?
+### Script tag order
 
-Control the execution sequence of dependent scripts:
+Aliases control the order in which Unhead renders script tags:
 
 ::code-block
 
@@ -186,12 +160,12 @@ useHead({
     {
       key: 'plugin',
       src: '/js/jquery-plugin.js',
-      tagPriority: 'after:script:jquery' // Ensure jQuery loads first
+      tagPriority: 'after:script:jquery'
     },
     {
       key: 'app',
       src: '/js/app.js',
-      tagPriority: 'after:script:plugin' // Load app.js last
+      tagPriority: 'after:script:plugin'
     }
   ]
 })
@@ -199,12 +173,13 @@ useHead({
 
 ::
 
-## Best Practices
+This controls tag order, not execution order. Dynamically inserted scripts follow the browser's script loading model, so use module imports, promises, or explicit load events when one script depends on another. See the [HTML script processing model](https://html.spec.whatwg.org/multipage/scripting.html#script-processing-model).
+
+## Limits and conventions
 
 - Use meaningful keys that describe the tag's purpose
-- Keep dependencies simple - avoid complex chains
-- Consider using numeric priorities for critical tags
-- Document your tag ordering strategy for your team
+- Keep dependency chains short
+- Use numeric or named priorities to cross weight groups
 
 ::note
 During hydration (SSR or page switches), tags may not reorder to avoid content flashing. The plugin respects this behavior.
@@ -212,4 +187,4 @@ During hydration (SSR or page switches), tags may not reorder to avoid content f
 
 ## Related
 
-- [Tag Positions](/docs/head/guides/core-concepts/positions) - Control tag ordering
+- [Tag Positions](/docs/head/guides/core-concepts/positions): Control tag ordering

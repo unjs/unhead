@@ -4,19 +4,15 @@ description: "Auto-generate og:title, og:description, and twitter:card from exis
 navigation.title: "Infer SEO Meta"
 ---
 
-**Quick Answer:** The Infer SEO Meta plugin automatically generates `og:title`, `og:description`, and `twitter:card` from your existing `title` and `description` tags, reducing duplicate meta tag definitions.
+The Infer SEO Meta plugin generates `og:title`, `og:description`, and `twitter:card` from your existing `title` and `description` tags.
 
-## What Does This Plugin Do?
+The plugin generates these tags from existing content:
 
-The Infer SEO Meta plugin automatically generates Open Graph and Twitter meta tags from your existing content:
+- `og:title`: Inferred from your page title
+- `og:description`: Inferred from your description meta
+- `twitter:card`: Added as `summary_large_image` by default, whether or not `og:image` is present
 
-- `og:title` - Inferred from your page title
-- `og:description` - Inferred from your description meta
-- `twitter:card` - Set automatically when using `og:image`
-
-Use this plugin when you want to avoid duplicating your page title and description across Open Graph and Twitter meta tags. It's ideal for sites that need consistent social sharing metadata without manual repetition.
-
-## How Does the Output Look?
+## Generated output
 
 ::code-block
 
@@ -34,11 +30,12 @@ useHead({
 <meta name="description" content="A description of my page">
 <meta property="og:title" content="My Page Title">
 <meta property="og:description" content="A description of my page">
+<meta name="twitter:card" content="summary_large_image">
 ```
 
 ::
 
-## How Do I Set Up the Plugin?
+## Setup
 
 Add the plugin to your Unhead configuration:
 
@@ -60,9 +57,9 @@ head.use(InferSeoMetaPlugin())
 
 ::
 
-## What Options Can I Configure?
+## Options
 
-You can customize how the plugin transforms your content:
+The plugin accepts transforms for the generated title and description, plus a Twitter card setting:
 
 ::code-block
 
@@ -73,16 +70,17 @@ export interface InferSeoMetaPluginOptions {
    *
    * @param title
    */
-  ogTitle?: ((title: string) => string)
+  ogTitle?: ((title?: string) => string)
   /**
    * Transform the og description.
    *
    * @param description
    */
-  ogDescription?: ((description: string) => string)
+  ogDescription?: ((description?: string) => string)
   /**
    * The twitter card to use.
    *
+   * @deprecated Set this to false and rely on Open Graph metadata instead.
    * @default 'summary_large_image'
    */
   twitterCard?: false | 'summary' | 'summary_large_image' | 'app' | 'player'
@@ -91,7 +89,7 @@ export interface InferSeoMetaPluginOptions {
 
 ::
 
-## How Do I Customize the OG Title?
+## Customizing the Open Graph title
 
 Remove site name suffix from Open Graph titles:
 
@@ -103,7 +101,7 @@ import { InferSeoMetaPlugin } from '@unhead/dynamic-import/plugins'
 const head = createHead({
   plugins: [
     InferSeoMetaPlugin({
-      ogTitle: title => title.replace('- My Site', '')
+      ogTitle: (title = '') => title.replace('- My Site', '')
     })
   ]
 })
@@ -111,7 +109,7 @@ const head = createHead({
 
 ::
 
-## How Do I Disable Twitter Cards?
+## Disabling the Twitter card field
 
 If you don't want Twitter cards generated:
 
@@ -125,7 +123,7 @@ InferSeoMetaPlugin({
 
 ::
 
-## How Do I Format OG Descriptions?
+## Formatting Open Graph descriptions
 
 Append a call-to-action to your Open Graph descriptions:
 
@@ -133,7 +131,7 @@ Append a call-to-action to your Open Graph descriptions:
 
 ```ts [Input]
 InferSeoMetaPlugin({
-  ogDescription: description => `${description} Learn more now!`
+  ogDescription: (description = '') => `${description} Read the documentation.`
 })
 ```
 
@@ -141,5 +139,5 @@ InferSeoMetaPlugin({
 
 ## Related
 
-- [useSeoMeta()](/docs/head/api/composables/use-seo-meta) - Manual SEO meta management
-- [Template Params](/docs/head/guides/plugins/template-params) - Dynamic template parameters
+- [useSeoMeta()](/docs/head/api/composables/use-seo-meta): Manual SEO meta management
+- [Template Params](/docs/head/guides/plugins/template-params): Dynamic template parameters

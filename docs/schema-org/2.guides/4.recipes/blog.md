@@ -1,26 +1,26 @@
 ---
 title: Schema.org for a Blog
-description: 'Add Article/BlogPosting structured data with defineArticle(). Enable rich snippets for author, publish date, and thumbnails in search results.'
+description: 'Add Article or BlogPosting structured data with defineArticle() so search engines can understand a post and its author, dates, and images.'
 navigation:
     title: Blog
 ---
 
-Use `defineArticle()` with `@type: 'BlogPosting'` to mark up blog posts. This enables rich snippets showing author, publish date, and article images in search results.
+Use `defineArticle()` with `@type: 'BlogPosting'` to mark up blog posts. [Article structured data can help Google understand the author, publication date, and representative images](https://developers.google.com/search/docs/appearance/structured-data/article).
 
 ::note
-Schema.org Article markup helps Google display enhanced search results with author info, thumbnails, and publication dates - improving click-through rates.
+Article markup can affect how Google understands title text, images, and date information, but it does not guarantee a particular search appearance.
 ::
 
 ## Useful Links
 
-- [Article | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/article)
-- [Article Schema | Yoast](https://developer.yoast.com/features/schema/pieces/article)
+- [Article - Schema.org](https://schema.org/Article)
+- [Article | Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/article)
 
 ## How do I mark up a blog article?
 
-The [defineArticle](/docs/schema-org/api/schema/article) function is provided to create Article Schema whilst handling relations for you.
+The [defineArticle](/docs/schema-org/api/schema/article) helper creates an Article node and handles its supported relationships.
 
-Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
+Some fields may already be inferred. See [Schema.org Params](/docs/schema-org/guides/core-concepts/params).
 
 ```ts
 import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -29,17 +29,15 @@ useSchemaOrg([
   defineArticle({
     // name and description can usually be inferred
     image: '/photos/16x9/photo.jpg',
-    datePublished: new Date(2020, 1, 1),
-    dateModified: new Date(2020, 1, 1),
+    datePublished: new Date('2020-02-01T00:00:00.000Z'),
+    dateModified: new Date('2020-02-01T00:00:00.000Z'),
   })
 ])
 ```
 
 ## How do I specify the article type?
 
-Providing a type of Article can help clarify what kind of content the page is about.
-
-The most common types are: `BlogPosting` and `NewsArticle`.
+Set `@type` to describe the kind of article. The most common choices are `BlogPosting` and `NewsArticle`.
 
 ```ts
 import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -56,10 +54,9 @@ See the [Article Types](/docs/schema-org/api/schema/article#sub-types) for the l
 
 ## How do I add an author?
 
-If the author of the article isn't the [site identity](/docs/schema-org/guides/recipes/identity), then you'll need to
-config the author or authors.
+Set `author` when an article's author differs from the [site identity](/docs/schema-org/guides/recipes/identity).
 
-When defining a Person when an Article is present, it will automatically associate them as the author.
+When a Person and an Article are registered together, the Person becomes the Article's author if the Article does not already have one.
 
 ```ts
 import { defineArticle, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -69,11 +66,11 @@ useSchemaOrg([
     headline: 'My Article',
     author: [
       {
-        name: 'John doe',
+        name: 'John Doe',
         url: 'https://johndoe.com',
       },
       {
-        name: 'Jane doe',
+        name: 'Jane Doe',
         url: 'https://janedoe.com',
       },
     ]
@@ -83,8 +80,7 @@ useSchemaOrg([
 
 ## How do I mark up blog archive pages?
 
-Assuming you have the `WebPage` and `WebSite` schema loaded in from a parent layout component,
-you can augment the `WebPage` type to better indicate the purpose of the page.
+If a parent layout already defines `WebPage` and `WebSite`, set the page type to `CollectionPage` for a blog archive.
 
 See [CollectionPage](https://schema.org/CollectionPage) for more information.
 
@@ -100,23 +96,42 @@ useSchemaOrg([
 
 ## Expected JSON-LD Output
 
-The above code generates JSON-LD like this:
+Combining the fields shown above, with a host of `https://example.com` and a page path of `/blog/my-post`, produces JSON-LD like this:
 
 ```json
 {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "BlogPosting",
-      "@id": "https://example.com/blog/my-post/#article",
+      "@type": ["Article", "BlogPosting"],
+      "@id": "https://example.com/blog/my-post#article",
       "headline": "My Article",
-      "image": "https://example.com/photos/16x9/photo.jpg",
+      "image": { "@id": "https://example.com/#/schema/image/1" },
       "datePublished": "2020-02-01T00:00:00.000Z",
       "dateModified": "2020-02-01T00:00:00.000Z",
       "author": [
-        { "@type": "Person", "name": "John doe", "url": "https://johndoe.com" }
+        { "@id": "https://example.com/#/schema/person/1" },
+        { "@id": "https://example.com/#/schema/person/2" }
       ],
-      "mainEntityOfPage": { "@id": "https://example.com/blog/my-post/" }
+      "thumbnailUrl": "https://example.com/photos/16x9/photo.jpg"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://example.com/#/schema/person/2",
+      "name": "Jane Doe",
+      "url": "https://janedoe.com"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://example.com/#/schema/person/1",
+      "name": "John Doe",
+      "url": "https://johndoe.com"
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://example.com/#/schema/image/1",
+      "contentUrl": "https://example.com/photos/16x9/photo.jpg",
+      "url": "https://example.com/photos/16x9/photo.jpg"
     }
   ]
 }
@@ -126,18 +141,18 @@ The above code generates JSON-LD like this:
 
 ### Missing `image` warning
 
-Google requires at least one image for Article rich results. Always provide `image`.
+Google recommends one or more representative images for Article markup. Provide `image` when the page has a suitable image.
 
 ### `datePublished` format errors
 
-Use JavaScript `Date` objects—Unhead handles ISO 8601 conversion automatically.
+Pass a JavaScript `Date` object and Unhead will serialize it as ISO 8601.
 
 ### Author not showing
 
-If using site identity as author, ensure you've called `defineOrganization()` or `definePerson()` in your layout.
+To use the site identity as the author, call `defineOrganization()` or `definePerson()` in the layout.
 
 ## Related Recipes
 
-- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
-- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Add navigation breadcrumbs
-- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Add FAQ structured data
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization/person
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs): Add navigation breadcrumbs
+- [FAQ Page](/docs/schema-org/guides/recipes/faq): Add FAQ structured data

@@ -259,7 +259,10 @@ describe('defineArticle', () => {
         }
       `)
 
-      const id = client[2].author['@id']
+      const author = client[2].author
+      if (!author || typeof author !== 'object' || !('@id' in author))
+        throw new TypeError('Expected the resolved article author to be an ID reference.')
+      const id = author['@id']
 
       expect(id).toEqual('https://example.com/#/schema/person/1')
 
@@ -305,6 +308,9 @@ describe('defineArticle', () => {
           {
             "@id": "https://example.com/#identity",
             "@type": "Organization",
+            "logo": {
+              "@id": "https://example.com/#logo",
+            },
             "name": "Identity",
             "url": "https://example.com/",
           },
@@ -378,13 +384,6 @@ describe('defineArticle', () => {
             "contentUrl": "https://example.com/test.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/test.png",
-          },
-          {
-            "@id": "https://example.com/#organization",
-            "@type": "Organization",
-            "logo": "https://example.com/test.png",
-            "name": "Identity",
-            "url": "https://example.com/",
           },
           {
             "@id": "https://example.com/#/schema/image/1",

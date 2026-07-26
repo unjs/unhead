@@ -1,11 +1,11 @@
 ---
 title: Music Recording Schema
-description: Use defineMusicRecording() to add MusicRecording structured data. Display song info with artist, album, and duration in search results.
+description: Use defineMusicRecording() to describe a song or track, including its artist, album, duration, ISRC, audio, and release date.
 ---
 
 ## Schema.org MusicRecording
 
-**Type**: `defineMusicRecording(input?: MusicRecording)`{lang="ts"}
+**Type**: `defineMusicRecording<T extends Record<string, any>>(input?: MusicRecording & T)`{lang="ts"}
 
   Describes an individual music track or song.
 
@@ -19,19 +19,19 @@ description: Use defineMusicRecording() to add MusicRecording structured data. D
 
   The name of the song/track.
 
+## Recommended properties
+
 - **url** `string`
 
   The URL where the song can be accessed.
 
-## Recommended Properties
+- **byArtist** `NodeRelations<Person | string>`
 
-- **byArtist** `NodeRelations<Person | MusicGroup | string>`
+  The artist or artists who performed the song. Plain objects and strings resolve as [Person](/docs/schema-org/api/schema/person).
 
-  The artist(s) who performed the song. Resolves to [Person](/docs/schema-org/api/schema/person) or [MusicGroup](/docs/schema-org/api/schema/music-group).
+- **inAlbum** `NodeRelation<string>`
 
-- **inAlbum** `NodeRelation<MusicAlbum>`
-
-  Reference to the album this recording is part of.
+  The name, URL, or ID of the album. This field is currently passed through without a MusicAlbum resolver.
 
 - **duration** `string`
 
@@ -44,7 +44,7 @@ description: Use defineMusicRecording() to add MusicRecording structured data. D
 ## Defaults
 
 - **@type**: `MusicRecording`
-- **@id**: `${canonicalHost}#music-recording`
+- **@id**: `${canonicalHost}#/schema/music-recording/{n}`
 
 ## Examples
 
@@ -58,7 +58,7 @@ defineMusicRecording({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineMusicRecording({
@@ -68,9 +68,7 @@ defineMusicRecording({
   byArtist: {
     name: 'Queen',
   },
-  inAlbum: {
-    name: 'A Night at the Opera',
-  },
+  inAlbum: 'https://example.com/albums/a-night-at-the-opera',
   duration: 'PT5M55S', // 5 minutes 55 seconds
   isrcCode: 'GBUM71029604',
   datePublished: new Date(1975, 9, 31),
@@ -87,8 +85,8 @@ export interface MusicRecordingSimple extends Thing {
   description?: string
   url?: string
   audio?: string
-  byArtist?: NodeRelations<Person | MusicGroup | string>
-  inAlbum?: NodeRelation<MusicAlbum>
+  byArtist?: NodeRelations<Person | string>
+  inAlbum?: NodeRelation<string>
   inPlaylist?: NodeRelations<string>
   duration?: string
   isrcCode?: string
@@ -102,6 +100,6 @@ export interface MusicRecordingSimple extends Thing {
 
 ## Related Schemas
 
-- [MusicAlbum](/docs/schema-org/api/schema/music-album) - Album containing track
-- [MusicGroup](/docs/schema-org/api/schema/music-group) - Performing artist
-- [Person](/docs/schema-org/api/schema/person) - Individual artist
+- [MusicAlbum](/docs/schema-org/api/schema/music-album): Album containing track
+- [MusicGroup](/docs/schema-org/api/schema/music-group): Performing artist
+- [Person](/docs/schema-org/api/schema/person): Individual artist

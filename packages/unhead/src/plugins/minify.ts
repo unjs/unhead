@@ -15,7 +15,8 @@ export interface MinifyPluginOptions {
    */
   css?: false | ((code: string) => string)
   /**
-   * Minify JSON script types (application/ld+json, application/json).
+   * Minify JSON script types (application/ld+json, application/json,
+   * speculationrules, importmap).
    * @default true
    */
   json?: boolean
@@ -30,8 +31,7 @@ export interface MinifyPluginOptions {
   omitLineBreaks?: boolean
 }
 
-const JSON_TYPES = new Set(['application/json', 'application/ld+json'])
-const SKIP_JS_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
 
 /**
  * Minifies inline script and style tag content during SSR rendering.
@@ -76,8 +76,6 @@ export function MinifyPlugin(options?: MinifyPluginOptions): HeadPluginInput {
               }
               continue
             }
-            if (type && SKIP_JS_TYPES.has(type))
-              continue
             if (jsMinify) {
               const min = jsMinify(content)
               if (min.length < content.length)

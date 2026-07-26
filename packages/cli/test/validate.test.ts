@@ -51,4 +51,20 @@ describe('validateHtml', () => {
     expect(ids).toContain('non-absolute-canonical')
     expect(ids).toContain('canonical-og-url-mismatch')
   })
+
+  it('surfaces excessive prefetches as an advisory info finding', () => {
+    const prefetches = Array.from(
+      { length: 51 },
+      (_, i) => `<link rel="prefetch" href="/future-resource-${i}.js" />`,
+    ).join('\n')
+    const html = `<!doctype html><html><head>
+      <title>x</title>
+      <meta name="description" content="d" />
+      ${prefetches}
+    </head></html>`
+
+    const rule = validateHtml(html, 'inline').rules.find(r => r.id === 'too-many-prefetches')
+    expect(rule?.severity).toBe('info')
+    expect(rule?.message).toContain('advisory guardrail, not a standards limit')
+  })
 })

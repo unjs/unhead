@@ -8,6 +8,7 @@ import type {
 } from './types'
 import { FlatMetaPlugin } from './plugins/flatMeta'
 import { SafeInputPlugin } from './plugins/safe'
+import { hasOwn } from './utils/hasOwn'
 
 export function useHead<T extends Unhead<any>, I = ResolvableHead>(unhead: T, input?: ResolvableHead, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
   return unhead.push((input || {}) as I, options) as ActiveHeadEntry<I>
@@ -27,7 +28,7 @@ export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaIn
     }
     const meta: Record<string, any> = {}
     for (const key in input) {
-      if (!Object.hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
+      if (!hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
         continue
       meta[key] = input[key as keyof UseSeoMetaInput]
     }

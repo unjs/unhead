@@ -84,6 +84,20 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   return tag
 }
 
+export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any {
+  let resolve: PropResolver | undefined
+  if (propResolvers.length) {
+    resolve = (key, val) => {
+      for (let i = 0; i < propResolvers.length; i++)
+        val = propResolvers[i](key, val)
+      return val
+    }
+    // Resolve the root before walking so ref-wrapped functions are unwrapped.
+    input = resolve(undefined, input)
+  }
+  return walkResolver(input, resolve)
+}
+
 function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string): HeadTag | HeadTag[] {
   const input = typeof _input === 'object' && typeof _input !== 'function'
     ? _input
@@ -119,20 +133,9 @@ export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]):
     return []
   if (typeof input === 'function')
     input = input()
-  let resolve: PropResolver | undefined
-  if (propResolvers.length) {
-    resolve = (key, val) => {
-      for (let i = 0; i < propResolvers.length; i++)
-        val = propResolvers[i](key, val)
-      return val
-    }
-    // load-bearing: walkResolver unwraps functions BEFORE resolving, so a
-    // resolvable yielding a function (e.g. `useHead(ref(() => ({...})))`,
-    // see vite-pwa/vite-plugin-pwa#832) only renders if a resolve pass runs
-    // first. The root intentionally passes through the resolver chain twice.
-    input = resolve(undefined, input)
-  }
-  input = walkResolver(input, resolve)
+  // The root intentionally passes through the resolver chain twice. The first
+  // pass unwraps refs, then walkResolver invokes a function returned by a ref.
+  input = resolveHeadInput(input, propResolvers)
   const tags: HeadTag[] = []
   for (const key in input) {
     const value = input[key]
