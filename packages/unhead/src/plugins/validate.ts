@@ -54,6 +54,12 @@ export interface ValidatePluginOptions {
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
 const AT_PREFIX_RE = /^at\s+/
+const SLACK_TWITTER_META_NAMES = new Set([
+  'twitter:data1',
+  'twitter:data2',
+  'twitter:label1',
+  'twitter:label2',
+])
 
 /**
  * Per-rule severity used by the runtime ValidatePlugin path that runs through
@@ -201,7 +207,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                   hasOgTags = true
                 if (key === 'description')
                   hasDescription = true
-                if (key === 'robots' && tag.props.content?.toLowerCase().includes('noindex'))
+                if (key === 'robots' && String(tag.props.content ?? '').toLowerCase().includes('noindex'))
                   isIndexable = false
               }
             }
@@ -239,6 +245,12 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 emitFromPredicates(predicate(tagInput), tag)
             }
 
+            if (tag.tag === 'meta' && typeof metaKey === 'string') {
+              const normalizedMetaKey = metaKey.toLowerCase()
+              if (normalizedMetaKey.startsWith('twitter:') && !SLACK_TWITTER_META_NAMES.has(normalizedMetaKey))
+                report('deprecated-twitter-meta', `${normalizedMetaKey} is deprecated. Use Open Graph metadata instead.`, 'warn', tag)
+            }
+
             // === URL Validity (runtime-only: depends on URL_META_KEYS lookup) ===
 
             // OG/Twitter URL meta
@@ -265,7 +277,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
                 for (const diag of headInputPredicates['no-html-in-title'](titleInput))
                   report(diag.ruleId as ValidationRuleId, diag.message, 'warn', tag)
               }
-              const text = tag.textContent || ''
+              const text = String(tag.textContent ?? '')
               if (TEMPLATE_PARAM_RE.test(text))
                 report('unresolved-template-param', `Unresolved template param in title: "${text}".`, 'warn', tag)
               if (!text.trim())
