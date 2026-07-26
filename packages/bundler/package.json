@@ -80,6 +80,7 @@
   },
   "peerDependencies": {
     "@unhead/cli": "workspace:^",
+    "@vitejs/devtools-kit": "^0.4.1",
     "esbuild": ">=0.17.0",
     "lightningcss": ">=1.20.0",
     "oxc-parser": ">=0.98.0",
@@ -90,6 +91,9 @@
   },
   "peerDependenciesMeta": {
     "@unhead/cli": {
+      "optional": true
+    },
+    "@vitejs/devtools-kit": {
       "optional": true
     },
     "esbuild": {
@@ -112,13 +116,13 @@
     }
   },
   "dependencies": {
-    "@vitejs/devtools-kit": "catalog:",
     "magic-string": "catalog:",
     "oxc-walker": "catalog:",
     "ufo": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
+    "@vitejs/devtools-kit": "catalog:",
     "oxc-parser": "catalog:",
     "rollup": "catalog:",
     "unhead": "workspace:*",

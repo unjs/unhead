@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 interface PackageJson {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
+  optionalDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
   peerDependenciesMeta?: Record<string, { optional?: boolean }>
 }
@@ -19,5 +20,17 @@ describe('@unhead/bundler package', () => {
     expect(packageJson.peerDependencies).toHaveProperty('oxc-parser')
     expect(packageJson.peerDependenciesMeta?.['oxc-parser']).toEqual({ optional: true })
     expect(packageJson.devDependencies).toHaveProperty('oxc-parser')
+  })
+
+  it('keeps Vite DevTools packages optional', () => {
+    const runtimeDependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.optionalDependencies,
+    }
+
+    expect(Object.keys(runtimeDependencies).filter(name => name.startsWith('@vitejs/devtools'))).toEqual([])
+    expect(packageJson.peerDependencies?.['@vitejs/devtools-kit']).toBeDefined()
+    expect(packageJson.peerDependenciesMeta?.['@vitejs/devtools-kit']).toEqual({ optional: true })
+    expect(packageJson.devDependencies?.['@vitejs/devtools-kit']).toBeDefined()
   })
 })
