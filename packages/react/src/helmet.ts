@@ -29,13 +29,14 @@ function useHelmetHead(): Unhead {
 export interface HelmetProps {
   children?: ReactNode
   /**
-   * A default title to use when no `<title>` child is provided.
+   * A default title to use unchanged when no title is provided.
    *
    * Equivalent to react-helmet's `defaultTitle`.
    */
   defaultTitle?: string
   /**
    * A template for the title. Use `%s` as a placeholder for the page title.
+   * The template is not applied to `defaultTitle`.
    *
    * @example `%s | My Site`
    */
@@ -123,7 +124,9 @@ const Helmet: React.FC<HelmetProps> = ({
     const input: UseHeadInput = {}
 
     if (titleTemplate) {
-      input.titleTemplate = titleTemplate
+      input.titleTemplate = defaultTitle
+        ? title => title ? titleTemplate : defaultTitle
+        : titleTemplate
     }
 
     // Apply prop-based API values first (children override these)
@@ -199,16 +202,12 @@ const Helmet: React.FC<HelmetProps> = ({
       }
     }
 
-    // Apply defaultTitle when no title is provided via props or children
-    if (!hasTitle && defaultTitle) {
-      input.title = defaultTitle
-    }
-
-    // Pass defaultTitle through templateParams for titleTemplate support
-    if (defaultTitle) {
-      input.templateParams = {
-        ...input.templateParams as any,
-        defaultTitle,
+    // A low-priority title acts as a fallback across sibling Helmet entries.
+    // When titleTemplate exists, its resolver emits defaultTitle only if no real title won.
+    if (!hasTitle && defaultTitle && !titleTemplate) {
+      input.title = {
+        textContent: defaultTitle,
+        tagPriority: 'low',
       }
     }
 
