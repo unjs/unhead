@@ -115,7 +115,7 @@ defineOrganization({
 })
 ```
 
-The logo URL resolves into an ImageObject with the ID `#logo`. The primary identity references related content, while a compact Organization node at `#organization` carries the absolute logo URL for Google's organization markup.
+The logo URL resolves into an ImageObject with the ID `#logo`, referenced by the primary Organization identity.
 
 ```json
 {
@@ -124,6 +124,9 @@ The logo URL resolves into an ImageObject with the ID `#logo`. The primary ident
     {
       "@id": "https://nuxtjs.org/#identity",
       "@type": "Organization",
+      "logo": {
+        "@id": "https://nuxtjs.org/#logo"
+      },
       "name": "Nuxt.js",
       "url": "https://nuxtjs.org/"
     },
@@ -133,13 +136,6 @@ The logo URL resolves into an ImageObject with the ID `#logo`. The primary ident
       "caption": "Nuxt.js",
       "contentUrl": "https://nuxtjs.org/img/logo.png",
       "url": "https://nuxtjs.org/img/logo.png"
-    },
-    {
-      "@id": "https://nuxtjs.org/#organization",
-      "@type": "Organization",
-      "logo": "https://nuxtjs.org/img/logo.png",
-      "name": "Nuxt.js",
-      "url": "https://nuxtjs.org/"
     }
   ]
 }

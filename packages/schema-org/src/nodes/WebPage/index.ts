@@ -12,7 +12,6 @@ import type { Person } from '../Person'
 import type { VideoObject } from '../Video'
 import type { WebSite } from '../WebSite'
 import type { ReadAction } from './ReadAction'
-import { withoutTrailingSlash } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -20,6 +19,7 @@ import {
   resolvableDateToIso,
   resolveDefaultType,
   setIfEmpty,
+  withoutTrailingSlash,
 } from '../../utils'
 import { breadcrumbResolver, PrimaryBreadcrumbId } from '../Breadcrumb'
 import { imageResolver } from '../Image'
@@ -161,6 +161,9 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     // actions may be a function that need resolving
     if (node.potentialAction) {
       const resolveAction = (action: ReadAction | Thing) => {
+        if (!action || typeof action !== 'object')
+          return action
+
         const type = action['@type']
         const isReadAction = type === 'ReadAction'
           || (Array.isArray(type) && type.includes('ReadAction'))

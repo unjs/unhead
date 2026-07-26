@@ -127,10 +127,13 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
 
     return video
   },
-  resolveRootNode(video, { find }) {
-    if (video.image && !video.thumbnail) {
-      const firstImage = asArray(video.image)[0] as ImageObject
-      setIfEmpty(video, 'thumbnail', find(firstImage['@id'] as Id, isImageObject)?.url)
+  resolveRootNode(video, { find, meta }) {
+    if (video.image && !video.thumbnailUrl) {
+      const firstImage = asArray(video.image)[0]
+      if (typeof firstImage === 'string')
+        setIfEmpty(video, 'thumbnailUrl', resolveWithBase(meta.host, firstImage))
+      else if (firstImage?.['@id'])
+        setIfEmpty(video, 'thumbnailUrl', find(firstImage['@id'] as Id, isImageObject)?.url)
     }
   },
 })

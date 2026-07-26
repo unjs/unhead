@@ -1,6 +1,6 @@
 import type { Arrayable, Id, MetaInput, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing } from '../types'
 import { imageResolver } from '../nodes/Image'
-import { asArray, resolveAsGraphKey, stripNullProperties } from '../utils'
+import { resolveAsGraphKey, stripNullProperties } from '../utils'
 import { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 import { merge } from './util'
 
@@ -41,25 +41,32 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
   function find(id: Id | string): SchemaOrgNode | null
   function find<T extends SchemaOrgNode>(id: Id | string, guard: (node: SchemaOrgNode) => node is T): T | null
   function find<T extends SchemaOrgNode>(id: Id | string, guard?: (node: SchemaOrgNode) => node is T): SchemaOrgNode | T | null {
-    // if it starts with # we can assume we match any fragment
-    // if it starts with / then we need to also match the path
-    // if it starts with http we need to match the full url
-    let resolver = (s: string) => s
-    if (id[0] === '#') {
-      resolver = resolveAsGraphKey as (s: string) => string
-    }
-    else if (id[0] === '/') {
-      resolver = (s: string) => s
-        .replace(DOMAIN_RE, '')
-        .split('/')[0]
-    }
-    const key = resolver(id) as Id
+    const matchFragment = id[0] === '#'
+    const matchDomain = id[0] === '/' && id[1] === '/'
+    const key = (matchFragment
+      ? resolveAsGraphKey(id)
+      : matchDomain
+        ? id.replace(DOMAIN_RE, '').split('/')[0]
+        : id) as Id
 
-    const node = ctx.nodeIndex.size > 0
-      ? ctx.nodeIndex.get(key)
-      : ctx.nodes
-          .filter(n => !!n['@id'])
-          .find(n => resolver(n['@id'] as Id) === key)
+    let node = ctx.nodeIndex.size > 0 ? ctx.nodeIndex.get(key) : undefined
+    if (!node) {
+      for (let i = 0; i < ctx.nodes.length; i++) {
+        const candidate = ctx.nodes[i]
+        const nodeId = candidate['@id']
+        if (!nodeId)
+          continue
+        const nodeKey = matchFragment
+          ? resolveAsGraphKey(nodeId)
+          : matchDomain
+            ? nodeId.replace(DOMAIN_RE, '').split('/')[0]
+            : nodeId
+        if (nodeKey === key) {
+          node = candidate
+          break
+        }
+      }
+    }
 
     if (!node || (guard && !guard(node)))
       return null
@@ -69,13 +76,20 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
   ctx = {
     find,
     push(input: Arrayable<Thing>) {
-      asArray(input).forEach((node) => {
-        const registeredNode = node as SchemaOrgNode
+      if (Array.isArray(input)) {
+        for (let i = 0; i < input.length; i++) {
+          const registeredNode = input[i] as SchemaOrgNode
+          ctx.nodes.push(registeredNode)
+          if (ctx.nodeIndex.size > 0)
+            indexNode(ctx.nodeIndex, registeredNode)
+        }
+      }
+      else {
+        const registeredNode = input as SchemaOrgNode
         ctx.nodes.push(registeredNode)
-        // Update nodeIndex if it's been initialized
         if (ctx.nodeIndex.size > 0)
           indexNode(ctx.nodeIndex, registeredNode)
-      })
+      }
     },
     resolveGraph(meta: MetaInput) {
       // Reset counters per graph resolution (instance-scoped, not global)
@@ -94,12 +108,14 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
 
       // Dedupe and build nodeIndex in single pass
       const dedupedNodes: Record<Id, SchemaOrgNode> = Object.create(null)
-      ctx.nodeIndex = new Map()
+      let hasDuplicates = false
+      ctx.nodeIndex.clear()
       for (let i = 0; i < ctx.nodes.length; i++) {
         const n = ctx.nodes[i]
         // Use @id directly - should be set after resolveNodeId
         const nodeKey = resolveAsGraphKey(n['@id']) as Id
         if (dedupedNodes[nodeKey]) {
+          hasDuplicates = true
           if (n._dedupeStrategy !== 'replace')
             dedupedNodes[nodeKey] = merge(dedupedNodes[nodeKey], n) as SchemaOrgNode
           else
@@ -109,7 +125,8 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
           dedupedNodes[nodeKey] = n
         }
       }
-      ctx.nodes = Object.values(dedupedNodes)
+      if (hasDuplicates)
+        ctx.nodes = Object.values(dedupedNodes)
       // Index after dedupe so we have final merged nodes
       for (let i = 0; i < ctx.nodes.length; i++)
         indexNode(ctx.nodeIndex, ctx.nodes[i])
@@ -153,30 +170,26 @@ export function createSchemaOrgGraph(): SchemaOrgGraph {
         const n = ctx.nodes[i]
         const nodeKey = resolveAsGraphKey(n['@id']) as Id
 
-        // Partition keys into primitives and relations
         const keys = Object.keys(n)
-        const primitives: string[] = []
-        const relations: string[] = []
+        keys.sort()
+
+        // Build primitives first, followed by relations, both alphabetically.
+        const newNode = {} as SchemaOrgNode
+        let relationCount = 0
         for (let j = 0; j < keys.length; j++) {
           const k = keys[j]
           if (k[0] === '_')
             continue
           const v = n[k]
           if (v !== null && (Array.isArray(v) || typeof v === 'object'))
-            relations.push(k)
+            keys[relationCount++] = k
           else
-            primitives.push(k)
+            newNode[k] = v
         }
-        // Simple string sort (faster than localeCompare)
-        primitives.sort()
-        relations.sort()
-
-        // Build normalized node
-        const newNode = {} as SchemaOrgNode
-        for (let j = 0; j < primitives.length; j++)
-          newNode[primitives[j]] = n[primitives[j]]
-        for (let j = 0; j < relations.length; j++)
-          newNode[relations[j]] = n[relations[j]]
+        for (let j = 0; j < relationCount; j++) {
+          const k = keys[j]
+          newNode[k] = n[k]
+        }
 
         if (needsDedupe) {
           normalizedNodes[nodeKey] = normalizedNodes[nodeKey]

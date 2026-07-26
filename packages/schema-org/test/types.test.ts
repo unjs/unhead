@@ -22,7 +22,8 @@ import type {
 } from '@unhead/schema-org'
 import type { SchemaOrgArticle } from '@unhead/schema-org/vue'
 import type { DeepResolvableProperties } from '@unhead/vue'
-import type { HeadPlugin, Unhead } from 'unhead/types'
+import type { HeadPlugin, HeadPluginInput, Unhead } from 'unhead/types'
+import type { ComputedRef } from 'vue'
 import {
   createSchemaOrgGraph,
   defineArticle,
@@ -101,7 +102,18 @@ describe('public types', () => {
     expect(person?.name).toBe('Ada')
     expect(graph.find('#person', (node): node is Person => typeof node.name === 'string' && node.name === 'Grace')).toBeNull()
 
+    const pathGraph = createSchemaOrgGraph()
+    pathGraph.push([
+      { '@id': '/first' },
+      { '@id': '/second' },
+    ])
+    expect(pathGraph.find('/second')?.['@id']).toBe('/second')
+
+    pathGraph.push({ '@id': '//cdn.example.com/first' })
+    expect(pathGraph.find('//cdn.example.com/second')?.['@id']).toBe('//cdn.example.com/first')
+
     const plugin = UnheadSchemaOrg({ trailingSlash: true })
+    expectTypeOf(plugin).toMatchTypeOf<HeadPluginInput>()
     expectTypeOf(plugin).toMatchTypeOf<<Input, RenderResult>(head: Unhead<Input, RenderResult>) => HeadPlugin<Input, RenderResult>>()
     // @ts-expect-error schema tag resolution is synchronous, so metadata cannot be async
     UnheadSchemaOrg({}, async () => ({ host: 'https://example.com' }))
@@ -158,8 +170,9 @@ describe('public types', () => {
 
     const website = ref({ name: 'Typed site' })
     const definedWebsite = defineVueWebSite(website)
-    const preservedWebsiteRef: typeof website = definedWebsite
-    expect(preservedWebsiteRef).toBe(website)
+    expectTypeOf(definedWebsite).toMatchTypeOf<ComputedRef<{ name: string }>>()
+    expectTypeOf(definedWebsite.value.name).toEqualTypeOf<string>()
+    expect(definedWebsite).not.toBe(website)
     expectTypeOf<IsAny<typeof SchemaOrgArticle>>().toEqualTypeOf<false>()
 
     type ArticleComponentProps = InstanceType<typeof SchemaOrgArticle>['$props']

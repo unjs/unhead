@@ -1,9 +1,10 @@
 import type { ReactElement, ReactNode } from 'react'
 import type { ClientUnhead } from 'unhead/client'
 import type { CompatibleHead, CreateClientHeadOptions as CoreCreateClientHeadOptions, HeadRenderer, ResolvableHead, Unhead, UseHeadInput } from 'unhead/types'
+import type { UniversalUnheadProviderProps } from './context'
 import { createElement, useRef } from 'react'
 import { createHead as _createHead, createDebouncedFn, createDomRenderer } from 'unhead/client'
-import { UnheadContext } from './context'
+import { toUnheadContextValue, UnheadContext } from './context'
 
 export { renderDOMHead } from 'unhead/client'
 
@@ -30,17 +31,30 @@ export function createHead<I = UseHeadInput, RenderResult = unknown>(options: Cu
   return head
 }
 
-export interface UnheadProviderProps<I = UseHeadInput, RenderResult = unknown> {
+interface LegacyUnheadProviderProps<I, RenderResult> {
   children: ReactNode
+  value?: never
+  /**
+   * @deprecated Use `value` for a consistent provider API across client and server entries.
+   */
   head?: CompatibleHead<I, ResolvableHead, RenderResult>
 }
 
-export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ children, head }: UnheadProviderProps<I, RenderResult>): ReactElement {
+export type UnheadProviderProps<I = UseHeadInput, RenderResult = unknown>
+  = | (UniversalUnheadProviderProps<I, RenderResult> & { head?: never })
+    | LegacyUnheadProviderProps<I, RenderResult>
+
+export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ children, value, head }: UnheadProviderProps<I, RenderResult>): ReactElement {
   const headRef = useRef<ClientUnhead<I, void> | null>(null)
-  if (!head && !headRef.current)
+  if (value !== undefined && head !== undefined)
+    throw new TypeError('UnheadProvider received both value and head props')
+
+  const suppliedHead = value ?? head
+  if (suppliedHead === undefined && headRef.current === null)
     headRef.current = createHead<I>()
-  // React context is the deliberate generic-erasure boundary.
-  const contextHead = (head || headRef.current!) as unknown as Unhead
+  const contextHead = suppliedHead === undefined
+    ? toUnheadContextValue<I, void>(headRef.current!)
+    : toUnheadContextValue<I, RenderResult>(suppliedHead)
   return createElement(UnheadContext.Provider, { value: contextHead }, children)
 }
 

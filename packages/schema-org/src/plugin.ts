@@ -2,19 +2,17 @@ import type { HeadPlugin, HeadTag, Unhead } from 'unhead/types'
 import type { SchemaOrgGraph } from './core/graph'
 import type { MetaInput, ResolvedMeta } from './types'
 import { defineHeadPlugin, TemplateParamsPlugin } from 'unhead/plugins'
-import { processTemplateParams } from 'unhead/utils'
+import { hasOwn, processTemplateParams } from 'unhead/utils'
 import {
   createSchemaOrgGraph,
 } from './core/graph'
 import { resolveMeta } from './core/resolve'
 
-const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-
 // Simple merge utility that recursively merges objects
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
+    if (!hasOwn(source, key) || source[key] === undefined || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const isNestedObject = result[key]
@@ -104,7 +102,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           graph = graph || createSchemaOrgGraph()
           // Reset graph nodes each cycle so disposed entries don't leave stale nodes.
           graph.nodes = []
-          graph.nodeIndex = new Map()
+          graph.nodeIndex.clear()
           resolvedMeta = {}
           for (const entry of ctx.entries) {
             if (entry._tags) {
@@ -140,7 +138,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
                 '@graph': resolvedGraph,
               }, (_, value) => {
                 // process template params here
-                if (typeof value !== 'object')
+                if (typeof value === 'string')
                   return processTemplateParams(value, head._templateParams!, head._separator!)
                 return value
               }, minify ? 0 : 2)

@@ -105,9 +105,7 @@ type DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> = (
 ) & { _resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput> }
 
 function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> {
-  if (!input)
-    input = {} as Input
-  return { ...input, _resolver: resolver } as DefinedSchemaOrgNode<ResolvedInput, CastInput, Input>
+  return { ...(input || {} as Input), _resolver: resolver } as DefinedSchemaOrgNode<ResolvedInput, CastInput, Input>
 }
 
 export function defineAddress<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PostalAddress, Input>) {

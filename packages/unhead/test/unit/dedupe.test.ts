@@ -1,4 +1,34 @@
-import { dedupeKey, hashTag } from '../../src/utils/dedupe'
+import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+
+describe('isMetaArrayDupeKey', () => {
+  it('rejects scalar Open Graph and Twitter metadata', () => {
+    expect(isMetaArrayDupeKey('meta:og:title')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:og:description')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:article:section')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:book:isbn')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:profile:username')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:twitter:card')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:twitter:title')).toBe(false)
+    expect(isMetaArrayDupeKey('meta:twitter:description')).toBe(false)
+  })
+
+  it('accepts repeatable metadata', () => {
+    expect(isMetaArrayDupeKey('meta:theme-color')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:google-site-verification')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:author')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:og:locale:alternate')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:og:image')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:og:image:alt')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:og:audio:type')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:og:video:width')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:article:author')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:article:tag')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:book:author')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:book:tag')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:twitter:image')).toBe(true)
+    expect(isMetaArrayDupeKey('meta:twitter:image:alt')).toBe(true)
+  })
+})
 
 describe('dedupeKey', () => {
   it('uses rel + href for link identity regardless of other props', () => {

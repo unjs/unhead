@@ -137,6 +137,10 @@ describe('types', () => {
     expectTypeOf<NonNullable<HeadEntry<unknown>['options']>>()
       .toEqualTypeOf<Omit<HeadEntryOptions<unknown>, 'head' | 'onRendered'>>()
   })
+  it('types unpackMeta output as concrete meta tags', () => {
+    const meta = unpackMeta({ description: 'Page description' })
+    expectTypeOf(meta).toEqualTypeOf<UnheadMeta[]>()
+  })
   it('preserves properties validated by define helpers', () => {
     const preload = defineLink({
       rel: 'preload',

@@ -209,6 +209,28 @@ describe('defineWebPage', () => {
     })
   })
 
+  it('handles targetless read actions and primitive runtime values', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineWebPage({
+          potentialAction: [
+            { '@type': 'ReadAction' },
+            '#external-action' as unknown as WebPage,
+          ],
+        }),
+      ])
+
+      const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
+
+      expect(webPage?.potentialAction).toEqual([
+        {
+          '@type': 'ReadAction',
+          'target': ['https://example.com/'],
+        },
+        '#external-action',
+      ])
+    })
+  })
   it('can infer @type from path', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
@@ -302,6 +324,9 @@ describe('defineWebPage', () => {
           {
             "@id": "https://example.com/#identity",
             "@type": "Organization",
+            "logo": {
+              "@id": "https://example.com/#logo",
+            },
             "name": "Harlan Wilton",
             "url": "https://example.com/",
           },
@@ -322,13 +347,6 @@ describe('defineWebPage', () => {
             "contentUrl": "https://example.com/logo.png",
             "inLanguage": "en-AU",
             "url": "https://example.com/logo.png",
-          },
-          {
-            "@id": "https://example.com/#organization",
-            "@type": "Organization",
-            "logo": "https://example.com/logo.png",
-            "name": "Harlan Wilton",
-            "url": "https://example.com/",
           },
         ]
       `)

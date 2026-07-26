@@ -1,4 +1,4 @@
-const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+import { hasOwn } from 'unhead/utils'
 
 type MergeValue<T, U> = U extends undefined
   ? T
@@ -24,7 +24,7 @@ export function merge(target: any, source: any): any {
     return target
 
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || UNSAFE_KEYS.has(key))
+    if (!hasOwn(source, key) || key === '__proto__' || key === 'constructor' || key === 'prototype')
       continue
 
     const value = source[key]

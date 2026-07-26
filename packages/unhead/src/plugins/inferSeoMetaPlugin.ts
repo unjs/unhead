@@ -1,3 +1,4 @@
+import { hasContent } from '../utils/const'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 export interface InferSeoMetaPluginOptions {
@@ -59,16 +60,16 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}) {
           // check if the current title is %infer
           const ogTitle = tagMap.get('meta:og:title')
           if (typeof ogTitle?.props['data-infer'] !== 'undefined') {
-            const resolvedTitle = typeof title === 'string' ? title : undefined
+            const resolvedTitle = hasContent(title) ? String(title) : undefined
             ogTitle.props!.content = options.ogTitle ? options.ogTitle(resolvedTitle) : resolvedTitle || ''
             ogTitle.processTemplateParams = true
           }
 
-          const description = tagMap.get('meta:description')?.props?.content
+          const descriptionValue = tagMap.get('meta:description')?.props?.content
+          const description = hasContent(descriptionValue) ? String(descriptionValue) : undefined
           const ogDescription = tagMap.get('meta:og:description')
           if (typeof ogDescription?.props['data-infer'] !== 'undefined') {
-            const resolvedDescription = description == null || description === false ? undefined : String(description)
-            ogDescription.props!.content = options.ogDescription ? options.ogDescription(resolvedDescription) : resolvedDescription || ''
+            ogDescription.props!.content = options.ogDescription ? options.ogDescription(description) : description || ''
             ogDescription.processTemplateParams = true
           }
         },

@@ -1,7 +1,7 @@
 import type { NodeRelation, OptionalSchemaOrgPrefix, Thing } from '../../types'
 import type { MonetaryAmount } from '../MonetaryAmount'
-import { withBase } from 'ufo'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { withBase } from '../../utils'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 
 type MerchantReturnEnumeration

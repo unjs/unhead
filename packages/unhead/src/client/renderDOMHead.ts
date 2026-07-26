@@ -86,7 +86,7 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   const documentChanged = !!activeState && activeState._d !== dom
-  if (!dom || (!documentChanged && !head.dirty && !hasPendingEntries(head)))
+  if (!dom || (activeState && !documentChanged && !head.dirty && !hasPendingEntries(head)))
     return false
   if (head._du)
     return false
