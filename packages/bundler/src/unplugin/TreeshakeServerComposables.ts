@@ -100,10 +100,7 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
 
-        // The parse walk collects all declarations first so hoisted locals
-        // (`function useServerHead() {}` below a call site) are visible when
-        // the removal walk visits earlier statements.
-        walk(ast.program, { scopeTracker })
+        // The parse walk collected all declarations, including hoisted locals.
         scopeTracker.freeze()
 
         walk(ast.program, {

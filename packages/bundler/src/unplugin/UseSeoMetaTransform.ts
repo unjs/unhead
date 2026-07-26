@@ -109,10 +109,7 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
 
-        // The parse walk collects all declarations first so hoisted locals
-        // (`function useSeoMeta() {}` below a call site) are visible when
-        // the rewrite walk visits earlier statements.
-        walk(ast.program, { scopeTracker })
+        // The parse walk collected all declarations, including hoisted locals.
         scopeTracker.freeze()
 
         // Track which ImportDeclarations need specifier rewrites
