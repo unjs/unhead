@@ -112,7 +112,7 @@ export function resolveTitleTemplate<Input, RenderResult>(ctx: ResolveTagsContex
   const title = ctx.tagMap.get('title')
   const tpl = ctx.tagMap.get('titleTemplate')
   const rawTitle = title?.textContent
-  const titleContent = rawTitle == null || typeof rawTitle === 'function' ? undefined : String(rawTitle)
+  const titleContent = typeof rawTitle !== 'function' && hasContent(rawTitle) ? String(rawTitle) : undefined
   head._title = titleContent
   head._titleTemplate = undefined
   if (!tpl)
