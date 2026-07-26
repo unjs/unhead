@@ -1,4 +1,5 @@
 import type { ServerUnhead } from 'unhead/server'
+import type { PreparedTemplate } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
@@ -11,7 +12,9 @@ import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
 export {
+  type PreparedTemplate,
   prepareStreamingTemplate,
+  prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   type StreamingTemplateParts,
@@ -33,7 +36,7 @@ export interface SolidStreamableHeadContext {
    * Wrap a web ReadableStream to handle head injection automatically.
    * Must be called after onCompleteShell has fired.
    */
-  wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => ReadableStream<Uint8Array>
+  wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => ReadableStream<Uint8Array>
 }
 
 /**
@@ -75,7 +78,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       head._solidShellComplete = true
       resolveShellReady(shellState)
     },
-    wrapStream: (stream: ReadableStream<Uint8Array>, template: string) => {
+    wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
       const encoder = new TextEncoder()
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
       let readerReleased = false

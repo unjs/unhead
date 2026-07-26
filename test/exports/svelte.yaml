@@ -18,15 +18,17 @@
   AliasSortingPlugin: object
   CanonicalPlugin: function
   defineHeadPlugin: function
+  DeprecationsPlugin: object
   FlatMetaPlugin: object
   InferSeoMetaPlugin: function
   MinifyPlugin: function
-  PromisesPlugin: object
+  PromisesPlugin: function
   SafeInputPlugin: object
   TemplateParamsPlugin: function
   ValidatePlugin: function
 ./server:
   createHead: function
+  prepareTemplate: function
   renderSSRHead: function
   transformHtmlTemplate: function
   UnheadContextKey: symbol
@@ -38,6 +40,7 @@
   createStreamableHead: function
   HeadStream: function
   prepareStreamingTemplate: function
+  prepareTemplate: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   UnheadContextKey: symbol
@@ -52,6 +55,7 @@
   DupeableTags: object
   HasElementTags: object
   hashTag: function
+  hasOwn: function
   isMetaArrayDupeKey: function
   MetaTagsArrayable: object
   normalizeEntryToTags: function

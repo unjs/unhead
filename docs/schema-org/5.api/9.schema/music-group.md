@@ -1,11 +1,11 @@
 ---
 title: Music Group Schema
-description: Use defineMusicGroup() to add MusicGroup structured data. Display band info with members, genre, and discography in search results.
+description: Use defineMusicGroup() to describe a band or musical group, including its members, genre, dates, discography, and profiles.
 ---
 
 ## Schema.org MusicGroup
 
-**Type**: `defineMusicGroup(input?: MusicGroup)`{lang="ts"}
+**Type**: `defineMusicGroup<T extends Record<string, any>>(input?: MusicGroup & T)`{lang="ts"}
 
   Describes a band or musical group.
 
@@ -23,21 +23,21 @@ description: Use defineMusicGroup() to add MusicGroup structured data. Display b
 
 - **member** `NodeRelations<Person | string>`
 
-  Array of band members. Resolves to [Person](/docs/schema-org/api/schema/person).
+  An array of band members, resolved as [Person](/docs/schema-org/api/schema/person) nodes.
 
 - **genre** `string | string[]`
 
   The genre(s) of music the group performs.
 
-- **album** `NodeRelations<MusicAlbum>`
+- **album** `NodeRelations<string>`
 
-  Array of albums by the group.
+  Names or URLs of albums by the group. This field is currently passed through without a MusicAlbum resolver.
 
 ## Defaults
 
 - **@type**: `MusicGroup`
-- **@id**: `${canonicalHost}#music-group`
-- **url**: `options.canonicalHost`
+- **@id**: `${canonicalHost}#/schema/music-group/{n}`
+- **url**: `canonicalHost`
 
 ## Examples
 
@@ -49,7 +49,7 @@ defineMusicGroup({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineMusicGroup({
@@ -66,8 +66,8 @@ defineMusicGroup({
   foundingDate: new Date(1960, 7, 1),
   dissolutionDate: new Date(1970, 3, 10),
   album: [
-    { name: 'Abbey Road' },
-    { name: 'Sgt. Pepper\'s Lonely Hearts Club Band' },
+    'Abbey Road',
+    'Sgt. Pepper\'s Lonely Hearts Club Band',
   ],
   image: 'https://example.com/artists/the-beatles.jpg',
   sameAs: [
@@ -97,7 +97,7 @@ export interface MusicGroupSimple extends Thing {
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Band members
-- [MusicAlbum](/docs/schema-org/api/schema/music-album) - Discography
-- [MusicRecording](/docs/schema-org/api/schema/music-recording) - Songs
-- [Event](/docs/schema-org/api/schema/event) - Concerts
+- [Person](/docs/schema-org/api/schema/person): Band members
+- [MusicAlbum](/docs/schema-org/api/schema/music-album): Discography
+- [MusicRecording](/docs/schema-org/api/schema/music-recording): Songs
+- [Event](/docs/schema-org/api/schema/event): Concerts

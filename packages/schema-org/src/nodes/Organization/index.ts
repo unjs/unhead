@@ -1,8 +1,6 @@
-import type { Arrayable, NodeRelation, NodeRelations, Thing } from '../../types'
+import type { Arrayable, NodeRelations, Thing } from '../../types'
 import type { ImageObject } from '../Image'
 import type { PostalAddress } from '../PostalAddress'
-import type { WebPage } from '../WebPage'
-import type { WebSite } from '../WebSite'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -12,7 +10,7 @@ import {
   resolveDefaultType,
   setIfEmpty,
 } from '../../utils'
-import { imageResolver } from '../Image'
+import { imageResolver, isImageObject } from '../Image'
 import { addressResolver } from '../PostalAddress'
 import { PrimaryWebPageId } from '../WebPage'
 import { PrimaryWebSiteId } from '../WebSite'
@@ -29,7 +27,7 @@ export interface OrganizationSimple extends Thing {
    * (for example, if the logo is mostly white or gray,
    * it may not look how you want it to look when displayed on a white background).
    */
-  logo?: NodeRelation<ImageObject | string>
+  logo?: NodeRelations<ImageObject | string>
   /**
    * The site's home URL.
    */
@@ -75,7 +73,15 @@ export interface Organization extends OrganizationSimple {}
  * (such as Corporation or LocalBusiness) if the required conditions are met.
  */
 export const organizationResolver
-  = defineSchemaOrgResolver<Organization>({
+  = defineSchemaOrgResolver<Organization, Organization | string>({
+    cast(node) {
+      if (typeof node === 'string') {
+        return {
+          name: node,
+        }
+      }
+      return node
+    },
     defaults: {
       '@type': 'Organization',
     },
@@ -90,21 +96,31 @@ export const organizationResolver
     },
     resolveRootNode(node, ctx) {
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
-      const webPage = ctx.find<WebPage>(PrimaryWebPageId)
+      const webPage = ctx.find(PrimaryWebPageId)
       if (node.logo && isIdentity) {
-        // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
-        if (!ctx.find('#organization')) {
-        // create a node for the logo
-          const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
-            root: true,
-            afterResolve(logo) {
-              logo['@id'] = prefixId(ctx.meta.host, '#logo')
-              setIfEmpty(logo, 'caption', node.name)
-            },
-          })
+        const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
+        // Google expects a single logo, so use the first configured image.
+        const logoNode = resolveRelation(logoInput, ctx, imageResolver, {
+          root: true,
+          afterResolve(logo) {
+            logo['@id'] = prefixId(ctx.meta.host, '#logo')
+            setIfEmpty(logo, 'caption', node.name)
+          },
+        })
 
-          if (webPage && logoNode)
-            setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
+        if (webPage && logoNode)
+          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
+
+        if (node['@type'] === 'Organization') {
+          node.logo = logoNode
+        }
+        // Specialized organizations retain a compact Organization node for
+        // Google's Organization rich result.
+        // eslint-disable-next-line e18e/prefer-array-some -- ctx.find is not Array.find
+        else if (!ctx.find('#organization')) {
+          const resolvedLogo = logoNode && typeof logoNode === 'object' && logoNode['@id']
+            ? ctx.find(logoNode['@id'], isImageObject)
+            : null
 
           // push a separate node that will just be used for the Logo rich result
           ctx.nodes.push({
@@ -117,18 +133,19 @@ export const organizationResolver
             // 'image': idReference(logoNode),
             'address': node.address,
             // needs to be a URL
-            'logo': resolveRelation(node.logo, ctx, imageResolver, { root: false }).url,
+            'logo': resolvedLogo?.url,
             '_priority': -1,
             '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
           })
         }
-        delete node.logo
+        if (node['@type'] !== 'Organization')
+          delete node.logo
       }
 
       if (isIdentity && webPage)
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 
-      const webSite = ctx.find<WebSite>(PrimaryWebSiteId)
+      const webSite = ctx.find(PrimaryWebSiteId)
       if (webSite)
         setIfEmpty(webSite, 'publisher', idReference(node as Organization))
     },

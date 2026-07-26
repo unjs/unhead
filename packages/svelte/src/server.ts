@@ -1,6 +1,6 @@
 export { UnheadContextKey } from './context'
 
-export { createHead, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
+export { createHead, type PreparedTemplate, prepareTemplate, renderSSRHead, transformHtmlTemplate } from 'unhead/server'
 
 export type {
   CreateServerHeadOptions,

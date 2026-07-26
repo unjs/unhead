@@ -1,3 +1,4 @@
+import type { UseScriptReturn } from 'unhead/scripts'
 import type {
   ActiveHeadEntry,
   HeadEntryOptions,
@@ -6,11 +7,11 @@ import type {
   UseHeadInput,
   UseScriptInput,
   UseScriptOptions,
-  UseScriptReturn,
   UseSeoMetaInput,
 } from 'unhead/types'
 import { getContext, onDestroy, onMount } from 'svelte'
-import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
+import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta } from 'unhead'
+import { useScript as baseUseScript } from 'unhead/scripts'
 import { UnheadContextKey } from './context'
 
 export function useUnhead(): Unhead {
@@ -44,7 +45,7 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
   return withSideEffects(baseSeoMeta(options.head || useUnhead(), input, options))
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options?.head || useUnhead()
@@ -56,26 +57,17 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
-  // capture the controller at registration time so unmount aborts the controller
-  // that was active when this component registered, not a newer one
-  const triggerAbortController = script._triggerAbortController
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   const sideEffects: (() => void)[] = []
-  // core's onLoaded/onError register by identity and return an identity-based
-  // disposer; we only tie that disposer to the component lifecycle
-  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
-    const off = base(cb) ?? (() => {})
+  const bind = <A extends any[]>(base: (...args: A) => () => void) => (...args: A) => {
+    const off = base(...args)
     sideEffects.push(off)
     return off
   }
-  // core returns an identity-based disposer at runtime although the type says void
-  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
-  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
-  // if we have a scope we should make these callbacks reactive
-  script.onLoaded = bind(baseOnLoaded)
-  script.onError = bind(baseOnError)
+  script.onLoaded = bind(script.onLoaded)
+  script.onError = bind(script.onError)
+  const triggerAbortController = script._triggerAbortController
   onDestroy(() => {
-    // stop any trigger promises
     triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })

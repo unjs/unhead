@@ -6,6 +6,7 @@
 //    that noisy timing hides; needs --expose-gc)
 // It imports built dist on purpose (measures shipped output), hence the .mjs +
 // eslint ignore. Output is a single JSON line; keep stdout clean.
+import { Session } from 'node:inspector/promises'
 import { pathToFileURL } from 'node:url'
 
 // resolve built dist from the repo root (cwd) so this harness can run from anywhere
@@ -167,26 +168,53 @@ function measureTimes(fn, { warmup = 50, reps = 40, runs = 250 } = {}) {
   return { wall: stats(wall), cpu: stats(cpu) }
 }
 
-// bytes allocated per render. The batch (`runs`) stays under new-space so no scavenge
-// fires mid-batch, making heapUsed delta == bytes allocated. Allocation is near
-// deterministic, so the median across reps has tiny variance — marginal wins (which
-// noisy wall-time hides) show up here.
-function measureAlloc(fn, { warmup = 50, reps = 25, runs = 60 } = {}) {
+function sampledBytes(profile) {
+  let bytes = 0
+  const visit = (node) => {
+    bytes += node.selfSize || 0
+    for (const child of node.children || [])
+      visit(child)
+  }
+  visit(profile.head)
+  return bytes
+}
+
+// Fine-grained sampling catches small per-render deltas. Five short repetitions
+// keep the extra profiler work bounded in the bundle-size job.
+const ALLOCATION_SAMPLING_INTERVAL = 64
+
+// A heapUsed batch delta silently resets whenever V8 scavenges the young
+// generation. Profile total allocations instead, across several independent
+// samples so the report can gate on the profiler's measured variance.
+async function measureAlloc(fn, { warmup = 50, reps = 5, runs = 200 } = {}) {
   for (let i = 0; i < warmup; i++) fn()
   const samples = []
-  for (let r = 0; r < reps; r++) {
+  for (let i = 0; i < reps; i++) {
     forceGC()
-    const before = process.memoryUsage().heapUsed
-    for (let i = 0; i < runs; i++) fn()
-    samples.push((process.memoryUsage().heapUsed - before) / runs)
+    const session = new Session()
+    session.connect()
+    try {
+      await session.post('HeapProfiler.enable')
+      await session.post('HeapProfiler.startSampling', {
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
+        includeObjectsCollectedByMajorGC: true,
+        includeObjectsCollectedByMinorGC: true,
+      })
+      for (let j = 0; j < runs; j++) fn()
+      const { profile } = await session.post('HeapProfiler.stopSampling')
+      samples.push(sampledBytes(profile) / runs)
+    }
+    finally {
+      session.disconnect()
+    }
   }
-  samples.sort((a, b) => a - b)
-  return { value: samples[samples.length >> 1] }
+  return stats(samples)
 }
 
 // async twins of measureTimes/measureAlloc for the streaming benches, which must be
 // awaited per run; kept separate so the sync render benches don't pay the microtask
-// overhead of a conditional await inside their hot loop
+// overhead of a conditional await inside their hot loop. Async heap deltas are only
+// informational: ReadableStream cleanup makes them bimodal even without code changes.
 async function measureTimesAsync(fn, { warmup = 20, reps = 25, runs = 40 } = {}) {
   for (let i = 0; i < warmup; i++) await fn()
   const wall = []
@@ -203,17 +231,29 @@ async function measureTimesAsync(fn, { warmup = 20, reps = 25, runs = 40 } = {})
   return { wall: stats(wall), cpu: stats(cpu) }
 }
 
-async function measureAllocAsync(fn, { warmup = 20, reps = 15, runs = 25 } = {}) {
+async function measureAllocAsync(fn, { warmup = 20, reps = 5, runs = 50 } = {}) {
   for (let i = 0; i < warmup; i++) await fn()
   const samples = []
-  for (let r = 0; r < reps; r++) {
+  for (let i = 0; i < reps; i++) {
     forceGC()
-    const before = process.memoryUsage().heapUsed
-    for (let i = 0; i < runs; i++) await fn()
-    samples.push((process.memoryUsage().heapUsed - before) / runs)
+    const session = new Session()
+    session.connect()
+    try {
+      await session.post('HeapProfiler.enable')
+      await session.post('HeapProfiler.startSampling', {
+        samplingInterval: ALLOCATION_SAMPLING_INTERVAL,
+        includeObjectsCollectedByMajorGC: true,
+        includeObjectsCollectedByMinorGC: true,
+      })
+      for (let j = 0; j < runs; j++) await fn()
+      const { profile } = await session.post('HeapProfiler.stopSampling')
+      samples.push(sampledBytes(profile) / runs)
+    }
+    finally {
+      session.disconnect()
+    }
   }
-  samples.sort((a, b) => a - b)
-  return { value: samples[samples.length >> 1] }
+  return stats(samples)
 }
 
 // Streaming SSR: an end-to-end wrapStream drain (shell + 50 app chunks + closing
@@ -277,14 +317,14 @@ async function streamingBenches() {
   const wrapTimes = await measureTimesAsync(drainWrappedStream, { warmup: 50, reps: 30, runs: 100 })
   const wrapAlloc = await measureAllocAsync(drainWrappedStream)
   const chunkTimes = measureTimes(renderSuspenseChunk, { reps: 30, runs: 120 })
-  const chunkAlloc = measureAlloc(renderSuspenseChunk, { reps: 20, runs: 40 })
+  const chunkAlloc = await measureAlloc(renderSuspenseChunk)
 
   return [
     { id: 'stream-wrap-cpu', name: 'Streaming wrapStream drain (CPU)', kind: 'time', value: wrapTimes.cpu.value, rme: wrapTimes.cpu.rme },
     { id: 'stream-wrap-wall', name: 'Streaming wrapStream drain (wall)', kind: 'time', value: wrapTimes.wall.value, rme: wrapTimes.wall.rme, informational: true },
-    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value },
+    { id: 'stream-wrap-alloc', name: 'Streaming allocated / drain', kind: 'alloc', value: wrapAlloc.value, rme: wrapAlloc.rme, informational: true },
     { id: 'stream-chunk-cpu', name: 'Streaming suspense chunk (CPU)', kind: 'time', value: chunkTimes.cpu.value, rme: chunkTimes.cpu.rme },
-    { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value },
+    { id: 'stream-chunk-alloc', name: 'Streaming allocated / suspense chunk', kind: 'alloc', value: chunkAlloc.value, rme: chunkAlloc.rme },
   ]
 }
 
@@ -350,19 +390,19 @@ async function csrBenches() {
 }
 
 const times = measureTimes(renderMediumSsrHead)
-const alloc = measureAlloc(renderMediumSsrHead)
+const alloc = await measureAlloc(renderMediumSsrHead)
 const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
 const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
-const schemaOrgAlloc = measureAlloc(renderCachedSchemaOrgHead, { reps: 20, runs: 40 })
+const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
 
 const result = {
   benches: [
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
-    { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value },
+    { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
-    { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value },
+    { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },
     ...await streamingBenches(),
     ...await csrBenches(),
   ],

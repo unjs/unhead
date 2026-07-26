@@ -3,6 +3,32 @@ import { resolveTags } from '../../../src/utils/resolve'
 import { basicSchema, createClientHeadWithContext } from '../../util'
 
 describe('resolveTags', () => {
+  it('preserves numeric zero meta content and drops empty values', () => {
+    const head = createClientHeadWithContext()
+
+    head.push({
+      meta: [
+        { name: 'numeric-zero', content: 0 },
+        { name: 'string-zero', content: '0' },
+        { name: 'value', content: 'value' },
+        { name: 'empty-string', content: '' },
+        { name: 'null', content: null },
+        // @ts-expect-error missing content exercises the runtime sanitizer boundary
+        { name: 'absent' },
+        { name: 'false', content: false },
+        { name: 'nan', content: Number.NaN },
+        { name: 'positive-infinity', content: Number.POSITIVE_INFINITY },
+        { name: 'negative-infinity', content: Number.NEGATIVE_INFINITY },
+      ],
+    })
+
+    expect(resolveTags(head).map(tag => tag.props)).toEqual([
+      { name: 'numeric-zero', content: 0 },
+      { name: 'string-zero', content: '0' },
+      { name: 'value', content: 'value' },
+    ])
+  })
+
   it('docs example', async () => {
     const head = createClientHeadWithContext()
 
@@ -89,8 +115,7 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
-          "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_d": "link:icon:https://cdn.example.com/favicon.ico",
           "_p": 1028,
           "_w": 100,
           "props": {
@@ -196,8 +221,7 @@ describe('resolveTags', () => {
           "tag": "meta",
         },
         {
-          "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_d": "link:icon:https://cdn.example.com/favicon.ico",
           "_p": 1028,
           "_w": 100,
           "props": {

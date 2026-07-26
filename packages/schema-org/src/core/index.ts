@@ -1,5 +1,7 @@
+export type { ResolverOptions } from '../utils'
 export { defineSchemaOrgResolver } from './define'
 export type { SchemaOrgGraph } from './graph'
 export { createSchemaOrgGraph } from './graph'
 export { resolveMeta, resolveNode, resolveNodeId, resolveRelation } from './resolve'
 export { merge } from './util'
+export type { Merge } from './util'

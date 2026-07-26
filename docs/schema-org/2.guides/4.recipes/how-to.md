@@ -1,23 +1,23 @@
 ---
 title: Schema.org for How-To Content
-description: 'Add HowTo structured data with defineHowTo(). Enable step-by-step rich snippets with images, supplies, and time estimates.'
+description: 'Add HowTo structured data with defineHowTo(), including steps, images, supplies, tools, and time estimates.'
 navigation:
   title: How To
 ---
 
-Creating How-To content is an excellent way to provide valuable instructions to your users. With Schema.org markup, you can help search engines better understand your content structure and potentially get rich results in search.
+HowTo structured data describes the steps, supplies, tools, and timing of instructional content. [Google deprecated How-to rich results in September 2023](https://developers.google.com/search/blog/2023/08/howto-faq-changes), but the markup remains part of Schema.org.
 
 ## Useful Links
 
 - [defineHowTo](/docs/schema-org/api/schema/how-to)
-- [HowTo | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/how-to)
-- [HowTo Schema | Yoast](https://developer.yoast.com/features/schema/pieces/howto)
+- [HowTo - Schema.org](https://schema.org/HowTo)
+- [How-to rich result deprecation | Google Search Central](https://developers.google.com/search/blog/2023/08/howto-faq-changes)
 
 ## Marking up a How-To Guide
 
-The [defineHowTo](/docs/schema-org/api/schema/how-to) function creates HowTo Schema whilst handling relations for you.
+The [defineHowTo](/docs/schema-org/api/schema/how-to) helper creates a HowTo node and resolves its steps.
 
-Note that some fields may already be inferred, see [Schema.org Params](/docs/schema-org/guides/core-concepts/params)
+Some fields may already be inferred. See [Schema.org Params](/docs/schema-org/guides/core-concepts/params).
 
 ```ts
 import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -28,6 +28,7 @@ useSchemaOrg([
     description: 'A step-by-step guide to building a home office desk.',
     image: '/images/desk-building.jpg',
     estimatedCost: {
+      '@type': 'MonetaryAmount',
       currency: 'USD',
       value: '100'
     },
@@ -74,7 +75,7 @@ useSchemaOrg([
 
 ## Steps with HowToStep
 
-For more complex How-To guides, you can define detailed steps using the HowToStep type.
+Use `HowToStep` when a step contains several directions:
 
 ```ts
 import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -82,7 +83,7 @@ import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
 useSchemaOrg([
   defineHowTo({
     name: 'How to Change a Flat Tire',
-    description: 'A comprehensive guide to safely changing a flat tire.',
+    description: 'Instructions for changing a flat tire safely.',
     step: [
       {
         '@type': 'HowToStep',
@@ -131,7 +132,7 @@ useSchemaOrg([
 
 ## Adding Time Information
 
-For How-To guides, you can specify how long each step takes or the total time required:
+For How-To guides, you can specify the time spent performing the instructions and the total time required:
 
 ```ts
 import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -139,17 +140,16 @@ import { defineHowTo, useSchemaOrg } from '@unhead/schema-org/@framework'
 useSchemaOrg([
   defineHowTo({
     name: 'How to Make Pancakes',
+    performTime: 'PT20M', // 20 minutes performing the instructions
     totalTime: 'PT30M', // 30 minutes in ISO 8601 duration format
     step: [
       {
         name: 'Mix ingredients',
-        text: 'Combine flour, milk, eggs, and sugar in a bowl.',
-        performTime: 'PT5M' // 5 minutes
+        text: 'Combine flour, milk, eggs, and sugar in a bowl.'
       },
       {
         name: 'Cook pancakes',
-        text: 'Pour batter onto hot griddle and flip when bubbles form.',
-        performTime: 'PT15M' // 15 minutes
+        text: 'Pour batter onto hot griddle and flip when bubbles form.'
       }
     ]
   })
@@ -157,12 +157,12 @@ useSchemaOrg([
 ```
 
 ::tip
-For time durations, use [ISO 8601 duration format](https://en.wikipedia.org/wiki/ISO_8601#Durations). For example, "PT30M" represents 30 minutes, "PT2H30M" represents 2 hours and 30 minutes.
+For time durations, use the [W3C duration format](https://www.w3.org/TR/xmlschema11-2/#duration). For example, "PT30M" represents 30 minutes, "PT2H30M" represents 2 hours and 30 minutes.
 ::
 
 ## Structured How-To Content
 
-For the best user experience, your HTML structure should match your schema. Here's an example of how you might structure your How-To content:
+Keep the visible instructions consistent with the schema. For example:
 
 ```html
 <div>
@@ -208,15 +208,12 @@ For the best user experience, your HTML structure should match your schema. Here
 
 ## Best Practices
 
-1. **Match content to schema**: Ensure your visible page content matches what's in your schema markup.
-2. **Complete information**: Include all relevant details like tools, supplies, and clear steps.
-3. **Add images**: Where possible, include images for each step to enhance understanding.
-4. **Be specific**: Provide clear, actionable instructions in each step.
-5. **Include timing**: Add time estimates for each step when applicable.
-6. **Test in Google's Rich Results Test**: Validate your markup using [Google's Rich Results Test](https://search.google.com/test/rich-results).
+- Match every marked-up step, tool, supply, and duration to the visible instructions.
+- Add step images and time estimates when the page provides them.
+- Check the rendered markup with the [Schema.org Validator](https://validator.schema.org/). Google's Rich Results Test no longer supports HowTo.
 
 ## Related Recipes
 
-- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization/person
-- [FAQ Page](/docs/schema-org/guides/recipes/faq) - Add FAQ structured data
-- [Blog Posts](/docs/schema-org/guides/recipes/blog) - Article structured data
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization/person
+- [FAQ Page](/docs/schema-org/guides/recipes/faq): Add FAQ structured data
+- [Blog Posts](/docs/schema-org/guides/recipes/blog): Article structured data

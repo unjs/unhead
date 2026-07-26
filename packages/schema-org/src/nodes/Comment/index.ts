@@ -1,5 +1,4 @@
 import type { IdReference, NodeRelation, ResolvableDate, Thing } from '../../types'
-import type { Article } from '../Article'
 import type { Person } from '../Person'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
@@ -60,7 +59,7 @@ export const commentResolver = defineSchemaOrgResolver<Comment>({
     return node
   },
   resolveRootNode(node, { find }) {
-    const article = find<Article>(PrimaryArticleId)
+    const article = find(PrimaryArticleId)
     if (article)
       setIfEmpty(node, 'about', idReference(article))
   },

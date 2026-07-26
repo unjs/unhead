@@ -1,28 +1,28 @@
 ---
 title: Schema.org Breadcrumbs
-description: 'Add BreadcrumbList structured data with defineBreadcrumb(). Display clickable navigation paths instead of URLs in Google search results.'
+description: 'Add BreadcrumbList structured data with defineBreadcrumb() so Google can use a page hierarchy in search results.'
 navigation:
   title: Breadcrumbs
 ---
 
-Use `defineBreadcrumb()` with an array of `{ name, item }` objects to create breadcrumb navigation markup. Google displays this as a clickable path in search results instead of showing the raw URL.
+Use `defineBreadcrumb()` with an array of `{ name, item }` objects to create breadcrumb navigation markup. Google may use this markup to categorize a page in search results.
 
 ::note
-Breadcrumb structured data replaces URLs in search results with a readable navigation path (Home > Category > Page), helping users understand your site hierarchy.
+Breadcrumb structured data describes a readable navigation path such as Home > Category > Page. Search appearance is not guaranteed.
 ::
 
 ## Useful Links
 
-- [Breadcrumb | Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/breadcrumb)
-- [Breadcrumb | Yoast](https://developer.yoast.com/features/schema/pieces/breadcrumb)
+- [BreadcrumbList - Schema.org](https://schema.org/BreadcrumbList)
+- [Breadcrumb | Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb)
 
 ## How do I mark up breadcrumbs?
 
-[defineBreadcrumb](/docs/schema-org/api/schema/breadcrumb) creates Breadcrumb Schema whilst handling relations for you.
+[defineBreadcrumb](/docs/schema-org/api/schema/breadcrumb) creates a BreadcrumbList node and handles its ListItem relationships.
 
-Imagine we want to generate the following markup with the appropriate Schema.
+The following example generates structured data for the matching visible breadcrumb navigation.
 
-Note: Google recommends that the markup for the breadcrumbs should exist on the page matching the Schema.org entry.
+Google requires the breadcrumb markup to represent a typical user path to the page.
 
 ```ts
 import { defineBreadcrumb, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -42,7 +42,7 @@ useSchemaOrg([
 ])
 ```
 
-Here's an example of how you might structure your breadcrumbs in HTML:
+The visible breadcrumb navigation can use the same items:
 
 ```html
 <ul>
@@ -62,9 +62,7 @@ Here's an example of how you might structure your breadcrumbs in HTML:
 
 ## How do I add multiple breadcrumb trails?
 
-There may be some cases where you'd like multiple breadcrumbs to be displayed.
-
-For these cases you can provide an `@id` and it will avoid overwriting the primary breadcrumb.
+Give each additional trail its own `@id` so it does not overwrite the primary breadcrumb.
 
 ```ts
 import { defineBreadcrumb, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -94,5 +92,5 @@ useSchemaOrg([
 
 ## Related Recipes
 
-- [Blog Posts](/docs/schema-org/guides/recipes/blog) - Article structured data
-- [E-Commerce](/docs/schema-org/guides/recipes/e-commerce) - Product structured data
+- [Blog Posts](/docs/schema-org/guides/recipes/blog): Article structured data
+- [E-commerce](/docs/schema-org/guides/recipes/e-commerce): Product structured data

@@ -228,6 +228,30 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('client adapter hooks', () => {
+    it('exposes hooks to the renderer owned by the streaming core', async () => {
+      const { document } = setupStreamingDom([])
+      let calls = 0
+      const head = createStreamableHead({
+        hooks: {
+          'tags:resolve': ({ tags }) => {
+            calls++
+            const title = tags.find(tag => tag.tag === 'title')
+            if (title)
+              title.textContent = 'Hooked stream title'
+          },
+        },
+      })
+
+      await waitForDomUpdate()
+      head!.push({ title: 'Original stream title' })
+      await waitForDomUpdate()
+
+      expect(calls).toBeGreaterThan(0)
+      expect(document.title).toBe('Hooked stream title')
+    })
+  })
+
   describe('style tag updates with key', () => {
     it('updates style innerHTML when pushing styles with same key', async () => {
       const { window, document } = setupStreamingDom([])

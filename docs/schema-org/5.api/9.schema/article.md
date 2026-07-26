@@ -5,9 +5,9 @@ navigation:
   title: Article
 ---
 
-Article schema identifies written content like blog posts, news articles, and technical documentation. It helps search engines understand authorship, publish dates, and content type for rich results in Google Search.
+[Article structured data](https://developers.google.com/search/docs/appearance/structured-data/article) identifies written content such as blog posts, news articles, and technical documentation. It can help Google understand authorship, publication dates, representative images, and content type.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -33,62 +33,58 @@ Article schema identifies written content like blog posts, news articles, and te
 }
 ```
 
-With Unhead, generate this using the `defineArticle()` composable — see the [API reference](#schema-org-article) below.
-
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
 ::
 
 ## Schema.org Article
 
-- **Type**: `defineArticle(input?: Article)`{lang="ts"}
+- **Type**: `defineArticle<T extends Record<string, any>>(input?: Article & T)`{lang="ts"}
 
   Describes an `Article` on a `WebPage`.
 
 ## Useful Links
 
 - [Article - Schema.org](https://schema.org/Article)
-- [Article Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/article)
-- [Article - Yoast](https://developer.yoast.com/features/schema/pieces/article)
+- [Article Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/article)
 - [Recipe: Blog](/docs/schema-org/guides/recipes/blog)
 
-## Required properties
+## Recommended properties for Google
 
 - **headline** `string`
 
   Name of the article
 
-  A name can be provided using route meta on the `title` key, see [defaults](#defaults).
+  Route metadata on the `title` key can provide this value; see [Defaults](#defaults).
 
 - **image** `Arrayable<string|ImageObject>`
 
-  Link a primary image or a collection of images to used to the article.
+  Link a primary image or a collection of images to the article.
 
-  A single image URL can be provided using route meta on the `image` key, see [defaults](#defaults).
+  Route metadata on the `image` key can provide a single image URL; see [Defaults](#defaults).
 
-- **author** `AuthorInput` (conditional)
+  For Google Search, use crawlable images that represent the article. Google recommends several high-resolution images with 16:9, 4:3, and 1:1 aspect ratios; see the [current Article image guidelines](https://developers.google.com/search/docs/appearance/structured-data/article#article-types).
 
-  If the author of the article is not your identity (see [Choosing an identity](/docs/schema-org/guides/recipes/identity)) you will need to provide authors
-  manually.
+- **author** `NodeRelations<Identity>`
 
-  The registered author is moved to a root Schema node, resolving the field as reference to a [Person](/docs/schema-org/api/schema/person).
+  If the article's author is not your site identity, provide the author explicitly. See [Choosing an identity](/docs/schema-org/guides/recipes/identity).
 
-## Recommended Properties
+  The registered author is moved to a root Schema node, resolving the field as an `@id` reference to a [Person](/docs/schema-org/api/schema/person).
 
 - **@type** [sub-types](#sub-types)
 
-  Select the most appropriate type for your content for the article.
+  Select the Article subtype that best matches the content.
 
 ## Defaults
 
 - **@type**: `Article`
 - **@id**: `${canonicalUrl}#article`
-- **headline**: `currentRouteMeta.title` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **image**: `currentRouteMeta.image` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **description**: `currentRouteMeta.description` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **inLanguage**: `options.defaultLanguage` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **datePublished**: `currentRouteMeta.datePublished` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
-- **dateModified**: `currentRouteMeta.dateModified` _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **headline**: `title` from resolved page metadata _(see: [Schema.org Params](/docs/schema-org/guides/core-concepts/params))_
+- **image**: `image` from resolved page metadata
+- **description**: `description` from resolved page metadata
+- **inLanguage**: `inLanguage` from resolved page metadata
+- **datePublished**: `datePublished` from resolved page metadata
+- **dateModified**: `dateModified` from resolved page metadata
 - **publisher**: Identity Reference
 - **author**: Identity Reference
 - **isPartOf**: WebPage Reference
@@ -110,15 +106,14 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 [WebPage](/docs/schema-org/api/schema/webpage)
 
 - sets default `potentialAction` to `ReadAction`
-- sets default `dateModified` to articles `dateModified`
-- sets default `datePublished` to articles `datePublished`
-- sets default `primaryImageOfPage` to articles first image
+- sets the default `dateModified` to the Article's `dateModified`
+- sets the default `datePublished` to the Article's `datePublished`
 
 ## Resolves
 
-See [Global Resolves](/docs/schema-org/guides/get-started/overview#site-page-level-config) for full context.
+See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `headline` will be cut to a maximum length of 110 without breaking words.
+- `headline` is cut to a maximum of 110 characters at the last complete word that fits.
 
 - `thumbnailUrl` will be set to the first image
 
@@ -131,7 +126,7 @@ defineArticle({
 })
 ```
 
-- providing a single string of `@type` which isn't `Article` will convert it to an array `TechArticle` -> `['Article', 'TechArticle']`
+- providing a single `@type` other than `Article` converts it to an array: `TechArticle` becomes `['Article', 'TechArticle']`
 
 ```ts
 defineArticle({
@@ -156,13 +151,13 @@ defineArticle({
 
 ### Route Meta
 
-Add type support for using the routes meta.
+Add type support for route metadata.
 
 ```ts
 defineArticle()
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineArticle({
@@ -221,10 +216,7 @@ export interface ArticleSimple extends Thing {
   video?: NodeRelations<VideoObject>
   /**
    * An image object or referenced by ID.
-   * - Must be at least 696 pixels wide.
-   * - Must be of the following formats+file extensions: .jpg, .png, .gif ,or .webp.
-   *
-   * Must have markup of it somewhere on the page.
+   * Google eligibility has additional image requirements; see the Article guide above.
    */
   image?: NodeRelations<ImageObject | string>
   /**
@@ -280,6 +272,6 @@ export interface ArticleSimple extends Thing {
 
 ## Related Schemas
 
-- [Person](/docs/schema-org/api/schema/person) - Article author
-- [Organization](/docs/schema-org/api/schema/organization) - Publisher
-- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Article navigation
+- [Person](/docs/schema-org/api/schema/person): Article author
+- [Organization](/docs/schema-org/api/schema/organization): Publisher
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb): Article navigation

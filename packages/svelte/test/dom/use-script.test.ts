@@ -2,6 +2,7 @@
 import { cleanup, render } from '@testing-library/svelte'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHead, UnheadContextKey } from '../../src/client'
+import ScriptCallbacks from '../fixtures/ScriptCallbacks.svelte'
 import ScriptLoading from '../fixtures/ScriptLoading.svelte'
 import ScriptProxy from '../fixtures/ScriptProxy.svelte'
 
@@ -93,5 +94,25 @@ describe('svelte useScript', () => {
 
     await new Promise(r => setTimeout(r, 10))
     expect(document.querySelector('link[rel="preload"][as="script"]')).toBeTruthy()
+  })
+
+  it('forwards keyed callback options to core', async () => {
+    const head = createHead()
+    const context = new Map()
+    const onCall = vi.fn()
+    context.set(UnheadContextKey, head)
+
+    render(ScriptCallbacks, {
+      context,
+      props: { onCall },
+    })
+
+    const script = (head as any)._scripts['//svelte-keyed.js']
+    script.status = 'loaded'
+    head.hooks?.callHook('script:updated', { script })
+    await script._loadPromise
+
+    expect(onCall).toHaveBeenCalledOnce()
+    expect(onCall).toHaveBeenCalledWith('first')
   })
 })

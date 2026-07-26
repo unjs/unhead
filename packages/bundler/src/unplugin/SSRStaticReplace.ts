@@ -1,18 +1,35 @@
 import type { ConfigEnv, UserConfig } from 'vite'
+import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
+import { parseAndWalk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
+import { resolveBuildConsumer } from './utils'
 
 const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
 const HEAD_SSR_FILTER_RE = /\bhead\.ssr\b/
-const HEAD_SSR_RE = new RegExp(HEAD_SSR_FILTER_RE.source, 'g')
+
+function isMutationTarget(parent: any, key: string | number | symbol | null | undefined): boolean {
+  if (key === 'left') {
+    return parent?.type === 'AssignmentExpression'
+      || parent?.type === 'ForInStatement'
+      || parent?.type === 'ForOfStatement'
+  }
+  return key === 'argument'
+    && (parent?.type === 'UpdateExpression'
+      || (parent?.type === 'UnaryExpression' && parent.operator === 'delete'))
+}
 
 export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() => {
-  let ssr = false
-  let enabled = true
+  // Fallback build target for bundlers without a per-transform environment
+  // (webpack, rspack, Vite <6). Those bundlers create a separate plugin
+  // instance per build, so instance-local state is safe there. Under the Vite
+  // Environment API (`this.environment`) the target is resolved per transform
+  // call, since one plugin instance can serve both client and server
+  // environments in one pipeline. When the target is unknown (plain rollup),
+  // `head.ssr` is left dynamic in the source.
+  let fallbackConsumer: BuildConsumer | undefined
 
   function shouldTransformId(id: string): boolean {
-    if (!enabled)
-      return false
     return UNHEAD_JS_MODULE_RE.test(id)
   }
 
@@ -31,16 +48,43 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         id: UNHEAD_JS_MODULE_RE,
       },
       handler(code, id) {
+        const consumer = resolveBuildConsumer(this, fallbackConsumer)
+        // Unknown build target: retain `head.ssr` so runtime detection keeps
+        // working instead of hard-coding the wrong branch.
+        if (!consumer)
+          return
+
         if (!shouldTransformId(id))
           return
 
         if (!shouldTransformCode(code))
           return
 
+        const ssr = consumer === 'server'
         const s = new MagicString(code)
-        for (const match of code.matchAll(HEAD_SSR_RE)) {
-          s.overwrite(match.index!, match.index! + match[0].length, String(ssr))
-        }
+        let mutationTargetDepth = 0
+        parseAndWalk(code, id, {
+          parseOptions: { lang: 'js' },
+          enter(node: any, parent: any, { key }: any) {
+            if (isMutationTarget(parent, key))
+              mutationTargetDepth++
+            if (mutationTargetDepth
+              || node.type !== 'MemberExpression'
+              || node.computed
+              || node.object?.type !== 'Identifier'
+              || node.object.name !== 'head'
+              || node.property?.type !== 'Identifier'
+              || node.property.name !== 'ssr'
+              || code.slice(node.start, node.end) !== 'head.ssr') {
+              return
+            }
+            s.overwrite(node.start, node.end, String(ssr))
+          },
+          leave(_node: any, parent: any, { key }: any) {
+            if (isMutationTarget(parent, key))
+              mutationTargetDepth--
+          },
+        })
 
         if (s.hasChanged()) {
           return {
@@ -52,21 +96,20 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
     },
 
     webpack(ctx) {
-      if (ctx.name === 'server')
-        ssr = true
+      fallbackConsumer = ctx.name === 'server' ? 'server' : 'client'
     },
     vite: {
+      // Per-call target resolution via `this.environment` makes the plugin
+      // safe to share across environments in a single build pipeline.
+      sharedDuringBuild: true,
       apply(_config: UserConfig, env: ConfigEnv): boolean {
         // In dev mode (serve), both SSR and client environments share the same
-        // vite dev server. Statically replacing head.ssr would force one value
-        // for both environments, breaking SSR renders. Only apply during builds
-        // where SSR and client are separate passes.
-        if (env.command === 'serve') {
-          enabled = false
-          return true
-        }
-        if (env.isSsrBuild)
-          ssr = true
+        // vite dev server module graph. Statically replacing head.ssr would
+        // force one value for both environments, breaking SSR renders. Only
+        // apply during builds where SSR and client are separate outputs.
+        if (env.command === 'serve')
+          return false
+        fallbackConsumer = env.isSsrBuild ? 'server' : 'client'
         return true
       },
     },

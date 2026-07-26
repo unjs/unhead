@@ -1,18 +1,17 @@
 ---
 title: Podcast Series Schema
-description: Use definePodcastSeries() to add PodcastSeries structured data. Enable podcast rich results with show info, host, and RSS feed link.
+description: Use definePodcastSeries() to describe a podcast show, including its host, RSS feed, episodes, seasons, dates, and cover image.
 ---
 
 ## Schema.org PodcastSeries
 
-**Type**: `definePodcastSeries(input?: PodcastSeries)`{lang="ts"}
+**Type**: `definePodcastSeries<T extends Record<string, any>>(input?: PodcastSeries & T)`{lang="ts"}
 
-  Describes a podcast series - the main podcast show.
+  Describes a podcast series, the main podcast show.
 
 ## Useful Links
 
 - [PodcastSeries - Schema.org](https://schema.org/PodcastSeries)
-- [Podcast Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/podcast)
 
 ## Required properties
 
@@ -28,7 +27,7 @@ description: Use definePodcastSeries() to add PodcastSeries structured data. Ena
 
 - **author** `NodeRelations<Person | Organization | string>`
 
-  The author/creator/host of the podcast. Resolves to [Person](/docs/schema-org/api/schema/person) or [Organization](/docs/schema-org/api/schema/organization).
+  The author, creator, or host of the podcast. Plain objects and strings resolve as [Person](/docs/schema-org/api/schema/person); wrap an organization with `defineOrganization()` to select the Organization resolver.
 
 - **image** `NodeRelations<string | ImageObject>`
 
@@ -45,7 +44,7 @@ description: Use definePodcastSeries() to add PodcastSeries structured data. Ena
 ## Defaults
 
 - **@type**: `PodcastSeries`
-- **@id**: `${canonicalUrl}#podcast-series`
+- **@id**: `${canonicalUrl}#/schema/podcast-series/{n}`
 
 ## Examples
 
@@ -58,7 +57,7 @@ definePodcastSeries({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 definePodcastSeries({
@@ -104,6 +103,6 @@ export interface PodcastSeriesSimple extends Thing {
 
 ## Related Schemas
 
-- [PodcastEpisode](/docs/schema-org/api/schema/podcast-episode) - Episodes
-- [Person](/docs/schema-org/api/schema/person) - Host
-- [Organization](/docs/schema-org/api/schema/organization) - Publisher
+- [PodcastEpisode](/docs/schema-org/api/schema/podcast-episode): Episodes
+- [Person](/docs/schema-org/api/schema/person): Host
+- [Organization](/docs/schema-org/api/schema/organization): Publisher

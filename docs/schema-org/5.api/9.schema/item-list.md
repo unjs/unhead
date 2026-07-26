@@ -1,13 +1,13 @@
 ---
 title: ItemList Schema - JSON-LD Guide & Examples
-description: Add ItemList structured data with Unhead. JSON-LD examples for carousels, ranked lists, and product collections with Google rich result support.
+description: Add ItemList structured data with Unhead. Create ordered lists and eligible Google carousels for courses, movies, recipes, and restaurants.
 navigation:
   title: ItemList
 ---
 
-ItemList schema represents an ordered or unordered list of items. Google uses it to display carousel rich results for recipes, products, courses, and other list-based content.
+ItemList schema represents an ordered or unordered list of items. [Google supports host carousel markup](https://developers.google.com/search/docs/appearance/structured-data/carousel) when ItemList is combined with Course, Movie, Recipe, or Restaurant items.
 
-### JSON-LD Example
+## JSON-LD Example
 
 ```json
 {
@@ -17,23 +17,21 @@ ItemList schema represents an ordered or unordered list of items. Google uses it
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://example.com/best-phones/iphone"
+      "url": "https://example.com/recipes/apple-pie"
     },
     {
       "@type": "ListItem",
       "position": 2,
-      "url": "https://example.com/best-phones/pixel"
+      "url": "https://example.com/recipes/banana-bread"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://example.com/best-phones/galaxy"
+      "url": "https://example.com/recipes/carrot-cake"
     }
   ]
 }
 ```
-
-With Unhead, generate this using the `defineItemList()` composable — see the [API reference](#schema-org-itemlist) below.
 
 ::tip{icon="i-heroicons-wrench-screwdriver"}
 Use the [Schema.org Generator](/tools/schema-generator) to build your structured data visually.
@@ -41,20 +39,25 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 ## Schema.org ItemList
 
-- **Type**: `defineItemList(input?: ItemList)`{lang="ts"}
+- **Type**: `defineItemList<T extends Record<string, any>>(input?: ItemList & T)`{lang="ts"}
 
-A list of items of any sort. Mainly used for breadcrumbs and carousels.
+An ItemList represents an ordered or unordered list, primarily for breadcrumbs and carousels.
 
 ## Useful Links
 
 - [ItemList - Schema.org](https://schema.org/ItemList)
-- [Carousel - Google](https://developers.google.com/search/docs/advanced/structured-data/carousel)
+- [Carousel - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/carousel)
 
 ## Required properties
 
-- **itemListElement** `ListItem`
+- **itemListElement** `NodeRelations<ListItem>`
 
   The item list elements.
+
+## Defaults and resolves
+
+- `@type` defaults to `ItemList`, and a root list receives an ID such as `${canonicalUrl}#/schema/item-list/{n}`.
+- Each nested ListItem receives a one-based `position` when it does not already have one.
 
 ## Types
 
@@ -65,7 +68,7 @@ export interface ItemListSimple extends Thing {
    */
   itemListElement: NodeRelations<ListItem>
   /**
-   * Type of ordering (e.g. Ascending, Descending, Unordered).
+   * Type of ordering (e.g., Ascending, Descending, Unordered).
    *
    * @default undefined
    */
@@ -83,6 +86,6 @@ export interface ItemListSimple extends Thing {
 
 ## Related Schemas
 
-- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb) - Navigation lists
-- [Product](/docs/schema-org/api/schema/product) - Product lists
-- [Article](/docs/schema-org/api/schema/article) - Article lists
+- [Breadcrumb](/docs/schema-org/api/schema/breadcrumb): Navigation lists
+- [Product](/docs/schema-org/api/schema/product): Product lists
+- [Article](/docs/schema-org/api/schema/article): Article lists

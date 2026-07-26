@@ -1,22 +1,22 @@
 ---
 title: Event Schema
-description: Use defineEvent() to add Event structured data to your pages. Enable rich results for concerts, conferences, and meetups with dates, venues, and ticket info.
+description: Use defineEvent() to add Event structured data for concerts, conferences, and meetups with dates, venues, and ticket information.
 ---
 
 ## Schema.org Event
 
-- **Type**: `defineEvent(input?: Event)`{lang="ts"}
+- **Type**: `defineEvent<T extends Record<string, any>>(input?: Event & T)`{lang="ts"}
 
   Describes an Event.
 
 ## Useful Links
 
 - [Schema.org Event](https://schema.org/Event)
-- [Event Schema Markup - Google Search Central](https://developers.google.com/search/docs/advanced/structured-data/event)
+- [Event Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/event)
 
-::alert{type="warning"}
-🔨 Documentation in progress
-::
+Unhead supports Schema.org online and mixed-attendance events. Google's event search experience currently requires an event at a physical location that is [bookable by the general public](https://developers.google.com/search/docs/appearance/structured-data/event#content-guidelines).
+
+For that Google feature, the rendered Event must include `name`, `startDate`, and a physical `Place` with an address. A Schema.org-valid virtual-only Event is not eligible. Unhead accepts and resolves both forms but does not enforce Google's requirements.
 
 ## Examples
 
@@ -25,7 +25,7 @@ defineEvent({
   name: 'The Adventures of Kira and Morrison',
   location: [
     'https://operaonline.stream5.com/',
-    {
+    definePlace({
       name: 'Snickerpark Stadium',
       address: {
         streetAddress: '100 West Snickerpark Dr',
@@ -34,17 +34,17 @@ defineEvent({
         addressRegion: 'PA',
         addressCountry: 'US',
       },
-    },
+    }),
   ],
   image: [
     'https://example.com/photos/1x1/photo.jpg',
     'https://example.com/photos/4x3/photo.jpg',
     'https://example.com/photos/16x9/photo.jpg',
   ],
-  organizer: {
+  organizer: defineOrganization({
     name: 'Kira and Morrison Music',
     url: 'https://kiraandmorrisonmusic.com',
-  },
+  }),
   performer: {
     '@type': 'PerformingGroup',
     'name': 'Kira and Morrison',
@@ -52,15 +52,25 @@ defineEvent({
   offers: {
     price: 30,
     url: 'https://www.example.com/event_offer/12345_201803180430',
-    validFrom: new Date(Date.UTC(2024, 5, 21, 12)),
+    validFrom: new Date(Date.UTC(2026, 5, 21, 12)),
   },
   description: 'The Adventures of Kira and Morrison is coming to Snickertown in a can\'t miss performance.',
-  startDate: '2025-07-21T19:00-05:00',
-  endDate: '2025-07-21T23:00-05:00',
+  startDate: '2027-07-21T19:00-05:00',
+  endDate: '2027-07-21T23:00-05:00',
   eventStatus: 'EventScheduled',
   eventAttendanceMode: 'MixedEventAttendanceMode',
 })
 ```
+
+Import `definePlace` and `defineOrganization` with `defineEvent` in this example. Nested helpers select the correct resolver when a relation accepts more than one node type.
+
+## Defaults and resolves
+
+- `@type` defaults to `Event`, and `@id` defaults to `${canonicalUrl}#event`.
+- `name`, `description`, `image`, and `inLanguage` can be inherited from resolved page metadata.
+- `organizer`, `performer`, and `offers` use their corresponding nested resolvers.
+- `eventAttendanceMode` and `eventStatus` are expanded to full Schema.org URLs.
+- Event date fields accept JavaScript Date objects. Midnight values are serialized as calendar dates unless `eventStatus` is `EventMovedOnline`; dates for moved-online events are serialized as ISO 8601 date-times.
 
 ## Types
 
@@ -83,7 +93,7 @@ export interface EventSimple extends Thing {
    */
   eventAttendanceMode?: OptionalSchemaOrgPrefix<EventAttendanceModeTypes>
   /**
-   * An eventStatus of an event represents its status; particularly useful when an event is cancelled or rescheduled.
+   * An eventStatus of an event represents its status; particularly useful when an event is canceled or rescheduled.
    */
   eventStatus?: OptionalSchemaOrgPrefix<EventStatusTypes>
   /**
@@ -117,7 +127,7 @@ export interface EventSimple extends Thing {
    */
   performer?: NodeRelation<Person>
   /**
-   * Used in conjunction with eventStatus for rescheduled or cancelled events.
+   * Used in conjunction with eventStatus for rescheduled or canceled events.
    * This property contains the previously scheduled start date.
    * For rescheduled events, the startDate property should be used for the newly scheduled start date.
    * In the (rare) case of an event that has been postponed and rescheduled multiple times, this field may be repeated.
@@ -144,6 +154,6 @@ export interface EventSimple extends Thing {
 
 ## Related Schemas
 
-- [Organization](/docs/schema-org/api/schema/organization) - Event organizer
-- [Person](/docs/schema-org/api/schema/person) - Event performer
-- [LocalBusiness](/docs/schema-org/api/schema/local-business) - Event venue
+- [Organization](/docs/schema-org/api/schema/organization): Event organizer
+- [Person](/docs/schema-org/api/schema/person): Event performer
+- [LocalBusiness](/docs/schema-org/api/schema/local-business): Event venue

@@ -5,7 +5,6 @@ import type { Offer } from '../Offer'
 import type { Organization } from '../Organization'
 import type { Person } from '../Person'
 import type { Review } from '../Review'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   IdentityId,
@@ -82,7 +81,7 @@ export interface ServiceSimple extends Thing {
    * The geographic area where the service is provided.
    * Can be a text description or a Place object.
    */
-  'areaServed'?: string | unknown
+  'areaServed'?: Arrayable<string | Thing>
   /**
    * A means of accessing the service (e.g. a phone bank, a web site, a location, etc.).
    */
@@ -90,7 +89,7 @@ export interface ServiceSimple extends Thing {
   /**
    * An intended audience, i.e. a group for whom the service was created.
    */
-  'audience'?: unknown
+  'audience'?: Thing
   /**
    * A category for the item. Greater signs or slashes can be used to informally indicate a category hierarchy.
    */
@@ -98,7 +97,7 @@ export interface ServiceSimple extends Thing {
   /**
    * Indicates an OfferCatalog listing for this Service.
    */
-  'hasOfferCatalog'?: unknown
+  'hasOfferCatalog'?: Thing
   /**
    * An offer to provide this service—for example, an offer to perform a service for a price, or without charge.
    */
@@ -167,8 +166,8 @@ export const serviceResolver = defineSchemaOrgResolver<Service>({
     return node
   },
   resolveRootNode(service, { find }) {
-    const webPage = find<WebPage>(PrimaryWebPageId)
-    const identity = find<Person | Organization>(IdentityId)
+    const webPage = find(PrimaryWebPageId)
+    const identity = find(IdentityId)
 
     // Set the provider to the identity if not specified
     if (identity)

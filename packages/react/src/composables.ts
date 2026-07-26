@@ -90,7 +90,7 @@ export function useSeoMeta(input: UseSeoMetaInput = {}, options: HeadEntryOption
   return withSideEffects<ActiveHeadEntry<UseSeoMetaInput>>(input, options, baseSeoMeta)
 }
 
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: Omit<UseScriptOptions<T>, 'scope'>): UseScriptReturn<T> {
   const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
   const options = _options || {} as UseScriptOptions<T>
   const head = options.head || useUnhead()
@@ -122,15 +122,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   })
 
   useEffect(() => {
-    const existingControllers = new Set(script._triggerAbortControllers)
-    script.setupTriggerHandler(trigger)
-    const triggerAbortControllers = script._triggerAbortControllers
-      ? [...script._triggerAbortControllers].filter(controller => !existingControllers.has(controller))
-      : []
-
-    return () => {
-      triggerAbortControllers.forEach(controller => controller.abort())
-    }
+    return script.setupTriggerHandler(trigger)
   }, [script, trigger])
 
   function reconcileScriptCallbacks(activeRenderId: number) {
@@ -173,7 +165,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           return
         record.active = false
         record.registered = false
-        cb(...args)
+        return cb(...args)
       },
       key,
       registered: false,

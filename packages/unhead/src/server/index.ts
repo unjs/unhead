@@ -1,3 +1,5 @@
+export { prepareTemplate } from '../parser'
+export type { PreparedTemplate } from '../parser'
 export type { CreateServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
 export { createHead } from './createHead'
 export type { ServerUnhead } from './createHead'

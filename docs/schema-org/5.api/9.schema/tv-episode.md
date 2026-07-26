@@ -1,11 +1,11 @@
 ---
 title: TV Episode Schema
-description: Use defineTVEpisode() to add TVEpisode structured data. Enable rich results for TV episodes with cast, director, and ratings info.
+description: Use defineTVEpisode() to add TVEpisode structured data with cast, director, and rating information.
 ---
 
 ## Schema.org TVEpisode
 
-**Type**: `defineTVEpisode(input?: TVEpisode)`{lang="ts"}
+**Type**: `defineTVEpisode<T extends Record<string, any>>(input?: TVEpisode & T)`{lang="ts"}
 
   Describes an individual TV episode.
 
@@ -13,6 +13,8 @@ description: Use defineTVEpisode() to add TVEpisode structured data. Enable rich
 
 - [TVEpisode - Schema.org](https://schema.org/TVEpisode)
 - [Video Structured Data - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/video)
+
+TVEpisode is a general Schema.org type, not Google's VideoObject result type. For Google video eligibility, provide a nested VideoObject with the required `name`, `thumbnailUrl`, and `uploadDate` fields.
 
 ## Required properties
 
@@ -45,6 +47,7 @@ description: Use defineTVEpisode() to add TVEpisode structured data. Enable rich
 ## Defaults
 
 - **@type**: `TVEpisode`
+- **@id**: `${canonicalUrl}#/schema/tv-episode/{n}`
 
 ## Examples
 
@@ -57,25 +60,27 @@ defineTVEpisode({
 })
 ```
 
-### Complete
+### Detailed example
 
 ```ts
 defineTVEpisode({
   name: 'Pilot',
   description: 'The first episode of Breaking Bad',
   episodeNumber: 1,
-  partOfSeason: {
+  partOfSeason: defineTVSeason({
     seasonNumber: 1,
-  },
-  partOfSeries: {
+  }),
+  partOfSeries: defineTVSeries({
     name: 'Breaking Bad',
-  },
+  }),
   url: 'https://example.com/shows/breaking-bad/s1/e1',
   duration: 'PT58M',
   datePublished: new Date(2008, 0, 20),
   image: 'https://example.com/shows/breaking-bad-s1e1.jpg',
   video: {
     name: 'Pilot',
+    description: 'The first episode of Breaking Bad',
+    thumbnailUrl: 'https://example.com/shows/breaking-bad-s1e1.jpg',
     url: 'https://example.com/videos/breaking-bad-s1e1.mp4',
     uploadDate: new Date(2008, 0, 20),
   },
@@ -120,6 +125,6 @@ export interface TVEpisodeSimple extends Thing {
 
 ## Related Schemas
 
-- [TVSeason](/docs/schema-org/api/schema/tv-season) - Parent season
-- [Person](/docs/schema-org/api/schema/person) - Director, actors
-- [Organization](/docs/schema-org/api/schema/organization) - Production company
+- [TVSeason](/docs/schema-org/api/schema/tv-season): Parent season
+- [Person](/docs/schema-org/api/schema/person): Director, actors
+- [Organization](/docs/schema-org/api/schema/organization): Production company

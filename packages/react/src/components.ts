@@ -4,17 +4,49 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { HasElementTags, TagsWithInnerContent, ValidHeadTags } from 'unhead/utils'
 import { useUnhead } from './composables'
 
-interface HeadProps {
+export interface HeadProps {
   children: ReactNode
   titleTemplate?: string
+}
+
+function normalizeReactPropAliases(props: unknown): Record<string, any> {
+  if (!props || typeof props !== 'object')
+    return {}
+
+  const normalized: Record<string, any> = {}
+  for (const [prop, value] of Object.entries(props)) {
+    if (prop === 'ref' || prop === 'suppressContentEditableWarning' || prop === 'suppressHydrationWarning')
+      continue
+
+    const name = prop === 'className'
+      ? 'class'
+      : prop === 'httpEquiv' ? 'http-equiv' : prop
+    normalized[name] = value
+  }
+  return normalized
+}
+
+function flattenHeadElements(children: ReactNode): React.ReactElement[] {
+  const elements: React.ReactElement[] = []
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child))
+      return
+
+    if (child.type === React.Fragment) {
+      elements.push(...flattenHeadElements((child.props as { children?: ReactNode }).children))
+      return
+    }
+
+    elements.push(child)
+  })
+  return elements
 }
 
 const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
   const head = useUnhead()
 
   // Process children only when they change
-  const processedElements = useMemo(() =>
-    React.Children.toArray(children).filter(React.isValidElement), [children])
+  const processedElements = useMemo(() => flattenHeadElements(children), [children])
 
   const getHeadChanges = useCallback(() => {
     const input: UseHeadInput = {
@@ -30,7 +62,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
         continue
       }
 
-      const data: Record<string, any> = { ...(typeof props === 'object' ? props : {}) }
+      const data = normalizeReactPropAliases(props)
 
       if (TagsWithInnerContent.has(tagName) && data.children) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'

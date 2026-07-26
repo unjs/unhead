@@ -1,9 +1,7 @@
 import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { MonetaryAmount } from '../MonetaryAmount'
 import type { Organization } from '../Organization'
-import type { Person } from '../Person'
 import type { Place } from '../Place'
-import type { WebPage } from '../WebPage'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { monetaryAmountResolver } from '../MonetaryAmount'
@@ -51,7 +49,7 @@ export interface JobPostingSimple extends Thing {
   /**
    * The actual base salary for the job, as provided by the employer (not an estimate).
    */
-  baseSalary?: MonetaryAmount
+  baseSalary?: NodeRelation<MonetaryAmount>
 
   /**
    * Type of employment
@@ -107,8 +105,8 @@ export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
     return node
   },
   resolveRootNode(jobPosting, { find }) {
-    const webPage = find<WebPage>(PrimaryWebPageId)
-    const identity = find<Person | Organization>(IdentityId)
+    const webPage = find(PrimaryWebPageId)
+    const identity = find(IdentityId)
 
     if (identity)
       setIfEmpty(jobPosting, 'hiringOrganization', idReference(identity))

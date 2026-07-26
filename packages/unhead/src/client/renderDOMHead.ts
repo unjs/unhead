@@ -86,7 +86,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   const documentChanged = !!activeState && activeState._d !== dom
-  if (!dom || (!documentChanged && !head.dirty && !hasPendingEntries(head)))
+  if (!dom || (activeState && !documentChanged && !head.dirty && !hasPendingEntries(head)))
     return false
   if (head._du)
     return false
@@ -233,7 +233,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       const count = dupeKeyCounter[tag._d!] || 0
       const id = (count ? `${tag._d}:${count}` : tag._d) || tag._h!
       const ctx = { tag, id, shouldRender: true } as DomRenderTagContext
-      if (tag._d && isMetaArrayDupeKey(tag._d))
+      // meta guard matches dedupeTags: link keys like `link:author:x` must not hit the counter
+      if (tag.tag === 'meta' && tag._d && isMetaArrayDupeKey(tag._d))
         dupeKeyCounter[tag._d] = count + 1
       tags.push(ctx)
       if (tag.tag === 'title') {

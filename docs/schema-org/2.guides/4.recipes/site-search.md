@@ -1,25 +1,18 @@
 ---
 title: Site Search
-description: 'Add SearchAction to WebSite schema with defineSearchAction(). Enable Google Sitelinks Searchbox for your site in search results.'
+description: 'Add a SearchAction to WebSite schema with defineSearchAction() and describe your internal search URL template.'
 ---
 
-If your site offers a search function, you may like to define markup to help Google understand it.
+If your site offers a search function, you can describe it with a SearchAction on the WebSite node. [Google removed the sitelinks search box in November 2024](https://developers.google.com/search/blog/2024/10/sitelinks-search-box), so this markup no longer creates that visual feature or affects Google rankings.
 
 ## Useful Links
 
-- [Sitelinks Searchbox](https://developers.google.com/search/docs/advanced/structured-data/sitelinks-searchbox)
-- [SearchAction | Yoast](https://developer.yoast.com/features/schema/pieces/searchaction)
+- [Sitelinks search box removal](https://developers.google.com/search/blog/2024/10/sitelinks-search-box)
+- [SearchAction - Schema.org](https://schema.org/SearchAction)
 
 ## Define a Search Action
 
-To provide a search action for your WebSite, you need to insert a SearchAction in `potentialAction`.
-
-To make configuring this easier, the function `defineSearchAction` is provided.
-
-Make sure that you set place `{search_term_string}` somewhere in your URL.
-This represents a query a user would be searching for.
-
-This markup should go in your root Schema definition.
+Add `defineSearchAction()` to the primary WebSite node's `potentialAction`. Its URL template must contain `{search_term_string}`, which is replaced with the visitor's query.
 
 ```ts
 import { defineSearchAction, defineWebSite, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -37,7 +30,7 @@ useSchemaOrg([
 
 ## Define your Search Results Page
 
-Using your [WebPage](/docs/schema-org/api/schema/webpage) Schema, you can define the page as a search results page.
+Set the [WebPage](/docs/schema-org/api/schema/webpage) type to `SearchResultsPage` for the search results route.
 
 ```ts
 import { defineWebPage, useSchemaOrg } from '@unhead/schema-org/@framework'
@@ -51,6 +44,6 @@ useSchemaOrg([
 
 ## Related Recipes
 
-- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity) - Define your organization
-- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs) - Navigation breadcrumbs
-- [eCommerce](/docs/schema-org/guides/recipes/e-commerce) - Product structured data
+- [Setting Up Your Identity](/docs/schema-org/guides/recipes/identity): Define your organization
+- [Breadcrumbs](/docs/schema-org/guides/recipes/breadcrumbs): Navigation breadcrumbs
+- [E-commerce](/docs/schema-org/guides/recipes/e-commerce): Product structured data

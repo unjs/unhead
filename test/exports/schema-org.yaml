@@ -65,6 +65,7 @@
   howToStepDirectionResolver: object
   howToStepResolver: object
   imageResolver: object
+  isImageObject: function
   itemListResolver: object
   jobPostingResolver: object
   listItemResolver: object
