@@ -3,6 +3,7 @@ import type {
   Id,
   Thing,
 } from '../types'
+import { hasOwn } from 'unhead/utils'
 
 const PROTOCOL_RE = /^[\s\w\0+.-]{2,}:(?:[/\\]{2})?/
 const JOIN_LEADING_SLASH_RE = /^\.?\//
@@ -177,7 +178,7 @@ export function resolveAsGraphKey(key?: Id | string) {
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
-    if (!Object.hasOwn(obj, k))
+    if (!hasOwn(obj, k))
       continue
 
     const v = obj[k]
@@ -215,7 +216,7 @@ export function stripNullProperties(obj: any) {
   }
 
   for (const k in obj) {
-    if (!Object.hasOwn(obj, k))
+    if (!hasOwn(obj, k))
       continue
 
     const v = obj[k]
