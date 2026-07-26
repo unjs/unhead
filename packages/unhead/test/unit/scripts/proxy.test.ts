@@ -147,6 +147,17 @@ describe('proxy chain', () => {
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
   })
 
+  it('binds methods from a synchronous instance to that instance', () => {
+    const instance = {
+      assertReceiver() {
+        expect(this).toBe(instance)
+      },
+    }
+    const { proxy } = createNoopedRecordingProxy(instance)
+
+    proxy.assertReceiver()
+  })
+
   it('replays calls after async use() resolves', async () => {
     const head = createHead()
     const { promise, resolve } = Promise.withResolvers<{ greet: (foo: string) => string }>()
