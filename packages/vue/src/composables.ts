@@ -6,7 +6,7 @@ import type {
   UseSeoMetaInput,
 } from './types'
 import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
-import { walkResolver } from 'unhead/utils'
+import { hasOwn, walkResolver } from 'unhead/utils'
 import {
   getCurrentInstance,
   getCurrentScope,
@@ -84,7 +84,7 @@ function normalizeSeoMetaInput(input: UseSeoMetaInput) {
 
   const meta: Record<string, any> = {}
   for (const key in input) {
-    if (!Object.hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
+    if (!hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
       continue
     meta[key] = input[key as keyof UseSeoMetaInput]
   }
