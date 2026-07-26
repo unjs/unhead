@@ -4,7 +4,7 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
   const stack: RecordingEntry[][] = []
   const backing = {} as T
   let resolved = instance
-  let forwarding = !!instance
+  let forwarding = false
   const forward = (value: any, owner: any) => value && (typeof value === 'object' || typeof value === 'function')
     ? createForwardingProxy(value, owner)
     : value
@@ -14,7 +14,9 @@ export function createNoopedRecordingProxy<T extends Record<string, any>>(instan
     get(_, prop, receiver) {
       if (!reuseStack && resolved) {
         const value = Reflect.get(resolved, prop, resolved)
-        return forwarding ? forward(value, resolved) : value
+        return forwarding
+          ? forward(value, resolved)
+          : typeof value === 'function' ? (value as (...args: any[]) => any).bind(resolved) : value
       }
       if (!reuseStack) {
         const v = Reflect.get(_, prop, receiver)
