@@ -45,6 +45,12 @@ export default defineConfig({
 })
 ```
 
+To use the Unhead panel in Vite DevTools, install its optional development packages:
+
+```bash
+pnpm add -D @vitejs/devtools @vitejs/devtools-kit
+```
+
 ### Options
 
 ```ts
