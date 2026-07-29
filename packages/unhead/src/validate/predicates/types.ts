@@ -1,5 +1,25 @@
 import type { ValidationRuleId } from '../rules'
 
+export type InputValueKind = 'array' | 'boolean' | 'function' | 'null' | 'number' | 'object' | 'string' | 'unknown'
+
+export type InputShapeContext = 'bodyAttrs' | 'head' | 'htmlAttrs' | 'seoMeta'
+
+/**
+ * Parser-independent view of an input object used for structural validation.
+ */
+export interface InputShapeView {
+  /** Input object whose fields are being validated. */
+  context: InputShapeContext
+  /** Every statically-known field name. */
+  keys: Set<string>
+  /** Parser-independent value shape for every field. */
+  valueKinds: Map<string, InputValueKind>
+  /** Adapter-supplied opaque marker for the whole input literal. */
+  loc?: unknown
+  /** Adapter-supplied opaque marker for individual field values. */
+  propLocs?: Record<string, unknown>
+}
+
 /**
  * Materialized view of a single head tag (`<meta>`, `<link>`, `<script>`, etc.)
  * suitable for parser-agnostic predicate checks. Adapters in the eslint-plugin
@@ -12,7 +32,7 @@ import type { ValidationRuleId } from '../rules'
  * read `keys`; predicates that need the value read `props`.
  */
 export interface TagInput {
-  /** Tag list this came from in the head input (`meta` / `link` / `script` / `noscript` / `style`). */
+  /** Tag list this came from in the head input. */
   tagType: 'meta' | 'link' | 'script' | 'noscript' | 'style'
   /** Statically-resolvable props. */
   props: Record<string, string | number | boolean>
@@ -105,3 +125,4 @@ export interface PredicateContext {
 
 export type TagPredicate = (tag: TagInput, ctx?: PredicateContext) => Diagnostic[]
 export type HeadInputPredicate = (input: HeadInputView, ctx?: PredicateContext) => Diagnostic[]
+export type InputShapePredicate = (input: InputShapeView, ctx?: PredicateContext) => Diagnostic[]
