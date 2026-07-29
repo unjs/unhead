@@ -57,7 +57,7 @@ function init(options: { streamKey?: string } = {}) {
 
   win[streamKey] = {
     _q: queue?._q || [],
-    _head: head,
+    _head: head as unknown as StreamingGlobal['_head'],
     _hydrationLocked: () => hydrationLocked,
     // Server pushes arrays of entries (from inline scripts during streaming)
     push: (entries: any[]) => {

@@ -1,5 +1,6 @@
 import type { ScriptInstance } from '../scripts'
-import type { CreateClientHeadOptions, HeadEntry, Unhead } from './head'
+import type { CreateHeadOptions, HeadEntry, Unhead } from './head'
+import type { ResolvableHead } from './schema'
 import type { HeadTag } from './tags'
 
 export type HookResult = Promise<void> | void
@@ -32,17 +33,17 @@ export interface DomRenderTagContext {
 }
 export interface SSRRenderContext { tags: HeadTag[], html: SSRHeadPayload }
 
-interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
+export interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
 
-export interface CoreHeadHooks {
-  'entries:updated': (ctx: Unhead<any>) => HookResult
-  'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
-  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
-  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
+export interface CoreHeadHooks<Input = ResolvableHead, RenderResult = unknown> {
+  'entries:updated': (ctx: Unhead<Input, RenderResult>) => HookResult
+  'entries:resolve': (ctx: EntryResolveCtx<Input>) => SyncHookResult
+  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<Input> }) => SyncHookResult
+  'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<Input>, resolvedOptions: CreateHeadOptions<Input> }) => SyncHookResult
   'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:afterResolve': (ctx: TagResolveContext) => SyncHookResult
-  'script:updated': (ctx: { script: ScriptInstance<any> }) => void | Promise<void>
+  'script:updated': <ScriptApi extends object>(ctx: { script: ScriptInstance<ScriptApi> }) => void | Promise<void>
 }
 
 export interface DOMHeadHooks {
@@ -59,6 +60,6 @@ export interface SSRHeadHooks {
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult
 }
 
-export type ClientHeadHooks = CoreHeadHooks & DOMHeadHooks
-export type ServerHeadHooks = CoreHeadHooks & SSRHeadHooks
-export type HeadHooks = CoreHeadHooks & DOMHeadHooks & SSRHeadHooks
+export type ClientHeadHooks<Input = ResolvableHead, RenderResult = boolean> = CoreHeadHooks<Input, RenderResult> & DOMHeadHooks
+export type ServerHeadHooks<Input = ResolvableHead, RenderResult = SSRHeadPayload> = CoreHeadHooks<Input, RenderResult> & SSRHeadHooks
+export type HeadHooks<Input = ResolvableHead, RenderResult = unknown> = CoreHeadHooks<Input, RenderResult> & DOMHeadHooks & SSRHeadHooks

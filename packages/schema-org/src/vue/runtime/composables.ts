@@ -1,5 +1,5 @@
 import type { DeepResolvableProperties, UseHeadInput, UseHeadOptions } from '@unhead/vue'
-import type { ActiveHeadEntry } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryTarget } from 'unhead/types'
 import type { ComputedRef, MaybeRef, Ref } from 'vue'
 import type { AggregateOffer } from '../../nodes/AggregateOffer'
 import type { AggregateRating } from '../../nodes/AggregateRating'
@@ -269,7 +269,12 @@ export function defineService<Input extends object | undefined = undefined>(inpu
 
 export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>>>>
 
-export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
+type UseSchemaOrgOptions = Omit<UseHeadOptions, 'head'> & {
+  head?: HeadEntryTarget<UseHeadInput> & SchemaOrgPluginHost
+}
+
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseSchemaOrgOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || injectHead()
   unhead.use(UnheadSchemaOrg())

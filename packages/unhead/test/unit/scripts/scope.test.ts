@@ -1,3 +1,4 @@
+import type { ScriptInstance } from '../../../src/scripts/types'
 import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment jsdom
 import { createHead } from '../../../src/client'
@@ -46,7 +47,7 @@ describe('script scope', () => {
 
     scopeB.load()
     scopeB.script.status = 'loaded'
-    head.hooks.callHook('script:updated', { script: scopeB.script })
+    head.hooks.callHook('script:updated', { script: scopeB.script as unknown as ScriptInstance<object> })
     await scopeB.script._loadPromise
 
     expect(loadedA).not.toHaveBeenCalled()
@@ -92,7 +93,7 @@ describe('script scope', () => {
 
     script.load()
     script.status = 'loaded'
-    head.hooks.callHook('script:updated', { script })
+    head.hooks.callHook('script:updated', { script: script as unknown as ScriptInstance<object> })
     await script._loadPromise
     scope.dispose()
 

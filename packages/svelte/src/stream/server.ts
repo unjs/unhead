@@ -1,5 +1,5 @@
 import type { PreparedTemplate, WebStreamableHeadContext } from 'unhead/stream/server'
-import type { CreateStreamableServerHeadOptions } from 'unhead/types'
+import type { CreateStreamableServerHeadOptions, ResolvableHead } from 'unhead/types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream as coreWrapStream,
@@ -37,7 +37,11 @@ export function HeadStream(): string {
  * Svelte streaming context returned by createStreamableHead.
  * Type alias for WebStreamableHeadContext from core.
  */
-export type SvelteStreamableHeadContext = WebStreamableHeadContext
+export type SvelteStreamableHeadContext<I = ResolvableHead> = WebStreamableHeadContext<I>
+
+type CreateStreamableHeadArgs<Input> = ResolvableHead extends Input
+  ? [options?: CreateStreamableServerHeadOptions<Input>]
+  : [options: CreateStreamableServerHeadOptions<Input> & { disableDefaults: true }]
 
 /**
  * Creates a head instance configured for Svelte streaming SSR.
@@ -51,8 +55,12 @@ export type SvelteStreamableHeadContext = WebStreamableHeadContext
  * return wrapStream(stream, template)
  * ```
  */
-export function createStreamableHead(options: CreateStreamableServerHeadOptions = {}): SvelteStreamableHeadContext {
-  const { head } = _createStreamableHead(options)
+export function createStreamableHead(options?: CreateStreamableServerHeadOptions<ResolvableHead>): SvelteStreamableHeadContext<ResolvableHead>
+export function createStreamableHead<I>(options: CreateStreamableServerHeadOptions<I> & { disableDefaults: true }): SvelteStreamableHeadContext<I>
+export function createStreamableHead<I>(options: CreateStreamableServerHeadOptions<I>): SvelteStreamableHeadContext<I | ResolvableHead>
+export function createStreamableHead<I = ResolvableHead>(...args: CreateStreamableHeadArgs<I>): SvelteStreamableHeadContext<I>
+export function createStreamableHead<I = ResolvableHead>(options: CreateStreamableServerHeadOptions<I> = {}): SvelteStreamableHeadContext<I> {
+  const { head } = _createStreamableHead<I>(options as CreateStreamableServerHeadOptions<I> & { disableDefaults: true })
 
   // Track shell render state - HeadStream skips entries until shell is rendered
   let shellRendered = false

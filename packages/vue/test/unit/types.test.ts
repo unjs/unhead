@@ -1,9 +1,13 @@
+import type { CreateClientHeadOptions } from '@unhead/vue/client'
+import type { CreateServerHeadOptions as VueCreateServerHeadOptions } from '@unhead/vue/server'
+import type { CreateStreamableClientHeadOptions } from '@unhead/vue/stream/client'
+import type { CreateStreamableServerHeadOptions } from '@unhead/vue/stream/server'
 import type { SSRHeadPayload } from 'unhead/types'
-import type { RawInput, SerializableHead } from '../../src/'
+import type { RawInput, SerializableHead, UseHeadInput, VueHeadClient } from '../../src/'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { computed } from 'vue'
-import { useHead, useHeadSafe } from '../../src/composables'
+import { useHead, useHeadSafe, useScript, useSeoMeta } from '../../src/composables'
 
 describe('types', () => {
   it('types useHead', () => {
@@ -86,13 +90,15 @@ describe('types', () => {
         {
           type: 'application/json',
           id: 'xss-script',
-          // @ts-expect-error not allowed
+          // @ts-expect-error innerHTML is not allowed in safe script input
           innerHTML: 'alert("xss")',
         },
       ],
+    }, { head })
+    useHeadSafe({
       meta: [
         {
-          // @ts-expect-error not allowed
+          // @ts-expect-error http-equiv is not allowed in safe meta input
           'http-equiv': 'refresh',
           'content': '0;javascript:alert(1)',
         },
@@ -126,9 +132,17 @@ describe('types', () => {
     useHead(input as any, { head })
   })
   it('types render() return types', () => {
-    // client render() returns boolean
+    // the default Vue client renderer is debounced, so render() returns void
     const clientHead = createHead()
+    clientHead.render() satisfies void
+    createHead({ init: [] }).push satisfies (input: UseHeadInput) => unknown
+    createHead({ init: [false, undefined] }).push satisfies (input: UseHeadInput) => unknown
+
+    // @ts-expect-error the debounced renderer does not expose the core boolean result
     clientHead.render() satisfies boolean
+
+    const customClientHead = createHead({ render: head => head.ssr ? 'server' as const : 'rendered' as const })
+    customClientHead.render() satisfies 'server' | 'rendered'
 
     // server render() returns SSRHeadPayload
     const serverHead = createServerHead()
@@ -136,6 +150,75 @@ describe('types', () => {
 
     // @ts-expect-error server render() should not be assignable to boolean
     serverHead.render() satisfies boolean
+
+    // Vue installs its resolver and does not accept a replacement resolver list.
+    // @ts-expect-error propResolvers is intentionally omitted from the wrapper API
+    createServerHead({ propResolvers: [] })
+  })
+  it('preserves explicit entry and script API types', () => {
+    interface Input { title: string }
+    const exactHead = createHead<Input>()
+    const entry = useHead<Input>({ title: 'page' }, { head: exactHead })
+    entry.patch({ title: 'next' })
+    useHead<Input>({ title: 'broad head' }, { head: createHead() })
+
+    if (false) {
+      // @ts-expect-error synthesized safe entries do not provide required title
+      useHeadSafe({}, { head: exactHead })
+      // @ts-expect-error synthesized SEO entries do not provide required title
+      useSeoMeta({}, { head: exactHead })
+      // @ts-expect-error synthesized script entries do not provide required title
+      useScript('/required.js', { head: exactHead })
+
+      type OptionalInput = UseHeadInput & { custom?: string }
+      type UnionInput = UseHeadInput | { custom: string }
+      const optionalHead = createHead<OptionalInput>()
+      const unionHead = createHead<UnionInput>()
+      const customOnlyHead = null as unknown as VueHeadClient<{ custom: string }>
+      useHeadSafe({}, { head: optionalHead })
+      useSeoMeta({}, { head: optionalHead })
+      useScript('/optional.js', { head: optionalHead })
+      useHeadSafe({}, { head: unionHead })
+      useSeoMeta({}, { head: unionHead })
+      useScript('/union.js', { head: unionHead })
+      // @ts-expect-error standard entries are incompatible with custom-only heads
+      useHeadSafe({}, { head: customOnlyHead })
+      // @ts-expect-error standard entries are incompatible with custom-only heads
+      useSeoMeta({}, { head: customOnlyHead })
+      // @ts-expect-error standard entries are incompatible with custom-only heads
+      useScript('/custom.js', { head: customOnlyHead })
+    }
+
+    const options: CreateClientHeadOptions<Input> = {}
+    createHead(options).render() satisfies void
+
+    const exactServerHead = createServerHead<Input>({ disableDefaults: true })
+    exactServerHead.push({ title: 'server' })
+    const serverOptions: VueCreateServerHeadOptions<Input> = {}
+    createServerHead(serverOptions).push satisfies (input: UseHeadInput) => unknown
+
+    const reactiveInit = [() => ({ title: 'Reactive title' })]
+    const vueServerOptions: VueCreateServerHeadOptions = { init: reactiveInit }
+    const streamClientOptions: CreateStreamableClientHeadOptions = { init: reactiveInit }
+    const streamServerOptions: CreateStreamableServerHeadOptions = { init: reactiveInit }
+    void vueServerOptions
+    void streamClientOptions
+    void streamServerOptions
+
+    // @ts-expect-error Vue owns the server resolver chain
+    const invalidServerOptions: VueCreateServerHeadOptions = { propResolvers: [] }
+    void invalidServerOptions
+
+    if (false) {
+      // @ts-expect-error an explicit entry type requires a matching input
+      useHead<Input>()
+      // @ts-expect-error exact custom server input requires defaults to be disabled
+      createServerHead<Input>()
+
+      const script = useScript<{ lookup: (id: string) => number }>('/script.js')
+      script.instance satisfies { lookup: (id: string) => number } | null
+      script.onLoaded(() => {}) satisfies () => void
+    }
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'

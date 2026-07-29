@@ -1,6 +1,6 @@
-import type { Unhead } from 'unhead/types'
+import type { HeadContextTarget, ResolvableHead } from 'unhead/types'
 import { InjectionToken } from '@angular/core'
 
 export const headSymbol = 'usehead'
 
-export const UnheadInjectionToken = new InjectionToken<Unhead>(headSymbol)
+export const UnheadInjectionToken = new InjectionToken<HeadContextTarget<ResolvableHead>>(headSymbol)

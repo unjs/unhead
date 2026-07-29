@@ -42,7 +42,7 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   config = resolveMeta({ ...config })
   let graph: SchemaOrgGraph
   let resolvedMeta: Partial<ResolvedMeta> = {}
-  return defineHeadPlugin((head: Unhead): HeadPlugin => {
+  return defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>): HeadPlugin<Input, RenderResult> => {
     head.use(TemplateParamsPlugin)
     function collectTag(tag: HeadTag) {
       if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {

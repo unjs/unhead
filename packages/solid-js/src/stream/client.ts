@@ -10,5 +10,6 @@ export function HeadStream(): null {
 export {
   type CreateStreamableClientHeadOptions,
   createStreamableHead,
+  type StreamingGlobal,
   type UnheadStreamQueue,
 } from 'unhead/stream/client'

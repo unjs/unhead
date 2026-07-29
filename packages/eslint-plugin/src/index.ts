@@ -40,7 +40,7 @@ const plugin: UnheadEslintPlugin = {
     version: '3.0.5',
   },
   rules,
-}
+} satisfies ESLint.Plugin
 
 function withPlugin(config: Linter.Config): Linter.Config {
   return { ...config, plugins: { '@unhead': plugin } }

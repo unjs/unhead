@@ -1,3 +1,4 @@
+import type { StreamingPluginOptions } from '../../src/stream/unplugin'
 import { describe, expect, it } from 'vitest'
 import {
   createStreamingPlugin,
@@ -23,6 +24,14 @@ function callLoad(plugin: any, id: string) {
 }
 
 describe('streaming unplugin', () => {
+  it('accepts the standard string transform result', () => {
+    const options: StreamingPluginOptions = {
+      framework: '@unhead/test',
+      transform: code => code,
+    }
+    expect(options.transform?.('code', 'entry.ts')).toBe('code')
+  })
+
   it('resolves the Vite-only IIFE virtual module in the Vite adapter', () => {
     const plugin = createStreamingPlugin.vite({
       framework: '@unhead/test',

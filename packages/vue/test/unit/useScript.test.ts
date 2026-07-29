@@ -22,11 +22,12 @@ describe('vue e2e scripts', () => {
     })
 
     const checkInference = async () => {
-      const inferred: typeof api = await script.load()
-      inferred.method('ok')
+      const inferred = await script.load()
+      if (inferred)
+        inferred.method('ok')
     }
     type Loaded = Awaited<ReturnType<typeof script.load>>
-    expectTypeOf<Loaded>().toEqualTypeOf<typeof api>()
+    expectTypeOf<Loaded>().toEqualTypeOf<typeof api | false>()
     const notAny: 0 extends (1 & Loaded) ? never : true = true
     void checkInference
     void notAny

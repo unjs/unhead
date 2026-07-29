@@ -306,11 +306,11 @@ export function normalizeSchemaOrgInput(input: unknown): SchemaOrgHeadInput<unkn
   }
 }
 
-export function useSchemaOrg<HeadInput, RenderResult>(unhead: Unhead<HeadInput, RenderResult>, input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+export function useSchemaOrg<HeadInput, RenderResult>(unhead: Unhead<HeadInput, RenderResult>, input: UseSchemaOrgInput = [], options: HeadEntryOptions<HeadInput> = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   unhead.use(UnheadSchemaOrg())
   const entry = (unhead as unknown as Unhead<SchemaOrgHeadInput<UseSchemaOrgInput>>).push(
     normalizeSchemaOrgInput(input),
-    options,
+    options as unknown as HeadEntryOptions<SchemaOrgHeadInput<UseSchemaOrgInput>>,
   )
   const corePatch = entry.patch
   const publicEntry = entry as unknown as ActiveHeadEntry<UseSchemaOrgInput>

@@ -5,13 +5,13 @@ const STREAMING_NAME = '@unhead/vue:streaming'
 
 describe('unified Unhead({ streaming: true }) per bundler', () => {
   it('vite returns a plugin array including the streaming plugin', () => {
-    const plugins = Unhead({ streaming: true }).vite() as any[]
+    const plugins = Unhead({ streaming: true }).vite()
     expect(Array.isArray(plugins)).toBe(true)
     expect(plugins.some(p => p?.name === STREAMING_NAME)).toBe(true)
   })
 
   it('vite omits the streaming plugin when not enabled', () => {
-    const plugins = Unhead().vite() as any[]
+    const plugins = Unhead().vite()
     expect(plugins.some(p => p?.name === STREAMING_NAME)).toBe(false)
   })
 
@@ -20,7 +20,7 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
     // virtual module load hook sees the finalised build output. Regression
     // guard: if this inverts, `window.__unhead__` bootstrap can collide with
     // the runtime plugin initialisation that CreateHeadTransform emits.
-    const plugins = Unhead({ streaming: true }).vite() as any[]
+    const plugins = Unhead({ streaming: true }).vite()
     const streamIdx = plugins.findIndex(p => p?.name === STREAMING_NAME)
     expect(streamIdx).toBeGreaterThan(0)
     expect(streamIdx).toBe(plugins.length - 1)
@@ -30,21 +30,21 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
     // Webpack plugin wrappers from unplugin only expose `.apply`, no `name`,
     // so we verify the streaming plugin's presence indirectly via the count
     // delta against the no-streaming baseline.
-    const baseline = Unhead().webpack() as any[]
-    const withStreaming = Unhead({ streaming: true }).webpack() as any[]
+    const baseline = Unhead().webpack()
+    const withStreaming = Unhead({ streaming: true }).webpack()
     expect(Array.isArray(withStreaming)).toBe(true)
     expect(withStreaming.every(p => typeof p?.apply === 'function')).toBe(true)
     expect(withStreaming.length).toBe(baseline.length + 1)
   })
 
   it('rspack returns a plugin array dispatched via the rspack bundler hook', () => {
-    const plugins = Unhead({ streaming: true }).rspack() as any[]
+    const plugins = Unhead({ streaming: true }).rspack()
     expect(Array.isArray(plugins)).toBe(true)
     expect(plugins.length).toBeGreaterThan(0)
   })
 
   it('rollup returns a plugin array dispatched via the rollup bundler hook', () => {
-    const plugins = Unhead({ streaming: true }).rollup() as any[]
+    const plugins = Unhead({ streaming: true }).rollup()
     expect(Array.isArray(plugins)).toBe(true)
     expect(plugins.length).toBeGreaterThan(0)
   })

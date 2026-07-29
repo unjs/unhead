@@ -1,4 +1,4 @@
-import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadRenderer, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
+import type { DomBeforeRenderCtx, DomRenderTagContext, DomState, HeadTag, RenderDomHeadOptions, Unhead } from '../types'
 import { HasElementTags } from '../utils/const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
@@ -18,16 +18,16 @@ type DomStateInternal = DomState & {
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createDomRenderer(options: RenderDomHeadOptions = {}): HeadRenderer<boolean> {
-  return (head: Unhead<any>) => _renderDOMHead(head, options)
+export function createDomRenderer(options: RenderDomHeadOptions = {}): <Input, RenderResult>(head: Unhead<Input, RenderResult>) => boolean {
+  return head => _renderDOMHead(head, options)
 }
 
 /** @deprecated Use `head.render()` instead */
-export function renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+export function renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, options: RenderDomHeadOptions = {}): boolean {
   return _renderDOMHead(head, options)
 }
 
-function hasPendingEntries<T extends Unhead<any>>(head: T) {
+function hasPendingEntries<Input, RenderResult>(head: Unhead<Input, RenderResult>) {
   for (const entry of head.entries.values()) {
     if (entry._pending !== undefined)
       return true
@@ -44,7 +44,7 @@ function cleanupDomState(state: DomStateInternal) {
   state._l.clear()
 }
 
-function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
+function createDomState<Input, RenderResult>(head: Unhead<Input, RenderResult>, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
   for (const el of [...dom.body.children, ...dom.head.children]) {
     const tag = el.tagName.toLowerCase() as HeadTag['tag']
@@ -82,7 +82,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
   return state
 }
 
-function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
+function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, options: RenderDomHeadOptions = {}): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
   const documentChanged = !!activeState && activeState._d !== dom
@@ -168,10 +168,11 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         // clear what we set, never SSR-adopted or externally mutated content.
         const text = tag.textContent
         if (text != null && text !== '') {
-          if (text !== $el.textContent)
-            $el.textContent = text as string
+          const renderedText = typeof text === 'function' ? '' : String(text)
+          if (renderedText !== $el.textContent)
+            $el.textContent = renderedText
           track(id, 'text', () => {
-            if ($el.textContent === text)
+            if ($el.textContent === renderedText)
               $el.textContent = ''
           }, true)
         }

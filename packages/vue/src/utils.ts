@@ -3,7 +3,7 @@ import type { UseHeadInput } from './types'
 import { walkResolver } from 'unhead/utils'
 import { VueResolver } from './resolver'
 
-export { VueResolver }
+export { setVueRefResolver, VueResolver } from './resolver'
 export * from 'unhead/utils'
 
 /**

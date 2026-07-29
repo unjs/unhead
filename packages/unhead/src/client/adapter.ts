@@ -2,15 +2,15 @@ import type { HookableCore } from 'hookable'
 import type { ActiveHeadEntry, ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
 
-export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
-  hooks: HookableCore<ClientHeadHooks>
+export interface ClientUnhead<T = ResolvableHead, RenderResult = boolean> extends Unhead<T, RenderResult> {
+  hooks: HookableCore<ClientHeadHooks<T, RenderResult>>
   dirty: boolean
   invalidate: () => void
 }
 
-export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>): ClientUnhead<T> {
+export function createClientHeadAdapter<T, RenderResult>(core: Unhead<T, RenderResult>, hooks: HookableCore<ClientHeadHooks<T, RenderResult>>, render: HeadRenderer<RenderResult, T>): ClientUnhead<T, RenderResult> {
   const corePush = core.push
-  const head = core as ClientUnhead<T>
+  const head = core as ClientUnhead<T, RenderResult>
   head.ssr = false
   head.hooks = hooks
   head.dirty = !!head.dirty
@@ -22,7 +22,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     head.dirty = true
     hooks.callHook('entries:updated', head)
   }
-  head.push = (input: T, entryOptions?: HeadEntryOptions) => {
+  head.push = (input: T, entryOptions?: HeadEntryOptions<T>) => {
     const unhook = entryOptions?.onRendered
       ? hooks.hook('dom:rendered', entryOptions.onRendered as any)
       : undefined
@@ -54,7 +54,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   return head
 }
 
-export function createStreamClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>, locked: () => boolean): ClientUnhead<T> {
+export function createStreamClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks<T, boolean>>, render: HeadRenderer<boolean, T>, locked: () => boolean): ClientUnhead<T> {
   const head = createClientHeadAdapter(core, hooks, render)
   const push = head.push
   head.push = (input, options) => {

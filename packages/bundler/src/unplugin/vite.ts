@@ -48,8 +48,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
 
   // Devtools registers its own runtime plugins via ctx during configResolved
   if (options.devtools !== false) {
-    const devtoolsOpts = typeof options.devtools === 'object' ? options.devtools : {}
-    plugins.push(unheadDevtools({ ...devtoolsOpts, _ctx: ctx }))
+    plugins.push(unheadDevtools({ _ctx: ctx }))
   }
 
   // Replace head.ssr with static boolean for tree-shaking
