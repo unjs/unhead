@@ -51,13 +51,13 @@
   },
   "schemaOrgImports": {
     "size": 98,
-    "gz": 109,
-    "br": 93
+    "gz": 110,
+    "br": 90
   },
   "schemaOrgVueMeta": {
-    "size": 845,
-    "gz": 443,
-    "br": 358
+    "size": 978,
+    "gz": 493,
+    "br": 407
   },
   "clientSelfContained": {
     "size": 14662,
