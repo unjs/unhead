@@ -2,10 +2,10 @@ import type { SourceMapInput } from 'rollup'
 import type { BuildOptions } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import MagicString from 'magic-string'
-import { parseSync } from 'oxc-parser'
-import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
+import { ScopeTracker, ScopeTrackerImport } from 'oxc-walker'
 import { minifyJSON } from 'unhead/minify'
 import { createUnplugin } from 'unplugin'
+import { isMissingParserError, parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -242,58 +242,58 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
         if (!CONTENT_PROP_NAMES.some(name => code.includes(name)) && !code.includes('\\u'))
           return
 
-        let ast
-        try {
-          ast = parseSync(id, code)
-        }
-        catch {
-          return
-        }
-
         const scopeTracker = new ScopeTracker()
         const pendingTransforms: PendingTransform[] = []
         const environmentTarget = (this as { environment?: { config?: { build?: BuildOptions } } }).environment?.config?.build?.target
         const inlineScriptTarget = transpileOptions?.target ?? environmentTarget ?? resolvedViteTarget
 
-        walk(ast.program, {
-          scopeTracker,
-          enter(node: any, _parent: any) {
-            if (node.type !== 'CallExpression')
-              return
+        try {
+          parseAndWalkSource(code, id, {
+            scopeTracker,
+            enter(node: any, _parent: any) {
+              if (node.type !== 'CallExpression')
+                return
 
-            if (!resolveHeadFunctionName(node.callee, scopeTracker))
-              return
+              if (!resolveHeadFunctionName(node.callee, scopeTracker))
+                return
 
-            const arg = node.arguments[0]
-            if (!arg || arg.type !== 'ObjectExpression')
-              return
+              const arg = node.arguments[0]
+              if (!arg || arg.type !== 'ObjectExpression')
+                return
 
-            // look for script: [...] and style: [...] properties
-            for (const prop of arg.properties) {
-              if (prop.type !== 'Property')
-                continue
-
-              const tagType = resolveStaticPropertyName(prop)
-              if (tagType !== 'script' && tagType !== 'style')
-                continue
-
-              if (tagType === 'style' && !doCSS)
-                continue
-
-              // handle both array and single object: script: [{ innerHTML: '...' }] or script: { innerHTML: '...' }
-              const elements = prop.value?.type === 'ArrayExpression'
-                ? prop.value.elements
-                : [prop.value]
-
-              for (const element of elements) {
-                if (!element || element.type !== 'ObjectExpression')
+              // look for script: [...] and style: [...] properties
+              for (const prop of arg.properties) {
+                if (prop.type !== 'Property')
                   continue
 
-                processScriptOrStyleObject(element, tagType, pendingTransforms, inlineScriptTarget)
+                const tagType = resolveStaticPropertyName(prop)
+                if (tagType !== 'script' && tagType !== 'style')
+                  continue
+
+                if (tagType === 'style' && !doCSS)
+                  continue
+
+                // handle both array and single object: script: [{ innerHTML: '...' }] or script: { innerHTML: '...' }
+                const elements = prop.value?.type === 'ArrayExpression'
+                  ? prop.value.elements
+                  : [prop.value]
+
+                for (const element of elements) {
+                  if (!element || element.type !== 'ObjectExpression')
+                    continue
+
+                  processScriptOrStyleObject(element, tagType, pendingTransforms, inlineScriptTarget)
+                }
               }
-            }
-          },
-        })
+            },
+          })
+        }
+        catch (error) {
+          if (isMissingParserError(error))
+            throw error
+          // Invalid source is left unchanged for the bundler's parser to report.
+          return
+        }
 
         if (!pendingTransforms.length)
           return

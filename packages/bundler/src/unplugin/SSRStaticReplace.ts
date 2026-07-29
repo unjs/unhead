@@ -1,8 +1,8 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
-import { parseAndWalk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
+import { parseAndWalkSource } from './parser'
 import { resolveBuildConsumer } from './utils'
 
 const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
@@ -63,7 +63,7 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         const ssr = consumer === 'server'
         const s = new MagicString(code)
         let mutationTargetDepth = 0
-        parseAndWalk(code, id, {
+        parseAndWalkSource(code, id, {
           parseOptions: { lang: 'js' },
           enter(node: any, parent: any, { key }: any) {
             if (isMutationTarget(parent, key))
