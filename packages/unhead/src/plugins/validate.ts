@@ -1,7 +1,9 @@
-import type { HeadTag, Unhead } from '../types'
+import type { HeadTag, PropResolver, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
 import {
   headInputPredicates,
+  inputShapeFromRuntime,
+  inputShapePredicates,
   tagInputFromRuntime,
   tagPredicates,
   titleInputFromRuntime,
@@ -76,6 +78,7 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'deprecated-prop-hid-vmid': 'warn',
   'empty-meta-content': 'warn',
   'html-in-title': 'warn',
+  'invalid-input-shape': 'warn',
   'non-absolute-canonical': 'warn',
   'numeric-tag-priority': 'info',
   'possible-typo': 'warn',
@@ -134,12 +137,59 @@ function captureSource(root?: string): string | undefined {
   return undefined
 }
 
+/**
+ * Observe top-level values after preceding framework resolvers in the same walk.
+ */
+function createInputShapeObserver(): {
+  resolver: PropResolver
+  take: () => Record<string, unknown> | undefined
+} {
+  let remainingRootKeys: Set<string> | undefined
+  let resolvedValues: Map<string, unknown> | undefined
+
+  const resolver: PropResolver = (key, value) => {
+    if (key === undefined) {
+      if (value?.constructor === Object) {
+        remainingRootKeys = new Set(Object.keys(value))
+        resolvedValues = new Map()
+      }
+      else {
+        remainingRootKeys = undefined
+        resolvedValues = undefined
+      }
+    }
+    else if (remainingRootKeys?.delete(key)) {
+      resolvedValues?.set(key, value)
+    }
+    return value
+  }
+  resolver._static = true
+
+  return {
+    resolver,
+    take() {
+      const input = resolvedValues
+        ? Object.fromEntries(resolvedValues)
+        : undefined
+      remainingRootKeys = undefined
+      resolvedValues = undefined
+      return input
+    },
+  }
+}
+
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
   const stacks = new Map<number, string>()
 
   return defineHeadPlugin((head: Unhead) => {
+    const pendingInputDiagnostics: { diagnostic: Diagnostic, entryIndex: number }[] = []
+    const inputShapeObserver = createInputShapeObserver()
+    head.resolvedOptions.propResolvers = [
+      ...(head.resolvedOptions.propResolvers || []),
+      inputShapeObserver.resolver,
+    ]
     const hooks = head.hooks as any
     if (hooks) {
       const _callHook = hooks.callHook.bind(hooks)
@@ -174,17 +224,33 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
     return {
       key: 'validate',
       hooks: {
+        'entries:normalize': ({ entry }) => {
+          const input = inputShapeObserver.take()
+          if (!input || input.constructor !== Object)
+            return
+          const shape = inputShapeFromRuntime('head', input)
+          for (const predicate of Object.values(inputShapePredicates)) {
+            for (const diagnostic of predicate(shape))
+              pendingInputDiagnostics.push({ diagnostic, entryIndex: entry._i })
+          }
+        },
         'tags:afterResolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
-          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
+          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
             const severity = resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, defaultSeverity)
             if (severity === 'off')
               return
-            const entryIndex = tag?._p != null ? tag._p >> 10 : undefined
+            const entryIndex = inputEntryIndex ?? (tag?._p != null ? tag._p >> 10 : undefined)
             const source = entryIndex != null ? stacks.get(entryIndex) : undefined
             rules.push({ id, message, severity, source, tag })
           }
+
+          for (const { diagnostic, entryIndex } of pendingInputDiagnostics) {
+            const severity = PREDICATE_SEVERITY[diagnostic.ruleId] ?? 'warn'
+            report(diagnostic.ruleId, diagnostic.message, severity, undefined, entryIndex)
+          }
+          pendingInputDiagnostics.length = 0
 
           // Build lookup maps for cross-tag checks
           const metaByKey = new Map<string, HeadTag>()
@@ -243,6 +309,11 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tagInput) {
               for (const predicate of Object.values(tagPredicates))
                 emitFromPredicates(predicate(tagInput), tag)
+            }
+            if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+              const inputShape = inputShapeFromRuntime(tag.tag, tag.props)
+              for (const predicate of Object.values(inputShapePredicates))
+                emitFromPredicates(predicate(inputShape), tag)
             }
 
             if (tag.tag === 'meta' && typeof metaKey === 'string') {

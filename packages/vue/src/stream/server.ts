@@ -52,7 +52,7 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
  * ```
  */
 export function createStreamableHead(
-  options: Omit<CreateStreamableServerHeadOptions, 'propsResolver'> = {},
+  options: Omit<CreateStreamableServerHeadOptions, 'propResolvers'> = {},
 ): VueStreamableHeadContext {
   const { head } = _createStreamableHead({
     ...options,
