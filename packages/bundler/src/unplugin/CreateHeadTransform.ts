@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
 import MagicString from 'magic-string'
-import { parseAndWalk } from 'oxc-walker'
+import { parseAndWalkSource } from './parser'
 
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const CREATE_HEAD_RE = /\bcreateHead\b/
@@ -69,7 +69,7 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
         const directCreateHeadNames = new Set<string>()
         const namespaceNames = new Set<string>()
 
-        parseAndWalk(code, id, {
+        parseAndWalkSource(code, id, {
           parseOptions: { lang: 'ts' },
           enter(node: any) {
             if (node.type === 'ImportDeclaration') {

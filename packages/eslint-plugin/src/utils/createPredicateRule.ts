@@ -1,8 +1,8 @@
 import type { Rule } from 'eslint'
 import type * as ESTree from 'estree'
-import type { HeadInputPredicate, PredicateContext, TagInput, TagPredicate } from 'unhead/validate'
+import type { HeadInputPredicate, InputShapeContext, InputShapePredicate, PredicateContext, TagInput, TagPredicate } from 'unhead/validate'
 import { reportDiagnostic } from './applyDiagnostic'
-import { materializeHeadInput, materializeTag } from './materialize'
+import { materializeHeadInput, materializeInputShape, materializeTag } from './materialize'
 import { createTagVisitor, getCalleeName, HEAD_INPUT_CALLEES, unwrapTS } from './visitor'
 
 const HELPER_NAMES = new Set(['defineLink', 'defineScript'])
@@ -96,4 +96,28 @@ export function createHeadInputPredicateRule(
         reportDiagnostic(ctx, arg as ESTree.ObjectExpression, diag)
     },
   })
+}
+
+/**
+ * Build an ESLint rule that validates both top-level head inputs and nested
+ * htmlAttrs/bodyAttrs object shapes through one shared predicate.
+ */
+export function createInputShapePredicateRule(
+  predicate: InputShapePredicate,
+): (ctx: Rule.RuleContext) => Rule.RuleListener {
+  return ctx => createTagVisitor({
+    onHeadInput(node, callee) {
+      const context: InputShapeContext = callee === 'useSeoMeta' || callee === 'useServerSeoMeta'
+        ? 'seoMeta'
+        : 'head'
+      for (const diag of predicate(materializeInputShape(node, context)))
+        reportDiagnostic(ctx, node, diag)
+    },
+    onTag(node, tagType) {
+      if (tagType !== 'htmlAttrs' && tagType !== 'bodyAttrs')
+        return
+      for (const diag of predicate(materializeInputShape(node, tagType)))
+        reportDiagnostic(ctx, node, diag)
+    },
+  })(ctx)
 }

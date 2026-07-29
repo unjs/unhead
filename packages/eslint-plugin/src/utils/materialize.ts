@@ -1,6 +1,58 @@
 import type * as ESTree from 'estree'
-import type { HeadInputView, TagInput } from 'unhead/validate'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from 'unhead/validate'
 import { findProperty, getStringValue, unwrapTS } from './visitor'
+
+function valueKind(node: ESTree.Node | undefined): InputValueKind {
+  const value = unwrapTS(node)
+  if (!value)
+    return 'unknown'
+  if (value.type === 'ArrayExpression')
+    return 'array'
+  if (value.type === 'ObjectExpression')
+    return 'object'
+  if (value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+    return 'function'
+  if (value.type === 'TemplateLiteral')
+    return 'string'
+  if (value.type !== 'Literal')
+    return 'unknown'
+  if (value.value === null)
+    return 'null'
+  const kind = typeof value.value
+  if (kind === 'boolean' || kind === 'number' || kind === 'string')
+    return kind
+  return 'unknown'
+}
+
+/**
+ * Build a parser-independent input-shape view from an ESTree object literal.
+ */
+export function materializeInputShape(
+  node: ESTree.ObjectExpression,
+  context: InputShapeContext,
+): InputShapeView {
+  const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
+  const propLocs: Record<string, ESTree.Property> = {}
+
+  for (const p of node.properties) {
+    if (p.type !== 'Property' || p.computed)
+      continue
+    const key = p.key
+    const name = key.type === 'Identifier'
+      ? key.name
+      : key.type === 'Literal' && typeof key.value === 'string'
+        ? key.value
+        : undefined
+    if (!name)
+      continue
+    keys.add(name)
+    valueKinds.set(name, valueKind(p.value))
+    propLocs[name] = p
+  }
+
+  return { context, keys, valueKinds, loc: node, propLocs }
+}
 
 /**
  * Build a parser-agnostic {@link TagInput} from an ESTree object literal so a

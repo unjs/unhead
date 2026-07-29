@@ -1,7 +1,6 @@
 import type { SourceMapInput } from 'rollup'
 import type { BaseTransformerTypes } from './types'
 import MagicString from 'magic-string'
-import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import {
   resolveMetaKeyType,
@@ -9,6 +8,7 @@ import {
   resolvePackedMetaObjectValue,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
+import { parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
 
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -106,13 +106,10 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
           return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
-        const ast = parseSync(id, code)
+        const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
 
-        // Pre-pass: collect all declarations first so hoisted locals
-        // (`function useSeoMeta() {}` below a call site) are visible when
-        // the rewrite walk visits earlier statements.
-        walk(ast.program, { scopeTracker })
+        // The parse walk collected all declarations, including hoisted locals.
         scopeTracker.freeze()
 
         // Track which ImportDeclarations need specifier rewrites

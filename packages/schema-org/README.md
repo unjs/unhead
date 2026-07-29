@@ -1,6 +1,6 @@
 # @unhead/schema-org
 
-> Unhead Schema.org for Simple and Automated Google Rich Results
+> Generate Schema.org JSON-LD with Google-focused TypeScript helpers
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -8,12 +8,13 @@
 
 ## Features
 
-- 🔍 **Google Rich Results** - Automated schema generation for rich search results
-- 🎯 **Type-safe** - Full TypeScript support with schema validation
-- 🖖 **Framework agnostic** - Works with Vue, React, Svelte, SolidJS, and more
-- 📋 **80+ Schema Types** - Support for most common schema.org types
-- ⚡ **Zero runtime** - Generates optimized JSON-LD at build time
-- 🔄 **Reactive** - Dynamic schema updates with framework reactivity
+- 🔍 **Google-focused fields**: Helpers prioritize properties used by Google Search structured data features
+- 🎯 **Typed helpers**: TypeScript autocomplete for supported fields, defaults, and node relationships
+- 🖖 **Framework agnostic**: Works with Vue, React, Svelte, SolidJS, and more
+- 📋 **Custom nodes**: Add any valid Schema.org type or property when no dedicated helper exists
+- 🔄 **Reactive**: Dynamic schema updates with framework reactivity
+
+The helper types are practical subsets, not complete TypeScript definitions of the Schema.org vocabulary. Extra valid properties pass through to the generated JSON-LD. Use [`schema-dts`](https://github.com/google/schema-dts) with a custom node when you need full Schema.org typing.
 
 ## Installation
 

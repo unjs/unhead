@@ -1,5 +1,6 @@
-import type { HeadInputPredicate, TagPredicate } from './types'
+import type { HeadInputPredicate, InputShapePredicate, TagPredicate } from './types'
 import { emptyMetaContent } from './empty-meta-content'
+import { validateInputShape } from './input-shape'
 import { noDeprecatedProps } from './no-deprecated-props'
 import { noHtmlInTitle } from './no-html-in-title'
 import { noUnknownMeta } from './no-unknown-meta'
@@ -12,6 +13,7 @@ import { deferOnModuleScript, scriptSrcWithContent } from './script-rules'
 import { twitterHandleMissingAt } from './twitter-handle-missing-at'
 import { viewportUserScalable } from './viewport-user-scalable'
 
+export * from './input-shape'
 export * from './runtime'
 export * from './types'
 
@@ -29,6 +31,11 @@ export const tagPredicates = {
   'twitter-handle-missing-at': twitterHandleMissingAt,
   'viewport-user-scalable': viewportUserScalable,
 } satisfies Record<string, TagPredicate>
+
+/** Predicates for structural input validation across parser adapters. */
+export const inputShapePredicates = {
+  'invalid-input-shape': validateInputShape,
+} satisfies Record<string, InputShapePredicate>
 
 /** Migration-only tag predicates — opt-in via the `migration` config preset. */
 export const migrationTagPredicates = {

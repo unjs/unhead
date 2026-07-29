@@ -1,4 +1,4 @@
-import type { HeadInputView, TagInput } from 'unhead/validate'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from 'unhead/validate'
 
 // oxc-parser AST is ESTree-shaped: Property/Literal/Identifier/ObjectExpression
 // share the same node names as ESTree, so we work against a loose any-typed
@@ -34,6 +34,57 @@ function getKeyName(prop: Node): string | undefined {
   if (k.type === 'Literal' && typeof k.value === 'string')
     return k.value
   return undefined
+}
+
+function valueKind(node: Node | undefined): InputValueKind {
+  const value = unwrapTS(node)
+  if (!value)
+    return 'unknown'
+  if (value.type === 'ArrayExpression')
+    return 'array'
+  if (value.type === 'ObjectExpression')
+    return 'object'
+  if (value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+    return 'function'
+  if (value.type === 'TemplateLiteral')
+    return 'string'
+  if (value.type !== 'Literal')
+    return 'unknown'
+  if (value.value === null)
+    return 'null'
+  const kind = typeof value.value
+  if (kind === 'boolean' || kind === 'number' || kind === 'string')
+    return kind
+  return 'unknown'
+}
+
+/**
+ * Build a parser-independent input-shape view from an oxc object literal.
+ */
+export function materializeInputShape(
+  obj: Node,
+  context: InputShapeContext,
+): InputShapeView {
+  const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
+  const propLocs: Record<string, OxcLoc> = {}
+
+  for (const prop of obj.properties) {
+    const name = getKeyName(prop)
+    if (!name)
+      continue
+    keys.add(name)
+    valueKinds.set(name, valueKind(prop.value))
+    propLocs[name] = { start: prop.start, end: prop.end }
+  }
+
+  return {
+    context,
+    keys,
+    valueKinds,
+    loc: { start: obj.start, end: obj.end },
+    propLocs,
+  }
 }
 
 /**

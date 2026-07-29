@@ -9,6 +9,7 @@
 ## Features
 
 - 🛠️ Build-time optimizations for Unhead
+- 🎯 Transpile static inline scripts to Vite's configured browser target
 - 🌲 Tree-shake server composables from client bundles
 - ⚡ Transform `useSeoMeta` calls for better performance
 - 📦 Support for Vite, Webpack, and other bundlers
@@ -44,6 +45,12 @@ export default defineConfig({
 })
 ```
 
+To use the Unhead panel in Vite DevTools, install its optional development packages:
+
+```bash
+pnpm add -D @vitejs/devtools @vitejs/devtools-kit
+```
+
 ### Options
 
 ```ts
@@ -53,6 +60,9 @@ interface UnpluginOptions {
 
   // Transform useSeoMeta calls for better performance
   useSeoMetaTransform?: boolean | UseSeoMetaTransformOptions
+
+  // Vite: transpile static inline scripts to build.target (enabled by default)
+  transformInlineScripts?: false | { target?: string | string[] | false }
 }
 ```
 
