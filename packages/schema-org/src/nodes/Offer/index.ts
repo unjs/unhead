@@ -119,7 +119,7 @@ type OfferPrice
 export type OfferSimple = OfferBase & OfferPrice
 export type Offer = OfferSimple
 
-const unitPriceSpecificationResolver = defineSchemaOrgResolver<UnitPriceSpecification>({
+export const unitPriceSpecificationResolver = defineSchemaOrgResolver<UnitPriceSpecification>({
   defaults: {
     '@type': 'UnitPriceSpecification',
   },

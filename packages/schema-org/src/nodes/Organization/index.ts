@@ -6,7 +6,9 @@ import type { MonetaryAmount, QuantitativeValue } from '../MonetaryAmount'
 import type { UnitPriceSpecification } from '../Offer'
 import type { PostalAddress } from '../PostalAddress'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { interactionCounterResolver, propertyValueResolver } from '../../core/common'
 import {
+  asArray,
   IdentityId,
   idReference,
   prefixId,
@@ -21,6 +23,7 @@ import { definedRegionResolver } from '../DefinedRegion'
 import { imageResolver, isImageObject } from '../Image'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
 import { monetaryAmountResolver, quantitativeValueResolver } from '../MonetaryAmount'
+import { unitPriceSpecificationResolver } from '../Offer'
 import { addressResolver } from '../PostalAddress'
 import { PrimaryWebPageId } from '../WebPage'
 import { PrimaryWebSiteId } from '../WebSite'
@@ -53,7 +56,7 @@ export interface MemberProgram extends Thing {
 }
 
 export interface CreditCard extends Thing {
-  '@type': 'CreditCard'
+  '@type'?: 'CreditCard'
   'name': string
 }
 
@@ -222,7 +225,7 @@ export interface OrganizationSimple extends Thing {
   /**
    * Organization identifiers used by profile and merchant features.
    */
-  identifier?: Arrayable<PropertyValue | string>
+  identifier?: NodeRelations<PropertyValue | string>
   /**
    * Counts of interactions performed by the organization.
    */
@@ -241,6 +244,12 @@ const contactPointResolver = defineSchemaOrgResolver<ContactPoint>({
   },
 })
 
+const creditCardResolver = defineSchemaOrgResolver<CreditCard>({
+  defaults: {
+    '@type': 'CreditCard',
+  },
+})
+
 export const memberProgramTierResolver = defineSchemaOrgResolver<MemberProgramTier>({
   defaults: {
     '@type': 'MemberProgramTier',
@@ -249,8 +258,24 @@ export const memberProgramTierResolver = defineSchemaOrgResolver<MemberProgramTi
     node.hasTierBenefit = (Array.isArray(node.hasTierBenefit)
       ? node.hasTierBenefit.map(benefit => withBase(benefit, 'https://schema.org/'))
       : withBase(node.hasTierBenefit, 'https://schema.org/')) as MemberProgramTier['hasTierBenefit']
-    node.hasTierRequirement = resolveRelation(node.hasTierRequirement, ctx)
-    node.isTierOf = resolveRelation(node.isTierOf, ctx)
+    if (node.hasTierRequirement) {
+      const requirement = node.hasTierRequirement
+      if (typeof requirement === 'object') {
+        const types = asArray(requirement['@type'])
+        if (types.includes('CreditCard')) {
+          node.hasTierRequirement = resolveRelation(requirement as NodeRelation<CreditCard>, ctx, creditCardResolver)
+        }
+        else if (types.includes('MonetaryAmount') || 'currency' in requirement) {
+          node.hasTierRequirement = resolveRelation(requirement as NodeRelation<MonetaryAmount>, ctx, monetaryAmountResolver)
+        }
+        else {
+          node.hasTierRequirement = resolveRelation(requirement as NodeRelation<UnitPriceSpecification>, ctx, unitPriceSpecificationResolver)
+        }
+      }
+    }
+    // MemberProgram and MemberProgramTier may reference each other.
+    // eslint-disable-next-line ts/no-use-before-define
+    node.isTierOf = resolveRelation(node.isTierOf, ctx, memberProgramResolver)
     node.membershipPointsEarned = resolveRelation(node.membershipPointsEarned, ctx, quantitativeValueResolver)
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
@@ -361,10 +386,20 @@ export const organizationResolver
     resolve(node, ctx) {
       resolveDefaultType(node, 'Organization')
       node.address = resolveRelation(node.address, ctx, addressResolver)
+      node.agentInteractionStatistic = resolveRelation(node.agentInteractionStatistic, ctx, interactionCounterResolver)
       node.contactPoint = resolveRelation(node.contactPoint, ctx, contactPointResolver)
       node.hasMemberProgram = resolveRelation(node.hasMemberProgram, ctx, memberProgramResolver)
       node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy, ctx, merchantReturnPolicyResolver)
       node.hasShippingService = resolveRelation(node.hasShippingService, ctx, shippingServiceResolver)
+      if (node.identifier) {
+        const resolveIdentifier = (identifier: NodeRelation<PropertyValue | string>) => typeof identifier === 'string'
+          ? identifier
+          : resolveRelation(identifier as NodeRelation<PropertyValue>, ctx, propertyValueResolver)
+        node.identifier = Array.isArray(node.identifier)
+          ? node.identifier.map(resolveIdentifier)
+          : resolveIdentifier(node.identifier)
+      }
+      node.interactionStatistic = resolveRelation(node.interactionStatistic, ctx, interactionCounterResolver)
       node.numberOfEmployees = resolveRelation(node.numberOfEmployees, ctx, quantitativeValueResolver)
       if (node.url)
         node.url = resolveWithBase(ctx.meta.host, node.url)

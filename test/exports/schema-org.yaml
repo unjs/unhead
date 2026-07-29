@@ -128,6 +128,7 @@
   tvSeasonResolver: object
   tvSeriesResolver: object
   UnheadSchemaOrg: function
+  unitPriceSpecificationResolver: object
   useSchemaOrg: function
   vacationRentalResolver: object
   videoResolver: object

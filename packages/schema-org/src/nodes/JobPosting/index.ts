@@ -3,6 +3,7 @@ import type { MonetaryAmount } from '../MonetaryAmount'
 import type { Organization } from '../Organization'
 import type { Place } from '../Place'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { propertyValueResolver } from '../../core/common'
 import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 import { organizationResolver } from '../Organization'
@@ -56,9 +57,6 @@ export interface JobPostingSimple extends Thing {
   validThrough?: ResolvableDate
 
   /**
-   * A description of the job location (e.g. TELECOMMUTE for telecommute jobs).
-   */
-  /**
    * Indicates whether the URL that's associated with this job posting enables direct application for the job.
    */
   directApply?: boolean
@@ -106,7 +104,7 @@ export interface JobLocationRequirement extends Thing {
 type JobLocation
   = | {
     jobLocation: NodeRelations<Place>
-    jobLocationType?: 'TELECOMMUTE'
+    jobLocationType?: never
     applicantLocationRequirements?: NodeRelations<JobLocationRequirement>
   }
   | {
@@ -126,12 +124,6 @@ const credentialResolver = defineSchemaOrgResolver<EducationalOccupationalCreden
 const experienceRequirementsResolver = defineSchemaOrgResolver<OccupationalExperienceRequirements>({
   defaults: {
     '@type': 'OccupationalExperienceRequirements',
-  },
-})
-
-const propertyValueResolver = defineSchemaOrgResolver<PropertyValue>({
-  defaults: {
-    '@type': 'PropertyValue',
   },
 })
 

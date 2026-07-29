@@ -225,6 +225,7 @@ const peopleAudienceResolver = defineSchemaOrgResolver<PeopleAudience>({
 })
 
 const certificationRatingResolver = defineSchemaOrgResolver<Rating>({
+  // Certification scales are domain-specific, so do not apply Rating's 1 to 5 defaults.
   defaults: {
     '@type': 'Rating',
   },

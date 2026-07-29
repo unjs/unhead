@@ -116,11 +116,13 @@ describe('defineWebPage', () => {
           'mainEntity': definePerson({
             name: 'Ada Lovelace',
             alternateName: 'ada',
-            identifier: 'profile-1',
+            identifier: {
+              name: 'Profile ID',
+              value: 'profile-1',
+            },
             interactionStatistic: {
-              '@type': 'InteractionCounter',
-              'interactionType': 'FollowAction',
-              'userInteractionCount': 42,
+              interactionType: 'FollowAction',
+              userInteractionCount: 42,
             },
           }),
         }),
@@ -138,7 +140,14 @@ describe('defineWebPage', () => {
       expect(graphNodes[1]).toMatchObject({
         '@type': 'Person',
         'alternateName': 'ada',
-        'identifier': 'profile-1',
+        'identifier': {
+          '@type': 'PropertyValue',
+          'name': 'Profile ID',
+          'value': 'profile-1',
+        },
+        'interactionStatistic': {
+          '@type': 'InteractionCounter',
+        },
         'name': 'Ada Lovelace',
       })
     })

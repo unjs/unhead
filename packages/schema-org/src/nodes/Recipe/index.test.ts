@@ -115,4 +115,48 @@ describe('defineRecipe', () => {
       })
     })
   })
+
+  it('resolves image arrays and preserves explicit textless steps', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineRecipe({
+          name: 'Bread',
+          image: [
+            {
+              url: '/bread.jpg',
+              license: '/license',
+            },
+            '/bread-wide.jpg',
+          ],
+          recipeInstructions: {
+            '@type': 'HowToStep',
+            'itemListElement': ['Shape the loaf.'],
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const recipe = graph.find(node => node['@type'] === 'Recipe')
+      const images = graph.filter(node => node['@type'] === 'ImageObject')
+
+      expect(recipe).toMatchObject({
+        image: [
+          { '@id': 'https://example.com/#/schema/image/1' },
+          { '@id': 'https://example.com/#/schema/image/2' },
+        ],
+        recipeInstructions: {
+          '@type': 'HowToStep',
+        },
+      })
+      expect(images).toMatchObject([
+        {
+          contentUrl: 'https://example.com/bread.jpg',
+          license: 'https://example.com/license',
+        },
+        {
+          contentUrl: 'https://example.com/bread-wide.jpg',
+        },
+      ])
+    })
+  })
 })

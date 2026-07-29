@@ -97,6 +97,14 @@ describe('defineOrganization', () => {
       useSchemaOrg(head, [
         defineOrganization({
           name: 'Shop',
+          identifier: {
+            name: 'Merchant ID',
+            value: 'shop-1',
+          },
+          agentInteractionStatistic: {
+            interactionType: 'WriteAction',
+            userInteractionCount: 3,
+          },
           hasMemberProgram: {
             name: 'Shop Plus',
             description: 'Member prices and points',
@@ -104,6 +112,10 @@ describe('defineOrganization', () => {
             hasTiers: {
               name: 'Gold',
               hasTierBenefit: ['TierBenefitLoyaltyPoints', 'TierBenefitLoyaltyPrice'],
+              hasTierRequirement: {
+                currency: 'AUD',
+                value: 100,
+              },
               membershipPointsEarned: {
                 value: 2,
               },
@@ -144,6 +156,12 @@ describe('defineOrganization', () => {
       const [organization] = await injectSchemaOrg(head)
 
       expect(organization).toMatchObject({
+        agentInteractionStatistic: {
+          '@type': 'InteractionCounter',
+        },
+        identifier: {
+          '@type': 'PropertyValue',
+        },
         hasMemberProgram: {
           '@type': 'MemberProgram',
           'hasTiers': {
@@ -152,6 +170,9 @@ describe('defineOrganization', () => {
               'https://schema.org/TierBenefitLoyaltyPoints',
               'https://schema.org/TierBenefitLoyaltyPrice',
             ],
+            'hasTierRequirement': {
+              '@type': 'MonetaryAmount',
+            },
             'membershipPointsEarned': {
               '@type': 'QuantitativeValue',
               'value': 2,

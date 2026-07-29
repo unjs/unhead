@@ -13,6 +13,7 @@ import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
 import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
+  asArray,
   idReference,
   resolvableDateToIso,
   setIfEmpty,
@@ -20,6 +21,7 @@ import {
 import { aggregateRatingResolver } from '../AggregateRating'
 import { PrimaryArticleId } from '../Article'
 import { howToSectionResolver, howToStepResolver } from '../HowTo'
+import { imageResolver } from '../Image'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 import { videoResolver } from '../Video'
@@ -145,11 +147,19 @@ export const recipeResolver = defineSchemaOrgResolver<Recipe>({
       root: true,
     }) as NodeRelation<Identity>
     node.datePublished = resolvableDateToIso(node.datePublished)
+    node.image = resolveRelation(node.image, ctx, imageResolver, {
+      root: true,
+    })
     if (node.recipeInstructions) {
       const resolveInstruction = (instruction: NodeRelation<HowToSection | HowToStep | string>) => {
-        const isSection = typeof instruction === 'object'
+        const instructionTypes = typeof instruction === 'object' && instruction !== null
+          ? asArray(instruction['@type'])
+          : []
+        const isExplicitStep = instructionTypes.includes('HowToStep')
+        const isSection = !isExplicitStep
+          && typeof instruction === 'object'
           && instruction !== null
-          && (instruction['@type'] === 'HowToSection' || ('itemListElement' in instruction && !('text' in instruction)))
+          && (instructionTypes.includes('HowToSection') || ('itemListElement' in instruction && !('text' in instruction)))
         return isSection
           ? resolveRelation(instruction as HowToSection, ctx, howToSectionResolver)
           : resolveRelation(instruction as NodeRelation<HowToStep | string>, ctx, howToStepResolver)

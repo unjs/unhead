@@ -165,7 +165,7 @@ export interface ProductSimple extends Thing {
    */
   manufacturer?: NodeRelation<Organization>
   audience?: NodeRelations<PeopleAudience>
-  category?: Arrayable<CategoryCode | string>
+  category?: Arrayable<NodeRelation<CategoryCode> | string>
   color?: Arrayable<string>
   gtin8?: string
   gtin12?: string

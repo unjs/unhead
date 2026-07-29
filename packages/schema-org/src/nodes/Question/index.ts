@@ -57,7 +57,7 @@ export interface QuestionSimple extends Thing {
   image?: NodeRelations<ImageObject | string>
   text?: string
   upvoteCount?: number
-  video?: NodeRelations<VideoObject>
+  video?: NodeRelations<VideoObject | string>
   /**
    * Alias for `name`
    */

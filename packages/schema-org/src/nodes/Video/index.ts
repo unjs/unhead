@@ -1,6 +1,7 @@
 import type { Arrayable, Id, InteractionCounter, NodeRelation, NodeRelations, ResolvableDate, Thing } from '../../types'
 import type { ImageObject } from '../Image'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { interactionCounterResolver } from '../../core/common'
 import {
   asArray,
   resolvableDateToIso,
@@ -131,12 +132,6 @@ export interface VideoSimple extends Thing {
 }
 
 export interface VideoObject extends VideoSimple {}
-
-const interactionCounterResolver = defineSchemaOrgResolver<InteractionCounter>({
-  defaults: {
-    '@type': 'InteractionCounter',
-  },
-})
 
 const clipResolver = defineSchemaOrgResolver<Clip>({
   defaults: {

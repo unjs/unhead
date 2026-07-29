@@ -1,6 +1,7 @@
-import type { Arrayable, InteractionCounter, NodeRelations, PropertyValue, Thing } from '../../types'
+import type { Arrayable, InteractionCounter, NodeRelation, NodeRelations, PropertyValue, Thing } from '../../types'
 import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver } from '../../core'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { interactionCounterResolver, propertyValueResolver } from '../../core/common'
 import {
   IdentityId,
   idReference,
@@ -27,7 +28,7 @@ export interface PersonSimple extends Thing {
   /**
    * An identifier for the person.
    */
-  identifier?: Arrayable<PropertyValue | string>
+  identifier?: NodeRelations<PropertyValue | string>
   /**
    * The user bio, truncated to 250 characters.
    */
@@ -75,6 +76,16 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
   },
   idPrefix: ['host', IdentityId],
   resolve(node, ctx) {
+    if (node.identifier) {
+      const resolveIdentifier = (identifier: NodeRelation<PropertyValue | string>) => typeof identifier === 'string'
+        ? identifier
+        : resolveRelation(identifier as NodeRelation<PropertyValue>, ctx, propertyValueResolver)
+      node.identifier = Array.isArray(node.identifier)
+        ? node.identifier.map(resolveIdentifier)
+        : resolveIdentifier(node.identifier)
+    }
+    node.agentInteractionStatistic = resolveRelation(node.agentInteractionStatistic, ctx, interactionCounterResolver)
+    node.interactionStatistic = resolveRelation(node.interactionStatistic, ctx, interactionCounterResolver)
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
     return node

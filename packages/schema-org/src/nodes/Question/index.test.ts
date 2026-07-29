@@ -86,6 +86,7 @@ describe('defineQuestion', () => {
             datePublished: new Date(Date.UTC(2026, 0, 2)),
             url: '/answers/typed-helper',
           },
+          video: '/question.mp4',
         }),
       ])
 
@@ -103,6 +104,10 @@ describe('defineQuestion', () => {
         },
         'datePublished': '2026-01-02T00:00:00.000Z',
         'url': 'https://example.com/answers/typed-helper',
+      })
+      expect(graphNodes[1].video).toMatchObject({
+        '@type': 'VideoObject',
+        'url': 'https://example.com/question.mp4',
       })
       expect(graphNodes[2]).toMatchObject({
         '@type': 'Organization',

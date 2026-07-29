@@ -57,7 +57,7 @@ The Unhead `Organization` interface requires `name` when you pass an object. Goo
 
 ## Recommended Properties
 
-- **logo** `NodeRelation<ImageObject | string>`
+- **logo** `NodeRelations<ImageObject | string>`
 
   A logo image URL, which may be relative to the site root.
 
@@ -215,7 +215,7 @@ export interface OrganizationSimple extends Thing {
   numberOfEmployees?: NodeRelation<QuantitativeValue>
   taxID?: string
   vatID?: string
-  identifier?: Arrayable<PropertyValue | string>
+  identifier?: NodeRelations<PropertyValue | string>
   agentInteractionStatistic?: NodeRelations<InteractionCounter>
   interactionStatistic?: NodeRelations<InteractionCounter>
 }

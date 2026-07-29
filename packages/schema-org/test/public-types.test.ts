@@ -167,6 +167,17 @@ it('requires Google rich result property alternatives', () => {
   }
   expectTypeOf(invalidRemoteJob).toEqualTypeOf<JobPosting>()
 
+  // @ts-expect-error remote jobs require applicantLocationRequirements even when jobLocation is present
+  const invalidRemoteJobWithLocation: JobPosting = {
+    datePosted: '2026-01-01',
+    description: 'Remote role',
+    hiringOrganization: { name: 'Unhead' },
+    jobLocation: { name: 'Head office', address: '1 Main Street' },
+    jobLocationType: 'TELECOMMUTE',
+    title: 'Maintainer',
+  }
+  expectTypeOf(invalidRemoteJobWithLocation).toEqualTypeOf<JobPosting>()
+
   const contentUrlImage = {
     contentUrl: '/image.jpg',
   } satisfies ImageObject

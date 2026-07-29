@@ -92,7 +92,7 @@ export interface RecipeSimple extends Thing {
    */
   recipeIngredient?: string[]
   /**
-   * An array of HowToStep objects.
+   * Instructions as a HowToStep, HowToSection, string, or an array of those values.
    */
   recipeInstructions?: NodeRelations<HowToSection | HowToStep | string>
   /**
