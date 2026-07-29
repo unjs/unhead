@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
-import { normalizeResolvedHeadInput, resolveHeadEntryInput } from './normalize'
+import { normalizeEntryToTags } from './normalize'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -213,15 +213,14 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         tags = e._precomputedTags
       }
       else {
-        const input = resolveHeadEntryInput(e.input, head.resolvedOptions.propResolvers || [])
-        tags = normalizeResolvedHeadInput(input)
+        tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
         if (e.options && !isEmptyProps(e.options)) {
           for (const t of tags)
             Object.assign(t, e.options)
         }
         // re-read per entry: an earlier listener may have (un)registered hooks
         if (hooks['entries:normalize']?.length) {
-          const normalizeCtx = { input, tags, entry: e }
+          const normalizeCtx = { tags, entry: e }
           callHook(head, 'entries:normalize', normalizeCtx)
           tags = normalizeCtx.tags
         }

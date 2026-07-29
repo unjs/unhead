@@ -1,4 +1,4 @@
-import type { HeadTag, Unhead } from '../types'
+import type { HeadTag, PropResolver, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
 import {
   headInputPredicates,
@@ -137,6 +137,47 @@ function captureSource(root?: string): string | undefined {
   return undefined
 }
 
+/**
+ * Observe top-level values after preceding framework resolvers in the same walk.
+ */
+function createInputShapeObserver(): {
+  resolver: PropResolver
+  take: () => Record<string, unknown> | undefined
+} {
+  let remainingRootKeys: Set<string> | undefined
+  let resolvedValues: Map<string, unknown> | undefined
+
+  const resolver: PropResolver = (key, value) => {
+    if (key === undefined) {
+      if (value?.constructor === Object) {
+        remainingRootKeys = new Set(Object.keys(value))
+        resolvedValues = new Map()
+      }
+      else {
+        remainingRootKeys = undefined
+        resolvedValues = undefined
+      }
+    }
+    else if (remainingRootKeys?.delete(key)) {
+      resolvedValues?.set(key, value)
+    }
+    return value
+  }
+  resolver._static = true
+
+  return {
+    resolver,
+    take() {
+      const input = resolvedValues
+        ? Object.fromEntries(resolvedValues)
+        : undefined
+      remainingRootKeys = undefined
+      resolvedValues = undefined
+      return input
+    },
+  }
+}
+
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
@@ -144,6 +185,11 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
   return defineHeadPlugin((head: Unhead) => {
     const pendingInputDiagnostics: { diagnostic: Diagnostic, entryIndex: number }[] = []
+    const inputShapeObserver = createInputShapeObserver()
+    head.resolvedOptions.propResolvers = [
+      ...(head.resolvedOptions.propResolvers || []),
+      inputShapeObserver.resolver,
+    ]
     const hooks = head.hooks as any
     if (hooks) {
       const _callHook = hooks.callHook.bind(hooks)
@@ -178,7 +224,8 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
     return {
       key: 'validate',
       hooks: {
-        'entries:normalize': ({ entry, input }) => {
+        'entries:normalize': ({ entry }) => {
+          const input = inputShapeObserver.take()
           if (!input || input.constructor !== Object)
             return
           const shape = inputShapeFromRuntime('head', input)

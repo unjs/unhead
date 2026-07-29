@@ -36,6 +36,28 @@ describe('validatePlugin', () => {
       ]))
     })
 
+    it('observes custom resolver output without running it twice', () => {
+      const rules: HeadValidationRule[] = []
+      const resolver = vi.fn((key: string | undefined, value: unknown) => {
+        if (key === 'meta' && value === 'resolved-invalid-shape')
+          return { name: 'description', content: 'Hello' }
+        return value
+      })
+      const head = createHead({
+        disableDefaults: true,
+        propResolvers: [resolver],
+        plugins: [ValidatePlugin({
+          onReport: diagnostics => rules.push(...diagnostics),
+        })],
+      })
+
+      head.push({ meta: 'resolved-invalid-shape' } as any)
+      renderSSRHead(head)
+
+      expect(rules.filter(rule => rule.id === 'invalid-input-shape')).toHaveLength(1)
+      expect(resolver.mock.calls.filter(([key]) => key === 'meta')).toHaveLength(1)
+    })
+
     it('warns for head properties inside htmlAttrs', () => {
       const { head, rules } = createValidationHead()
       head.push({

@@ -33,12 +33,17 @@ describe('validatePlugin input shapes', () => {
 
   it('validates computed top-level head field shapes after resolver unwrapping', () => {
     const { head, rules } = createValidationHead()
-    const meta = computed(() => ({ name: 'description', content: 'Hello' }))
+    let getterCalls = 0
+    const meta = computed(() => {
+      getterCalls++
+      return { name: 'description', content: 'Hello' }
+    })
 
     head.push(computed(() => ({ meta })) as any)
     renderSSRHead(head)
 
     expect(rules.filter(rule => rule.id === 'invalid-input-shape')).toHaveLength(1)
+    expect(getterCalls).toBe(1)
   })
 
   it('accepts computed values that resolve to valid attribute shapes', () => {

@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { createHead } from '../../../src/server'
 
 describe('resolver cache hook invalidation', () => {
+  it('keeps resolved input out of the core normalize hook payload', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({ title: 'Original' })
+
+    let payload: object | undefined
+    head.hooks.hook('entries:normalize', (ctx) => {
+      payload = ctx
+    })
+
+    head.render()
+    expect(payload).not.toHaveProperty('input')
+  })
+
   it('re-normalizes existing entries when normalize hooks are added and removed', () => {
     const head = createHead({ disableDefaults: true })
     head.push({ title: 'Original' })

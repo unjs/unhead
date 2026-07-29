@@ -128,25 +128,14 @@ function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
   }
 }
 
-/**
- * Resolve one head entry through the configured framework property resolvers.
- */
-export function resolveHeadEntryInput(input: any, propResolvers: PropResolver[]): any {
+export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
   if (!input)
-    return input
+    return []
   if (typeof input === 'function')
     input = input()
   // The root intentionally passes through the resolver chain twice. The first
   // pass unwraps refs, then walkResolver invokes a function returned by a ref.
-  return resolveHeadInput(input, propResolvers)
-}
-
-/**
- * Normalize an already-resolved head entry without invoking resolvers again.
- */
-export function normalizeResolvedHeadInput(input: any): HeadTag[] {
-  if (!input)
-    return []
+  input = resolveHeadInput(input, propResolvers)
   const tags: HeadTag[] = []
   for (const key in input) {
     const value = input[key]
@@ -160,8 +149,4 @@ export function normalizeResolvedHeadInput(input: any): HeadTag[] {
     }
   }
   return tags
-}
-
-export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
-  return normalizeResolvedHeadInput(resolveHeadEntryInput(input, propResolvers))
 }

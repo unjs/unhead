@@ -37,7 +37,7 @@ interface TagResolveContext { tagMap: Map<string, HeadTag>, tags: HeadTag[] }
 export interface CoreHeadHooks {
   'entries:updated': (ctx: Unhead<any>) => HookResult
   'entries:resolve': (ctx: EntryResolveCtx<any>) => SyncHookResult
-  'entries:normalize': (ctx: { input: any, tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
+  'entries:normalize': (ctx: { tags: HeadTag[], entry: HeadEntry<any> }) => SyncHookResult
   'tag:normalise': (ctx: { tag: HeadTag, entry: HeadEntry<any>, resolvedOptions: CreateClientHeadOptions }) => SyncHookResult
   'tags:beforeResolve': (ctx: TagResolveContext) => SyncHookResult
   'tags:resolve': (ctx: TagResolveContext) => SyncHookResult
