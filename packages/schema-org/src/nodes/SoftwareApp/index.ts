@@ -32,26 +32,18 @@ type ApplicationCategory
     | 'UtilitiesApplication'
     | 'ReferenceApplication'
 
-export interface SoftwareAppSimple extends Thing {
+interface SoftwareAppBase extends Thing {
   '@type'?: Arrayable<'SoftwareApplication' | 'MobileApplication' | 'VideoGame' | 'WebApplication'>
   /**
    * The name of the app.
    */
-  'name'?: string
+  'name': string
   /**
    * An offer to sell the app.
    * For developers, offers can indicate the marketplaces that carry the application.
    * For marketplaces, use offers to indicate the price of the app for a specific app instance.
    */
   'offers': NodeRelations<Offer>
-  /**
-   * The average review score of the app.
-   */
-  'aggregateRating'?: NodeRelation<AggregateRating>
-  /**
-   * A single review of the app.
-   */
-  'review'?: NodeRelation<Review>
   /**
    * The type of app (for example, BusinessApplication or GameApplication). The value must be a supported app type.
    */
@@ -78,7 +70,18 @@ export interface SoftwareAppSimple extends Thing {
   'featureList'?: string[]
 }
 
-export interface SoftwareApp extends SoftwareAppSimple {}
+type SoftwareAppRating
+  = | {
+    aggregateRating: NodeRelation<AggregateRating>
+    review?: NodeRelation<Review>
+  }
+  | {
+    aggregateRating?: NodeRelation<AggregateRating>
+    review: NodeRelation<Review>
+  }
+
+export type SoftwareAppSimple = SoftwareAppBase & SoftwareAppRating
+export type SoftwareApp = SoftwareAppSimple
 
 export const softwareAppResolver = defineSchemaOrgResolver<SoftwareApp>({
   defaults: {

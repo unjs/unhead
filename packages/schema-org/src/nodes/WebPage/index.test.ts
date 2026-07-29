@@ -1,6 +1,6 @@
 import type { WebPage } from './index'
 import { expect } from 'vitest'
-import { defineImage, defineOrganization, defineReadAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
+import { defineImage, defineOrganization, definePerson, defineReadAction, defineWebPage, defineWebSite, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../test'
 import { IdentityId, idReference, prefixId } from '../../utils'
 import { PrimaryWebSiteId } from '../WebSite'
@@ -104,6 +104,43 @@ describe('defineWebPage', () => {
       const webPage = await findNode<WebPage>(head, PrimaryWebPageId)
 
       expect(webPage?.['@type']).toEqual(['WebPage', 'FAQPage'])
+    })
+  })
+
+  it('resolves ProfilePage entities and feature properties', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineWebPage({
+          '@type': 'ProfilePage',
+          'dateCreated': new Date(Date.UTC(2025, 0, 1)),
+          'mainEntity': definePerson({
+            name: 'Ada Lovelace',
+            alternateName: 'ada',
+            identifier: 'profile-1',
+            interactionStatistic: {
+              '@type': 'InteractionCounter',
+              'interactionType': 'FollowAction',
+              'userInteractionCount': 42,
+            },
+          }),
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+
+      expect(graphNodes[0]).toMatchObject({
+        '@type': ['WebPage', 'ProfilePage'],
+        'dateCreated': '2025-01-01T00:00:00.000Z',
+        'mainEntity': {
+          '@id': 'https://example.com/#/schema/person/1',
+        },
+      })
+      expect(graphNodes[1]).toMatchObject({
+        '@type': 'Person',
+        'alternateName': 'ada',
+        'identifier': 'profile-1',
+        'name': 'Ada Lovelace',
+      })
     })
   })
 

@@ -13,6 +13,8 @@ description: Use defineProduct() to add Product structured data for e-commerce p
 
 - [Product - Schema.org](https://schema.org/Product)
 - [Product Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/product)
+- [Merchant Listing Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing)
+- [Product Variant Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/product-variants)
 - [Recipe: E-commerce](/docs/schema-org/guides/recipes/e-commerce)
 
 For a Google product snippet, `name` and at least one of `review`, `aggregateRating`, or `offers` are required. Google supports product rich results on pages focused on one product or variants of that product; see the [product snippet requirements](https://developers.google.com/search/docs/appearance/structured-data/product-snippet#structured-data-type-definitions).
@@ -35,6 +37,10 @@ The `Product` TypeScript interface requires `name` and `image` when you pass an 
 
   Add [Offer](https://schema.org/Offer) properties.
 
+Google's merchant and product variant documentation also uses `audience`, `category`, `color`, GTIN variants, `hasAdultConsideration`, `hasCertification`, `inProductGroupWithID`, `isVariantOf`, `material`, `pattern`, `size`, and `subjectOf`. Unhead types their nested CategoryCode, Certification, PeopleAudience, ProductGroup, SizeSpecification, and 3DModel values.
+
+Offer price specifications cover active prices, struck-through prices, unit pricing, member prices, and loyalty points. The type prevents `priceType` and `validForMemberTier` from appearing together.
+
 ## Defaults
 
 - **@type**: `Product`
@@ -50,6 +56,8 @@ The `Product` TypeScript interface requires `name` and `image` when you pass an 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
 - when `image` is a single string, it is resolved to a root ImageObject node with an absolute URL; arrays are left as the supplied image values
+
+- `audience`, `brand`, `hasCertification`, `isVariantOf`, and `subjectOf` resolve as typed nested nodes
 
 ## Examples
 
@@ -115,7 +123,7 @@ export interface ProductSimple extends Thing {
   /**
    *  A reference to an Organization piece, representing the brand associated with the Product.
    */
-  brand?: NodeRelation<Organization>
+  brand?: NodeRelation<Brand | Organization>
   /**
    * A reference to an Organization piece which represents the seller/merchant.
    */
@@ -156,6 +164,22 @@ export interface ProductSimple extends Thing {
    * A reference to an Organization piece, representing the brand which produces the Product.
    */
   manufacturer?: NodeRelation<Organization>
+  audience?: NodeRelations<PeopleAudience>
+  category?: Arrayable<CategoryCode | string>
+  color?: Arrayable<string>
+  gtin8?: string
+  gtin12?: string
+  gtin13?: string
+  gtin14?: string
+  isbn?: string
+  hasAdultConsideration?: Arrayable<AdultConsideration>
+  hasCertification?: NodeRelations<Certification>
+  inProductGroupWithID?: string
+  isVariantOf?: NodeRelation<ProductGroup>
+  material?: Arrayable<string | Thing>
+  pattern?: Arrayable<string>
+  size?: NodeRelation<SizeSpecification | string>
+  subjectOf?: NodeRelation<ThreeDModel>
 }
 ```
 

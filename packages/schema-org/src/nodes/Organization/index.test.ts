@@ -91,4 +91,98 @@ describe('defineOrganization', () => {
       })
     })
   })
+
+  it('resolves Google loyalty and shipping policy fields', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Shop',
+          hasMemberProgram: {
+            name: 'Shop Plus',
+            description: 'Member prices and points',
+            url: '/members',
+            hasTiers: {
+              name: 'Gold',
+              hasTierBenefit: ['TierBenefitLoyaltyPoints', 'TierBenefitLoyaltyPrice'],
+              membershipPointsEarned: {
+                value: 2,
+              },
+              url: '/members/gold',
+            },
+          },
+          hasShippingService: {
+            name: 'Standard',
+            fulfillmentType: 'FulfillmentTypeDelivery',
+            handlingTime: {
+              businessDays: ['Monday', 'Tuesday'],
+              duration: {
+                minValue: 0,
+                maxValue: 2,
+                unitCode: 'DAY',
+              },
+            },
+            shippingConditions: {
+              shippingDestination: {
+                addressCountry: 'AU',
+              },
+              shippingRate: {
+                currency: 'AUD',
+                value: 10,
+              },
+              transitTime: {
+                duration: {
+                  minValue: 2,
+                  maxValue: 4,
+                  unitCode: 'DAY',
+                },
+              },
+            },
+          },
+        }),
+      ])
+
+      const [organization] = await injectSchemaOrg(head)
+
+      expect(organization).toMatchObject({
+        hasMemberProgram: {
+          '@type': 'MemberProgram',
+          'hasTiers': {
+            '@type': 'MemberProgramTier',
+            'hasTierBenefit': [
+              'https://schema.org/TierBenefitLoyaltyPoints',
+              'https://schema.org/TierBenefitLoyaltyPrice',
+            ],
+            'membershipPointsEarned': {
+              '@type': 'QuantitativeValue',
+              'value': 2,
+            },
+            'url': 'https://example.com/members/gold',
+          },
+          'url': 'https://example.com/members',
+        },
+        hasShippingService: {
+          '@type': 'ShippingService',
+          'fulfillmentType': 'https://schema.org/FulfillmentTypeDelivery',
+          'handlingTime': {
+            '@type': 'ServicePeriod',
+            'duration': {
+              '@type': 'QuantitativeValue',
+            },
+          },
+          'shippingConditions': {
+            '@type': 'ShippingConditions',
+            'shippingDestination': {
+              '@type': 'DefinedRegion',
+            },
+            'shippingRate': {
+              '@type': 'MonetaryAmount',
+            },
+            'transitTime': {
+              '@type': 'ServicePeriod',
+            },
+          },
+        },
+      })
+    })
+  })
 })

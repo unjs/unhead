@@ -54,7 +54,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 ## Google requirements
 
-Google requires both `name` and `address` for a LocalBusiness rich result. The Unhead input type inherits `name` from Organization but leaves `address` optional, so the helper does not enforce this requirement.
+Google requires both `name` and `address` for a LocalBusiness rich result. The Unhead input type requires both properties.
 
 - **name** `string`
 
@@ -148,6 +148,10 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-sche
 
 - `@type` resolve: `Dentist` -> `['Organization', 'LocalBusiness', 'Dentist']`
 
+- `aggregateRating`, `department`, `geo`, and `review` resolve as typed nested nodes
+
+- a relative `menu` URL becomes absolute
+
 ## Types
 
 ```ts
@@ -184,6 +188,7 @@ type ValidLocalBusinessSubTypes = 'AnimalShelter'
 
 export interface LocalBusinessSimple extends Organization {
   '@type'?: ['Organization', 'LocalBusiness'] | ['Organization', 'LocalBusiness', ValidLocalBusinessSubTypes] | ValidLocalBusinessSubTypes
+  'address': NodeRelations<PostalAddress>
   /**
    * The primary public telephone number of the business.
    */
@@ -207,7 +212,7 @@ export interface LocalBusinessSimple extends Organization {
   /**
    * A GeoCoordinates object.
    */
-  'geo'?: unknown
+  'geo'?: NodeRelation<GeoCoordinates>
   /**
    * The VAT ID of the business.
    */
@@ -228,6 +233,11 @@ export interface LocalBusinessSimple extends Organization {
    * The operating hours of the business.
    */
   'openingHoursSpecification'?: NodeRelations<OpeningHoursSpecification>
+  'aggregateRating'?: NodeRelation<AggregateRating>
+  'department'?: NodeRelations<LocalBusiness>
+  'menu'?: string
+  'review'?: NodeRelations<Review>
+  'servesCuisine'?: Arrayable<string>
 }
 ```
 

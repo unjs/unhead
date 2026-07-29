@@ -1,5 +1,6 @@
 import type {
   Arrayable,
+  GeoCoordinates,
   NodeRelation,
   NodeRelations,
   Thing,
@@ -7,25 +8,16 @@ import type {
 import type { AggregateRating } from '../AggregateRating'
 import type { QuantitativeValue } from '../MonetaryAmount'
 import type { PostalAddress } from '../PostalAddress'
+import type { Brand } from '../Product'
 import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import { idReference, resolveWithBase, setIfEmpty } from '../../utils'
 import { aggregateRatingResolver } from '../AggregateRating'
 import { quantitativeValueResolver } from '../MonetaryAmount'
 import { addressResolver } from '../PostalAddress'
+import { brandResolver } from '../Product'
 import { reviewResolver } from '../Review'
 import { PrimaryWebPageId } from '../WebPage'
-
-export interface GeoCoordinates extends Thing {
-  '@type'?: 'GeoCoordinates'
-  'latitude': number
-  'longitude': number
-}
-
-export interface Brand extends Thing {
-  '@type'?: 'Brand'
-  'name': string
-}
 
 export interface LocationFeatureSpecification extends Thing {
   '@type'?: 'LocationFeatureSpecification'
@@ -85,15 +77,9 @@ type VacationRentalLocation
 export type VacationRentalSimple = VacationRentalBase & VacationRentalLocation
 export type VacationRental = VacationRentalSimple
 
-const geoCoordinatesResolver = defineSchemaOrgResolver<GeoCoordinates>({
+export const geoCoordinatesResolver = defineSchemaOrgResolver<GeoCoordinates>({
   defaults: {
     '@type': 'GeoCoordinates',
-  },
-})
-
-const brandResolver = defineSchemaOrgResolver<Brand>({
-  defaults: {
-    '@type': 'Brand',
   },
 })
 

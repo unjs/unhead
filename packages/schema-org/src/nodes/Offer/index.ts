@@ -1,6 +1,8 @@
 import type { NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import type { MerchantReturnPolicy } from '../MerchantReturnPolicy'
+import type { QuantitativeValue } from '../MonetaryAmount'
 import type { OfferShippingDetails } from '../OfferShippingDetails'
+import type { MemberProgramTier } from '../Organization'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
   resolvableDateToIso,
@@ -9,7 +11,9 @@ import {
   withBase,
 } from '../../utils'
 import { merchantReturnPolicyResolver } from '../MerchantReturnPolicy'
+import { quantitativeValueResolver } from '../MonetaryAmount'
 import { offerShippingDetailsResolver } from '../OfferShippingDetails'
+import { memberProgramTierResolver } from '../Organization'
 
 type ItemAvailability
   = 'BackOrder'
@@ -28,7 +32,48 @@ type OfferItemCondition
     | 'RefurbishedCondition'
     | 'UsedCondition'
 
-export interface OfferSimple extends Thing {
+interface UnitPriceSpecificationBase extends Thing {
+  '@type'?: 'UnitPriceSpecification'
+  'billingDuration'?: number
+  'billingIncrement'?: number
+  'priceCurrency'?: string
+  'referenceQuantity'?: NodeRelation<QuantitativeValue>
+  'unitCode'?: string
+  'validFrom'?: ResolvableDate
+  'validThrough'?: ResolvableDate
+  'valueAddedTaxIncluded'?: boolean
+}
+
+type UnitPriceSpecificationKind
+  = | {
+    price: number | string
+    priceType?: never
+    validForMemberTier?: never
+    membershipPointsEarned?: never
+  }
+  | {
+    price: number | string
+    priceType: OptionalSchemaOrgPrefix<'StrikethroughPrice'>
+    validForMemberTier?: never
+    membershipPointsEarned?: never
+  }
+  | ({
+    priceType?: never
+    validForMemberTier: NodeRelations<MemberProgramTier>
+  } & (
+    | {
+      price: number | string
+      membershipPointsEarned?: number
+    }
+    | {
+      price?: never
+      membershipPointsEarned: number
+    }
+  ))
+
+export type UnitPriceSpecification = UnitPriceSpecificationBase & UnitPriceSpecificationKind
+
+interface OfferBase extends Thing {
   '@type'?: 'Offer'
   /**
    * Condition of the item offered for sale.
@@ -39,22 +84,17 @@ export interface OfferSimple extends Thing {
    */
   'availability'?: OptionalSchemaOrgPrefix<ItemAvailability>
   /**
-   * The price, omitting any currency symbols, and using '.' to indicate a decimal place.
-   */
-  'price': number | string
-  /**
    * The currency used to describe the product price, in three-letter ISO 4217 format.
    */
   'priceCurrency'?: string
   /**
-   * @todo A PriceSpecification object, including a valueAddedTaxIncluded property (of either true or false).
-   */
-  'priceSpecification'?: Thing
-  /**
    * The date after which the price is no longer available.
    */
   'priceValidUntil'?: ResolvableDate
-
+  /**
+   * The date when the offer becomes valid.
+   */
+  'validFrom'?: ResolvableDate
   'url'?: string
   /**
    * Nested information about the return policies associated with an Offer. If you decide to add hasMerchantReturnPolicy, add the required and recommended MerchantReturnPolicy properties.
@@ -66,7 +106,35 @@ export interface OfferSimple extends Thing {
   'shippingDetails'?: NodeRelations<OfferShippingDetails>
 }
 
-export interface Offer extends OfferSimple {}
+type OfferPrice
+  = | {
+    price: number | string
+    priceSpecification?: NodeRelations<UnitPriceSpecification>
+  }
+  | {
+    price?: number | string
+    priceSpecification: NodeRelations<UnitPriceSpecification>
+  }
+
+export type OfferSimple = OfferBase & OfferPrice
+export type Offer = OfferSimple
+
+const unitPriceSpecificationResolver = defineSchemaOrgResolver<UnitPriceSpecification>({
+  defaults: {
+    '@type': 'UnitPriceSpecification',
+  },
+  resolve(node, ctx) {
+    if (node.price !== undefined)
+      setIfEmpty(node, 'priceCurrency', ctx.meta.currency)
+    if (node.priceType)
+      node.priceType = withBase(node.priceType, 'https://schema.org/') as NonNullable<UnitPriceSpecification['priceType']>
+    node.referenceQuantity = resolveRelation(node.referenceQuantity, ctx, quantitativeValueResolver)
+    node.validForMemberTier = resolveRelation(node.validForMemberTier, ctx, memberProgramTierResolver)
+    node.validFrom = resolvableDateToIso(node.validFrom)
+    node.validThrough = resolvableDateToIso(node.validThrough)
+    return node
+  },
+})
 
 export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | string>({
   cast(node) {
@@ -85,7 +153,7 @@ export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | str
     setIfEmpty(node, 'priceCurrency', ctx.meta.currency)
     setIfEmpty(node, 'priceValidUntil', new Date(Date.UTC(new Date().getFullYear() + 1, 12, -1, 0, 0, 0)))
     if (node.url)
-      resolveWithBase(ctx.meta.host, node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
 
     if (node.availability)
       node.availability = withBase(node.availability, 'https://schema.org/') as ItemAvailability
@@ -94,8 +162,10 @@ export const offerResolver = defineSchemaOrgResolver<Offer, Offer | number | str
 
     if (node.priceValidUntil)
       node.priceValidUntil = resolvableDateToIso(node.priceValidUntil)
+    node.validFrom = resolvableDateToIso(node.validFrom)
 
     node.hasMerchantReturnPolicy = resolveRelation(node.hasMerchantReturnPolicy, ctx, merchantReturnPolicyResolver)
+    node.priceSpecification = resolveRelation(node.priceSpecification, ctx, unitPriceSpecificationResolver)
     node.shippingDetails = resolveRelation(node.shippingDetails, ctx, offerShippingDetailsResolver)
     return node
   },

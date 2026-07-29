@@ -5,6 +5,7 @@
   articleResolver: object
   bookEditionResolver: object
   bookResolver: object
+  brandResolver: object
   breadcrumbResolver: object
   commentResolver: object
   courseResolver: object
@@ -68,8 +69,10 @@
   employerAggregateRatingResolver: object
   eventResolver: object
   foodEstablishmentResolver: object
+  geoCoordinatesResolver: object
   HowToId: string
   howToResolver: object
+  howToSectionResolver: object
   howToStepDirectionResolver: object
   howToStepResolver: object
   imageResolver: object
@@ -79,6 +82,7 @@
   listItemResolver: object
   localBusinessResolver: object
   mathSolverResolver: object
+  memberProgramTierResolver: object
   merge: function
   movieResolver: object
   musicAlbumResolver: object
@@ -119,6 +123,7 @@
   ServiceId: string
   serviceResolver: object
   softwareAppResolver: object
+  speakableSpecificationResolver: object
   tvEpisodeResolver: object
   tvSeasonResolver: object
   tvSeriesResolver: object
@@ -127,6 +132,7 @@
   vacationRentalResolver: object
   videoResolver: object
   virtualLocationResolver: object
+  webPageElementResolver: object
   webPageResolver: object
   webSiteResolver: object
 ./imports:

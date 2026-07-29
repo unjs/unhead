@@ -233,4 +233,113 @@ describe('defineProduct', () => {
       expect(JSON.stringify(graphNodes)).toMatchInlineSnapshot(`"[{"@id":"https://example.com/#product","@type":"Product","description":"Trinket with clean lines","gtin14":"12345678901234","name":"Nice trinket","sku":"trinket-12345","aggregateRating":{"@type":"AggregateRating","ratingValue":4.4,"reviewCount":89},"brand":{"@type":"Brand","name":"MyBrand"},"image":["https://example.com/photos/16x9/trinket.jpg","https://example.com/photos/4x3/trinket.jpg","https://example.com/photos/1x1/trinket.jpg"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","url":"https://www.example.com/trinket_offer","itemCondition":"https://schema.org/NewCondition","price":39.99,"priceCurrency":"USD","priceValidUntil":"2020-11-20","shippingDetails":{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":3.49,"currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":5,"unitCode":"DAY"}}}},"review":{"@type":"Review","reviewRating":{"@type":"Rating","bestRating":5,"worstRating":1,"ratingValue":4},"author":{"@type":"Person","name":"Fred Benson"},"inLanguage":"en-AU"}}]"`)
     })
   })
+
+  it('resolves Google merchant and variant fields', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'Winter coat',
+          image: '/coat.jpg',
+          audience: {
+            suggestedGender: 'unisex',
+            suggestedAge: {
+              minValue: 13,
+              unitCode: 'ANN',
+            },
+          },
+          category: {
+            codeValue: '2271',
+            inCodeSet: 'https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt',
+          },
+          hasCertification: {
+            name: 'EPREL',
+            issuedBy: {
+              name: 'European_Commission',
+            },
+            certificationIdentification: '53553',
+            url: '/certifications/53553',
+          },
+          isVariantOf: {
+            name: 'Winter coat',
+            hasVariant: {
+              url: '/coat/blue',
+            },
+            productGroupID: 'coat-1',
+            url: '/coat',
+            variesBy: ['size', 'color'],
+          },
+          offers: {
+            price: 49,
+            priceSpecification: {
+              membershipPointsEarned: 20,
+              validForMemberTier: {
+                '@id': 'https://example.com/members#gold',
+              },
+            },
+          },
+          size: {
+            name: 'XL',
+            sizeGroup: 'WearableSizeGroupRegular',
+            sizeSystem: 'WearableSizeSystemAU',
+          },
+          subjectOf: {
+            encoding: {
+              contentUrl: '/models/coat.glb',
+            },
+          },
+        }),
+      ])
+
+      const [product] = await injectSchemaOrg(head)
+
+      expect(product).toMatchObject({
+        audience: {
+          '@type': 'PeopleAudience',
+          'suggestedAge': {
+            '@type': 'QuantitativeValue',
+          },
+        },
+        category: {
+          '@type': 'CategoryCode',
+        },
+        hasCertification: {
+          '@type': 'Certification',
+          'issuedBy': {
+            '@type': 'Organization',
+          },
+          'url': 'https://example.com/certifications/53553',
+        },
+        isVariantOf: {
+          '@type': 'ProductGroup',
+          'hasVariant': {
+            '@type': 'Product',
+            'url': 'https://example.com/coat/blue',
+          },
+          'url': 'https://example.com/coat',
+          'variesBy': [
+            'https://schema.org/size',
+            'https://schema.org/color',
+          ],
+        },
+        offers: {
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            'validForMemberTier': {
+              '@id': 'https://example.com/members#gold',
+            },
+          },
+        },
+        size: {
+          '@type': 'SizeSpecification',
+        },
+        subjectOf: {
+          '@type': '3DModel',
+          'encoding': {
+            '@type': 'MediaObject',
+            'contentUrl': 'https://example.com/models/coat.glb',
+          },
+        },
+      })
+    })
+  })
 })

@@ -50,7 +50,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 - A root app receives an ID such as `${canonicalUrl}#/schema/software-application/{n}`.
 - `offers`, `aggregateRating`, and `review` are resolved with their corresponding nested resolvers.
 
-Google's software app result has stricter requirements than the helper type: the rendered node needs `name`, `offers.price`, and either `aggregateRating` or `review`. A free app still needs `offers.price: 0`. Unhead does not validate those conditions; see [Google's SoftwareApplication property table](https://developers.google.com/search/docs/appearance/structured-data/software-app#structured-data-type-definitions).
+The input type requires `name`, `offers`, and either `aggregateRating` or `review`. Each Offer requires a direct price or a price specification. A free app still needs `offers.price: 0`; Unhead performs no runtime eligibility validation. See [Google's SoftwareApplication property table](https://developers.google.com/search/docs/appearance/structured-data/software-app#structured-data-type-definitions).
 
 ## Example
 
@@ -97,26 +97,18 @@ type ApplicationCategory
     | 'UtilitiesApplication'
     | 'ReferenceApplication'
 
-export interface SoftwareAppSimple extends Thing {
+interface SoftwareAppBase extends Thing {
   '@type'?: Arrayable<'SoftwareApplication' | 'MobileApplication' | 'VideoGame' | 'WebApplication'>
   /**
    * The name of the app.
    */
-  'name'?: string
+  'name': string
   /**
    * An offer to sell the app.
    * For developers, offers can indicate the marketplaces that carry the application.
    * For marketplaces, use offers to indicate the price of the app for a specific app instance.
    */
   'offers': NodeRelations<Offer>
-  /**
-   * The average review score of the app.
-   */
-  'aggregateRating'?: NodeRelation<AggregateRating>
-  /**
-   * A single review of the app.
-   */
-  'review'?: NodeRelation<Review>
   /**
    * The type of app (for example, BusinessApplication or GameApplication). The value must be a supported app type.
    */
@@ -142,6 +134,18 @@ export interface SoftwareAppSimple extends Thing {
    */
   'featureList'?: string[]
 }
+
+type SoftwareAppRating
+  = | {
+    aggregateRating: NodeRelation<AggregateRating>
+    review?: NodeRelation<Review>
+  }
+  | {
+    aggregateRating?: NodeRelation<AggregateRating>
+    review: NodeRelation<Review>
+  }
+
+export type SoftwareAppSimple = SoftwareAppBase & SoftwareAppRating
 ```
 
 ## Related Schemas

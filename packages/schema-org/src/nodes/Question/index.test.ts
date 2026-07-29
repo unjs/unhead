@@ -67,4 +67,47 @@ describe('defineQuestion', () => {
       title: 'FAQ',
     })
   })
+
+  it('links questions to QAPage and resolves suggested answers', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineWebPage({
+          '@type': 'QAPage',
+        }),
+        defineQuestion({
+          name: 'How should this be configured?',
+          answerCount: 1,
+          suggestedAnswer: {
+            text: 'Use the typed helper.',
+            author: {
+              '@type': 'Organization',
+              'name': 'Unhead',
+            },
+            datePublished: new Date(Date.UTC(2026, 0, 2)),
+            url: '/answers/typed-helper',
+          },
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+
+      expect(graphNodes[0].mainEntity).toEqual([
+        {
+          '@id': 'https://example.com/#/schema/question/1',
+        },
+      ])
+      expect(graphNodes[1].suggestedAnswer).toMatchObject({
+        '@type': 'Answer',
+        'author': {
+          '@id': 'https://example.com/#/schema/organization/1',
+        },
+        'datePublished': '2026-01-02T00:00:00.000Z',
+        'url': 'https://example.com/answers/typed-helper',
+      })
+      expect(graphNodes[2]).toMatchObject({
+        '@type': 'Organization',
+        'name': 'Unhead',
+      })
+    })
+  })
 })

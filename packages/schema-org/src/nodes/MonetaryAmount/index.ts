@@ -1,26 +1,41 @@
-import type { Thing } from '../../types'
+import type { NodeRelation, Thing } from '../../types'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 
-export interface MonetaryAmountSimple extends Thing {
+interface MonetaryAmountBase extends Thing {
   /**
    * The currency in which the monetary amount is expressed.
    */
   currency: string
 
-  /**
-   * The value of the quantitative value or property value node.
-   */
-  value: number | `${number}` | QuantitativeValue
 }
 
-export interface MonetaryAmount extends MonetaryAmountSimple {}
+type MonetaryAmountValue
+  = | {
+    value: number | `${number}` | QuantitativeValue
+    minValue?: number | `${number}`
+    maxValue?: number | `${number}`
+  }
+  | {
+    value?: never
+    minValue: number | `${number}`
+    maxValue?: number | `${number}`
+  }
+  | {
+    value?: never
+    minValue?: number | `${number}`
+    maxValue: number | `${number}`
+  }
+
+export type MonetaryAmountSimple = MonetaryAmountBase & MonetaryAmountValue
+export type MonetaryAmount = MonetaryAmountSimple
 
 export interface QuantitativeSimple extends Thing {
-  value?: number
+  value?: number | `${number}`
   minValue?: number
   maxValue?: number
   unitCode?: string
   unitText?: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR'
+  valueReference?: NodeRelation<QuantitativeValue>
 }
 
 export interface QuantitativeValue extends QuantitativeSimple {}
@@ -36,6 +51,10 @@ export const quantitativeValueResolver = defineSchemaOrgResolver<QuantitativeVal
   },
   defaults: {
     '@type': 'QuantitativeValue',
+  },
+  resolve(node, ctx) {
+    node.valueReference = resolveRelation(node.valueReference, ctx, quantitativeValueResolver)
+    return node
   },
 })
 

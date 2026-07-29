@@ -1,4 +1,4 @@
-import type { Arrayable, NodeRelations, Thing } from '../../types'
+import type { Arrayable, InteractionCounter, NodeRelations, PropertyValue, Thing } from '../../types'
 import type { ImageObject } from '../Image'
 import { defineSchemaOrgResolver } from '../../core'
 import {
@@ -21,6 +21,14 @@ export interface PersonSimple extends Thing {
    */
   name: string
   /**
+   * An alternate name, such as a profile handle.
+   */
+  alternateName?: string
+  /**
+   * An identifier for the person.
+   */
+  identifier?: Arrayable<PropertyValue | string>
+  /**
    * The user bio, truncated to 250 characters.
    */
   description?: string
@@ -38,6 +46,14 @@ export interface PersonSimple extends Thing {
    * or to their personal homepage/website.
    */
   url?: string
+  /**
+   * Counts of interactions performed by this person.
+   */
+  agentInteractionStatistic?: NodeRelations<InteractionCounter>
+  /**
+   * Counts of interactions with this person.
+   */
+  interactionStatistic?: NodeRelations<InteractionCounter>
 }
 
 export interface Person extends PersonSimple { }
