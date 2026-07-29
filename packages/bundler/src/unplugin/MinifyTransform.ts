@@ -12,6 +12,26 @@ const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JAVASCRIPT_TYPES = new Set([
+  '',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'module',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
@@ -30,24 +50,44 @@ interface PendingTransform {
 
 export type MinifyFn = (code: string) => Promise<string | null>
 type InlineScriptTranspiler = (code: string, target: BuildOptions['target']) => Promise<string | null>
-type ViteTransformApi = Pick<typeof import('vite'), 'transformWithEsbuild'> & Partial<Pick<typeof import('vite'), 'transformWithOxc'>>
+type ViteTransformTarget = Exclude<BuildOptions['target'], false>
+type ViteTransformApi = Pick<typeof import('vite'), 'resolveConfig' | 'transformWithEsbuild'> & Partial<Pick<typeof import('vite'), 'transformWithOxc'>>
+
+const resolvedBaselineTargets = new WeakMap<ViteTransformApi, Promise<ViteTransformTarget>>()
+
+function resolveViteTransformTarget(vite: ViteTransformApi, target: ViteTransformTarget): Promise<ViteTransformTarget> {
+  if (target !== 'baseline-widely-available')
+    return Promise.resolve(target)
+
+  let resolved = resolvedBaselineTargets.get(vite)
+  if (!resolved) {
+    resolved = vite.resolveConfig({
+      configFile: false,
+      build: { target },
+    }, 'build').then(config => config.build.target === false ? undefined : config.build.target)
+    resolvedBaselineTargets.set(vite, resolved)
+  }
+  return resolved
+}
 
 export async function transformInlineScriptWithVite(vite: ViteTransformApi, code: string, target: BuildOptions['target']): Promise<string> {
   if (target === false)
     return code
 
+  const resolvedTarget = await resolveViteTransformTarget(vite, target)
+
   if (typeof vite.transformWithOxc === 'function') {
     const result = await vite.transformWithOxc(code, 'unhead-inline-script.js', {
       lang: 'js',
       sourcemap: false,
-      target,
+      target: resolvedTarget,
     })
     return result.code.trim()
   }
 
   const result = await vite.transformWithEsbuild(code, 'unhead-inline-script.js', {
     loader: 'js',
-    target,
+    target: resolvedTarget,
   })
   return result.code.trim()
 }
@@ -219,10 +259,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
             // look for script: [...] and style: [...] properties
             for (const prop of arg.properties) {
-              if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+              if (prop.type !== 'Property')
                 continue
 
-              const tagType = prop.key.name
+              const tagType = resolveStaticPropertyName(prop)
               if (tagType !== 'script' && tagType !== 'style')
                 continue
 
@@ -308,22 +348,28 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
         (p: any) => p.type === 'Property'
-          && !p.computed
-          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
-            || (p.key?.type === 'Literal' && p.key.value === 'type')),
+          && resolveStaticPropertyName(p) === 'type',
       )
-      if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
-        contentType = 'json'
-      else if (!doJS)
+      if (typeProp) {
+        if (typeProp.value?.type !== 'Literal' || typeof typeProp.value.value !== 'string')
+          return
+        const scriptType = typeProp.value.value.toLowerCase()
+        if (JSON_TYPES.has(scriptType))
+          contentType = 'json'
+        else if (!JAVASCRIPT_TYPES.has(scriptType))
+          return
+      }
+      if (contentType === 'script' && !doJS)
         return
     }
 
     // find innerHTML or textContent property with a static string value
     for (const prop of objectNode.properties) {
-      if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+      if (prop.type !== 'Property')
         continue
 
-      if (!CONTENT_PROPS.has(prop.key.name))
+      const contentProp = resolveStaticPropertyName(prop)
+      if (!contentProp || !CONTENT_PROPS.has(contentProp))
         continue
 
       // only handle static string literals and template literals without expressions
@@ -356,6 +402,13 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
         })
       }
     }
+  }
+
+  function resolveStaticPropertyName(prop: any): string | undefined {
+    if (prop.key?.type === 'Identifier')
+      return prop.key.name
+    if (prop.key?.type === 'Literal' && typeof prop.key.value === 'string')
+      return prop.key.value
   }
 
   function transformStringContent(content: string, contentType: ContentType, inlineScriptTarget: BuildOptions['target']): Promise<string | null> {

@@ -6,6 +6,8 @@ import { Unhead } from '../src/unplugin/vite'
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.url))
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
+const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.ts', import.meta.url))
+const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
 
 function outputCode(result: any): string {
   const outputs = Array.isArray(result) ? result : [result]
@@ -110,6 +112,65 @@ describe('vite build integration', () => {
 
     expect(code).not.toContain('payload?.value')
     expect(code).not.toContain('?? "fallback"')
+  })
+
+  it('normalizes an explicit Vite special target', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({
+        devtools: false,
+        transformInlineScripts: { target: 'baseline-widely-available' },
+      }) as any,
+      build: {
+        target: 'chrome77',
+        write: false,
+        minify: false,
+        lib: { entry, formats: ['es'], fileName: 'entry' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).toContain('payload?.value')
+    expect(code).toContain('??')
+  })
+
+  it('leaves non-JavaScript data blocks unchanged', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false }) as any,
+      build: {
+        target: 'chrome77',
+        write: false,
+        minify: false,
+        lib: { entry: dataBlockEntry, formats: ['es'], fileName: 'data-block' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).toContain('<div>{{ value }}</div>')
+  })
+
+  it('transforms quoted static property names', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false }) as any,
+      build: {
+        target: 'chrome77',
+        write: false,
+        minify: false,
+        lib: { entry: quotedPropertiesEntry, formats: ['es'], fileName: 'quoted-properties' },
+      },
+    })
+    const code = outputCode(result)
+
+    expect(code).toContain('QUOTED_MARKER')
+    expect(code).not.toContain('payload?.value')
   })
 })
 
