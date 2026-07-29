@@ -83,7 +83,6 @@
     "@vitejs/devtools-kit": "^0.4.1",
     "esbuild": ">=0.17.0",
     "lightningcss": ">=1.20.0",
-    "oxc-parser": ">=0.98.0",
     "rolldown": ">=1.0.0-beta.0",
     "unhead": "workspace:^",
     "vite": ">=6.4.2",
@@ -102,9 +101,6 @@
     "lightningcss": {
       "optional": true
     },
-    "oxc-parser": {
-      "optional": true
-    },
     "rolldown": {
       "optional": true
     },
@@ -117,13 +113,13 @@
   },
   "dependencies": {
     "magic-string": "catalog:",
+    "oxc-parser": "catalog:",
     "oxc-walker": "catalog:",
     "ufo": "catalog:",
     "unplugin": "catalog:"
   },
   "devDependencies": {
     "@vitejs/devtools-kit": "catalog:",
-    "oxc-parser": "catalog:",
     "rollup": "catalog:",
     "unhead": "workspace:*",
     "vite": "catalog:"

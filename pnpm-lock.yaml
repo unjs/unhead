@@ -845,6 +845,9 @@ importers:
       magic-string:
         specifier: 'catalog:'
         version: 1.0.0
+      oxc-parser:
+        specifier: 'catalog:'
+        version: 0.140.0
       oxc-walker:
         specifier: 'catalog:'
         version: 1.0.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.1.2)(rollup@4.62.2)(vite@8.1.5)(webpack@5.105.2(esbuild@0.28.1))
@@ -864,9 +867,6 @@ importers:
       '@vitejs/devtools-kit':
         specifier: 'catalog:'
         version: 0.4.1(@modelcontextprotocol/sdk@1.29.0(supports-color@10.2.2)(zod@4.4.2))(srvx@0.11.22)(typescript@7.0.2)(vite@8.1.5)
-      oxc-parser:
-        specifier: 'catalog:'
-        version: 0.140.0
       rollup:
         specifier: 'catalog:'
         version: 4.62.2

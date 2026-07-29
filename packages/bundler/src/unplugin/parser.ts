@@ -81,7 +81,7 @@ function getParser(): ParserResolutionSuccess {
   if (resolution._tag === 'missing') {
     throw Object.assign(
       new Error(
-        'Unhead build transforms need a parser. Vite 8 provides Rolldown; otherwise install oxc-parser with `pnpm add -D oxc-parser`.',
+        'Unhead could not load a parser for its build transforms. Reinstall @unhead/bundler to restore its oxc-parser dependency.',
         { cause: new AggregateError(resolution.failures.map(failure => failure.cause), 'Parser resolution failed') },
       ),
       { _tag: 'MissingParserError' as const },

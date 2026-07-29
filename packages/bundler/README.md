@@ -26,12 +26,6 @@ yarn add @unhead/bundler
 pnpm add @unhead/bundler
 ```
 
-Vite 8 reuses Rolldown's parser. Other build setups also need the optional Oxc fallback:
-
-```bash
-pnpm add -D oxc-parser
-```
-
 ## Usage
 
 ### Vite Plugin

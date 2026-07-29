@@ -15,11 +15,11 @@ const packageJson = JSON.parse(
 ) as PackageJson
 
 describe('@unhead/bundler package', () => {
-  it('keeps oxc-parser as an optional fallback', () => {
-    expect(packageJson.dependencies).not.toHaveProperty('oxc-parser')
-    expect(packageJson.peerDependencies).toHaveProperty('oxc-parser')
-    expect(packageJson.peerDependenciesMeta?.['oxc-parser']).toEqual({ optional: true })
-    expect(packageJson.devDependencies).toHaveProperty('oxc-parser')
+  it('installs oxc-parser as the fallback parser', () => {
+    expect(packageJson.dependencies).toHaveProperty('oxc-parser')
+    expect(packageJson.peerDependencies).not.toHaveProperty('oxc-parser')
+    expect(packageJson.peerDependenciesMeta).not.toHaveProperty('oxc-parser')
+    expect(packageJson.devDependencies).not.toHaveProperty('oxc-parser')
   })
 
   it('keeps Vite DevTools packages optional', () => {
