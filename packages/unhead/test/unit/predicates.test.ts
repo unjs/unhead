@@ -1,9 +1,8 @@
-import type { HeadInputView, InputValueKind, TagInput } from '../../src/validate'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from '../../src/validate'
 import { describe, expect, it } from 'vitest'
 import {
   deferOnModuleScript,
   emptyMetaContent,
-  nestedHeadProperties,
   noDeprecatedProps,
   noHtmlInTitle,
   nonAbsoluteCanonical,
@@ -15,29 +14,16 @@ import {
   robotsConflict,
   scriptSrcWithContent,
   twitterHandleMissingAt,
+  validateInputShape,
   viewportUserScalable,
 } from '../../src/validate'
 
 function tag(props: Record<string, string | number | boolean>, tagType: TagInput['tagType'] = 'meta', extra: Partial<TagInput> = {}): TagInput {
   const keys = extra.keys ?? new Set(Object.keys(props))
-  const valueKinds = new Map<string, InputValueKind>(
-    [...keys].map((key) => {
-      const value = props[key]
-      let kind: InputValueKind = 'unknown'
-      if (typeof value === 'boolean')
-        kind = 'boolean'
-      else if (typeof value === 'number')
-        kind = 'number'
-      else if (typeof value === 'string')
-        kind = 'string'
-      return [key, kind]
-    }),
-  )
   return {
     tagType,
     props,
     keys,
-    valueKinds,
     ...extra,
   }
 }
@@ -48,6 +34,14 @@ function input(props: Record<string, string>, extra: Partial<HeadInputView> = {}
     props,
     keys: new Set(Object.keys(props)),
     ...extra,
+  }
+}
+
+function shape(context: InputShapeContext, fields: Record<string, InputValueKind>): InputShapeView {
+  return {
+    context,
+    keys: new Set(Object.keys(fields)),
+    valueKinds: new Map(Object.entries(fields)),
   }
 }
 
@@ -155,7 +149,6 @@ describe('script-src-with-content', () => {
       tagType: 'script',
       props: { src: '/x.js' },
       keys: new Set(['src', 'innerHTML']),
-      valueKinds: new Map([['src', 'string'], ['innerHTML', 'unknown']]),
     }
     expect(scriptSrcWithContent(t)).toHaveLength(1)
   })
@@ -236,78 +229,84 @@ describe('no-html-in-title', () => {
   })
 })
 
-describe('nested-head-properties', () => {
-  it('flags top-level head properties nested in bodyAttrs', () => {
-    const [d] = nestedHeadProperties(tag(
-      { title: 'Home', titleTemplate: '%s | Site', meta: '[object Object]' },
-      'bodyAttrs',
-      { valueKinds: new Map([['title', 'string'], ['titleTemplate', 'string'], ['meta', 'array']]) },
-    ))
-    expect(d.ruleId).toBe('nested-head-properties')
-    expect(d.message).toContain('"title", "titleTemplate", "meta"')
-    expect(d.at).toEqual({ kind: 'tag' })
+describe('input-shape', () => {
+  it('reports invalid top-level head field shapes', () => {
+    const diagnostics = validateInputShape(shape('head', {
+      htmlAttrs: 'array',
+      meta: 'object',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.every(d => d.ruleId === 'invalid-input-shape')).toBe(true)
+    expect(diagnostics.map(d => d.at)).toEqual([
+      { kind: 'prop-value', key: 'htmlAttrs' },
+      { kind: 'prop-value', key: 'meta' },
+    ])
   })
 
-  it('flags top-level head properties nested in htmlAttrs', () => {
-    expect(nestedHeadProperties(tag(
-      { lang: 'en', script: '[object Object]' },
-      'htmlAttrs',
-      { valueKinds: new Map([['lang', 'string'], ['script', 'array']]) },
-    ))).toHaveLength(1)
+  it('accepts valid top-level head field shapes and resolvers', () => {
+    expect(validateInputShape(shape('head', {
+      base: 'object',
+      bodyAttrs: 'function',
+      htmlAttrs: 'object',
+      link: 'array',
+      meta: 'function',
+      noscript: 'array',
+      script: 'array',
+      style: 'array',
+      templateParams: 'object',
+      title: 'number',
+      titleTemplate: 'null',
+    }))).toEqual([])
   })
 
-  it('allows valid global and data attributes', () => {
-    expect(nestedHeadProperties(tag(
-      { 'title': 'Tooltip', 'style': 'color: red', 'data-theme': 'dark' },
-      'bodyAttrs',
-    ))).toEqual([])
+  it('reports head-shaped fields nested in attribute inputs', () => {
+    const diagnostics = validateInputShape(shape('bodyAttrs', {
+      meta: 'array',
+      title: 'string',
+      titleTemplate: 'string',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.map(d => d.at)).toEqual([
+      { kind: 'prop-value', key: 'meta' },
+      { kind: 'prop-value', key: 'titleTemplate' },
+    ])
   })
 
-  it('does not classify head-named scalar attributes as a nested head input', () => {
-    expect(nestedHeadProperties(tag(
-      { meta: 'custom-value', script: 'module', link: '/feed' },
-      'bodyAttrs',
-    ))).toEqual([])
+  it('accepts attribute values, special class and style shapes, and scalar head-named attributes', () => {
+    expect(validateInputShape(shape('htmlAttrs', {
+      'class': 'array',
+      'data-theme': 'string',
+      'meta': 'string',
+      'onClick': 'function',
+      'script': 'string',
+      'style': 'object',
+      'title': 'string',
+      'titleTemplate': 'null',
+    }))).toEqual([])
   })
 
-  it('does not use unresolved values as structural evidence', () => {
-    expect(nestedHeadProperties(tag(
-      { title: 'Tooltip' },
-      'bodyAttrs',
-      {
-        keys: new Set(['title', 'meta']),
-        valueKinds: new Map([['title', 'string'], ['meta', 'unknown']]),
-      },
-    ))).toEqual([])
+  it('reports object and array values for ordinary attributes', () => {
+    const diagnostics = validateInputShape(shape('bodyAttrs', {
+      'aria-label': 'array',
+      'data-options': 'object',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.every(d => d.ruleId === 'invalid-input-shape')).toBe(true)
   })
 
-  it('does not treat null titleTemplate as a nested head input', () => {
-    expect(nestedHeadProperties(tag(
-      {},
-      'htmlAttrs',
-      {
-        keys: new Set(['titleTemplate']),
-        valueKinds: new Map([['titleTemplate', 'null']]),
-      },
-    ))).toEqual([])
+  it('skips unresolved values and unknown augmented head fields', () => {
+    expect(validateInputShape(shape('head', {
+      customAugmentation: 'object',
+      meta: 'unknown',
+    }))).toEqual([])
   })
 
-  it('recognises object-shaped singleton head fields', () => {
-    expect(nestedHeadProperties(tag(
-      {},
-      'bodyAttrs',
-      {
-        keys: new Set(['base', 'templateParams']),
-        valueKinds: new Map([['base', 'object'], ['templateParams', 'object']]),
-      },
-    ))).toHaveLength(1)
-  })
-
-  it('ignores ordinary head tags', () => {
-    expect(nestedHeadProperties(tag(
-      { name: 'description', content: 'Hello' },
-      'meta',
-    ))).toEqual([])
+  it('rejects head containers in flat SEO input', () => {
+    expect(validateInputShape(shape('seoMeta', {
+      description: 'string',
+      meta: 'array',
+      title: 'string',
+    }))).toHaveLength(1)
   })
 })
 

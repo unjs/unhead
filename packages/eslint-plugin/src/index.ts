@@ -2,7 +2,7 @@ import type { ESLint, Linter } from 'eslint'
 import { migration, recommended } from './configs/recommended'
 import { nonAbsoluteCanonical } from './rules/canonical-rules'
 import { emptyMetaContent } from './rules/empty-meta-content'
-import { nestedHeadProperties } from './rules/nested-head-properties'
+import { inputShape } from './rules/input-shape'
 import { noDeprecatedProps } from './rules/no-deprecated-props'
 import { noUnknownMeta } from './rules/no-unknown-meta'
 import { numericTagPriority } from './rules/numeric-tag-priority'
@@ -20,7 +20,7 @@ const rules = {
   'no-deprecated-props': noDeprecatedProps,
   'no-html-in-title': noHtmlInTitle,
   'no-unknown-meta': noUnknownMeta,
-  'nested-head-properties': nestedHeadProperties,
+  'invalid-input-shape': inputShape,
   'non-absolute-canonical': nonAbsoluteCanonical,
   'numeric-tag-priority': numericTagPriority,
   'prefer-define-helpers': preferDefineHelpers,

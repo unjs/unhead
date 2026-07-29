@@ -116,17 +116,18 @@
   ValidHeadTags: object
   walkResolver: function
 ./validate:
-  attributeInputPredicates: object
   deferOnModuleScript: function
   DEPRECATED_PROPS: object
   emptyMetaContent: function
   findClosestMatch: function
   headInputPredicates: object
+  INPUT_SHAPE_FIELDS: object
+  inputShapeFromRuntime: function
+  inputShapePredicates: object
   KNOWN_META_NAMES: object
   KNOWN_META_PROPERTIES: object
   levenshtein: function
   migrationTagPredicates: object
-  nestedHeadProperties: function
   noDeprecatedProps: function
   noHtmlInTitle: function
   nonAbsoluteCanonical: function
@@ -143,5 +144,6 @@
   titleInputFromRuntime: function
   twitterHandleMissingAt: function
   URL_META_KEYS: object
+  validateInputShape: function
   VALIDATION_RULE_IDS: object
   viewportUserScalable: function

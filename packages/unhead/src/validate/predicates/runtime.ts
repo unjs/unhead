@@ -1,4 +1,4 @@
-import type { HeadInputView, InputValueKind, TagInput } from './types'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from './types'
 
 /**
  * Subset of the runtime `HeadTag` shape this adapter needs. We don't import
@@ -14,7 +14,7 @@ export interface RuntimeHeadTag {
   tagPriority?: string | number
 }
 
-const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style', 'htmlAttrs', 'bodyAttrs'])
+const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style'])
 
 function valueKind(value: unknown): InputValueKind {
   if (value === null)
@@ -28,13 +28,30 @@ function valueKind(value: unknown): InputValueKind {
 }
 
 /**
+ * Adapt a resolved runtime input object into its structural validation view.
+ * Callers must pass values after framework prop resolvers have run.
+ */
+export function inputShapeFromRuntime(
+  context: InputShapeContext,
+  input: Record<string, unknown>,
+): InputShapeView {
+  const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
+  for (const [key, value] of Object.entries(input)) {
+    keys.add(key)
+    valueKinds.set(key, valueKind(value))
+  }
+  return { context, keys, valueKinds }
+}
+
+/**
  * Adapt a runtime tag (post-resolve `HeadTag`) into a {@link TagInput} that
  * predicates can read. Coerces `props.content` to a string and lowercases
  * `meta[name]` to mirror HTML's case-insensitive `name=` semantics, matching
  * the runtime `ValidatePlugin`'s pre-existing behaviour.
  *
- * Returns `undefined` when the tag is not one of the validated tag or
- * attribute-object types (`title`, `base`, etc. are handled separately).
+ * Returns `undefined` when the tag is not one of the validated tag types
+ * (`title`, `base`, and attribute objects are handled separately).
  */
 export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   if (!TAG_TYPES.has(tag.tag))
@@ -42,10 +59,8 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
 
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
-  const valueKinds = new Map<string, InputValueKind>()
   for (const [k, v] of Object.entries(tag.props)) {
     keys.add(k)
-    valueKinds.set(k, valueKind(v))
     if (v == null) {
       // Mirror the runtime ValidatePlugin convention of coercing null `content`
       // to an empty string so the empty-meta-content predicate fires when a
@@ -63,8 +78,8 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
         props[k] = v
     }
     else {
-      // Primitive predicates consume `props`; structural predicates use the
-      // original shape retained in `valueKinds`.
+      // Predicates only consume primitives, so non-coerceable values become
+      // `[object Object]` and miss every check.
       props[k] = String(v)
     }
   }
@@ -75,11 +90,9 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   if (tag.tag === 'script' || tag.tag === 'style' || tag.tag === 'noscript') {
     if (tag.innerHTML != null && tag.innerHTML !== '') {
       keys.add('innerHTML')
-      valueKinds.set('innerHTML', valueKind(tag.innerHTML))
     }
     if (tag.textContent != null && tag.textContent !== '') {
       keys.add('textContent')
-      valueKinds.set('textContent', valueKind(tag.textContent))
     }
   }
 
@@ -87,7 +100,6 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   // predicate (which inspects `props.tagPriority`) fires for runtime tags.
   if (tag.tagPriority != null) {
     keys.add('tagPriority')
-    valueKinds.set('tagPriority', valueKind(tag.tagPriority))
     if (typeof tag.tagPriority === 'string' || typeof tag.tagPriority === 'number')
       props.tagPriority = tag.tagPriority
   }
@@ -96,7 +108,6 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
     tagType: tag.tag as TagInput['tagType'],
     props,
     keys,
-    valueKinds,
   }
 }
 

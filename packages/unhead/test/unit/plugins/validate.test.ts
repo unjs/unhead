@@ -17,8 +17,8 @@ function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
 }
 
 describe('validatePlugin', () => {
-  describe('nested head properties', () => {
-    it('warns for resolver-returned head properties inside bodyAttrs', () => {
+  describe('input shape', () => {
+    it('validates resolver-returned attribute shapes', () => {
       const { head, rules } = createValidationHead()
       head.push((() => ({
         bodyAttrs: {
@@ -28,9 +28,12 @@ describe('validatePlugin', () => {
         },
       })) as any)
       renderSSRHead(head)
-      expect(rules.find(r => r.id === 'nested-head-properties')).toMatchObject({
-        message: expect.stringContaining('"title", "titleTemplate", "meta"'),
-      })
+      const diagnostics = rules.filter(r => r.id === 'invalid-input-shape')
+      expect(diagnostics).toHaveLength(2)
+      expect(diagnostics.map(d => d.message)).toEqual(expect.arrayContaining([
+        expect.stringContaining('"titleTemplate"'),
+        expect.stringContaining('"meta"'),
+      ]))
     })
 
     it('warns for head properties inside htmlAttrs', () => {
@@ -42,7 +45,7 @@ describe('validatePlugin', () => {
         },
       } as any)
       renderSSRHead(head)
-      expect(rules.find(r => r.id === 'nested-head-properties')).toBeTruthy()
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeTruthy()
     })
 
     it('allows valid title, style, and data attributes', () => {
@@ -55,10 +58,10 @@ describe('validatePlugin', () => {
         },
       } as any)
       renderSSRHead(head)
-      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
     })
 
-    it('does not classify head-named scalar attributes as a nested head input', () => {
+    it('allows head-named scalar attributes', () => {
       const { head, rules } = createValidationHead()
       head.push({
         bodyAttrs: {
@@ -68,7 +71,7 @@ describe('validatePlugin', () => {
         },
       } as any)
       renderSSRHead(head)
-      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
     })
 
     it('does not run head-tag predicates against attribute objects', () => {
@@ -86,7 +89,7 @@ describe('validatePlugin', () => {
 
     it('respects rule severity configuration', () => {
       const { head, rules } = createValidationHead({
-        rules: { 'nested-head-properties': 'off' },
+        rules: { 'invalid-input-shape': 'off' },
       })
       head.push({
         bodyAttrs: {
@@ -94,7 +97,7 @@ describe('validatePlugin', () => {
         },
       } as any)
       renderSSRHead(head)
-      expect(rules.find(r => r.id === 'nested-head-properties')).toBeFalsy()
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
     })
   })
 

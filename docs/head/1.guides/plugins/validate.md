@@ -108,10 +108,12 @@ Google recommends [absolute canonical URLs](https://developers.google.com/search
 | `deprecated-twitter-meta` | Non-Slack `twitter:*` metadata; use Open Graph metadata instead |
 | `missing-alias-sorting-plugin` | A `before:` or `after:` priority is used without `AliasSortingPlugin` |
 | `missing-template-params-plugin` | `templateParams` is used without `TemplateParamsPlugin` |
-| `nested-head-properties` | Top-level head properties such as `meta` or `titleTemplate` are nested inside `htmlAttrs` or `bodyAttrs` |
+| `invalid-input-shape` | A head field has the wrong container shape, or an attribute object contains a misplaced structured value |
 | `numeric-tag-priority` | A numeric `tagPriority` is used instead of a named priority |
 
 `twitter:label1`, `twitter:label2`, `twitter:data1`, and `twitter:data2` remain supported for Slack link unfurls.
+
+Input shapes are checked after framework resolvers run. Vue refs, computed values, and computed getters are validated using their resolved values.
 
 ### Missing Companion Tags
 

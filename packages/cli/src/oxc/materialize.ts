@@ -1,4 +1,4 @@
-import type { HeadInputView, InputValueKind, TagInput } from 'unhead/validate'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from 'unhead/validate'
 
 // oxc-parser AST is ESTree-shaped: Property/Literal/Identifier/ObjectExpression
 // share the same node names as ESTree, so we work against a loose any-typed
@@ -59,6 +59,35 @@ function valueKind(node: Node | undefined): InputValueKind {
 }
 
 /**
+ * Build a parser-independent input-shape view from an oxc object literal.
+ */
+export function materializeInputShape(
+  obj: Node,
+  context: InputShapeContext,
+): InputShapeView {
+  const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
+  const propLocs: Record<string, OxcLoc> = {}
+
+  for (const prop of obj.properties) {
+    const name = getKeyName(prop)
+    if (!name)
+      continue
+    keys.add(name)
+    valueKinds.set(name, valueKind(prop.value))
+    propLocs[name] = { start: prop.start, end: prop.end }
+  }
+
+  return {
+    context,
+    keys,
+    valueKinds,
+    loc: { start: obj.start, end: obj.end },
+    propLocs,
+  }
+}
+
+/**
  * Iterate object expression properties latest-to-first and return the *last*
  * matching property. Mirrors runtime JS semantics where a duplicate key is
  * overwritten by the later occurrence — so a fixer that writes the "current"
@@ -85,7 +114,6 @@ export function materializeTag(
 ): TagInput {
   const props: TagInput['props'] = {}
   const keys = new Set<string>()
-  const valueKinds = new Map<string, InputValueKind>()
   const propLocs: Record<string, OxcLoc> = {}
 
   for (const p of obj.properties) {
@@ -93,7 +121,6 @@ export function materializeTag(
     if (!name)
       continue
     keys.add(name)
-    valueKinds.set(name, valueKind(p.value))
     propLocs[name] = { start: p.start, end: p.end }
     const value = unwrapTS(p.value)
     if (!value)
@@ -113,7 +140,6 @@ export function materializeTag(
     tagType,
     props,
     keys,
-    valueKinds,
     loc: { start: obj.start, end: obj.end },
     propLocs,
     inArray,

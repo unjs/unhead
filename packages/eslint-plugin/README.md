@@ -32,7 +32,7 @@ For projects migrating from unhead v2, swap in `configs.migration` to also wrap 
 | `no-deprecated-props` | error | ✓ | v2 props: `children`, `hid`, `vmid`, `body: true` |
 | `no-html-in-title` | warn |   | HTML chars in `title` (will be escaped, not rendered) |
 | `no-unknown-meta` | warn | ✓ | typos in `name` / `property` (Levenshtein-suggested fix) |
-| `nested-head-properties` | warn |   | top-level head properties nested inside `htmlAttrs` / `bodyAttrs` |
+| `invalid-input-shape` | warn |   | wrong container shapes and structured values in ordinary `htmlAttrs` / `bodyAttrs` fields |
 | `non-absolute-canonical` | warn |   | relative URLs in `<link rel="canonical">` |
 | `numeric-tag-priority` | warn | suggestion | numeric `tagPriority` (suggests `'critical'`, `'high'`, or `'low'`) |
 | `prefer-define-helpers` | off (migration only) | ✓ | wraps `link` / `script` tag object literals in `defineLink` / `defineScript` |

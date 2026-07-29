@@ -131,10 +131,12 @@ export default defineNuxtConfig({
     expect(results[0].headCalls.map(c => c.name)).toEqual(['defineNuxtConfig'])
   })
 
-  it('reports top-level head properties nested in bodyAttrs', async () => {
-    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-nested-head-'))
+  it('reports invalid input shapes', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-input-shape-'))
     await writeFile(join(tmp, 'app.ts'), `
 useHead({
+  htmlAttrs: [],
+  link: {},
   bodyAttrs: {
     title: 'Home',
     titleTemplate: '%s | Site',
@@ -148,13 +150,17 @@ useHead({
       cwd: tmp,
     })
     expect(results).toHaveLength(1)
-    expect(results[0].diagnostics).toContainEqual(expect.objectContaining({
-      ruleId: 'nested-head-properties',
-      message: expect.stringContaining('"title", "titleTemplate", "meta"'),
-    }))
+    const shapeDiagnostics = results[0].diagnostics.filter(d => d.ruleId === 'invalid-input-shape')
+    expect(shapeDiagnostics).toHaveLength(4)
+    expect(shapeDiagnostics.map(d => d.message)).toEqual(expect.arrayContaining([
+      expect.stringContaining('"htmlAttrs" in a head input'),
+      expect.stringContaining('"link" in a head input'),
+      expect.stringContaining('"titleTemplate" has a head input shape'),
+      expect.stringContaining('"meta" has a head input shape'),
+    ]))
   })
 
-  it('uses value shape and attribute-specific predicates for bodyAttrs', async () => {
+  it('allows unresolved expressions and valid scalar attribute shapes', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-attrs-shape-'))
     await writeFile(join(tmp, 'app.ts'), `
 useHead({
@@ -163,6 +169,7 @@ useHead({
     meta: 'custom-value',
     script: 'module',
     children: 'label',
+    options: computedOptions,
   },
 })
 `)
