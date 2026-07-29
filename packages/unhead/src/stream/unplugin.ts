@@ -100,7 +100,7 @@ function buildClientStub(framework: string, streamKey: string, warnOnMissing: bo
     ? `else{console.warn('[unhead] streaming client loaded but window['+${key}+'] is undefined; did the server call wrapStream()/renderSSRHeadShell()?')}`
     : ''
   return `import{createHead}from'${framework}/client'
-const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}${warnBranch}`
+const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(b=>b.forEach(e=>h.push(e)));s.push=b=>b.forEach(e=>h.push(e));s._head=h}${warnBranch}`
 }
 
 /**

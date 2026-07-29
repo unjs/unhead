@@ -3,11 +3,13 @@ import process from 'node:process'
 import { collectBundleData, renderBundleReport } from './bundle-report'
 import { renderDependencyReport } from './dependency-report'
 import { renderPerfReport } from './perf-report'
+import { renderPrecompileReport } from './precompile-report'
 
 // Combined bundle, dependency, and perf comment for the PR. Bundle data comes
 // from the dist dirs; dependency and perf data come from JSON generated for the
 // base and PR builds.
-const sections: string[] = [renderBundleReport(collectBundleData())]
+const bundleData = collectBundleData()
+const sections: string[] = [renderBundleReport(bundleData.filter(item => !item.comparison))]
 
 function readJson(p?: string) {
   return p && fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null
@@ -21,6 +23,10 @@ if (prDependencies?.packages?.length)
 const prPerf = readJson(process.env.PR_PERF)
 if (prPerf?.benches?.length)
   sections.push(renderPerfReport(readJson(process.env.BASE_PERF), prPerf))
+
+const precompilePerf = readJson(process.env.PRECOMPILE_PERF)
+if (precompilePerf?.off?.benches?.length && precompilePerf?.on?.benches?.length)
+  sections.push(renderPrecompileReport(bundleData, precompilePerf))
 
 let out = sections.join('\n\n---\n\n')
 

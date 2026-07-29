@@ -122,6 +122,19 @@ describe('createHeadTransform', () => {
     expect(await transform(`import { createHead } from 'some-other-lib'\nconst head = createHead()`)).toBeUndefined()
   })
 
+  it.each([
+    'unhead/precompiled/client',
+    '@unhead/vue/precompiled/client',
+    '@unhead/react/precompiled',
+  ])('does not inject runtime plugins into the sealed %s entry', async (source) => {
+    const { transform } = createPlugin([{
+      import: { name: 'ValidatePlugin', source: 'unhead/plugins', as: '__validate' },
+      client: '_h.use(__validate())',
+    }])
+
+    expect(await transform(`import { createHead } from '${source}'\nconst head = createHead()`)).toBeUndefined()
+  })
+
   it('does not rewrite namespace createHead from non-Unhead packages', async () => {
     const { transform } = createPlugin([{
       import: { name: 'ValidatePlugin', source: 'unhead/plugins', as: '__validate' },

@@ -267,12 +267,165 @@ describe('useSeoMetaTransform', () => {
     `)
   })
 
-  it('fails gracefully with nested objects', async () => {
+  it('statically packs nested objects with booleans', async () => {
     const code = await transform([
       'import { useSeoMeta } from \'unhead\'',
       'useSeoMeta({ title: \'Hello\', robots: { noindex: true, nofollow: true } })',
     ])
-    expect(code).toBeUndefined()
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        title: 'Hello',
+        meta: [
+          { name: 'robots', content: "noindex, nofollow" },
+        ]
+      })"
+    `)
+  })
+
+  it('statically packs nested objects with numbers and negative numbers', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { maxSnippet: -1, maxImagePreview: \'large\', maxVideoPreview: 0 } })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead } from 'unhead'
+      useHead({
+        meta: [
+          { name: 'robots', content: "max-snippet:-1, max-image-preview:large, max-video-preview:0" },
+        ]
+      })"
+    `)
+  })
+
+  it('drops false nested values like runtime sanitizeObject', async () => {
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { noindex: false, nofollow: true, maxSnippet: -1 } })',
+    ])
+    expect(code).toContain('{ name: \'robots\', content: "nofollow, max-snippet:-1" }')
+  })
+
+  it('bails nested objects with identifiers, calls and member expressions', async () => {
+    for (const value of ['flag', 'getFlag()', 'config.noindex']) {
+      expect(await transform([
+        'import { useSeoMeta } from \'unhead\'',
+        `useSeoMeta({ robots: { noindex: ${value} } })`,
+      ])).toBeUndefined()
+    }
+  })
+
+  it('bails nested objects with bigint and regexp values', async () => {
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { maxSnippet: 1n } })',
+    ])).toBeUndefined()
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { pattern: /x/ } })',
+    ])).toBeUndefined()
+  })
+
+  it('bails non-numeric unary values', async () => {
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { noindex: !0 } })',
+    ])).toBeUndefined()
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ robots: { maxSnippet: -\'1\' } })',
+    ])).toBeUndefined()
+  })
+
+  it('bails arrayable meta keys with object values (runtime handleObjectEntry)', async () => {
+    // themeColor objects expand into sibling tags at runtime, not a packed string
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'useSeoMeta({ themeColor: { color: \'#fff\', media: \'dark\' } })',
+    ])).toBeUndefined()
+  })
+
+  it('splits an unsupported tail prop into a residual runtime call', async () => {
+    // robots stays a plain object at runtime (primitives-routed), so it can
+    // trail the lowered entry without reordering rendered tags.
+    const code = await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const flag = true',
+      'useSeoMeta({ title: \'Hello\', description: \'World\', robots: { noindex: flag } })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useSeoMeta } from 'unhead'
+      const flag = true
+      useHead({
+        title: 'Hello',
+        meta: [
+          { name: 'description', content: 'World' },
+        ]
+      });
+      useSeoMeta({ robots: { noindex: flag } })"
+    `)
+  })
+
+  it('does not split a dynamic media tail after lowered meta props', async () => {
+    // og could resolve to an object at runtime; unpackMeta renders media
+    // expansions before scalar props, so splitting would reorder tags.
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const og = \'/og.png\'',
+      'useSeoMeta({ title: \'Hello\', description: \'World\', ogImage: og })',
+    ])).toBeUndefined()
+  })
+
+  it('residual split keeps the aliased callee and its import', async () => {
+    const code = await transform([
+      'import { useSeoMeta as usm } from \'unhead\'',
+      'const og = \'/og.png\'',
+      'usm({ title: \'Hello\', ogImage: og })',
+    ])
+    expect(code).toMatchInlineSnapshot(`
+      "import { useHead, useSeoMeta as usm } from 'unhead'
+      const og = '/og.png'
+      useHead({
+        title: 'Hello',
+      });
+      usm({ ogImage: og })"
+    `)
+  })
+
+  it('does not split when the residual name overlaps a lowered name', async () => {
+    // ogImageUrl and ogImage both resolve to og:image; a cross-entry dedupe
+    // could reorder rendered tags, so the whole call must stay at runtime.
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const og = \'/og.png\'',
+      'useSeoMeta({ ogImageUrl: \'/a.png\', ogImage: og })',
+    ])).toBeUndefined()
+  })
+
+  it('does not split when title appears after the unsupported prop', async () => {
+    // title is hoisted into the lowered entry regardless of source position;
+    // splitting would move it before the residual props and change last-wins order.
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const flag = true',
+      'useSeoMeta({ description: \'D\', robots: { noindex: flag }, title: \'T\' })',
+    ])).toBeUndefined()
+  })
+
+  it('does not split when an options argument is present', async () => {
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const og = \'/og.png\'',
+      'useSeoMeta({ title: \'T\', ogImage: og }, { tagPriority: 10 })',
+    ])).toBeUndefined()
+  })
+
+  it('does not split when the call result is used', async () => {
+    expect(await transform([
+      'import { useSeoMeta } from \'unhead\'',
+      'const og = \'/og.png\'',
+      'const entry = useSeoMeta({ title: \'T\', ogImage: og })',
+    ])).toBeUndefined()
   })
 
   it('statically replaces packed meta objects without evaluating source text', async () => {

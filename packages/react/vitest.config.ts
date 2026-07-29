@@ -13,6 +13,10 @@ export default defineConfig({
     alias: {
       '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),
+      'unhead/precompiled/server': resolve(__dirname, '../unhead/src/precompiled/server.ts'),
+      'unhead/precompiled/client-csr': resolve(__dirname, '../unhead/src/precompiled/client-csr.ts'),
+      'unhead/precompiled/client-deferred': resolve(__dirname, '../unhead/src/precompiled/client-deferred.ts'),
+      'unhead/precompiled/client': resolve(__dirname, '../unhead/src/precompiled/client.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
       'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
