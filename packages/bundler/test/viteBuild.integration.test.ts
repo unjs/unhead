@@ -201,4 +201,29 @@ describe('vite inline script transform backend', () => {
       target: 'chrome77',
     })
   })
+
+  it('uses Vite 6 module targets when baseline is not supported', async () => {
+    const modulesTarget = ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
+    const resolveConfig = vi.fn(async ({ build }: any) => ({
+      build: {
+        target: build.target === 'modules' ? modulesTarget : build.target,
+      },
+    }))
+    const transformWithEsbuild = vi.fn(async () => ({ code: '  esbuild output  ' }))
+
+    await transformInlineScriptWithVite({ resolveConfig, transformWithEsbuild } as any, 'source', 'baseline-widely-available')
+
+    expect(resolveConfig).toHaveBeenNthCalledWith(1, {
+      configFile: false,
+      build: { target: 'baseline-widely-available' },
+    }, 'build')
+    expect(resolveConfig).toHaveBeenNthCalledWith(2, {
+      configFile: false,
+      build: { target: 'modules' },
+    }, 'build')
+    expect(transformWithEsbuild).toHaveBeenCalledWith('source', 'unhead-inline-script.js', {
+      loader: 'js',
+      target: modulesTarget,
+    })
+  })
 })

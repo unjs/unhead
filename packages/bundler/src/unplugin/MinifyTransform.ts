@@ -64,7 +64,18 @@ function resolveViteTransformTarget(vite: ViteTransformApi, target: ViteTransfor
     resolved = vite.resolveConfig({
       configFile: false,
       build: { target },
-    }, 'build').then(config => config.build.target === false ? undefined : config.build.target)
+    }, 'build').then(async (config) => {
+      if (config.build.target !== target)
+        return config.build.target === false ? undefined : config.build.target
+
+      // Vite 6 predates the baseline alias. Its `modules` target is the
+      // closest Vite-owned compatibility target and is already normalized.
+      const fallback = await vite.resolveConfig({
+        configFile: false,
+        build: { target: 'modules' },
+      }, 'build')
+      return fallback.build.target === false ? undefined : fallback.build.target
+    })
     resolvedBaselineTargets.set(vite, resolved)
   }
   return resolved
