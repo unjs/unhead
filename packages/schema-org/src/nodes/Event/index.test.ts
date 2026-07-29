@@ -94,7 +94,7 @@ describe('defineEvent', () => {
         defineEvent({
           name: 'Rescheduled event',
           previousStartDate: [
-            new Date(Date.UTC(2025, 0, 1)),
+            new Date(2025, 0, 1),
             '2025-02-01',
           ],
           offers: {
@@ -108,7 +108,7 @@ describe('defineEvent', () => {
       const [event] = await injectSchemaOrg(head)
 
       expect(event.previousStartDate).toEqual([
-        '2025-01-01T00:00:00.000Z',
+        '2025-01-01',
         '2025-02-01',
       ])
       expect(event.offers).toMatchObject({
