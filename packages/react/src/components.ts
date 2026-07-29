@@ -87,7 +87,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       const data = normalizeReactPropAliases(props)
       normalizeRawContent(tagName, data)
 
-      if (TagsWithInnerContent.has(tagName) && data.children) {
+      if (TagsWithInnerContent.has(tagName) && data.children != null) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'
         data[contentKey] = Array.isArray(data.children)
           ? data.children.map(String).join('')
