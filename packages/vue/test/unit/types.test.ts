@@ -1,8 +1,11 @@
 import type { SSRHeadPayload } from 'unhead/types'
 import type { RawInput, SerializableHead } from '../../src/'
+import type { injectHead } from '../../src/composables'
 import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
-import { computed } from 'vue'
+import { createStreamableHead } from '@unhead/vue/stream/client'
+import { createStreamableHead as createStreamableServerHead } from '@unhead/vue/stream/server'
+import { computed, ref } from 'vue'
 import { useHead, useHeadSafe } from '../../src/composables'
 
 describe('types', () => {
@@ -136,6 +139,44 @@ describe('types', () => {
 
     // @ts-expect-error server render() should not be assignable to boolean
     serverHead.render() satisfies boolean
+  })
+  it('keeps Vue reactivity at the useHead interface', () => {
+    const clientHead = createHead()
+    const title = ref('Reactive title')
+
+    useHead({ title }, { head: clientHead })
+    useHead(computed(() => ({ title: title.value })), { head: clientHead })
+    clientHead.push({ title: () => title.value })
+
+    // @ts-expect-error Vue refs require useHead() on the client
+    clientHead.push({ title })
+    // @ts-expect-error Root Vue refs require useHead() on the client
+    clientHead.push(ref({ title: 'Reactive title' }))
+    // @ts-expect-error Vue computed entries require useHead() on the client
+    clientHead.push(computed(() => ({ title: title.value })))
+
+    // @ts-expect-error Injected client heads expose the same raw input contract
+    const injectedInput: Parameters<ReturnType<typeof injectHead>['push']>[0] = { title }
+    void injectedInput
+
+    const streamHead = createStreamableHead()
+    streamHead?.push({ title: () => title.value })
+    // @ts-expect-error Vue refs require useHead() on the streaming client
+    streamHead?.push({ title })
+
+    const serverHead = createServerHead()
+    serverHead.push({ title })
+    serverHead.push(computed(() => ({ title: title.value })))
+    // @ts-expect-error Vue server heads own the Vue resolver chain
+    createServerHead({ propResolvers: [] })
+
+    const { head: streamServerHead } = createStreamableServerHead()
+    streamServerHead.push({ title })
+    streamServerHead.push(computed(() => ({ title: title.value })))
+    // @ts-expect-error Stream server heads retain a concrete input schema
+    streamServerHead.push({ invalid: true })
+    // @ts-expect-error Vue stream server heads own the Vue resolver chain
+    createStreamableServerHead({ propResolvers: [] })
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'

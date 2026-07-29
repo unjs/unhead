@@ -8,7 +8,7 @@ export { VueHeadMixin } from './VueHeadMixin'
 export { type PreparedTemplate, prepareTemplate, propsToString, renderSSRHead, type SSRHeadPayload, transformHtmlTemplate } from 'unhead/server'
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createHead(options: Omit<CreateServerHeadOptions, 'propsResolver'> = {}): VueHeadClient<UseHeadInput, SSRHeadPayload> {
+export function createHead(options: Omit<CreateServerHeadOptions, 'propResolvers'> = {}): VueHeadClient<UseHeadInput, SSRHeadPayload> {
   const head = _createServerHead({
     ...options,
     propResolvers: [VueResolver],
