@@ -1,4 +1,5 @@
 import type { SourceMapInput } from 'rollup'
+import type { BuildOptions } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import MagicString from 'magic-string'
 import { parseSync } from 'oxc-parser'
@@ -11,6 +12,26 @@ const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JAVASCRIPT_TYPES = new Set([
+  '',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'module',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
@@ -19,14 +40,76 @@ const MINIFY_CACHE_MAX = 100
 type ContentType = 'script' | 'style' | 'json'
 type TagType = Exclude<ContentType, 'json'>
 
-interface PendingMinification {
+interface PendingTransform {
   end: number
-  minified: Promise<string | null>
+  replaceIfLonger: boolean
   raw: string
   start: number
+  transformed: Promise<string | null>
 }
 
 export type MinifyFn = (code: string) => Promise<string | null>
+type InlineScriptTranspiler = (code: string, target: BuildOptions['target']) => Promise<string | null>
+type ViteTransformTarget = Exclude<BuildOptions['target'], false>
+type ViteTransformApi = Pick<typeof import('vite'), 'resolveConfig' | 'transformWithEsbuild'> & Partial<Pick<typeof import('vite'), 'transformWithOxc'>>
+
+const resolvedBaselineTargets = new WeakMap<ViteTransformApi, Promise<ViteTransformTarget>>()
+
+function resolveViteTransformTarget(vite: ViteTransformApi, target: ViteTransformTarget): Promise<ViteTransformTarget> {
+  if (target !== 'baseline-widely-available')
+    return Promise.resolve(target)
+
+  let resolved = resolvedBaselineTargets.get(vite)
+  if (!resolved) {
+    resolved = vite.resolveConfig({
+      configFile: false,
+      build: { target },
+    }, 'build').then(async (config) => {
+      if (config.build.target !== target)
+        return config.build.target === false ? undefined : config.build.target
+
+      // Vite 6 predates the baseline alias. Its `modules` target is the
+      // closest Vite-owned compatibility target and is already normalized.
+      const fallback = await vite.resolveConfig({
+        configFile: false,
+        build: { target: 'modules' },
+      }, 'build')
+      return fallback.build.target === false ? undefined : fallback.build.target
+    })
+    resolvedBaselineTargets.set(vite, resolved)
+  }
+  return resolved
+}
+
+export async function transformInlineScriptWithVite(vite: ViteTransformApi, code: string, target: BuildOptions['target']): Promise<string> {
+  if (target === false)
+    return code
+
+  const resolvedTarget = await resolveViteTransformTarget(vite, target)
+
+  if (typeof vite.transformWithOxc === 'function') {
+    const result = await vite.transformWithOxc(code, 'unhead-inline-script.js', {
+      lang: 'js',
+      sourcemap: false,
+      target: resolvedTarget,
+    })
+    return result.code.trim()
+  }
+
+  const result = await vite.transformWithEsbuild(code, 'unhead-inline-script.js', {
+    loader: 'js',
+    target: resolvedTarget,
+  })
+  return result.code.trim()
+}
+
+export interface InlineScriptTransformOptions {
+  /**
+   * Override the JavaScript target used for inline scripts. When omitted,
+   * Vite's resolved `build.target` is used.
+   */
+  target?: BuildOptions['target']
+}
 
 const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
@@ -45,22 +128,58 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
    * Use `@unhead/bundler/minify/lightningcss` for a preconfigured minifier.
    */
   css?: false | MinifyFn
+  /**
+   * Transpile inline JavaScript before optional minification.
+   *
+   * Vite builds inherit the resolved `build.target`; pass an object to
+   * override it. Other bundlers currently require a custom `js` transform.
+   */
+  transpile?: boolean | InlineScriptTransformOptions
+}
+
+interface MinifyTransformPluginOptions {
+  minify?: MinifyTransformOptions | false
+  transformInlineScripts?: InlineScriptTransformOptions | false
+}
+
+export function resolveMinifyTransformOptions(options: MinifyTransformPluginOptions): MinifyTransformOptions | undefined {
+  const minifyOptions = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
+  const transpile = options.transformInlineScripts === false
+    ? false
+    : typeof options.transformInlineScripts === 'object'
+      ? options.transformInlineScripts
+      : true
+
+  if (!minifyOptions.js && !minifyOptions.css && !transpile)
+    return
+
+  return { ...minifyOptions, transpile }
 }
 
 /**
- * Vite/Webpack transform plugin that pre-minifies static string literals
- * inside `useHead()` / `useServerHead()` calls at build time.
+ * Vite/Webpack transform plugin that processes static string literals inside
+ * `useHead()` / `useServerHead()` calls at build time.
  *
- * Uses esbuild (Vite 7) or rolldown (Vite 8+) for JS, and lightningcss for CSS.
- * These never enter the SSR runtime bundle since they run only in the Vite `transform` hook.
+ * Vite can transpile inline scripts to its resolved build target. Optional
+ * minifiers use esbuild/rolldown for JS and lightningcss for CSS. These never
+ * enter the SSR runtime bundle because they run only in build hooks.
  */
-export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}) => {
+export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}, meta) => {
   const jsMinifier = options.js !== false ? options.js : undefined
   const cssMinifier = options.css !== false ? options.css : undefined
-  const doJS = !!jsMinifier
+  const transpileOptions = typeof options.transpile === 'object' ? options.transpile : undefined
+  const shouldTranspile = options.transpile === true || !!transpileOptions
+  let resolvedViteTarget: BuildOptions['target']
+  const jsTranspiler: InlineScriptTranspiler | undefined = shouldTranspile && meta.framework === 'vite'
+    ? async (code, target) => {
+      const vite = await import('vite')
+      return transformInlineScriptWithVite(vite, code, target)
+    }
+    : undefined
+  const doJS = !!jsMinifier || !!jsTranspiler
   const doCSS = !!cssMinifier
 
-  const minifyCache: Record<ContentType, Map<string, Promise<string | null>>> = {
+  const transformCache: Record<ContentType, Map<string, Promise<string | null>>> = {
     json: new Map(),
     script: new Map(),
     style: new Map(),
@@ -98,6 +217,14 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     enforce: 'post',
     transformInclude: shouldTransformId,
 
+    vite: jsTranspiler
+      ? {
+          configResolved(config) {
+            resolvedViteTarget = config.build.target
+          },
+        }
+      : undefined,
+
     transform: {
       filter: {
         code: HEAD_RE,
@@ -124,7 +251,9 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
         }
 
         const scopeTracker = new ScopeTracker()
-        const pendingMinifications: PendingMinification[] = []
+        const pendingTransforms: PendingTransform[] = []
+        const environmentTarget = (this as { environment?: { config?: { build?: BuildOptions } } }).environment?.config?.build?.target
+        const inlineScriptTarget = transpileOptions?.target ?? environmentTarget ?? resolvedViteTarget
 
         walk(ast.program, {
           scopeTracker,
@@ -141,10 +270,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
 
             // look for script: [...] and style: [...] properties
             for (const prop of arg.properties) {
-              if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+              if (prop.type !== 'Property')
                 continue
 
-              const tagType = prop.key.name
+              const tagType = resolveStaticPropertyName(prop)
               if (tagType !== 'script' && tagType !== 'style')
                 continue
 
@@ -160,22 +289,22 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
                 if (!element || element.type !== 'ObjectExpression')
                   continue
 
-                processScriptOrStyleObject(element, tagType, pendingMinifications)
+                processScriptOrStyleObject(element, tagType, pendingTransforms, inlineScriptTarget)
               }
             }
           },
         })
 
-        if (!pendingMinifications.length)
+        if (!pendingTransforms.length)
           return
 
-        const minified = await Promise.all(pendingMinifications.map(pending => pending.minified))
+        const transformed = await Promise.all(pendingTransforms.map(pending => pending.transformed))
         const s = new MagicString(code)
 
-        for (let i = 0; i < pendingMinifications.length; i++) {
-          const pending = pendingMinifications[i]
-          const result = minified[i]
-          if (result && result.length < pending.raw.length)
+        for (let i = 0; i < pendingTransforms.length; i++) {
+          const pending = pendingTransforms[i]
+          const result = transformed[i]
+          if (result && result !== pending.raw && (pending.replaceIfLonger || result.length < pending.raw.length))
             s.overwrite(pending.start, pending.end, JSON.stringify(result))
         }
 
@@ -223,79 +352,110 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
   function processScriptOrStyleObject(
     objectNode: any,
     tagType: TagType,
-    pendingMinifications: PendingMinification[],
+    pendingTransforms: PendingTransform[],
+    inlineScriptTarget: BuildOptions['target'],
   ) {
     let contentType: ContentType = tagType
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
         (p: any) => p.type === 'Property'
-          && !p.computed
-          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
-            || (p.key?.type === 'Literal' && p.key.value === 'type')),
+          && resolveStaticPropertyName(p) === 'type',
       )
-      if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
-        contentType = 'json'
-      else if (!doJS)
+      if (typeProp) {
+        if (typeProp.value?.type !== 'Literal' || typeof typeProp.value.value !== 'string')
+          return
+        const scriptType = typeProp.value.value.toLowerCase()
+        if (JSON_TYPES.has(scriptType))
+          contentType = 'json'
+        else if (!JAVASCRIPT_TYPES.has(scriptType))
+          return
+      }
+      if (contentType === 'script' && !doJS)
         return
     }
 
     // find innerHTML or textContent property with a static string value
     for (const prop of objectNode.properties) {
-      if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+      if (prop.type !== 'Property')
         continue
 
-      if (!CONTENT_PROPS.has(prop.key.name))
+      const contentProp = resolveStaticPropertyName(prop)
+      if (!contentProp || !CONTENT_PROPS.has(contentProp))
         continue
 
       // only handle static string literals and template literals without expressions
       if (prop.value?.type === 'Literal') {
         const raw = prop.value.value
-        if (typeof raw !== 'string' || raw.length < 20)
+        const minLength = contentType === 'script' && jsTranspiler ? 0 : 20
+        if (typeof raw !== 'string' || raw.length < minLength)
           continue
 
-        pendingMinifications.push({
+        pendingTransforms.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, contentType),
+          replaceIfLonger: contentType === 'script' && !!jsTranspiler,
           raw,
           start: prop.value.start,
+          transformed: transformStringContent(raw, contentType, inlineScriptTarget),
         })
       }
       else if (prop.value?.type === 'TemplateLiteral' && prop.value.expressions.length === 0) {
         const raw = prop.value.quasis[0]?.value?.cooked as string
-        if (!raw || raw.length < 20)
+        const minLength = contentType === 'script' && jsTranspiler ? 0 : 20
+        if (!raw || raw.length < minLength)
           continue
 
-        pendingMinifications.push({
+        pendingTransforms.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, contentType),
+          replaceIfLonger: contentType === 'script' && !!jsTranspiler,
           raw,
           start: prop.value.start,
+          transformed: transformStringContent(raw, contentType, inlineScriptTarget),
         })
       }
     }
   }
 
-  function minifyStringContent(content: string, contentType: ContentType): Promise<string | null> {
-    const minifier = contentType === 'json' ? jsonMinifier : contentType === 'script' ? jsMinifier : cssMinifier
-    if (!minifier)
+  function resolveStaticPropertyName(prop: any): string | undefined {
+    if (prop.key?.type === 'Identifier')
+      return prop.key.name
+    if (prop.key?.type === 'Literal' && typeof prop.key.value === 'string')
+      return prop.key.value
+  }
+
+  function transformStringContent(content: string, contentType: ContentType, inlineScriptTarget: BuildOptions['target']): Promise<string | null> {
+    const minifier = contentType === 'json'
+      ? jsonMinifier
+      : contentType === 'script' ? jsMinifier : cssMinifier
+    const transpiler = contentType === 'script' ? jsTranspiler : undefined
+    if (!minifier && !transpiler)
       return Promise.resolve(null)
 
-    const cache = minifyCache[contentType]
-    const cached = cache.get(content)
+    const cache = transformCache[contentType]
+    const cacheKey = transpiler
+      ? `${JSON.stringify(inlineScriptTarget)}\0${content}`
+      : content
+    const cached = cache.get(cacheKey)
     if (cached) {
-      cache.delete(content)
-      cache.set(content, cached)
+      cache.delete(cacheKey)
+      cache.set(cacheKey, cached)
       return cached
     }
 
     const pending: Promise<string | null> = Promise.resolve()
-      .then(() => minifier(content))
+      .then(async () => {
+        let result = content
+        if (transpiler)
+          result = await transpiler(result, inlineScriptTarget) || result
+        if (minifier)
+          result = await minifier(result) || result
+        return result === content ? null : result
+      })
       .catch((error) => {
-        if (cache.get(content) === pending)
-          cache.delete(content)
+        if (cache.get(cacheKey) === pending)
+          cache.delete(cacheKey)
         throw error
       })
-    cache.set(content, pending)
+    cache.set(cacheKey, pending)
 
     if (cache.size > MINIFY_CACHE_MAX) {
       const oldest = cache.keys().next().value
