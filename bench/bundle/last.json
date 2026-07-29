@@ -32,17 +32,17 @@
   "reactClient": {
     "size": 15073,
     "gz": 5988,
-    "br": 5426
+    "br": 5431
   },
   "reactClientFull": {
     "size": 28729,
-    "gz": 10878,
-    "br": 9835
+    "gz": 10877,
+    "br": 9836
   },
   "reactServer": {
     "size": 13327,
     "gz": 5314,
-    "br": 4800
+    "br": 4802
   },
   "schemaOrg": {
     "size": 28631,
