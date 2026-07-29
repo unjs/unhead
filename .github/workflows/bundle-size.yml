@@ -32,6 +32,8 @@ jobs:
           cache: pnpm
 
       - name: Build base branch bundles
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
@@ -42,7 +44,7 @@ jobs:
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
           git diff --stat
-          git checkout -f ${{ github.base_ref }}
+          git checkout -f "$BASE_REF"
           pnpm install
           cp /tmp/unplugin-transform.bench.ts bench/unplugin-transform.bench.ts
           node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json

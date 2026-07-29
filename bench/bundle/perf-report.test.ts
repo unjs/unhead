@@ -2,6 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { parseVitestBenchmarks, renderPerfReport } from './perf-report'
 
 describe('parseVitestBenchmarks', () => {
+  it('treats a missing benchmark file as an empty run', () => {
+    expect(parseVitestBenchmarks(null)).toEqual({ benches: [] })
+  })
+
+  it('rejects malformed benchmark output', () => {
+    expect(() => parseVitestBenchmarks({
+      files: [{
+        groups: [{
+          benchmarks: [{
+            name: 'useSeoMetaTransform static calls',
+            mean: '1.25',
+            rme: 2.5,
+          }],
+        }],
+      }],
+    })).toThrowError('Invalid Vitest benchmark result')
+  })
+
   it('converts transform benchmark output into performance benches', () => {
     expect(parseVitestBenchmarks({
       files: [{

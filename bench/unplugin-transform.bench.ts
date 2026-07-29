@@ -96,7 +96,12 @@ async function runPluginTransform(plugin: any, code: string, id: string, context
 function assertTransformResult(result: unknown, name: string) {
   if (
     typeof result === 'string'
-    || (typeof result === 'object' && result !== null && 'code' in result)
+    || (
+      typeof result === 'object'
+      && result !== null
+      && 'code' in result
+      && typeof (result as { code?: unknown }).code === 'string'
+    )
   ) {
     return
   }

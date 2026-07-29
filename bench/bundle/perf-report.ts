@@ -27,14 +27,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function parseVitestBenchmark(value: unknown): PerfBench | undefined {
+function parseVitestBenchmark(value: unknown): PerfBench {
   if (
     !isRecord(value)
     || typeof value.name !== 'string'
     || typeof value.mean !== 'number'
     || !Number.isFinite(value.mean)
+    || typeof value.rme !== 'number'
+    || !Number.isFinite(value.rme)
   ) {
-    return undefined
+    throw new TypeError('Invalid Vitest benchmark result')
   }
 
   return {
@@ -42,27 +44,31 @@ function parseVitestBenchmark(value: unknown): PerfBench | undefined {
     name: `Bundler: ${value.name}`,
     kind: 'time',
     value: value.mean,
-    rme: typeof value.rme === 'number' && Number.isFinite(value.rme) ? value.rme : undefined,
+    rme: value.rme,
   }
 }
 
 export function parseVitestBenchmarks(value: unknown): PerfRun {
-  if (!isRecord(value) || !Array.isArray(value.files))
+  if (value === null || value === undefined)
     return { benches: [] }
 
-  return {
-    benches: value.files.flatMap((file) => {
-      if (!isRecord(file) || !Array.isArray(file.groups))
-        return []
-      return file.groups.flatMap((group) => {
-        if (!isRecord(group) || !Array.isArray(group.benchmarks))
-          return []
-        return group.benchmarks
-          .map(parseVitestBenchmark)
-          .filter((bench): bench is PerfBench => bench !== undefined)
-      })
-    }),
-  }
+  if (!isRecord(value) || !Array.isArray(value.files))
+    throw new TypeError('Invalid Vitest benchmark output')
+
+  const benches = value.files.flatMap((file) => {
+    if (!isRecord(file) || !Array.isArray(file.groups))
+      throw new TypeError('Invalid Vitest benchmark file')
+    return file.groups.flatMap((group) => {
+      if (!isRecord(group) || !Array.isArray(group.benchmarks))
+        throw new TypeError('Invalid Vitest benchmark group')
+      return group.benchmarks.map(parseVitestBenchmark)
+    })
+  })
+
+  if (!benches.length)
+    throw new TypeError('Vitest benchmark output contained no results')
+
+  return { benches }
 }
 
 const TIME_FLOOR_PCT = 5
