@@ -23,6 +23,48 @@ export interface PerfRun {
   benches: PerfBench[]
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function parseVitestBenchmark(value: unknown): PerfBench | undefined {
+  if (
+    !isRecord(value)
+    || typeof value.name !== 'string'
+    || typeof value.mean !== 'number'
+    || !Number.isFinite(value.mean)
+  ) {
+    return undefined
+  }
+
+  return {
+    id: `bundler-transform:${value.name}`,
+    name: `Bundler: ${value.name}`,
+    kind: 'time',
+    value: value.mean,
+    rme: typeof value.rme === 'number' && Number.isFinite(value.rme) ? value.rme : undefined,
+  }
+}
+
+export function parseVitestBenchmarks(value: unknown): PerfRun {
+  if (!isRecord(value) || !Array.isArray(value.files))
+    return { benches: [] }
+
+  return {
+    benches: value.files.flatMap((file) => {
+      if (!isRecord(file) || !Array.isArray(file.groups))
+        return []
+      return file.groups.flatMap((group) => {
+        if (!isRecord(group) || !Array.isArray(group.benchmarks))
+          return []
+        return group.benchmarks
+          .map(parseVitestBenchmark)
+          .filter((bench): bench is PerfBench => bench !== undefined)
+      })
+    }),
+  }
+}
+
 const TIME_FLOOR_PCT = 5
 const ALLOC_FLOOR_PCT = 2
 const ALLOC_FLOOR_BYTES = 1024
