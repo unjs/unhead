@@ -12,6 +12,7 @@ describe('resolver cache hook invalidation', () => {
     })
 
     head.render()
+    expect(payload).toBeDefined()
     expect(payload).not.toHaveProperty('input')
   })
 
