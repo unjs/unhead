@@ -103,9 +103,11 @@ describe('defineRecipe', () => {
           'itemListElement': [
             {
               '@type': 'HowToStep',
+              'text': 'Preheat the oven.',
             },
             {
               '@type': 'HowToStep',
+              'text': 'Bake the loaf.',
               'video': {
                 '@type': 'VideoObject',
               },
@@ -146,6 +148,10 @@ describe('defineRecipe', () => {
         ],
         recipeInstructions: {
           '@type': 'HowToStep',
+          'itemListElement': {
+            '@type': 'HowToDirection',
+            'text': 'Shape the loaf.',
+          },
         },
       })
       expect(images).toMatchObject([

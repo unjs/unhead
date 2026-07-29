@@ -58,6 +58,7 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-sche
 - when `image` is a single string, it is resolved to a root ImageObject node with an absolute URL; arrays are left as the supplied image values
 
 - `audience`, `brand`, `hasCertification`, `isVariantOf`, and `subjectOf` resolve as typed nested nodes
+- untyped `brand` objects resolve as `Brand`; set `@type: Organization` for an organization brand
 
 ## Examples
 
@@ -121,7 +122,7 @@ export interface ProductSimple extends Thing {
    */
   offers?: NodeRelations<Offer | number>
   /**
-   *  A reference to an Organization piece, representing the brand associated with the Product.
+   * A Brand or Organization associated with the Product.
    */
   brand?: NodeRelation<Brand | Organization>
   /**

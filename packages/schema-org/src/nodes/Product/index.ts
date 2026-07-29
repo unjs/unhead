@@ -9,6 +9,7 @@ import type { Rating } from '../Rating'
 import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 import {
+  asArray,
   IdentityId,
   idReference,
   resolveWithBase,
@@ -139,7 +140,7 @@ export interface ProductSimple extends Thing {
    */
   offers?: NodeRelations<Offer | number>
   /**
-   *  A reference to an Organization piece, representing brand associated with the Product.
+   * A Brand or Organization associated with the Product.
    */
   brand?: NodeRelation<Brand | Organization>
   /**
@@ -350,10 +351,12 @@ export const productResolver = defineSchemaOrgResolver<Product>({
       node.category = Array.isArray(node.category) ? resolved : resolved[0]
     }
     if (node.brand) {
-      const isBrand = typeof node.brand === 'object' && node.brand?.['@type'] === 'Brand'
-      node.brand = isBrand
-        ? resolveRelation(node.brand as NodeRelation<Brand>, ctx, brandResolver)
-        : resolveRelation(node.brand as NodeRelation<Organization>, ctx, organizationResolver)
+      const isOrganization = typeof node.brand === 'object'
+        && node.brand !== null
+        && asArray(node.brand['@type']).includes('Organization')
+      node.brand = isOrganization
+        ? resolveRelation(node.brand as NodeRelation<Organization>, ctx, organizationResolver)
+        : resolveRelation(node.brand as NodeRelation<Brand>, ctx, brandResolver)
     }
     node.hasCertification = resolveRelation(node.hasCertification, ctx, certificationResolver)
     node.isVariantOf = resolveRelation(node.isVariantOf, ctx, productGroupResolver)

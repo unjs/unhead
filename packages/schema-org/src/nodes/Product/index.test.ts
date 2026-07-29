@@ -166,6 +166,53 @@ describe('defineProduct', () => {
     })
   })
 
+  it('distinguishes untyped Brand and explicit Organization values', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'Unhead mug',
+          image: '/mug.png',
+          brand: {
+            name: 'Unhead',
+          },
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      const product = graphNodes.find(node => node['@type'] === 'Product')
+
+      expect(product).toMatchObject({
+        brand: {
+          '@type': 'Brand',
+          'name': 'Unhead',
+        },
+      })
+    })
+
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineProduct({
+          name: 'Unhead mug',
+          image: '/mug.png',
+          brand: {
+            '@type': 'Organization',
+            'name': 'Unhead',
+          },
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+      const product = graphNodes.find(node => node['@type'] === 'Product')
+
+      expect(product).toMatchObject({
+        brand: {
+          '@type': 'Organization',
+          'name': 'Unhead',
+        },
+      })
+    })
+  })
+
   it('merchant listing experience', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
