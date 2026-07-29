@@ -40,7 +40,7 @@ defineDiscussionForumPosting({
 })
 ```
 
-Google requires `author`, `datePublished`, and post content supplied through `text`, `image`, or `video`. Use `@type: 'SocialMediaPosting'` for social platforms that are not organized as forums.
+For a root post, Google requires `author`, `datePublished`, and content supplied through `text`, `image`, or `video`. Posts represented on another page with an external `url` may omit the content property. Use `@type: 'SocialMediaPosting'` for social platforms that are not organized as forums.
 
 ## Defaults and resolves
 

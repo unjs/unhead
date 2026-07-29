@@ -32,10 +32,30 @@ describe('defineEmployerAggregateRating', () => {
             "@type": "Organization",
             "name": "World’s Best Coffee Shop",
             "sameAs": "https://coffee.example.com",
-            "url": "https://example.com/",
           },
         ]
       `)
+    })
+  })
+
+  it('preserves an explicit organization URL', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEmployerAggregateRating({
+          itemReviewed: {
+            name: 'World’s Best Coffee Shop',
+            url: 'https://coffee.example.com',
+          },
+          reviewCount: 10,
+          ratingValue: 4.8,
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      expect(graph[1]).toMatchObject({
+        name: 'World’s Best Coffee Shop',
+        url: 'https://coffee.example.com',
+      })
     })
   })
 })

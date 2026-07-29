@@ -23,6 +23,12 @@ defineVacationRental({
   image: [
     '/images/beach-house-1.jpg',
     '/images/beach-house-2.jpg',
+    '/images/beach-house-3.jpg',
+    '/images/beach-house-4.jpg',
+    '/images/beach-house-5.jpg',
+    '/images/beach-house-6.jpg',
+    '/images/beach-house-7.jpg',
+    '/images/beach-house-8.jpg',
   ],
   latitude: -38.14992,
   longitude: 144.36172,

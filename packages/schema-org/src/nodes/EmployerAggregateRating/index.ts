@@ -30,8 +30,17 @@ export const employerAggregateRatingResolver = defineSchemaOrgResolver<EmployerA
   },
   idPrefix: ['url', '#employer-aggregate-rating'],
   resolve(node, ctx) {
+    const hasExplicitOrganizationUrl = typeof node.itemReviewed === 'object'
+      && node.itemReviewed !== null
+      && 'url' in node.itemReviewed
+      && node.itemReviewed.url != null
+
     node.itemReviewed = resolveRelation(node.itemReviewed, ctx, organizationResolver, {
       root: true,
+      afterResolve(organization) {
+        if (!hasExplicitOrganizationUrl)
+          delete organization.url
+      },
     })
     return node
   },
