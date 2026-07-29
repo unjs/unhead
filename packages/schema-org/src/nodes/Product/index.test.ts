@@ -342,18 +342,26 @@ describe('defineProduct', () => {
       expect(product).toMatchObject({
         audience: {
           '@type': 'PeopleAudience',
+          'suggestedGender': 'unisex',
           'suggestedAge': {
             '@type': 'QuantitativeValue',
+            'minValue': 13,
+            'unitCode': 'ANN',
           },
         },
         category: {
           '@type': 'CategoryCode',
+          'codeValue': '2271',
+          'inCodeSet': 'https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt',
         },
         hasCertification: {
           '@type': 'Certification',
+          'certificationIdentification': '53553',
           'issuedBy': {
             '@type': 'Organization',
+            'name': 'European_Commission',
           },
+          'name': 'EPREL',
           'url': 'https://example.com/certifications/53553',
         },
         isVariantOf: {
@@ -362,6 +370,7 @@ describe('defineProduct', () => {
             '@type': 'Product',
             'url': 'https://example.com/coat/blue',
           },
+          'productGroupID': 'coat-1',
           'url': 'https://example.com/coat',
           'variesBy': [
             'https://schema.org/size',
@@ -371,6 +380,7 @@ describe('defineProduct', () => {
         offers: {
           priceSpecification: {
             '@type': 'UnitPriceSpecification',
+            'membershipPointsEarned': 20,
             'validForMemberTier': {
               '@id': 'https://example.com/members#gold',
             },
@@ -378,6 +388,9 @@ describe('defineProduct', () => {
         },
         size: {
           '@type': 'SizeSpecification',
+          'name': 'XL',
+          'sizeGroup': 'WearableSizeGroupRegular',
+          'sizeSystem': 'WearableSizeSystemAU',
         },
         subjectOf: {
           '@type': '3DModel',
