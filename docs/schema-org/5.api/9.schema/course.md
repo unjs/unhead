@@ -14,6 +14,8 @@ description: Use defineCourse() to add Course structured data with a provider, d
 - [Schema.org Course](https://schema.org/Course)
 - [Course List Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/course)
 
+The fields below cover Google's Course list feature and the fields used by Unhead's resolver. They do not cover every property on `schema.org/Course`. Other valid properties, such as `coursePrerequisites`, pass through to the generated JSON-LD. Use a [custom node](/docs/schema-org/guides/recipes/custom-nodes) with [`schema-dts`](https://github.com/google/schema-dts) when you need full Schema.org typing.
+
 ## Examples
 
 ```ts

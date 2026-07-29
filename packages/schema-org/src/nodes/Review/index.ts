@@ -2,6 +2,7 @@ import type { NodeRelation, ResolvableDate, Thing } from '../../types'
 import type { Person } from '../Person'
 import type { Rating } from '../Rating'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { resolvableDateToIso } from '../../utils'
 import { personResolver } from '../Person'
 import { ratingResolver } from '../Rating'
 
@@ -27,6 +28,10 @@ export interface ReviewSimple extends Thing {
    */
   datePublished?: ResolvableDate
   /**
+   * The date of the experience described by the review, in ISO 8601 format.
+   */
+  contentReferenceTime?: ResolvableDate
+  /**
    * The text content of the review.
    */
   reviewBody?: string
@@ -44,6 +49,8 @@ export const reviewResolver = defineSchemaOrgResolver<Review>({
   resolve(review, ctx) {
     review.reviewRating = resolveRelation(review.reviewRating, ctx, ratingResolver)
     review.author = resolveRelation(review.author, ctx, personResolver)
+    review.contentReferenceTime = resolvableDateToIso(review.contentReferenceTime)
+    review.datePublished = resolvableDateToIso(review.datePublished)
     return review
   },
 })
