@@ -112,9 +112,6 @@ catalogs:
     hookable:
       specifier: ^6.1.1
       version: 6.1.1
-    js-yaml:
-      specifier: ^5.2.1
-      version: 5.2.1
     jsdom:
       specifier: ^29.1.1
       version: 29.1.1
@@ -234,7 +231,7 @@ importers:
         version: 0.17.0(eslint@10.7.0(jiti@2.7.0)(supports-color@10.2.2))
       js-yaml:
         specifier: 'catalog:'
-        version: 5.2.1
+        version: 5.2.2
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -8041,8 +8038,8 @@ packages:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
     hasBin: true
 
-  js-yaml@5.2.1:
-    resolution: {integrity: sha512-zfLtNfQqxVqq3uaTqSkh4x4hZw3KHobGUA0fJUj4wawW8bsQLTVqpHdXSIzidh7o+4lEW36tANuAGdaFx6Zgnw==}
+  js-yaml@5.2.2:
+    resolution: {integrity: sha512-dayzUzKkJ1MkuUtZglSebU43utNXH0OWQByK9rKOOuYIO8M5TV1y+n8ALMdG0rdzBnfNkOmZEqrURepb0ejqBw==}
     hasBin: true
 
   jsdoc-type-pratt-parser@7.2.0:
@@ -19856,7 +19853,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js-yaml@5.2.1:
+  js-yaml@5.2.2:
     dependencies:
       argparse: 2.0.1
 
