@@ -1,8 +1,10 @@
-import type { NodeRelation, ResolvableDate, Thing } from '../../types'
-import type { Person } from '../Person'
+import type { Identity, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { ItemList } from '../ItemList'
 import type { Rating } from '../Rating'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import { resolvableDateToIso } from '../../utils'
+import { itemListResolver } from '../ItemList'
+import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 import { ratingResolver } from '../Rating'
 
@@ -14,7 +16,7 @@ export interface ReviewSimple extends Thing {
   /**
    * The author of the review.
    */
-  author: NodeRelation<Person | string>
+  author: NodeRelation<Identity | string>
   /**
    * An answer object, with a text property which contains the answer to the question.
    */
@@ -35,6 +37,18 @@ export interface ReviewSimple extends Thing {
    * The text content of the review.
    */
   reviewBody?: string
+  /**
+   * The item being reviewed. Required when Review is a standalone root.
+   */
+  itemReviewed?: NodeRelation<Thing>
+  /**
+   * Positive notes about a product.
+   */
+  positiveNotes?: NodeRelation<ItemList>
+  /**
+   * Negative notes about a product.
+   */
+  negativeNotes?: NodeRelation<ItemList>
 }
 
 export interface Review extends ReviewSimple {}
@@ -48,7 +62,13 @@ export const reviewResolver = defineSchemaOrgResolver<Review>({
   ],
   resolve(review, ctx) {
     review.reviewRating = resolveRelation(review.reviewRating, ctx, ratingResolver)
-    review.author = resolveRelation(review.author, ctx, personResolver)
+    review.author = resolveIdentityRelation(review.author as NodeRelation<Identity>, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }) as NodeRelation<Identity | string>
+    review.itemReviewed = resolveRelation(review.itemReviewed, ctx)
+    review.negativeNotes = resolveRelation(review.negativeNotes, ctx, itemListResolver)
+    review.positiveNotes = resolveRelation(review.positiveNotes, ctx, itemListResolver)
     review.contentReferenceTime = resolvableDateToIso(review.contentReferenceTime)
     review.datePublished = resolvableDateToIso(review.datePublished)
     return review

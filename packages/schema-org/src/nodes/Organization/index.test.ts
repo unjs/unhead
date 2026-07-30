@@ -91,4 +91,119 @@ describe('defineOrganization', () => {
       })
     })
   })
+
+  it('resolves Google loyalty and shipping policy fields', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({
+          name: 'Shop',
+          identifier: {
+            name: 'Merchant ID',
+            value: 'shop-1',
+          },
+          agentInteractionStatistic: {
+            interactionType: 'WriteAction',
+            userInteractionCount: 3,
+          },
+          hasMemberProgram: {
+            name: 'Shop Plus',
+            description: 'Member prices and points',
+            url: '/members',
+            hasTiers: {
+              name: 'Gold',
+              hasTierBenefit: ['TierBenefitLoyaltyPoints', 'TierBenefitLoyaltyPrice'],
+              hasTierRequirement: {
+                currency: 'AUD',
+                value: 100,
+              },
+              membershipPointsEarned: {
+                value: 2,
+              },
+              url: '/members/gold',
+            },
+          },
+          hasShippingService: {
+            name: 'Standard',
+            fulfillmentType: 'FulfillmentTypeDelivery',
+            handlingTime: {
+              businessDays: ['Monday', 'Tuesday'],
+              duration: {
+                minValue: 0,
+                maxValue: 2,
+                unitCode: 'DAY',
+              },
+            },
+            shippingConditions: {
+              shippingDestination: {
+                addressCountry: 'AU',
+              },
+              shippingRate: {
+                currency: 'AUD',
+                value: 10,
+              },
+              transitTime: {
+                duration: {
+                  minValue: 2,
+                  maxValue: 4,
+                  unitCode: 'DAY',
+                },
+              },
+            },
+          },
+        }),
+      ])
+
+      const [organization] = await injectSchemaOrg(head)
+
+      expect(organization).toMatchObject({
+        agentInteractionStatistic: {
+          '@type': 'InteractionCounter',
+        },
+        identifier: {
+          '@type': 'PropertyValue',
+        },
+        hasMemberProgram: {
+          '@type': 'MemberProgram',
+          'hasTiers': {
+            '@type': 'MemberProgramTier',
+            'hasTierBenefit': [
+              'https://schema.org/TierBenefitLoyaltyPoints',
+              'https://schema.org/TierBenefitLoyaltyPrice',
+            ],
+            'hasTierRequirement': {
+              '@type': 'MonetaryAmount',
+            },
+            'membershipPointsEarned': {
+              '@type': 'QuantitativeValue',
+              'value': 2,
+            },
+            'url': 'https://example.com/members/gold',
+          },
+          'url': 'https://example.com/members',
+        },
+        hasShippingService: {
+          '@type': 'ShippingService',
+          'fulfillmentType': 'https://schema.org/FulfillmentTypeDelivery',
+          'handlingTime': {
+            '@type': 'ServicePeriod',
+            'duration': {
+              '@type': 'QuantitativeValue',
+            },
+          },
+          'shippingConditions': {
+            '@type': 'ShippingConditions',
+            'shippingDestination': {
+              '@type': 'DefinedRegion',
+            },
+            'shippingRate': {
+              '@type': 'MonetaryAmount',
+            },
+            'transitTime': {
+              '@type': 'ServicePeriod',
+            },
+          },
+        },
+      })
+    })
+  })
 })

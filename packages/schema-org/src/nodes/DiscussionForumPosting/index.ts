@@ -1,19 +1,18 @@
-import type { SchemaOrgGraph } from '../../core'
 import type {
+  DigitalSourceType,
   Identity,
   IdReference,
+  InteractionCounter,
   NodeRelation,
   NodeRelations,
-  OptionalSchemaOrgPrefix,
   ResolvableDate,
   Thing,
 } from '../../types'
 import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
 import type { WebPage } from '../WebPage'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
-  asArray,
   idReference,
   resolvableDateToIso,
   setIfEmpty,
@@ -23,26 +22,6 @@ import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 import { videoResolver } from '../Video'
 import { PrimaryWebPageId } from '../WebPage'
-
-type DiscussionInteractionType = OptionalSchemaOrgPrefix<
-  'LikeAction'
-  | 'DislikeAction'
-  | 'ViewAction'
-  | 'CommentAction'
-  | 'ReplyAction'
-  | 'ShareAction'
->
-
-type DigitalSourceType = OptionalSchemaOrgPrefix<
-  'TrainedAlgorithmicMediaDigitalSource'
-  | 'AlgorithmicMediaDigitalSource'
->
-
-export interface InteractionCounter extends Thing {
-  '@type'?: 'InteractionCounter'
-  'interactionType': DiscussionInteractionType
-  'userInteractionCount': number
-}
 
 interface DiscussionContentFields {
   image?: NodeRelations<ImageObject | string>
@@ -92,24 +71,15 @@ type ExternalDiscussionContent = DiscussionContentFields & { url: string }
 export type DiscussionForumPostingSimple = DiscussionForumPostingBase & (DiscussionContent | ExternalDiscussionContent)
 export type DiscussionForumPosting = DiscussionForumPostingSimple
 
-function identityResolver(input: NodeRelation<Identity>) {
-  if (typeof input !== 'object' || !input)
-    return personResolver
-
-  const types = asArray(input['@type'])
-  return types.includes('Organization') ? organizationResolver : personResolver
-}
-
-function resolveIdentity(input: NodeRelation<Identity>, ctx: SchemaOrgGraph) {
-  return resolveRelation(input, ctx, identityResolver(input)) as NodeRelation<Identity>
-}
-
 export const discussionCommentResolver = defineSchemaOrgResolver<DiscussionComment>({
   defaults: {
     '@type': 'Comment',
   },
   resolve(node, ctx) {
-    node.author = resolveIdentity(node.author, ctx)
+    node.author = resolveIdentityRelation(node.author, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }) as NodeRelation<Identity>
     node.comment = resolveRelation(node.comment, ctx, discussionCommentResolver)
     node.dateModified = resolvableDateToIso(node.dateModified)
     node.datePublished = resolvableDateToIso(node.datePublished)!
@@ -132,7 +102,10 @@ export const discussionForumPostingResolver = defineSchemaOrgResolver<Discussion
   ],
   idPrefix: ['url', '#discussion-forum-posting'],
   resolve(node, ctx) {
-    node.author = resolveIdentity(node.author, ctx)
+    node.author = resolveIdentityRelation(node.author, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }) as NodeRelation<Identity>
     node.comment = resolveRelation(node.comment, ctx, discussionCommentResolver)
     node.dateModified = resolvableDateToIso(node.dateModified)
     node.datePublished = resolvableDateToIso(node.datePublished)!

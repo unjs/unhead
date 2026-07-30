@@ -51,7 +51,7 @@ export interface CourseSimple extends Thing {
   /**
    * A description of the course. Display limit of 60 characters.
    */
-  description?: string
+  description: string
   /**
    * The course code or identifier.
    */

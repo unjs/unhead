@@ -1,8 +1,12 @@
-import type { Thing } from '../../types'
-import { defineSchemaOrgResolver } from '../../core'
+import type { NodeRelation, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
 
-export interface AggregateRatingSimple extends Thing {
+interface AggregateRatingBase extends Thing {
   '@type'?: 'AggregateRating'
+  /**
+   * The item being rated. Required when AggregateRating is a standalone root.
+   */
+  'itemReviewed'?: NodeRelation<Thing>
   /**
    * The total number of ratings for the item on your site. At least one of ratingCount or reviewCount is required.
    */
@@ -30,10 +34,25 @@ export interface AggregateRatingSimple extends Thing {
   'worstRating'?: number | string
 }
 
-export interface AggregateRating extends AggregateRatingSimple {}
+type RatingCount
+  = | {
+    ratingCount: number | string
+    reviewCount?: number | string
+  }
+  | {
+    ratingCount?: number | string
+    reviewCount: number | string
+  }
+
+export type AggregateRatingSimple = AggregateRatingBase & RatingCount
+export type AggregateRating = AggregateRatingSimple
 
 export const aggregateRatingResolver = defineSchemaOrgResolver<AggregateRating>({
   defaults: {
     '@type': 'AggregateRating',
+  },
+  resolve(node, ctx) {
+    node.itemReviewed = resolveRelation(node.itemReviewed, ctx)
+    return node
   },
 })

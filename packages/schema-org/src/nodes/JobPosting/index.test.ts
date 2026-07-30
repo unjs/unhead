@@ -56,4 +56,54 @@ describe('defineJobPosting', () => {
       `)
     })
   })
+
+  it('supports fully remote job requirements', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineJobPosting({
+          title: 'Maintainer',
+          description: 'Maintain Unhead',
+          datePosted: new Date('2026-01-01T00:00:00.000Z'),
+          hiringOrganization: {
+            name: 'Unhead',
+          },
+          jobLocationType: 'TELECOMMUTE',
+          applicantLocationRequirements: {
+            '@type': 'Country',
+            'name': 'Australia',
+          },
+          educationRequirements: {
+            credentialCategory: 'bachelor degree',
+          },
+          experienceRequirements: {
+            monthsOfExperience: 24,
+          },
+          identifier: {
+            name: 'Job ID',
+            value: 'maintainer-1',
+          },
+        }),
+      ])
+
+      const [job] = await injectSchemaOrg(head)
+
+      expect(job).toMatchObject({
+        applicantLocationRequirements: {
+          '@type': 'Country',
+        },
+        datePosted: '2026-01-01T00:00:00.000Z',
+        educationRequirements: {
+          '@type': 'EducationalOccupationalCredential',
+        },
+        experienceRequirements: {
+          '@type': 'OccupationalExperienceRequirements',
+        },
+        identifier: {
+          '@type': 'PropertyValue',
+        },
+        jobLocationType: 'TELECOMMUTE',
+      })
+      expect(job).not.toHaveProperty('jobLocation')
+    })
+  })
 })

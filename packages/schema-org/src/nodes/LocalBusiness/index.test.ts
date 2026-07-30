@@ -143,6 +143,9 @@ describe('defineLocalBusiness', () => {
           '@id': '#my-biz-123',
           'name': 'My Custom Business',
           'logo': '/logo-1.png',
+          'address': {
+            addressCountry: 'Australia',
+          },
         }),
       ])
 
@@ -156,6 +159,10 @@ describe('defineLocalBusiness', () => {
               "Organization",
               "LocalBusiness",
             ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+            },
             "currenciesAccepted": "AUD",
             "logo": "/logo-1.png",
             "name": "My Custom Business",
@@ -163,6 +170,60 @@ describe('defineLocalBusiness', () => {
           },
         ]
       `)
+    })
+  })
+
+  it('resolves Google LocalBusiness fields', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineLocalBusiness({
+          name: 'Harbor Cafe',
+          address: {
+            addressCountry: 'AU',
+          },
+          aggregateRating: {
+            ratingCount: 5,
+            ratingValue: 4.6,
+          },
+          department: {
+            name: 'Harbor Cafe Bakery',
+            address: {
+              addressCountry: 'AU',
+            },
+          },
+          geo: {
+            latitude: -38.1,
+            longitude: 144.3,
+          },
+          menu: '/menu',
+          review: {
+            author: 'Ada',
+            reviewRating: 5,
+          },
+          servesCuisine: ['Cafe', 'Bakery'],
+        }),
+      ])
+
+      const [business] = await injectSchemaOrg(head)
+
+      expect(business).toMatchObject({
+        aggregateRating: {
+          '@type': 'AggregateRating',
+        },
+        department: {
+          '@type': [
+            'Organization',
+            'LocalBusiness',
+          ],
+        },
+        geo: {
+          '@type': 'GeoCoordinates',
+        },
+        menu: 'https://example.com/menu',
+        review: {
+          '@type': 'Review',
+        },
+      })
     })
   })
 })

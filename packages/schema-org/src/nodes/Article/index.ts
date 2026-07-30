@@ -8,7 +8,8 @@ import type {
 } from '../../types'
 import type { ImageObject } from '../Image'
 import type { VideoObject } from '../Video'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import type { SpeakableSpecification, WebPageElement } from '../WebPage'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
   asArray,
   IdentityId,
@@ -20,8 +21,10 @@ import {
   trimLength,
 } from '../../utils'
 import { isImageObject } from '../Image'
+import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
-import { PrimaryWebPageId } from '../WebPage'
+import { videoResolver } from '../Video'
+import { PrimaryWebPageId, speakableSpecificationResolver, webPageElementResolver } from '../WebPage'
 
 type ValidArticleSubTypes = 'Article' | 'BlogPosting' | 'AdvertiserContentArticle' | 'NewsArticle' | 'Report' | 'SatiricalArticle' | 'ScholarlyArticle' | 'SocialMediaPosting' | 'TechArticle'
 
@@ -99,7 +102,15 @@ export interface ArticleSimple extends Thing {
   /**
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
-  speakable?: Thing
+  speakable?: NodeRelations<SpeakableSpecification>
+  /**
+   * Whether the article is available without a subscription or registration.
+   */
+  isAccessibleForFree?: boolean
+  /**
+   * Paywalled sections in the article.
+   */
+  hasPart?: NodeRelations<WebPageElement>
   /**
    * The year from which the article holds copyright status.
    */
@@ -139,10 +150,27 @@ export const articleResolver = defineSchemaOrgResolver<Article>({
   ],
   idPrefix: ['url', PrimaryArticleId],
   resolve(node, ctx) {
-    node.author = resolveRelation(node.author, ctx, personResolver, {
+    node.author = resolveIdentityRelation(node.author, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
       root: true,
     })
-    node.publisher = resolveRelation(node.publisher, ctx)
+    node.publisher = resolveIdentityRelation(node.publisher, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
+      root: true,
+    })
+    node.copyrightHolder = resolveIdentityRelation(node.copyrightHolder, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
+      root: true,
+    })
+    node.hasPart = resolveRelation(node.hasPart, ctx, webPageElementResolver)
+    node.speakable = resolveRelation(node.speakable, ctx, speakableSpecificationResolver)
+    node.video = resolveRelation(node.video, ctx, videoResolver)
     node.dateModified = resolvableDateToIso(node.dateModified)
     node.datePublished = resolvableDateToIso(node.datePublished)
     resolveDefaultType(node, 'Article')

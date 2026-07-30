@@ -74,4 +74,61 @@ describe('defineVideo', () => {
       expect(video.thumbnailUrl).toBe('https://example.com/poster.jpg')
     })
   })
+
+  it('supports Google video enhancements without a generic url', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineVideo({
+          name: 'Launch stream',
+          thumbnailUrl: '/poster.jpg',
+          uploadDate: new Date(Date.UTC(2026, 0, 1)),
+          contentUrl: '/video.mp4',
+          expires: new Date(Date.UTC(2026, 1, 1)),
+          regionsAllowed: ['AU', 'NZ'],
+          interactionStatistic: {
+            '@type': 'InteractionCounter',
+            'interactionType': {
+              '@type': 'WatchAction',
+            },
+            'userInteractionCount': 12,
+          },
+          hasPart: {
+            name: 'Introduction',
+            startOffset: 0,
+            url: '/watch?t=0',
+          },
+          publication: {
+            isLiveBroadcast: true,
+            startDate: new Date(Date.UTC(2026, 0, 1)),
+            endDate: new Date(Date.UTC(2026, 0, 1, 1)),
+          },
+          potentialAction: {
+            'target': '/watch?t={seek_to_second_number}',
+            'startOffset-input': 'required name=seek_to_second_number',
+          },
+        }),
+      ])
+
+      const [video] = await injectSchemaOrg(head)
+
+      expect(video).toMatchObject({
+        contentUrl: 'https://example.com/video.mp4',
+        expires: '2026-02-01T00:00:00.000Z',
+        hasPart: {
+          '@type': 'Clip',
+          'url': 'https://example.com/watch?t=0',
+        },
+        potentialAction: {
+          '@type': 'SeekToAction',
+          'target': 'https://example.com/watch?t={seek_to_second_number}',
+        },
+        publication: {
+          '@type': 'BroadcastEvent',
+          'endDate': '2026-01-01T01:00:00.000Z',
+          'startDate': '2026-01-01T00:00:00.000Z',
+        },
+      })
+      expect(video).not.toHaveProperty('url')
+    })
+  })
 })
