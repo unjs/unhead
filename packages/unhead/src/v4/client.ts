@@ -2,8 +2,8 @@
  * v4 client: DOM renderer + createHead.
  * Contracts from V4_DESIGN.md 5.1: zero work until first mutation (no init
  * scan; adoption happens lazily inside the first flush), never reorder
- * existing elements (w is an SSR concern), side effects tracked as data
- * records undone by a switch, renders batched on a microtask.
+ * existing elements (w is an SSR concern), side effects tracked as one flat
+ * stride-3 array per render, renders batched on a microtask.
  */
 import type { EntryOptions, Tag, V4Head } from './core'
 import { compileEntry, TitlePlugin } from './compile'
@@ -11,32 +11,40 @@ import {
   createCore,
   F_ID,
   F_POS,
+  F_RAW,
   F_REMOVED,
   INNER_CONTENT,
   POS_SHIFT,
   T_BODY_ATTRS,
   T_HTML_ATTRS,
+  T_LINK,
+  T_META,
+  T_NOSCRIPT,
+  T_STYLE,
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
 } from './core'
 
-// side-effect kinds; records are [kind, target, key] tuples in a keyed map
+// side-effect kinds; effects are one flat stride-3 array per render
+// (kind, target, data) reclaimed by a lockstep diff against the previous
+// render (V4_DESIGN.md 5.1/7: flat measured 2.2x over closures, keyed
+// records were speed-neutral). Kinds above FX_EVT carry an undo payload in
+// the data slot rather than an identity: a matching (kind, target) pair is
+// the same effect even when the payload changed.
 const FX_ATTR = 0
 const FX_CLASS = 1
 const FX_STYLE = 2
-const FX_TEXT = 3
-const FX_HTML = 4
-const FX_EL = 5
-const FX_TITLE = 6
-const FX_EVT = 7
-
-type Fx = [number, any, string]
+const FX_EL = 3
+const FX_EVT = 4
+const FX_TEXT = 5
+const FX_HTML = 6
+const FX_TITLE = 7
 
 interface DomState {
-  adopted: boolean
   els: Map<string, Element>
-  fx: Map<string, Fx>
+  /** flat stride-3 (kind, target, data) effects applied by the last render */
+  fx: any[]
   listeners: Map<string, [EventTarget, string, EventListener, EventListener]>
   title: string
 }
@@ -72,27 +80,22 @@ function hashTag(t: Tag): string {
   return h
 }
 
-const TAG_IDS: Record<string, number> = /* @__PURE__ */ (() => {
-  const m: Record<string, number> = Object.create(null)
-  for (let i = 0; i < TAG_NAMES.length; i++) m[TAG_NAMES[i]] = i
-  return m
-})()
-
 // lazy adoption: index existing (SSR-rendered) elements by the same identity
 // rules the compiler uses, so the first flush reuses them instead of duplicating
 function adopt(doc: Document, els: Map<string, Element>) {
   for (const el of [...doc.head.children, ...doc.body.children]) {
-    const name = el.tagName.toLowerCase()
-    const id = TAG_IDS[name]
-    if (id === undefined || id === T_HTML_ATTRS || id === T_BODY_ATTRS || id === T_TITLE)
+    const id = TAG_NAMES.indexOf(el.tagName.toLowerCase() as any)
+    if (id < 0 || id === T_HTML_ATTRS || id === T_BODY_ATTRS || id === T_TITLE)
       continue
     const p: Record<string, any> = {}
-    for (const a of el.getAttributeNames()) p[a] = el.getAttribute(a) === '' ? true : el.getAttribute(a)
+    for (const a of el.getAttributeNames()) {
+      const v = el.getAttribute(a)
+      p[a] = v === '' ? true : v
+    }
     const c = el.innerHTML || null
-    const pseudo: Tag = { f: id, w: 0, o: 0, d: '', p, c }
     // recompute identity from DOM state; compile identity rules are in compile.ts,
     // duplicated minimally here via the pseudo-tag hash + common fast paths
-    const key = domIdentity(id, p, c, (el.getAttribute('data-hid') as string | null)) || hashTag(pseudo)
+    const key = domIdentity(id, p, c) || hashTag({ f: id, w: 0, o: 0, d: '', p, c })
     let k = key
     let n = 1
     while (els.has(k)) k = `${key}:${n++}`
@@ -101,47 +104,54 @@ function adopt(doc: Document, els: Map<string, Element>) {
 }
 
 // mirror of compile.ts identity() over adopted DOM props (kept tiny; hash covers the rest)
-function domIdentity(id: number, p: Record<string, any>, c: string | null, hid: string | null): string {
+function domIdentity(id: number, p: Record<string, any>, c: string | null): string {
   const name = TAG_NAMES[id]
   if (p.charset)
     return 'charset'
-  if (id === TAG_IDS.meta) {
+  if (id === T_META) {
     const v = p.name ?? p.property ?? p['http-equiv']
     if (v !== undefined)
       return `meta:${v}`
   }
+  const hid = p['data-hid']
   if (hid)
     return `${name}:key:${hid}`
   if (p.id)
     return `${name}:id:${p.id}`
-  if (id === TAG_IDS.link) {
+  if (id === T_LINK) {
     if (p.rel === 'canonical')
       return 'canonical'
     if (p.rel && p.href)
       return `link:${p.rel}:${p.href}`
   }
-  if (c && (id >= TAG_IDS.style && id <= TAG_IDS.noscript))
-    return `${name}:content:${c}`
-  return ''
+  return c && id >= T_STYLE && id <= T_NOSCRIPT ? `${name}:content:${c}` : ''
 }
 
-function undoFx(r: Fx, state: DomState, doc: Document) {
-  const [kind, t, k] = r
+// effect i in a equals effect j in b (payload kinds match on target alone)
+function sameFx(a: any[], b: any[], i: number, j: number): boolean {
+  return a[i] === b[j] && a[i + 1] === b[j + 1] && (a[i] > FX_EVT || a[i + 2] === b[j + 2])
+}
+
+// membership key for the seen-set (payload kinds identify by kind alone)
+function fxKey(a: any[], i: number): string | number {
+  return a[i] > FX_EVT ? a[i] : `${a[i]}\0${a[i + 2]}`
+}
+
+function setAttr(el: Element, k: string, v: any) {
+  const sv = v === true ? '' : String(v)
+  el.getAttribute(k) !== sv && el.setAttribute(k, sv)
+}
+
+function undoFx(kind: number, t: any, k: any, state: DomState, doc: Document) {
   switch (kind) {
-    case FX_ATTR: (t as Element).removeAttribute(k)
+    case FX_ATTR: t.removeAttribute(k)
       break
-    case FX_CLASS: (t as Element).classList.remove(k)
+    case FX_CLASS: t.classList.remove(k)
       break
-    case FX_STYLE: (t as HTMLElement).style.removeProperty(k)
+    case FX_STYLE: t.style.removeProperty(k)
       break
-    case FX_TEXT: (t as Element).textContent === k && ((t as Element).textContent = '')
-      break
-    case FX_HTML: (t as Element).innerHTML === k && ((t as Element).innerHTML = '')
-      break
-    case FX_EL: (t as Element).remove()
+    case FX_EL: t.remove()
       state.els.delete(k)
-      break
-    case FX_TITLE: doc.title = k
       break
     case FX_EVT: {
       const l = state.listeners.get(k)
@@ -151,6 +161,13 @@ function undoFx(r: Fx, state: DomState, doc: Document) {
       }
       break
     }
+    case FX_TEXT:
+    case FX_HTML: {
+      const prop = kind === FX_TEXT ? 'textContent' : 'innerHTML'
+      t[prop] === k && (t[prop] = '')
+      break
+    }
+    default: doc.title = k
   }
 }
 
@@ -161,16 +178,12 @@ function renderDOM(head: ClientHead): boolean {
   head.dirty = false
   let state = head._dom
   if (!state) {
-    state = head._dom = { adopted: false, els: new Map(), fx: new Map(), listeners: new Map(), title: doc.title }
+    state = head._dom = { els: new Map(), fx: [], listeners: new Map(), title: doc.title }
     adopt(doc, state.els)
-    state.adopted = true
   }
   const prev = state.fx
-  const next = new Map<string, Fx>()
-  const track = (key: string, kind: number, target: any, data: string) => {
-    next.set(key, prev.get(key) || [kind, target, data])
-    prev.delete(key)
-  }
+  const fx: any[] = []
+  state.fx = fx
 
   const tags = head.resolve()
   const dupes: Record<string, number> = Object.create(null)
@@ -190,33 +203,32 @@ function renderDOM(head: ClientHead): boolean {
     if (id === T_TITLE) {
       if (doc.title !== t.c)
         doc.title = t.c ?? ''
-      track('title', FX_TITLE, null, state.title)
+      fx.push(FX_TITLE, 0, state.title)
       continue
     }
 
     // per-prop attr tags apply directly to documentElement/body
     if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
-      const el = id === T_HTML_ATTRS ? doc.documentElement : doc.body
+      const el: any = id === T_HTML_ATTRS ? doc.documentElement : doc.body
       const p = t.p!
       for (const k in p) {
         const v = p[k]
         if (k === 'class') {
-          track(`${TAG_NAMES[id]}:c:${v}`, FX_CLASS, el, v)
+          fx.push(FX_CLASS, el, v)
           el.classList.contains(v) || el.classList.add(v)
         }
         else if (k === 'style') {
           const ci = (v as string).indexOf(':')
           const sk = (v as string).slice(0, ci)
-          track(`${TAG_NAMES[id]}:s:${sk}`, FX_STYLE, el, sk)
-          ;(el as HTMLElement).style.setProperty(sk, (v as string).slice(ci + 1))
+          fx.push(FX_STYLE, el, sk)
+          el.style.setProperty(sk, (v as string).slice(ci + 1))
         }
         else if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
-          bindEvent(state, next, prev, `${TAG_NAMES[id]}:e:${k}`, el, k.slice(2), v, id === T_BODY_ATTRS ? doc.defaultView || el : el)
+          bindEvent(state, fx, TAG_NAMES[id] + k, el, k.slice(2), v, id === T_BODY_ATTRS ? doc.defaultView || el : el)
         }
         else if (v !== false && v !== null) {
-          track(`${TAG_NAMES[id]}:a:${k}`, FX_ATTR, el, k)
-          const sv = v === true ? '' : String(v)
-          el.getAttribute(k) !== sv && el.setAttribute(k, sv)
+          fx.push(FX_ATTR, el, k)
+          setAttr(el, k, v)
         }
       }
       continue
@@ -227,51 +239,49 @@ function renderDOM(head: ClientHead): boolean {
     const nth = dupes[base] || 0
     dupes[base] = nth + 1
     const key = nth ? `${base}:${nth}` : base
-    let el = state.els.get(key)
+    let el: any = state.els.get(key)
     const fresh = !el
-    if (!el) {
+    if (fresh) {
       el = doc.createElement(TAG_NAMES[id])
       state.els.set(key, el)
     }
-    track(`${key}:el`, FX_EL, el, key)
+    fx.push(FX_EL, el, key)
+    // entry tag caches are stable objects: same Tag re-rendered to the same
+    // element means every prop was applied last render, so skip the DOM reads
+    const same = el._uht === t
+    el._uht = t
 
     if (t.p) {
       for (const k in t.p) {
         const v = t.p[k]
         if (k[0] === 'o' && k[1] === 'n' && typeof v === 'function') {
-          bindEvent(state, next, prev, `${key}:e:${k}`, el, k.slice(2), v, el)
-          continue
+          bindEvent(state, fx, `${key}:${k}`, el, k.slice(2), v, el)
         }
-        if (v === false || v === null)
-          continue
-        if (k === 'class') {
+        else if (v === false || v === null) {
+          // dropped prop
+        }
+        else if (k === 'class') {
           for (const c of v as Set<string>) {
-            track(`${key}:c:${c}`, FX_CLASS, el, c)
-            el.classList.contains(c) || el.classList.add(c)
+            fx.push(FX_CLASS, el, c)
+            same || el.classList.contains(c) || el.classList.add(c)
           }
         }
         else if (k === 'style') {
           for (const [sk, sv] of v as Map<string, string>) {
-            track(`${key}:s:${sk}`, FX_STYLE, el, sk)
-            ;(el as HTMLElement).style.setProperty(sk, sv)
+            fx.push(FX_STYLE, el, sk)
+            same || el.style.setProperty(sk, sv)
           }
         }
         else {
-          track(`${key}:a:${k}`, FX_ATTR, el, k)
-          const sv = v === true ? '' : String(v)
-          el.getAttribute(k) !== sv && el.setAttribute(k, sv)
+          fx.push(FX_ATTR, el, k)
+          same || setAttr(el, k, v)
         }
       }
     }
     if (t.c != null && (INNER_CONTENT >> id & 1)) {
-      if (f & 64) { // F_RAW
-        el.innerHTML !== t.c && (el.innerHTML = t.c)
-        track(`${key}:h`, FX_HTML, el, t.c)
-      }
-      else {
-        el.textContent !== t.c && (el.textContent = t.c)
-        track(`${key}:t`, FX_TEXT, el, t.c)
-      }
+      const prop = f & F_RAW ? 'innerHTML' : 'textContent'
+      same || el[prop] === t.c || (el[prop] = t.c)
+      fx.push(f & F_RAW ? FX_HTML : FX_TEXT, el, t.c)
     }
     if (fresh) {
       // append-only: new elements go at the end of their bucket, existing
@@ -291,26 +301,49 @@ function renderDOM(head: ClientHead): boolean {
   if (closeFrag)
     doc.body.appendChild(closeFrag)
 
-  // anything tracked last render and not re-tracked gets undone
-  for (const r of prev.values()) undoFx(r, state, doc)
-  state.fx = next
+  // reclaim: undo whatever last render applied that this one didn't re-apply.
+  // steady-state rerenders resolve entirely in the lockstep prefix (no keys,
+  // no allocation); a keyed seen-set only materializes for the changed middle.
+  let s = 0
+  const pn = prev.length
+  const nn = fx.length
+  const min = pn < nn ? pn : nn
+  while (s < min && sameFx(prev, fx, s, s)) s += 3
+  if (s < pn) {
+    let pe = pn
+    let ne = nn
+    while (pe > s && ne > s && sameFx(prev, fx, pe - 3, ne - 3)) {
+      pe -= 3
+      ne -= 3
+    }
+    // effect triples are unique within a render (dedupe collapses identical
+    // identities before the renderer), so set membership is exact
+    let seen: Map<any, Set<any>> | null = null
+    if (ne > s) {
+      seen = new Map()
+      for (let i = s; i < ne; i += 3) {
+        let set = seen.get(fx[i + 1])
+        set || seen.set(fx[i + 1], set = new Set())
+        set.add(fxKey(fx, i))
+      }
+    }
+    for (let i = pe - 3; i >= s; i -= 3) {
+      if (!seen || !seen.get(prev[i + 1])?.has(fxKey(prev, i)))
+        undoFx(prev[i], prev[i + 1], prev[i + 2], state, doc)
+    }
+  }
   return true
 }
 
-function bindEvent(state: DomState, next: Map<string, Fx>, prev: Map<string, Fx>, key: string, el: Element, ev: string, src: any, target: EventTarget) {
-  const existing = state.listeners.get(key)
-  if (existing && existing[2] === src) {
-    next.set(key, prev.get(key) || [FX_EVT, null, key])
-    prev.delete(key)
-    return
+function bindEvent(state: DomState, fx: any[], key: string, el: Element, ev: string, src: any, target: EventTarget) {
+  const ex = state.listeners.get(key)
+  if (!ex || ex[2] !== src) {
+    ex && ex[0].removeEventListener(ex[1], ex[3])
+    const bound = ((e: Event) => src.call(el, e)) as EventListener
+    target.addEventListener(ev, bound)
+    state.listeners.set(key, [target, ev, src, bound])
   }
-  if (existing)
-    existing[0].removeEventListener(existing[1], existing[3])
-  const bound = ((e: Event) => src.call(el, e)) as EventListener
-  target.addEventListener(ev, bound)
-  state.listeners.set(key, [target, ev, src, bound])
-  next.set(key, [FX_EVT, null, key])
-  prev.delete(key)
+  fx.push(FX_EVT, 0, key)
 }
 
 export function createHead(options: CreateClientHeadOptions = {}): ClientHead {
