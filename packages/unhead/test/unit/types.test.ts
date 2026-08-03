@@ -1,8 +1,14 @@
-import type { SerializableHead } from '../../src/types'
+import type { SerializableHead, UnheadMeta } from '../../src/types'
+import { expectTypeOf } from 'vitest'
 import { useHead, useHeadSafe, useSeoMeta } from '../../src/composables'
 import { createHead } from '../../src/server'
+import { unpackMeta } from '../../src/utils'
 
 describe('types', () => {
+  it('types unpackMeta output as concrete meta tags', () => {
+    const meta = unpackMeta({ description: 'Page description' })
+    expectTypeOf(meta).toEqualTypeOf<UnheadMeta[]>()
+  })
   it('types useHead', () => {
     const unhead = createHead()
     useHead(unhead, {

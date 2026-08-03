@@ -1,4 +1,4 @@
-import type { MetaFlat, ResolvableHead, UnheadMeta } from '../types'
+import type { MetaFlat, UnheadMeta } from '../types'
 import { MetaTagsArrayable } from './const'
 
 export const NAMESPACES = /* @__PURE__ */ {
@@ -130,10 +130,8 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
     Object.entries(sanitizedValue)
       .map(([k, v]) => [`${key}${k === 'url' ? '' : `${k[0].toUpperCase()}${k.slice(1)}`}`, v]),
   )
-  // @ts-expect-error untyped
   return unpackMeta(input || {})
-    // @ts-expect-error untyped
-    .sort((a, b) => ((a[attr]?.length || 0) - (b[attr]?.length || 0))) as UnheadMeta[]
+    .sort((a: any, b: any) => ((a[attr]?.length || 0) - (b[attr]?.length || 0)))
 }
 
 export function resolveMetaKeyType(key: string): keyof UnheadMeta {
@@ -170,7 +168,7 @@ export function resolvePackedMetaObjectValue(value: string, key: string): string
   })
 }
 
-export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHead>['meta'] {
+export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
   const extras: UnheadMeta[] = []
   const primitives: Record<string, any> = {}
 
@@ -194,7 +192,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
 
           for (const [propKey, propValue] of Object.entries(v)) {
             const metaKey = `${key}${propKey === 'url' ? '' : `:${propKey}`}`
-            const meta = unpackMeta({ [metaKey]: propValue }) as UnheadMeta[]
+            const meta = unpackMeta({ [metaKey]: propValue })
             // @ts-expect-error untyped
             ;(propKey === 'url' ? urlProps : otherProps).push(...meta)
           }
@@ -203,7 +201,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
         }
         else {
           extras.push(...(typeof v === 'string'
-            ? unpackMeta({ [key]: v }) as UnheadMeta[]
+            ? unpackMeta({ [key]: v })
             : handleObjectEntry(key, v)))
         }
       }
@@ -276,5 +274,5 @@ export function unpackMeta<T extends MetaFlat>(input: T): Required<ResolvableHea
       : m.content === '_null'
         ? { ...m, content: null }
         : m,
-  ) as Required<ResolvableHead>['meta']
+  )
 }
