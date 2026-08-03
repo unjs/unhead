@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { useScript } from '../../../src/composables'
 import { useDelayedSerializedDom, useDOMHead } from '../../../test/util'
 
@@ -44,11 +44,12 @@ describe('dom useScript', () => {
 
     expect(instance.proxy.test('hello-world')).toEqual('hello-world')
   })
-  it('remove & re-add', async () => {
+  it('keeps removed handles terminal', async () => {
     const head = useDOMHead()
+    const src = 'https://cdn.example.com/script.js'
 
     const instance = useScript<{ test: (foo: string) => void }>(head, {
-      src: 'https://cdn.example.com/script.js',
+      src,
     })
 
     let dom = await useDelayedSerializedDom()
@@ -58,14 +59,17 @@ describe('dom useScript', () => {
     await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
     expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`[]`)
-    // reload
-    instance.load()
+    await expect(instance.load()).resolves.toBe(false)
+    expect(instance.entry).toBeUndefined()
+    expect(head._scripts?.[src]).toBeUndefined()
+
+    const nextInstance = useScript<{ test: (foo: string) => void }>(head, { src })
+    expect(nextInstance).not.toBe(instance)
+    await instance.load()
+    expect(instance.entry).toBeUndefined()
+    expect(head._scripts?.[src]).toBe(nextInstance)
     await new Promise(r => setTimeout(r, 100))
     dom = await useDelayedSerializedDom()
-    expect(dom.split('\n').filter(l => l.trim().startsWith('<script'))).toMatchInlineSnapshot(`
-      [
-        "<script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js" data-onload="" data-onerror=""></script></head>",
-      ]
-    `)
+    expect(dom).toContain('<script defer="" fetchpriority="low" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://cdn.example.com/script.js"')
   })
 })
