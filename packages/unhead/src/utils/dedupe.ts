@@ -13,10 +13,14 @@ const StandardSingleMetaTags = new Set([
 ])
 
 export function isMetaArrayDupeKey(v: string) {
-  const parts = v.split(':')
-  if (!parts.length)
+  const i = v.indexOf(':')
+  if (i === -1)
     return false
-  return MetaTagsArrayable.has(parts[1])
+  const j = v.indexOf(':', i + 1)
+  const namespace = v.slice(i + 1, j === -1 ? v.length : j)
+  if (namespace === 'twitter')
+    return v === 'meta:twitter:image' || v.startsWith('meta:twitter:image:')
+  return MetaTagsArrayable.has(namespace)
 }
 
 export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
