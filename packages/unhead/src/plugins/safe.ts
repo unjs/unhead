@@ -2,6 +2,7 @@ import type { HeadSafe } from '../types/safeSchema'
 import type { RawInput } from '../types/schema'
 import type { HeadTag } from '../types/tags'
 import { hasContent } from '../utils/const'
+import { isUnsafeKey } from '../utils/unsafeKey'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const WhitelistAttributes = {
@@ -98,7 +99,7 @@ function stripProtoKeys(obj: any): any {
   if (obj && typeof obj === 'object') {
     const clean: Record<string, any> = {}
     for (const key of Object.keys(obj)) {
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype')
+      if (isUnsafeKey(key))
         continue
       clean[key] = stripProtoKeys(obj[key])
     }

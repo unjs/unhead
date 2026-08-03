@@ -1,4 +1,5 @@
 import type { PropResolver } from '../types'
+import { isUnsafeKey } from './unsafeKey'
 
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
   // Combined primitive type check
@@ -14,15 +15,39 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
   const v = resolve ? resolve(key, val) : val
 
   if (Array.isArray(v)) {
-    return v.map(r => walkResolver(r, resolve))
+    let out: any[] | undefined
+    for (let i = 0; i < v.length; i++) {
+      const resolved = walkResolver(v[i], resolve)
+      if (out) {
+        out[i] = resolved
+      }
+      else if (resolved !== v[i]) {
+        out = v.slice(0, i)
+        out[i] = resolved
+      }
+    }
+    return out || v
   }
 
   if (v?.constructor === Object) {
-    const next: Record<string, any> = {}
-    for (const k of Object.keys(v)) {
-      next[k] = walkResolver(v[k], resolve, k)
+    let next: Record<string, any> | undefined
+    for (const k in v) {
+      const unsafe = isUnsafeKey(k)
+      const resolved = unsafe ? undefined : walkResolver(v[k], resolve, k)
+      if (!next && (unsafe || resolved !== v[k])) {
+        next = {}
+        for (const previousKey in v) {
+          if (previousKey === k) {
+            break
+          }
+          next[previousKey] = v[previousKey]
+        }
+      }
+      if (next && !unsafe) {
+        next[k] = resolved
+      }
     }
-    return next
+    return next || v
   }
 
   return v
