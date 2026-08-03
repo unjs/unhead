@@ -16,7 +16,13 @@ const packageJson = JSON.parse(
 
 describe('@unhead/bundler package', () => {
   it('keeps parser packages as optional peers', () => {
-    expect(packageJson.dependencies).not.toHaveProperty('oxc-parser')
+    const runtimeDependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.optionalDependencies,
+    }
+
+    expect(runtimeDependencies).not.toHaveProperty('oxc-parser')
+    expect(runtimeDependencies).not.toHaveProperty('rolldown')
     expect(packageJson.peerDependencies?.['oxc-parser']).toBeDefined()
     expect(packageJson.peerDependenciesMeta?.['oxc-parser']).toEqual({ optional: true })
     expect(packageJson.peerDependencies?.rolldown).toBeDefined()

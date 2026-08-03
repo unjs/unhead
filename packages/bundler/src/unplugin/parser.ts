@@ -73,23 +73,24 @@ function loadParser(id: ParserId): ParserLoadResult {
   }
 }
 
-function getParser(): ParserResolutionSuccess {
-  if (cachedParser)
-    return cachedParser
-
-  const resolution = resolveParser(loadParser)
+export function resolveParserOrThrow(load: ParserLoader): ParserResolutionSuccess {
+  const resolution = resolveParser(load)
   if (resolution._tag === 'missing') {
     throw Object.assign(
       new Error(
-        'Unhead could not load a parser for its build transforms. Install rolldown or oxc-parser alongside @unhead/bundler.',
+        'Unhead build transforms require a parser. Rolldown is detected automatically. Projects without Rolldown can install oxc-parser: `pnpm add -D oxc-parser`.',
         { cause: new AggregateError(resolution.failures.map(failure => failure.cause), 'Parser resolution failed') },
       ),
       { _tag: 'MissingParserError' as const },
     )
   }
 
-  cachedParser = resolution
   return resolution
+}
+
+function getParser(): ParserResolutionSuccess {
+  cachedParser ||= resolveParserOrThrow(loadParser)
+  return cachedParser
 }
 
 export function isMissingParserError(error: unknown): error is MissingParserError {

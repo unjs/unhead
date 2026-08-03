@@ -27,6 +27,21 @@ yarn add @unhead/bundler
 pnpm add @unhead/bundler
 ```
 
+The build transforms need a parser. If Rolldown is installed, Unhead reuses
+`rolldown/utils`. Vite 8 includes Rolldown. For Vite 6 or 7 and other bundlers,
+install the Oxc fallback:
+
+```bash
+# npm
+npm install -D oxc-parser
+
+# yarn
+yarn add -D oxc-parser
+
+# pnpm
+pnpm add -D oxc-parser
+```
+
 ## Usage
 
 ### Vite Plugin
