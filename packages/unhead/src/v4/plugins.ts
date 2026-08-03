@@ -5,7 +5,7 @@
  * All resolve-slot mutation goes through ctx.patch (copy-on-write): entry tag
  * caches are shared across renders and must never be mutated in place.
  */
-import type { ResolveCtx, Tag, V4Head, V4Plugin } from './core'
+import type { V4Head, V4Plugin } from './core'
 import { F_ID, F_REMOVED, T_HTML_ATTRS, T_LINK, T_META, T_TITLE } from './core'
 
 // ---------------------------------------------------------------------------
@@ -99,37 +99,6 @@ export function useTemplateParams(head: V4Head, params: TemplateParams) {
   }
 }
 
-// raw (pre-titleTemplate) title: dedupe winner across the compiled entry caches.
-// Needed because the resolve slot runs after TitlePlugin already templated it.
-function rawTitle(head: V4Head): string {
-  let c = ''
-  let w = Number.POSITIVE_INFINITY
-  let o = -1
-  for (const e of head.entries.values()) {
-    if (!e.tags)
-      continue
-    for (const t of e.tags) {
-      if ((t.f & F_ID) === T_TITLE && (t.w < w || (t.w === w && t.o > o))) {
-        c = t.c || ''
-        w = t.w
-        o = t.o
-      }
-    }
-  }
-  return c
-}
-
-function eachTag(ctx: ResolveCtx, fn: (tag: Tag) => void) {
-  for (const s of ctx.tags) {
-    if (Array.isArray(s)) {
-      for (const t of s) fn(t)
-    }
-    else {
-      fn(s)
-    }
-  }
-}
-
 export const TemplateParamsPlugin: V4Plugin = {
   key: 'template-params',
   resolve(ctx) {
@@ -140,8 +109,9 @@ export const TemplateParamsPlugin: V4Plugin = {
     }
     const sep = p.separator || '|'
     delete p.separator
-    p.pageTitle = processTemplateParams((p.pageTitle as string) || rawTitle(ctx.head), p, sep)
-    eachTag(ctx, (tag) => {
+    // raw (pre-titleTemplate) title, published by TitlePlugin (always first)
+    p.pageTitle = processTemplateParams((p.pageTitle as string) || (ctx.shared.title as string) || '', p, sep)
+    ctx.each((tag) => {
       if (tag.f & F_REMOVED)
         return
       const id = tag.f & F_ID
@@ -181,17 +151,6 @@ export interface InferSeoMetaPluginOptions {
 
 const hasContent = (value: unknown) => typeof value === 'number' ? Number.isFinite(value) : value
 
-// final title after TitlePlugin: a lone titleTemplate is converted to a title
-// tag in place but keeps its 'titleTemplate' identity, so check both slots
-function resolvedTitle(ctx: ResolveCtx): string | undefined {
-  for (const d of ['title', 'titleTemplate']) {
-    const t = ctx.get(d)
-    if (t && !(t.f & F_REMOVED) && (t.f & F_ID) === T_TITLE)
-      return t.c ?? undefined
-  }
-  return undefined
-}
-
 export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}): V4Plugin {
   return {
     key: 'infer-seo-meta',
@@ -213,7 +172,8 @@ export function InferSeoMetaPlugin(options: InferSeoMetaPluginOptions = {}): V4P
     resolve(ctx) {
       const ogTitle = ctx.get('meta:og:title')
       if (ogTitle && !(ogTitle.f & F_REMOVED) && ogTitle.p?.['data-infer'] !== undefined) {
-        const title = resolvedTitle(ctx)
+        // final title, published by TitlePlugin (always first)
+        const title = ctx.shared.titleResolved
         const t = hasContent(title) ? String(title) : undefined
         const content = options.ogTitle ? options.ogTitle(t) : t || ''
         content
@@ -329,7 +289,7 @@ export function CanonicalPlugin(options: CanonicalPluginOptions): V4Plugin {
     },
     resolve(ctx) {
       const h = resolveHost(ctx.head)
-      eachTag(ctx, (tag) => {
+      ctx.each((tag) => {
         if (tag.f & F_REMOVED)
           return
         const id = tag.f & F_ID

@@ -275,25 +275,34 @@ export function compileEntry(input: any, seq: number, opts: EntryOptions | null)
   return tags
 }
 
-/** L1 micro-plugin: titleTemplate resolution, runs in the resolve slot. */
+/**
+ * L1 micro-plugin: titleTemplate resolution, runs in the resolve slot.
+ * Registered first by createHead, so ctx.shared.title (raw pre-template
+ * title) and ctx.shared.titleResolved (final title) are populated before
+ * any user plugin's resolve slot runs.
+ */
 export const TitlePlugin: V4Plugin = {
   key: 'title',
   resolve(ctx: ResolveCtx) {
-    const tpl = ctx.get('titleTemplate')
-    if (!tpl)
-      return
     const title = ctx.get('title')
-    const fn = tpl.p?.fn
-    let v = typeof fn === 'function' ? fn(title?.c ?? undefined) : tpl.c
-    if (typeof v === 'string')
-      v = v.replace('%s', title?.c || '')
-    if (title) {
-      ctx.patch(tpl, { f: tpl.f | F_REMOVED })
-      ctx.patch(title, v === null ? { f: title.f | F_REMOVED } : { c: v })
+    const raw = title?.c
+    ctx.shared.title = raw || ''
+    const tpl = ctx.get('titleTemplate')
+    let v: string | null | undefined = raw
+    if (tpl) {
+      const fn = tpl.p?.fn
+      v = typeof fn === 'function' ? fn(raw ?? undefined) : tpl.c
+      if (typeof v === 'string')
+        v = v.replace('%s', raw || '')
+      if (title) {
+        ctx.patch(tpl, { f: tpl.f | F_REMOVED })
+        ctx.patch(title, v === null ? { f: title.f | F_REMOVED } : { c: v })
+      }
+      else {
+        // no title tag: the template renders as the title
+        ctx.patch(tpl, v != null ? { f: (tpl.f & ~15) | T_TITLE, c: v, p: null } : { f: tpl.f | F_REMOVED })
+      }
     }
-    else {
-      // no title tag: the template renders as the title
-      ctx.patch(tpl, v != null ? { f: (tpl.f & ~15) | T_TITLE, c: v, p: null } : { f: tpl.f | F_REMOVED })
-    }
+    ctx.shared.titleResolved = v ?? undefined
   },
 }

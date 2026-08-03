@@ -55,7 +55,11 @@ export interface EntryOptions {
 
 export interface ResolveCtx {
   tags: (Tag | Tag[])[]
+  /** cross-plugin state, fresh per resolve (replaces v3 back-channels) */
+  shared: Record<string, unknown>
   get: (d: string) => Tag | undefined
+  /** flat iteration over the resolved set; arrayable slots are unrolled */
+  each: (fn: (tag: Tag) => void) => void
   /**
    * Copy-on-write mutation. Entry tag caches are shared across renders; plugins
    * must never mutate a resolved tag directly. patch() clones the tag with the
@@ -68,6 +72,10 @@ export interface ResolveCtx {
 export interface V4Plugin {
   key: string
   init?: (head: V4Head) => void
+  /** raw input, pre-compile; runs at push and entry.patch */
+  entry?: (entry: Entry, head: V4Head) => void
+  /** per-entry post-compile transform; result cached with the entry */
+  tags?: (tags: Tag[], entry: Entry, head: V4Head) => Tag[] | void
   resolve?: (ctx: ResolveCtx) => void
 }
 
@@ -81,6 +89,8 @@ export interface V4Head {
   ssr: boolean
   _c: number
   _pk: Record<string, 1>
+  _pe: NonNullable<V4Plugin['entry']>[]
+  _pt: NonNullable<V4Plugin['tags']>[]
   _pr: NonNullable<V4Plugin['resolve']>[]
   _compile: Compile
   use: (p: V4Plugin) => void
@@ -88,12 +98,17 @@ export interface V4Head {
   resolve: () => Tag[]
 }
 
-const ESC_AMP_RE = /&/g
-const ESC_LT_RE = /</g
+const ESC_TEXT_RE = /[&<>"'/]/g
+const ESC_TEXT: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#x27;', '/': '&#x2F;' }
+const ESC_JSON_RE = /[\\"<]/g
+const ESC_JSON: Record<string, string> = { '\\': '\\\\', '"': '\\"', '<': '\\u003C' }
 const ESC_QUOT_RE = /"/g
 
 // hole escape modes: 0 text, 1 attr, 2 json. `at` is the entry-level fill
 // cursor: fills are shared across a plan's tuples, consumed left to right.
+// text matches the SSR title escaping contract exactly (dual-path law);
+// json fills splice inside a JSON string literal, so quotes and backslashes
+// must escape or a fill value corrupts the document
 function fillHoles(segments: string[], modes: number, fills: readonly unknown[], at: number): string {
   let out = segments[0]
   for (let i = 0; i < segments.length - 1; i++) {
@@ -102,8 +117,8 @@ function fillHoles(segments: string[], modes: number, fills: readonly unknown[],
     out += (mode === 1
       ? (v.includes('"') ? v.replace(ESC_QUOT_RE, '&quot;') : v)
       : mode === 2
-        ? v.replace(ESC_LT_RE, '\\u003C')
-        : v.replace(ESC_AMP_RE, '&amp;').replace(ESC_LT_RE, '&lt;')) + segments[i + 1]
+        ? v.replace(ESC_JSON_RE, c => ESC_JSON[c])
+        : v.replace(ESC_TEXT_RE, c => ESC_TEXT[c])) + segments[i + 1]
   }
   return out
 }
@@ -140,14 +155,15 @@ const isArr = Array.isArray
 export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head {
   const entries = new Map<number, Entry>()
   // repeated-resolve cache: collected+sorted flat tags, invalidated by
-  // push/patch/dispose. dedupe + plugins still run per resolve (their
-  // containers are per-resolve mutable); the cached array is never mutated
+  // push/patch/dispose and by late tags-slot registration (use)
   let cAll: Tag[] | null = null
   const head: V4Head = {
     entries,
     ssr: options.ssr,
     _c: 1,
     _pk: Object.create(null),
+    _pe: [],
+    _pt: [],
     _pr: [],
     _compile: options.compile || (() => {
       throw new Error('[unhead] strict core cannot compile loose input')
@@ -156,26 +172,38 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
       if (head._pk[p.key])
         return
       head._pk[p.key] = 1
+      p.entry && head._pe.push(p.entry)
+      if (p.tags) {
+        head._pt.push(p.tags)
+        // registration cliff: cached entry tags predate this slot, drop them
+        // once so the next resolve rebuilds through it
+        for (const e of entries.values()) e.tags = null
+        cAll = null
+      }
       if (p.resolve)
         head._pr.push(p.resolve)
       p.init?.(head)
     },
     push(input, opts) {
       const i = head._c++
-      const fills = opts?.fills || null
+      // tags build lazily in resolve (plan revive included) so entry/tags
+      // slots registered between push and first render still apply
       const entry: Entry = {
         i,
         input,
-        fills,
-        tags: isArr(input) ? revivePlan(input as PlanTag[], fills, i) : null,
+        fills: opts?.fills || null,
+        tags: null,
         opts: opts || null,
       }
+      for (const fn of head._pe) fn(entry, head)
       entries.set(i, entry)
       cAll = null
       return {
         patch(next, nextFills) {
           entry.input = next
-          entry.tags = isArr(next) ? revivePlan(next as PlanTag[], nextFills || entry.fills, i) : null
+          nextFills && (entry.fills = nextFills)
+          entry.tags = null
+          for (const fn of head._pe) fn(entry, head)
           cAll = null
         },
         dispose() {
@@ -189,7 +217,15 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
       if (!all) {
         let n = 0
         for (const e of entries.values()) {
-          n += (e.tags || (e.tags = head._compile(e.input, e.i, e.opts))).length
+          let tags = e.tags
+          if (!tags) {
+            // plan revive or loose compile, then per-entry tags slots; the
+            // result is the entry's cache
+            tags = isArr(e.input) ? revivePlan(e.input as PlanTag[], e.fills, e.i) : head._compile(e.input, e.i, e.opts)
+            for (const fn of head._pt) tags = fn(tags, e, head) || tags
+            e.tags = tags
+          }
+          n += tags.length
         }
         // eslint-disable-next-line unicorn/no-new-array -- hot path, measured 2.4x over push (V4_DESIGN.md s3)
         all = cAll = new Array(n)
@@ -237,15 +273,20 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
       if (head._pr.length) {
         const ctx: ResolveCtx = {
           tags: slots,
+          shared: {},
           get: (d) => {
             const s = slots[byKey[d]]
             return isArr(s) ? s[0] : s
           },
+          each: fn => slots.forEach(s => isArr(s) ? s.forEach(fn) : fn(s)),
           patch: (tag, changes) => {
             const next = { ...tag, ...changes }
             // slot containers are per-resolve, safe to write; only the
             // entry-cached Tag objects themselves are shared
             const idx = byKey[tag.d]
+            // eslint-disable-next-line node/prefer-global/process -- bundler-defined NODE_ENV; minifiers strip the whole branch
+            if (process.env.NODE_ENV !== 'production' && idx === undefined)
+              console.warn(`[unhead] patch() target is not in the resolved set (d: "${tag.d}"); the change will not render`)
             const s = slots[idx]
             if (isArr(s)) {
               const j = s.indexOf(tag)

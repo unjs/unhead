@@ -78,7 +78,8 @@ describe('v4 ssr parity with v3', () => {
       [100, 'meta:description', ['<meta name="description" content="', '">'], 0b01],
     ], { fills: ['a <b> & c', 'say "hi"'] })
     const out = renderV4(head).headTags
-    expect(out).toBe('<title>a &lt;b> &amp; c</title><meta name="description" content="say &quot;hi&quot;">')
+    // text mode matches the SSR title escaping contract (& < > " ' /)
+    expect(out).toBe('<title>a &lt;b&gt; &amp; c</title><meta name="description" content="say &quot;hi&quot;">')
   })
 
   it('content-only script/style (no props) matches v3', () => {

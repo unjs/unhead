@@ -4,7 +4,7 @@
  * SSR payloads match; every plugin also gets a repeated-render stability test
  * (entry tag caches are shared across renders and must never be mutated).
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { useSeoMeta as useSeoMetaV3 } from '../packages/unhead/src'
 import {
   CanonicalPlugin as CanonicalPluginV3,
@@ -467,5 +467,145 @@ describe('v4 combined compat surface', () => {
     const first = renderV4(head)
     for (let i = 0; i < 5; i++) renderV4(head)
     expect(renderV4(head)).toEqual(first)
+  })
+})
+
+describe('v4 slot API revisions (design 12 items 1-4)', () => {
+  it('titlePlugin publishes shared.title/titleResolved before user plugins (registration order)', () => {
+    const head = createV4({ disableDefaults: true })
+    const seen: unknown[][] = []
+    head.use({
+      key: 'probe',
+      resolve(ctx) {
+        seen.push([ctx.shared.title, ctx.shared.titleResolved])
+      },
+    })
+    head.push({ title: 'About', titleTemplate: '%s · Site' })
+    renderV4(head)
+    // TitlePlugin is registered first by createHead, so shared is already
+    // populated when the user plugin's resolve slot runs
+    expect(seen[0]).toEqual(['About', 'About · Site'])
+  })
+
+  it('shared.titleResolved covers lone titleTemplate and plain title', () => {
+    const seen: unknown[] = []
+    const probe = { key: 'probe', resolve: (ctx: any) => seen.push(ctx.shared.titleResolved) }
+    const a = createV4({ disableDefaults: true })
+    a.use(probe)
+    a.push({ titleTemplate: 'Just a Site' })
+    renderV4(a)
+    const b = createV4({ disableDefaults: true })
+    b.use(probe)
+    b.push({ title: 'Plain' })
+    renderV4(b)
+    expect(seen).toEqual(['Just a Site', 'Plain'])
+  })
+
+  it('ctx.shared is fresh per resolve', () => {
+    const head = createV4({ disableDefaults: true })
+    const shareds: Record<string, unknown>[] = []
+    const carried: boolean[] = []
+    head.use({
+      key: 'probe',
+      resolve(ctx) {
+        carried.push('x' in ctx.shared)
+        ctx.shared.x = 1
+        shareds.push(ctx.shared)
+      },
+    })
+    head.push({ title: 'A' })
+    renderV4(head)
+    renderV4(head)
+    expect(shareds[0]).not.toBe(shareds[1])
+    expect(carried).toEqual([false, false])
+  })
+
+  it('dev-mode warn when patch() targets a tag with no identity', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const head = createV4({ disableDefaults: true })
+    head.use({
+      key: 'bad-patch',
+      resolve(ctx) {
+        ctx.each(t => !t.d && ctx.patch(t, { c: 'x' }))
+      },
+    })
+    // script with src only compiles to d: '' (positionally unique)
+    head.push({ script: [{ src: '/a.js' }] })
+    renderV4(head)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0][0])).toContain('patch()')
+    warn.mockRestore()
+  })
+
+  it('ctx.each unrolls arrayable slots', () => {
+    const head = createV4({ disableDefaults: true })
+    const seen: string[] = []
+    head.use({
+      key: 'probe',
+      resolve(ctx) {
+        ctx.each(t => seen.push(t.d))
+      },
+    })
+    head.push({ meta: [
+      { property: 'og:image', content: '/1.png' },
+      { property: 'og:image', content: '/2.png' },
+      { name: 'description', content: 'd' },
+    ] })
+    renderV4(head)
+    // both og:image tags visited despite sharing one identity slot
+    expect(seen.filter(d => d === 'meta:og:image')).toHaveLength(2)
+    expect(seen).toContain('meta:description')
+  })
+
+  it('entry slot runs pre-compile at push and patch', () => {
+    const head = createV4({ disableDefaults: true })
+    head.use({
+      key: 'entry-slot',
+      entry(e) {
+        const input = e.input as Record<string, any>
+        if (input?.title)
+          input.title = `${input.title}!`
+      },
+    })
+    const handle = head.push({ title: 'A' })
+    expect(renderV4(head).headTags).toBe('<title>A!</title>')
+    handle.patch({ title: 'B' })
+    expect(renderV4(head).headTags).toBe('<title>B!</title>')
+  })
+
+  it('tags slot transforms per entry and caches with it', () => {
+    const head = createV4({ disableDefaults: true })
+    let calls = 0
+    head.use({
+      key: 'tags-slot',
+      tags(tags) {
+        calls++
+        return tags.map(t => t.d.startsWith('meta:') ? { ...t, p: { ...t.p, 'data-v': '1' } } : t)
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'd' }] })
+    const first = renderV4(head)
+    expect(first.headTags).toBe('<meta name="description" content="d" data-v="1">')
+    renderV4(head)
+    renderV4(head)
+    expect(calls).toBe(1) // cached with the entry, not re-run per resolve
+    head.push({ meta: [{ name: 'other', content: 'o' }] })
+    renderV4(head)
+    expect(calls).toBe(2) // only the new entry compiles through the slot
+  })
+
+  it('tags slot registered after pushes transforms already-pushed entries', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push({ meta: [{ name: 'description', content: 'd' }] })
+    // plan entry: cached tags exist the moment it is pushed
+    head.push([[100, 'meta:x', '<meta name="x" content="1">']])
+    expect(renderV4(head).headTags).toBe('<meta name="description" content="d"><meta name="x" content="1">')
+    head.use({
+      key: 'late-tags',
+      tags: tags => tags.filter(t => t.d !== 'meta:description'),
+    })
+    // registration cliff: cached entry tags (loose and plan) rebuilt once
+    expect(renderV4(head).headTags).toBe('<meta name="x" content="1">')
+    expect(renderV4(head).headTags).toBe('<meta name="x" content="1">')
   })
 })
