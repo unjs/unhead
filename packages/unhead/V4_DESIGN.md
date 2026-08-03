@@ -359,3 +359,18 @@ Slot API revisions earned by the plugin ports:
 5. Lone titleTemplate converts to title but keeps `d: 'titleTemplate'`; consumers probe two keys.
 
 Known conscious divergences vs v3 (documented in tests): capo weights for importmap/speculationrules/textContent-script edge paths; htmlAttrs per-prop explosion skips boolean coercion; `{ innerHTML: null }` JSON quirk; function/ref values must be resolved by adapters pre-push; `templateParams` input key replaced by `useTemplateParams()`. DOM adoption identity gaps: base, alternate+hreflang, keyed metas fall back to hash (re-created, not adopted); fix by exporting compile's identity().
+
+### 12.1 Emitter + slot revision round (commits 7e7ad25d, 0e5359ce)
+
+`emit.ts` implements the compiler contract: `emitEntryPlan` (holes as private-use-area tokens pushed through the real compile pipeline, dual-path by construction), `emitRoutePlan` (cross-entry pre-merge with true d/w), `planToCode`, `PlanEmitError` as the bundler's deterministic bail signal. 142 tests total on the branch.
+
+Wire-format spec changes required before freezing v1 (found by the dual-path corpus):
+1. `PlanTag` needs an arrayable flag slot: revived same-`d` og:image tuples dedupe-replace; the emitter currently folds each arrayable group into one concatenated tuple and throws on interleaved groups.
+2. Attr fragments need class/style folding at emit (single fragment per attr under coarse `d`); per-token tuples would emit duplicate `class` attributes. Residual: runtime class pushes alongside sealed attr fragments duplicate the attr in renderSSRHead — bucket merge needs to parse or key prebuilt fragments.
+3. Hole fill escaping is now contract-exact: text mode == SSR title escaping (& < > " ' /), json mode escapes backslash/quote/`<` so fills cannot corrupt the JSON document. Both fixed in core fillHoles.
+4. Weight bakes at emit; holes in weight-feeding props (async/defer/src) freeze the token-derived weight, `rel`/`type` holes throw.
+5. Lone folded titleTemplate re-keys to `d: 'title'` so runtime titles can override.
+
+Slot API state: ctx.shared/each/patch-warn/entry/tags all landed (+118B gz server, dev warn is 0B prod via NODE_ENV DCE). TitlePlugin stays a plugin (sealed profiles must not pay for it) but is an L1 contract: registered first, publishes `shared.title` and `shared.titleResolved`. Plan revival is now lazy (first resolve) so the registration cliff covers plan entries.
+
+Current sizes (gz): server 3,966 / client 5,165 / sealed 1,982. Sealed crept +131 from slot plumbing in createCore across the round; if sealed budget tightens, split createCore into a slotless base for sealed profiles.
