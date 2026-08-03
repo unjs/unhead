@@ -92,36 +92,38 @@ export const organizationResolver
       const isIdentity = resolveAsGraphKey(node['@id']) === IdentityId
       const webPage = ctx.find<WebPage>(PrimaryWebPageId)
       if (node.logo && isIdentity) {
-        if (!ctx.find('#organization')) {
-        // create a node for the logo
-          const logoNode = resolveRelation(node.logo, ctx, imageResolver, {
-            root: true,
-            afterResolve(logo) {
-              logo['@id'] = prefixId(ctx.meta.host, '#logo')
-              setIfEmpty(logo, 'caption', node.name)
-            },
-          })
+        const logoInput = Array.isArray(node.logo) ? node.logo[0] : node.logo
+        const logoNode = resolveRelation(logoInput, ctx, imageResolver, {
+          root: true,
+          afterResolve(logo) {
+            logo['@id'] = prefixId(ctx.meta.host, '#logo')
+            setIfEmpty(logo, 'caption', node.name)
+          },
+        })
 
-          if (webPage && logoNode)
-            setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
+        if (webPage && logoNode)
+          setIfEmpty(webPage, 'primaryImageOfPage', idReference(logoNode))
 
-          // push a separate node that will just be used for the Logo rich result
+        if (node['@type'] === 'Organization') {
+          node.logo = logoNode
+        }
+        else if (!ctx.find('#organization')) {
+          const resolvedLogo = logoNode && typeof logoNode === 'object' && logoNode['@id']
+            ? ctx.find<ImageObject>(logoNode['@id'])
+            : null
           ctx.nodes.push({
-            // we want to make a simple node that has the essentials, this will allow parent nodes to inject
-            // as well without inserting invalid data (i.e LocalBusiness operatingHours)
             '@type': 'Organization',
             'name': node.name,
             'url': node.url,
             'sameAs': node.sameAs,
-            // 'image': idReference(logoNode),
             'address': node.address,
-            // needs to be a URL
-            'logo': resolveRelation(node.logo, ctx, imageResolver, { root: false }).url,
+            'logo': resolvedLogo?.url || resolvedLogo?.contentUrl,
             '_priority': -1,
-            '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
+            '@id': prefixId(ctx.meta.host, '#organization'),
           })
         }
-        delete node.logo
+        if (node['@type'] !== 'Organization')
+          delete node.logo
       }
 
       if (isIdentity && webPage)
