@@ -51,7 +51,7 @@ describe('resolveParser', () => {
     }))
 
     expect(() => resolveParserOrThrow(load)).toThrowError(
-      'Unhead build transforms require a parser. Rolldown is detected automatically. Projects without Rolldown can install oxc-parser: `pnpm add -D oxc-parser`.',
+      'Unhead build transforms require a parser. Rolldown is detected automatically. If Rolldown is unavailable, install oxc-parser as a development dependency.',
     )
 
     try {
