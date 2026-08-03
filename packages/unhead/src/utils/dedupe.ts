@@ -87,5 +87,6 @@ export function hashTag(tag: HeadTag) {
   const inner = tag.textContent || tag.innerHTML
   if (inner)
     return inner
-  return `${tag.tag}:${Object.entries(tag.props).map(([k, v]) => `${k}:${String(v)}`).join(',')}`
+  const keys = Object.keys(tag.props).sort()
+  return `${tag.tag}:${keys.map(k => `${k}:${String(tag.props[k])}`).join(',')}`
 }

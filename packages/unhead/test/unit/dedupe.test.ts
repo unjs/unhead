@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+
+describe('hashTag', () => {
+  it('is stable across prop insertion order', () => {
+    expect(hashTag({
+      tag: 'script',
+      props: { defer: true as any, src: '/app.js' },
+    })).toBe(hashTag({
+      tag: 'script',
+      props: { src: '/app.js', defer: true as any },
+    }))
+  })
+})
 
 describe('isMetaArrayDupeKey', () => {
   it('only treats structured Twitter images as arrayable', () => {

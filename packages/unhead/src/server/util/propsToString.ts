@@ -1,4 +1,7 @@
 /* @__PURE__ */
+import { INVALID_ATTR_NAME_RE } from '../../utils/attrs'
+import { hasOwn } from '../../utils/hasOwn'
+
 function encodeAttribute(value: string) {
   return String(value).replace(/"/g, '&quot;')
 }
@@ -8,7 +11,7 @@ export function propsToString(props: Record<string, any>) {
   let attrs = ''
 
   for (const key in props) {
-    if (!Object.hasOwn(props, key))
+    if (!hasOwn(props, key) || !key || INVALID_ATTR_NAME_RE.test(key))
       continue
 
     let value = props[key]
