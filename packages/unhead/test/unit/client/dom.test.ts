@@ -177,6 +177,122 @@ describe('dom', () => {
 // fixes — without a `key`, dropping a value usually changes the dedupe identity (fresh element,
 // no stale state), but a `key` forces reuse, so the drop has to be cleaned up explicitly.
 describe('reused element drop reconciliation', () => {
+  it('reconciles identity attributes on an adopted meta tag', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<meta name="og:title" content="Default" data-origin="external">'
+    const adopted = document.head.querySelector('meta')!
+
+    head.push({ meta: [{ property: 'og:title', content: 'Page' }] })
+
+    const meta = document.head.querySelector('meta[property="og:title"]')!
+    expect(meta).toBe(adopted)
+    expect(meta.getAttribute('name')).toBeNull()
+    expect(meta.getAttribute('content')).toBe('Page')
+    expect(meta.getAttribute('data-origin')).toBeNull()
+  })
+
+  it.each([
+    ['base target', '<base href="/" target="_blank">', { base: { href: '/' } }, 'base', 'target'],
+    ['link media', '<link rel="stylesheet" href="/app.css" media="print">', { link: [{ rel: 'stylesheet', href: '/app.css' }] }, 'link', 'media'],
+    ['script defer', '<script data-hid="app" src="/app.js" defer></script>', { script: [{ key: 'app', src: '/app.js' }] }, 'script', 'defer'],
+    ['style nonce', '<style nonce="old">body{}</style>', { style: [{ textContent: 'body{}' }] }, 'style', 'nonce'],
+    ['meta content', '<meta http-equiv="refresh" content="5">', { meta: [{ 'http-equiv': 'refresh' }] }, 'meta', 'content'],
+  ] as const)('removes stale %s from an adopted tag', (_, html, input, selector, attr) => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = html
+    const adopted = document.head.querySelector(selector)!
+
+    head.push(input as any)
+
+    expect(document.head.querySelector(selector)).toBe(adopted)
+    expect(adopted.getAttribute(attr)).toBeNull()
+  })
+
+  it('reconciles classes, styles, and attributes on adopted document elements', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.documentElement.setAttribute('class', 'server shared')
+    document.documentElement.setAttribute('style', 'color: red; background: blue')
+    document.documentElement.setAttribute('data-server', 'html')
+    document.body.setAttribute('class', 'server shared')
+    document.body.setAttribute('style', 'color: red; background: blue')
+    document.body.setAttribute('data-server', 'body')
+
+    head.push({
+      htmlAttrs: {
+        class: 'client shared',
+        style: { color: 'green' },
+      },
+      bodyAttrs: {
+        class: 'client shared',
+        style: { color: 'green' },
+      },
+    })
+
+    expect(document.documentElement.className).toBe('shared client')
+    expect(document.documentElement.style.cssText).toBe('color: green;')
+    expect(document.documentElement.getAttribute('data-server')).toBeNull()
+    expect(document.body.className).toBe('shared client')
+    expect(document.body.style.cssText).toBe('color: green;')
+    expect(document.body.getAttribute('data-server')).toBeNull()
+  })
+
+  it('clears content omitted from an adopted keyed tag', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<script data-hid="payload" type="application/json">{"stale":true}</script>'
+    const adopted = document.head.querySelector('script')!
+
+    head.push({ script: [{ key: 'payload', type: 'application/json' }] } as any)
+
+    expect(document.head.querySelector('script')).toBe(adopted)
+    expect(adopted.textContent).toBe('')
+  })
+
+  it('preserves unmatched external elements', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<meta name="external" content="keep" data-origin="external">'
+    const external = document.head.querySelector('meta')!
+
+    head.push({ title: 'Page' })
+
+    expect(document.head.querySelector('meta')).toBe(external)
+    expect(external.getAttribute('content')).toBe('keep')
+    expect(external.getAttribute('data-origin')).toBe('external')
+  })
+
+  it('preserves attributes added after adoption', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    document.head.innerHTML = '<meta name="description" content="managed">'
+    const entry = head.push({
+      bodyAttrs: {
+        class: 'managed',
+        style: { color: 'green' },
+      },
+      meta: [{ name: 'description', content: 'managed' }],
+    })
+    const meta = document.head.querySelector('meta')!
+    meta.setAttribute('data-external', 'keep')
+    document.body.classList.add('external')
+    document.body.style.setProperty('background', 'blue')
+
+    entry.patch({
+      bodyAttrs: {
+        class: 'managed',
+        style: { color: 'green' },
+      },
+      meta: [{ name: 'description', content: 'managed' }],
+    })
+
+    expect(meta.getAttribute('data-external')).toBe('keep')
+    expect(document.body.classList.contains('external')).toBe(true)
+    expect(document.body.style.getPropertyValue('background')).toBe('blue')
+  })
+
   it('updates content in place (no stale value)', () => {
     const head = useDOMHead()
     const document = head.resolvedOptions.document!
