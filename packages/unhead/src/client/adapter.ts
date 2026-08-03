@@ -1,6 +1,12 @@
 import type { HookableCore } from 'hookable'
 import type { ActiveHeadEntry, ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
+import { callHook } from '../utils/hooks'
+
+type EntryDisposeState
+  = | { _tag: 'active' }
+    | { _tag: 'deferred' }
+    | { _tag: 'disposed' }
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
   hooks: HookableCore<ClientHeadHooks>
@@ -27,11 +33,26 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
       ? hooks.hook('dom:rendered', entryOptions.onRendered as any)
       : undefined
     const active = corePush(input, entryOptions)
+    if (active._i === -1) {
+      unhook?.()
+      return active
+    }
     const entry = core.entries.get(active._i)
     if (entry)
       entry._o = input
     head.dirty = true
     hooks.callHook('entries:updated', head)
+    let disposeState: EntryDisposeState = { _tag: 'active' }
+    const finalizeDispose = () => {
+      if (disposeState._tag === 'disposed')
+        return
+      disposeState = { _tag: 'disposed' }
+      unhook?.()
+      if (core.entries.has(active._i)) {
+        active.dispose()
+        head.invalidate()
+      }
+    }
     return {
       _i: active._i,
       patch(input: T) {
@@ -40,11 +61,23 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
         hooks.callHook('entries:updated', head)
       },
       dispose() {
-        unhook?.()
-        if (core.entries.has(active._i)) {
-          active.dispose()
-          head.invalidate()
-        }
+        if (disposeState._tag !== 'active')
+          return
+        const storedEntry = core.entries.get(active._i)
+        if (!storedEntry)
+          return finalizeDispose()
+
+        const deferred: PromiseLike<unknown>[] = []
+        callHook(head, 'entries:beforeDispose', {
+          entry: storedEntry,
+          defer: (promise: PromiseLike<unknown>) => deferred.push(promise),
+        })
+        if (!deferred.length)
+          return finalizeDispose()
+
+        disposeState = { _tag: 'deferred' }
+        // Rejected navigation or suspense promises must still release the entry.
+        void Promise.allSettled(deferred).then(finalizeDispose)
       },
     }
   }
