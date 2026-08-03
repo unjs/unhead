@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { resolveParser } from '../src/unplugin/parser'
+import { resolveParser, resolveParserOrThrow } from '../src/unplugin/parser'
 
 const parseSync = vi.fn()
 
@@ -42,5 +42,26 @@ describe('resolveParser', () => {
     expect(result._tag).toBe('missing')
     if (result._tag === 'missing')
       expect(result.failures.map(failure => failure.id)).toEqual(['rolldown/utils', 'oxc-parser'])
+  })
+
+  it('explains how to install the fallback when neither parser is available', () => {
+    const load = vi.fn(id => ({
+      _tag: 'error' as const,
+      cause: new Error(`${id} is not installed`),
+    }))
+
+    expect(() => resolveParserOrThrow(load)).toThrowError(
+      'Unhead build transforms require a parser. Rolldown is detected automatically. If Rolldown is unavailable, install oxc-parser as a development dependency.',
+    )
+
+    try {
+      resolveParserOrThrow(load)
+    }
+    catch (error) {
+      expect(error).toMatchObject({
+        _tag: 'MissingParserError',
+        cause: expect.any(AggregateError),
+      })
+    }
   })
 })

@@ -23,10 +23,9 @@ overrides:
   # Keep Vite on one peer variant so plugin types share the same module identity.
   '@vitejs/devtools': 0.4.1
   chokidar: 5.0.0
-  # dedupe rolldown so unplugin resolves a single UnpluginInstance type across the
-  # workspace; otherwise @unhead/bundler (rolldown@1.0.3) and the framework packages
-  # (rolldown@1.1.2) produce incompatible plugin types and vue-tsc fails on bundler.ts
-  rolldown: 1.1.2
+  # Keep Rolldown on one peer variant so unplugin resolves a single
+  # UnpluginInstance type across the workspace.
+  rolldown: 1.2.1
   unhead@3.1.8: workspace:*
 catalog:
   '@angular-devkit/build-angular': ^21.2.19
