@@ -18,7 +18,7 @@ import type {
 } from './types'
 import { hasOwn } from '../utils/hasOwn'
 import { callHook } from '../utils/hooks'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptProxy } from './proxy'
 import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'
 
@@ -469,12 +469,9 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     throw error
   }
   if (resolveApi || use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
+    const { proxy, resolve } = createScriptProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
-    script.onLoaded((instance) => {
-      replayProxyRecordings(instance, stack)
-      script.proxy = createForwardingProxy(instance)
-    })
+    script.onLoaded(resolve)
   }
   // need to make sure it's not already registered
   const warmupStrategy = _warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false)
