@@ -1,8 +1,33 @@
 import { expect } from 'vitest'
+import { organizationResolver } from '.'
 import { defineOrganization, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
+  it('keeps a logo when the identity type is resolved from the default', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        {
+          name: 'test',
+          logo: '/logo.png',
+          _resolver: {
+            ...organizationResolver,
+            defaults: undefined,
+          },
+        },
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const identity = graph.find(node => node['@id'] === 'https://example.com/#identity')
+
+      expect(identity).toMatchObject({
+        '@type': 'Organization',
+        'logo': { '@id': 'https://example.com/#logo' },
+      })
+      expect(graph.some(node => node['@id'] === 'https://example.com/#organization')).toBe(false)
+    })
+  })
+
   it('keeps a logo on the identity organization', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
