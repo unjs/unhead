@@ -15,18 +15,18 @@
     "@unhead/schema-org": "workspace:*",
     "compression": "^1.8.1",
     "express": "^5.2.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "sirv": "^3.0.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.1.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
     "cross-env": "^10.1.0",
     "typescript": "5.8.3",
-    "vite": "^8.1.5"
+    "vite": "^8.2.0"
   }
 }
