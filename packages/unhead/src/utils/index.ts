@@ -1,4 +1,15 @@
-export * from './const'
+export {
+  DupeableTags,
+  HasElementTags,
+  MetaTagsArrayable,
+  ScriptNetworkEvents,
+  SelfClosingTags,
+  TagConfigKeys,
+  TagsWithInnerContent,
+  UniqueTags,
+  UsesMergeStrategy,
+  ValidHeadTags,
+} from './const'
 export { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 export { resolveMetaKeyType, resolveMetaKeyValue, resolvePackedMetaObjectValue, unpackMeta } from './meta'
 export { normalizeEntryToTags, normalizeProps } from './normalize'

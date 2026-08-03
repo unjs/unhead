@@ -3,6 +3,27 @@ import { useHead } from '../../../src'
 import { basicSchema, useDelayedSerializedDom, useDOMHead } from '../../util'
 
 describe('dom', () => {
+  it('renders numeric zero meta content', async () => {
+    const head = useDOMHead()
+
+    head.push({
+      meta: [{ name: 'numeric-zero', content: 0 }],
+    })
+
+    expect(await useDelayedSerializedDom()).toContain('<meta name="numeric-zero" content="0">')
+  })
+
+  it('renders a numeric zero title', async () => {
+    const head = useDOMHead()
+
+    head.push({
+      title: 0,
+    })
+
+    await useDelayedSerializedDom()
+    expect(head.resolvedOptions.document?.title).toBe('0')
+  })
+
   it('basic', async () => {
     const head = useDOMHead()
 
