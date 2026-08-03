@@ -3,7 +3,7 @@ import type { AsVoidFunctions } from '../../../src/scripts/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../../src/scripts/proxy'
+import { createScriptProxy } from '../../../src/scripts/proxy'
 import { createSpyProxy } from '../../../src/scripts/utils'
 
 interface Api {
@@ -31,7 +31,7 @@ interface GoogleAnalytics {
 
 describe('proxy chain', () => {
   it('augments types', () => {
-    const proxy = createNoopedRecordingProxy<Api>()
+    const proxy = createScriptProxy<Api>()
     expectTypeOf(proxy.proxy._paq).toBeArray()
     expectTypeOf(proxy.proxy.doSomething).toBeFunction()
     expectTypeOf(proxy.proxy.doSomething).returns.toBeVoid()
@@ -40,7 +40,7 @@ describe('proxy chain', () => {
   })
   it('e2e', async () => {
     // do recording
-    const { proxy, stack } = createNoopedRecordingProxy<Api>()
+    const { proxy, stack, resolve } = createScriptProxy<Api>()
     const script = { proxy, instance: null }
     script.proxy._paq.push(['test'])
     script.proxy.say('hello world')
@@ -66,10 +66,9 @@ describe('proxy chain', () => {
     const consoleMock = vi.spyOn(console, 'log').mockImplementation((...args) => {
       log('mocked', ...args)
     })
+    // replay recording and switch the (same) proxy over to forwarding
     // @ts-expect-error untyped
-    replayProxyRecordings(script.instance, stack)
-    // @ts-expect-error untyped
-    script.proxy = createForwardingProxy(script.instance)
+    resolve(script.instance)
     expect(consoleMock).toHaveBeenCalledWith('hello world')
     script.proxy.say('proxy updated!')
     expect(consoleMock).toHaveBeenCalledWith('proxy updated!')
@@ -147,6 +146,60 @@ describe('proxy chain', () => {
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
   })
 
+  it('applies vendor methods against their raw owner', () => {
+    // native APIs brand check their receiver, so they must never see the proxy as `this`
+    const branded = new WeakSet<object>()
+    const canvas = {
+      getBoundingClientRect() {
+        if (!branded.has(this)) {
+          throw new TypeError('Illegal invocation')
+        }
+        return { width: 120 }
+      },
+    }
+    branded.add(canvas)
+    const api = {
+      canvas,
+      addConfetti() {
+        return this.canvas.getBoundingClientRect().width
+      },
+    }
+
+    const { proxy, resolve } = createScriptProxy<typeof api>()
+    resolve(api)
+
+    expect(() => proxy.addConfetti()).not.toThrow()
+    // nested objects are handed back raw so vendor internals keep working
+    expect(proxy.canvas).toBe(canvas)
+  })
+
+  it('keeps references taken before load working after load', () => {
+    const greet = vi.fn((s: string) => s)
+    const { proxy, resolve } = createScriptProxy<{ greet: (s: string) => string }>()
+    // destructured in setup, before the script has loaded
+    const heldProxy = proxy
+    const heldMethod = proxy.greet
+
+    proxy.greet('before')
+    resolve({ greet })
+
+    expect(greet).toHaveBeenCalledWith('before')
+    heldProxy.greet('after-via-object')
+    heldMethod('after-via-method')
+    expect(greet).toHaveBeenCalledWith('after-via-object')
+    expect(greet).toHaveBeenCalledWith('after-via-method')
+  })
+
+  it('has a stable identity either side of load', () => {
+    const api = { say: (s: string) => s }
+    const { proxy, resolve } = createScriptProxy<typeof api>()
+    expect(proxy.say).toBe(proxy.say)
+    resolve(api)
+    expect(proxy.say).toBe(proxy.say)
+    // calls stay void once forwarding
+    expect(proxy.say('x')).toBeUndefined()
+  })
+
   it('replays calls after async use() resolves', async () => {
     const head = createHead()
     const { promise, resolve } = Promise.withResolvers<{ greet: (foo: string) => string }>()
@@ -188,8 +241,6 @@ describe('types: AsVoidFunctions', () => {
   })
 
   it('gtag types', () => {
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const gtag = {} as AsVoidFunctions<GoogleAnalytics>['gtag']
-    expectTypeOf<typeof gtag>().toBeFunction()
+    expectTypeOf<AsVoidFunctions<GoogleAnalytics>['gtag']>().toBeFunction()
   })
 })
