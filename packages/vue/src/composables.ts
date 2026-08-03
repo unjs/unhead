@@ -10,6 +10,7 @@ import { FlatMetaPlugin, SafeInputPlugin } from 'unhead/plugins'
 import { walkResolver } from 'unhead/utils'
 import {
   getCurrentInstance,
+  getCurrentScope,
   hasInjectionContext,
   inject,
   onActivated,
@@ -39,6 +40,10 @@ export function useHead<I = UseHeadInput>(input?: UseHeadInput, options: UseHead
 }
 
 function clientUseHead<I = UseHeadInput>(head: Unhead<I>, input?: I, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+  const scope = getCurrentScope()
+  if (scope && !scope.active)
+    return { patch() {}, dispose() {}, _poll() {} }
+
   const deactivated = ref(false)
 
   let entry: ActiveHeadEntry<I>
@@ -77,12 +82,28 @@ export function useHeadSafe(input: UseHeadSafeInput = {}, options: UseHeadOption
 export function useSeoMeta(input: UseSeoMetaInput = {}, options: UseHeadOptions = {}): ActiveHeadEntry<UseSeoMetaInput> {
   const head = options.head || injectHead()
   head.use(FlatMetaPlugin)
-  const { title, titleTemplate, ...meta } = input
-  return useHead({
-    title,
-    titleTemplate,
+  const entry = useHead<UseSeoMetaInput>(normalizeSeoMetaInput(input), options)
+  const corePatch = entry.patch
+  entry.patch = input => corePatch(normalizeSeoMetaInput(input))
+  return entry
+}
+
+function normalizeSeoMetaInput(input: UseSeoMetaInput) {
+  // @ts-expect-error internal normalized input
+  if (input._flatMeta)
+    return input
+
+  const meta: Record<string, any> = {}
+  for (const key in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, key) || key === 'title' || key === 'titleTemplate')
+      continue
+    meta[key] = input[key as keyof UseSeoMetaInput]
+  }
+  return {
+    title: input.title,
+    titleTemplate: input.titleTemplate,
     _flatMeta: meta,
-  } as UseSeoMetaInput, options)
+  } as UseSeoMetaInput
 }
 
 /**

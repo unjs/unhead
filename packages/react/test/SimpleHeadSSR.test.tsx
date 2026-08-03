@@ -163,4 +163,25 @@ describe('simpleHead component in ssr', () => {
     expect(headTags).toContain('nomodule')
     expect(headTags).toContain('referrerpolicy="origin"')
   })
+
+  it('preserves numeric zero children', async () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <ServerUnheadProvider value={head}>
+        <Head>
+          <title>{0}</title>
+          <script type="text/plain">{0}</script>
+          <style>{0}</style>
+          <noscript>{0}</noscript>
+        </Head>
+      </ServerUnheadProvider>,
+    )
+
+    const { headTags } = await renderSSRHead(head)
+    expect(headTags).toContain('<title>0</title>')
+    expect(headTags).toContain('<script type="text/plain">0</script>')
+    expect(headTags).toContain('<style>0</style>')
+    expect(headTags).toContain('<noscript>0</noscript>')
+  })
 })

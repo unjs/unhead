@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { CreateClientHeadOptions, Unhead } from 'unhead/types'
-import { createElement } from 'react'
+import { createElement, useRef } from 'react'
 import { createHead as _createHead, createDebouncedFn, renderDOMHead } from 'unhead/client'
 import { UnheadContext } from './context'
 
@@ -34,10 +34,14 @@ interface UniversalUnheadProviderProps {
 export type UnheadProviderProps = LegacyUnheadProviderProps | UniversalUnheadProviderProps
 
 export function UnheadProvider({ children, value, head }: UnheadProviderProps) {
+  const headRef = useRef<Unhead | null>(null)
   if (value !== undefined && head !== undefined)
     throw new TypeError('UnheadProvider received both value and head props')
 
-  return createElement(UnheadContext.Provider, { value: value ?? head ?? createHead() }, children)
+  const suppliedHead = value ?? head
+  if (suppliedHead === undefined && headRef.current === null)
+    headRef.current = createHead()
+  return createElement(UnheadContext.Provider, { value: suppliedHead ?? headRef.current }, children)
 }
 
 export type {
