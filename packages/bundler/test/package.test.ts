@@ -25,7 +25,7 @@ describe('@unhead/bundler package', () => {
     expect(runtimeDependencies).not.toHaveProperty('rolldown')
     expect(packageJson.peerDependencies?.['oxc-parser']).toBeDefined()
     expect(packageJson.peerDependenciesMeta?.['oxc-parser']).toEqual({ optional: true })
-    expect(packageJson.peerDependencies?.rolldown).toBeDefined()
+    expect(packageJson.peerDependencies?.rolldown).toBe('>=1.0.0')
     expect(packageJson.peerDependenciesMeta?.rolldown).toEqual({ optional: true })
   })
 
