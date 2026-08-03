@@ -51,11 +51,11 @@ export function propsToString(props: Record<string, any>): string {
       continue
     }
     if (typeof v !== 'string') {
-      if (k === 'class')
-        v = Array.from(v as Set<string>).join(' ')
-      else if (k === 'style')
-        v = Array.from(v as Map<string, string>).map(([a, b]) => `${a}:${b}`).join(';')
-      else v = String(v)
+      v = k === 'class'
+        ? [...v as Set<string>].join(' ')
+        : k === 'style'
+          ? [...v as Map<string, string>].map(([a, b]) => `${a}:${b}`).join(';')
+          : String(v)
     }
     // quote-guard: measured 3x on the clean-value common case
     attrs += ` ${k}="${v.includes('"') ? v.replace(QUOT_RE, '&quot;') : v}"`
@@ -70,21 +70,15 @@ export function tagToHtml(t: Tag): string {
   const open = `<${name}${t.p ? propsToString(t.p) : ''}>`
   return (SELF_CLOSING >> id & 1)
     ? open
-    : (INNER_CONTENT >> id & 1)
-        ? `${open}${id === T_TITLE ? escapeHtml(t.c ?? '') : t.c ?? ''}</${name}>`
-        : `${open}</${name}>`
+    : `${open}${(INNER_CONTENT >> id & 1) ? (id === T_TITLE ? escapeHtml(t.c ?? '') : t.c ?? '') : ''}</${name}>`
 }
 
 export function renderSSRHead(head: V4Head): SSRPayload {
   const tags = head.resolve()
-  let hd = ''
-  let bo = ''
-  let bc = ''
-  let htmlAttrs = ''
-  let bodyAttrs = ''
+  const buckets = ['', '', ''] // head, bodyOpen, bodyClose
+  const attrs = ['', ''] // htmlAttrs, bodyAttrs
   // per-prop attr tags merge into one bag; class/style tokens accumulate
-  let htmlBag: Record<string, any> | null = null
-  let bodyBag: Record<string, any> | null = null
+  const bags: (Record<string, any> | null)[] = [null, null]
 
   for (let i = 0; i < tags.length; i++) {
     const t = tags[i]
@@ -94,12 +88,13 @@ export function renderSSRHead(head: V4Head): SSRPayload {
     const id = f & F_ID
 
     if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
+      const j = id - T_HTML_ATTRS
       if (f & F_PREBUILT) {
         // plan attr fragments are final strings
-        id === T_HTML_ATTRS ? htmlAttrs += t.c : bodyAttrs += t.c
+        attrs[j] += t.c
         continue
       }
-      const bag = id === T_HTML_ATTRS ? (htmlBag ||= {}) : (bodyBag ||= {})
+      const bag = bags[j] ||= {}
       const p = t.p!
       for (const k in p) {
         if (k === 'class' || k === 'style')
@@ -112,20 +107,14 @@ export function renderSSRHead(head: V4Head): SSRPayload {
     if (id === T_TITLE_TEMPLATE)
       continue
 
-    const s = f & F_PREBUILT ? t.c! : tagToHtml(t)
-    const pos = (f & F_POS) >> POS_SHIFT
-    if (pos === 0)
-      hd += s
-    else if (pos === 1)
-      bo += s
-    else bc += s
+    buckets[(f & F_POS) >> POS_SHIFT] += f & F_PREBUILT ? t.c! : tagToHtml(t)
   }
 
-  if (htmlBag)
-    htmlAttrs += propsToString(htmlBag)
-  if (bodyBag)
-    bodyAttrs += propsToString(bodyBag)
-  return { headTags: hd, bodyTags: bc, bodyTagsOpen: bo, htmlAttrs, bodyAttrs }
+  for (let j = 0; j < 2; j++) {
+    if (bags[j])
+      attrs[j] += propsToString(bags[j]!)
+  }
+  return { headTags: buckets[0], bodyTags: buckets[2], bodyTagsOpen: buckets[1], htmlAttrs: attrs[0], bodyAttrs: attrs[1] }
 }
 
 export interface CreateServerHeadOptions {

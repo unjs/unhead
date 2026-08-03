@@ -110,7 +110,8 @@ function fillHoles(segments: string[], modes: number, fills: readonly unknown[],
 
 export function revivePlan(plan: PlanTag[], fills: readonly unknown[] | null, seq: number): Tag[] {
   const o = seq * 4096
-  const tags: Tag[] = Array.from({ length: plan.length })
+  // eslint-disable-next-line unicorn/no-new-array -- hot path, Array.from({length}) is larger and slower
+  const tags: Tag[] = new Array(plan.length)
   let fillAt = 0
   for (let i = 0; i < plan.length; i++) {
     const t = plan[i]
@@ -134,9 +135,14 @@ export function revivePlan(plan: PlanTag[], fills: readonly unknown[] | null, se
 }
 
 const sortTags = (a: Tag, b: Tag) => a.w - b.w || a.o - b.o
+const isArr = Array.isArray
 
 export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head {
   const entries = new Map<number, Entry>()
+  // repeated-resolve cache: collected+sorted flat tags, invalidated by
+  // push/patch/dispose. dedupe + plugins still run per resolve (their
+  // containers are per-resolve mutable); the cached array is never mutated
+  let cAll: Tag[] | null = null
   const head: V4Head = {
     entries,
     ssr: options.ssr,
@@ -161,36 +167,45 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
         i,
         input,
         fills,
-        tags: Array.isArray(input) ? revivePlan(input as PlanTag[], fills, i) : null,
+        tags: isArr(input) ? revivePlan(input as PlanTag[], fills, i) : null,
         opts: opts || null,
       }
       entries.set(i, entry)
+      cAll = null
       return {
         patch(next, nextFills) {
           entry.input = next
-          entry.tags = Array.isArray(next) ? revivePlan(next as PlanTag[], nextFills || entry.fills, i) : null
+          entry.tags = isArr(next) ? revivePlan(next as PlanTag[], nextFills || entry.fills, i) : null
+          cAll = null
         },
         dispose() {
           entries.delete(i)
+          cAll = null
         },
       }
     },
     resolve() {
-      let n = 0
-      for (const e of entries.values()) {
-        n += (e.tags || (e.tags = head._compile(e.input, e.i, e.opts))).length
+      let all = cAll
+      if (!all) {
+        let n = 0
+        for (const e of entries.values()) {
+          n += (e.tags || (e.tags = head._compile(e.input, e.i, e.opts))).length
+        }
+        // eslint-disable-next-line unicorn/no-new-array -- hot path, measured 2.4x over push (V4_DESIGN.md s3)
+        all = cAll = new Array(n)
+        let w = 0
+        for (const e of entries.values()) {
+          const tags = e.tags!
+          for (let i = 0; i < tags.length; i++) all[w++] = tags[i]
+        }
+        all.sort(sortTags)
       }
-      const all: Tag[] = Array.from({ length: n })
-      let w = 0
-      for (const e of entries.values()) {
-        const tags = e.tags!
-        for (let i = 0; i < tags.length; i++) all[w++] = tags[i]
-      }
-      all.sort(sortTags)
+      const n = all.length
 
       // dedupe: byKey maps d -> slot index; slots hold a Tag or a Tag[] (arrayable append)
       const byKey: Record<string, number> = Object.create(null)
       const slots: (Tag | Tag[])[] = []
+      let hasArrayAppend = false
       for (let i = 0; i < n; i++) {
         const t = all[i]
         const d = t.d
@@ -205,11 +220,12 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
           continue
         }
         const cur = slots[idx]
-        const prev = Array.isArray(cur) ? cur[cur.length - 1] : cur
+        const prev = isArr(cur) ? cur[cur.length - 1] : cur
         // arrayable identities append within the same entry; across entries the
         // later entry replaces the whole set (v3 semantics)
         if (t.f & F_ARRAYABLE && (t.o / 4096 | 0) === (prev.o / 4096 | 0)) {
-          Array.isArray(cur) ? cur.push(t) : slots[idx] = [cur, t]
+          isArr(cur) ? cur.push(t) : slots[idx] = [cur, t]
+          hasArrayAppend = true
         }
         else if (t.w === prev.w) {
           // sorted ascending: equal weight means higher o, later wins
@@ -222,27 +238,22 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
         const ctx: ResolveCtx = {
           tags: slots,
           get: (d) => {
-            const idx = byKey[d]
-            if (idx === undefined)
-              return undefined
-            const s = slots[idx]
-            return Array.isArray(s) ? s[0] : s
+            const s = slots[byKey[d]]
+            return isArr(s) ? s[0] : s
           },
           patch: (tag, changes) => {
             const next = { ...tag, ...changes }
+            // slot containers are per-resolve, safe to write; only the
+            // entry-cached Tag objects themselves are shared
             const idx = byKey[tag.d]
-            if (idx !== undefined) {
-              // slot containers are per-resolve, safe to write; only the
-              // entry-cached Tag objects themselves are shared
-              const s = slots[idx]
-              if (Array.isArray(s)) {
-                const j = s.indexOf(tag)
-                if (j >= 0)
-                  s[j] = next
-              }
-              else if (s === tag) {
-                slots[idx] = next
-              }
+            const s = slots[idx]
+            if (isArr(s)) {
+              const j = s.indexOf(tag)
+              if (j >= 0)
+                s[j] = next
+            }
+            else if (s === tag) {
+              slots[idx] = next
             }
             return next
           },
@@ -251,17 +262,13 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
         for (let i = 0; i < head._pr.length; i++) head._pr[i](ctx)
       }
 
-      // flatten; removed tags are skipped at render, kept here to preserve indices
-      const out: Tag[] = []
-      for (let i = 0; i < slots.length; i++) {
-        const s = slots[i]
-        if (Array.isArray(s)) {
-          for (let j = 0; j < s.length; j++) out.push(s[j])
-        }
-        else {
-          out.push(s)
-        }
-      }
+      // flatten; removed tags are skipped at render, kept here to preserve indices.
+      // arrayable appends (multiple og:image sets) re-sort by (w, o) so structured
+      // sub-properties stay adjacent to their parent (v3 sortFlatMeta parity: the
+      // OG spec requires og:image:width to follow its og:image)
+      const out = slots.flat()
+      if (hasArrayAppend)
+        out.sort(sortTags)
       return out
     },
   }

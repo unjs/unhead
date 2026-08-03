@@ -80,4 +80,25 @@ describe('v4 ssr parity with v3', () => {
     const out = renderV4(head).headTags
     expect(out).toBe('<title>a &lt;b> &amp; c</title><meta name="description" content="say &quot;hi&quot;">')
   })
+
+  it('content-only script/style (no props) matches v3', () => {
+    // regression: identity() used to throw on tags with null props
+    const input = {
+      script: ['console.log(1)', { innerHTML: 'console.log(2)' }],
+      style: ['body{color:red}', { textContent: '.a{margin:0}' }],
+    }
+    const a = v3Render(push => push(input))
+    const b = v4Render(push => push(input))
+    expect(b.headTags).toBe(a.headTags)
+  })
+
+  it('identical inline scripts dedupe by content like v3', () => {
+    const apply = (push: (input: any) => void) => {
+      push({ script: ['console.log(1)'] })
+      push({ script: ['console.log(1)'] })
+    }
+    const a = v3Render(apply)
+    const b = v4Render(apply)
+    expect(b.headTags).toBe(a.headTags)
+  })
 })
