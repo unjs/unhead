@@ -334,3 +334,28 @@ Graded output of three ideation passes (platform frontier, compilation endgame, 
 ### Rejected with evidence
 
 llms.txt (Ahrefs: 97% of 137k files receive zero bot requests; no vendor consumes it), noai/noimageai metas (no major vendor honors), resumable head-state serialization (30–60 B/tag HTML cost vs single-digit-µs lazy scan), client-side capo reordering via `moveBefore` (zero preload-scanner benefit post-load; devtools-only), WASM L1 compiler (boundary cost + bytes on µs-scale string work), scheduler.yield in renderer (60-tag renders are µs).
+
+## 12. Prototype findings (v4/core-experiment branch, 2026-08-04)
+
+Working prototype at `packages/unhead/src/v4/` (core, compile, server, client, seo, plugins, early-hints), 69 tests in `bench/v4-*.test.ts`, benches in `bench/v4-*.bench.ts`.
+
+Scorecard vs v3 (same workloads, SSR output byte-identical where testable):
+
+| Axis | Result |
+|---|---|
+| SSR e2e: runtime / plans / sealed | 1.6-2.4x / 3.8-6x / 5.6-11x |
+| DOM mount+dispose / patch / 50-patch flush | ~2.9x / 2.4-3.5x / 161x |
+| Plugins (templateParams+inferSeo+canonical) | 2.6x vs v3 same plugins |
+| Server gz: default / sealed | 3,818 (v3 4,973) / 1,851 |
+| Client gz | 4,976 (v3 5,483) |
+
+Budget status: sealed profiles beat targets; defaults remain above (server 3.8k vs 2.5k target, client 5.0k vs 3.2k). Measured verdict from the size pass: the remaining L1 bytes are irreducible v3 semantics (dedupe rules, capo, coercion) that resist table-driven compression post-gzip; hitting the default targets likely requires moving semantics to the compiler (cross-entry pre-merge default-on) rather than more code golf. Reverted-with-data: bitmask membership tables cost +13 gz vs `id===T_X` chains (gzip wins), full slots cache +97 gz.
+
+Slot API revisions earned by the plugin ports:
+1. `ctx.patch` on a `d: ''` tag is a silent no-op; add dev-mode warn.
+2. Reinstate `ctx.shared` (dropped in the prototype): raw-title recovery and templateParams needed back-channels without it.
+3. `ctx.tags: (Tag | Tag[])[]` makes every plugin write a flatten helper; expose flat iteration.
+4. Per-entry flags (`processTemplateParams` opt-in/out) need the designed `entry`/`tags` slots; prototype only has `resolve`.
+5. Lone titleTemplate converts to title but keeps `d: 'titleTemplate'`; consumers probe two keys.
+
+Known conscious divergences vs v3 (documented in tests): capo weights for importmap/speculationrules/textContent-script edge paths; htmlAttrs per-prop explosion skips boolean coercion; `{ innerHTML: null }` JSON quirk; function/ref values must be resolved by adapters pre-push; `templateParams` input key replaced by `useTemplateParams()`. DOM adoption identity gaps: base, alternate+hreflang, keyed metas fall back to hash (re-created, not adopted); fix by exporting compile's identity().
