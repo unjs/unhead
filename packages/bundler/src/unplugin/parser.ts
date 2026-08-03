@@ -81,7 +81,7 @@ function getParser(): ParserResolutionSuccess {
   if (resolution._tag === 'missing') {
     throw Object.assign(
       new Error(
-        'Unhead could not load a parser for its build transforms. Reinstall @unhead/bundler to restore its oxc-parser dependency.',
+        'Unhead could not load a parser for its build transforms. Install rolldown or oxc-parser alongside @unhead/bundler.',
         { cause: new AggregateError(resolution.failures.map(failure => failure.cause), 'Parser resolution failed') },
       ),
       { _tag: 'MissingParserError' as const },
