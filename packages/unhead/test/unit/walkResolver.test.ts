@@ -29,6 +29,21 @@ describe('walkResolver structural sharing', () => {
     expect(resolved.meta[1].content).toBe('resolved')
   })
 
+  it('copies branches with resolver markers', () => {
+    const node = {
+      _resolver: 'searchAction',
+      target: '/search?query={search_term_string}',
+    }
+    const input = { nodes: [node] }
+
+    const resolved = walkResolver(input)
+
+    expect(resolved).not.toBe(input)
+    expect(resolved.nodes).not.toBe(input.nodes)
+    expect(resolved.nodes[0]).not.toBe(node)
+    expect(resolved.nodes[0]).toEqual(node)
+  })
+
   it('drops unsafe keys without changing the result prototype', () => {
     const input = { title: 'Safe' }
     Object.defineProperty(input, '__proto__', {

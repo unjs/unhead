@@ -34,7 +34,8 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
     for (const k in v) {
       const unsafe = isUnsafeKey(k)
       const resolved = unsafe ? undefined : walkResolver(v[k], resolve, k)
-      if (!next && (unsafe || resolved !== v[k])) {
+      const requiresCopy = k === '_resolver'
+      if (!next && (unsafe || requiresCopy || resolved !== v[k])) {
         next = {}
         for (const previousKey in v) {
           if (previousKey === k) {
