@@ -4,12 +4,14 @@
  * (v4 appends in capo resolve order, v3 in alias order), so element sets are
  * compared sorted; attrs, title, and html/body attributes compare exactly.
  */
+import type { PlanTag } from '../packages/unhead/src/v4/core'
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { createHead as createV3 } from '../packages/unhead/src/client'
 import { createHead as createV4 } from '../packages/unhead/src/v4/client'
 import { createHead as createV4Server, renderSSRHead as renderV4Server } from '../packages/unhead/src/v4/server'
-import { applyPage } from './v4/fixtures'
+import { instrument } from './v4-explore/nav/dom-ops'
+import { applyPage, SEALED_FILLS, SEALED_PAGE_PLAN } from './v4/fixtures'
 
 const BLANK = '<!DOCTYPE html><html><head></head><body><div><h1>hello</h1></div></body></html>'
 
@@ -67,6 +69,60 @@ describe('v4 dom', () => {
     entry.dispose()
     head.render()
     expect(doc.title).toBe('About · Harlan Wilton')
+  })
+
+  it('sealed plan renders the same document state as the loose-object path', () => {
+    const a = new JSDOM(BLANK)
+    const loose = createV4({ document: a.window.document })
+    applyPage((input, opts) => loose.push(input, opts))
+    loose.render()
+
+    const b = new JSDOM(BLANK)
+    const sealed = createV4({ document: b.window.document })
+    sealed.push(SEALED_PAGE_PLAN, { fills: SEALED_FILLS })
+    sealed.render()
+
+    expect(domState(b.window.document)).toEqual(domState(a.window.document))
+  })
+
+  it('sealed plan refill syncs attributes without recreating elements', () => {
+    const dom = new JSDOM(BLANK)
+    const doc = dom.window.document
+    const head = createV4({ document: doc })
+    const entry = head.push(SEALED_PAGE_PLAN, { fills: SEALED_FILLS })
+    head.render()
+    const desc = doc.querySelector('meta[name=description]')!
+    const els = [...doc.head.children, ...doc.body.children]
+    const ops = instrument(dom.window)
+    entry.patch(SEALED_PAGE_PLAN, ['New Title', 'New description.'])
+    head.render()
+    expect(doc.title).toBe('New Title')
+    expect(doc.querySelector('meta[name=description]')).toBe(desc)
+    expect(desc.getAttribute('content')).toBe('New description.')
+    expect([...doc.head.children, ...doc.body.children]).toEqual(els)
+    const s = ops.snap()
+    expect(s.create).toBe(0)
+    expect(s.insert).toBe(0)
+    expect(s.remove).toBe(0)
+    expect(s.setAttr).toBe(1) // only the description content changed
+    expect(s.title).toBe(1)
+  })
+
+  it('a changed sealed script is replaced, never mutated', () => {
+    const plan: PlanTag[] = [[100, 'script:key:state', ['<script type="application/json" data-hid="state">{"u":"', '"}</script>'], 2]]
+    const dom = new JSDOM(BLANK)
+    const doc = dom.window.document
+    const head = createV4({ document: doc })
+    const entry = head.push(plan, { fills: ['a'] })
+    head.render()
+    const first = doc.querySelector('script[data-hid=state]')!
+    expect(first.textContent).toBe('{"u":"a"}')
+    entry.patch(plan, ['b'])
+    head.render()
+    const second = doc.querySelector('script[data-hid=state]')!
+    expect(second).not.toBe(first)
+    expect(second.textContent).toBe('{"u":"b"}')
+    expect(doc.querySelectorAll('script').length).toBe(1)
   })
 
   it('batches renders on the scheduler', () => {

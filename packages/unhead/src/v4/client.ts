@@ -11,6 +11,7 @@ import {
   createCore,
   F_ID,
   F_POS,
+  F_PREBUILT,
   F_RAW,
   F_REMOVED,
   INNER_CONTENT,
@@ -24,6 +25,7 @@ import {
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
+  unescapeHtml,
 } from './core'
 
 // side-effect kinds; effects are one flat stride-3 array per render
@@ -151,7 +153,9 @@ function undoFx(kind: number, t: any, k: any, state: DomState, doc: Document) {
     case FX_STYLE: t.style.removeProperty(k)
       break
     case FX_EL: t.remove()
-      state.els.delete(k)
+      // a replaced script re-keys to a new element; only drop the mapping
+      // when it still points at the undone element
+      state.els.get(k) === t && state.els.delete(k)
       break
     case FX_EVT: {
       const l = state.listeners.get(k)
@@ -170,6 +174,72 @@ function undoFx(kind: number, t: any, k: any, state: DomState, doc: Document) {
     default: doc.title = k
   }
 }
+
+// ---- prebuilt (sealed plan) rendering: c is final html, not props ----------
+
+const ATTR_RE = /\s([^\s=>]+)(?:="([^"]*)")?/g
+const QUOT_ENT_RE = /&quot;/g
+const unescAttr = (s: string) => s.includes('&quot;') ? s.replace(QUOT_ENT_RE, '"') : s
+
+interface Parsed {
+  name: string
+  attrs: [string, string][]
+  content: string | null
+}
+
+/** Regex scan of a single prebuilt tag's html; no HTML parser involved. */
+function parsePrebuilt(html: string): Parsed {
+  const gt = html.indexOf('>')
+  const open = html.slice(1, gt)
+  const sp = open.indexOf(' ')
+  const name = sp < 0 ? open : open.slice(0, sp)
+  const attrs: [string, string][] = []
+  if (sp >= 0) {
+    ATTR_RE.lastIndex = 0
+    let m = ATTR_RE.exec(open)
+    while (m) {
+      attrs.push([m[1], m[2] === undefined ? '' : unescAttr(m[2])])
+      m = ATTR_RE.exec(open)
+    }
+  }
+  const close = html.lastIndexOf('</')
+  return { name, attrs, content: close > gt ? html.slice(gt + 1, close) : null }
+}
+
+function setParsedContent(el: any, pd: Parsed) {
+  // script/style content is raw text; noscript's is markup
+  const prop = pd.name === 'noscript' ? 'innerHTML' : 'textContent'
+  el[prop] !== pd.content && (el[prop] = pd.content)
+}
+
+function buildParsed(doc: Document, pd: Parsed): Element {
+  const el = doc.createElement(pd.name)
+  for (const [k, v] of pd.attrs) el.setAttribute(k, v)
+  if (pd.content != null)
+    setParsedContent(el, pd)
+  return el
+}
+
+/** Attr-level sync: write only what differs, drop what disappeared. */
+function syncParsed(el: any, pd: Parsed) {
+  for (const [k, v] of pd.attrs) el.getAttribute(k) !== v && el.setAttribute(k, v)
+  if (el.attributes.length !== pd.attrs.length) {
+    for (const a of el.getAttributeNames()) {
+      let keep = false
+      for (const [k] of pd.attrs) {
+        if (k === a) {
+          keep = true
+          break
+        }
+      }
+      keep || el.removeAttribute(a)
+    }
+  }
+  if (pd.content != null)
+    setParsedContent(el, pd)
+}
+
+// ---------------------------------------------------------------------------
 
 function renderDOM(head: ClientHead): boolean {
   const doc = head._doc
@@ -197,6 +267,76 @@ function renderDOM(head: ClientHead): boolean {
     if (f & F_REMOVED)
       continue
     const id = f & F_ID
+
+    if (f & F_PREBUILT) {
+      // sealed plan tuple: c is final html. Head-position tuples carry no
+      // type id in f (revivePlan only encodes position), so dispatch on d/c.
+      if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
+        // single-attr fragment string, e.g. ' class="dark"' (wire contract)
+        const el: any = id === T_HTML_ATTRS ? doc.documentElement : doc.body
+        const c = t.c!
+        const eq = c.indexOf('="')
+        const k = eq < 0 ? c.slice(1) : c.slice(1, eq)
+        const v = eq < 0 ? '' : unescAttr(c.slice(eq + 2, -1))
+        if (k === 'class') {
+          fx.push(FX_CLASS, el, v)
+          el.classList.contains(v) || el.classList.add(v)
+        }
+        else if (k === 'style') {
+          const ci = v.indexOf(':')
+          const sk = v.slice(0, ci).trim()
+          fx.push(FX_STYLE, el, sk)
+          el.style.setProperty(sk, v.slice(ci + 1).trim())
+        }
+        else {
+          fx.push(FX_ATTR, el, k)
+          setAttr(el, k, eq < 0 ? true : v)
+        }
+        continue
+      }
+      if (t.d === 'title') {
+        const c = t.c!
+        const text = unescapeHtml(c.slice(7, c.length - 8))
+        doc.title !== text && (doc.title = text)
+        fx.push(FX_TITLE, 0, state.title)
+        continue
+      }
+      const base = t.d || `pb:${t.c}`
+      const nth = dupes[base] || 0
+      dupes[base] = nth + 1
+      const key = nth ? `${base}:${nth}` : base
+      let el: any = state.els.get(key)
+      const fresh = !el
+      if (fresh) {
+        el = buildParsed(doc, parsePrebuilt(t.c!))
+        el._uhc = t.c
+        state.els.set(key, el)
+      }
+      else if (el._uhc !== t.c) {
+        const pd = parsePrebuilt(t.c!)
+        if (el.tagName === 'SCRIPT') {
+          // a changed script is a new script; replace, never mutate
+          const s: any = buildParsed(doc, pd)
+          el.replaceWith(s)
+          state.els.set(key, s)
+          el = s
+        }
+        else {
+          syncParsed(el, pd)
+        }
+        el._uhc = t.c
+      }
+      fx.push(FX_EL, el, key)
+      if (fresh) {
+        const pos = (f & F_POS) >> POS_SHIFT
+        const frag = pos === 0
+          ? (headFrag ||= doc.createDocumentFragment())
+          : pos === 1 ? (openFrag ||= doc.createDocumentFragment()) : (closeFrag ||= doc.createDocumentFragment())
+        frag.appendChild(el)
+      }
+      continue
+    }
+
     if (id === T_TITLE_TEMPLATE)
       continue
 

@@ -102,6 +102,10 @@ export interface V4Head {
 
 const ESC_TEXT_RE = /[&<>"'/]/g
 const ESC_TEXT: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#x27;', '/': '&#x2F;' }
+const UNESC_RE = /&(?:amp|lt|gt|quot|#x27|#x2F);/g
+const UNESC: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#x27;': '\'', '&#x2F;': '/' }
+/** Reverse of the SSR text escape; prebuilt (F_PREBUILT) tag text decodes through this. */
+export const unescapeHtml = (s: string): string => s.includes('&') ? s.replace(UNESC_RE, c => UNESC[c]) : s
 const ESC_JSON_RE = /[\\"<]/g
 const ESC_JSON: Record<string, string> = { '\\': '\\\\', '"': '\\"', '<': '\\u003C' }
 const ESC_QUOT_RE = /"/g
