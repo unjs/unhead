@@ -28,6 +28,16 @@ function domState(document: Document) {
 }
 
 describe('v4 dom', () => {
+  it('keeps DOM adoption lazy when a first flush resolves no tags', () => {
+    const dom = new JSDOM(BLANK)
+    const head = createV4({ document: dom.window.document, scheduler: () => {} })
+    const entry = head.push({})
+    entry.dispose()
+
+    expect(head.render()).toBe(true)
+    expect(head._dom).toBeNull()
+  })
+
   it('mount matches v3 document state', () => {
     const a = new JSDOM(BLANK)
     const v3 = createV3({ document: a.window.document })

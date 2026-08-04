@@ -118,6 +118,12 @@
 ./v4/client:
   createHead: function
   renderDOMHead: function
+./v4/client-compiled:
+  createHead: function
+  renderDOMHead: function
+./v4/compiled:
+  injectHead: function
+  useHead: function
 ./v4/plugins:
   CanonicalPlugin: function
   InferSeoMetaPlugin: function
@@ -126,6 +132,9 @@
 ./v4/server:
   createHead: function
   propsToString: function
+  renderSSRHead: function
+./v4/server-compiled:
+  createHead: function
   renderSSRHead: function
 ./v4/utils:
   resolveTags: function

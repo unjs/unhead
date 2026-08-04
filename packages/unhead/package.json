@@ -102,9 +102,21 @@
       "types": "./dist/v4/server.d.ts",
       "default": "./dist/v4/server.mjs"
     },
+    "./v4/server-compiled": {
+      "types": "./dist/v4/server-compiled.d.ts",
+      "default": "./dist/v4/server-compiled.mjs"
+    },
+    "./v4/server-plans": {
+      "types": "./dist/v4/server-plans.d.ts",
+      "default": "./dist/v4/server-plans.mjs"
+    },
     "./v4/client": {
       "types": "./dist/v4/client.d.ts",
       "default": "./dist/v4/client.mjs"
+    },
+    "./v4/client-compiled": {
+      "types": "./dist/v4/client-compiled.d.ts",
+      "default": "./dist/v4/client-compiled.mjs"
     },
     "./v4/client-plans": {
       "types": "./dist/v4/client-plans.d.ts",
@@ -190,8 +202,17 @@
       "v4/server": [
         "dist/v4/server.d.ts"
       ],
+      "v4/server-compiled": [
+        "dist/v4/server-compiled.d.ts"
+      ],
+      "v4/server-plans": [
+        "dist/v4/server-plans.d.ts"
+      ],
       "v4/client": [
         "dist/v4/client.d.ts"
+      ],
+      "v4/client-compiled": [
+        "dist/v4/client-compiled.d.ts"
       ],
       "v4/client-plans": [
         "dist/v4/client-plans.d.ts"

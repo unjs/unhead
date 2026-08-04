@@ -2,7 +2,7 @@ import type { V4Head } from 'unhead/v4'
 import type { UseHeadInput } from './types'
 import { walkResolver } from 'unhead/utils'
 import { F_ID, F_PREBUILT, F_RAW, F_REMOVED, TAG_NAMES } from 'unhead/v4'
-import { VueResolver } from '../resolver'
+import { VueResolver } from './resolver'
 
 export { VueResolver, walkResolver }
 

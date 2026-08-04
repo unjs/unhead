@@ -150,6 +150,10 @@
   hashTag: function
   setAttr: function
   useHead: function
+./v4/client-compiled:
+  createHead: function
+  renderDOMHead: function
+  useHead: function
 ./v4/client-plans:
   installPlanRenderer: function
 ./v4/compile:
@@ -161,9 +165,12 @@
   toLinkHeader: function
 ./v4/emit:
   emitEntryPlan: function
+  emitRoutePayload: function
   emitRoutePlan: function
+  emitSSRRoutePlan: function
   hole: function
   isHole: function
+  payloadToCode: function
   PlanEmitError: function
   planToCode: function
 ./v4/plugins:
@@ -183,6 +190,12 @@
   renderSSRHead: function
   tagToHtml: function
   useHead: function
+./v4/server-compiled:
+  createHead: function
+  renderSSRHead: function
+  useHead: function
+./v4/server-plans:
+  renderSSRRoutePlan: function
 ./validate:
   deferOnModuleScript: function
   DEPRECATED_PROPS: object

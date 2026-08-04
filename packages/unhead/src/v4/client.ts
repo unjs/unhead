@@ -5,8 +5,8 @@
  * existing elements (w is an SSR concern), side effects tracked as one flat
  * stride-3 array per render, renders batched on a microtask.
  */
-import type { EntryOptions, Tag, V4Head } from './core'
-import { compileEntry, identity, TitlePlugin } from './compile'
+import type { EntryOptions, PlanFill, Tag, V4Head } from './core'
+import { compileEntry, TitlePlugin } from './compile'
 import {
   createCore,
   F_ID,
@@ -18,10 +18,12 @@ import {
   POS_SHIFT,
   T_BODY_ATTRS,
   T_HTML_ATTRS,
+  T_STYLE,
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
 } from './core'
+import { identity } from './identity'
 
 // side-effect kinds; effects are one flat stride-3 array per render
 // (kind, target, data) reclaimed by a lockstep diff against the previous
@@ -95,7 +97,7 @@ function adopt(doc: Document, els: Map<string, Element>) {
       const v = el.getAttribute(a)
       p[a] = v === '' ? true : v
     }
-    const c = el.innerHTML || null
+    const c = id >= T_STYLE ? el.innerHTML || null : null
     const key = identity(id, p, c, p['data-hid'] ?? null) || hashTag({ f: id, w: 0, o: 0, d: '', p, c })
     let k = key
     let n = 1
@@ -155,8 +157,11 @@ function renderDOM(head: ClientHead): boolean {
   if (!doc)
     return false
   head.dirty = false
+  const tags = head.resolve()
   let state = head._dom
   if (!state) {
+    if (!tags.length)
+      return true
     state = head._dom = { els: new Map(), fx: [], listeners: new Map(), title: doc.title }
     adopt(doc, state.els)
   }
@@ -164,7 +169,6 @@ function renderDOM(head: ClientHead): boolean {
   const fx: any[] = []
   state.fx = fx
 
-  const tags = head.resolve()
   const dupes: Record<string, number> = Object.create(null)
   // position-bucket fragments: 0 head, 1 bodyOpen, 2 bodyClose
   const frags: (DocumentFragment | undefined)[] = []
@@ -374,7 +378,7 @@ export function attachDom(core: V4Head, options: CreateClientHeadOptions = {}): 
     const entry = corePush(input, opts)
     invalidate()
     return {
-      patch(next: unknown, fills?: unknown[]) {
+      patch(next: unknown, fills?: readonly PlanFill[]) {
         entry.patch(next, fills)
         invalidate()
       },

@@ -42,7 +42,7 @@ export interface Tag {
 export interface Entry {
   i: number
   input: unknown
-  fills: unknown[] | null
+  fills: readonly PlanFill[] | null
   tags: Tag[] | null
   opts: EntryOptions | null
 }
@@ -50,8 +50,12 @@ export interface Entry {
 export interface EntryOptions {
   tagPriority?: number | string
   tagPosition?: 'head' | 'bodyOpen' | 'bodyClose'
-  fills?: unknown[]
+  /** String interpolation values for sealed plan holes. */
+  fills?: readonly PlanFill[]
 }
+
+/** Sealed plans interpolate strings; loose-input normalization does not rerun. */
+export type PlanFill = string
 
 export interface ResolveCtx {
   tags: (Tag | Tag[])[]
@@ -96,7 +100,7 @@ export interface V4Head {
   _pr: NonNullable<V4Plugin['resolve']>[]
   _compile: Compile
   use: (p: V4Plugin) => void
-  push: (input: unknown, opts?: EntryOptions) => { patch: (input: unknown, fills?: unknown[]) => void, dispose: () => void }
+  push: (input: unknown, opts?: EntryOptions) => { patch: (input: unknown, fills?: readonly PlanFill[]) => void, dispose: () => void }
   resolve: () => Tag[]
   /**
    * Drop resolve caches; renderer heads also schedule a repaint. The hook for
@@ -121,10 +125,10 @@ const ESC_QUOT_RE = /"/g
 // text matches the SSR title escaping contract exactly (dual-path law);
 // json fills splice inside a JSON string literal, so quotes and backslashes
 // must escape or a fill value corrupts the document
-function fillHoles(segments: string[], modes: number, fills: readonly unknown[], at: number): string {
+function fillHoles(segments: string[], modes: number, fills: readonly PlanFill[], at: number): string {
   let out = segments[0]
   for (let i = 0; i < segments.length - 1; i++) {
-    const v = String(fills[at + i] ?? '')
+    const v = fills[at + i] ?? ''
     const mode = modes >> (i * 2) & 3
     out += (mode === 1
       ? (v.includes('"') ? v.replace(ESC_QUOT_RE, '&quot;') : v)
@@ -135,7 +139,7 @@ function fillHoles(segments: string[], modes: number, fills: readonly unknown[],
   return out
 }
 
-export function revivePlan(plan: PlanTag[], fills: readonly unknown[] | null, seq: number): Tag[] {
+export function revivePlan(plan: PlanTag[], fills: readonly PlanFill[] | null, seq: number): Tag[] {
   const o = seq * 4096
   // eslint-disable-next-line unicorn/no-new-array -- hot path, Array.from({length}) is larger and slower
   const tags: Tag[] = new Array(plan.length)
@@ -276,7 +280,7 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
         const prev = Array.isArray(cur) ? cur[cur.length - 1] : cur
         // arrayable identities append within the same entry; across entries the
         // later entry replaces the whole set (v3 semantics)
-        if (t.f & F_ARRAYABLE && (t.o / 4096 | 0) === (prev.o / 4096 | 0)) {
+        if (t.f & F_ARRAYABLE && t.o >> 12 === prev.o >> 12) {
           Array.isArray(cur) ? cur.push(t) : slots[idx] = [cur, t]
           hasArrayAppend = true
         }
@@ -324,9 +328,10 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
       // arrayable appends (multiple og:image sets) re-sort by (w, o) so structured
       // sub-properties stay adjacent to their parent (v3 sortFlatMeta parity: the
       // OG spec requires og:image:width to follow its og:image)
+      if (!hasArrayAppend)
+        return slots as Tag[]
       const out = slots.flat()
-      if (hasArrayAppend)
-        out.sort(sortTags)
+      out.sort(sortTags)
       return out
     },
   }

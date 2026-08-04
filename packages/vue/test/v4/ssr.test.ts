@@ -90,6 +90,17 @@ describe('v4 ssr', () => {
     expect(renderSSRHead(head).headTags).toBe('<title>Fetched</title>')
   })
 
+  it('resolves and patches root refs and getters at the server compile boundary', () => {
+    const input = ref({ title: 'initial' })
+    const head = createV4Head({ disableDefaults: true })
+    const entry = useHead(input, { head })
+    input.value = { title: 'before render' }
+    expect(renderSSRHead(head).headTags).toBe('<title>before render</title>')
+
+    entry.patch(() => ({ title: 'getter patch' }))
+    expect(renderSSRHead(head).headTags).toBe('<title>getter patch</title>')
+  })
+
   it('injectHead inside setup returns the provided head', async () => {
     let injected: unknown
     const head = await ssrVueAppWithV4Head(() => {
@@ -171,13 +182,12 @@ describe('v4 ssr', () => {
     expect(renderSSRHead(head).headTags).toBe('<title>Page | Acme</title>')
   })
 
-  it('nuxt island shape: entries are iterable with raw input', () => {
+  it('nuxt island shape: entries expose raw input without an adapter thunk', () => {
     const head = createV4Head({ disableDefaults: true })
-    useHead({ title: 'island' }, { head })
+    const input = { title: 'island' }
+    useHead(input, { head })
     const inputs = [...head.entries.values()].map(e => e.input)
     expect(inputs).toHaveLength(1)
-    // the adapter pushes thunks; islands walk them through walkResolver, which
-    // unwraps top-level functions
-    expect((inputs[0] as () => unknown)()).toEqual({ title: 'island' })
+    expect(inputs[0]).toBe(input)
   })
 })

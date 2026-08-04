@@ -22,10 +22,12 @@ import {
   TAG_NAMES,
   unescapeHtml,
 } from './core'
+import { identity } from './identity'
+
+export { identity } from './identity'
 
 const ALIASES: Record<string, number> = { critical: -8, high: -1, low: 2 }
 const LINK_WEIGHTS: Record<string, number> = { 'preconnect': 20, 'stylesheet': 60, 'preload': 70, 'modulepreload': 70, 'prefetch': 90, 'dns-prefetch': 90, 'prerender': 90 }
-const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 // exact arrayable meta names, plus og:image/video/audio + twitter:image sub-prop prefixes
 const ARRAYABLE_RE = /^(?:og:(?:image|video|audio)|twitter:image)(?::|$)|^(?:theme-color|google-site-verification|author|og:locale:alternate|(?:article|book):(?:author|tag))$/
 const POS: Record<string, number> = { bodyOpen: 1, bodyClose: 2 }
@@ -66,39 +68,6 @@ function weight(id: number, p: Record<string, any> | null, content: string | nul
     w = content && content.includes('@import') ? 40 : 60
   }
   return w + (ALIASES[priority as string] || 0)
-}
-
-// port of v3 utils/dedupe.ts dedupeKey; p may be null (content-only tags).
-// Exported for the client's DOM adoption (data-hid stands in for key there),
-// so compile and adopt can never drift.
-export function identity(id: number, p: Record<string, any> | null, content: string | null, key: string | null): string {
-  const name = TAG_NAMES[id]
-  if (id === T_TITLE || id === T_BASE || id === T_TITLE_TEMPLATE)
-    return name
-  if (p) {
-    if (id === T_LINK) {
-      if (p.rel === 'canonical')
-        return 'canonical'
-      if (p.rel === 'alternate' && p.hreflang)
-        return `alternate:${p.hreflang}`
-    }
-    if (p.charset)
-      return 'charset'
-    if (id === T_META) {
-      const v = p.name ?? p.property ?? p['http-equiv']
-      if (v !== undefined)
-        return `meta:${v}${(typeof v !== 'string' || !v.includes(':')) && !META_NOREWRITE_RE.test(v) && key ? `:key:${key}` : ''}`
-    }
-  }
-  if (key)
-    return `${name}:key:${key}`
-  if (p) {
-    if (p.id)
-      return `${name}:id:${p.id}`
-    if (id === T_LINK && p.rel && p.href)
-      return `link:${p.rel}:${p.href}`
-  }
-  return content && (id >= T_STYLE && id <= T_NOSCRIPT) ? `${name}:content:${content}` : ''
 }
 
 // class -> Set<string>, style -> Map<string, string> (v3 normalizeStyleClassProps)
@@ -196,8 +165,9 @@ function compileTag(id: number, input: Record<string, any>, opts: EntryOptions |
   }
 
   // script content escaping happens at compile time, render assumes clean
-  if (c !== null && id === T_SCRIPT) {
-    c = isJsonType(String(p?.type)) ? c.replace(JSON_LT_RE, '\\u003C') : c.replace(SCRIPT_END_RE, '<\\/script')
+  // Avoid RegExp replacement machinery for large, already-safe payload scripts.
+  if (c !== null && id === T_SCRIPT && c.includes('<')) {
+    c = isJsonType(p?.type) ? c.replace(JSON_LT_RE, '\\u003C') : c.replace(SCRIPT_END_RE, '<\\/script')
   }
 
   // compile-time sanitize: empty tags and contentless metas are dropped here

@@ -7,7 +7,9 @@
  * emitEntryPlan (per entry) or emitRoutePlan (cross-entry pre-merge).
  * Static values become prebuilt html tuples byte-identical to what
  * compileEntry + renderSSRHead produce (the dual-path law); holes become
- * segment-array tuples whose escape mode is fixed at build time.
+ * string-interpolation tuples whose escape mode is fixed at build time.
+ * Hole fills do not rerun loose-input normalization. An automatic transform
+ * must keep non-string or structurally dynamic values on the runtime path.
  *
  * Fill contract: revivePlan consumes fills with a single left-to-right
  * cursor over the plan (tuple order, then hole order inside each tuple).
@@ -21,13 +23,17 @@
  * All shapes that cannot compile deterministically throw PlanEmitError so
  * the bundler has an unambiguous bail-to-runtime signal.
  */
+import type { CompiledPlan } from './compiled'
 import type { EntryOptions, PlanTag, Tag } from './core'
+import type { SSRPayload } from './server'
+import type { SSRRoutePlan, SSRRoutePlanTag } from './server-plans'
 import { compileEntry, TitlePlugin } from './compile'
 import {
   createCore,
   F_ARRAYABLE,
   F_ID,
   F_POS,
+  F_PREBUILT,
   F_REMOVED,
   POS_SHIFT,
   T_BODY_ATTRS,
@@ -36,7 +42,8 @@ import {
   T_TITLE_TEMPLATE,
   TAG_NAMES,
 } from './core'
-import { propsToString, tagToHtml } from './server'
+import { DEFAULT_PLAN, propsToString, tagToHtml } from './server'
+import { renderSSRRoutePlan } from './server-plans'
 
 export class PlanEmitError extends Error {
   constructor(message: string) {
@@ -59,10 +66,12 @@ export interface Hole {
 }
 
 /**
- * Marker for a dynamic value inside an otherwise static head object.
+ * Marker for a string interpolation inside an otherwise static head object.
  * Mode is normally inferred from position (text for title/textContent,
  * attr for prop values, json for JSON script content); an explicit mode
- * always wins.
+ * always wins. Fills are strings and interpolate into the compiled fragment;
+ * this does not preserve loose-input boolean, nullish, object, or array
+ * normalization.
  */
 export function hole(mode?: HoleMode): Hole {
   return { [HOLE_BRAND]: true, mode: mode || null }
@@ -78,21 +87,51 @@ const MODE_BITS: Record<HoleMode, number> = { text: 0, attr: 1, json: 2 }
 // hole placeholders must survive every compile-time transform untouched:
 // private-use-area chars pass through JSON.stringify, escapeHtml, the attr
 // quote guard and the </script terminator regex without rewriting
-const TOKEN_OPEN = '\uE000'
-const TOKEN_RE = /\uE000(\d+)\uE000/g
+const TOKEN_CHAR = '\uE000'
+
+interface HoleRegistry {
+  modes: number[]
+  open: string
+  pattern: RegExp
+}
+
+function createRegistry(inputs: readonly unknown[]): HoleRegistry {
+  let longest = 0
+  const seen = new WeakSet<object>()
+  const scan = (value: unknown) => {
+    if (typeof value === 'string') {
+      let run = 0
+      for (let i = 0; i < value.length; i++) {
+        run = value[i] === TOKEN_CHAR ? run + 1 : 0
+        if (run > longest)
+          longest = run
+      }
+    }
+    else if (value && typeof value === 'object' && !isHole(value) && !seen.has(value)) {
+      seen.add(value)
+      for (const key in value) {
+        scan(key)
+        scan((value as Record<string, unknown>)[key])
+      }
+    }
+  }
+  for (const input of inputs) scan(input)
+  const open = TOKEN_CHAR.repeat(longest + 1)
+  return { modes: [], open, pattern: new RegExp(`${open}(\\d+)${open}`, 'g') }
+}
 
 const isJsonType = (t: unknown) => String(t).endsWith('json') || t === 'importmap' || t === 'speculationrules'
 
 /** Register one hole; returns its placeholder token. */
-function tok(reg: number[], mode: HoleMode | null, h: Hole): string {
+function tok(reg: HoleRegistry, mode: HoleMode | null, h: Hole): string {
   const m = h.mode || mode
   if (!m)
     bail('a hole in raw innerHTML has no inferable escape mode; pass hole(\'json\') for JSON content or leave the tag to runtime')
-  reg.push(MODE_BITS[m])
-  return `\uE000${reg.length - 1}\uE000`
+  reg.modes.push(MODE_BITS[m])
+  return `${reg.open}${reg.modes.length - 1}${reg.open}`
 }
 
-function tokDeep(v: any, mode: HoleMode, reg: number[]): any {
+function tokDeep(v: any, mode: HoleMode, reg: HoleRegistry): any {
   if (isHole(v))
     return tok(reg, mode, v)
   if (typeof v === 'function')
@@ -107,7 +146,7 @@ function tokDeep(v: any, mode: HoleMode, reg: number[]): any {
   return v
 }
 
-function tokTagObj(tag: string, obj: Record<string, any>, reg: number[]): Record<string, any> {
+function tokTagObj(tag: string, obj: Record<string, any>, reg: HoleRegistry): Record<string, any> {
   const out: Record<string, any> = {}
   for (const k in obj) {
     const v = obj[k]
@@ -138,7 +177,7 @@ function tokTagObj(tag: string, obj: Record<string, any>, reg: number[]): Record
 }
 
 /** Clone a head input, swapping hole markers for placeholder tokens. */
-function tokHead(input: Record<string, any>, reg: number[], allowTitleTemplate: boolean): Record<string, any> {
+function tokHead(input: Record<string, any>, reg: HoleRegistry, allowTitleTemplate: boolean): Record<string, any> {
   if (!input || typeof input !== 'object' || Array.isArray(input))
     bail('emitter input must be a plain head object')
   const out: Record<string, any> = {}
@@ -177,11 +216,27 @@ function tokHead(input: Record<string, any>, reg: number[], allowTitleTemplate: 
 }
 
 export interface EmitResult {
-  plan: PlanTag[]
+  plan: CompiledPlan
   /** Fill slots the plan consumes (revivePlan's cursor length). */
   holes: number
   /** fillOrder[i] = creation-order index (input traversal) of the hole filling slot i. */
   fillOrder: number[]
+}
+
+declare const sealedRoutePlan: unique symbol
+/** A plan fully merged by emitRoutePlan and safe for the direct SSR renderer. */
+export type SealedRoutePlan = CompiledPlan & { readonly [sealedRoutePlan]: true }
+
+export interface RouteEmitResult extends EmitResult {
+  plan: SealedRoutePlan
+}
+
+export interface SSRRouteEmitResult extends Omit<EmitResult, 'plan'> {
+  plan: SSRRoutePlan
+}
+
+export interface RouteEmitOptions {
+  disableDefaults?: boolean
 }
 
 interface EmitItem {
@@ -192,14 +247,14 @@ interface EmitItem {
 }
 
 /** Serialize compiled/resolved tags to plan tuples, splitting hole tokens into segments. */
-function serialize(tags: Tag[], reg: number[]): EmitResult {
+function serialize(tags: Tag[], reg: HoleRegistry): EmitResult {
   const items: EmitItem[] = []
 
   for (const t of tags) {
     if (t.f & F_REMOVED)
       continue
     const id = t.f & F_ID
-    if (t.d.includes(TOKEN_OPEN))
+    if (t.d.includes(reg.open))
       bail(`hole in an identity-critical position on <${TAG_NAMES[id]}>: the computed dedupe identity would be dynamic`)
     if (id === T_TITLE_TEMPLATE)
       bail('titleTemplate cannot be sealed into a plan')
@@ -207,10 +262,12 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
       // per-prop fragments keep the runtime d (class/style stay per token) so
       // revived fragments dedupe against runtime attr pushes in core;
       // renderSSRHead folds prebuilt fragments back through its attr bag
-      items.push({ w: t.w, d: t.d, pos: id === T_HTML_ATTRS ? 3 : 4, html: propsToString(t.p!) })
+      const html = t.f & F_PREBUILT ? t.c! : propsToString(t.p!)
+      if (html)
+        items.push({ w: t.w, d: t.d, pos: id === T_HTML_ATTRS ? 3 : 4, html })
       continue
     }
-    const html = tagToHtml(t)
+    const html = t.f & F_PREBUILT ? t.c! : tagToHtml(t)
     // a lone titleTemplate folds to a title but keeps d 'titleTemplate'
     // (see V4_DESIGN.md 12.5); emit as 'title' so runtime pushes override it
     const d = id === T_TITLE && t.d === 'titleTemplate' ? 'title' : t.d
@@ -223,7 +280,7 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
   const fillOrder: number[] = []
   for (const it of items) {
     const html = it.html
-    if (!html.includes(TOKEN_OPEN)) {
+    if (!html.includes(reg.open)) {
       plan.push(it.pos ? [it.w, it.d, html, it.pos] : [it.w, it.d, html])
       continue
     }
@@ -231,22 +288,22 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
     let modes = 0
     let count = 0
     let last = 0
-    TOKEN_RE.lastIndex = 0
-    let m = TOKEN_RE.exec(html)
+    reg.pattern.lastIndex = 0
+    let m = reg.pattern.exec(html)
     while (m) {
       if (count === 15)
         bail('a plan tuple supports at most 15 holes (2-bit modes in one word)')
       segments.push(html.slice(last, m.index))
-      modes |= reg[+m[1]] << (count * 2)
+      modes |= reg.modes[+m[1]] << (count * 2)
       fillOrder.push(+m[1])
       count++
       last = m.index + m[0].length
-      m = TOKEN_RE.exec(html)
+      m = reg.pattern.exec(html)
     }
     segments.push(html.slice(last))
     plan.push(it.pos ? [it.w, it.d, segments, modes, it.pos] : [it.w, it.d, segments, modes])
   }
-  return { plan, holes: fillOrder.length, fillOrder }
+  return { plan: plan as CompiledPlan, holes: fillOrder.length, fillOrder }
 }
 
 /**
@@ -256,11 +313,11 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
  * identity-critical holes) so the bundler bails the entry to runtime.
  */
 export function emitEntryPlan(input: Record<string, any>, opts?: EntryOptions): EmitResult {
-  const reg: number[] = []
+  const reg = createRegistry([input])
   const tokenized = tokHead(input, reg, false)
   const res = serialize(compileEntry(tokenized, 0, opts || null), reg)
   // entry plans never dedupe at build time, so every hole must reach the plan
-  if (res.holes !== reg.length)
+  if (res.holes !== reg.modes.length)
     bail('a hole sits in a position the compiler drops (empty tag, contentless meta, or an unsupported slot); leave the entry to runtime')
   return res
 }
@@ -272,8 +329,8 @@ export function emitEntryPlan(input: Record<string, any>, opts?: EntryOptions): 
  * override through ordinary dedupe. Static titleTemplate + static title fold
  * to a final title; a dynamic (hole) title under a titleTemplate throws.
  */
-export function emitRoutePlan(entries: [Record<string, any>, EntryOptions?][]): EmitResult {
-  const reg: number[] = []
+function emitMergedRoutePlan(entries: [Record<string, any>, EntryOptions?][], includeDefaults: boolean): RouteEmitResult {
+  const reg = createRegistry(entries.map(entry => entry[0]))
   let hasTemplate = false
   let holeTitle = false
   const tokenized: [Record<string, any>, EntryOptions | undefined][] = entries.map(([input, opts]) => {
@@ -289,10 +346,39 @@ export function emitRoutePlan(entries: [Record<string, any>, EntryOptions?][]): 
     bail('a static titleTemplate cannot pre-merge over a dynamic title; leave the title entry to runtime')
   const head = createCore({ ssr: true, compile: compileEntry })
   head.use(TitlePlugin)
+  if (includeDefaults)
+    head.push(DEFAULT_PLAN)
   for (const [input, opts] of tokenized) head.push(input, opts)
   // no holes===reg.length assert here: build-time dedupe may legally drop a
   // hole-bearing loser; fillOrder is the authoritative slot map
-  return serialize(head.resolve(), reg)
+  return serialize(head.resolve(), reg) as RouteEmitResult
+}
+
+export function emitRoutePlan(entries: [Record<string, any>, EntryOptions?][]): RouteEmitResult {
+  return emitMergedRoutePlan(entries, false)
+}
+
+/** Strip identity and weight fields that the direct server renderer cannot use. */
+export function emitSSRRoutePlan(entries: [Record<string, any>, EntryOptions?][], options: RouteEmitOptions = {}): SSRRouteEmitResult {
+  const emitted = emitMergedRoutePlan(entries, !options.disableDefaults)
+  const plan = emitted.plan.map((tuple): SSRRoutePlanTag => {
+    const content = tuple[2]
+    if (typeof content === 'string') {
+      const position = (tuple[3] || 0) & 7
+      return position ? [content, position] : [content]
+    }
+    const position = (tuple[4] || 0) & 7
+    return position ? [content, tuple[3] || 0, position] : [content, tuple[3] || 0]
+  }) as SSRRoutePlan
+  return { plan, holes: emitted.holes, fillOrder: emitted.fillOrder }
+}
+
+/** Fold a fully static route to its final SSR payload. No Unhead runtime ships. */
+export function emitRoutePayload(entries: [Record<string, any>, EntryOptions?][], options: RouteEmitOptions = {}): SSRPayload {
+  const emitted = emitSSRRoutePlan(entries, options)
+  if (emitted.holes)
+    bail('emitRoutePayload requires a fully static route; use emitSSRRoutePlan and renderSSRRoutePlan for holes')
+  return renderSSRRoutePlan(emitted.plan)
 }
 
 export interface PlanToCodeOptions {
@@ -315,4 +401,9 @@ export function planToCode(plan: PlanTag[], opts: PlanToCodeOptions = {}): strin
       : `[${v.map(str).join(',')}]`
   const src = `[${plan.map(t => `[${(t as (number | string | string[])[]).map(cell).join(',')}]`).join(',')}]`
   return opts.fills ? `[${src},{fills:[${opts.fills.join(',')}]}]` : src
+}
+
+/** Compact source for a bundler to inject instead of a server runtime call. */
+export function payloadToCode(payload: SSRPayload): string {
+  return JSON.stringify(payload).replace(/[\u2028\u2029]/g, c => c === '\u2028' ? '\\u2028' : '\\u2029')
 }

@@ -4,6 +4,8 @@ import { createHead as _createHead } from 'unhead/v4/client'
 import { nextTick } from 'vue'
 import { vueInstall } from './install'
 
+const vueScheduler = (flush: () => void) => void nextTick(flush)
+
 export interface CreateHeadOptions {
   document?: Document
   disableDefaults?: boolean
@@ -21,13 +23,15 @@ export interface CreateHeadOptions {
 export function createHead(options: CreateHeadOptions = {}): VueHeadClient {
   const beforeRender: ((ctx: DomBeforeRenderCtx) => void)[] = []
   const shouldRender = () => {
+    if (!beforeRender.length)
+      return true
     const ctx: DomBeforeRenderCtx = { shouldRender: true }
     for (const cb of beforeRender) cb(ctx)
     return ctx.shouldRender
   }
   // default rides vue's job queue (vue-native research SHIP verdict): head
   // flushes land after component effects in the same tick, zero extra bytes
-  const schedule = options.scheduler || ((flush: () => void) => void nextTick(flush))
+  const schedule = options.scheduler || vueScheduler
   const head = _createHead({
     document: options.document,
     disableDefaults: options.disableDefaults,
@@ -39,7 +43,9 @@ export function createHead(options: CreateHeadOptions = {}): VueHeadClient {
       shouldRender() && flush()
     }),
   }) as unknown as VueHeadClient
-  for (const p of options.plugins || []) head.use(p)
+  if (options.plugins) {
+    for (const p of options.plugins) head.use(p)
+  }
   const render = head.render!
   head.render = () => shouldRender() && render()
   head.hooks = {

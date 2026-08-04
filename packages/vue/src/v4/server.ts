@@ -1,5 +1,6 @@
-import type { Tag, V4Head, V4Plugin } from 'unhead/v4'
+import type { EntryOptions, Tag, V4Head, V4Plugin } from 'unhead/v4'
 import type { VueHeadClient } from './types'
+import { walkResolver } from 'unhead/utils'
 import {
   F_ID,
   F_POS,
@@ -12,6 +13,7 @@ import {
 } from 'unhead/v4'
 import { createHead as _createHead, propsToString, tagToHtml } from 'unhead/v4/server'
 import { vueInstall } from './install'
+import { VueResolver } from './resolver'
 
 export { propsToString }
 
@@ -37,7 +39,15 @@ export interface CreateServerHeadOptions {
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: CreateServerHeadOptions = {}): VueHeadClient {
   const head = _createHead({ disableDefaults: options.disableDefaults }) as VueHeadClient
-  for (const p of options.plugins || []) head.use(p)
+  const compile = head._compile
+  head._compile = (input, seq, opts) => {
+    const resolved = walkResolver(input, VueResolver) || {}
+    const transform = (opts as EntryOptions & { _v?: (input: Record<string, any>) => Record<string, any> } | null)?._v
+    return compile(transform ? transform(resolved) : resolved, seq, opts)
+  }
+  if (options.plugins) {
+    for (const p of options.plugins) head.use(p)
+  }
   head.install = vueInstall(head)
   return head
 }
