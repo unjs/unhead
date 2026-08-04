@@ -203,6 +203,39 @@ describe('vue e2e scripts', () => {
     script.remove()
   })
 
+  it('disposes callbacks by identity', async () => {
+    const dom = useDom()
+    const head = createHead({ document: dom.window.document })
+    const calls: string[] = []
+    let offFirst!: () => void
+    let offSecond!: () => void
+    const el = dom.window.document.createElement('div')
+    const app = createApp({
+      setup() {
+        const script = useScript({ src: '//ordered-callbacks.js' }, { trigger: 'manual', head })
+        offFirst = script.onLoaded(() => {
+          calls.push('first')
+        }) as unknown as () => void
+        offSecond = script.onLoaded(() => {
+          calls.push('second')
+        }) as unknown as () => void
+        return () => h('div')
+      },
+    })
+    app.mount(el)
+
+    offFirst()
+    offSecond()
+
+    const script = (head as any)._scripts['//ordered-callbacks.js']
+    script.status = 'loaded'
+    await head.hooks?.callHook('script:updated', { script })
+    await script._loadPromise
+
+    expect(calls).toEqual([])
+    app.unmount()
+  })
+
   it('setupTriggerHandler race condition: old scope disposal should not abort new scope trigger', async () => {
     const dom = useDom()
     const head = createHead({

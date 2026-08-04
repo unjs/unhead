@@ -42,25 +42,15 @@ function registerVueScopeHandlers<T extends Record<symbol | string, any> = Recor
   if (!scope) {
     return
   }
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    if (!script._cbs[key]) {
-      cb(script.instance)
-      return () => {}
-    }
-    let i: number | null = script._cbs[key].push(cb)
-    const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
-    }
-    onScopeDispose(destroy)
-    return destroy
+  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
+    const off = base(cb) ?? (() => {})
+    onScopeDispose(off)
+    return off
   }
-  // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
+  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
+  script.onLoaded = bind(baseOnLoaded)
+  script.onError = bind(baseOnError)
   // capture the controller at registration time so this scope only aborts
   // the controller it was associated with, not a newer one created by a later scope
   const triggerAbortController = script._triggerAbortController

@@ -15,7 +15,7 @@ import type {
   WarmupStrategy,
 } from './types'
 import { ScriptNetworkEvents } from '../utils'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptProxy } from './proxy'
 
 /**
  * @deprecated compute key manually
@@ -35,7 +35,10 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : _input
   const options = _options || {}
   const id = resolveScriptKey(input)
-  const prevScript = head._scripts?.[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+  const scripts = head._scripts || (head._scripts = Object.create(null))
+  const prevScript = Object.prototype.hasOwnProperty.call(scripts, id)
+    ? scripts[id] as undefined | UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
+    : undefined
   if (prevScript) {
     prevScript.setupTriggerHandler(options.trigger)
     return prevScript
@@ -52,6 +55,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       const k = fn as keyof HttpEventAttributes
       const _fn = typeof input[k] === 'function' ? input[k].bind(options.eventContext) : null
       input[k] = (e: Event) => {
+        // eslint-disable-next-line ts/no-use-before-define
+        if (script.status === 'removed')
+          return
         syncStatus(fn === 'onload' ? 'loaded' : fn === 'onerror' ? 'error' : 'loading')
         _fn?.(e)
       }
@@ -64,31 +70,48 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     if (head.ssr) {
       return
     }
+    let uniqueKey: string | undefined
     if (options?.key) {
-      const key = `${options?.key}:${options.key}`
-      if (_uniqueCbs.has(key)) {
+      uniqueKey = `${key}:${options.key}`
+      if (_uniqueCbs.has(uniqueKey)) {
         return
       }
-      _uniqueCbs.add(key)
+      _uniqueCbs.add(uniqueKey)
     }
     if (_cbs[key]) {
-      const i: number = _cbs[key].push(cb)
-      return () => _cbs[key]?.splice(i - 1, 1)
+      _cbs[key].push(cb)
+      return () => {
+        const idx = _cbs[key]?.indexOf(cb) ?? -1
+        if (idx !== -1)
+          _cbs[key]?.splice(idx, 1)
+        if (uniqueKey)
+          _uniqueCbs.delete(uniqueKey)
+      }
     }
-    // the event has already happened, run immediately
     // eslint-disable-next-line ts/no-use-before-define
-    cb(script.instance)
-    return () => {}
+    if (key === 'loaded' && script.status === 'loaded')
+      // eslint-disable-next-line ts/no-use-before-define
+      cb(script.instance)
+    // eslint-disable-next-line ts/no-use-before-define
+    else if (key === 'error' && script.status === 'error')
+      cb()
+    return () => {
+      if (uniqueKey)
+        _uniqueCbs.delete(uniqueKey)
+    }
   }
   const loadPromise = new Promise<T | false>((resolve) => {
     // promise never resolves
     if (head.ssr)
       return
-    const emit = (api: T) => requestAnimationFrame(() => resolve(api))
-    const _ = head.hooks.hook('script:updated', ({ script }) => {
+    const emit = (api: T) => queueMicrotask(() => resolve(api))
+    const _ = head.hooks.hook('script:updated', ({ script: updatedScript }) => {
+      // eslint-disable-next-line ts/no-use-before-define
+      if (updatedScript !== script)
+        return
       // vue augmentation... not ideal
-      const status = script.status
-      if (script.id === id && (status === 'loaded' || status === 'error')) {
+      const status = updatedScript.status
+      if (status === 'loaded' || status === 'error' || status === 'removed') {
         if (status === 'loaded') {
           if (typeof options.use === 'function') {
             const api = options.use()
@@ -103,6 +126,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         else if (status === 'error') {
           resolve(false) // failed to load
         }
+        else if (status === 'removed') {
+          resolve(false)
+        }
         _()
       }
     })
@@ -116,19 +142,22 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     status: 'awaitingLoad',
 
     remove() {
+      const hadEntry = !!script.entry
       // cancel all pending triggers
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
       script._warmupEl?.dispose()
+      script._warmupEl = undefined
       if (script.entry) {
         script.entry.dispose()
         script.entry = undefined
-        syncStatus('removed')
-        delete head._scripts?.[id]
-        return true
       }
-      return false
+      if (scripts[id] === script)
+        delete scripts[id]
+      if (script.status !== 'removed')
+        syncStatus('removed')
+      return hadEntry
     },
     warmup(rel: WarmupStrategy) {
       const { src } = input
@@ -155,6 +184,8 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
       return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
+      if (script.status === 'removed')
+        return loadPromise
       // cancel all pending triggers as we've started loading
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
@@ -211,7 +242,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         // store the latest controller for external access
         script._triggerAbortController = abortController
         script._triggerPromises = script._triggerPromises || []
-        const idx = script._triggerPromises.push(Promise.race([
+        const triggerPromise: Promise<void> = Promise.race([
           trigger.then(v => typeof v === 'undefined' || v ? script.load : undefined),
           abortPromise,
         ])
@@ -221,9 +252,13 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
             res?.()
           })
           .finally(() => {
+            script._triggerAbortControllers?.delete(abortController)
             // remove the promise from the list
-            script._triggerPromises?.splice(idx, 1)
-          }))
+            const idx = script._triggerPromises?.indexOf(triggerPromise) ?? -1
+            if (idx !== -1)
+              script._triggerPromises?.splice(idx, 1)
+          })
+        script._triggerPromises.push(triggerPromise)
       }
       else if (typeof trigger === 'function') {
         trigger(script.load)
@@ -240,7 +275,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
         _cbs.loaded = null
       }
       else {
-        _cbs.error?.forEach(cb => cb())
+        if (script.status === 'error')
+          _cbs.error?.forEach(cb => cb())
+        _cbs.loaded = null
         _cbs.error = null
       }
     })
@@ -248,13 +285,9 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   script.setupTriggerHandler(options.trigger)
   if (options.use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
+    const { proxy, resolve } = createScriptProxy<T>(head.ssr ? {} as T : options.use() || {} as T)
     script.proxy = proxy
-    script.onLoaded((instance) => {
-      replayProxyRecordings(instance, stack)
-      // just forward everything with the same behavior
-      script.proxy = createForwardingProxy(instance)
-    })
+    script.onLoaded(resolve)
   }
   // need to make sure it's not already registered
   if (!options.warmupStrategy && (typeof options.trigger === 'undefined' || options.trigger === 'client')) {
@@ -263,6 +296,6 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   if (options.warmupStrategy) {
     script.warmup(options.warmupStrategy)
   }
-  head._scripts = Object.assign(head._scripts || {}, { [id]: script })
+  scripts[id] = script
   return script
 }

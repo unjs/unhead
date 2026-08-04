@@ -3,7 +3,7 @@ import type { AsVoidFunctions } from '../../../src/scripts/types'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from '../../../src/scripts/proxy'
+import { createScriptProxy } from '../../../src/scripts/proxy'
 import { createSpyProxy } from '../../../src/scripts/utils'
 
 interface Api {
@@ -31,7 +31,7 @@ interface GoogleAnalytics {
 
 describe('proxy chain', () => {
   it('augments types', () => {
-    const proxy = createNoopedRecordingProxy<Api>()
+    const proxy = createScriptProxy<Api>()
     expectTypeOf(proxy.proxy._paq).toBeArray()
     expectTypeOf(proxy.proxy.doSomething).toBeFunction()
     expectTypeOf(proxy.proxy.doSomething).returns.toBeVoid()
@@ -40,7 +40,7 @@ describe('proxy chain', () => {
   })
   it('e2e', async () => {
     // do recording
-    const { proxy, stack } = createNoopedRecordingProxy<Api>()
+    const { proxy, stack, resolve } = createScriptProxy<Api>()
     const script = { proxy, instance: null }
     script.proxy._paq.push(['test'])
     script.proxy.say('hello world')
@@ -62,14 +62,12 @@ describe('proxy chain', () => {
       say: w.say,
     }
     const log = console.log
-    // replay recording
+    // replay recording and switch the same proxy to forwarding
     const consoleMock = vi.spyOn(console, 'log').mockImplementation((...args) => {
       log('mocked', ...args)
     })
     // @ts-expect-error untyped
-    replayProxyRecordings(script.instance, stack)
-    // @ts-expect-error untyped
-    script.proxy = createForwardingProxy(script.instance)
+    resolve(script.instance)
     expect(consoleMock).toHaveBeenCalledWith('hello world')
     script.proxy.say('proxy updated!')
     expect(consoleMock).toHaveBeenCalledWith('proxy updated!')
@@ -145,6 +143,64 @@ describe('proxy chain', () => {
     expectTypeOf(instance.proxy.greet).toBeFunction()
     instance.proxy.greet('hello-world')
     expect(consoleMock).toHaveBeenCalledWith('hello-world')
+  })
+
+  it('keeps proxy references working after load', async () => {
+    const head = createHead()
+    const greet = vi.fn()
+    let loaded = false
+    const instance = useScript(head, '/stable-proxy.js', {
+      trigger: 'manual',
+      use: () => loaded ? { greet } : undefined,
+    })
+    const heldProxy = instance.proxy
+    const heldMethod = instance.proxy.greet
+
+    heldProxy.greet('before')
+    loaded = true
+    instance.load()
+    instance.status = 'loaded'
+    await head.hooks.callHook('script:updated', { script: instance })
+    await instance._loadPromise
+
+    heldProxy.greet('after-object')
+    heldMethod('after-method')
+    expect(greet).toHaveBeenCalledWith('before')
+    expect(greet).toHaveBeenCalledWith('after-object')
+    expect(greet).toHaveBeenCalledWith('after-method')
+  })
+
+  it('applies proxied methods against their raw owner', async () => {
+    const head = createHead()
+    const branded = new WeakSet<object>()
+    const canvas = {
+      readWidth() {
+        if (!branded.has(this))
+          throw new TypeError('Illegal invocation')
+        return 120
+      },
+    }
+    branded.add(canvas)
+    const api = {
+      canvas,
+      readWidth() {
+        return this.canvas.readWidth()
+      },
+    }
+    let loaded = false
+    const instance = useScript(head, '/raw-receiver.js', {
+      trigger: 'manual',
+      use: () => loaded ? api : undefined,
+    })
+
+    loaded = true
+    instance.load()
+    instance.status = 'loaded'
+    await head.hooks.callHook('script:updated', { script: instance })
+    await instance._loadPromise
+
+    expect(() => instance.proxy.readWidth()).not.toThrow()
+    expect(instance.proxy.canvas).toBe(canvas)
   })
 })
 
