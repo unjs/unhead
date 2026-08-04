@@ -88,11 +88,12 @@ describe('normalizeStyle/parseStringStyle: @vue/shared vs v4 normListy', () => {
     expect(v4StyleString('color:red; margin:0')).toBe(stringifyStyle(parseStringStyle('color:red; margin:0')).replace(/;$/, ''))
   })
 
-  it('diverges on semicolons inside url() data URIs: vue parses correctly, v4 corrupts', () => {
+  it('agrees on semicolons inside url() data URIs (fixed: v4 split is paren-aware)', () => {
     const css = 'background:url(data:image/png;base64,AAA);color:red'
     expect(parseStringStyle(css)).toEqual({ background: 'url(data:image/png;base64,AAA)', color: 'red' })
-    // v4's naive split(';') severs the data URI
-    expect(v4StyleString(css)).toBe('background:url(data:image/png;color:red')
+    // the research round found v4's split(';') severed the data URI; compile.ts
+    // now ports vue's paren-aware delimiter, so both agree
+    expect(v4StyleString(css)).toBe('background:url(data:image/png;base64,AAA);color:red')
   })
 
   it('diverges on css comments: vue strips them, v4 keeps them in values', () => {
