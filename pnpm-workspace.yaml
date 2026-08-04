@@ -5,6 +5,8 @@ minimumReleaseAgeExclude:
   - '@nuxt/schema@4.5.0'
   - '@nuxt/vite-builder@4.5.0'
   - nuxt@4.5.0
+  - '@unhead/cli@3.3.0'
+  - unhead@3.3.0
 shellEmulator: true
 
 trustPolicy: no-downgrade

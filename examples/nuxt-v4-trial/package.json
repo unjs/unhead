@@ -1,0 +1,16 @@
+{
+  "name": "nuxt-v4-trial",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@unhead/vue": "workspace:*",
+    "nuxt": "catalog:",
+    "unhead": "workspace:*"
+  }
+}
