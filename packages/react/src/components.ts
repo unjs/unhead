@@ -87,7 +87,7 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       const data = normalizeReactPropAliases(props)
       normalizeRawContent(tagName, data)
 
-      if (TagsWithInnerContent.has(tagName) && data.children) {
+      if (TagsWithInnerContent.has(tagName) && data.children != null) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'
         data[contentKey] = Array.isArray(data.children)
           ? data.children.map(String).join('')
@@ -112,18 +112,18 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
     return input
   }, [processedElements, titleTemplate])
 
-  const headRef = useRef<ActiveHeadEntry<any> | null>(
-    head.push(getHeadChanges()),
-  )
+  const headRef = useRef<ActiveHeadEntry<any> | null>(null)
+
+  if (head.ssr && !headRef.current)
+    headRef.current = head.push(getHeadChanges())
 
   useEffect(() => {
+    headRef.current = head.push(getHeadChanges())
     return () => {
-      if (headRef.current?.dispose) {
-        headRef.current.dispose()
-      }
+      headRef.current?.dispose()
       headRef.current = null
     }
-  }, [])
+  }, [head])
 
   useEffect(() => {
     headRef.current?.patch(getHeadChanges())
