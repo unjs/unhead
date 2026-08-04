@@ -60,3 +60,14 @@ export function createHead(options: CreateHeadOptions = {}): VueHeadClient {
   head.install = vueInstall(head)
   return head
 }
+
+/**
+ * v3 compat: Nuxt <=4.4's client head plugin imports renderDOMHead from
+ * `@unhead/vue/client` and awaits it to flush head state after hydration and
+ * page transitions. The v4 head flushes through head.render() (already gated
+ * by the dom:beforeRender shim above); `options.document` is accepted and
+ * ignored because the v4 head binds its document at createHead time.
+ */
+export function renderDOMHead(head: VueHeadClient, _options: { document?: Document } = {}): boolean {
+  return !!head.render?.()
+}
