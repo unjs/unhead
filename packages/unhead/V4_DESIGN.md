@@ -404,6 +404,8 @@ Core bugs from the Nuxt role-play (bench/v4-explore/nuxt/NUXT_INTEGRATION.md), b
 - B1 (953a74eb is the client half, e6b4597b the plugin): TitlePlugin decodes F_PREBUILT titles (unescapeHtml helper in core next to the escape tables), applies the template and demotes the tag to a plain title so renderers re-escape.
 - B2 (953a74eb): the client renders sealed PlanTag tuples via a regex tag parse into element sync ops; pos 3/4 attr fragments apply to html/body, refills sync only changed attributes, changed scripts are replaced never mutated.
 
+Sealed-plan client rendering split out (post-B2 size pass): B2 cost the default client +765 B gz (5,861 vs 5,096 pre-B2) that loose-input apps paid for nothing, so the F_PREBUILT handlers (parsePrebuilt/buildParsed/syncParsed and the prebuilt fx branches) moved to `client-plans.ts` behind a head-level slot: `installPlanRenderer(head)` sets `head._plans`, the renderer calls it per prebuilt tag, and without it prebuilt tags are skipped in prod and throw in dev naming the import. `attachDom(core)` is the companion seam: `attachDom(createCore({ ssr: false }))` plus the installer is a sealed client with no L1 compiler. Measured (gz): default client 5,861 to 5,235, sealed-client profile 4,231, server unchanged at 4,061. The residual +139 over the 5,096 reference is the seam stub plus the B1 title decode, exact-adoption identity and public invalidate() commits, which landed after that measurement.
+
 Nuxt NEEDS-ADDITION list state (NUXT_INTEGRATION.md prioritized items):
 1. B2 client plan revival: FIXED (953a74eb).
 2. B1 prebuilt titles: FIXED (e6b4597b).

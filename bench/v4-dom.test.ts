@@ -9,6 +9,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { createHead as createV3 } from '../packages/unhead/src/client'
 import { createHead as createV4 } from '../packages/unhead/src/v4/client'
+import { installPlanRenderer } from '../packages/unhead/src/v4/client-plans'
 import { TemplateParamsPlugin, useTemplateParams } from '../packages/unhead/src/v4/plugins'
 import { createHead as createV4Server, renderSSRHead as renderV4Server } from '../packages/unhead/src/v4/server'
 import { instrument } from './v4-explore/nav/dom-ops'
@@ -106,6 +107,13 @@ describe('v4 dom', () => {
     expect(doc.querySelector('meta[name=x-custom]')).toBe(before.custom)
   })
 
+  it('dev: sealed plan tags without the plan renderer throw naming the import', () => {
+    const dom = new JSDOM(BLANK)
+    const head = createV4({ document: dom.window.document })
+    head.push([[100, 'meta:name:x', '<meta name="x" content="1">']] as PlanTag[])
+    expect(() => head.render()).toThrow(/client-plans/)
+  })
+
   it('sealed plan renders the same document state as the loose-object path', () => {
     const a = new JSDOM(BLANK)
     const loose = createV4({ document: a.window.document })
@@ -114,6 +122,7 @@ describe('v4 dom', () => {
 
     const b = new JSDOM(BLANK)
     const sealed = createV4({ document: b.window.document })
+    installPlanRenderer(sealed)
     sealed.push(SEALED_PAGE_PLAN, { fills: SEALED_FILLS })
     sealed.render()
 
@@ -124,6 +133,7 @@ describe('v4 dom', () => {
     const dom = new JSDOM(BLANK)
     const doc = dom.window.document
     const head = createV4({ document: doc })
+    installPlanRenderer(head)
     const entry = head.push(SEALED_PAGE_PLAN, { fills: SEALED_FILLS })
     head.render()
     const desc = doc.querySelector('meta[name=description]')!
@@ -148,6 +158,7 @@ describe('v4 dom', () => {
     const dom = new JSDOM(BLANK)
     const doc = dom.window.document
     const head = createV4({ document: doc })
+    installPlanRenderer(head)
     const entry = head.push(plan, { fills: ['a'] })
     head.render()
     const first = doc.querySelector('script[data-hid=state]')!

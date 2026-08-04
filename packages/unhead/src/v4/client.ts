@@ -21,7 +21,6 @@ import {
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
-  unescapeHtml,
 } from './core'
 
 // side-effect kinds; effects are one flat stride-3 array per render
@@ -30,16 +29,16 @@ import {
 // records were speed-neutral). Kinds above FX_EVT carry an undo payload in
 // the data slot rather than an identity: a matching (kind, target) pair is
 // the same effect even when the payload changed.
-const FX_ATTR = 0
-const FX_CLASS = 1
-const FX_STYLE = 2
-const FX_EL = 3
+export const FX_ATTR = 0
+export const FX_CLASS = 1
+export const FX_STYLE = 2
+export const FX_EL = 3
 const FX_EVT = 4
 const FX_TEXT = 5
 const FX_HTML = 6
-const FX_TITLE = 7
+export const FX_TITLE = 7
 
-interface DomState {
+export interface DomState {
   els: Map<string, Element>
   /** flat stride-3 (kind, target, data) effects applied by the last render */
   fx: any[]
@@ -47,11 +46,15 @@ interface DomState {
   title: string
 }
 
+/** Sealed-plan tag handler seam; installed by client-plans.ts, absent by default. */
+export type PrebuiltRender = (t: Tag, doc: Document, state: DomState, fx: any[], dupes: Record<string, number>) => Element | void
+
 export interface ClientHead extends V4Head {
   render: () => boolean
   dirty: boolean
   _doc: Document
   _dom: DomState | null
+  _plans?: PrebuiltRender
 }
 
 export interface CreateClientHeadOptions {
@@ -110,7 +113,7 @@ function fxKey(a: any[], i: number): string | number {
   return a[i] > FX_EVT ? a[i] : `${a[i]}\0${a[i + 2]}`
 }
 
-function setAttr(el: Element, k: string, v: any) {
+export function setAttr(el: Element, k: string, v: any) {
   const sv = v === true ? '' : String(v)
   el.getAttribute(k) !== sv && el.setAttribute(k, sv)
 }
@@ -146,72 +149,6 @@ function undoFx(kind: number, t: any, k: any, state: DomState, doc: Document) {
   }
 }
 
-// ---- prebuilt (sealed plan) rendering: c is final html, not props ----------
-
-const ATTR_RE = /\s([^\s=>]+)(?:="([^"]*)")?/g
-const QUOT_ENT_RE = /&quot;/g
-const unescAttr = (s: string) => s.includes('&quot;') ? s.replace(QUOT_ENT_RE, '"') : s
-
-interface Parsed {
-  name: string
-  attrs: [string, string][]
-  content: string | null
-}
-
-/** Regex scan of a single prebuilt tag's html; no HTML parser involved. */
-function parsePrebuilt(html: string): Parsed {
-  const gt = html.indexOf('>')
-  const open = html.slice(1, gt)
-  const sp = open.indexOf(' ')
-  const name = sp < 0 ? open : open.slice(0, sp)
-  const attrs: [string, string][] = []
-  if (sp >= 0) {
-    ATTR_RE.lastIndex = 0
-    let m = ATTR_RE.exec(open)
-    while (m) {
-      attrs.push([m[1], m[2] === undefined ? '' : unescAttr(m[2])])
-      m = ATTR_RE.exec(open)
-    }
-  }
-  const close = html.lastIndexOf('</')
-  return { name, attrs, content: close > gt ? html.slice(gt + 1, close) : null }
-}
-
-function setParsedContent(el: any, pd: Parsed) {
-  // script/style content is raw text; noscript's is markup
-  const prop = pd.name === 'noscript' ? 'innerHTML' : 'textContent'
-  el[prop] !== pd.content && (el[prop] = pd.content)
-}
-
-function buildParsed(doc: Document, pd: Parsed): Element {
-  const el = doc.createElement(pd.name)
-  for (const [k, v] of pd.attrs) el.setAttribute(k, v)
-  if (pd.content != null)
-    setParsedContent(el, pd)
-  return el
-}
-
-/** Attr-level sync: write only what differs, drop what disappeared. */
-function syncParsed(el: any, pd: Parsed) {
-  for (const [k, v] of pd.attrs) el.getAttribute(k) !== v && el.setAttribute(k, v)
-  if (el.attributes.length !== pd.attrs.length) {
-    for (const a of el.getAttributeNames()) {
-      let keep = false
-      for (const [k] of pd.attrs) {
-        if (k === a) {
-          keep = true
-          break
-        }
-      }
-      keep || el.removeAttribute(a)
-    }
-  }
-  if (pd.content != null)
-    setParsedContent(el, pd)
-}
-
-// ---------------------------------------------------------------------------
-
 function renderDOM(head: ClientHead): boolean {
   const doc = head._doc
   if (!doc)
@@ -228,9 +165,8 @@ function renderDOM(head: ClientHead): boolean {
 
   const tags = head.resolve()
   const dupes: Record<string, number> = Object.create(null)
-  let headFrag: DocumentFragment | null = null
-  let openFrag: DocumentFragment | null = null
-  let closeFrag: DocumentFragment | null = null
+  // position-bucket fragments: 0 head, 1 bodyOpen, 2 bodyClose
+  const frags: (DocumentFragment | undefined)[] = []
 
   for (let i = 0; i < tags.length; i++) {
     const t = tags[i]
@@ -240,70 +176,17 @@ function renderDOM(head: ClientHead): boolean {
     const id = f & F_ID
 
     if (f & F_PREBUILT) {
-      // sealed plan tuple: c is final html. Head-position tuples carry no
-      // type id in f (revivePlan only encodes position), so dispatch on d/c.
-      if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
-        // single-attr fragment string, e.g. ' class="dark"' (wire contract)
-        const el: any = id === T_HTML_ATTRS ? doc.documentElement : doc.body
-        const c = t.c!
-        const eq = c.indexOf('="')
-        const k = eq < 0 ? c.slice(1) : c.slice(1, eq)
-        const v = eq < 0 ? '' : unescAttr(c.slice(eq + 2, -1))
-        if (k === 'class') {
-          fx.push(FX_CLASS, el, v)
-          el.classList.contains(v) || el.classList.add(v)
-        }
-        else if (k === 'style') {
-          const ci = v.indexOf(':')
-          const sk = v.slice(0, ci).trim()
-          fx.push(FX_STYLE, el, sk)
-          el.style.setProperty(sk, v.slice(ci + 1).trim())
-        }
-        else {
-          fx.push(FX_ATTR, el, k)
-          setAttr(el, k, eq < 0 ? true : v)
-        }
-        continue
+      // sealed plan tuple: c is final html, not props. The handler ships in
+      // client-plans.ts so loose-input apps never pay for it; without it the
+      // tags are skipped (dev throws, naming the import).
+      const plans = head._plans
+      if (plans) {
+        const el = plans(t, doc, state, fx, dupes)
+        el && (frags[(f & F_POS) >> POS_SHIFT] ||= doc.createDocumentFragment()).appendChild(el)
       }
-      if (t.d === 'title') {
-        const c = t.c!
-        const text = unescapeHtml(c.slice(7, c.length - 8))
-        doc.title !== text && (doc.title = text)
-        fx.push(FX_TITLE, 0, state.title)
-        continue
-      }
-      const base = t.d || `pb:${t.c}`
-      const nth = dupes[base] || 0
-      dupes[base] = nth + 1
-      const key = nth ? `${base}:${nth}` : base
-      let el: any = state.els.get(key)
-      const fresh = !el
-      if (fresh) {
-        el = buildParsed(doc, parsePrebuilt(t.c!))
-        el._uhc = t.c
-        state.els.set(key, el)
-      }
-      else if (el._uhc !== t.c) {
-        const pd = parsePrebuilt(t.c!)
-        if (el.tagName === 'SCRIPT') {
-          // a changed script is a new script; replace, never mutate
-          const s: any = buildParsed(doc, pd)
-          el.replaceWith(s)
-          state.els.set(key, s)
-          el = s
-        }
-        else {
-          syncParsed(el, pd)
-        }
-        el._uhc = t.c
-      }
-      fx.push(FX_EL, el, key)
-      if (fresh) {
-        const pos = (f & F_POS) >> POS_SHIFT
-        const frag = pos === 0
-          ? (headFrag ||= doc.createDocumentFragment())
-          : pos === 1 ? (openFrag ||= doc.createDocumentFragment()) : (closeFrag ||= doc.createDocumentFragment())
-        frag.appendChild(el)
+      // eslint-disable-next-line node/prefer-global/process -- bundler-defined NODE_ENV; minifiers strip the whole branch
+      else if (process.env.NODE_ENV !== 'production') {
+        throw new Error('[unhead] this head received sealed plan tags but no plan renderer is installed; import { installPlanRenderer } from \'unhead/v4/client-plans\' and call installPlanRenderer(head)')
       }
       continue
     }
@@ -397,20 +280,16 @@ function renderDOM(head: ClientHead): boolean {
     if (fresh) {
       // append-only: new elements go at the end of their bucket, existing
       // elements are never moved (w ordering is an SSR-emit concern)
-      const pos = (f & F_POS) >> POS_SHIFT
-      const frag = pos === 0
-        ? (headFrag ||= doc.createDocumentFragment())
-        : pos === 1 ? (openFrag ||= doc.createDocumentFragment()) : (closeFrag ||= doc.createDocumentFragment())
-      frag.appendChild(el)
+      ;(frags[(f & F_POS) >> POS_SHIFT] ||= doc.createDocumentFragment()).appendChild(el)
     }
   }
 
-  if (headFrag)
-    doc.head.appendChild(headFrag)
-  if (openFrag)
-    doc.body.insertBefore(openFrag, doc.body.firstChild)
-  if (closeFrag)
-    doc.body.appendChild(closeFrag)
+  if (frags[0])
+    doc.head.appendChild(frags[0])
+  if (frags[1])
+    doc.body.insertBefore(frags[1], doc.body.firstChild)
+  if (frags[2])
+    doc.body.appendChild(frags[2])
 
   // reclaim: undo whatever last render applied that this one didn't re-apply.
   // steady-state rerenders resolve entirely in the lockstep prefix (no keys,
@@ -457,15 +336,18 @@ function bindEvent(state: DomState, fx: any[], key: string, el: Element, ev: str
   fx.push(FX_EVT, 0, key)
 }
 
-export function createHead(options: CreateClientHeadOptions = {}): ClientHead {
+/**
+ * Wire the DOM renderer onto a core. The seam sealed profiles build on:
+ * `attachDom(createCore({ ssr: false }))` plus client-plans' installer is a
+ * full sealed client with no L1 compiler in the bundle.
+ */
+export function attachDom(core: V4Head, options: CreateClientHeadOptions = {}): ClientHead {
   const doc = options.document || (typeof document !== 'undefined' ? document : undefined)
   const schedule = options.scheduler || ((flush: () => void) => queueMicrotask(flush))
-  const core = createCore({ ssr: false, compile: compileEntry })
   const head = core as ClientHead
   head._doc = doc as Document
   head._dom = null
   head.dirty = false
-  head.use(TitlePlugin)
 
   let scheduled = false
   const flush = () => {
@@ -507,6 +389,12 @@ export function createHead(options: CreateClientHeadOptions = {}): ClientHead {
   }
   if (!options.disableDefaults && doc)
     head.dirty = false // defaults come from SSR markup; client adds nothing until first mutation
+  return head
+}
+
+export function createHead(options: CreateClientHeadOptions = {}): ClientHead {
+  const head = attachDom(createCore({ ssr: false, compile: compileEntry }), options)
+  head.use(TitlePlugin)
   return head
 }
 
