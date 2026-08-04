@@ -381,7 +381,7 @@ export type {
 export interface MetaGeneric extends MetaBase {
   'name'?: MetaNames | (string & Record<never, never>)
   'property'?: MetaProperties | (string & Record<never, never>)
-  'http-equiv'?: 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | (string & Record<never, never>)
+  'http-equiv'?: 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | 'origin-trial' | (string & Record<never, never>)
   'charset'?: 'utf-8' | (string & Record<never, never>)
   'content'?: string | number
 }
