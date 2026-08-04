@@ -5,7 +5,7 @@ export function merge(target: any, source: any): any {
     return target
 
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || UNSAFE_KEYS.has(key))
+    if (!Object.prototype.hasOwnProperty.call(source, key) || UNSAFE_KEYS.has(key))
       continue
 
     const value = source[key]
