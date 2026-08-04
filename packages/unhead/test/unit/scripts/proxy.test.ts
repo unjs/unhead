@@ -210,8 +210,7 @@ describe('proxy chain', () => {
     const greet = vi.fn((foo: string) => foo)
 
     instance.proxy.greet('hello-world')
-    instance.status = 'loaded'
-    head.hooks.callHook('script:updated', { script: instance })
+    ;(instance as any).input.onload(new Event('load'))
     resolve({ greet })
     await instance._loadPromise
 
