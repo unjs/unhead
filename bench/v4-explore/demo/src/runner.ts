@@ -27,6 +27,7 @@ function round(n: number, dp = 3): number {
 export function run(impl: Impl): void {
   const headEl = document.head
   const headChildrenBefore = headEl.children.length
+  const scriptsBefore = document.scripts.length
 
   const mo = new MutationObserver(() => {})
   mo.observe(headEl, { childList: true, attributes: true, subtree: true, characterData: true })
@@ -35,8 +36,12 @@ export function run(impl: Impl): void {
   const nav = impl.hydrate()
   performance.mark('unhead:hydrate:end')
   const hydrateMs = performance.measure('unhead:hydrate', 'unhead:hydrate:start', 'unhead:hydrate:end').duration
-  const hydrateMutations = mo.takeRecords().length
+  const hydrateRecords = mo.takeRecords().map(r =>
+    `${r.type} ${r.target.nodeName}${r.attributeName ? ` @${r.attributeName}` : ''}${r.addedNodes.length ? ` +${[...r.addedNodes].map(n => n.nodeName).join(',')}` : ''}${r.removedNodes.length ? ` -${[...r.removedNodes].map(n => n.nodeName).join(',')}` : ''}`)
+  const hydrateMutations = hydrateRecords.length
   const headChildrenAfter = headEl.children.length
+  // catches duplicated or re-created scripts anywhere (head + body)
+  const scriptsAfter = document.scripts.length
 
   const switchMs: number[] = []
   const switchMutations: number[] = []
@@ -58,8 +63,11 @@ export function run(impl: Impl): void {
     label: impl.label,
     hydrateMs: round(hydrateMs),
     hydrateMutations,
+    hydrateRecords,
     headChildrenBefore,
     headChildrenAfter,
+    scriptsBefore,
+    scriptsAfter,
     switches: SWITCHES,
     navTotalMs: round(navTotalMs),
     navAvgMs: round(navTotalMs / SWITCHES, 4),
@@ -77,7 +85,7 @@ export function run(impl: Impl): void {
   if (el) {
     el.textContent = [
       `impl                ${results.label}`,
-      `hydrate             ${results.hydrateMs} ms  (${hydrateMutations} head mutations, head children ${headChildrenBefore} -> ${headChildrenAfter})`,
+      `hydrate             ${results.hydrateMs} ms  (${hydrateMutations} head mutations, head children ${headChildrenBefore} -> ${headChildrenAfter}, scripts ${scriptsBefore} -> ${scriptsAfter})`,
       `page switches       ${SWITCHES} total ${results.navTotalMs} ms, avg ${results.navAvgMs} ms/switch`,
       `head mutations      ${mutationsTotal} total, ${results.mutationsPerSwitch}/switch`,
       `final title         ${results.finalTitle}`,

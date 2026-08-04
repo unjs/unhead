@@ -125,7 +125,7 @@ async function main() {
   const blurbs = {
     'v3': 'SSR head by v3 server renderer; hydrated by the v3 client (sync render per push/patch).',
     'v4': 'SSR head by v4 server renderer; hydrated by the v4 client (batched, flushed sync via injectable scheduler).',
-    'v4-sealed': 'SSR head from the emit.ts sealed route plan; client is a tiny plan-native fill patcher (see README).',
+    'v4-sealed': 'SSR head from the emit.ts sealed route plan; client is the real sealed profile (attachDom + installPlanRenderer, no L1 compiler).',
   }
   for (const name of Object.keys(ssr)) {
     const s = sizes[name]
