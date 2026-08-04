@@ -1,6 +1,7 @@
-import type { Arrayable, Id, NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { Arrayable, Id, InteractionCounter, NodeRelation, NodeRelations, ResolvableDate, Thing } from '../../types'
 import type { ImageObject } from '../Image'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { interactionCounterResolver } from '../../core/common'
 import {
   asArray,
   resolvableDateToIso,
@@ -8,6 +9,27 @@ import {
   setIfEmpty,
 } from '../../utils'
 import { imageResolver, isImageObject } from '../Image'
+
+export interface Clip extends Thing {
+  '@type'?: 'Clip'
+  'name': string
+  'startOffset': number
+  'url': string
+  'endOffset'?: number
+}
+
+export interface BroadcastEvent extends Thing {
+  '@type'?: 'BroadcastEvent'
+  'isLiveBroadcast': boolean
+  'startDate': ResolvableDate
+  'endDate'?: ResolvableDate
+}
+
+export interface SeekToAction extends Thing {
+  '@type'?: 'SeekToAction'
+  'target': string
+  'startOffset-input': 'required name=seek_to_second_number'
+}
 
 export interface VideoSimple extends Thing {
   /**
@@ -37,7 +59,7 @@ export interface VideoSimple extends Thing {
   /**
    * The URL of the image file (e.g., /images/cat.jpg).
    */
-  url: string
+  url?: string
   /**
    * The fully-qualified, absolute URL of the image file (e.g., https://www.example.com/images/cat.jpg).
    * Note: The contentUrl and url properties are intentionally duplicated.
@@ -79,9 +101,68 @@ export interface VideoSimple extends Thing {
    * A transcript of the video.
    */
   transcript?: string
+  /**
+   * The date after which the video is no longer available.
+   */
+  expires?: ResolvableDate
+  /**
+   * Regions where the video is unavailable.
+   */
+  ineligibleRegion?: Arrayable<string>
+  /**
+   * Regions where the video is available.
+   */
+  regionsAllowed?: Arrayable<string>
+  /**
+   * The number of times the video has been watched.
+   */
+  interactionStatistic?: NodeRelations<InteractionCounter>
+  /**
+   * Key moments in the video.
+   */
+  hasPart?: NodeRelations<Clip>
+  /**
+   * Livestream publication details.
+   */
+  publication?: NodeRelations<BroadcastEvent>
+  /**
+   * URL pattern used to seek to a timestamp.
+   */
+  potentialAction?: NodeRelation<SeekToAction>
 }
 
 export interface VideoObject extends VideoSimple {}
+
+const clipResolver = defineSchemaOrgResolver<Clip>({
+  defaults: {
+    '@type': 'Clip',
+  },
+  resolve(node, ctx) {
+    node.url = resolveWithBase(ctx.meta.host, node.url)
+    return node
+  },
+})
+
+const broadcastEventResolver = defineSchemaOrgResolver<BroadcastEvent>({
+  defaults: {
+    '@type': 'BroadcastEvent',
+  },
+  resolve(node) {
+    node.startDate = resolvableDateToIso(node.startDate)!
+    node.endDate = resolvableDateToIso(node.endDate)
+    return node
+  },
+})
+
+const seekToActionResolver = defineSchemaOrgResolver<SeekToAction>({
+  defaults: {
+    '@type': 'SeekToAction',
+  },
+  resolve(node, ctx) {
+    node.target = resolveWithBase(ctx.meta.host, node.target)
+    return node
+  },
+})
 
 /**
  * Describes an individual video (usually in the context of an embedded media object).
@@ -110,7 +191,13 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
   resolve(video, ctx) {
     if (video.uploadDate)
       video.uploadDate = resolvableDateToIso(video.uploadDate)
-    video.url = resolveWithBase(ctx.meta.host, video.url)
+    video.expires = resolvableDateToIso(video.expires)
+    if (video.url)
+      video.url = resolveWithBase(ctx.meta.host, video.url)
+    if (video.contentUrl)
+      video.contentUrl = resolveWithBase(ctx.meta.host, video.contentUrl)
+    if (video.embedUrl)
+      video.embedUrl = resolveWithBase(ctx.meta.host, video.embedUrl)
     if (video.caption && !video.description)
       video.description = video.caption
 
@@ -124,6 +211,10 @@ export const videoResolver = defineSchemaOrgResolver<VideoObject, VideoObject | 
 
     if (video.thumbnail)
       video.thumbnail = resolveRelation(video.thumbnail, ctx, imageResolver)
+    video.hasPart = resolveRelation(video.hasPart, ctx, clipResolver)
+    video.interactionStatistic = resolveRelation(video.interactionStatistic, ctx, interactionCounterResolver)
+    video.potentialAction = resolveRelation(video.potentialAction, ctx, seekToActionResolver)
+    video.publication = resolveRelation(video.publication, ctx, broadcastEventResolver)
 
     return video
   },

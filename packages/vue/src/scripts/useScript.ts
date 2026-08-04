@@ -1,4 +1,4 @@
-import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptInstance, ScriptScope, UseFunctionType, UseScriptContextOptions, UseScriptLoader, UseScriptSourceLessInput, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptInstance, ScriptScope, UseFunctionType, UseScriptContextOptions, UseScriptLoaderInput, UseScriptStatus } from 'unhead/scripts'
 import type {
   DataKeys,
   GenericScript,
@@ -42,7 +42,6 @@ export interface UseScriptOptions<T extends Record<symbol | string, any> = Recor
 }
 
 export type UseScriptLoaderOptions<T extends Record<symbol | string, any>> = Omit<UseScriptOptions<T>, 'resolve' | 'use'> & {
-  loader: UseScriptLoader<T>
   resolve?: never
   use?: never
 }
@@ -57,17 +56,17 @@ type ScriptApi = Record<symbol | string, any>
 type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
 
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope: true }): VueScriptScope<T>
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T> & { scope?: false }): VueScriptInstance<T>
-export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptSourceLessInput, _options: UseScriptLoaderOptions<T>): VueScriptInstance<T> | VueScriptScope<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): VueScriptScope<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): VueScriptInstance<T>
+export function useScript<T extends Record<symbol | string, any>>(_input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): VueScriptInstance<T> | VueScriptScope<T>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): VueScriptScope<ResolvedScriptApi<R>>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): VueScriptInstance<ResolvedScriptApi<R>>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R>): VueScriptInstance<ResolvedScriptApi<R>> | VueScriptScope<ResolvedScriptApi<R>>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput | UseScriptSourceLessInput, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput | UseScriptSourceLessInput
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(_input: UseScriptInput | UseScriptLoaderInput<T>, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput | UseScriptLoaderInput<T>
   const options = { ..._options } as UseScriptOptions<T> | UseScriptLoaderOptions<T>
   const head = options?.head || injectHead()
   options.head = head

@@ -19,17 +19,18 @@ type UseScriptInputBase = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & 
 
 export type UseScriptResolvedInput = UseScriptInputBase & { src: string }
 
-/** A logical client-side script resource without a DOM script tag. */
-export interface UseScriptSourceLessInput {
+type BaseScriptApi = Record<symbol | string, any>
+
+/** A keyed client-side resource loaded without a DOM script tag. */
+export interface UseScriptLoaderInput<T extends BaseScriptApi = BaseScriptApi> {
   key: string
+  loader: UseScriptLoader<T>
   src?: never
   innerHTML?: never
   onerror?: never
   onload?: never
   textContent?: never
 }
-
-type BaseScriptApi = Record<symbol | string, any>
 
 type HasDiscriminatedParameters<T>
   = T extends {
@@ -220,8 +221,6 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Existing callers receive the cached shared script unless this is enabled.
    */
   scope?: boolean
-  /** Reserved for source-less script overloads. */
-  loader?: never
   /**
    * Resolve the script instance from the window. This legacy callback is always
    * called without arguments. It may return the API asynchronously.
@@ -258,8 +257,7 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
 }
 
 /** Options for a keyed, client-only resource that does not render a script tag. */
-export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'loader' | 'resolve' | 'use' | 'warmupStrategy'> & {
-  loader: UseScriptLoader<T>
+export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Omit<UseScriptOptions<T>, 'resolve' | 'use' | 'warmupStrategy'> & {
   resolve?: never
   use?: never
   warmupStrategy?: never

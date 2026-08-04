@@ -11,10 +11,9 @@ describe('vue e2e scripts', () => {
   it('loads a source-less SDK', async () => {
     const head = createHead()
     const api = { ready: true as const }
-    const script = useScript({ key: 'module-sdk' }, {
+    const script = useScript({ key: 'module-sdk', loader: async () => api }, {
       head,
       trigger: 'manual',
-      loader: async () => api,
     })
 
     expect(await script.load()).toBe(api)
@@ -23,7 +22,7 @@ describe('vue e2e scripts', () => {
 
     if (false) {
       // @ts-expect-error source-less loaders own API resolution
-      useScript({ key: 'invalid-module-sdk' }, { head, loader: () => api, resolve: () => api })
+      useScript({ key: 'invalid-module-sdk', loader: () => api }, { head, resolve: () => api })
     }
   })
 
@@ -314,8 +313,7 @@ describe('vue e2e scripts', () => {
     offSecond()
 
     const script = (head as any)._scripts['//ordered-callbacks.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
@@ -342,8 +340,7 @@ describe('vue e2e scripts', () => {
     app.mount(el)
 
     const script = (head as any)._scripts['//vue-keyed.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     expect(calls).toEqual(['first'])

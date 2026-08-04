@@ -12,6 +12,10 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 ## Useful Links
 
 - [Schema.org WebPage](https://schema.org/WebPage)
+- [ProfilePage - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/profile-page)
+- [QAPage - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/qapage)
+- [Speakable - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/speakable)
+- [Paywalled content - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/paywalled-content)
 
 ## Recommended properties
 
@@ -56,6 +60,10 @@ description: Use defineWebPage() to add WebPage structured data. Connect page co
 ## Resolves
 
 - `dateModified` or `datePublished` can be resolved from Date objects
+- `dateCreated` can be resolved from a Date object
+- ProfilePage `mainEntity` resolves a Person or Organization to a root node
+- `speakable` resolves SpeakableSpecification objects
+- paywalled `hasPart` sections resolve to WebPageElement objects
 
 ```ts
 defineWebPage({
@@ -142,6 +150,10 @@ export interface WebPageSimple extends Thing {
    */
   datePublished?: ResolvableDate
   /**
+   * The time at which the page was created.
+   */
+  dateCreated?: ResolvableDate
+  /**
    * The time at which the page was last modified, in ISO 8601 format; e.g., 2015-10-31T16:10:29+00:00.
    */
   dateModified?: ResolvableDate
@@ -160,7 +172,15 @@ export interface WebPageSimple extends Thing {
   /**
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
-  speakable?: unknown
+  speakable?: NodeRelations<SpeakableSpecification>
+  /**
+   * Whether the page is available without a subscription or registration.
+   */
+  isAccessibleForFree?: boolean
+  /**
+   * Sections or creative works contained by this page.
+   */
+  hasPart?: NodeRelations<WebPageElement | Thing>
   /**
    * The time at which the page was last reviewed, in ISO 8601 format.
    */

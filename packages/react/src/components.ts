@@ -9,6 +9,28 @@ export interface HeadProps {
   titleTemplate?: string
 }
 
+function normalizeRawContent(tagName: string, data: Record<string, any>) {
+  const rawContent = data.dangerouslySetInnerHTML
+  delete data.dangerouslySetInnerHTML
+
+  if (rawContent == null)
+    return
+
+  if (!TagsWithInnerContent.has(tagName)) {
+    throw new Error(`${tagName} is a self-closing tag and must neither have \`children\` nor use \`dangerouslySetInnerHTML\`.`)
+  }
+  if (typeof rawContent !== 'object' || !('__html' in rawContent)) {
+    throw new Error('`props.dangerouslySetInnerHTML` must be in the form `{__html: ...}`.')
+  }
+  if (data.children != null) {
+    throw new Error('Can only set one of `children` or `props.dangerouslySetInnerHTML`.')
+  }
+
+  const content = rawContent.__html
+  if (content != null)
+    data[tagName === 'title' ? 'textContent' : 'innerHTML'] = String(content)
+}
+
 function normalizeReactPropAliases(props: unknown): Record<string, any> {
   if (!props || typeof props !== 'object')
     return {}
@@ -63,8 +85,9 @@ const Head: React.FC<HeadProps> = ({ children, titleTemplate }) => {
       }
 
       const data = normalizeReactPropAliases(props)
+      normalizeRawContent(tagName, data)
 
-      if (TagsWithInnerContent.has(tagName) && data.children) {
+      if (TagsWithInnerContent.has(tagName) && data.children != null) {
         const contentKey = tagName === 'script' ? 'innerHTML' : 'textContent'
         data[contentKey] = Array.isArray(data.children)
           ? data.children.map(String).join('')

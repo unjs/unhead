@@ -9,6 +9,7 @@
 ## Features
 
 - 🛠️ Build-time optimizations for Unhead
+- 🎯 Transpile static inline scripts to Vite's configured browser target
 - 🌲 Tree-shake server composables from client bundles
 - ⚡ Transform `useSeoMeta` calls for better performance
 - 📦 Support for Vite, Webpack, and other bundlers
@@ -24,6 +25,21 @@ yarn add @unhead/bundler
 
 # pnpm
 pnpm add @unhead/bundler
+```
+
+The build transforms need a parser. If Rolldown is installed, Unhead reuses
+`rolldown/utils`. Vite 8 includes Rolldown. For Vite 6 or 7 and other bundlers,
+install the Oxc fallback:
+
+```bash
+# npm
+npm install -D oxc-parser
+
+# yarn
+yarn add -D oxc-parser
+
+# pnpm
+pnpm add -D oxc-parser
 ```
 
 ## Usage
@@ -44,6 +60,12 @@ export default defineConfig({
 })
 ```
 
+To use the Unhead panel in Vite DevTools, install its optional development packages:
+
+```bash
+pnpm add -D @vitejs/devtools @vitejs/devtools-kit
+```
+
 ### Options
 
 ```ts
@@ -53,6 +75,9 @@ interface UnpluginOptions {
 
   // Transform useSeoMeta calls for better performance
   useSeoMetaTransform?: boolean | UseSeoMetaTransformOptions
+
+  // Vite: transpile static inline scripts to build.target (enabled by default)
+  transformInlineScripts?: false | { target?: string | string[] | false }
 }
 ```
 

@@ -7,6 +7,10 @@ export type NodeRelations<T> = Arrayable<NodeRelation<T>>
 export type Identity = Person | Organization
 export type ResolvableDate = string | Date
 export type OptionalSchemaOrgPrefix<T extends string> = T | `https://schema.org/${T}`
+export type DigitalSourceType = OptionalSchemaOrgPrefix<
+  'TrainedAlgorithmicMediaDigitalSource'
+  | 'AlgorithmicMediaDigitalSource'
+>
 export interface MetaInput {
   /**
    * Whether to inject the scripts at the end of the body or in the head.
@@ -58,9 +62,9 @@ export interface Thing {
    */
   'mainEntityOfPage'?: Arrayable<IdReference>
   /**
-   * A reference-by-ID to the WebPage node.
+   * The primary entity described by this node.
    */
-  'mainEntity'?: Arrayable<IdReference>
+  'mainEntity'?: NodeRelations<Thing>
   /**
    * An image object or referenced by ID.
    * - Must be at least 696 pixels wide.
@@ -81,6 +85,29 @@ export interface Thing {
    * Allow any arbitrary keys
    */
   [key: string]: unknown
+}
+
+export interface Action extends Thing {
+  '@type': Arrayable<OptionalSchemaOrgPrefix<`${string}Action`>>
+}
+
+export interface InteractionCounter extends Thing {
+  '@type'?: 'InteractionCounter'
+  'interactionType': OptionalSchemaOrgPrefix<`${string}Action`> | NodeRelation<Action>
+  'userInteractionCount': number
+}
+
+export interface PropertyValue extends Thing {
+  '@type'?: 'PropertyValue'
+  'name'?: string
+  'propertyID'?: string
+  'value': boolean | number | string
+}
+
+export interface GeoCoordinates extends Thing {
+  '@type'?: 'GeoCoordinates'
+  'latitude': number
+  'longitude': number
 }
 
 export interface SchemaOrgNode extends Thing {

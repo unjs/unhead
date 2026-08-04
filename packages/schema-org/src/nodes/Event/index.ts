@@ -1,4 +1,5 @@
 import type {
+  Arrayable,
   Identity,
   NodeRelation,
   NodeRelations,
@@ -30,6 +31,10 @@ type EventAttendanceModeTypes = 'OfflineEventAttendanceMode' | 'OnlineEventAtten
 type EventStatusTypes = 'EventCancelled' | 'EventMovedOnline' | 'EventPostponed' | 'EventRescheduled' | 'EventScheduled'
 
 export interface EventSimple extends Thing {
+  /**
+   * The name of the event.
+   */
+  name: string
   /**
    * Description of the event.
    * Describe all details of the event to make it easier for users to understand and attend the event.
@@ -76,14 +81,14 @@ export interface EventSimple extends Thing {
   /**
    * A performer at the event—for example, a presenter, musician, musical group or actor.
    */
-  performer?: NodeRelation<Person>
+  performer?: NodeRelations<Person | PerformingGroup>
   /**
    * Used in conjunction with eventStatus for rescheduled or cancelled events.
    * This property contains the previously scheduled start date.
    * For rescheduled events, the startDate property should be used for the newly scheduled start date.
    * In the (rare) case of an event that has been postponed and rescheduled multiple times, this field may be repeated.
    */
-  previousStartDate?: ResolvableDate
+  previousStartDate?: Arrayable<ResolvableDate>
   /**
    * The start date and time of the item (in ISO 8601 date format).
    */
@@ -104,7 +109,24 @@ export interface EventSimple extends Thing {
 
 export interface Event extends EventSimple {}
 
+export interface PerformingGroup extends Thing {
+  '@type'?: 'PerformingGroup'
+  'name': string
+  'url'?: string
+}
+
 export const PrimaryEventId = '#event'
+
+const performingGroupResolver = defineSchemaOrgResolver<PerformingGroup>({
+  defaults: {
+    '@type': 'PerformingGroup',
+  },
+  resolve(node, ctx) {
+    if (node.url)
+      node.url = withBase(node.url, ctx.meta.host || '')
+    return node
+  },
+})
 
 /**
  * Describes an Event.
@@ -143,12 +165,27 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
       }
     }
 
-    node.performer = resolveRelation(node.performer, ctx, personResolver, {
-      root: true,
-    })
-    node.organizer = resolveRelation(node.organizer, ctx, organizationResolver, {
-      root: true,
-    })
+    if (node.performer) {
+      const resolvePerformer = (performer: NodeRelation<Person | PerformingGroup>) => {
+        const isGroup = typeof performer === 'object' && performer?.['@type'] === 'PerformingGroup'
+        return isGroup
+          ? resolveRelation(performer as NodeRelation<PerformingGroup>, ctx, performingGroupResolver, { root: true })
+          : resolveRelation(performer as NodeRelation<Person>, ctx, personResolver, { root: true })
+      }
+      node.performer = Array.isArray(node.performer)
+        ? node.performer.map(resolvePerformer)
+        : resolvePerformer(node.performer)
+    }
+    if (node.organizer) {
+      const organizerTypes = typeof node.organizer === 'object' && node.organizer
+        ? node.organizer['@type']
+        : undefined
+      const isPerson = organizerTypes === 'Person'
+        || (Array.isArray(organizerTypes) && organizerTypes.includes('Person'))
+      node.organizer = resolveRelation(node.organizer, ctx, isPerson ? personResolver : organizationResolver, {
+        root: true,
+      })
+    }
     node.offers = resolveRelation(node.offers, ctx, offerResolver)
 
     if (node.eventAttendanceMode)
@@ -160,17 +197,28 @@ export const eventResolver = defineSchemaOrgResolver<Event>({
       || node.eventAttendanceMode === 'https://schema.org/OnlineEventAttendanceMode'
 
     // dates
-    const dates = ['startDate', 'previousStartDate', 'endDate'] as const
+    const resolveDate = (date: ResolvableDate) => {
+      if (!isOnline && date instanceof Date && date.getHours() === 0 && date.getMinutes() === 0)
+        return resolvableDateToDate(date)
+      return isOnline ? resolvableDateToIso(date)! : date
+    }
+
+    const dates = ['startDate', 'endDate'] as const
     // offline events can be passed as simple date strings because it will use the event location
     dates.forEach((date) => {
       if (!isOnline) {
-        if (node[date] instanceof Date && node[date].getHours() === 0 && node[date].getMinutes() === 0)
-          node[date] = resolvableDateToDate(node[date])
+        if (node[date])
+          node[date] = resolveDate(node[date])
       }
       else {
         node[date] = resolvableDateToIso(node[date])
       }
     })
+    if (node.previousStartDate) {
+      node.previousStartDate = Array.isArray(node.previousStartDate)
+        ? node.previousStartDate.map(resolveDate)
+        : resolveDate(node.previousStartDate)
+    }
     setIfEmpty(node, 'endDate', node.startDate)
     return node
   },

@@ -2,9 +2,9 @@ import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
-import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
+import { parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
@@ -97,13 +97,10 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         }
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
-        const ast = parseSync(id, code)
+        const ast = parseAndWalkSource(code, id, { scopeTracker })
         const s = new MagicString(code)
 
-        // Pre-pass: collect all declarations first so hoisted locals
-        // (`function useServerHead() {}` below a call site) are visible when
-        // the removal walk visits earlier statements.
-        walk(ast.program, { scopeTracker })
+        // The parse walk collected all declarations, including hoisted locals.
         scopeTracker.freeze()
 
         walk(ast.program, {

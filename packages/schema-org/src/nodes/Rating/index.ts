@@ -15,11 +15,11 @@ export interface RatingSimple extends Thing {
   /**
    * The highest value allowed in this rating system. If bestRating is omitted, 5 is assumed.
    */
-  'bestRating'?: number
+  'bestRating'?: number | string
   /**
    * The lowest value allowed in this rating system. If worstRating is omitted, 1 is assumed.
    */
-  'worstRating'?: number
+  'worstRating'?: number | string
 }
 
 export interface Rating extends RatingSimple {}
