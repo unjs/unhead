@@ -80,6 +80,26 @@
     "./legacy": {
       "types": "./dist/legacy.d.ts",
       "default": "./dist/legacy.mjs"
+    },
+    "./v4": {
+      "types": "./dist/v4.d.ts",
+      "default": "./dist/v4.mjs"
+    },
+    "./v4/client": {
+      "types": "./dist/v4/client.d.ts",
+      "default": "./dist/v4/client.mjs"
+    },
+    "./v4/server": {
+      "types": "./dist/v4/server.d.ts",
+      "default": "./dist/v4/server.mjs"
+    },
+    "./v4/plugins": {
+      "types": "./dist/v4/plugins.d.ts",
+      "default": "./dist/v4/plugins.mjs"
+    },
+    "./v4/utils": {
+      "types": "./dist/v4/utils.d.ts",
+      "default": "./dist/v4/utils.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -128,6 +148,21 @@
       ],
       "legacy": [
         "dist/legacy"
+      ],
+      "v4": [
+        "dist/v4"
+      ],
+      "v4/client": [
+        "dist/v4/client"
+      ],
+      "v4/server": [
+        "dist/v4/server"
+      ],
+      "v4/plugins": [
+        "dist/v4/plugins"
+      ],
+      "v4/utils": [
+        "dist/v4/utils"
       ]
     }
   },
