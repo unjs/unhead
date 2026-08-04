@@ -79,14 +79,45 @@ describe('emitEntryPlan: dual-path law', () => {
     })
   }
 
-  it('interleaved arrayable identities bail (wire format has no arrayable flag)', () => {
-    expect(() => emitEntryPlan({
+  it('arrayable metas emit per-tuple with the pos|8 flag; interleaved groups seal', () => {
+    const input = {
       meta: [
         { property: 'og:image', content: 'a.png' },
         { property: 'og:image:width', content: 100 },
         { property: 'og:image', content: 'b.png' },
       ],
-    })).toThrow(PlanEmitError)
+    }
+    const { plan } = emitEntryPlan(input)
+    expect(plan).toEqual([
+      [100, 'meta:og:image', '<meta property="og:image" content="a.png">', 8],
+      [100, 'meta:og:image:width', '<meta property="og:image:width" content="100">', 8],
+      [100, 'meta:og:image', '<meta property="og:image" content="b.png">', 8],
+    ])
+    expect(planPath(input)).toEqual(objectPath(input))
+  })
+
+  it('revived arrayable metas keep F_ARRAYABLE: runtime og:image dedupes like the object path', () => {
+    const input = {
+      meta: [
+        { property: 'og:image', content: 'a.png' },
+        { property: 'og:image', content: 'b.png' },
+      ],
+    }
+    const runtime = { meta: [{ property: 'og:image', content: 'c.png' }, { property: 'og:image', content: 'd.png' }] }
+    const { plan } = emitEntryPlan(input)
+    const a = render((p) => {
+      p(input)
+      p(runtime)
+    })
+    const b = render((p) => {
+      p(plan)
+      p(runtime)
+    })
+    expect(b).toEqual(a)
+    // later entry replaces the whole arrayable set (v3 semantics), then appends within itself
+    expect(b.headTags).not.toContain('a.png')
+    expect(b.headTags).toContain('c.png')
+    expect(b.headTags).toContain('d.png')
   })
 })
 

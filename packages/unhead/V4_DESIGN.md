@@ -365,7 +365,7 @@ Known conscious divergences vs v3 (documented in tests): capo weights for import
 `emit.ts` implements the compiler contract: `emitEntryPlan` (holes as private-use-area tokens pushed through the real compile pipeline, dual-path by construction), `emitRoutePlan` (cross-entry pre-merge with true d/w), `planToCode`, `PlanEmitError` as the bundler's deterministic bail signal. 142 tests total on the branch.
 
 Wire-format spec changes required before freezing v1 (found by the dual-path corpus):
-1. `PlanTag` needs an arrayable flag slot: revived same-`d` og:image tuples dedupe-replace; the emitter currently folds each arrayable group into one concatenated tuple and throws on interleaved groups.
+1. RESOLVED. `PlanTag` carries the arrayable flag in the existing pos slot: `pf = pos | 8` marks arrayable, `pf & 7` is the position, so tuple arity is unchanged. `revivePlan` decodes bit 3 into `F_ARRAYABLE` (`(pf & 8) << 4`); the emitter no longer folds arrayable groups or throws on interleaved ones, it emits per-tag tuples with the flag.
 2. Attr fragments need class/style folding at emit (single fragment per attr under coarse `d`); per-token tuples would emit duplicate `class` attributes. Residual: runtime class pushes alongside sealed attr fragments duplicate the attr in renderSSRHead — bucket merge needs to parse or key prebuilt fragments.
 3. Hole fill escaping is now contract-exact: text mode == SSR title escaping (& < > " ' /), json mode escapes backslash/quote/`<` so fills cannot corrupt the JSON document. Both fixed in core fillHoles.
 4. Weight bakes at emit; holes in weight-feeding props (async/defer/src) freeze the token-derived weight, `rel`/`type` holes throw.

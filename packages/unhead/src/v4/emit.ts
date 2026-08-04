@@ -197,7 +197,6 @@ interface EmitItem {
 function serialize(tags: Tag[], reg: number[]): EmitResult {
   const items: EmitItem[] = []
   const mergeSlots: Record<string, EmitItem> = Object.create(null)
-  const arraySlots: Record<string, number> = Object.create(null)
 
   for (const t of tags) {
     if (t.f & F_REMOVED)
@@ -235,20 +234,9 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
     // a lone titleTemplate folds to a title but keeps d 'titleTemplate'
     // (see V4_DESIGN.md 12.5); emit as 'title' so runtime pushes override it
     const d = id === T_TITLE && t.d === 'titleTemplate' ? 'title' : t.d
-    if ((t.f & F_ARRAYABLE) && d) {
-      // the wire format has no arrayable flag, so revived same-d tags would
-      // dedupe-replace; fold the whole set into one tuple (runtime same-d
-      // pushes replace the set, matching v3 cross-entry semantics)
-      const at = arraySlots[d]
-      if (at !== undefined) {
-        if (at !== items.length - 1)
-          bail(`arrayable tags with identity "${d}" are interleaved with other tags and cannot fold into one plan tuple`)
-        items[at].html += html
-        continue
-      }
-      arraySlots[d] = items.length
-    }
-    items.push({ w: t.w, d, pos: (t.f & F_POS) >> POS_SHIFT, html })
+    // pf bit 3 carries F_ARRAYABLE so revived same-d tuples arrayable-append
+    // within the plan entry instead of dedupe-replacing (wire format v1)
+    items.push({ w: t.w, d, pos: (t.f & F_POS) >> POS_SHIFT | (t.f & F_ARRAYABLE ? 8 : 0), html })
   }
 
   const plan: PlanTag[] = []

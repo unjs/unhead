@@ -5,7 +5,7 @@
  */
 import type { EntryOptions, PlanTag, Tag } from '../../packages/unhead/src/v4/core'
 import { compileEntry } from '../../packages/unhead/src/v4/compile'
-import { F_ID, F_POS, POS_SHIFT, T_BODY_ATTRS, T_HTML_ATTRS } from '../../packages/unhead/src/v4/core'
+import { F_ARRAYABLE, F_ID, F_POS, POS_SHIFT, T_BODY_ATTRS, T_HTML_ATTRS } from '../../packages/unhead/src/v4/core'
 import { propsToString, tagToHtml } from '../../packages/unhead/src/v4/server'
 
 type Push = (input: any, opts?: EntryOptions) => void
@@ -96,8 +96,8 @@ export function toPlan(input: any, opts?: EntryOptions): PlanTag[] {
     const id = t.f & F_ID
     if (id === T_HTML_ATTRS || id === T_BODY_ATTRS)
       return [t.w, t.d, propsToString(t.p!), id === T_HTML_ATTRS ? 3 : 4] as PlanTag
-    const pos = (t.f & F_POS) >> POS_SHIFT
-    return pos ? [t.w, t.d, tagToHtml(t), pos] as PlanTag : [t.w, t.d, tagToHtml(t)] as PlanTag
+    const pf = (t.f & F_POS) >> POS_SHIFT | (t.f & F_ARRAYABLE ? 8 : 0)
+    return pf ? [t.w, t.d, tagToHtml(t), pf] as PlanTag : [t.w, t.d, tagToHtml(t)] as PlanTag
   })
 }
 

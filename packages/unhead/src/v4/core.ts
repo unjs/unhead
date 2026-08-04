@@ -81,7 +81,9 @@ export interface V4Plugin {
 
 export type Compile = (input: any, seq: number, opts: EntryOptions | null) => Tag[]
 
-// server plan tag: [w, d, html, pos?] | [w, d, segments, modes, pos?]
+// server plan tag: [w, d, html, pf?] | [w, d, segments, modes, pf?]
+// pf bits 0-2: position (0 head, 1 bodyOpen, 2 bodyClose, 3 htmlAttrs, 4 bodyAttrs);
+// bit 3: arrayable (revives with F_ARRAYABLE). Attr fragments are single-attr strings.
 export type PlanTag = [number, string, string | string[], number?, number?]
 
 export interface V4Head {
@@ -132,9 +134,12 @@ export function revivePlan(plan: PlanTag[], fills: readonly unknown[] | null, se
     const t = plan[i]
     const seg = t[2]
     const isHole = typeof seg !== 'string'
-    const pos = (isHole ? t[4] : t[3]) || 0
-    // pos 3/4 target html/body attrs; 0-2 are document buckets
+    const pf = (isHole ? t[4] : t[3]) || 0
+    const pos = pf & 7
+    // pos 3/4 target html/body attrs; 0-2 are document buckets. pf bit 3 is
+    // the arrayable flag: (pf & 8) << 4 lands exactly on F_ARRAYABLE (1 << 7)
     const f = F_PREBUILT
+      | ((pf & 8) << 4)
       | (pos === 3 ? T_HTML_ATTRS : pos === 4 ? T_BODY_ATTRS : pos << POS_SHIFT)
     let c: string
     if (isHole) {
