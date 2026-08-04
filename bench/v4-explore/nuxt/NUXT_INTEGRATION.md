@@ -220,7 +220,7 @@ Test-backed with a hostile input: `</title><script>` title (neutralized by escap
 
 **Verdict: NEEDS-ADDITION**, minimal: port the v3 `SafeInputPlugin` allowlist as a standalone `sanitizeSafeInput(input)` function in L2 (`unhead/safe` or inside the adapters). No core change; escape modes already carry the value-level half.
 
-## Core bugs found (not fixed, other agents own `src/v4`)
+## Core bugs found (since FIXED; see V4_DESIGN.md section 13: B1 e6b4597b, B2 953a74eb, invalidate() 771e0cc8, identity() export 1e63531b)
 
 ### B1: TitlePlugin mangles sealed titles under a runtime titleTemplate
 

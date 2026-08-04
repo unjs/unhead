@@ -358,7 +358,7 @@ Slot API revisions earned by the plugin ports:
 4. Per-entry flags (`processTemplateParams` opt-in/out) need the designed `entry`/`tags` slots; prototype only has `resolve`.
 5. Lone titleTemplate converts to title but keeps `d: 'titleTemplate'`; consumers probe two keys.
 
-Known conscious divergences vs v3 (documented in tests): capo weights for importmap/speculationrules/textContent-script edge paths; htmlAttrs per-prop explosion skips boolean coercion; `{ innerHTML: null }` JSON quirk; function/ref values must be resolved by adapters pre-push; `templateParams` input key replaced by `useTemplateParams()`. DOM adoption identity gaps: base, alternate+hreflang, keyed metas fall back to hash (re-created, not adopted); fix by exporting compile's identity().
+Known conscious divergences vs v3 (documented in tests): capo weights for importmap/speculationrules/textContent-script edge paths; htmlAttrs per-prop explosion skips boolean coercion; `{ innerHTML: null }` JSON quirk; function/ref values must be resolved by adapters pre-push; `templateParams` input key replaced by `useTemplateParams()`. DOM adoption identity gaps: RESOLVED in section 13 (compile's identity() exported and reused by adopt; keyed metas emit data-hid).
 
 ### 12.1 Emitter + slot revision round (commits 7e7ad25d, 0e5359ce)
 
@@ -374,3 +374,40 @@ Wire-format spec changes required before freezing v1 (found by the dual-path cor
 Slot API state: ctx.shared/each/patch-warn/entry/tags all landed (+118B gz server, dev warn is 0B prod via NODE_ENV DCE). TitlePlugin stays a plugin (sealed profiles must not pay for it) but is an L1 contract: registered first, publishes `shared.title` and `shared.titleResolved`. Plan revival is now lazy (first resolve) so the registration cliff covers plan entries.
 
 Current sizes (gz): server 3,966 / client 5,165 / sealed 1,982. Sealed crept +131 from slot plumbing in createCore across the round; if sealed budget tightens, split createCore into a slotless base for sealed profiles.
+
+Round status: the adoption identity gap, the prebuilt-title bug (B1), client plan rendering (B2) and the missing public invalidate() are all RESOLVED in section 13.
+
+## 13. Exploration round (hydration + navigation), 2026-08-04
+
+Verdicts from `bench/v4-explore/` (hydration/, nav/, nuxt/, demo/), measured in JSDOM benches plus a real-browser demo build. Everything below is integrated into `src/v4`.
+
+Hydration:
+- Lazy adoption KEPT. Eager adoption at createHead measured 215x worse on idle boot (pays the scan even when nothing mutates); lazy pays it only inside the first flush.
+- Exact identity adopt SHIPPED: compile's identity() is exported and reused by the client's adopt() (data-hid stands in for key), measured cost-identical to the hash mirror it replaced. Fixes base, alternate+hreflang and keyed metas re-creating instead of adopting. Keyed metas now emit data-hid when the identity consumed the key (v4 extension; v3 leaves metas unmarked).
+- Marker attrs and claims manifest REJECTED as default-on: +204-246 B gz of SSR payload to save roughly 30 us of adoption work. Not worth bytes on every page for a one-time microsecond win; exact identity closes the correctness gap for free.
+- No-adopt (comment-range replace) DISQUALIFIED: fresh script elements re-execute in a real browser, SSR-only defaults (charset, viewport) are lost.
+
+Navigation:
+- entry.patch BLESSED as the navigation primitive: push-B-then-dispose-A ordering is already correct (suspense-overlap tests) and fills-only refills sync at the attribute level.
+- head.swap REJECTED: +169 B gz for zero DOM-op gain; the renderer is already at the DOM-op floor (append-only + attr-level sync), so a group-swap primitive has nothing left to save. Reserved slot in 2.5 stays unimplemented.
+- Sealed plans are a boot/SSR optimization, not a navigation one: steady-state nav DOM ops are identical across loose, plan and sealed strategies; the sealed win is boot bundle size and zero-L1 SSR.
+
+Real-browser numbers (demo build, median):
+
+| Profile | Hydrate | Spurious mutations | Client gz |
+|---|---|---|---|
+| v3 | 0.90 ms | 26 | 5.5 kB |
+| v4 | 0.50 ms | 0 | 5.2 kB |
+| v4 sealed | 0.10 ms | 2 | 2.1 kB |
+
+Core bugs from the Nuxt role-play (bench/v4-explore/nuxt/NUXT_INTEGRATION.md), both FIXED:
+- B1 (953a74eb is the client half, e6b4597b the plugin): TitlePlugin decodes F_PREBUILT titles (unescapeHtml helper in core next to the escape tables), applies the template and demotes the tag to a plain title so renderers re-escape.
+- B2 (953a74eb): the client renders sealed PlanTag tuples via a regex tag parse into element sync ops; pos 3/4 attr fragments apply to html/body, refills sync only changed attributes, changed scripts are replaced never mutated.
+
+Nuxt NEEDS-ADDITION list state (NUXT_INTEGRATION.md prioritized items):
+1. B2 client plan revival: FIXED (953a74eb).
+2. B1 prebuilt titles: FIXED (e6b4597b).
+3. Public invalidate(): FIXED (771e0cc8), on V4Head; client schedules a flush, so useTemplateParams().patch() plus invalidate() repaints.
+4. ssr/rendered plugin slots: OPEN.
+5. identity() export for adoption: FIXED (1e63531b).
+6. Cosmetic (data-infer strip, emitter docs): OPEN.
