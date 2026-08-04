@@ -117,6 +117,7 @@
   useServerSeoMeta: function
 ./v4/client:
   createHead: function
+  renderDOMHead: function
 ./v4/plugins:
   CanonicalPlugin: function
   InferSeoMetaPlugin: function
