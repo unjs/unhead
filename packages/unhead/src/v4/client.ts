@@ -66,8 +66,9 @@ export interface CreateClientHeadOptions {
 
 const hashCache = /* @__PURE__ */ new WeakMap<Tag, string>()
 
-// fallback identity for positionally-unique tags, DOM adoption only
-function hashTag(t: Tag): string {
+// fallback identity for positionally-unique tags: DOM adoption here, and
+// client-plans' keyless prebuilt tuples (both sides must key identically)
+export function hashTag(t: Tag): string {
   let h = hashCache.get(t)
   if (h === undefined) {
     h = TAG_NAMES[t.f & F_ID]

@@ -171,6 +171,50 @@ describe('v4 dom', () => {
     expect(doc.querySelectorAll('script').length).toBe(1)
   })
 
+  it('sealed hydrate adopts a keyed SSR script instead of replacing it', () => {
+    const plan: PlanTag[] = [[100, 'script:key:analytics', '<script data-hid="analytics">console.log("a")</script>']]
+    const server = createV4Server()
+    server.push(plan)
+    const ssr = renderV4Server(server)
+    const dom = new JSDOM(`<!DOCTYPE html><html><head>${ssr.headTags}</head><body><div id="app"></div></body></html>`)
+    const doc = dom.window.document
+    const el = doc.querySelector('script[data-hid=analytics]')!
+    const count = doc.scripts.length
+
+    const head = createV4({ document: doc })
+    installPlanRenderer(head)
+    head.push(plan)
+    head.render()
+    // same node adopted, not a removeChild+appendChild swap (which re-executes
+    // the script in a real browser)
+    expect(doc.querySelector('script[data-hid=analytics]')).toBe(el)
+    expect(doc.scripts.length).toBe(count)
+  })
+
+  it('sealed hydrate adopts keyless src scripts without duplicating them', () => {
+    // plain src scripts get no compile identity (d: ''), matching the demo's
+    // bodyClose module/legacy pair
+    const plan: PlanTag[] = [
+      [80, '', '<script type="module" src="/module.js"></script>', 2],
+      [100, '', '<script src="/legacy.js" defer></script>', 2],
+    ]
+    const server = createV4Server()
+    server.push(plan)
+    const ssr = renderV4Server(server)
+    const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body><div id="app"></div>${ssr.bodyTags}</body></html>`)
+    const doc = dom.window.document
+    const before = [...doc.scripts]
+    expect(before.length).toBe(2)
+
+    const head = createV4({ document: doc })
+    installPlanRenderer(head)
+    head.push(plan)
+    head.render()
+    const after = [...doc.scripts]
+    expect(after.length).toBe(before.length) // no double fetch/execute
+    before.forEach((el, i) => expect(after[i]).toBe(el))
+  })
+
   it('batches renders on the scheduler', () => {
     const dom = new JSDOM(BLANK)
     let flushes = 0

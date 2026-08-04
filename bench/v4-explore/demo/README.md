@@ -26,14 +26,16 @@ Bundle sizes are the full page script (implementation + shared demo harness + wo
 - v3: the same 6 real changes plus 6 spurious rewrites of unchanged values on every render: `script[defer]`, `link[crossorigin]` (boolean props compare `'' !== true` against the adopted attribute), and `og:image:width/height`, `twitter:image:width/height` (numeric props compare `'1200' !== 1200`). v3's write guard is `getAttribute(k) !== v` without normalizing the tag-side value, so boolean and number props are rewritten every render, forever.
 - v3 hydration performs 26 head mutations against an SSR head it fully matches (same root cause plus `data-hid` bookkeeping); v4 hydration performs zero (lazy adoption, no-op verified writes).
 
-### Sealed-profile hydration bugs found in this run (shipped `client-plans.ts`)
+### Sealed-profile hydration bugs found in this run (both FIXED)
+
+Both fixed by `fix(v4): adopt prebuilt scripts on sealed hydrate instead of replacing` on this branch, guarded by the two "sealed hydrate adopts" tests in `bench/v4-dom.test.ts`. Original findings, reproduced 5/5 before the fix:
 
 Head childElementCount stays 33 -> 33 through the sealed first flush, but script accounting (`document.scripts` before/after hydrate) shows adoption is not clean:
 
-1. Keyed prebuilt scripts are replaced, not adopted. The analytics script (`data-hid="analytics"`, d `script:key:analytics`) is found by adoption, but `renderPrebuilt` treats it as changed because adopted elements carry no `_uhc`, and its changed-script policy is replace-never-mutate. Result: one `childList HEAD +SCRIPT -SCRIPT` mutation per hydrate and a re-executed analytics script in a real app.
-2. Keyless prebuilt src scripts are duplicated. The bodyClose `module.js` / `legacy.js` tuples have `d: ''` (plain src scripts get no compile identity), so `renderPrebuilt` keys them as `pb:<html>` while adoption keyed the SSR elements by `hashTag` props. No match, fresh elements appended: `document.scripts` goes 5 -> 7 on every sealed hydrate (double fetch + double execution in a real app). The inline JSON payload script is fine (`script:content:` identity matches both sides).
+1. FIXED. Keyed prebuilt scripts were replaced, not adopted. The analytics script (`data-hid="analytics"`, d `script:key:analytics`) was found by adoption, but `renderPrebuilt` treated it as changed because adopted elements carry no `_uhc`, and its changed-script policy is replace-never-mutate. Result: one `childList HEAD +SCRIPT -SCRIPT` mutation per hydrate and a re-executed analytics script in a real app. Fix: `sameParsed` attr+content equality runs before the replace policy when `_uhc` is absent, so an identical adopted script is recognized as hydration; a genuinely changed script still replaces.
+2. FIXED. Keyless prebuilt src scripts were duplicated. The bodyClose `module.js` / `legacy.js` tuples have `d: ''` (plain src scripts get no compile identity), so `renderPrebuilt` keyed them as `pb:<html>` while adoption keyed the SSR elements by `hashTag` props. No match, fresh elements appended: `document.scripts` went 5 -> 7 on every sealed hydrate (double fetch + double execution in a real app). The inline JSON payload script was fine (`script:content:` identity matches both sides). Fix: keyless tuples now parse first and derive their key through the same exported `hashTag` adoption uses, so both sides key identically.
 
-The v4 loose page has neither problem (both sides hash the same pseudo-tag). Fix directions: seed `_uhc` (or an attr-level equality check) before invoking the replace policy, and give prebuilt tuples the same hash fallback identity that adoption uses.
+The v4 loose page had neither problem (both sides hash the same pseudo-tag). Cost of the fix: sealed-client profile 4,231 -> 4,327 B gz; default client unchanged at 5,235 B gz (client-plans stays out of it).
 
 ### Honest caveats
 

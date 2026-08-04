@@ -12,8 +12,8 @@ import type { ClientHead, DomState } from './client'
  * changed scripts are replaced, never mutated (execution semantics).
  */
 import type { Tag } from './core'
-import { FX_ATTR, FX_CLASS, FX_EL, FX_STYLE, FX_TITLE, setAttr } from './client'
-import { F_ID, T_BODY_ATTRS, T_HTML_ATTRS, unescapeHtml } from './core'
+import { FX_ATTR, FX_CLASS, FX_EL, FX_STYLE, FX_TITLE, hashTag, setAttr } from './client'
+import { F_ID, T_BODY_ATTRS, T_HTML_ATTRS, TAG_NAMES, unescapeHtml } from './core'
 
 const ATTR_RE = /\s([^\s=>]+)(?:="([^"]*)")?/g
 const QUOT_ENT_RE = /&quot;/g
@@ -77,6 +77,17 @@ function syncParsed(el: any, pd: Parsed) {
     setParsedContent(el, pd)
 }
 
+/** An element (typically SSR-adopted) already equals the parsed tag exactly. */
+function sameParsed(el: any, pd: Parsed): boolean {
+  if (el.attributes.length !== pd.attrs.length)
+    return false
+  for (const [k, v] of pd.attrs) {
+    if (el.getAttribute(k) !== v)
+      return false
+  }
+  return el[pd.name === 'noscript' ? 'innerHTML' : 'textContent'] === (pd.content ?? '')
+}
+
 /**
  * The renderer's F_PREBUILT branch: sealed plan tuple to fx + element ops.
  * Head-position tuples carry no type id in f (revivePlan only encodes
@@ -115,20 +126,31 @@ function renderPrebuilt(t: Tag, doc: Document, state: DomState, fx: any[], dupes
     fx.push(FX_TITLE, 0, state.title)
     return
   }
-  const base = t.d || `pb:${t.c}`
+  let pd: Parsed | null = null
+  let base = t.d
+  if (!base) {
+    // keyless tuple: derive the same fallback identity adoption used for the
+    // SSR element (hashTag over name/props/content), or hydration duplicates
+    pd = parsePrebuilt(t.c!)
+    const p: Record<string, any> = {}
+    for (const [k, v] of pd.attrs) p[k] = v === '' ? true : v
+    base = hashTag({ f: TAG_NAMES.indexOf(pd.name as any), w: 0, o: 0, d: '', p, c: pd.content || null })
+  }
   const nth = dupes[base] || 0
   dupes[base] = nth + 1
   const key = nth ? `${base}:${nth}` : base
   let el: any = state.els.get(key)
   const fresh = !el
   if (fresh) {
-    el = buildParsed(doc, parsePrebuilt(t.c!))
+    el = buildParsed(doc, pd || parsePrebuilt(t.c!))
     el._uhc = t.c
     state.els.set(key, el)
   }
   else if (el._uhc !== t.c) {
-    const pd = parsePrebuilt(t.c!)
-    if (el.tagName === 'SCRIPT') {
+    pd ||= parsePrebuilt(t.c!)
+    // adopted (SSR) elements carry no _uhc; an identical adopted script is
+    // hydration, not a change, so the replace policy must not fire
+    if (el.tagName === 'SCRIPT' && !(el._uhc === undefined && sameParsed(el, pd))) {
       // a changed script is a new script; replace, never mutate
       const s: any = buildParsed(doc, pd)
       el.replaceWith(s)
