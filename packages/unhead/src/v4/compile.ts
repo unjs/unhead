@@ -5,6 +5,7 @@
 import type { EntryOptions, ResolveCtx, Tag, V4Plugin } from './core'
 import {
   F_ARRAYABLE,
+  F_PREBUILT,
   F_RAW,
   F_REMOVED,
   POS_SHIFT,
@@ -19,6 +20,7 @@ import {
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
+  unescapeHtml,
 } from './core'
 
 const ALIASES: Record<string, number> = { critical: -8, high: -1, low: 2 }
@@ -285,7 +287,10 @@ export const TitlePlugin: V4Plugin = {
   key: 'title',
   resolve(ctx: ResolveCtx) {
     const title = ctx.get('title')
-    const raw = title?.c
+    // a sealed (F_PREBUILT) title's c is final html '<title>...</title>' with
+    // escaped inner text; decode to the raw text the template contract expects
+    const pre = title && title.f & F_PREBUILT
+    const raw = pre ? unescapeHtml(title.c!.slice(7, title.c!.length - 8)) : title?.c
     ctx.shared.title = raw || ''
     const tpl = ctx.get('titleTemplate')
     let v: string | null | undefined = raw
@@ -296,7 +301,9 @@ export const TitlePlugin: V4Plugin = {
         v = v.replace('%s', raw || '')
       if (title) {
         ctx.patch(tpl, { f: tpl.f | F_REMOVED })
-        ctx.patch(title, v === null ? { f: title.f | F_REMOVED } : { c: v })
+        // templated prebuilt titles demote to a plain title tag (id bits are
+        // already T_TITLE) so renderers re-escape the new text themselves
+        ctx.patch(title, v === null ? { f: title.f | F_REMOVED } : { f: title.f & ~F_PREBUILT, c: v })
       }
       else {
         // no title tag: the template renders as the title

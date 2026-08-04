@@ -129,6 +129,29 @@ describe('v4 ssr parity with v3', () => {
     expect(b.bodyAttrs).toBe(' class="antialiased"')
   })
 
+  it('sealed title + runtime titleTemplate templates the inner text (B1)', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push(emitEntryPlan({ title: 'About' }).plan)
+    head.push({ titleTemplate: '%s · Acme' })
+    expect(renderV4(head).headTags).toBe('<title>About · Acme</title>')
+  })
+
+  it('sealed hole-filled title + runtime titleTemplate re-escapes correctly', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push([[10, 'title', ['<title>', '</title>'], 0]], { fills: ['A & B <C>'] })
+    head.push({ titleTemplate: '%s · Acme' })
+    expect(renderV4(head).headTags).toBe('<title>A &amp; B &lt;C&gt; · Acme</title>')
+  })
+
+  it('sealed title without a template stays prebuilt and publishes the raw text', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push(emitEntryPlan({ title: 'A & B' }).plan)
+    let seen: unknown
+    head.use({ key: 'probe', resolve: ctx => seen = ctx.shared.title })
+    expect(renderV4(head).headTags).toBe('<title>A &amp; B</title>')
+    expect(seen).toBe('A & B')
+  })
+
   it('identical inline scripts dedupe by content like v3', () => {
     const apply = (push: (input: any) => void) => {
       push({ script: ['console.log(1)'] })
