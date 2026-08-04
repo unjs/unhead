@@ -470,6 +470,23 @@ describe('v4 combined compat surface', () => {
   })
 })
 
+describe('v4 style normalization correctness', () => {
+  // deliberate v3 divergence: v3's normalize.ts splits style strings on every
+  // ';' and corrupts data-URI/paren values (vue-native research finding);
+  // v4 splits paren-aware like vue's parseStringStyle
+  it('style strings with data-URIs survive normalization', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push({ bodyAttrs: { style: 'background:url(data:image/png;base64,AAA);color:red' } })
+    expect(renderV4(head).bodyAttrs).toBe(' style="background:url(data:image/png;base64,AAA);color:red"')
+  })
+
+  it('plain multi-declaration style strings still normalize', () => {
+    const head = createV4({ disableDefaults: true })
+    head.push({ bodyAttrs: { style: 'color:red; margin:0 ;' } })
+    expect(renderV4(head).bodyAttrs).toBe(' style="color:red;margin:0"')
+  })
+})
+
 describe('v4 slot API revisions (design 12 items 1-4)', () => {
   it('titlePlugin publishes shared.title/titleResolved before user plugins (registration order)', () => {
     const head = createV4({ disableDefaults: true })

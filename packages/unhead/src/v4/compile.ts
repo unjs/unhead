@@ -31,6 +31,7 @@ const ARRAYABLE_RE = /^(?:og:(?:image|video|audio)|twitter:image)(?::|$)|^(?:the
 const POS: Record<string, number> = { bodyOpen: 1, bodyClose: 2 }
 const SCRIPT_END_RE = /<\/script/gi
 const JSON_LT_RE = /</g
+const STYLE_DELIM_RE = /;(?![^(]*\))/
 const isTruthy = (v: unknown) => v === '' || v === true
 const isJsonType = (t: unknown) => String(t).endsWith('json') || t === 'importmap' || t === 'speculationrules'
 
@@ -115,7 +116,9 @@ function normListy(value: any, isStyle: boolean): any {
     }
   }
   if (typeof value === 'string') {
-    isStyle ? value.split(';').forEach(add) : add(value)
+    // paren-aware split (vue parseStringStyle): a ';' inside url(data:...;base64)
+    // is part of the value, not a delimiter
+    isStyle ? value.split(STYLE_DELIM_RE).forEach(add) : add(value)
   }
   else if (Array.isArray(value)) {
     value.forEach(add)
