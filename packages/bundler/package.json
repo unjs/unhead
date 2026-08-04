@@ -86,7 +86,7 @@
     "oxc-parser": ">=0.98.0",
     "rolldown": ">=1.0.0",
     "unhead": "workspace:^",
-    "vite": ">=6.4.2",
+    "vite": ">=8.2.0",
     "webpack": ">=5.0.0"
   },
   "peerDependenciesMeta": {
