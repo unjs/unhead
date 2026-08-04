@@ -415,3 +415,17 @@ Nuxt NEEDS-ADDITION list state (NUXT_INTEGRATION.md prioritized items):
 4. ssr/rendered plugin slots: OPEN.
 5. identity() export for adoption: FIXED (1e63531b).
 6. Cosmetic (data-infer strip, emitter docs): OPEN.
+
+## Consuming the experiment
+
+The v4 modules ship as package subpath exports, so a real project can pnpm-override `unhead` to this branch's build and import them directly:
+
+- `unhead/v4`: L0 strict core (`createCore`, `revivePlan`, `TAG_NAMES`, `T_*`/`F_*` consts, `Tag`/`PlanTag`/`V4Plugin` types).
+- `unhead/v4/server`: SSR head (`createHead`, `useHead`, `renderSSRHead`).
+- `unhead/v4/client`: DOM head (`createHead`, `attachDom`, `useHead`).
+- `unhead/v4/client-plans`: sealed PlanTag renderer slot (`installPlanRenderer`).
+- `unhead/v4/compile`: L1 loose-input compiler (`compileEntry`, `identity`, `TitlePlugin`).
+- `unhead/v4/plugins`: optional resolve plugins (canonical, infer SEO meta, template params).
+- `unhead/v4/seo`: `useSeoMeta` and meta unpacking.
+- `unhead/v4/early-hints`: 103 Early Hints extraction (`toEarlyHints`, `toLinkHeader`).
+- `unhead/v4/emit`: build-time plan emitter (`emitEntryPlan`, `emitRoutePlan`, `planToCode`).

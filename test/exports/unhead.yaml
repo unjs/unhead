@@ -115,6 +115,74 @@
   UsesMergeStrategy: object
   ValidHeadTags: object
   walkResolver: function
+./v4:
+  createCore: function
+  F_ARRAYABLE: number
+  F_ID: number
+  F_POS: number
+  F_PREBUILT: number
+  F_RAW: number
+  F_REMOVED: number
+  INNER_CONTENT: number
+  POS_SHIFT: number
+  revivePlan: function
+  SELF_CLOSING: number
+  T_BASE: number
+  T_BODY_ATTRS: number
+  T_HTML_ATTRS: number
+  T_LINK: number
+  T_META: number
+  T_NOSCRIPT: number
+  T_SCRIPT: number
+  T_STYLE: number
+  T_TITLE: number
+  T_TITLE_TEMPLATE: number
+  TAG_NAMES: object
+  unescapeHtml: function
+./v4/client:
+  attachDom: function
+  createHead: function
+  FX_ATTR: number
+  FX_CLASS: number
+  FX_EL: number
+  FX_STYLE: number
+  FX_TITLE: number
+  hashTag: function
+  setAttr: function
+  useHead: function
+./v4/client-plans:
+  installPlanRenderer: function
+./v4/compile:
+  compileEntry: function
+  identity: function
+  TitlePlugin: object
+./v4/early-hints:
+  toEarlyHints: function
+  toLinkHeader: function
+./v4/emit:
+  emitEntryPlan: function
+  emitRoutePlan: function
+  hole: function
+  isHole: function
+  PlanEmitError: function
+  planToCode: function
+./v4/plugins:
+  CanonicalPlugin: function
+  InferSeoMetaPlugin: function
+  processTemplateParams: function
+  TemplateParamsPlugin: object
+  useTemplateParams: function
+./v4/seo:
+  unpackMeta: function
+  unpackSeoMetaInput: function
+  useSeoMeta: function
+./v4/server:
+  createHead: function
+  DEFAULT_PLAN: object
+  propsToString: function
+  renderSSRHead: function
+  tagToHtml: function
+  useHead: function
 ./validate:
   deferOnModuleScript: function
   DEPRECATED_PROPS: object

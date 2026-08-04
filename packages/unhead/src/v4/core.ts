@@ -165,7 +165,6 @@ export function revivePlan(plan: PlanTag[], fills: readonly unknown[] | null, se
 }
 
 const sortTags = (a: Tag, b: Tag) => a.w - b.w || a.o - b.o
-const isArr = Array.isArray
 
 export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head {
   const entries = new Map<number, Entry>()
@@ -239,7 +238,7 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
           if (!tags) {
             // plan revive or loose compile, then per-entry tags slots; the
             // result is the entry's cache
-            tags = isArr(e.input) ? revivePlan(e.input as PlanTag[], e.fills, e.i) : head._compile(e.input, e.i, e.opts)
+            tags = Array.isArray(e.input) ? revivePlan(e.input as PlanTag[], e.fills, e.i) : head._compile(e.input, e.i, e.opts)
             for (const fn of head._pt) tags = fn(tags, e, head) || tags
             e.tags = tags
           }
@@ -274,11 +273,11 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
           continue
         }
         const cur = slots[idx]
-        const prev = isArr(cur) ? cur[cur.length - 1] : cur
+        const prev = Array.isArray(cur) ? cur[cur.length - 1] : cur
         // arrayable identities append within the same entry; across entries the
         // later entry replaces the whole set (v3 semantics)
         if (t.f & F_ARRAYABLE && (t.o / 4096 | 0) === (prev.o / 4096 | 0)) {
-          isArr(cur) ? cur.push(t) : slots[idx] = [cur, t]
+          Array.isArray(cur) ? cur.push(t) : slots[idx] = [cur, t]
           hasArrayAppend = true
         }
         else if (t.w === prev.w) {
@@ -294,9 +293,9 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
           shared: {},
           get: (d) => {
             const s = slots[byKey[d]]
-            return isArr(s) ? s[0] : s
+            return Array.isArray(s) ? s[0] : s
           },
-          each: fn => slots.forEach(s => isArr(s) ? s.forEach(fn) : fn(s)),
+          each: fn => slots.forEach(s => Array.isArray(s) ? s.forEach(fn) : fn(s)),
           patch: (tag, changes) => {
             const next = { ...tag, ...changes }
             // slot containers are per-resolve, safe to write; only the
@@ -306,7 +305,7 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
             if (process.env.NODE_ENV !== 'production' && idx === undefined)
               console.warn(`[unhead] patch() target is not in the resolved set (d: "${tag.d}"); the change will not render`)
             const s = slots[idx]
-            if (isArr(s)) {
+            if (Array.isArray(s)) {
               const j = s.indexOf(tag)
               if (j >= 0)
                 s[j] = next
