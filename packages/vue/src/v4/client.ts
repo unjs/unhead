@@ -1,6 +1,7 @@
 import type { V4Plugin } from 'unhead/v4'
 import type { DomBeforeRenderCtx, VueHeadClient } from './types'
 import { createHead as _createHead } from 'unhead/v4/client'
+import { nextTick } from 'vue'
 import { vueInstall } from './install'
 
 export interface CreateHeadOptions {
@@ -24,7 +25,9 @@ export function createHead(options: CreateHeadOptions = {}): VueHeadClient {
     for (const cb of beforeRender) cb(ctx)
     return ctx.shouldRender
   }
-  const schedule = options.scheduler || ((flush: () => void) => queueMicrotask(flush))
+  // default rides vue's job queue (vue-native research SHIP verdict): head
+  // flushes land after component effects in the same tick, zero extra bytes
+  const schedule = options.scheduler || ((flush: () => void) => void nextTick(flush))
   const head = _createHead({
     document: options.document,
     disableDefaults: options.disableDefaults,
