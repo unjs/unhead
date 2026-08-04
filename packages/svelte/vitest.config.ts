@@ -11,6 +11,7 @@ export default defineProject({
     alias: {
       '@unhead/bundler/framework': resolve(__dirname, '../bundler/src/unplugin/framework.ts'),
       '@unhead/bundler': resolve(__dirname, '../bundler/src'),
+      'unhead/v4/emit': resolve(__dirname, '../unhead/src/v4/emit.ts'),
       'unhead/stream/server': resolve(__dirname, '../unhead/src/stream/server.ts'),
       'unhead/stream/client': resolve(__dirname, '../unhead/src/stream/client.ts'),
       'unhead/stream/unplugin': resolve(__dirname, '../unhead/src/stream/unplugin.ts'),
