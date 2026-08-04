@@ -110,7 +110,8 @@ export const DYNAMIC_ENTRIES = ENTRIES.filter(e => !e[2])
 export const SEALED_PAGE_PLAN: PlanTag[] = [
   ...STATIC_PLANS.flat(),
   [10, 'title', ['<title>', '</title>'], 0b00],
-  [101, 'bodyAttrs:class', ' class="antialiased font-sans"', 4],
+  [101, 'bodyAttrs:class:antialiased', ' class="antialiased"', 4],
+  [101, 'bodyAttrs:class:font-sans', ' class="font-sans"', 4],
   [101, 'canonical', '<link rel="canonical" href="https://harlanzw.com/about">'],
   [101, 'meta:robots', '<meta name="robots" content="index, follow">'],
   [100, 'meta:description', ['<meta name="description" content="', '">'], 0b01],

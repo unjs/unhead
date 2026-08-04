@@ -189,14 +189,11 @@ interface EmitItem {
   d: string
   pos: number
   html: string
-  /** class/style attr fragment accumulating tokens; html is built at flush */
-  merge?: { prop: string, value: string }
 }
 
 /** Serialize compiled/resolved tags to plan tuples, splitting hole tokens into segments. */
 function serialize(tags: Tag[], reg: number[]): EmitResult {
   const items: EmitItem[] = []
-  const mergeSlots: Record<string, EmitItem> = Object.create(null)
 
   for (const t of tags) {
     if (t.f & F_REMOVED)
@@ -207,27 +204,10 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
     if (id === T_TITLE_TEMPLATE)
       bail('titleTemplate cannot be sealed into a plan')
     if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
-      const p = t.p!
-      const prop = Object.keys(p)[0]
-      const pos = id === T_HTML_ATTRS ? 3 : 4
-      if (prop === 'class' || prop === 'style') {
-        // class/style explode per token for dedupe identity, but the wire
-        // format's attr fragments concat raw (duplicate attributes if emitted
-        // one per token); re-fold tokens into a single fragment so plan output
-        // stays byte-identical with the runtime attr-bag merge
-        const sk = `${id}:${prop}`
-        const slot = mergeSlots[sk]
-        if (slot) {
-          slot.merge!.value += (prop === 'class' ? ' ' : ';') + p[prop]
-          continue
-        }
-        const item: EmitItem = { w: t.w, d: `${TAG_NAMES[id]}:${prop}`, pos, html: '', merge: { prop, value: String(p[prop]) } }
-        mergeSlots[sk] = item
-        items.push(item)
-      }
-      else {
-        items.push({ w: t.w, d: t.d, pos, html: propsToString(p) })
-      }
+      // per-prop fragments keep the runtime d (class/style stay per token) so
+      // revived fragments dedupe against runtime attr pushes in core;
+      // renderSSRHead folds prebuilt fragments back through its attr bag
+      items.push({ w: t.w, d: t.d, pos: id === T_HTML_ATTRS ? 3 : 4, html: propsToString(t.p!) })
       continue
     }
     const html = tagToHtml(t)
@@ -242,7 +222,7 @@ function serialize(tags: Tag[], reg: number[]): EmitResult {
   const plan: PlanTag[] = []
   const fillOrder: number[] = []
   for (const it of items) {
-    const html = it.merge ? propsToString({ [it.merge.prop]: it.merge.value }) : it.html
+    const html = it.html
     if (!html.includes(TOKEN_OPEN)) {
       plan.push(it.pos ? [it.w, it.d, html, it.pos] : [it.w, it.d, html])
       continue

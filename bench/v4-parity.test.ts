@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { createHead as createV3, renderSSRHead as renderV3 } from '../packages/unhead/src/server'
+import { emitEntryPlan } from '../packages/unhead/src/v4/emit'
 import { createHead as createV4, renderSSRHead as renderV4 } from '../packages/unhead/src/v4/server'
 import { applyPage, DYNAMIC_ENTRIES, SEALED_FILLS, SEALED_PAGE_PLAN, SIMPLE, STATIC_PLANS } from './v4/fixtures'
 
@@ -91,6 +92,41 @@ describe('v4 ssr parity with v3', () => {
     const a = v3Render(push => push(input))
     const b = v4Render(push => push(input))
     expect(b.headTags).toBe(a.headTags)
+  })
+
+  it('sealed htmlAttrs class fragment + runtime class push merge into one class attribute', () => {
+    const sealedInput = { htmlAttrs: { class: 'dark mode-a' } }
+    const runtime = { htmlAttrs: { class: 'compact' } }
+    const a = v4Render((push) => {
+      push(sealedInput)
+      push(runtime)
+    })
+    const b = v4Render((push) => {
+      push(emitEntryPlan(sealedInput).plan)
+      push(runtime)
+    })
+    expect(b.htmlAttrs).toBe(a.htmlAttrs)
+    expect(b.htmlAttrs.match(/class=/g)).toHaveLength(1)
+    expect(b.htmlAttrs).toContain('class="dark mode-a compact"')
+  })
+
+  it('sealed vs runtime attr dedupe matches runtime-vs-runtime (token overlap, style override)', () => {
+    const sealedInput = { htmlAttrs: { class: 'dark mode-a', style: 'color:red' }, bodyAttrs: { class: 'antialiased' } }
+    const runtime = { htmlAttrs: { class: 'dark compact', style: 'color:blue' }, bodyAttrs: { class: 'antialiased' } }
+    const a = v4Render((push) => {
+      push(sealedInput)
+      push(runtime)
+    })
+    const b = v4Render((push) => {
+      push(emitEntryPlan(sealedInput).plan)
+      push(runtime)
+    })
+    expect(b.htmlAttrs).toBe(a.htmlAttrs)
+    expect(b.bodyAttrs).toBe(a.bodyAttrs)
+    // class union dedupes tokens, later entry wins the style property
+    expect(b.htmlAttrs).toContain('class="dark mode-a compact"')
+    expect(b.htmlAttrs).toContain('style="color:blue"')
+    expect(b.bodyAttrs).toBe(' class="antialiased"')
   })
 
   it('identical inline scripts dedupe by content like v3', () => {

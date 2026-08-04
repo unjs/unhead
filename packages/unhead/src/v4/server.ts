@@ -76,7 +76,6 @@ export function tagToHtml(t: Tag): string {
 export function renderSSRHead(head: V4Head): SSRPayload {
   const tags = head.resolve()
   const buckets = ['', '', ''] // head, bodyOpen, bodyClose
-  const attrs = ['', ''] // htmlAttrs, bodyAttrs
   // per-prop attr tags merge into one bag; class/style tokens accumulate
   const bags: (Record<string, any> | null)[] = [null, null]
 
@@ -88,19 +87,22 @@ export function renderSSRHead(head: V4Head): SSRPayload {
     const id = f & F_ID
 
     if (id === T_HTML_ATTRS || id === T_BODY_ATTRS) {
-      const j = id - T_HTML_ATTRS
+      const bag = bags[id - T_HTML_ATTRS] ||= {}
+      let p = t.p
       if (f & F_PREBUILT) {
-        // plan attr fragments are final strings
-        attrs[j] += t.c
-        continue
+        // plan attr fragments are single-attr strings (wire contract); parse
+        // the prop back out so prebuilt and runtime attrs merge through one
+        // bag; the fragment value is already attr-escaped, propsToString's
+        // quote guard passes it through untouched
+        const c = t.c!
+        const eq = c.indexOf('="')
+        p = eq < 0 ? { [c.slice(1)]: true } : { [c.slice(1, eq)]: c.slice(eq + 2, -1) }
       }
-      const bag = bags[j] ||= {}
-      const p = t.p!
-      for (const k in p) {
+      for (const k in p!) {
         if (k === 'class' || k === 'style')
-          bag[k] = bag[k] ? `${bag[k]}${k === 'class' ? ' ' : ';'}${p[k]}` : p[k]
+          bag[k] = bag[k] ? `${bag[k]}${k === 'class' ? ' ' : ';'}${p![k]}` : p![k]
         else
-          bag[k] = p[k]
+          bag[k] = p![k]
       }
       continue
     }
@@ -110,11 +112,13 @@ export function renderSSRHead(head: V4Head): SSRPayload {
     buckets[(f & F_POS) >> POS_SHIFT] += f & F_PREBUILT ? t.c! : tagToHtml(t)
   }
 
-  for (let j = 0; j < 2; j++) {
-    if (bags[j])
-      attrs[j] += propsToString(bags[j]!)
+  return {
+    headTags: buckets[0],
+    bodyTags: buckets[2],
+    bodyTagsOpen: buckets[1],
+    htmlAttrs: bags[0] ? propsToString(bags[0]) : '',
+    bodyAttrs: bags[1] ? propsToString(bags[1]) : '',
   }
-  return { headTags: buckets[0], bodyTags: buckets[2], bodyTagsOpen: buckets[1], htmlAttrs: attrs[0], bodyAttrs: attrs[1] }
 }
 
 export interface CreateServerHeadOptions {
