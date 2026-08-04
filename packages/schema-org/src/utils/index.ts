@@ -115,9 +115,12 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
   }
   // General case: dedupe with Set
   const types = new Set<string>(asArray(defaultType))
-  for (const t of asArray(val))
-    types.add(t)
-  node['@type'] = types.size === 1 ? val : [...types]
+  for (const t of asArray(val)) {
+    if (t != null)
+      types.add(t)
+  }
+  const resolved = [...types]
+  node['@type'] = resolved.length === 1 ? resolved[0] : resolved
 }
 
 export function resolveWithBase(base: string, urlOrPath: string) {
@@ -138,7 +141,7 @@ export function resolveAsGraphKey(key?: Id | string) {
  */
 export function stripEmptyProperties(obj: any) {
   for (const k in obj) {
-    if (!Object.hasOwn(obj, k))
+    if (!Object.prototype.hasOwnProperty.call(obj, k))
       continue
 
     const v = obj[k]

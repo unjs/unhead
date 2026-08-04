@@ -2,6 +2,7 @@ import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
+import { isUnsafeKey } from './unsafeKey'
 
 function normalizeStyleClassProps(
   key: 'class' | 'style',
@@ -63,7 +64,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
 
   for (const prop of Object.keys(input)) {
-    if (prop === '__proto__' || prop === 'constructor' || prop === 'prototype')
+    if (isUnsafeKey(prop))
       continue
     const isDataKey = prop.startsWith('data-')
     const isHtmlAttr = isHtmlTag && !TagConfigKeys.has(prop)

@@ -52,30 +52,21 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   }
   // @ts-expect-error untyped
   const script = baseUseScript(head, input as BaseUseScriptInput, options)
+  const triggerAbortController = script._triggerAbortController
   // Note: we don't remove scripts on unmount as it's not a common use case and reloading the script may be expensive
   const sideEffects: (() => void)[] = []
-  const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    if (!script._cbs[key]) {
-      cb(script.instance)
-      return () => {}
-    }
-    let i: number | null = script._cbs[key].push(cb)
-    const destroy = () => {
-      // avoid removing the wrong callback
-      if (i) {
-        script._cbs[key]?.splice(i - 1, 1)
-        i = null
-      }
-    }
-    sideEffects.push(destroy)
-    return destroy
+  const bind = (base: (cb: any) => (() => void) | undefined) => (cb: any) => {
+    const off = base(cb) ?? (() => {})
+    sideEffects.push(off)
+    return off
   }
-  // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  const baseOnLoaded = script.onLoaded as unknown as (cb: any) => (() => void) | undefined
+  const baseOnError = script.onError as unknown as (cb: any) => (() => void) | undefined
+  script.onLoaded = bind(baseOnLoaded)
+  script.onError = bind(baseOnError)
   onDestroy(() => {
     // stop any trigger promises
-    script._triggerAbortController?.abort()
+    triggerAbortController?.abort()
     sideEffects.forEach(i => i())
   })
   return script

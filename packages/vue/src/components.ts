@@ -1,6 +1,6 @@
 import type { DefineComponent, Ref, VNode } from 'vue'
 import type { ReactiveHead } from './types'
-import { defineComponent, onBeforeUnmount, ref, watchEffect } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useHead } from './composables'
 
 function addVNodeToHeadObj(node: VNode, obj: ReactiveHead) {
@@ -66,18 +66,10 @@ export const Head: DefineComponent = /* @__PURE__ */ defineComponent({
   setup(_, { slots }) {
     const obj: Ref<ReactiveHead> = ref({})
 
-    const entry = useHead(obj)
-
-    onBeforeUnmount(() => {
-      entry.dispose()
-    })
+    useHead(obj)
 
     return () => {
-      watchEffect(() => {
-        if (!slots.default)
-          return
-        entry.patch(vnodesToHeadObj(slots.default()))
-      })
+      obj.value = slots.default ? vnodesToHeadObj(slots.default()) : {}
       return null
     }
   },

@@ -26,7 +26,7 @@ async function preloadNestedResolvers(obj: any): Promise<void> {
   }
 
   for (const key in obj) {
-    if (!Object.hasOwn(obj, key) || UNSAFE_KEYS.has(key))
+    if (!Object.prototype.hasOwnProperty.call(obj, key) || UNSAFE_KEYS.has(key))
       continue
     const val = obj[key]
     if (val && typeof val === 'object') {
@@ -48,7 +48,7 @@ async function preloadNestedResolvers(obj: any): Promise<void> {
 function mergeObjects(target: any, source: any): any {
   const result = { ...target }
   for (const key in source) {
-    if (!Object.hasOwn(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
+    if (!Object.prototype.hasOwnProperty.call(source, key) || source[key] === undefined || UNSAFE_KEYS.has(key))
       continue
 
     const isNestedObject = result[key]
