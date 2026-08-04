@@ -7,6 +7,9 @@ import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransfor
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
+import { V4PlanTransform } from './V4PlanTransform'
+
+export { V4PlanTransform }
 
 /**
  * Per-framework factory config. `framework` is the package name (e.g.
@@ -76,6 +79,10 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
       instance: MinifyTransform,
       options: { ...common, ...minifyTransformOptions },
     })
+  }
+  if (options.experimental?.v4Plans && options.experimental.v4Plans.profile === 'compiled') {
+    const v4PlanOpts = options.experimental.v4Plans
+    defs.push({ instance: V4PlanTransform, options: { ...common, ...v4PlanOpts } })
   }
 
   return defs
