@@ -98,6 +98,12 @@ export interface V4Head {
   use: (p: V4Plugin) => void
   push: (input: unknown, opts?: EntryOptions) => { patch: (input: unknown, fills?: unknown[]) => void, dispose: () => void }
   resolve: () => Tag[]
+  /**
+   * Drop resolve caches; renderer heads also schedule a repaint. The hook for
+   * plugin-driven state changes that bypass entries (templateParams patch,
+   * script status), which would otherwise never mark the head dirty.
+   */
+  invalidate: () => void
 }
 
 const ESC_TEXT_RE = /[&<>"'/]/g
@@ -177,6 +183,9 @@ export function createCore(options: { ssr: boolean, compile?: Compile }): V4Head
     _compile: options.compile || (() => {
       throw new Error('[unhead] strict core cannot compile loose input')
     }),
+    invalidate() {
+      cAll = null
+    },
     use(p) {
       if (head._pk[p.key])
         return

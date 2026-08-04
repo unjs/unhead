@@ -480,6 +480,11 @@ export function createHead(options: CreateClientHeadOptions = {}): ClientHead {
       schedule(flush)
     }
   }
+  const coreInvalidate = core.invalidate
+  head.invalidate = () => {
+    coreInvalidate()
+    invalidate()
+  }
 
   const corePush = core.push
   head.push = (input: unknown, opts?: EntryOptions) => {

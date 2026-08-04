@@ -9,6 +9,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
 import { createHead as createV3 } from '../packages/unhead/src/client'
 import { createHead as createV4 } from '../packages/unhead/src/v4/client'
+import { TemplateParamsPlugin, useTemplateParams } from '../packages/unhead/src/v4/plugins'
 import { createHead as createV4Server, renderSSRHead as renderV4Server } from '../packages/unhead/src/v4/server'
 import { instrument } from './v4-explore/nav/dom-ops'
 import { applyPage, SEALED_FILLS, SEALED_PAGE_PLAN } from './v4/fixtures'
@@ -174,6 +175,25 @@ describe('v4 dom', () => {
     expect(flushes).toBe(1) // 7 pushes, one scheduled flush
     pending!()
     expect(dom.window.document.title).toBe('About · Harlan Wilton')
+  })
+
+  it('invalidate() repaints plugin-driven state (templateParams patch)', () => {
+    const dom = new JSDOM(BLANK)
+    const doc = dom.window.document
+    let pending: (() => void) | null = null
+    const head = createV4({ document: doc, scheduler: f => pending = f })
+    head.use(TemplateParamsPlugin)
+    const params = useTemplateParams(head, { siteName: 'Acme' })
+    head.push({ title: 'About %separator %siteName' })
+    pending!()
+    expect(doc.title).toBe('About | Acme')
+    // params-only change: no entry touched, nothing marks the head dirty
+    params.patch({ siteName: 'Beta' })
+    expect(head.render()).toBe(false)
+    expect(doc.title).toBe('About | Acme')
+    head.invalidate()
+    pending!()
+    expect(doc.title).toBe('About | Beta')
   })
 
   it('dispose removes owned elements and restores state', () => {
