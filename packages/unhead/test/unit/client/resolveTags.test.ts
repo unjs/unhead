@@ -114,7 +114,7 @@ describe('resolveTags', () => {
         },
         {
           "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_h": "link:href:https://cdn.example.com/favicon.ico,rel:icon,type:image/x-icon",
           "_p": 1028,
           "_w": 100,
           "props": {
@@ -221,7 +221,7 @@ describe('resolveTags', () => {
         },
         {
           "_d": undefined,
-          "_h": "link:rel:icon,type:image/x-icon,href:https://cdn.example.com/favicon.ico",
+          "_h": "link:href:https://cdn.example.com/favicon.ico,rel:icon,type:image/x-icon",
           "_p": 1028,
           "_w": 100,
           "props": {

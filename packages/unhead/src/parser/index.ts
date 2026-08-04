@@ -1,4 +1,5 @@
 import type { SerializableHead } from '../types'
+import { hasOwn } from '../utils/hasOwn'
 
 const TAG_HTML = 0
 const TAG_HEAD = 1
@@ -131,6 +132,10 @@ export function parseAttributes(attrStr: string): Record<string, string> {
     return {}
 
   const result: Record<string, string> = {}
+  const setAttr = (name: string, value: string) => {
+    if (!hasOwn(result, name))
+      result[name] = value
+  }
   const len = attrStr.length
   let i = 0
 
@@ -175,7 +180,7 @@ export function parseAttributes(attrStr: string): Record<string, string> {
           state = BEFORE_VALUE
         }
         else if (!isSpace) {
-          result[name] = ''
+          setAttr(name, '')
           state = NAME
           nameStart = i
           nameEnd = 0 // Reset nameEnd when starting a new attribute
@@ -195,18 +200,15 @@ export function parseAttributes(attrStr: string): Record<string, string> {
         break
 
       case QUOTED_VALUE:
-        if (charCode === BACKSLASH_CHAR && i + 1 < len) {
-          i++
-        }
-        else if (charCode === quoteChar) {
-          result[name] = attrStr.substring(valueStart, i)
+        if (charCode === quoteChar) {
+          setAttr(name, attrStr.substring(valueStart, i))
           state = WHITESPACE
         }
         break
 
       case UNQUOTED_VALUE:
         if (isSpace || charCode === GT_CHAR) {
-          result[name] = attrStr.substring(valueStart, i)
+          setAttr(name, attrStr.substring(valueStart, i))
           state = WHITESPACE
         }
         break
@@ -218,14 +220,14 @@ export function parseAttributes(attrStr: string): Record<string, string> {
   // Handle the last attribute
   if (state === QUOTED_VALUE || state === UNQUOTED_VALUE) {
     if (name) {
-      result[name] = attrStr.substring(valueStart, i)
+      setAttr(name, attrStr.substring(valueStart, i))
     }
   }
   else if (state === NAME || state === AFTER_NAME || state === BEFORE_VALUE) {
     nameEnd = nameEnd || i
     const currentName = attrStr.substring(nameStart, nameEnd).toLowerCase()
     if (currentName) {
-      result[currentName] = ''
+      setAttr(currentName, '')
     }
   }
 

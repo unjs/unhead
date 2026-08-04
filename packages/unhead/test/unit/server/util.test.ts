@@ -14,6 +14,13 @@ describe('propsToString', () => {
       style: 'color: red; font-size: 12px',
     })).toStrictEqual(' class="a b" style="color: red; font-size: 12px"')
   })
+  it('skips invalid own attribute names', () => {
+    expect(propsToString({
+      'name': 'description',
+      '\'><script>alert(1)</script><meta data-x': 'x',
+      'content': 'safe',
+    })).toStrictEqual(' name="description" content="safe"')
+  })
   it('stringifies all properties correctly', async () => {
     expect(propsToString({
       'array': ['a', 1],
