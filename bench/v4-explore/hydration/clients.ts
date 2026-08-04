@@ -83,8 +83,9 @@ const adoptHash = /* @__PURE__ */ makeScanAdopt(domIdentityHash)
 // ---------------------------------------------------------------------------
 // exact identity adopt: full port of compile.ts identity() over DOM props,
 // with data-hid standing in for `key`. Check order mirrors identity() exactly.
-// Keyed metas remain a gap: compile emits `meta:<name>:key:<k>` but SSR HTML
-// never carries the key for metas, so the DOM side cannot reconstruct it.
+// Keyed metas adopt too since compile emits data-hid on them (was a gap:
+// SSR HTML used to carry no key for metas). This is what shipped in
+// client.ts, which now imports identity() directly.
 
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 

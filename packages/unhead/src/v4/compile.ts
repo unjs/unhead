@@ -67,8 +67,10 @@ function weight(id: number, p: Record<string, any> | null, content: string | nul
   return w + (ALIASES[priority as string] || 0)
 }
 
-// port of v3 utils/dedupe.ts dedupeKey; p may be null (content-only tags)
-function identity(id: number, p: Record<string, any> | null, content: string | null, key: string | null): string {
+// port of v3 utils/dedupe.ts dedupeKey; p may be null (content-only tags).
+// Exported for the client's DOM adoption (data-hid stands in for key there),
+// so compile and adopt can never drift.
+export function identity(id: number, p: Record<string, any> | null, content: string | null, key: string | null): string {
   const name = TAG_NAMES[id]
   if (id === T_TITLE || id === T_BASE || id === T_TITLE_TEMPLATE)
     return name
@@ -202,8 +204,11 @@ function compileTag(id: number, input: Record<string, any>, opts: EntryOptions |
     return null
 
   const d = identity(id, p, c, key)
-  // keyed dupeable tags emit data-hid for DOM adoption (v3 parity)
-  if (key && (id === T_LINK || (id >= T_STYLE && id <= T_NOSCRIPT)))
+  // keyed dupeable tags emit data-hid for DOM adoption (v3 parity for
+  // link/style/script/noscript); keyed metas too when the identity consumed
+  // the key (v4 extension: v3 leaves metas unmarked and re-creates them on
+  // hydration instead of adopting)
+  if (key && (id === T_LINK || (id >= T_STYLE && id <= T_NOSCRIPT) || (id === T_META && d.endsWith(`:key:${key}`))))
     (p ||= {})['data-hid'] = key
   let f = id | (pos << POS_SHIFT) | (raw ? F_RAW : 0)
   if (id === T_META && p) {

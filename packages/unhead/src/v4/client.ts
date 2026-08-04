@@ -6,7 +6,7 @@
  * stride-3 array per render, renders batched on a microtask.
  */
 import type { EntryOptions, Tag, V4Head } from './core'
-import { compileEntry, TitlePlugin } from './compile'
+import { compileEntry, identity, TitlePlugin } from './compile'
 import {
   createCore,
   F_ID,
@@ -18,10 +18,6 @@ import {
   POS_SHIFT,
   T_BODY_ATTRS,
   T_HTML_ATTRS,
-  T_LINK,
-  T_META,
-  T_NOSCRIPT,
-  T_STYLE,
   T_TITLE,
   T_TITLE_TEMPLATE,
   TAG_NAMES,
@@ -82,8 +78,9 @@ function hashTag(t: Tag): string {
   return h
 }
 
-// lazy adoption: index existing (SSR-rendered) elements by the same identity
-// rules the compiler uses, so the first flush reuses them instead of duplicating
+// lazy adoption: index existing (SSR-rendered) elements by the exact compile
+// identity (data-hid stands in for key) so the first flush reuses them instead
+// of duplicating; hash covers positionally-unique tags
 function adopt(doc: Document, els: Map<string, Element>) {
   for (const el of [...doc.head.children, ...doc.body.children]) {
     const id = TAG_NAMES.indexOf(el.tagName.toLowerCase() as any)
@@ -95,38 +92,12 @@ function adopt(doc: Document, els: Map<string, Element>) {
       p[a] = v === '' ? true : v
     }
     const c = el.innerHTML || null
-    // recompute identity from DOM state; compile identity rules are in compile.ts,
-    // duplicated minimally here via the pseudo-tag hash + common fast paths
-    const key = domIdentity(id, p, c) || hashTag({ f: id, w: 0, o: 0, d: '', p, c })
+    const key = identity(id, p, c, p['data-hid'] ?? null) || hashTag({ f: id, w: 0, o: 0, d: '', p, c })
     let k = key
     let n = 1
     while (els.has(k)) k = `${key}:${n++}`
     els.set(k, el)
   }
-}
-
-// mirror of compile.ts identity() over adopted DOM props (kept tiny; hash covers the rest)
-function domIdentity(id: number, p: Record<string, any>, c: string | null): string {
-  const name = TAG_NAMES[id]
-  if (p.charset)
-    return 'charset'
-  if (id === T_META) {
-    const v = p.name ?? p.property ?? p['http-equiv']
-    if (v !== undefined)
-      return `meta:${v}`
-  }
-  const hid = p['data-hid']
-  if (hid)
-    return `${name}:key:${hid}`
-  if (p.id)
-    return `${name}:id:${p.id}`
-  if (id === T_LINK) {
-    if (p.rel === 'canonical')
-      return 'canonical'
-    if (p.rel && p.href)
-      return `link:${p.rel}:${p.href}`
-  }
-  return c && id >= T_STYLE && id <= T_NOSCRIPT ? `${name}:content:${c}` : ''
 }
 
 // effect i in a equals effect j in b (payload kinds match on target alone)

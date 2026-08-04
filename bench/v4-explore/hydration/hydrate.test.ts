@@ -4,10 +4,12 @@
  *
  * Expected outcomes are strategy-specific and intentionally document the
  * known identity gaps:
- * - baseline/eager (hash adopt): base, alternate-hreflang and keyed metas
- *   duplicate (V4_DESIGN.md 12 known gap)
- * - exact (compile identity() port): base + alternate-hreflang fixed; keyed
- *   metas still duplicate (SSR HTML carries no key for metas)
+ * - baseline (real client): adopts everything exactly since the exact
+ *   identity port + keyed-meta data-hid landed (was the [2,2,2] hash gap)
+ * - eager (hash adopt): base, alternate-hreflang and keyed metas duplicate
+ *   (the pre-fix hash mirror, kept as the comparison point)
+ * - exact (compile identity() port): everything adopts; keyed metas fixed by
+ *   the server now emitting data-hid for them
  * - marker/manifest: everything adopts exactly
  * - noadopt: no duplicates, but scripts are re-created (re-executed in a real
  *   browser) and SSR-only defaults (charset, viewport) are lost: disqualified
@@ -33,9 +35,9 @@ interface Strategy {
 }
 
 const STRATEGIES: Strategy[] = [
-  { name: 'baseline (lazy hash adopt)', create: createBaselineHead as any, render: renderSSRHead, adopts: true, edge: [2, 2, 2] },
+  { name: 'baseline (lazy exact adopt)', create: createBaselineHead as any, render: renderSSRHead, adopts: true, edge: [1, 1, 1] },
   { name: 'eager hash adopt', create: createEagerHead, render: renderSSRHead, adopts: true, edge: [2, 2, 2] },
-  { name: 'exact identity adopt', create: createExactHead, render: renderSSRHead, adopts: true, edge: [1, 1, 2] },
+  { name: 'exact identity adopt', create: createExactHead, render: renderSSRHead, adopts: true, edge: [1, 1, 1] },
   { name: 'marker attr adopt', create: createMarkerHead, render: renderSSRHeadMarked, adopts: true, edge: [1, 1, 1] },
   { name: 'manifest adopt', create: createManifestHead, render: renderSSRHeadManifest, adopts: true, edge: [1, 1, 1] },
   { name: 'no-adopt replace', create: createNoAdoptHead, render: renderSSRHeadRanged, adopts: false, edge: [1, 1, 1] },

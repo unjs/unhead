@@ -71,6 +71,40 @@ describe('v4 dom', () => {
     expect(doc.title).toBe('About · Harlan Wilton')
   })
 
+  it('hydration adopts base, alternate hreflang and keyed metas exactly', () => {
+    const edge = {
+      base: { href: '/app/' },
+      link: [{ rel: 'alternate', hreflang: 'en', href: 'https://example.com/en' }],
+      meta: [{ name: 'x-custom', content: 'a', key: 'custom' }],
+    }
+    const server = createV4Server()
+    applyPage((input, opts) => server.push(input, opts))
+    server.push(edge)
+    const ssr = renderV4Server(server)
+    const dom = new JSDOM(`<!DOCTYPE html><html${ssr.htmlAttrs}><head>${ssr.headTags}</head><body${ssr.bodyAttrs}>${ssr.bodyTagsOpen}<div id="app"></div>${ssr.bodyTags}</body></html>`)
+    const doc = dom.window.document
+    const before = {
+      count: doc.head.children.length,
+      base: doc.querySelector('base'),
+      alt: doc.querySelector('link[hreflang]'),
+      custom: doc.querySelector('meta[name=x-custom]'),
+    }
+    // keyed metas carry data-hid so the client can reconstruct the keyed identity
+    expect(before.custom!.getAttribute('data-hid')).toBe('custom')
+
+    const head = createV4({ document: doc })
+    applyPage((input, opts) => head.push(input, opts))
+    head.push(edge)
+    head.render()
+    expect(doc.querySelectorAll('base').length).toBe(1)
+    expect(doc.querySelectorAll('link[hreflang]').length).toBe(1)
+    expect(doc.querySelectorAll('meta[name=x-custom]').length).toBe(1)
+    expect(doc.head.children.length).toBe(before.count)
+    expect(doc.querySelector('base')).toBe(before.base)
+    expect(doc.querySelector('link[hreflang]')).toBe(before.alt)
+    expect(doc.querySelector('meta[name=x-custom]')).toBe(before.custom)
+  })
+
   it('sealed plan renders the same document state as the loose-object path', () => {
     const a = new JSDOM(BLANK)
     const loose = createV4({ document: a.window.document })
