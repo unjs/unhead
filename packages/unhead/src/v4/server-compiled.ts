@@ -2,7 +2,7 @@
 import type { CompiledEntryOptions, CompiledHead, CompiledPlan } from './compiled'
 import type { V4Head } from './core'
 import type { SSRPayload } from './server'
-import { createCore } from './core'
+import { createSealedCore } from './core-sealed'
 import { DEFAULT_PLAN, renderSSRHead as renderHead } from './server'
 
 export type { CompiledEntry, CompiledEntryOptions, CompiledHead, CompiledPlan } from './compiled'
@@ -12,19 +12,14 @@ export interface CreateCompiledServerHeadOptions {
   disableDefaults?: boolean
 }
 
-function rejectPlugin() {
-  throw new Error('[unhead] compiled heads cannot install runtime plugins')
-}
-
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead(options: CreateCompiledServerHeadOptions = {}): CompiledHead {
+  const head = createSealedCore({ ssr: true })
+  // Compiled tuples have no prop objects; the sealed core's use() throws
   if ('plugins' in options)
-    rejectPlugin()
-  const head = createCore({ ssr: true })
+    head.use(0 as never)
   if (!options.disableDefaults)
     head.push(DEFAULT_PLAN)
-  // Compiled tuples have no prop objects. Resolve plugins cannot safely run.
-  head.use = rejectPlugin
   return head as unknown as CompiledHead
 }
 
