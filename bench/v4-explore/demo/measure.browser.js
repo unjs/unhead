@@ -1,4 +1,6 @@
-// dev-browser script: run with
+/* eslint-disable antfu/no-top-level-await, no-undef, no-console */
+// dev-browser script (not repo runtime code): `browser` is a dev-browser
+// global and the harness supports top-level await. Run with
 //   dev-browser --headless --timeout 180 run bench/v4-explore/demo/measure.browser.js
 // against a static server for the built dist dir (default port 8791; the
 // page runs its own 50-switch loop and exposes window.__RESULTS__).

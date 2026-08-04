@@ -122,7 +122,8 @@ export function renderSSRHeadMarked(head: V4Head): SSRPayload {
       // prebuilt plan tags carry final html; splice the marker before the
       // first `>` (safe for plan-emitted defaults; a real emitter would
       // stamp the marker at plan build time instead)
-      return t.c!.replace('>', ` data-h="${escAttr(key)}">`)
+      const gt = t.c!.indexOf('>')
+      return `${t.c!.slice(0, gt)} data-h="${escAttr(key)}"${t.c!.slice(gt)}`
     }
     return tagToHtmlMarked(t, key)
   })
