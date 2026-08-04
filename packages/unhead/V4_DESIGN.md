@@ -423,9 +423,48 @@ The v4 modules ship as package subpath exports, so a real project can pnpm-overr
 - `unhead/v4`: L0 strict core (`createCore`, `revivePlan`, `TAG_NAMES`, `T_*`/`F_*` consts, `Tag`/`PlanTag`/`V4Plugin` types).
 - `unhead/v4/server`: SSR head (`createHead`, `useHead`, `renderSSRHead`).
 - `unhead/v4/client`: DOM head (`createHead`, `attachDom`, `useHead`).
+- `unhead/v4/client-compiled`: strict browser runtime for `CompiledPlan` only. It includes the plan DOM renderer and no L1 compiler.
 - `unhead/v4/client-plans`: sealed PlanTag renderer slot (`installPlanRenderer`).
 - `unhead/v4/compile`: L1 loose-input compiler (`compileEntry`, `identity`, `TitlePlugin`).
 - `unhead/v4/plugins`: optional resolve plugins (canonical, infer SEO meta, template params).
 - `unhead/v4/seo`: `useSeoMeta` and meta unpacking.
 - `unhead/v4/early-hints`: 103 Early Hints extraction (`toEarlyHints`, `toLinkHeader`).
-- `unhead/v4/emit`: build-time plan emitter (`emitEntryPlan`, `emitRoutePlan`, `planToCode`).
+- `unhead/v4/emit`: build-time plan emitter (`emitEntryPlan`, `emitRoutePlan`, `emitSSRRoutePlan`, `emitRoutePayload`, `planToCode`).
+- `unhead/v4/server-compiled`: strict server runtime for `CompiledPlan` only. Runtime plugins and loose inputs fail loudly.
+- `unhead/v4/server-plans`: 602 B gzip direct route renderer for plans already sorted and deduped at build time.
+
+## 14. Performance follow-up, 2026-08-04
+
+The first real-site pass showed that v4 had no SSR regression, but the default path still spent most of its Unhead time in L1. This follow-up profiled the actual Nuxt response, then optimized the same shapes in isolated harnesses.
+
+### Default runtime
+
+| Change | Measured result | Bundle cost |
+|---|---:|---:|
+| Skip `slots.flat()` when no arrayable meta appended | fresh page resolve +14.8% with the identity fast path below | included below |
+| Gate keyed-meta regex work on a real key | `compileEntry` +15.1%; keyless meta identity 9.8x | core + compiler + server: -3 B gzip before the payload guard |
+| Guard script escaping when content contains no `<` | 1.1 MB Nuxt payload scan 27.091 to 4.647 ms per 600, 5.83x | +4 B gzip |
+| Resolve Vue values once at the server compile boundary | typical three-entry Vue SSR request +3.92% | client +7 B gzip; server +16 B gzip |
+| Skip irrelevant DOM `innerHTML` reads during adoption | 2,000-meta adoption 3.45 to 3.30 ms | +11 B gzip |
+
+The script guard came straight from the CPU profile. Nuxt's `__NUXT_DATA__` script was 1.09 to 1.14 MB and contained no `<`, yet the compiler ran a regex replacement over it on every request.
+
+The final uncontended real-site run measured v4 at 7.935 requests per second against v3 at 7.198, a 10.24% gain. Generated-range attribution across 1,800 requests measured 1.194 ms of v4 head self time per request against 1.399 ms for v3, 14.63% lower. Interleaved route p50 improved 14.45% on `/` and 15.20% on the docs route. Two v4 CPU repeats agreed with each other, but differed from an earlier unusually low profile, so the real-site evidence supports the end-to-end gain while the isolated benchmark supports the script-guard claim.
+
+### Compiled paths
+
+`emitSSRRoutePlan` removes weights and identities after route-level sort and dedupe. `renderSSRRoutePlan` then fills strings and writes directly into the five SSR payload buckets. It creates no head instance, entry map, compiler, plugin slots, sort, or dedupe table.
+
+| Server path | Median throughput | Runtime gzip |
+|---|---:|---:|
+| stateful static plan | 121,959 ops/s | 4,071 B default server |
+| direct static route plan | 1,797,063 ops/s | 602 B |
+| stateful plan with holes | 112,172 ops/s | 4,071 B default server |
+| direct route plan with holes | 1,333,589 ops/s | 602 B |
+| fully static `emitRoutePayload` | no runtime call | 0 B |
+
+The strict compiled profiles remove L1 while keeping the normal head lifecycle. Measured gzip is 4,384 B vs 5,257 B for the core client, 2,065 B vs 4,071 B for the core server, 4,868 B vs 5,555 B for Vue client plus its strict composable, and 2,416 B vs 4,514 B for Vue server. A separate identity module was required: client adoption needs dedupe identity, but importing it from `compile.ts` retained 591 B of L1.
+
+The opt-in bundler transform uses the proven scope and literal-decoder patterns from PR #857. It compiles static `useHead()` objects to hoisted plans and leaves every unsupported shape unchanged. Server request throughput moved from 332,041 to 686,196 ops/s, 2.07x, for +40 B gzip in the representative server bundle. Client transformation stays off unless requested because combining plans with the loose client is +958 B gzip. The public option requires `{ profile: 'compiled' }` and trusts only `@unhead/vue/v4/compiled` by default.
+
+Compiled tuples contain final HTML, not loose prop objects. `CanonicalPlugin`, `InferSeoMetaPlugin`, `TemplateParamsPlugin`, and arbitrary entry/tags/resolve slots cannot rewrite them at runtime. The strict profiles reject runtime plugins, and the bundler requires the explicit compiled-profile option so this boundary cannot be crossed accidentally.

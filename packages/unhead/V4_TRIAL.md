@@ -181,10 +181,23 @@ Core metadata survived on v4: canonical URLs, viewport, descriptions, and Open G
 
 The runtime benchmark mode emitted no `og:image` or `twitter:image` on either v3 or v4. A stock v3 full prerender did emit both, so OG image survival still needs a like-for-like prerender trial after the v4 module interop is complete.
 
-The first sequential SSR timing pass showed v4 about 10% slower. A 240 sample per route interleaved run reversed that result: v4 p50 was 19.8% lower on `/` and 11.9% lower on the docs route. CPU profiles also found no v4 head regression. Across 2,000 profiled requests, v4 handled 6.110 requests per second against v3's 5.988. Corrected raw-range attribution puts v4 head self time at about 1.48 ms per request, compared with 1.67 ms for v3. Nitro emitted null source-map mappings for the inlined v4 core, so source-map-only attribution undercounts v4. The conflicting latency passes make the end-to-end SSR timing inconclusive; the head CPU slice is the useful result.
+The final SSR run held the machine quiet, alternated builds and routes, and used two agreeing CPU-profile repeats. Nitro emitted null source-map mappings for the inlined v4 core, so v4 attribution uses audited generated-code ranges.
+
+| Measurement | v3 | v4 | Change |
+|---|---:|---:|---:|
+| full workload throughput | 7.198 req/s | 7.935 req/s | +10.24% |
+| attributed head self time | 1.399 ms/request | 1.194 ms/request | -14.63% |
+| `/` p50 / p95 | 117.156 / 134.094 ms | 100.233 / 122.319 ms | -14.45% / -8.78% |
+| docs p50 / p95 | 130.714 / 162.003 ms | 110.851 / 125.990 ms | -15.20% / -22.23% |
+
+The v4 CPU figure combines 1,800 measured requests. An earlier v4 profile reported an unusually low 1.025 ms/request; the final uncontended repeats measured 1.206 and 1.171 ms/request. Treat CPU-profile deltas smaller than that spread cautiously. The stable result is that v4 is materially faster than v3 end to end and has no SSR regression.
+
+The profile exposed one avoidable cost: every response scanned Nuxt's 1.09 to 1.14 MB `__NUXT_DATA__` script for `<`, even when it contained none. Checking `includes('<')` before the replacement reduced the isolated 600-compile benchmark from 27.091 to 4.647 ms, an 82.85% reduction. Real-site CPU sampling did not isolate a further win from this guard, while throughput remained ahead, so the guard claim rests on the isolated benchmark.
 
 The v4 HTML response is about 60 kB larger raw, but only about 3 kB larger gzip. The extra bytes are in `__NUXT_DATA__`: v4 preserves Nuxt's `\u002F` and `\u003C` safety escapes, while `@nuxtjs/seo` decodes them from a v3 `ssr:render` minify hook. That hook cannot run on the v4 head. The head itself differs by about 750 bytes.
 
 Client source-map attribution found 17,034 raw bytes from Unhead in v4, down from 26,264 in v3. The per-file compression proxy was 6,643 bytes gzip for v4 and 8,664 for v3. Total client output stayed flat at 735,808 bytes gzip for v4 and 735,920 for v3.
 
 Warm browser hydration also improved. The response-end to Vue-mount median moved from 109.1 ms to 106.1 ms on `/`, and from 93.1 ms to 87.5 ms on the `useHead` docs page. Median total head mutation records stayed at 4 on `/` and fell from 8 to 6 on the docs page. These counts include Nuxt link and style work; v4 removed the two node removals seen on both v3 routes.
+
+The strict compiled profiles and static-call bundler transform were measured separately. The current Nuxt override keeps the loose runtime because Nuxt and its modules create dynamic heads and install runtime plugins. Moving this site to a compiled profile needs Nuxt-level route extraction plus plan-aware replacements for template params, canonical inference, and schema.org. Enabling the transform against the current module stack would silently skip those runtime rewrites, so the public option requires an explicit compiled profile.
