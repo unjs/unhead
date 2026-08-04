@@ -183,6 +183,8 @@ The runtime benchmark mode emitted no `og:image` or `twitter:image` on either v3
 
 The first sequential SSR timing pass showed v4 about 10% slower. A 240 sample per route interleaved run reversed that result: v4 p50 was 19.8% lower on `/` and 11.9% lower on the docs route. CPU profiles also found no v4 head regression. Across 2,000 profiled requests, v4 handled 6.110 requests per second against v3's 5.988. Corrected raw-range attribution puts v4 head self time at about 1.48 ms per request, compared with 1.67 ms for v3. Nitro emitted null source-map mappings for the inlined v4 core, so source-map-only attribution undercounts v4. The conflicting latency passes make the end-to-end SSR timing inconclusive; the head CPU slice is the useful result.
 
+The v4 HTML response is about 60 kB larger raw, but only about 3 kB larger gzip. The extra bytes are in `__NUXT_DATA__`: v4 preserves Nuxt's `\u002F` and `\u003C` safety escapes, while `@nuxtjs/seo` decodes them from a v3 `ssr:render` minify hook. That hook cannot run on the v4 head. The head itself differs by about 750 bytes.
+
 Client source-map attribution found 17,034 raw bytes from Unhead in v4, down from 26,264 in v3. The per-file compression proxy was 6,643 bytes gzip for v4 and 8,664 for v3. Total client output stayed flat at 735,808 bytes gzip for v4 and 735,920 for v3.
 
 Warm browser hydration also improved. The response-end to Vue-mount median moved from 109.1 ms to 106.1 ms on `/`, and from 93.1 ms to 87.5 ms on the `useHead` docs page. Median total head mutation records stayed at 4 on `/` and fell from 8 to 6 on the docs page. These counts include Nuxt link and style work; v4 removed the two node removals seen on both v3 routes.
