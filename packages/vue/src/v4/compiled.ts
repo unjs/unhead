@@ -30,3 +30,13 @@ export function useHead(plan: CompiledPlan, options: UseHeadOptions = {}): Compi
     onBeforeUnmount(entry.dispose)
   return entry
 }
+
+/**
+ * `useSeoMeta` has no compiled-plan identity of its own: `UseSeoMetaTransform`
+ * rewrites a static call to plain `useHead` source before `V4PlanTransform`
+ * ever runs, so by the time either bundler transform is done, this name and
+ * `useHead` are interchangeable. It exists only so source keeps its authored
+ * intent and so the SEO transform's rewritten import resolves against a
+ * trusted compiled composable instead of falling back to loose `@unhead/vue`.
+ */
+export const useSeoMeta = useHead

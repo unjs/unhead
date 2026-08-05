@@ -14,8 +14,16 @@ const USE_HEAD_RE = /\buseHead\b/
 const DEFAULT_IMPORT_PATHS = new Set(['@unhead/vue/v4/compiled'])
 const LITERAL_TYPES = new Set(['Literal', 'StringLiteral', 'NumericLiteral', 'BooleanLiteral', 'NullLiteral'])
 const DECODE_BAIL = Symbol('unhead:v4-plan-decode-bail')
+// type annotations that erase to nothing at runtime; both the call-argument
+// check and the decoder look through them to the real expression
+const TS_WRAPPER_TYPES = new Set(['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSInstantiationExpression', 'ParenthesizedExpression'])
 
 type StaticValue = string | number | boolean | null | StaticValue[] | { [key: string]: StaticValue }
+
+function unwrapType(node: any): any {
+  while (node && TS_WRAPPER_TYPES.has(node.type)) node = node.expression
+  return node
+}
 
 export interface V4PlanTransformOptions extends BaseTransformerTypes {
   /** Import paths whose named or namespace `useHead` export is trusted. */
@@ -26,6 +34,35 @@ export interface V4PlanTransformOptions extends BaseTransformerTypes {
   client?: boolean
   /** Source for the client `injectHead` import, useful for virtual composables. */
   adapterImport?: string
+  /**
+   * Called once per trusted `useHead` call site (imported from a path in
+   * `importPaths`/the default compiled path), reporting whether it compiled
+   * to a plan or fell back to the runtime call. This is the primitive a
+   * two-pass build uses to decide whether the whole app can safely switch
+   * its root `createHead` import to the strict compiled profile: see
+   * `canUseCompiledProfile`. Emission only, no import rewriting happens here.
+   */
+  reportEntry?: (info: { id: string, compiled: boolean }) => void
+}
+
+export interface CompiledProfileStats {
+  /** Trusted `useHead` call sites seen (compiled or not). */
+  trusted: number
+  /** Trusted call sites that did not compile to a plan. */
+  bailed: number
+}
+
+/**
+ * Whether an app-wide build (aggregated `reportEntry` calls across every
+ * transformed module) can safely swap its root `createHead` import from the
+ * loose profile to the strict compiled one. Every trusted call site must
+ * have compiled: a single bailed call still executes against whatever
+ * `createHead` the app uses, and the strict compiled head throws on a loose
+ * object (it has no L1 to fall back to), so this is a correctness gate, not
+ * an optimization heuristic.
+ */
+export function canUseCompiledProfile(stats: CompiledProfileStats): boolean {
+  return stats.trusted > 0 && stats.bailed === 0
 }
 
 interface ResolvedUseHead {
@@ -70,6 +107,7 @@ function isUnsafeObjectKey(key: string): boolean {
 
 /** Decode syntax only. Source text is never evaluated. */
 function decodeStaticValue(node: any): StaticValue | typeof DECODE_BAIL {
+  node = unwrapType(node)
   if (!node)
     return DECODE_BAIL
   if (LITERAL_TYPES.has(node.type)) {
@@ -84,7 +122,7 @@ function decodeStaticValue(node: any): StaticValue | typeof DECODE_BAIL {
       : DECODE_BAIL
   }
   if (node.type === 'UnaryExpression') {
-    const arg = node.argument
+    const arg = unwrapType(node.argument)
     if ((node.operator !== '-' && node.operator !== '+')
       || !arg
       || !LITERAL_TYPES.has(arg.type)
@@ -214,30 +252,45 @@ export const V4PlanTransform = createUnplugin<V4PlanTransformOptions, false>((op
             if (node.type !== 'CallExpression' || node.arguments.length !== 1)
               return
             const resolved = resolveUseHead(node.callee, scopeTracker)
-            const inputNode = node.arguments[0]
-            if (!resolved || inputNode?.type !== 'ObjectExpression')
+            if (!resolved)
               return
+            const rawInputNode = node.arguments[0]
+            // `as const` / `satisfies X` erase at runtime; decode the real
+            // expression but replace the whole original span (annotation
+            // included) with the compiled plan
+            const inputNode = unwrapType(rawInputNode)
+            if (inputNode?.type !== 'ObjectExpression') {
+              options.reportEntry?.({ compiled: false, id })
+              return
+            }
             const input = decodeStaticValue(inputNode)
-            if (input === DECODE_BAIL || Array.isArray(input) || input === null || typeof input !== 'object')
+            if (input === DECODE_BAIL || Array.isArray(input) || input === null || typeof input !== 'object') {
+              options.reportEntry?.({ compiled: false, id })
               return
+            }
 
             let plan: ReturnType<typeof emitEntryPlan>
             try {
               plan = emitEntryPlan(input)
             }
             catch (error) {
-              if (error instanceof PlanEmitError)
+              if (error instanceof PlanEmitError) {
+                options.reportEntry?.({ compiled: false, id })
                 return
+              }
               throw error
             }
-            if (plan.holes)
+            if (plan.holes) {
+              options.reportEntry?.({ compiled: false, id })
               return
+            }
+            options.reportEntry?.({ compiled: true, id })
             pending.push({
               ...resolved,
               code: planToCode(plan.plan),
-              end: inputNode.end,
+              end: rawInputNode.end,
               name: `${prefix}_plan_${pending.length}`,
-              start: inputNode.start,
+              start: rawInputNode.start,
             })
           },
         })
