@@ -64,6 +64,16 @@ export default defineNuxtConfig({
   // bundle) and nitro's rollup build (the renderer that calls createHead and
   // renderSSRHead), so one map covers every consumer.
   alias: baseline ? {} : unheadV4Alias,
+  // PRERENDER-TRACE-AS-SCANNER prototype: prerender every route this example
+  // has so app/plugins/v4-head-trace.server.ts + server/plugins/v4-head-manifest.ts
+  // can double-render, hash, and classify each one into route-head-manifest.json.
+  nitro: {
+    prerender: {
+      routes: ['/', '/about', '/trap'],
+      crawlLinks: false,
+      failOnError: true,
+    },
+  },
   app: {
     head: {
       htmlAttrs: { lang: 'en' },
