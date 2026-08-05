@@ -155,5 +155,6 @@ export default defineBuildConfig({
     { input: 'src/v4/seo', name: 'v4/seo' },
     { input: 'src/v4/early-hints', name: 'v4/early-hints' },
     { input: 'src/v4/emit', name: 'v4/emit' },
+    { input: 'src/v4/record', name: 'v4/record' },
   ],
 })

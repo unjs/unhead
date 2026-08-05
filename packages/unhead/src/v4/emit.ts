@@ -381,6 +381,92 @@ export function emitRoutePayload(entries: [Record<string, any>, EntryOptions?][]
   return renderSSRRoutePlan(emitted.plan)
 }
 
+/** Where a guaranteed route head entry came from; order fixes merge priority. */
+export type RouteHeadSourceKind = 'app' | 'layout' | 'route-rule' | 'page'
+
+export interface RouteHeadSource {
+  source: RouteHeadSourceKind
+  input: Record<string, any>
+  opts?: EntryOptions
+}
+
+export interface RouteHeadOptions {
+  /**
+   * The route is prerendered and its holes (if any) are filled once at build:
+   * a hole-free route folds to a final payload with zero head runtime.
+   */
+  prerender?: boolean
+  /**
+   * A premerged titleTemplate is consumed at build time and can never
+   * re-apply to a title pushed by a runtime entry. The integration must prove
+   * no runtime title source exists on the route (every title-bearing useHead
+   * is itself premerged) before allowing a template to seal. Default: refuse.
+   */
+  allowTitleTemplate?: boolean
+  disableDefaults?: boolean
+}
+
+/**
+ * Classified route head emission. `payload` and `plan` carry injectable code;
+ * `runtime` carries the refusal reason and the integration MUST keep the
+ * original runtime calls (and should surface the reason in build output).
+ */
+export type RouteHeadEmit
+  = | { kind: 'payload', payload: SSRPayload, code: string }
+    | {
+      kind: 'plan'
+      /** Client boot/nav plan: keeps d/w so runtime entries override via dedupe. */
+      plan: SealedRoutePlan
+      code: string
+      /** Direct-renderer plan for renderSSRRoutePlan (identity/weight stripped). */
+      ssrPlan: SSRRoutePlan
+      ssrCode: string
+      holes: number
+      fillOrder: number[]
+    }
+    | { kind: 'runtime', reason: string }
+
+/**
+ * Conservative route-level pre-merge (V4_DESIGN.md 11): fold a route's
+ * guaranteed static entries (app, layout, route rules, page) into one plan.
+ * Never silent: ineligible inputs return `kind: 'runtime'` with the exact
+ * reason. Nested/conditional component heads are NOT route-guaranteed and
+ * must go through per-callsite entry plans instead.
+ */
+export function emitRouteHead(sources: RouteHeadSource[], options: RouteHeadOptions = {}): RouteHeadEmit {
+  if (!options.allowTitleTemplate) {
+    for (const s of sources) {
+      if (s.input && typeof s.input === 'object' && !Array.isArray(s.input) && s.input.titleTemplate != null)
+        return { kind: 'runtime', reason: `${s.source} head declares a titleTemplate: sealing it at build time would stop it applying to runtime titles; premerge every title source and pass allowTitleTemplate, or leave the route on the runtime path` }
+    }
+  }
+  const entries = sources.map(s => [s.input, s.opts] as [Record<string, any>, EntryOptions?])
+  let plan: RouteEmitResult
+  let ssr: SSRRouteEmitResult
+  try {
+    plan = emitRoutePlan(entries)
+    ssr = emitSSRRoutePlan(entries, { disableDefaults: options.disableDefaults })
+  }
+  catch (error) {
+    if (error instanceof PlanEmitError)
+      return { kind: 'runtime', reason: error.message }
+    throw error
+  }
+  if (options.prerender && !ssr.holes) {
+    const payload = renderSSRRoutePlan(ssr.plan)
+    return { kind: 'payload', payload, code: payloadToCode(payload) }
+  }
+  return {
+    kind: 'plan',
+    plan: plan.plan,
+    code: planToCode(plan.plan),
+    ssrPlan: ssr.plan,
+    ssrCode: planToCode(ssr.plan as unknown as PlanTag[]),
+    holes: ssr.holes,
+    fillOrder: ssr.fillOrder,
+  }
+}
+
 export interface PlanToCodeOptions {
   /** Raw JS expression sources for each fill slot, in fill (plan-scan) order. */
   fills?: string[]

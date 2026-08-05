@@ -141,6 +141,10 @@
     "./v4/emit": {
       "types": "./dist/v4/emit.d.ts",
       "default": "./dist/v4/emit.mjs"
+    },
+    "./v4/record": {
+      "types": "./dist/v4/record.d.ts",
+      "default": "./dist/v4/record.mjs"
     }
   },
   "main": "dist/index.mjs",
@@ -231,6 +235,9 @@
       ],
       "v4/emit": [
         "dist/v4/emit.d.ts"
+      ],
+      "v4/record": [
+        "dist/v4/record.d.ts"
       ]
     }
   },
