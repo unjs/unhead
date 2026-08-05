@@ -5,6 +5,7 @@ import { interactionCounterResolver, propertyValueResolver } from '../../core/co
 import {
   IdentityId,
   idReference,
+  isHomePage,
   resolveAsGraphKey,
   resolveWithBase,
   setIfEmpty,
@@ -95,8 +96,9 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
     if (resolveAsGraphKey(node['@id']) === IdentityId) {
       setIfEmpty(node, 'url', meta.host)
 
+      // Only the homepage is about the identity, see webPageResolver.
       const webPage = find(PrimaryWebPageId)
-      if (webPage)
+      if (webPage && isHomePage(meta))
         setIfEmpty(webPage, 'about', idReference(node as Person))
 
       const webSite = find(PrimaryWebSiteId)

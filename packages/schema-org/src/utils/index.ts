@@ -1,6 +1,7 @@
 import type {
   Arrayable,
   Id,
+  ResolvedMeta,
   Thing,
 } from '../types'
 import { hasOwn } from 'unhead/utils'
@@ -89,6 +90,14 @@ export function resolvableDateToIso(val: Date | string | undefined) {
 }
 
 export const IdentityId = '#identity'
+
+/**
+ * The site identity describes the site as a whole, so it may only be the subject
+ * (`WebPage.about`) of the homepage. Every other page is about something else.
+ */
+export function isHomePage(meta: ResolvedMeta) {
+  return meta.url === meta.host
+}
 
 export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any) {
   if (node?.[field] === undefined && value != null)
