@@ -1,10 +1,11 @@
 import type { SourceMapInput } from 'rollup'
+import type { Hole } from 'unhead/v4/emit'
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
-import { emitEntryPlan, PlanEmitError, planToCode } from 'unhead/v4/emit'
+import { emitEntryPlan, hole, PlanEmitError, planToCode } from 'unhead/v4/emit'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
 import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
@@ -18,7 +19,23 @@ const DECODE_BAIL = Symbol('unhead:v4-plan-decode-bail')
 // check and the decoder look through them to the real expression
 const TS_WRAPPER_TYPES = new Set(['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSInstantiationExpression', 'ParenthesizedExpression'])
 
-type StaticValue = string | number | boolean | null | StaticValue[] | { [key: string]: StaticValue }
+// a value position may hold `hole()` (a value that varies but never changes
+// tag/attribute structure); StaticValue widens to admit it so decode can
+// return it inline instead of threading a parallel result type through
+// every array/object branch
+type StaticValue = string | number | boolean | null | Hole | StaticValue[] | { [key: string]: StaticValue }
+
+/**
+ * One `() => expr` getter found in a value position while decoding. `node`
+ * is the arrow's body expression (not the arrow itself): its source span is
+ * copied verbatim into the fills array literal at the original call site, so
+ * it keeps referencing whatever component/setup scope it was written in.
+ * Pushed in decode (= plan creation) order; `emitEntryPlan`'s `fillOrder`
+ * maps each plan hole back to an index into this array.
+ */
+interface HoleSite {
+  node: any
+}
 
 function unwrapType(node: any): any {
   while (node && TS_WRAPPER_TYPES.has(node.type)) node = node.expression
@@ -74,6 +91,8 @@ interface PendingPlan extends ResolvedUseHead {
   end: number
   name: string
   start: number
+  /** `[expr1,expr2,...]` source, verbatim original spans, or undefined if the plan has no holes. */
+  fillsExpr?: string
 }
 
 function getExportName(node: any): string | undefined {
@@ -105,11 +124,26 @@ function isUnsafeObjectKey(key: string): boolean {
   return key === '__proto__' || key === 'constructor' || key === 'prototype'
 }
 
-/** Decode syntax only. Source text is never evaluated. */
-function decodeStaticValue(node: any): StaticValue | typeof DECODE_BAIL {
+/**
+ * Decode syntax only. Source text is never evaluated.
+ *
+ * `holes` collects eligible `() => expr` getters found in value positions,
+ * in encounter order; `emitEntryPlan`'s `fillOrder` later maps each plan
+ * hole back to an index into this array. An arrow that fails eligibility
+ * (params, block body, async, generator) is not a hole: it bails the whole
+ * call to the runtime path, same as any other undecodable value, per
+ * V4_DESIGN.md 15's "block statements, async, arguments: bail loose" rule.
+ */
+function decodeStaticValue(node: any, holes: HoleSite[]): StaticValue | typeof DECODE_BAIL {
   node = unwrapType(node)
   if (!node)
     return DECODE_BAIL
+  if (node.type === 'ArrowFunctionExpression') {
+    if (node.async || node.generator || node.params.length || node.body.type === 'BlockStatement')
+      return DECODE_BAIL
+    holes.push({ node: node.body })
+    return hole()
+  }
   if (LITERAL_TYPES.has(node.type)) {
     if (node.regex !== undefined || node.bigint !== undefined)
       return DECODE_BAIL
@@ -146,7 +180,7 @@ function decodeStaticValue(node: any): StaticValue | typeof DECODE_BAIL {
     for (const element of node.elements) {
       if (!element || element.type === 'SpreadElement')
         return DECODE_BAIL
-      const value = decodeStaticValue(element)
+      const value = decodeStaticValue(element, holes)
       if (value === DECODE_BAIL)
         return DECODE_BAIL
       out.push(value)
@@ -161,7 +195,7 @@ function decodeStaticValue(node: any): StaticValue | typeof DECODE_BAIL {
       const key = getStaticPropertyKey(prop)
       if (!key || isUnsafeObjectKey(key))
         return DECODE_BAIL
-      const value = decodeStaticValue(prop.value)
+      const value = decodeStaticValue(prop.value, holes)
       if (value === DECODE_BAIL)
         return DECODE_BAIL
       out[key] = value
@@ -263,7 +297,8 @@ export const V4PlanTransform = createUnplugin<V4PlanTransformOptions, false>((op
               options.reportEntry?.({ compiled: false, id })
               return
             }
-            const input = decodeStaticValue(inputNode)
+            const holes: HoleSite[] = []
+            const input = decodeStaticValue(inputNode, holes)
             if (input === DECODE_BAIL || Array.isArray(input) || input === null || typeof input !== 'object') {
               options.reportEntry?.({ compiled: false, id })
               return
@@ -280,17 +315,31 @@ export const V4PlanTransform = createUnplugin<V4PlanTransformOptions, false>((op
               }
               throw error
             }
-            if (plan.holes) {
+            // every `hole()` we minted must have reached the plan in the same
+            // count: emitEntryPlan itself throws PlanEmitError (caught above)
+            // for a hole a structural/identity position or the compiler drops,
+            // so a mismatch here would mean a latent bug, not a legal shape.
+            // Bail conservatively to the runtime path rather than emit a plan
+            // with a fills array of the wrong length.
+            if (plan.holes !== holes.length) {
               options.reportEntry?.({ compiled: false, id })
               return
             }
             options.reportEntry?.({ compiled: true, id })
+            // getters must stay lexically at the call site (they close over
+            // component/setup scope); only the structural plan hoists to
+            // module scope. fillOrder is the identity permutation for entry
+            // plans (no cross-entry dedupe), but it costs nothing to honor it.
+            const fillsExpr = plan.holes
+              ? `[${plan.fillOrder.map(i => code.slice(holes[i].node.start, holes[i].node.end)).join(',')}]`
+              : undefined
             pending.push({
               ...resolved,
               code: planToCode(plan.plan),
               end: rawInputNode.end,
               name: `${prefix}_plan_${pending.length}`,
               start: rawInputNode.start,
+              fillsExpr,
             })
           },
         })
@@ -314,9 +363,15 @@ export const V4PlanTransform = createUnplugin<V4PlanTransformOptions, false>((op
         }
 
         for (const item of pending) {
-          const replacement = consumer === 'client'
+          const planRef = consumer === 'client'
             ? `(${installName}(${injectNames.get(item.adapterSource)}()),${item.name})`
             : item.name
+          // the original call always had exactly one argument (the guard at
+          // the top of the walker requires it); a hole-bearing plan grows
+          // that single argument span into two args, plan then fills, so the
+          // fills array literal (with its call-site-scoped expressions)
+          // lands inside the same parens the user wrote
+          const replacement = item.fillsExpr ? `${planRef}, { fills: () => ${item.fillsExpr} }` : planRef
           s.overwrite(item.start, item.end, replacement)
         }
 
