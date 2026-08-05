@@ -468,3 +468,47 @@ The strict compiled profiles remove L1 while keeping the normal head lifecycle. 
 The opt-in bundler transform uses the proven scope and literal-decoder patterns from PR #857. It compiles static `useHead()` objects to hoisted plans and leaves every unsupported shape unchanged. Server request throughput moved from 332,041 to 686,196 ops/s, 2.07x, for +40 B gzip in the representative server bundle. Client transformation stays off unless requested because combining plans with the loose client is +958 B gzip. The public option requires `{ profile: 'compiled' }` and trusts only `@unhead/vue/v4/compiled` by default.
 
 Compiled tuples contain final HTML, not loose prop objects. `CanonicalPlugin`, `InferSeoMetaPlugin`, `TemplateParamsPlugin`, and arbitrary entry/tags/resolve slots cannot rewrite them at runtime. The strict profiles reject runtime plugins, and the bundler requires the explicit compiled-profile option so this boundary cannot be crossed accidentally.
+
+## 15. Byte forensics and marginal-cost round, 2026-08-05
+
+Three bounded investigations re-measured every prior size claim and dieted the compiled profiles.
+
+### 15.1 Sealed core for compiled profiles (landed, c3e5ca2f)
+
+The compiled profiles previously shared `createCore` and the loose `renderDOM`. Symbol attribution showed roughly a quarter of each compiled bundle was dead code the sealed path can never reach: plugin slots, `ResolveCtx`, loose-tag dispatch in the render loop, `bindEvent`, FX_EVT/FX_TEXT/FX_HTML undo cases. esbuild cannot tree-shake at sub-function granularity, so the fix is source-level: `core-sealed.ts` (`createSealedCore`, dedupe/arrayable only, kept out of the `unhead/v4` barrel) plus a self-contained sealed DOM renderer in `client-compiled.ts`.
+
+| Bundle | Before (gz) | After (gz) |
+|---|---:|---:|
+| core client-compiled | 4,384 B | 3,337 B |
+| Vue client-compiled + composable | 4,868 B | 3,812 B |
+| core server-compiled | 2,065 B | 1,744 B |
+| Vue server-compiled | 2,416 B | 2,099 B |
+
+Both stretch targets (<4.0 kB core, <4.5 kB Vue) beaten. What remains is load-bearing: dedupe/arrayable identity, SSR-adoption matching, the sealed-tag sync engine, fills/escaping. Rejected with evidence: parametrizing `attachDom(core, options, render = renderDOM)` to share wiring measured +981 B gz, because esbuild retains a default-parameter initializer even when every call site passes the argument. Duplication is the correct pattern for this bundler model, not style. Known remaining seam: unbuild extracts core constants into a shared `dist/v4.mjs` chunk consumers cannot fully re-tree-shake, an estimated 150-300 B on the Vue side; that is build-config work, not source diet.
+
+### 15.2 Measurement audit: what the size claims actually mean
+
+An independent differential harness (esbuild, gzip -9 CLI) reproduced core loose 5,266 B, core compiled 4,397 B, and Vue compiled 4,878 B within noise. Two prior figures needed correction:
+
+- The Vue loose figure depends on the entry: `@unhead/vue/v4/client` alone is 5,555 B, but the full adapter import set (`@unhead/vue/v4` + client) is 6,195 B, because `client.ts` unconditionally imports `compileEntry`/`TitlePlugin`. A bare `createHead()` with zero `useHead` calls already costs 5,587 B gz on the loose path. Quote the entry with the number.
+- The real-site source-map "compression proxy" (17,034 raw / 6,643 gz v4 vs 26,264 / 8,664 v3) joins mapped segments with `\n`, adding one synthetic byte per segment (3,211 v4, 4,831 v3). Byte-exact concatenation measures 6,081 v4 vs 8,039 v3; in-context excision (gzip of chunk minus gzip of chunk without Unhead spans) measures 6,033 vs 8,076. The v4-vs-v3 saving of ~1,950-2,050 B gz is robust across all three methods; only the absolute numbers move.
+
+App-level marginal cost with Vue bundled in: v4 loose saves only 157 B gz over v3 (both drag in ~2 kB raw of extra `@vue/reactivity`/`@vue/runtime-core` watch machinery that compiled harnesses avoid), while v4 compiled saves 2,461 B gz over v3, verified against real `V4PlanTransform` output to within 14 B. gzip CLI and Node zlib diverge 9-34 B at the 4-6 kB scale, enough to flip close comparisons; state the tool with the number.
+
+### 15.3 Route premerge prototype (validated, not landed)
+
+`emitRouteHead(sources)` premerges app/layout/route-rule/page heads into one route plan, refusing to seal `titleTemplate` unless every title source is proven premerged; `recordRouteHead` classifies prerendered routes static vs dynamic. 14 targeted tests passed, including two premerged route plans overlapping under Suspense navigation (push destination while departing route still mounted), which identity-keyed dedupe already handles.
+
+Two honest results. Premerged glue is not smaller than loose objects at small scale (toy corpus: loose 299 B gz vs premerged 345 B, tuple encoding overhead dominates); the value of premerge is proving no loose entries exist on a route, which is the precondition for shipping the compiled-only bundles above, and 0 B for fully static routes. Second, the Nuxt build-time scanner that extracts `RouteHeadSource[]` from real pages/layouts/route-rules does not exist and is the bulk of the remaining work; the prototype takes pre-extracted sources. Open risk: `recordRouteHead`'s `static` verdict is necessary but not sufficient to omit the client head runtime; a route with any client-only `useHead()` still needs a live client head, and nothing enforces that yet.
+
+Eligibility summary: premerge only what routing metadata proves unconditionally (app config, route rules, page/layout top-level static `useHead`); nested/conditional component calls compile locally at the call site (Vue owns mount/dispose) when the object is a static literal; Suspense and route transitions affect mount timing, not eligibility; islands and client-only components never premerge; anything whose tag structure depends on runtime data stays loose.
+
+### 15.4 Compiled-profile gating in the bundler (landed, b9ba6496)
+
+Dead runtime removal cannot be a single-pass import rewrite: Rollup and Vite resolve imports before whole-graph compile success is known. The landed primitive is two-pass: `V4PlanTransform` reports per-call-site compile/bail outcomes through a `reportEntry` callback, and `canUseCompiledProfile(stats)` returns true only when every trusted call site compiled, at which point a second pass aliases the untouched app source at `@unhead/vue/v4/client-compiled`. Measured on a real two-pass Vite build: 7,752 to 4,595 B gzip, a 40.7% reduction, stacking on the sealed-core profiles. Also landed: `as const`/`satisfies` annotations are erased before decode, and static `useSeoMeta` compiles through the existing `UseSeoMetaTransform` pipeline via a compiled-profile alias. Bundler suite 169 to 182 tests.
+
+Designed-only with effort estimates: template-literal holes need whole-expression opaque holes restricted to guaranteed-string expressions, because a hole cannot represent the null/false attribute-omitted case (~0.5-1 day); cross-module hoisting needs file resolution, a parse cache, watch invalidation, and a cycle guard (~1 day); route manifest emission is a `buildEnd` + `emitFile` collection pass (~2-3 hours).
+
+### 15.5 Where this leaves the floors
+
+Loose profiles are architecturally settled: remaining loose bytes are v3 semantics (compiler, plugin slots, reactive integration), and the loose Vue marginal cost over v3 is near zero (-157 B gz) because both pay the same Vue reactivity machinery. Compiled profiles are near a practical floor at 3,337 B core / 3,812 B Vue: what remains is dedupe identity, adoption matching, the sealed sync engine, and fills/escaping, all load-bearing; the only known non-source seam is the shared dist chunk (~150-300 B, build-config work). A zero-runtime static route requires the Nuxt scanner that extracts `RouteHeadSource[]` from real apps plus enforcement that no client-only `useHead` exists on the route; the primitives (`emitRouteHead`, `recordRouteHead`, `emitRoutePayload`, compiled-profile gating) are all landed.
