@@ -124,6 +124,7 @@
 ./v4/compiled:
   injectHead: function
   useHead: function
+  useSeoMeta: function
 ./v4/plugins:
   CanonicalPlugin: function
   InferSeoMetaPlugin: function

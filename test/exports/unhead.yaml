@@ -165,6 +165,7 @@
   toLinkHeader: function
 ./v4/emit:
   emitEntryPlan: function
+  emitRouteHead: function
   emitRoutePayload: function
   emitRoutePlan: function
   emitSSRRoutePlan: function
@@ -179,6 +180,8 @@
   processTemplateParams: function
   TemplateParamsPlugin: object
   useTemplateParams: function
+./v4/record:
+  recordRouteHead: function
 ./v4/seo:
   unpackMeta: function
   unpackSeoMetaInput: function
