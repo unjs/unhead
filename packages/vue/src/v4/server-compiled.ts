@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 import type { CompiledHead, CreateCompiledServerHeadOptions } from 'unhead/v4/server-compiled'
 import type { App } from 'vue'
 import type { RenderSSRHeadOptions, SSRHeadPayload } from './server'

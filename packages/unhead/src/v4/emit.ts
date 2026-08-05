@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 build-time plan emitter: compiles static (possibly hole-bearing) head
  * objects into the sealed PlanTag wire format (V4_DESIGN.md 2.4, 11).

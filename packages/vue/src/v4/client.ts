@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 import type { V4Plugin } from 'unhead/v4'
 import type { DomBeforeRenderCtx, VueHeadClient } from './types'
 import { createHead as _createHead } from 'unhead/v4/client'

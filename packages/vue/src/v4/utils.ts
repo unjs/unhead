@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 import type { V4Head } from 'unhead/v4'
 import type { UseHeadInput } from './types'
 import { walkResolver } from 'unhead/utils'

@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /** Vue lifecycle adapter for strict compiled plans. */
 import type { CompiledEntry, CompiledEntryOptions, CompiledHead, CompiledPlan } from 'unhead/v4/client-compiled'
 import { getCurrentInstance, getCurrentScope, onBeforeUnmount, watch } from 'vue'

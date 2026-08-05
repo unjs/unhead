@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 L2 plugins: the v3 "mostly compatible" plugin surface as resolve-slot plugins.
  * TemplateParamsPlugin, InferSeoMetaPlugin, CanonicalPlugin.

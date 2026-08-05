@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 plugin surface for Vue apps. These are plain v4 slot plugins (no Vue
  * coupling); re-exported here so Nuxt's `@unhead/vue/plugins` import maps

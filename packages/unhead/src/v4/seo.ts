@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 L2: useSeoMeta. The flat-meta expander lives at the call site (no plugin),
  * compiles flat input into a regular head object and pushes through L1.

@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 import type { CompiledClientHead, CreateCompiledClientHeadOptions } from 'unhead/v4/client-compiled'
 import type { App } from 'vue'
 import type { DomBeforeRenderCtx, HooksShim, VueHeadClient } from './types'

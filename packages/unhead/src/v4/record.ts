@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * Prerender route recording: after a deterministic (prerendered) route
  * renders, capture the final head payload and classify whether it was

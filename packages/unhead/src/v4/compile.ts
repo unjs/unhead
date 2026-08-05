@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 L1: loose-input compiler. Turns v3-style head objects into L0 Tags.
  * Must stay output-identical to the build-time plan emitter (dual-path law).

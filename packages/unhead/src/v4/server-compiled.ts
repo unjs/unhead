@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /** Strict v4 server profile: sealed plans in, serialized payload out. */
 import type { CompiledEntryOptions, CompiledHead, CompiledPlan } from './compiled'
 import type { V4Head } from './core'

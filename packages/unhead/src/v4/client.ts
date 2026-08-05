@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4 client: DOM renderer + createHead.
  * Contracts from V4_DESIGN.md 5.1: zero work until first mutation (no init

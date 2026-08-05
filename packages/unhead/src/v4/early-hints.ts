@@ -1,3 +1,4 @@
+/** @experimental v4 preview surface: semver-exempt until v4 stabilizes. See packages/unhead/V4_DESIGN.md. */
 /**
  * v4: 103 Early Hints adapter (`unhead/server/early-hints`).
  * Extracts the hintable link set from a live head or a build-time static plan
