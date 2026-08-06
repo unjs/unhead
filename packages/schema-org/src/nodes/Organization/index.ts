@@ -456,7 +456,7 @@ export const organizationResolver
           delete node.logo
       }
 
-      // Only the homepage is about the identity, see webPageResolver.
+      // Default the homepage's about relation to the site identity.
       if (isIdentity && webPage && isHomePage(ctx.meta))
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 

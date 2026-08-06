@@ -91,10 +91,7 @@ export function resolvableDateToIso(val: Date | string | undefined) {
 
 export const IdentityId = '#identity'
 
-/**
- * The site identity describes the site as a whole, so it may only be the subject
- * (`WebPage.about`) of the homepage. Every other page is about something else.
- */
+/** Whether identity resolvers should default `WebPage.about` to the site identity. */
 export function isHomePage(meta: ResolvedMeta) {
   return meta.url === meta.host
 }

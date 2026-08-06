@@ -96,7 +96,7 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
     if (resolveAsGraphKey(node['@id']) === IdentityId) {
       setIfEmpty(node, 'url', meta.host)
 
-      // Only the homepage is about the identity, see webPageResolver.
+      // Default the homepage's about relation to the site identity.
       const webPage = find(PrimaryWebPageId)
       if (webPage && isHomePage(meta))
         setIfEmpty(webPage, 'about', idReference(node as Person))
