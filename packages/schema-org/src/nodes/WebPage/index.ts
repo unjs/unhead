@@ -17,6 +17,7 @@ import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } fro
 import {
   IdentityId,
   idReference,
+  isHomePage,
   resolvableDateToIso,
   resolveDefaultType,
   setIfEmpty,
@@ -267,7 +268,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     /*
      * When it's a homepage, add additional about property which references the identity of the site.
      */
-    if (identity && meta.url === meta.host)
+    if (identity && isHomePage(meta))
       setIfEmpty(webPage, 'about', idReference(identity))
 
     if (logo)

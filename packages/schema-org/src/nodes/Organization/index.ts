@@ -11,6 +11,7 @@ import {
   asArray,
   IdentityId,
   idReference,
+  isHomePage,
   prefixId,
   resolvableDateToIso,
   resolveAsGraphKey,
@@ -446,14 +447,17 @@ export const organizationResolver
             // needs to be a URL
             'logo': resolvedLogo?.url,
             '_priority': -1,
-            '@id': prefixId(ctx.meta.host, '#organization'), // avoid the id so nothing can link to it
+            // Distinct from #identity so the specialized identity node stays the linkable one;
+            // the id is stable so repeat resolves dedupe on the ctx.find('#organization') guard.
+            '@id': prefixId(ctx.meta.host, '#organization'),
           })
         }
         if (node['@type'] !== 'Organization')
           delete node.logo
       }
 
-      if (isIdentity && webPage)
+      // Default the homepage's about relation to the site identity.
+      if (isIdentity && webPage && isHomePage(ctx.meta))
         setIfEmpty(webPage, 'about', idReference(node as Organization))
 
       const webSite = ctx.find(PrimaryWebSiteId)

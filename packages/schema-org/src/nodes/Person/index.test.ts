@@ -1,10 +1,39 @@
 import type { Article } from '../Article'
 import { describe, expect, it } from 'vitest'
-import { defineArticle, defineOrganization, definePerson, useSchemaOrg } from '../../'
+import { defineArticle, defineOrganization, definePerson, defineWebPage, useSchemaOrg } from '../../'
 import { findNode, injectSchemaOrg, useSetup } from '../../../test'
 import { PrimaryArticleId } from '../Article'
 
 describe('definePerson', () => {
+  it('sets webpage about to the identity on the homepage', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        definePerson({ name: 'Harlan Wilton' }),
+        defineWebPage(),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const webPage = graph.find(node => node['@id'] === 'https://example.com/#webpage')
+
+      expect(webPage?.about).toEqual({ '@id': 'https://example.com/#identity' })
+    })
+  })
+
+  it('does not set webpage about to the identity off the homepage', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        definePerson({ name: 'Harlan Wilton' }),
+        defineWebPage(),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const webPage = graph.find(node => node['@id'] === 'https://example.com/posts/hello#webpage')
+
+      expect(webPage).toBeDefined()
+      expect(webPage).not.toHaveProperty('about')
+    }, { path: '/posts/hello' })
+  })
+
   it('can be registered', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
