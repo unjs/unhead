@@ -101,5 +101,46 @@
   ValidHeadTags: object
   VueResolver: function
   walkResolver: function
+./v4:
+  defineLink: function
+  defineScript: function
+  headSymbol: string
+  injectHead: function
+  resolveUnrefHeadInput: function
+  sanitizeSafeInput: function
+  unheadVueComposablesImports: object
+  useHead: function
+  useHeadSafe: function
+  useSeoMeta: function
+  useServerHead: function
+  useServerHeadSafe: function
+  useServerSeoMeta: function
+./v4/client:
+  createHead: function
+  renderDOMHead: function
+./v4/client-compiled:
+  createHead: function
+  renderDOMHead: function
+./v4/compiled:
+  injectHead: function
+  useHead: function
+  useSeoMeta: function
+./v4/plugins:
+  CanonicalPlugin: function
+  InferSeoMetaPlugin: function
+  TemplateParamsPlugin: object
+  useTemplateParams: function
+./v4/server:
+  createHead: function
+  propsToString: function
+  renderSSRHead: function
+./v4/server-compiled:
+  createHead: function
+  renderSSRHead: function
+./v4/utils:
+  resolveTags: function
+  resolveUnrefHeadInput: function
+  VueResolver: function
+  walkResolver: function
 ./vite:
   Unhead: function

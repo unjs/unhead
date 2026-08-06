@@ -1,6 +1,7 @@
 import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
+import type { V4PlanTransformOptions } from './V4PlanTransform'
 
 export interface BaseTransformerTypes {
   sourcemap?: boolean
@@ -22,6 +23,18 @@ export interface UnpluginOptions extends BaseTransformerTypes {
    * to override the target.
    */
   transformInlineScripts?: InlineScriptTransformOptions | false
+  experimental?: {
+    /**
+     * Compile static v4 Vue `useHead` objects to sealed plan tuples.
+     *
+     * This is an explicit compiled-profile contract. Revived plans contain
+     * final HTML, so entry/tags/resolve plugins that expect loose props, such
+     * as CanonicalPlugin and InferSeoMetaPlugin, cannot inspect or rewrite
+     * them. Finalize those transformations before emission or use only
+     * plugins that are plan-aware. Server only unless `client: true`.
+     */
+    v4Plans?: false | (V4PlanTransformOptions & { profile: 'compiled' })
+  }
 }
 
 export interface VitePluginOptions extends UnpluginOptions {

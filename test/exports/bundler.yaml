@@ -4,6 +4,7 @@
   InferSeoMetaPlugin: function
 ./framework:
   createFrameworkPlugin: function
+  V4PlanTransform: object
 ./minify/esbuild:
   createJSMinifier: function
 ./minify/lightningcss:
@@ -12,3 +13,4 @@
   createJSMinifier: function
 ./vite:
   Unhead: function
+  V4PlanTransform: object
