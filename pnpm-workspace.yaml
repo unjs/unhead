@@ -97,7 +97,7 @@ catalog:
   zone.js: ^0.16.2
 catalogs:
   conflicts_nuxt_4_5_0:
-    nuxt: 4.5.0
+    nuxt: 4.5.1
 ignoredBuiltDependencies:
   - lmdb
   - msgpackr-extract
