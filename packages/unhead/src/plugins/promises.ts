@@ -13,17 +13,41 @@ function walkPromises(v: any): any {
     return Promise.resolve(v).then(walkPromises)
 
   if (Array.isArray(v)) {
-    const values = v.map(walkPromises)
-    return values.some(isThenable) ? Promise.all(values) : v
+    for (let index = 0; index < v.length; index++) {
+      const value = walkPromises(v[index])
+      if (isThenable(value)) {
+        // eslint-disable-next-line unicorn/no-new-array -- Allocate only after the first thenable.
+        const values = new Array(v.length)
+        for (let prefix = 0; prefix < index; prefix++)
+          values[prefix] = v[prefix]
+        values[index] = value
+        for (let rest = index + 1; rest < v.length; rest++)
+          values[rest] = walkPromises(v[rest])
+        return Promise.all(values)
+      }
+    }
+    return v
   }
 
   if (v?.constructor === Object) {
     const keys = Object.keys(v)
-    const values = keys.map(key => walkPromises(v[key]))
-    if (values.some(isThenable)) {
-      return Promise.all(values).then(resolved => Object.fromEntries(
-        keys.map((key, index) => [key, resolved[index]]),
-      ))
+    for (let index = 0; index < keys.length; index++) {
+      const value = walkPromises(v[keys[index]])
+      if (isThenable(value)) {
+        // eslint-disable-next-line unicorn/no-new-array -- Allocate only after the first thenable.
+        const values = new Array(keys.length)
+        for (let prefix = 0; prefix < index; prefix++)
+          values[prefix] = v[keys[prefix]]
+        values[index] = value
+        for (let rest = index + 1; rest < keys.length; rest++)
+          values[rest] = walkPromises(v[keys[rest]])
+        return Promise.all(values).then((resolved) => {
+          const output: Record<string, any> = {}
+          for (let resolvedIndex = 0; resolvedIndex < keys.length; resolvedIndex++)
+            output[keys[resolvedIndex]] = resolved[resolvedIndex]
+          return output
+        })
+      }
     }
   }
 
