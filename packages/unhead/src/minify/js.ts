@@ -3,25 +3,34 @@
  * Strips comments and collapses whitespace while preserving string literals.
  */
 export function minifyJS(code: string): string {
+  if (!/[\s/]/.test(code))
+    return code
+
   let result = ''
+  // Reading the growing result forces V8 to repeatedly flatten its string rope.
+  let last = ''
   let i = 0
   const len = code.length
+  const append = (value: string) => {
+    result += value
+    last = value
+  }
 
   while (i < len) {
     const ch = code[i]
     // string literals - preserve as-is
     if (ch === '\'' || ch === '"' || ch === '`') {
       const quote = ch
-      result += ch
+      append(ch)
       i++
       while (i < len && code[i] !== quote) {
         if (code[i] === '\\' && i + 1 < len) {
-          result += code[i++]
+          append(code[i++]!)
         }
-        result += code[i++]
+        append(code[i++]!)
       }
       if (i < len)
-        result += code[i++] // closing quote
+        append(code[i++]!) // closing quote
     }
     // single-line comment
     else if (ch === '/' && code[i + 1] === '/') {
@@ -44,18 +53,17 @@ export function minifyJS(code: string): string {
           hasNewline = true
         i++
       }
-      const prev = result.at(-1)
       const next = code[i]
-      if (hasNewline && prev && next && prev !== '{' && prev !== '}' && prev !== ';' && next !== '}' && next !== ';')
-        result += '\n'
-      else if (prev && next && isIdentChar(prev) && isIdentChar(next))
-        result += ' '
+      if (hasNewline && last && next && last !== '{' && last !== '}' && last !== ';' && next !== '}' && next !== ';')
+        append('\n')
+      else if (last && next && isIdentChar(last) && isIdentChar(next))
+        append(' ')
       // preserve space between identical + or - to avoid creating ++/-- operators
-      else if (prev && next && ((prev === '+' && next === '+') || (prev === '-' && next === '-')))
-        result += ' '
+      else if (last && next && ((last === '+' && next === '+') || (last === '-' && next === '-')))
+        append(' ')
     }
     else {
-      result += ch
+      append(ch!)
       i++
     }
   }
