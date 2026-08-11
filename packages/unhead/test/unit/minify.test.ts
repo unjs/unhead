@@ -51,6 +51,11 @@ describe('minifyJS', () => {
     expect(result).toContain('window.__NUXT__')
     expect(result.length).toBeLessThan(input.length)
   })
+
+  it('returns compact input unchanged', () => {
+    const input = 'globalThis.item={key:"value",count:1};'
+    expect(minifyJS(input)).toBe(input)
+  })
 })
 
 describe('minifyCSS', () => {
@@ -111,6 +116,11 @@ describe('minifyCSS', () => {
     expect(result).toContain('html,body{')
     expect(result.length).toBeLessThan(input.length)
   })
+
+  it('returns compact input unchanged', () => {
+    const input = '.item{color:red;padding:1rem}'
+    expect(minifyCSS(input)).toBe(input)
+  })
 })
 
 describe('minifyJSON', () => {
@@ -147,5 +157,30 @@ describe('minifyJSON', () => {
   fcIt.prop([fc.jsonValue()])('returns arbitrary invalid JSON unchanged', (value) => {
     const invalid = ` \n${JSON.stringify(value)} trailing`
     expect(minifyJSON(invalid)).toBe(invalid)
+  })
+})
+
+describe('large input performance', () => {
+  it.each([
+    ['JavaScript', minifyJS, 'const   item   =   { key: "value", count: 1 }; // comment\n'],
+    ['CSS', minifyCSS, '.item   { color: red; padding: calc(1rem + 2px); } /* comment */\n'],
+  ] as const)('keeps %s minification near linear', (_, minify, unit) => {
+    const small = unit.repeat(Math.ceil(32_768 / unit.length))
+    const large = unit.repeat(Math.ceil(262_144 / unit.length))
+    const fastestDuration = (input: string, attempts: number) => {
+      let fastest = Number.POSITIVE_INFINITY
+      for (let i = 0; i < attempts; i++) {
+        const start = performance.now()
+        minify(input)
+        fastest = Math.min(fastest, performance.now() - start)
+      }
+      return fastest
+    }
+
+    minify(small)
+    const smallDuration = fastestDuration(small, 5)
+    const largeDuration = fastestDuration(large, 3)
+
+    expect(largeDuration).toBeLessThan(smallDuration * 20)
   })
 })
