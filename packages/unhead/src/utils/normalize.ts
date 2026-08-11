@@ -36,7 +36,7 @@ function normalizeStyleClassProps(
   return store
 }
 
-export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
+function normalizePropsInternal(tag: HeadTag, input: Record<string, any>, resolveValues = false, resolve?: PropResolver): HeadTag {
   tag.props = tag.props || {}
   if (!input)
     return tag
@@ -54,7 +54,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
     if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
-    const value = input[prop]
+    const value = resolveValues ? walkResolver(input[prop], resolve, prop) : input[prop]
     if (value === null) {
       tag.props[key] = null as any
     }
@@ -84,25 +84,75 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   return tag
 }
 
-export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any {
-  let resolve: PropResolver | undefined
-  if (propResolvers.length) {
-    resolve = (key, val) => {
-      for (let i = 0; i < propResolvers.length; i++)
-        val = propResolvers[i](key, val)
-      return val
-    }
-    // Resolve the root before walking so ref-wrapped functions are unwrapped.
-    input = resolve(undefined, input)
+export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
+  return normalizePropsInternal(tag, input)
+}
+
+function createResolver(propResolvers: PropResolver[]): PropResolver | undefined {
+  if (!propResolvers.length)
+    return
+  return (key, val) => {
+    for (let i = 0; i < propResolvers.length; i++)
+      val = propResolvers[i](key, val)
+    return val
   }
+}
+
+function resolveShallow(input: any, resolve?: PropResolver, key?: string): any {
+  if (key === '_resolver')
+    return input
+  if (typeof input === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on'))))
+    input = input()
+  return resolve ? resolve(key, input) : input
+}
+
+function resolveChildren(input: any, resolve?: PropResolver): any {
+  if (Array.isArray(input)) {
+    let next: any[] | undefined
+    for (let i = 0; i < input.length; i++) {
+      const value = walkResolver(input[i], resolve)
+      if (next)
+        next[i] = value
+      else if (value !== input[i])
+        next = [...input.slice(0, i), value]
+    }
+    return next || input
+  }
+  if (input?.constructor === Object) {
+    let next: Record<string, any> | undefined
+    for (const key in input) {
+      const unsafe = isUnsafeKey(key)
+      const value = unsafe ? undefined : walkResolver(input[key], resolve, key)
+      if (!next && (unsafe || value !== input[key])) {
+        next = {}
+        for (const previousKey in input) {
+          if (previousKey === key)
+            break
+          next[previousKey] = input[previousKey]
+        }
+      }
+      if (next && !unsafe)
+        next[key] = value
+    }
+    return next || input
+  }
+  return input
+}
+
+export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any {
+  const resolve = createResolver(propResolvers)
+  // Resolve the root before walking so ref-wrapped functions are unwrapped.
+  if (resolve)
+    input = resolve(undefined, input)
   return walkResolver(input, resolve)
 }
 
-function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string): HeadTag | HeadTag[] {
-  const input = typeof _input === 'object' && typeof _input !== 'function'
+function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string, resolveValues = false, resolve?: PropResolver): HeadTag | HeadTag[] {
+  const isObjectInput = typeof _input === 'object' && typeof _input !== 'function'
+  const input = isObjectInput
     ? _input
     : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
-  const tag = normalizeProps({ tag: tagName, props: {} }, input)
+  const tag = normalizePropsInternal({ tag: tagName, props: {} }, input, isObjectInput && resolveValues, resolve)
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
@@ -128,23 +178,41 @@ function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
   }
 }
 
+function normalizeResolvedTag(tags: HeadTag[], tagName: HeadTag['tag'], input: any, resolveValues: boolean, resolve?: PropResolver) {
+  if (resolveValues && (Array.isArray(input)
+    || (input?.constructor === Object && (tagName === 'templateParams' || 'innerHTML' in input || 'textContent' in input)))) {
+    input = resolveChildren(input, resolve)
+    resolveValues = false
+  }
+  pushNormalizedTag(tags, normalizeTag(tagName, input, resolveValues && input?.constructor === Object, resolve))
+}
+
 export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
   if (!input)
     return []
   if (typeof input === 'function')
     input = input()
+  const resolve = createResolver(propResolvers)
   // The root intentionally passes through the resolver chain twice. The first
-  // pass unwraps refs, then walkResolver invokes a function returned by a ref.
-  input = resolveHeadInput(input, propResolvers)
+  // pass unwraps refs, then the shallow pass invokes a function returned by a ref.
+  if (resolve)
+    input = resolve(undefined, input)
+  input = resolveShallow(input, resolve)
+  const resolveValues = input?.constructor === Object
   const tags: HeadTag[] = []
   for (const key in input) {
-    const value = input[key]
+    if (resolveValues && isUnsafeKey(key))
+      continue
+    const value = resolveValues ? resolveShallow(input[key], resolve, key) : input[key]
     if (value !== undefined) {
       if (Array.isArray(value)) {
-        for (const v of value) pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, v))
+        for (const v of value) {
+          const resolved = resolveValues ? resolveShallow(v, resolve) : v
+          normalizeResolvedTag(tags, key as keyof ResolvableHead, resolved, resolveValues, resolve)
+        }
       }
       else {
-        pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, value))
+        normalizeResolvedTag(tags, key as keyof ResolvableHead, value, resolveValues, resolve)
       }
     }
   }
