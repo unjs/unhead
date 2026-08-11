@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createHead, renderSSRHead } from '../../../src/server'
 import { normalizeEntryToTags } from '../../../src/utils'
 
-describe('SSR hot path invariants', () => {
+describe('ssr hot path invariants', () => {
   it('resolves a wrapped root function before normalizing primitive tags', () => {
     const calls: Array<string | undefined> = []
     const resolver: PropResolver = (key, value) => {
