@@ -39,6 +39,24 @@ function createBenchHead(count: number, plugin?: keyof typeof benchPlugins) {
   return head
 }
 
+function createMergeBenchHead(count: number) {
+  const head = createHead({ disableDefaults: true })
+  for (let i = 0; i < count; i++) {
+    head.push({
+      htmlAttrs: { [`data-entry-${i}`]: String(i) },
+    })
+  }
+  return head
+}
+
+function createArrayableMetaBenchHead(count: number) {
+  const head = createHead({ disableDefaults: true })
+  head.push({
+    meta: Array.from({ length: count }, (_, i) => ({ property: 'og:image', content: `/image-${i}.png` })),
+  })
+  return head
+}
+
 describe('resolveTags many entries, first render', () => {
   bench('20 entries, no plugins', () => {
     createBenchHead(20).render()
@@ -75,5 +93,15 @@ describe('resolveTags many entries, cached render', () => {
 
   bench('20 entries, flatMeta plugin', () => {
     flatMeta.render()
+  })
+})
+
+describe('resolveTags duplicate scaling', () => {
+  bench('100 merged attribute entries', () => {
+    createMergeBenchHead(100).render()
+  })
+
+  bench('100 arrayable meta tags', () => {
+    createArrayableMetaBenchHead(100).render()
   })
 })

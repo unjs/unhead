@@ -1,6 +1,6 @@
 import type { HeadTag } from '../../types'
 import { SelfClosingTags, TagsWithInnerContent } from '../../utils'
-import { propsToString } from './propsToString'
+import { propsToString, propsToStringTrusted } from './propsToString'
 
 const ESCAPE_HTML_RE = /[&<>"'/]/g
 const CLOSE_TAG_RE: Record<string, RegExp> = {}
@@ -12,8 +12,7 @@ export function escapeHtml(str: string) {
 }
 
 /* @__PURE__ */
-export function tagToString<T extends HeadTag>(tag: T) {
-  const attrs = propsToString(tag.props)
+function stringifyTag<T extends HeadTag>(tag: T, attrs: string) {
   const openTag = `<${tag.tag}${attrs}>`
   // self-closing (meta/link/base) is the common SSR tag: one Set lookup, no close tag.
   // SelfClosingTags and TagsWithInnerContent are disjoint, so the second SelfClosingTags.has()
@@ -25,6 +24,21 @@ export function tagToString<T extends HeadTag>(tag: T) {
 
   // dangerously using innerHTML, we don't encode this
   let content = String(tag.textContent ?? tag.innerHTML ?? '')
-  content = tag.tag === 'title' ? escapeHtml(content) : content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
+  if (tag.tag === 'title')
+    content = escapeHtml(content)
+  else if (content.includes('<'))
+    content = content.replace(CLOSE_TAG_RE[tag.tag] ||= new RegExp(`<\/${tag.tag}`, 'gi'), `<\\/${tag.tag}`)
   return `${openTag}${content}</${tag.tag}>`
+}
+
+/* @__PURE__ */
+export function tagToString<T extends HeadTag>(tag: T) {
+  return stringifyTag(tag, propsToString(tag.props))
+}
+
+/** @internal */
+/* @__PURE__ */
+export function tagToStringTrusted<T extends HeadTag>(tag: T) {
+  // Title object props do not pass through HTML attribute normalization.
+  return stringifyTag(tag, tag.tag === 'title' ? propsToString(tag.props) : propsToStringTrusted(tag.props))
 }

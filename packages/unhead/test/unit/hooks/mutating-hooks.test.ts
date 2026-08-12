@@ -31,4 +31,58 @@ describe('tag-mutating hooks', () => {
     expect(second.htmlAttrs).not.toContain('render-1')
     expect(second.htmlAttrs).toContain('render-2')
   })
+
+  it('filters invalid attributes added by render hooks', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'ssr:render': ({ tags }) => {
+          tags[0].props['invalid name'] = 'hidden'
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'visible' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="visible">')
+  })
+
+  it('filters invalid attributes from resolved tags', () => {
+    const head = createHead({ disableDefaults: true })
+    const result = renderSSRHead(head, {
+      resolvedTags: [{
+        tag: 'meta',
+        props: { 'name': 'description', 'content': 'visible', 'invalid name': 'hidden' },
+      }],
+    })
+
+    expect(result.headTags).toBe('<meta name="description" content="visible">')
+  })
+
+  it('filters invalid attributes from object titles', () => {
+    const head = createHead({ disableDefaults: true })
+    head.push({
+      title: {
+        'textContent': 'visible',
+        'invalid name': 'hidden',
+      },
+    } as any)
+
+    expect(renderSSRHead(head).headTags).toBe('<title>visible</title>')
+  })
+
+  it('sees render hooks registered before rendering starts', () => {
+    const head = createHead({
+      disableDefaults: true,
+      hooks: {
+        'ssr:beforeRender': () => {
+          head.hooks.hook('ssr:render', ({ tags }) => {
+            tags[0].props['invalid name'] = 'hidden'
+          })
+        },
+      },
+    })
+    head.push({ meta: [{ name: 'description', content: 'visible' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="visible">')
+  })
 })

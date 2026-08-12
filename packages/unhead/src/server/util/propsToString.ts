@@ -9,11 +9,11 @@ function encodeAttribute(value: string) {
 }
 
 /* @__PURE__ */
-export function propsToString(props: Record<string, any>) {
+function stringifyProps(props: Record<string, any>, validateNames: boolean) {
   let attrs = ''
 
   for (const key in props) {
-    if (!Object.hasOwn(props, key) || !key || INVALID_ATTR_NAME_RE.test(key))
+    if (validateNames && (!Object.hasOwn(props, key) || !key || INVALID_ATTR_NAME_RE.test(key)))
       continue
 
     let value = props[key]
@@ -38,4 +38,15 @@ export function propsToString(props: Record<string, any>) {
   }
 
   return attrs
+}
+
+/* @__PURE__ */
+export function propsToString(props: Record<string, any>) {
+  return stringifyProps(props, true)
+}
+
+/** @internal */
+/* @__PURE__ */
+export function propsToStringTrusted(props: Record<string, any>) {
+  return stringifyProps(props, false)
 }

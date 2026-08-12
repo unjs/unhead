@@ -78,6 +78,34 @@ describe('dedupe', () => {
     `)
   })
 
+  it('preserves repeated arrayable metadata across renders', () => {
+    const head = createServerHeadWithContext()
+    useHead(head, {
+      meta: [
+        { property: 'og:image', content: '/first.png' },
+        { property: 'og:image', content: '/second.png' },
+        { property: 'og:image', content: '/third.png' },
+      ],
+    })
+
+    for (let i = 0; i < 2; i++) {
+      const contents = [...renderSSRHead(head).headTags.matchAll(/<meta property="og:image" content="([^"]+)">/g)]
+        .map(match => match[1])
+      expect(contents).toEqual(['/first.png', '/second.png', '/third.png'])
+    }
+  })
+
+  it('merges repeated attributes without mutating cached entries', () => {
+    const head = createServerHeadWithContext()
+    head.push({ htmlAttrs: { 'class': 'first', 'style': { color: 'red' }, 'data-first': '1' } })
+    head.push({ htmlAttrs: { 'class': 'second', 'style': { color: 'blue', display: 'block' }, 'data-second': '2' } })
+    head.push({ htmlAttrs: { 'class': 'third', 'style': { display: 'grid' }, 'data-third': '3' } })
+
+    for (let i = 0; i < 2; i++) {
+      expect(renderSSRHead(head).htmlAttrs).toBe(' class="first second third" style="color:blue;display:grid" data-first="1" data-second="2" data-third="3"')
+    }
+  })
+
   it ('arrays two', async () => {
     const head = createServerHeadWithContext()
 
