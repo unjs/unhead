@@ -1,6 +1,6 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
-import { createUnhead, registerPlugin } from '../unhead'
+import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
 import { normalizeEntryToTags } from '../utils/normalize'
@@ -101,8 +101,6 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
   const hooks = createHooks<ServerHeadHooks>(options.hooks)
   const head = core as ServerUnhead<T>
   head.hooks = hooks
-  head.render = () => render(head)
-  head.use = p => registerPlugin(head, p)
 
   // Register plugins
   options.plugins?.forEach(p => head.use(p))
