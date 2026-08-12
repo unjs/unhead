@@ -14,7 +14,10 @@ type InputSnapshot
     | { _tag: 'date', value: number }
     | { _tag: 'array', keys: string[], length: number, values: InputSnapshot[] }
     | { _tag: 'object', keys: string[], values: InputSnapshot[] }
-type EntrySnapshot = [entry: HeadEntry<any>, input: unknown, tags: HeadTag[] | undefined, value: InputSnapshot]
+type GraphDependencySnapshot
+  = | { _tag: 'nodes', tag: HeadTag, value: unknown, snapshot: InputSnapshot }
+    | { _tag: 'templateParams', tag: HeadTag, value: unknown, snapshot: InputSnapshot }
+type EntrySnapshot = [entry: HeadEntry<any>, input: unknown, tags: HeadTag[] | undefined, dependencies: GraphDependencySnapshot[], inputSnapshot?: InputSnapshot]
 type GraphCache = { _tag: 'empty' } | {
   _tag: 'ready'
   entries: EntrySnapshot[]
@@ -98,8 +101,30 @@ function inputMatches(value: unknown, snapshot: InputSnapshot): boolean {
   return true
 }
 
+function captureGraphDependencies(tags: HeadTag[] | undefined): GraphDependencySnapshot[] {
+  const dependencies: GraphDependencySnapshot[] = []
+  for (const tag of tags || []) {
+    if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+      dependencies.push({ _tag: 'nodes', tag, value: tag.props.nodes, snapshot: snapshotInput(tag.props.nodes) })
+    }
+    else if (tag.tag === 'templateParams') {
+      dependencies.push({ _tag: 'templateParams', tag, value: tag.props, snapshot: snapshotInput(tag.props) })
+    }
+  }
+  return dependencies
+}
+
 function captureEntries(entries: HeadEntry<any>[]): EntrySnapshot[] {
-  return entries.map(entry => [entry, entry.input, entry._tags, snapshotInput(entry.input)])
+  return entries.map((entry) => {
+    const dependencies = captureGraphDependencies(entry._tags)
+    return [
+      entry,
+      entry.input,
+      entry._tags,
+      dependencies,
+      dependencies.some(dependency => dependency._tag === 'nodes') ? snapshotInput(entry.input) : undefined,
+    ]
+  })
 }
 
 function entriesMatch(entries: HeadEntry<any>[], snapshot: EntrySnapshot[]): boolean {
@@ -108,9 +133,16 @@ function entriesMatch(entries: HeadEntry<any>[], snapshot: EntrySnapshot[]): boo
   for (let i = 0; i < entries.length; i++) {
     if (entries[i] !== snapshot[i][0]
       || entries[i].input !== snapshot[i][1]
-      || entries[i]._tags !== snapshot[i][2]
-      || !inputMatches(entries[i].input, snapshot[i][3])) {
+      || entries[i]._tags !== snapshot[i][2]) {
       return false
+    }
+    const inputSnapshot = snapshot[i][4]
+    if (inputSnapshot && !inputMatches(entries[i].input, inputSnapshot))
+      return false
+    for (const dependency of snapshot[i][3]) {
+      const value = dependency._tag === 'nodes' ? dependency.tag.props.nodes : dependency.tag.props
+      if (value !== dependency.value || !inputMatches(value, dependency.snapshot))
+        return false
     }
   }
   return true
@@ -153,13 +185,13 @@ export interface PluginSchemaOrgOptions {
 
 export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta?: () => Partial<MetaInput>, options?: PluginSchemaOrgOptions) {
   config = resolveMeta({ ...config })
-  let graph: SchemaOrgGraph
-  let resolvedMeta: Partial<ResolvedMeta> = {}
-  let cache: GraphCache = { _tag: 'empty' }
-  let entries: HeadEntry<any>[] = []
-  let reuseGraph = false
   return defineHeadPlugin((head: Unhead): HeadPlugin => {
     head.use(TemplateParamsPlugin)
+    let graph: SchemaOrgGraph
+    let resolvedMeta: Partial<ResolvedMeta> = {}
+    let cache: GraphCache = { _tag: 'empty' }
+    let entries: HeadEntry<any>[] = []
+    let reuseGraph = false
     const ownHooks = new Set<(...args: any[]) => any>()
     function collectTag(tag: HeadTag) {
       if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {

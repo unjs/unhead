@@ -30,6 +30,20 @@ describe('ssr event handlers', () => {
     `)
   })
 
+  it('does not execute handlers during normalization', () => {
+    const head = createServerHeadWithContext()
+    useHead(head, {
+      script: [{
+        src: '/handler.js',
+        onload: () => {
+          throw new Error('handler executed during SSR')
+        },
+      }],
+    })
+
+    expect(renderSSRHead(head).headTags).toContain('onload="this.dataset.onloadfired = true"')
+  })
+
   it('converts handlers nested inside JSON content', () => {
     const head = createServerHeadWithContext()
     useHead(head, {

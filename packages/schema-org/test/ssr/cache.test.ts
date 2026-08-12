@@ -3,6 +3,25 @@ import { createHead, renderSSRHead } from 'unhead/server'
 import { describe, expect, it } from 'vitest'
 
 describe('schema.org render cache', () => {
+  it('isolates one plugin instance across nested head renders', () => {
+    const plugin = UnheadSchemaOrg({ host: 'https://example.com' })
+    const first = createHead({ disableDefaults: true })
+    const second = createHead({ disableDefaults: true })
+    first.use(plugin)
+    second.use(plugin)
+    first.push({
+      script: [{ type: 'application/ld+json', key: 'schema-org-graph', nodes: [defineWebSite({ name: 'First' })] }],
+    } as any)
+    second.push({
+      script: [{ type: 'application/ld+json', key: 'schema-org-graph', nodes: [defineWebPage({ name: 'Second' })] }],
+    } as any)
+    first.hooks.hook('entries:resolve', () => renderSSRHead(second))
+
+    const result = renderSSRHead(first).bodyTags
+    expect(result).toContain('First')
+    expect(result).not.toContain('Second')
+  })
+
   it('invalidates when entries change', () => {
     const head = createHead({ disableDefaults: true })
     head.use(UnheadSchemaOrg({ host: 'https://example.com' }))
@@ -64,6 +83,19 @@ describe('schema.org render cache', () => {
 
     expect(renderSSRHead(head).bodyTags).toContain('First')
     site.name = 'Second'
+    expect(renderSSRHead(head).bodyTags).toContain('Second')
+  })
+
+  it('invalidates when a schema node array changes in place', () => {
+    const input: any = {
+      script: [{ type: 'application/ld+json', key: 'schema-org-graph', nodes: [defineWebSite({ name: 'First' })] }],
+    }
+    const head = createHead({ disableDefaults: true })
+    head.use(UnheadSchemaOrg({ host: 'https://example.com' }))
+    head.push(input)
+
+    expect(renderSSRHead(head).bodyTags).toContain('First')
+    input.script[0].nodes = [defineWebSite({ name: 'Second' })]
     expect(renderSSRHead(head).bodyTags).toContain('Second')
   })
 

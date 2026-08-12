@@ -45,7 +45,7 @@ function resolveShallowValue(value: any, key?: string, resolve?: PropResolver): 
 }
 
 function resolveServerEventHandler(key: string | undefined, value: any): any {
-  return key?.startsWith('on') && typeof value === 'function'
+  return typeof value === 'function' && key?.startsWith('on')
     ? `this.dataset.${key}fired = true`
     : value
 }
@@ -53,6 +53,8 @@ function resolveServerEventHandler(key: string | undefined, value: any): any {
 export function createPropResolver(propResolvers: PropResolver[], serverEventHandlers: boolean): PropResolver | undefined {
   if (!propResolvers.length && !serverEventHandlers)
     return
+  if (!propResolvers.length)
+    return resolveServerEventHandler
   return (key, value) => {
     for (let i = 0; i < propResolvers.length; i++)
       value = propResolvers[i](key, value)
