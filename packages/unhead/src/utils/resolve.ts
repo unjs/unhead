@@ -44,16 +44,18 @@ export interface ResolveTagsOptions {
 
 // clone each resolved tag so hooks can't mutate the entry cache; class/style
 // are containers and need their own copies
+function cloneTag(tag: HeadTag): HeadTag {
+  const props: Record<string, any> = { ...tag.props }
+  if (props.class instanceof Set)
+    props.class = new Set(props.class)
+  if (props.style instanceof Map)
+    props.style = new Map(props.style)
+  return { ...tag, props }
+}
+
 function cloneTagsInPlace(tags: HeadTag[]) {
-  for (let i = 0; i < tags.length; i++) {
-    const t = tags[i]
-    const props: Record<string, any> = { ...t.props }
-    if (props.class instanceof Set)
-      props.class = new Set(props.class)
-    if (props.style instanceof Map)
-      props.style = new Map(props.style)
-    tags[i] = { ...t, props }
-  }
+  for (let i = 0; i < tags.length; i++)
+    tags[i] = cloneTag(tags[i])
 }
 
 function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
@@ -77,7 +79,7 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
   let ownedMergeProps: Set<string> | undefined
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || next._h || hashTag(next)
+    const k = next._d || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -85,49 +87,45 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
       ctx.tagMap.set(k, next)
       continue
     }
-    const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
-    if (strategy === 'merge') {
-      let props: Record<string, any> = prev.props
+    const prevTag = Array.isArray(prev) ? prev[prev.length - 1] : prev
+    const merge = next.tagDuplicateStrategy
+      ? next.tagDuplicateStrategy === 'merge'
+      : UsesMergeStrategy.has(next.tag) || Boolean(next.key && next.key === prevTag.key)
+    if (merge) {
+      let props: Record<string, any> = prevTag.props
       if (!ownedMergeProps?.has(k)) {
-        props = { ...props }
-        if (props.style instanceof Map)
-          props.style = new Map(props.style)
-        if (props.class instanceof Set)
-          props.class = new Set(props.class)
+        props = cloneTag(prevTag).props
         ownedMergeProps ||= new Set()
         ownedMergeProps.add(k)
       }
       for (const p in next.props) {
-        if (!Object.hasOwn(next.props, p) || isUnsafeKey(p))
-          continue
-        if (p === 'style') {
-          const style = props.style ||= new Map()
-          for (const [key, value] of next.props.style as unknown as Map<string, string>)
-            style.set(key, value)
-        }
-        else if (p === 'class') {
-          const classes = props.class ||= new Set()
-          for (const value of next.props.class as unknown as Set<string>)
-            classes.add(value)
-        }
-        else {
-          props[p] = next.props[p]
+        if (Object.hasOwn(next.props, p) && !isUnsafeKey(p)) {
+          if (p === 'style') {
+            const style = props.style ||= new Map()
+            for (const [key, value] of next.props.style as unknown as Map<string, string>)
+              style.set(key, value)
+          }
+          else if (p === 'class') {
+            const classes = props.class ||= new Set()
+            for (const value of next.props.class as unknown as Set<string>)
+              classes.add(value)
+          }
+          else {
+            props[p] = next.props[p]
+          }
         }
       }
       ctx.tagMap.set(k, { ...next, props })
     }
-    else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
-      if (Array.isArray(prev)) {
+    else if ((next._p! >> 10) === (prevTag._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
+      if (Array.isArray(prev))
         prev.push(next)
-        Object.assign(prev, next)
-      }
-      else {
-        ctx.tagMap.set(k, Object.assign([prev, next], next))
-      }
+      else
+        ctx.tagMap.set(k, [prev, next] as unknown as HeadTag)
       hasFlatMeta = true
     }
     // @ts-expect-error untyped
-    else if (next._w === prev._w ? next._p! > prev._p! : next._w < prev._w) {
+    else if (next._w === prevTag._w ? next._p! > prevTag._p! : next._w < prevTag._w) {
       ctx.tagMap.set(k, next)
     }
   }
