@@ -51,6 +51,28 @@ function renderMediumSsrHead() {
   return renderSSRHead(head, { omitLineBreaks: true })
 }
 
+function createCachedDuplicateHeavyRenderer() {
+  const head = createHead({ disableDefaults: true })
+  for (let i = 0; i < 100; i++) {
+    head.push({
+      htmlAttrs: {
+        class: `theme-${i}`,
+        [`data-benchmark-${i}`]: `${i}`,
+      },
+    })
+  }
+  head.push({
+    meta: Array.from({ length: 100 }, (_, i) => ({
+      property: 'og:image',
+      content: `/images/${i}.png`,
+    })),
+  })
+
+  const options = { omitLineBreaks: true }
+  renderSSRHead(head, options)
+  return () => renderSSRHead(head, options)
+}
+
 function createCachedSchemaOrgRenderer() {
   const head = createHead({ disableDefaults: true })
   head.push({
@@ -391,6 +413,9 @@ async function csrBenches() {
 
 const times = measureTimes(renderMediumSsrHead)
 const alloc = await measureAlloc(renderMediumSsrHead)
+const renderCachedDuplicateHeavyHead = createCachedDuplicateHeavyRenderer()
+const duplicateHeavyTimes = measureTimes(renderCachedDuplicateHeavyHead, { reps: 30, runs: 250 })
+const duplicateHeavyAlloc = await measureAlloc(renderCachedDuplicateHeavyHead)
 const renderCachedSchemaOrgHead = createCachedSchemaOrgRenderer()
 const schemaOrgTimes = measureTimes(renderCachedSchemaOrgHead, { reps: 30, runs: 120 })
 const schemaOrgAlloc = await measureAlloc(renderCachedSchemaOrgHead)
@@ -400,6 +425,9 @@ const result = {
     { id: 'ssr-medium-cpu', name: 'SSR render (CPU)', kind: 'time', value: times.cpu.value, rme: times.cpu.rme },
     { id: 'ssr-medium-wall', name: 'SSR render (wall)', kind: 'time', value: times.wall.value, rme: times.wall.rme, informational: true },
     { id: 'ssr-medium-alloc', name: 'SSR allocated / render', kind: 'alloc', value: alloc.value, rme: alloc.rme },
+    { id: 'ssr-duplicate-heavy-cached-cpu', name: 'Duplicate-heavy cached render (CPU)', kind: 'time', value: duplicateHeavyTimes.cpu.value, rme: duplicateHeavyTimes.cpu.rme },
+    { id: 'ssr-duplicate-heavy-cached-wall', name: 'Duplicate-heavy cached render (wall)', kind: 'time', value: duplicateHeavyTimes.wall.value, rme: duplicateHeavyTimes.wall.rme, informational: true },
+    { id: 'ssr-duplicate-heavy-cached-alloc', name: 'Duplicate-heavy cached allocated / render', kind: 'alloc', value: duplicateHeavyAlloc.value, rme: duplicateHeavyAlloc.rme },
     { id: 'schema-org-cached-cpu', name: 'Schema.org cached render (CPU)', kind: 'time', value: schemaOrgTimes.cpu.value, rme: schemaOrgTimes.cpu.rme },
     { id: 'schema-org-cached-wall', name: 'Schema.org cached render (wall)', kind: 'time', value: schemaOrgTimes.wall.value, rme: schemaOrgTimes.wall.rme, informational: true },
     { id: 'schema-org-cached-alloc', name: 'Schema.org cached allocated / render', kind: 'alloc', value: schemaOrgAlloc.value, rme: schemaOrgAlloc.rme },

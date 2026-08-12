@@ -1,8 +1,8 @@
 // Renders the directional Performance section. A change is only surfaced past a gate:
-//  - time:  |Δ| > max(5%, 2× combined relative margin of error). Wall/CPU time is
-//           noisy on shared runners, so the gate is RME-bound; small gains stay hidden.
-//  - alloc: |Δ| > max(2%, 1 KiB). Synchronous bytes allocated per render is
-//           near-deterministic, so a tight gate surfaces gains time can't show.
+//  - time:  |Δ| > max(5% of base, combined 95% confidence interval). Wall/CPU
+//           time is noisy on shared runners, so the gate is confidence-bound.
+//  - alloc: |Δ| > max(2% of base, 1 KiB, combined 95% confidence interval).
+//           Synchronous allocated bytes are stable enough for a tight gate.
 //  - count: |Δ| > max(2%, 0.5). DOM mutations per CSR navigation; deterministic,
 //           so a half-op change is real (a renderer touching more of the DOM).
 // Noisy metrics are `informational`: shown for reference but excluded from the verdict.
@@ -108,18 +108,19 @@ function classify(pr: PerfBench, base?: PerfBench): Row {
     return { bench: pr, base, status: 'new', deltaPct: 0 }
   const delta = pr.value - base.value
   const deltaPct = base.value !== 0 ? (delta / Math.abs(base.value)) * 100 : 0
+  const baseCi = Math.abs(base.value) * (base.rme || 0) / 100
+  const prCi = Math.abs(pr.value) * (pr.rme || 0) / 100
+  const combinedCi = Math.hypot(baseCi, prCi)
   let significant: boolean
   if (pr.kind === 'time') {
-    const threshold = Math.max(TIME_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
-    significant = Math.abs(deltaPct) > threshold
+    significant = Math.abs(delta) > Math.max(Math.abs(base.value) * TIME_FLOOR_PCT / 100, combinedCi)
   }
   else if (pr.kind === 'count') {
     // a zero baseline (0 -> N) has no meaningful percentage; fall back to the absolute floor
     significant = Math.abs(delta) > COUNT_FLOOR_UNITS && (base.value === 0 || Math.abs(deltaPct) > COUNT_FLOOR_PCT)
   }
   else {
-    const threshold = Math.max(ALLOC_FLOOR_PCT, 2 * ((base.rme || 0) + (pr.rme || 0)))
-    significant = Math.abs(delta) > ALLOC_FLOOR_BYTES && (base.value === 0 || Math.abs(deltaPct) > threshold)
+    significant = Math.abs(delta) > Math.max(ALLOC_FLOOR_BYTES, Math.abs(base.value) * ALLOC_FLOOR_PCT / 100, combinedCi)
   }
   if (!significant)
     return { bench: pr, base, status: 'same', deltaPct }
@@ -132,9 +133,9 @@ function deltaCell(row: Row): string {
     return '🆕 new'
   // informational metrics report their delta neutrally, never as slower/faster
   if (row.bench.informational)
-    return row.status === 'same' ? '~ noise' : `ℹ️ ${fmtPct(row.deltaPct)}`
+    return row.status === 'same' ? `~ ${fmtPct(row.deltaPct)}` : `ℹ️ ${fmtPct(row.deltaPct)}`
   if (row.status === 'same')
-    return '~ noise'
+    return `~ ${fmtPct(row.deltaPct)}`
   const emoji = row.status === 'slower' ? '🔴' : '🟢'
   if (row.bench.kind === 'time')
     return `${emoji} ${fmtPct(row.deltaPct)}`
