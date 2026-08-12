@@ -33,7 +33,7 @@ it('connects head state through the DevTools RPC client', async () => {
   await import('../src/devtools/bridge')
   await vi.advanceTimersByTimeAsync(0)
 
-  expect(devtoolsClient.getClient).toHaveBeenCalledOnce()
+  expect(devtoolsClient.getClient).toHaveBeenCalledWith({ baseURL: '/__devtools/' })
   expect(getSharedState).toHaveBeenCalledWith('unhead:state', {
     initialValue: expect.objectContaining({
       tags: [expect.objectContaining({ tag: 'title', textContent: 'Home' })],

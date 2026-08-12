@@ -338,7 +338,7 @@ function connectBridge(head: any) {
 
   async function init() {
     const { getDevToolsRpcClient } = await import('@vitejs/devtools-kit/client')
-    const rpc = await getDevToolsRpcClient()
+    const rpc = await getDevToolsRpcClient({ baseURL: '/__devtools/' })
 
     sharedState = await rpc.sharedState.get('unhead:state', {
       initialValue: serializeHeadState(head, wasSSR, ssrPayload),
