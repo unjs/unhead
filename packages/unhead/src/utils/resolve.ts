@@ -46,9 +46,9 @@ export interface ResolveTagsOptions {
 // are containers and need their own copies
 function cloneTag(tag: HeadTag): HeadTag {
   const props: Record<string, any> = { ...tag.props }
-  if (props.class instanceof Set)
+  if (props.class)
     props.class = new Set(props.class)
-  if (props.style instanceof Map)
+  if (props.style)
     props.style = new Map(props.style)
   return { ...tag, props }
 }

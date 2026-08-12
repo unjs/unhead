@@ -117,6 +117,24 @@ describe('dedupe', () => {
     }
   })
 
+  it('merges iterable attributes produced by hooks', () => {
+    const head = createServerHeadWithContext({
+      hooks: {
+        'entries:normalize': ({ tags }) => {
+          const attrs = tags.find(tag => tag.tag === 'htmlAttrs')
+          if (attrs?.props.id === 'first') {
+            attrs.props.class = ['hooked'] as any
+            attrs.props.style = [['color', 'red']] as any
+          }
+        },
+      },
+    })
+    head.push({ htmlAttrs: { id: 'first' } })
+    head.push({ htmlAttrs: { class: 'second', style: { display: 'block' } } })
+
+    expect(renderSSRHead(head).htmlAttrs).toBe(' id="first" class="hooked second" style="color:red;display:block"')
+  })
+
   it ('arrays two', async () => {
     const head = createServerHeadWithContext()
 
