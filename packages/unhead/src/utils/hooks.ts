@@ -2,6 +2,19 @@ import type { HookableCore } from 'hookable'
 import type { CoreHeadHooks, Unhead } from '../types'
 import { HookableCore as Hookable } from 'hookable'
 
+const normalizedPropsHooks = new WeakSet<(...args: any[]) => any>()
+const StaticHook = Symbol.for('unhead:static-hook')
+
+export function isPropsNormalizedHook(hook: (...args: any[]) => any) {
+  return normalizedPropsHooks.has(hook)
+}
+
+export function markStaticPropsNormalizedHook<T extends (...args: any[]) => any>(hook: T): T {
+  normalizedPropsHooks.add(hook)
+  Object.defineProperty(hook, StaticHook, { value: true })
+  return hook
+}
+
 export function createHooks<T extends CoreHeadHooks>(hooks?: Partial<T>): HookableCore<T> {
   const instance = new Hookable<T>()
   for (const key in hooks || {}) {

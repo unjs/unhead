@@ -1,4 +1,5 @@
 import type { HeadRenderer, RenderSSRHeadOptions, ShouldRenderContext, SSRHeadPayload, SSRRenderContext, Unhead } from '../types'
+import { isPropsNormalizedHook } from '../utils/hooks'
 import { resolveTags } from '../utils/resolve'
 import { capoTagWeight } from './sort'
 import { ssrRenderTags } from './util'
@@ -14,8 +15,12 @@ function hasHook(head: Unhead<any>, name: string): boolean {
 function hasUnsafeTagHooks(head: Unhead<any>): boolean {
   const hooks = (head.hooks as any)?._hooks || {}
   for (const name in hooks) {
-    if (hooks[name]?.length && UNSAFE_TAG_HOOK_RE.test(name))
-      return true
+    if (UNSAFE_TAG_HOOK_RE.test(name)) {
+      for (const hook of hooks[name] || []) {
+        if (!isPropsNormalizedHook(hook))
+          return true
+      }
+    }
   }
   return false
 }

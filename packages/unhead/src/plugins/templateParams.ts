@@ -1,5 +1,6 @@
 import type { HeadTag, TemplateParams } from '../types/tags'
 import { processTemplateParams } from '../utils'
+import { markStaticPropsNormalizedHook } from '../utils/hooks'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 const SupportedAttrs: Partial<Record<string, string>> = {
@@ -20,7 +21,7 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
   return {
     key: 'template-params',
     hooks: {
-      'tags:resolve': ({ tagMap, tags }) => {
+      'tags:resolve': markStaticPropsNormalizedHook(({ tagMap, tags }) => {
         // we always process params so we can substitute the title
         const params = (tagMap.get('templateParams')?.props || {}) as TemplateParams
         // ensure a separator exists
@@ -52,14 +53,14 @@ export const TemplateParamsPlugin = /* @__PURE__ */ defineHeadPlugin((head) => {
         // resolved template params
         head._templateParams = params
         head._separator = sep
-      },
-      'tags:afterResolve': ({ tagMap }) => {
+      }),
+      'tags:afterResolve': markStaticPropsNormalizedHook(({ tagMap }) => {
         // we need to re-process in case then user had a function as the titleTemplate
         const title: HeadTag | undefined = tagMap.get('title')
         if (title?.textContent && title.processTemplateParams !== false) {
           title.textContent = processIfNeeded(title.textContent, head._templateParams!, head._separator!)
         }
-      },
+      }),
     },
   }
 }, 'template-params')

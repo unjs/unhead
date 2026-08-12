@@ -1,5 +1,7 @@
 import type { MetaFlat, MetaGeneric, UnheadMeta } from '../types'
+import { INVALID_ATTR_NAME_RE } from './attrs'
 import { MetaTagsArrayable } from './const'
+import { isUnsafeKey } from './unsafeKey'
 
 export type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
@@ -89,8 +91,8 @@ function fixKeyCase(key: string): string {
       )
 }
 
-function sanitizeObject(input: Record<string, any>) {
-  return Object.fromEntries(Object.entries(input).filter(([k, v]) => String(v) !== 'false' && k))
+function sanitizeObject<T extends Record<string, any>>(input: T): T {
+  return Object.fromEntries(Object.entries(input).filter(([k, v]) => String(v) !== 'false' && k && !INVALID_ATTR_NAME_RE.test(k) && !isUnsafeKey(k))) as T
 }
 
 function transformObject(obj: any): any {
@@ -178,7 +180,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
       if (key === 'themeColor') {
         value.forEach((v) => {
           if (typeof v === 'object' && v !== null) {
-            extras.push({ name: 'theme-color', ...v })
+            extras.push({ name: 'theme-color', ...sanitizeObject(v) })
           }
         })
         continue

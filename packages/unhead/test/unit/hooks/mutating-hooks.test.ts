@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { useSeoMeta } from '../../../src'
 import { createHead, renderSSRHead } from '../../../src/server'
 
 describe('tag-mutating hooks', () => {
@@ -84,5 +85,14 @@ describe('tag-mutating hooks', () => {
     head.push({ meta: [{ name: 'description', content: 'visible' }] })
 
     expect(renderSSRHead(head).headTags).toBe('<meta name="description" content="visible">')
+  })
+
+  it('filters invalid attributes produced by flat metadata', () => {
+    const head = createHead({ disableDefaults: true })
+    useSeoMeta(head, {
+      themeColor: [{ 'content': '#fff', 'media': '(prefers-color-scheme: light)', 'invalid name': 'hidden' }] as any,
+    })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta name="theme-color" content="#fff" media="(prefers-color-scheme: light)">')
   })
 })

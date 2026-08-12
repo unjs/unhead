@@ -1,11 +1,12 @@
 import type { HeadTag } from '../types'
+import { markStaticPropsNormalizedHook } from '../utils/hooks'
 import { unpackMeta } from '../utils/meta'
 import { defineHeadPlugin } from './defineHeadPlugin'
 
 export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
   key: 'flatMeta',
   hooks: {
-    'entries:normalize': (ctx) => {
+    'entries:normalize': /* @__PURE__ */ markStaticPropsNormalizedHook((ctx) => {
       let hasFlatMeta = false
       const tags: HeadTag[] = []
       const tagsToAdd: HeadTag[] = []
@@ -22,6 +23,6 @@ export const FlatMetaPlugin = /* @__PURE__ */ defineHeadPlugin({
         return
       for (const tag of tagsToAdd) tags.push(tag)
       ctx.tags = tags
-    },
+    }),
   },
 })
