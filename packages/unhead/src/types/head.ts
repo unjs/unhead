@@ -111,6 +111,19 @@ export interface CreateHeadOptions {
    * @internal
    */
   _tagWeight?: (tag: HeadTag) => number
+  /**
+   * Convert server event handlers to hydration markers during normalization.
+   * @internal
+   */
+  _eventHandlers?: boolean
+  /**
+   * Pre-composed property resolver chain.
+   * @internal
+   */
+  _propResolver?: {
+    resolve: PropResolver | undefined
+    source: PropResolver[]
+  }
 }
 
 export interface CreateServerHeadOptions extends CreateHeadOptions {

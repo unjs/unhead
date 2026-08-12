@@ -10,7 +10,7 @@ import { FlatMetaPlugin } from './plugins/flatMeta'
 import { SafeInputPlugin } from './plugins/safe'
 import { hasOwn } from './utils/hasOwn'
 
-export function useHead<T extends Unhead<any>, I = ResolvableHead>(unhead: T, input?: ResolvableHead, options: HeadEntryOptions = {}): ActiveHeadEntry<I> {
+export function useHead<T extends Unhead<any>, I = ResolvableHead>(unhead: T, input?: ResolvableHead, options?: HeadEntryOptions): ActiveHeadEntry<I> {
   return unhead.push((input || {}) as I, options) as ActiveHeadEntry<I>
 }
 

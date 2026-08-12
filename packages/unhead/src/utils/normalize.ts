@@ -36,12 +36,55 @@ function normalizeStyleClassProps(
   return store
 }
 
-export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTag {
+function resolveShallowValue(value: any, key?: string, resolve?: PropResolver): any {
+  if (key === '_resolver')
+    return value
+  if (typeof value === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on'))))
+    value = value()
+  return resolve ? resolve(key, value) : value
+}
+
+function resolveServerEventHandler(key: string | undefined, value: any): any {
+  return key?.startsWith('on') && typeof value === 'function'
+    ? `this.dataset.${key}fired = true`
+    : value
+}
+
+export function createPropResolver(propResolvers: PropResolver[], serverEventHandlers: boolean): PropResolver | undefined {
+  if (!propResolvers.length && !serverEventHandlers)
+    return
+  return (key, value) => {
+    for (let i = 0; i < propResolvers.length; i++)
+      value = propResolvers[i](key, value)
+    return serverEventHandlers ? resolveServerEventHandler(key, value) : value
+  }
+}
+
+function resolveObjectChildren(input: Record<string, any>, resolve?: PropResolver): Record<string, any> {
+  let output: Record<string, any> | undefined
+  for (const key in input) {
+    const unsafe = isUnsafeKey(key)
+    const value = unsafe ? undefined : walkResolver(input[key], resolve, key)
+    if (!output && (unsafe || value !== input[key])) {
+      output = {}
+      for (const previous in input) {
+        if (previous === key)
+          break
+        output[previous] = input[previous]
+      }
+    }
+    if (output && !unsafe)
+      output[key] = value
+  }
+  return output || input
+}
+
+export function normalizeProps(tag: HeadTag, input: Record<string, any>, serverEventHandlers = false, resolveFunctions = false, resolve?: PropResolver): HeadTag {
   tag.props = tag.props || {}
   if (!input)
     return tag
   if (tag.tag === 'templateParams') {
-    tag.props = input
+    tag.props = resolveFunctions ? resolveObjectChildren(input, resolve) : input
     return tag
   }
   const isHtmlTag = HasElementTags.has(tag.tag) || tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs'
@@ -54,12 +97,15 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     const key = isHtmlAttr && !isData ? prop.toLowerCase() : prop
     if (isHtmlAttr && (!key || INVALID_ATTR_NAME_RE.test(key)))
       continue
-    const value = input[prop]
+    const value = resolveFunctions ? walkResolver(input[prop], resolve, prop) : input[prop]
     if (value === null) {
       tag.props[key] = null as any
     }
     else if (prop === 'class' || prop === 'style') {
       tag.props[prop] = normalizeStyleClassProps(prop, value) as any
+    }
+    else if (serverEventHandlers && prop.startsWith('on') && typeof value === 'function') {
+      tag.props[key] = `this.dataset.${prop}fired = true`
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
@@ -84,25 +130,21 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
   return tag
 }
 
-export function resolveHeadInput(input: any, propResolvers: PropResolver[]): any {
-  let resolve: PropResolver | undefined
-  if (propResolvers.length) {
-    resolve = (key, val) => {
-      for (let i = 0; i < propResolvers.length; i++)
-        val = propResolvers[i](key, val)
-      return val
-    }
+export function resolveHeadInput(input: any, propResolvers: PropResolver[], serverEventHandlers = false): any {
+  const resolve = createPropResolver(propResolvers, serverEventHandlers)
+  if (resolve) {
     // Resolve the root before walking so ref-wrapped functions are unwrapped.
     input = resolve(undefined, input)
   }
   return walkResolver(input, resolve)
 }
 
-function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string): HeadTag | HeadTag[] {
-  const input = typeof _input === 'object' && typeof _input !== 'function'
-    ? _input
-    : { [(tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent']: _input }
-  const tag = normalizeProps({ tag: tagName, props: {} }, input)
+function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string, serverEventHandlers: boolean, resolve?: PropResolver): HeadTag | HeadTag[] {
+  if (typeof _input !== 'object' || typeof _input === 'function') {
+    const content = (tagName === 'script' || tagName === 'noscript' || tagName === 'style') ? 'innerHTML' : 'textContent'
+    return { tag: tagName, props: {}, [content]: _input }
+  }
+  const tag = normalizeProps({ tag: tagName, props: {} }, _input, serverEventHandlers, true, resolve)
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
@@ -128,23 +170,29 @@ function pushNormalizedTag(tags: HeadTag[], tag: HeadTag | HeadTag[]) {
   }
 }
 
-export function normalizeEntryToTags(input: any, propResolvers: PropResolver[]): HeadTag[] {
+export function normalizeEntryToTags(input: any, propResolvers: PropResolver[], serverEventHandlers = false, _resolve?: PropResolver): HeadTag[] {
   if (!input)
     return []
   if (typeof input === 'function')
     input = input()
+  const resolve = _resolve || createPropResolver(propResolvers, serverEventHandlers)
   // The root intentionally passes through the resolver chain twice. The first
   // pass unwraps refs, then walkResolver invokes a function returned by a ref.
-  input = resolveHeadInput(input, propResolvers)
+  if (resolve) {
+    input = resolve(undefined, input)
+    input = resolveShallowValue(input, undefined, resolve)
+  }
   const tags: HeadTag[] = []
   for (const key in input) {
-    const value = input[key]
+    if (isUnsafeKey(key))
+      continue
+    const value = resolveShallowValue(input[key], key, resolve)
     if (value !== undefined) {
       if (Array.isArray(value)) {
-        for (const v of value) pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, v))
+        for (const v of value) pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, resolveShallowValue(v, undefined, resolve), serverEventHandlers, resolve))
       }
       else {
-        pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, value))
+        pushNormalizedTag(tags, normalizeTag(key as keyof ResolvableHead, value, serverEventHandlers, resolve))
       }
     }
   }

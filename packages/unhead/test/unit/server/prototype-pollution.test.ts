@@ -102,13 +102,14 @@ describe('prototype pollution', () => {
   })
 
   it('strips __proto__ from merged attributes replaced by hooks', () => {
-    let normalizeCount = 0
     let inheritedOnload: unknown
     const head = createServerHeadWithContext({
       hooks: {
         'entries:normalize': ({ tags }) => {
-          if (++normalizeCount === 2)
-            tags[0].props = JSON.parse('{"lang":"en","__proto__":{"onload":"alert(1)"}}')
+          const htmlAttrs = tags.find(tag => tag.tag === 'htmlAttrs')
+          const classes = htmlAttrs?.props.class as unknown
+          if (htmlAttrs && classes instanceof Set && classes.has('second'))
+            htmlAttrs.props = JSON.parse('{"lang":"en","__proto__":{"onload":"alert(1)"}}')
         },
         'tags:beforeResolve': ({ tags }) => {
           inheritedOnload = tags.find(tag => tag.tag === 'htmlAttrs')?.props.onload
@@ -121,6 +122,7 @@ describe('prototype pollution', () => {
     const result = renderSSRHead(head)
 
     expect(inheritedOnload).toBeUndefined()
+    expect(result.htmlAttrs).toContain('lang="en"')
     expect(result.htmlAttrs).not.toContain('onload')
   })
 })

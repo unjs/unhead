@@ -3,6 +3,7 @@ import type { ClientUnhead } from './adapter'
 import { createUnhead } from '../unhead'
 import { TagPriorityAliases } from '../utils/const'
 import { createHooks } from '../utils/hooks'
+import { createPropResolver } from '../utils/normalize'
 import { createClientHeadAdapter } from './adapter'
 import { createDomRenderer } from './renderDOMHead'
 
@@ -13,7 +14,8 @@ const tagWeight = (tag: HeadTag) => typeof tag.tagPriority === 'number' ? tag.ta
 export function createHead<T = ResolvableHead>(options: CreateClientHeadOptions = {}): ClientUnhead<T> {
   options.document = options.document || (typeof window !== 'undefined' ? document : undefined)
   const renderer = (options.render || createDomRenderer({ document: options.document })) as HeadRenderer<boolean>
-  const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers: options.propResolvers, _tagWeight: tagWeight, init: [] })
+  const propResolvers = [...(options.propResolvers || [])]
+  const core = createUnhead<T, boolean>(renderer, { document: options.document, propResolvers, _propResolver: { resolve: createPropResolver(propResolvers, false), source: propResolvers }, _tagWeight: tagWeight, init: [] })
   const hooks = createHooks<ClientHeadHooks>(options.hooks)
   const head = createClientHeadAdapter(core, hooks, renderer)
   options.plugins?.forEach(p => head.use(p))

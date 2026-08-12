@@ -1,9 +1,9 @@
 import type { HookableCore } from 'hookable'
-import type { CreateServerHeadOptions, HeadTag, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
+import type { CreateServerHeadOptions, HeadTag, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
 import { createUnhead } from '../unhead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { createHooks } from '../utils/hooks'
-import { normalizeEntryToTags } from '../utils/normalize'
+import { createPropResolver, normalizeEntryToTags } from '../utils/normalize'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
 
@@ -27,18 +27,6 @@ const DEFAULT_INIT = {
     },
   ],
 }
-
-// identity for anything but `on*` function handlers, so `_static` for the
-// default init fast path (the default entry has no event handlers)
-const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
-  (k?: string, v?: any) => {
-    if (k && k.startsWith('on') && typeof v === 'function') {
-      return `this.dataset.${k}fired = true`
-    }
-    return v
-  },
-  { _static: true },
-)
 
 let defaultInitTags: HeadTag[] | undefined
 
@@ -69,16 +57,16 @@ function getDefaultInitTags(): HeadTag[] {
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
+  const propResolvers = [...(options.propResolvers || [])]
   const render = createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
   const core = createUnhead<T, SSRHeadPayload>(render, {
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
     experimentalStreamKey: options.experimentalStreamKey,
-    propResolvers: [
-      ...(options.propResolvers || []),
-      serverPropResolver,
-    ],
+    propResolvers,
+    _eventHandlers: true,
+    _propResolver: { resolve: createPropResolver(propResolvers, true), source: propResolvers },
     init: [
       options.disableDefaults ? undefined : DEFAULT_INIT,
       ...(options.init || []),

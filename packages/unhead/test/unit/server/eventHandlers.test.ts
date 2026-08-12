@@ -29,4 +29,19 @@ describe('ssr event handlers', () => {
       }
     `)
   })
+
+  it('converts handlers nested inside JSON content', () => {
+    const head = createServerHeadWithContext()
+    useHead(head, {
+      script: [{
+        type: 'application/json',
+        innerHTML: {
+          onReady: () => true,
+        },
+      }],
+    })
+
+    const ctx = renderSSRHead(head)
+    expect(ctx.headTags).toContain('{"onReady":"this.dataset.onReadyfired = true"}')
+  })
 })

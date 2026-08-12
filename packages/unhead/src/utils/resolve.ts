@@ -2,7 +2,7 @@ import type { HeadEntry, HeadTag, Unhead } from '../types'
 import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
-import { normalizeEntryToTags } from './normalize'
+import { createPropResolver, normalizeEntryToTags } from './normalize'
 import { isUnsafeKey } from './unsafeKey'
 
 const LT_RE = /</g
@@ -77,7 +77,7 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
   let ownedMergeProps: Set<string> | undefined
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || hashTag(next)
+    const k = next._d || next._h || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -241,7 +241,15 @@ export function resolveTags(head: Unhead<any>, options?: ResolveTagsOptions): He
         tags = e._precomputedTags
       }
       else {
-        tags = normalizeEntryToTags(e.input, head.resolvedOptions.propResolvers || [])
+        const propResolvers = head.resolvedOptions.propResolvers || []
+        let compiled = head.resolvedOptions._propResolver
+        if (compiled?.source !== propResolvers) {
+          compiled = head.resolvedOptions._propResolver = {
+            resolve: createPropResolver(propResolvers, Boolean(head.resolvedOptions._eventHandlers)),
+            source: propResolvers,
+          }
+        }
+        tags = normalizeEntryToTags(e.input, propResolvers, head.resolvedOptions._eventHandlers, compiled.resolve)
         if (e.options && !isEmptyProps(e.options)) {
           for (const t of tags)
             Object.assign(t, e.options)
