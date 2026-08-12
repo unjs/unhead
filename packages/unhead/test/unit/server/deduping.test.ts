@@ -135,6 +135,18 @@ describe('dedupe', () => {
     expect(renderSSRHead(head).htmlAttrs).toBe(' id="first" class="hooked second" style="color:red;display:block"')
   })
 
+  it('does not mutate a replacement before a later merge', () => {
+    const head = createServerHeadWithContext()
+    head.push({ htmlAttrs: { 'data-first': '1' } })
+    head.push({ htmlAttrs: { 'data-second': '2' } })
+    head.push({ htmlAttrs: { 'data-replacement': '3', 'tagDuplicateStrategy': 'replace' } })
+    const merged = head.push({ htmlAttrs: { 'data-merged': '4' } })
+
+    expect(renderSSRHead(head).htmlAttrs).toContain('data-merged="4"')
+    merged.dispose()
+    expect(renderSSRHead(head).htmlAttrs).toBe(' data-replacement="3"')
+  })
+
   it ('arrays two', async () => {
     const head = createServerHeadWithContext()
 

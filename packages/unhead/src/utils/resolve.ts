@@ -77,7 +77,7 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
 
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
-  let ownedMergeProps: Set<string> | undefined
+  let ownedMergeProps: WeakSet<Record<string, any>> | undefined
   for (const next of ctx.tags.sort(sortTags)) {
     const k = next._d || hashTag(next)
     if (!k)
@@ -93,10 +93,10 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
       : UsesMergeStrategy.has(next.tag) || Boolean(next.key && next.key === prevTag.key)
     if (merge) {
       let props: Record<string, any> = prevTag.props
-      if (!ownedMergeProps?.has(k)) {
+      if (!ownedMergeProps?.has(props)) {
         props = cloneTag(prevTag).props
-        ownedMergeProps ||= new Set()
-        ownedMergeProps.add(k)
+        ownedMergeProps ||= new WeakSet()
+        ownedMergeProps.add(props)
       }
       for (const p in next.props) {
         if (Object.hasOwn(next.props, p) && !isUnsafeKey(p)) {
