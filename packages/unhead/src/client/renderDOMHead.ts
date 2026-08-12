@@ -35,15 +35,6 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
   return false
 }
 
-function cleanupDomState(state: DomStateInternal) {
-  for (const k in state._s) state._s[k]()
-  for (const k in state._p) state._p[k]()
-  state._s = {}
-  state._p = {}
-  state._e.clear()
-  state._l.clear()
-}
-
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
   for (const el of [...dom.body.children, ...dom.head.children]) {
@@ -98,10 +89,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return false
-    let state = head._dom as DomStateInternal | undefined
+    let state = activeState
     if (state?._d !== dom) {
-      if (state)
-        cleanupDomState(state)
+      if (state) {
+        for (const k in state._s) state._s[k]()
+        for (const k in state._p) state._p[k]()
+        state._s = state._p = {}
+        state._e.clear()
+        state._l.clear()
+      }
       state = undefined
     }
     if (!state) {
