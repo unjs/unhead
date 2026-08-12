@@ -3,6 +3,7 @@ import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { isUnsafeKey } from './unsafeKey'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -97,6 +98,8 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
         ownedMergeProps.add(k)
       }
       for (const p in next.props) {
+        if (!Object.hasOwn(next.props, p) || isUnsafeKey(p))
+          continue
         if (p === 'style') {
           const style = props.style ||= new Map()
           for (const [key, value] of next.props.style as unknown as Map<string, string>)

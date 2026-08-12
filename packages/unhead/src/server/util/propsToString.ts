@@ -13,7 +13,7 @@ function stringifyProps(props: Record<string, any>, validateNames: boolean) {
   let attrs = ''
 
   for (const key in props) {
-    if (validateNames && (!Object.hasOwn(props, key) || !key || INVALID_ATTR_NAME_RE.test(key)))
+    if (!Object.hasOwn(props, key) || (validateNames && (!key || INVALID_ATTR_NAME_RE.test(key))))
       continue
 
     let value = props[key]
