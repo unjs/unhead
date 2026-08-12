@@ -54,6 +54,7 @@ import type {
 import type { Place } from './nodes/Place'
 import type { VirtualLocation } from './nodes/VirtualLocation'
 import type { Arrayable, SchemaOrgNodeDefinition, Thing } from './types'
+import { markBuiltinSchemaNode } from './core/define'
 import { aggregateOfferResolver } from './nodes/AggregateOffer'
 import { aggregateRatingResolver } from './nodes/AggregateRating'
 import { articleResolver } from './nodes/Article'
@@ -115,7 +116,7 @@ type DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> = (
 ) & { _resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput> }
 
 function provideResolver<Input extends object | undefined, ResolvedInput extends Thing, CastInput>(input: Input | undefined, resolver?: SchemaOrgNodeDefinition<ResolvedInput, CastInput>): DefinedSchemaOrgNode<ResolvedInput, CastInput, Input> {
-  return { ...(input || {} as Input), _resolver: resolver } as DefinedSchemaOrgNode<ResolvedInput, CastInput, Input>
+  return markBuiltinSchemaNode({ ...(input || {} as Input), _resolver: resolver }) as DefinedSchemaOrgNode<ResolvedInput, CastInput, Input>
 }
 
 export function defineAddress<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<PostalAddress, Input>) {
