@@ -95,6 +95,17 @@ describe('dedupe', () => {
     }
   })
 
+  it('replaces arrayable metadata from earlier entries', () => {
+    const head = createServerHeadWithContext()
+    head.push({ meta: [
+      { property: 'og:image', content: '/first.png' },
+      { property: 'og:image', content: '/second.png' },
+    ] })
+    head.push({ meta: [{ property: 'og:image', content: '/latest.png' }] })
+
+    expect(renderSSRHead(head).headTags).toBe('<meta property="og:image" content="/latest.png">')
+  })
+
   it('merges repeated attributes without mutating cached entries', () => {
     const head = createServerHeadWithContext()
     head.push({ htmlAttrs: { 'class': 'first', 'style': { color: 'red' }, 'data-first': '1' } })
