@@ -3,6 +3,7 @@ import { hasContent, UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { isUnsafeKey } from './unsafeKey'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -74,8 +75,9 @@ function valuesToTags(ctx: ResolveTagsContext, sortFlatMeta: boolean) {
 
 export function dedupeTags(ctx: ResolveTagsContext): boolean {
   let hasFlatMeta = false
+  let ownedMergeProps: Set<string> | undefined
   for (const next of ctx.tags.sort(sortTags)) {
-    const k = next._d || hashTag(next)
+    const k = next._d || next._h || hashTag(next)
     if (!k)
       continue
     const prev = ctx.tagMap.get(k)
@@ -85,17 +87,43 @@ export function dedupeTags(ctx: ResolveTagsContext): boolean {
     }
     const strategy = next.tagDuplicateStrategy || (UsesMergeStrategy.has(next.tag) ? 'merge' : null) || (next.key && next.key === prev.key ? 'merge' : null)
     if (strategy === 'merge') {
-      const props = { ...prev.props }
+      let props: Record<string, any> = prev.props
+      if (!ownedMergeProps?.has(k)) {
+        props = { ...props }
+        if (props.style instanceof Map)
+          props.style = new Map(props.style)
+        if (props.class instanceof Set)
+          props.class = new Set(props.class)
+        ownedMergeProps ||= new Set()
+        ownedMergeProps.add(k)
+      }
       for (const p in next.props) {
-        // @ts-expect-error untyped - style is Map, class is Set at runtime
-        props[p] = p === 'style'
-          ? new Map([...(prev.props.style || new Map()) as any, ...next.props[p] as any])
-          : p === 'class' ? new Set([...(prev.props.class || []) as any, ...next.props[p] as any]) : next.props[p]
+        if (!Object.hasOwn(next.props, p) || isUnsafeKey(p))
+          continue
+        if (p === 'style') {
+          const style = props.style ||= new Map()
+          for (const [key, value] of next.props.style as unknown as Map<string, string>)
+            style.set(key, value)
+        }
+        else if (p === 'class') {
+          const classes = props.class ||= new Set()
+          for (const value of next.props.class as unknown as Set<string>)
+            classes.add(value)
+        }
+        else {
+          props[p] = next.props[p]
+        }
       }
       ctx.tagMap.set(k, { ...next, props })
     }
     else if ((next._p! >> 10) === (prev._p! >> 10) && next.tag === 'meta' && isMetaArrayDupeKey(k)) {
-      ctx.tagMap.set(k, Object.assign([...(Array.isArray(prev) ? prev : [prev]), next], next))
+      if (Array.isArray(prev)) {
+        prev.push(next)
+        Object.assign(prev, next)
+      }
+      else {
+        ctx.tagMap.set(k, Object.assign([prev, next], next))
+      }
       hasFlatMeta = true
     }
     // @ts-expect-error untyped
