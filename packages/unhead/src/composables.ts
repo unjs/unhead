@@ -19,31 +19,32 @@ export function useHeadSafe<T extends Unhead<any>>(unhead: T, input: HeadSafe = 
   return useHead(unhead, input as ResolvableHead, Object.assign(options, { _safe: true })) as ActiveHeadEntry<HeadSafe>
 }
 
+function normalizeSeoMetaInput(input: UseSeoMetaInput) {
+  // @ts-expect-error untyped
+  if (input._flatMeta) {
+    return input
+  }
+  const meta: Record<string, any> = {}
+  for (const key in input) {
+    if (!hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
+      continue
+    meta[key] = input[key as keyof UseSeoMetaInput]
+  }
+  return {
+    title: input.title,
+    titleTemplate: input.titleTemplate,
+    _flatMeta: meta,
+  }
+}
+
 export function useSeoMeta<T extends Unhead<any>>(unhead: T, input: UseSeoMetaInput = {}, options?: HeadEntryOptions): ActiveHeadEntry<UseSeoMetaInput> {
   unhead.use(FlatMetaPlugin)
-  function normalize(input: UseSeoMetaInput) {
-    // @ts-expect-error untyped
-    if (input._flatMeta) {
-      return input
-    }
-    const meta: Record<string, any> = {}
-    for (const key in input) {
-      if (!hasOwn(input, key) || key === 'title' || key === 'titleTemplate')
-        continue
-      meta[key] = input[key as keyof UseSeoMetaInput]
-    }
-    return {
-      title: input.title,
-      titleTemplate: input.titleTemplate,
-      _flatMeta: meta,
-    }
-  }
-  const entry = unhead.push(normalize(input), options)
+  const entry = unhead.push(normalizeSeoMetaInput(input), options)
   // just in case
   const corePatch = entry.patch
   // @ts-expect-error runtime
   if (!entry.__patched) {
-    entry.patch = input => corePatch(normalize(input))
+    entry.patch = input => corePatch(normalizeSeoMetaInput(input))
     // @ts-expect-error runtime
     entry.__patched = true
   }

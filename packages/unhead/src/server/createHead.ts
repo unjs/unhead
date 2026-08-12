@@ -58,8 +58,7 @@ function getDefaultInitTags(): HeadTag[] {
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
   const propResolvers = [...(options.propResolvers || [])]
-  const render = createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
-  const core = createUnhead<T, SSRHeadPayload>(render, {
+  const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
@@ -86,12 +85,10 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       defaultEntry._precomputedTags = getDefaultInitTags()
   }
 
-  const hooks = createHooks<ServerHeadHooks>(options.hooks)
-  const head = core as ServerUnhead<T>
-  head.hooks = hooks
+  core.hooks = createHooks<ServerHeadHooks>(options.hooks)
 
   // Register plugins
-  options.plugins?.forEach(p => head.use(p))
+  options.plugins?.forEach(p => core.use(p))
 
-  return head
+  return core as ServerUnhead<T>
 }

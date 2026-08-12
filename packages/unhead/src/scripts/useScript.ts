@@ -32,6 +32,7 @@ import { createScriptWaitFor } from './waitFor'
 type ScriptApi = Record<symbol | string, any>
 type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
+function noop() {}
 
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
 export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
@@ -112,7 +113,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       : undefined
   const _events: { type: string, timestamp: number }[] = []
   let loadError: Error | undefined
-  let resolveLoad = (_value: T | false) => {}
+  let resolveLoad: (value: T | false) => void = noop
   const loadPromise = new Promise<T | false>((resolve) => {
     if (!head.ssr)
       resolveLoad = resolve
@@ -216,13 +217,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
-      return () => {}
+      return noop
     }
     let uniqueKey: string | undefined
     if (options?.key) {
       uniqueKey = `${key}:${options.key}`
       if (_uniqueCbs.has(uniqueKey)) {
-        return () => {}
+        return noop
       }
       _uniqueCbs.add(uniqueKey)
     }
@@ -355,7 +356,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       return script._setupTriggerHandler(trigger)
     },
     _setupTriggerHandler(trigger: UseScriptOptions['trigger'], removeOnError = true) {
-      const noop = () => {}
       if (script.status !== 'awaitingLoad') {
         return noop
       }
