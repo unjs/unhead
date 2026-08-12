@@ -44,7 +44,26 @@ describe('parseVitestBenchmarks', () => {
 })
 
 describe('renderPerfReport allocation noise gate', () => {
-  it('keeps allocation changes within the combined RME out of the verdict', () => {
+  it('keeps allocation changes within the combined 95% confidence interval out of the verdict', () => {
+    const report = renderPerfReport(
+      {
+        benches: [
+          { id: 'alloc', name: 'Allocated / render', kind: 'alloc', value: 100_000, rme: 8 },
+        ],
+      },
+      {
+        benches: [
+          { id: 'alloc', name: 'Allocated / render', kind: 'alloc', value: 108_000, rme: 8 },
+        ],
+      },
+    )
+
+    expect(report).toContain('No significant change')
+    expect(report).toContain('~ +8.0%')
+    expect(report).not.toContain('slower')
+  })
+
+  it('does not double an RME that already represents a 95% confidence interval', () => {
     const report = renderPerfReport(
       {
         benches: [
@@ -58,9 +77,8 @@ describe('renderPerfReport allocation noise gate', () => {
       },
     )
 
-    expect(report).toContain('No significant change')
-    expect(report).toContain('~ noise')
-    expect(report).not.toContain('slower')
+    expect(report).toContain('1 slower')
+    expect(report).toContain('+11.7 KiB (+12.0%)')
   })
 
   it('reports allocation changes that exceed the absolute and RME gates', () => {
