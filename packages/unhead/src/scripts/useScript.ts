@@ -82,9 +82,16 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
           _uniqueCbs.delete(uniqueKey)
       }
     }
-    // the event has already happened, run immediately
+    // The event has already happened, replay only matching terminal callbacks.
     // eslint-disable-next-line ts/no-use-before-define
-    cb(script.instance)
+    if (script.status === key) {
+      // eslint-disable-next-line ts/no-use-before-define
+      cb(key === 'loaded' ? script.instance : undefined)
+    }
+    else if (uniqueKey) {
+      _uniqueCbs.delete(uniqueKey)
+      uniqueKey = undefined
+    }
     return () => {
       if (uniqueKey)
         _uniqueCbs.delete(uniqueKey)

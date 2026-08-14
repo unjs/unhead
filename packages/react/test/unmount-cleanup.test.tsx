@@ -451,4 +451,76 @@ describe('issue #558 - unmount cleanup', () => {
 
     expect(loaded).toBe(1)
   })
+
+  it('keeps shared script callbacks scoped to their owning component', async () => {
+    const head = createHead()
+    let loadedA = 0
+    let loadedB = 0
+
+    function PageA() {
+      const script = useScript('//react-shared-callback.js', {
+        trigger: 'manual',
+        head,
+      })
+      React.useEffect(() => {
+        return script.onLoaded(() => {
+          loadedA++
+        })
+      }, [script])
+      return null
+    }
+
+    function PageB() {
+      const script = useScript('//react-shared-callback.js', {
+        trigger: 'manual',
+        head,
+      })
+      React.useEffect(() => {
+        return script.onLoaded(() => {
+          loadedB++
+        })
+      }, [script])
+      return null
+    }
+
+    const renderApp = (showB: boolean) => (
+      <UnheadProvider head={head}>
+        <PageA />
+        {showB ? <PageB /> : null}
+      </UnheadProvider>
+    )
+
+    const { rerender } = render(renderApp(true))
+
+    await act(async () => {
+      await wait()
+    })
+
+    const script = (head as any)._scripts['//react-shared-callback.js']
+    expect(script._cbs.loaded).toHaveLength(2)
+
+    rerender(renderApp(false))
+    await act(async () => {
+      await wait()
+    })
+
+    expect(script._cbs.loaded).toHaveLength(1)
+
+    script.load()
+    await act(async () => {
+      await renderDOMHead(head)
+      await wait()
+    })
+
+    document
+      .querySelector('script[src="//react-shared-callback.js"]')
+      ?.dispatchEvent(new Event('load'))
+
+    await act(async () => {
+      await wait()
+    })
+
+    expect(loadedA).toBe(1)
+    expect(loadedB).toBe(0)
+  })
 })

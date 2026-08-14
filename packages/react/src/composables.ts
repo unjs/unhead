@@ -13,15 +13,14 @@ import { useContext, useEffect, useRef } from 'react'
 import { useHead as baseHead, useHeadSafe as baseHeadSafe, useSeoMeta as baseSeoMeta, useScript as baseUseScript } from 'unhead'
 import { UnheadContext } from './context'
 
-interface ScriptCallbackRecord {
-  active: boolean
-  handler: any
-  key: 'loaded' | 'error'
-  registered: boolean
-  renderScoped: boolean
-  renderId: number
-  script: UseScriptReturn<any>
-}
+type ScriptCallbackRecord = [
+  active: boolean,
+  handler: any,
+  key: 'loaded' | 'error',
+  registered: boolean,
+  renderId: number,
+  script: UseScriptReturn<any>,
+]
 
 export function useUnhead(): Unhead {
   // fallback to react context
@@ -102,6 +101,7 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
   } as UseScriptOptions<T>
 
   const callbackRecords = useRef<ScriptCallbackRecord[]>([])
+  const scopedScript = useRef<[UseScriptReturn<T>, UseScriptReturn<T>] | null>(null)
   const isMounted = useRef(false)
   const renderId = useRef(0)
   const committedRenderId = useRef(0)
@@ -135,61 +135,59 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
 
   function reconcileScriptCallbacks(activeRenderId: number) {
     callbackRecords.current.forEach((record) => {
-      if (record.renderScoped && record.renderId !== activeRenderId) {
-        record.active = false
+      if (record[4] && record[4] !== activeRenderId) {
+        record[0] = false
         unregisterScriptCallback(record)
       }
     })
-    callbackRecords.current = callbackRecords.current.filter(record => record.active && (!record.renderScoped || record.renderId === activeRenderId))
+    callbackRecords.current = callbackRecords.current.filter(record => record[0] && (!record[4] || record[4] === activeRenderId))
   }
 
   function registerScriptCallback(record: ScriptCallbackRecord) {
-    if (!record.active || record.registered)
+    if (!record[0] || record[3])
       return
-    const cbs = record.script._cbs[record.key]
+    const cbs = record[5]._cbs[record[2]]
     if (!cbs) {
-      record.handler(record.script.instance)
+      record[1](record[5].instance)
       return
     }
-    cbs.push(record.handler)
-    record.registered = true
+    cbs.push(record[1])
+    record[3] = true
   }
 
   function unregisterScriptCallback(record: ScriptCallbackRecord) {
-    if (!record.registered)
+    if (!record[3])
       return
-    const idx = record.script._cbs[record.key]?.indexOf(record.handler) ?? -1
+    const idx = record[5]._cbs[record[2]]?.indexOf(record[1]) ?? -1
     if (idx !== -1)
-      record.script._cbs[record.key]?.splice(idx, 1)
-    record.registered = false
+      record[5]._cbs[record[2]]?.splice(idx, 1)
+    record[3] = false
   }
 
   const _registerCb = (key: 'loaded' | 'error', cb: any) => {
-    const renderScoped = !(isMounted.current && committedRenderId.current === currentRenderId)
-    const record: ScriptCallbackRecord = {
-      active: true,
-      handler: (...args: any[]) => {
-        if (!record.active)
-          return
-        record.active = false
-        record.registered = false
-        cb(...args)
+    const record: ScriptCallbackRecord = [
+      true,
+      (...args: any[]) => {
+        if (record[0]) {
+          record[0] = false
+          record[3] = false
+          cb(...args)
+        }
       },
       key,
-      registered: false,
-      renderScoped,
-      renderId: currentRenderId,
+      false,
+      isMounted.current && committedRenderId.current === currentRenderId ? 0 : currentRenderId,
       script,
-    }
+    ]
     callbackRecords.current.push(record)
     if (isMounted.current && committedRenderId.current === currentRenderId)
       registerScriptCallback(record)
     return destroy
 
     function destroy() {
-      if (!record.active)
+      if (!record[0])
         return
-      record.active = false
+      record[0] = false
       unregisterScriptCallback(record)
       const idx = callbackRecords.current.indexOf(record)
       if (idx !== -1)
@@ -197,7 +195,14 @@ export function useScript<T extends Record<symbol | string, any> = Record<symbol
     }
   }
   // if we have a scope we should make these callbacks reactive
-  script.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
-  script.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
-  return script
+  if (!scopedScript.current || scopedScript.current[0] !== script) {
+    scopedScript.current = [
+      script,
+      Object.create(script) as UseScriptReturn<T>,
+    ]
+  }
+  const scriptFacade = scopedScript.current[1]
+  scriptFacade.onLoaded = (cb: (instance: T) => void | Promise<void>) => _registerCb('loaded', cb)
+  scriptFacade.onError = (cb: (err?: Error) => void | Promise<void>) => _registerCb('error', cb)
+  return scriptFacade
 }

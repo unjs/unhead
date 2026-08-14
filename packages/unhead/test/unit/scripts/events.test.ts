@@ -183,5 +183,36 @@ describe('useScript events', () => {
     expect(instance._cbs.loaded).toBeNull()
     expect(instance._cbs.error).toBeNull()
     expect(calls).toEqual([])
+
+    instance.onLoaded(() => {
+      calls.push('late-loaded')
+    })
+    instance.onError(() => {
+      calls.push('late-error')
+    })
+
+    expect(calls).toEqual([])
+  })
+
+  it('replays only matching late callbacks after script errors', async () => {
+    const head = createHead()
+    const instance = useScript(head, '/script.js', {
+      trigger: 'manual',
+    })
+    const calls: string[] = []
+
+    instance.load()
+    const input = (instance as any).input as { onerror?: (event: Event) => void }
+    input.onerror?.(new Event('error'))
+    await expect(instance._loadPromise).resolves.toBe(false)
+
+    instance.onLoaded(() => {
+      calls.push('late-loaded')
+    })
+    instance.onError(() => {
+      calls.push('late-error')
+    })
+
+    expect(calls).toEqual(['late-error'])
   })
 })
