@@ -119,6 +119,8 @@ export function unheadDevtools(options?: UnheadDevtoolsInternalOptions): Plugin 
   const pkgDir = findPkgRoot(import.meta.url)
   const devtoolsUiDir = resolve(pkgDir, 'dist/devtools-ui')
 
+  // Keep lazyUnheadDevtools in sync when adding Vite hooks here; framework
+  // bundler entries rely on that proxy to avoid loading Vite-only devtools code.
   return {
     name: '@unhead/devtools',
     apply: 'serve',

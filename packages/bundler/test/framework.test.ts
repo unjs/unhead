@@ -153,4 +153,26 @@ describe('createFrameworkPlugin devtools loading', () => {
       'load:/@unhead/bridge.mjs',
     ])
   })
+
+  it('replays configResolved before setup when Vite DevTools enables late', async () => {
+    const plugins = Unhead().vite() as any[]
+    const devtools = plugins.find(plugin => plugin?.name === '@unhead/devtools')
+
+    await devtools.configResolved({
+      root: process.cwd(),
+      devtools: { enabled: false },
+      plugins,
+    })
+    expect(devtoolsState.loads).toBe(0)
+
+    await devtools.devtools.setup({})
+    await expect(devtools.load('/@unhead/bridge.mjs')).resolves.toBe('bridge')
+
+    expect(devtoolsState.instances).toBe(1)
+    expect(devtoolsState.calls).toEqual([
+      'configResolved',
+      'setup',
+      'load:/@unhead/bridge.mjs',
+    ])
+  })
 })
