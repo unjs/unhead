@@ -2,6 +2,7 @@ import type { HeadTag, PropResolver, ResolvableHead } from '../types'
 import { walkResolver } from '../utils/walkResolver'
 import { INVALID_ATTR_NAME_RE } from './attrs'
 import { DupeableTags, HasElementTags, TagConfigKeys } from './const'
+import { isTrustedHTML } from './trustedTypes'
 import { isUnsafeKey } from './unsafeKey'
 
 function normalizeStyleClassProps(
@@ -63,10 +64,15 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
     }
     else if (TagConfigKeys.has(prop)) {
       if ((prop === 'textContent' || prop === 'innerHTML') && typeof value === 'object') {
-        const type = input.type || 'application/json'
-        if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
-          tag.props.type = input.type = type
-          tag[prop] = JSON.stringify(value)
+        if (prop === 'innerHTML' && isTrustedHTML(value)) {
+          (tag as any)[prop] = value
+        }
+        else {
+          const type = input.type || 'application/json'
+          if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
+            tag.props.type = input.type = type
+            tag[prop] = JSON.stringify(value)
+          }
         }
       }
       else {
@@ -105,7 +111,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   const tag = normalizeProps({ tag: tagName, props: {} }, input)
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
-  if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
+  if (tag.tag === 'script' && typeof tag.innerHTML === 'object' && !isTrustedHTML(tag.innerHTML)) {
     tag.innerHTML = JSON.stringify(tag.innerHTML)
     tag.props.type = tag.props.type || 'application/json'
   }

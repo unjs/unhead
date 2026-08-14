@@ -1,4 +1,5 @@
 import type { PropResolver } from '../types'
+import { isTrustedHTML } from './trustedTypes'
 import { isUnsafeKey } from './unsafeKey'
 
 export function walkResolver(val: any, resolve?: PropResolver, key?: string): any {
@@ -7,6 +8,8 @@ export function walkResolver(val: any, resolve?: PropResolver, key?: string): an
   if (typeof val === 'function' && (!key || (key !== 'titleTemplate' && !key.startsWith('on'))))
     val = val()
   const v = resolve ? resolve(key, val) : val
+  if (isTrustedHTML(v))
+    return v
   // Structural sharing: only allocate a new array/object when a child actually
   // changed (a function was unwrapped or a resolver rewrote a value). For static
   // input with no resolver — the common SSR case — every walk returns the same

@@ -4,6 +4,7 @@ import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../utils/dedupe'
 import { callHook } from '../utils/hooks'
 import { normalizeProps } from '../utils/normalize'
 import { resolveTags } from '../utils/resolve'
+import { getEmptyTrustedHTML, isTrustedHTML } from '../utils/trustedTypes'
 
 const WHITESPACE_RE = /\s+/
 
@@ -175,13 +176,15 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
               $el.textContent = ''
           }, true)
         }
-        const html = tag.innerHTML
+        const html = tag.innerHTML as unknown
         if (html != null && html !== '') {
           if (html !== $el.innerHTML)
             $el.innerHTML = html as string
+          const renderedHtml = $el.innerHTML
+          const emptyHtml = isTrustedHTML(html) ? getEmptyTrustedHTML() : ''
           track(id, 'html', () => {
-            if ($el.innerHTML === html)
-              $el.innerHTML = ''
+            if ($el.innerHTML === renderedHtml)
+              $el.innerHTML = emptyHtml as string
           }, true)
         }
         const elKey = `${id}:el`

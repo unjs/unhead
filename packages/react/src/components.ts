@@ -9,6 +9,11 @@ export interface HeadProps {
   titleTemplate?: string
 }
 
+function isTrustedHTML(value: unknown): boolean {
+  const trustedTypes = (globalThis as typeof globalThis & { trustedTypes?: { isHTML?: (value: unknown) => boolean } }).trustedTypes
+  return typeof value === 'object' && value !== null && trustedTypes?.isHTML?.(value) === true
+}
+
 function normalizeRawContent(tagName: string, data: Record<string, any>) {
   const rawContent = data.dangerouslySetInnerHTML
   delete data.dangerouslySetInnerHTML
@@ -27,8 +32,13 @@ function normalizeRawContent(tagName: string, data: Record<string, any>) {
   }
 
   const content = rawContent.__html
-  if (content != null)
-    data[tagName === 'title' ? 'textContent' : 'innerHTML'] = String(content)
+  if (content == null)
+    return
+  // Unhead titles use textContent; treating raw RCDATA as text changes entity semantics.
+  if (tagName === 'title') {
+    throw new Error('`dangerouslySetInnerHTML` is not supported on <title>; use children instead.')
+  }
+  data.innerHTML = isTrustedHTML(content) ? content : String(content)
 }
 
 function flattenHeadElements(children: ReactNode): React.ReactElement[] {

@@ -3,6 +3,7 @@ import { UsesMergeStrategy, ValidHeadTags } from './const'
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from './dedupe'
 import { callHook } from './hooks'
 import { normalizeEntryToTags } from './normalize'
+import { isTrustedHTML } from './trustedTypes'
 
 const LT_RE = /</g
 const SCRIPT_END_RE = /<\/script/g
@@ -143,9 +144,11 @@ function sanitizeTagsInPlace(tags: HeadTag[]): HeadTag[] {
     if (tag === 'script' && (innerHTML || t.textContent)) {
       const type = String(props.type)
       const isJsonLike = type.endsWith('json') || type === 'importmap' || type === 'speculationrules'
-      const escape = (content: unknown): unknown => isJsonLike
-        ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
-        : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
+      const escape = (content: unknown): unknown => isTrustedHTML(content)
+        ? content
+        : isJsonLike
+          ? (typeof content === 'string' ? content : JSON.stringify(content)).replace(LT_RE, '\\u003C')
+          : typeof content === 'string' ? content.replace(SCRIPT_END_RE, '<\\/script') : content
       // copy-on-write: resolved tags may be shared with the entry cache
       t = { ...t }
       if (innerHTML)

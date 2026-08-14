@@ -1,7 +1,11 @@
 import { renderDOMHead } from '@unhead/dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useHead } from '../../../src'
 import { basicSchema, createServerHeadWithContext, useDelayedSerializedDom, useDom, useDOMHead } from '../../util'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('dom', () => {
   it('renders a fresh server head into an explicit document once', () => {
@@ -148,6 +152,30 @@ describe('dom', () => {
     // switch back text -> html
     entry.patch({ style: [{ key: 's1', id: 'sw', innerHTML: '.c{color:green}' }] } as any)
     expect(el.innerHTML).toBe('.c{color:green}')
+  })
+
+  it('preserves and clears TrustedHTML on a reused element', () => {
+    const head = useDOMHead()
+    const document = head.resolvedOptions.document!
+    const html = '.trusted{color:green}'
+    const trustedHTML = { toString: () => html } as unknown as TrustedHTML
+    const emptyToString = vi.fn(() => '')
+    const emptyHTML = { toString: emptyToString } as unknown as TrustedHTML
+    vi.stubGlobal('trustedTypes', {
+      emptyHTML,
+      isHTML: (value: unknown) => value === trustedHTML || value === emptyHTML,
+    })
+
+    const entry = head.push({
+      style: [{ key: 'trusted', id: 'trusted-style', innerHTML: trustedHTML as unknown as string }],
+    })
+    const el = document.querySelector('style#trusted-style')!
+    expect(el.innerHTML).toBe(html)
+
+    entry.patch({ style: [{ key: 'trusted', id: 'trusted-style' }] } as any)
+    expect(document.querySelector('style#trusted-style')).toBe(el)
+    expect(el.innerHTML).toBe('')
+    expect(emptyToString).toHaveBeenCalled()
   })
 })
 

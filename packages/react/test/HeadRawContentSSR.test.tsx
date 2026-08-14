@@ -18,7 +18,6 @@ describe('head raw content in SSR', () => {
           />
           <style dangerouslySetInnerHTML={{ __html: 'body::before { content: "</style><script>evil()</script>"; }' }} />
           <noscript dangerouslySetInnerHTML={{ __html: '<img src="pixel.gif" alt="pixel">' }} />
-          <title dangerouslySetInnerHTML={{ __html: '<b>Title</b> & value' }} />
         </Head>
       </UnheadProvider>,
     )
@@ -27,7 +26,6 @@ describe('head raw content in SSR', () => {
     expect(headTags).toContain('<script type="application/javascript">window.payload = "<\\/script><script>evil()<\\/script>"</script>')
     expect(headTags).toContain('<style>body::before { content: "<\\/style><script>evil()</script>"; }</style>')
     expect(headTags).toContain('<noscript><img src="pixel.gif" alt="pixel"></noscript>')
-    expect(headTags).toContain('<title>&lt;b&gt;Title&lt;&#x2F;b&gt; &amp; value</title>')
     expect(headTags.toLowerCase()).not.toContain('dangerouslysetinnerhtml')
   })
 
@@ -46,6 +44,33 @@ describe('head raw content in SSR', () => {
       )).toThrow('Can only set one of `children` or `props.dangerouslySetInnerHTML`.')
     },
   )
+
+  it('rejects dangerouslySetInnerHTML on title instead of changing RCDATA semantics', () => {
+    const head = createHead({ disableDefaults: true })
+    const rawElement = React.createElement('title', {
+      dangerouslySetInnerHTML: { __html: 'A &amp; B &#x41;' },
+    })
+
+    expect(() => renderToString(
+      <UnheadProvider value={head}>
+        <Head>{rawElement}</Head>
+      </UnheadProvider>,
+    )).toThrow('`dangerouslySetInnerHTML` is not supported on <title>; use children instead.')
+  })
+
+  it('allows null raw title content as a no-op', () => {
+    const head = createHead({ disableDefaults: true })
+    const rawElement = React.createElement('title', {
+      dangerouslySetInnerHTML: { __html: null } as unknown as { __html: string },
+    })
+
+    expect(() => renderToString(
+      <UnheadProvider value={head}>
+        <Head>{rawElement}</Head>
+      </UnheadProvider>,
+    )).not.toThrow()
+    expect(renderSSRHead(head).headTags).toBe('')
+  })
 
   it('rejects malformed dangerouslySetInnerHTML values', () => {
     const head = createHead({ disableDefaults: true })
