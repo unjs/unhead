@@ -25,7 +25,7 @@ afterEach(() => {
 })
 
 describe('precompiled React client profiles', () => {
-  it('keeps one CSR entry through StrictMode replay and disposes it on unmount', () => {
+  it('keeps one CSR entry through StrictMode replay and disposes it on unmount', async () => {
     document.title = 'Initial title'
     const head = createCsrHead()
 
@@ -43,10 +43,12 @@ describe('precompiled React client profiles', () => {
     )
 
     expect(head._e.size).toBe(1)
+    await Promise.resolve()
     expect(document.title).toBe('Profiled React')
 
     app.unmount()
     expect(head._e.size).toBe(0)
+    await Promise.resolve()
     expect(document.title).toBe('Initial title')
   })
 

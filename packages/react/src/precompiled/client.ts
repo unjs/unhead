@@ -2,9 +2,9 @@ import type { ReactNode } from 'react'
 import type { PrecompiledClientHead, PrecompiledClientInput } from 'unhead/precompiled/client'
 import type { UseHeadInput, UseSeoMetaInput } from 'unhead/types'
 import { createContext, createElement, useContext, useEffect, useRef } from 'react'
-import { createHead as createCoreHead } from 'unhead/precompiled/client'
+import { createHead as createCoreHead, pushBatched } from 'unhead/precompiled/client'
 
-export { renderDOMHead } from 'unhead/precompiled/client'
+export { finishHydration, renderDOMHead } from 'unhead/precompiled/client'
 
 export const UnheadContext = /* @__PURE__ */ createContext<PrecompiledClientHead | null>(null)
 
@@ -33,7 +33,7 @@ export function useHead(input: UseHeadInput, options: PrecompiledReactClientEntr
     throw new Error('useHead() was called without a precompiled React client provider.')
   const plan = input as unknown as PrecompiledClientInput
   useEffect(() => {
-    const entry = head.push(plan)
+    const entry = pushBatched(head, plan)
     return entry.dispose
   }, [head, plan])
 }

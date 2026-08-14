@@ -36,15 +36,17 @@ afterEach(() => {
 })
 
 describe('precompiled Vue client profiles', () => {
-  it('keeps the CSR runtime isolated from server-rendered nodes', () => {
+  it('keeps the CSR runtime isolated from server-rendered nodes', async () => {
     document.head.innerHTML = '<meta name="description" content="server">'
     const head = createCsrHead()
     const app = mountHead(head, useCsrHead, [[100, 'meta:description', 'meta', { name: 'description', content: 'client' }]])
 
+    await Promise.resolve()
     expect(document.head.querySelectorAll('meta')).toHaveLength(2)
     expect(document.head.querySelectorAll('meta')[1].getAttribute('content')).toBe('client')
 
     app.unmount()
+    await Promise.resolve()
     expect(document.head.querySelectorAll('meta')).toHaveLength(1)
     expect(document.head.querySelector('meta')?.getAttribute('content')).toBe('server')
   })

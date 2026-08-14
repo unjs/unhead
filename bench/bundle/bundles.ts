@@ -31,6 +31,8 @@ export const BUNDLES: BundleSpec[] = [
   { id: 'precompileClientDeferredAsync', name: 'Precompile Client Deferred (Async)', category: 'Experimental', file: 'precompile-client-runtime-deferred/chunks/client.mjs', comparison: 'precompile' },
   { id: 'precompileClientCsr', name: 'Precompile Client CSR', category: 'Experimental', file: 'precompile-client-runtime-csr/client/precompile-runtime.mjs', comparison: 'precompile' },
   { id: 'precompileClientSnapshot', name: 'Precompile Client Snapshot', category: 'Experimental', file: 'precompile-client-runtime-snapshot/client/precompile-snapshot.mjs', comparison: 'precompile' },
+  { id: 'precompileClientNone', name: 'Precompile Client None', category: 'Experimental', file: 'precompile-client-runtime-none/client/precompile-none.mjs', comparison: 'precompile' },
+  { id: 'precompileClientNoneControl', name: 'Precompile Client None Control', category: 'Experimental', file: 'precompile-client-runtime-none/client/precompile-none-control.mjs', comparison: 'precompile' },
   { id: 'precompileServerSnapshot', name: 'Precompile Server Snapshot', category: 'Experimental', file: 'precompile-runtime-snapshot/vue-server/precompile-snapshot.mjs', comparison: 'precompile' },
   { id: 'vueClient', name: 'Vue Client (Minimal)', category: 'Vue', file: 'vue-client/vue-client/minimal.mjs', required: true },
   { id: 'vueClientFull', name: 'Vue Client (Full)', category: 'Vue', file: 'vue-client-full/vue-client/full.mjs' },

@@ -54,9 +54,11 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const clientDeferredAsync = bundles.find(item => item.name === 'Precompile Client Deferred (Async)')
   const clientCsr = bundles.find(item => item.name === 'Precompile Client CSR')
   const clientSnapshot = bundles.find(item => item.name === 'Precompile Client Snapshot')
+  const clientNone = bundles.find(item => item.name === 'Precompile Client None')
+  const clientNoneControl = bundles.find(item => item.name === 'Precompile Client None Control')
   const serverSnapshot = bundles.find(item => item.name === 'Precompile Server Snapshot')
   const serverUnique = bundles.find(item => item.name === 'Precompile Server Unique')
-  if (!offBundle || !onBundle || !clientOffBundle || !clientOnBundle || !clientDeferredInitial || !clientDeferredAsync || !clientCsr || !clientSnapshot || !serverSnapshot || !serverUnique)
+  if (!offBundle || !onBundle || !clientOffBundle || !clientOnBundle || !clientDeferredInitial || !clientDeferredAsync || !clientCsr || !clientSnapshot || !clientNone || !clientNoneControl || !serverSnapshot || !serverUnique)
     throw new Error('Missing experimental precompile runtime or profile bundles.')
 
   const offCreate = bench(perf.off, 'precompile-static-create-cpu')
@@ -77,6 +79,15 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const clientOffAlloc = bench(perf.off, 'precompile-client-e2e-heap')
   const clientOnAlloc = bench(perf.on, 'precompile-client-e2e-heap')
   const clientAllocComparison = comparison(perf, 'precompile-client-e2e-heap')
+  const clientColdOffCpu = bench(perf.off, 'precompile-client-cold-adoption-cpu')
+  const clientColdOnCpu = bench(perf.on, 'precompile-client-cold-adoption-cpu')
+  const clientColdCpuComparison = comparison(perf, 'precompile-client-cold-adoption-cpu')
+  const clientColdOffHeap = bench(perf.off, 'precompile-client-cold-adoption-heap')
+  const clientColdOnHeap = bench(perf.on, 'precompile-client-cold-adoption-heap')
+  const clientColdHeapComparison = comparison(perf, 'precompile-client-cold-adoption-heap')
+  const serverUniqueCpu = comparison(perf, 'precompile-server-unique-e2e-cpu')
+  const serverSnapshotCpu = comparison(perf, 'precompile-server-snapshot-e2e-cpu')
+  const clientCsrCpu = comparison(perf, 'precompile-client-csr-e2e-cpu')
 
   const gzipDelta = onBundle.gzippedSize - offBundle.gzippedSize
   const cpuPct = cpuComparison.deltaPct
@@ -96,6 +107,9 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
   const clientAllocDelta = clientOnAlloc.value - clientOffAlloc.value
   const clientAllocPct = pct(clientOffAlloc.value, clientOnAlloc.value)
   const clientAllocMeaningful = Math.abs(clientAllocDelta) > 1024 && Math.abs(clientAllocPct) > 2
+  const clientColdCpuCi = clientColdCpuComparison.pairedCi95Pct || 0
+  const clientColdHeapPct = pct(clientColdOffHeap.value, clientColdOnHeap.value)
+  const clientColdHeapMeaningful = Math.abs(clientColdOnHeap.value - clientColdOffHeap.value) > 1024 && Math.abs(clientColdHeapPct) > 2
 
   const out = [
     '## 🧪 Experimental sealed precompile: client and server _(same commit)_',
@@ -112,6 +126,8 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
     `| Client benchmark bundle (gzip) | ${clientOffBundle.gzippedSize.toLocaleString()} B | ${clientOnBundle.gzippedSize.toLocaleString()} B | ${mark(clientGzipDelta)} ${clientGzipDelta > 0 ? '+' : ''}${clientGzipDelta} B (${signed(pct(clientOffBundle.gzippedSize, clientOnBundle.gzippedSize), '%')}) |`,
     `| Client mount + dispose (CPU) | ${duration(clientOffCpu.value)} | ${duration(clientOnCpu.value)} | ${mark(clientCpuComparison.deltaPct, clientCpuMeaningful)} ${signed(clientCpuComparison.deltaPct, '%')} ±${clientCpuCi.toFixed(1)} pp |`,
     `| Client transient heap / mount + dispose | ${(clientOffAlloc.value / 1024).toFixed(1)} KiB | ${(clientOnAlloc.value / 1024).toFixed(1)} KiB | ${mark(clientAllocDelta, clientAllocMeaningful)} ${clientAllocMeaningful ? `${signed(clientAllocPct, '%')} (95% upper ${signed(clientAllocComparison.pairedCi95UpperPct || 0, '%')})` : `${signed(clientAllocPct, '%')} (within noise gate)`} |`,
+    `| Cold SSR adoption (CPU) | ${duration(clientColdOffCpu.value)} | ${duration(clientColdOnCpu.value)} | ${mark(clientColdCpuComparison.deltaPct)} ${signed(clientColdCpuComparison.deltaPct, '%')} ±${clientColdCpuCi.toFixed(1)} pp |`,
+    `| Cold SSR adoption retained heap | ${(clientColdOffHeap.value / 1024).toFixed(1)} KiB | ${(clientColdOnHeap.value / 1024).toFixed(1)} KiB | ${mark(clientColdOnHeap.value - clientColdOffHeap.value, clientColdHeapMeaningful)} ${clientColdHeapMeaningful ? `${signed(clientColdHeapPct, '%')} (95% upper ${signed(clientColdHeapComparison.pairedCi95UpperPct || 0, '%')})` : `${signed(clientColdHeapPct, '%')} (within noise gate)`} |`,
     '',
     '<details><summary>Stricter profile bundle detail</summary>',
     '',
@@ -121,8 +137,19 @@ export function renderPrecompileReport(bundles: BundleData[], perf: PrecompilePe
     `| Server snapshot | ${serverSnapshot.size.toLocaleString()} B | ${serverSnapshot.gzippedSize.toLocaleString()} B | ${serverSnapshot.brotliSize.toLocaleString()} B | ${signed(pct(onBundle.gzippedSize, serverSnapshot.gzippedSize), '%')} gzip |`,
     `| Client CSR | ${clientCsr.size.toLocaleString()} B | ${clientCsr.gzippedSize.toLocaleString()} B | ${clientCsr.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientCsr.gzippedSize), '%')} gzip |`,
     `| Client snapshot | ${clientSnapshot.size.toLocaleString()} B | ${clientSnapshot.gzippedSize.toLocaleString()} B | ${clientSnapshot.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientSnapshot.gzippedSize), '%')} gzip |`,
+    `| Client none (MPA) | ${clientNone.size.toLocaleString()} B | ${clientNone.gzippedSize.toLocaleString()} B | ${clientNone.brotliSize.toLocaleString()} B | **${clientNone.size - clientNoneControl.size} B attributable head code** |`,
     `| Client deferred initial | ${clientDeferredInitial.size.toLocaleString()} B | ${clientDeferredInitial.gzippedSize.toLocaleString()} B | ${clientDeferredInitial.brotliSize.toLocaleString()} B | ${signed(pct(clientOnBundle.gzippedSize, clientDeferredInitial.gzippedSize), '%')} initial gzip |`,
     `| Client deferred async | ${clientDeferredAsync.size.toLocaleString()} B | ${clientDeferredAsync.gzippedSize.toLocaleString()} B | ${clientDeferredAsync.brotliSize.toLocaleString()} B | loaded after hydration starts |`,
+    '',
+    '</details>',
+    '',
+    '<details><summary>Strict profile CPU detail</summary>',
+    '',
+    '| Profile | CPU change from lifecycle runtime |',
+    '|---|---:|',
+    `| Server unique render | ${signed(serverUniqueCpu.deltaPct, '%')} ±${(serverUniqueCpu.pairedCi95Pct || 0).toFixed(1)} pp |`,
+    `| Server snapshot render | ${signed(serverSnapshotCpu.deltaPct, '%')} ±${(serverSnapshotCpu.pairedCi95Pct || 0).toFixed(1)} pp |`,
+    `| Client CSR mount + dispose | ${signed(clientCsrCpu.deltaPct, '%')} ±${(clientCsrCpu.pairedCi95Pct || 0).toFixed(1)} pp |`,
     '',
     '</details>',
     '',

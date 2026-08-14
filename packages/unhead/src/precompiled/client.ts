@@ -28,6 +28,8 @@ interface PrecompiledDomState {
 
 export interface PrecompiledClientHead {
   /** @internal */
+  _a?: 1
+  /** @internal */
   _c: number
   /** @internal */
   _e: Map<number, PrecompiledClientInput>
@@ -37,6 +39,38 @@ export interface PrecompiledClientHead {
   _u?: 1
   push: (input: PrecompiledClientInput) => PrecompiledClientEntry
   render: () => boolean
+}
+
+interface BatchableClientHead<T extends PrecompiledClientEntry = PrecompiledClientEntry> {
+  /** @internal */
+  _q?: 1
+  push: (input: PrecompiledClientInput, batch?: 0) => T
+  render: () => boolean
+}
+
+type BatchDispose = (batch?: 0) => boolean
+
+/** Schedule one render shared by every framework mutation in this microtask. @internal */
+export function scheduleRender(head: BatchableClientHead): void {
+  if (!head._q) {
+    head._q = 1
+    queueMicrotask(() => {
+      head._q = undefined
+      head.render()
+    })
+  }
+}
+
+/** Register a framework-owned plan without rendering until the microtask flush. @internal */
+export function pushBatched<T extends PrecompiledClientEntry>(head: BatchableClientHead<T>, input: PrecompiledClientInput): T {
+  const entry = head.push(input, 0)
+  const dispose = entry.dispose as unknown as BatchDispose
+  entry.dispose = () => {
+    if (dispose(0))
+      scheduleRender(head)
+  }
+  scheduleRender(head)
+  return entry
 }
 
 function identity(el: Element): string | undefined {
@@ -126,16 +160,19 @@ function render(head: PrecompiledClientHead): boolean {
     head._s = undefined
   }
   if (!state) {
-    const adopted = new Map<string, Element[]>()
-    for (const el of document.querySelectorAll('head>*,body>*')) {
-      const key = identity(el)
-      if (!key || key === 'title')
-        continue
-      const existing = adopted.get(key)
-      if (existing)
-        existing.push(el)
-      else
-        adopted.set(key, [el])
+    let adopted: Map<string, Element[]> | undefined
+    if (!head._a) {
+      adopted = new Map()
+      for (const el of document.querySelectorAll('head>*,body>*')) {
+        const key = identity(el)
+        if (!key || key === 'title')
+          continue
+        const existing = adopted.get(key)
+        if (existing)
+          existing.push(el)
+        else
+          adopted.set(key, [el])
+      }
     }
     state = { adopted, document, elements: new Map(), tags: new Map(), title: document.title }
     head._s = state
@@ -259,11 +296,26 @@ function push(head: PrecompiledClientHead, input: PrecompiledClientInput, should
   if (shouldRender)
     head.render()
   return {
-    dispose() {
-      if (head._e.delete(id))
-        head.render()
+    dispose(batch?: 0) {
+      if (head._e.delete(id)) {
+        if (batch !== 0)
+          head.render()
+        return true
+      }
+      return false
     },
   }
+}
+
+/**
+ * Close the SSR adoption window and release references to unmatched SSR nodes.
+ * Later plans are treated as client-created navigation entries.
+ * @experimental
+ */
+export function finishHydration(head: PrecompiledClientHead): void {
+  head._a = 1
+  if (head._s)
+    head._s.adopted = undefined
 }
 
 /** Create a capability-limited client head for build-finalized entries. @experimental */

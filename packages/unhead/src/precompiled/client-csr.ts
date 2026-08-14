@@ -162,12 +162,19 @@ function push(head: PrecompiledCsrClientHead, input: PrecompiledClientInput, sho
   if (shouldRender)
     head.render()
   return {
-    dispose() {
-      if (head._e.delete(id))
-        head.render()
+    dispose(batch?: 0) {
+      if (head._e.delete(id)) {
+        if (batch !== 0)
+          head.render()
+        return true
+      }
+      return false
     },
   }
 }
+
+/** Keep the client profile API uniform; CSR has no SSR adoption state. @experimental */
+export function finishHydration(_head: PrecompiledCsrClientHead): void {}
 
 /** Create a SPA-only client head that never scans or adopts initial DOM nodes. @experimental */
 export function createHead(): PrecompiledCsrClientHead {

@@ -784,6 +784,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           && shouldTransformId(seoMetaOpts, id)
           && SEO_META_RE.test(code)
         const precompileConsumer = resolveBuildConsumer(this, fallbackConsumer)
+        const stripClientHead = precompileConsumer === 'client' && precompileOpts?.client === 'none'
         const runPrecompile = !!precompileOpts
           && shouldTransformPrecompileId(precompileOpts, id)
           && (PRECOMPILE_RE.test(code) || STRICT_PRECOMPILE_SOURCE_RE.test(code))
@@ -1261,13 +1262,36 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             && node.exportKind !== 'type'
             && (!node.specifiers.length || node.specifiers.some((specifier: any) => specifier.exportKind !== 'type')))
           if (staticModule && strictSource?.profile) {
-            const selected = strictSource.profile === 'snapshot'
-              ? precompileOpts?.mode === 'snapshot'
-              : strictSource.profile === 'unique'
-                ? precompileOpts?.duplicates === 'error'
-                : precompileOpts?.client === strictSource.profile
+            const selected = stripClientHead
+              ? false
+              : strictSource.profile === 'snapshot'
+                ? precompileOpts?.mode === 'snapshot'
+                : strictSource.profile === 'unique'
+                  ? precompileOpts?.duplicates === 'error'
+                  : precompileOpts?.client === strictSource.profile
             if (!selected)
               precompileFailure(node, `the ${strictSource.profile} entry requires the matching precompile option`)
+          }
+          if (stripClientHead && strictSource) {
+            if (node.type === 'ImportDeclaration' && node.importKind !== 'type') {
+              for (const specifier of node.specifiers) {
+                if (specifier.importKind === 'type')
+                  continue
+                const imported = specifier.type === 'ImportSpecifier'
+                  ? getModuleExportName(specifier.imported)
+                  : undefined
+                if (imported === 'createHead')
+                  precompileFailure(specifier, 'client:none does not create a client head; remove client head installation and providers')
+                if (specifier.type !== 'ImportSpecifier' || (imported !== 'useHead' && imported !== 'useSeoMeta'))
+                  precompileFailure(specifier, 'client:none only accepts direct useHead/useSeoMeta imports; client head capabilities are unavailable')
+              }
+              if (!node.specifiers.length)
+                precompileFailure(node, 'client:none does not allow runtime side-effect imports from precompiled entries')
+            }
+            if ((node.type === 'ExportNamedDeclaration' && staticModule)
+              || (node.type === 'ExportAllDeclaration' && node.exportKind !== 'type')) {
+              precompileFailure(node, 'client:none does not allow runtime re-exports from precompiled entries')
+            }
           }
           if (staticModule
             && precompileConsumer === 'server'
@@ -1281,6 +1305,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             precompileFailure(node, 'resolveTags and namespace imports are unavailable when server identities are removed')
           }
           if (staticModule && strictSource && precompileOpts?.mode === 'snapshot') {
+            if (stripClientHead)
+              return
             if (strictSource.framework)
               precompileFailure(node, 'snapshot mode does not support framework lifecycle adapters')
             if (precompileConsumer === 'client' && precompileOpts.client && precompileOpts.client !== 'eager')
@@ -1321,6 +1347,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             && precompileConsumer
             && strictSource?.framework
             && !strictSource.consumer) {
+            if (stripClientHead)
+              return
             edits.push({
               start: node.source.start,
               end: node.source.end,
@@ -1371,8 +1399,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           if (resolved.consumer && resolved.consumer !== precompileConsumer) {
             precompileFailure(node, `the sealed ${resolved.consumer} entry cannot be used in a ${precompileConsumer} build`)
           }
-          if (precompileOpts?.duplicates === 'error' && resolved.framework)
-            precompileFailure(node, 'unique identity mode is not available through framework adapters')
+          if (precompileOpts?.duplicates === 'error' && resolved.framework) {
+            if (!stripClientHead)
+              precompileFailure(node, 'unique identity mode is not available through framework adapters')
+          }
           if (precompileConsumer === 'client'
             && precompileOpts?.duplicates === 'error'
             && (precompileOpts.client === 'csr' || precompileOpts.client === 'deferred')) {
@@ -1380,6 +1410,8 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           }
 
           if (resolved.kind === 'createHead') {
+            if (stripClientHead)
+              precompileFailure(node, 'client:none does not create a client head; remove client head installation and providers')
             if (resolved.framework) {
               if (precompileConsumer === 'client' && node.arguments.length)
                 precompileFailure(node, 'sealed framework createHead does not accept options')
@@ -1459,7 +1491,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
             return true
           }
 
-          if ((resolved.framework || precompileConsumer === 'server' || precompileOpts?.mode === 'snapshot') && parent?.type !== 'ExpressionStatement')
+          if ((stripClientHead || resolved.framework || precompileConsumer === 'server' || precompileOpts?.mode === 'snapshot') && parent?.type !== 'ExpressionStatement')
             precompileFailure(node, 'the return value cannot be observed; entry patch/dispose handles are not supported')
 
           const options = node.arguments[1]
@@ -1515,6 +1547,14 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               reason => precompileFailure(arg, reason),
             ),
           })
+          if (stripClientHead) {
+            edits.push({
+              start: parent.start,
+              end: parent.end,
+              content: null,
+              phase: 'precompile',
+            })
+          }
           precompiledRanges.push([node.start, node.end])
           return true
         }
@@ -1598,7 +1638,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         const defaultPlanName = `${precompilePrefix}_defaults`
         let compiledPlans = await Promise.all(pendingPrecompilations.map(pending => pending.source))
 
-        if (precompileOpts?.duplicates === 'error') {
+        if (precompileOpts?.duplicates === 'error' && !stripClientHead) {
           const moduleIdentities = new Map<string, string>()
           const locate = (start: number) => {
             const preceding = code.slice(0, start)
@@ -1647,7 +1687,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         }
 
         let snapshotDeclaration: string | undefined
-        if (precompileOpts?.mode === 'snapshot' && (pendingHeadCreations.length || pendingPrecompilations.length)) {
+        if (!stripClientHead && precompileOpts?.mode === 'snapshot' && (pendingHeadCreations.length || pendingPrecompilations.length)) {
           const creation = pendingHeadCreations[0]
           const failureNode = creation || pendingPrecompilations[0] || ast.program
           if (pendingHeadCreations.length !== 1)
@@ -1742,7 +1782,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           }
           compiledPlans = []
         }
-        else {
+        else if (!stripClientHead) {
           for (const pending of pendingHeadCreations) {
             edits.push({
               start: pending.start,
@@ -1840,7 +1880,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
         const s = new MagicString(code)
         applyEdits(s, edits, id)
-        if (snapshotDeclaration || pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)) {
+        if (snapshotDeclaration || (!stripClientHead && (pendingPrecompilations.length || pendingHeadCreations.some(pending => !pending.disableDefaults)))) {
           const directives = ast.program.body.filter((node: any) => node.type === 'ExpressionStatement' && node.directive)
           const directiveEnd = directives.at(-1)?.end
           const importOffset = directiveEnd ?? (code.startsWith('#!') ? code.indexOf('\n') + 1 : 0)

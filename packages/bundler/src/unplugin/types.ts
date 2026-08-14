@@ -19,10 +19,12 @@ export interface PrecompileOptions extends BaseTransformerTypes {
   /**
    * Load the sealed client DOM runtime in a separate async chunk and replay
    * queued plans after it resolves. Use `csr` for SPA-only pages because they
-   * do not have an SSR head to preserve before the chunk loads.
+   * do not have an SSR head to preserve before the chunk loads. Use `none`
+   * only for MPA/SSG/SSR pages whose head never changes without a full
+   * document navigation; validated client declarations are erased entirely.
    * @default 'eager'
    */
-  client?: 'csr' | 'deferred' | 'eager'
+  client?: 'csr' | 'deferred' | 'eager' | 'none'
   /**
    * Reject duplicate tag identities across every transformed module and let
    * the sealed runtimes skip winner maps. This is intentionally stricter than

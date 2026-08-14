@@ -15,7 +15,9 @@ export interface DeferredPrecompiledClientEntry extends PrecompiledClientEntry {
 
 export interface DeferredPrecompiledClientHead {
   /** Resolves after the full client runtime has loaded and active plans have replayed. */
-  ready: Promise<void>
+  readonly ready: Promise<void>
+  /** Load the full client runtime immediately and replay active queued plans. */
+  load: () => Promise<void>
   push: (input: PrecompiledClientInput) => DeferredPrecompiledClientEntry
   render: () => boolean
 }
@@ -31,6 +33,9 @@ export interface DeferredPrecompiledClientHead {
 export function createHead(): DeferredPrecompiledClientHead {
   let pending: DeferredRecord[] | undefined = []
   let runtime: PrecompiledClientHead | undefined
+  let loading: Promise<void> | undefined
+  let cancelScheduled: (() => void) | undefined
+  let initialBurst = 0
   const pushRuntimeMany = (batch: DeferredRecord[]) => {
     const runtimePush = runtime!.push as (input: PrecompiledClientInput, batch?: 0) => PrecompiledClientEntry
     for (let i = 0; i < batch.length; i++) {
@@ -67,6 +72,39 @@ export function createHead(): DeferredPrecompiledClientHead {
     }
   }
 
+  const load = (): Promise<void> => {
+    if (!loading) {
+      cancelScheduled?.()
+      cancelScheduled = undefined
+      loading = import('./client').then((module) => {
+        runtime = module.createHead()
+        pushRuntimeMany(pending!)
+        pending = undefined
+      })
+    }
+    return loading
+  }
+
+  const schedule = () => {
+    const run = () => {
+      cancelScheduled = undefined
+      void load()
+    }
+    if (typeof globalThis.requestIdleCallback === 'function') {
+      const id = globalThis.requestIdleCallback(run, { timeout: 2000 })
+      cancelScheduled = () => globalThis.cancelIdleCallback?.(id)
+    }
+    else {
+      const id = setTimeout(run)
+      cancelScheduled = () => clearTimeout(id)
+    }
+  }
+
+  const demand = () => {
+    if (initialBurst === 2)
+      void load()
+  }
+
   const entry = (record: DeferredRecord): DeferredPrecompiledClientEntry => ({
     _setActive(active) {
       if (!record.disposed && record.active !== active) {
@@ -75,6 +113,9 @@ export function createHead(): DeferredPrecompiledClientHead {
           runtime._e.set(record.runtimeId, active ? record.input : [])
           runtime.render()
         }
+        else {
+          demand()
+        }
       }
     },
     dispose() {
@@ -82,16 +123,17 @@ export function createHead(): DeferredPrecompiledClientHead {
         record.disposed = true
         if (runtime && record.runtimeId !== undefined && runtime._e.delete(record.runtimeId))
           runtime.render()
+        else
+          demand()
       }
     },
   })
 
   const head: DeferredPrecompiledClientHead = {
-    ready: import('./client').then((module) => {
-      runtime = module.createHead()
-      pushRuntimeMany(pending!)
-      pending = undefined
-    }),
+    get ready() {
+      return load()
+    },
+    load,
     push(input) {
       const record: DeferredRecord = { active: true, input }
       pending?.push(record)
@@ -99,9 +141,26 @@ export function createHead(): DeferredPrecompiledClientHead {
         runtime.push(input)
         record.runtimeId = runtime._c
       }
+      else if (!initialBurst) {
+        initialBurst = 1
+        if (!loading)
+          schedule()
+        queueMicrotask(() => {
+          initialBurst = 2
+        })
+      }
+      else {
+        demand()
+      }
       return entry(record)
     },
-    render: () => runtime?.render() || false,
+    render() {
+      if (!runtime) {
+        void load()
+        return false
+      }
+      return runtime.render()
+    },
   }
   return head
 }

@@ -1,11 +1,11 @@
 import type { PrecompiledClientEntry, PrecompiledClientHead, PrecompiledClientInput } from 'unhead/precompiled/client'
 import type { Plugin } from 'vue'
 import type { UseHeadInput, UseSeoMetaInput } from '../types'
-import { createHead as createClientHead, renderDOMHead } from 'unhead/precompiled/client'
+import { createHead as createClientHead, finishHydration, pushBatched, renderDOMHead, scheduleRender } from 'unhead/precompiled/client'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated } from 'vue'
 import { injectHead, vueInstall } from '../install'
 
-export { renderDOMHead }
+export { finishHydration, renderDOMHead }
 
 export type VuePrecompiledClientHead = PrecompiledClientHead & Plugin
 
@@ -24,14 +24,14 @@ export function useHead(input: UseHeadInput, options: { head?: VuePrecompiledCli
 
   const head = options.head || injectHead() as unknown as VuePrecompiledClientHead
   const plan = input as unknown as PrecompiledClientInput
-  const entry = head.push(plan)
+  const entry = pushBatched(head, plan)
   const id = head._c
   if (getCurrentInstance()) {
     onBeforeUnmount(() => entry.dispose())
     const setActive = (active: boolean) => {
       if (head._e.has(id)) {
         head._e.set(id, active ? plan : [])
-        head.render()
+        scheduleRender(head)
       }
     }
     onDeactivated(() => setActive(false))

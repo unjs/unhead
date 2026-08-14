@@ -1,13 +1,60 @@
 import type { PrecompiledClientInput } from '../../src/precompiled/client'
 import { JSDOM } from 'jsdom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createHead } from '../../src/precompiled/client'
+import { createHead, finishHydration, pushBatched } from '../../src/precompiled/client'
 
 afterEach(() => {
   vi.unstubAllGlobals()
 })
 
 describe('precompiled client runtime', () => {
+  it('coalesces framework registrations and disposals without changing direct push timing', async () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    const render = vi.spyOn(head, 'render')
+    const direct = head.push([[100, 'title', 'title', {}, 'Direct']])
+
+    expect(document.title).toBe('Direct')
+    expect(render).toHaveBeenCalledTimes(1)
+
+    const first = pushBatched(head, [[100, 'meta:first', 'meta', { name: 'first', content: 'one' }]])
+    const second = pushBatched(head, [[100, 'meta:second', 'meta', { name: 'second', content: 'two' }]])
+    expect(document.head.querySelectorAll('meta')).toHaveLength(0)
+
+    await Promise.resolve()
+    expect(render).toHaveBeenCalledTimes(2)
+    expect(document.head.querySelectorAll('meta')).toHaveLength(2)
+
+    first.dispose()
+    second.dispose()
+    expect(document.head.querySelectorAll('meta')).toHaveLength(2)
+
+    await Promise.resolve()
+    expect(render).toHaveBeenCalledTimes(3)
+    expect(document.head.querySelectorAll('meta')).toHaveLength(0)
+    direct.dispose()
+  })
+
+  it('releases unmatched SSR adoption references only when hydration is explicitly finished', () => {
+    const dom = new JSDOM('<!doctype html><html><head><meta charset="utf-8"><meta name="description" content="server"></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const existing = document.head.querySelector('meta[name="description"]')
+    const head = createHead()
+
+    head.push([[100, 'title', 'title', {}, 'Hydrated']])
+    expect(head._s?.adopted?.size).toBe(2)
+
+    finishHydration(head)
+    expect(head._s?.adopted).toBeUndefined()
+
+    head.push([[100, 'meta:description', 'meta', { name: 'description', content: 'client' }]])
+    const descriptions = document.head.querySelectorAll('meta[name="description"]')
+    expect(descriptions).toHaveLength(2)
+    expect(descriptions[0]).toBe(existing)
+    expect(descriptions[1].getAttribute('content')).toBe('client')
+  })
+
   it('registers a batch with one render and returns independently disposable entries', () => {
     const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
     vi.stubGlobal('document', dom.window.document)

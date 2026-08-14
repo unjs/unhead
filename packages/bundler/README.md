@@ -60,7 +60,7 @@ interface UnpluginOptions {
   experimental?: {
     precompile?: boolean | {
       consumer?: 'client' | 'server'
-      client?: 'eager' | 'csr' | 'deferred'
+      client?: 'eager' | 'csr' | 'deferred' | 'none'
       duplicates?: 'runtime' | 'error'
       mode?: 'runtime' | 'snapshot'
     }
@@ -129,10 +129,11 @@ Client profiles are selected in the build config:
 - `client: 'eager'` adopts SSR elements and is the default.
 - `client: 'csr'` is smaller for SPA-only pages because it never scans or adopts initial DOM nodes.
 - `client: 'deferred'` starts loading the DOM runtime immediately in an async chunk, keeps the SSR head authoritative meanwhile, queues pushes, and replays them when the chunk resolves. It reduces the initial chunk rather than total transfer; do not use it on pages without an SSR head.
+- `client: 'none'` validates and erases client head declarations entirely. It is only for MPA/SSG/SSR pages where every head-changing navigation replaces the whole document; client head creation, providers, renderers, contexts, and entry handles are rejected.
 - `mode: 'snapshot'` finalizes one non-escaping core head at build time and removes lifecycle/disposal.
 - `duplicates: 'error'` rejects duplicate identities across transformed modules, including lazy chunks. The core server then emits identity-free plans and cannot expose `resolveTags()`; the eager core client skips its winner map. This profile is rejected by framework, CSR, and deferred adapters.
 
-Vue, React, Solid, and Svelte expose neutral `/precompiled` imports. The bundler rewrites them to the matching server, eager client, CSR client, or deferred client adapter while retaining framework setup and cleanup.
+Vue, React, Solid, and Svelte expose neutral `/precompiled` imports. The bundler rewrites them to the matching server, eager client, CSR client, or deferred client adapter while retaining framework setup and cleanup. In `client: 'none'`, validated client declarations are erased instead and no framework client adapter is loaded.
 
 The build fails with a file and line number for dynamic values, spreads, getters, computed keys, patches, entry options other than `{ head }`, title templates, explicit tag keys, class/style attributes, invalid tag positions, `templateParams`, `processTemplateParams`, custom duplicate strategies, or repeated arrayable identities. Server and framework entry handles cannot be observed; core lifecycle client entries expose `dispose()` only. The sealed heads do not expose hooks, plugins, custom weights/resolvers, raw `init`, or streaming replay.
 

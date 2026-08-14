@@ -102,6 +102,23 @@ function clientSnapshot(runtime) {
   return snapshot
 }
 
+const serverPayload = on.renderStaticHead()
+const ssrDocument = () => new JSDOM(`<!doctype html><html${serverPayload.htmlAttrs}><head>${serverPayload.headTags}</head><body${serverPayload.bodyAttrs}>${serverPayload.bodyTagsOpen}<main></main>${serverPayload.bodyTags}</body></html>`)
+
+function clientColdMount(runtime, dom) {
+  useDocument(dom)
+  const scripts = [...document.querySelectorAll('script')]
+  const mounted = runtime.mountStaticHead()
+  for (const script of scripts) {
+    if (!script.isConnected)
+      throw new Error('Cold SSR adoption replayed or replaced an existing script.')
+  }
+  return {
+    mounted,
+    value: document.head.children.length + document.body.children.length + document.documentElement.attributes.length,
+  }
+}
+
 if (JSON.stringify(clientSnapshot(clientOff)) !== JSON.stringify(clientSnapshot(clientOn)))
   throw new Error('Experimental client precompile DOM output did not match the disabled mode.')
 if (JSON.stringify(clientSnapshot(clientCsr)) !== JSON.stringify(clientSnapshot(clientOn)))
@@ -204,6 +221,31 @@ function measureCpu(id, name, offFn, onFn, consume, { warmup = 150, reps = 28, m
   }
 }
 
+// Preparing a realistic SSR document is deliberately outside the timed region.
+// This measures the cold adoption pass itself instead of JSDOM's HTML parser.
+function measurePreparedCpu(id, name, offFn, onFn, consume, { warmup = 4, reps = 20, runs = 6 } = {}) {
+  for (let i = 0; i < warmup; i++) {
+    benchmarkSink = (benchmarkSink + consume(offFn(ssrDocument())) + consume(onFn(ssrDocument()))) | 0
+  }
+  const samples = { off: [], on: [] }
+  for (let rep = 0; rep < reps; rep++) {
+    const order = rep % 2 ? [['on', onFn], ['off', offFn]] : [['off', offFn], ['on', onFn]]
+    for (const [mode, fn] of order) {
+      const documents = Array.from({ length: runs }, ssrDocument)
+      forceGC()
+      const before = process.hrtime.bigint()
+      for (const document of documents)
+        benchmarkSink = (benchmarkSink + consume(fn(document))) | 0
+      samples[mode].push(Number(process.hrtime.bigint() - before) / 1e6 / runs)
+    }
+  }
+  return {
+    comparison: { id, ...pairedComparison(samples.off, samples.on) },
+    off: { id, name, kind: 'time', iterationsPerSample: runs, ...stats(samples.off) },
+    on: { id, name, kind: 'time', iterationsPerSample: runs, ...stats(samples.on) },
+  }
+}
+
 function measureHeapGrowth(id, name, offFn, onFn, consume, { warmup = 100, reps = 25, runs = 10 } = {}) {
   for (let i = 0; i < warmup; i++) {
     benchmarkSink = (benchmarkSink + consume(offFn()) + consume(onFn())) | 0
@@ -239,22 +281,95 @@ function measureHeapGrowth(id, name, offFn, onFn, consume, { warmup = 100, reps 
   }
 }
 
+function measurePreparedHeapGrowth(id, name, offFn, onFn, consume, { warmup = 3, reps = 16, runs = 3 } = {}) {
+  for (let i = 0; i < warmup; i++) {
+    benchmarkSink = (benchmarkSink + consume(offFn(ssrDocument())) + consume(onFn(ssrDocument()))) | 0
+  }
+  const samples = { off: [], on: [] }
+  const measure = (fn) => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const documents = Array.from({ length: runs }, ssrDocument)
+      forceGC()
+      const before = process.memoryUsage().heapUsed
+      const retained = documents.map(fn)
+      forceGC()
+      const value = (process.memoryUsage().heapUsed - before) / runs
+      for (const result of retained)
+        benchmarkSink = (benchmarkSink + consume(result)) | 0
+      if (value >= 0)
+        return value
+    }
+    throw new Error('A GC interrupted every cold SSR-adoption heap sample.')
+  }
+  for (let rep = 0; rep < reps; rep++) {
+    const order = rep % 2 ? [['on', onFn], ['off', offFn]] : [['off', offFn], ['on', onFn]]
+    for (const [mode, fn] of order)
+      samples[mode].push(measure(fn))
+  }
+  const offValue = median(samples.off)
+  const onValue = median(samples.on)
+  return {
+    comparison: {
+      id,
+      deltaPct: ((onValue - offValue) / offValue) * 100,
+      ...pairedMedianInterval(samples.off, samples.on),
+    },
+    off: { id, name, kind: 'alloc', value: offValue },
+    on: { id, name, kind: 'alloc', value: onValue },
+  }
+}
+
+const clientCsrDoms = {
+  eager: new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>'),
+  profile: new JSDOM('<!doctype html><html><head></head><body><main></main></body></html>'),
+}
+const clientCsrProfile = measureCpu(
+  'precompile-client-csr-e2e-cpu',
+  'Client CSR mount + dispose (CPU)',
+  () => clientCycle(clientOn, clientCsrDoms.eager),
+  () => clientCycle(clientCsr, clientCsrDoms.profile),
+  value => value,
+  { warmup: 20, minRuns: 20 },
+)
+const serverUniqueProfile = measureCpu('precompile-server-unique-e2e-cpu', 'Server unique render (CPU)', on.renderStaticHead, serverUnique.renderStaticHead, consumeRender)
+const serverSnapshotProfile = measureCpu('precompile-server-snapshot-e2e-cpu', 'Server snapshot render (CPU)', on.renderStaticHead, serverSnapshot.renderStaticHead, consumeRender)
+const clientColdProfile = measurePreparedCpu(
+  'precompile-client-cold-adoption-cpu',
+  'Cold SSR adoption (CPU)',
+  dom => clientColdMount(clientOff, dom),
+  dom => clientColdMount(clientOn, dom),
+  result => result.value,
+)
+
 const stages = [
   measureCpu('precompile-static-create-cpu', 'Static SSR create (CPU)', off.createStaticHead, on.createStaticHead, consumeCreate, { minRuns: 300 }),
   measureCpu('precompile-static-resolve-cpu', 'Static SSR create + resolve (CPU)', off.resolveStaticHead, on.resolveStaticHead, consumeResolve),
   measureCpu('precompile-static-e2e-cpu', 'Static SSR create + render (CPU)', off.renderStaticHead, on.renderStaticHead, consumeRender),
   measureCpu('precompile-client-e2e-cpu', 'Static client mount + dispose (CPU)', clientOffCycle, clientOnCycle, value => value, { warmup: 20, minRuns: 20 }),
+  clientColdProfile,
 ]
 const heaps = [
   measureHeapGrowth('precompile-static-e2e-heap', 'Static SSR transient heap growth / render', off.renderStaticHead, on.renderStaticHead, consumeRender),
   measureHeapGrowth('precompile-client-e2e-heap', 'Static client transient heap growth / mount + dispose', clientOffCycle, clientOnCycle, value => value, { warmup: 20, reps: 20, runs: 3 }),
+  measurePreparedHeapGrowth(
+    'precompile-client-cold-adoption-heap',
+    'Cold SSR adoption retained heap',
+    dom => clientColdMount(clientOff, dom),
+    dom => clientColdMount(clientOn, dom),
+    result => result.value,
+  ),
 ]
+
+const profileStages = [serverUniqueProfile, serverSnapshotProfile, clientCsrProfile]
 
 console.log(JSON.stringify({
   schemaVersion: 1,
   fixture: 'static-product-page',
   benchmarkSink,
-  comparisons: [...stages.map(stage => stage.comparison), ...heaps.map(heap => heap.comparison)],
+  comparisons: [...stages.map(stage => stage.comparison), ...heaps.map(heap => heap.comparison), ...profileStages.map(stage => stage.comparison)],
   off: { benches: [...stages.map(stage => stage.off), ...heaps.map(heap => heap.off)] },
   on: { benches: [...stages.map(stage => stage.on), ...heaps.map(heap => heap.on)] },
+  profiles: {
+    benches: profileStages.flatMap(stage => [stage.off, stage.on]),
+  },
 }))

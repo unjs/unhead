@@ -111,6 +111,109 @@ describe('sealed static precompile transform', () => {
     expect(deferred).toContain('head.push(__unhead_precompiled_plan_0)')
   })
 
+  it('validates then erases unobserved client declarations in client:none', async () => {
+    const code = await transform([
+      'import { useHead, useSeoMeta } from \'unhead/precompiled/client\'',
+      'useHead({ title: \'erased title\' }, { head })',
+      'useSeoMeta({ description: \'erased description\' }, { head })',
+      'export const marker = \'client-none\'',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    }, { environment: { config: { consumer: 'client' } } })
+
+    expect(code).toContain('export const marker = \'client-none\'')
+    expect(code).toContain('from \'unhead/precompiled/client\'')
+    expect(code).not.toContain('erased title')
+    expect(code).not.toContain('erased description')
+    expect(code).not.toContain('__unhead_precompiled_plan_')
+    expect(code).not.toContain('.push(')
+  })
+
+  it.each(['vue', 'react', 'solid-js', 'svelte'])('erases the %s client adapter without selecting a runtime entry', async (framework) => {
+    const options = framework === 'solid-js' || framework === 'svelte' ? ', { head }' : ''
+    const code = await transform([
+      `import { useHead } from '@unhead/${framework}/precompiled'`,
+      `useHead({ title: 'erased framework' }${options})`,
+      'export const marker = true',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    }, { environment: { config: { consumer: 'client' } } })
+
+    expect(code).toContain(`from '@unhead/${framework}/precompiled'`)
+    expect(code).not.toContain('/precompiled/client')
+    expect(code).not.toContain('erased framework')
+    expect(code).not.toContain('__unhead_precompiled_plan_')
+  })
+
+  it('keeps client:none validation fail-loud', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'useHead({ title: getTitle() }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/dynamic or unsupported value/)
+
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/client\'',
+      'const entry = useHead({ title: \'observed\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/return value cannot be observed/)
+  })
+
+  it('rejects client head creation and capability imports in client:none', async () => {
+    const context = { environment: { config: { consumer: 'client' } } }
+    const options = { seoMeta: false, precompile: { client: 'none' } }
+    await expect(transform([
+      'import { createHead } from \'unhead/precompiled/client\'',
+      'const head = createHead()',
+    ].join('\n'), options, context))
+      .rejects
+      .toThrow(/client:none does not create a client head/)
+    await expect(transform('import { renderDOMHead } from \'unhead/precompiled/client\'', options, context))
+      .rejects
+      .toThrow(/client head capabilities are unavailable/)
+    await expect(transform('import { UnheadProvider } from \'@unhead/react/precompiled\'', options, context))
+      .rejects
+      .toThrow(/client head capabilities are unavailable/)
+    await expect(transform('import * as head from \'unhead/precompiled/client\'', options, context))
+      .rejects
+      .toThrow(/client head capabilities are unavailable/)
+    await expect(transform('export { renderDOMHead } from \'unhead/precompiled/client\'', options, context))
+      .rejects
+      .toThrow(/does not allow runtime re-exports/)
+  })
+
+  it('preserves the server transform when client:none is configured', async () => {
+    const code = await transform(strictCall({ title: 'server remains' }), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    })
+    expect(code).toContain('from \'unhead/precompiled/server\'')
+    expect(code).toContain('__unhead_precompiled_plan_0')
+    expect(code).toContain('head._p.push(__unhead_precompiled_plan_0)')
+  })
+
+  it('rejects concrete client runtime profiles when client:none is selected', async () => {
+    await expect(transform([
+      'import { useHead } from \'unhead/precompiled/client-csr\'',
+      'useHead({ title: \'mismatch\' }, { head })',
+    ].join('\n'), {
+      seoMeta: false,
+      precompile: { client: 'none' },
+    }, { environment: { config: { consumer: 'client' } } }))
+      .rejects
+      .toThrow(/csr entry requires the matching precompile option/)
+  })
+
   it('uses sanitized inline content as the client adoption identity', async () => {
     const code = await transform(strictClientCall({
       script: [{ type: 'application/ld+json', innerHTML: { value: '</script><unsafe>' } }],

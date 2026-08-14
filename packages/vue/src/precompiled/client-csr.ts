@@ -2,11 +2,12 @@ import type { PrecompiledClientEntry, PrecompiledClientInput } from 'unhead/prec
 import type { PrecompiledCsrClientHead } from 'unhead/precompiled/client-csr'
 import type { Plugin } from 'vue'
 import type { UseHeadInput, UseSeoMetaInput } from '../types'
-import { createHead as createClientHead, renderDOMHead } from 'unhead/precompiled/client-csr'
+import { pushBatched, scheduleRender } from 'unhead/precompiled/client'
+import { createHead as createClientHead, finishHydration, renderDOMHead } from 'unhead/precompiled/client-csr'
 import { getCurrentInstance, getCurrentScope, onActivated, onBeforeUnmount, onDeactivated } from 'vue'
 import { injectHead, vueInstall } from '../install'
 
-export { renderDOMHead }
+export { finishHydration, renderDOMHead }
 
 export type VuePrecompiledCsrClientHead = PrecompiledCsrClientHead & Plugin
 
@@ -25,14 +26,14 @@ export function useHead(input: UseHeadInput, options: { head?: VuePrecompiledCsr
 
   const head = options.head || injectHead() as unknown as VuePrecompiledCsrClientHead
   const plan = input as unknown as PrecompiledClientInput
-  const entry = head.push(plan)
+  const entry = pushBatched(head, plan)
   const id = head._c
   if (getCurrentInstance()) {
     onBeforeUnmount(() => entry.dispose())
     const setActive = (active: boolean) => {
       if (head._e.has(id)) {
         head._e.set(id, active ? plan : [])
-        head.render()
+        scheduleRender(head)
       }
     }
     onDeactivated(() => setActive(false))

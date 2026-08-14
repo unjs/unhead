@@ -1,13 +1,33 @@
 import type { PrecompiledClientInput } from '../../src/precompiled/client'
 import { JSDOM } from 'jsdom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createHead } from '../../src/precompiled/client-csr'
+import { pushBatched } from '../../src/precompiled/client'
+import { createHead, finishHydration } from '../../src/precompiled/client-csr'
 
 afterEach(() => {
   vi.unstubAllGlobals()
 })
 
 describe('precompiled CSR client runtime', () => {
+  it('coalesces framework registrations while direct pushes stay synchronous', async () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    const render = vi.spyOn(head, 'render')
+
+    head.push([[100, 'title', 'title', {}, 'Direct CSR']])
+    expect(document.title).toBe('Direct CSR')
+
+    pushBatched(head, [[100, 'meta:first', 'meta', { name: 'first', content: 'one' }]])
+    pushBatched(head, [[100, 'meta:second', 'meta', { name: 'second', content: 'two' }]])
+    expect(render).toHaveBeenCalledTimes(1)
+
+    finishHydration(head)
+    await Promise.resolve()
+    expect(render).toHaveBeenCalledTimes(2)
+    expect(document.head.querySelectorAll('meta')).toHaveLength(2)
+  })
+
   it('leaves initial DOM nodes unmanaged instead of adopting them', () => {
     const dom = new JSDOM('<!doctype html><html><head><meta name="description" content="server"></head><body></body></html>')
     vi.stubGlobal('document', dom.window.document)

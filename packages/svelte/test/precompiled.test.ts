@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ResolvableHead, UseSeoMetaInput } from 'unhead/types'
 import { cleanup, render } from '@testing-library/svelte'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHead as createNeutralHead, useHead as useNeutralHead, useSeoMeta as useNeutralSeoMeta } from '../src/precompiled'
 import { createHead as createClientHead } from '../src/precompiled/client'
 import { createHead as createCsrHead } from '../src/precompiled/client-csr'
@@ -25,25 +25,33 @@ describe('svelte precompiled adapters', () => {
       .toThrow('must be compiled by @unhead/bundler')
   })
 
-  it('disposes client plans when the component is destroyed', () => {
+  it('batches and disposes client plans when the component is destroyed', async () => {
     const head = createClientHead()
+    const renderHead = vi.spyOn(head, 'render')
     const view = render(Precompiled, { props: { head } })
 
     expect(head._e.size).toBe(2)
+    expect(renderHead).not.toHaveBeenCalled()
+    await Promise.resolve()
+    expect(renderHead).toHaveBeenCalledTimes(1)
     view.unmount()
     expect(head._e.size).toBe(0)
+    await Promise.resolve()
+    expect(renderHead).toHaveBeenCalledTimes(2)
   })
 
-  it('disposes SPA-only client plans when the component is destroyed', () => {
+  it('disposes SPA-only client plans when the component is destroyed', async () => {
     document.head.innerHTML = '<meta name="ssr" content="untouched">'
     document.title = ''
     const head = createCsrHead()
     const view = render(PrecompiledCsr, { props: { head } })
 
     expect(head._e.size).toBe(2)
+    await Promise.resolve()
     expect(document.title).toBe('Svelte CSR')
     view.unmount()
     expect(head._e.size).toBe(0)
+    await Promise.resolve()
     expect(document.querySelector('meta[name="ssr"]')?.getAttribute('content')).toBe('untouched')
   })
 

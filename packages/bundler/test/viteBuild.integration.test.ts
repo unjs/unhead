@@ -6,6 +6,7 @@ import { Unhead } from '../src/unplugin/vite'
 const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.url))
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
 const precompiledClientEntry = fileURLToPath(new URL('./fixtures/vite-build/precompiled-client.ts', import.meta.url))
+const precompiledClientNoneEntry = fileURLToPath(new URL('./fixtures/vite-build/precompiled-client-none.ts', import.meta.url))
 
 function outputCode(result: any): string {
   const outputs = Array.isArray(result) ? result : [result]
@@ -92,5 +93,28 @@ describe('vite build integration', () => {
     expect(code).toContain('createHead().push([[')
     expect(code).not.toContain('function useHead')
     expect(code).not.toContain('__proto__')
+  })
+
+  it('erases the sealed client graph for the MPA-only profile', async () => {
+    const code = outputCode(await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({
+        devtools: false,
+        validate: false,
+        experimental: { precompile: { client: 'none' } },
+      }) as any,
+      build: {
+        write: false,
+        minify: false,
+        lib: { entry: precompiledClientNoneEntry, formats: ['es'], fileName: 'precompiled-client-none' },
+      },
+    }))
+    expect(code).toContain('CLIENT_NONE_MARKER')
+    expect(code).not.toContain('ERASED_CLIENT_NONE')
+    expect(code).not.toContain('__unhead_precompiled_plan_')
+    expect(code).not.toContain('querySelectorAll')
+    expect(code).not.toContain('unhead/precompiled')
   })
 })
