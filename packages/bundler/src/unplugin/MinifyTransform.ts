@@ -6,9 +6,8 @@ import { ScopeTracker, ScopeTrackerImport } from 'oxc-walker'
 import { minifyJSON } from 'unhead/minify'
 import { createUnplugin } from 'unplugin'
 import { isMissingParserError, parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, splitTransformId } from './utils'
 
-const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const HEAD_RE = /\buse(?:Server)?Head\b/
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
@@ -202,20 +201,15 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
       return true
 
     // js/ts files
-    if (TRANSFORM_RE.test(pathname))
+    if (JS_EXT_RE.test(pathname))
       return true
 
     return false
   }
 
-  function shouldTransformCode(code: string): boolean {
-    return HEAD_RE.test(code)
-  }
-
   return {
     name: 'unhead:minify-transform',
     enforce: 'post',
-    transformInclude: shouldTransformId,
 
     vite: jsTranspiler
       ? {
@@ -231,10 +225,10 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
         id: createJsVueTransformIdFilter(options.filter?.include),
       },
       async handler(code, id) {
+        // `filter.id` admits `.vue` sub-requests of any block type, and it
+        // cannot express the caller's `filter.exclude`, so the id still needs
+        // a second look. `filter.code` already guaranteed `useHead`.
         if (!shouldTransformId(id))
-          return
-
-        if (!shouldTransformCode(code))
           return
 
         // Escaped identifiers still need parsing because their source does not

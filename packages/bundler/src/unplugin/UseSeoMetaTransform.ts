@@ -9,9 +9,8 @@ import {
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, splitTransformId } from './utils'
 
-const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const SEO_META_RE = /\buse(?:Server)?SeoMeta\b/
 
 export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
@@ -78,20 +77,15 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
       return true
 
     // js files
-    if (TRANSFORM_RE.test(pathname))
+    if (JS_EXT_RE.test(pathname))
       return true
 
     return false
   }
 
-  function shouldTransformCode(code: string): boolean {
-    return SEO_META_RE.test(code)
-  }
-
   return {
     name: 'unhead:use-seo-meta-transform',
     enforce: 'post',
-    transformInclude: shouldTransformId,
 
     transform: {
       filter: {
@@ -99,10 +93,10 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
         id: createJsVueTransformIdFilter(options.filter?.include),
       },
       async handler(code, id) {
+        // `filter.id` admits `.vue` sub-requests of any block type, and it
+        // cannot express the caller's `filter.exclude`, so the id still needs
+        // a second look. `filter.code` already guaranteed `useSeoMeta`.
         if (!shouldTransformId(id))
-          return
-
-        if (!shouldTransformCode(code))
           return
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })

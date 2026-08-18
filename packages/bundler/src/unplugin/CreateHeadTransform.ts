@@ -1,8 +1,8 @@
 import type { Plugin } from 'vite'
 import MagicString from 'magic-string'
 import { parseAndWalkSource } from './parser'
+import { SOURCE_FILE_RE } from './utils'
 
-const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const CREATE_HEAD_RE = /\bcreateHead\b/
 const UNHEAD_SOURCE_RE = /^(?:@unhead\/[^/]+|unhead)(?:\/[^?]*)?$/
 
@@ -44,12 +44,10 @@ export function CreateHeadTransform(ctx: HeadTransformContext): Plugin {
     },
 
     transform: {
-      filter: { id: FILE_RE, code: CREATE_HEAD_RE },
+      filter: { id: SOURCE_FILE_RE, code: CREATE_HEAD_RE },
       handler(code, id) {
         const registrations = ctx.getRegistrations()
         if (!registrations.length)
-          return
-        if (!CREATE_HEAD_RE.test(code))
           return
 
         const isServer = this.environment?.config?.consumer === 'server'

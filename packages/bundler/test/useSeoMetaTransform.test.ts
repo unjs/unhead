@@ -1,17 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { UseSeoMetaTransform } from '../src/unplugin/UseSeoMetaTransform'
+import { runTransform } from './utils'
 
 const USE_SERVER_HEAD_RE = /useServerHead/
 const TITLE_RE = /title:/
 
 async function transform(code: string | string[], id = 'some-id.js', opts: any = {}) {
   const plugin = UseSeoMetaTransform.vite(opts) as any
-  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
-  const res = await handler.call(
-    {},
-    Array.isArray(code) ? code.join('\n') : code,
-    id,
-  )
+  const res = await runTransform(plugin, Array.isArray(code) ? code.join('\n') : code, id)
   return res?.code
 }
 
@@ -48,6 +44,13 @@ describe('useSeoMetaTransform', () => {
   it('ignores non-JS files', async () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
   })
+
+  it.each(['test.ts', 'test.mts', 'test.cts', 'test.js', 'test.mjs', 'test.cjs', 'test.tsx', 'test.jsx'])(
+    'transforms %s modules',
+    async (id) => {
+      expect(await transform(couldTransform, id)).toBeDefined()
+    },
+  )
 
   it('transforms vue script blocks', async () => {
     expect(await transform(couldTransform, 'test.vue?type=script')).toBeDefined()

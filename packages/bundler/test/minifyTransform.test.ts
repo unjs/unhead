@@ -1,6 +1,7 @@
 import type { MinifyFn } from '../src/unplugin/MinifyTransform'
 import { describe, expect, it } from 'vitest'
 import { MinifyTransform } from '../src/unplugin/MinifyTransform'
+import { runTransform } from './utils'
 
 const mockJSMinifier: MinifyFn = async (code: string) => {
   // simple mock: strip comments and collapse whitespace
@@ -18,14 +19,7 @@ async function transform(code: string | string[], opts: { js?: false | MinifyFn,
 }
 
 async function transformWithPlugin(plugin: any, code: string | string[], id = '/app/some-id.js') {
-  if (plugin.transformInclude && !plugin.transformInclude(id))
-    return undefined
-  const handler = typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
-  return handler.call(
-    {},
-    Array.isArray(code) ? code.join('\n') : code,
-    id,
-  )
+  return runTransform(plugin, Array.isArray(code) ? code.join('\n') : code, id)
 }
 
 describe('minifyTransform', () => {
@@ -244,6 +238,21 @@ describe('minifyTransform', () => {
 
     expect(code).toBeUndefined()
   })
+
+  it.each(['/app/test.ts', '/app/test.mts', '/app/test.cts', '/app/test.mjs', '/app/test.cjs', '/app/test.tsx'])(
+    'minifies inside %s modules',
+    async (id) => {
+      const code = await transform([
+        `import { useHead } from 'unhead'`,
+        `useHead({`,
+        `  script: [{ innerHTML: '// comment\\nvar x = 1;  var y = 2;' }]`,
+        `})`,
+      ], { js: mockJSMinifier }, id)
+
+      expect(code).toBeDefined()
+      expect(code).not.toContain('// comment')
+    },
+  )
 
   it('handles template literal without expressions', async () => {
     const code = await transform([

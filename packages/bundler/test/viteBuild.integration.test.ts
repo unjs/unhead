@@ -6,6 +6,7 @@ import { Unhead } from '../src/unplugin/vite'
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/vite-build', import.meta.url))
 const entry = fileURLToPath(new URL('./fixtures/vite-build/entry.ts', import.meta.url))
+const mtsEntry = fileURLToPath(new URL('./fixtures/vite-build/entry.mts', import.meta.url))
 const dataBlockEntry = fileURLToPath(new URL('./fixtures/vite-build/data-block.ts', import.meta.url))
 const quotedPropertiesEntry = fileURLToPath(new URL('./fixtures/vite-build/quoted-properties.ts', import.meta.url))
 
@@ -29,6 +30,23 @@ describe('vite build integration', () => {
         write: false,
         minify: false,
         lib: { entry, formats: ['es'], fileName: 'entry' },
+      },
+    })
+    const code = outputCode(result)
+    expect(code).toContain('CLIENT_MARKER')
+    expect(code).not.toContain('SERVER_ONLY_MARKER')
+  })
+
+  it('client build drops server-only composables from a .mts entry', async () => {
+    const result = await build({
+      root: fixtureDir,
+      configFile: false,
+      logLevel: 'silent',
+      plugins: Unhead({ devtools: false }) as any,
+      build: {
+        write: false,
+        minify: false,
+        lib: { entry: mtsEntry, formats: ['es'], fileName: 'entry-mts' },
       },
     })
     const code = outputCode(result)

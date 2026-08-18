@@ -5,9 +5,8 @@ import MagicString from 'magic-string'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
 import { parseAndWalkSource } from './parser'
-import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
-const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/
 
 const functionNames = new Set([
@@ -62,20 +61,15 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
       return true
 
     // js files
-    if (TRANSFORM_RE.test(pathname))
+    if (JS_EXT_RE.test(pathname))
       return true
 
     return false
   }
 
-  function shouldTransformCode(code: string): boolean {
-    return SERVER_COMPOSABLE_RE.test(code)
-  }
-
   return {
     name: 'unhead:remove-server-composables',
     enforce: 'post',
-    transformInclude: shouldTransformId,
 
     transform: {
       filter: {
@@ -89,12 +83,11 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
         if (resolveBuildConsumer(this, fallbackConsumer) !== 'client')
           return
 
+        // `filter.id` admits `.vue` sub-requests of any block type, and it
+        // cannot express the caller's `filter.exclude`, so the id still needs
+        // a second look. `filter.code` already guaranteed the composables.
         if (!shouldTransformId(id))
           return
-
-        if (!shouldTransformCode(code)) {
-          return
-        }
 
         const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         const ast = parseAndWalkSource(code, id, { scopeTracker })
