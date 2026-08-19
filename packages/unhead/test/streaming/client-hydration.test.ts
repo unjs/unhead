@@ -256,6 +256,37 @@ describe('streaming client hydration', () => {
       expect(document.querySelector('script[type="application/ld+json"]')).toBeTruthy()
     })
 
+    it('keeps one render when a listener pushes another chunk mid-batch', async () => {
+      const { window, document } = setupStreamingDom([])
+      let reentered = false
+      const head = createStreamableHead({
+        hooks: {
+          'entries:updated': () => {
+            if (reentered)
+              return
+            reentered = true
+            window.__unhead__.push([{ meta: [{ name: 'author', content: 'Nested' }] }])
+          },
+        },
+      })!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      window.__unhead__.push([{ title: 'Outer' }, { meta: [{ name: 'description', content: 'Outer' }] }])
+      await waitForDomUpdate()
+
+      expect(renders).toBe(1)
+      expect(document.title).toBe('Outer')
+      expect(document.querySelector('meta[name="author"]')?.getAttribute('content')).toBe('Nested')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Outer')
+    })
+
     it('leaves the render-per-push behaviour intact for client pushes', async () => {
       const { window } = setupStreamingDom([])
       const head = createStreamableHead()!

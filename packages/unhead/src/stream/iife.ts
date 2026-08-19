@@ -47,6 +47,9 @@ function init(options: { streamKey?: string } = {}) {
   // Push a batch of entries and render once. Without `_b` a client head
   // wrapper renders on every push, so an N-entry chunk costs N renders.
   function pushBatch(entries: any[]) {
+    // Nested call (an `entries:updated` listener pushed again): stay inside the
+    // outer batch so it still owns the single render.
+    const nested = head._b
     head._b = true
     try {
       for (const entry of entries) {
@@ -54,10 +57,12 @@ function init(options: { streamKey?: string } = {}) {
       }
     }
     finally {
-      head._b = false
+      head._b = nested
     }
-    head.dirty = true
-    head.render()
+    if (!nested) {
+      head.dirty = true
+      head.render()
+    }
   }
 
   // Consume existing queue - each item in queue is an array of entries
