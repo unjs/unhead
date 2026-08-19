@@ -24,17 +24,6 @@ function init(options: { streamKey?: string } = {}) {
   const doc = typeof document !== 'undefined' ? document : undefined
   const head = createUnhead(createDomRenderer(), { document: doc })
 
-  // Hydration lock - ignore client pushes until hydration completes
-  // SSR streaming pushes (from inline scripts) happen before hydration starts
-  // After IIFE init, hydration begins and components re-call useHead
-  // We skip those during hydration to preserve the SSR-streamed state
-  let hydrationLocked = true
-
-  // Unlock after microtask - hydration should be complete by then
-  queueMicrotask(() => {
-    hydrationLocked = false
-  })
-
   // Push an entry and tag it as streamed so devtools can distinguish
   // entries that arrived via inline streaming scripts from client pushes.
   function pushStreamed(entry: any) {
@@ -44,31 +33,43 @@ function init(options: { streamKey?: string } = {}) {
       stored._streamed = true
   }
 
-  // Consume existing queue - each item in queue is an array of entries
-  if (queue?._q) {
-    for (const entries of queue._q) {
+  // Push a batch of entries and render once. Without `_b` a client head
+  // wrapper renders on every push, so an N-entry chunk costs N renders.
+  function pushBatch(entries: any[]) {
+    // Nested call (an `entries:updated` listener pushed again): stay inside the
+    // outer batch so it still owns the single render.
+    const nested = head._b
+    head._b = true
+    try {
       for (const entry of entries) {
         pushStreamed(entry)
       }
     }
-    head.dirty = true
-    head.render()
+    finally {
+      head._b = nested
+      // In the `finally` so a throwing entry still renders the ones that
+      // landed before it, instead of leaving them pending indefinitely.
+      if (!nested) {
+        head.dirty = true
+        head.render()
+      }
+    }
+  }
+
+  // Consume the backlog as one batch. Each item is an array of entries, and
+  // the whole queue is worth a single render, not one per queued chunk.
+  if (queue?._q?.length) {
+    pushBatch(queue._q.flat())
   }
 
   win[streamKey] = {
-    _q: queue?._q || [],
+    // Replayed batches are dropped rather than carried over. Nothing reads
+    // `_q` after init, and in `async` mode it can hold the whole page's
+    // streamed head until the tab closes.
+    _q: [],
     _head: head,
-    _hydrationLocked: () => hydrationLocked,
     // Server pushes arrays of entries (from inline scripts during streaming)
-    push: (entries: any[]) => {
-      // During hydration, only SSR streaming scripts should push
-      // Client useHead calls are skipped to preserve streamed state
-      for (const entry of entries) {
-        pushStreamed(entry)
-      }
-      head.dirty = true
-      head.render()
-    },
+    push: pushBatch,
   } satisfies StreamingGlobal
 
   return head
