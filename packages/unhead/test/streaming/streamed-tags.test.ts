@@ -1,3 +1,4 @@
+import { useSeoMeta } from 'unhead'
 import { createStreamableHead, inspectStreamedTags, renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
@@ -74,6 +75,29 @@ describe('inspectStreamedTags', () => {
     expect(pendingTags[0]!.props.content).toBe('lazy')
   })
 
+  it('expands useSeoMeta into the tags it will actually render', () => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    useSeoMeta(head as any, { ogTitle: 'x', description: 'y', twitterCard: 'summary' })
+
+    const { pendingTags, tagsHiddenFromBots } = inspectStreamedTags(head)
+    expect(pendingTags.map(t => t.tag)).toEqual(['meta', 'meta', 'meta'])
+    expect(tagsHiddenFromBots).toHaveLength(3)
+    // the report matches what the entries actually render to
+    expect(renderShell(head).headTags).toBe(
+      '<meta property="og:title" content="x">\n<meta name="description" content="y">\n<meta name="twitter:card" content="summary">',
+    )
+  })
+
+  it('does not let a templateParams mutation reach a later render', () => {
+    const { head } = createStreamableHead({ disableDefaults: true })
+    head.push({ templateParams: { site: 'Acme' } })
+
+    const { pendingTags } = inspectStreamedTags(head)
+    ;(pendingTags[0]!.props as any).site = 'HACKED'
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('"site":"Acme"')
+  })
+
   describe('tagsHiddenFromBots', () => {
     function flags(input: any) {
       const { head } = createStreamableHead({ disableDefaults: true })
@@ -89,6 +113,9 @@ describe('inspectStreamedTags', () => {
       ['meta robots', { meta: [{ name: 'robots', content: 'index' }] }],
       ['meta googlebot', { meta: [{ name: 'googlebot', content: 'index' }] }],
       ['meta keywords', { meta: [{ name: 'keywords', content: 'a,b' }] }],
+      ['meta bingbot', { meta: [{ name: 'bingbot', content: 'index' }] }],
+      ['http-equiv refresh', { meta: [{ 'http-equiv': 'refresh', 'content': '0;url=/x' }] }],
+      ['http-equiv content-language', { meta: [{ 'http-equiv': 'content-language', 'content': 'en' }] }],
       ['og property', { meta: [{ property: 'og:title', content: 'x' }] }],
       ['twitter name', { meta: [{ name: 'twitter:card', content: 'summary' }] }],
       ['article property', { meta: [{ property: 'article:author', content: 'x' }] }],
@@ -124,6 +151,7 @@ describe('inspectStreamedTags', () => {
       ['bodyAttrs', { bodyAttrs: { class: 'dark' } }],
       ['templateParams', { templateParams: { site: 'Acme' } }],
       ['unrelated meta', { meta: [{ name: 'theme-color', content: '#fff' }] }],
+      ['unrelated http-equiv', { meta: [{ 'http-equiv': 'x-ua-compatible', 'content': 'IE=edge' }] }],
     ])('ignores %s', (_name, input) => {
       expect(flags(input)).toBe(false)
     })

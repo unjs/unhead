@@ -5,6 +5,7 @@ import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
+import { callHook } from '../utils/hooks'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -210,9 +211,10 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  * A crawler reads the HTML the server sent. It does not run the streaming
  * patch script, so a tag delivered that way never reaches it.
  */
-const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'keywords'])
+const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al):/
+const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
 const WHITESPACE_RE = /\s+/
 
 function isHiddenFromBots(tag: HeadTag): boolean {
@@ -234,6 +236,10 @@ function isHiddenFromBots(tag: HeadTag): boolean {
     case 'meta': {
       const name = String(props.name || '').toLowerCase()
       if (BOT_HEAD_META_NAMES.has(name))
+        return true
+      // Search engines follow `http-equiv="refresh"` as a redirect, so one
+      // that only arrives as a patch changes what they index.
+      if (BOT_HEAD_META_EQUIVS.has(String(props['http-equiv'] || '').toLowerCase()))
         return true
       const property = String(props.property || props.name || '').toLowerCase()
       return BOT_HEAD_META_PREFIX_RE.test(property)
@@ -299,13 +305,31 @@ export interface StreamedTagsReport {
  */
 export function inspectStreamedTags(head: Unhead<any>): StreamedTagsReport {
   const propResolvers = head.resolvedOptions.propResolvers || []
+  const runsNormalizeHook = !!(head.hooks as any)?._hooks?.['entries:normalize']?.length
   const pendingTags: HeadTag[] = []
   const tagsHiddenFromBots: HeadTag[] = []
-  for (const entry of head.entries.values()) {
-    const entryTags = normalizeEntryToTags(entry.input, propResolvers)
-    for (const tag of entryTags) {
-      if (entry.options)
+  // Snapshot: an `entries:normalize` listener may push, and a live iterator
+  // would feed those entries back into this same pass.
+  for (const entry of [...head.entries.values()]) {
+    let entryTags = normalizeEntryToTags(entry.input, propResolvers)
+    if (entry.options) {
+      for (const tag of entryTags)
         Object.assign(tag, entry.options)
+    }
+    // `useSeoMeta` pushes a single `_flatMeta` entry that only becomes real
+    // meta tags inside this hook, so skipping it would report none of the
+    // Open Graph, Twitter, or description tags it set.
+    if (runsNormalizeHook) {
+      const ctx = { tags: entryTags, entry }
+      callHook(head, 'entries:normalize', ctx)
+      entryTags = ctx.tags
+    }
+    for (const tag of entryTags) {
+      // `normalizeProps` assigns the entry's own object for templateParams
+      // rather than copying it, so this is the one tag a caller could mutate
+      // into a later render.
+      if (tag.tag === 'templateParams')
+        tag.props = { ...tag.props }
       pendingTags.push(tag)
       if (isHiddenFromBots(tag))
         tagsHiddenFromBots.push(tag)
