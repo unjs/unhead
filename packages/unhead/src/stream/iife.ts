@@ -63,7 +63,10 @@ function init(options: { streamKey?: string } = {}) {
   }
 
   win[streamKey] = {
-    _q: queue?._q || [],
+    // Replayed batches are dropped rather than carried over. Nothing reads
+    // `_q` after init, and in `async` mode it can hold the whole page's
+    // streamed head until the tab closes.
+    _q: [],
     _head: head,
     // Server pushes arrays of entries (from inline scripts during streaming)
     push: pushBatch,

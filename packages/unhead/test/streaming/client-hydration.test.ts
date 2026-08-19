@@ -228,6 +228,28 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('queue handoff', () => {
+    it('drops replayed batches instead of retaining them', async () => {
+      const { window, document } = setupStreamingDom([
+        { title: 'Queued' },
+        { meta: [{ name: 'description', content: 'Queued' }] },
+      ])
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Queued')
+      expect(window.__unhead__._q).toEqual([])
+    })
+
+    it('does not accumulate batches pushed after init', async () => {
+      const { window } = setupStreamingDom([])
+      createStreamableHead()
+      window.__unhead__.push([{ title: 'Live' }])
+      await waitForDomUpdate()
+
+      expect(window.__unhead__._q).toEqual([])
+    })
+  })
+
   describe('same-tick pushes', () => {
     it('keeps a client push made in the tick the iife initialised', async () => {
       const { document } = setupStreamingDom([])
