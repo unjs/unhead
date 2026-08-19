@@ -5,10 +5,6 @@ function pending(head: any) {
   return inspectStreamedTags(head).pendingTags.map((t: any) => t.tag)
 }
 
-function hidden(head: any) {
-  return inspectStreamedTags(head).tagsHiddenFromBots.map((t: any) => t.tag)
-}
-
 describe('inspectStreamedTags', () => {
   it('reports the tags waiting to be flushed', () => {
     const { head } = createStreamableHead({ disableDefaults: true })
@@ -79,51 +75,88 @@ describe('inspectStreamedTags', () => {
   })
 
   describe('tagsHiddenFromBots', () => {
-    it('flags tags a bot only reads from the served head', () => {
+    function flags(input: any) {
       const { head } = createStreamableHead({ disableDefaults: true })
-      head.push({
-        title: 'Home',
-        link: [{ rel: 'canonical', href: 'https://example.com/' }],
-        meta: [
-          { name: 'description', content: 'Home page' },
-          { name: 'robots', content: 'index' },
-          { property: 'og:title', content: 'Home' },
-        ],
-        script: [{ type: 'application/ld+json', innerHTML: '{}' }],
-      })
+      head.push(input)
+      return inspectStreamedTags(head).tagsHiddenFromBots.length > 0
+    }
 
-      expect(hidden(head)).toEqual(['title', 'link', 'meta', 'meta', 'meta', 'script'])
+    it.each([
+      ['title', { title: 'Home' }],
+      ['titleTemplate', { titleTemplate: '%s | Site' }],
+      ['base', { base: { href: '/app/' } }],
+      ['meta description', { meta: [{ name: 'description', content: 'x' }] }],
+      ['meta robots', { meta: [{ name: 'robots', content: 'index' }] }],
+      ['meta googlebot', { meta: [{ name: 'googlebot', content: 'index' }] }],
+      ['meta keywords', { meta: [{ name: 'keywords', content: 'a,b' }] }],
+      ['og property', { meta: [{ property: 'og:title', content: 'x' }] }],
+      ['twitter name', { meta: [{ name: 'twitter:card', content: 'summary' }] }],
+      ['article property', { meta: [{ property: 'article:author', content: 'x' }] }],
+      ['book property', { meta: [{ property: 'book:isbn', content: 'x' }] }],
+      ['profile property', { meta: [{ property: 'profile:username', content: 'x' }] }],
+      ['fb property', { meta: [{ property: 'fb:app_id', content: '1' }] }],
+      ['al property', { meta: [{ property: 'al:ios:url', content: 'x' }] }],
+      ['link canonical', { link: [{ rel: 'canonical', href: '/' }] }],
+      ['link alternate', { link: [{ rel: 'alternate', href: '/fr', hreflang: 'fr' }] }],
+      ['link amphtml', { link: [{ rel: 'amphtml' as 'canonical', href: '/amp' }] }],
+      ['link prev', { link: [{ rel: 'prev', href: '/1' }] }],
+      ['link next', { link: [{ rel: 'next', href: '/3' }] }],
+      ['link author', { link: [{ rel: 'author', href: '/me' }] }],
+      ['link license', { link: [{ rel: 'license', href: '/l' }] }],
+      ['ld+json script', { script: [{ type: 'application/ld+json', innerHTML: '{}' }] }],
+    ])('flags %s', (_name, input) => {
+      expect(flags(input)).toBe(true)
     })
 
-    it('ignores tags a client-side patch can still serve', () => {
-      const { head } = createStreamableHead({ disableDefaults: true })
-      head.push({
-        link: [
-          { rel: 'preload', href: '/a.js', as: 'script' },
-          { rel: 'stylesheet', href: '/a.css' },
-        ],
-        script: [{ src: '/app.js' }],
-        style: [{ innerHTML: 'body{color:red}' }],
-        htmlAttrs: { lang: 'en' },
-        meta: [{ name: 'theme-color', content: '#fff' }],
-      })
-
-      expect(hidden(head)).toEqual([])
+    it.each([
+      ['preload', { link: [{ rel: 'preload', href: '/a.js', as: 'script' }] }],
+      ['prefetch', { link: [{ rel: 'prefetch', href: '/a.js' }] }],
+      ['preconnect', { link: [{ rel: 'preconnect', href: 'https://cdn.example' }] }],
+      ['dns-prefetch', { link: [{ rel: 'dns-prefetch', href: 'https://cdn.example' }] }],
+      ['modulepreload', { link: [{ rel: 'modulepreload', href: '/a.js' }] }],
+      ['stylesheet', { link: [{ rel: 'stylesheet', href: '/a.css' }] }],
+      ['icon', { link: [{ rel: 'icon', href: '/f.ico' }] }],
+      ['manifest', { link: [{ rel: 'manifest', href: '/m.json' }] }],
+      ['plain script', { script: [{ src: '/app.js' }] }],
+      ['style', { style: [{ innerHTML: 'body{color:red}' }] }],
+      ['noscript', { noscript: [{ innerHTML: '<p>no js</p>' }] }],
+      ['htmlAttrs', { htmlAttrs: { lang: 'en' } }],
+      ['bodyAttrs', { bodyAttrs: { class: 'dark' } }],
+      ['templateParams', { templateParams: { site: 'Acme' } }],
+      ['unrelated meta', { meta: [{ name: 'theme-color', content: '#fff' }] }],
+    ])('ignores %s', (_name, input) => {
+      expect(flags(input)).toBe(false)
     })
 
-    it('ignores body-positioned tags', () => {
+    it('ignores body-positioned tags that would otherwise be flagged', () => {
+      expect(flags({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })).toBe(false)
+
       const { head } = createStreamableHead({ disableDefaults: true })
-      head.push({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })
       head.push({ meta: [{ name: 'description', content: 'x' }] }, { tagPosition: 'bodyOpen' })
-
-      expect(hidden(head)).toEqual([])
+      expect(inspectStreamedTags(head).tagsHiddenFromBots).toEqual([])
     })
 
     it('matches a rel that appears in a multi-value link', () => {
-      const { head } = createStreamableHead({ disableDefaults: true })
-      head.push({ link: [{ rel: 'alternate stylesheet' as 'alternate', href: '/x', hreflang: 'fr' }] })
+      expect(flags({ link: [{ rel: 'alternate stylesheet' as 'alternate', href: '/x', hreflang: 'fr' }] })).toBe(true)
+    })
 
-      expect(hidden(head)).toEqual(['link'])
+    it('matches case-insensitively', () => {
+      expect(flags({ meta: [{ property: 'OG:TITLE', content: 'x' }] })).toBe(true)
+      expect(flags({ link: [{ rel: 'CANONICAL' as 'canonical', href: '/' }] })).toBe(true)
+      expect(flags({ script: [{ type: 'Application/LD+JSON', innerHTML: '{}' }] })).toBe(true)
+    })
+
+    it('returns the flagged tags, not just a count', () => {
+      const { head } = createStreamableHead({ disableDefaults: true })
+      head.push({
+        title: 'Home',
+        link: [{ rel: 'canonical', href: '/' }, { rel: 'preload', href: '/a.js', as: 'script' }],
+      })
+
+      const { pendingTags, tagsHiddenFromBots } = inspectStreamedTags(head)
+      expect(pendingTags).toHaveLength(3)
+      expect(tagsHiddenFromBots.map(t => t.tag)).toEqual(['title', 'link'])
+      expect(tagsHiddenFromBots[1]!.props.rel).toBe('canonical')
     })
   })
 })
