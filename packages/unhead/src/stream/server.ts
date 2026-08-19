@@ -213,11 +213,19 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
 const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'keywords'])
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al):/
+const WHITESPACE_RE = /\s+/
 
 function isHiddenFromBots(tag: HeadTag): boolean {
+  const props = tag.props
+  // Search engines read JSON-LD anywhere in the document, but only when it is
+  // in the HTML they were served. Position does not rescue it, so this is
+  // checked before the body exemption below.
+  if (tag.tag === 'script')
+    return String(props.type || '').toLowerCase() === 'application/ld+json'
+  // Every other tag here only carries meaning from the head, so one placed in
+  // the body was never going to be read.
   if (tag.tagPosition?.startsWith('body'))
     return false
-  const props = tag.props
   switch (tag.tag) {
     case 'title':
     case 'titleTemplate':
@@ -231,11 +239,9 @@ function isHiddenFromBots(tag: HeadTag): boolean {
       return BOT_HEAD_META_PREFIX_RE.test(property)
     }
     case 'link':
-      return String(props.rel || '').toLowerCase().split(' ').some(rel => BOT_HEAD_LINK_RELS.has(rel))
-    case 'script':
-      // Search engines read JSON-LD anywhere in the document, but only when
-      // it is in the HTML they were served.
-      return String(props.type || '').toLowerCase() === 'application/ld+json'
+      // `rel` is a space-separated token list, and HTML allows any ASCII
+      // whitespace between tokens.
+      return String(props.rel || '').toLowerCase().split(WHITESPACE_RE).some(rel => BOT_HEAD_LINK_RELS.has(rel))
     default:
       return false
   }

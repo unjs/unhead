@@ -128,16 +128,29 @@ describe('inspectStreamedTags', () => {
       expect(flags(input)).toBe(false)
     })
 
-    it('ignores body-positioned tags that would otherwise be flagged', () => {
-      expect(flags({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })).toBe(false)
+    it('ignores body-positioned tags that only carry meaning from the head', () => {
+      expect(flags({ link: [{ rel: 'canonical', href: '/', tagPosition: 'bodyClose' }] })).toBe(false)
 
       const { head } = createStreamableHead({ disableDefaults: true })
       head.push({ meta: [{ name: 'description', content: 'x' }] }, { tagPosition: 'bodyOpen' })
       expect(inspectStreamedTags(head).tagsHiddenFromBots).toEqual([])
     })
 
+    it('still flags body-positioned JSON-LD, which bots read anywhere', () => {
+      expect(flags({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })).toBe(true)
+
+      const { head } = createStreamableHead({ disableDefaults: true })
+      head.push({ script: [{ type: 'application/ld+json', innerHTML: '{}' }] }, { tagPosition: 'bodyClose' })
+      expect(inspectStreamedTags(head).tagsHiddenFromBots).toHaveLength(1)
+    })
+
     it('matches a rel that appears in a multi-value link', () => {
       expect(flags({ link: [{ rel: 'alternate stylesheet' as 'alternate', href: '/x', hreflang: 'fr' }] })).toBe(true)
+    })
+
+    it('splits rel tokens on any whitespace, not just spaces', () => {
+      expect(flags({ link: [{ rel: 'stylesheet\n\tcanonical' as 'canonical', href: '/' }] })).toBe(true)
+      expect(flags({ link: [{ rel: '  canonical  ' as 'canonical', href: '/' }] })).toBe(true)
     })
 
     it('matches case-insensitively', () => {
