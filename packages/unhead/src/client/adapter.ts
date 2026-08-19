@@ -16,11 +16,20 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.dirty = !!head.dirty
   head.use = p => registerPlugin(head, p)
   head.render = () => render(head)
+  // Rendering happens here rather than in an `entries:updated` listener.
+  // `hookable` awaits listeners in sequence, so one async listener would defer
+  // a listener-driven render past the synchronous batch that `_b` guards, and
+  // the batch would silently degrade to a render per push.
+  function notify() {
+    hooks.callHook('entries:updated', head)
+    if (!head._b)
+      head.render()
+  }
   head.invalidate = () => {
     for (const entry of head.entries.values())
       delete entry._tags
     head.dirty = true
-    hooks.callHook('entries:updated', head)
+    notify()
   }
   head.push = (input: T, entryOptions?: HeadEntryOptions) => {
     const unhook = entryOptions?.onRendered
@@ -31,13 +40,13 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     if (entry)
       entry._o = input
     head.dirty = true
-    hooks.callHook('entries:updated', head)
+    notify()
     return {
       _i: active._i,
       patch(input: T) {
         active.patch(input)
         head.dirty = true
-        hooks.callHook('entries:updated', head)
+        notify()
       },
       dispose() {
         unhook?.()
@@ -48,9 +57,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
       },
     }
   }
-  hooks.hook('entries:updated', () => {
-    head.render()
-  })
   return head
 }
 

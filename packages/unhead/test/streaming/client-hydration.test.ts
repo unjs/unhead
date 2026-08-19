@@ -228,6 +228,122 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('chunk batching', () => {
+    it('renders once for the whole pre-init backlog', async () => {
+      // Each queued chunk sets a different title, and the DOM renderer only
+      // writes a title that changed. One render per backlog means one write,
+      // one render per chunk means three.
+      const dom = new JSDOM('<!DOCTYPE html><html><head><title>Initial</title></head><body></body></html>')
+      const win = dom.window as any
+      win.__unhead__ = {
+        _q: [[{ title: 'A' }], [{ title: 'B' }], [{ title: 'C' }]],
+        push: (entries: any) => win.__unhead__._q.push(entries),
+      }
+      globalThis.window = win
+      globalThis.document = win.document
+
+      const proto = win.Document.prototype
+      const original = Object.getOwnPropertyDescriptor(proto, 'title')!
+      const written: string[] = []
+      Object.defineProperty(proto, 'title', {
+        configurable: true,
+        get() { return original.get!.call(this) },
+        set(value: string) {
+          written.push(value)
+          original.set!.call(this, value)
+        },
+      })
+
+      try {
+        initIife({})
+      }
+      finally {
+        Object.defineProperty(proto, 'title', original)
+      }
+
+      expect(written).toEqual(['C'])
+      expect(win.document.title).toBe('C')
+    })
+
+    it('renders once per streamed chunk, not once per entry', async () => {
+      const { window, document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      window.__unhead__.push([
+        { title: 'Streamed' },
+        { meta: [{ name: 'description', content: 'Streamed description' }] },
+        { link: [{ rel: 'canonical', href: 'https://example.com/' }] },
+        { script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' }] },
+      ])
+      await waitForDomUpdate()
+
+      expect(renders).toBe(1)
+      expect(document.title).toBe('Streamed')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Streamed description')
+      expect(document.querySelector('link[rel="canonical"]')).toBeTruthy()
+      expect(document.querySelector('script[type="application/ld+json"]')).toBeTruthy()
+    })
+
+    it('keeps one render when a listener pushes another chunk mid-batch', async () => {
+      const { window, document } = setupStreamingDom([])
+      let reentered = false
+      const head = createStreamableHead({
+        hooks: {
+          'entries:updated': () => {
+            if (reentered)
+              return
+            reentered = true
+            window.__unhead__.push([{ meta: [{ name: 'author', content: 'Nested' }] }])
+          },
+        },
+      })!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      window.__unhead__.push([{ title: 'Outer' }, { meta: [{ name: 'description', content: 'Outer' }] }])
+      await waitForDomUpdate()
+
+      expect(renders).toBe(1)
+      expect(document.title).toBe('Outer')
+      expect(document.querySelector('meta[name="author"]')?.getAttribute('content')).toBe('Nested')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Outer')
+    })
+
+    it('leaves the render-per-push behaviour intact for client pushes', async () => {
+      const { window } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      head.push({ title: 'One' })
+      head.push({ meta: [{ name: 'description', content: 'Two' }] })
+      await waitForDomUpdate()
+
+      expect(renders).toBe(2)
+      expect(window.document.title).toBe('One')
+    })
+  })
+
   describe('client adapter hooks', () => {
     it('exposes hooks to the renderer owned by the streaming core', async () => {
       const { document } = setupStreamingDom([])
@@ -309,5 +425,58 @@ describe('streaming client hydration', () => {
       const styles = document.querySelectorAll('style')
       expect(styles.length).toBe(2)
     })
+  })
+})
+
+describe('batching under an async listener', () => {
+  it('batches even when a listener returns a promise', async () => {
+    const { window, document } = setupStreamingDom([])
+    const head = createStreamableHead({
+      hooks: {
+        'entries:updated': () => Promise.resolve(),
+      },
+    })!
+    await waitForDomUpdate()
+
+    let renders = 0
+    const render = head.render
+    head.render = () => {
+      renders++
+      return render()
+    }
+
+    window.__unhead__.push([
+      { title: 'Async listener' },
+      { meta: [{ name: 'description', content: 'x' }] },
+      { link: [{ rel: 'canonical', href: '/' }] },
+    ])
+    await waitForDomUpdate()
+
+    expect(document.title).toBe('Async listener')
+    expect(document.querySelector('link[rel="canonical"]')).toBeTruthy()
+    expect(renders).toBe(1)
+  })
+
+  it('batches when every listener is synchronous', async () => {
+    const { window, document } = setupStreamingDom([])
+    const head = createStreamableHead({
+      hooks: {
+        'entries:updated': () => {},
+      },
+    })!
+    await waitForDomUpdate()
+
+    let renders = 0
+    const render = head.render
+    head.render = () => {
+      renders++
+      return render()
+    }
+
+    window.__unhead__.push([{ title: 'Sync listener' }, { meta: [{ name: 'description', content: 'x' }] }])
+    await waitForDomUpdate()
+
+    expect(renders).toBe(1)
+    expect(document.title).toBe('Sync listener')
   })
 })

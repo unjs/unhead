@@ -131,7 +131,9 @@ function getStreamKey(head: Unhead<any>): string {
 export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, nonce?: string): string {
   assertValidStreamKey(streamKey)
   const nonceAttr = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : ''
-  return `<script${nonceAttr}>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+  // `inline` mode runs the client IIFE above this script, so never clobber an
+  // already-installed queue. Doing so drops every streamed patch.
+  return `<script${nonceAttr}>window.${streamKey}||(window.${streamKey}={_q:[],push(e){this._q.push(e)}})</script>`
 }
 
 /**

@@ -274,6 +274,13 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _du?: boolean
   /**
+   * Suppresses the render that normally follows every `push`, so a batch of
+   * pushes costs one render instead of one per entry.
+   *
+   * @internal
+   */
+  _b?: boolean
+  /**
    * @internal
    */
   _scripts?: Record<string, any>
