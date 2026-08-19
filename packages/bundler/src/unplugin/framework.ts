@@ -155,8 +155,11 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
             // client-side so a non-streaming SSR app pays nothing: the plugin
             // captures a stack trace on every push, which is not worth it for
             // a rule that can never fire.
+            // Distinct key: `registerPlugin` drops a duplicate key without
+            // running it, so sharing `'validate'` would silently swallow a
+            // ValidatePlugin the app registers itself.
             server: wantStreaming
-              ? `_h.use(__unhead_validate({ root: __ROOT__, only: ['streamed-tag-hidden-from-bots'] }))`
+              ? `_h.use(__unhead_validate({ root: __ROOT__, key: 'validate:streaming', only: ['streamed-tag-hidden-from-bots'] }))`
               : undefined,
           })
         }

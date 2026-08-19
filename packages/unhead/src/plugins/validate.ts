@@ -63,6 +63,16 @@ export interface ValidatePluginOptions {
    * from the client and would otherwise warn twice per request.
    */
   only?: ValidationRuleId[]
+  /**
+   * Plugin key used to deduplicate registrations.
+   *
+   * `registerPlugin` drops a second plugin sharing a key without running it, so
+   * a narrowed instance registered automatically would silently swallow one a
+   * user adds by hand. Give an automatic instance its own key so both survive.
+   *
+   * @default 'validate'
+   */
+  key?: string
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
@@ -269,6 +279,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
   const only = options.only && new Set<string>(options.only)
+  // Both the static key (used by registerPlugin to bail before setup) and the
+  // returned plugin's key (used as the map key) have to agree.
+  const pluginKey = options.key || 'validate'
 
   function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
     if (only && !only.has(id))
@@ -293,7 +306,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
         const result = _callHook(name, ...args)
-        if (result?.then && !warnedAsyncHook) {
+        // Suppressed for a narrowed instance: it is not one of the rules the
+        // caller asked for, and a second full instance already reports it.
+        if (result?.then && !warnedAsyncHook && !only) {
           warnedAsyncHook = true
           console.warn(`[unhead] promise ignored: ${name}`)
         }
@@ -342,7 +357,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
     }
 
     return {
-      key: 'validate',
+      key: pluginKey,
       hooks: {
         'ssr:streamChunk': ({ tags }) => {
           const severity = severityFor('streamed-tag-hidden-from-bots', 'warn')
@@ -755,5 +770,5 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         },
       },
     }
-  }, 'validate')
+  }, pluginKey)
 }
