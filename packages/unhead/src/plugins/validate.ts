@@ -315,7 +315,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             const entryIndex = tag._p != null ? tag._p >> 10 : undefined
             rules.push({
               id: 'streamed-tag-hidden-from-bots',
-              message: `${describeTag(tag)} was registered after the streaming shell was sent, so it is delivered as a client-side patch. Bots read the served HTML and will not see it.`,
+              message: `Bots will not see ${describeTag(tag)}. It arrived after the shell, so it ships as a client patch. Register it before the shell.`,
               severity,
               source: entryIndex != null ? stacks.get(entryIndex) : undefined,
               tag,
