@@ -427,3 +427,61 @@ describe('streaming client hydration', () => {
     })
   })
 })
+
+describe('batching under an async listener', () => {
+  // Known limitation. `hookable` awaits listeners in sequence, so an async
+  // `entries:updated` listener defers the adapter's render listener past the
+  // synchronous batch, and `_b` is already restored when it finally runs.
+  // Batching degrades to a render per push; the resulting DOM is still right.
+  it('still produces the correct DOM, without the batching win', async () => {
+    const { window, document } = setupStreamingDom([])
+    const head = createStreamableHead({
+      hooks: {
+        'entries:updated': () => Promise.resolve(),
+      },
+    })!
+    await waitForDomUpdate()
+
+    let renders = 0
+    const render = head.render
+    head.render = () => {
+      renders++
+      return render()
+    }
+
+    window.__unhead__.push([
+      { title: 'Async listener' },
+      { meta: [{ name: 'description', content: 'x' }] },
+      { link: [{ rel: 'canonical', href: '/' }] },
+    ])
+    await waitForDomUpdate()
+
+    expect(document.title).toBe('Async listener')
+    expect(document.querySelector('link[rel="canonical"]')).toBeTruthy()
+    // documents the degradation rather than asserting the win
+    expect(renders).toBeGreaterThan(1)
+  })
+
+  it('batches when every listener is synchronous', async () => {
+    const { window, document } = setupStreamingDom([])
+    const head = createStreamableHead({
+      hooks: {
+        'entries:updated': () => {},
+      },
+    })!
+    await waitForDomUpdate()
+
+    let renders = 0
+    const render = head.render
+    head.render = () => {
+      renders++
+      return render()
+    }
+
+    window.__unhead__.push([{ title: 'Sync listener' }, { meta: [{ name: 'description', content: 'x' }] }])
+    await waitForDomUpdate()
+
+    expect(renders).toBe(1)
+    expect(document.title).toBe('Sync listener')
+  })
+})
