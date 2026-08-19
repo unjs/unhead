@@ -581,19 +581,39 @@ describe('streaming SSR', () => {
   })
 
   describe('createBootstrapScript', () => {
-    it('returns script tag with default key', () => {
-      const script = createBootstrapScript()
-      expect(script).toBe('<script>window.__unhead__={_q:[],push(e){this._q.push(e)}}</script>')
+    // Runs the emitted script body the way a browser would, against a fake window.
+    function runBootstrap(script: string, win: Record<string, any>) {
+      const body = script.replace(/^<script[^>]*>/, '').replace(/<\/script>$/, '')
+      // eslint-disable-next-line no-new-func
+      new Function('window', body)(win)
+      return win
+    }
+
+    it('queues entries pushed before the client takes over', () => {
+      const win = runBootstrap(createBootstrapScript(), {})
+      win.__unhead__.push([{ title: 'streamed' }])
+      expect(win.__unhead__._q).toEqual([[{ title: 'streamed' }]])
     })
 
-    it('returns script tag with custom key', () => {
-      const script = createBootstrapScript('__myapp__')
-      expect(script).toContain('window.__myapp__')
-      expect(script).not.toContain('window.__unhead__')
+    it('keeps an already-installed queue so inline mode does not lose patches', () => {
+      // `inline` mode runs the client IIFE above the bootstrap, so the bootstrap
+      // must not replace the head it installed.
+      const pushed: any[] = []
+      const installed = { _q: [], _head: { marker: 'real' }, push: (e: any) => pushed.push(e) }
+      const win = runBootstrap(createBootstrapScript(), { __unhead__: installed })
+
+      win.__unhead__.push([{ title: 'streamed' }])
+
+      expect(win.__unhead__).toBe(installed)
+      expect(win.__unhead__._head).toEqual({ marker: 'real' })
+      expect(pushed).toEqual([[{ title: 'streamed' }]])
     })
 
-    it('returns a string', () => {
-      expectTypeOf(createBootstrapScript()).toBeString()
+    it('installs the queue under a custom stream key', () => {
+      const win = runBootstrap(createBootstrapScript('__myapp__'), {})
+      win.__myapp__.push([{ title: 'streamed' }])
+      expect(win.__myapp__._q).toEqual([[{ title: 'streamed' }]])
+      expect(win.__unhead__).toBeUndefined()
     })
   })
 
