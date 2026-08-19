@@ -14,6 +14,7 @@ import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
 export {
+  getPendingTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,

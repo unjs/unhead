@@ -4,7 +4,7 @@ import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHea
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
-import { normalizeProps, resolveHeadInput } from '../utils/normalize'
+import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -202,6 +202,48 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
     bodyAttrs: ssr.bodyAttrs,
     bodyTags: ssr.bodyTags,
   })
+}
+
+/**
+ * @experimental
+ *
+ * Normalizes the entries that have not been flushed yet into tags, without
+ * rendering or clearing them.
+ *
+ * Once the shell `<head>` is on the wire, pending entries can only be
+ * delivered as client-side patches. Use this to inspect what the next
+ * `renderSSRHeadSuspenseChunk()` will defer, for example to warn that an
+ * SEO-critical tag will not reach the served HTML.
+ *
+ * Entry options are applied to each tag, so `tagPosition` tells you whether a
+ * tag was bound for the head or the body. Tags are freshly normalized on every
+ * call and are not cached, so mutating them cannot affect a later render.
+ *
+ * @param head - The Unhead instance
+ * @returns The normalized tags for all pending entries
+ *
+ * @example
+ * ```ts
+ * const deferred = getPendingTags(head).filter(t => !t.tagPosition?.startsWith('body'))
+ * if (deferred.length) {
+ *   console.warn(`These tags miss the shell: ${deferred.map(t => t.tag).join(', ')}`)
+ * }
+ * const chunk = renderSSRHeadSuspenseChunk(head)
+ * ```
+ */
+export function getPendingTags(head: Unhead<any>): HeadTag[] {
+  const propResolvers = head.resolvedOptions.propResolvers || []
+  const tags: HeadTag[] = []
+  for (const entry of head.entries.values()) {
+    const entryTags = normalizeEntryToTags(entry.input, propResolvers)
+    if (entry.options) {
+      for (const tag of entryTags)
+        Object.assign(tag, entry.options)
+    }
+    for (const tag of entryTags)
+      tags.push(tag)
+  }
+  return tags
 }
 
 /**
@@ -800,4 +842,4 @@ export function prepareStreamingTemplate(
 
 export { prepareTemplate } from '../parser'
 export type { PreparedTemplate } from '../parser'
-export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
+export type { CreateStreamableServerHeadOptions, HeadTag, SSRHeadPayload, Unhead } from '../types'

@@ -37,6 +37,7 @@
   UnheadContext: object
 ./stream/server:
   createStreamableHead: function
+  getPendingTags: function
   HeadStream: function
   prepareStreamingTemplate: function
   prepareTemplate: function

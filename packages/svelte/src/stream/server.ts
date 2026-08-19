@@ -10,6 +10,7 @@ export { UnheadContextKey } from '../context'
 
 export {
   type CreateStreamableServerHeadOptions,
+  getPendingTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
