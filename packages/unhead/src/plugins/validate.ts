@@ -53,6 +53,16 @@ export interface ValidatePluginOptions {
    * Project root path. When set, source locations are displayed as relative paths.
    */
   root?: string
+  /**
+   * Restrict the plugin to these rules. Every other rule is treated as `'off'`,
+   * whatever `rules` says.
+   *
+   * Use this for a second instance that only needs to cover what the first one
+   * cannot see. A server head running alongside a client one wants
+   * `['streamed-tag-hidden-from-bots']`, since every other rule already reports
+   * from the client and would otherwise warn twice per request.
+   */
+  only?: ValidationRuleId[]
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
@@ -258,6 +268,13 @@ function describeTag(tag: HeadTag): string {
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
+  const only = options.only && new Set<string>(options.only)
+
+  function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
+    if (only && !only.has(id))
+      return 'off'
+    return resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, fallback)
+  }
 
   return defineHeadPlugin((head: Unhead) => {
     // Per head, not per plugin: entry indexes restart at 1 for every head, so
@@ -286,7 +303,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
-      if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
+      if ((opts as any)?.mode && severityFor('deprecated-option-mode', 'warn') !== 'off') {
         console.warn(`[unhead] "mode: '${(opts as any).mode}'" option was removed in v3. Use the appropriate createHead import (unhead/client or unhead/server) instead.`)
       }
       const source = captureSource(root)
@@ -328,10 +345,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       key: 'validate',
       hooks: {
         'ssr:streamChunk': ({ tags }) => {
-          const severity = resolveSeverity(
-            ruleConfig['streamed-tag-hidden-from-bots'] as RuleSeverity | [RuleSeverity, unknown] | undefined,
-            'warn',
-          )
+          const severity = severityFor('streamed-tag-hidden-from-bots', 'warn')
           if (severity === 'off')
             return
           const rules: HeadValidationRule[] = []
@@ -365,7 +379,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const rules: HeadValidationRule[] = []
 
           function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
-            const severity = resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, defaultSeverity)
+            const severity = severityFor(id, defaultSeverity)
             if (severity === 'off')
               return
             const entryIndex = inputEntryIndex ?? (tag?._p != null ? tag._p >> 10 : undefined)

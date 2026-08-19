@@ -149,6 +149,15 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
           ctx.addRuntimePlugin({
             import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
+            // Streaming only. `streamed-tag-hidden-from-bots` fires from the
+            // chunk renderer, which the client never sees, and it is the one
+            // rule the client instance cannot cover. Everything else stays
+            // client-side so a non-streaming SSR app pays nothing: the plugin
+            // captures a stack trace on every push, which is not worth it for
+            // a rule that can never fire.
+            server: wantStreaming
+              ? `_h.use(__unhead_validate({ root: __ROOT__, only: ['streamed-tag-hidden-from-bots'] }))`
+              : undefined,
           })
         }
         if (devtools !== false) {
