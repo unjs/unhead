@@ -288,7 +288,14 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  const flushChunk = options?.flushChunk
+  // Without a `flushChunk`, entries registered after the shell reach neither
+  // the served `<head>` nor the client: they are simply discarded. Default to
+  // emitting them as a patch script so the bare call does not lose tags.
+  // Framework wrappers pass their own to control the wrapper (CSP nonces).
+  const flushChunk = options?.flushChunk ?? (() => {
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    return chunk ? `<script>${chunk};document.currentScript.remove()</script>` : ''
+  })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let end = ''
