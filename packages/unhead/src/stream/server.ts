@@ -6,6 +6,8 @@ import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
 import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { callHook } from '../utils/hooks'
+import { unpackMeta } from '../utils/meta'
+import { normalizeEntryToTags, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -206,136 +208,36 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
 }
 
 /**
- * A tag whose job depends on being in the served `<head>`.
+ * Normalizes the entries that have not been flushed yet, for inspection only.
  *
- * A crawler reads the HTML the server sent. It does not run the streaming
- * patch script, so a tag delivered that way never reaches it.
+ * Mirrors the parts of `resolveTags` that decide what a tag IS: entry options,
+ * and the `_flatMeta` expansion that turns a `useSeoMeta` entry into real meta
+ * tags. It deliberately does not run the `entries:normalize` hook, because
+ * listeners there hold per-resolve state that a second pass would corrupt.
  */
-const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
-const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
-const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al):/
-const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
-const WHITESPACE_RE = /\s+/
-
-function isHiddenFromBots(tag: HeadTag): boolean {
-  const props = tag.props
-  // Search engines read JSON-LD anywhere in the document, but only when it is
-  // in the HTML they were served. Position does not rescue it, so this is
-  // checked before the body exemption below.
-  if (tag.tag === 'script')
-    return String(props.type || '').toLowerCase() === 'application/ld+json'
-  // Every other tag here only carries meaning from the head, so one placed in
-  // the body was never going to be read.
-  if (tag.tagPosition?.startsWith('body'))
-    return false
-  switch (tag.tag) {
-    case 'title':
-    case 'titleTemplate':
-    case 'base':
-      return true
-    case 'meta': {
-      const name = String(props.name || '').toLowerCase()
-      if (BOT_HEAD_META_NAMES.has(name))
-        return true
-      // Search engines follow `http-equiv="refresh"` as a redirect, so one
-      // that only arrives as a patch changes what they index.
-      if (BOT_HEAD_META_EQUIVS.has(String(props['http-equiv'] || '').toLowerCase()))
-        return true
-      const property = String(props.property || props.name || '').toLowerCase()
-      return BOT_HEAD_META_PREFIX_RE.test(property)
-    }
-    case 'link':
-      // `rel` is a space-separated token list, and HTML allows any ASCII
-      // whitespace between tokens.
-      return String(props.rel || '').toLowerCase().split(WHITESPACE_RE).some(rel => BOT_HEAD_LINK_RELS.has(rel))
-    default:
-      return false
-  }
-}
-
-/**
- * @experimental
- *
- * What the next {@link renderSSRHeadSuspenseChunk} call will hand to the
- * client, before it renders and clears anything.
- */
-export interface StreamedTagsReport {
-  /**
-   * Every entry that has not been flushed yet, normalized to tags. Entry
-   * options are applied, so `tagPosition` tells you whether a tag was bound
-   * for the head or the body.
-   */
-  pendingTags: HeadTag[]
-  /**
-   * The subset of `pendingTags` that only works when it is in the served
-   * `<head>`.
-   *
-   * A bot reads the HTML the server sent. It does not run the streaming patch
-   * script, so it never sees these: `<title>`, canonical and alternate links,
-   * robots and description meta, Open Graph and Twitter cards, JSON-LD.
-   */
-  tagsHiddenFromBots: HeadTag[]
-}
-
-/**
- * @experimental
- *
- * Inspects the entries that have not been flushed yet, without rendering or
- * clearing them.
- *
- * Once the shell `<head>` is on the wire, pending entries can only be
- * delivered as client-side patches. Use this to see what the next
- * `renderSSRHeadSuspenseChunk()` will defer, and to warn when a tag that
- * needs to be in the served HTML will not be.
- *
- * Tags are normalized fresh on every call and are never cached, so mutating
- * them cannot affect a later render.
- *
- * @param head - The Unhead instance
- * @returns The pending tags, and the subset a crawler will not see
- *
- * @example
- * ```ts
- * const { tagsHiddenFromBots } = inspectStreamedTags(head)
- * if (tagsHiddenFromBots.length) {
- *   console.warn(`Bots will not see: ${tagsHiddenFromBots.map(t => t.tag).join(', ')}`)
- * }
- * const chunk = renderSSRHeadSuspenseChunk(head)
- * ```
- */
-export function inspectStreamedTags(head: Unhead<any>): StreamedTagsReport {
+function normalizePendingTags(head: Unhead<any>): HeadTag[] {
   const propResolvers = head.resolvedOptions.propResolvers || []
-  const runsNormalizeHook = !!(head.hooks as any)?._hooks?.['entries:normalize']?.length
-  const pendingTags: HeadTag[] = []
-  const tagsHiddenFromBots: HeadTag[] = []
-  // Snapshot: an `entries:normalize` listener may push, and a live iterator
-  // would feed those entries back into this same pass.
-  for (const entry of [...head.entries.values()]) {
-    let entryTags = normalizeEntryToTags(entry.input, propResolvers)
-    if (entry.options) {
-      for (const tag of entryTags)
+  const tags: HeadTag[] = []
+  for (const entry of head.entries.values()) {
+    for (const tag of normalizeEntryToTags(entry.input, propResolvers)) {
+      if (entry.options)
         Object.assign(tag, entry.options)
-    }
-    // `useSeoMeta` pushes a single `_flatMeta` entry that only becomes real
-    // meta tags inside this hook, so skipping it would report none of the
-    // Open Graph, Twitter, or description tags it set.
-    if (runsNormalizeHook) {
-      const ctx = { tags: entryTags, entry }
-      callHook(head, 'entries:normalize', ctx)
-      entryTags = ctx.tags
-    }
-    for (const tag of entryTags) {
+      if (tag.tag === '_flatMeta') {
+        // `useSeoMeta` pushes one of these; FlatMetaPlugin expands it during a
+        // real resolve, so an unexpanded one hides every tag it set.
+        for (const props of unpackMeta(tag.props))
+          tags.push({ ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] })
+        continue
+      }
       // `normalizeProps` assigns the entry's own object for templateParams
-      // rather than copying it, so this is the one tag a caller could mutate
-      // into a later render.
+      // rather than copying it, so this is the one tag an inspector could
+      // mutate into a later render.
       if (tag.tag === 'templateParams')
         tag.props = { ...tag.props }
-      pendingTags.push(tag)
-      if (isHiddenFromBots(tag))
-        tagsHiddenFromBots.push(tag)
+      tags.push(tag)
     }
   }
-  return { pendingTags, tagsHiddenFromBots }
+  return tags
 }
 
 /**
@@ -556,6 +458,12 @@ export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
+
+  // Only pay for normalization when something is listening (the dev-only
+  // ValidatePlugin). Production registers no listener, so this is one
+  // property lookup per chunk.
+  if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length)
+    callHook(head, 'ssr:streamChunk', { tags: normalizePendingTags(head) })
 
   const streamKey = getStreamKey(head)
   const propResolvers = head.resolvedOptions.propResolvers || []

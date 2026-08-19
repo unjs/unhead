@@ -45,6 +45,7 @@ export const VALIDATION_RULE_IDS = /* @__PURE__ */ [
   'render-blocking-script',
   'robots-conflict',
   'script-src-with-content',
+  'streamed-tag-hidden-from-bots',
   'too-many-fetchpriority-high',
   'too-many-preconnects',
   'too-many-prefetches',

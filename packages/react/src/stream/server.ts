@@ -140,7 +140,6 @@ export function createStreamableHead<T = ResolvableHead>(
 export {
   type BaseStreamableHeadContext,
   type CreateStreamableServerHeadOptions,
-  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
@@ -149,7 +148,6 @@ export {
   renderStreamEnd,
   renderStreamMarkup,
   type StreamableHeadContext,
-  type StreamedTagsReport,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,

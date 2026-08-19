@@ -54,6 +54,15 @@ export interface DOMHeadHooks {
 }
 
 export interface SSRHeadHooks {
+  /**
+   * Fired by `renderSSRHeadSuspenseChunk` with the tags it is about to hand to
+   * the client as a patch, before the entries are cleared.
+   *
+   * The chunk renderer serializes raw entry input and never resolves tags, so
+   * this is the only place a plugin can see what a stream chunk carried. The
+   * tags are normalized for inspection only; they are not what gets rendered.
+   */
+  'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => HookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult

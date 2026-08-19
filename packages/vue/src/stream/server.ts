@@ -69,7 +69,6 @@ export function createStreamableHead(
 export {
   createBootstrapScript,
   type CreateStreamableServerHeadOptions,
-  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,

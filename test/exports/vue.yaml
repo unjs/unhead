@@ -60,7 +60,6 @@
 ./stream/server:
   createBootstrapScript: function
   createStreamableHead: function
-  inspectStreamedTags: function
   prepareStreamingTemplate: function
   prepareTemplate: function
   renderShell: function

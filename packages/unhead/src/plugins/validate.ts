@@ -86,6 +86,7 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'preload-missing-as': 'warn',
   'robots-conflict': 'warn',
   'script-src-with-content': 'warn',
+  'streamed-tag-hidden-from-bots': 'warn',
   'twitter-handle-missing-at': 'warn',
   'viewport-user-scalable': 'info',
 }
@@ -178,6 +179,59 @@ function createInputShapeObserver(): {
   }
 }
 
+/**
+ * Tags a bot only ever reads from the served `<head>`.
+ *
+ * During streaming SSR anything registered after the shell is delivered as a
+ * script that patches the DOM. A browser runs it. A bot reads the HTML the
+ * server sent and never does, so these tags simply are not there for it.
+ */
+const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
+const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
+const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
+const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al):/
+const REL_SEPARATOR_RE = /\s+/
+
+function isHiddenFromBots(tag: HeadTag): boolean {
+  const props = tag.props
+  // Search engines read JSON-LD anywhere in the document, but only when it is
+  // in the HTML they were served, so position does not rescue it.
+  if (tag.tag === 'script')
+    return String(props.type || '').toLowerCase() === 'application/ld+json'
+  // Every other tag here only carries meaning from the head, so one placed in
+  // the body was never going to be read.
+  if (tag.tagPosition?.startsWith('body'))
+    return false
+  switch (tag.tag) {
+    case 'title':
+    case 'titleTemplate':
+    case 'base':
+      return true
+    case 'meta': {
+      if (BOT_HEAD_META_NAMES.has(String(props.name || '').toLowerCase()))
+        return true
+      if (BOT_HEAD_META_EQUIVS.has(String(props['http-equiv'] || '').toLowerCase()))
+        return true
+      return BOT_HEAD_META_PREFIX_RE.test(String(props.property || props.name || '').toLowerCase())
+    }
+    case 'link':
+      return String(props.rel || '').toLowerCase().split(REL_SEPARATOR_RE).some(rel => BOT_HEAD_LINK_RELS.has(rel))
+    default:
+      return false
+  }
+}
+
+function describeTag(tag: HeadTag): string {
+  const props = tag.props
+  if (tag.tag === 'meta')
+    return `meta[${props.property ? `property="${props.property}"` : props['http-equiv'] ? `http-equiv="${props['http-equiv']}"` : `name="${props.name}"`}]`
+  if (tag.tag === 'link')
+    return `link[rel="${props.rel}"]`
+  if (tag.tag === 'script')
+    return 'script[type="application/ld+json"]'
+  return tag.tag
+}
+
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
@@ -221,9 +275,45 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       return active
     }
 
+    function dispatch(rules: HeadValidationRule[]) {
+      ;(head as any)._validationRules = rules
+      if (!rules.length)
+        return
+      if (options.onReport) {
+        options.onReport(rules)
+        return
+      }
+      for (const rule of rules) {
+        const loc = rule.source ? ` (${rule.source})` : ''
+        console.warn(`[unhead] ${rule.message}${loc}`)
+      }
+    }
+
     return {
       key: 'validate',
       hooks: {
+        'ssr:streamChunk': ({ tags }) => {
+          const severity = resolveSeverity(
+            ruleConfig['streamed-tag-hidden-from-bots'] as RuleSeverity | [RuleSeverity, unknown] | undefined,
+            'warn',
+          )
+          if (severity === 'off')
+            return
+          const rules: HeadValidationRule[] = []
+          for (const tag of tags) {
+            if (!isHiddenFromBots(tag))
+              continue
+            const entryIndex = tag._p != null ? tag._p >> 10 : undefined
+            rules.push({
+              id: 'streamed-tag-hidden-from-bots',
+              message: `${describeTag(tag)} was registered after the streaming shell was sent, so it is delivered as a client-side patch. Bots read the served HTML and will not see it.`,
+              severity,
+              source: entryIndex != null ? stacks.get(entryIndex) : undefined,
+              tag,
+            })
+          }
+          dispatch(rules)
+        },
         'entries:normalize': ({ entry }) => {
           const input = inputShapeObserver.take()
           if (!input || input.constructor !== Object)
@@ -610,20 +700,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           }
 
           // Store rules on the head instance for devtools integration
-          ;(head as any)._validationRules = rules
-
-          // Dispatch
-          if (rules.length) {
-            if (options.onReport) {
-              options.onReport(rules)
-            }
-            else {
-              for (const rule of rules) {
-                const loc = rule.source ? ` (${rule.source})` : ''
-                console.warn(`[unhead] ${rule.message}${loc}`)
-              }
-            }
-          }
+          dispatch(rules)
         },
       },
     }

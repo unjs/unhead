@@ -14,7 +14,6 @@ import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
 export {
-  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
