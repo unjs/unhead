@@ -25,9 +25,18 @@ export function createStreamableHead<T = ResolvableHead>(options: CreateStreamab
   if (!core)
     return undefined
 
-  // Check if already wrapped
-  if ((core as any)._wrapped)
-    return core as ClientUnhead<T>
+  // Already wrapped, by an earlier call or by a client bundle that built the
+  // head itself. Re-wrapping would double every push, so apply what this call
+  // brought and hand the existing head back. The old early return dropped
+  // `hooks`, `plugins`, and `init` on the floor.
+  if ((core as any)._wrapped) {
+    const wrapped = core as ClientUnhead<T>
+    for (const name in rest.hooks || {})
+      wrapped.hooks?.hook(name as any, (rest.hooks as any)[name])
+    ;(rest.plugins || []).forEach(p => wrapped.use(p))
+    rest.init?.forEach(e => e && wrapped.push(e as T))
+    return wrapped
+  }
 
   // Check if hydration is locked (client pushes should be skipped during hydration)
   const isHydrationLocked = () => streamQueue?._hydrationLocked?.() ?? false
