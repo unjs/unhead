@@ -290,7 +290,21 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  const flushChunk = options?.flushChunk
+  // Without a default, entries registered after the shell are discarded.
+  const flushChunk = options?.flushChunk ?? (() => {
+    let chunk: string
+    try {
+      chunk = renderSSRHeadSuspenseChunk(head)
+    }
+    catch {
+      // Bytes are already on the wire; a throw here truncates the response.
+      return ''
+    }
+    if (!chunk)
+      return ''
+    // A template with no `</head>` never received the bootstrap script.
+    return `<script>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
+  })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
   let end = ''
