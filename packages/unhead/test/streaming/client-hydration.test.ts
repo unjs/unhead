@@ -229,6 +229,42 @@ describe('streaming client hydration', () => {
   })
 
   describe('chunk batching', () => {
+    it('renders once for the whole pre-init backlog', async () => {
+      // Each queued chunk sets a different title, and the DOM renderer only
+      // writes a title that changed. One render per backlog means one write,
+      // one render per chunk means three.
+      const dom = new JSDOM('<!DOCTYPE html><html><head><title>Initial</title></head><body></body></html>')
+      const win = dom.window as any
+      win.__unhead__ = {
+        _q: [[{ title: 'A' }], [{ title: 'B' }], [{ title: 'C' }]],
+        push: (entries: any) => win.__unhead__._q.push(entries),
+      }
+      globalThis.window = win
+      globalThis.document = win.document
+
+      const proto = win.Document.prototype
+      const original = Object.getOwnPropertyDescriptor(proto, 'title')!
+      const written: string[] = []
+      Object.defineProperty(proto, 'title', {
+        configurable: true,
+        get() { return original.get!.call(this) },
+        set(value: string) {
+          written.push(value)
+          original.set!.call(this, value)
+        },
+      })
+
+      try {
+        initIife({})
+      }
+      finally {
+        Object.defineProperty(proto, 'title', original)
+      }
+
+      expect(written).toEqual(['C'])
+      expect(win.document.title).toBe('C')
+    })
+
     it('renders once per streamed chunk, not once per entry', async () => {
       const { window, document } = setupStreamingDom([])
       const head = createStreamableHead()!

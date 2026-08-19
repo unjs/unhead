@@ -58,18 +58,19 @@ function init(options: { streamKey?: string } = {}) {
     }
     finally {
       head._b = nested
-    }
-    if (!nested) {
-      head.dirty = true
-      head.render()
+      // In the `finally` so a throwing entry still renders the ones that
+      // landed before it, instead of leaving them pending indefinitely.
+      if (!nested) {
+        head.dirty = true
+        head.render()
+      }
     }
   }
 
-  // Consume existing queue - each item in queue is an array of entries
-  if (queue?._q) {
-    for (const entries of queue._q) {
-      pushBatch(entries)
-    }
+  // Consume the backlog as one batch. Each item is an array of entries, and
+  // the whole queue is worth a single render, not one per queued chunk.
+  if (queue?._q?.length) {
+    pushBatch(queue._q.flat())
   }
 
   win[streamKey] = {
