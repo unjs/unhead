@@ -228,6 +228,41 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('same-tick pushes', () => {
+    it('keeps a client push made in the tick the iife initialised', async () => {
+      const { document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+
+      const active = head.push({ title: 'Client title', meta: [{ name: 'description', content: 'Client' }] })
+      await waitForDomUpdate()
+
+      expect(active._i).toBeGreaterThan(0)
+      expect(document.title).toBe('Client title')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client')
+    })
+
+    it('keeps a streamed chunk that arrives in the tick the iife initialised', async () => {
+      const { window, document } = setupStreamingDom([])
+      createStreamableHead()
+
+      window.__unhead__.push([{ title: 'Streamed title' }])
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Streamed title')
+    })
+
+    it('keeps a patch applied in the tick the iife initialised', async () => {
+      const { document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+
+      const active = head.push({ title: 'First' })
+      active.patch({ title: 'Patched' })
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Patched')
+    })
+  })
+
   describe('chunk batching', () => {
     it('renders once for the whole pre-init backlog', async () => {
       // Each queued chunk sets a different title, and the DOM renderer only
