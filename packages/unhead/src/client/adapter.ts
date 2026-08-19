@@ -49,7 +49,10 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     }
   }
   hooks.hook('entries:updated', () => {
-    head.render()
+    // `_b` is set while a caller pushes a batch of entries (streaming chunks)
+    // and renders once at the end.
+    if (!head._b)
+      head.render()
   })
   return head
 }

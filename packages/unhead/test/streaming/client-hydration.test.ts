@@ -228,6 +228,55 @@ describe('streaming client hydration', () => {
     })
   })
 
+  describe('chunk batching', () => {
+    it('renders once per streamed chunk, not once per entry', async () => {
+      const { window, document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      window.__unhead__.push([
+        { title: 'Streamed' },
+        { meta: [{ name: 'description', content: 'Streamed description' }] },
+        { link: [{ rel: 'canonical', href: 'https://example.com/' }] },
+        { script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' }] },
+      ])
+      await waitForDomUpdate()
+
+      expect(renders).toBe(1)
+      expect(document.title).toBe('Streamed')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Streamed description')
+      expect(document.querySelector('link[rel="canonical"]')).toBeTruthy()
+      expect(document.querySelector('script[type="application/ld+json"]')).toBeTruthy()
+    })
+
+    it('leaves the render-per-push behaviour intact for client pushes', async () => {
+      const { window } = setupStreamingDom([])
+      const head = createStreamableHead()!
+      await waitForDomUpdate()
+
+      let renders = 0
+      const render = head.render
+      head.render = () => {
+        renders++
+        return render()
+      }
+
+      head.push({ title: 'One' })
+      head.push({ meta: [{ name: 'description', content: 'Two' }] })
+      await waitForDomUpdate()
+
+      expect(renders).toBe(2)
+      expect(window.document.title).toBe('One')
+    })
+  })
+
   describe('client adapter hooks', () => {
     it('exposes hooks to the renderer owned by the streaming core', async () => {
       const { document } = setupStreamingDom([])
