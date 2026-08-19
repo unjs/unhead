@@ -103,8 +103,10 @@ function buildClientStub(framework: string, streamKey: string, warnOnMissing: bo
   // so each batch is spread into individual `h.push` calls. Pushing the batch
   // array itself normalizes its indexes into tags named `0`, `1`, ... and
   // every streamed tag is lost.
+  // Entries are marked `_streamed` to match the iife, so devtools can tell
+  // them apart from client pushes.
   return `import{createHead}from'${framework}/client'
-const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});const p=b=>{for(const e of b)h.push(e)};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
+const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});const p=b=>{for(const e of b){const a=h.push(e),t=h.entries.get(a._i);if(t)t._streamed=!0}};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
 }
 
 /**

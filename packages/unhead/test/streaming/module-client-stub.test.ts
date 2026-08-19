@@ -46,12 +46,8 @@ function runStub(streamKey = '__unhead__') {
   return new Function('createHead', 'window', 'document', 'console', body)(createHead, globalThis.window, globalThis.document, console)
 }
 
-function settle() {
-  return new Promise(resolve => setTimeout(resolve, 20))
-}
-
 describe('module-mode client stub', () => {
-  it('applies a batch queued before the client loaded', async () => {
+  it('applies a batch queued before the client loaded', () => {
     const win = setupDom()
     win.__unhead__.push([
       { title: 'Streamed' },
@@ -59,13 +55,12 @@ describe('module-mode client stub', () => {
     ])
 
     runStub()
-    await settle()
 
     expect(globalThis.document.title).toBe('Streamed')
     expect(globalThis.document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Streamed description')
   })
 
-  it('applies a batch that arrives after the client loaded', async () => {
+  it('applies a batch that arrives after the client loaded', () => {
     const win = setupDom()
 
     runStub()
@@ -73,24 +68,32 @@ describe('module-mode client stub', () => {
       { link: [{ rel: 'canonical', href: 'https://example.com/' }] },
       { script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' }] },
     ])
-    await settle()
 
     expect(globalThis.document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://example.com/')
     expect(globalThis.document.querySelector('script[type="application/ld+json"]')).toBeTruthy()
   })
 
-  it('never emits a tag named after a batch index', async () => {
+  it('never emits a tag named after a batch index', () => {
     const win = setupDom()
 
     runStub()
     win.__unhead__.push([{ meta: [{ name: 'a', content: '1' }] }, { meta: [{ name: 'b', content: '2' }] }])
-    await settle()
 
     expect(globalThis.document.head.innerHTML).not.toMatch(/<0|<1/)
     expect(globalThis.globalThis.document.querySelectorAll('meta[name="a"], meta[name="b"]')).toHaveLength(2)
   })
 
-  it('exposes the head instance for the framework client to adopt', async () => {
+  it('marks streamed entries so devtools can tell them apart', () => {
+    const win = setupDom()
+    runStub()
+    win.__unhead__.push([{ title: 'Streamed' }])
+
+    const entries = [...win.__unhead__._head.entries.values()]
+    expect(entries).toHaveLength(1)
+    expect(entries[0]._streamed).toBe(true)
+  })
+
+  it('exposes the head instance for the framework client to adopt', () => {
     const win = setupDom()
     runStub()
     expect(win.__unhead__._head).toBeDefined()
