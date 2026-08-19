@@ -1,5 +1,6 @@
 import type { HeadTag, PropResolver, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
+import { unpackMeta } from '../utils/meta'
 import {
   headInputPredicates,
   inputShapeFromRuntime,
@@ -191,6 +192,27 @@ const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-langua
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
 const REL_SEPARATOR_RE = /\s+/
+// Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
+const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+
+/**
+ * Resolves the plugin-owned shapes `renderSSRHeadSuspenseChunk` leaves alone:
+ * a `useSeoMeta` entry, and the legacy `body` prop DeprecationsPlugin rewrites.
+ */
+function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
+  // `useHeadSafe` drops these outright, so reporting one as "a browser gets
+  // it, a bot does not" would be wrong twice over.
+  if (tag._safe && tag.tag === 'link' && SAFE_BLOCKED_RELS.has(String(tag.props.rel || '').toLowerCase()))
+    return
+  if (tag.props.body)
+    tag.tagPosition = 'bodyClose'
+  if (tag.tag !== '_flatMeta') {
+    yield tag
+    return
+  }
+  for (const props of unpackMeta(tag.props))
+    yield { ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] }
+}
 
 function isHiddenFromBots(tag: HeadTag): boolean {
   const props = tag.props
@@ -309,17 +331,19 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           if (severity === 'off')
             return
           const rules: HeadValidationRule[] = []
-          for (const tag of tags) {
-            if (!isHiddenFromBots(tag))
-              continue
-            const entryIndex = tag._p != null ? tag._p >> 10 : undefined
-            rules.push({
-              id: 'streamed-tag-hidden-from-bots',
-              message: `Bots will not see ${describeTag(tag)}. It arrived after the shell, so it ships as a client patch. Register it before the shell.`,
-              severity,
-              source: entryIndex != null ? stacks.get(entryIndex) : undefined,
-              tag,
-            })
+          for (const pending of tags) {
+            for (const tag of expandPendingTag(pending)) {
+              if (!isHiddenFromBots(tag))
+                continue
+              const entryIndex = tag._p != null ? tag._p >> 10 : undefined
+              rules.push({
+                id: 'streamed-tag-hidden-from-bots',
+                message: `Bots will not see ${describeTag(tag)}. It arrived after the shell, so it ships as a client patch. Register it before the shell.`,
+                severity,
+                source: entryIndex != null ? stacks.get(entryIndex) : undefined,
+                tag,
+              })
+            }
           }
           dispatch(rules, 'append')
         },

@@ -60,7 +60,9 @@ export interface SSRHeadHooks {
    *
    * The chunk renderer serializes raw entry input and never resolves tags, so
    * this is the only place a plugin can see what a stream chunk carried. The
-   * tags are normalized for inspection only; they are not what gets rendered.
+   * tags are normalized for inspection only; they are not what gets rendered,
+   * and plugin-owned shapes (`_flatMeta`, the legacy `body` prop) are left for
+   * the listener to resolve.
    *
    * Synchronous: the renderer clears the entries as soon as this returns, so a
    * listener that deferred its work would read them after they were gone.
