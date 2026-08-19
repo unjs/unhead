@@ -60,9 +60,7 @@ export function createStreamableHead(
 
   return {
     head: vueHead,
-    // No `flushChunk`: the core default emits the same self-deleting patch
-    // script, and additionally guards the queue and survives an entry it
-    // cannot serialize. A second copy here only drifts from it.
+    // No `flushChunk`: a second copy of the core default only drifts from it.
     wrapStream: (stream, template) => wrapStream(vueHead, stream, template),
   }
 }

@@ -290,27 +290,19 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  // Without a `flushChunk`, entries registered after the shell reach neither
-  // the served `<head>` nor the client: they are simply discarded. Default to
-  // emitting them as a patch script so the bare call does not lose tags.
-  // Framework wrappers pass their own to control the wrapper (CSP nonces).
+  // Without a default, entries registered after the shell are discarded.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string
     try {
       chunk = renderSSRHeadSuspenseChunk(head)
     }
     catch {
-      // Best effort, deliberately swallowed. This runs after bytes are on the
-      // wire, so rethrowing would error the stream and truncate a response the
-      // client is already reading, which is worse than losing the tags this
-      // default exists to save. `renderSSRHeadSuspenseChunk` drops the entry it
-      // could not serialize before throwing, so the next chunk recovers.
+      // Bytes are already on the wire; a throw here truncates the response.
       return ''
     }
     if (!chunk)
       return ''
-    // A template with no `</head>` never received the bootstrap script, so the
-    // queue may not exist. Guard rather than throw on `undefined.push`.
+    // A template with no `</head>` never received the bootstrap script.
     return `<script>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
   })
   const enc = encoder ??= new TextEncoder()
