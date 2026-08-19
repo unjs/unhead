@@ -44,15 +44,33 @@ function init(options: { streamKey?: string } = {}) {
       stored._streamed = true
   }
 
-  // Consume existing queue - each item in queue is an array of entries
-  if (queue?._q) {
-    for (const entries of queue._q) {
+  // Push a batch of entries and render once. Without `_b` a client head
+  // wrapper renders on every push, so an N-entry chunk costs N renders.
+  function pushBatch(entries: any[]) {
+    // Nested call (an `entries:updated` listener pushed again): stay inside the
+    // outer batch so it still owns the single render.
+    const nested = head._b
+    head._b = true
+    try {
       for (const entry of entries) {
         pushStreamed(entry)
       }
     }
-    head.dirty = true
-    head.render()
+    finally {
+      head._b = nested
+      // In the `finally` so a throwing entry still renders the ones that
+      // landed before it, instead of leaving them pending indefinitely.
+      if (!nested) {
+        head.dirty = true
+        head.render()
+      }
+    }
+  }
+
+  // Consume the backlog as one batch. Each item is an array of entries, and
+  // the whole queue is worth a single render, not one per queued chunk.
+  if (queue?._q?.length) {
+    pushBatch(queue._q.flat())
   }
 
   win[streamKey] = {
@@ -60,15 +78,9 @@ function init(options: { streamKey?: string } = {}) {
     _head: head,
     _hydrationLocked: () => hydrationLocked,
     // Server pushes arrays of entries (from inline scripts during streaming)
-    push: (entries: any[]) => {
-      // During hydration, only SSR streaming scripts should push
-      // Client useHead calls are skipped to preserve streamed state
-      for (const entry of entries) {
-        pushStreamed(entry)
-      }
-      head.dirty = true
-      head.render()
-    },
+    // During hydration, only SSR streaming scripts should push
+    // Client useHead calls are skipped to preserve streamed state
+    push: pushBatch,
   } satisfies StreamingGlobal
 
   return head
