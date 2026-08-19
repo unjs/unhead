@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ActiveHeadEntry, ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
 
 export interface ClientUnhead<T = ResolvableHead> extends Unhead<T, boolean> {
@@ -56,25 +56,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
         }
       },
     }
-  }
-  return head
-}
-
-export function createStreamClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>, locked: () => boolean): ClientUnhead<T> {
-  const head = createClientHeadAdapter(core, hooks, render)
-  const push = head.push
-  head.push = (input, options) => {
-    if (locked()) {
-      return {
-        _i: -1,
-        patch: () => {},
-        dispose: () => {},
-      } as ActiveHeadEntry<T>
-    }
-    const active = push(input, options)
-    const patch = active.patch
-    active.patch = input => !locked() && patch(input)
-    return active
   }
   return head
 }

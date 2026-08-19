@@ -201,7 +201,7 @@ describe('streaming client hydration', () => {
 
       const head = createStreamableHead()
       expect(head).toBeDefined()
-      await waitForDomUpdate() // wait for hydration lock to release
+      await waitForDomUpdate()
       head!.push({ title: 'After Iife' })
       await waitForDomUpdate()
 
@@ -225,6 +225,63 @@ describe('streaming client hydration', () => {
       const descriptions = document.querySelectorAll('meta[name="description"]')
       expect(descriptions.length).toBe(1)
       expect(descriptions[0].getAttribute('content')).toBe('Updated')
+    })
+  })
+
+  describe('queue handoff', () => {
+    it('drops replayed batches instead of retaining them', async () => {
+      const { window, document } = setupStreamingDom([
+        { title: 'Queued' },
+        { meta: [{ name: 'description', content: 'Queued' }] },
+      ])
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Queued')
+      expect(window.__unhead__._q).toEqual([])
+    })
+
+    it('does not accumulate batches pushed after init', async () => {
+      const { window } = setupStreamingDom([])
+      createStreamableHead()
+      window.__unhead__.push([{ title: 'Live' }])
+      await waitForDomUpdate()
+
+      expect(window.__unhead__._q).toEqual([])
+    })
+  })
+
+  describe('same-tick pushes', () => {
+    it('keeps a client push made in the tick the iife initialised', async () => {
+      const { document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+
+      const active = head.push({ title: 'Client title', meta: [{ name: 'description', content: 'Client' }] })
+      await waitForDomUpdate()
+
+      expect(active._i).toBeGreaterThan(0)
+      expect(document.title).toBe('Client title')
+      expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Client')
+    })
+
+    it('keeps a streamed chunk that arrives in the tick the iife initialised', async () => {
+      const { window, document } = setupStreamingDom([])
+      createStreamableHead()
+
+      window.__unhead__.push([{ title: 'Streamed title' }])
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Streamed title')
+    })
+
+    it('keeps a patch applied in the tick the iife initialised', async () => {
+      const { document } = setupStreamingDom([])
+      const head = createStreamableHead()!
+
+      const active = head.push({ title: 'First' })
+      active.patch({ title: 'Patched' })
+      await waitForDomUpdate()
+
+      expect(document.title).toBe('Patched')
     })
   })
 
