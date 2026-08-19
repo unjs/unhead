@@ -96,8 +96,14 @@ export function createStreamableHead<T = ResolvableHead>(
 
             passthrough.on('data', chunk => writable.write(chunk))
             passthrough.on('end', () => {
-              writable.write(renderStreamEnd(head, parts))
-              writable.end()
+              // Runs after the enclosing catch has gone, so it owns its own failure.
+              try {
+                writable.write(renderStreamEnd(head, parts))
+                writable.end()
+              }
+              catch (err) {
+                writable.destroy(err instanceof Error ? err : new Error(String(err)))
+              }
             })
             passthrough.on('error', (err) => {
               writable.destroy(err)

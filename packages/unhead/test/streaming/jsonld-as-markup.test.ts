@@ -170,3 +170,24 @@ describe('template-free drivers', () => {
     expect(renderStreamTail(head)).toBe('')
   })
 })
+
+describe('tail render failure', () => {
+  it('keeps the held JSON-LD for a retry', () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    const render = head.render.bind(head)
+    let boom = true
+    head.render = () => {
+      if (boom) {
+        boom = false
+        throw new Error('plugin blew up')
+      }
+      return render()
+    }
+
+    expect(() => renderStreamTail(head)).toThrow('plugin blew up')
+    expect(renderStreamTail(head)).toContain('Organization')
+  })
+})

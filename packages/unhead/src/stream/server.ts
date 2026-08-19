@@ -302,7 +302,6 @@ export function renderStreamTail(head: Unhead<any>): string {
   if (!held?.length) {
     return ''
   }
-  ;(head as any)._streamMarkup = undefined
 
   // Re-pushed through the real head so the tags get the same normalization,
   // dedupe, and escaping as any other server-rendered tag.
@@ -311,7 +310,10 @@ export function renderStreamTail(head: Unhead<any>): string {
   try {
     for (const input of held)
       head.push({ ...input, script: input.script.map((t: any) => ({ ...t, tagPosition: 'bodyClose' })) })
-    return (head.render() as SSRHeadPayload).bodyTags
+    const bodyTags = (head.render() as SSRHeadPayload).bodyTags
+    // Only after the render succeeds, so a failure leaves the markup for a retry.
+    ;(head as any)._streamMarkup = undefined
+    return bodyTags
   }
   finally {
     head.entries.clear()
