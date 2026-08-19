@@ -83,7 +83,7 @@ describe('module-mode client stub', () => {
     expect(globalThis.globalThis.document.querySelectorAll('meta[name="a"], meta[name="b"]')).toHaveLength(2)
   })
 
-  it('marks streamed entries so devtools can tell them apart', () => {
+  it('marks live-pushed entries so devtools can tell them apart', () => {
     const win = setupDom()
     runStub()
     win.__unhead__.push([{ title: 'Streamed' }])
@@ -91,6 +91,16 @@ describe('module-mode client stub', () => {
     const entries = [...win.__unhead__._head.entries.values()]
     expect(entries).toHaveLength(1)
     expect(entries[0]._streamed).toBe(true)
+  })
+
+  it('marks replayed entries so devtools can tell them apart', () => {
+    const win = setupDom()
+    win.__unhead__.push([{ title: 'Queued' }, { meta: [{ name: 'description', content: 'Queued' }] }])
+    runStub()
+
+    const entries = [...win.__unhead__._head.entries.values()]
+    expect(entries).toHaveLength(2)
+    expect(entries.map((entry: any) => entry._streamed)).toEqual([true, true])
   })
 
   it('exposes the head instance for the framework client to adopt', () => {
