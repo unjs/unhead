@@ -99,8 +99,12 @@ function buildClientStub(framework: string, streamKey: string, warnOnMissing: bo
   const warnBranch = warnOnMissing
     ? `else{console.warn('[unhead] streaming client loaded but window['+${key}+'] is undefined; did the server call wrapStream()/renderSSRHeadShell()?')}`
     : ''
+  // `_q` items and the server's live `push` argument are BATCHES of entries,
+  // so each batch is spread into individual `h.push` calls. Pushing the batch
+  // array itself normalizes its indexes into tags named `0`, `1`, ... and
+  // every streamed tag is lost.
   return `import{createHead}from'${framework}/client'
-const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});q.forEach(e=>h.push(e));s.push=e=>h.push(e);s._head=h}${warnBranch}`
+const s=window[${key}];if(s){const q=s._q;s._q=[];const h=createHead({document});const p=b=>{for(const e of b)h.push(e)};q.forEach(p);s.push=p;s._head=h}${warnBranch}`
 }
 
 /**
