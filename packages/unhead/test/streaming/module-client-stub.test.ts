@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { createHead } from 'unhead/client'
+import { createStreamableHead } from 'unhead/stream/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createStreamingPlugin, VIRTUAL_CLIENT_ID } from '../../src/stream/unplugin'
 
@@ -107,5 +108,38 @@ describe('module-mode client stub', () => {
     const win = setupDom()
     runStub()
     expect(win.__unhead__._head).toBeDefined()
+  })
+})
+
+describe('adopting the stub head', () => {
+  it('does not double-wrap, so one push is one render', async () => {
+    const win = setupDom()
+    runStub()
+    const head = createStreamableHead()!
+
+    let renders = 0
+    const render = head.render
+    head.render = () => {
+      renders++
+      return render()
+    }
+    head.push({ title: 'Client' })
+
+    expect(renders).toBe(1)
+    expect(win.document.title).toBe('Client')
+  })
+
+  it('still applies plugins, hooks and init when adopting', async () => {
+    setupDom()
+    runStub()
+    const seen: string[] = []
+    const head = createStreamableHead({
+      hooks: { 'entries:updated': () => { seen.push('hook') } },
+      init: [{ meta: [{ name: 'from-init', content: 'yes' }] }],
+    })!
+
+    expect(seen).toContain('hook')
+    expect(globalThis.document.querySelector('meta[name="from-init"]')).toBeTruthy()
+    expect(head).toBeDefined()
   })
 })
