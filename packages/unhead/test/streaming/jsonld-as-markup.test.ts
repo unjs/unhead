@@ -101,4 +101,30 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(ld).toBeLessThan(html.indexOf('</body>'))
     expect(html).not.toContain('__unhead__.push')
   })
+  it('does not repeat JSON-LD the shell already rendered', async () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [LD] })
+    let once = true
+    const html = await readAll(wrapStream(head, streamOf(['<p>app</p>']), TEMPLATE, undefined, {
+      flushChunk: () => {
+        if (!once)
+          return ''
+        once = false
+        head.push({ script: [LD] })
+        return renderSSRHeadSuspenseChunk(head)
+      },
+    }))
+
+    expect(html.match(/ld\+json/g)).toHaveLength(1)
+  })
+
+  it('does not repeat JSON-LD across two chunks', () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS).match(/ld\+json/g)).toHaveLength(1)
+  })
 })

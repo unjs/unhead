@@ -153,6 +153,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
+  rememberShellJsonLd(head)
   head.entries.clear()
   return result
 }
@@ -228,16 +229,51 @@ function isJsonLd(tag: any): boolean {
 }
 
 /**
+ * Identity for a JSON-LD tag. Its content is the identity, which is what
+ * `hashTag` falls back to for a tag with no dedupe key of its own.
+ */
+function jsonLdIdentity(tag: any): string {
+  const content = tag.innerHTML ?? tag.textContent
+  return typeof content === 'string' ? content : JSON.stringify(content)
+}
+
+/**
+ * Records the JSON-LD the shell already rendered, so a later chunk repeating
+ * the same block does not emit a second copy of it.
+ */
+function rememberShellJsonLd(head: Unhead<any>): void {
+  const seen = ((head as any)._streamLd ||= new Set<string>())
+  const propResolvers = head.resolvedOptions.propResolvers || []
+  for (const entry of head.entries.values()) {
+    if (!(entry.input as any)?.script)
+      continue
+    const input: any = resolveHeadInput(entry.input, propResolvers)
+    for (const tag of input?.script || []) {
+      if (isJsonLd(tag))
+        seen.add(jsonLdIdentity(tag))
+    }
+  }
+}
+
+/**
  * Splits a resolved head input into the part that must go out as a client
  * patch and the JSON-LD that can go out as markup instead. Returns `undefined`
  * for a side that has nothing in it.
  */
-function splitJsonLd(input: any): { patch?: any, markup?: any } {
+function splitJsonLd(input: any, seen: Set<string>): { patch?: any, markup?: any } {
   const scripts = input?.script
   if (!Array.isArray(scripts))
     return { patch: input }
-  const ld = scripts.filter(isJsonLd)
-  if (!ld.length)
+  const ld = scripts.filter((t: any) => {
+    if (!isJsonLd(t))
+      return false
+    const id = jsonLdIdentity(t)
+    if (seen.has(id))
+      return false
+    seen.add(id)
+    return true
+  })
+  if (!ld.length && !scripts.some(isJsonLd))
     return { patch: input }
 
   const rest = scripts.filter((t: any) => !isJsonLd(t))
@@ -249,7 +285,7 @@ function splitJsonLd(input: any): { patch?: any, markup?: any } {
 
   // An entry carrying nothing but JSON-LD leaves no patch behind at all.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
-  return { patch: hasPatch ? patch : undefined, markup: { script: ld } }
+  return { patch: hasPatch ? patch : undefined, markup: ld.length ? { script: ld } : undefined }
 }
 
 /**
@@ -312,11 +348,12 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let serialized: string
   let patchCount = 0
   try {
+    const seen = ((head as any)._streamLd ||= new Set<string>())
     const resolved = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
     const inputs: any[] = []
     const markup: any[] = []
     for (const input of resolved) {
-      const split = splitJsonLd(input)
+      const split = splitJsonLd(input, seen)
       if (split.patch)
         inputs.push(split.patch)
       if (split.markup)
@@ -651,6 +688,7 @@ export function prepareStreamingTemplate(
 
   // Only clear entries once the shell/end parts have been successfully
   // produced so a template failure leaves them intact for retry.
+  rememberShellJsonLd(head)
   if (!preRenderedState) {
     head.entries.clear()
   }
