@@ -1,5 +1,5 @@
 import type { ServerUnhead } from 'unhead/server'
-import type { PreparedTemplate } from 'unhead/stream/server'
+import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, SSRHeadPayload } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
@@ -7,6 +7,7 @@ import {
   createStreamableHead as _createStreamableHead,
   prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
@@ -17,6 +18,7 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
@@ -106,7 +108,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
           let shellResolved = false
           let shellFlushed = false
           let innerDone = false
-          let end = ''
+          let parts: StreamingTemplateParts | undefined
           let shellState: SSRHeadPayload | undefined
           const bufferedChunks: Uint8Array[] = []
           const outputChunks: Uint8Array[] = []
@@ -188,9 +190,8 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
 
             try {
               if (!shellFlushed) {
-                const prepared = prepareStreamingTemplate(head, template, shellState)
-                enqueueOutput(encoder.encode(prepared.shell))
-                end = prepared.end
+                parts = prepareStreamingTemplate(head, template, shellState)
+                enqueueOutput(encoder.encode(parts.shell))
                 shellFlushed = true
               }
 
@@ -202,7 +203,8 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
               }
 
               if (innerDone) {
-                enqueueOutput(encoder.encode(end))
+                if (parts)
+                  enqueueOutput(encoder.encode(renderStreamEnd(head, parts)))
                 closeOutput()
               }
             }

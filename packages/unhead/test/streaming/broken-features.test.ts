@@ -2,6 +2,7 @@ import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 /**
  * Tests for features that may be broken or have edge cases with streaming SSR.
@@ -9,7 +10,6 @@ import {
  */
 import { describe, expect, it } from 'vitest'
 
-const PUSH_RE = /\.push\((.+)\)$/
 const ROBOTS_RE = /robots/g
 const PUSH_SIMPLE_RE = /push\((.+)\)$/
 const LT_RE = /\\u003c/g
@@ -284,18 +284,16 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      const chunk = renderSSRHeadSuspenseChunk(head)
-      expect(chunk).toContain('schema.org')
-      expect(chunk).toContain('Product')
+      // JSON-LD leaves the stream as markup, not as a patch, so bots that do
+      // not run the patch script still read it.
+      expect(renderSSRHeadSuspenseChunk(head)).toBe('')
 
-      // Verify JSON is valid in the output by parsing the push argument
-      const match = chunk.match(PUSH_RE)
-      if (match) {
-        const entries = JSON.parse(match[1])
-        // Entries is an array of head inputs
-        expect(entries[0].script[0].innerHTML).toBeDefined()
-        expect(() => JSON.parse(entries[0].script[0].innerHTML)).not.toThrow()
-      }
+      const tail = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
+      expect(tail).toContain('schema.org')
+      expect(tail).toContain('Product')
+
+      const json = tail.slice(tail.indexOf('>') + 1, tail.indexOf('</script>'))
+      expect(() => JSON.parse(json)).not.toThrow()
     })
 
     it('inline script with variables preserved', async () => {

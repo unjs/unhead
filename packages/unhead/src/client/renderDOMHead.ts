@@ -35,11 +35,16 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
   return false
 }
 
-function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
-  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+/**
+ * Indexes server-rendered elements by the same key the renderer computes, so a
+ * tag already in the document is adopted instead of duplicated. Elements
+ * already indexed are skipped, which makes this safe to run more than once.
+ */
+function indexDom(state: DomStateInternal, dom: Document): void {
+  const tracked = new Set(state._e.values())
   for (const el of [...dom.body.children, ...dom.head.children]) {
     const tag = el.tagName.toLowerCase() as HeadTag['tag']
-    if (!HasElementTags.has(tag))
+    if (!HasElementTags.has(tag) || tracked.has(el))
       continue
     const props: Record<string, any> = { innerHTML: el.innerHTML }
     for (const n of el.getAttributeNames())
@@ -53,6 +58,11 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
       k = `${dedupe}:${c++}`
     state._e.set(k, el)
   }
+}
+
+function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
+  const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
+  indexDom(state, dom)
   for (const entry of head.entries.values()) {
     if (entry._o !== undefined) {
       const orig = entry._o as Record<string, any>
@@ -110,6 +120,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
     state._s = {}
     const renderState = state
+    let reindexed = false
     const previous = renderState._p
 
     function track(key: string, fn: () => void, fresh?: boolean) {
@@ -229,6 +240,13 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
         continue
       }
       ctx.$el = renderState._e.get(id)
+      if (!ctx.$el && !reindexed) {
+        // Streaming can append server-rendered tags after the first render
+        // indexed the document, so a miss re-indexes once before giving up.
+        reindexed = true
+        indexDom(renderState, dom)
+        ctx.$el = renderState._e.get(id)
+      }
       if (ctx.$el)
         trackCtx(ctx as DomRenderTagContext & { $el: Element })
       else if (HasElementTags.has(tag.tag))

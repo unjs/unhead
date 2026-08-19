@@ -215,6 +215,92 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  * }
  * ```
  */
+const JSON_LD_TYPE_RE = /\bld\+json\b/i
+
+/**
+ * Search engines read `application/ld+json` anywhere in the document, so it
+ * does not need to reach the served `<head>` to count. Everything else in a
+ * streamed patch only works from the head, and only for clients that run the
+ * script.
+ */
+function isJsonLd(tag: any): boolean {
+  return !!tag && typeof tag === 'object' && typeof tag.type === 'string' && JSON_LD_TYPE_RE.test(tag.type)
+}
+
+/**
+ * Splits a resolved head input into the part that must go out as a client
+ * patch and the JSON-LD that can go out as markup instead. Returns `undefined`
+ * for a side that has nothing in it.
+ */
+function splitJsonLd(input: any): { patch?: any, markup?: any } {
+  const scripts = input?.script
+  if (!Array.isArray(scripts))
+    return { patch: input }
+  const ld = scripts.filter(isJsonLd)
+  if (!ld.length)
+    return { patch: input }
+
+  const rest = scripts.filter((t: any) => !isJsonLd(t))
+  const patch = { ...input }
+  if (rest.length)
+    patch.script = rest
+  else
+    delete patch.script
+
+  // An entry carrying nothing but JSON-LD leaves no patch behind at all.
+  const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
+  return { patch: hasPatch ? patch : undefined, markup: { script: ld } }
+}
+
+/**
+ * Renders the JSON-LD held back from earlier chunks as body markup.
+ */
+function renderStreamTail(head: Unhead<any>): string {
+  const held = (head as any)._streamMarkup as any[] | undefined
+  if (!held?.length) {
+    return ''
+  }
+  ;(head as any)._streamMarkup = undefined
+
+  // Re-pushed through the real head so the tags get the same normalization,
+  // dedupe, and escaping as any other server-rendered tag.
+  const restore = new Map(head.entries)
+  head.entries.clear()
+  try {
+    for (const input of held)
+      head.push({ ...input, script: input.script.map((t: any) => ({ ...t, tagPosition: 'bodyClose' })) })
+    return (head.render() as SSRHeadPayload).bodyTags
+  }
+  finally {
+    head.entries.clear()
+    for (const [k, v] of restore)
+      head.entries.set(k, v)
+  }
+}
+
+/**
+ * Builds the closing HTML for a stream, folding in any JSON-LD that was held
+ * back from the patch scripts.
+ *
+ * Drive a stream by hand and you must write this instead of `parts.end`, or
+ * the held-back JSON-LD never reaches the page.
+ *
+ * @example
+ * ```ts
+ * const parts = prepareStreamingTemplate(head, template)
+ * res.write(parts.shell)
+ * // ...stream the app, calling renderSSRHeadSuspenseChunk per boundary
+ * res.end(renderStreamEnd(head, parts))
+ * ```
+ */
+export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
+  const tail = renderStreamTail(head)
+  if (!tail)
+    return parts.end
+  const at = parts.bodyTagsAt ?? parts.end.length
+  return parts.end.slice(0, at) + tail + parts.end.slice(at)
+}
+
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
@@ -224,9 +310,25 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
   let serialized: string
+  let patchCount = 0
   try {
-    const inputs = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
+    const resolved = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
+    const inputs: any[] = []
+    const markup: any[] = []
+    for (const input of resolved) {
+      const split = splitJsonLd(input)
+      if (split.patch)
+        inputs.push(split.patch)
+      if (split.markup)
+        markup.push(split.markup)
+    }
+    if (!inputs.length && !markup.length)
+      return ''
     serialized = safeJsonStringify(inputs)
+    patchCount = inputs.length
+    if (markup.length) {
+      ((head as any)._streamMarkup ||= []).push(...markup)
+    }
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -242,6 +344,10 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
+  // Every pending tag was JSON-LD, so it goes out as markup and this chunk
+  // needs no script at all.
+  if (!patchCount)
+    return ''
   return `window.${streamKey}.push(${serialized})`
 }
 
@@ -293,7 +399,7 @@ export function wrapStream(
   const flushChunk = options?.flushChunk
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
-  let end = ''
+  let parts: StreamingTemplateParts | undefined
 
   return new ReadableStream<Uint8Array>({
     // Async so a failure here rejects into an errored stream instead of
@@ -303,17 +409,17 @@ export function wrapStream(
     // for retry.
     async start(controller) {
       const activeReader = stream.getReader()
-      let parts: StreamingTemplateParts
+      let prepared: StreamingTemplateParts
       try {
-        parts = prepareStreamingTemplate(head, template, preRenderedState)
+        prepared = prepareStreamingTemplate(head, template, preRenderedState)
       }
       catch (error) {
         activeReader.releaseLock()
         throw error
       }
       reader = activeReader
-      end = parts.end
-      controller.enqueue(enc.encode(parts.shell))
+      parts = prepared
+      controller.enqueue(enc.encode(prepared.shell))
     },
     // Read at most one upstream chunk per downstream request so backpressure
     // propagates instead of eagerly draining the app stream.
@@ -341,8 +447,9 @@ export function wrapStream(
         const extra = flushChunk?.()
         if (extra)
           controller.enqueue(enc.encode(extra))
-        if (end)
-          controller.enqueue(enc.encode(end))
+        const closing = parts ? renderStreamEnd(head, parts) : ''
+        if (closing)
+          controller.enqueue(enc.encode(closing))
         controller.close()
         return
       }
@@ -383,6 +490,12 @@ export interface StreamingTemplateParts {
    * Write this after streaming app content completes.
    */
   end: string
+  /**
+   * Offset within `end` where body-close tags sit. Content inserted here stays
+   * a direct child of `<body>`, which is what the client DOM renderer scans
+   * when it adopts server-rendered tags.
+   */
+  bodyTagsAt?: number
 }
 
 interface StreamingTemplateLayout {
@@ -525,6 +638,7 @@ export function prepareStreamingTemplate(
     parts = {
       shell,
       end: layout.endBeforeBodyTags + ssr.bodyTags + layout.endAfterBodyTags,
+      bodyTagsAt: layout.endBeforeBodyTags.length,
     }
   }
   else {

@@ -9,6 +9,7 @@ import {
   createStreamableHead as createCoreStreamableHead,
   prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
@@ -88,14 +89,14 @@ export function createStreamableHead<T = ResolvableHead>(
       return (writable: Writable) => {
         shellReady.then(async () => {
           try {
-            const { shell, end } = await prepareStreamingTemplate(head, template)
-            writable.write(shell)
+            const parts = await prepareStreamingTemplate(head, template)
+            writable.write(parts.shell)
 
             const passthrough = new PassThrough()
 
             passthrough.on('data', chunk => writable.write(chunk))
             passthrough.on('end', () => {
-              writable.write(end)
+              writable.write(renderStreamEnd(head, parts))
               writable.end()
             })
             passthrough.on('error', (err) => {
@@ -122,6 +123,7 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
   type StreamableHeadContext,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,

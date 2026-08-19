@@ -74,6 +74,7 @@
   prepareTemplate: function
   renderShell: function
   renderSSRHeadShell: function
+  renderSSRHeadStreamTail: function
   renderSSRHeadSuspenseChunk: function
   wrapStream: function
 ./stream/unplugin:
