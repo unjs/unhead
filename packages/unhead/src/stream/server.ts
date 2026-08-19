@@ -293,8 +293,23 @@ export function wrapStream(
   // emitting them as a patch script so the bare call does not lose tags.
   // Framework wrappers pass their own to control the wrapper (CSP nonces).
   const flushChunk = options?.flushChunk ?? (() => {
-    const chunk = renderSSRHeadSuspenseChunk(head)
-    return chunk ? `<script>${chunk};document.currentScript.remove()</script>` : ''
+    let chunk: string
+    try {
+      chunk = renderSSRHeadSuspenseChunk(head)
+    }
+    catch {
+      // Best effort, deliberately swallowed. This runs after bytes are on the
+      // wire, so rethrowing would error the stream and truncate a response the
+      // client is already reading, which is worse than losing the tags this
+      // default exists to save. `renderSSRHeadSuspenseChunk` drops the entry it
+      // could not serialize before throwing, so the next chunk recovers.
+      return ''
+    }
+    if (!chunk)
+      return ''
+    // A template with no `</head>` never received the bootstrap script, so the
+    // queue may not exist. Guard rather than throw on `undefined.push`.
+    return `<script>window.${getStreamKey(head)}&&(${chunk});document.currentScript.remove()</script>`
   })
   const enc = encoder ??= new TextEncoder()
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined

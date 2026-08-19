@@ -48,6 +48,56 @@ describe('wrapStream late entries', () => {
     expect(html).not.toContain('__unhead__.push(')
   })
 
+  it('guards the queue when the template never got a bootstrap script', async () => {
+    const { head } = createStreamableHead()
+    const html = await new Response(wrapStream(
+      head,
+      lateStream(() => head.push({ title: 'Late' })),
+      '<html><body><div id="app"><!--app-html--></div></body></html>',
+    )).text()
+
+    expect(html).not.toContain('window.__unhead__={')
+    expect(html).toContain('window.__unhead__&&(')
+  })
+
+  it('completes the response when a chunk cannot be serialized', async () => {
+    const { head } = createStreamableHead()
+    const circular: any = {}
+    circular.self = circular
+
+    const html = await render(head, () => head.push({ script: [{ innerHTML: circular }] }))
+
+    // the tags are lost, but the document is whole
+    expect(html).toContain('</html>')
+    expect(html).not.toContain('__unhead__.push(')
+  })
+
+  it('recovers on the next chunk after an unserializable entry', async () => {
+    const { head } = createStreamableHead()
+    const circular: any = {}
+    circular.self = circular
+
+    // both pushes happen after the shell, in separate chunks
+    let pulls = 0
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls++
+        if (pulls === 1) {
+          head.push({ script: [{ innerHTML: circular }] })
+          controller.enqueue(new TextEncoder().encode('<p>one</p>'))
+          return
+        }
+        head.push({ title: 'Recovered' })
+        controller.enqueue(new TextEncoder().encode('<p>two</p>'))
+        controller.close()
+      },
+    })
+    const html = await new Response(wrapStream(head, stream, TEMPLATE)).text()
+
+    expect(html).toContain('</html>')
+    expect(html).toContain('Recovered')
+  })
+
   it('lets a caller override the wrapper', async () => {
     const { head } = createStreamableHead()
     const html = await render(
