@@ -13,6 +13,8 @@ import { DEFAULT_STREAM_KEY } from './client'
 const LT_RE = /</g
 const GT_RE = />/g
 const AMP_RE = /&/g
+// Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
+const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
 const SSR_OUTLET_RE = /<!--\s*(?:app-html|ssr-outlet)\s*-->/
 
 // Lazy pure memo (CONTRIBUTING.md side-effects policy): constant-derived,
@@ -219,9 +221,21 @@ function normalizePendingTags(head: Unhead<any>): HeadTag[] {
   const propResolvers = head.resolvedOptions.propResolvers || []
   const tags: HeadTag[] = []
   for (const entry of head.entries.values()) {
+    let index = 0
     for (const tag of normalizeEntryToTags(entry.input, propResolvers)) {
       if (entry.options)
         Object.assign(tag, entry.options)
+      // Same packing as `resolveTags`, so a consumer can recover the entry
+      // that registered the tag and report its source location.
+      tag._p = (entry._i << 10) + index++
+      // `useHeadSafe` drops these outright, so reporting one as "a browser
+      // gets it, a bot does not" would be wrong twice over.
+      if (entry.options?._safe && tag.tag === 'link' && SAFE_BLOCKED_RELS.has(String(tag.props.rel || '').toLowerCase()))
+        continue
+      // The legacy `body` prop becomes `tagPosition: 'bodyClose'` in
+      // DeprecationsPlugin's normalize hook, which this does not run.
+      if (tag.props.body)
+        tag.tagPosition = 'bodyClose'
       if (tag.tag === '_flatMeta') {
         // `useSeoMeta` pushes one of these; FlatMetaPlugin expands it during a
         // real resolve, so an unexpanded one hides every tag it set.

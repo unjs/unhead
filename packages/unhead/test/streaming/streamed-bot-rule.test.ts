@@ -1,5 +1,5 @@
 import type { HeadValidationRule } from 'unhead/plugins'
-import { useSeoMeta } from 'unhead'
+import { useHeadSafe, useSeoMeta } from 'unhead'
 import { ValidatePlugin } from 'unhead/plugins'
 import { createStreamableHead, renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { describe, expect, it, vi } from 'vitest'
@@ -97,6 +97,36 @@ describe('streamed-tag-hidden-from-bots', () => {
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
     expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
+  })
+
+  it('carries the source location of the call that registered the tag', () => {
+    const { head, reported } = setup()
+    head.push({ link: [{ rel: 'canonical', href: '/' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    // the frame chosen is captureSource's existing heuristic; what matters
+    // here is that the entry index survives normalization so a source can be
+    // resolved at all
+    const [rule] = reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')
+    expect(rule!.source).toBeTypeOf('string')
+    expect(rule!.source!.length).toBeGreaterThan(0)
+  })
+
+  it('stays quiet for a useHeadSafe canonical, which is dropped anyway', () => {
+    const { head, reported } = setup()
+    useHeadSafe(head as any, { link: [{ rel: 'canonical', href: '/x' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
+  })
+
+  it('respects the legacy body prop as a body position', () => {
+    expect(flagged({ meta: [{ name: 'description', content: 'x', body: true }] } as any)).toEqual([])
+  })
+
+  it('reports the wider Open Graph namespaces', () => {
+    expect(flagged({ meta: [{ property: 'video:release_date', content: '2026' }] })).toHaveLength(1)
+    expect(flagged({ meta: [{ property: 'product:price:amount', content: '9' }] })).toHaveLength(1)
   })
 
   it('keeps the resolve rules in the devtools snapshot', () => {
