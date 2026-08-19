@@ -20,11 +20,11 @@ afterEach(() => {
  * Runs the module-mode stub the plugin emits against Vue's REAL client head,
  * which renders on a debounce rather than synchronously.
  */
-function runStub() {
+function runStub(queued: any[][] = []) {
   const dom = new JSDOM('<!DOCTYPE html><html><head><title>Initial</title></head><body></body></html>')
   const win = dom.window as any
   win.__unhead__ = {
-    _q: [] as any[],
+    _q: [...queued] as any[],
     push(entries: any) {
       this._q.push(entries)
     },
@@ -57,6 +57,25 @@ describe('module stub against the real Vue client head', () => {
     expect(win.document.title).toBe('Streamed')
     expect(win.document.querySelector('meta[name="description"]')?.getAttribute('content'))
       .toBe('Streamed description')
+  })
+
+  it('applies a batch queued before the stub ran', async () => {
+    const win = runStub([
+      [{ title: 'Queued' }, { meta: [{ name: 'description', content: 'Queued description' }] }],
+    ])
+    await settle()
+
+    expect(win.document.title).toBe('Queued')
+    expect(win.document.querySelector('meta[name="description"]')?.getAttribute('content'))
+      .toBe('Queued description')
+  })
+
+  it('marks replayed entries as streamed', async () => {
+    const win = runStub([[{ title: 'Queued' }, { meta: [{ name: 'a', content: '1' }] }]])
+    await settle()
+
+    const entries = [...win.__unhead__._head.entries.values()]
+    expect(entries.map((e: any) => e._streamed)).toEqual([true, true])
   })
 
   it('never emits a tag named after a batch index', async () => {
