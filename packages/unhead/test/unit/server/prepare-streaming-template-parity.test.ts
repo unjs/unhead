@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../../../src/parser'
-import { prepareStreamingTemplate } from '../../../src/stream/server'
+import { createBootstrapScript, prepareStreamingTemplate } from '../../../src/stream/server'
 import { createStreamableServerHead } from '../../util'
 
 // Reference implementation: prepareStreamingTemplate used to derive the shell
@@ -10,7 +10,9 @@ import { createStreamableServerHead } from '../../util'
 function oldPrepareStreamingTemplate(head: any, template: string, preRenderedState?: any) {
   const ssr = preRenderedState ?? head.render()
   const streamKey = head.resolvedOptions.experimentalStreamKey || '__unhead__'
-  const bootstrapScript = `<script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+  // The fuzz locks shell-index derivation, not the bootstrap payload, so the
+  // reference takes the script from the real function.
+  const bootstrapScript = createBootstrapScript(streamKey)
   const parsed = parseHtmlForIndexes(template)
   const bodyEnd = parsed.indexes.bodyTagEnd
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart
