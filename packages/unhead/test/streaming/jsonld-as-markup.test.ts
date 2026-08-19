@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
+import { prepareStreamingTemplate, renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, renderStreamTail, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
@@ -126,5 +126,47 @@ describe('jSON-LD held back from streamed patches', () => {
     renderSSRHeadSuspenseChunk(head)
 
     expect(renderStreamEnd(head, PARTS).match(/ld\+json/g)).toHaveLength(1)
+  })
+})
+
+describe('pre-rendered shell state', () => {
+  // Solid and Svelte render the shell themselves, then hand the payload to
+  // `prepareStreamingTemplate`. Entries pushed after that render belong to the
+  // stream, not the shell.
+  it('keeps JSON-LD pushed after the shell render', () => {
+    const head = createStreamableServerHead()
+    head.push({ title: 'Shell' })
+    const shellState = renderShell(head)
+
+    head.push({ script: [LD] })
+    const parts = prepareStreamingTemplate(head, TEMPLATE, shellState)
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, parts)).toContain('Organization')
+  })
+
+  it('drops JSON-LD the shell render already emitted', () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [LD] })
+    const shellState = renderShell(head)
+
+    const parts = prepareStreamingTemplate(head, TEMPLATE, shellState)
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(shellState.headTags).toContain('Organization')
+    expect(renderStreamEnd(head, parts)).not.toContain('Organization')
+  })
+})
+
+describe('template-free drivers', () => {
+  it('hands the held JSON-LD back once', () => {
+    const head = createStreamableServerHead()
+    renderShell(head)
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamTail(head)).toContain('Organization')
+    expect(renderStreamTail(head)).toBe('')
   })
 })

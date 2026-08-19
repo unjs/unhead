@@ -124,6 +124,7 @@ export {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
+  renderStreamTail,
   type StreamableHeadContext,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,

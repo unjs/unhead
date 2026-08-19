@@ -149,6 +149,9 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * ```ts
  * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
+ *
+ * // ...stream the app, then close it with the JSON-LD held back from the chunks
+ * res.end(`${renderStreamTail(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
@@ -289,9 +292,12 @@ function splitJsonLd(input: any, seen: Set<string>): { patch?: any, markup?: any
 }
 
 /**
- * Renders the JSON-LD held back from earlier chunks as body markup.
+ * Renders the JSON-LD held back from earlier chunks as body markup, and clears
+ * it. Drive a stream by hand and you must write this before `</body>`, or the
+ * held-back JSON-LD never reaches the page. `renderStreamEnd()` does it for
+ * you when you stream from a template.
  */
-function renderStreamTail(head: Unhead<any>): string {
+export function renderStreamTail(head: Unhead<any>): string {
   const held = (head as any)._streamMarkup as any[] | undefined
   if (!held?.length) {
     return ''
@@ -359,8 +365,6 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
       if (split.markup)
         markup.push(split.markup)
     }
-    if (!inputs.length && !markup.length)
-      return ''
     serialized = safeJsonStringify(inputs)
     patchCount = inputs.length
     if (markup.length) {
@@ -688,8 +692,10 @@ export function prepareStreamingTemplate(
 
   // Only clear entries once the shell/end parts have been successfully
   // produced so a template failure leaves them intact for retry.
-  rememberShellJsonLd(head)
   if (!preRenderedState) {
+    // A caller supplying its own payload rendered the shell earlier, so its
+    // entries are gone and anything left belongs to the stream.
+    rememberShellJsonLd(head)
     head.entries.clear()
   }
   return parts

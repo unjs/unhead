@@ -6,6 +6,7 @@ import { ssr } from 'solid-js/web'
 import {
   createStreamableHead as _createStreamableHead,
   prepareStreamingTemplate,
+  renderShell,
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
 } from 'unhead/stream/server'
@@ -19,6 +20,7 @@ export {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
+  renderStreamTail,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
@@ -74,8 +76,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
     head,
     onCompleteShell: () => {
       // Capture head entries from shell components before streaming starts
-      const shellState = head.render()
-      head.entries.clear()
+      const shellState = renderShell(head)
       // @ts-expect-error - custom property for SolidJS streaming
       head._solidShellComplete = true
       resolveShellReady(shellState)
