@@ -38,8 +38,8 @@
   UnheadContextKey: symbol
 ./stream/server:
   createStreamableHead: function
-  getPendingTags: function
   HeadStream: function
+  inspectStreamedTags: function
   prepareStreamingTemplate: function
   prepareTemplate: function
   renderSSRHeadShell: function

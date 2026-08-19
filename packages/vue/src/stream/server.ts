@@ -69,7 +69,7 @@ export function createStreamableHead(
 export {
   createBootstrapScript,
   type CreateStreamableServerHeadOptions,
-  getPendingTags,
+  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
@@ -78,6 +78,7 @@ export {
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
   renderStreamMarkup,
+  type StreamedTagsReport,
   type StreamingTemplateParts,
   wrapStream,
 } from 'unhead/stream/server'

@@ -14,7 +14,7 @@ import { UnheadContext } from '../context'
 
 export { UnheadContext } from '../context'
 export {
-  getPendingTags,
+  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
@@ -22,6 +22,7 @@ export {
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
   renderStreamMarkup,
+  type StreamedTagsReport,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,

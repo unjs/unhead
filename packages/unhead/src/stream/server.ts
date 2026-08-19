@@ -205,45 +205,107 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
 }
 
 /**
+ * A tag whose job depends on being in the served `<head>`.
+ *
+ * A crawler reads the HTML the server sent. It does not run the streaming
+ * patch script, so a tag delivered that way never reaches it.
+ */
+const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'keywords'])
+const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
+const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al):/
+
+function isHiddenFromBots(tag: HeadTag): boolean {
+  if (tag.tagPosition?.startsWith('body'))
+    return false
+  const props = tag.props
+  switch (tag.tag) {
+    case 'title':
+    case 'titleTemplate':
+    case 'base':
+      return true
+    case 'meta': {
+      const name = String(props.name || '').toLowerCase()
+      if (BOT_HEAD_META_NAMES.has(name))
+        return true
+      const property = String(props.property || props.name || '').toLowerCase()
+      return BOT_HEAD_META_PREFIX_RE.test(property)
+    }
+    case 'link':
+      return String(props.rel || '').toLowerCase().split(' ').some(rel => BOT_HEAD_LINK_RELS.has(rel))
+    case 'script':
+      // Search engines read JSON-LD anywhere in the document, but only when
+      // it is in the HTML they were served.
+      return String(props.type || '').toLowerCase() === 'application/ld+json'
+    default:
+      return false
+  }
+}
+
+/**
  * @experimental
  *
- * Normalizes the entries that have not been flushed yet into tags, without
- * rendering or clearing them.
+ * What the next {@link renderSSRHeadSuspenseChunk} call will hand to the
+ * client, before it renders and clears anything.
+ */
+export interface StreamedTagsReport {
+  /**
+   * Every entry that has not been flushed yet, normalized to tags. Entry
+   * options are applied, so `tagPosition` tells you whether a tag was bound
+   * for the head or the body.
+   */
+  pendingTags: HeadTag[]
+  /**
+   * The subset of `pendingTags` that only works when it is in the served
+   * `<head>`.
+   *
+   * A bot reads the HTML the server sent. It does not run the streaming patch
+   * script, so it never sees these: `<title>`, canonical and alternate links,
+   * robots and description meta, Open Graph and Twitter cards, JSON-LD.
+   */
+  tagsHiddenFromBots: HeadTag[]
+}
+
+/**
+ * @experimental
+ *
+ * Inspects the entries that have not been flushed yet, without rendering or
+ * clearing them.
  *
  * Once the shell `<head>` is on the wire, pending entries can only be
- * delivered as client-side patches. Use this to inspect what the next
- * `renderSSRHeadSuspenseChunk()` will defer, for example to warn that an
- * SEO-critical tag will not reach the served HTML.
+ * delivered as client-side patches. Use this to see what the next
+ * `renderSSRHeadSuspenseChunk()` will defer, and to warn when a tag that
+ * needs to be in the served HTML will not be.
  *
- * Entry options are applied to each tag, so `tagPosition` tells you whether a
- * tag was bound for the head or the body. Tags are freshly normalized on every
- * call and are not cached, so mutating them cannot affect a later render.
+ * Tags are normalized fresh on every call and are never cached, so mutating
+ * them cannot affect a later render.
  *
  * @param head - The Unhead instance
- * @returns The normalized tags for all pending entries
+ * @returns The pending tags, and the subset a crawler will not see
  *
  * @example
  * ```ts
- * const deferred = getPendingTags(head).filter(t => !t.tagPosition?.startsWith('body'))
- * if (deferred.length) {
- *   console.warn(`These tags miss the shell: ${deferred.map(t => t.tag).join(', ')}`)
+ * const { tagsHiddenFromBots } = inspectStreamedTags(head)
+ * if (tagsHiddenFromBots.length) {
+ *   console.warn(`Bots will not see: ${tagsHiddenFromBots.map(t => t.tag).join(', ')}`)
  * }
  * const chunk = renderSSRHeadSuspenseChunk(head)
  * ```
  */
-export function getPendingTags(head: Unhead<any>): HeadTag[] {
+export function inspectStreamedTags(head: Unhead<any>): StreamedTagsReport {
   const propResolvers = head.resolvedOptions.propResolvers || []
-  const tags: HeadTag[] = []
+  const pendingTags: HeadTag[] = []
+  const tagsHiddenFromBots: HeadTag[] = []
   for (const entry of head.entries.values()) {
     const entryTags = normalizeEntryToTags(entry.input, propResolvers)
-    if (entry.options) {
-      for (const tag of entryTags)
+    for (const tag of entryTags) {
+      if (entry.options)
         Object.assign(tag, entry.options)
+      pendingTags.push(tag)
+      if (isHiddenFromBots(tag))
+        tagsHiddenFromBots.push(tag)
     }
-    for (const tag of entryTags)
-      tags.push(tag)
   }
-  return tags
+  return { pendingTags, tagsHiddenFromBots }
 }
 
 /**

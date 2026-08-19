@@ -10,7 +10,7 @@ export { UnheadContextKey } from '../context'
 
 export {
   type CreateStreamableServerHeadOptions,
-  getPendingTags,
+  inspectStreamedTags,
   type PreparedTemplate,
   prepareStreamingTemplate,
   prepareTemplate,
@@ -18,6 +18,7 @@ export {
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
   renderStreamMarkup,
+  type StreamedTagsReport,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
