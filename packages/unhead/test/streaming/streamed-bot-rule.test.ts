@@ -99,6 +99,21 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
   })
 
+  it('keeps the resolve rules in the devtools snapshot', () => {
+    const { head } = setup()
+    const idsAfter = () => ((head as any)._validationRules || []).map((r: any) => r.id)
+    expect(idsAfter()).toContain('missing-title')
+
+    head.push({ link: [{ rel: 'canonical', href: '/' }] })
+    renderSSRHeadSuspenseChunk(head)
+    expect(idsAfter()).toEqual(expect.arrayContaining(['missing-title', 'streamed-tag-hidden-from-bots']))
+
+    // a chunk carrying nothing bot-visible must not wipe the snapshot
+    head.push({ script: [{ src: '/a.js' }] })
+    renderSSRHeadSuspenseChunk(head)
+    expect(idsAfter()).toContain('missing-title')
+  })
+
   it('costs nothing when the plugin is not registered', () => {
     const { head } = createStreamableHead({ disableDefaults: true })
     renderShell(head)

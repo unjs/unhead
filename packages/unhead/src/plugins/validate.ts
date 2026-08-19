@@ -275,8 +275,17 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       return active
     }
 
-    function dispatch(rules: HeadValidationRule[]) {
-      ;(head as any)._validationRules = rules
+    /**
+     * `replace` is for a full resolve, which recomputes every rule. Stream
+     * chunks are incremental events, so they append: overwriting would drop
+     * the resolve's rules, and an empty chunk would clear the snapshot
+     * devtools reads.
+     */
+    function dispatch(rules: HeadValidationRule[], mode: 'replace' | 'append') {
+      const head_ = head as any
+      head_._validationRules = mode === 'replace'
+        ? rules
+        : [...(head_._validationRules || []), ...rules]
       if (!rules.length)
         return
       if (options.onReport) {
@@ -312,7 +321,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
               tag,
             })
           }
-          dispatch(rules)
+          dispatch(rules, 'append')
         },
         'entries:normalize': ({ entry }) => {
           const input = inputShapeObserver.take()
@@ -700,7 +709,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           }
 
           // Store rules on the head instance for devtools integration
-          dispatch(rules)
+          dispatch(rules, 'replace')
         },
       },
     }
