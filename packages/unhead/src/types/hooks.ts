@@ -61,8 +61,11 @@ export interface SSRHeadHooks {
    * The chunk renderer serializes raw entry input and never resolves tags, so
    * this is the only place a plugin can see what a stream chunk carried. The
    * tags are normalized for inspection only; they are not what gets rendered.
+   *
+   * Synchronous: the renderer clears the entries as soon as this returns, so a
+   * listener that deferred its work would read them after they were gone.
    */
-  'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => HookResult
+  'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => SyncHookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult

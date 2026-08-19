@@ -154,18 +154,22 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(spy).not.toHaveBeenCalledWith('ssr:streamChunk', expect.anything())
   })
 
-  it('does not let a mutated templateParams tag reach a later render', () => {
+  it('does not hand out the callers own templateParams object', () => {
     const seen: any[] = []
     const { head } = createStreamableHead({
       disableDefaults: true,
       hooks: { 'ssr:streamChunk': ({ tags }) => { seen.push(...tags) } },
     })
     renderShell(head)
-    head.push({ templateParams: { site: 'Acme' } })
-    renderSSRHeadSuspenseChunk(head)
-    seen[0]!.props.site = 'HACKED'
 
-    head.push({ templateParams: { other: 'x' } })
-    expect(renderSSRHeadSuspenseChunk(head)).not.toContain('HACKED')
+    // the exact object the caller owns
+    const templateParams = { site: 'Acme' }
+    head.push({ templateParams })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(seen).toHaveLength(1)
+    expect(seen[0]!.props).not.toBe(templateParams)
+    seen[0]!.props.site = 'HACKED'
+    expect(templateParams.site).toBe('Acme')
   })
 })
