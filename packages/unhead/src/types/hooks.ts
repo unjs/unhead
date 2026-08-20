@@ -70,6 +70,20 @@ export interface DOMHeadHooks {
 }
 
 export interface SSRHeadHooks {
+  /**
+   * Fired by `renderSSRHeadSuspenseChunk` with normalized tags from entries
+   * pending after the shell. It runs before Streamed Body Tags are split out.
+   * It also runs before the remaining patch is serialized and entries clear.
+   *
+   * The chunk renderer normally serializes entry input without normalizing
+   * tags. This hook supplies normalized copies for inspection. The rendered
+   * patch does not use these tags. Plugin-owned shapes (`_flatMeta`, the legacy
+   * `body` prop) are left for the listener to resolve.
+   *
+   * Synchronous: the renderer does not wait for promises before it serializes
+   * the patch and clears entries.
+   */
+  'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => SyncHookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult
   'ssr:render': (ctx: { tags: HeadTag[], options: RenderSSRHeadOptions }) => HookResult
   'ssr:rendered': (ctx: SSRRenderContext) => HookResult

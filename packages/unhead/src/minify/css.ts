@@ -3,25 +3,34 @@
  * Strips comments and collapses whitespace while preserving string literals.
  */
 export function minifyCSS(code: string): string {
+  if (!/[\s/]|;\}|0\.\d/.test(code))
+    return code
+
   let result = ''
+  // Reading the growing result forces V8 to repeatedly flatten its string rope.
+  let last = ''
   let i = 0
   let parenDepth = 0
   const len = code.length
+  const append = (value: string) => {
+    result += value
+    last = value
+  }
 
   while (i < len) {
     const ch = code[i]
     // string literals - preserve as-is
     if (ch === '\'' || ch === '"') {
       const quote = ch
-      result += ch
+      append(ch)
       i++
       while (i < len && code[i] !== quote) {
         if (code[i] === '\\' && i + 1 < len)
-          result += code[i++]
-        result += code[i++]
+          append(code[i++]!)
+        append(code[i++]!)
       }
       if (i < len)
-        result += code[i++]
+        append(code[i++]!)
     }
     // comments
     else if (ch === '/' && code[i + 1] === '*') {
@@ -33,19 +42,18 @@ export function minifyCSS(code: string): string {
     // track paren depth for calc()/min()/max()/clamp()/var()
     else if (ch === '(') {
       parenDepth++
-      result += ch
+      append(ch)
       i++
     }
     else if (ch === ')') {
       parenDepth = Math.max(0, parenDepth - 1)
-      result += ch
+      append(ch)
       i++
     }
     // whitespace - collapse to single space, remove around punctuation
     else if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
       while (i < len && (code[i] === ' ' || code[i] === '\t' || code[i] === '\n' || code[i] === '\r'))
         i++
-      const prev = result.at(-1)
       const next = code[i]
       // strip space before ! for !important
       if (next === '!')
@@ -53,11 +61,11 @@ export function minifyCSS(code: string): string {
       if (parenDepth > 0) {
         // inside parens (calc/min/max/clamp/var): strip around * and / (safe per spec),
         // preserve around + and - (required by spec), strip around base punctuation
-        if (prev && next && !isCSSCalcPunctuation(prev) && !isCSSCalcPunctuation(next))
-          result += ' '
+        if (last && next && !isCSSCalcPunctuation(last) && !isCSSCalcPunctuation(next))
+          append(' ')
       }
-      else if (prev && next && !isCSSPunctuation(prev) && !isCSSPunctuation(next)) {
-        result += ' '
+      else if (last && next && !isCSSPunctuation(last) && !isCSSPunctuation(next)) {
+        append(' ')
       }
     }
     // trailing semicolon before } is optional
@@ -69,16 +77,15 @@ export function minifyCSS(code: string): string {
         i++ // skip the semicolon
       }
       else {
-        result += ch
+        append(ch)
         i++
       }
     }
     // leading zero: 0.x → .x
     else if (ch === '0' && code[i + 1] === '.' && code[i + 2] >= '0' && code[i + 2] <= '9') {
-      const prev = result.at(-1)
       // only strip if prev is not a digit (avoid turning 10.5 into 1.5)
-      if (prev && prev >= '0' && prev <= '9') {
-        result += ch
+      if (last && last >= '0' && last <= '9') {
+        append(ch)
         i++
       }
       else {
@@ -86,7 +93,7 @@ export function minifyCSS(code: string): string {
       }
     }
     else {
-      result += ch
+      append(ch!)
       i++
     }
   }

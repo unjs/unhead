@@ -5,6 +5,8 @@ import type { Book } from '../../nodes/Book'
 import type { BreadcrumbList } from '../../nodes/Breadcrumb'
 import type { Comment } from '../../nodes/Comment'
 import type { Course } from '../../nodes/Course'
+import type { DiscussionForumPosting } from '../../nodes/DiscussionForumPosting'
+import type { EmployerAggregateRating } from '../../nodes/EmployerAggregateRating'
 import type { Event } from '../../nodes/Event'
 import type { FoodEstablishment } from '../../nodes/FoodEstablishment'
 import type { HowTo } from '../../nodes/HowTo'
@@ -12,14 +14,17 @@ import type { ImageObject } from '../../nodes/Image'
 import type { ItemList } from '../../nodes/ItemList'
 import type { JobPosting } from '../../nodes/JobPosting'
 import type { LocalBusiness } from '../../nodes/LocalBusiness'
+import type { MathSolver } from '../../nodes/MathSolver'
 import type { Movie } from '../../nodes/Movie'
 import type { Organization } from '../../nodes/Organization'
 import type { Person } from '../../nodes/Person'
 import type { Product } from '../../nodes/Product'
 import type { Question } from '../../nodes/Question'
+import type { Quiz } from '../../nodes/Quiz'
 import type { Recipe } from '../../nodes/Recipe'
 import type { Review } from '../../nodes/Review'
 import type { SoftwareApp } from '../../nodes/SoftwareApp'
+import type { VacationRental } from '../../nodes/VacationRental'
 import type { VideoObject } from '../../nodes/Video'
 import type { WebPage } from '../../nodes/WebPage'
 import type { WebSite } from '../../nodes/WebSite'
@@ -32,6 +37,8 @@ import {
   defineBreadcrumb,
   defineComment,
   defineCourse,
+  defineDiscussionForumPosting,
+  defineEmployerAggregateRating,
   defineEvent,
   defineFoodEstablishment,
   defineHowTo,
@@ -39,14 +46,17 @@ import {
   defineItemList,
   defineJobPosting,
   defineLocalBusiness,
+  defineMathSolver,
   defineMovie,
   defineOrganization,
   definePerson,
   defineProduct,
   defineQuestion,
+  defineQuiz,
   defineRecipe,
   defineReview,
   defineSoftwareApp,
+  defineVacationRental,
   defineVideo,
   defineWebPage,
   defineWebSite,
@@ -155,19 +165,24 @@ export function defineSchemaOrgComponent<DefineFn extends SchemaOrgDefinition, P
 export const SchemaOrgArticle = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineArticle, SchemaOrgComponentInput<Article>>('SchemaOrgArticle', defineArticle)
 export const SchemaOrgBreadcrumb = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineBreadcrumb, SchemaOrgComponentInput<BreadcrumbList>>('SchemaOrgBreadcrumb', defineBreadcrumb)
 export const SchemaOrgComment = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineComment, SchemaOrgComponentInput<Comment>>('SchemaOrgComment', defineComment)
+export const SchemaOrgDiscussionForumPosting = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineDiscussionForumPosting, SchemaOrgComponentInput<DiscussionForumPosting>>('SchemaOrgDiscussionForumPosting', defineDiscussionForumPosting)
+export const SchemaOrgEmployerAggregateRating = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineEmployerAggregateRating, SchemaOrgComponentInput<EmployerAggregateRating>>('SchemaOrgEmployerAggregateRating', defineEmployerAggregateRating)
 export const SchemaOrgEvent = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineEvent, SchemaOrgComponentInput<Event>>('SchemaOrgEvent', defineEvent)
 export const SchemaOrgFoodEstablishment = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineFoodEstablishment, SchemaOrgComponentInput<FoodEstablishment>>('SchemaOrgFoodEstablishment', defineFoodEstablishment)
 export const SchemaOrgHowTo = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineHowTo, SchemaOrgComponentInput<HowTo>>('SchemaOrgHowTo', defineHowTo)
 export const SchemaOrgImage = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineImage, SchemaOrgComponentInput<ImageObject>>('SchemaOrgImage', defineImage)
 export const SchemaOrgJobPosting = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineJobPosting, SchemaOrgComponentInput<JobPosting>>('SchemaOrgJobPosting', defineJobPosting)
 export const SchemaOrgLocalBusiness = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineLocalBusiness, SchemaOrgComponentInput<LocalBusiness>>('SchemaOrgLocalBusiness', defineLocalBusiness)
+export const SchemaOrgMathSolver = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineMathSolver, SchemaOrgComponentInput<MathSolver>>('SchemaOrgMathSolver', defineMathSolver)
 export const SchemaOrgOrganization = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineOrganization, SchemaOrgComponentInput<Organization>>('SchemaOrgOrganization', defineOrganization)
 export const SchemaOrgPerson = /* @__PURE__ */ defineSchemaOrgComponent<typeof definePerson, SchemaOrgComponentInput<Person>>('SchemaOrgPerson', definePerson)
 export const SchemaOrgProduct = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineProduct, SchemaOrgComponentInput<Product>>('SchemaOrgProduct', defineProduct)
 export const SchemaOrgQuestion = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineQuestion, SchemaOrgComponentInput<Question>>('SchemaOrgQuestion', defineQuestion)
+export const SchemaOrgQuiz = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineQuiz, SchemaOrgComponentInput<Quiz>>('SchemaOrgQuiz', defineQuiz)
 export const SchemaOrgRecipe = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineRecipe, SchemaOrgComponentInput<Recipe>>('SchemaOrgRecipe', defineRecipe)
 export const SchemaOrgReview = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineReview, SchemaOrgComponentInput<Review>>('SchemaOrgReview', defineReview)
 export const SchemaOrgVideo = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineVideo, SchemaOrgComponentInput<VideoObject>>('SchemaOrgVideo', defineVideo)
+export const SchemaOrgVacationRental = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineVacationRental, SchemaOrgComponentInput<VacationRental>>('SchemaOrgVacationRental', defineVacationRental)
 export const SchemaOrgWebPage = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineWebPage, SchemaOrgComponentInput<WebPage>>('SchemaOrgWebPage', defineWebPage)
 export const SchemaOrgWebSite = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineWebSite, SchemaOrgComponentInput<WebSite>>('SchemaOrgWebSite', defineWebSite)
 export const SchemaOrgMovie = /* @__PURE__ */ defineSchemaOrgComponent<typeof defineMovie, SchemaOrgComponentInput<Movie>>('SchemaOrgMovie', defineMovie)

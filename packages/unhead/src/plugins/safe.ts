@@ -257,7 +257,7 @@ export const SafeInputPlugin = /* @__PURE__ */ defineHeadPlugin({
     },
     'tags:afterResolve': (ctx) => {
       ctx.tags = ctx.tags.reduce((acc: HeadTag[], tag: HeadTag) => {
-        if (!(tag as any)._safe) {
+        if (!tag._safe) {
           acc.push(tag)
           return acc
         }

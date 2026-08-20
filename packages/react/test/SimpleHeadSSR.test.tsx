@@ -163,4 +163,25 @@ describe('simpleHead component in ssr', () => {
       <meta name="fragment-meta-2" content="nested-2">"
     `)
   })
+
+  it('preserves numeric zero children', () => {
+    const head = createHead({ disableDefaults: true })
+
+    renderToString(
+      <UnheadProvider head={head}>
+        <Head>
+          <title>{0}</title>
+          <script type="text/plain">{0}</script>
+          <style>{0}</style>
+          <noscript>{0}</noscript>
+        </Head>
+      </UnheadProvider>,
+    )
+
+    const { headTags } = renderSSRHead(head)
+    expect(headTags).toContain('<title>0</title>')
+    expect(headTags).toContain('<script type="text/plain">0</script>')
+    expect(headTags).toContain('<style>0</style>')
+    expect(headTags).toContain('<noscript>0</noscript>')
+  })
 })

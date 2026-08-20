@@ -7,9 +7,10 @@ import {
   resolveWithBase,
 } from '../../../utils'
 import { imageResolver } from '../../Image'
+import { videoResolver } from '../../Video'
 import { howToStepDirectionResolver } from '../HowToStepDirection'
 
-export interface HowToStepSimple extends Thing {
+interface HowToStepBase extends Thing {
   /**
    * A link to a fragment identifier (an 'ID anchor') of the individual step
    * (e.g., https://www.example.com/example-page/#recipe-step-5).
@@ -19,7 +20,6 @@ export interface HowToStepSimple extends Thing {
    * The instruction string
    * ("e.g., "Bake at 200*C for 40 minutes, or until golden-brown, stirring periodically throughout").
    */
-  text: string
   /**
    * The word or short phrase summarizing the step (for example, "Attach wires to post" or "Dig").
    * Don't use non-descriptive text (for example, "Step 1: [text]") or other form of step number (for example, "1. [text]").
@@ -39,7 +39,18 @@ export interface HowToStepSimple extends Thing {
   itemListElement?: NodeRelations<HowToDirection | string>
 }
 
-export interface HowToStep extends HowToStepSimple {}
+type HowToStepContent
+  = | {
+    text: string
+    itemListElement?: NodeRelations<HowToDirection | string>
+  }
+  | {
+    text?: string
+    itemListElement: NodeRelations<HowToDirection | string>
+  }
+
+export type HowToStepSimple = HowToStepBase & HowToStepContent
+export type HowToStep = HowToStepSimple
 
 /**
  * Describes a HowTo guide, which contains a series of steps.
@@ -65,7 +76,9 @@ export const howToStepResolver = defineSchemaOrgResolver<HowToStep, HowToStep | 
       })
     }
     if (step.itemListElement)
-      step.itemListElement = resolveRelation(step.itemListElement, ctx, howToStepDirectionResolver)
+      step.itemListElement = resolveRelation(step.itemListElement as NodeRelations<HowToDirection | string>, ctx, howToStepDirectionResolver)
+    if (step.video)
+      step.video = resolveRelation(step.video, ctx, videoResolver)
     return step
   },
 })

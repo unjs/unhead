@@ -17,6 +17,112 @@ function createValidationHead(opts?: Pick<ValidatePluginOptions, 'rules'>) {
 }
 
 describe('validatePlugin', () => {
+  describe('input shape', () => {
+    it('validates resolver-returned attribute shapes', () => {
+      const { head, rules } = createValidationHead()
+      head.push((() => ({
+        bodyAttrs: {
+          title: 'Home',
+          titleTemplate: '%s | Site',
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      })) as any)
+      renderSSRHead(head)
+      const diagnostics = rules.filter(r => r.id === 'invalid-input-shape')
+      expect(diagnostics).toHaveLength(2)
+      expect(diagnostics.map(d => d.message)).toEqual(expect.arrayContaining([
+        expect.stringContaining('"titleTemplate"'),
+        expect.stringContaining('"meta"'),
+      ]))
+    })
+
+    it('observes custom resolver output without running it twice', () => {
+      const rules: HeadValidationRule[] = []
+      const resolver = vi.fn((key: string | undefined, value: unknown) => {
+        if (key === 'meta' && value === 'resolved-invalid-shape')
+          return { name: 'description', content: 'Hello' }
+        return value
+      })
+      const head = createHead({
+        disableDefaults: true,
+        propResolvers: [resolver],
+        plugins: [ValidatePlugin({
+          onReport: diagnostics => rules.push(...diagnostics),
+        })],
+      })
+
+      head.push({ meta: 'resolved-invalid-shape' } as any)
+      renderSSRHead(head)
+
+      expect(rules.filter(rule => rule.id === 'invalid-input-shape')).toHaveLength(1)
+      expect(resolver.mock.calls.filter(([key]) => key === 'meta')).toHaveLength(1)
+    })
+
+    it('warns for head properties inside htmlAttrs', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        htmlAttrs: {
+          lang: 'en',
+          script: [{ src: '/analytics.js' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeTruthy()
+    })
+
+    it('allows valid title, style, and data attributes', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          'title': 'Tooltip',
+          'style': 'color: red',
+          'data-theme': 'dark',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
+    })
+
+    it('allows head-named scalar attributes', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          meta: 'custom-value',
+          script: 'module',
+          link: '/feed',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
+    })
+
+    it('does not run head-tag predicates against attribute objects', () => {
+      const { head, rules } = createValidationHead()
+      head.push({
+        bodyAttrs: {
+          children: 'label',
+          hid: 'page',
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'deprecated-prop-children')).toBeFalsy()
+      expect(rules.find(r => r.id === 'deprecated-prop-hid-vmid')).toBeFalsy()
+    })
+
+    it('respects rule severity configuration', () => {
+      const { head, rules } = createValidationHead({
+        rules: { 'invalid-input-shape': 'off' },
+      })
+      head.push({
+        bodyAttrs: {
+          meta: [{ name: 'description', content: 'Hello' }],
+        },
+      } as any)
+      renderSSRHead(head)
+      expect(rules.find(r => r.id === 'invalid-input-shape')).toBeFalsy()
+    })
+  })
+
   describe('url validity', () => {
     it('warns on non-absolute canonical', () => {
       const { head, rules } = createValidationHead()

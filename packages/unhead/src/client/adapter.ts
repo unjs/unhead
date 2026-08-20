@@ -1,5 +1,5 @@
 import type { HookableCore } from 'hookable'
-import type { ActiveHeadEntry, ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
+import type { ClientHeadHooks, HeadEntryOptions, HeadRenderer, ResolvableHead, Unhead } from '../types'
 import { registerPlugin } from '../unhead'
 import { callHook } from '../utils/hooks'
 
@@ -22,11 +22,17 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.dirty = !!head.dirty
   head.use = p => registerPlugin(head, p)
   head.render = () => render(head)
+  // Render here because an async hook listener could break batching.
+  function notify() {
+    hooks.callHook('entries:updated', head)
+    if (!head._b)
+      head.render()
+  }
   head.invalidate = () => {
     for (const entry of head.entries.values())
       delete entry._tags
     head.dirty = true
-    hooks.callHook('entries:updated', head)
+    notify()
   }
   head.push = (input: T, entryOptions?: HeadEntryOptions) => {
     const unhook = entryOptions?.onRendered
@@ -41,7 +47,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
     if (entry)
       entry._o = input
     head.dirty = true
-    hooks.callHook('entries:updated', head)
+    notify()
     let disposeState: EntryDisposeState = { _tag: 'active' }
     const finalizeDispose = () => {
       if (disposeState._tag === 'disposed')
@@ -58,7 +64,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
       patch(input: T) {
         active.patch(input)
         head.dirty = true
-        hooks.callHook('entries:updated', head)
+        notify()
       },
       dispose() {
         if (disposeState._tag !== 'active')
@@ -80,28 +86,6 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
         void Promise.allSettled(deferred).then(finalizeDispose)
       },
     }
-  }
-  hooks.hook('entries:updated', () => {
-    head.render()
-  })
-  return head
-}
-
-export function createStreamClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: HookableCore<ClientHeadHooks>, render: HeadRenderer<boolean>, locked: () => boolean): ClientUnhead<T> {
-  const head = createClientHeadAdapter(core, hooks, render)
-  const push = head.push
-  head.push = (input, options) => {
-    if (locked()) {
-      return {
-        _i: -1,
-        patch: () => {},
-        dispose: () => {},
-      } as ActiveHeadEntry<T>
-    }
-    const active = push(input, options)
-    const patch = active.patch
-    active.patch = input => !locked() && patch(input)
-    return active
   }
   return head
 }

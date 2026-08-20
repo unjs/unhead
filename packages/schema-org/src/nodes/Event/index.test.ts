@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defineEvent, defineOrganization, definePlace, useSchemaOrg } from '../../'
+import { defineEvent, defineOrganization, definePerson, definePlace, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineEvent', () => {
@@ -62,6 +62,59 @@ describe('defineEvent', () => {
           },
         ]
       `)
+    })
+  })
+
+  it('resolves person organizers without changing their type', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Community meetup',
+          organizer: definePerson({
+            name: 'Ada Lovelace',
+          }),
+        }),
+      ])
+
+      const graphNodes = await injectSchemaOrg(head)
+
+      expect(graphNodes[0].organizer).toEqual({
+        '@id': 'https://example.com/#/schema/person/1',
+      })
+      expect(graphNodes[1]).toMatchObject({
+        '@type': 'Person',
+        'name': 'Ada Lovelace',
+      })
+    })
+  })
+
+  it('resolves repeated previous dates and relative offer URLs', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineEvent({
+          name: 'Rescheduled event',
+          previousStartDate: [
+            new Date(2025, 0, 1),
+            '2025-02-01',
+          ],
+          offers: {
+            price: 10,
+            url: '/tickets',
+            validFrom: new Date(Date.UTC(2024, 11, 1)),
+          },
+        }),
+      ])
+
+      const [event] = await injectSchemaOrg(head)
+
+      expect(event.previousStartDate).toEqual([
+        '2025-01-01',
+        '2025-02-01',
+      ])
+      expect(event.offers).toMatchObject({
+        url: 'https://example.com/tickets',
+        validFrom: '2024-12-01T00:00:00.000Z',
+      })
     })
   })
 

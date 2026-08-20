@@ -75,7 +75,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 - **jobLocation** `Place`
 
-  The physical location where the employee reports to work. Google permits this field to be omitted for a fully remote job when `jobLocationType: 'TELECOMMUTE'` and `applicantLocationRequirements` describe where the employee may work. The current Unhead input type still marks `jobLocation` as required.
+  The physical location where the employee reports to work. For a fully remote job, set `jobLocationType: 'TELECOMMUTE'` and provide `applicantLocationRequirements` instead.
 
 - **datePosted** `ResolvableDate`
 
@@ -103,7 +103,7 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
   Indicates whether direct application is allowed.
 
-- **identifier:** `string`
+- **identifier:** `string | PropertyValue`
 
   An identifier for the job posting, unique within the hiring organization.
 
@@ -124,9 +124,10 @@ See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-sche
 
 - `datePosted`: Date
 - `hiringOrganization`: Organization
-- `jobLocation`: Place
+- `jobLocation` and `applicantLocationRequirements`: Place and AdministrativeArea nodes
 - `baseSalary`: MonetaryAmount
 - `validThrough`: Date
+- object forms of `educationRequirements`, `experienceRequirements`, and `identifier`
 
 ## Examples
 
@@ -190,13 +191,6 @@ export interface JobPostingSimple extends Thing {
   hiringOrganization: NodeRelation<Organization>
 
   /**
-   * The physical location(s) of the business where the employee will report to work (such as an office or worksite),
-   * not the location where the job was posted. Include as many properties as possible. The more properties you provide,
-   * the higher quality the job posting is to our users. Note that you must include the addressCountry property.
-   */
-  jobLocation: NodeRelation<Place>
-
-  /**
    * The title of the job (not the title of the posting). For example, "Software Engineer" or "Barista"
    */
   title: string
@@ -204,7 +198,7 @@ export interface JobPostingSimple extends Thing {
   /**
    * The actual base salary for the job, as provided by the employer (not an estimate).
    */
-  baseSalary?: MonetaryAmount
+  baseSalary?: NodeRelation<MonetaryAmount>
 
   /**
    * Type of employment
@@ -218,11 +212,6 @@ export interface JobPostingSimple extends Thing {
   validThrough?: ResolvableDate
 
   /**
-   * For fully remote jobs, set this to `TELECOMMUTE`.
-   */
-  jobLocationType?: 'TELECOMMUTE'
-
-  /**
    * Indicates whether the URL that's associated with this job posting enables direct application for the job.
    */
   directApply?: boolean
@@ -233,16 +222,32 @@ export interface JobPostingSimple extends Thing {
   /**
    * Educational credentials or qualifications required for the job.
    */
-  educationRequirements?: string
+  educationRequirements?: NodeRelations<EducationalOccupationalCredential | string>
   /**
    * Description of the level of experience required for the job.
    */
-  experienceRequirements?: string
+  experienceRequirements?: NodeRelations<OccupationalExperienceRequirements | string>
   /**
    * Skills, abilities, or knowledge needed for the job.
    */
   qualifications?: string
+  identifier?: NodeRelation<PropertyValue | string>
+  experienceInPlaceOfEducation?: boolean
 }
+
+type JobLocation
+  = | {
+    jobLocation: NodeRelations<Place>
+    jobLocationType?: 'TELECOMMUTE'
+    applicantLocationRequirements?: NodeRelations<JobLocationRequirement>
+  }
+  | {
+    jobLocation?: NodeRelations<Place>
+    jobLocationType: 'TELECOMMUTE'
+    applicantLocationRequirements: NodeRelations<JobLocationRequirement>
+  }
+
+export type JobPosting = JobPostingSimple & JobLocation
 ```
 
 ## Related Schemas
