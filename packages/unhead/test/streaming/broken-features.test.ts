@@ -269,7 +269,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('script innerHTML handling', () => {
     it('jSON-LD script innerHTML preserved across stream', async () => {
-      const { head } = createStreamableHead({ streamTail: true })
+      const { head } = createStreamableHead({ writesMarkup: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -346,7 +346,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('noscript tags', () => {
     it('noscript content leaves the stream as markup', async () => {
-      const { head } = createStreamableHead({ streamTail: true })
+      const { head } = createStreamableHead({ writesMarkup: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 

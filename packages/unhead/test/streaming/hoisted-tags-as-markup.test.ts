@@ -11,7 +11,7 @@ const GTM = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-1"></i
 
 describe('noscript registered after the shell', () => {
   it('goes out as markup, not as a patch', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
@@ -19,7 +19,7 @@ describe('noscript registered after the shell', () => {
   })
 
   it('lands at the body close, because the body-open slot already flushed', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -27,7 +27,7 @@ describe('noscript registered after the shell', () => {
   })
 
   it('is not repeated when the shell already served it', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ noscript: [{ innerHTML: GTM }] })
     renderShell(head)
 
@@ -40,7 +40,7 @@ describe('noscript registered after the shell', () => {
 
 describe('body-positioned tags registered after the shell', () => {
   it('sends a body-close script as markup', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
@@ -48,7 +48,7 @@ describe('body-positioned tags registered after the shell', () => {
   })
 
   it('sends a body-close style as markup', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ style: [{ innerHTML: '.a{color:red}', tagPosition: 'bodyClose' }] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -56,7 +56,7 @@ describe('body-positioned tags registered after the shell', () => {
   })
 
   it('keeps head-positioned tags in the patch', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ meta: [{ name: 'description', content: 'late' }], link: [{ rel: 'canonical', href: '/a' }] })
 
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -69,7 +69,7 @@ describe('body-positioned tags registered after the shell', () => {
 
 describe('an entry mixing hoistable and head-only tags', () => {
   it('splits it across the patch and the markup', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({
       meta: [{ name: 'description', content: 'late' }],
       noscript: [{ innerHTML: GTM }],
@@ -95,7 +95,7 @@ describe('a stream that pauses mid-element', () => {
   // is written into the template, so it lands at body level whatever the app
   // was in the middle of.
   it('parses the hoisted markup into the body, not the open select', async () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     const template = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
     const enc = new TextEncoder()
     let app!: ReadableStreamDefaultController<Uint8Array>
@@ -133,7 +133,7 @@ describe('a tag the shell already served', () => {
   // copy. Hoisting a second one would put two blocks with the same key in the
   // served HTML. The patch can still update the first for a JS client.
   it('patches an update to a keyed tag instead of hoisting a duplicate', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ script: [{ key: 'schema', type: 'application/ld+json', innerHTML: '{"v":1}' }] })
     const shell = renderShell(head)
     expect(shell.headTags).toContain('{"v":1}')
@@ -146,7 +146,7 @@ describe('a tag the shell already served', () => {
   })
 
   it('drops an exact repeat entirely', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ noscript: [{ key: 'gtm', innerHTML: '<i>1</i>' }] })
     renderShell(head)
 
@@ -157,7 +157,7 @@ describe('a tag the shell already served', () => {
   })
 
   it('still hoists a different unkeyed block', () => {
-    const head = createStreamableServerHead({ streamTail: true })
+    const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"a":1}' }] })
     renderShell(head)
 
@@ -207,5 +207,37 @@ describe('a driver that builds the response by hand', () => {
     await client.render()
 
     expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
+  })
+})
+
+describe('tagPosition given as an entry option', () => {
+  // `useHead(input, { tagPosition })` is a documented API and resolveTags
+  // applies it to every tag in the entry. The split has to see it too, or the
+  // tag ships as a patch nobody but a browser reads.
+  it('hoists a tag positioned by its entry', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    renderShell(head)
+    head.push({ script: [{ src: '/x.js' }] }, { tagPosition: 'bodyClose' })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    expect(renderStreamEnd(head, PARTS)).toContain('/x.js')
+  })
+
+  it('leaves a head-positioned entry in the patch', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    renderShell(head)
+    head.push({ meta: [{ name: 'description', content: 'x' }] }, { tagPosition: 'head' })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('description')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
+  it('lets a tag override its entry position', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    renderShell(head)
+    head.push({ script: [{ src: '/keep.js', tagPosition: 'head' }] }, { tagPosition: 'bodyClose' })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('/keep.js')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 })

@@ -92,15 +92,15 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, streamTail, ...rest } = options
+  const { streamKey, writesMarkup, ...rest } = options
   if (streamKey !== undefined)
     assertValidStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
   })
-  if (streamTail)
-    (head as any)._streamTail = true
+  if (writesMarkup)
+    streamState(head).writesMarkup = true
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -153,7 +153,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
  * // ...stream the app, then close it with the tags held back from the chunks
- * res.end(`${renderStreamTail(head)}${bodyTags}</body></html>`)
+ * res.end(`${renderStreamMarkup(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
@@ -223,6 +223,11 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  */
 const JSON_LD_TYPE_RE = /\bld\+json\b/i
 
+/** Per-response streaming state. Created on first use, never on a cold head. */
+function streamState(head: Unhead<any>) {
+  return (head._stream ||= {})
+}
+
 /**
  * Tags that reach the page better as body markup than as a client patch.
  *
@@ -234,21 +239,24 @@ const JSON_LD_TYPE_RE = /\bld\+json\b/i
  * Everything else in a streamed patch only works from the head, and only for
  * clients that run the script.
  */
-function isHoistable(tagName: string, tag: any): boolean {
+function isMarkupTag(tagName: string, tag: any, entryPosition?: string): boolean {
   if (!tag || typeof tag !== 'object')
     return false
   if (tagName === 'noscript')
     return true
-  if (tag.tagPosition === 'bodyClose' || tag.tagPosition === 'bodyOpen')
+  // `useHead(input, { tagPosition })` applies to every tag in the entry, so a
+  // tag with no position of its own inherits it, the way `resolveTags` does.
+  const position = tag.tagPosition ?? entryPosition
+  if (position === 'bodyClose' || position === 'bodyOpen')
     return true
   return tagName === 'script' && typeof tag.type === 'string' && JSON_LD_TYPE_RE.test(tag.type)
 }
 
 /**
- * Identity for a hoisted tag. The shell and a later chunk build their objects
+ * Identity for a tag bound for markup. The shell and a later chunk build their objects
  * independently, so the key order is normalized before comparing.
  */
-function hoistIdentity(tagName: string, tag: any): string {
+function markupIdentity(tagName: string, tag: any): string {
   let id = tagName
   for (const key of Object.keys(tag).sort()) {
     const value = tag[key]
@@ -261,33 +269,34 @@ function hoistIdentity(tagName: string, tag: any): string {
  * Content-independent identity, so an update to a tag can be recognised as the
  * same tag. Only a tag the author keyed has one.
  */
-function hoistDedupeKey(tagName: string, tag: any): string | undefined {
+function markupDedupeKey(tagName: string, tag: any): string | undefined {
   return tag.key ? `${tagName}\u0000key=${tag.key}` : undefined
 }
 
 /**
- * Records the hoistable tags the shell already rendered, so a later chunk
+ * Records the markup-bound tags the shell already rendered, so a later chunk
  * repeating one of them does not emit a second copy.
  */
 function rememberShellMarkup(head: Unhead<any>): void {
-  const seen = ((head as any)._streamHoisted ||= new Set<string>())
+  const seen = streamState(head).seen ||= new Set<string>()
   const propResolvers = head.resolvedOptions.propResolvers || []
   for (const entry of head.entries.values()) {
     const raw: any = entry.input
     if (!raw || typeof raw !== 'object')
       continue
+    const entryPosition = (entry.options as any)?.tagPosition
     // Resolving is the expensive half. Only `script` and `noscript` carry a
-    // hoistable tag type, and `tagPosition` is a literal on the input, so a
+    // markup-bound tag type, and `tagPosition` is a literal on the input, so a
     // head of plain meta and links never resolves twice.
-    let mayHoist = false
+    let mayCarry = false
     for (const key in raw) {
       const value = raw[key]
-      if (Array.isArray(value) && (key === 'script' || key === 'noscript' || value.some((t: any) => t?.tagPosition && t.tagPosition !== 'head'))) {
-        mayHoist = true
+      if (Array.isArray(value) && (key === 'script' || key === 'noscript' || (entryPosition && entryPosition !== 'head') || value.some((t: any) => t?.tagPosition && t.tagPosition !== 'head'))) {
+        mayCarry = true
         break
       }
     }
-    if (!mayHoist)
+    if (!mayCarry)
       continue
     const input: any = resolveHeadInput(raw, propResolvers)
     for (const key in input) {
@@ -295,11 +304,11 @@ function rememberShellMarkup(head: Unhead<any>): void {
       if (!Array.isArray(value))
         continue
       for (const tag of value) {
-        if (!isHoistable(key, tag))
+        if (!isMarkupTag(key, tag, entryPosition))
           continue
-        seen.add(hoistIdentity(key, tag))
+        seen.add(markupIdentity(key, tag))
         // The head bytes are gone, so a later update cannot replace this tag.
-        const dedupe = hoistDedupeKey(key, tag)
+        const dedupe = markupDedupeKey(key, tag)
         if (dedupe)
           seen.add(dedupe)
       }
@@ -312,7 +321,7 @@ function rememberShellMarkup(head: Unhead<any>): void {
  * patch and the part that can go out as body markup instead. Returns
  * `undefined` for a side that has nothing in it.
  */
-function splitHoistable(input: any, seen: Set<string>, keepFallback: boolean): { patch?: any, markup?: any } {
+function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, entryPosition?: string): { patch?: any, markup?: any } {
   if (!input || typeof input !== 'object')
     return { patch: input }
 
@@ -320,28 +329,28 @@ function splitHoistable(input: any, seen: Set<string>, keepFallback: boolean): {
   let markup: any
   for (const key in input) {
     const value = input[key]
-    if (!Array.isArray(value) || !value.some(tag => isHoistable(key, tag)))
+    if (!Array.isArray(value) || !value.some(tag => isMarkupTag(key, tag, entryPosition)))
       continue
     const rest: any[] = []
-    const hoisted: any[] = []
+    const carried: any[] = []
     for (const tag of value) {
-      if (!isHoistable(key, tag)) {
+      if (!isMarkupTag(key, tag, entryPosition)) {
         rest.push(tag)
         continue
       }
       // A repeat of something the shell already served goes out nowhere.
-      const id = hoistIdentity(key, tag)
+      const id = markupIdentity(key, tag)
       if (seen.has(id))
         continue
-      // The shell served this key already. Hoisting would put a second copy of
+      // The shell served this key already. Sending markup would put a second copy of
       // it in the HTML, so the patch updates the first one instead.
-      const dedupe = hoistDedupeKey(key, tag)
+      const dedupe = markupDedupeKey(key, tag)
       if (dedupe && seen.has(dedupe)) {
         rest.push(tag)
         continue
       }
       seen.add(id)
-      hoisted.push(tag)
+      carried.push(tag)
       // A driver that never writes the tail would otherwise lose this tag. The
       // patch recreates it, and the client adopts the served markup when the
       // tail did land, so it is never rendered twice.
@@ -353,13 +362,13 @@ function splitHoistable(input: any, seen: Set<string>, keepFallback: boolean): {
       patch[key] = rest
     else
       delete patch[key]
-    if (hoisted.length)
-      (markup ||= {})[key] = hoisted
+    if (carried.length)
+      (markup ||= {})[key] = carried
   }
 
   if (!patch)
     return { patch: input }
-  // An entry carrying nothing but hoisted tags leaves no patch behind at all.
+  // An entry carrying nothing but markup tags leaves no patch behind at all.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
   return { patch: hasPatch ? patch : undefined, markup }
 }
@@ -370,8 +379,8 @@ function splitHoistable(input: any, seen: Set<string>, keepFallback: boolean): {
  * the held-back tags never reach the page. `renderStreamEnd()` does it for
  * you when you stream from a template.
  */
-export function renderStreamTail(head: Unhead<any>): string {
-  const held = (head as any)._streamMarkup as any[] | undefined
+export function renderStreamMarkup(head: Unhead<any>): string {
+  const held = streamState(head).markup
   if (!held?.length) {
     return ''
   }
@@ -391,7 +400,7 @@ export function renderStreamTail(head: Unhead<any>): string {
     }
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
     // Only after the render succeeds, so a failure leaves the markup for a retry.
-    ;(head as any)._streamMarkup = undefined
+    streamState(head).markup = undefined
     return bodyTags
   }
   finally {
@@ -417,7 +426,7 @@ export function renderStreamTail(head: Unhead<any>): string {
  * ```
  */
 export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
-  const tail = renderStreamTail(head)
+  const tail = renderStreamMarkup(head)
   if (!tail)
     return parts.end
   const at = parts.bodyTagsAt ?? parts.end.length
@@ -435,12 +444,15 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let serialized: string
   let patchCount = 0
   try {
-    const seen = ((head as any)._streamHoisted ||= new Set<string>())
-    const resolved = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
+    const seen = streamState(head).seen ||= new Set<string>()
+    const entries = Array.from(head.entries.values())
+    const entryPositions = entries.map(e => (e.options as any)?.tagPosition as string | undefined)
+    const resolved = entries.map(e => resolveHeadInput(e.input, propResolvers))
     const inputs: any[] = []
     const markup: any[] = []
-    for (const input of resolved) {
-      const split = splitHoistable(input, seen, !(head as any)._streamTail)
+    for (let i = 0; i < resolved.length; i++) {
+      const input = resolved[i]
+      const split = splitMarkupTags(input, seen, !streamState(head).writesMarkup, entryPositions[i])
       if (split.patch)
         inputs.push(split.patch)
       if (split.markup)
@@ -449,7 +461,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     serialized = safeJsonStringify(inputs)
     patchCount = inputs.length
     if (markup.length) {
-      ((head as any)._streamMarkup ||= []).push(...markup)
+      (streamState(head).markup ||= []).push(...markup)
     }
   }
   catch (error) {
@@ -466,7 +478,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
-  // Every pending tag was hoisted, so it goes out as markup and this chunk
+  // Every pending tag went out as markup, so this chunk
   // needs no script at all.
   if (!patchCount)
     return ''
@@ -518,10 +530,10 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  // This wrapper always writes `renderStreamEnd`, so hoisted tags need no
-  // patch fallback. `renderStreamTail` sets the same flag for a hand-rolled
-  // driver, from its first call onward.
-  ;(head as any)._streamTail = true
+  // This wrapper always writes `renderStreamEnd`, so markup tags need no
+  // patch fallback. A hand-rolled driver promises the same with the
+  // `writesMarkup` option.
+  streamState(head).writesMarkup = true
   // Without a default, entries registered after the shell are discarded.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string

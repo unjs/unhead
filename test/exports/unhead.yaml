@@ -76,7 +76,7 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   renderStreamEnd: function
-  renderStreamTail: function
+  renderStreamMarkup: function
   wrapStream: function
 ./stream/unplugin:
   buildStreamingPluginOptions: function

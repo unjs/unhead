@@ -130,7 +130,7 @@ export {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
-  renderStreamTail,
+  renderStreamMarkup,
   type StreamableHeadContext,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,

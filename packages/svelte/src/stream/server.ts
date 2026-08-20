@@ -16,7 +16,7 @@ export {
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
-  renderStreamTail,
+  renderStreamMarkup,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
