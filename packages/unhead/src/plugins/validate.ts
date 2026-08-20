@@ -214,13 +214,13 @@ function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
     yield { ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] }
 }
 
-function isHiddenFromBots(tag: HeadTag, writesMarkup: boolean): boolean {
+function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
   // Search engines read JSON-LD anywhere in the document, so a driver that
-  // writes the body markup serves it after all. One that does not still hides
+  // writes body tags serves it after all. One that does not still hides
   // it: position alone cannot rescue a tag that exists only in a patch.
   if (tag.tag === 'script')
-    return !writesMarkup && String(props.type || '').toLowerCase() === 'application/ld+json'
+    return !writesBodyTags && String(props.type || '').toLowerCase() === 'application/ld+json'
   // Every other tag here only carries meaning from the head, so one placed in
   // the body was never going to be read.
   if (tag.tagPosition?.startsWith('body'))
@@ -337,7 +337,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const rules: HeadValidationRule[] = []
           for (const pending of tags) {
             for (const tag of expandPendingTag(pending)) {
-              if (!isHiddenFromBots(tag, !!head._stream?.writesMarkup))
+              if (!isHiddenFromBots(tag, !!head._stream?.writesBodyTags))
                 continue
               const entryIndex = tag._p != null ? tag._p >> 10 : undefined
               rules.push({
