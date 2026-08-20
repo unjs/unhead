@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { prepareStreamingTemplate, renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, renderStreamMarkup, wrapStream } from '../../src/stream/server'
+import { prepareStreamingTemplate, renderShell, renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderStreamEnd, renderStreamMarkup, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
@@ -130,6 +130,17 @@ describe('jSON-LD held back from streamed patches', () => {
 })
 
 describe('pre-rendered shell state', () => {
+  it('does not repeat JSON-LD rendered by renderSSRHeadShell', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    head.push({ script: [LD] })
+    expect(renderSSRHeadShell(head, TEMPLATE)).toContain('Organization')
+
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS)).not.toContain('Organization')
+  })
+
   // Solid and Svelte render the shell themselves, then hand the payload to
   // `prepareStreamingTemplate`. Entries pushed after that render belong to the
   // stream, not the shell.
@@ -172,6 +183,16 @@ describe('template-free drivers', () => {
 })
 
 describe('tail render failure', () => {
+  it('keeps valid JSON-LD when another entry cannot serialize', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    head.push({ script: [LD] })
+    head.push({ meta: [{ name: 'invalid', content: 1n }] } as any)
+
+    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow(TypeError)
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    expect(renderStreamMarkup(head)).toContain('Organization')
+  })
+
   it('keeps the held JSON-LD for a retry', () => {
     const head = createStreamableServerHead({ writesMarkup: true })
     head.push({ script: [LD] })

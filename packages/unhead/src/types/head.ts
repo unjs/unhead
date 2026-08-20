@@ -171,9 +171,9 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    * before `</body>`.
    *
    * Tags that work from the body, such as JSON-LD and `noscript`, then leave
-   * the stream only as markup. Without it they are also repeated in the patch,
-   * so a driver that never writes the tail cannot lose them. `wrapStream()`
-   * sets this for you.
+   * the stream only as markup. Without it they stay in the patch, so a driver
+   * that never writes the tail cannot lose them. `wrapStream()` sets this for
+   * you.
    *
    * @default false
    */

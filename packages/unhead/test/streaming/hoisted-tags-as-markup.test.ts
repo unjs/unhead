@@ -184,13 +184,29 @@ describe('a driver that builds the response by hand', () => {
     expect(chunk).toContain('px.gif')
   })
 
-  it('still offers them as markup, so a tail that is written wins', () => {
+  it('does not hold markup until the driver guarantees the tail', () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
-    expect(renderStreamEnd(head, PARTS)).toContain('ld+json')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
+  it('does not append markup after its fallback patch has rendered', async () => {
+    const head = createStreamableServerHead()
+    renderShell(head)
+    head.push({ script: [LD] })
+    const chunk = renderSSRHeadSuspenseChunk(head)
+
+    const doc = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>').window.document
+    const client = createClientHead({ document: doc })
+    for (const input of JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')'))))
+      client.push(input)
+    await client.render()
+    doc.body.insertAdjacentHTML('beforeend', renderStreamEnd(head, { shell: '', end: '' }))
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 
   it('does not render twice when the client applies a patch over the markup', async () => {
@@ -261,6 +277,19 @@ describe('a slot the shell filled, without an explicit key', () => {
 })
 
 describe('an entry whose input is resolved lazily', () => {
+  it('resolves the shell input once', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    let calls = 0
+    head.push((() => ({ script: [{ type: 'application/ld+json', innerHTML: `{"v":${++calls}}` }] })) as any)
+
+    expect(renderShell(head).headTags).toContain('{"v":1}')
+    expect(calls).toBe(1)
+
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"v":1}' }] })
+    renderSSRHeadSuspenseChunk(head)
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
   // The shell scan cannot look for tag arrays on the raw input: a function
   // entry has none until it resolves, and skipping it loses what the shell
   // served.
