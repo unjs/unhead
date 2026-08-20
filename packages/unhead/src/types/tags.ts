@@ -108,6 +108,11 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _p?: number
   /**
+   * Copied from the entry options: the entry came from `useHeadSafe`.
+   * @internal
+   */
+  _safe?: boolean
+  /**
    * @internal
    */
   _d?: string

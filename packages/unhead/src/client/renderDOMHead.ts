@@ -37,22 +37,6 @@ function hasPendingEntries<T extends Unhead<any>>(head: T) {
 
 function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
-  for (const el of [...dom.body.children, ...dom.head.children]) {
-    const tag = el.tagName.toLowerCase() as HeadTag['tag']
-    if (!HasElementTags.has(tag))
-      continue
-    const props: Record<string, any> = { innerHTML: el.innerHTML }
-    for (const n of el.getAttributeNames())
-      props[n] = el.getAttribute(n)
-    const next = normalizeProps({ tag, props: {} } as HeadTag, props)
-    next.key = el.getAttribute('data-hid') || undefined
-    const dedupe = dedupeKey(next) || hashTag(next)
-    let k = dedupe
-    let c = 1
-    while (state._e.has(k))
-      k = `${dedupe}:${c++}`
-    state._e.set(k, el)
-  }
   for (const entry of head.entries.values()) {
     if (entry._o !== undefined) {
       const orig = entry._o as Record<string, any>
@@ -76,10 +60,7 @@ function createDomState<T extends Unhead<any>>(head: T, dom: Document): DomState
 function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOptions = {}): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
-  const documentChanged = !!activeState && activeState._d !== dom
-  if (!dom || (activeState && !documentChanged && !head.dirty && !hasPendingEntries(head)))
-    return false
-  if (head._du)
+  if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
     return false
   const defaultView = dom.defaultView
   head._du = true
@@ -146,9 +127,8 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
-      const isAttr = tag.tag.endsWith('Attrs')
       renderState._e.set(id, $el)
-      if (!isAttr) {
+      if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
         // clear what we set, never SSR-adopted or externally mutated content.
@@ -234,10 +214,32 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       else if (HasElementTags.has(tag.tag))
         pending.push(ctx)
     }
+    // Scan when a missing tag may match late server HTML.
+    if (pending.length) {
+      const tracked = new Set(renderState._e.values())
+      for (const el of [...dom.body.children, ...dom.head.children]) {
+        const elTag = el.tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(elTag) || tracked.has(el))
+          continue
+        const props: Record<string, any> = { innerHTML: el.innerHTML }
+        for (const n of el.getAttributeNames())
+          props[n] = el.getAttribute(n)
+        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
+        next.key = el.getAttribute('data-hid') || undefined
+        const dedupe = dedupeKey(next) || hashTag(next)
+        let k = dedupe
+        let c = 1
+        while (renderState._e.has(k))
+          k = `${dedupe}:${c++}`
+        renderState._e.set(k, el)
+      }
+    }
     for (const ctx of pending) {
-      ctx.$el = dom.createElement(ctx.tag.tag)
+      const found = renderState._e.get(ctx.id)
+      ctx.$el = found || dom.createElement(ctx.tag.tag)
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
-      ;(frag[ctx.tag.tagPosition || 'head'] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
+      if (!found)
+        (frag[ctx.tag.tagPosition || 'head'] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     if (frag.head)
       dom.head.appendChild(frag.head)

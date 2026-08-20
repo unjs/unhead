@@ -101,8 +101,8 @@ describe('fuzz parity old vs new prepareStreamingTemplate', () => {
       const template = Array.from({ length: n }, () => PIECES[Math.floor(rand() * PIECES.length)]).join('')
       const state = { htmlAttrs: ' data-a="1"', headTags: '<title>X</title>', bodyAttrs: ' class="b"', bodyTagsOpen: '', bodyTags: '<script src="/x.js"></script>' }
       const oldResult = oldPrepareStreamingTemplate(createStreamableServerHead(), template, state)
-      const newResult = prepareStreamingTemplate(createStreamableServerHead(), template, state)
-      expect(newResult, `template: ${JSON.stringify(template)}`).toEqual(oldResult)
+      const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), template, state)
+      expect({ shell, end }, `template: ${JSON.stringify(template)}`).toEqual(oldResult)
     }
   })
 })

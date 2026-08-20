@@ -2,6 +2,7 @@ import {
   createStreamableHead,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 /**
  * Tests for features that may be broken or have edge cases with streaming SSR.
@@ -9,7 +10,6 @@ import {
  */
 import { describe, expect, it } from 'vitest'
 
-const PUSH_RE = /\.push\((.+)\)$/
 const ROBOTS_RE = /robots/g
 const PUSH_SIMPLE_RE = /push\((.+)\)$/
 const LT_RE = /\\u003c/g
@@ -268,8 +268,8 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('script innerHTML handling', () => {
-    it('jSON-LD script innerHTML preserved across stream', async () => {
-      const { head } = createStreamableHead()
+    it('preserves JSON-LD script innerHTML across the stream', async () => {
+      const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -284,18 +284,15 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      const chunk = renderSSRHeadSuspenseChunk(head)
-      expect(chunk).toContain('schema.org')
-      expect(chunk).toContain('Product')
+      // Streamed Body Tags keep JSON-LD visible without client scripts.
+      expect(renderSSRHeadSuspenseChunk(head)).toBe('')
 
-      // Verify JSON is valid in the output by parsing the push argument
-      const match = chunk.match(PUSH_RE)
-      if (match) {
-        const entries = JSON.parse(match[1])
-        // Entries is an array of head inputs
-        expect(entries[0].script[0].innerHTML).toBeDefined()
-        expect(() => JSON.parse(entries[0].script[0].innerHTML)).not.toThrow()
-      }
+      const end = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
+      expect(end).toContain('schema.org')
+      expect(end).toContain('Product')
+
+      const json = end.slice(end.indexOf('>') + 1, end.indexOf('</script>'))
+      expect(() => JSON.parse(json)).not.toThrow()
     })
 
     it('inline script with variables preserved', async () => {
@@ -347,8 +344,8 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('noscript tags', () => {
-    it('noscript content preserved', async () => {
-      const { head } = createStreamableHead()
+    it('writes noscript content as Streamed Body Tags', async () => {
+      const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -358,9 +355,9 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
-      expect(chunk).toContain('noscript')
-      expect(chunk).toContain('tracking.gif')
+      // A `noscript` client cannot run a patch.
+      expect(await renderSSRHeadSuspenseChunk(head)).toBe('')
+      expect(renderStreamEnd(head, { shell: '', end: '</body></html>' })).toContain('tracking.gif')
     })
   })
 
