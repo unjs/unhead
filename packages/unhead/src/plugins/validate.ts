@@ -258,9 +258,12 @@ function describeTag(tag: HeadTag): string {
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
-  const stacks = new Map<number, string>()
 
   return defineHeadPlugin((head: Unhead) => {
+    // Per head, not per plugin: entry indexes restart at 1 for every head, so
+    // one instance shared across requests would cross-attribute their sources
+    // and never release them.
+    const stacks = new Map<number, string>()
     const pendingInputDiagnostics: { diagnostic: Diagnostic, entryIndex: number }[] = []
     const inputShapeObserver = createInputShapeObserver()
     head.resolvedOptions.propResolvers = [
