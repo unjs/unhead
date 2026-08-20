@@ -18,10 +18,6 @@ afterEach(() => {
   globalThis.document = originalDocument
 })
 
-/**
- * Renders through a bare `wrapStream`, then executes the served HTML the way a
- * browser would: the shell's bootstrap script and the streamed patch both run.
- */
 async function serveAndRun(late: Record<string, unknown>) {
   const { head } = createStreamableHead()
   const stream = new ReadableStream<Uint8Array>({
@@ -36,7 +32,6 @@ async function serveAndRun(late: Record<string, unknown>) {
   const dom = new JSDOM(html, { runScripts: 'dangerously' })
   globalThis.window = dom.window as any
   globalThis.document = dom.window.document
-  // the bundler injects the iife in a real app; it drains the queue
   initIife({})
   return { html, document: dom.window.document }
 }
@@ -49,10 +44,8 @@ describe('the patch a bare wrapStream emits', () => {
       script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' }],
     })
 
-    // the tag was not in the served head
     expect(html.slice(0, html.indexOf('</head>'))).not.toContain('Streamed late')
 
-    // ...but the browser ends up with it
     expect(document.title).toBe('Streamed late')
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://example.com/')
     expect(document.querySelector('script[type="application/ld+json"]')).toBeTruthy()

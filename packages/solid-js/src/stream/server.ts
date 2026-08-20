@@ -82,8 +82,8 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
       resolveShellReady(shellState)
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
-      // This wrapper always writes `renderStreamEnd`, so body-bound tags need
-      // no patch copy. A caller driving `head` by hand keeps the fallback.
+      // `renderStreamEnd()` writes Streamed Body Tags.
+      // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       const encoder = new TextEncoder()
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined

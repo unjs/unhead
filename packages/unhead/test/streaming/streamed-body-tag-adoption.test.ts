@@ -17,7 +17,7 @@ function appendJsonLd(doc: Document) {
   return el
 }
 
-describe('adopting server markup that arrives after the first render', () => {
+describe('adopting late Streamed Body Tags', () => {
   it('reuses a tag appended between renders', async () => {
     const doc = setup()
     const head = createHead({ document: doc })
@@ -25,7 +25,6 @@ describe('adopting server markup that arrives after the first render', () => {
     head.push({ title: 'first' })
     await head.render()
 
-    // Streaming appends body-close tags after the renderer indexed the document.
     const streamed = appendJsonLd(doc)
 
     head.push({ script: [{ type: 'application/ld+json', innerHTML: LD_JSON }] })
