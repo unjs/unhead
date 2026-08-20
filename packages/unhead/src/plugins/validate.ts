@@ -195,19 +195,24 @@ function createInputShapeObserver(): {
 }
 
 /**
- * Tags a bot only ever reads from the served `<head>`.
+ * Tags bots must receive in server HTML.
  *
- * During streaming SSR anything registered after the shell is delivered as a
- * script that patches the DOM. A browser runs it. A bot reads the HTML the
- * server sent and never does, so these tags simply are not there for it.
+ * Most must stay in `<head>`. JSON-LD can appear anywhere in the response.
+ * Streaming SSR delivers late registrations through a DOM patch. Browsers
+ * apply it. Many bots only read server HTML.
  */
 const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
 const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
-const REL_SEPARATOR_RE = /\s+/
+const JSON_LD_TYPE_RE = /^[\t\n\f\r ]*application\/ld\+json[\t\n\f\r ]*(?:;|$)/i
+const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+
+function relTokens(value: unknown): string[] {
+  return String(value || '').toLowerCase().split(REL_SEPARATOR_RE)
+}
 
 /**
  * Resolves the plugin-owned shapes `renderSSRHeadSuspenseChunk` leaves alone:
@@ -216,7 +221,7 @@ const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload',
 function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
   // `useHeadSafe` drops these outright, so reporting one as "a browser gets
   // it, a bot does not" would be wrong twice over.
-  if (tag._safe && tag.tag === 'link' && SAFE_BLOCKED_RELS.has(String(tag.props.rel || '').toLowerCase()))
+  if (tag._safe && tag.tag === 'link' && relTokens(tag.props.rel).some(rel => SAFE_BLOCKED_RELS.has(rel)))
     return
   if (tag.props.body)
     tag.tagPosition = 'bodyClose'
@@ -232,7 +237,7 @@ function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
   // Served JSON-LD remains visible as Streamed Body Tags.
   if (tag.tag === 'script')
-    return !writesBodyTags && String(props.type || '').toLowerCase() === 'application/ld+json'
+    return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
   // Other reported tags only carry meaning from the head.
   if (tag.tagPosition?.startsWith('body'))
     return false
@@ -249,7 +254,7 @@ function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
       return BOT_HEAD_META_PREFIX_RE.test(String(props.property || props.name || '').toLowerCase())
     }
     case 'link':
-      return String(props.rel || '').toLowerCase().split(REL_SEPARATOR_RE).some(rel => BOT_HEAD_LINK_RELS.has(rel))
+      return relTokens(props.rel).some(rel => BOT_HEAD_LINK_RELS.has(rel))
     default:
       return false
   }

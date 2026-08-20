@@ -55,17 +55,17 @@ export interface DOMHeadHooks {
 
 export interface SSRHeadHooks {
   /**
-   * Fired by `renderSSRHeadSuspenseChunk` with the tags it is about to hand to
-   * the client as a patch, before the entries are cleared.
+   * Fired by `renderSSRHeadSuspenseChunk` with normalized tags from entries
+   * pending after the shell. It runs before Streamed Body Tags are split out.
+   * It also runs before the remaining patch is serialized and entries clear.
    *
-   * The chunk renderer serializes raw entry input and never resolves tags, so
-   * this is the only place a plugin can see what a stream chunk carried. The
-   * tags are normalized for inspection only; they are not what gets rendered,
-   * and plugin-owned shapes (`_flatMeta`, the legacy `body` prop) are left for
-   * the listener to resolve.
+   * The chunk renderer normally serializes entry input without normalizing
+   * tags. This hook supplies normalized copies for inspection. The rendered
+   * patch does not use these tags. Plugin-owned shapes (`_flatMeta`, the legacy
+   * `body` prop) are left for the listener to resolve.
    *
-   * Synchronous: the renderer clears the entries as soon as this returns, so a
-   * listener that deferred its work would read them after they were gone.
+   * Synchronous: the renderer does not wait for promises before it serializes
+   * the patch and clears entries.
    */
   'ssr:streamChunk': (ctx: { tags: HeadTag[] }) => SyncHookResult
   'ssr:beforeRender': (ctx: ShouldRenderContext) => HookResult

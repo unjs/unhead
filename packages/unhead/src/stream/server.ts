@@ -216,12 +216,15 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
  * It deliberately does not run the `entries:normalize` hook, because listeners
  * there hold per-resolve state that a second pass would corrupt.
  */
-function normalizePendingTags(head: Unhead<any>): HeadTag[] {
+function normalizePendingTags(head: Unhead<any>): { tags: HeadTag[], entries: Map<number, { input: any, resolved: any }> } {
   const propResolvers = head.resolvedOptions.propResolvers || []
   const tags: HeadTag[] = []
+  const entries = new Map<number, { input: any, resolved: any }>()
   for (const entry of head.entries.values()) {
+    const resolved = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+    entries.set(entry._i, { input: entry.input, resolved })
     let index = 0
-    for (const tag of normalizeEntryToTags(entry.input, propResolvers)) {
+    for (const tag of normalizeEntryToTags(resolved, [])) {
       if (entry.options)
         Object.assign(tag, entry.options)
       // Same packing as `resolveTags`, so a consumer can recover the entry
@@ -235,7 +238,7 @@ function normalizePendingTags(head: Unhead<any>): HeadTag[] {
       tags.push(tag)
     }
   }
-  return tags
+  return { tags, entries }
 }
 
 /**
@@ -276,8 +279,7 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
 }
 
 function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  // Copy props because `normalizeProps` mutates object payloads.
-  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, { ...tag })
+  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
   const content = hashTag(normalized)
   return { slot: dedupeKey(normalized) || content, content }
 }
@@ -413,25 +415,29 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
 
-  // Only pay for normalization when something is listening (the dev-only
-  // ValidatePlugin). Production registers no listener, so this is one
-  // property lookup per chunk.
-  if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length)
-    callHook(head, 'ssr:streamChunk', { tags: normalizePendingTags(head) })
-
   const streamKey = getStreamKey(head)
   const propResolvers = head.resolvedOptions.propResolvers || []
+  let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
   let serialized: string
   let patchCount = 0
   try {
+    // Only pay for normalization when something is listening.
+    if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
+      const normalized = normalizePendingTags(head)
+      normalizedEntries = normalized.entries
+      callHook(head, 'ssr:streamChunk', { tags: normalized.tags })
+    }
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
     let bodyTags: any[] | undefined
     for (const entry of head.entries.values()) {
-      const input = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+      const normalized = normalizedEntries?.get(entry._i)
+      const input = normalized && normalized.input === entry.input
+        ? normalized.resolved
+        : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       const entryPosition = (entry.options as any)?.tagPosition
       if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
         inputs.push(input)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CreateHeadTransform, createHeadTransformContext } from '../src/unplugin/CreateHeadTransform'
+import { Unhead } from '../src/unplugin/vite'
 
 function createPlugin(registrations: Parameters<ReturnType<typeof createHeadTransformContext>['addRuntimePlugin']>[0][], consumer: 'client' | 'server' = 'client') {
   const ctx = createHeadTransformContext()
@@ -52,6 +53,18 @@ describe('createHeadTransform', () => {
     const result = await transform(`import { createHead } from '@unhead/vue/server'\nconst head = createHead()`)
     expect(result.code).toContain('import { devtoolsPlugin as __devtools } from \'@unhead/bundler\'')
     expect(result.code).toContain('_h.use(__devtools())')
+  })
+
+  it('injects validation into development server heads', async () => {
+    const plugin = (Unhead({ devtools: false }) as any[]).find(plugin => plugin?.name === '@unhead/create-head-transform')
+    plugin.configResolved({ root: '/project' })
+    const result = await plugin.transform.handler.call(
+      { environment: { config: { consumer: 'server' } } },
+      `import { createHead } from 'unhead/server'\nconst head = createHead()`,
+      'entry.ts',
+    )
+
+    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
   })
 
   it('skips client-only registrations on server', async () => {

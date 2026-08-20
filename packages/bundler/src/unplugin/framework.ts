@@ -149,8 +149,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
           ctx.addRuntimePlugin({
             import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
-            // Streaming apps call `createStreamableHead()`, which this transform
-            // does not match. Server validation stays opt-in. See the streaming guide.
+            server: '_h.use(__unhead_validate({ root: __ROOT__ }))',
           })
         }
         if (devtools !== false) {
