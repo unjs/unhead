@@ -22,17 +22,14 @@ export function UnheadProvider({ value, children }: UnheadProviderProps): ReactN
 /**
  * Streaming head component for React.
  *
- * Return it from the same component that calls `useHead`, ahead of that
- * component's own markup:
+ * Return it before the output from the component that calls `useHead`:
  *
  * ```tsx
  * return <><HeadStream />{jsx}</>
  * ```
  *
- * It must re-render in lockstep with that component. As a sibling of a
- * suspending component, React evaluates it once before the suspension is
- * detected, and does not evaluate it again on the replay. This call clears the
- * pending entries, so they reach the page as neither markup nor a patch.
+ * Keep it inside that component. A sibling may render before React detects
+ * suspension. That early render clears the pending entries.
  *
  * The bundler plugin applies the wrapping form for you.
  */
@@ -99,8 +96,8 @@ export function createStreamableHead<T = ResolvableHead>(
     head,
     onShellReady,
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
-      // This wrapper always writes `renderStreamEnd`, so body-bound tags need
-      // no patch copy. A caller driving `head` by hand keeps the fallback.
+      // `renderStreamEnd()` writes Streamed Body Tags.
+      // Manual drivers retain the client patch by default.
       ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {
         shellReady.then(async () => {
@@ -112,7 +109,7 @@ export function createStreamableHead<T = ResolvableHead>(
 
             passthrough.on('data', chunk => writable.write(chunk))
             passthrough.on('end', () => {
-              // Runs after the enclosing catch has gone, so it owns its own failure.
+              // The event runs after the outer catch. Handle its error here.
               try {
                 writable.write(renderStreamEnd(head, parts))
                 writable.end()

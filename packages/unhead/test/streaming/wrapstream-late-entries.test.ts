@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
 
-/** A stream that registers head entries only once it is pulled, after the shell. */
 function lateStream(register: () => void) {
   return new ReadableStream<Uint8Array>({
     pull(controller) {
@@ -67,7 +66,6 @@ describe('wrapStream late entries', () => {
 
     const html = await render(head, () => head.push({ script: [{ innerHTML: circular }] }))
 
-    // the tags are lost, but the document is whole
     expect(html).toContain('</html>')
     expect(html).not.toContain('__unhead__.push(')
   })
@@ -77,7 +75,6 @@ describe('wrapStream late entries', () => {
     const circular: any = {}
     circular.self = circular
 
-    // both pushes happen after the shell, in separate chunks
     let pulls = 0
     const stream = new ReadableStream<Uint8Array>({
       pull(controller) {

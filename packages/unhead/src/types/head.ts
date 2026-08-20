@@ -167,13 +167,10 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    */
   streamKey?: string
   /**
-   * Set when the driver writes `renderStreamBodyTags()` (or `renderStreamEnd()`)
-   * before `</body>`.
+   * Set when the driver writes Streamed Body Tags before `</body>`.
    *
-   * Tags that work from the body, such as JSON-LD and `noscript`, then leave
-   * the stream only as markup. Without it they stay in the patch, so a driver
-   * that never writes the body tags cannot lose them. `wrapStream()` sets this
-   * for you.
+   * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
+   * `wrapStream()` enables this option automatically.
    *
    * @default false
    */
@@ -286,8 +283,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _du?: boolean
   /**
-   * Suppresses the render that normally follows every `push`, so a batch of
-   * pushes costs one render instead of one per entry.
+   * Batches client pushes into one render.
    *
    * @internal
    */
@@ -313,12 +309,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string
   /**
-   * Per-response streaming state: the tags held back for the body markup, the
-   * identities the response already served, and whether the driver writes it.
+   * Per-response state for Streamed Body Tags.
    *
    * @internal
    */
-  _stream?: { markup?: any[], seen?: Set<string>, writesBodyTags?: boolean }
+  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
 }
 
 export interface DomState {

@@ -33,11 +33,9 @@ function init(options: { streamKey?: string } = {}) {
       stored._streamed = true
   }
 
-  // Push a batch of entries and render once. Without `_b` a client head
-  // wrapper renders on every push, so an N-entry chunk costs N renders.
+  // Push each streamed batch with one render.
   function pushBatch(entries: any[]) {
-    // Nested call (an `entries:updated` listener pushed again): stay inside the
-    // outer batch so it still owns the single render.
+    // Let the outer batch own renders from nested pushes.
     const nested = head._b
     head._b = true
     try {
@@ -47,8 +45,7 @@ function init(options: { streamKey?: string } = {}) {
     }
     finally {
       head._b = nested
-      // In the `finally` so a throwing entry still renders the ones that
-      // landed before it, instead of leaving them pending indefinitely.
+      // Render accepted entries even when a later push throws.
       if (!nested) {
         head.dirty = true
         head.render()
@@ -56,16 +53,13 @@ function init(options: { streamKey?: string } = {}) {
     }
   }
 
-  // Consume the backlog as one batch. Each item is an array of entries, and
-  // the whole queue is worth a single render, not one per queued chunk.
+  // Consume the backlog with one render.
   if (queue?._q?.length) {
     pushBatch(queue._q.flat())
   }
 
   win[streamKey] = {
-    // Replayed batches are dropped rather than carried over. Nothing reads
-    // `_q` after init, and in `async` mode it can hold the whole page's
-    // streamed head until the tab closes.
+    // Drop the consumed queue to release streamed entries.
     _q: [],
     _head: head,
     // Server pushes arrays of entries (from inline scripts during streaming)

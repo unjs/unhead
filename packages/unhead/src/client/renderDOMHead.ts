@@ -214,9 +214,7 @@ function _renderDOMHead<T extends Unhead<any>>(head: T, options: RenderDomHeadOp
       else if (HasElementTags.has(tag.tag))
         pending.push(ctx)
     }
-    // Indexed lazily: the scan is paid for by a render that has a tag with no
-    // element, and it reruns because streaming appends server-rendered tags
-    // long after the first render.
+    // Scan when a missing tag may match late server HTML.
     if (pending.length) {
       const tracked = new Set(renderState._e.values())
       for (const el of [...dom.body.children, ...dom.head.children]) {

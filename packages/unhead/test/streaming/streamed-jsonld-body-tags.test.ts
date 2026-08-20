@@ -30,10 +30,10 @@ async function readAll(stream: ReadableStream<Uint8Array>) {
 
 const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
 
-// A driver writes `end` last, so body tags land at the body-close slot inside it.
+// Streamed Body Tags render at the body-close position in `end`.
 const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.length }
 
-describe('jSON-LD held back from streamed patches', () => {
+describe('rendering JSON-LD as Streamed Body Tags', () => {
   it('keeps JSON-LD out of the patch script', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
@@ -51,7 +51,7 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(chunk).not.toContain('ld+json')
   })
 
-  it('renders the held JSON-LD as markup', () => {
+  it('renders JSON-LD as a Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Reviews', script: [LD] })
     renderSSRHeadSuspenseChunk(head)
@@ -62,7 +62,7 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(end).toContain('"@type":"Organization"')
   })
 
-  it('drains the held JSON-LD only once', () => {
+  it('drains JSON-LD only once', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
@@ -82,7 +82,7 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(renderSSRHeadSuspenseChunk(head)).toContain('Later')
   })
 
-  it('emits the JSON-LD inside the body of a wrapped stream', async () => {
+  it('writes JSON-LD inside the body of a wrapped stream', async () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Shell' })
     let pending = true
@@ -141,9 +141,7 @@ describe('pre-rendered shell state', () => {
     expect(renderStreamEnd(head, PARTS)).not.toContain('Organization')
   })
 
-  // Solid and Svelte render the shell themselves, then hand the payload to
-  // `prepareStreamingTemplate`. Entries pushed after that render belong to the
-  // stream, not the shell.
+  // Solid and Svelte pass a rendered shell payload into template preparation.
   it('keeps JSON-LD pushed after the shell render', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Shell' })
@@ -171,7 +169,7 @@ describe('pre-rendered shell state', () => {
 })
 
 describe('template-free drivers', () => {
-  it('hands the held JSON-LD back once', () => {
+  it('returns Streamed Body Tags once', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     renderShell(head)
     head.push({ script: [LD] })
@@ -182,7 +180,7 @@ describe('template-free drivers', () => {
   })
 })
 
-describe('body tag render failure', () => {
+describe('render failures for Streamed Body Tags', () => {
   it('keeps valid JSON-LD when another entry cannot serialize', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
@@ -193,7 +191,7 @@ describe('body tag render failure', () => {
     expect(renderStreamBodyTags(head)).toContain('Organization')
   })
 
-  it('keeps the held JSON-LD for a retry', () => {
+  it('keeps Streamed Body Tags for a retry', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
