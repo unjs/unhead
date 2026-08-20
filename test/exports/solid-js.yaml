@@ -68,6 +68,8 @@
   prepareTemplate: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
+  renderStreamBodyTags: function
+  renderStreamEnd: function
   UnheadContext: object
   wrapStream: function
 ./stream/vite:

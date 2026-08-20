@@ -1,8 +1,9 @@
+import type { PerfRun } from './perf-report'
 import fs from 'node:fs'
 import process from 'node:process'
 import { collectBundleData, renderBundleReport } from './bundle-report'
 import { renderDependencyReport } from './dependency-report'
-import { renderPerfReport } from './perf-report'
+import { parseVitestBenchmarks, renderPerfReport } from './perf-report'
 import { renderPrecompileReport } from './precompile-report'
 
 // Combined bundle, dependency, and perf comment for the PR. Bundle data comes
@@ -19,10 +20,22 @@ const prDependencies = readJson(process.env.PR_DEPENDENCIES)
 if (prDependencies?.packages?.length)
   sections.push(renderDependencyReport(readJson(process.env.BASE_DEPENDENCIES), prDependencies))
 
+function mergePerfRuns(...runs: Array<PerfRun | null>): PerfRun | null {
+  const benches = runs.flatMap(run => run?.benches || [])
+  return benches.length ? { benches } : null
+}
+
 // guard on benches: a perf run that failed writes `{}`, which must skip the section, not crash
-const prPerf = readJson(process.env.PR_PERF)
+const basePerf = mergePerfRuns(
+  readJson(process.env.BASE_PERF),
+  parseVitestBenchmarks(readJson(process.env.BASE_TRANSFORM_PERF)),
+)
+const prPerf = mergePerfRuns(
+  readJson(process.env.PR_PERF),
+  parseVitestBenchmarks(readJson(process.env.PR_TRANSFORM_PERF)),
+)
 if (prPerf?.benches?.length)
-  sections.push(renderPerfReport(readJson(process.env.BASE_PERF), prPerf))
+  sections.push(renderPerfReport(basePerf, prPerf))
 
 const precompilePerf = readJson(process.env.PRECOMPILE_PERF)
 if (precompilePerf?.off?.benches?.length && precompilePerf?.on?.benches?.length)

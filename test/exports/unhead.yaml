@@ -114,6 +114,8 @@
   renderShell: function
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
+  renderStreamBodyTags: function
+  renderStreamEnd: function
   wrapStream: function
 ./stream/unplugin:
   buildStreamingPluginOptions: function
@@ -160,6 +162,9 @@
   emptyMetaContent: function
   findClosestMatch: function
   headInputPredicates: object
+  INPUT_SHAPE_FIELDS: object
+  inputShapeFromRuntime: function
+  inputShapePredicates: object
   KNOWN_META_NAMES: object
   KNOWN_META_PROPERTIES: object
   levenshtein: function
@@ -180,5 +185,6 @@
   titleInputFromRuntime: function
   twitterHandleMissingAt: function
   URL_META_KEYS: object
+  validateInputShape: function
   VALIDATION_RULE_IDS: object
   viewportUserScalable: function

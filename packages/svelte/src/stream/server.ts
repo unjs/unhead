@@ -3,6 +3,7 @@ import type { CreateStreamableServerHeadOptions } from 'unhead/types'
 import {
   createStreamableHead as _createStreamableHead,
   wrapStream as coreWrapStream,
+  renderShell,
 } from 'unhead/stream/server'
 
 export { UnheadContextKey } from '../context'
@@ -14,6 +15,8 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
+  renderStreamEnd,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
@@ -62,8 +65,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
     head,
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
       // Capture shell state before clearing entries
-      const preRenderedState = head.render()
-      head.entries.clear()
+      const preRenderedState = renderShell(head)
       // Mark shell as rendered so HeadStream starts outputting streaming updates
       shellRendered = true
       return coreWrapStream(head, stream, template, preRenderedState)

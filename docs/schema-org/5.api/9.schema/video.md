@@ -46,13 +46,29 @@ description: Use defineVideo() to add VideoObject structured data with thumbnail
 
 - **url** `string`
 
-  The video file or page URL used by Unhead. Relative values are resolved against the configured host.
+  An optional video file or page URL used by Unhead. Relative values are resolved against the configured host.
 
-  This Unhead input is not a substitute for Google's `contentUrl` or `embedUrl` properties.
+  Google does not require this property when `contentUrl` or `embedUrl` is available.
 
 - **contentUrl** `string` or **embedUrl** `string`
 
-  Google recommends the URL of the video bytes in `contentUrl`, or a player URL in `embedUrl` when the content URL is unavailable. Unhead passes these fields through without URL resolution, so provide absolute URLs.
+  Google recommends the URL of the video bytes in `contentUrl`, or a player URL in `embedUrl` when the content URL is unavailable. Unhead resolves relative values against the configured host.
+
+- **hasPart** `Clip | Clip[]`
+
+  Add named key moments with `name`, `startOffset`, `url`, and optional `endOffset`.
+
+- **publication** `BroadcastEvent | BroadcastEvent[]`
+
+  Add livestream timing with `isLiveBroadcast`, `startDate`, and optional `endDate`.
+
+- **potentialAction** `SeekToAction`
+
+  Describe the timestamp URL pattern used for automatic key moments.
+
+- **expires**, **interactionStatistic**, **ineligibleRegion**, and **regionsAllowed**
+
+  These properties cover expiry, view counts, and regional availability.
 
 ## Defaults
 
@@ -68,8 +84,8 @@ description: Use defineVideo() to add VideoObject structured data with thumbnail
 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `url` and each `thumbnailUrl` are resolved to absolute URLs
-- `uploadDate` accepts a Date object and is serialized as an ISO 8601 string
+- `url`, `contentUrl`, `embedUrl`, Clip URLs, SeekToAction targets, and each `thumbnailUrl` are resolved to absolute URLs
+- `uploadDate`, `expires`, and BroadcastEvent dates accept Date objects and are serialized as ISO 8601 strings
 - a string input is cast to `{ url: input }`
 
 ## Example
@@ -80,8 +96,12 @@ defineVideo({
   description: 'A short demonstration video.',
   thumbnailUrl: '/video-thumbnail.png',
   uploadDate: new Date(Date.UTC(2020, 10, 10)),
-  url: '/videos/demo',
-  contentUrl: 'https://example.com/video.mp4',
+  contentUrl: '/video.mp4',
+  hasPart: {
+    name: 'Introduction',
+    startOffset: 0,
+    url: '/videos/demo?t=0',
+  },
 })
 ```
 
@@ -116,7 +136,7 @@ export interface VideoSimple extends Thing {
   /**
    * The URL of the video file or page.
    */
-  url: string
+  url?: string
   /**
    * The fully qualified, absolute URL of the video file.
    */
@@ -156,5 +176,12 @@ export interface VideoSimple extends Thing {
    * A transcript of the video.
    */
   transcript?: string
+  expires?: ResolvableDate
+  ineligibleRegion?: Arrayable<string>
+  regionsAllowed?: Arrayable<string>
+  interactionStatistic?: NodeRelations<InteractionCounter>
+  hasPart?: NodeRelations<Clip>
+  publication?: NodeRelations<BroadcastEvent>
+  potentialAction?: NodeRelation<SeekToAction>
 }
 ```

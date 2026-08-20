@@ -4,6 +4,7 @@ import type { UnheadDevtoolsOptions } from '../unplugin/types'
 
 const HEAD_COMPOSABLE_RE = /\b(?:useHead|useSeoMeta|useHeadSafe|useScript)\b/
 const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
+const DEVTOOLS_KIT_PACKAGE = '@vitejs/devtools-kit'
 
 interface LazyUnheadDevtoolsOptions extends UnheadDevtoolsOptions {
   _ctx?: HeadTransformContext
@@ -31,6 +32,26 @@ function isViteDevtoolsEnabled(config: { devtools?: { enabled?: boolean }, plugi
   return config.devtools?.enabled === true || config.plugins.some(isViteDevtoolsPlugin)
 }
 
+function isMissingDevtoolsKit(error: unknown): boolean {
+  let current = error
+  while (current instanceof Error) {
+    if (current.message.includes(DEVTOOLS_KIT_PACKAGE))
+      return true
+    current = current.cause
+  }
+  return false
+}
+
+function handleDevtoolsLoadError(error: unknown): never {
+  if (isMissingDevtoolsKit(error)) {
+    throw new Error(
+      'Install @vitejs/devtools and @vitejs/devtools-kit to enable Unhead DevTools. For example: pnpm add -D @vitejs/devtools @vitejs/devtools-kit',
+      { cause: error },
+    )
+  }
+  throw error
+}
+
 /**
  * Lightweight proxy for the Vite-only devtools plugin. Framework bundler
  * entries are shared by webpack/rspack/rollup, so keep the devtools
@@ -50,10 +71,12 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
   async function resolvePlugin(): Promise<Plugin> {
     if (plugin)
       return plugin
-    pluginPromise ||= import('./vite').then((mod) => {
-      plugin = mod.unheadDevtools(options)
-      return plugin
-    })
+    pluginPromise ||= import('./vite')
+      .catch(handleDevtoolsLoadError)
+      .then((mod) => {
+        plugin = mod.unheadDevtools(options)
+        return plugin
+      })
     return pluginPromise
   }
 

@@ -337,30 +337,10 @@ function connectBridge(head: any) {
   }
 
   async function init() {
-    const { getDevToolsClientContext } = await import('@vitejs/devtools-kit/client')
+    const { getDevToolsRpcClient } = await import('@vitejs/devtools-kit/client')
+    const rpc = await getDevToolsRpcClient({ baseURL: '/__devtools/' })
 
-    // Retry until DevTools client context is available
-    let ctx = getDevToolsClientContext()
-    if (!ctx) {
-      let retries = 0
-      await new Promise<void>((resolve) => {
-        const timer = globalThis.setInterval(() => {
-          ctx = getDevToolsClientContext()
-          if (ctx || ++retries > 50) {
-            globalThis.clearInterval(timer)
-            if (!ctx)
-              console.warn('[unhead bridge] gave up waiting for DevTools context after 50 retries')
-            resolve()
-          }
-        }, 100)
-      })
-    }
-    if (!ctx) {
-      console.warn('[unhead bridge] no DevTools client context, aborting')
-      return
-    }
-
-    sharedState = await (ctx.rpc.sharedState as any).get('unhead:state', {
+    sharedState = await rpc.sharedState.get('unhead:state', {
       initialValue: serializeHeadState(head, wasSSR, ssrPayload),
     })
 

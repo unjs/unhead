@@ -15,6 +15,20 @@ const packageJson = JSON.parse(
 ) as PackageJson
 
 describe('@unhead/bundler package', () => {
+  it('keeps parser packages as optional peers', () => {
+    const runtimeDependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.optionalDependencies,
+    }
+
+    expect(runtimeDependencies).not.toHaveProperty('oxc-parser')
+    expect(runtimeDependencies).not.toHaveProperty('rolldown')
+    expect(packageJson.peerDependencies?.['oxc-parser']).toBeDefined()
+    expect(packageJson.peerDependenciesMeta?.['oxc-parser']).toEqual({ optional: true })
+    expect(packageJson.peerDependencies?.rolldown).toBe('>=1.0.0')
+    expect(packageJson.peerDependenciesMeta?.rolldown).toEqual({ optional: true })
+  })
+
   it('keeps Vite DevTools packages optional', () => {
     const runtimeDependencies = {
       ...packageJson.dependencies,
@@ -25,5 +39,8 @@ describe('@unhead/bundler package', () => {
     expect(packageJson.peerDependencies?.['@vitejs/devtools-kit']).toBeDefined()
     expect(packageJson.peerDependenciesMeta?.['@vitejs/devtools-kit']).toEqual({ optional: true })
     expect(packageJson.devDependencies?.['@vitejs/devtools-kit']).toBeDefined()
+  })
+  it('does not ship unused runtime dependencies', () => {
+    expect(packageJson.dependencies).not.toHaveProperty('ufo')
   })
 })

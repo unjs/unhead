@@ -1,6 +1,6 @@
 import type { HookableCore } from 'hookable'
 import type { CreateServerHeadOptions, PropResolver, ResolvableHead, ServerHeadHooks, SSRHeadPayload, Unhead } from '../types'
-import { createUnhead, registerPlugin } from '../unhead'
+import { createUnhead } from '../unhead'
 import { createHooks } from '../utils/hooks'
 import { createServerRenderer } from './renderSSRHead'
 import { capoTagWeight } from './sort'
@@ -35,8 +35,7 @@ const serverPropResolver: PropResolver = /* @__PURE__ */ Object.assign(
 /* @__NO_SIDE_EFFECTS__ */
 export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions = {}): ServerUnhead<T> {
   const tagWeight = options.tagWeight || capoTagWeight
-  const render = createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks })
-  const core = createUnhead<T, SSRHeadPayload>(render, {
+  const core = createUnhead<T, SSRHeadPayload>(createServerRenderer({ tagWeight, omitLineBreaks: options.omitLineBreaks }), {
     _tagWeight: tagWeight,
     // @ts-expect-error untyped
     document: false,
@@ -57,11 +56,10 @@ export function createHead<T = ResolvableHead>(options: CreateServerHeadOptions 
       defaultEntry._precomputedTags = DEFAULT_INIT_TAGS.map((tag, i) => ({ ...tag, tag: i ? 'meta' : 'htmlAttrs', props: { ...tag.props }, _p: 1024 + i }))
   }
 
-  const hooks = createHooks<ServerHeadHooks>(options.hooks)
-  const head = core as ServerUnhead<T>
-  head.hooks = hooks
-  head.render = () => render(head)
-  head.use = p => registerPlugin(head, p)
-  options.plugins?.forEach(p => head.use(p))
-  return head
+  core.hooks = createHooks<ServerHeadHooks>(options.hooks)
+
+  // Register plugins
+  options.plugins?.forEach(p => core.use(p))
+
+  return core as ServerUnhead<T>
 }

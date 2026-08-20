@@ -1,10 +1,9 @@
 import type { SourceMapInput } from 'rollup'
 import type { UnpluginOptions as UnpluginRawOptions } from 'unplugin'
-import type { ConfigEnv, UserConfig } from 'vite'
+import type { BuildOptions, ConfigEnv, UserConfig } from 'vite'
 import type { BaseTransformerTypes, PrecompileOptions } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
-import { parseSync } from 'oxc-parser'
 import { ScopeTracker, ScopeTrackerImport, walk } from 'oxc-walker'
 import { minifyJSON } from 'unhead/minify'
 import { capoTagWeight, propsToString, tagToString } from 'unhead/server'
@@ -22,7 +21,9 @@ import {
   unpackMeta,
 } from 'unhead/utils'
 import { createUnplugin } from 'unplugin'
-import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
+import { transformInlineScriptWithVite } from './InlineScriptTransform'
+import { isMissingParserError, parseAndWalkSource } from './parser'
+import { createJsVueTransformIdFilter, isVueScriptRequest, JS_EXT_RE, NODE_MODULES_RE, resolveBuildConsumer, splitTransformId } from './utils'
 
 /*
  * Internal unified single-parse transform pipeline.
@@ -46,7 +47,6 @@ import { createJsVueTransformIdFilter, isVueScriptRequest, NODE_MODULES_RE, reso
  * are thin single-concern adapters over this pipeline.
  */
 
-const TRANSFORM_RE = /\.(?:(?:c|m)?j|t)sx?$/
 const SERVER_COMPOSABLE_RE = /\b(?:useServerHead|useServerHeadSafe|useServerSeoMeta|useSchemaOrg)\b/
 const SEO_META_RE = /\buse(?:Server)?SeoMeta\b/
 const HEAD_RE = /\buse(?:Server)?Head\b/
@@ -71,6 +71,26 @@ const PRECOMPILE_FN_NAMES = new Set(['createHead', 'useHead', 'useSeoMeta'])
 const MEDIA_KEYS = new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage'])
 
 const JSON_TYPES = new Set(['application/json', 'application/ld+json', 'speculationrules', 'importmap'])
+const JAVASCRIPT_TYPES = new Set([
+  '',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'module',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
 const HEAD_FN_NAMES = new Set(['useHead', 'useServerHead'])
 const CONTENT_PROP_NAMES = ['innerHTML', 'textContent']
 const CONTENT_PROPS = new Set(CONTENT_PROP_NAMES)
@@ -141,6 +161,7 @@ type DecodedStaticValue = string | number | boolean | null | DecodedStaticValue[
 interface PendingMinification {
   end: number
   minified: Promise<string | null>
+  replaceIfLonger: boolean
   raw: string
   start: number
 }
@@ -205,6 +226,9 @@ const PRECOMPILED_DEFAULT_PLAN = [
 ] as const
 
 export type MinifyFn = (code: string) => Promise<string | null>
+export interface InlineScriptTransformOptions {
+  target?: BuildOptions['target']
+}
 const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
@@ -247,6 +271,8 @@ export interface MinifyTransformOptions extends BaseTransformerTypes {
    * Use `@unhead/bundler/minify/lightningcss` for a preconfigured minifier.
    */
   css?: false | MinifyFn
+  /** Transpile inline JavaScript before optional minification. */
+  transpile?: boolean | InlineScriptTransformOptions
 }
 
 export interface TransformPipelineOptions {
@@ -259,6 +285,7 @@ export interface TransformPipelineOptions {
 }
 
 interface TransformPipelineConfig extends TransformPipelineOptions {
+  framework?: string
   name: string
 }
 
@@ -282,20 +309,20 @@ function shouldTransformId(options: BaseTransformerTypes, id: string): boolean {
   if (NODE_MODULES_RE.test(pathname))
     return false
 
-  // Included
-  if (options.filter?.include?.some(pattern => id.match(pattern)))
-    return true
-
   // Excluded
   if (options.filter?.exclude?.some(pattern => id.match(pattern)))
     return false
+
+  // Included
+  if (options.filter?.include?.some(pattern => id.match(pattern)))
+    return true
 
   // vue files
   if (isVueScriptRequest(pathname, query))
     return true
 
   // js files
-  if (TRANSFORM_RE.test(pathname))
+  if (JS_EXT_RE.test(pathname))
     return true
 
   return false
@@ -364,8 +391,18 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
   // -- minify concern --------------------------------------------------------
   const jsMinifier = minifyOpts && minifyOpts.js !== false ? minifyOpts.js : undefined
   const cssMinifier = minifyOpts && minifyOpts.css !== false ? minifyOpts.css : undefined
-  const doJS = !!jsMinifier
+  const transpileOptions = typeof minifyOpts?.transpile === 'object' ? minifyOpts.transpile : undefined
+  const shouldTranspile = minifyOpts?.transpile === true || !!transpileOptions
+  const jsTranspiler = shouldTranspile && config.framework === 'vite'
+    ? async (code: string, target: BuildOptions['target']) => {
+      // Vite is optional for the generic bundler entry. Load it only in its build hook.
+      const vite = await import('vite')
+      return transformInlineScriptWithVite(vite, code, target)
+    }
+    : undefined
+  const doJS = !!jsMinifier || !!jsTranspiler
   const doCSS = !!cssMinifier
+  let resolvedViteTarget: BuildOptions['target']
 
   const minifyCache: Record<ContentType, Map<string, Promise<string | null>>> = {
     json: new Map(),
@@ -373,27 +410,36 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     style: new Map(),
   }
 
-  function minifyStringContent(content: string, contentType: ContentType): Promise<string | null> {
+  function minifyStringContent(content: string, contentType: ContentType, inlineScriptTarget?: BuildOptions['target']): Promise<string | null> {
     const minifier = contentType === 'json' ? jsonMinifier : contentType === 'script' ? jsMinifier : cssMinifier
-    if (!minifier)
+    const transpiler = contentType === 'script' ? jsTranspiler : undefined
+    if (!minifier && !transpiler)
       return Promise.resolve(null)
 
     const cache = minifyCache[contentType]
-    const cached = cache.get(content)
+    const cacheKey = transpiler ? `${JSON.stringify(inlineScriptTarget)}\0${content}` : content
+    const cached = cache.get(cacheKey)
     if (cached) {
-      cache.delete(content)
-      cache.set(content, cached)
+      cache.delete(cacheKey)
+      cache.set(cacheKey, cached)
       return cached
     }
 
     const pending: Promise<string | null> = Promise.resolve()
-      .then(() => minifier(content))
+      .then(async () => {
+        let result = content
+        if (transpiler)
+          result = await transpiler(result, inlineScriptTarget) || result
+        if (minifier)
+          result = await minifier(result) || result
+        return result === content ? null : result
+      })
       .catch((error) => {
-        if (cache.get(content) === pending)
-          cache.delete(content)
+        if (cache.get(cacheKey) === pending)
+          cache.delete(cacheKey)
         throw error
       })
-    cache.set(content, pending)
+    cache.set(cacheKey, pending)
 
     if (cache.size > MINIFY_CACHE_MAX) {
       const oldest = cache.keys().next().value
@@ -469,6 +515,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     input: Record<string, DecodedStaticValue>,
     kind: 'useHead' | 'useSeoMeta',
     minifyContents: boolean,
+    inlineScriptTarget: BuildOptions['target'],
     fail: (reason: string) => never,
   ): Promise<string> {
     const normalizedInput = kind === 'useSeoMeta' ? normalizeStaticSeoMetaInput(input) : input
@@ -484,10 +531,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         continue
       for (const key of CONTENT_PROP_NAMES) {
         const raw = tag[key as 'innerHTML' | 'textContent']
-        if (typeof raw !== 'string' || raw.length < 20)
+        const canReplaceLonger = contentType === 'script' && !!jsTranspiler
+        if (typeof raw !== 'string' || raw.length < (canReplaceLonger ? 0 : 20))
           continue
-        contentMinifications.push(minifyStringContent(raw, contentType).then((result) => {
-          if (result && result.length < raw.length)
+        contentMinifications.push(minifyStringContent(raw, contentType, inlineScriptTarget).then((result) => {
+          if (result && (canReplaceLonger || result.length < raw.length))
             tag[key as 'innerHTML' | 'textContent'] = result
         }))
       }
@@ -556,6 +604,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     input: Record<string, DecodedStaticValue>,
     kind: 'useHead' | 'useSeoMeta',
     minifyContents: boolean,
+    inlineScriptTarget: BuildOptions['target'],
     fail: (reason: string) => never,
   ): Promise<string> {
     const normalizedInput = kind === 'useSeoMeta' ? normalizeStaticSeoMetaInput(input) : input
@@ -571,10 +620,11 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         continue
       for (const key of CONTENT_PROP_NAMES) {
         const raw = tag[key as 'innerHTML' | 'textContent']
-        if (typeof raw !== 'string' || raw.length < 20)
+        const canReplaceLonger = contentType === 'script' && !!jsTranspiler
+        if (typeof raw !== 'string' || raw.length < (canReplaceLonger ? 0 : 20))
           continue
-        contentMinifications.push(minifyStringContent(raw, contentType).then((result) => {
-          if (result && result.length < raw.length)
+        contentMinifications.push(minifyStringContent(raw, contentType, inlineScriptTarget).then((result) => {
+          if (result && (canReplaceLonger || result.length < raw.length))
             tag[key as 'innerHTML' | 'textContent'] = result
         }))
       }
@@ -676,50 +726,61 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
     objectNode: any,
     tagType: TagType,
     pendingMinifications: PendingMinification[],
+    inlineScriptTarget?: BuildOptions['target'],
   ) {
     let contentType: ContentType = tagType
     if (tagType === 'script') {
       const typeProp = objectNode.properties.find(
         (p: any) => p.type === 'Property'
-          && !p.computed
-          && ((p.key?.type === 'Identifier' && p.key.name === 'type')
-            || (p.key?.type === 'Literal' && p.key.value === 'type')),
+          && getStaticPropertyKey(p) === 'type',
       )
-      if (typeProp?.value?.type === 'Literal' && JSON_TYPES.has(typeProp.value.value))
-        contentType = 'json'
-      else if (!doJS)
+      if (typeProp) {
+        if (typeProp.value?.type !== 'Literal' || typeof typeProp.value.value !== 'string')
+          return
+        const scriptType = typeProp.value.value.toLowerCase()
+        if (JSON_TYPES.has(scriptType))
+          contentType = 'json'
+        else if (!JAVASCRIPT_TYPES.has(scriptType))
+          return
+      }
+      if (contentType === 'script' && !doJS)
         return
     }
 
     // find innerHTML or textContent property with a static string value
     for (const prop of objectNode.properties) {
-      if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+      if (prop.type !== 'Property')
         continue
 
-      if (!CONTENT_PROPS.has(prop.key.name))
+      const contentProp = getStaticPropertyKey(prop)
+      if (!contentProp || !CONTENT_PROPS.has(contentProp))
         continue
 
       // only handle static string literals and template literals without expressions
       if (prop.value?.type === 'Literal') {
         const raw = prop.value.value
-        if (typeof raw !== 'string' || raw.length < 20)
+        const minLength = contentType === 'script' && jsTranspiler ? 0 : 20
+        if (typeof raw !== 'string' || raw.length < minLength)
           continue
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, contentType),
+          minified: minifyStringContent(raw, contentType, inlineScriptTarget),
+          replaceIfLonger: contentType === 'script' && !!jsTranspiler,
           raw,
           start: prop.value.start,
         })
       }
       else if (prop.value?.type === 'TemplateLiteral' && prop.value.expressions.length === 0) {
         const raw = prop.value.quasis[0]?.value?.cooked as string
-        if (!raw || raw.length < 20)
+        const minLength = contentType === 'script' && jsTranspiler ? 0 : 20
+        if (!raw || raw.length < minLength)
           continue
 
         pendingMinifications.push({
           end: prop.value.end,
-          minified: minifyStringContent(raw, contentType),
+          minified: minifyStringContent(raw, contentType, inlineScriptTarget),
+          replaceIfLonger: contentType === 'script' && !!jsTranspiler,
           raw,
           start: prop.value.start,
         })
@@ -808,11 +869,16 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         if (!runTreeshake && !runSeoMeta && !runPrecompile && !runMinify)
           return
 
+        const environmentTarget = (this as { environment?: { config?: { build?: BuildOptions } } }).environment?.config?.build?.target
+        const inlineScriptTarget = transpileOptions?.target ?? environmentTarget ?? resolvedViteTarget
+        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
         let ast
         try {
-          ast = parseSync(id, code)
+          ast = parseAndWalkSource(code, id, { scopeTracker })
         }
         catch (error) {
+          if (isMissingParserError(error))
+            throw error
           if (runPrecompile && STRICT_PRECOMPILE_SOURCE_RE.test(code))
             throw new Error(`[@unhead/bundler] strict precompile failed in ${id}: source could not be parsed`, { cause: error })
           return
@@ -820,11 +886,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
         if (ast.errors?.length && runPrecompile && STRICT_PRECOMPILE_SOURCE_RE.test(code))
           throw new Error(`[@unhead/bundler] strict precompile failed in ${id}: source could not be parsed (${ast.errors[0].message})`)
 
-        const scopeTracker = new ScopeTracker({ preserveExitedScopes: true })
-        // Pre-pass: collect all declarations first so hoisted locals
-        // (`function useServerHead() {}` below a call site) are visible when
-        // the phase walk visits earlier statements.
-        walk(ast.program, { scopeTracker })
+        // The parse walk collected all declarations, including hoisted locals.
         scopeTracker.freeze()
 
         const edits: PipelineEdit[] = []
@@ -1523,6 +1585,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               decoded as Record<string, DecodedStaticValue>,
               resolved.kind,
               minifyEligible,
+              inlineScriptTarget,
               reason => precompileFailure(arg, reason),
             ),
           })
@@ -1546,10 +1609,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
 
           // look for script: [...] and style: [...] properties
           for (const prop of arg.properties) {
-            if (prop.type !== 'Property' || prop.key?.type !== 'Identifier')
+            if (prop.type !== 'Property')
               continue
 
-            const tagType = prop.key.name
+            const tagType = getStaticPropertyKey(prop)
             if (tagType !== 'script' && tagType !== 'style')
               continue
 
@@ -1565,7 +1628,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               if (!element || element.type !== 'ObjectExpression')
                 continue
 
-              processScriptOrStyleObject(element, tagType, pendingMinifications)
+              processScriptOrStyleObject(element, tagType, pendingMinifications, inlineScriptTarget)
             }
           }
         }
@@ -1839,7 +1902,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
           for (let i = 0; i < pendingMinifications.length; i++) {
             const pending = pendingMinifications[i]
             const result = minified[i]
-            if (result && result.length < pending.raw.length)
+            if (result && result !== pending.raw && (pending.replaceIfLonger || result.length < pending.raw.length))
               edits.push({ start: pending.start, end: pending.end, content: JSON.stringify(result), phase: 'minify' })
           }
         }
@@ -1882,6 +1945,9 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
       // Per-call target resolution via `this.environment` makes the plugin
       // safe to share across environments in a single build pipeline.
       sharedDuringBuild: true,
+      configResolved(config) {
+        resolvedViteTarget = config.build.target
+      },
       apply(_config: UserConfig, env: ConfigEnv) {
         if (env.command === 'serve') {
           // Dev server shares one module graph between client and SSR renders;
@@ -1905,9 +1971,10 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
  *
  * @internal
  */
-export const UnheadTransforms = createUnplugin<TransformPipelineOptions, false>((options: TransformPipelineOptions = {}) =>
+export const UnheadTransforms = createUnplugin<TransformPipelineOptions, false>((options: TransformPipelineOptions = {}, meta) =>
   createTransformPipeline({
     name: 'unhead:transforms',
+    framework: meta.framework,
     consumer: options.consumer,
     treeshake: options.treeshake ?? false,
     seoMeta: options.seoMeta ?? false,

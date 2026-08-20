@@ -4,6 +4,7 @@ import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { UnheadTransforms } from './createTransformPipeline'
+import { resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 
 /**
@@ -63,13 +64,8 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     && { ...common, ...(typeof options.treeshake === 'object' ? options.treeshake : {}) }
   const seoMeta = options.transformSeoMeta !== false
     && { ...common, ...(typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}) }
-  const minifyOpts = typeof options.minify === 'object'
-    ? options.minify
-    : (options.minify as boolean | undefined) === true
-        ? { js: true, css: true }
-        : {}
-  const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
-    && { ...common, ...minifyOpts }
+  const minifyOpts = resolveMinifyTransformOptions(options)
+  const minify = minifyOpts && { ...common, ...minifyOpts }
   const precompileOptions = options.experimental?.precompile
   const precompile = precompileOptions
     && { ...common, ...(typeof precompileOptions === 'object' ? precompileOptions : {}) }
@@ -85,7 +81,13 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
 function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): any[] {
   const out: any[] = []
   for (const { instance, options } of defs) {
-    const plugin = (instance[bundler] as (opts: any) => any)(options)
+    // Only Vite exposes a resolved browser target and a compatible transform
+    // API. Other bundlers still receive explicitly configured minifiers, but
+    // should not pay for an inert inline-script transform.
+    const bundlerOptions = bundler === 'vite'
+      ? options
+      : { ...options, minify: options.minify && { ...options.minify, transpile: false } }
+    const plugin = (instance[bundler] as (opts: any) => any)(bundlerOptions)
     if (Array.isArray(plugin))
       out.push(...plugin)
     else out.push(plugin)
@@ -149,6 +151,7 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
           ctx.addRuntimePlugin({
             import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
+            server: '_h.use(__unhead_validate({ root: __ROOT__ }))',
           })
         }
         if (devtools !== false) {

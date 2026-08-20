@@ -3,13 +3,15 @@ import type { InternalFrameworkContext, VitePluginOptions } from './types'
 import { unheadDevtools } from '../devtools/vite'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
 import { UnheadTransforms } from './createTransformPipeline'
+import { resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 
 export type { VitePluginOptions }
 
 /**
  * Vite plugin factory that composes the core Unhead build-time transforms
- * (tree-shake, seo-meta, minify, SSR static replace, devtools).
+ * (tree-shake, seo-meta, inline-script transform, minify, SSR static replace,
+ * devtools).
  *
  * Framework packages (e.g. `@unhead/vue/vite`) should not call this directly;
  * use the `createFrameworkVitePlugin` helper in `./framework` which threads
@@ -25,9 +27,8 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     && { ...common, ...(typeof options.treeshake === 'object' ? options.treeshake : {}) }
   const seoMeta = options.transformSeoMeta !== false
     && { ...common, ...(typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}) }
-  const minifyOpts = typeof options.minify === 'object' ? options.minify : {}
-  const minify = options.minify !== false && !!(minifyOpts.js || minifyOpts.css)
-    && { ...common, ...minifyOpts }
+  const minifyOpts = resolveMinifyTransformOptions(options)
+  const minify = minifyOpts && { ...common, ...minifyOpts }
   const precompileOptions = options.experimental?.precompile
   const precompile = precompileOptions
     && { ...common, ...(typeof precompileOptions === 'object' ? precompileOptions : {}) }
@@ -43,6 +44,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     ctx.addRuntimePlugin({
       import: { name: 'ValidatePlugin', source: pluginsSource, as: '__unhead_validate' },
       client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
+      server: '_h.use(__unhead_validate({ root: __ROOT__ }))',
     })
   }
 

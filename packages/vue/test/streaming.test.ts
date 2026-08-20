@@ -174,7 +174,7 @@ describe('vue streaming SSR', () => {
       const text = await new Response(wrapStream(appStream, TEMPLATE)).text()
 
       expect(text).toContain('<title>Initial</title>')
-      expect(text).toMatch(/<div>first<\/div><script>window\.__unhead__\.push\(.*Updated mid-stream.*\);document\.currentScript\.remove\(\)<\/script><div>second<\/div>/)
+      expect(text).toMatch(/<div>first<\/div><script>window\.__unhead__&&\(window\.__unhead__\.push\(.*Updated mid-stream.*\)\);document\.currentScript\.remove\(\)<\/script><div>second<\/div>/)
     })
 
     it('escapes script-breakout sequences in streamed head updates', async () => {

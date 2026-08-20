@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - name: Use Node.js 24.x
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -33,17 +33,21 @@ jobs:
           cache: pnpm
 
       - name: Build base branch bundles
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           # the PR's perf harness may not exist on the base ref; keep a copy so we can
           # measure the base build with the same script (same runner cancels variance)
           cp bench/perf-ci.mjs /tmp/perf-ci.mjs
           cp bench/bundle/dependency-analyze.mjs /tmp/dependency-analyze.mjs
+          cp bench/unplugin-transform.bench.ts /tmp/unplugin-transform.bench.ts
           # runner setup (pnpm store probing) can leave the lockfile dirty; nothing
           # in this fresh checkout is precious, so surface the diff and discard it
           git status --porcelain
           git diff --stat
-          git checkout -f ${{ github.base_ref }}
-          pnpm install --frozen-lockfile
+          git checkout -f "$BASE_REF"
+          pnpm install
+          cp /tmp/unplugin-transform.bench.ts bench/unplugin-transform.bench.ts
           node /tmp/dependency-analyze.mjs > /tmp/base-dependencies.json
           pnpm build
           # the base ref may predate some bundle configs (react, full, schema-org);
@@ -60,6 +64,7 @@ jobs:
           # measure base perf with the PR's harness against the base-built packages;
           # run from /tmp so the working tree stays clean across the checkout back
           node --expose-gc /tmp/perf-ci.mjs > /tmp/base-perf.json || echo '{}' > /tmp/base-perf.json
+          pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --outputJson /tmp/base-transform-perf.json
           # the base pnpm install may have rewritten the lockfile; discard before switching back
           git checkout -f -
 
@@ -76,6 +81,7 @@ jobs:
           pnpm test:schema-org-bundle-size
           node --expose-gc bench/perf-ci.mjs > /tmp/pr-perf.json || echo '{}' > /tmp/pr-perf.json
           node --expose-gc --max-semi-space-size=64 bench/precompile-perf-ci.mjs > /tmp/precompile-perf.json
+          pnpm exec vitest bench bench/unplugin-transform.bench.ts --config bench/vitest.config.ts --run --outputJson /tmp/pr-transform-perf.json
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
@@ -91,9 +97,11 @@ jobs:
           BASE_DIST: /tmp/base-dist
           BASE_DEPENDENCIES: /tmp/base-dependencies.json
           BASE_PERF: /tmp/base-perf.json
+          BASE_TRANSFORM_PERF: /tmp/base-transform-perf.json
           PR_DEPENDENCIES: /tmp/pr-dependencies.json
           PR_PERF: /tmp/pr-perf.json
           PRECOMPILE_PERF: /tmp/precompile-perf.json
+          PR_TRANSFORM_PERF: /tmp/pr-transform-perf.json
         run: |
           output=$(bun bench/bundle/report.ts)
           echo "$output"
@@ -108,7 +116,7 @@ jobs:
 
       - name: Post comment on PR
         continue-on-error: true
-        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: Bundle Size Analysis
           message: ${{ steps.analyze.outputs.result }}

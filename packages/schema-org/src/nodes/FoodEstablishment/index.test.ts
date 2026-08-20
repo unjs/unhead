@@ -116,6 +116,9 @@ describe('defineLocalBusiness', () => {
           '@type': 'BarOrPub',
           'acceptsReservations': true,
           'name': 'test',
+          'address': {
+            addressCountry: 'Australia',
+          },
         }),
       ])
 
@@ -132,6 +135,10 @@ describe('defineLocalBusiness', () => {
               "BarOrPub",
             ],
             "acceptsReservations": true,
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "Australia",
+            },
             "currenciesAccepted": "AUD",
             "name": "test",
             "url": "https://example.com/",

@@ -10,6 +10,8 @@ import type {
   UseScriptContext,
   UseScriptContextOptions,
   UseScriptInput,
+  UseScriptLoaderInput,
+  UseScriptLoaderOptions,
   UseScriptOptions,
   UseScriptResolvedInput,
   UseScriptReturn,
@@ -18,7 +20,7 @@ import type {
 } from './types'
 import { hasOwn } from '../utils/hasOwn'
 import { callHook } from '../utils/hooks'
-import { createForwardingProxy, createNoopedRecordingProxy, replayProxyRecordings } from './proxy'
+import { createScriptProxy } from './proxy'
 import { createScriptScope } from './scope'
 import { createScriptWaitFor } from './waitFor'
 
@@ -30,32 +32,43 @@ import { createScriptWaitFor } from './waitFor'
 type ScriptApi = Record<symbol | string, any>
 type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
+function noop() {}
 
+export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
+export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
+export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): ScriptInstance<T> | ScriptScope<T>
 export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): ScriptScope<ResolvedScriptApi<R>>
 export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): ScriptInstance<ResolvedScriptApi<R>>
 export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R>): ScriptInstance<ResolvedScriptApi<R>> | ScriptScope<ResolvedScriptApi<R>>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   return _useScript(head, _input, _options, !!_options?.scope)
 }
 
 /** Resolve the shared script and optionally attach a consumer scope. */
-function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options: UseScriptOptions<T> | UseScriptLoaderOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   // Event handlers below capture this head, so never mutate an input object that
   // may be reused by another SSR request or client app.
-  const input: UseScriptResolvedInput = typeof _input === 'string' ? { src: _input } : { ..._input }
+  const loaderInput = typeof _input === 'object' && 'loader' in _input ? _input : undefined
+  const loader = loaderInput?.loader
+  const input: UseScriptResolvedInput | Omit<UseScriptLoaderInput<T>, 'loader'> = typeof _input === 'string'
+    ? { src: _input }
+    : loaderInput
+      ? { key: loaderInput.key }
+      : { ..._input }
   const {
     beforeInit,
     eventContext: _eventContext,
-    resolve: resolveApi,
+    resolve: optionResolve,
     scope: _scope,
     trigger,
     use,
     warmupStrategy: _warmupStrategy,
     ...entryOptions
   } = _options || {}
+  const resolveApi = loader || optionResolve
   const id = input.key || input.src || (typeof input.innerHTML === 'string' ? input.innerHTML : '')
   const scripts = head._scripts || (head._scripts = Object.create(null))
   const prevScript = hasOwn(scripts, id)
@@ -80,7 +93,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   let initialUseError: unknown
   let initialUseFailed = false
   try {
-    initialUseResult = !head.ssr && (resolveApi || use)
+    initialUseResult = !head.ssr && !loader && (resolveApi || use)
       ? resolveUse()
       : undefined
   }
@@ -100,6 +113,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       : undefined
   const _events: { type: string, timestamp: number }[] = []
   let loadError: Error | undefined
+  let resolveLoad: (value: T | false) => void = noop
+  const loadPromise = new Promise<T | false>((resolve) => {
+    if (!head.ssr)
+      resolveLoad = resolve
+  })
   const syncStatus = (s: ScriptInstance<T>['status']) => {
     // eslint-disable-next-line ts/no-use-before-define
     script.status = s
@@ -111,6 +129,48 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     loadError = reason instanceof Error ? reason : new Error(String(reason))
     lifecycleController.abort(loadError)
     syncStatus('error')
+    resolveLoad(false)
+  }
+  const emitLoaded = (api: T) => queueMicrotask(() => {
+    // eslint-disable-next-line ts/no-use-before-define
+    resolveLoad(lifecycleController.signal.aborted || script.status === 'removed' ? false : api)
+  })
+  let resolvingApi = false
+  const resolveLoaded = () => {
+    if (resolvingApi)
+      return
+    resolvingApi = true
+    if (!resolveApi && !use) {
+      emitLoaded({} as T)
+      return
+    }
+    const outcome = initialUseOutcome || (() => {
+      try {
+        return Promise.resolve(resolveUse()).then(
+          api => [true, api] as const,
+          error => [false, error] as const,
+        )
+      }
+      catch (error) {
+        return Promise.resolve([false, error] as const)
+      }
+    })()
+    void outcome.then((result) => {
+      // eslint-disable-next-line ts/no-use-before-define
+      if (lifecycleController.signal.aborted || script.status === 'removed')
+        return
+      if (!result[0]) {
+        failReadiness(result[1])
+      }
+      else if (result[1]) {
+        if (loader)
+          syncStatus('loaded')
+        emitLoaded(result[1])
+      }
+      else {
+        failReadiness(new Error(`${loader ? 'loader' : 'use'}() resolved without a script API`))
+      }
+    })
   }
   let onload = typeof input.onload === 'function' ? input.onload.bind(_eventContext) : null
   let onerror = typeof input.onerror === 'function' ? input.onerror.bind(_eventContext) : null
@@ -123,6 +183,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       return
     try {
       syncStatus('loaded')
+      resolveLoaded()
       onload?.(e)
     }
     finally {
@@ -135,6 +196,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     try {
       lifecycleController.abort()
       syncStatus('error')
+      resolveLoad(false)
       onerror?.(e)
     }
     finally {
@@ -155,13 +217,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   const _registerCb = (key: 'loaded' | 'error', cb: any, options?: EventHandlerOptions) => {
     // events will never run
     if (head.ssr) {
-      return () => {}
+      return noop
     }
     let uniqueKey: string | undefined
     if (options?.key) {
       uniqueKey = `${key}:${options.key}`
       if (_uniqueCbs.has(uniqueKey)) {
-        return () => {}
+        return noop
       }
       _uniqueCbs.add(uniqueKey)
     }
@@ -189,72 +251,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         _uniqueCbs.delete(uniqueKey)
     }
   }
-  const loadPromise = new Promise<T | false>((resolve) => {
-    // promise never resolves
-    if (head.ssr)
-      return
-    // resolve on a microtask rather than requestAnimationFrame: rAF is suspended while the
-    // tab is hidden, which would defer onLoaded() callbacks indefinitely (unjs/unhead#771)
-    const emit = (api: T) => queueMicrotask(() => {
-      // eslint-disable-next-line ts/no-use-before-define
-      if (lifecycleController.signal.aborted || script.status === 'removed')
-        resolve(false)
-      else
-        resolve(api)
-    })
-    let resolvingApi = false
-    const unhook = head.hooks?.hook('script:updated', ({ script: updatedScript }: { script: ScriptInstance<T> }) => {
-      // Same-id scripts can overlap while a removed entry finishes dispatching DOM events.
-      // eslint-disable-next-line ts/no-use-before-define
-      if (updatedScript !== script)
-        return
-      // vue augmentation... not ideal
-      const status = updatedScript.status
-      if (status === 'loaded' || status === 'error' || status === 'removed') {
-        if (status === 'loaded') {
-          if (resolvingApi)
-            return
-          resolvingApi = true
-          if (!resolveApi && !use) {
-            emit({} as T)
-            unhook?.()
-            return
-          }
-
-          const useOutcome = initialUseOutcome || (() => {
-            try {
-              return Promise.resolve(resolveUse()).then(
-                api => [true, api] as const,
-                error => [false, error] as const,
-              )
-            }
-            catch (error) {
-              return Promise.resolve([false, error] as const)
-            }
-          })()
-          void useOutcome.then((outcome) => {
-            if (lifecycleController.signal.aborted || updatedScript.status === 'removed')
-              return
-            if (!outcome[0]) {
-              failReadiness(outcome[1])
-            }
-            else if (outcome[1]) {
-              emit(outcome[1])
-              unhook?.()
-            }
-            else {
-              failReadiness(new Error('use() resolved without a script API'))
-            }
-          })
-        }
-        else {
-          resolve(false) // failed to load
-          unhook?.()
-        }
-      }
-    })
-  })
-
   const script = {
     _loadPromise: loadPromise,
     _events,
@@ -287,10 +283,13 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         delete scripts[id]
       if (script.status !== 'removed')
         syncStatus('removed')
+      resolveLoad(false)
       return hadEntry
     },
     warmup(rel: WarmupStrategy) {
       const { src } = input
+      if (!src)
+        return
       const isCrossOrigin = !src.startsWith('/') || src.startsWith('//')
       const isPreconnect = rel === 'preconnect' || rel === 'dns-prefetch'
       let href = src
@@ -323,7 +322,11 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       script._triggerAbortControllers?.forEach(ac => ac.abort())
       script._triggerAbortControllers?.clear()
       script._triggerPromises = [] // clear any pending promises
-      if (!script.entry) {
+      if (loader && !head.ssr && script.status === 'awaitingLoad') {
+        syncStatus('loading')
+        resolveLoaded()
+      }
+      else if (!loader && !script.entry) {
         syncStatus('loading')
         const defaults: Partial<RawInput<'script'>> = {
           defer: true,
@@ -353,7 +356,6 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
       return script._setupTriggerHandler(trigger)
     },
     _setupTriggerHandler(trigger: UseScriptOptions['trigger'], removeOnError = true) {
-      const noop = () => {}
       if (script.status !== 'awaitingLoad') {
         return noop
       }
@@ -469,15 +471,12 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     throw error
   }
   if (resolveApi || use) {
-    const { proxy, stack } = createNoopedRecordingProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
+    const { proxy, resolve } = createScriptProxy<T>(head.ssr ? {} as T : initialInstance || {} as T)
     script.proxy = proxy
-    script.onLoaded((instance) => {
-      replayProxyRecordings(instance, stack)
-      script.proxy = createForwardingProxy(instance)
-    })
+    script.onLoaded(resolve)
   }
   // need to make sure it's not already registered
-  const warmupStrategy = _warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false)
+  const warmupStrategy = !loader && (_warmupStrategy || ((typeof trigger === 'undefined' || trigger === 'client') ? 'preload' : false))
   if (warmupStrategy) {
     script._warmupStrategy = warmupStrategy
     script.warmup(warmupStrategy)

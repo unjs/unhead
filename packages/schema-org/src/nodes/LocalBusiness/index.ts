@@ -1,14 +1,21 @@
-import type { Arrayable, NodeRelations, Thing } from '../../types'
+import type { Arrayable, GeoCoordinates, NodeRelation, NodeRelations, Thing } from '../../types'
+import type { AggregateRating } from '../AggregateRating'
 import type { OpeningHoursSpecification } from '../OpeningHours'
 import type { Organization } from '../Organization'
+import type { PostalAddress } from '../PostalAddress'
+import type { Review } from '../Review'
 import { defineSchemaOrgResolver, resolveNode, resolveRelation } from '../../core'
 import {
   IdentityId,
   resolveDefaultType,
+  resolveWithBase,
 } from '../../utils'
+import { aggregateRatingResolver } from '../AggregateRating'
 import { openingHoursResolver } from '../OpeningHours'
 import { organizationResolver } from '../Organization'
 import { addressResolver } from '../PostalAddress'
+import { reviewResolver } from '../Review'
+import { geoCoordinatesResolver } from '../VacationRental'
 
 type ValidLocalBusinessSubTypes = 'AnimalShelter'
   | 'ArchiveOrganization'
@@ -64,10 +71,6 @@ export interface LocalBusinessSimple extends Organization {
    */
   'areaServed'?: Arrayable<string | Thing>
   /**
-   * A GeoCoordinates object.
-   */
-  'geo'?: Thing
-  /**
    * The VAT ID of the business.
    */
   'vatID'?: string
@@ -87,6 +90,34 @@ export interface LocalBusinessSimple extends Organization {
    * The operating hours of the business.
    */
   'openingHoursSpecification'?: NodeRelations<OpeningHoursSpecification>
+  /**
+   * The physical address required by Google for LocalBusiness results.
+   */
+  'address': NodeRelations<PostalAddress>
+  /**
+   * The average rating of the business.
+   */
+  'aggregateRating'?: NodeRelation<AggregateRating>
+  /**
+   * Departments within the business.
+   */
+  'department'?: NodeRelations<LocalBusiness>
+  /**
+   * Geographic coordinates of the business.
+   */
+  'geo'?: NodeRelation<GeoCoordinates>
+  /**
+   * The menu URL for a food establishment.
+   */
+  'menu'?: string
+  /**
+   * Reviews of the business.
+   */
+  'review'?: NodeRelations<Review>
+  /**
+   * The cuisine served by a food establishment.
+   */
+  'servesCuisine'?: Arrayable<string>
 }
 
 export interface LocalBusiness extends LocalBusinessSimple {}
@@ -107,8 +138,14 @@ export const localBusinessResolver = defineSchemaOrgResolver<LocalBusiness>({
   resolve(node, ctx) {
     resolveDefaultType(node, ['Organization', 'LocalBusiness'])
 
-    node.address = resolveRelation(node.address, ctx, addressResolver)
+    node.address = resolveRelation(node.address, ctx, addressResolver)!
+    node.aggregateRating = resolveRelation(node.aggregateRating, ctx, aggregateRatingResolver)
+    node.department = resolveRelation(node.department, ctx, localBusinessResolver)
+    node.geo = resolveRelation(node.geo, ctx, geoCoordinatesResolver)
     node.openingHoursSpecification = resolveRelation(node.openingHoursSpecification, ctx, openingHoursResolver)
+    node.review = resolveRelation(node.review, ctx, reviewResolver)
+    if (node.menu)
+      node.menu = resolveWithBase(ctx.meta.host, node.menu)
 
     node = resolveNode({ ...node }, ctx, organizationResolver) as LocalBusiness
     return node as LocalBusiness

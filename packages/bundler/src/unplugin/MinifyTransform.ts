@@ -1,23 +1,36 @@
 import type { MinifyFn, MinifyTransformOptions } from './createTransformPipeline'
+import type { InlineScriptTransformOptions } from './InlineScriptTransform'
 import { createUnplugin } from 'unplugin'
 import { createTransformPipeline } from './createTransformPipeline'
+import { transformInlineScriptWithVite } from './InlineScriptTransform'
 
-export type { MinifyFn, MinifyTransformOptions }
+export type { InlineScriptTransformOptions, MinifyFn, MinifyTransformOptions }
+export { transformInlineScriptWithVite }
 
-/**
- * Vite/Webpack transform plugin that pre-minifies static string literals
- * inside `useHead()` / `useServerHead()` calls at build time.
- *
- * Uses esbuild (Vite 7) or rolldown (Vite 8+) for JS, and lightningcss for CSS.
- * These never enter the SSR runtime bundle since they run only in the Vite `transform` hook.
- *
- * Thin single-concern adapter over the shared transform pipeline; `Unhead()` /
- * `createFrameworkPlugin()` compose the same concern into a single-parse
- * pipeline instead.
- */
-export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}) =>
+interface MinifyTransformPluginOptions {
+  minify?: MinifyTransformOptions | false
+  transformInlineScripts?: InlineScriptTransformOptions | false
+}
+
+export function resolveMinifyTransformOptions(options: MinifyTransformPluginOptions): MinifyTransformOptions | undefined {
+  const minifyOptions = options.minify !== false && typeof options.minify === 'object' ? options.minify : {}
+  const transpile = options.transformInlineScripts === false
+    ? false
+    : typeof options.transformInlineScripts === 'object'
+      ? options.transformInlineScripts
+      : true
+
+  if (!minifyOptions.js && !minifyOptions.css && !transpile)
+    return
+
+  return { ...minifyOptions, transpile }
+}
+
+/** Single-concern adapter over the shared transform pipeline. */
+export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((options: MinifyTransformOptions = {}, meta) =>
   createTransformPipeline({
     name: 'unhead:minify-transform',
+    framework: meta.framework,
     treeshake: false,
     seoMeta: false,
     minify: options,

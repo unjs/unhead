@@ -9,6 +9,8 @@ import type {
   Comment,
   Course,
   Dataset,
+  DiscussionForumPosting,
+  EmployerAggregateRating,
   Event,
   FoodEstablishment,
   HowTo,
@@ -18,6 +20,7 @@ import type {
   JobPosting,
   ListItem,
   LocalBusiness,
+  MathSolver,
   Movie,
   MusicAlbum,
   MusicGroup,
@@ -33,6 +36,7 @@ import type {
   PostalAddress,
   Product,
   Question,
+  Quiz,
   ReadAction,
   Recipe,
   Review,
@@ -42,6 +46,7 @@ import type {
   TVEpisode,
   TVSeason,
   TVSeries,
+  VacationRental,
   VideoObject,
   WebPage,
   WebSite,
@@ -57,6 +62,8 @@ import { breadcrumbResolver } from './nodes/Breadcrumb'
 import { commentResolver } from './nodes/Comment'
 import { courseResolver } from './nodes/Course'
 import { datasetResolver } from './nodes/Dataset'
+import { discussionForumPostingResolver } from './nodes/DiscussionForumPosting'
+import { employerAggregateRatingResolver } from './nodes/EmployerAggregateRating'
 import { eventResolver } from './nodes/Event'
 import { foodEstablishmentResolver } from './nodes/FoodEstablishment'
 import { howToResolver } from './nodes/HowTo'
@@ -66,6 +73,7 @@ import { itemListResolver } from './nodes/ItemList'
 import { jobPostingResolver } from './nodes/JobPosting'
 import { listItemResolver } from './nodes/ListItem'
 import { localBusinessResolver } from './nodes/LocalBusiness'
+import { mathSolverResolver } from './nodes/MathSolver'
 import { movieResolver } from './nodes/Movie'
 import { musicAlbumResolver } from './nodes/MusicAlbum'
 import { musicGroupResolver } from './nodes/MusicGroup'
@@ -82,6 +90,7 @@ import { podcastSeriesResolver } from './nodes/PodcastSeries'
 import { addressResolver } from './nodes/PostalAddress'
 import { productResolver } from './nodes/Product'
 import { questionResolver } from './nodes/Question'
+import { quizResolver } from './nodes/Quiz'
 import { recipeResolver } from './nodes/Recipe'
 import { reviewResolver } from './nodes/Review'
 import { serviceResolver } from './nodes/Service'
@@ -89,6 +98,7 @@ import { softwareAppResolver } from './nodes/SoftwareApp'
 import { tvEpisodeResolver } from './nodes/TVEpisode'
 import { tvSeasonResolver } from './nodes/TVSeason'
 import { tvSeriesResolver } from './nodes/TVSeries'
+import { vacationRentalResolver } from './nodes/VacationRental'
 import { videoResolver } from './nodes/Video'
 import { virtualLocationResolver } from './nodes/VirtualLocation'
 import { webPageResolver } from './nodes/WebPage'
@@ -126,6 +136,12 @@ export function defineBreadcrumb<Input extends object | undefined = undefined>(i
 export function defineComment<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Comment, Input>) {
   return provideResolver(input, commentResolver)
 }
+export function defineDiscussionForumPosting<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<DiscussionForumPosting, Input>) {
+  return provideResolver(input, discussionForumPostingResolver)
+}
+export function defineEmployerAggregateRating<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<EmployerAggregateRating, Input>) {
+  return provideResolver(input, employerAggregateRatingResolver)
+}
 export function defineEvent<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Event, Input>) {
   return provideResolver(input, eventResolver)
 }
@@ -153,6 +169,9 @@ export function defineJobPosting<Input extends object | undefined = undefined>(i
 export function defineLocalBusiness<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<LocalBusiness, Input>) {
   return provideResolver(input, localBusinessResolver)
 }
+export function defineMathSolver<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<MathSolver, Input>) {
+  return provideResolver(input, mathSolverResolver)
+}
 export function defineOffer<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Offer, Input>) {
   return provideResolver(input, offerResolver)
 }
@@ -171,6 +190,9 @@ export function defineProduct<Input extends object | undefined = undefined>(inpu
 export function defineQuestion<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Question, Input>) {
   return provideResolver(input, questionResolver)
 }
+export function defineQuiz<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Quiz, Input>) {
+  return provideResolver(input, quizResolver)
+}
 export function defineRecipe<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<Recipe, Input>) {
   return provideResolver(input, recipeResolver)
 }
@@ -179,6 +201,9 @@ export function defineReview<Input extends object | undefined = undefined>(input
 }
 export function defineVideo<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<VideoObject, Input>) {
   return provideResolver(input, videoResolver)
+}
+export function defineVacationRental<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<VacationRental, Input>) {
+  return provideResolver(input, vacationRentalResolver)
 }
 export function defineWebPage<Input extends object | undefined = undefined>(input?: SchemaOrgDefinerInput<WebPage, Input>) {
   return provideResolver(input, webPageResolver)
