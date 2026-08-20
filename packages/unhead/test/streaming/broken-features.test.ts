@@ -269,7 +269,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('script innerHTML handling', () => {
     it('jSON-LD script innerHTML preserved across stream', async () => {
-      const { head } = createStreamableHead({ writesMarkup: true })
+      const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
@@ -288,11 +288,11 @@ describe('streaming SSR - potentially broken features', () => {
       // not run the patch script still read it.
       expect(renderSSRHeadSuspenseChunk(head)).toBe('')
 
-      const tail = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
-      expect(tail).toContain('schema.org')
-      expect(tail).toContain('Product')
+      const end = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
+      expect(end).toContain('schema.org')
+      expect(end).toContain('Product')
 
-      const json = tail.slice(tail.indexOf('>') + 1, tail.indexOf('</script>'))
+      const json = end.slice(end.indexOf('>') + 1, end.indexOf('</script>'))
       expect(() => JSON.parse(json)).not.toThrow()
     })
 
@@ -346,7 +346,7 @@ describe('streaming SSR - potentially broken features', () => {
 
   describe('noscript tags', () => {
     it('noscript content leaves the stream as markup', async () => {
-      const { head } = createStreamableHead({ writesMarkup: true })
+      const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
 
