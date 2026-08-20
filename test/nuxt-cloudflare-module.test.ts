@@ -31,7 +31,6 @@ describe('nuxt cloudflare_module', () => {
       preset: 'cloudflare-module',
       framework: {
         name: 'nuxt',
-        version: '4.5.0',
       },
     })
   }, 200_000)

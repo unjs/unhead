@@ -12,12 +12,17 @@ Describes an individual image (usually in the context of an embedded media objec
 ## Useful Links
 
 - [ImageObject - Schema.org](https://schema.org/ImageObject)
+- [Image metadata - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata)
 
 ## Required properties
 
-- **url** `string`
+- **url** or **contentUrl** `string`
 
-  The URL of the image file (e.g., /images/cat.jpg).
+  The image file URL. Relative URLs become absolute.
+
+## Google image metadata
+
+For licensable images, add `creator`, `creditText`, `copyrightNotice`, and at least one of `license` or `acquireLicensePage`. Unhead resolves a nested creator as a Person or Organization and makes license URLs absolute.
 
 ## Defaults
 
@@ -29,6 +34,10 @@ Describes an individual image (usually in the context of an embedded media objec
 ## Resolves
 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
+
+- `creator` resolves as a Person or Organization
+
+- `license` and `acquireLicensePage` become absolute URLs
 
 - `width` and `height` must be provided for either to be included
 
@@ -45,47 +54,24 @@ defineImage({
 ## Types
 
 ```ts
-export interface ImageSimple extends Thing {
-  /**
-   * The URL of the image file (e.g., /images/cat.jpg).
-   */
-  url: string
-  /**
-   * The fully qualified, absolute URL of the image file (e.g., https://www.example.com/images/cat.jpg).
-   * Note: The contentUrl and url properties are intentionally duplicated.
-   */
-  contentUrl?: string
-  /**
-   * A text string describing the image.
-   * - Fall back to the image alt attribute if no specific caption field exists or is defined.
-   */
+interface ImageBase extends Thing {
   caption?: string
-  /**
-   * The height of the image in pixels.
-   * - Must be used with width.
-   */
   height?: number
-  /**
-   * The width of the image in pixels.
-   * - Must be used with height.
-   */
   width?: number
-  /**
-   * The language code for the textual content; e.g., en-GB.
-   * - Only needed when providing a caption.
-   */
   inLanguage?: string
-  /**
-   * The name of the image.
-   */
   name?: string
-  /**
-   * A description of the image.
-   */
   description?: string
-  /**
-   * The file format or media type of the image (e.g., image/jpeg).
-   */
   encodingFormat?: string
+  creator?: NodeRelations<Identity>
+  creditText?: string
+  copyrightNotice?: string
+  license?: string
+  acquireLicensePage?: string
 }
+
+type ImageLocation
+  = | { url: string, contentUrl?: string }
+    | { url?: string, contentUrl: string }
+
+export type ImageSimple = ImageBase & ImageLocation
 ```

@@ -1,8 +1,9 @@
-import type { NodeRelation, ResolvableDate, Thing } from '../../types'
+import type { NodeRelation, NodeRelations, PropertyValue, ResolvableDate, SchemaOrgNodeDefinition, Thing } from '../../types'
 import type { MonetaryAmount } from '../MonetaryAmount'
 import type { Organization } from '../Organization'
 import type { Place } from '../Place'
 import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { propertyValueResolver } from '../../core/common'
 import { IdentityId, idReference, resolvableDateToIso, setIfEmpty } from '../../utils'
 import { monetaryAmountResolver } from '../MonetaryAmount'
 import { organizationResolver } from '../Organization'
@@ -35,13 +36,6 @@ export interface JobPostingSimple extends Thing {
   hiringOrganization: NodeRelation<Organization>
 
   /**
-   * The physical location(s) of the business where the employee will report to work (such as an office or worksite),
-   * not the location where the job was posted. Include as many properties as possible. The more properties you provide,
-   * the higher quality the job posting is to our users. Note that you must include the addressCountry property.
-   */
-  jobLocation: NodeRelation<Place>
-
-  /**
    * The title of the job (not the title of the posting). For example, "Software Engineer" or "Barista"
    */
   title: string
@@ -63,11 +57,6 @@ export interface JobPostingSimple extends Thing {
   validThrough?: ResolvableDate
 
   /**
-   * A description of the job location (e.g. TELECOMMUTE for telecommute jobs).
-   */
-  jobLocationType?: 'TELECOMMUTE'
-
-  /**
    * Indicates whether the URL that's associated with this job posting enables direct application for the job.
    */
   directApply?: boolean
@@ -78,18 +67,71 @@ export interface JobPostingSimple extends Thing {
   /**
    * Educational credentials or qualifications required for the job.
    */
-  educationRequirements?: string
+  educationRequirements?: NodeRelations<EducationalOccupationalCredential | string>
   /**
    * Description of the level of experience required for the job.
    */
-  experienceRequirements?: string
+  experienceRequirements?: NodeRelations<OccupationalExperienceRequirements | string>
   /**
    * Skills, abilities, or knowledge needed for the job.
    */
   qualifications?: string
+  /**
+   * An employer-specific identifier for the job.
+   */
+  identifier?: NodeRelation<PropertyValue | string>
+  /**
+   * Whether experience can substitute for education.
+   */
+  experienceInPlaceOfEducation?: boolean
 }
 
-export interface JobPosting extends JobPostingSimple {}
+export interface EducationalOccupationalCredential extends Thing {
+  '@type'?: 'EducationalOccupationalCredential'
+  'credentialCategory'?: string
+}
+
+export interface OccupationalExperienceRequirements extends Thing {
+  '@type'?: 'OccupationalExperienceRequirements'
+  'monthsOfExperience'?: number
+}
+
+export interface JobLocationRequirement extends Thing {
+  '@type'?: 'AdministrativeArea' | 'Country' | 'State'
+  'name': string
+}
+
+type JobLocation
+  = | {
+    jobLocation: NodeRelations<Place>
+    jobLocationType?: never
+    applicantLocationRequirements?: NodeRelations<JobLocationRequirement>
+  }
+  | {
+    jobLocation?: NodeRelations<Place>
+    jobLocationType: 'TELECOMMUTE'
+    applicantLocationRequirements: NodeRelations<JobLocationRequirement>
+  }
+
+export type JobPosting = JobPostingSimple & JobLocation
+
+const credentialResolver = defineSchemaOrgResolver<EducationalOccupationalCredential>({
+  defaults: {
+    '@type': 'EducationalOccupationalCredential',
+  },
+})
+
+const experienceRequirementsResolver = defineSchemaOrgResolver<OccupationalExperienceRequirements>({
+  defaults: {
+    '@type': 'OccupationalExperienceRequirements',
+  },
+})
+
+const jobLocationRequirementResolver = defineSchemaOrgResolver<JobLocationRequirement>({
+  defaults: {
+    '@type': 'AdministrativeArea',
+  },
+})
 
 export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
   defaults: {
@@ -97,9 +139,22 @@ export const jobPostingResolver = defineSchemaOrgResolver<JobPosting>({
   },
   idPrefix: ['url', '#job-posting'],
   resolve(node, ctx) {
+    const resolveObjects = <T extends Thing>(input: NodeRelations<T | string> | undefined, resolver: SchemaOrgNodeDefinition<T>) => {
+      if (!input)
+        return input
+      const values = Array.isArray(input) ? input : [input]
+      const resolved = values.map(value => typeof value === 'object' ? resolveRelation(value, ctx, resolver) : value)
+      return Array.isArray(input) ? resolved : resolved[0]
+    }
+
     node.datePosted = resolvableDateToIso(node.datePosted)!
+    node.applicantLocationRequirements = resolveRelation(node.applicantLocationRequirements, ctx, jobLocationRequirementResolver)
+    node.educationRequirements = resolveObjects(node.educationRequirements, credentialResolver)
+    node.experienceRequirements = resolveObjects(node.experienceRequirements, experienceRequirementsResolver)
     node.hiringOrganization = resolveRelation(node.hiringOrganization, ctx, organizationResolver)
     node.jobLocation = resolveRelation(node.jobLocation, ctx, placeResolver)
+    if (typeof node.identifier === 'object')
+      node.identifier = resolveRelation(node.identifier, ctx, propertyValueResolver)
     node.baseSalary = resolveRelation(node.baseSalary, ctx, monetaryAmountResolver)
     node.validThrough = resolvableDateToIso(node.validThrough)
     return node

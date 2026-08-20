@@ -1,9 +1,11 @@
-import type { Arrayable, NodeRelations, Thing } from '../../types'
+import type { Arrayable, InteractionCounter, NodeRelation, NodeRelations, PropertyValue, Thing } from '../../types'
 import type { ImageObject } from '../Image'
-import { defineSchemaOrgResolver } from '../../core'
+import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { interactionCounterResolver, propertyValueResolver } from '../../core/common'
 import {
   IdentityId,
   idReference,
+  isHomePage,
   resolveAsGraphKey,
   resolveWithBase,
   setIfEmpty,
@@ -20,6 +22,14 @@ export interface PersonSimple extends Thing {
    * The full name of the Person.
    */
   name: string
+  /**
+   * An alternate name, such as a profile handle.
+   */
+  alternateName?: string
+  /**
+   * An identifier for the person.
+   */
+  identifier?: NodeRelations<PropertyValue | string>
   /**
    * The user bio, truncated to 250 characters.
    */
@@ -38,6 +48,14 @@ export interface PersonSimple extends Thing {
    * or to their personal homepage/website.
    */
   url?: string
+  /**
+   * Counts of interactions performed by this person.
+   */
+  agentInteractionStatistic?: NodeRelations<InteractionCounter>
+  /**
+   * Counts of interactions with this person.
+   */
+  interactionStatistic?: NodeRelations<InteractionCounter>
 }
 
 export interface Person extends PersonSimple { }
@@ -59,6 +77,16 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
   },
   idPrefix: ['host', IdentityId],
   resolve(node, ctx) {
+    if (node.identifier) {
+      const resolveIdentifier = (identifier: NodeRelation<PropertyValue | string>) => typeof identifier === 'string'
+        ? identifier
+        : resolveRelation(identifier as NodeRelation<PropertyValue>, ctx, propertyValueResolver)
+      node.identifier = Array.isArray(node.identifier)
+        ? node.identifier.map(resolveIdentifier)
+        : resolveIdentifier(node.identifier)
+    }
+    node.agentInteractionStatistic = resolveRelation(node.agentInteractionStatistic, ctx, interactionCounterResolver)
+    node.interactionStatistic = resolveRelation(node.interactionStatistic, ctx, interactionCounterResolver)
     if (node.url)
       node.url = resolveWithBase(ctx.meta.host, node.url)
     return node
@@ -68,8 +96,9 @@ export const personResolver = defineSchemaOrgResolver<Person, Person | string>({
     if (resolveAsGraphKey(node['@id']) === IdentityId) {
       setIfEmpty(node, 'url', meta.host)
 
+      // Default the homepage's about relation to the site identity.
       const webPage = find(PrimaryWebPageId)
-      if (webPage)
+      if (webPage && isHomePage(meta))
         setIfEmpty(webPage, 'about', idReference(node as Person))
 
       const webSite = find(PrimaryWebSiteId)

@@ -8,11 +8,12 @@ import { extname } from 'pathe'
 import { glob } from 'tinyglobby'
 import {
   headInputPredicates,
+  inputShapePredicates,
   migrationTagPredicates,
   tagPredicates,
 } from 'unhead/validate'
 import { applyFix } from './applyFix'
-import { materializeHeadInput, materializeTag } from './materialize'
+import { materializeHeadInput, materializeInputShape, materializeTag } from './materialize'
 import { analyzeUseHeadForUseSeoMeta, renderUseSeoMetaArg } from './prefer-use-seo-meta'
 import { extractScriptBlocks, langForExt } from './sfc'
 import { collectImportedHelpers, extractCallGraph, extractCandidateTitles, HEAD_INPUT_CALLEES, walkHeadCalls } from './walker'
@@ -84,6 +85,7 @@ const RECOMMENDED_SEVERITY: Record<string, 'error' | 'warning' | 'info'> = {
   'deprecated-prop-hid-vmid': 'error',
   'deprecated-prop-body': 'error',
   'html-in-title': 'warning',
+  'invalid-input-shape': 'warning',
   'possible-typo': 'warning',
   'non-absolute-canonical': 'warning',
   'numeric-tag-priority': 'warning',
@@ -289,8 +291,30 @@ async function auditFile(
           for (const diag of pred(view) as Diagnostic[])
             emit(diag, input)
         }
+        const inputContext = callee === 'useSeoMeta' || callee === 'useServerSeoMeta'
+          ? 'seoMeta'
+          : 'head'
+        const shape = materializeInputShape(input, inputContext)
+        for (const name of predicateNames) {
+          const pred = (inputShapePredicates as Record<string, any>)[name]
+          if (!pred)
+            continue
+          for (const diag of pred(shape) as Diagnostic[])
+            emit(diag, input)
+        }
       },
       onTag(tag, tagType, info) {
+        if (tagType === 'htmlAttrs' || tagType === 'bodyAttrs') {
+          const shape = materializeInputShape(tag, tagType)
+          for (const name of predicateNames) {
+            const pred = (inputShapePredicates as Record<string, any>)[name]
+            if (!pred)
+              continue
+            for (const diag of pred(shape) as Diagnostic[])
+              emit(diag, tag)
+          }
+          return
+        }
         const view: TagInput = materializeTag(tag, tagType as TagInput['tagType'], info.inArray)
         const ctx: PredicateContext = {
           get importedHelpers() {
@@ -376,9 +400,14 @@ export async function runAudit(opts: RunOptions): Promise<AuditFileResult[]> {
   })
 
   const shouldFix = opts.mode === 'migrate'
+  const recommendedPredicates = [
+    ...Object.keys(tagPredicates),
+    ...Object.keys(inputShapePredicates),
+    ...Object.keys(headInputPredicates),
+  ]
   const predicateNames = opts.mode === 'migrate'
-    ? [...Object.keys(tagPredicates), ...Object.keys(headInputPredicates), ...Object.keys(migrationTagPredicates)]
-    : [...Object.keys(tagPredicates), ...Object.keys(headInputPredicates)]
+    ? [...recommendedPredicates, ...Object.keys(migrationTagPredicates)]
+    : recommendedPredicates
 
   const results: AuditFileResult[] = []
   const allGraphs: CallGraph[] = []

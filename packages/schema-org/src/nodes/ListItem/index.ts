@@ -18,6 +18,10 @@ export interface ListItemSimple extends Thing {
    */
   'item'?: string | Thing
   /**
+   * The canonical URL for a summary-page carousel item.
+   */
+  'url'?: string
+  /**
    *  An integer (starting at 1), counting the 'depth' of the page from (including) the homepage.
    */
   'position'?: number
@@ -42,6 +46,8 @@ export const listItemResolver = defineSchemaOrgResolver<ListItem, ListItem | str
       node.item = resolveWithBase(ctx.meta.host, node.item as string)
     else if (typeof node.item === 'object')
       node.item = resolveRelation(node.item, ctx)
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
 
     return node
   },

@@ -14,8 +14,6 @@ export interface StreamingGlobal {
   _q: SerializableHead[][]
   /** Resolved Unhead instance, populated once the IIFE initialises. */
   _head?: Unhead<any>
-  /** True while framework hydration is in progress (client push suppression). */
-  _hydrationLocked?: () => boolean
   /** Push an entry batch onto the queue (pre-init) or the head (post-init). */
   push: (entries: SerializableHead[]) => void
 }

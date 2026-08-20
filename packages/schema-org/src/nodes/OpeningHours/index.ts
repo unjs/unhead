@@ -1,23 +1,24 @@
-import type { Arrayable, ResolvableDate, Thing } from '../../types'
+import type { Arrayable, OptionalSchemaOrgPrefix, ResolvableDate, Thing } from '../../types'
 import { defineSchemaOrgResolver } from '../../core'
+import { resolvableDateToIso } from '../../utils'
 
-type DayOfWeek = 'Friday'
+type DayOfWeek = OptionalSchemaOrgPrefix<'Friday'
   | 'Monday'
   | 'PublicHolidays'
   | 'Saturday'
   | 'Sunday'
   | 'Thursday'
   | 'Tuesday'
-  | 'Wednesday'
+  | 'Wednesday'>
 
-type Time = `${number}${number}:${number}${number}`
+type Time = `${number}${number}:${number}${number}` | `${number}${number}:${number}${number}:${number}${number}`
 
 export interface OpeningHoursSimple extends Thing {
   '@type'?: 'OpeningHoursSpecification'
   /**
    * The day of the week for which these opening hours are valid.
    */
-  'dayOfWeek': Arrayable<DayOfWeek>
+  'dayOfWeek'?: Arrayable<DayOfWeek>
   /**
    * The opening hour of the place or service on the given day(s) of the week.
    */
@@ -43,5 +44,10 @@ export const openingHoursResolver = defineSchemaOrgResolver<OpeningHoursSpecific
     '@type': 'OpeningHoursSpecification',
     'opens': '00:00',
     'closes': '23:59',
+  },
+  resolve(node) {
+    node.validFrom = resolvableDateToIso(node.validFrom)
+    node.validThrough = resolvableDateToIso(node.validThrough)
+    return node
   },
 })

@@ -1,5 +1,47 @@
 import { describe, expect, it } from 'vitest'
-import { renderPerfReport } from './perf-report'
+import { parseVitestBenchmarks, renderPerfReport } from './perf-report'
+
+describe('parseVitestBenchmarks', () => {
+  it('treats a missing benchmark file as an empty run', () => {
+    expect(parseVitestBenchmarks(null)).toEqual({ benches: [] })
+  })
+
+  it('rejects malformed benchmark output', () => {
+    expect(() => parseVitestBenchmarks({
+      files: [{
+        groups: [{
+          benchmarks: [{
+            name: 'useSeoMetaTransform static calls',
+            mean: '1.25',
+            rme: 2.5,
+          }],
+        }],
+      }],
+    })).toThrowError('Invalid Vitest benchmark result')
+  })
+
+  it('converts transform benchmark output into performance benches', () => {
+    expect(parseVitestBenchmarks({
+      files: [{
+        groups: [{
+          benchmarks: [{
+            name: 'useSeoMetaTransform static calls',
+            mean: 1.25,
+            rme: 2.5,
+          }],
+        }],
+      }],
+    })).toEqual({
+      benches: [{
+        id: 'bundler-transform:useSeoMetaTransform static calls',
+        name: 'Bundler: useSeoMetaTransform static calls',
+        kind: 'time',
+        value: 1.25,
+        rme: 2.5,
+      }],
+    })
+  })
+})
 
 describe('renderPerfReport allocation noise gate', () => {
   it('keeps allocation changes within the combined RME out of the verdict', () => {

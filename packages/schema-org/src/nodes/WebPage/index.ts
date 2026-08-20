@@ -1,5 +1,6 @@
 import type {
   Arrayable,
+  Identity,
   NodeRelation,
   NodeRelations,
   ResolvableDate,
@@ -12,10 +13,11 @@ import type { Person } from '../Person'
 import type { VideoObject } from '../Video'
 import type { WebSite } from '../WebSite'
 import type { ReadAction } from './ReadAction'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
   IdentityId,
   idReference,
+  isHomePage,
   resolvableDateToIso,
   resolveDefaultType,
   setIfEmpty,
@@ -25,10 +27,32 @@ import { breadcrumbResolver, PrimaryBreadcrumbId } from '../Breadcrumb'
 import { imageResolver } from '../Image'
 import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
+import { videoResolver } from '../Video'
 import { PrimaryWebSiteId } from '../WebSite'
 import { readActionResolver } from './ReadAction'
 
 type ValidSubTypes = 'WebPage' | 'AboutPage' | 'CheckoutPage' | 'CollectionPage' | 'ContactPage' | 'FAQPage' | 'ItemPage' | 'MedicalWebPage' | 'ProfilePage' | 'QAPage' | 'RealEstateListing' | 'SearchResultsPage'
+
+interface SpeakableSpecificationBase extends Thing {
+  '@type'?: 'SpeakableSpecification'
+}
+
+export type SpeakableSpecification = SpeakableSpecificationBase & (
+  | {
+    cssSelector: Arrayable<string>
+    xPath?: never
+  }
+  | {
+    cssSelector?: never
+    xPath: Arrayable<string>
+  }
+)
+
+export interface WebPageElement extends Thing {
+  '@type'?: 'WebPageElement'
+  'cssSelector': Arrayable<string>
+  'isAccessibleForFree': boolean
+}
 
 /**
  * A web page.
@@ -71,6 +95,10 @@ export interface WebPageSimple extends Thing {
    */
   datePublished?: ResolvableDate
   /**
+   * The time at which the page was created.
+   */
+  dateCreated?: ResolvableDate
+  /**
    * The time at which the page was last modified, in ISO 8601 format; e.g., 2015-10-31T16:10:29+00:00.
    */
   dateModified?: ResolvableDate
@@ -89,7 +117,15 @@ export interface WebPageSimple extends Thing {
   /**
    * A SpeakableSpecification object which identifies any content elements suitable for spoken results.
    */
-  speakable?: Thing
+  speakable?: NodeRelations<SpeakableSpecification>
+  /**
+   * Whether the page is available without a subscription or registration.
+   */
+  isAccessibleForFree?: boolean
+  /**
+   * Sections or creative works contained by this page.
+   */
+  hasPart?: NodeRelations<WebPageElement | Thing>
   /**
    * The time at which the page was last reviewed, in ISO 8601 format.
    */
@@ -107,6 +143,18 @@ export interface WebPageSimple extends Thing {
 }
 
 export interface WebPage extends WebPageSimple {}
+
+export const speakableSpecificationResolver = defineSchemaOrgResolver<SpeakableSpecification>({
+  defaults: {
+    '@type': 'SpeakableSpecification',
+  },
+})
+
+export const webPageElementResolver = defineSchemaOrgResolver<WebPageElement>({
+  defaults: {
+    '@type': 'WebPageElement',
+  },
+})
 
 export const PrimaryWebPageId = '#webpage'
 
@@ -149,6 +197,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     'url',
   ],
   resolve(node, ctx) {
+    node.dateCreated = resolvableDateToIso(node.dateCreated)
     node.dateModified = resolvableDateToIso(node.dateModified)
     node.datePublished = resolvableDateToIso(node.datePublished)
 
@@ -157,7 +206,30 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     node.about = resolveRelation(node.about, ctx, organizationResolver)
     node.breadcrumb = resolveRelation(node.breadcrumb, ctx, breadcrumbResolver)
     node.author = resolveRelation(node.author, ctx, personResolver)
+    if (node.hasPart) {
+      const resolvePart = (part: NodeRelation<WebPageElement | Thing>) => {
+        const isPaywalledSection = typeof part === 'object'
+          && part !== null
+          && (part['@type'] === 'WebPageElement' || 'cssSelector' in part)
+        return isPaywalledSection
+          ? resolveRelation(part as WebPageElement, ctx, webPageElementResolver)
+          : resolveRelation(part, ctx)
+      }
+      node.hasPart = Array.isArray(node.hasPart)
+        ? node.hasPart.map(resolvePart)
+        : resolvePart(node.hasPart)
+    }
     node.primaryImageOfPage = resolveRelation(node.primaryImageOfPage, ctx, imageResolver)
+    node.speakable = resolveRelation(node.speakable, ctx, speakableSpecificationResolver)
+    node.video = resolveRelation(node.video, ctx, videoResolver)
+    if (Array.isArray(node['@type']) && node['@type'].includes('ProfilePage')) {
+      node.mainEntity = resolveIdentityRelation(node.mainEntity as NodeRelations<Identity>, ctx, {
+        organization: organizationResolver,
+        person: personResolver,
+      }, {
+        root: true,
+      })
+    }
     // actions may be a function that need resolving
     if (node.potentialAction) {
       const resolveAction = (action: ReadAction | Thing) => {
@@ -196,7 +268,7 @@ export const webPageResolver = defineSchemaOrgResolver<WebPage>({
     /*
      * When it's a homepage, add additional about property which references the identity of the site.
      */
-    if (identity && meta.url === meta.host)
+    if (identity && isHomePage(meta))
       setIfEmpty(webPage, 'about', idReference(identity))
 
     if (logo)

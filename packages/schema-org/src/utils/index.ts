@@ -1,6 +1,7 @@
 import type {
   Arrayable,
   Id,
+  ResolvedMeta,
   Thing,
 } from '../types'
 import { hasOwn } from 'unhead/utils'
@@ -90,6 +91,11 @@ export function resolvableDateToIso(val: Date | string | undefined) {
 
 export const IdentityId = '#identity'
 
+/** Whether identity resolvers should default `WebPage.about` to the site identity. */
+export function isHomePage(meta: ResolvedMeta) {
+  return meta.url === meta.host
+}
+
 export function setIfEmpty<T extends Thing>(node: T, field: keyof T, value: any) {
   if (node?.[field] === undefined && value != null)
     node[field] = value
@@ -154,9 +160,12 @@ export function resolveDefaultType(node: Thing, defaultType: Arrayable<string>) 
   }
   // General case: dedupe with Set
   const types = new Set<string>(asArray(defaultType))
-  for (const t of asArray(val))
-    types.add(t)
-  node['@type'] = types.size === 1 ? val : [...types]
+  for (const t of asArray(val)) {
+    if (t != null)
+      types.add(t)
+  }
+  const resolved = [...types]
+  node['@type'] = resolved.length === 1 ? resolved[0] : resolved
 }
 
 export function resolveWithBase(base: string | undefined, urlOrPath: string) {

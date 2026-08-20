@@ -31,11 +31,15 @@ Google uses Dataset markup for [Dataset Search discovery](https://developers.goo
 
 - **creator** `NodeRelations<Identity>`
 
-  The person or organization that created the dataset. A plain nested object resolves as a Person; wrap an organization with `defineOrganization()` to select the Organization resolver.
+  The person or organization that created the dataset. Set `@type` or use `definePerson()` or `defineOrganization()` when needed.
+
+- **funder** `NodeRelations<Identity>`
+
+  The person or organization that funded the dataset.
 
 - **distribution** `NodeRelations<DataDownload>`
 
-  Information about how to access or download the dataset. This field is passed through without a DataDownload resolver, so include `@type: 'DataDownload'` in a nested object.
+  Information about how to access or download the dataset. Each distribution requires `contentUrl`; Unhead adds the DataDownload type and resolves relative URLs.
 
 - **temporalCoverage** `string`
 
@@ -109,7 +113,7 @@ defineDataset({
 ```ts
 export interface DataDownload extends Thing {
   '@type'?: 'DataDownload'
-  'contentUrl'?: string
+  'contentUrl': string
   'encodingFormat'?: string
   'contentSize'?: string
 }
@@ -124,22 +128,27 @@ export interface DatasetSimple extends Thing {
   '@type'?: Arrayable<'Dataset'>
   'name': string
   'description': string
+  'alternateName'?: Arrayable<string>
   'url'?: string
   'keywords'?: Arrayable<string>
   'creator'?: NodeRelations<Identity>
+  'funder'?: NodeRelations<Identity>
   'citation'?: Arrayable<string>
-  'license'?: string
+  'license'?: Arrayable<string | Thing>
   'temporalCoverage'?: string
   'spatialCoverage'?: Arrayable<string | Thing>
   'distribution'?: NodeRelations<DataDownload>
+  'hasPart'?: NodeRelations<Dataset | string>
+  'isPartOf'?: NodeRelations<Dataset | string>
   'variableMeasured'?: Arrayable<string | Thing>
+  'measurementTechnique'?: Arrayable<string | Thing>
   'includedInDataCatalog'?: NodeRelation<DataCatalog>
   'isAccessibleForFree'?: boolean
   'datePublished'?: ResolvableDate
   'dateModified'?: ResolvableDate
-  'version'?: string
+  'version'?: number | string
   'sameAs'?: Arrayable<string>
-  'identifier'?: Arrayable<string>
+  'identifier'?: Arrayable<PropertyValue | string>
 }
 ```
 

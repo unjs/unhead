@@ -3,14 +3,17 @@ import type {
   Identity,
   NodeRelation,
   NodeRelations,
+  PropertyValue,
   ResolvableDate,
   Thing,
 } from '../../types'
-import { defineSchemaOrgResolver, resolveRelation } from '../../core'
+import { defineSchemaOrgResolver, resolveIdentityRelation, resolveRelation } from '../../core'
 import {
   resolvableDateToIso,
   resolveDefaultType,
+  resolveWithBase,
 } from '../../utils'
+import { organizationResolver } from '../Organization'
 import { personResolver } from '../Person'
 
 /**
@@ -21,7 +24,7 @@ export interface DataDownload extends Thing {
   /**
    * The direct download URL for the dataset file.
    */
-  'contentUrl'?: string
+  'contentUrl': string
   /**
    * The file format of the distribution (e.g., "CSV", "JSON", "XML", "application/json").
    */
@@ -60,6 +63,10 @@ export interface DatasetSimple extends Thing {
    */
   'description': string
   /**
+   * An alternate name for the dataset.
+   */
+  'alternateName'?: Arrayable<string>
+  /**
    * The location of a page describing the dataset.
    */
   'url'?: string
@@ -74,6 +81,10 @@ export interface DatasetSimple extends Thing {
    */
   'creator'?: NodeRelations<Identity>
   /**
+   * A person or organization that funded the dataset.
+   */
+  'funder'?: NodeRelations<Identity>
+  /**
    * Identifies academic articles that are recommended by the data provider.
    * Can be the article text, URL, or DOI.
    */
@@ -82,7 +93,7 @@ export interface DatasetSimple extends Thing {
    * A license document that applies to this content, typically indicated by URL.
    * Can also be the license text.
    */
-  'license'?: string
+  'license'?: Arrayable<string | Thing>
   /**
    * The time period that the dataset covers, in ISO 8601 format.
    * Examples:
@@ -101,10 +112,22 @@ export interface DatasetSimple extends Thing {
    */
   'distribution'?: NodeRelations<DataDownload>
   /**
+   * Datasets included in this dataset.
+   */
+  'hasPart'?: NodeRelations<Dataset | string>
+  /**
+   * A dataset that contains this dataset.
+   */
+  'isPartOf'?: NodeRelations<Dataset | string>
+  /**
    * The variables that are measured in the dataset.
    * Can be text descriptions or PropertyValue objects.
    */
   'variableMeasured'?: Arrayable<string | Thing>
+  /**
+   * The technique, technology, or methodology used in the dataset.
+   */
+  'measurementTechnique'?: Arrayable<string | Thing>
   /**
    * A data catalog which contains this dataset.
    */
@@ -124,7 +147,7 @@ export interface DatasetSimple extends Thing {
   /**
    * The version number or identifier for this dataset.
    */
-  'version'?: string
+  'version'?: number | string
   /**
    * A link to the license document or terms of use.
    */
@@ -132,12 +155,33 @@ export interface DatasetSimple extends Thing {
   /**
    * An identifier for the dataset, such as a DOI.
    */
-  'identifier'?: Arrayable<string>
+  'identifier'?: Arrayable<PropertyValue | string>
 }
 
 export interface Dataset extends DatasetSimple {}
 
 export const PrimaryDatasetId = '#dataset'
+
+const dataDownloadResolver = defineSchemaOrgResolver<DataDownload>({
+  defaults: {
+    '@type': 'DataDownload',
+  },
+  resolve(node, ctx) {
+    node.contentUrl = resolveWithBase(ctx.meta.host, node.contentUrl)
+    return node
+  },
+})
+
+const dataCatalogResolver = defineSchemaOrgResolver<DataCatalog>({
+  defaults: {
+    '@type': 'DataCatalog',
+  },
+  resolve(node, ctx) {
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
+    return node
+  },
+})
 
 /**
  * Describes a Dataset on a WebPage.
@@ -159,9 +203,44 @@ export const datasetResolver = defineSchemaOrgResolver<Dataset>({
     resolveDefaultType(node, 'Dataset')
 
     // Resolve relationships
-    node.creator = resolveRelation(node.creator, ctx, personResolver, {
+    node.creator = resolveIdentityRelation(node.creator, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
       root: true,
     })
+    node.funder = resolveIdentityRelation(node.funder, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
+      root: true,
+    })
+    node.distribution = resolveRelation(node.distribution, ctx, dataDownloadResolver)
+    node.includedInDataCatalog = resolveRelation(node.includedInDataCatalog, ctx, dataCatalogResolver)
+    const resolveDatasetRelations = (input: NodeRelations<Dataset | string> | undefined) => {
+      if (!input)
+        return input
+      const values = Array.isArray(input) ? input : [input]
+      const resolved = values.map(value => typeof value === 'string'
+        ? resolveWithBase(ctx.meta.host, value)
+        : resolveRelation(value, ctx, datasetResolver))
+      return Array.isArray(input) ? resolved : resolved[0]
+    }
+    node.hasPart = resolveDatasetRelations(node.hasPart)
+    node.isPartOf = resolveDatasetRelations(node.isPartOf)
+
+    if (node.url)
+      node.url = resolveWithBase(ctx.meta.host, node.url)
+    if (node.sameAs) {
+      node.sameAs = Array.isArray(node.sameAs)
+        ? node.sameAs.map(url => resolveWithBase(ctx.meta.host, url))
+        : resolveWithBase(ctx.meta.host, node.sameAs)
+    }
+    if (node.license) {
+      const licenses = Array.isArray(node.license) ? node.license : [node.license]
+      const resolved = licenses.map(license => typeof license === 'string' ? resolveWithBase(ctx.meta.host, license) : license)
+      node.license = Array.isArray(node.license) ? resolved : resolved[0]
+    }
 
     // Resolve dates
     node.dateModified = resolvableDateToIso(node.dateModified)

@@ -54,4 +54,115 @@ describe('defineRecipe', () => {
       `)
     })
   })
+
+  it('resolves sections, organization authors, and ratings', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineRecipe({
+          name: 'Bread',
+          image: ['/bread-square.jpg', '/bread-wide.jpg'],
+          author: {
+            '@type': 'Organization',
+            'name': 'Test Kitchen',
+          },
+          aggregateRating: {
+            ratingValue: 4.8,
+            ratingCount: 12,
+          },
+          recipeInstructions: {
+            name: 'Bake',
+            itemListElement: [
+              'Preheat the oven.',
+              {
+                text: 'Bake the loaf.',
+                video: {
+                  name: 'Bake the loaf',
+                  thumbnailUrl: '/poster.jpg',
+                  uploadDate: '2026-01-01',
+                  contentUrl: '/bake.mp4',
+                },
+              },
+            ],
+          },
+          recipeYield: [1, '1 loaf'],
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const recipe = graph.find(node => node['@type'] === 'Recipe')
+
+      expect(recipe).toMatchObject({
+        aggregateRating: {
+          '@type': 'AggregateRating',
+        },
+        author: {
+          '@id': 'https://example.com/#/schema/organization/1',
+        },
+        recipeInstructions: {
+          '@type': 'HowToSection',
+          'itemListElement': [
+            {
+              '@type': 'HowToStep',
+              'text': 'Preheat the oven.',
+            },
+            {
+              '@type': 'HowToStep',
+              'text': 'Bake the loaf.',
+              'video': {
+                '@type': 'VideoObject',
+              },
+            },
+          ],
+        },
+      })
+    })
+  })
+
+  it('resolves image arrays and preserves explicit textless steps', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineRecipe({
+          name: 'Bread',
+          image: [
+            {
+              url: '/bread.jpg',
+              license: '/license',
+            },
+            '/bread-wide.jpg',
+          ],
+          recipeInstructions: {
+            '@type': 'HowToStep',
+            'itemListElement': ['Shape the loaf.'],
+          },
+        }),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const recipe = graph.find(node => node['@type'] === 'Recipe')
+      const images = graph.filter(node => node['@type'] === 'ImageObject')
+
+      expect(recipe).toMatchObject({
+        image: [
+          { '@id': 'https://example.com/#/schema/image/1' },
+          { '@id': 'https://example.com/#/schema/image/2' },
+        ],
+        recipeInstructions: {
+          '@type': 'HowToStep',
+          'itemListElement': {
+            '@type': 'HowToDirection',
+            'text': 'Shape the loaf.',
+          },
+        },
+      })
+      expect(images).toMatchObject([
+        {
+          contentUrl: 'https://example.com/bread.jpg',
+          license: 'https://example.com/license',
+        },
+        {
+          contentUrl: 'https://example.com/bread-wide.jpg',
+        },
+      ])
+    })
+  })
 })
