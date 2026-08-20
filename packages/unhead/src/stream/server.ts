@@ -279,8 +279,7 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
 }
 
 function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  // Copy props because `normalizeProps` mutates object payloads.
-  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, { ...tag })
+  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
   const content = hashTag(normalized)
   return { slot: dedupeKey(normalized) || content, content }
 }
@@ -416,30 +415,27 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   if (!head.entries.size)
     return ''
 
-  let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
-  // Only pay for normalization when something is listening (the dev-only
-  // ValidatePlugin). Production registers no listener, so this is one
-  // property lookup per chunk.
-  if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
-    const normalized = normalizePendingTags(head)
-    normalizedEntries = normalized.entries
-    callHook(head, 'ssr:streamChunk', { tags: normalized.tags })
-  }
-
   const streamKey = getStreamKey(head)
   const propResolvers = head.resolvedOptions.propResolvers || []
+  let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
   let serialized: string
   let patchCount = 0
   try {
+    // Only pay for normalization when something is listening.
+    if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
+      const normalized = normalizePendingTags(head)
+      normalizedEntries = normalized.entries
+      callHook(head, 'ssr:streamChunk', { tags: normalized.tags })
+    }
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
     let bodyTags: any[] | undefined
     for (const entry of head.entries.values()) {
       const normalized = normalizedEntries?.get(entry._i)
-      const input = normalized?.input === entry.input
+      const input = normalized && normalized.input === entry.input
         ? normalized.resolved
         : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       const entryPosition = (entry.options as any)?.tagPosition

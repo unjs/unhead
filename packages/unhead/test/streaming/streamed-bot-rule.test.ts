@@ -150,6 +150,14 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
   })
 
+  it('stays quiet for blocked useHeadSafe rel tokens', () => {
+    const { head, reported } = setup()
+    useHeadSafe(head as any, { link: [{ rel: 'stylesheet\ncanonical', href: '/x' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
+  })
+
   it('respects the legacy body prop as a body position', () => {
     expect(flagged({ meta: [{ name: 'description', content: 'x', body: true }] } as any)).toEqual([])
   })
@@ -187,10 +195,21 @@ describe('streamed-tag-hidden-from-bots', () => {
   it('evaluates a lazy entry once while inspecting its patch', () => {
     const { head } = setup()
     let calls = 0
-    head.push(() => ({ title: `Home ${++calls}` }))
+    head.push((() => ({ title: `Home ${++calls}` })) as any)
 
     expect(renderSSRHeadSuspenseChunk(head)).toContain('Home 1')
     expect(calls).toBe(1)
+  })
+
+  it('drops an entry that fails during inspection', () => {
+    const { head } = setup()
+    head.push((() => {
+      throw new Error('invalid late entry')
+    }) as any)
+    head.push({ title: 'Valid late entry' })
+
+    expect(() => renderSSRHeadSuspenseChunk(head)).toThrow('invalid late entry')
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Valid late entry')
   })
 
   it('does not mutate caller-owned script input while inspecting its patch', () => {

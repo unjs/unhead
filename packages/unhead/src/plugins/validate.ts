@@ -192,9 +192,13 @@ const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-langua
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
 const JSON_LD_TYPE_RE = /\bld\+json\b/i
-const REL_SEPARATOR_RE = /\s+/
+const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+
+function relTokens(value: unknown): string[] {
+  return String(value || '').toLowerCase().split(REL_SEPARATOR_RE)
+}
 
 /**
  * Resolves the plugin-owned shapes `renderSSRHeadSuspenseChunk` leaves alone:
@@ -203,7 +207,7 @@ const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload',
 function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
   // `useHeadSafe` drops these outright, so reporting one as "a browser gets
   // it, a bot does not" would be wrong twice over.
-  if (tag._safe && tag.tag === 'link' && SAFE_BLOCKED_RELS.has(String(tag.props.rel || '').toLowerCase()))
+  if (tag._safe && tag.tag === 'link' && relTokens(tag.props.rel).some(rel => SAFE_BLOCKED_RELS.has(rel)))
     return
   if (tag.props.body)
     tag.tagPosition = 'bodyClose'
@@ -236,7 +240,7 @@ function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
       return BOT_HEAD_META_PREFIX_RE.test(String(props.property || props.name || '').toLowerCase())
     }
     case 'link':
-      return String(props.rel || '').toLowerCase().split(REL_SEPARATOR_RE).some(rel => BOT_HEAD_LINK_RELS.has(rel))
+      return relTokens(props.rel).some(rel => BOT_HEAD_LINK_RELS.has(rel))
     default:
       return false
   }
