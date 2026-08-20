@@ -17,7 +17,6 @@ export {
   renderSSRHeadSuspenseChunk,
   renderStreamEnd,
   renderStreamMarkup,
-  type StreamedTagsReport,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
