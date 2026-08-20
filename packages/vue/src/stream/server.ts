@@ -22,14 +22,9 @@ export interface VueStreamableHeadContext extends Omit<WebStreamableHeadContext<
 /**
  * Creates a head instance configured for Vue streaming SSR.
  *
- * `wrapStream` suits Vue because `renderToWebStream` flushes chunks in
- * document order per resolved Suspense boundary, so head entries added during
- * a chunk's render can be emitted as a self-deleting inline `<script>` right
- * after the chunk. The script executes at HTML parse (updating the client head
- * state progressively) and calls `document.currentScript.remove()` so the DOM
- * is clean before Vue hydrates. Frameworks with out-of-order Suspense reveals
- * (React, Solid) place that script in the tree with `<HeadStream />` instead,
- * so it lands inside the framework's own chunk format.
+ * Vue emits resolved Suspense boundaries in document order.
+ * `wrapStream()` can therefore write each head patch after its app chunk.
+ * React and Solid use `<HeadStream />` for out-of-order reveals.
  *
  * @example
  * ```ts
@@ -60,7 +55,7 @@ export function createStreamableHead(
 
   return {
     head: vueHead,
-    // No `flushChunk`: a second copy of the core default only drifts from it.
+    // Use the core chunk renderer.
     wrapStream: (stream, template) => wrapStream(vueHead, stream, template),
   }
 }
@@ -75,6 +70,8 @@ export {
   renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
+  renderStreamEnd,
   type StreamingTemplateParts,
   wrapStream,
 } from 'unhead/stream/server'
