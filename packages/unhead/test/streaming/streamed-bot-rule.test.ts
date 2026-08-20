@@ -47,6 +47,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     ['stylesheet', { link: [{ rel: 'stylesheet', href: '/a.css' }] }],
     ['icon', { link: [{ rel: 'icon', href: '/f.ico' }] }],
     ['plain script', { script: [{ src: '/app.js' }] }],
+    ['different JSON media type', { script: [{ type: 'application/not-ld+json', innerHTML: '{}' }] }],
     ['style', { style: [{ innerHTML: 'body{color:red}' }] }],
     ['htmlAttrs', { htmlAttrs: { lang: 'en' } }],
     ['templateParams', { templateParams: { site: 'Acme' } }],
@@ -89,7 +90,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
   })
 
-  it('matches rel tokens on any whitespace, case-insensitively', () => {
+  it('matches rel tokens on ASCII whitespace, case-insensitively', () => {
     expect(flagged({ link: [{ rel: 'stylesheet\n\tcanonical' as 'canonical', href: '/' }] })).toHaveLength(1)
     expect(flagged({ meta: [{ property: 'OG:TITLE', content: 'x' }] })).toHaveLength(1)
   })

@@ -191,7 +191,7 @@ const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'g
 const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
-const JSON_LD_TYPE_RE = /\bld\+json\b/i
+const JSON_LD_TYPE_RE = /^[\t\n\f\r ]*application\/ld\+json[\t\n\f\r ]*(?:;|$)/i
 const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
