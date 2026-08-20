@@ -94,15 +94,15 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, writesMarkup, ...rest } = options
+  const { streamKey, writesBodyTags, ...rest } = options
   if (streamKey !== undefined)
     assertValidStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
   })
-  if (writesMarkup)
-    streamState(head).writesMarkup = true
+  if (writesBodyTags)
+    streamState(head).writesBodyTags = true
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -155,7 +155,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
  * // ...stream the app, then close it with the tags held back from the chunks
- * res.end(`${renderStreamMarkup(head)}${bodyTags}</body></html>`)
+ * res.end(`${renderStreamBodyTags(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
@@ -186,6 +186,7 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
 export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
+  rememberShellMarkup(head)
   // Only clear entries once the shell has been successfully produced so a
   // template failure leaves them intact for retry.
   head.entries.clear()
@@ -284,7 +285,8 @@ function isMarkupTag(tagName: string, tag: any, entryPosition?: string): boolean
   const position = tag.tagPosition ?? entryPosition
   if (position === 'bodyClose' || position === 'bodyOpen')
     return true
-  return tagName === 'script' && typeof tag.type === 'string' && JSON_LD_TYPE_RE.test(tag.type)
+  const type = tag.type ?? tag.props?.type
+  return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
 /**
@@ -309,43 +311,38 @@ function unwrapEntryInput(input: any): any {
  * repeating one of them does not emit a second copy.
  */
 function rememberShellMarkup(head: Unhead<any>): void {
-  const seen = streamState(head).seen ||= new Set<string>()
-  const propResolvers = head.resolvedOptions.propResolvers || []
+  const state = streamState(head)
+  let seen = state.seen
   for (const entry of head.entries.values()) {
-    const raw: any = unwrapEntryInput(entry.input)
-    if (!raw || typeof raw !== 'object')
-      continue
     const entryPosition = (entry.options as any)?.tagPosition
-    // Every entry resolves. A shape test on the raw input cannot stand in for
-    // one: an entry given as a function has no tag arrays until it resolves,
-    // and skipping it loses what the shell served.
-    const input: any = resolveHeadInput(raw, propResolvers)
-    for (const key in input) {
-      const value = input[key]
-      if (!Array.isArray(value))
+    for (const tag of entry._tags || entry._precomputedTags || []) {
+      if (!isMarkupTag(tag.tag, tag, entryPosition))
         continue
-      for (const tag of value) {
-        if (!isMarkupTag(key, tag, entryPosition))
-          continue
-        // Both, so a later chunk can tell an exact repeat from an update to a
-        // tag whose head bytes have already gone out.
-        const id = markupIdentity(key, tag)
-        seen.add(id.content)
-        seen.add(id.slot)
-      }
+      seen ||= state.seen = new Set<string>()
+      if (tag.textContent || tag.innerHTML)
+        seen.add(String(tag.textContent || tag.innerHTML))
+      seen.add(tag._d || tag._h || hashTag(tag))
     }
   }
 }
 
-/**
- * Splits a resolved head input into the part that must go out as a client
- * patch and the part that can go out as body markup instead. Returns
- * `undefined` for a side that has nothing in it.
- */
-function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, entryPosition?: string): { patch?: any, markup?: any } {
-  if (!input || typeof input !== 'object')
-    return { patch: input }
+function hasMarkupTags(input: any, entryPosition?: string): boolean {
+  if (input && typeof input === 'object') {
+    for (const key in input) {
+      const value = input[key]
+      if (Array.isArray(value)) {
+        for (const tag of value) {
+          if (isMarkupTag(key, tag, entryPosition))
+            return true
+        }
+      }
+    }
+  }
+  return false
+}
 
+/** Splits a resolved head input between its client patch and body markup. */
+function splitMarkupTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, markup?: any } {
   let patch: any
   let markup: any
   for (const key in input) {
@@ -370,12 +367,8 @@ function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, e
         continue
       }
       seen.add(id.content)
-      carried.push(tag)
-      // A driver that never writes the tail would otherwise lose this tag. The
-      // patch recreates it, and the client adopts the served markup when the
-      // tail did land, so it is never rendered twice.
-      if (keepFallback)
-        rest.push(tag)
+      // The body-open slot already flushed, so held tags land at the close.
+      carried.push({ ...tag, tagPosition: 'bodyClose' })
     }
     patch ||= { ...input }
     if (rest.length)
@@ -386,8 +379,6 @@ function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, e
       (markup ||= {})[key] = carried
   }
 
-  if (!patch)
-    return { patch: input }
   // An entry carrying nothing but markup tags leaves no patch behind at all.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
   return { patch: hasPatch ? patch : undefined, markup }
@@ -399,7 +390,7 @@ function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, e
  * the held-back tags never reach the page. `renderStreamEnd()` does it for
  * you when you stream from a template.
  */
-export function renderStreamMarkup(head: Unhead<any>): string {
+export function renderStreamBodyTags(head: Unhead<any>): string {
   const held = streamState(head).markup
   if (!held?.length) {
     return ''
@@ -410,14 +401,8 @@ export function renderStreamMarkup(head: Unhead<any>): string {
   const restore = new Map(head.entries)
   head.entries.clear()
   try {
-    for (const input of held) {
-      // The body-open slot flushed with the shell, so everything held lands at
-      // the close. A `bodyOpen` tag is relocated, not dropped.
-      const forced: any = {}
-      for (const key in input)
-        forced[key] = input[key].map((t: any) => ({ ...t, tagPosition: 'bodyClose' }))
-      head.push(forced)
-    }
+    for (const input of held)
+      head.push(input)
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
     // Only after the render succeeds, so a failure leaves the markup for a retry.
     streamState(head).markup = undefined
@@ -446,11 +431,11 @@ export function renderStreamMarkup(head: Unhead<any>): string {
  * ```
  */
 export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
-  const tail = renderStreamMarkup(head)
-  if (!tail)
+  const bodyTags = renderStreamBodyTags(head)
+  if (!bodyTags)
     return parts.end
   const at = parts.bodyTagsAt ?? parts.end.length
-  return parts.end.slice(0, at) + tail + parts.end.slice(at)
+  return parts.end.slice(0, at) + bodyTags + parts.end.slice(at)
 }
 
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
@@ -470,25 +455,29 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let serialized: string
   let patchCount = 0
   try {
-    const seen = streamState(head).seen ||= new Set<string>()
-    const entries = Array.from(head.entries.values())
-    const entryPositions = entries.map(e => (e.options as any)?.tagPosition as string | undefined)
-    const resolved = entries.map(e => resolveHeadInput(unwrapEntryInput(e.input), propResolvers))
+    const state = streamState(head)
+    let nextSeen: Set<string> | undefined
     const inputs: any[] = []
-    const markup: any[] = []
-    for (let i = 0; i < resolved.length; i++) {
-      const input = resolved[i]
-      const split = splitMarkupTags(input, seen, !streamState(head).writesMarkup, entryPositions[i])
+    let markup: any[] | undefined
+    for (const entry of head.entries.values()) {
+      const input = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+      const entryPosition = (entry.options as any)?.tagPosition
+      if (!state.writesBodyTags || !hasMarkupTags(input, entryPosition)) {
+        inputs.push(input)
+        continue
+      }
+      const split = splitMarkupTags(input, nextSeen ||= new Set(state.seen), entryPosition)
       if (split.patch)
         inputs.push(split.patch)
       if (split.markup)
-        markup.push(split.markup)
+        (markup ||= []).push(split.markup)
     }
     serialized = safeJsonStringify(inputs)
     patchCount = inputs.length
-    if (markup.length) {
-      (streamState(head).markup ||= []).push(...markup)
-    }
+    if (nextSeen)
+      state.seen = nextSeen
+    if (markup)
+      (state.markup ||= []).push(...markup)
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -558,8 +547,8 @@ export function wrapStream(
 ): ReadableStream<Uint8Array> {
   // This wrapper always writes `renderStreamEnd`, so markup tags need no
   // patch fallback. A hand-rolled driver promises the same with the
-  // `writesMarkup` option.
-  streamState(head).writesMarkup = true
+  // `writesBodyTags` option.
+  streamState(head).writesBodyTags = true
   // Without a default, entries registered after the shell are discarded.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string

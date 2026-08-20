@@ -54,21 +54,15 @@ export interface ValidatePluginOptions {
    */
   root?: string
   /**
-   * Restrict the plugin to these rules. Every other rule is treated as `'off'`,
-   * whatever `rules` says.
+   * Run only these rules. Every other rule is off, even when `rules` enables it.
    *
-   * Use this for a second instance that only needs to cover what the first one
-   * cannot see. A server head running alongside a client one wants
-   * `['streamed-tag-hidden-from-bots']`, since every other rule already reports
-   * from the client and would otherwise warn twice per request.
+   * Use `['streamed-tag-hidden-from-bots']` for a focused streaming server instance.
    */
-  only?: ValidationRuleId[]
+  only?: readonly ValidationRuleId[]
   /**
-   * Plugin key used to deduplicate registrations.
+   * Key used to deduplicate plugin registrations.
    *
-   * `registerPlugin` drops a second plugin sharing a key without running it, so
-   * a narrowed instance registered automatically would silently swallow one a
-   * user adds by hand. Give an automatic instance its own key so both survive.
+   * Use a unique key when one head needs more than one validator instance.
    *
    * @default 'validate'
    */
@@ -234,13 +228,13 @@ function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
     yield { ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] }
 }
 
-function isHiddenFromBots(tag: HeadTag, writesMarkup: boolean): boolean {
+function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
   // Search engines read JSON-LD anywhere in the document, so a driver that
-  // writes the body markup serves it after all. One that does not still hides
+  // writes body tags serves it after all. One that does not still hides
   // it: position alone cannot rescue a tag that exists only in a patch.
   if (tag.tag === 'script')
-    return !writesMarkup && String(props.type || '').toLowerCase() === 'application/ld+json'
+    return !writesBodyTags && String(props.type || '').toLowerCase() === 'application/ld+json'
   // Every other tag here only carries meaning from the head, so one placed in
   // the body was never going to be read.
   if (tag.tagPosition?.startsWith('body'))
@@ -279,8 +273,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
   const only = options.only && new Set<string>(options.only)
-  // Both the static key (used by registerPlugin to bail before setup) and the
-  // returned plugin's key (used as the map key) have to agree.
+  // Registration and storage must use the same key.
   const pluginKey = options.key || 'validate'
 
   function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
@@ -366,7 +359,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const rules: HeadValidationRule[] = []
           for (const pending of tags) {
             for (const tag of expandPendingTag(pending)) {
-              if (!isHiddenFromBots(tag, !!head._stream?.writesMarkup))
+              if (!isHiddenFromBots(tag, !!head._stream?.writesBodyTags))
                 continue
               const entryIndex = tag._p != null ? tag._p >> 10 : undefined
               rules.push({

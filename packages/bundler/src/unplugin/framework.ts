@@ -149,12 +149,8 @@ export function createFrameworkPlugin<S>({ framework, streamingPlugin }: Framewo
           ctx.addRuntimePlugin({
             import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
-            // No `server` registration. A streaming app calls
-            // `createStreamableHead()`, which CreateHeadTransform does not
-            // match, and which returns a context rather than a head. Teaching
-            // the transform about it pulls every other server registration
-            // (devtools included) into streaming entries and breaks them, so
-            // server-side validation stays opt-in. See the streaming guide.
+            // Streaming apps call `createStreamableHead()`, which this transform
+            // does not match. Server validation stays opt-in. See the streaming guide.
           })
         }
         if (devtools !== false) {

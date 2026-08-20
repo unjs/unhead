@@ -76,7 +76,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     const reported: HeadValidationRule[] = []
     const { head } = createStreamableHead({
       disableDefaults: true,
-      writesMarkup: true,
+      writesBodyTags: true,
       plugins: [ValidatePlugin({ onReport: r => reported.push(...r) })],
     })
     renderShell(head)

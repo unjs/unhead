@@ -75,8 +75,8 @@ export {
   renderShell,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
   renderStreamEnd,
-  renderStreamMarkup,
   type StreamingTemplateParts,
   wrapStream,
 } from 'unhead/stream/server'

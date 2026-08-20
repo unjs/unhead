@@ -1,9 +1,9 @@
-import type { HeadValidationRule } from 'unhead/plugins'
+import type { HeadValidationRule, ValidationRuleId } from 'unhead/plugins'
 import { ValidatePlugin } from 'unhead/plugins'
 import { createStreamableHead, renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { describe, expect, it } from 'vitest'
 
-function setup(only?: any) {
+function setup(only?: readonly ValidationRuleId[]) {
   const reported: HeadValidationRule[] = []
   const { head } = createStreamableHead({
     disableDefaults: true,

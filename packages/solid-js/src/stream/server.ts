@@ -19,8 +19,8 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
   renderStreamEnd,
-  renderStreamMarkup,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
@@ -84,7 +84,7 @@ export function createStreamableHead(options: CreateStreamableServerHeadOptions 
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
       // This wrapper always writes `renderStreamEnd`, so body-bound tags need
       // no patch copy. A caller driving `head` by hand keeps the fallback.
-      ;(head._stream ||= {}).writesMarkup = true
+      ;(head._stream ||= {}).writesBodyTags = true
       const encoder = new TextEncoder()
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
       let readerReleased = false
