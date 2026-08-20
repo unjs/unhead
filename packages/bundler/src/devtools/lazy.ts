@@ -1,8 +1,8 @@
 import type { Plugin } from 'vite'
 import type { HeadTransformContext } from '../unplugin/CreateHeadTransform'
+import { SOURCE_FILE_RE } from '../unplugin/utils'
+import { HEAD_COMPOSABLE_RE } from './filter'
 
-const HEAD_COMPOSABLE_RE = /\b(?:useHead|useSeoMeta|useHeadSafe|useScript)\b/
-const FILE_RE = /\.(vue|tsx?|jsx?|svelte)$/
 const DEVTOOLS_KIT_PACKAGE = '@vitejs/devtools-kit'
 
 interface LazyUnheadDevtoolsOptions {
@@ -117,7 +117,7 @@ export function lazyUnheadDevtools(options?: LazyUnheadDevtoolsOptions): Plugin 
     },
 
     transform: {
-      filter: { id: FILE_RE, code: HEAD_COMPOSABLE_RE },
+      filter: { id: SOURCE_FILE_RE, code: HEAD_COMPOSABLE_RE },
       async handler(code, id, options) {
         return callEnabledHook('transform', this, [code, id, options])
       },

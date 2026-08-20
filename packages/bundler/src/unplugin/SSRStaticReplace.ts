@@ -29,18 +29,9 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
   // `head.ssr` is left dynamic in the source.
   let fallbackConsumer: BuildConsumer | undefined
 
-  function shouldTransformId(id: string): boolean {
-    return UNHEAD_JS_MODULE_RE.test(id)
-  }
-
-  function shouldTransformCode(code: string): boolean {
-    return HEAD_SSR_FILTER_RE.test(code)
-  }
-
   return {
     name: 'unhead:ssr-static-replace',
     enforce: 'pre',
-    transformInclude: shouldTransformId,
 
     transform: {
       filter: {
@@ -52,12 +43,6 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         // Unknown build target: retain `head.ssr` so runtime detection keeps
         // working instead of hard-coding the wrong branch.
         if (!consumer)
-          return
-
-        if (!shouldTransformId(id))
-          return
-
-        if (!shouldTransformCode(code))
           return
 
         const ssr = consumer === 'server'

@@ -22,7 +22,27 @@ export function resolveBuildConsumer(ctx: unknown, fallback: BuildConsumer | und
     return consumer
   return fallback
 }
-export const JS_VUE_RE = /\.(?:(?:c|m)?j|t)sx?(?:$|\?)|\.vue(?:$|\?)/
+/**
+ * Script extensions the transforms understand, matched against a `pathname`
+ * with any query already stripped by `splitTransformId`.
+ *
+ * Covers every JS/TS extension pair: `.js`, `.cjs`, `.mjs`, `.jsx`, `.ts`,
+ * `.cts`, `.mts`, `.tsx`.
+ */
+export const JS_EXT_RE = /\.[cm]?[jt]sx?$/
+
+/**
+ * Same extensions as `JS_EXT_RE` plus `.vue`, matched against a raw module id.
+ * Ids carry a query in dev and for SFC sub-requests (`App.vue?vue&type=script`),
+ * so the pattern ends at `?` as well as at the end of the string.
+ */
+export const JS_VUE_RE = /\.(?:[cm]?[jt]sx?|vue)(?:$|\?)/
+
+/**
+ * Same extensions as `JS_VUE_RE` plus `.svelte`, for the plugins that inspect
+ * any authored source file rather than only script modules.
+ */
+export const SOURCE_FILE_RE = /\.(?:[cm]?[jt]sx?|vue|svelte)(?:$|\?)/
 
 export function createJsVueTransformIdFilter(include?: RegExp[]): HookFilter['id'] {
   return {
