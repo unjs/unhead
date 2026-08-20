@@ -16,7 +16,7 @@ export function createServerHeadWithContext(resolvedOptions: CreateServerHeadOpt
   })
 }
 
-export function createStreamableServerHead(options: { streamKey?: string } = {}) {
+export function createStreamableServerHead(options: { streamKey?: string, streamTail?: boolean } = {}) {
   const { head } = createServerStreamableHead({
     disableDefaults: true,
     ...options,

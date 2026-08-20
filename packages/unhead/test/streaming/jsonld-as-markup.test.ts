@@ -35,14 +35,14 @@ const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.len
 
 describe('jSON-LD held back from streamed patches', () => {
   it('keeps JSON-LD out of the patch script', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
   })
 
   it('splits an entry so the rest still patches', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ title: 'Reviews', script: [LD] })
 
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -52,7 +52,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('renders the held JSON-LD as markup', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ title: 'Reviews', script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -63,7 +63,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('drains the held JSON-LD only once', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -72,7 +72,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('leaves pending entries alone', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
     head.push({ title: 'Later' })
@@ -83,7 +83,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('emits the JSON-LD inside the body of a wrapped stream', async () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ title: 'Shell' })
     let pending = true
     const html = await readAll(wrapStream(head, streamOf(['<p>app</p>']), TEMPLATE, undefined, {
@@ -102,7 +102,7 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(html).not.toContain('__unhead__.push')
   })
   it('does not repeat JSON-LD the shell already rendered', async () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     let once = true
     const html = await readAll(wrapStream(head, streamOf(['<p>app</p>']), TEMPLATE, undefined, {
@@ -119,7 +119,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('does not repeat JSON-LD across two chunks', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
     head.push({ script: [LD] })
@@ -134,7 +134,7 @@ describe('pre-rendered shell state', () => {
   // `prepareStreamingTemplate`. Entries pushed after that render belong to the
   // stream, not the shell.
   it('keeps JSON-LD pushed after the shell render', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ title: 'Shell' })
     const shellState = renderShell(head)
 
@@ -146,7 +146,7 @@ describe('pre-rendered shell state', () => {
   })
 
   it('drops JSON-LD the shell render already emitted', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     const shellState = renderShell(head)
 
@@ -161,7 +161,7 @@ describe('pre-rendered shell state', () => {
 
 describe('template-free drivers', () => {
   it('hands the held JSON-LD back once', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     renderShell(head)
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
@@ -173,7 +173,7 @@ describe('template-free drivers', () => {
 
 describe('tail render failure', () => {
   it('keeps the held JSON-LD for a retry', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 

@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom'
+import { createHead as createClientHead } from 'unhead/client'
 import { describe, expect, it } from 'vitest'
 import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
@@ -10,7 +11,7 @@ const GTM = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-1"></i
 
 describe('noscript registered after the shell', () => {
   it('goes out as markup, not as a patch', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
@@ -18,7 +19,7 @@ describe('noscript registered after the shell', () => {
   })
 
   it('lands at the body close, because the body-open slot already flushed', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -26,7 +27,7 @@ describe('noscript registered after the shell', () => {
   })
 
   it('is not repeated when the shell already served it', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ noscript: [{ innerHTML: GTM }] })
     renderShell(head)
 
@@ -39,7 +40,7 @@ describe('noscript registered after the shell', () => {
 
 describe('body-positioned tags registered after the shell', () => {
   it('sends a body-close script as markup', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
@@ -47,7 +48,7 @@ describe('body-positioned tags registered after the shell', () => {
   })
 
   it('sends a body-close style as markup', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ style: [{ innerHTML: '.a{color:red}', tagPosition: 'bodyClose' }] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -55,7 +56,7 @@ describe('body-positioned tags registered after the shell', () => {
   })
 
   it('keeps head-positioned tags in the patch', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ meta: [{ name: 'description', content: 'late' }], link: [{ rel: 'canonical', href: '/a' }] })
 
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -68,7 +69,7 @@ describe('body-positioned tags registered after the shell', () => {
 
 describe('an entry mixing hoistable and head-only tags', () => {
   it('splits it across the patch and the markup', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({
       meta: [{ name: 'description', content: 'late' }],
       noscript: [{ innerHTML: GTM }],
@@ -94,7 +95,7 @@ describe('a stream that pauses mid-element', () => {
   // is written into the template, so it lands at body level whatever the app
   // was in the middle of.
   it('parses the hoisted markup into the body, not the open select', async () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     const template = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
     const enc = new TextEncoder()
     let app!: ReadableStreamDefaultController<Uint8Array>
@@ -132,7 +133,7 @@ describe('a tag the shell already served', () => {
   // copy. Hoisting a second one would put two blocks with the same key in the
   // served HTML. The patch can still update the first for a JS client.
   it('patches an update to a keyed tag instead of hoisting a duplicate', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [{ key: 'schema', type: 'application/ld+json', innerHTML: '{"v":1}' }] })
     const shell = renderShell(head)
     expect(shell.headTags).toContain('{"v":1}')
@@ -145,7 +146,7 @@ describe('a tag the shell already served', () => {
   })
 
   it('drops an exact repeat entirely', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ noscript: [{ key: 'gtm', innerHTML: '<i>1</i>' }] })
     renderShell(head)
 
@@ -156,7 +157,7 @@ describe('a tag the shell already served', () => {
   })
 
   it('still hoists a different unkeyed block', () => {
-    const head = createStreamableServerHead()
+    const head = createStreamableServerHead({ streamTail: true })
     head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"a":1}' }] })
     renderShell(head)
 
@@ -164,5 +165,47 @@ describe('a tag the shell already served', () => {
     renderSSRHeadSuspenseChunk(head)
 
     expect(renderStreamEnd(head, PARTS)).toContain('{"b":2}')
+  })
+})
+
+describe('a driver that builds the response by hand', () => {
+  const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
+
+  // Nuxt renders the shell itself and writes its own closing HTML. Until it
+  // writes the tail, the patch has to carry these tags or they reach nobody.
+  it('keeps hoisted tags in the patch when the tail is not guaranteed', () => {
+    const head = createStreamableServerHead()
+    renderShell(head)
+    head.push({ script: [LD], noscript: [{ innerHTML: '<img src="px.gif">' }] })
+
+    const chunk = renderSSRHeadSuspenseChunk(head)
+
+    expect(chunk).toContain('ld+json')
+    expect(chunk).toContain('px.gif')
+  })
+
+  it('still offers them as markup, so a tail that is written wins', () => {
+    const head = createStreamableServerHead()
+    renderShell(head)
+    head.push({ script: [LD] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS)).toContain('ld+json')
+  })
+
+  it('does not render twice when the client applies a patch over the markup', async () => {
+    const head = createStreamableServerHead()
+    renderShell(head)
+    head.push({ script: [LD] })
+    const chunk = renderSSRHeadSuspenseChunk(head)
+    const served = `<!DOCTYPE html><html><head></head><body><div id="app">app</div>${renderStreamEnd(head, PARTS)}`
+
+    const doc = new JSDOM(served).window.document
+    const client = createClientHead({ document: doc })
+    for (const input of JSON.parse(chunk.slice(chunk.indexOf('(') + 1, chunk.lastIndexOf(')'))))
+      client.push(input)
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 })

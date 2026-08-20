@@ -92,13 +92,15 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, ...rest } = options
+  const { streamKey, streamTail, ...rest } = options
   if (streamKey !== undefined)
     assertValidStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
   })
+  if (streamTail)
+    (head as any)._streamTail = true
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -310,7 +312,7 @@ function rememberShellMarkup(head: Unhead<any>): void {
  * patch and the part that can go out as body markup instead. Returns
  * `undefined` for a side that has nothing in it.
  */
-function splitHoistable(input: any, seen: Set<string>): { patch?: any, markup?: any } {
+function splitHoistable(input: any, seen: Set<string>, keepFallback: boolean): { patch?: any, markup?: any } {
   if (!input || typeof input !== 'object')
     return { patch: input }
 
@@ -340,6 +342,11 @@ function splitHoistable(input: any, seen: Set<string>): { patch?: any, markup?: 
       }
       seen.add(id)
       hoisted.push(tag)
+      // A driver that never writes the tail would otherwise lose this tag. The
+      // patch recreates it, and the client adopts the served markup when the
+      // tail did land, so it is never rendered twice.
+      if (keepFallback)
+        rest.push(tag)
     }
     patch ||= { ...input }
     if (rest.length)
@@ -433,7 +440,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     const inputs: any[] = []
     const markup: any[] = []
     for (const input of resolved) {
-      const split = splitHoistable(input, seen)
+      const split = splitHoistable(input, seen, !(head as any)._streamTail)
       if (split.patch)
         inputs.push(split.patch)
       if (split.markup)
@@ -511,6 +518,10 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
+  // This wrapper always writes `renderStreamEnd`, so hoisted tags need no
+  // patch fallback. `renderStreamTail` sets the same flag for a hand-rolled
+  // driver, from its first call onward.
+  ;(head as any)._streamTail = true
   // Without a default, entries registered after the shell are discarded.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string

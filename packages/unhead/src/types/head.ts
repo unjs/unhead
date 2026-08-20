@@ -166,6 +166,18 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    * @default '__unhead__'
    */
   streamKey?: string
+  /**
+   * Set when the driver writes `renderStreamTail()` (or `renderStreamEnd()`)
+   * before `</body>`.
+   *
+   * Tags that work from the body, such as JSON-LD and `noscript`, then leave
+   * the stream only as markup. Without it they are also repeated in the patch,
+   * so a driver that never writes the tail cannot lose them. `wrapStream()`
+   * sets this for you.
+   *
+   * @default false
+   */
+  streamTail?: boolean
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
