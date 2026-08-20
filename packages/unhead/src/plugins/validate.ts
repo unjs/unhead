@@ -216,13 +216,10 @@ function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
 
 function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
-  // Search engines read JSON-LD anywhere in the document, so a driver that
-  // writes body tags serves it after all. One that does not still hides
-  // it: position alone cannot rescue a tag that exists only in a patch.
+  // Served JSON-LD remains visible as Streamed Body Tags.
   if (tag.tag === 'script')
     return !writesBodyTags && String(props.type || '').toLowerCase() === 'application/ld+json'
-  // Every other tag here only carries meaning from the head, so one placed in
-  // the body was never going to be read.
+  // Other reported tags only carry meaning from the head.
   if (tag.tagPosition?.startsWith('body'))
     return false
   switch (tag.tag) {
