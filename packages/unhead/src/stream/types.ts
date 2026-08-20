@@ -1,4 +1,4 @@
-import type { SerializableHead, Unhead } from '../types'
+import type { SerializableHead } from '../types'
 
 /**
  * Shape of the streaming queue written to `window[streamKey]` (default
@@ -12,8 +12,11 @@ import type { SerializableHead, Unhead } from '../types'
 export interface StreamingGlobal {
   /** Queued entry batches pushed before the client IIFE took over. */
   _q: SerializableHead[][]
-  /** Resolved Unhead instance, populated once the IIFE initialises. */
-  _head?: Unhead<any>
+  /**
+   * Opaque resolved head, populated once the IIFE initialises.
+   * Framework wrappers refine this internal value after reading the queue.
+   */
+  _head?: unknown
   /** Push an entry batch onto the queue (pre-init) or the head (post-init). */
   push: (entries: SerializableHead[]) => void
 }

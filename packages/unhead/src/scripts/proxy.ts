@@ -2,7 +2,7 @@ import type { AsVoidFunctions, RecordingEntry } from './types'
 
 function NOOP() {}
 
-export interface ScriptProxy<T extends Record<symbol | string, any>> {
+export interface ScriptProxy<T extends object> {
   proxy: AsVoidFunctions<T>
   stack: RecordingEntry[][]
   /**
@@ -50,7 +50,7 @@ function walk(root: any, path: PropertyKey[]) {
  *
  * The proxy identity never changes, so a reference taken before the script loads keeps working after.
  */
-export function createScriptProxy<T extends Record<string, any>>(initial: T = {} as T): ScriptProxy<T> {
+export function createScriptProxy<T extends object>(initial: T = {} as T): ScriptProxy<T> {
   const stack: RecordingEntry[][] = []
   let instance: T | undefined
   let stackIdx = -1

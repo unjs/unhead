@@ -1,7 +1,10 @@
 import type {
   RawInput,
+  ResolvableHead,
+  ScriptHeadTarget,
   Unhead,
 } from '../types'
+import type { DefinedGenericScript } from '../types/schema/script'
 import type {
   EventHandlerOptions,
   ScriptInstance,
@@ -34,21 +37,22 @@ type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & 
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
 function noop() {}
 
-export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
-export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
-export function useScript<T extends Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): ScriptInstance<T> | ScriptScope<T>
-export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): ScriptScope<ResolvedScriptApi<R>>
-export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): ScriptInstance<ResolvedScriptApi<R>>
-export function useScript<R>(head: Unhead<any>, _input: UseScriptInput, _options: ResolveScriptOptions<R>): ScriptInstance<ResolvedScriptApi<R>> | ScriptScope<ResolvedScriptApi<R>>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
-export function useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+export function useScript<T extends object>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): ScriptScope<T>
+export function useScript<T extends object>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): ScriptInstance<T>
+export function useScript<T extends object>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): ScriptInstance<T> | ScriptScope<T>
+export function useScript<R>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): ScriptScope<ResolvedScriptApi<R>>
+export function useScript<R>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): ScriptInstance<ResolvedScriptApi<R>>
+export function useScript<R>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options: ResolveScriptOptions<R>): ScriptInstance<ResolvedScriptApi<R>> | ScriptScope<ResolvedScriptApi<R>>
+export function useScript<T extends object = Record<PropertyKey, unknown>>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
+export function useScript<T extends object = Record<PropertyKey, unknown>>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
+export function useScript<T extends object = Record<PropertyKey, unknown>>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
+export function useScript<T extends object = Record<PropertyKey, unknown>>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
   return _useScript(head, _input, _options, !!_options?.scope)
 }
 
 /** Resolve the shared script and optionally attach a consumer scope. */
-function _useScript<T extends Record<symbol | string, any> = Record<symbol | string, any>>(head: Unhead<any>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options: UseScriptOptions<T> | UseScriptLoaderOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+function _useScript<T extends object = Record<PropertyKey, unknown>>(head: ScriptHeadTarget<ResolvableHead>, _input: UseScriptInput | UseScriptLoaderInput<T>, _options: UseScriptOptions<T> | UseScriptLoaderOptions<T> | undefined, scoped: boolean): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  const scriptHead = head as unknown as Unhead<ResolvableHead, unknown>
   // Event handlers below capture this head, so never mutate an input object that
   // may be reused by another SSR request or client app.
   const loaderInput = typeof _input === 'object' && 'loader' in _input ? _input : undefined
@@ -123,7 +127,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
     script.status = s
     _events.push({ type: s, timestamp: Date.now() })
     // eslint-disable-next-line ts/no-use-before-define
-    callHook(head, 'script:updated', hookCtx)
+    callHook(scriptHead, 'script:updated', hookCtx)
   }
   const failReadiness = (reason: unknown) => {
     loadError = reason instanceof Error ? reason : new Error(String(reason))
@@ -254,7 +258,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
   const script = {
     _loadPromise: loadPromise,
     _events,
-    _warmupStrategy: undefined as string | undefined,
+    _warmupStrategy: undefined as WarmupStrategy | undefined,
     instance: initialInstance,
     proxy: null,
     id,
@@ -311,7 +315,7 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
         integrity: input.integrity,
         as: rel === 'preload' ? 'script' : undefined,
       } as RawInput<'link'>
-      script._warmupEl = head.push({ link: [link] }, { head, tagPriority: 'high' })
+      script._warmupEl = scriptHead.push({ link: [link] }, { head: scriptHead, tagPriority: 'high' })
       return script._warmupEl
     },
     load(cb?: () => void | Promise<void>) {
@@ -338,8 +342,8 @@ function _useScript<T extends Record<symbol | string, any> = Record<symbol | str
           defaults.referrerpolicy = 'no-referrer'
         }
         // status should get updated from script events
-        script.entry = head.push({
-          script: [{ ...defaults, ...input }],
+        script.entry = scriptHead.push({
+          script: [{ ...defaults, ...input } as unknown as DefinedGenericScript],
         }, entryOptions)
       }
       if (cb)

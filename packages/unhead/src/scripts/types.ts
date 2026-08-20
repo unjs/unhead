@@ -3,15 +3,17 @@ import type {
   DataKeys,
   GenericScript,
   HeadEntryOptions,
+  HeadEntryTarget,
   HttpEventAttributes,
   MaybeEventFnHandlers,
+  ResolvableHead,
   SchemaAugmentations,
   ScriptHttpEvents,
 } from '../types'
 
 export type UseScriptStatus = 'awaitingLoad' | 'loading' | 'loaded' | 'error' | 'removed'
 
-export type UseScriptContext<T extends Record<symbol | string, any>> = ScriptInstance<T>
+export type UseScriptContext<T extends object> = ScriptInstance<T>
 /**
  * Either a string source for the script or full script properties.
  */
@@ -19,7 +21,7 @@ type UseScriptInputBase = Omit<GenericScript, 'src' | keyof ScriptHttpEvents> & 
 
 export type UseScriptResolvedInput = UseScriptInputBase & { src: string }
 
-type BaseScriptApi = Record<symbol | string, any>
+type BaseScriptApi = object
 
 /** A keyed client-side resource loaded without a DOM script tag. */
 export interface UseScriptLoaderInput<T extends BaseScriptApi = BaseScriptApi> {
@@ -63,12 +65,12 @@ type IsOverloadedFunction<T>
       : false
 
 export type AsVoidFunctions<T extends BaseScriptApi> = {
-  [K in keyof T]: T[K] extends any[]
+  [K in keyof T]: T[K] extends unknown[]
     ? T[K]
-    : T[K] extends (...args: infer A) => any
+    : T[K] extends (...args: infer A) => unknown
       // we can't modify overloaded functions, so we need to check if the function is overloaded
       ? IsOverloadedFunction<T[K]> extends true ? T[K] : (...args: A) => void
-      : T[K] extends Record<any, any>
+      : T[K] extends object
         ? AsVoidFunctions<T[K]>
         : never;
 }
@@ -152,16 +154,16 @@ export interface ScriptScope<T extends BaseScriptApi> extends ScriptInstance<T> 
 
 export interface ScriptInstance<T extends BaseScriptApi> {
   proxy: AsVoidFunctions<T>
-  instance?: T
+  instance: T | null
   id: string
   /**
    * Aborted when the script is removed or fails to load.
    */
   signal: AbortSignal
   status: Readonly<UseScriptStatus>
-  entry?: ActiveHeadEntry<any>
-  load: () => Promise<T>
-  warmup: (rel: WarmupStrategy) => ActiveHeadEntry<any>
+  entry?: ActiveHeadEntry<ResolvableHead>
+  load: (cb?: () => void | Promise<void>) => Promise<T | false>
+  warmup: (rel: WarmupStrategy) => ActiveHeadEntry<ResolvableHead> | undefined
   remove: () => boolean
   setupTriggerHandler: (trigger: UseScriptOptions['trigger']) => () => void
   // cbs
@@ -170,7 +172,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
-  _warmupStrategy?: string
+  _warmupStrategy?: WarmupStrategy
   /**
    * @internal
    */
@@ -178,7 +180,7 @@ export interface ScriptInstance<T extends BaseScriptApi> {
   /**
    * @internal
    */
-  _warmupEl: any
+  _warmupEl?: ActiveHeadEntry<ResolvableHead>
   /**
    * @internal
    */
@@ -211,11 +213,20 @@ export interface EventHandlerOptions {
   key?: string
 }
 
-export type RecordingEntry
-  = | { type: 'get', key: string | symbol, args?: any[], value?: any }
-    | { type: 'apply', key: string | symbol, args: any[] }
+/**
+ * Render-independent capabilities required by `useScript` when a head is
+ * supplied through framework options.
+ */
+export interface ScriptHeadTarget<Input = ResolvableHead> extends HeadEntryTarget<Input> {
+  _scripts?: Record<string, unknown>
+}
 
-export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>> extends HeadEntryOptions {
+export type RecordingEntry
+  = | { type: 'get', key: string | symbol, args?: unknown[], value?: unknown }
+    | { type: 'apply', key: string | symbol, args: unknown[] }
+
+export interface UseScriptOptions<T extends BaseScriptApi = Record<PropertyKey, unknown>> extends HeadEntryOptions {
+  head?: ScriptHeadTarget<ResolvableHead>
   /**
    * Create a consumer-owned handle without changing the shared script lifecycle.
    * Existing callers receive the cached shared script unless this is enabled.
@@ -248,7 +259,7 @@ export interface UseScriptOptions<T extends BaseScriptApi = Record<string, any>>
    * Context to run events with. This is useful in Vue to attach the current instance context before
    * calling the event, allowing the event to be reactive.
    */
-  eventContext?: any
+  eventContext?: unknown
   /**
    * Called before the script is initialized. Will not be triggered when the script is already loaded. This means
    * this is guaranteed to be called only once, unless the script is removed and re-added.
@@ -263,6 +274,6 @@ export type UseScriptLoaderOptions<T extends BaseScriptApi = BaseScriptApi> = Om
   warmupStrategy?: never
 }
 
-export type UseScriptReturn<T extends Record<symbol | string, any>> = ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptReturn<T extends object> = ScriptInstance<UseFunctionType<UseScriptOptions<T>, T>>
 
-export type UseScriptScopeReturn<T extends Record<symbol | string, any>> = ScriptScope<UseFunctionType<UseScriptOptions<T>, T>>
+export type UseScriptScopeReturn<T extends object> = ScriptScope<UseFunctionType<UseScriptOptions<T>, T>>

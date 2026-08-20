@@ -26,7 +26,7 @@ export interface UnpluginOptions extends BaseTransformerTypes {
 
 export interface VitePluginOptions extends UnpluginOptions {
   /** Vite DevTools integration (dev-only). Enabled by default, set `false` to disable. */
-  devtools?: UnheadDevtoolsOptions | false
+  devtools?: boolean
   /** Inject ValidatePlugin in dev to surface head tag warnings in the console. Enabled by default, set `false` to disable. */
   validate?: boolean
   /**
@@ -48,5 +48,3 @@ export interface VitePluginOptions extends UnpluginOptions {
 export interface InternalFrameworkContext {
   framework?: string
 }
-
-export interface UnheadDevtoolsOptions {}

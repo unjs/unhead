@@ -1,4 +1,4 @@
-import type { UnpluginOptions } from 'unplugin'
+import type { TransformResult, UnpluginOptions } from 'unplugin'
 import type { ConfigEnv, ResolvedConfig, UserConfig } from 'vite'
 import { createUnplugin } from 'unplugin'
 
@@ -25,7 +25,7 @@ export interface StreamingPluginOptions {
   /** Optional source-code prefilter for transform hooks. */
   codeFilter?: RegExp
   /** Transform handler called for files matching `filter`. */
-  transform?: (code: string, id: string, options?: { ssr?: boolean }) => { code: string, map?: any } | null | undefined | void
+  transform?: (code: string, id: string, options?: { ssr?: boolean }) => TransformResult
   /**
    * How to load the streaming client (vite-only, ignored on webpack/rspack/rollup where
    * index.html injection isn't available; frameworks inject the iife themselves in SSR).

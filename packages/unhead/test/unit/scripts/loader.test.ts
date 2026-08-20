@@ -179,6 +179,8 @@ describe('source-less script loader', () => {
     proxy.increment()
     const loaded = await script.load()
     proxy.increment()
+    if (!loaded)
+      throw new Error('Expected loader API')
     loaded.label = 'updated'
 
     expect(api.count()).toBe(2)

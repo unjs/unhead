@@ -1,4 +1,4 @@
-import type { ActiveHeadEntry, HeadEntryOptions, UseHeadInput } from 'unhead/types'
+import type { ActiveHeadEntry, HeadEntryOptions, HeadEntryTarget, UseHeadInput } from 'unhead/types'
 import type { UseSchemaOrgInput } from './index'
 import { useHead, useUnhead } from '@unhead/react'
 import { schemaAutoImports } from './imports'
@@ -61,7 +61,12 @@ export {
 
 type PatchedSchemaOrgEntry = ActiveHeadEntry<UseHeadInput> & { __patched?: boolean }
 type PublicSchemaOrgEntry = ActiveHeadEntry<UseSchemaOrgInput> & { __patched?: boolean }
-export function useSchemaOrg(input: UseSchemaOrgInput = [], options: HeadEntryOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
+interface SchemaOrgPluginHost { use: (plugin: ReturnType<typeof UnheadSchemaOrg>) => void }
+type UseSchemaOrgOptions = Omit<HeadEntryOptions<UseHeadInput>, 'head'> & {
+  head?: HeadEntryTarget<UseHeadInput> & SchemaOrgPluginHost
+}
+
+export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseSchemaOrgOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
   const unhead = options.head || useUnhead()
   unhead.use(UnheadSchemaOrg())

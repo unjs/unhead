@@ -277,7 +277,6 @@ describe('defineWebPage', () => {
       ])
     })
   })
-
   it('can infer @type from path', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [
