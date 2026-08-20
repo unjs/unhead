@@ -1,5 +1,5 @@
-import type { MinifyFn, MinifyTransformOptions } from './createTransformPipeline'
 import type { InlineScriptTransformOptions } from './InlineScriptTransform'
+import type { MinifyFn, MinifyTransformOptions } from './MinifyTransformTypes'
 import { createUnplugin } from 'unplugin'
 import { createTransformPipeline } from './createTransformPipeline'
 import { transformInlineScriptWithVite } from './InlineScriptTransform'

@@ -84,8 +84,26 @@ function transformHandler(plugin: any) {
   return typeof plugin.transform === 'function' ? plugin.transform : plugin.transform.handler
 }
 
+function idFilterMatches(plugin: any, id: string) {
+  const filter = typeof plugin.transform === 'function' ? undefined : plugin.transform?.filter?.id
+  if (!filter)
+    return true
+  if (filter instanceof RegExp)
+    return filter.test(id)
+  if (filter.exclude && toArray(filter.exclude).some((pattern: RegExp) => pattern.test(id)))
+    return false
+  const include = toArray(filter.include)
+  return include.length === 0 || include.some((pattern: RegExp) => pattern.test(id))
+}
+
+function toArray<T>(value: T | T[] | undefined): T[] {
+  if (value === undefined)
+    return []
+  return Array.isArray(value) ? value : [value]
+}
+
 async function runPluginTransform(plugin: any, code: string, id: string, context: any = {}) {
-  if (plugin.transformInclude && !plugin.transformInclude(id))
+  if (!idFilterMatches(plugin, id))
     return undefined
   const transform = plugin.transform
   const codeFilter = typeof transform === 'function' ? undefined : transform?.filter?.code
@@ -110,17 +128,17 @@ function assertTransformResult(result: unknown, name: string) {
 }
 
 describe('unplugin transform CPU', () => {
-  bench('transformInclude mixed ids', () => {
+  bench('transform id filter mixed ids', () => {
     const seo = UseSeoMetaTransform.vite({}) as any
     const minify = MinifyTransform.vite({ js: mockJSMinifier, css: mockCSSMinifier }) as any
     const treeshake = TreeshakeServerComposables.vite({}) as any
     let included = 0
     for (const id of ids) {
-      if (seo.transformInclude(id))
+      if (idFilterMatches(seo, id))
         included++
-      if (minify.transformInclude(id))
+      if (idFilterMatches(minify, id))
         included++
-      if (treeshake.transformInclude(id))
+      if (idFilterMatches(treeshake, id))
         included++
     }
     return included

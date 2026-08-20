@@ -1,6 +1,7 @@
 import type { SourceMapInput } from 'rollup'
 import type { UnpluginOptions as UnpluginRawOptions } from 'unplugin'
 import type { BuildOptions, ConfigEnv, UserConfig } from 'vite'
+import type { MinifyFn, MinifyTransformOptions } from './MinifyTransformTypes'
 import type { BaseTransformerTypes, PrecompileOptions } from './types'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
@@ -225,10 +226,6 @@ const PRECOMPILED_DEFAULT_PLAN = [
   [100, 'htmlAttrs:lang', ' lang="en"', 3],
 ] as const
 
-export type MinifyFn = (code: string) => Promise<string | null>
-export interface InlineScriptTransformOptions {
-  target?: BuildOptions['target']
-}
 const jsonMinifier: MinifyFn = code => Promise.resolve(minifyJSON(code))
 
 export interface TreeshakeServerComposablesOptions extends BaseTransformerTypes {
@@ -254,25 +251,6 @@ export interface UseSeoMetaTransformOptions extends BaseTransformerTypes {
    * Extra import paths to consider where `useSeoMeta()` may be imported from.
    */
   importPaths?: string[]
-}
-
-export interface MinifyTransformOptions extends BaseTransformerTypes {
-  /**
-   * Custom JS minifier function, or `false` to disable JS minification.
-   *
-   * Use a subpath import to get a preconfigured minifier:
-   * - `@unhead/bundler/minify/rolldown` (Vite 8+)
-   * - `@unhead/bundler/minify/esbuild` (Vite 7)
-   */
-  js?: false | MinifyFn
-  /**
-   * Custom CSS minifier function, or `false` to disable CSS minification.
-   *
-   * Use `@unhead/bundler/minify/lightningcss` for a preconfigured minifier.
-   */
-  css?: false | MinifyFn
-  /** Transpile inline JavaScript before optional minification. */
-  transpile?: boolean | InlineScriptTransformOptions
 }
 
 export interface TransformPipelineOptions {

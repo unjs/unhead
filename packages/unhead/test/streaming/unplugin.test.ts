@@ -32,6 +32,8 @@ describe('streaming unplugin', () => {
     const loaded = callLoad(plugin, RESOLVED_CLIENT_ID)
     const code = loaded.code.replace(/^import[^\n]+\n/, '')
     const pushed: any[] = []
+    const entries = new Map<number, { _streamed?: boolean }>()
+    let entryId = 0
     const stream = {
       _q: [[{ title: 'queued' }, { meta: [{ name: 'description', content: 'queued' }] }]],
       push: (_batch: any[]) => 0,
@@ -40,12 +42,21 @@ describe('streaming unplugin', () => {
     new Function('window', 'document', 'createHead', code)(
       { __unhead__: stream },
       {},
-      () => ({ push: (entry: any) => pushed.push(entry) }),
+      () => ({
+        entries,
+        push: (entry: any) => {
+          pushed.push(entry)
+          entries.set(++entryId, {})
+          return { _i: entryId }
+        },
+      }),
     )
     expect(pushed).toEqual([{ title: 'queued' }, { meta: [{ name: 'description', content: 'queued' }] }])
+    expect([...entries.values()].every(entry => entry._streamed)).toBe(true)
 
     stream.push([{ title: 'future' }, { htmlAttrs: { lang: 'en' } }])
     expect(pushed.slice(2)).toEqual([{ title: 'future' }, { htmlAttrs: { lang: 'en' } }])
+    expect([...entries.values()].every(entry => entry._streamed)).toBe(true)
   })
 
   it('resolves the Vite-only IIFE virtual module in the Vite adapter', () => {
