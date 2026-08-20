@@ -4,7 +4,8 @@ import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHea
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
-import { normalizeProps, resolveHeadInput } from '../utils/normalize'
+import { callHook } from '../utils/hooks'
+import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -205,6 +206,42 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
 }
 
 /**
+ * Normalizes the entries that have not been flushed yet, for inspection only.
+ *
+ * Mirrors only the parts of `resolveTags` that no listener can redo: entry
+ * options and the `_p` packing. Plugin-owned shapes (`_flatMeta`, the legacy
+ * `body` prop, `useHeadSafe` filtering) stay unresolved so the SSR bundle does
+ * not carry a second copy of every plugin's normalization.
+ *
+ * It deliberately does not run the `entries:normalize` hook, because listeners
+ * there hold per-resolve state that a second pass would corrupt.
+ */
+function normalizePendingTags(head: Unhead<any>): { tags: HeadTag[], entries: Map<number, { input: any, resolved: any }> } {
+  const propResolvers = head.resolvedOptions.propResolvers || []
+  const tags: HeadTag[] = []
+  const entries = new Map<number, { input: any, resolved: any }>()
+  for (const entry of head.entries.values()) {
+    const resolved = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+    entries.set(entry._i, { input: entry.input, resolved })
+    let index = 0
+    for (const tag of normalizeEntryToTags(resolved, [])) {
+      if (entry.options)
+        Object.assign(tag, entry.options)
+      // Same packing as `resolveTags`, so a consumer can recover the entry
+      // that registered the tag and report its source location.
+      tag._p = (entry._i << 10) + index++
+      // `normalizeProps` assigns the entry's own object for templateParams
+      // rather than copying it, so this is the one tag an inspector could
+      // mutate into a later render.
+      if (tag.tag === 'templateParams')
+        tag.props = { ...tag.props }
+      tags.push(tag)
+    }
+  }
+  return { tags, entries }
+}
+
+/**
  * @experimental
  *
  * Renders head updates for a suspense boundary chunk.
@@ -242,8 +279,7 @@ function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): b
 }
 
 function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  // Copy props because `normalizeProps` mutates object payloads.
-  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, { ...tag })
+  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, tag)
   const content = hashTag(normalized)
   return { slot: dedupeKey(normalized) || content, content }
 }
@@ -381,17 +417,27 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
 
   const streamKey = getStreamKey(head)
   const propResolvers = head.resolvedOptions.propResolvers || []
+  let normalizedEntries: Map<number, { input: any, resolved: any }> | undefined
   // Resolve and serialize before clearing so a failure leaves the valid
   // entries intact for the next chunk.
   let serialized: string
   let patchCount = 0
   try {
+    // Only pay for normalization when something is listening.
+    if ((head.hooks as any)?._hooks?.['ssr:streamChunk']?.length) {
+      const normalized = normalizePendingTags(head)
+      normalizedEntries = normalized.entries
+      callHook(head, 'ssr:streamChunk', { tags: normalized.tags })
+    }
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
     let bodyTags: any[] | undefined
     for (const entry of head.entries.values()) {
-      const input = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
+      const normalized = normalizedEntries?.get(entry._i)
+      const input = normalized && normalized.input === entry.input
+        ? normalized.resolved
+        : resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       const entryPosition = (entry.options as any)?.tagPosition
       if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
         inputs.push(input)
@@ -755,4 +801,4 @@ export function prepareStreamingTemplate(
 
 export { prepareTemplate } from '../parser'
 export type { PreparedTemplate } from '../parser'
-export type { CreateStreamableServerHeadOptions, SSRHeadPayload, Unhead } from '../types'
+export type { CreateStreamableServerHeadOptions, HeadTag, SSRHeadPayload, Unhead } from '../types'
