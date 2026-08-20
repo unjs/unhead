@@ -275,7 +275,6 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
   const only = options.only && new Set<string>(options.only)
-  // Registration and storage must use the same key.
   const pluginKey = options.key || 'validate'
 
   function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
@@ -301,8 +300,6 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
         const result = _callHook(name, ...args)
-        // Suppressed for a narrowed instance: it is not one of the rules the
-        // caller asked for, and a second full instance already reports it.
         if (result?.then && !warnedAsyncHook && !only) {
           warnedAsyncHook = true
           console.warn(`[unhead] promise ignored: ${name}`)

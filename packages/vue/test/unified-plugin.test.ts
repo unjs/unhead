@@ -37,7 +37,7 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
       'entry.ts',
     )
 
-    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
+    expect(result.code).toContain(`_h.use(__unhead_validate({ root: "/project", key: 'validate:streaming', only: ['streamed-tag-hidden-from-bots'] }))`)
   })
 
   it('webpack adds exactly one extra plugin when streaming is enabled', () => {

@@ -41,15 +41,13 @@ describe('validatePlugin only', () => {
     const manual: HeadValidationRule[] = []
     const { head } = createStreamableHead({
       disableDefaults: true,
-      // what the bundler injects
-      plugins: [ValidatePlugin({
-        onReport: r => auto.push(...r),
-        key: 'validate:streaming',
-        only: ['streamed-tag-hidden-from-bots'],
-      })],
+      plugins: [ValidatePlugin({ onReport: r => manual.push(...r) })],
     })
-    // what the app adds by hand
-    head.use(ValidatePlugin({ onReport: r => manual.push(...r) }))
+    head.use(ValidatePlugin({
+      onReport: r => auto.push(...r),
+      key: 'validate:streaming',
+      only: ['streamed-tag-hidden-from-bots'],
+    }))
     renderShell(head)
     head.push({ link: [{ rel: 'canonical', href: '/' }] })
     renderSSRHeadSuspenseChunk(head)

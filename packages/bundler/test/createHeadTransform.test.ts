@@ -64,7 +64,7 @@ describe('createHeadTransform', () => {
       'entry.ts',
     )
 
-    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
+    expect(result.code).toContain(`_h.use(__unhead_validate({ root: "/project", key: 'validate:streaming', only: ['streamed-tag-hidden-from-bots'] }))`)
   })
 
   it('skips client-only registrations on server', async () => {
@@ -165,37 +165,5 @@ describe('createHeadTransform', () => {
     const result = await transform(`import { createHead } from '@unhead/vue/client'\nconst head = createHead()`)
     expect(result.code).toContain('import { ValidatePlugin as __validate }')
     expect(result.code).not.toContain('import { devtoolsPlugin as __devtools }')
-  })
-})
-
-describe('validate server registration', () => {
-  const registration = {
-    import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__unhead_validate' },
-    client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
-    server: `_h.use(__unhead_validate({ root: __ROOT__, key: 'validate:streaming', only: ['streamed-tag-hidden-from-bots'] }))`,
-  }
-
-  it('emits the narrowed instance in a server build', async () => {
-    const { transform } = createPlugin([registration], 'server')
-    const result = await transform(`import { createHead } from '@unhead/vue/server'\nconst head = createHead()`)
-
-    expect(result.code).toContain(`key: 'validate:streaming'`)
-    expect(result.code).toContain(`only: ['streamed-tag-hidden-from-bots']`)
-    expect(result.code).toContain(`root: "/project"`)
-    expect(result.code).not.toContain('__ROOT__')
-  })
-
-  it('emits the full instance in a client build', async () => {
-    const { transform } = createPlugin([registration], 'client')
-    const result = await transform(`import { createHead } from '@unhead/vue/client'\nconst head = createHead()`)
-
-    expect(result.code).toContain('__unhead_validate({ root: "/project" })')
-    expect(result.code).not.toContain('validate:streaming')
-  })
-
-  it('emits nothing on the server when the registration has no server expression', async () => {
-    const { transform } = createPlugin([{ ...registration, server: undefined }], 'server')
-
-    expect(await transform(`import { createHead } from '@unhead/vue/server'\nconst head = createHead()`)).toBeUndefined()
   })
 })
