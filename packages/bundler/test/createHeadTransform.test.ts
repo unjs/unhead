@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CreateHeadTransform, createHeadTransformContext } from '../src/unplugin/CreateHeadTransform'
 import { Unhead } from '../src/unplugin/vite'
+import { passesTransformFilter } from './utils'
 
 function createPlugin(registrations: Parameters<ReturnType<typeof createHeadTransformContext>['addRuntimePlugin']>[0][], consumer: 'client' | 'server' = 'client') {
   const ctx = createHeadTransformContext()
@@ -21,6 +22,34 @@ function createPlugin(registrations: Parameters<ReturnType<typeof createHeadTran
 }
 
 describe('createHeadTransform', () => {
+  it.each([
+    '/src/main.ts',
+    '/src/main.mts',
+    '/src/main.cts',
+    '/src/main.mjs',
+    '/src/main.tsx',
+    '/src/App.vue',
+    // dev ids and SFC sub-requests carry a query
+    '/src/main.ts?t=1730000000',
+    '/src/App.vue?vue&type=script&setup=true',
+    '/src/App.svelte?svelte&type=script&lang.ts',
+  ])('runs on %s', (id) => {
+    const { plugin } = createPlugin([{
+      import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__validate' },
+      client: '_h.use(__validate())',
+    }])
+    expect(passesTransformFilter(plugin, id, 'const head = createHead()')).toBe(true)
+  })
+
+  it('skips ids and sources that cannot hold a createHead call', () => {
+    const { plugin } = createPlugin([{
+      import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__validate' },
+      client: '_h.use(__validate())',
+    }])
+    expect(passesTransformFilter(plugin, '/src/style.css', 'const head = createHead()')).toBe(false)
+    expect(passesTransformFilter(plugin, '/src/main.ts', 'const x = 1')).toBe(false)
+  })
+
   it('ignores files without createHead', async () => {
     const { transform } = createPlugin([{
       import: { name: 'ValidatePlugin', source: '@unhead/vue/plugins', as: '__validate' },

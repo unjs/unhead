@@ -119,9 +119,8 @@ export const unheadSolidStreamingPlugin = createUnplugin<UnheadSolidStreamingOpt
     codeFilter: HEAD_COMPOSABLE_RE,
     mode: options.mode,
     transform(code, id, opts) {
-      if (!hasHeadComposable(code))
-        return null
-
+      // `codeFilter` above is declared as the hook's `filter.code`, so the
+      // bundler already skipped sources without a head composable.
       const s = new MagicString(code)
       if (!transform(code, id, opts?.ssr ?? false, s))
         return null
