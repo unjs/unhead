@@ -73,6 +73,22 @@ export interface HowToSimple extends Thing {
 
 export interface HowTo extends HowToSimple {}
 
+export interface HowToSection extends Thing {
+  '@type'?: 'HowToSection'
+  'name': string
+  'itemListElement': NodeRelations<HowToStep | string>
+}
+
+export const howToSectionResolver = defineSchemaOrgResolver<HowToSection>({
+  defaults: {
+    '@type': 'HowToSection',
+  },
+  resolve(node, ctx) {
+    node.itemListElement = resolveRelation(node.itemListElement, ctx, howToStepResolver)
+    return node
+  },
+})
+
 export const HowToId = '#howto'
 
 /**

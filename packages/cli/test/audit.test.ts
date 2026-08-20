@@ -131,6 +131,57 @@ export default defineNuxtConfig({
     expect(results[0].headCalls.map(c => c.name)).toEqual(['defineNuxtConfig'])
   })
 
+  it('reports invalid input shapes', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-input-shape-'))
+    await writeFile(join(tmp, 'app.ts'), `
+useHead({
+  htmlAttrs: [],
+  link: {},
+  bodyAttrs: {
+    title: 'Home',
+    titleTemplate: '%s | Site',
+    meta: [{ name: 'description', content: 'Hello' }],
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['app.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    const shapeDiagnostics = results[0].diagnostics.filter(d => d.ruleId === 'invalid-input-shape')
+    expect(shapeDiagnostics).toHaveLength(4)
+    expect(shapeDiagnostics.map(d => d.message)).toEqual(expect.arrayContaining([
+      expect.stringContaining('"htmlAttrs" in a head input'),
+      expect.stringContaining('"link" in a head input'),
+      expect.stringContaining('"titleTemplate" has a head input shape'),
+      expect.stringContaining('"meta" has a head input shape'),
+    ]))
+  })
+
+  it('allows unresolved expressions and valid scalar attribute shapes', async () => {
+    const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-attrs-shape-'))
+    await writeFile(join(tmp, 'app.ts'), `
+useHead({
+  bodyAttrs: {
+    title: 'Tooltip',
+    meta: 'custom-value',
+    script: 'module',
+    children: 'label',
+    options: computedOptions,
+  },
+})
+`)
+    const results = await runAudit({
+      patterns: ['app.ts'],
+      mode: 'audit',
+      cwd: tmp,
+    })
+    expect(results).toHaveLength(1)
+    expect(results[0].diagnostics).toHaveLength(0)
+  })
+
   it('surfaces parse errors as a diagnostic instead of silently skipping', async () => {
     const tmp = await mkdtemp(join(tmpdir(), 'unhead-cli-parse-'))
     await writeFile(join(tmp, 'broken.ts'), 'useHead({ title: \'oops\' )) // unbalanced\n')

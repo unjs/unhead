@@ -1,8 +1,8 @@
 import type { ConfigEnv, UserConfig } from 'vite'
 import type { BuildConsumer } from './utils'
 import MagicString from 'magic-string'
-import { parseAndWalk } from 'oxc-walker'
 import { createUnplugin } from 'unplugin'
+import { parseAndWalkSource } from './parser'
 import { resolveBuildConsumer } from './utils'
 
 const UNHEAD_JS_MODULE_RE = /[\\/]node_modules[\\/](?:@unhead[\\/][^\\/]+|unhead)[\\/].*\.(?:c|m)?js$/
@@ -29,18 +29,9 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
   // `head.ssr` is left dynamic in the source.
   let fallbackConsumer: BuildConsumer | undefined
 
-  function shouldTransformId(id: string): boolean {
-    return UNHEAD_JS_MODULE_RE.test(id)
-  }
-
-  function shouldTransformCode(code: string): boolean {
-    return HEAD_SSR_FILTER_RE.test(code)
-  }
-
   return {
     name: 'unhead:ssr-static-replace',
     enforce: 'pre',
-    transformInclude: shouldTransformId,
 
     transform: {
       filter: {
@@ -54,16 +45,10 @@ export const SSRStaticReplace = createUnplugin<Record<string, never>, false>(() 
         if (!consumer)
           return
 
-        if (!shouldTransformId(id))
-          return
-
-        if (!shouldTransformCode(code))
-          return
-
         const ssr = consumer === 'server'
         const s = new MagicString(code)
         let mutationTargetDepth = 0
-        parseAndWalk(code, id, {
+        parseAndWalkSource(code, id, {
           parseOptions: { lang: 'js' },
           enter(node: any, parent: any, { key }: any) {
             if (isMutationTarget(parent, key))

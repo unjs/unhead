@@ -23,8 +23,7 @@ describe('angular useScript callback disposal', () => {
     TestBed.flushEffects()
 
     const script = (head as any)._scripts['//angular-loaded.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     expect(calls).toEqual(['only'])
@@ -54,8 +53,7 @@ describe('angular useScript callback disposal', () => {
     offSecond()
 
     const script = (head as any)._scripts['//angular-ordered.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
@@ -78,8 +76,7 @@ describe('angular useScript callback disposal', () => {
     TestBed.flushEffects()
 
     const script = (head as any)._scripts['//angular-keyed.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     expect(calls).toEqual(['first'])

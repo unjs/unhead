@@ -201,7 +201,7 @@ export interface HttpEquivMeta extends MetaBase {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#attr-http-equiv
    */
-  'http-equiv': 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | (string & Record<never, never>)
+  'http-equiv': 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh' | 'accept-ch' | 'origin-trial' | (string & Record<never, never>)
   /**
    * This attribute contains the value for the http-equiv attribute.
    *

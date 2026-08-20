@@ -5,6 +5,7 @@
   articleResolver: object
   bookEditionResolver: object
   bookResolver: object
+  brandResolver: object
   breadcrumbResolver: object
   commentResolver: object
   courseResolver: object
@@ -20,6 +21,8 @@
   defineComment: function
   defineCourse: function
   defineDataset: function
+  defineDiscussionForumPosting: function
+  defineEmployerAggregateRating: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -29,6 +32,7 @@
   defineJobPosting: function
   defineListItem: function
   defineLocalBusiness: function
+  defineMathSolver: function
   defineMovie: function
   defineMusicAlbum: function
   defineMusicGroup: function
@@ -44,6 +48,7 @@
   definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
+  defineQuiz: function
   defineReadAction: function
   defineRecipe: function
   defineReview: function
@@ -54,14 +59,20 @@
   defineTVEpisode: function
   defineTVSeason: function
   defineTVSeries: function
+  defineVacationRental: function
   defineVideo: function
   defineVirtualLocation: function
   defineWebPage: function
   defineWebSite: function
+  discussionCommentResolver: object
+  discussionForumPostingResolver: object
+  employerAggregateRatingResolver: object
   eventResolver: object
   foodEstablishmentResolver: object
+  geoCoordinatesResolver: object
   HowToId: string
   howToResolver: object
+  howToSectionResolver: object
   howToStepDirectionResolver: object
   howToStepResolver: object
   imageResolver: object
@@ -70,6 +81,8 @@
   jobPostingResolver: object
   listItemResolver: object
   localBusinessResolver: object
+  mathSolverResolver: object
+  memberProgramTierResolver: object
   merge: function
   movieResolver: object
   musicAlbumResolver: object
@@ -95,6 +108,7 @@
   ProductId: string
   productResolver: object
   questionResolver: object
+  quizResolver: object
   ratingResolver: object
   readActionResolver: object
   RecipeId: string
@@ -109,13 +123,17 @@
   ServiceId: string
   serviceResolver: object
   softwareAppResolver: object
+  speakableSpecificationResolver: object
   tvEpisodeResolver: object
   tvSeasonResolver: object
   tvSeriesResolver: object
   UnheadSchemaOrg: function
+  unitPriceSpecificationResolver: object
   useSchemaOrg: function
+  vacationRentalResolver: object
   videoResolver: object
   virtualLocationResolver: object
+  webPageElementResolver: object
   webPageResolver: object
   webSiteResolver: object
 ./imports:
@@ -127,6 +145,8 @@
   defineComment: function
   defineCourse: function
   defineDataset: function
+  defineDiscussionForumPosting: function
+  defineEmployerAggregateRating: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -134,6 +154,7 @@
   defineItemList: function
   defineJobPosting: function
   defineLocalBusiness: function
+  defineMathSolver: function
   defineMovie: function
   defineMusicAlbum: function
   defineMusicGroup: function
@@ -146,6 +167,7 @@
   definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
+  defineQuiz: function
   defineRecipe: function
   defineReview: function
   defineService: function
@@ -153,6 +175,7 @@
   defineTVEpisode: function
   defineTVSeason: function
   defineTVSeries: function
+  defineVacationRental: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function
@@ -165,6 +188,8 @@
   defineComment: function
   defineCourse: function
   defineDataset: function
+  defineDiscussionForumPosting: function
+  defineEmployerAggregateRating: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -172,6 +197,7 @@
   defineItemList: function
   defineJobPosting: function
   defineLocalBusiness: function
+  defineMathSolver: function
   defineMovie: function
   defineMusicAlbum: function
   defineMusicGroup: function
@@ -184,6 +210,7 @@
   definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
+  defineQuiz: function
   defineRecipe: function
   defineReview: function
   defineService: function
@@ -191,6 +218,7 @@
   defineTVEpisode: function
   defineTVSeason: function
   defineTVSeries: function
+  defineVacationRental: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function
@@ -203,6 +231,8 @@
   defineComment: function
   defineCourse: function
   defineDataset: function
+  defineDiscussionForumPosting: function
+  defineEmployerAggregateRating: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -210,6 +240,7 @@
   defineItemList: function
   defineJobPosting: function
   defineLocalBusiness: function
+  defineMathSolver: function
   defineMovie: function
   defineMusicAlbum: function
   defineMusicGroup: function
@@ -222,6 +253,7 @@
   definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
+  defineQuiz: function
   defineRecipe: function
   defineReview: function
   defineService: function
@@ -229,6 +261,7 @@
   defineTVEpisode: function
   defineTVSeason: function
   defineTVSeries: function
+  defineVacationRental: function
   defineVideo: function
   defineWebPage: function
   defineWebSite: function
@@ -245,6 +278,8 @@
   defineComment: function
   defineCourse: function
   defineDataset: function
+  defineDiscussionForumPosting: function
+  defineEmployerAggregateRating: function
   defineEvent: function
   defineFoodEstablishment: function
   defineHowTo: function
@@ -254,6 +289,7 @@
   defineJobPosting: function
   defineListItem: function
   defineLocalBusiness: function
+  defineMathSolver: function
   defineMovie: function
   defineMusicAlbum: function
   defineMusicGroup: function
@@ -269,6 +305,7 @@
   definePodcastSeries: function
   defineProduct: function
   defineQuestion: function
+  defineQuiz: function
   defineReadAction: function
   defineRecipe: function
   defineReview: function
@@ -279,6 +316,7 @@
   defineTVEpisode: function
   defineTVSeason: function
   defineTVSeries: function
+  defineVacationRental: function
   defineVideo: function
   defineVirtualLocation: function
   defineWebPage: function
@@ -290,6 +328,8 @@
   SchemaOrgComment: object
   schemaOrgComponents: object
   SchemaOrgCourse: object
+  SchemaOrgDiscussionForumPosting: object
+  SchemaOrgEmployerAggregateRating: object
   SchemaOrgEvent: object
   SchemaOrgFoodEstablishment: object
   SchemaOrgHowTo: object
@@ -297,15 +337,18 @@
   SchemaOrgItemList: object
   SchemaOrgJobPosting: object
   SchemaOrgLocalBusiness: object
+  SchemaOrgMathSolver: object
   SchemaOrgMovie: object
   SchemaOrgOrganization: object
   SchemaOrgPerson: object
   SchemaOrgProduct: object
   SchemaOrgQuestion: object
+  SchemaOrgQuiz: object
   SchemaOrgRecipe: object
   SchemaOrgResolver: function
   SchemaOrgReview: object
   SchemaOrgSoftwareApp: object
+  SchemaOrgVacationRental: object
   SchemaOrgVideo: object
   SchemaOrgWebPage: object
   SchemaOrgWebSite: object

@@ -23,6 +23,8 @@ export {
   defineComment,
   defineCourse,
   defineDataset,
+  defineDiscussionForumPosting,
+  defineEmployerAggregateRating,
   defineEvent,
   defineFoodEstablishment,
   defineHowTo,
@@ -32,6 +34,7 @@ export {
   defineJobPosting,
   defineListItem,
   defineLocalBusiness,
+  defineMathSolver,
   defineMovie,
   defineMusicAlbum,
   defineMusicGroup,
@@ -47,6 +50,7 @@ export {
   definePodcastSeries,
   defineProduct,
   defineQuestion,
+  defineQuiz,
   defineReadAction,
   defineRecipe,
   defineReview,
@@ -56,6 +60,7 @@ export {
   defineTVEpisode,
   defineTVSeason,
   defineTVSeries,
+  defineVacationRental,
   defineVideo,
   defineVirtualLocation,
   defineWebPage,
@@ -64,4 +69,4 @@ export {
   useSchemaOrg,
 } from './runtime'
 export type { SchemaOrgHeadInput, UseSchemaOrgInput } from './runtime'
-export type { Arrayable, Id, Identity, IdReference, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'
+export type { Action, Arrayable, DigitalSourceType, GeoCoordinates, Id, Identity, IdReference, InteractionCounter, MetaInput, NodeRelation, NodeRelations, OptionalSchemaOrgPrefix, PropertyValue, ResolvableDate, ResolvedMeta, SchemaOrgNode, SchemaOrgNodeDefinition, Thing, UserConfig, WithResolver } from './types'
