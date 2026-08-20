@@ -345,7 +345,7 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('noscript tags', () => {
-    it('noscript content preserved', async () => {
+    it('noscript content leaves the stream as markup', async () => {
       const { head } = createStreamableHead()
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -356,9 +356,10 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      const chunk = await renderSSRHeadSuspenseChunk(head)
-      expect(chunk).toContain('noscript')
-      expect(chunk).toContain('tracking.gif')
+      // A patched noscript reaches nobody: its only audience is a client that
+      // never runs the patch.
+      expect(await renderSSRHeadSuspenseChunk(head)).toBe('')
+      expect(renderStreamEnd(head, { shell: '', end: '</body></html>' })).toContain('tracking.gif')
     })
   })
 

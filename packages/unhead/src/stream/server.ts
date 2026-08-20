@@ -150,13 +150,13 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
- * // ...stream the app, then close it with the JSON-LD held back from the chunks
+ * // ...stream the app, then close it with the tags held back from the chunks
  * res.end(`${renderStreamTail(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
-  rememberShellJsonLd(head)
+  rememberShellMarkup(head)
   head.entries.clear()
   return result
 }
@@ -222,79 +222,122 @@ function applyShellToTemplate(head: Unhead<any>, ssr: SSRHeadPayload, parsed: Re
 const JSON_LD_TYPE_RE = /\bld\+json\b/i
 
 /**
- * Search engines read `application/ld+json` anywhere in the document, so it
- * does not need to reach the served `<head>` to count. Everything else in a
- * streamed patch only works from the head, and only for clients that run the
- * script.
+ * Tags that reach the page better as body markup than as a client patch.
+ *
+ * - `noscript` only ever renders for a client that does not run the patch
+ *   script, so a patched `noscript` reaches nobody.
+ * - An explicit body position is already a request for markup.
+ * - Search engines read `application/ld+json` anywhere in the document.
+ *
+ * Everything else in a streamed patch only works from the head, and only for
+ * clients that run the script.
  */
-function isJsonLd(tag: any): boolean {
-  return !!tag && typeof tag === 'object' && typeof tag.type === 'string' && JSON_LD_TYPE_RE.test(tag.type)
+function isHoistable(tagName: string, tag: any): boolean {
+  if (!tag || typeof tag !== 'object')
+    return false
+  if (tagName === 'noscript')
+    return true
+  if (tag.tagPosition === 'bodyClose' || tag.tagPosition === 'bodyOpen')
+    return true
+  return tagName === 'script' && typeof tag.type === 'string' && JSON_LD_TYPE_RE.test(tag.type)
 }
 
 /**
- * Identity for a JSON-LD tag. Its content is the identity, which is what
- * `hashTag` falls back to for a tag with no dedupe key of its own.
+ * Identity for a hoisted tag. The shell and a later chunk build their objects
+ * independently, so the key order is normalized before comparing.
  */
-function jsonLdIdentity(tag: any): string {
-  const content = tag.innerHTML ?? tag.textContent
-  return typeof content === 'string' ? content : JSON.stringify(content)
+function hoistIdentity(tagName: string, tag: any): string {
+  let id = tagName
+  for (const key of Object.keys(tag).sort()) {
+    const value = tag[key]
+    id += `\u0000${key}=${typeof value === 'string' ? value : JSON.stringify(value)}`
+  }
+  return id
 }
 
 /**
- * Records the JSON-LD the shell already rendered, so a later chunk repeating
- * the same block does not emit a second copy of it.
+ * Records the hoistable tags the shell already rendered, so a later chunk
+ * repeating one of them does not emit a second copy.
  */
-function rememberShellJsonLd(head: Unhead<any>): void {
-  const seen = ((head as any)._streamLd ||= new Set<string>())
+function rememberShellMarkup(head: Unhead<any>): void {
+  const seen = ((head as any)._streamHoisted ||= new Set<string>())
   const propResolvers = head.resolvedOptions.propResolvers || []
   for (const entry of head.entries.values()) {
-    if (!(entry.input as any)?.script)
+    const raw: any = entry.input
+    if (!raw || typeof raw !== 'object')
       continue
-    const input: any = resolveHeadInput(entry.input, propResolvers)
-    for (const tag of input?.script || []) {
-      if (isJsonLd(tag))
-        seen.add(jsonLdIdentity(tag))
+    // Resolving is the expensive half, so skip an entry holding no tag arrays.
+    let hasTags = false
+    for (const key in raw) {
+      if (Array.isArray(raw[key])) {
+        hasTags = true
+        break
+      }
+    }
+    if (!hasTags)
+      continue
+    const input: any = resolveHeadInput(raw, propResolvers)
+    for (const key in input) {
+      const value = input[key]
+      if (!Array.isArray(value))
+        continue
+      for (const tag of value) {
+        if (isHoistable(key, tag))
+          seen.add(hoistIdentity(key, tag))
+      }
     }
   }
 }
 
 /**
  * Splits a resolved head input into the part that must go out as a client
- * patch and the JSON-LD that can go out as markup instead. Returns `undefined`
- * for a side that has nothing in it.
+ * patch and the part that can go out as body markup instead. Returns
+ * `undefined` for a side that has nothing in it.
  */
-function splitJsonLd(input: any, seen: Set<string>): { patch?: any, markup?: any } {
-  const scripts = input?.script
-  if (!Array.isArray(scripts))
-    return { patch: input }
-  const ld = scripts.filter((t: any) => {
-    if (!isJsonLd(t))
-      return false
-    const id = jsonLdIdentity(t)
-    if (seen.has(id))
-      return false
-    seen.add(id)
-    return true
-  })
-  if (!ld.length && !scripts.some(isJsonLd))
+function splitHoistable(input: any, seen: Set<string>): { patch?: any, markup?: any } {
+  if (!input || typeof input !== 'object')
     return { patch: input }
 
-  const rest = scripts.filter((t: any) => !isJsonLd(t))
-  const patch = { ...input }
-  if (rest.length)
-    patch.script = rest
-  else
-    delete patch.script
+  let patch: any
+  let markup: any
+  for (const key in input) {
+    const value = input[key]
+    if (!Array.isArray(value) || !value.some(tag => isHoistable(key, tag)))
+      continue
+    const rest: any[] = []
+    const hoisted: any[] = []
+    for (const tag of value) {
+      if (!isHoistable(key, tag)) {
+        rest.push(tag)
+        continue
+      }
+      // A repeat of something the shell already served goes out nowhere.
+      const id = hoistIdentity(key, tag)
+      if (seen.has(id))
+        continue
+      seen.add(id)
+      hoisted.push(tag)
+    }
+    patch ||= { ...input }
+    if (rest.length)
+      patch[key] = rest
+    else
+      delete patch[key]
+    if (hoisted.length)
+      (markup ||= {})[key] = hoisted
+  }
 
-  // An entry carrying nothing but JSON-LD leaves no patch behind at all.
+  if (!patch)
+    return { patch: input }
+  // An entry carrying nothing but hoisted tags leaves no patch behind at all.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
-  return { patch: hasPatch ? patch : undefined, markup: ld.length ? { script: ld } : undefined }
+  return { patch: hasPatch ? patch : undefined, markup }
 }
 
 /**
- * Renders the JSON-LD held back from earlier chunks as body markup, and clears
- * it. Drive a stream by hand and you must write this before `</body>`, or the
- * held-back JSON-LD never reaches the page. `renderStreamEnd()` does it for
+ * Renders the tags held back from earlier chunks as body markup, and clears
+ * them. Drive a stream by hand and you must write this before `</body>`, or
+ * the held-back tags never reach the page. `renderStreamEnd()` does it for
  * you when you stream from a template.
  */
 export function renderStreamTail(head: Unhead<any>): string {
@@ -308,8 +351,14 @@ export function renderStreamTail(head: Unhead<any>): string {
   const restore = new Map(head.entries)
   head.entries.clear()
   try {
-    for (const input of held)
-      head.push({ ...input, script: input.script.map((t: any) => ({ ...t, tagPosition: 'bodyClose' })) })
+    for (const input of held) {
+      // The body-open slot flushed with the shell, so everything held lands at
+      // the close. A `bodyOpen` tag is relocated, not dropped.
+      const forced: any = {}
+      for (const key in input)
+        forced[key] = input[key].map((t: any) => ({ ...t, tagPosition: 'bodyClose' }))
+      head.push(forced)
+    }
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
     // Only after the render succeeds, so a failure leaves the markup for a retry.
     ;(head as any)._streamMarkup = undefined
@@ -323,11 +372,11 @@ export function renderStreamTail(head: Unhead<any>): string {
 }
 
 /**
- * Builds the closing HTML for a stream, folding in any JSON-LD that was held
+ * Builds the closing HTML for a stream, folding in any tags that were held
  * back from the patch scripts.
  *
  * Drive a stream by hand and you must write this instead of `parts.end`, or
- * the held-back JSON-LD never reaches the page.
+ * the held-back tags never reach the page.
  *
  * @example
  * ```ts
@@ -356,12 +405,12 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
   let serialized: string
   let patchCount = 0
   try {
-    const seen = ((head as any)._streamLd ||= new Set<string>())
+    const seen = ((head as any)._streamHoisted ||= new Set<string>())
     const resolved = Array.from(head.entries.values(), e => resolveHeadInput(e.input, propResolvers))
     const inputs: any[] = []
     const markup: any[] = []
     for (const input of resolved) {
-      const split = splitJsonLd(input, seen)
+      const split = splitHoistable(input, seen)
       if (split.patch)
         inputs.push(split.patch)
       if (split.markup)
@@ -387,7 +436,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
-  // Every pending tag was JSON-LD, so it goes out as markup and this chunk
+  // Every pending tag was hoisted, so it goes out as markup and this chunk
   // needs no script at all.
   if (!patchCount)
     return ''
@@ -711,7 +760,7 @@ export function prepareStreamingTemplate(
   if (!preRenderedState) {
     // A caller supplying its own payload rendered the shell earlier, so its
     // entries are gone and anything left belongs to the stream.
-    rememberShellJsonLd(head)
+    rememberShellMarkup(head)
     head.entries.clear()
   }
   return parts
