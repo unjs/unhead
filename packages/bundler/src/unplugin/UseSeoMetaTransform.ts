@@ -64,13 +64,13 @@ export const UseSeoMetaTransform = createUnplugin<UseSeoMetaTransformOptions, fa
     if (NODE_MODULES_RE.test(pathname))
       return false
 
-    // Included
-    if (options.filter?.include?.some(pattern => id.match(pattern)))
-      return true
-
     // Excluded
     if (options.filter?.exclude?.some(pattern => id.match(pattern)))
       return false
+
+    // Included
+    if (options.filter?.include?.some(pattern => id.match(pattern)))
+      return true
 
     // vue files
     if (isVueScriptRequest(pathname, query))

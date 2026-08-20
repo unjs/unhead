@@ -27,6 +27,16 @@ describe('treeshakeServerComposables', () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
   })
 
+  it('does not transform files matched by both include and exclude', async () => {
+    const plugin = TreeshakeServerComposables.vite({
+      filter: {
+        include: [/excluded/],
+        exclude: [/excluded/],
+      },
+    }) as any
+    expect(await transformWith(plugin, couldTransform, '/src/excluded.ts')).toBeUndefined()
+  })
+
   it.each(['test.ts', 'test.mts', 'test.cts', 'test.js', 'test.mjs', 'test.cjs', 'test.tsx', 'test.jsx'])(
     'transforms %s modules',
     async (id) => {

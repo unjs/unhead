@@ -45,6 +45,15 @@ describe('useSeoMetaTransform', () => {
     expect(await transform(couldTransform, 'test.css')).toBeUndefined()
   })
 
+  it('does not transform files matched by both include and exclude', async () => {
+    expect(await transform(couldTransform, '/src/excluded.ts', {
+      filter: {
+        include: [/excluded/],
+        exclude: [/excluded/],
+      },
+    })).toBeUndefined()
+  })
+
   it.each(['test.ts', 'test.mts', 'test.cts', 'test.js', 'test.mjs', 'test.cjs', 'test.tsx', 'test.jsx'])(
     'transforms %s modules',
     async (id) => {

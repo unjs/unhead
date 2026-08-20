@@ -190,11 +190,11 @@ export const MinifyTransform = createUnplugin<MinifyTransformOptions, false>((op
     if (NODE_MODULES_RE.test(pathname))
       return false
 
-    if (options.filter?.include?.some(pattern => id.match(pattern)))
-      return true
-
     if (options.filter?.exclude?.some(pattern => id.match(pattern)))
       return false
+
+    if (options.filter?.include?.some(pattern => id.match(pattern)))
+      return true
 
     // vue files
     if (isVueScriptRequest(pathname, query))

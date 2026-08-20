@@ -23,6 +23,21 @@ async function transformWithPlugin(plugin: any, code: string | string[], id = '/
 }
 
 describe('minifyTransform', () => {
+  it('does not transform files matched by both include and exclude', async () => {
+    const plugin = MinifyTransform.vite({
+      js: mockJSMinifier,
+      filter: {
+        include: [/excluded/],
+        exclude: [/excluded/],
+      },
+    }) as any
+    const code = await transformWithPlugin(plugin, [
+      `import { useHead } from 'unhead'`,
+      `useHead({ script: [{ innerHTML: 'var x = 1;  var y = 2;' }] })`,
+    ], '/src/excluded.ts')
+    expect(code).toBeUndefined()
+  })
+
   it('minifies inline script innerHTML with provided js minifier', async () => {
     const code = await transform([
       `import { useHead } from 'unhead'`,

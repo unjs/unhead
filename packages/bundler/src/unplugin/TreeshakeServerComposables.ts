@@ -48,13 +48,13 @@ export const TreeshakeServerComposables = createUnplugin<TreeshakeServerComposab
     if (NODE_MODULES_RE.test(pathname))
       return false
 
-    // Included
-    if (options.filter?.include?.some(pattern => id.match(pattern)))
-      return true
-
     // Excluded
     if (options.filter?.exclude?.some(pattern => id.match(pattern)))
       return false
+
+    // Included
+    if (options.filter?.include?.some(pattern => id.match(pattern)))
+      return true
 
     // vue files
     if (isVueScriptRequest(pathname, query))
