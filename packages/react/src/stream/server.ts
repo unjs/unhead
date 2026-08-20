@@ -21,7 +21,20 @@ export function UnheadProvider({ value, children }: UnheadProviderProps): ReactN
 
 /**
  * Streaming head component for React.
- * Place inside Suspense boundaries after async components that use useHead.
+ *
+ * Return it from the same component that calls `useHead`, ahead of that
+ * component's own markup:
+ *
+ * ```tsx
+ * return <><HeadStream />{jsx}</>
+ * ```
+ *
+ * It must re-render in lockstep with that component. As a sibling of a
+ * suspending component, React evaluates it once before the suspension is
+ * detected, and does not evaluate it again on the replay. This call clears the
+ * pending entries, so they reach the page as neither markup nor a patch.
+ *
+ * The bundler plugin applies the wrapping form for you.
  */
 export function HeadStream(): ReactNode {
   const head = useContext(UnheadContext)
@@ -86,6 +99,9 @@ export function createStreamableHead<T = ResolvableHead>(
     head,
     onShellReady,
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
+      // This wrapper always writes `renderStreamEnd`, so body-bound tags need
+      // no patch copy. A caller driving `head` by hand keeps the fallback.
+      ;(head._stream ||= {}).writesMarkup = true
       return (writable: Writable) => {
         shellReady.then(async () => {
           try {
