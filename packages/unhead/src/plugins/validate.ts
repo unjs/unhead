@@ -1,7 +1,10 @@
-import type { HeadTag, Unhead } from '../types'
+import type { HeadTag, MetaFlat, PropResolver, Unhead } from '../types'
 import type { Diagnostic, RulesConfig, RuleSeverity, ValidationRuleId, ValidationRuleOptions } from '../validate'
+import { unpackMeta } from '../utils/meta'
 import {
   headInputPredicates,
+  inputShapeFromRuntime,
+  inputShapePredicates,
   tagInputFromRuntime,
   tagPredicates,
   titleInputFromRuntime,
@@ -50,6 +53,20 @@ export interface ValidatePluginOptions {
    * Project root path. When set, source locations are displayed as relative paths.
    */
   root?: string
+  /**
+   * Run only these rules. Every other rule is off, even when `rules` enables it.
+   *
+   * Use `['streamed-tag-hidden-from-bots']` for a focused streaming server instance.
+   */
+  only?: readonly ValidationRuleId[]
+  /**
+   * Key used to deduplicate plugin registrations.
+   *
+   * Use a unique key when one head needs more than one validator instance.
+   *
+   * @default 'validate'
+   */
+  key?: string
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
@@ -76,6 +93,7 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'deprecated-prop-hid-vmid': 'warn',
   'empty-meta-content': 'warn',
   'html-in-title': 'warn',
+  'invalid-input-shape': 'warn',
   'non-absolute-canonical': 'warn',
   'numeric-tag-priority': 'info',
   'possible-typo': 'warn',
@@ -83,6 +101,7 @@ const PREDICATE_SEVERITY: Record<string, 'warn' | 'info'> = {
   'preload-missing-as': 'warn',
   'robots-conflict': 'warn',
   'script-src-with-content': 'warn',
+  'streamed-tag-hidden-from-bots': 'warn',
   'twitter-handle-missing-at': 'warn',
   'viewport-user-scalable': 'info',
 }
@@ -140,19 +159,154 @@ function captureSource(root?: string): string | undefined {
   return undefined
 }
 
+/**
+ * Observe top-level values after preceding framework resolvers in the same walk.
+ */
+function createInputShapeObserver(): {
+  resolver: PropResolver
+  take: () => Record<string, unknown> | undefined
+} {
+  let remainingRootKeys: Set<string> | undefined
+  let resolvedValues: Map<string, unknown> | undefined
+
+  const resolver: PropResolver = (key, value) => {
+    if (key === undefined) {
+      if (value?.constructor === Object) {
+        remainingRootKeys = new Set(Object.keys(value))
+        resolvedValues = new Map()
+      }
+      else {
+        remainingRootKeys = undefined
+        resolvedValues = undefined
+      }
+    }
+    else if (remainingRootKeys?.delete(key)) {
+      resolvedValues?.set(key, value)
+    }
+    return value
+  }
+  resolver._static = true
+
+  return {
+    resolver,
+    take() {
+      const input = resolvedValues
+        ? Object.fromEntries(resolvedValues)
+        : undefined
+      remainingRootKeys = undefined
+      resolvedValues = undefined
+      return input
+    },
+  }
+}
+
+/**
+ * Tags bots must receive in server HTML.
+ *
+ * Most must stay in `<head>`. JSON-LD can appear anywhere in the response.
+ * Streaming SSR delivers late registrations through a DOM patch. Browsers
+ * apply it. Many bots only read server HTML.
+ */
+const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
+const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
+const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
+const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
+const JSON_LD_TYPE_RE = /^[\t\n\f\r ]*application\/ld\+json[\t\n\f\r ]*(?:;|$)/i
+const REL_SEPARATOR_RE = /[\t\n\f\r ]+/
+// Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
+const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
+
+function relTokens(value: unknown): string[] {
+  return String(value || '').toLowerCase().split(REL_SEPARATOR_RE)
+}
+
+/**
+ * Resolves the plugin-owned shapes `renderSSRHeadSuspenseChunk` leaves alone:
+ * a `useSeoMeta` entry, and the legacy `body` prop DeprecationsPlugin rewrites.
+ */
+function* expandPendingTag(tag: HeadTag): Generator<HeadTag> {
+  // `useHeadSafe` drops these outright, so reporting one as "a browser gets
+  // it, a bot does not" would be wrong twice over.
+  if (tag._safe && tag.tag === 'link' && relTokens(tag.props.rel).some(rel => SAFE_BLOCKED_RELS.has(rel)))
+    return
+  if (tag.props.body)
+    tag.tagPosition = 'bodyClose'
+  if (tag.tag !== '_flatMeta') {
+    yield tag
+    return
+  }
+  for (const props of unpackMeta(tag.props as MetaFlat))
+    yield { ...tag, tag: 'meta', props: props as unknown as HeadTag['props'] }
+}
+
+function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
+  const props = tag.props
+  // Served JSON-LD remains visible as Streamed Body Tags.
+  if (tag.tag === 'script')
+    return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
+  // Other reported tags only carry meaning from the head.
+  if (tag.tagPosition?.startsWith('body'))
+    return false
+  switch (tag.tag) {
+    case 'title':
+    case 'titleTemplate':
+    case 'base':
+      return true
+    case 'meta': {
+      if (BOT_HEAD_META_NAMES.has(String(props.name || '').toLowerCase()))
+        return true
+      if (BOT_HEAD_META_EQUIVS.has(String(props['http-equiv'] || '').toLowerCase()))
+        return true
+      return BOT_HEAD_META_PREFIX_RE.test(String(props.property || props.name || '').toLowerCase())
+    }
+    case 'link':
+      return relTokens(props.rel).some(rel => BOT_HEAD_LINK_RELS.has(rel))
+    default:
+      return false
+  }
+}
+
+function describeTag(tag: HeadTag): string {
+  const props = tag.props
+  if (tag.tag === 'meta')
+    return `meta[${props.property ? `property="${props.property}"` : props['http-equiv'] ? `http-equiv="${props['http-equiv']}"` : `name="${props.name}"`}]`
+  if (tag.tag === 'link')
+    return `link[rel="${props.rel}"]`
+  if (tag.tag === 'script')
+    return 'script[type="application/ld+json"]'
+  return tag.tag
+}
+
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
-  const stacks = new Map<number, string>()
+  const only = options.only && new Set<string>(options.only)
+  const pluginKey = options.key || 'validate'
+
+  function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
+    if (only && !only.has(id))
+      return 'off'
+    return resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, fallback)
+  }
 
   return defineHeadPlugin(<Input, RenderResult>(head: Unhead<Input, RenderResult>) => {
+    // Per head, not per plugin: entry indexes restart at 1 for every head, so
+    // one instance shared across requests would cross-attribute their sources
+    // and never release them.
+    const stacks = new Map<number, string>()
+    const pendingInputDiagnostics: { diagnostic: Diagnostic, entryIndex: number }[] = []
+    const inputShapeObserver = createInputShapeObserver()
+    head.resolvedOptions.propResolvers = [
+      ...(head.resolvedOptions.propResolvers || []),
+      inputShapeObserver.resolver,
+    ]
     const hooks = head.hooks as any
     if (hooks) {
       const _callHook = hooks.callHook.bind(hooks)
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
         const result = _callHook(name, ...args)
-        if (result?.then && !warnedAsyncHook) {
+        if (result?.then && !warnedAsyncHook && !only) {
           warnedAsyncHook = true
           console.warn(`[unhead] promise ignored: ${name}`)
         }
@@ -162,7 +316,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
-      if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
+      if ((opts as any)?.mode && severityFor('deprecated-option-mode', 'warn') !== 'off') {
         console.warn(`[unhead] "mode: '${(opts as any).mode}'" option was removed in v3. Use the appropriate createHead import (unhead/client or unhead/server) instead.`)
       }
       const source = captureSource(root)
@@ -177,20 +331,80 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       return active
     }
 
+    /**
+     * `replace` is for a full resolve, which recomputes every rule. Stream
+     * chunks are incremental events, so they append: overwriting would drop
+     * the resolve's rules, and an empty chunk would clear the snapshot
+     * devtools reads.
+     */
+    function dispatch(rules: HeadValidationRule[], mode: 'replace' | 'append') {
+      const head_ = head as any
+      head_._validationRules = mode === 'replace'
+        ? rules
+        : [...(head_._validationRules || []), ...rules]
+      if (!rules.length)
+        return
+      if (options.onReport) {
+        options.onReport(rules)
+        return
+      }
+      for (const rule of rules) {
+        const loc = rule.source ? ` (${rule.source})` : ''
+        console.warn(`[unhead] ${rule.message}${loc}`)
+      }
+    }
+
     return {
-      key: 'validate',
+      key: pluginKey,
       hooks: {
+        'ssr:streamChunk': ({ tags }) => {
+          const severity = severityFor('streamed-tag-hidden-from-bots', 'warn')
+          if (severity === 'off')
+            return
+          const rules: HeadValidationRule[] = []
+          for (const pending of tags) {
+            for (const tag of expandPendingTag(pending)) {
+              if (!isHiddenFromBots(tag, !!head._stream?.writesBodyTags))
+                continue
+              const entryIndex = tag._p != null ? tag._p >> 10 : undefined
+              rules.push({
+                id: 'streamed-tag-hidden-from-bots',
+                message: `Bots will not see ${describeTag(tag)}. It arrived after the shell, so it ships as a client patch. Register it before the shell.`,
+                severity,
+                source: entryIndex != null ? stacks.get(entryIndex) : undefined,
+                tag,
+              })
+            }
+          }
+          dispatch(rules, 'append')
+        },
+        'entries:normalize': ({ entry }) => {
+          const input = inputShapeObserver.take()
+          if (!input || input.constructor !== Object)
+            return
+          const shape = inputShapeFromRuntime('head', input)
+          for (const predicate of Object.values(inputShapePredicates)) {
+            for (const diagnostic of predicate(shape))
+              pendingInputDiagnostics.push({ diagnostic, entryIndex: entry._i })
+          }
+        },
         'tags:afterResolve': ({ tags }) => {
           const rules: HeadValidationRule[] = []
 
-          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag) {
-            const severity = resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, defaultSeverity)
+          function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
+            const severity = severityFor(id, defaultSeverity)
             if (severity === 'off')
               return
-            const entryIndex = tag?._p != null ? tag._p >> 10 : undefined
+            const entryIndex = inputEntryIndex ?? (tag?._p != null ? tag._p >> 10 : undefined)
             const source = entryIndex != null ? stacks.get(entryIndex) : undefined
             rules.push({ id, message, severity, source, tag })
           }
+
+          for (const { diagnostic, entryIndex } of pendingInputDiagnostics) {
+            const severity = PREDICATE_SEVERITY[diagnostic.ruleId] ?? 'warn'
+            report(diagnostic.ruleId, diagnostic.message, severity, undefined, entryIndex)
+          }
+          pendingInputDiagnostics.length = 0
 
           // Build lookup maps for cross-tag checks
           const metaByKey = new Map<string, HeadTag>()
@@ -249,6 +463,11 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
             if (tagInput) {
               for (const predicate of Object.values(tagPredicates))
                 emitFromPredicates(predicate(tagInput), tag)
+            }
+            if (tag.tag === 'htmlAttrs' || tag.tag === 'bodyAttrs') {
+              const inputShape = inputShapeFromRuntime(tag.tag, tag.props)
+              for (const predicate of Object.values(inputShapePredicates))
+                emitFromPredicates(predicate(inputShape), tag)
             }
 
             if (tag.tag === 'meta' && typeof metaKey === 'string') {
@@ -562,22 +781,9 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           }
 
           // Store rules on the head instance for devtools integration
-          ;(head as any)._validationRules = rules
-
-          // Dispatch
-          if (rules.length) {
-            if (options.onReport) {
-              options.onReport(rules)
-            }
-            else {
-              for (const rule of rules) {
-                const loc = rule.source ? ` (${rule.source})` : ''
-                console.warn(`[unhead] ${rule.message}${loc}`)
-              }
-            }
-          }
+          dispatch(rules, 'replace')
         },
       },
     }
-  }, 'validate')
+  }, pluginKey)
 }

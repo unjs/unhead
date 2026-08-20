@@ -43,6 +43,8 @@ Use the [Schema.org Generator](/tools/schema-generator) to build your structured
 
 - [Organization - Schema.org](https://schema.org/Organization)
 - [Organization Schema Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/organization)
+- [Loyalty Program Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/loyalty-program)
+- [Merchant Shipping Policy Markup - Google Search Central](https://developers.google.com/search/docs/appearance/structured-data/shipping-policy)
 - [Choose an Identity - Organization](/docs/schema-org/guides/recipes/identity#organization)
 
 ## Unhead input property
@@ -55,7 +57,7 @@ The Unhead `Organization` interface requires `name` when you pass an object. Goo
 
 ## Recommended Properties
 
-- **logo** `NodeRelation<ImageObject | string>`
+- **logo** `NodeRelations<ImageObject | string>`
 
   A logo image URL, which may be relative to the site root.
 
@@ -74,6 +76,12 @@ The Unhead `Organization` interface requires `name` when you pass an object. Goo
 - **foundingDate** `string`
 
   The date the organization was founded.
+
+Google also documents `alternateName`, `contactPoint`, `description`, organization identifiers, return policies, membership programs, shipping services, employee counts, and interaction statistics. These fields and their nested node types are available in Unhead.
+
+`MemberProgram` requires `name`, `description`, and at least one `hasTiers` entry. Each MemberProgramTier requires `name` and `hasTierBenefit`.
+
+`ShippingService` requires `shippingConditions`. Its typed fields cover fulfillment, handling and transit periods, destinations, origins, order and package constraints, seasonal overrides, rates, and member tiers.
 
 ## Examples
 
@@ -103,6 +111,8 @@ defineOrganization({
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
 - address as `PostalAddress` object
+
+- `contactPoint`, `hasMemberProgram`, `hasMerchantReturnPolicy`, `hasShippingService`, and `numberOfEmployees` as typed nested nodes
 
 - resolves a string `logo` URL into an ImageObject with the ID `#logo`
 
@@ -156,7 +166,7 @@ export interface OrganizationSimple extends Thing {
    * (for example, if the logo is mostly white or gray,
    * it may not look how you want it to look when displayed on a white background).
    */
-  logo?: NodeRelation<ImageObject | string>
+  logo?: NodeRelations<ImageObject | string>
   /**
    * The site's home URL.
    */
@@ -190,6 +200,24 @@ export interface OrganizationSimple extends Thing {
    * The date the organization was founded.
    */
   foundingDate?: string
+  alternateName?: string
+  contactPoint?: NodeRelations<ContactPoint>
+  description?: string
+  duns?: string
+  globalLocationNumber?: string
+  hasMerchantReturnPolicy?: NodeRelations<MerchantReturnPolicy>
+  hasMemberProgram?: NodeRelations<MemberProgram>
+  hasShippingService?: NodeRelations<ShippingService>
+  iso6523Code?: string
+  legalName?: string
+  leiCode?: string
+  naics?: string
+  numberOfEmployees?: NodeRelation<QuantitativeValue>
+  taxID?: string
+  vatID?: string
+  identifier?: NodeRelations<PropertyValue | string>
+  agentInteractionStatistic?: NodeRelations<InteractionCounter>
+  interactionStatistic?: NodeRelations<InteractionCounter>
 }
 
 export interface Organization extends OrganizationSimple {}

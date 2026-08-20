@@ -46,22 +46,6 @@ function cleanupDomState(state: DomStateInternal) {
 
 function createDomState<Input, RenderResult>(head: Unhead<Input, RenderResult>, dom: Document): DomStateInternal {
   const state: DomStateInternal = { _d: dom, _t: dom.title, _e: new Map([['htmlAttrs', dom.documentElement], ['bodyAttrs', dom.body]]), _p: {}, _s: {}, _l: new Map() }
-  for (const el of [...dom.body.children, ...dom.head.children]) {
-    const tag = el.tagName.toLowerCase() as HeadTag['tag']
-    if (!HasElementTags.has(tag))
-      continue
-    const props: Record<string, any> = { innerHTML: el.innerHTML }
-    for (const n of el.getAttributeNames())
-      props[n] = el.getAttribute(n)
-    const next = normalizeProps({ tag, props: {} } as HeadTag, props)
-    next.key = el.getAttribute('data-hid') || undefined
-    const dedupe = dedupeKey(next) || hashTag(next)
-    let k = dedupe
-    let c = 1
-    while (state._e.has(k))
-      k = `${dedupe}:${c++}`
-    state._e.set(k, el)
-  }
   for (const entry of head.entries.values()) {
     if (entry._o !== undefined) {
       const orig = entry._o as Record<string, any>
@@ -85,10 +69,7 @@ function createDomState<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
 function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, options: RenderDomHeadOptions = {}): boolean {
   const dom: Document | undefined = options.document || head.resolvedOptions.document
   const activeState = head._dom as DomStateInternal | undefined
-  const documentChanged = !!activeState && activeState._d !== dom
-  if (!dom || (activeState && !documentChanged && !head.dirty && !hasPendingEntries(head)))
-    return false
-  if (head._du)
+  if (!dom || head._du || (activeState && activeState._d === dom && !head.dirty && !hasPendingEntries(head)))
     return false
   const defaultView = dom.defaultView
   head._du = true
@@ -98,7 +79,7 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
     callHook(head, 'dom:beforeRender', beforeRenderCtx)
     if (!beforeRenderCtx.shouldRender)
       return false
-    let state = head._dom as DomStateInternal | undefined
+    let state = activeState
     if (state?._d !== dom) {
       if (state)
         cleanupDomState(state)
@@ -114,32 +95,22 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
     }
     state._s = {}
     const renderState = state
+    const previous = renderState._p
 
-    function track(id: string, scope: string, fn: () => void, fresh?: boolean) {
-      const k = `${id}:${scope}`
+    function track(key: string, fn: () => void, fresh?: boolean) {
       // reuse the previous render's cleanup for a stable key: same $el/attr/class means an identical
       // closure, so this avoids reallocating ~one closure per tracked prop every frame. `fresh` opts
       // out for content closures, which capture a value that can change between renders.
-      renderState._s[k] = (!fresh && renderState._p[k]) || fn
-      delete renderState._p[k]
-    }
-
-    // Reclaim the previous render's cleanup for a key (and remove it from the pool), or undefined.
-    // Used as `_s[key] = reclaim(key) || (() => ...)` so the cleanup closure sits on the right of
-    // `||` and is only allocated when the key is new — a stable re-render allocates no closures.
-    function reclaim(key: string): (() => void) | undefined {
-      const prev = renderState._p[key]
-      delete renderState._p[key]
-      return prev
+      renderState._s[key] = (!fresh && previous[key]) || fn
+      delete previous[key]
     }
 
     function trackEvent(id: string, k: string, ev: string, source: DomEventHandler, $el: Element, target: EventTarget) {
-      const scope = `event:${k}`
-      const key = `${id}:${scope}`
+      const key = `${id}:event:${k}`
       const prev = renderState._l.get(key)
       // same target/type/source: keep the existing listener, just re-track its cleanup
       if (prev && prev[0] === target && prev[1] === ev && prev[2] === source) {
-        track(id, scope, prev[4])
+        track(key, prev[4])
         return
       }
       prev?.[4]()
@@ -156,13 +127,12 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
       renderState._l.set(key, [target, ev, source, handler, cleanup])
       $el.setAttribute(dk, '')
       // fresh: this cleanup removes a brand-new listener, the stale _p entry points at the old one
-      track(id, scope, cleanup, true)
+      track(key, cleanup, true)
     }
 
     function trackCtx({ id, $el, tag }: DomRenderTagContext & { $el: Element }) {
-      const isAttr = tag.tag.endsWith('Attrs')
       renderState._e.set(id, $el)
-      if (!isAttr) {
+      if (!tag.tag.endsWith('Attrs')) {
         // Content is tracked so a reused element (same dedupe id) that later drops its
         // textContent/innerHTML has the stale value cleared. The value guard ensures we only
         // clear what we set, never SSR-adopted or externally mutated content.
@@ -171,7 +141,7 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
           const renderedText = typeof text === 'function' ? '' : String(text)
           if (renderedText !== $el.textContent)
             $el.textContent = renderedText
-          track(id, 'text', () => {
+          track(`${id}:text`, () => {
             if ($el.textContent === renderedText)
               $el.textContent = ''
           }, true)
@@ -180,16 +150,16 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
         if (html != null && html !== '') {
           if (html !== $el.innerHTML)
             $el.innerHTML = html as string
-          track(id, 'html', () => {
+          track(`${id}:html`, () => {
             if ($el.innerHTML === html)
               $el.innerHTML = ''
           }, true)
         }
         const elKey = `${id}:el`
-        renderState._s[elKey] = reclaim(elKey) || (() => {
+        track(elKey, previous[elKey] || (() => {
           $el?.remove()
           renderState._e.delete(id)
-        })
+        }))
       }
       for (const k in tag.props) {
         const v = tag.props[k]
@@ -204,7 +174,7 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
         if (k === 'class' && v) {
           for (const c of v as Iterable<string>) {
             const key = `${ck}:${c}`
-            renderState._s[key] = reclaim(key) || (() => $el.classList.remove(c))
+            track(key, previous[key] || (() => $el.classList.remove(c)))
             if (!$el.classList.contains(c))
               $el.classList.add(c)
           }
@@ -212,14 +182,14 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
         else if (k === 'style' && v) {
           for (const [sk, sv] of v as Iterable<[string, string]>) {
             const key = `${ck}:${sk}`
-            renderState._s[key] = reclaim(key) || (() => ($el as HTMLElement).style.removeProperty(sk))
+            track(key, previous[key] || (() => ($el as HTMLElement).style.removeProperty(sk)))
             ;($el as HTMLElement).style.setProperty(sk, sv)
           }
         }
         else if (v !== false as any && v !== null) {
           if ($el.getAttribute(k) !== v as any)
             $el.setAttribute(k, v === true as any ? '' : String(v))
-          renderState._s[ck] = reclaim(ck) || (() => $el.removeAttribute(k))
+          track(ck, previous[ck] || (() => $el.removeAttribute(k)))
         }
       }
     }
@@ -240,7 +210,7 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
       tags.push(ctx)
       if (tag.tag === 'title') {
         dom.title = tag.textContent as string
-        track('title', '', () => dom.title = renderState._t)
+        track('title:', () => dom.title = renderState._t)
         continue
       }
       ctx.$el = renderState._e.get(id)
@@ -249,10 +219,32 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
       else if (HasElementTags.has(tag.tag))
         pending.push(ctx)
     }
+    // Scan when a missing tag may match late server HTML.
+    if (pending.length) {
+      const tracked = new Set(renderState._e.values())
+      for (const el of [...dom.body.children, ...dom.head.children]) {
+        const elTag = el.tagName.toLowerCase() as HeadTag['tag']
+        if (!HasElementTags.has(elTag) || tracked.has(el))
+          continue
+        const props: Record<string, any> = { innerHTML: el.innerHTML }
+        for (const n of el.getAttributeNames())
+          props[n] = el.getAttribute(n)
+        const next = normalizeProps({ tag: elTag, props: {} } as HeadTag, props)
+        next.key = el.getAttribute('data-hid') || undefined
+        const dedupe = dedupeKey(next) || hashTag(next)
+        let k = dedupe
+        let c = 1
+        while (renderState._e.has(k))
+          k = `${dedupe}:${c++}`
+        renderState._e.set(k, el)
+      }
+    }
     for (const ctx of pending) {
-      ctx.$el = dom.createElement(ctx.tag.tag)
+      const found = renderState._e.get(ctx.id)
+      ctx.$el = found || dom.createElement(ctx.tag.tag)
       trackCtx(ctx as DomRenderTagContext & { $el: Element })
-      ;(frag[ctx.tag.tagPosition || 'head'] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
+      if (!found)
+        (frag[ctx.tag.tagPosition || 'head'] ??= dom.createDocumentFragment()).appendChild(ctx.$el)
     }
     if (frag.head)
       dom.head.appendChild(frag.head)
@@ -260,8 +252,8 @@ function _renderDOMHead<Input, RenderResult>(head: Unhead<Input, RenderResult>, 
       dom.body.insertBefore(frag.bodyOpen, dom.body.firstChild)
     if (frag.bodyClose)
       dom.body.appendChild(frag.bodyClose)
-    for (const k in renderState._p)
-      renderState._p[k]()
+    for (const k in previous)
+      previous[k]()
     head._dom = renderState
     didRender = true
     callHook(head, 'dom:rendered', { renders: tags })

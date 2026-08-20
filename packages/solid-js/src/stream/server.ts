@@ -1,13 +1,15 @@
 import type { JSX } from 'solid-js'
 import type { ServerUnhead } from 'unhead/server'
-import type { PreparedTemplate } from 'unhead/stream/server'
+import type { PreparedTemplate, StreamingTemplateParts } from 'unhead/stream/server'
 import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from 'unhead/types'
 import { useContext } from 'solid-js'
 import { ssr } from 'solid-js/web'
 import {
   createStreamableHead as _createStreamableHead,
   prepareStreamingTemplate,
+  renderShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 import { UnheadContext } from '../context'
 
@@ -18,6 +20,8 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
+  renderStreamEnd,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,
   wrapStream,
@@ -81,13 +85,15 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
     head,
     onCompleteShell: () => {
       // Capture head entries from shell components before streaming starts
-      const shellState = head.render()
-      head.entries.clear()
+      const shellState = renderShell(head)
       // @ts-expect-error - custom property for SolidJS streaming
       head._solidShellComplete = true
       resolveShellReady(shellState)
     },
     wrapStream: (stream: ReadableStream<Uint8Array>, template: string | PreparedTemplate) => {
+      // `renderStreamEnd()` writes Streamed Body Tags.
+      // Manual drivers retain the client patch by default.
+      ;(head._stream ||= {}).writesBodyTags = true
       const encoder = new TextEncoder()
       let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
       let readerReleased = false
@@ -115,7 +121,7 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
           let shellResolved = false
           let shellFlushed = false
           let innerDone = false
-          let end = ''
+          let parts: StreamingTemplateParts | undefined
           let shellState: SSRHeadPayload | undefined
           const bufferedChunks: Uint8Array[] = []
           const outputChunks: Uint8Array[] = []
@@ -197,9 +203,8 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
 
             try {
               if (!shellFlushed) {
-                const prepared = prepareStreamingTemplate(head, template, shellState)
-                enqueueOutput(encoder.encode(prepared.shell))
-                end = prepared.end
+                parts = prepareStreamingTemplate(head, template, shellState)
+                enqueueOutput(encoder.encode(parts.shell))
                 shellFlushed = true
               }
 
@@ -211,7 +216,8 @@ export function createStreamableHead<I = ResolvableHead>(options: CreateStreamab
               }
 
               if (innerDone) {
-                enqueueOutput(encoder.encode(end))
+                if (parts)
+                  enqueueOutput(encoder.encode(renderStreamEnd(head, parts)))
                 closeOutput()
               }
             }
@@ -313,7 +319,7 @@ export function HeadStream(): JSX.Element {
   if (!head._solidShellComplete)
     return null
 
-  const update = renderSSRHeadSuspenseChunk(head as unknown as Unhead<ResolvableHead, unknown>)
+  const update = renderSSRHeadSuspenseChunk(head as unknown as Unhead<ResolvableHead, any>)
   if (!update)
     return null
 

@@ -19,7 +19,7 @@ export function findNode<T>(unhead: unknown, id: string) {
     throw new Error(`Could not find Schema.org node "${id}".`)
   return node as T
 }
-export function useSetup(fn: (unhead: ServerUnhead<ResolvableHead>) => void, meta: Partial<MetaInput> = {}) {
+export async function useSetup(fn: (unhead: ServerUnhead<ResolvableHead>) => Promise<void> | void, meta: Partial<MetaInput> = {}) {
   const head = createHead({
     disableDefaults: true,
     plugins: [
@@ -36,6 +36,6 @@ export function useSetup(fn: (unhead: ServerUnhead<ResolvableHead>) => void, met
       }),
     ],
   })
-  fn(head)
+  await fn(head)
   return head
 }

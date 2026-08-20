@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "nuxt": "catalog:conflicts_nuxt_4_5_0",
+    "nuxt": "catalog:",
     "unhead": "workspace:*"
   }
 }

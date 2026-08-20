@@ -1,4 +1,4 @@
-import type { HeadInputView, TagInput } from './types'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from './types'
 
 /**
  * Subset of the runtime `HeadTag` shape this adapter needs. We don't import
@@ -16,6 +16,34 @@ export interface RuntimeHeadTag {
 
 const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style'])
 
+function valueKind(value: unknown): InputValueKind {
+  if (value === null)
+    return 'null'
+  if (Array.isArray(value))
+    return 'array'
+  const kind = typeof value
+  if (kind === 'boolean' || kind === 'function' || kind === 'number' || kind === 'object' || kind === 'string')
+    return kind
+  return 'unknown'
+}
+
+/**
+ * Adapt a resolved runtime input object into its structural validation view.
+ * Callers must pass values after framework prop resolvers have run.
+ */
+export function inputShapeFromRuntime(
+  context: InputShapeContext,
+  input: Record<string, unknown>,
+): InputShapeView {
+  const keys = new Set<string>()
+  const valueKinds = new Map<string, InputValueKind>()
+  for (const [key, value] of Object.entries(input)) {
+    keys.add(key)
+    valueKinds.set(key, valueKind(value))
+  }
+  return { context, keys, valueKinds }
+}
+
 /**
  * Adapt a runtime tag (post-resolve `HeadTag`) into a {@link TagInput} that
  * predicates can read. Coerces `props.content` to a string and lowercases
@@ -23,7 +51,7 @@ const TAG_TYPES = new Set(['meta', 'link', 'script', 'noscript', 'style'])
  * the runtime `ValidatePlugin`'s pre-existing behaviour.
  *
  * Returns `undefined` when the tag is not one of the validated tag types
- * (`title`, `base`, etc. are handled separately).
+ * (`title`, `base`, and attribute objects are handled separately).
  */
 export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   if (!TAG_TYPES.has(tag.tag))
@@ -50,9 +78,8 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
         props[k] = v
     }
     else {
-      // Fallback to `String(v)` for anything coerceable; predicates only consume
-      // primitives, so non-coerceable values become `[object Object]` and miss
-      // every check (which is the safe outcome — runtime warnings are best-effort).
+      // Predicates only consume primitives, so non-coerceable values become
+      // `[object Object]` and miss every check.
       props[k] = String(v)
     }
   }
@@ -61,10 +88,12 @@ export function tagInputFromRuntime(tag: RuntimeHeadTag): TagInput | undefined {
   // textContent on the tag itself, not in `props`. Surface their presence via
   // `keys` so the predicate's `keys.has('innerHTML')` check works.
   if (tag.tag === 'script' || tag.tag === 'style' || tag.tag === 'noscript') {
-    if (tag.innerHTML != null && tag.innerHTML !== '')
+    if (tag.innerHTML != null && tag.innerHTML !== '') {
       keys.add('innerHTML')
-    if (tag.textContent != null && tag.textContent !== '')
+    }
+    if (tag.textContent != null && tag.textContent !== '') {
       keys.add('textContent')
+    }
   }
 
   // Surface the top-level `tagPriority` field so the `numeric-tag-priority`

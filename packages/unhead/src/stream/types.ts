@@ -17,8 +17,6 @@ export interface StreamingGlobal {
    * Framework wrappers refine this internal value after reading the queue.
    */
   _head?: unknown
-  /** True while framework hydration is in progress (client push suppression). */
-  _hydrationLocked?: () => boolean
   /** Push an entry batch onto the queue (pre-init) or the head (post-init). */
   push: (entries: SerializableHead[]) => void
 }

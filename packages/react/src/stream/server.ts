@@ -9,6 +9,7 @@ import {
   createStreamableHead as createCoreStreamableHead,
   prepareStreamingTemplate,
   renderSSRHeadSuspenseChunk,
+  renderStreamEnd,
 } from 'unhead/stream/server'
 import { toUnheadContextValue, UnheadContext } from '../context'
 
@@ -20,7 +21,17 @@ export function UnheadProvider<I = UseHeadInput, RenderResult = unknown>({ value
 
 /**
  * Streaming head component for React.
- * Place inside Suspense boundaries after async components that use useHead.
+ *
+ * Return it before the output from the component that calls `useHead`:
+ *
+ * ```tsx
+ * return <><HeadStream />{jsx}</>
+ * ```
+ *
+ * Keep it inside that component. A sibling may render before React detects
+ * suspension. That early render clears the pending entries.
+ *
+ * The bundler plugin applies the wrapping form for you.
  */
 export function HeadStream(): ReactNode {
   const head = useContext(UnheadContext)
@@ -93,18 +104,27 @@ export function createStreamableHead<T = ResolvableHead>(
     head,
     onShellReady,
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
+      // `renderStreamEnd()` writes Streamed Body Tags.
+      // Manual drivers retain the client patch by default.
+      ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {
         shellReady.then(async () => {
           try {
-            const { shell, end } = await prepareStreamingTemplate(head, template)
-            writable.write(shell)
+            const parts = await prepareStreamingTemplate(head, template)
+            writable.write(parts.shell)
 
             const passthrough = new PassThrough()
 
             passthrough.on('data', chunk => writable.write(chunk))
             passthrough.on('end', () => {
-              writable.write(end)
-              writable.end()
+              // The event runs after the outer catch. Handle its error here.
+              try {
+                writable.write(renderStreamEnd(head, parts))
+                writable.end()
+              }
+              catch (err) {
+                writable.destroy(err instanceof Error ? err : new Error(String(err)))
+              }
             })
             passthrough.on('error', (err) => {
               writable.destroy(err)
@@ -130,6 +150,8 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
+  renderStreamEnd,
   type StreamableHeadContext,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,

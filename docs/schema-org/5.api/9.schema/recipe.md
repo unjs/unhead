@@ -16,7 +16,7 @@ description: Use defineRecipe() to add Recipe structured data with cooking time,
 
 ## Google and Unhead requirements
 
-Google requires `name` and `image` for a Recipe rich result. Unhead can inherit those fields from page metadata. Separately, the `Recipe` TypeScript input requires `recipeIngredient` and `recipeInstructions`; Google recommends those two properties but does not require them for basic eligibility. Unhead performs no runtime validation of either set of rules.
+Google requires `name` and `image` for a Recipe rich result. Unhead can inherit those fields from page metadata. Google recommends `recipeIngredient` and `recipeInstructions`, so the input type leaves both optional. Unhead performs no runtime eligibility validation.
 
 - **name** `string`
 
@@ -24,7 +24,7 @@ Google requires `name` and `image` for a Recipe rich result. Unhead can inherit 
 
   Route metadata on the `title` key can provide this value; see [Defaults](#defaults).
 
-- **image** `string|ImageObject`
+- **image** `NodeRelations<string | ImageObject>`
 
   An image representing the completed recipe, referenced by ID.
 
@@ -32,11 +32,11 @@ Google requires `name` and `image` for a Recipe rich result. Unhead can inherit 
 
 - **recipeIngredient** `string[]`
 
-  An array of strings representing each ingredient and quantity (e.g., "3 apples").
+  Recommended. An array of strings representing each ingredient and quantity, for example `"3 apples"`.
 
-- **recipeInstructions** `NodeRelations<HowToStep | string>`
+- **recipeInstructions** `NodeRelations<HowToSection | HowToStep | string>`
 
-  An array of instructions for how to prepare the recipe.
+  Recommended. Instructions for how to prepare the recipe, optionally grouped into sections.
 
 ## Defaults
 
@@ -53,7 +53,9 @@ Google requires `name` and `image` for a Recipe rich result. Unhead can inherit 
 
 See [Global Resolves](/docs/schema-org/guides/get-started/overview#how-does-schemaorg-get-page-data) for full context.
 
-- `datePublished` can be resolved from Date objects
+- `aggregateRating`, `author`, `recipeInstructions`, and `video` resolve as typed nested nodes
+
+- `datePublished` accepts Date objects
 
 ### Minimal
 
@@ -84,15 +86,15 @@ export interface RecipeSimple extends Thing {
   /**
    * An image representing the completed recipe, referenced by ID.
    */
-  image?: NodeRelation<ImageObject | string>
+  image?: NodeRelations<ImageObject | string>
   /**
    * An array of strings representing each ingredient and quantity (e.g., "3 apples").
    */
-  recipeIngredient: string[]
+  recipeIngredient?: string[]
   /**
-   * An array of HowToStep objects.
+   * Instructions as a HowToStep, HowToSection, string, or an array of those values.
    */
-  recipeInstructions: NodeRelations<HowToStep | string>
+  recipeInstructions?: NodeRelations<HowToSection | HowToStep | string>
   /**
    * A string describing the recipe.
    */
@@ -121,7 +123,7 @@ export interface RecipeSimple extends Thing {
    * The number of servings the recipe creates (not the number of individual items, if these are different), as a string
    * (e.g., "6", rather than 6).
    */
-  recipeYield?: string
+  recipeYield?: Arrayable<number | string>
   /**
    * An array of strings representing the tools required in the recipe.
    */
@@ -153,11 +155,15 @@ export interface RecipeSimple extends Thing {
   /**
    * A reference-by-ID to the author of the article.
    */
-  author?: NodeRelation<Person>
+  author?: NodeRelation<Identity>
   /**
    * The date when the recipe was added, in ISO 8601 format.
    */
   datePublished?: ResolvableDate
+  /**
+   * The average rating of the recipe.
+   */
+  aggregateRating?: NodeRelation<AggregateRating>
 }
 
 export interface NutritionInformation extends Thing {

@@ -9,8 +9,8 @@ export interface UniversalUnheadProviderProps<I = UseHeadInput, RenderResult = u
 
 export function toUnheadContextValue<I, RenderResult>(
   head: Unhead<I, RenderResult>,
-): Unhead {
-  return head as unknown as Unhead
+): Unhead<any, any> {
+  return head as unknown as Unhead<any, any>
 }
 
-export const UnheadContext = /* @__PURE__ */ createContext<Unhead | null>(null)
+export const UnheadContext = /* @__PURE__ */ createContext<Unhead<any, any> | null>(null)

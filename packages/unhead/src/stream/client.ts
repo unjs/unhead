@@ -1,7 +1,7 @@
 import type { ClientUnhead } from '../client/adapter'
 import type { ClientHeadHooks, CreateClientHeadOptions, ResolvableHead, Unhead } from '../types'
 import type { StreamingGlobal, UnheadStreamQueue } from './types'
-import { createStreamClientHeadAdapter } from '../client/adapter'
+import { createClientHeadAdapter } from '../client/adapter'
 import { createHooks } from '../utils/hooks'
 
 export type { StreamingGlobal, UnheadStreamQueue }
@@ -24,21 +24,28 @@ export function createStreamableHead<T = never>(options: CreateStreamableClientH
   type Input = T | ResolvableHead
   const { streamKey = DEFAULT_STREAM_KEY, ...rest } = options
   const win = typeof window !== 'undefined' ? window as unknown as Window & Record<string, unknown> : undefined
-  const streamQueue = win?.[streamKey] as UnheadStreamQueue & { _hydrationLocked?: () => boolean } | undefined
+  const streamQueue = win?.[streamKey] as UnheadStreamQueue | undefined
   const core = streamQueue?._head as Unhead<Input, boolean> | undefined
 
   if (!core)
     return undefined
 
-  // Check if already wrapped
-  if ((core as WrappedStreamHead<Input>)._wrapped)
-    return core as ClientUnhead<Input>
+  // Already wrapped, by an earlier call or by a client bundle that built the
+  // head itself. Re-wrapping would double every push, so apply what this call
+  // brought and hand the existing head back. The old early return dropped
+  // `hooks`, `plugins`, and `init` on the floor.
+  if ((core as WrappedStreamHead<Input>)._wrapped) {
+    const wrapped = core as ClientUnhead<Input>
+    for (const name in rest.hooks || {})
+      wrapped.hooks?.hook(name as any, (rest.hooks as any)[name])
+    ;(rest.plugins || []).forEach(p => wrapped.use(p))
+    rest.init?.forEach(e => e && wrapped.push(e))
+    return wrapped
+  }
 
-  // Check if hydration is locked (client pushes should be skipped during hydration)
-  const isHydrationLocked = () => streamQueue?._hydrationLocked?.() ?? false
   const coreRender = core.render
   const hooks = createHooks<ClientHeadHooks<Input, boolean>>(rest.hooks)
-  const head = createStreamClientHeadAdapter(core, hooks, () => coreRender(), isHydrationLocked)
+  const head = createClientHeadAdapter(core, hooks, () => coreRender())
 
   // Mark as wrapped to avoid double-wrapping
   ;(head as WrappedStreamHead<Input>)._wrapped = true

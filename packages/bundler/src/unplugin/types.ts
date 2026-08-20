@@ -1,4 +1,4 @@
-import type { MinifyTransformOptions } from './MinifyTransform'
+import type { InlineScriptTransformOptions, MinifyTransformOptions } from './MinifyTransform'
 import type { TreeshakeServerComposablesOptions } from './TreeshakeServerComposables'
 import type { UseSeoMetaTransformOptions } from './UseSeoMetaTransform'
 
@@ -14,6 +14,14 @@ export interface UnpluginOptions extends BaseTransformerTypes {
   treeshake?: TreeshakeServerComposablesOptions | false
   transformSeoMeta?: UseSeoMetaTransformOptions | false
   minify?: MinifyTransformOptions | false
+  /**
+   * Transpile static inline scripts to the bundler's browser target.
+   *
+   * Enabled by default for Vite, where the resolved `build.target` is
+   * inherited automatically. Set to `false` to opt out or provide an object
+   * to override the target.
+   */
+  transformInlineScripts?: InlineScriptTransformOptions | false
 }
 
 export interface VitePluginOptions extends UnpluginOptions {

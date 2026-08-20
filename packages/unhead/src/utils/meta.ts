@@ -3,12 +3,10 @@ import { MetaTagsArrayable } from './const'
 
 export type MetaKeyType = 'name' | 'property' | 'http-equiv'
 
-const NAMESPACES = /* @__PURE__ */ {
-  META: new Set(['twitter', 'fediverse']),
-  OG: new Set(['og', 'book', 'article', 'profile', 'fb', 'payment']),
-  MEDIA: new Set(['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']),
-  HTTP_EQUIV: new Set(['contentType', 'defaultStyle', 'xUaCompatible']),
-} as const
+const META_NAMESPACES: readonly string[] = ['twitter', 'fediverse']
+const PROPERTY_NAMESPACES: readonly string[] = ['og', 'book', 'article', 'profile', 'fb', 'payment']
+const MEDIA_KEYS: readonly string[] = ['ogImage', 'ogVideo', 'ogAudio', 'twitterImage']
+const HTTP_EQUIV_KEYS: readonly string[] = ['contentType', 'defaultStyle', 'xUaCompatible']
 
 const META_ALIASES: Record<string, string> = /* @__PURE__ */ {
   articleExpirationTime: 'article:expiration_time',
@@ -85,7 +83,7 @@ function fixKeyCase(key: string): string {
   return prefixIndex === -1
     ? updated
     : (
-        NAMESPACES.META.has(updated.slice(0, prefixIndex)) || NAMESPACES.OG.has(updated.slice(0, prefixIndex))
+        META_NAMESPACES.includes(updated.slice(0, prefixIndex)) || PROPERTY_NAMESPACES.includes(updated.slice(0, prefixIndex))
           ? key.replace(CAPS_RE, ':$1').toLowerCase()
           : updated
       )
@@ -142,7 +140,7 @@ function handleObjectEntry(key: string, value: Record<string, any>): UnheadMeta[
 }
 
 export function resolveMetaKeyType(key: string): MetaKeyType {
-  if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || NAMESPACES.HTTP_EQUIV.has(key)) {
+  if (MetaPackingSchema[key]?.metaKey === 'http-equiv' || HTTP_EQUIV_KEYS.includes(key)) {
     return 'http-equiv'
   }
 
@@ -150,7 +148,7 @@ export function resolveMetaKeyType(key: string): MetaKeyType {
   const colonIndex = fixed.indexOf(':')
   return colonIndex === -1
     ? 'name'
-    : NAMESPACES.OG.has(fixed.slice(0, colonIndex))
+    : PROPERTY_NAMESPACES.includes(fixed.slice(0, colonIndex))
       ? 'property'
       : 'name'
 }
@@ -209,7 +207,7 @@ export function unpackMeta<T extends MetaFlat>(input: T): UnheadMeta[] {
     }
 
     if (typeof value === 'object' && value) {
-      if (NAMESPACES.MEDIA.has(key)) {
+      if (MEDIA_KEYS.includes(key)) {
         const prefix = key.startsWith('twitter') ? 'twitter' : 'og'
         const type = key.replace(OG_TWITTER_RE, '').toLowerCase()
         const metaKey = prefix === 'twitter' ? 'name' : 'property'

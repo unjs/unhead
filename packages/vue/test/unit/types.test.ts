@@ -8,6 +8,7 @@ import { createHead } from '@unhead/vue/client'
 import { createHead as createServerHead } from '@unhead/vue/server'
 import { computed } from 'vue'
 import { useHead, useHeadSafe, useScript, useSeoMeta } from '../../src/composables'
+import { createStreamableHead } from '../../src/stream/server'
 
 describe('types', () => {
   it('types useHead', () => {
@@ -219,6 +220,12 @@ describe('types', () => {
       script.instance satisfies { lookup: (id: string) => number } | null
       script.onLoaded(() => {}) satisfies () => void
     }
+  })
+  it('does not accept custom server prop resolvers', () => {
+    // @ts-expect-error Vue installs its own prop resolver
+    createServerHead({ propResolvers: [] })
+    // @ts-expect-error Vue installs its own prop resolver
+    createStreamableHead({ propResolvers: [] })
   })
   it('types nuxt core', () => {
     const payloadURL = 'test'

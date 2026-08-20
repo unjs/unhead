@@ -8,6 +8,24 @@ import { useDom } from '../../../unhead/test/util'
 import { useScript } from '../../src/scripts/useScript'
 
 describe('vue e2e scripts', () => {
+  it('loads a source-less SDK', async () => {
+    const head = createHead()
+    const api = { ready: true as const }
+    const script = useScript({ key: 'module-sdk', loader: async () => api }, {
+      head,
+      trigger: 'manual',
+    })
+
+    expect(await script.load()).toBe(api)
+    expect(script.status.value).toBe('loaded')
+    expect(script.entry).toBeUndefined()
+
+    if (false) {
+      // @ts-expect-error source-less loaders own API resolution
+      useScript({ key: 'invalid-module-sdk', loader: () => api }, { head, resolve: () => api })
+    }
+  })
+
   it('supports lifecycle-aware API resolution', () => {
     const head = createHead()
     const api = { ready: true as const, method: (value: string) => value.length }
@@ -296,8 +314,7 @@ describe('vue e2e scripts', () => {
     offSecond()
 
     const script = (head as any)._scripts['//ordered-callbacks.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     // both handles disposed, so neither callback should fire
@@ -324,8 +341,7 @@ describe('vue e2e scripts', () => {
     app.mount(el)
 
     const script = (head as any)._scripts['//vue-keyed.js']
-    script.status = 'loaded'
-    head.hooks?.callHook('script:updated', { script })
+    script.input.onload(new Event('load'))
     await script._loadPromise
 
     expect(calls).toEqual(['first'])

@@ -5,9 +5,9 @@ import { createHead } from '../../../src/client'
 import { useScript } from '../../../src/composables'
 import { createScriptWaitFor } from '../../../src/scripts/waitFor'
 
-function markLoaded(head: any, script: any) {
-  script.status = 'loaded'
-  return head.hooks.callHook('script:updated', { script })
+function markLoaded(_head: any, script: any) {
+  script.input.onload(new Event('load'))
+  return Promise.resolve()
 }
 
 describe('useScript events', () => {

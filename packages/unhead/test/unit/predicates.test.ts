@@ -1,4 +1,4 @@
-import type { HeadInputView, TagInput } from '../../src/validate'
+import type { HeadInputView, InputShapeContext, InputShapeView, InputValueKind, TagInput } from '../../src/validate'
 import { describe, expect, it } from 'vitest'
 import {
   deferOnModuleScript,
@@ -14,14 +14,16 @@ import {
   robotsConflict,
   scriptSrcWithContent,
   twitterHandleMissingAt,
+  validateInputShape,
   viewportUserScalable,
 } from '../../src/validate'
 
 function tag(props: Record<string, string | number | boolean>, tagType: TagInput['tagType'] = 'meta', extra: Partial<TagInput> = {}): TagInput {
+  const keys = extra.keys ?? new Set(Object.keys(props))
   return {
     tagType,
     props,
-    keys: new Set(Object.keys(props)),
+    keys,
     ...extra,
   }
 }
@@ -32,6 +34,14 @@ function input(props: Record<string, string>, extra: Partial<HeadInputView> = {}
     props,
     keys: new Set(Object.keys(props)),
     ...extra,
+  }
+}
+
+function shape(context: InputShapeContext, fields: Record<string, InputValueKind>): InputShapeView {
+  return {
+    context,
+    keys: new Set(Object.keys(fields)),
+    valueKinds: new Map(Object.entries(fields)),
   }
 }
 
@@ -135,7 +145,11 @@ describe('script-src-with-content', () => {
     expect(scriptSrcWithContent(t)).toHaveLength(1)
   })
   it('detects content via keys even if value not statically resolvable', () => {
-    const t: TagInput = { tagType: 'script', props: { src: '/x.js' }, keys: new Set(['src', 'innerHTML']) }
+    const t: TagInput = {
+      tagType: 'script',
+      props: { src: '/x.js' },
+      keys: new Set(['src', 'innerHTML']),
+    }
     expect(scriptSrcWithContent(t)).toHaveLength(1)
   })
 })
@@ -212,6 +226,87 @@ describe('no-html-in-title', () => {
   it('flags HTML in title', () => {
     const [d] = noHtmlInTitle(input({ title: 'Hello <b>World</b>' }))
     expect(d.ruleId).toBe('html-in-title')
+  })
+})
+
+describe('input-shape', () => {
+  it('reports invalid top-level head field shapes', () => {
+    const diagnostics = validateInputShape(shape('head', {
+      htmlAttrs: 'array',
+      meta: 'object',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.every(d => d.ruleId === 'invalid-input-shape')).toBe(true)
+    expect(diagnostics.map(d => d.at)).toEqual([
+      { kind: 'prop-value', key: 'htmlAttrs' },
+      { kind: 'prop-value', key: 'meta' },
+    ])
+  })
+
+  it('accepts valid top-level head field shapes and resolvers', () => {
+    expect(validateInputShape(shape('head', {
+      base: 'object',
+      bodyAttrs: 'function',
+      htmlAttrs: 'object',
+      link: 'array',
+      meta: 'function',
+      noscript: 'array',
+      script: 'array',
+      style: 'array',
+      templateParams: 'object',
+      title: 'number',
+      titleTemplate: 'null',
+    }))).toEqual([])
+  })
+
+  it('reports head-shaped fields nested in attribute inputs', () => {
+    const diagnostics = validateInputShape(shape('bodyAttrs', {
+      meta: 'array',
+      title: 'string',
+      titleTemplate: 'string',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.map(d => d.at)).toEqual([
+      { kind: 'prop-value', key: 'meta' },
+      { kind: 'prop-value', key: 'titleTemplate' },
+    ])
+  })
+
+  it('accepts attribute values, special class and style shapes, and scalar head-named attributes', () => {
+    expect(validateInputShape(shape('htmlAttrs', {
+      'class': 'array',
+      'data-theme': 'string',
+      'meta': 'string',
+      'onClick': 'function',
+      'script': 'string',
+      'style': 'object',
+      'title': 'string',
+      'titleTemplate': 'null',
+    }))).toEqual([])
+  })
+
+  it('reports object and array values for ordinary attributes', () => {
+    const diagnostics = validateInputShape(shape('bodyAttrs', {
+      'aria-label': 'array',
+      'data-options': 'object',
+    }))
+    expect(diagnostics).toHaveLength(2)
+    expect(diagnostics.every(d => d.ruleId === 'invalid-input-shape')).toBe(true)
+  })
+
+  it('skips unresolved values and unknown augmented head fields', () => {
+    expect(validateInputShape(shape('head', {
+      customAugmentation: 'object',
+      meta: 'unknown',
+    }))).toEqual([])
+  })
+
+  it('rejects head containers in flat SEO input', () => {
+    expect(validateInputShape(shape('seoMeta', {
+      description: 'string',
+      meta: 'array',
+      title: 'string',
+    }))).toHaveLength(1)
   })
 })
 

@@ -168,6 +168,15 @@ export interface CreateStreamableServerHeadOptions<Input = ResolvableHead, HeadI
    * @default '__unhead__'
    */
   streamKey?: string
+  /**
+   * Set when the driver writes Streamed Body Tags before `</body>`.
+   *
+   * Use `renderStreamBodyTags()` or `renderStreamEnd()` to write them.
+   * `wrapStream()` enables this option automatically.
+   *
+   * @default false
+   */
+  writesBodyTags?: boolean
 }
 
 export interface CreateClientHeadOptions<Input = ResolvableHead, RenderResult = boolean> extends CreateHeadOptions<Input> {
@@ -306,6 +315,12 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _du?: boolean
   /**
+   * Batches client pushes into one render.
+   *
+   * @internal
+   */
+  _b?: boolean
+  /**
    * @internal
    */
   _scripts?: Record<string, unknown>
@@ -326,9 +341,11 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    */
   _titleTemplate?: string | HeadTagTitleTemplate
   /**
+   * Per-response state for Streamed Body Tags.
+   *
    * @internal
    */
-  _rootStreamedTags?: Record<string, HeadTag>
+  _stream?: { bodyTags?: any[], seen?: Set<string>, writesBodyTags?: boolean }
 }
 
 export interface DomState {

@@ -1,10 +1,9 @@
 import type { RollupPlugin, RspackPluginInstance, UnpluginInstance, WebpackPluginInstance } from 'unplugin'
 import type { Plugin as VitePlugin } from 'vite'
-import type { MinifyTransformOptions } from './MinifyTransform'
 import type { UnpluginOptions, VitePluginOptions } from './types'
 import { lazyUnheadDevtools } from '../devtools/lazy'
 import { CreateHeadTransform, createHeadTransformContext } from './CreateHeadTransform'
-import { MinifyTransform } from './MinifyTransform'
+import { MinifyTransform, resolveMinifyTransformOptions } from './MinifyTransform'
 import { SSRStaticReplace } from './SSRStaticReplace'
 import { TreeshakeServerComposables } from './TreeshakeServerComposables'
 import { UseSeoMetaTransform } from './UseSeoMetaTransform'
@@ -58,18 +57,21 @@ export interface UnheadBundlerFactory {
 }
 
 interface CoreDef {
-  vite: () => VitePlugin
-  webpack: () => WebpackPluginInstance
-  rspack: () => RspackPluginInstance
-  rollup: () => RollupPlugin
+  options: { css?: unknown, js?: unknown, transpile?: boolean }
+  vite: (override?: { transpile?: false }) => VitePlugin
+  webpack: (override?: { transpile?: false }) => WebpackPluginInstance
+  rspack: (override?: { transpile?: false }) => RspackPluginInstance
+  rollup: (override?: { transpile?: false }) => RollupPlugin
 }
 
-function createCoreDef<O>(instance: UnpluginInstance<O, false>, options: O): CoreDef {
+function createCoreDef<O extends object>(instance: UnpluginInstance<O, false>, options: O): CoreDef {
+  const resolve = (override?: { transpile?: false }) => ({ ...options, ...override })
   return {
-    vite: () => instance.vite(options),
-    webpack: () => instance.webpack(options),
-    rspack: () => instance.rspack(options),
-    rollup: () => instance.rollup(options),
+    options,
+    vite: override => instance.vite(resolve(override)),
+    webpack: override => instance.webpack(resolve(override)),
+    rspack: override => instance.rspack(resolve(override)),
+    rollup: override => instance.rollup(resolve(override)),
   }
 }
 
@@ -85,18 +87,32 @@ function resolveCoreDefs(options: UnpluginOptions): CoreDef[] {
     const seoMetaOpts = typeof options.transformSeoMeta === 'object' ? options.transformSeoMeta : {}
     defs.push(createCoreDef(UseSeoMetaTransform, { ...common, ...seoMetaOpts }))
   }
-  if (options.minify !== false) {
-    const minifyOpts = typeof options.minify === 'object'
-      ? options.minify
-      : options.minify === true
-        ? { js: true, css: true } as unknown as MinifyTransformOptions
-        : {}
-    if (minifyOpts.js || minifyOpts.css) {
-      defs.push(createCoreDef(MinifyTransform, { ...common, ...minifyOpts }))
-    }
-  }
+  const minifyTransformOptions = resolveMinifyTransformOptions(options)
+  if (minifyTransformOptions)
+    defs.push(createCoreDef(MinifyTransform, { ...common, ...minifyTransformOptions }))
 
   return defs
+}
+
+function dispatch(bundler: 'vite', defs: CoreDef[]): VitePlugin[]
+function dispatch(bundler: 'webpack', defs: CoreDef[]): WebpackPluginInstance[]
+function dispatch(bundler: 'rspack', defs: CoreDef[]): RspackPluginInstance[]
+function dispatch(bundler: 'rollup', defs: CoreDef[]): RollupPlugin[]
+function dispatch(bundler: 'vite' | 'webpack' | 'rspack' | 'rollup', defs: CoreDef[]): (RollupPlugin | RspackPluginInstance | VitePlugin | WebpackPluginInstance)[] {
+  const out: (RollupPlugin | RspackPluginInstance | VitePlugin | WebpackPluginInstance)[] = []
+  for (const def of defs) {
+    const { options } = def
+    // Only Vite exposes a resolved browser target and a compatible transform
+    // API. Other bundlers still receive explicitly configured minifiers, but
+    // should not pay for an inert inline-script transform.
+    if (bundler !== 'vite' && options.transpile && !options.js && !options.css)
+      continue
+    const plugin = bundler === 'vite' ? def.vite() : def[bundler]({ transpile: false })
+    if (Array.isArray(plugin))
+      out.push(...plugin)
+    else out.push(plugin)
+  }
+  return out
 }
 
 function resolveStreamingOpts<S extends object>(streaming: true | S | false | undefined): S | undefined {
@@ -143,13 +159,14 @@ export function createFrameworkPlugin<S extends object>({ framework, streamingPl
 
     return {
       vite: () => {
-        const plugins = defs.map(def => def.vite())
+        const plugins = dispatch('vite', defs)
         const ctx = createHeadTransformContext()
 
         if (validate !== false) {
           ctx.addRuntimePlugin({
             import: { name: 'ValidatePlugin', source: `${framework}/plugins`, as: '__unhead_validate' },
             client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
+            server: '_h.use(__unhead_validate({ root: __ROOT__ }))',
           })
         }
         if (devtools !== false) {
@@ -162,21 +179,21 @@ export function createFrameworkPlugin<S extends object>({ framework, streamingPl
         return plugins
       },
       webpack: () => {
-        const plugins = defs.map(def => def.webpack())
+        const plugins = dispatch('webpack', defs)
         plugins.push(SSRStaticReplace.webpack({}))
         if (wantStreaming)
           pushPlugin(plugins, streamingPlugin.webpack(streamOpts))
         return plugins
       },
       rspack: () => {
-        const plugins = defs.map(def => def.rspack())
+        const plugins = dispatch('rspack', defs)
         plugins.push(SSRStaticReplace.rspack({}))
         if (wantStreaming)
           pushPlugin(plugins, streamingPlugin.rspack(streamOpts))
         return plugins
       },
       rollup: () => {
-        const plugins = defs.map(def => def.rollup())
+        const plugins = dispatch('rollup', defs)
         plugins.push(SSRStaticReplace.rollup({}))
         if (wantStreaming)
           pushPlugin(plugins, streamingPlugin.rollup(streamOpts))

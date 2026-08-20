@@ -1,20 +1,13 @@
-import type { SchemaOrgNode, Thing } from '../../types'
-import { defineSchemaOrgResolver } from '../../core'
+import type { Identity, NodeRelations, SchemaOrgNode, Thing } from '../../types'
+import { defineSchemaOrgResolver, resolveIdentityRelation } from '../../core'
 import {
   resolveWithBase,
   setIfEmpty,
 } from '../../utils'
+import { organizationResolver } from '../Organization'
+import { personResolver } from '../Person'
 
-export interface ImageSimple extends Thing {
-  /**
-   * The URL of the image file (e.g., /images/cat.jpg).
-   */
-  url: string
-  /**
-   * The fully-qualified, absolute URL of the image file (e.g., https://www.example.com/images/cat.jpg).
-   * Note: The contentUrl and url properties are intentionally duplicated.
-   */
-  contentUrl?: string
+interface ImageBase extends Thing {
   /**
    * A text string describing the image.
    * - Fall back to the image alt attribute if no specific caption field exists or is defined.
@@ -47,13 +40,44 @@ export interface ImageSimple extends Thing {
    * The file format or media type of the image (e.g., image/jpeg).
    */
   encodingFormat?: string
+  /**
+   * The creator of the image.
+   */
+  creator?: NodeRelations<Identity>
+  /**
+   * Credit text displayed with the image.
+   */
+  creditText?: string
+  /**
+   * A copyright notice for the image.
+   */
+  copyrightNotice?: string
+  /**
+   * A URL describing the image license.
+   */
+  license?: string
+  /**
+   * A URL where users can acquire a license.
+   */
+  acquireLicensePage?: string
 }
 
-export interface ImageObject extends ImageSimple {}
+type ImageLocation
+  = | {
+    url: string
+    contentUrl?: string
+  }
+  | {
+    url?: string
+    contentUrl: string
+  }
+
+export type ImageSimple = ImageBase & ImageLocation
+export type ImageObject = ImageSimple
 
 /** Narrow an arbitrary graph node to an image with its required URL. */
 export function isImageObject(node: SchemaOrgNode): node is ImageObject {
-  return typeof node.url === 'string'
+  return typeof node.url === 'string' || typeof node.contentUrl === 'string'
 }
 
 /**
@@ -77,9 +101,24 @@ export const imageResolver = defineSchemaOrgResolver<ImageObject, ImageObject | 
     'inLanguage',
   ],
   idPrefix: 'host',
-  resolve(image, { meta }) {
-    image.url = resolveWithBase(meta.host, image.url)
+  resolve(image, ctx) {
+    const { meta } = ctx
+    if (image.url)
+      image.url = resolveWithBase(meta.host, image.url)
+    if (image.contentUrl)
+      image.contentUrl = resolveWithBase(meta.host, image.contentUrl)
     setIfEmpty(image, 'contentUrl', image.url)
+    setIfEmpty(image, 'url', image.contentUrl)
+    image.creator = resolveIdentityRelation(image.creator, ctx, {
+      organization: organizationResolver,
+      person: personResolver,
+    }, {
+      root: true,
+    })
+    if (image.license)
+      image.license = resolveWithBase(meta.host, image.license)
+    if (image.acquireLicensePage)
+      image.acquireLicensePage = resolveWithBase(meta.host, image.acquireLicensePage)
     // image height and width are required to render
     if (image.height && !image.width)
       delete image.height

@@ -1,4 +1,4 @@
-import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptHeadTarget, ScriptInstance, ScriptScope, UseFunctionType, UseScriptContextOptions, UseScriptStatus } from 'unhead/scripts'
+import type { UseScriptInput as BaseUseScriptInput, UseScriptOptions as BaseUseScriptOptions, ScriptHeadTarget, ScriptInstance, ScriptScope, UseFunctionType, UseScriptContextOptions, UseScriptLoaderInput, UseScriptStatus } from 'unhead/scripts'
 import type {
   CompatibleHead,
   DataKeys,
@@ -42,6 +42,11 @@ export interface UseScriptOptions<T extends object = Record<PropertyKey, unknown
   head?: ScriptHeadTarget<ReactiveHead>
 }
 
+export type UseScriptLoaderOptions<T extends object> = Omit<UseScriptOptions<T>, 'resolve' | 'use'> & {
+  resolve?: never
+  use?: never
+}
+
 export type UseScriptContext<T extends object> = VueScriptInstance<T>
 
 export type UseScriptReturn<T extends object> = UseScriptContext<UseFunctionType<UseScriptOptions<T>, T>>
@@ -52,15 +57,18 @@ type ScriptApi = Record<symbol | string, any>
 type ResolveScriptOptions<R> = Omit<UseScriptOptions<any>, 'resolve' | 'use'> & { resolve: (ctx: UseScriptContextOptions) => R, use?: never }
 type ResolvedScriptApi<R> = Extract<NonNullable<Awaited<R>>, ScriptApi>
 
+export function useScript<T extends object>(_input: UseScriptLoaderInput<T>, _options: UseScriptLoaderOptions<T> & { scope: true }): VueScriptScope<T>
+export function useScript<T extends object>(_input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T> & { scope?: false }): VueScriptInstance<T>
+export function useScript<T extends object>(_input: UseScriptLoaderInput<T>, _options?: UseScriptLoaderOptions<T>): VueScriptInstance<T> | VueScriptScope<T>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope: true }): VueScriptScope<ResolvedScriptApi<R>>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R> & { scope?: false }): VueScriptInstance<ResolvedScriptApi<R>>
 export function useScript<R>(_input: UseScriptInput, _options: ResolveScriptOptions<R>): VueScriptInstance<ResolvedScriptApi<R>> | VueScriptScope<ResolvedScriptApi<R>>
 export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options: UseScriptOptions<T> & { scope: true }): UseScriptScopeReturn<T>
 export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: UseScriptOptions<T> & { scope?: false }): UseScriptReturn<T>
 export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T>
-export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput, _options?: UseScriptOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
-  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput
-  const options = { ..._options } as UseScriptOptions<T>
+export function useScript<T extends object = Record<PropertyKey, unknown>>(_input: UseScriptInput | UseScriptLoaderInput<T>, _options?: UseScriptOptions<T> | UseScriptLoaderOptions<T>): UseScriptReturn<T> | UseScriptScopeReturn<T> {
+  const input = (typeof _input === 'string' ? { src: _input } : _input) as UseScriptInput | UseScriptLoaderInput<T>
+  const options = { ..._options } as UseScriptOptions<T> | UseScriptLoaderOptions<T>
   const head = options?.head || injectHead()
   const scriptHead = head as unknown as CompatibleHead<ResolvableHead>
   options.head = head
