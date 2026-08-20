@@ -241,3 +241,21 @@ describe('tagPosition given as an entry option', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 })
+
+describe('a slot the shell filled, without an explicit key', () => {
+  // dedupeKey knows a second canonical or description replaces the first, even
+  // with no key on the tag. Emitting markup for the update would serve two.
+  it.each([
+    ['canonical', { link: [{ rel: 'canonical', href: '/a', tagPosition: 'bodyClose' }] }, { link: [{ rel: 'canonical', href: '/b', tagPosition: 'bodyClose' }] }, '/b'],
+    ['description', { meta: [{ name: 'description', content: 'v1', tagPosition: 'bodyClose' }] }, { meta: [{ name: 'description', content: 'v2', tagPosition: 'bodyClose' }] }, 'v2'],
+  ])('patches an update to %s rather than serving a second one', (_name, first, second, updated) => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    head.push(first as any)
+    renderShell(head)
+
+    head.push(second as any)
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain(updated)
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+})

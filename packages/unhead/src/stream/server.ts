@@ -1,9 +1,10 @@
 import type { PreparedHtmlTemplateWithIndexes, PreparedTemplate } from '../parser'
 import type { ServerUnhead } from '../server/createHead'
-import type { CreateStreamableServerHeadOptions, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
+import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHeadPayload, Unhead } from '../types'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
-import { resolveHeadInput } from '../utils/normalize'
+import { dedupeKey, hashTag } from '../utils/dedupe'
+import { normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
@@ -253,24 +254,15 @@ function isMarkupTag(tagName: string, tag: any, entryPosition?: string): boolean
 }
 
 /**
- * Identity for a tag bound for markup. The shell and a later chunk build their objects
- * independently, so the key order is normalized before comparing.
+ * Identity for a tag bound for markup, in the same terms the DOM renderer and
+ * `resolveTags` use. `dedupeKey` names the slot a tag occupies, keyed or
+ * semantic, and `hashTag` fingerprints its content.
  */
-function markupIdentity(tagName: string, tag: any): string {
-  let id = tagName
-  for (const key of Object.keys(tag).sort()) {
-    const value = tag[key]
-    id += `\u0000${key}=${typeof value === 'string' ? value : JSON.stringify(value)}`
-  }
-  return id
-}
-
-/**
- * Content-independent identity, so an update to a tag can be recognised as the
- * same tag. Only a tag the author keyed has one.
- */
-function markupDedupeKey(tagName: string, tag: any): string | undefined {
-  return tag.key ? `${tagName}\u0000key=${tag.key}` : undefined
+function markupIdentity(tagName: string, tag: any): { slot: string, content: string } {
+  // Copied because `normalizeProps` writes `type` back onto an object payload.
+  const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, { ...tag })
+  const content = hashTag(normalized)
+  return { slot: dedupeKey(normalized) || content, content }
 }
 
 /**
@@ -306,11 +298,11 @@ function rememberShellMarkup(head: Unhead<any>): void {
       for (const tag of value) {
         if (!isMarkupTag(key, tag, entryPosition))
           continue
-        seen.add(markupIdentity(key, tag))
-        // The head bytes are gone, so a later update cannot replace this tag.
-        const dedupe = markupDedupeKey(key, tag)
-        if (dedupe)
-          seen.add(dedupe)
+        // Both, so a later chunk can tell an exact repeat from an update to a
+        // tag whose head bytes have already gone out.
+        const id = markupIdentity(key, tag)
+        seen.add(id.content)
+        seen.add(id.slot)
       }
     }
   }
@@ -338,18 +330,17 @@ function splitMarkupTags(input: any, seen: Set<string>, keepFallback: boolean, e
         rest.push(tag)
         continue
       }
-      // A repeat of something the shell already served goes out nowhere.
       const id = markupIdentity(key, tag)
-      if (seen.has(id))
+      // A repeat of something the shell already served goes out nowhere.
+      if (seen.has(id.content))
         continue
-      // The shell served this key already. Sending markup would put a second copy of
-      // it in the HTML, so the patch updates the first one instead.
-      const dedupe = markupDedupeKey(key, tag)
-      if (dedupe && seen.has(dedupe)) {
+      // The shell filled this slot already. Sending markup would put a second
+      // copy in the HTML, so the patch updates the first one instead.
+      if (seen.has(id.slot)) {
         rest.push(tag)
         continue
       }
-      seen.add(id)
+      seen.add(id.content)
       carried.push(tag)
       // A driver that never writes the tail would otherwise lose this tag. The
       // patch recreates it, and the client adopts the served markup when the
