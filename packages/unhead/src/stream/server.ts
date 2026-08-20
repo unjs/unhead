@@ -93,15 +93,15 @@ export interface WebStreamableHeadContext<T = ResolvableHead> extends BaseStream
 export function createStreamableHead<T = ResolvableHead>(
   options: CreateStreamableServerHeadOptions = {},
 ): StreamableHeadContext<T> {
-  const { streamKey, writesMarkup, ...rest } = options
+  const { streamKey, writesBodyTags, ...rest } = options
   if (streamKey !== undefined)
     assertValidStreamKey(streamKey)
   const head = createHead<T>({
     ...rest,
     experimentalStreamKey: streamKey,
   })
-  if (writesMarkup)
-    streamState(head).writesMarkup = true
+  if (writesBodyTags)
+    streamState(head).writesBodyTags = true
 
   let resolveShellReady: () => void
   const shellReady = new Promise<void>((resolve) => {
@@ -154,7 +154,7 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
  * // ...stream the app, then close it with the tags held back from the chunks
- * res.end(`${renderStreamMarkup(head)}${bodyTags}</body></html>`)
+ * res.end(`${renderStreamBodyTags(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
@@ -356,7 +356,7 @@ function splitMarkupTags(input: any, seen: Set<string>, entryPosition?: string):
  * the held-back tags never reach the page. `renderStreamEnd()` does it for
  * you when you stream from a template.
  */
-export function renderStreamMarkup(head: Unhead<any>): string {
+export function renderStreamBodyTags(head: Unhead<any>): string {
   const held = streamState(head).markup
   if (!held?.length) {
     return ''
@@ -397,11 +397,11 @@ export function renderStreamMarkup(head: Unhead<any>): string {
  * ```
  */
 export function renderStreamEnd(head: Unhead<any>, parts: StreamingTemplateParts): string {
-  const tail = renderStreamMarkup(head)
-  if (!tail)
+  const bodyTags = renderStreamBodyTags(head)
+  if (!bodyTags)
     return parts.end
   const at = parts.bodyTagsAt ?? parts.end.length
-  return parts.end.slice(0, at) + tail + parts.end.slice(at)
+  return parts.end.slice(0, at) + bodyTags + parts.end.slice(at)
 }
 
 export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
@@ -422,7 +422,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     for (const entry of head.entries.values()) {
       const input = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       const entryPosition = (entry.options as any)?.tagPosition
-      if (!state.writesMarkup || !hasMarkupTags(input, entryPosition)) {
+      if (!state.writesBodyTags || !hasMarkupTags(input, entryPosition)) {
         inputs.push(input)
         continue
       }
@@ -507,8 +507,8 @@ export function wrapStream(
 ): ReadableStream<Uint8Array> {
   // This wrapper always writes `renderStreamEnd`, so markup tags need no
   // patch fallback. A hand-rolled driver promises the same with the
-  // `writesMarkup` option.
-  streamState(head).writesMarkup = true
+  // `writesBodyTags` option.
+  streamState(head).writesBodyTags = true
   // Without a default, entries registered after the shell are discarded.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string

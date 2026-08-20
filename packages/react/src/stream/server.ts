@@ -101,7 +101,7 @@ export function createStreamableHead<T = ResolvableHead>(
     wrap: (pipe: ReactPipeFunction, template: string | PreparedTemplate) => {
       // This wrapper always writes `renderStreamEnd`, so body-bound tags need
       // no patch copy. A caller driving `head` by hand keeps the fallback.
-      ;(head._stream ||= {}).writesMarkup = true
+      ;(head._stream ||= {}).writesBodyTags = true
       return (writable: Writable) => {
         shellReady.then(async () => {
           try {
@@ -145,8 +145,8 @@ export {
   prepareTemplate,
   renderSSRHeadShell,
   renderSSRHeadSuspenseChunk,
+  renderStreamBodyTags,
   renderStreamEnd,
-  renderStreamMarkup,
   type StreamableHeadContext,
   type StreamingTemplateParts,
   type WebStreamableHeadContext,

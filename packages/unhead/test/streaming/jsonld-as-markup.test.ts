@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { prepareStreamingTemplate, renderShell, renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderStreamEnd, renderStreamMarkup, wrapStream } from '../../src/stream/server'
+import { prepareStreamingTemplate, renderShell, renderSSRHeadShell, renderSSRHeadSuspenseChunk, renderStreamBodyTags, renderStreamEnd, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
 const TEMPLATE = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
@@ -30,19 +30,19 @@ async function readAll(stream: ReadableStream<Uint8Array>) {
 
 const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
 
-// A driver writes `end` last, so the tail lands at the body-close slot inside it.
+// A driver writes `end` last, so body tags land at the body-close slot inside it.
 const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.length }
 
 describe('jSON-LD held back from streamed patches', () => {
   it('keeps JSON-LD out of the patch script', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
 
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
   })
 
   it('splits an entry so the rest still patches', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Reviews', script: [LD] })
 
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -52,18 +52,18 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('renders the held JSON-LD as markup', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Reviews', script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
-    const tail = renderStreamEnd(head, PARTS)
+    const end = renderStreamEnd(head, PARTS)
 
-    expect(tail).toContain('application/ld+json')
-    expect(tail).toContain('"@type":"Organization"')
+    expect(end).toContain('application/ld+json')
+    expect(end).toContain('"@type":"Organization"')
   })
 
   it('drains the held JSON-LD only once', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -72,7 +72,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('leaves pending entries alone', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
     head.push({ title: 'Later' })
@@ -83,7 +83,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('emits the JSON-LD inside the body of a wrapped stream', async () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Shell' })
     let pending = true
     const html = await readAll(wrapStream(head, streamOf(['<p>app</p>']), TEMPLATE, undefined, {
@@ -102,7 +102,7 @@ describe('jSON-LD held back from streamed patches', () => {
     expect(html).not.toContain('__unhead__.push')
   })
   it('does not repeat JSON-LD the shell already rendered', async () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     let once = true
     const html = await readAll(wrapStream(head, streamOf(['<p>app</p>']), TEMPLATE, undefined, {
@@ -119,7 +119,7 @@ describe('jSON-LD held back from streamed patches', () => {
   })
 
   it('does not repeat JSON-LD across two chunks', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
     head.push({ script: [LD] })
@@ -131,7 +131,7 @@ describe('jSON-LD held back from streamed patches', () => {
 
 describe('pre-rendered shell state', () => {
   it('does not repeat JSON-LD rendered by renderSSRHeadShell', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     expect(renderSSRHeadShell(head, TEMPLATE)).toContain('Organization')
 
@@ -145,7 +145,7 @@ describe('pre-rendered shell state', () => {
   // `prepareStreamingTemplate`. Entries pushed after that render belong to the
   // stream, not the shell.
   it('keeps JSON-LD pushed after the shell render', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ title: 'Shell' })
     const shellState = renderShell(head)
 
@@ -157,7 +157,7 @@ describe('pre-rendered shell state', () => {
   })
 
   it('drops JSON-LD the shell render already emitted', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     const shellState = renderShell(head)
 
@@ -172,29 +172,29 @@ describe('pre-rendered shell state', () => {
 
 describe('template-free drivers', () => {
   it('hands the held JSON-LD back once', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     renderShell(head)
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
-    expect(renderStreamMarkup(head)).toContain('Organization')
-    expect(renderStreamMarkup(head)).toBe('')
+    expect(renderStreamBodyTags(head)).toContain('Organization')
+    expect(renderStreamBodyTags(head)).toBe('')
   })
 })
 
-describe('tail render failure', () => {
+describe('body tag render failure', () => {
   it('keeps valid JSON-LD when another entry cannot serialize', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     head.push({ meta: [{ name: 'invalid', content: 1n }] } as any)
 
     expect(() => renderSSRHeadSuspenseChunk(head)).toThrow(TypeError)
     expect(renderSSRHeadSuspenseChunk(head)).toBe('')
-    expect(renderStreamMarkup(head)).toContain('Organization')
+    expect(renderStreamBodyTags(head)).toContain('Organization')
   })
 
   it('keeps the held JSON-LD for a retry', () => {
-    const head = createStreamableServerHead({ writesMarkup: true })
+    const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [LD] })
     renderSSRHeadSuspenseChunk(head)
 
@@ -208,7 +208,7 @@ describe('tail render failure', () => {
       return render()
     }
 
-    expect(() => renderStreamMarkup(head)).toThrow('plugin blew up')
-    expect(renderStreamMarkup(head)).toContain('Organization')
+    expect(() => renderStreamBodyTags(head)).toThrow('plugin blew up')
+    expect(renderStreamBodyTags(head)).toContain('Organization')
   })
 })

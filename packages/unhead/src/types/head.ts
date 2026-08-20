@@ -167,17 +167,17 @@ export interface CreateStreamableServerHeadOptions extends Omit<CreateServerHead
    */
   streamKey?: string
   /**
-   * Set when the driver writes `renderStreamMarkup()` (or `renderStreamEnd()`)
+   * Set when the driver writes `renderStreamBodyTags()` (or `renderStreamEnd()`)
    * before `</body>`.
    *
    * Tags that work from the body, such as JSON-LD and `noscript`, then leave
    * the stream only as markup. Without it they stay in the patch, so a driver
-   * that never writes the tail cannot lose them. `wrapStream()` sets this for
-   * you.
+   * that never writes the body tags cannot lose them. `wrapStream()` sets this
+   * for you.
    *
    * @default false
    */
-  writesMarkup?: boolean
+  writesBodyTags?: boolean
 }
 
 export interface CreateClientHeadOptions extends CreateHeadOptions {
@@ -318,7 +318,7 @@ export interface Unhead<Input = ResolvableHead, RenderResult = unknown> {
    *
    * @internal
    */
-  _stream?: { markup?: any[], seen?: Set<string>, writesMarkup?: boolean }
+  _stream?: { markup?: any[], seen?: Set<string>, writesBodyTags?: boolean }
 }
 
 export interface DomState {
