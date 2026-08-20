@@ -25,7 +25,7 @@ describe('ssr innerHTML', () => {
         "bodyAttrs": "",
         "bodyTags": "",
         "bodyTagsOpen": "",
-        "headTags": "<script type="application/json">{"test":"test","something":{"else":123}}</script>",
+        "headTags": "<script type="application/json">{"something":{"else":123},"test":"test"}</script>",
         "htmlAttrs": "",
       }
     `)
@@ -71,7 +71,7 @@ describe('ssr innerHTML', () => {
       }],
     })
 
-    expect(renderSSRHead(head).headTags).toBe('<script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/about"},"eagerness":"moderate"},{"where":{"href_matches":"/products/*"},"eagerness":"moderate"}],"prerender":[{"where":{"href_matches":"/about"},"eagerness":"moderate"},{"where":{"href_matches":"/products/*"},"eagerness":"moderate"}]}</script>')
+    expect(renderSSRHead(head).headTags).toBe('<script type="speculationrules">{"prefetch":[{"eagerness":"moderate","where":{"href_matches":"/about"}},{"eagerness":"moderate","where":{"href_matches":"/products/*"}}],"prerender":[{"eagerness":"moderate","where":{"href_matches":"/about"}},{"eagerness":"moderate","where":{"href_matches":"/products/*"}}]}</script>')
   })
 
   it('noscript', async () => {

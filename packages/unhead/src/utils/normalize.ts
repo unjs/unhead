@@ -67,8 +67,7 @@ export function normalizeProps(tag: HeadTag, input: Record<string, any>): HeadTa
         const type = input.type || 'application/json'
         if (type.endsWith('json') || type === 'speculationrules' || type === 'importmap') {
           tag.props.type = input.type = type
-          tag[prop] = JSON.stringify(value)
-          tag._c = canonicalStringify(value)
+          tag[prop] = canonicalStringify(value)
         }
       }
       else {
@@ -108,8 +107,7 @@ function normalizeTag(tagName: HeadTag['tag'], _input: HeadTag['props'] | string
   if (tag.key && DupeableTags.has(tag.tag))
     tag.props['data-hid'] = tag._h = tag.key
   if (tag.tag === 'script' && typeof tag.innerHTML === 'object') {
-    tag._c = canonicalStringify(tag.innerHTML)
-    tag.innerHTML = JSON.stringify(tag.innerHTML)
+    tag.innerHTML = canonicalStringify(tag.innerHTML)
     tag.props.type = tag.props.type || 'application/json'
   }
   if (Array.isArray(tag.props.content)) {

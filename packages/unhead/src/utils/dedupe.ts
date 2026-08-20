@@ -5,23 +5,38 @@ const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
 /**
- * Recursively key-sorted JSON serialisation, so two objects with the same
- * shape but different property insertion order fingerprint identically.
- * Arrays stay order-sensitive: `[1,2]` and `[2,1]` are genuinely different.
+ * Rebuilds a value with every object's keys sorted, so two payloads with the
+ * same shape but different insertion order serialise identically. Arrays stay
+ * order-sensitive: `[1,2]` and `[2,1]` are genuinely different.
+ *
+ * `JSON.stringify` still does the serialising, so `Date`, `toJSON`, `NaN`, and
+ * `undefined` behave exactly as they did before.
  */
-export function canonicalStringify(value: unknown): string {
-  if (Array.isArray(value))
-    return `[${value.map(canonicalStringify).join(',')}]`
-  if (value !== null && typeof value === 'object') {
-    const parts: string[] = []
-    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-      const v = (value as Record<string, unknown>)[key]
-      if (v !== undefined)
-        parts.push(`${JSON.stringify(key)}:${canonicalStringify(v)}`)
-    }
-    return `{${parts.join(',')}}`
+function sortKeysDeep(value: unknown, seen: Set<object>): unknown {
+  if (!value || typeof value !== 'object')
+    return value
+  if (seen.has(value as object))
+    throw new TypeError('Converting circular structure to JSON')
+  seen.add(value as object)
+  let out: unknown
+  if (Array.isArray(value)) {
+    out = value.map(v => sortKeysDeep(v, seen))
   }
-  return JSON.stringify(value)
+  else if (typeof (value as { toJSON?: unknown }).toJSON === 'function') {
+    out = value
+  }
+  else {
+    const sorted: Record<string, unknown> = {}
+    for (const key of Object.keys(value as Record<string, unknown>).sort())
+      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key], seen)
+    out = sorted
+  }
+  seen.delete(value as object)
+  return out
+}
+
+export function canonicalStringify(value: unknown): string {
+  return JSON.stringify(sortKeysDeep(value, new Set())) as string
 }
 
 export function isMetaArrayDupeKey(v: string) {
@@ -63,11 +78,11 @@ export function dedupeKey<T extends HeadTag>(tag: T): string | undefined {
   // after key/id so an explicit key still allows multiple links with the same rel + href
   if (t === 'link' && props.rel && props.href)
     return `link:${props.rel}:${props.href}`
-  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag._c || tag.textContent || tag.innerHTML}` : undefined
+  return TagsWithInnerContent.has(t) && (tag.textContent || tag.innerHTML) ? `${t}:content:${tag.textContent || tag.innerHTML}` : undefined
 }
 
 export function hashTag(tag: HeadTag) {
-  const identity = tag._h || tag._d || tag._c || tag.textContent || tag.innerHTML
+  const identity = tag._h || tag._d || tag.textContent || tag.innerHTML
   if (identity)
     return identity
   // sort so the hash is stable across differing prop insertion orders (#823)

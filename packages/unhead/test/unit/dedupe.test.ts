@@ -124,3 +124,23 @@ describe('hashTag', () => {
     expect(dedupeKey(a)).not.toBe(dedupeKey(b))
   })
 })
+
+describe('canonical json identity across the ssr boundary', () => {
+  const LD = { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } }
+
+  it('adopts the server-rendered block instead of adding a second', async () => {
+    const { JSDOM } = await import('jsdom')
+    const { createHead: createClientHead } = await import('../../src/client')
+    const { createHead: createServerHead } = await import('../../src/server')
+
+    const ssr = createServerHead({ disableDefaults: true })
+    ssr.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    const doc = new JSDOM(`<!DOCTYPE html><html><head>${(await ssr.render()).headTags}</head><body></body></html>`).window.document
+
+    const client = createClientHead({ document: doc })
+    client.push({ script: [{ type: 'application/ld+json', innerHTML: LD as any }] })
+    await client.render()
+
+    expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
+  })
+})

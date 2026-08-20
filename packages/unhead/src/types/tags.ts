@@ -120,7 +120,6 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    * used for identity instead of the rendered string, which preserves insertion order.
    * @internal
    */
-  _c?: string
   /**
    * Source file:line that created this tag (devtools only).
    * @internal
