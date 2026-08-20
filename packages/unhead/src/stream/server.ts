@@ -4,9 +4,8 @@ import type { CreateStreamableServerHeadOptions, HeadTag, ResolvableHead, SSRHea
 import { applyHeadToHtml, parseHtmlForIndexes } from '../parser'
 import { createHead } from '../server/createHead'
 import { dedupeKey, hashTag } from '../utils/dedupe'
-import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { callHook } from '../utils/hooks'
-import { normalizeEntryToTags, resolveHeadInput } from '../utils/normalize'
+import { normalizeEntryToTags, normalizeProps, resolveHeadInput } from '../utils/normalize'
 import { DEFAULT_STREAM_KEY } from './client'
 
 const LT_RE = /</g
