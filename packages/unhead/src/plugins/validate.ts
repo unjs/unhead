@@ -191,6 +191,7 @@ const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'g
 const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])
 const BOT_HEAD_LINK_RELS = /* @__PURE__ */ new Set(['canonical', 'alternate', 'amphtml', 'prev', 'next', 'author', 'license'])
 const BOT_HEAD_META_PREFIX_RE = /^(?:og|twitter|article|book|profile|fb|al|music|video|place|product):/
+const JSON_LD_TYPE_RE = /\bld\+json\b/i
 const REL_SEPARATOR_RE = /\s+/
 // Mirrors `BlockedLinkRels` in plugins/safe.ts: rels `useHeadSafe` strips.
 const SAFE_BLOCKED_RELS = /* @__PURE__ */ new Set(['canonical', 'modulepreload', 'prerender', 'preload', 'prefetch', 'dns-prefetch', 'preconnect', 'manifest', 'pingback'])
@@ -218,7 +219,7 @@ function isHiddenFromBots(tag: HeadTag, writesBodyTags: boolean): boolean {
   const props = tag.props
   // Served JSON-LD remains visible as Streamed Body Tags.
   if (tag.tag === 'script')
-    return !writesBodyTags && String(props.type || '').toLowerCase() === 'application/ld+json'
+    return !writesBodyTags && JSON_LD_TYPE_RE.test(String(props.type || ''))
   // Other reported tags only carry meaning from the head.
   if (tag.tagPosition?.startsWith('body'))
     return false

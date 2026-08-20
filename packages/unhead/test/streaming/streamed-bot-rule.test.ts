@@ -1,6 +1,7 @@
 import type { HeadValidationRule } from 'unhead/plugins'
 import { useHeadSafe, useSeoMeta } from 'unhead'
 import { ValidatePlugin } from 'unhead/plugins'
+import { createHead } from 'unhead/server'
 import { createStreamableHead, renderShell, renderSSRHeadSuspenseChunk } from 'unhead/stream/server'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -36,6 +37,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     ['link alternate', { link: [{ rel: 'alternate', href: '/fr', hreflang: 'fr' }] }],
     ['link license', { link: [{ rel: 'license', href: '/l' }] }],
     ['ld+json script', { script: [{ type: 'application/ld+json', innerHTML: '{}' }] }],
+    ['ld+json script with a profile', { script: [{ type: 'application/ld+json;profile=https://schema.org', innerHTML: '{}' }] }],
   ])('reports %s', (_name, input) => {
     expect(flagged(input)).toHaveLength(1)
   })
@@ -114,6 +116,19 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
   })
 
+  it('exposes streamed tags from a regular server head to framework drivers', () => {
+    const chunks: string[][] = []
+    const head = createHead({
+      disableDefaults: true,
+      hooks: { 'ssr:streamChunk': ({ tags }) => { chunks.push(tags.map(tag => tag.tag)) } },
+    })
+    renderShell(head)
+    head.push({ meta: [{ name: 'description', content: 'late' }] })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('description')
+    expect(chunks).toEqual([['meta']])
+  })
+
   it('carries the source location of the call that registered the tag', () => {
     const { head, reported } = setup()
     head.push({ link: [{ rel: 'canonical', href: '/' }] })
@@ -167,6 +182,25 @@ describe('streamed-tag-hidden-from-bots', () => {
 
     expect(renderSSRHeadSuspenseChunk(head)).toContain('__unhead__.push(')
     expect(spy).not.toHaveBeenCalledWith('ssr:streamChunk', expect.anything())
+  })
+
+  it('evaluates a lazy entry once while inspecting its patch', () => {
+    const { head } = setup()
+    let calls = 0
+    head.push(() => ({ title: `Home ${++calls}` }))
+
+    expect(renderSSRHeadSuspenseChunk(head)).toContain('Home 1')
+    expect(calls).toBe(1)
+  })
+
+  it('does not mutate caller-owned script input while inspecting its patch', () => {
+    const { head } = setup()
+    const script = { innerHTML: { name: 'Acme' } }
+    head.push({ script: [script] })
+
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(script).not.toHaveProperty('type')
   })
 
   it('does not hand out the callers own templateParams object', () => {
