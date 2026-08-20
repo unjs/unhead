@@ -287,9 +287,7 @@ describe('streaming client hydration', () => {
 
   describe('chunk batching', () => {
     it('renders once for the whole pre-init backlog', async () => {
-      // Each queued chunk sets a different title, and the DOM renderer only
-      // writes a title that changed. One render per backlog means one write,
-      // one render per chunk means three.
+      // One backlog render produces one title write.
       const dom = new JSDOM('<!DOCTYPE html><html><head><title>Initial</title></head><body></body></html>')
       const win = dom.window as any
       win.__unhead__ = {
