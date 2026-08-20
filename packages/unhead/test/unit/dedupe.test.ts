@@ -1,4 +1,5 @@
 import { dedupeKey, hashTag, isMetaArrayDupeKey } from '../../src/utils/dedupe'
+import { normalizeEntryToTags } from '../../src/utils/normalize'
 
 describe('isMetaArrayDupeKey', () => {
   it('rejects scalar Open Graph and Twitter metadata', () => {
@@ -104,5 +105,22 @@ describe('hashTag', () => {
     expect(hashTag({ tag: 'script', props: {}, _h: 'hash' })).toBe('hash')
     expect(hashTag({ tag: 'meta', props: {}, _d: 'dedupe' })).toBe('dedupe')
     expect(hashTag({ tag: 'style', props: {}, innerHTML: 'body{}' })).toBe('body{}')
+  })
+
+  // JSON-LD (and other object innerHTML) is serialized with JSON.stringify, which
+  // preserves insertion order, so two logically identical payloads with differently
+  // ordered keys must still fingerprint identically at every nesting depth.
+  it('gives object innerHTML a hash that is stable across key insertion order, at any nesting depth', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { '@type': 'Organization', 'name': 'Acme', 'address': { city: 'Sydney', country: 'AU' } } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { 'address': { country: 'AU', city: 'Sydney' }, 'name': 'Acme', '@type': 'Organization' } }] }, [])
+    expect(hashTag(a)).toBe(hashTag(b))
+    expect(dedupeKey(a)).toBe(dedupeKey(b))
+  })
+
+  it('keeps array order significant inside object innerHTML', () => {
+    const [a] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [1, 2] } }] }, [])
+    const [b] = normalizeEntryToTags({ script: [{ type: 'application/ld+json', innerHTML: { items: [2, 1] } }] }, [])
+    expect(hashTag(a)).not.toBe(hashTag(b))
+    expect(dedupeKey(a)).not.toBe(dedupeKey(b))
   })
 })

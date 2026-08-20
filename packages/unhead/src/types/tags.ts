@@ -116,6 +116,12 @@ export interface HeadTag extends TagPriority, TagPosition, ResolvesDuplicates, H
    */
   _h?: string
   /**
+   * Key-order-stable fingerprint of an object `innerHTML`/`textContent` (e.g. JSON-LD),
+   * used for identity instead of the rendered string, which preserves insertion order.
+   * @internal
+   */
+  _c?: string
+  /**
    * Source file:line that created this tag (devtools only).
    * @internal
    */
