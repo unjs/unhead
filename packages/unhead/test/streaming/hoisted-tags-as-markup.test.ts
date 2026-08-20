@@ -1,5 +1,6 @@
+import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
-import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd } from '../../src/stream/server'
+import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
 // A driver writes `end` last, so the tail lands at the body-close slot inside it.
@@ -84,5 +85,44 @@ describe('an entry mixing hoistable and head-only tags', () => {
     expect(end).toContain('/tail.js')
     expect(end).toContain('<noscript>')
     expect(end).not.toContain('/head.js')
+  })
+})
+
+describe('a stream that pauses mid-element', () => {
+  // Vue flushes inside an open element: an async <option> parks the reader in
+  // <select>, where the parser drops an injected noscript outright. The tail
+  // is written into the template, so it lands at body level whatever the app
+  // was in the middle of.
+  it('parses the hoisted markup into the body, not the open select', async () => {
+    const head = createStreamableServerHead()
+    const template = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
+    const enc = new TextEncoder()
+    let app!: ReadableStreamDefaultController<Uint8Array>
+    const reader = wrapStream(head, new ReadableStream<Uint8Array>({ start: c => void (app = c) }), template).getReader()
+
+    const drive = (async () => {
+      app.enqueue(enc.encode('<select><option>first</option>'))
+      await Promise.resolve()
+      head.push({ noscript: [{ innerHTML: '<img src="px.gif">' }] })
+      app.enqueue(enc.encode('<option>second</option></select>'))
+      await Promise.resolve()
+      app.close()
+    })()
+
+    const dec = new TextDecoder()
+    let html = ''
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done)
+        break
+      html += dec.decode(value)
+    }
+    await drive
+
+    const doc = new JSDOM(html).window.document
+    const noscript = doc.body.querySelector('noscript')
+    expect(noscript).not.toBeNull()
+    expect(doc.querySelector('select')!.contains(noscript!)).toBe(false)
+    expect(doc.querySelectorAll('option')).toHaveLength(2)
   })
 })
