@@ -55,7 +55,7 @@ describe('createHeadTransform', () => {
     expect(result.code).toContain('_h.use(__devtools())')
   })
 
-  it('injects full validation into development server heads', async () => {
+  it('injects validation into development server heads', async () => {
     const plugin = (Unhead({ devtools: false }) as any[]).find(plugin => plugin?.name === '@unhead/create-head-transform')
     plugin.configResolved({ root: '/project' })
     const result = await plugin.transform.handler.call(
@@ -64,7 +64,7 @@ describe('createHeadTransform', () => {
       'entry.ts',
     )
 
-    expect(result.code).toContain(`_h.use(__unhead_validate({ root: "/project" }))`)
+    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
   })
 
   it('skips client-only registrations on server', async () => {

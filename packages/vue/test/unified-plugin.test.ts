@@ -26,7 +26,7 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
     expect(streamIdx).toBe(plugins.length - 1)
   })
 
-  it('vite injects full validation into development server heads', async () => {
+  it('vite injects validation into development server heads', async () => {
     const plugins = Unhead({ devtools: false }).vite() as any[]
     const transform = plugins.find(plugin => plugin?.name === '@unhead/create-head-transform')
     transform.configResolved({ root: '/project' })
@@ -37,7 +37,7 @@ describe('unified Unhead({ streaming: true }) per bundler', () => {
       'entry.ts',
     )
 
-    expect(result.code).toContain(`_h.use(__unhead_validate({ root: "/project" }))`)
+    expect(result.code).toContain('_h.use(__unhead_validate({ root: "/project" }))')
   })
 
   it('webpack adds exactly one extra plugin when streaming is enabled', () => {
