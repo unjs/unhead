@@ -256,6 +256,14 @@ function hoistIdentity(tagName: string, tag: any): string {
 }
 
 /**
+ * Content-independent identity, so an update to a tag can be recognised as the
+ * same tag. Only a tag the author keyed has one.
+ */
+function hoistDedupeKey(tagName: string, tag: any): string | undefined {
+  return tag.key ? `${tagName}\u0000key=${tag.key}` : undefined
+}
+
+/**
  * Records the hoistable tags the shell already rendered, so a later chunk
  * repeating one of them does not emit a second copy.
  */
@@ -266,15 +274,18 @@ function rememberShellMarkup(head: Unhead<any>): void {
     const raw: any = entry.input
     if (!raw || typeof raw !== 'object')
       continue
-    // Resolving is the expensive half, so skip an entry holding no tag arrays.
-    let hasTags = false
+    // Resolving is the expensive half. Only `script` and `noscript` carry a
+    // hoistable tag type, and `tagPosition` is a literal on the input, so a
+    // head of plain meta and links never resolves twice.
+    let mayHoist = false
     for (const key in raw) {
-      if (Array.isArray(raw[key])) {
-        hasTags = true
+      const value = raw[key]
+      if (Array.isArray(value) && (key === 'script' || key === 'noscript' || value.some((t: any) => t?.tagPosition && t.tagPosition !== 'head'))) {
+        mayHoist = true
         break
       }
     }
-    if (!hasTags)
+    if (!mayHoist)
       continue
     const input: any = resolveHeadInput(raw, propResolvers)
     for (const key in input) {
@@ -282,8 +293,13 @@ function rememberShellMarkup(head: Unhead<any>): void {
       if (!Array.isArray(value))
         continue
       for (const tag of value) {
-        if (isHoistable(key, tag))
-          seen.add(hoistIdentity(key, tag))
+        if (!isHoistable(key, tag))
+          continue
+        seen.add(hoistIdentity(key, tag))
+        // The head bytes are gone, so a later update cannot replace this tag.
+        const dedupe = hoistDedupeKey(key, tag)
+        if (dedupe)
+          seen.add(dedupe)
       }
     }
   }
@@ -315,6 +331,13 @@ function splitHoistable(input: any, seen: Set<string>): { patch?: any, markup?: 
       const id = hoistIdentity(key, tag)
       if (seen.has(id))
         continue
+      // The shell served this key already. Hoisting would put a second copy of
+      // it in the HTML, so the patch updates the first one instead.
+      const dedupe = hoistDedupeKey(key, tag)
+      if (dedupe && seen.has(dedupe)) {
+        rest.push(tag)
+        continue
+      }
       seen.add(id)
       hoisted.push(tag)
     }

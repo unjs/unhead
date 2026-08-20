@@ -126,3 +126,43 @@ describe('a stream that pauses mid-element', () => {
     expect(doc.querySelectorAll('option')).toHaveLength(2)
   })
 })
+
+describe('a tag the shell already served', () => {
+  // The head bytes are gone, so a post-shell update cannot replace the shell's
+  // copy. Hoisting a second one would put two blocks with the same key in the
+  // served HTML. The patch can still update the first for a JS client.
+  it('patches an update to a keyed tag instead of hoisting a duplicate', () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [{ key: 'schema', type: 'application/ld+json', innerHTML: '{"v":1}' }] })
+    const shell = renderShell(head)
+    expect(shell.headTags).toContain('{"v":1}')
+
+    head.push({ script: [{ key: 'schema', type: 'application/ld+json', innerHTML: '{"v":2}' }] })
+    const chunk = renderSSRHeadSuspenseChunk(head)
+
+    expect(chunk).toContain('{\\"v\\":2}')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
+  it('drops an exact repeat entirely', () => {
+    const head = createStreamableServerHead()
+    head.push({ noscript: [{ key: 'gtm', innerHTML: '<i>1</i>' }] })
+    renderShell(head)
+
+    head.push({ noscript: [{ key: 'gtm', innerHTML: '<i>1</i>' }] })
+
+    expect(renderSSRHeadSuspenseChunk(head)).toBe('')
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+
+  it('still hoists a different unkeyed block', () => {
+    const head = createStreamableServerHead()
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"a":1}' }] })
+    renderShell(head)
+
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"b":2}' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS)).toContain('{"b":2}')
+  })
+})
