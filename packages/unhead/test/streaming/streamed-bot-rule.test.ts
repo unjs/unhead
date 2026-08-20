@@ -67,9 +67,24 @@ describe('streamed-tag-hidden-from-bots', () => {
     ])
   })
 
-  it('ignores body-positioned tags, except JSON-LD which bots read anywhere', () => {
+  it('ignores body-positioned tags, except JSON-LD a driver will not serve', () => {
     expect(flagged({ link: [{ rel: 'canonical', href: '/', tagPosition: 'bodyClose' }] })).toEqual([])
     expect(flagged({ script: [{ type: 'application/ld+json', innerHTML: '{}', tagPosition: 'bodyClose' }] })).toHaveLength(1)
+  })
+
+  it('stays quiet on JSON-LD when the driver writes the body markup', () => {
+    const reported: HeadValidationRule[] = []
+    const { head } = createStreamableHead({
+      disableDefaults: true,
+      writesMarkup: true,
+      plugins: [ValidatePlugin({ onReport: r => reported.push(...r) })],
+    })
+    renderShell(head)
+
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: '{}' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(reported.filter(r => r.id === 'streamed-tag-hidden-from-bots')).toEqual([])
   })
 
   it('matches rel tokens on any whitespace, case-insensitively', () => {
