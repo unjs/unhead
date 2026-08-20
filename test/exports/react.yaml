@@ -46,7 +46,7 @@
   renderSSRHeadShell: function
   renderSSRHeadSuspenseChunk: function
   renderStreamEnd: function
-  renderStreamMarkup: function
+  renderStreamTail: function
   UnheadProvider: function
   wrapStream: function
 ./stream/vite:
