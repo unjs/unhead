@@ -268,7 +268,7 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('script innerHTML handling', () => {
-    it('jSON-LD script innerHTML preserved across stream', async () => {
+    it('preserves JSON-LD script innerHTML across the stream', async () => {
       const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -284,8 +284,7 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      // JSON-LD leaves the stream as markup, not as a patch, so bots that do
-      // not run the patch script still read it.
+      // Streamed Body Tags keep JSON-LD visible without client scripts.
       expect(renderSSRHeadSuspenseChunk(head)).toBe('')
 
       const end = renderStreamEnd(head, { shell: '', end: '</body></html>', bodyTagsAt: 0 })
@@ -345,7 +344,7 @@ describe('streaming SSR - potentially broken features', () => {
   })
 
   describe('noscript tags', () => {
-    it('noscript content leaves the stream as markup', async () => {
+    it('writes noscript content as Streamed Body Tags', async () => {
       const { head } = createStreamableHead({ writesBodyTags: true })
 
       await renderSSRHeadShell(head, '<html><head></head><body>')
@@ -356,8 +355,7 @@ describe('streaming SSR - potentially broken features', () => {
         }],
       })
 
-      // A patched noscript reaches nobody: its only audience is a client that
-      // never runs the patch.
+      // A `noscript` client cannot run a patch.
       expect(await renderSSRHeadSuspenseChunk(head)).toBe('')
       expect(renderStreamEnd(head, { shell: '', end: '</body></html>' })).toContain('tracking.gif')
     })

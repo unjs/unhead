@@ -16,10 +16,7 @@ export function createClientHeadAdapter<T>(core: Unhead<T, boolean>, hooks: Hook
   head.dirty = !!head.dirty
   head.use = p => registerPlugin(head, p)
   head.render = () => render(head)
-  // Rendering happens here rather than in an `entries:updated` listener.
-  // `hookable` awaits listeners in sequence, so one async listener would defer
-  // a listener-driven render past the synchronous batch that `_b` guards, and
-  // the batch would silently degrade to a render per push.
+  // Render here because an async hook listener could break batching.
   function notify() {
     hooks.callHook('entries:updated', head)
     if (!head._b)

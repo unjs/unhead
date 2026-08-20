@@ -154,13 +154,13 @@ export function createBootstrapScript(streamKey: string = DEFAULT_STREAM_KEY, no
  * const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderShell(head)
  * const shell = `<!DOCTYPE html><html${htmlAttrs}><head>${headTags}</head><body${bodyAttrs}>${bodyTagsOpen}`
  *
- * // ...stream the app, then close it with the tags held back from the chunks
+ * // Stream the app, then close it with the Streamed Body Tags.
  * res.end(`${renderStreamBodyTags(head)}${bodyTags}</body></html>`)
  * ```
  */
 export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
   const result = head.render()
-  rememberShellMarkup(head)
+  rememberShellBodyTags(head)
   head.entries.clear()
   return result
 }
@@ -186,9 +186,8 @@ export function renderShell(head: Unhead<any, SSRHeadPayload>): SSRHeadPayload {
 export function renderSSRHeadShell(head: Unhead<any>, template: string | PreparedTemplate): string {
   const parsed = typeof template === 'string' ? parseHtmlForIndexes(template) : template
   const result = applyShellToTemplate(head, head.render() as SSRHeadPayload, parsed)
-  rememberShellMarkup(head)
-  // Only clear entries once the shell has been successfully produced so a
-  // template failure leaves them intact for retry.
+  rememberShellBodyTags(head)
+  // Keep entries when template rendering fails, so the caller can retry.
   head.entries.clear()
   return result
 }
@@ -259,29 +258,16 @@ function normalizePendingTags(head: Unhead<any>): HeadTag[] {
  */
 const JSON_LD_TYPE_RE = /\bld\+json\b/i
 
-/** Per-response streaming state. Created on first use, never on a cold head. */
 function streamState(head: Unhead<any>) {
   return (head._stream ||= {})
 }
 
-/**
- * Tags that reach the page better as body markup than as a client patch.
- *
- * - `noscript` only ever renders for a client that does not run the patch
- *   script, so a patched `noscript` reaches nobody.
- * - An explicit body position is already a request for markup.
- * - Search engines read `application/ld+json` anywhere in the document.
- *
- * Everything else in a streamed patch only works from the head, and only for
- * clients that run the script.
- */
-function isMarkupTag(tagName: string, tag: any, entryPosition?: string): boolean {
+function isStreamedBodyTag(tagName: string, tag: any, entryPosition?: string): boolean {
   if (!tag || typeof tag !== 'object')
     return false
   if (tagName === 'noscript')
     return true
-  // `useHead(input, { tagPosition })` applies to every tag in the entry, so a
-  // tag with no position of its own inherits it, the way `resolveTags` does.
+  // An entry position applies when the tag has no position.
   const position = tag.tagPosition ?? entryPosition
   if (position === 'bodyClose' || position === 'bodyOpen')
     return true
@@ -289,34 +275,24 @@ function isMarkupTag(tagName: string, tag: any, entryPosition?: string): boolean
   return tagName === 'script' && typeof type === 'string' && JSON_LD_TYPE_RE.test(type)
 }
 
-/**
- * Identity for a tag bound for markup, in the same terms the DOM renderer and
- * `resolveTags` use. `dedupeKey` names the slot a tag occupies, keyed or
- * semantic, and `hashTag` fingerprints its content.
- */
-function markupIdentity(tagName: string, tag: any): { slot: string, content: string } {
-  // Copied because `normalizeProps` writes `type` back onto an object payload.
+function streamedBodyTagIdentity(tagName: string, tag: any): { slot: string, content: string } {
+  // Copy props because `normalizeProps` mutates object payloads.
   const normalized = normalizeProps({ tag: tagName as HeadTag['tag'], props: {} } as HeadTag, { ...tag })
   const content = hashTag(normalized)
   return { slot: dedupeKey(normalized) || content, content }
 }
 
-/** Mirrors `normalizeEntryToTags`: an entry may be a function of its input. */
 function unwrapEntryInput(input: any): any {
   return typeof input === 'function' ? input() : input
 }
 
-/**
- * Records the markup-bound tags the shell already rendered, so a later chunk
- * repeating one of them does not emit a second copy.
- */
-function rememberShellMarkup(head: Unhead<any>): void {
+function rememberShellBodyTags(head: Unhead<any>): void {
   const state = streamState(head)
   let seen = state.seen
   for (const entry of head.entries.values()) {
     const entryPosition = (entry.options as any)?.tagPosition
     for (const tag of entry._tags || entry._precomputedTags || []) {
-      if (!isMarkupTag(tag.tag, tag, entryPosition))
+      if (!isStreamedBodyTag(tag.tag, tag, entryPosition))
         continue
       seen ||= state.seen = new Set<string>()
       if (tag.textContent || tag.innerHTML)
@@ -326,13 +302,13 @@ function rememberShellMarkup(head: Unhead<any>): void {
   }
 }
 
-function hasMarkupTags(input: any, entryPosition?: string): boolean {
+function hasStreamedBodyTags(input: any, entryPosition?: string): boolean {
   if (input && typeof input === 'object') {
     for (const key in input) {
       const value = input[key]
       if (Array.isArray(value)) {
         for (const tag of value) {
-          if (isMarkupTag(key, tag, entryPosition))
+          if (isStreamedBodyTag(key, tag, entryPosition))
             return true
         }
       }
@@ -341,33 +317,31 @@ function hasMarkupTags(input: any, entryPosition?: string): boolean {
   return false
 }
 
-/** Splits a resolved head input between its client patch and body markup. */
-function splitMarkupTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, markup?: any } {
+function splitStreamedBodyTags(input: any, seen: Set<string>, entryPosition?: string): { patch?: any, bodyTags?: any } {
   let patch: any
-  let markup: any
+  let bodyTags: any
   for (const key in input) {
     const value = input[key]
-    if (!Array.isArray(value) || !value.some(tag => isMarkupTag(key, tag, entryPosition)))
+    if (!Array.isArray(value) || !value.some(tag => isStreamedBodyTag(key, tag, entryPosition)))
       continue
     const rest: any[] = []
     const carried: any[] = []
     for (const tag of value) {
-      if (!isMarkupTag(key, tag, entryPosition)) {
+      if (!isStreamedBodyTag(key, tag, entryPosition)) {
         rest.push(tag)
         continue
       }
-      const id = markupIdentity(key, tag)
-      // A repeat of something the shell already served goes out nowhere.
+      const id = streamedBodyTagIdentity(key, tag)
+      // The shell already served this exact tag.
       if (seen.has(id.content))
         continue
-      // The shell filled this slot already. Sending markup would put a second
-      // copy in the HTML, so the patch updates the first one instead.
+      // The shell owns this slot. Keep updates in the client patch.
       if (seen.has(id.slot)) {
         rest.push(tag)
         continue
       }
       seen.add(id.content)
-      // The body-open slot already flushed, so held tags land at the close.
+      // The body-open slot already flushed. Use the body-close slot.
       carried.push({ ...tag, tagPosition: 'bodyClose' })
     }
     patch ||= { ...input }
@@ -376,36 +350,35 @@ function splitMarkupTags(input: any, seen: Set<string>, entryPosition?: string):
     else
       delete patch[key]
     if (carried.length)
-      (markup ||= {})[key] = carried
+      (bodyTags ||= {})[key] = carried
   }
 
-  // An entry carrying nothing but markup tags leaves no patch behind at all.
+  // No client patch remains when every tag becomes a Streamed Body Tag.
   const hasPatch = Object.keys(patch).some(k => patch[k] !== undefined)
-  return { patch: hasPatch ? patch : undefined, markup }
+  return { patch: hasPatch ? patch : undefined, bodyTags }
 }
 
 /**
- * Renders the tags held back from earlier chunks as body markup, and clears
- * them. Drive a stream by hand and you must write this before `</body>`, or
- * the held-back tags never reach the page. `renderStreamEnd()` does it for
- * you when you stream from a template.
+ * Renders and clears Streamed Body Tags.
+ *
+ * Manual drivers must write this before `</body>`.
+ * `renderStreamEnd()` includes it for template streams.
  */
 export function renderStreamBodyTags(head: Unhead<any>): string {
-  const held = streamState(head).markup
-  if (!held?.length) {
+  const bodyTagInputs = streamState(head).bodyTags
+  if (!bodyTagInputs?.length) {
     return ''
   }
 
-  // Re-pushed through the real head so the tags get the same normalization,
-  // dedupe, and escaping as any other server-rendered tag.
+  // Use the server renderer for normalization, dedupe, and escaping.
   const restore = new Map(head.entries)
   head.entries.clear()
   try {
-    for (const input of held)
+    for (const input of bodyTagInputs)
       head.push(input)
     const bodyTags = (head.render() as SSRHeadPayload).bodyTags
-    // Only after the render succeeds, so a failure leaves the markup for a retry.
-    streamState(head).markup = undefined
+    // Clear only after a successful render, so failures can retry.
+    streamState(head).bodyTags = undefined
     return bodyTags
   }
   finally {
@@ -416,11 +389,9 @@ export function renderStreamBodyTags(head: Unhead<any>): string {
 }
 
 /**
- * Builds the closing HTML for a stream, folding in any tags that were held
- * back from the patch scripts.
+ * Adds Streamed Body Tags to the closing HTML.
  *
- * Drive a stream by hand and you must write this instead of `parts.end`, or
- * the held-back tags never reach the page.
+ * Manual drivers must write this instead of `parts.end`.
  *
  * @example
  * ```ts
@@ -458,26 +429,26 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     const state = streamState(head)
     let nextSeen: Set<string> | undefined
     const inputs: any[] = []
-    let markup: any[] | undefined
+    let bodyTags: any[] | undefined
     for (const entry of head.entries.values()) {
       const input = resolveHeadInput(unwrapEntryInput(entry.input), propResolvers)
       const entryPosition = (entry.options as any)?.tagPosition
-      if (!state.writesBodyTags || !hasMarkupTags(input, entryPosition)) {
+      if (!state.writesBodyTags || !hasStreamedBodyTags(input, entryPosition)) {
         inputs.push(input)
         continue
       }
-      const split = splitMarkupTags(input, nextSeen ||= new Set(state.seen), entryPosition)
+      const split = splitStreamedBodyTags(input, nextSeen ||= new Set(state.seen), entryPosition)
       if (split.patch)
         inputs.push(split.patch)
-      if (split.markup)
-        (markup ||= []).push(split.markup)
+      if (split.bodyTags)
+        (bodyTags ||= []).push(split.bodyTags)
     }
     serialized = safeJsonStringify(inputs)
     patchCount = inputs.length
     if (nextSeen)
       state.seen = nextSeen
-    if (markup)
-      (state.markup ||= []).push(...markup)
+    if (bodyTags)
+      (state.bodyTags ||= []).push(...bodyTags)
   }
   catch (error) {
     // Drop only entries that cannot resolve or serialize. Keeping one would
@@ -493,8 +464,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     throw error
   }
   head.entries.clear()
-  // Every pending tag went out as markup, so this chunk
-  // needs no script at all.
+  // No client patch remains when every tag becomes a Streamed Body Tag.
   if (!patchCount)
     return ''
   return `window.${streamKey}.push(${serialized})`
@@ -545,18 +515,17 @@ export function wrapStream(
   preRenderedState?: SSRHeadPayload,
   options?: { flushChunk?: () => string },
 ): ReadableStream<Uint8Array> {
-  // This wrapper always writes `renderStreamEnd`, so markup tags need no
-  // patch fallback. A hand-rolled driver promises the same with the
-  // `writesBodyTags` option.
+  // `renderStreamEnd()` writes Streamed Body Tags.
+  // Manual drivers opt in with `writesBodyTags`.
   streamState(head).writesBodyTags = true
-  // Without a default, entries registered after the shell are discarded.
+  // Preserve late entries when no custom chunk renderer exists.
   const flushChunk = options?.flushChunk ?? (() => {
     let chunk: string
     try {
       chunk = renderSSRHeadSuspenseChunk(head)
     }
     catch {
-      // Bytes are already on the wire; a throw here truncates the response.
+      // The response already started. Skip this patch.
       return ''
     }
     if (!chunk)
@@ -658,9 +627,7 @@ export interface StreamingTemplateParts {
    */
   end: string
   /**
-   * Offset within `end` where body-close tags sit. Content inserted here stays
-   * a direct child of `<body>`, which is what the client DOM renderer scans
-   * when it adopts server-rendered tags.
+   * Offset for Streamed Body Tags within `end`.
    */
   bodyTagsAt?: number
 }
@@ -819,9 +786,8 @@ export function prepareStreamingTemplate(
   // Only clear entries once the shell/end parts have been successfully
   // produced so a template failure leaves them intact for retry.
   if (!preRenderedState) {
-    // A caller supplying its own payload rendered the shell earlier, so its
-    // entries are gone and anything left belongs to the stream.
-    rememberShellMarkup(head)
+    // A supplied payload means all current entries belong to the stream.
+    rememberShellBodyTags(head)
     head.entries.clear()
   }
   return parts

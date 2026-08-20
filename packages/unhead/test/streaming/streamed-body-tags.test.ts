@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest'
 import { renderShell, renderSSRHeadSuspenseChunk, renderStreamEnd, wrapStream } from '../../src/stream/server'
 import { createStreamableServerHead } from '../util'
 
-// A driver writes `end` last, so body tags land at the body-close slot inside it.
+// Streamed Body Tags render at the body-close position in `end`.
 const PARTS = { shell: '', end: '</div></body></html>', bodyTagsAt: '</div>'.length }
 
 const GTM = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-1"></iframe>'
 
 describe('noscript registered after the shell', () => {
-  it('goes out as markup, not as a patch', () => {
+  it('writes noscript as a Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ noscript: [{ innerHTML: GTM, tagPosition: 'bodyOpen' }] })
 
@@ -39,7 +39,7 @@ describe('noscript registered after the shell', () => {
 })
 
 describe('body-positioned tags registered after the shell', () => {
-  it('sends a body-close script as markup', () => {
+  it('writes a body-close script as a Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ src: '/late.js', tagPosition: 'bodyClose' }] })
 
@@ -47,7 +47,7 @@ describe('body-positioned tags registered after the shell', () => {
     expect(renderStreamEnd(head, PARTS)).toContain('<script src="/late.js"')
   })
 
-  it('sends a body-close style as markup', () => {
+  it('writes a body-close style as a Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ style: [{ innerHTML: '.a{color:red}', tagPosition: 'bodyClose' }] })
     renderSSRHeadSuspenseChunk(head)
@@ -67,13 +67,13 @@ describe('body-positioned tags registered after the shell', () => {
   })
 })
 
-describe('an entry mixing hoistable and head-only tags', () => {
-  it('splits it across the patch and the markup', () => {
+describe('an entry with patch tags and Streamed Body Tags', () => {
+  it('splits each tag into the correct output', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({
       meta: [{ name: 'description', content: 'late' }],
       noscript: [{ innerHTML: GTM }],
-      script: [{ src: '/head.js' }, { src: '/tail.js', tagPosition: 'bodyClose' }],
+      script: [{ src: '/head.js' }, { src: '/streamed-body.js', tagPosition: 'bodyClose' }],
     })
 
     const chunk = renderSSRHeadSuspenseChunk(head)
@@ -81,20 +81,17 @@ describe('an entry mixing hoistable and head-only tags', () => {
 
     expect(chunk).toContain('description')
     expect(chunk).toContain('/head.js')
-    expect(chunk).not.toContain('/tail.js')
+    expect(chunk).not.toContain('/streamed-body.js')
     expect(chunk).not.toContain('noscript')
-    expect(end).toContain('/tail.js')
+    expect(end).toContain('/streamed-body.js')
     expect(end).toContain('<noscript>')
     expect(end).not.toContain('/head.js')
   })
 })
 
 describe('a stream that pauses mid-element', () => {
-  // Vue flushes inside an open element: an async <option> parks the reader in
-  // <select>, where the parser drops an injected noscript outright. Body tags
-  // are written into the template, so they land at body level whatever the app
-  // was in the middle of.
-  it('parses the hoisted markup into the body, not the open select', async () => {
+  // Vue may pause inside `<select>`. Streamed Body Tags remain body children.
+  it('renders Streamed Body Tags outside the open select', async () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     const template = '<!DOCTYPE html><html><head></head><body><div id="app"><!--app-html--></div></body></html>'
     const enc = new TextEncoder()
@@ -129,10 +126,7 @@ describe('a stream that pauses mid-element', () => {
 })
 
 describe('a tag the shell already served', () => {
-  // The head bytes are gone, so a post-shell update cannot replace the shell's
-  // copy. Hoisting a second one would put two blocks with the same key in the
-  // served HTML. The patch can still update the first for a JS client.
-  it('patches an update to a keyed tag instead of hoisting a duplicate', () => {
+  it('patches a keyed update instead of writing a duplicate', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ key: 'schema', type: 'application/ld+json', innerHTML: '{"v":1}' }] })
     const shell = renderShell(head)
@@ -156,7 +150,7 @@ describe('a tag the shell already served', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 
-  it('still hoists a different unkeyed block', () => {
+  it('writes a different unkeyed Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"a":1}' }] })
     renderShell(head)
@@ -171,9 +165,7 @@ describe('a tag the shell already served', () => {
 describe('a driver that builds the response by hand', () => {
   const LD = { type: 'application/ld+json', innerHTML: '{"@type":"Organization"}' } as const
 
-  // Nuxt renders the shell itself and writes its own closing HTML. Until it
-  // writes the body tags, the patch has to carry them or they reach nobody.
-  it('keeps hoisted tags in the patch when body tags are not guaranteed', () => {
+  it('keeps Streamed Body Tags in the patch until the driver opts in', () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD], noscript: [{ innerHTML: '<img src="px.gif">' }] })
@@ -184,7 +176,7 @@ describe('a driver that builds the response by hand', () => {
     expect(chunk).toContain('px.gif')
   })
 
-  it('does not hold body tags until the driver guarantees them', () => {
+  it('does not buffer Streamed Body Tags until the driver opts in', () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
@@ -193,7 +185,7 @@ describe('a driver that builds the response by hand', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 
-  it('does not append markup after its fallback patch has rendered', async () => {
+  it('does not append body tags after its fallback patch renders', async () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
@@ -209,7 +201,7 @@ describe('a driver that builds the response by hand', () => {
     expect(doc.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1)
   })
 
-  it('does not render twice when the client applies a patch over the markup', async () => {
+  it('does not duplicate a Streamed Body Tag after a client patch', async () => {
     const head = createStreamableServerHead()
     renderShell(head)
     head.push({ script: [LD] })
@@ -227,10 +219,7 @@ describe('a driver that builds the response by hand', () => {
 })
 
 describe('tagPosition given as an entry option', () => {
-  // `useHead(input, { tagPosition })` is a documented API and resolveTags
-  // applies it to every tag in the entry. The split has to see it too, or the
-  // tag ships as a patch nobody but a browser reads.
-  it('hoists a tag positioned by its entry', () => {
+  it('writes an entry-positioned Streamed Body Tag', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     renderShell(head)
     head.push({ script: [{ src: '/x.js' }] }, { tagPosition: 'bodyClose' })
@@ -259,8 +248,6 @@ describe('tagPosition given as an entry option', () => {
 })
 
 describe('a slot the shell filled, without an explicit key', () => {
-  // dedupeKey knows a second canonical or description replaces the first, even
-  // with no key on the tag. Emitting markup for the update would serve two.
   it.each([
     ['canonical', { link: [{ rel: 'canonical', href: '/a', tagPosition: 'bodyClose' }] }, { link: [{ rel: 'canonical', href: '/b', tagPosition: 'bodyClose' }] }, '/b'],
     ['description', { meta: [{ name: 'description', content: 'v1', tagPosition: 'bodyClose' }] }, { meta: [{ name: 'description', content: 'v2', tagPosition: 'bodyClose' }] }, 'v2'],
@@ -290,9 +277,6 @@ describe('an entry whose input is resolved lazily', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 
-  // The shell scan cannot look for tag arrays on the raw input: a function
-  // entry has none until it resolves, and skipping it loses what the shell
-  // served.
   it('remembers what the shell served from a function entry', () => {
     const head = createStreamableServerHead({ writesBodyTags: true })
     head.push((() => ({ script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Org"}' }] })) as any)
