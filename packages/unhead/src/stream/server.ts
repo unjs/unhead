@@ -265,6 +265,11 @@ function markupIdentity(tagName: string, tag: any): { slot: string, content: str
   return { slot: dedupeKey(normalized) || content, content }
 }
 
+/** Mirrors `normalizeEntryToTags`: an entry may be a function of its input. */
+function unwrapEntryInput(input: any): any {
+  return typeof input === 'function' ? input() : input
+}
+
 /**
  * Records the markup-bound tags the shell already rendered, so a later chunk
  * repeating one of them does not emit a second copy.
@@ -273,23 +278,13 @@ function rememberShellMarkup(head: Unhead<any>): void {
   const seen = streamState(head).seen ||= new Set<string>()
   const propResolvers = head.resolvedOptions.propResolvers || []
   for (const entry of head.entries.values()) {
-    const raw: any = entry.input
+    const raw: any = unwrapEntryInput(entry.input)
     if (!raw || typeof raw !== 'object')
       continue
     const entryPosition = (entry.options as any)?.tagPosition
-    // Resolving is the expensive half. Only `script` and `noscript` carry a
-    // markup-bound tag type, and `tagPosition` is a literal on the input, so a
-    // head of plain meta and links never resolves twice.
-    let mayCarry = false
-    for (const key in raw) {
-      const value = raw[key]
-      if (Array.isArray(value) && (key === 'script' || key === 'noscript' || (entryPosition && entryPosition !== 'head') || value.some((t: any) => t?.tagPosition && t.tagPosition !== 'head'))) {
-        mayCarry = true
-        break
-      }
-    }
-    if (!mayCarry)
-      continue
+    // Every entry resolves. A shape test on the raw input cannot stand in for
+    // one: an entry given as a function has no tag arrays until it resolves,
+    // and skipping it loses what the shell served.
     const input: any = resolveHeadInput(raw, propResolvers)
     for (const key in input) {
       const value = input[key]
@@ -438,7 +433,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     const seen = streamState(head).seen ||= new Set<string>()
     const entries = Array.from(head.entries.values())
     const entryPositions = entries.map(e => (e.options as any)?.tagPosition as string | undefined)
-    const resolved = entries.map(e => resolveHeadInput(e.input, propResolvers))
+    const resolved = entries.map(e => resolveHeadInput(unwrapEntryInput(e.input), propResolvers))
     const inputs: any[] = []
     const markup: any[] = []
     for (let i = 0; i < resolved.length; i++) {
@@ -460,7 +455,7 @@ export function renderSSRHeadSuspenseChunk(head: Unhead<any>): string {
     // poison every subsequent chunk render with the same error.
     for (const [key, entry] of head.entries) {
       try {
-        safeJsonStringify(resolveHeadInput(entry.input, propResolvers))
+        safeJsonStringify(resolveHeadInput(unwrapEntryInput(entry.input), propResolvers))
       }
       catch {
         head.entries.delete(key)

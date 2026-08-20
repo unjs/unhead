@@ -259,3 +259,19 @@ describe('a slot the shell filled, without an explicit key', () => {
     expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
   })
 })
+
+describe('an entry whose input is resolved lazily', () => {
+  // The shell scan cannot look for tag arrays on the raw input: a function
+  // entry has none until it resolves, and skipping it loses what the shell
+  // served.
+  it('remembers what the shell served from a function entry', () => {
+    const head = createStreamableServerHead({ writesMarkup: true })
+    head.push((() => ({ script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Org"}' }] })) as any)
+    expect(renderShell(head).headTags).toContain('ld+json')
+
+    head.push({ script: [{ type: 'application/ld+json', innerHTML: '{"@type":"Org"}' }] })
+    renderSSRHeadSuspenseChunk(head)
+
+    expect(renderStreamEnd(head, PARTS)).toBe(PARTS.end)
+  })
+})
