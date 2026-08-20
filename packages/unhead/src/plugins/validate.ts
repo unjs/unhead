@@ -53,6 +53,20 @@ export interface ValidatePluginOptions {
    * Project root path. When set, source locations are displayed as relative paths.
    */
   root?: string
+  /**
+   * Run only these rules. Every other rule is off, even when `rules` enables it.
+   *
+   * Use `['streamed-tag-hidden-from-bots']` for a focused streaming server instance.
+   */
+  only?: readonly ValidationRuleId[]
+  /**
+   * Key used to deduplicate plugin registrations.
+   *
+   * Use a unique key when one head needs more than one validator instance.
+   *
+   * @default 'validate'
+   */
+  key?: string
 }
 
 const TEMPLATE_PARAM_RE = /%\w+(?:\.\w+)?%/
@@ -260,6 +274,14 @@ function describeTag(tag: HeadTag): string {
 export function ValidatePlugin(options: ValidatePluginOptions = {}) {
   const ruleConfig = options.rules || {}
   const root = options.root
+  const only = options.only && new Set<string>(options.only)
+  const pluginKey = options.key || 'validate'
+
+  function severityFor(id: ValidationRuleId, fallback: RuleSeverity): RuleSeverity {
+    if (only && !only.has(id))
+      return 'off'
+    return resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, fallback)
+  }
 
   return defineHeadPlugin((head: Unhead) => {
     // Per head, not per plugin: entry indexes restart at 1 for every head, so
@@ -278,7 +300,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
       let warnedAsyncHook = false
       hooks.callHook = (name: string, ...args: any[]) => {
         const result = _callHook(name, ...args)
-        if (result?.then && !warnedAsyncHook) {
+        if (result?.then && !warnedAsyncHook && !only) {
           warnedAsyncHook = true
           console.warn(`[unhead] promise ignored: ${name}`)
         }
@@ -288,7 +310,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
 
     const _push = head.push.bind(head)
     head.push = (input, opts) => {
-      if ((opts as any)?.mode && resolveSeverity(ruleConfig['deprecated-option-mode'] as RuleSeverity | [RuleSeverity, unknown] | undefined, 'warn') !== 'off') {
+      if ((opts as any)?.mode && severityFor('deprecated-option-mode', 'warn') !== 'off') {
         console.warn(`[unhead] "mode: '${(opts as any).mode}'" option was removed in v3. Use the appropriate createHead import (unhead/client or unhead/server) instead.`)
       }
       const source = captureSource(root)
@@ -327,13 +349,10 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
     }
 
     return {
-      key: 'validate',
+      key: pluginKey,
       hooks: {
         'ssr:streamChunk': ({ tags }) => {
-          const severity = resolveSeverity(
-            ruleConfig['streamed-tag-hidden-from-bots'] as RuleSeverity | [RuleSeverity, unknown] | undefined,
-            'warn',
-          )
+          const severity = severityFor('streamed-tag-hidden-from-bots', 'warn')
           if (severity === 'off')
             return
           const rules: HeadValidationRule[] = []
@@ -367,7 +386,7 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
           const rules: HeadValidationRule[] = []
 
           function report(id: ValidationRuleId, message: string, defaultSeverity: 'warn' | 'info', tag?: HeadTag, inputEntryIndex?: number) {
-            const severity = resolveSeverity(ruleConfig[id] as RuleSeverity | [RuleSeverity, unknown] | undefined, defaultSeverity)
+            const severity = severityFor(id, defaultSeverity)
             if (severity === 'off')
               return
             const entryIndex = inputEntryIndex ?? (tag?._p != null ? tag._p >> 10 : undefined)
@@ -743,5 +762,5 @@ export function ValidatePlugin(options: ValidatePluginOptions = {}) {
         },
       },
     }
-  }, 'validate')
+  }, pluginKey)
 }
