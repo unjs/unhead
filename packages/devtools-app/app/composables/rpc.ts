@@ -3,12 +3,13 @@ import { getDevToolsRpcClient } from '@vitejs/devtools-kit/client'
 import { isConnected, syncState } from './state'
 
 export const colorMode = ref<'dark' | 'light'>('dark')
+const DEVTOOLS_RPC_BASE_URL = '/__devtools/'
 
 export async function useDevtoolsConnection(): Promise<void> {
   if (typeof window === 'undefined')
     return
 
-  await getDevToolsRpcClient()
+  await getDevToolsRpcClient({ baseURL: DEVTOOLS_RPC_BASE_URL })
     .then(async (client) => {
       const sharedState = await client.sharedState.get('unhead:state')
       if (!sharedState)
@@ -33,7 +34,7 @@ export async function useDevtoolsConnection(): Promise<void> {
 }
 
 export async function callRpc<T = any>(name: string, ...args: any[]): Promise<T> {
-  const client: any = await getDevToolsRpcClient()
+  const client: any = await getDevToolsRpcClient({ baseURL: DEVTOOLS_RPC_BASE_URL })
   if (!client?.call)
     throw new Error('[unhead] DevTools RPC client unavailable')
   return await client.call(name, ...args) as T

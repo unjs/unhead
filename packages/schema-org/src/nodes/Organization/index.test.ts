@@ -1,9 +1,38 @@
 import { expect } from 'vitest'
 import { organizationResolver } from '.'
-import { defineOrganization, useSchemaOrg } from '../../'
+import { defineOrganization, defineWebPage, useSchemaOrg } from '../../'
 import { injectSchemaOrg, useSetup } from '../../../test'
 
 describe('defineOrganization', () => {
+  it('sets webpage about to the identity on the homepage', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({ name: 'RankEval' }),
+        defineWebPage(),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const webPage = graph.find(node => node['@id'] === 'https://example.com/#webpage')
+
+      expect(webPage?.about).toEqual({ '@id': 'https://example.com/#identity' })
+    })
+  })
+
+  it('does not set webpage about to the identity off the homepage', async () => {
+    await useSetup(async (head) => {
+      useSchemaOrg(head, [
+        defineOrganization({ name: 'RankEval' }),
+        defineWebPage(),
+      ])
+
+      const graph = await injectSchemaOrg(head)
+      const webPage = graph.find(node => node['@id'] === 'https://example.com/orgs/rustopia#webpage')
+
+      expect(webPage).toBeDefined()
+      expect(webPage).not.toHaveProperty('about')
+    }, { path: '/orgs/rustopia' })
+  })
+
   it('keeps a logo when the identity type is resolved from the default', async () => {
     await useSetup(async (head) => {
       useSchemaOrg(head, [

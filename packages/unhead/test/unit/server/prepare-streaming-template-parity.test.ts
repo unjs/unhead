@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyHeadToHtml, parseHtmlForIndexes } from '../../../src/parser'
-import { prepareStreamingTemplate } from '../../../src/stream/server'
+import { createBootstrapScript, prepareStreamingTemplate } from '../../../src/stream/server'
 import { createStreamableServerHead } from '../../util'
 
 // Reference implementation: prepareStreamingTemplate used to derive the shell
@@ -10,7 +10,9 @@ import { createStreamableServerHead } from '../../util'
 function oldPrepareStreamingTemplate(head: any, template: string, preRenderedState?: any) {
   const ssr = preRenderedState ?? head.render()
   const streamKey = head.resolvedOptions.experimentalStreamKey || '__unhead__'
-  const bootstrapScript = `<script>window.${streamKey}={_q:[],push(e){this._q.push(e)}}</script>`
+  // The fuzz locks shell-index derivation, not the bootstrap payload, so the
+  // reference takes the script from the real function.
+  const bootstrapScript = createBootstrapScript(streamKey)
   const parsed = parseHtmlForIndexes(template)
   const bodyEnd = parsed.indexes.bodyTagEnd
   const bodyCloseStart = parsed.indexes.bodyCloseTagStart
@@ -99,8 +101,8 @@ describe('fuzz parity old vs new prepareStreamingTemplate', () => {
       const template = Array.from({ length: n }, () => PIECES[Math.floor(rand() * PIECES.length)]).join('')
       const state = { htmlAttrs: ' data-a="1"', headTags: '<title>X</title>', bodyAttrs: ' class="b"', bodyTagsOpen: '', bodyTags: '<script src="/x.js"></script>' }
       const oldResult = oldPrepareStreamingTemplate(createStreamableServerHead(), template, state)
-      const newResult = prepareStreamingTemplate(createStreamableServerHead(), template, state)
-      expect(newResult, `template: ${JSON.stringify(template)}`).toEqual(oldResult)
+      const { shell, end } = prepareStreamingTemplate(createStreamableServerHead(), template, state)
+      expect({ shell, end }, `template: ${JSON.stringify(template)}`).toEqual(oldResult)
     }
   })
 })

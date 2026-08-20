@@ -52,6 +52,7 @@ export function Unhead(options: VitePluginOptions = {}, internal: InternalFramew
     ctx.addRuntimePlugin({
       import: { name: 'ValidatePlugin', source: pluginsSource, as: '__unhead_validate' },
       client: '_h.use(__unhead_validate({ root: __ROOT__ }))',
+      server: '_h.use(__unhead_validate({ root: __ROOT__ }))',
     })
   }
 
