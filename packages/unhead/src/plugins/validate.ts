@@ -181,11 +181,11 @@ function createInputShapeObserver(): {
 }
 
 /**
- * Tags a bot only ever reads from the served `<head>`.
+ * Tags bots must receive in server HTML.
  *
- * During streaming SSR anything registered after the shell is delivered as a
- * script that patches the DOM. A browser runs it. A bot reads the HTML the
- * server sent and never does, so these tags simply are not there for it.
+ * Most must stay in `<head>`. JSON-LD can appear anywhere in the response.
+ * Streaming SSR delivers late registrations through a DOM patch. Browsers
+ * apply it. Many bots only read server HTML.
  */
 const BOT_HEAD_META_NAMES = /* @__PURE__ */ new Set(['description', 'robots', 'googlebot', 'bingbot', 'slurp', 'keywords'])
 const BOT_HEAD_META_EQUIVS = /* @__PURE__ */ new Set(['refresh', 'content-language'])

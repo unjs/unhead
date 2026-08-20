@@ -223,7 +223,7 @@ describe('streamed-tag-hidden-from-bots', () => {
     expect(script).not.toHaveProperty('type')
   })
 
-  it('does not hand out the callers own templateParams object', () => {
+  it('does not hand out the caller\'s own templateParams object', () => {
     const seen: any[] = []
     const { head } = createStreamableHead({
       disableDefaults: true,
