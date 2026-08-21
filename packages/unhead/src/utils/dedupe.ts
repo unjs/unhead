@@ -4,6 +4,41 @@ import { MetaTagsArrayable, TagsWithInnerContent, UniqueTags } from './const'
 const META_NOREWRITE_RE = /^(?:viewport|description|keywords|robots)$/
 const META_KEY_ATTRS = ['name', 'property', 'http-equiv'] as const
 
+/**
+ * Rebuilds a value with every object's keys sorted, so two payloads with the
+ * same shape but different insertion order serialise identically. Arrays stay
+ * order-sensitive: `[1,2]` and `[2,1]` are genuinely different.
+ *
+ * `JSON.stringify` still does the serialising, so `Date`, `toJSON`, `NaN`, and
+ * `undefined` behave exactly as they did before.
+ */
+function sortKeysDeep(value: unknown, seen: Set<object>): unknown {
+  if (!value || typeof value !== 'object')
+    return value
+  if (seen.has(value as object))
+    throw new TypeError('Converting circular structure to JSON')
+  seen.add(value as object)
+  let out: unknown
+  if (Array.isArray(value)) {
+    out = value.map(v => sortKeysDeep(v, seen))
+  }
+  else if (typeof (value as { toJSON?: unknown }).toJSON === 'function') {
+    out = value
+  }
+  else {
+    const sorted: Record<string, unknown> = {}
+    for (const key of Object.keys(value as Record<string, unknown>).sort())
+      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key], seen)
+    out = sorted
+  }
+  seen.delete(value as object)
+  return out
+}
+
+export function canonicalStringify(value: unknown): string {
+  return JSON.stringify(sortKeysDeep(value, new Set())) as string
+}
+
 export function isMetaArrayDupeKey(v: string) {
   const i = v.indexOf(':')
   if (i === -1)
