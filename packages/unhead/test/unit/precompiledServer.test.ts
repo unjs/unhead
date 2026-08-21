@@ -56,4 +56,43 @@ describe('sealed precompiled server runtime', () => {
     head._p.push(plan)
     expect(resolveTags(head)).toEqual(plan)
   })
+
+  it('memoizes repeat renders of a shared plan with fresh payload objects', () => {
+    const plan: PrecompiledHeadInput = [[10, 'title', '<title>a</title>'], [100, 'meta:x', '<meta name="x" content="1">']]
+    const first = createHead({ disableDefaults: true })
+    first._p.push(plan)
+    const second = createHead({ disableDefaults: true })
+    second._p.push(plan)
+    const firstPayload = renderSSRHead(first)
+    // cached path: same strings, distinct payload objects
+    expect(renderSSRHead(first)).toEqual(firstPayload)
+    expect(renderSSRHead(first)).not.toBe(firstPayload)
+    expect(renderSSRHead(second)).toEqual(firstPayload)
+    // resolveTags keeps returning a mutable fresh array over the shared cache
+    const resolved = resolveTags(first)
+    resolved.pop()
+    expect(resolveTags(first)).toHaveLength(2)
+  })
+
+  it('memoizes the defaults + plan shape and re-renders after a later push', () => {
+    const plan: PrecompiledHeadInput = [[10, 'title', '<title>a</title>']]
+    const withDefaults = createHead()
+    withDefaults._p.push(plan)
+    const expected = renderSSRHead(withDefaults)
+    expect(expected.headTags).toContain('<title>a</title>')
+    expect(expected.htmlAttrs).toBe(' lang="en"')
+    // repeat render hits the pair cache
+    expect(renderSSRHead(withDefaults)).toEqual(expected)
+    // a second head with the same plans shares the cached strings
+    const other = createHead()
+    other._p.push(plan)
+    expect(renderSSRHead(other)).toEqual(expected)
+    // a later push bypasses the cache and re-renders correctly
+    withDefaults._p.push([[100, 'meta:x', '<meta name="x" content="1">']])
+    const updated = renderSSRHead(withDefaults)
+    expect(updated.headTags).toContain('<meta name="x" content="1">')
+    expect(updated.headTags).toContain('<title>a</title>')
+    // and the cached defaults + plan payload is unaffected
+    expect(renderSSRHead(other)).toEqual(expected)
+  })
 })

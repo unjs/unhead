@@ -20,6 +20,18 @@ export function createHead(): never {
   throw new Error('[unhead] unique server heads must be compiled by @unhead/bundler')
 }
 
+// Plans are immutable module-level consts in compiled output, so rendered
+// payload strings are memoized per plan (and per plan pair, for the defaults +
+// plan shape the emit produces). Heads are per-request; plans are shared
+// across requests.
+// @internal
+const planPayloadCache = new WeakMap<PrecompiledUniqueHeadInput, PayloadStrings>()
+// @internal
+const pairPayloadCache = new WeakMap<PrecompiledUniqueHeadInput, WeakMap<PrecompiledUniqueHeadInput, PayloadStrings>>()
+
+/** @internal */
+type PayloadStrings = readonly [string, string, string, string, string]
+
 /** Resolve identity-free plans whose uniqueness was proven by the build. @experimental */
 function resolveTags(head: PrecompiledUniqueServerHead): PrecompiledUniqueTag[] {
   const tags: PrecompiledUniqueTag[] = []
@@ -30,13 +42,47 @@ function resolveTags(head: PrecompiledUniqueServerHead): PrecompiledUniqueTag[] 
   return tags.sort((a, b) => a[0] - b[0])
 }
 
-/** Render identity-free build-validated plans. @experimental */
-export function renderSSRHead(head: PrecompiledUniqueServerHead): SSRHeadPayload {
-  const output = ['', '', '', '', '']
-  for (const tag of resolveTags(head)) {
+/** @internal */
+function renderStrings(tags: readonly PrecompiledUniqueTag[]): PayloadStrings {
+  const output: [string, string, string, string, string] = ['', '', '', '', '']
+  for (const tag of tags) {
     if (tag[1])
       output[tag[2] || 0] += tag[1]
   }
+  return output
+}
+
+/** @internal */
+function payloadStrings(head: PrecompiledUniqueServerHead): PayloadStrings {
+  if (head._p.length === 1) {
+    const plan = head._p[0]
+    let strings = planPayloadCache.get(plan)
+    if (!strings) {
+      strings = renderStrings(resolveTags(head))
+      planPayloadCache.set(plan, strings)
+    }
+    return strings
+  }
+  if (head._p.length === 2) {
+    const [first, second] = head._p
+    let inner = pairPayloadCache.get(first)
+    let strings = inner?.get(second)
+    if (!strings) {
+      strings = renderStrings(resolveTags(head))
+      if (!inner) {
+        inner = new WeakMap()
+        pairPayloadCache.set(first, inner)
+      }
+      inner.set(second, strings)
+    }
+    return strings
+  }
+  return renderStrings(resolveTags(head))
+}
+
+/** Render identity-free build-validated plans. @experimental */
+export function renderSSRHead(head: PrecompiledUniqueServerHead): SSRHeadPayload {
+  const output = payloadStrings(head)
   return {
     headTags: output[0],
     bodyTags: output[2],

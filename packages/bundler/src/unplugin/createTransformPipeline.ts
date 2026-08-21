@@ -1852,7 +1852,7 @@ export function createTransformPipeline(config: TransformPipelineConfig): Unplug
               start: pending.start,
               end: pending.end,
               content: pending.consumer === 'client'
-                ? 'createHead(1)'
+                ? 'createHead()'
                 : pending.disableDefaults
                   ? '({_p:[]})'
                   : `({_p:[${defaultPlanName}]})`,

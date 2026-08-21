@@ -294,7 +294,7 @@ describe('sealed static precompile transform', () => {
       seoMeta: false,
       precompile: { duplicates: 'error' },
     }, { environment: { config: { consumer: 'client' } } })
-    expect(client).toContain('const head = createHead(1)')
+    expect(client).toContain('const head = createHead()')
 
     const server = await transform([
       'import { createHead, useHead } from \'unhead/precompiled/server\'',

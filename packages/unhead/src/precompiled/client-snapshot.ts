@@ -47,13 +47,24 @@ function identity(el: Element): string | undefined {
     return
   }
   const names = el.getAttributeNames().sort()
-  let value = `${tag}:`
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
+  return `${tag}:${names.map((name) => {
     const attribute = el.getAttribute(name)
-    value += `${i ? ',' : ''}${name}:${attribute === '' && !name.startsWith('data-') ? 'true' : attribute}`
+    return `${name}:${attribute === '' && !name.startsWith('data-') ? 'true' : attribute}`
+  }).join(',')}`
+}
+
+function setProps(el: Element, props: Record<string, string | number | boolean | null>) {
+  for (const prop in props) {
+    const value = props[prop]
+    if (value === false || value === null) {
+      el.removeAttribute(prop)
+    }
+    else {
+      const next = value === true ? '' : String(value)
+      if (el.getAttribute(prop) !== next)
+        el.setAttribute(prop, next)
+    }
   }
-  return value
 }
 
 function render(plan: PrecompiledClientInput): boolean {
@@ -61,15 +72,19 @@ function render(plan: PrecompiledClientInput): boolean {
   if (!document)
     return false
   const elements = new Map<string, Element[]>()
-  for (const el of document.querySelectorAll('head>*,body>*')) {
-    const key = identity(el)
-    if (!key || key === 'title')
-      continue
-    const existing = elements.get(key)
-    if (existing)
-      existing.push(el)
-    else
-      elements.set(key, [el])
+  // element children only: text and comment nodes can never match an identity
+  for (const parent of [document.head, document.body]) {
+    for (let i = 0; i < parent.children.length; i++) {
+      const el = parent.children[i]
+      const key = identity(el)
+      if (!key || key === 'title')
+        continue
+      const existing = elements.get(key)
+      if (existing)
+        existing.push(el)
+      else
+        elements.set(key, [el])
+    }
   }
   const take = (key: string) => {
     const value = elements.get(key)
@@ -95,17 +110,7 @@ function render(plan: PrecompiledClientInput): boolean {
     }
     if (name.endsWith('Attrs')) {
       const el = name === 'htmlAttrs' ? document.documentElement : document.body
-      for (const prop in props) {
-        const value = props[prop]
-        if (value === false || value === null) {
-          el.removeAttribute(prop)
-        }
-        else {
-          const next = value === true ? '' : String(value)
-          if (el.getAttribute(prop) !== next)
-            el.setAttribute(prop, next)
-        }
-      }
+      setProps(el, props)
       continue
     }
     const el = take(adoptionIdentity || key) || document.createElement(name)
@@ -115,17 +120,7 @@ function render(plan: PrecompiledClientInput): boolean {
       else
         pending.push([el, position])
     }
-    for (const prop in props) {
-      const value = props[prop]
-      if (value === false || value === null) {
-        el.removeAttribute(prop)
-      }
-      else {
-        const next = value === true ? '' : String(value)
-        if (el.getAttribute(prop) !== next)
-          el.setAttribute(prop, next)
-      }
-    }
+    setProps(el, props)
     if (content !== undefined) {
       if (isHTML) {
         if (el.innerHTML !== content)

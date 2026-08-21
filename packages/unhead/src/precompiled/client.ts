@@ -37,8 +37,6 @@ export interface PrecompiledClientHead {
   _set: (id: number, input: PrecompiledClientInput) => void
   /** @internal */
   _s?: PrecompiledDomState
-  /** @internal */
-  _u?: 1
   push: (input: PrecompiledClientInput) => PrecompiledClientEntry
   render: () => boolean
 }
@@ -85,13 +83,10 @@ function identity(el: Element): string | undefined {
     return
   }
   const names = el.getAttributeNames().sort()
-  let value = `${tag}:`
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
+  return `${tag}:${names.map((name) => {
     const attribute = el.getAttribute(name)
-    value += `${i ? ',' : ''}${name}:${attribute === '' && !name.startsWith('data-') ? 'true' : attribute}`
-  }
-  return value
+    return `${name}:${attribute === '' && !name.startsWith('data-') ? 'true' : attribute}`
+  }).join(',')}`
 }
 
 function takeAdopted(state: PrecompiledDomState, key: string): Element | undefined {
@@ -112,21 +107,29 @@ function resolveTags(head: PrecompiledClientHead): PrecompiledClientTag[] {
     for (const tag of plan) tags.push(tag)
   }
   tags.sort((a, b) => a[0] - b[0])
-  let resolved: PrecompiledClientTag[]
-  if (head._u) {
-    resolved = tags
+  const deduped = new Map<string, PrecompiledClientTag>()
+  for (const tag of tags) {
+    const previous = deduped.get(tag[1])
+    if (!previous || tag[2].endsWith('Attrs') || previous[0] === tag[0])
+      deduped.set(tag[1], tag)
   }
-  else {
-    const deduped = new Map<string, PrecompiledClientTag>()
-    for (const tag of tags) {
-      const previous = deduped.get(tag[1])
-      if (!previous || tag[2].endsWith('Attrs') || previous[0] === tag[0])
-        deduped.set(tag[1], tag)
-    }
-    resolved = [...deduped.values()]
-  }
+  const resolved = [...deduped.values()]
   head._r = resolved
   return resolved
+}
+
+function setProps(el: Element, props: Record<string, string | number | boolean | null>) {
+  for (const prop in props) {
+    const value = props[prop]
+    if (value === false || value === null) {
+      el.removeAttribute(prop)
+    }
+    else {
+      const next = value === true ? '' : String(value)
+      if (el.getAttribute(prop) !== next)
+        el.setAttribute(prop, next)
+    }
+  }
 }
 
 function render(head: PrecompiledClientHead): boolean {
@@ -141,15 +144,19 @@ function render(head: PrecompiledClientHead): boolean {
   }
   if (!state) {
     const adopted = new Map<string, Element[]>()
-    for (const el of document.querySelectorAll('head>*,body>*')) {
-      const key = identity(el)
-      if (!key || key === 'title')
-        continue
-      const existing = adopted.get(key)
-      if (existing)
-        existing.push(el)
-      else
-        adopted.set(key, [el])
+    // element children only: text and comment nodes can never match an identity
+    for (const parent of [document.head, document.body]) {
+      for (let i = 0; i < parent.children.length; i++) {
+        const el = parent.children[i]
+        const key = identity(el)
+        if (!key || key === 'title')
+          continue
+        const existing = adopted.get(key)
+        if (existing)
+          existing.push(el)
+        else
+          adopted.set(key, [el])
+      }
     }
     state = { adopted, document, elements: new Map(), tags: new Map(), title: document.title }
     head._s = state
@@ -179,20 +186,15 @@ function render(head: PrecompiledClientHead): boolean {
     }
     if (name.endsWith('Attrs')) {
       const el = name === 'htmlAttrs' ? document.documentElement : document.body
-      for (const prop in props) {
-        const value = props[prop]
-        if (value === false || value === null) {
-          el.removeAttribute(prop)
-        }
-        else {
-          const next = value === true ? '' : String(value)
-          if (el.getAttribute(prop) !== next)
-            el.setAttribute(prop, next)
-        }
-      }
+      setProps(el, props)
       continue
     }
     let el = state.elements.get(key)
+    // Plan tuples are shared readonly references: when the winning tuple did
+    // not change since the last render and the element was already synced, the
+    // DOM state matches and all writes can be skipped. External DOM edits made
+    // between renders are not repaired until the plan changes.
+    const synced = !!el
     if (!el) {
       el = takeAdopted(state, adoptionIdentity || key) || document.createElement(name)
       state.elements.set(key, el)
@@ -204,34 +206,26 @@ function render(head: PrecompiledClientHead): boolean {
       }
     }
     const previous = state.tags.get(key)
-    if (previous && previous[2] === name) {
-      for (const prop in previous[3]) {
-        if (!(prop in props))
-          el.removeAttribute(prop)
+    if (!synced || previous !== tag) {
+      if (previous && previous[2] === name) {
+        for (const prop in previous[3]) {
+          if (!(prop in props))
+            el.removeAttribute(prop)
+        }
       }
-    }
-    for (const prop in props) {
-      const value = props[prop]
-      if (value === false || value === null) {
-        el.removeAttribute(prop)
+      setProps(el, props)
+      if (content !== undefined) {
+        if (isHTML) {
+          if (el.innerHTML !== content)
+            el.innerHTML = content
+        }
+        else if (el.textContent !== content) {
+          el.textContent = content
+        }
       }
-      else {
-        const next = value === true ? '' : String(value)
-        if (el.getAttribute(prop) !== next)
-          el.setAttribute(prop, next)
+      else if (previous?.[4] !== undefined) {
+        el.textContent = ''
       }
-    }
-    if (content !== undefined) {
-      if (isHTML) {
-        if (el.innerHTML !== content)
-          el.innerHTML = content
-      }
-      else if (el.textContent !== content) {
-        el.textContent = content
-      }
-    }
-    else if (previous?.[4] !== undefined) {
-      el.textContent = ''
     }
   }
 
@@ -262,8 +256,6 @@ function render(head: PrecompiledClientHead): boolean {
       document.head.appendChild(el)
   }
   state.tags = next
-  if (state.adopted?.size === 0)
-    state.adopted = undefined
   return true
 }
 
@@ -284,12 +276,10 @@ function push(head: PrecompiledClientHead, input: PrecompiledClientInput, should
 }
 
 /** Create a capability-limited client head for build-finalized entries. @experimental */
-export function createHead(): PrecompiledClientHead
-export function createHead(unique?: 1): PrecompiledClientHead {
+export function createHead(): PrecompiledClientHead {
   const head = {
     _c: 0,
     _e: new Map<number, PrecompiledClientInput>(),
-    _u: unique,
     _set(id: number, input: PrecompiledClientInput) {
       head._e.set(id, input)
       head._r = undefined

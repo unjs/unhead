@@ -44,6 +44,20 @@ function resolveTags(head: PrecompiledCsrClientHead): PrecompiledClientTag[] {
   return resolved
 }
 
+function setProps(el: Element, props: Record<string, string | number | boolean | null>) {
+  for (const prop in props) {
+    const value = props[prop]
+    if (value === false || value === null) {
+      el.removeAttribute(prop)
+    }
+    else {
+      const next = value === true ? '' : String(value)
+      if (el.getAttribute(prop) !== next)
+        el.setAttribute(prop, next)
+    }
+  }
+}
+
 function render(head: PrecompiledCsrClientHead): boolean {
   const document = globalThis.document
   if (!document)
@@ -82,20 +96,16 @@ function render(head: PrecompiledCsrClientHead): boolean {
     }
     if (name.endsWith('Attrs')) {
       const el = name === 'htmlAttrs' ? document.documentElement : document.body
-      for (const prop in props) {
-        const value = props[prop]
-        if (value === false || value === null) {
-          el.removeAttribute(prop)
-        }
-        else {
-          const next = value === true ? '' : String(value)
-          if (el.getAttribute(prop) !== next)
-            el.setAttribute(prop, next)
-        }
-      }
+      setProps(el, props)
       continue
     }
     let el = state.elements.get(key)
+    // Plan tuples are shared readonly references: when the winning tuple did
+    // not change since the last render, the DOM state matches and all writes
+    // can be skipped. External DOM edits made between renders are not repaired
+    // until the plan changes.
+    if (state.elements.has(key) && state.tags.get(key) === tag)
+      continue
     if (!el) {
       el = document.createElement(name)
       state.elements.set(key, el)
@@ -111,17 +121,7 @@ function render(head: PrecompiledCsrClientHead): boolean {
           el.removeAttribute(prop)
       }
     }
-    for (const prop in props) {
-      const value = props[prop]
-      if (value === false || value === null) {
-        el.removeAttribute(prop)
-      }
-      else {
-        const next = value === true ? '' : String(value)
-        if (el.getAttribute(prop) !== next)
-          el.setAttribute(prop, next)
-      }
-    }
+    setProps(el, props)
     if (content !== undefined) {
       if (isHTML) {
         if (el.innerHTML !== content)

@@ -54,6 +54,41 @@ describe('precompiled client runtime', () => {
     expect(document.title).toBe('second')
   })
 
+  it('skips DOM writes when the winning plan tuple is unchanged and re-syncs when it changes', () => {
+    const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const head = createHead()
+    const batchedPush = head.push as (input: PrecompiledClientInput, batch?: 0) => ReturnType<typeof head.push>
+    const first: PrecompiledClientInput = [[100, 'meta:description', 'meta', { name: 'description', content: 'first' }]]
+    const second: PrecompiledClientInput = [[100, 'meta:description', 'meta', { 'name': 'description', 'content': 'second', 'data-x': '1' }]]
+    batchedPush(first, 0)
+    const setAttribute = vi.spyOn(dom.window.Element.prototype, 'setAttribute')
+    head.render()
+    expect(setAttribute).toHaveBeenCalled()
+    setAttribute.mockClear()
+    // unchanged tuple: no DOM writes
+    head.render()
+    expect(setAttribute).not.toHaveBeenCalled()
+    // a different winning tuple re-syncs every attribute
+    batchedPush(second, 0)
+    setAttribute.mockClear()
+    head.render()
+    expect(setAttribute).toHaveBeenCalled()
+    expect(document.head.querySelector('meta')?.getAttribute('content')).toBe('second')
+    expect(document.head.querySelector('meta')?.hasAttribute('data-x')).toBe(true)
+    setAttribute.mockRestore()
+  })
+
+  it('ignores text and comment nodes while adopting SSR elements', () => {
+    const dom = new JSDOM('<!doctype html><html><head><!-- c --><meta name="description" content="server">text</head><body></body></html>')
+    vi.stubGlobal('document', dom.window.document)
+    const existing = document.head.querySelector('meta')
+    const head = createHead()
+    head.push([[100, 'meta:description', 'meta', { name: 'description', content: 'client' }]])
+    expect(document.head.querySelector('meta')).toBe(existing)
+    expect(existing?.getAttribute('content')).toBe('client')
+  })
+
   it('adopts SSR elements once when registering a batch', () => {
     const dom = new JSDOM('<!doctype html><html><head><meta name="description" content="server"></head><body></body></html>')
     vi.stubGlobal('document', dom.window.document)
