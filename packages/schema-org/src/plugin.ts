@@ -45,21 +45,23 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
   return defineHeadPlugin((head: Unhead): HeadPlugin => {
     head.use(TemplateParamsPlugin)
     function collectTag(tag: HeadTag) {
-      if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+      if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
         // this is a bit expensive, load in seperate chunk
         const nodes = tag.props.nodes
-        for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-          // malformed input - skip null/undefined but allow empty objects
-          if (typeof node !== 'object' || node === null) {
-            continue
-          }
+        if (nodes) {
+          for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
+            // malformed input - skip null/undefined but allow empty objects
+            if (typeof node !== 'object' || node === null) {
+              continue
+            }
 
-          const newNode = {
-            ...node,
-            _dedupeStrategy: tag.tagDuplicateStrategy,
+            const newNode = {
+              ...node,
+              _dedupeStrategy: tag.tagDuplicateStrategy,
+            }
+            // Push node (it already has _resolver if it came from a defineXXX function)
+            graph.push(newNode)
           }
-          // Push node (it already has _resolver if it came from a defineXXX function)
-          graph.push(newNode)
         }
         tag.tagPosition = tag.tagPosition || (config.tagPosition === 'head' ? 'head' : 'bodyClose')
       }
@@ -123,7 +125,8 @@ export function UnheadSchemaOrg(config: MetaInput = {} as MetaInput, meta: () =>
           // find the schema.org node, should be a single instance
           for (const k in ctx.tags) {
             const tag = ctx.tags[k]
-            if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && tag.props.nodes) {
+            // nodes can resolve to nullish at runtime (reactive no-op input), match by key too
+            if (tag.tag === 'script' && tag.props.type === 'application/ld+json' && (tag.props.nodes || tag.key === 'schema-org-graph')) {
               delete tag.props.nodes
               const resolvedGraph = graph.resolveGraph({ ...(meta?.() || {}), ...config, ...resolvedMeta })
               if (!resolvedGraph.length) {

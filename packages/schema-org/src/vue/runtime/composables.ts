@@ -292,7 +292,7 @@ export function defineService<Input extends object | undefined = undefined>(inpu
   return provideResolver(input, serviceResolver)
 }
 
-export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>>>>
+export type UseSchemaOrgInput = Arrayable<MaybeRef<DeepResolvableProperties<Thing | Record<string, unknown>> | null | undefined | false>>
 
 export function useSchemaOrg(input: UseSchemaOrgInput = [], options: UseHeadOptions = {}): ActiveHeadEntry<UseSchemaOrgInput> {
   // lazy initialise the plugin
