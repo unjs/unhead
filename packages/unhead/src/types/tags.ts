@@ -85,7 +85,7 @@ export type TagKey = keyof ResolvableHead | InternalTagKey
  */
 export type InternalTagKey = '_flatMeta'
 
-export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | Record<string, string>>
+export type TemplateParams = { separator?: '|' | '-' | '·' | string } & Record<string, null | string | boolean | number | Record<string, string | boolean | number>>
 
 export interface ProcessesTemplateParams { processTemplateParams?: boolean }
 
